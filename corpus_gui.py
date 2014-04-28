@@ -23,7 +23,7 @@ import queue
 import pickle
 import os
 import string
-import MRel as string_sim
+import string_similarity as string_sim
 import collections
 from codecs import open
 from math import log
