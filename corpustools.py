@@ -618,7 +618,7 @@ class CorpusFactory(object):
     def change_path(self, path):
         self.basepath = path
 
-    def make_corpus_from_gui(self,corpus_name, features, size=100, q=None, corpusq=None):
+    def make_corpus_from_gui(self, corpus_name, features, size=100, q=None, corpusq=None):
         """
         Called from GUI. Instead of returning a corpus object, it puts it
         into a Queue. This Queue is also used to update the GUI as to how

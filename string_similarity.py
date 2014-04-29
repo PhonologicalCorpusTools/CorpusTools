@@ -1,11 +1,11 @@
-#fun times with morphological relatedness
 import math
 import pprint
-import corpustools
 import os
 import collections
 import re
 from codecs import open
+
+import corpustools
 
 class Relator(object):
 
