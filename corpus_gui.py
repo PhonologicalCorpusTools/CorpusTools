@@ -23,14 +23,17 @@ import queue
 import pickle
 import os
 import string
-import string_similarity as string_sim
+import string_similarity
+import functional_load as FL
 import collections
+import functional_load
 from codecs import open
 from math import log
 
 class ThreadedTask(threading.Thread):
-    def __init__(self, queue, **kwargs):
-        threading.Thread.__init__(self,target=kwargs['target'], args=kwargs['args'])
+    def __init__(self, queue, target, args, **kwargs):
+        #threading.Thread.__init__(self,target=kwargs['target'], args=kwargs['args'], kwargs=kwargs['kwargs'])
+        threading.Thread.__init__(self,target=target, args=args, kwargs=kwargs['kwargs'])
         self.queue = queue
 
 class MultiListbox(Frame):
@@ -54,7 +57,6 @@ class MultiListbox(Frame):
         sb = Scrollbar(frame, orient=VERTICAL, command=self._scroll)
         sb.pack(expand=YES, fill=Y)
         self.lists[0]['yscrollcommand']=sb.set
-
 
     def _select(self, y):
         row = self.lists[0].nearest(y)
@@ -83,12 +85,12 @@ class MultiListbox(Frame):
         for l in self.lists:
             l.delete(first, last)
 
-    def get(self, first, last=None):
+    def get(self, first, last=END):
         result = []
         for l in self.lists:
             result.append(l.get(first,last))
-        if last:
-            return map(None, *result)
+##        if last:
+##            return map(None, *result)
         return result
 
     def index(self, index):
@@ -144,10 +146,10 @@ class GUI(Toplevel):
         self.features_button_var = StringVar()
         self.search_var = StringVar()
         #string similarity variables
-        self.string_sim_query_var = StringVar()
-        self.string_sim_filename_var = StringVar()
-        self.string_sim_typetoken_var = StringVar()
-        self.string_sim_stringtype_var = StringVar()
+        self.string_similarity_query_var = StringVar()
+        self.string_similarity_filename_var = StringVar()
+        self.string_similarity_typetoken_var = StringVar()
+        self.string_similarity_stringtype_var = StringVar()
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('No feature system selected')
@@ -175,6 +177,14 @@ class GUI(Toplevel):
         self.punc_vars = [IntVar() for mark in string.punctuation]
         self.new_corpus_string_type = StringVar()
         self.new_corpus_feature_system_var = StringVar()
+        #Functional load variables
+        self.fl_frequency_cutoff_var = StringVar()
+        self.fl_homophones_var = StringVar()
+        self.fl_relative_count_var = StringVar()
+        self.fl_seg1_var = StringVar()
+        self.fl_seg2_var = StringVar()
+        self.fl_q = queue.Queue()
+        self.fl_results_table = None
 
         #
         self.main_screen = Frame(master)
@@ -308,9 +318,10 @@ class GUI(Toplevel):
         self.custom_corpus_name.grid()
         delimiter_label = Label(custom_corpus_load_frame, text='Delimiter (enter \'t\' for tab)')
         delimiter_label.grid()
-        self.delimter_entry = Entry(custom_corpus_load_frame)
-        self.delimter_entry.insert(0,',')
-        self.delimter_entry.grid()
+        self.delimiter_entry = Entry(custom_corpus_load_frame)
+        self.delimiter_entry.delete(0,END)
+        self.delimiter_entry.insert(0,',')
+        self.delimiter_entry.grid()
         new_corpus_feature_frame = LabelFrame(custom_corpus_load_frame, text='Feature system to use (if transcription exists)')
         new_corpus_feature_system = OptionMenu(new_corpus_feature_frame,#parent
             self.new_corpus_feature_system_var,#variable
@@ -329,7 +340,7 @@ class GUI(Toplevel):
         if not os.path.exists(filename):
             MessageBox.showerror(message='Corpus file could not be located. Please verify the path and file name.')
 
-        delimiter = self.delimter_entry.get()
+        delimiter = self.delimiter_entry.get()
         corpus_name = self.custom_corpus_name.get()
         if (not filename) or (not delimiter) or (not corpus_name):
             MessageBox.showerror(message='Information is missing. Please verify that you entered something in all the text boxes')
@@ -486,7 +497,7 @@ class GUI(Toplevel):
         self.search_popup.destroy()
 
 
-    def string_similarity(self):
+    def string_similarityilarity(self):
 
         #Check if it's even possible to do this analysis
         has_spelling = True
@@ -509,64 +520,65 @@ class GUI(Toplevel):
                 missing = ','.join(missing)
                 MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
 
-        self.string_sim_popup = Toplevel()
-        self.string_sim_popup.title('String similarity')
+        self.string_similarity_popup = Toplevel()
+        self.string_similarity_popup.title('String similarity')
         try:
             selection = self.corpus_box.get(self.corpus_box.curselection())[0]
         except TclError:
             #this means that nothing was selected in the multibox
             selection = ''
 
-        word1_frame = LabelFrame(self.string_sim_popup, text='Enter a word')
+        word1_frame = LabelFrame(self.string_similarity_popup, text='Enter a word')
         word1_frame.grid()
-        word1_entry = Entry(word1_frame, textvariable=self.string_sim_query_var)
+        word1_entry = Entry(word1_frame, textvariable=self.string_similarity_query_var)
         word1_entry.delete(0,END)
         word1_entry.insert(0,selection)
         word1_entry.grid()
 
-        filename_frame = LabelFrame(self.string_sim_popup, text='Name for output file')
-        string_sim_filename_entry = Entry(filename_frame, textvariable=self.string_sim_filename_var)
-        string_sim_filename_entry.delete(0,END)
+        filename_frame = LabelFrame(self.string_similarity_popup, text='Name for output file')
+        string_similarity_filename_entry = Entry(filename_frame, textvariable=self.string_similarity_filename_var)
+        string_similarity_filename_entry.delete(0,END)
         if selection:
-            string_sim_filename_entry.insert(0,'{}_string_similarity.txt'.format(selection))
-        string_sim_filename_entry.grid()
+            string_similarity_filename_entry.insert(0,'{}_string_similarityilarity.txt'.format(selection))
+        string_similarity_filename_entry.grid()
         filename_frame.grid()
 
-        options_frame = LabelFrame(self.string_sim_popup, text='Options')
+        options_frame = LabelFrame(self.string_similarity_popup, text='Options')
         typetoken_frame = LabelFrame(options_frame, text='Type or Token')
-        type_button = Radiobutton(typetoken_frame, text='Count types', variable=self.string_sim_typetoken_var, value='type')
+        type_button = Radiobutton(typetoken_frame, text='Count types', variable=self.string_similarity_typetoken_var, value='type')
         type_button.grid(sticky=W)
         type_button.invoke()
-        token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.string_sim_typetoken_var, value='token')
+        token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.string_similarity_typetoken_var, value='token')
         token_button.grid(sticky=W)
         if not has_frequency:
             token_button.configure(state=('disabled'))
         typetoken_frame.grid(column=0, row=0)
         stringtype_frame = LabelFrame(options_frame, text='String type')
-        spelling_button = Radiobutton(stringtype_frame, text='Compare spelling', variable=self.string_sim_stringtype_var, value='spelling')
+        spelling_button = Radiobutton(stringtype_frame, text='Compare spelling', variable=self.string_similarity_stringtype_var, value='spelling')
         spelling_button.grid(sticky=W)
         spelling_button.invoke()
         if not has_spelling:
             transcription_button.configure(state=('disabled'))
-        transcription_button = Radiobutton(stringtype_frame, text='Compare transcription', variable=self.string_sim_stringtype_var, value='transcription')
+        transcription_button = Radiobutton(stringtype_frame, text='Compare transcription', variable=self.string_similarity_stringtype_var, value='transcription')
         transcription_button.grid(sticky=W)
         if not has_transcription:
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=1, row=0)
         options_frame.grid()
 
-        ok_button = Button(self.string_sim_popup, text='OK', command=self.calculate_string_sim)
+        ok_button = Button(self.string_similarity_popup, text='OK', command=self.calculate_string_similarity)
         ok_button.grid()
         if not has_spelling and has_transcription:
             ok_button.state = DISABLED
-        cancel_button = Button(self.string_sim_popup, text='Cancel', command=self.cancel_string_similarity)
+        cancel_button = Button(self.string_similarity_popup, text='Cancel', command=self.cancel_string_similarityilarity)
         cancel_button.grid()
-        info_button = Button(self.string_sim_popup, text='About this function...', command=self.string_sim_info)
+        info_button = Button(self.string_similarity_popup, text='About this function...', command=self.string_similarity_info)
         info_button.grid()
 
-    def string_sim_info(self):
+    def string_similarity_info(self):
 
         info_popup = Toplevel()
+        info_popup.title('About the string similarity function')
         description_frame = LabelFrame(info_popup, text='Brief description')
         text = 'This function calculates substring similarity, and can be used as a proxy for morphological relatedness'
         description_label = Label(description_frame, text=text)
@@ -584,6 +596,7 @@ class GUI(Toplevel):
     def entropy_info(self):
 
         info_popup = Toplevel()
+        info_popup.title('About the entropy function')
         description_frame = LabelFrame(info_popup, text='Brief description')
         description_label = Label(description_frame, text='This function calculates the entropy of two segments')
         description_label.grid()
@@ -597,10 +610,10 @@ class GUI(Toplevel):
         author_label.grid()
         author_frame.grid(sticky=W)
 
-    def calculate_string_sim(self):
+    def calculate_string_similarity(self):
 
         #First check if the word is in the corpus
-        query = self.string_sim_query_var.get()
+        query = self.string_similarity_query_var.get()
         try:
             self.corpus.find(query,keyerror=True)
         except KeyError:
@@ -609,7 +622,7 @@ class GUI(Toplevel):
             return
 
         #Then check for a filename
-        filename = self.string_sim_filename_var.get()
+        filename = self.string_similarity_filename_var.get()
         if not filename:
             MessageBox.showerror(message='Please enter a filename')
             return
@@ -617,19 +630,19 @@ class GUI(Toplevel):
             filename += '.txt'
 
         #If it's all good, then calculate relatedness
-        relator = string_sim.Relator(ready_made_corpus=self.corpus)
+        relator = string_similarity.Relator(ready_made_corpus=self.corpus)
         relator.relate(query, filename,
-                        count_what=self.string_sim_typetoken_var.get(),
-                        string_type=self.string_sim_stringtype_var.get())
-        string_type = self.string_sim_stringtype_var.get()
+                        count_what=self.string_similarity_typetoken_var.get(),
+                        string_type=self.string_similarity_stringtype_var.get())
+        string_type = self.string_similarity_stringtype_var.get()
         string_type = string_type[0].upper()+string_type[1:]
-        string_sim_results_popup = Toplevel()
-        title = 'Counting {}, Comparing {}'.format(self.string_sim_typetoken_var.get(),
-                                                 self.string_sim_stringtype_var.get())
-        string_sim_results_popup.title(title)
-        string_sim_results_frame = LabelFrame(string_sim_results_popup, text='Results')
-        string_sim_results_box = MultiListbox(string_sim_results_popup,
-                    [('Relatedness to \"{}\"'.format(self.string_sim_query_var.get()),20),
+        string_similarity_results_popup = Toplevel()
+        title = 'Counting {}, Comparing {}'.format(self.string_similarity_typetoken_var.get(),
+                                                 self.string_similarity_stringtype_var.get())
+        string_similarity_results_popup.title(title)
+        string_similarity_results_frame = LabelFrame(string_similarity_results_popup, text='Results')
+        string_similarity_results_box = MultiListbox(string_similarity_results_popup,
+                    [('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),20),
                     (string_type, 10)])
 
         #Read from results file and display in a multibox
@@ -641,12 +654,12 @@ class GUI(Toplevel):
                     continue
                 score = score[1:]
                 spelling = spelling.strip()
-                string_sim_results_box.insert(END,[score, spelling])
-        string_sim_results_box.grid()
-        string_sim_results_frame.grid()
+                string_similarity_results_box.insert(END,[score, spelling])
+        string_similarity_results_box.grid()
+        string_similarity_results_frame.grid()
 
-    def cancel_string_similarity(self):
-        self.string_sim_popup.destroy()
+    def cancel_string_similarityilarity(self):
+        self.string_similarity_popup.destroy()
 
     def donothing(self,event=None):
         pass
@@ -725,7 +738,7 @@ class GUI(Toplevel):
                 self.corpus_select_screen.after(3, self.process_queue)
         except queue.Empty:
             #queue is empty initially for a while because it takes some time for the
-            #corpus_factory.make_corpus to actually start producing worsd
+            #corpus_factory.make_corpus to actually start producing words
             self.corpus_select_screen.after(10, self.process_queue)
 
     def process_custom_corpus_queue(self):
@@ -748,7 +761,7 @@ class GUI(Toplevel):
             #corpus_factory.make_corpus to actually start producing worsd
             self.custom_corpus_load_screen.after(10, self.process_custom_corpus_queue)
 
-    def load_corpus(self, corpus_name, features_name, size=5000):
+    def load_corpus(self, corpus_name, features_name, size=10000):
         """
         good if size is fixed low for testing purposes, the actual program would probably want
         to load the entire corpus every time
@@ -792,6 +805,7 @@ class GUI(Toplevel):
             return
 
         self.destroy_tier_window = Toplevel()
+        self.destroy_tier_window.title('Tiers')
         choose_tier = LabelFrame(self.destroy_tier_window, text='Select tier to remove')
         self.kill_tiers_list = Listbox(choose_tier)
         for tier_name in sorted(word.tiers):
@@ -894,6 +908,7 @@ class GUI(Toplevel):
             matches = ' '.join(m)
 
         preview_window = Toplevel()
+        preview_window.title('Preview tier')
         preview_frame = LabelFrame(preview_window, text='This tier will contain these segments:')
         segs = Label(preview_frame, text=matches, justify=LEFT, anchor=W)
         segs.grid()
@@ -965,7 +980,7 @@ class GUI(Toplevel):
 
 
         self.entropy_screen = Toplevel()
-        self.entropy_screen.title('PPRM')
+        self.entropy_screen.title('Entropy calculation')
 
         ipa_frame = LabelFrame(self.entropy_screen, text='Sounds')
         segs = [seg.symbol for seg in self.corpus.inventory]
@@ -1532,7 +1547,7 @@ class GUI(Toplevel):
 
     def corpus_from_text(self):
 
-        self.from_text_window = Toplevel()
+        self.from_text_window = Toplevel('Create corpus')
         from_text_frame = LabelFrame(self.from_text_window, text='Create corpus from text')
         choose_file_frame = LabelFrame(from_text_frame, text='Select a file')
         self.from_text_entry = Entry(choose_file_frame)
@@ -1768,6 +1783,197 @@ class GUI(Toplevel):
             self.feature_screen.destroy()
             self.show_feature_system()
 
+    def functional_load(self):
+        self.fl_popup = Toplevel()
+        self.fl_popup.title('Functional load')
+        ipa_frame = LabelFrame(self.fl_popup, text='Sounds')
+        segs = [seg.symbol for seg in self.corpus.inventory]
+        segs.sort()
+        seg1_frame = LabelFrame(ipa_frame, text='Choose first symbol')
+        colmax = 10
+        col = 0
+        row = 0
+        for seg in segs:
+            seg_button = OldRadiobutton(seg1_frame, text=seg, variable=self.fl_seg1_var, value=seg, indicatoron=0)
+            seg_button.grid(row=row, column=col)
+            col+=1
+            if col > colmax:
+                col = 0
+                row += 1
+        seg1_frame.grid()
+
+        seg2_frame = LabelFrame(ipa_frame, text='Choose second symbol')
+        colmax = 10
+        col = 0
+        row = 0
+        for seg in segs:
+            seg_button = OldRadiobutton(seg2_frame, text=seg, variable=self.fl_seg2_var, value=seg, indicatoron=0)
+            seg_button.grid(row=row, column=col)
+            col+=1
+            if col > colmax:
+                col = 0
+                row += 1
+        seg2_frame.grid()
+        ipa_frame.grid(row=0,column=0,sticky=N)
+
+        option_frame = LabelFrame(self.fl_popup, text='Options')
+        min_freq_frame = LabelFrame(option_frame, text='Minimum frequency?')
+        fl_frequency_cutoff_label = Label(min_freq_frame, text='Only consider sounds with frequency greater than...')
+        fl_frequency_cutoff_label.grid(row=0, column=0)
+        fl_frequency_cutoff_entry = Entry(min_freq_frame, textvariable=self.fl_frequency_cutoff_var)
+        fl_frequency_cutoff_entry.delete(0,END)
+        fl_frequency_cutoff_entry.insert(0,'0')
+        fl_frequency_cutoff_entry.grid(row=0, column=1)
+        min_freq_frame.grid(sticky=W)
+
+        relative_count_frame = LabelFrame(option_frame, text='Relative count?')
+        relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
+                                    value='relative', variable=self.fl_relative_count_var)
+        relative_count.grid(sticky=W)
+        raw_count = Radiobutton(relative_count_frame, text='Calculate just the number of minimal pairs',
+                                    value='raw', variable=self.fl_relative_count_var)
+        raw_count.grid(sticky=W)
+        relative_count_frame.grid(sticky=W)
+        relative_count.invoke()
+
+        homophones_frame = LabelFrame(option_frame, text='What to do with homophones?')
+        count_homophones_button = Radiobutton(homophones_frame, text='Include homophones',
+                                    value='include', variable=self.fl_homophones_var)
+        count_homophones_button.grid(sticky=W)
+        ignore_homophones_button = Radiobutton(homophones_frame,
+                                text='Ignore homophones (i.e. count each phonological form once)',
+                                value = 'ignore', variable=self.fl_homophones_var)
+        ignore_homophones_button.grid(sticky=W)
+        ignore_homophones_button.invoke()
+        homophones_frame.grid(sticky=W)
+
+        option_frame.grid(row=0,column=1,sticky=N)
+
+        ok_button = Button(self.fl_popup, text='Start new functional load calculations', command=lambda x=False:self.calculate_functional_load(update=x))
+        ok_button.grid(row=2, column=0)
+        self.update_fl_button = Button(self.fl_popup, text='Update results table', command=lambda x=True:self.calculate_functional_load(update=x))
+        self.update_fl_button.grid()
+        self.update_fl_button.config(state=DISABLED)
+        cancel_button = Button(self.fl_popup, text='Cancel', command=self.cancel_functional_load)
+        cancel_button.grid(row=2, column=1)
+        about = Button(self.fl_popup, text='About this function...', command=self.about_functional_load)
+        about.grid(row=2, column=2)
+
+    def cancel_functional_load(self):
+        self.delete_fl_results_table()
+        self.fl_popup.destroy()
+
+    def about_functional_load(self):
+        about_fl = Toplevel()
+        about_fl.title('Functional load')
+        desc_frame = LabelFrame(about_fl, text='Brief description')
+        desc_label = Label(desc_frame, text='This function calculate the functional load of the contrast between any two segments, based on either the number of minimal pairs or the change in entropy resulting from merging that contrast.')
+        desc_label.grid()
+        desc_frame.grid(sticky=W)
+        source_frame = LabelFrame(about_fl, text='Original sources')
+        source_label = Label(source_frame, text='Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12.')
+        source_label.grid()
+        source_label2 = Label(source_frame, text='Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013. High functional load inhibits phonological contrast loss: A corpus study. Cognition 128.179-86')
+        source_label2.grid()
+        source_frame.grid(sticky=W)
+        coder_frame = LabelFrame(about_fl, text='Coded by')
+        coder_label = Label(coder_frame, text='Blake Allen')
+        coder_label.grid()
+        coder_frame.grid(sticky=W)
+
+    def calculate_functional_load(self,update=False):
+        if not self.fl_seg1_var.get() or not self.fl_seg2_var.get():
+            MessageBox.showwarning(message='Please select two segments.')
+            return
+
+        if not update and self.fl_results_table is not None:
+            carryon = MessageBox.askyesno(message='You have functional load results open in a table already.\nWould you like to start a new table?')
+            if not carryon:
+                return
+            else:
+                self.fl_results_table.destroy()
+                self.fl_results.destroy()
+        s1 = self.fl_seg1_var.get()
+        s2 = self.fl_seg2_var.get()
+        frequency_cutoff = int(self.fl_frequency_cutoff_var.get())
+        relative_count = True if self.fl_relative_count_var.get() == 'relative' else False
+        distinguish_homophones = True if self.fl_homophones_var.get() == 'include' else False
+        functional_load_thread = ThreadedTask(self.fl_q,
+                                target=FL.minpair_fl,
+                                args=(s1, s2, self.corpus),
+                                kwargs={'frequency_cutoff':frequency_cutoff,
+                                'relative_count':relative_count,
+                                'distinguish_homophones':distinguish_homophones,
+                                'threaded_q':self.fl_q})
+        functional_load_thread.start()
+        self.process_fl_queue(update)
+
+
+    def process_fl_queue(self,update):
+        try:
+            result = self.fl_q.get(0)
+            if update:
+                self.update_fl_results(result) #results window exists, just return a new value
+            else:
+                self.show_fl_result(result) #construct a new window to display results
+
+        except queue.Empty:
+            self.fl_popup.after(100, lambda x=update:self.process_fl_queue(update))
+
+    def delete_fl_results_table(self):
+
+        #clean-up function
+        if self.fl_results_table is not None:
+            self.fl_results_table.destroy()
+            self.fl_results_table = None
+            self.fl_results.destroy()
+        try:
+            self.update_fl_button.config(state=DISABLED)
+        except TclError:
+            pass #the button doesn't exist, ignore the error
+
+    def show_fl_result(self, result):
+        self.fl_results = Toplevel()
+        self.fl_results.protocol('WM_DELETE_WINDOW', self.delete_fl_results_table)
+        self.update_fl_button.config(state=ACTIVE)
+        self.fl_results.title('Functional load results')
+        ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
+        relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
+        #results_frame = LabelFrame(self.fl_results, text='Results')
+        self.fl_results_table = MultiListbox(self.fl_results,[('Segment 1',10),
+                                                ('Segment 2',10),
+                                                ('Functional Load',20),
+                                                ('Ignored homophones?',5),
+                                                ('Relative count?',5)])
+        self.fl_results_table.grid()
+        self.fl_results_table.insert(END,[self.fl_seg1_var.get(), self.fl_seg2_var.get(), result,ignored_homophones,relative_count])
+        #results_frame.grid()
+
+        button_frame = Frame(self.fl_results)
+        print_button = Button(button_frame, text='Print results to file', command=self.print_fl_results)
+        print_button.grid(row=0, column=0)
+        close_button = Button(button_frame, text='Close this table', command=self.delete_fl_results_table)
+        close_button.grid(row=0, column=1)
+        button_frame.grid()
+
+    def print_fl_results(self):
+        filename = FileDialog.asksaveasfilename()
+        if not filename.endswith('.txt'):
+            filename += '.txt'
+        with open(filename, mode='w', encoding='utf-8') as f:
+            print('\t'.join([h for h in self.fl_results_table.headers]), file=f)
+            for result in zip(*self.fl_results_table.get(0)):
+                print('\t'.join(str(r) for r in result)+'\r\n', file=f)
+
+    def update_fl_results(self, result):
+        ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
+        relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
+        self.fl_results_table.insert(END,[self.fl_seg1_var.get(),
+                                        self.fl_seg2_var.get(),
+                                        result,
+                                        ignored_homophones,
+                                        relative_count])
+
 def make_menus(root,app):
 
     menubar = Menu(root)
@@ -1790,9 +1996,9 @@ def make_menus(root,app):
     menubar.add_cascade(label='Corpus', menu=corpusmenu)
 
     calcmenu = Menu(menubar, tearoff=0)
-    calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
+    calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarityilarity)
     calcmenu.add_command(label='Calculate entropy...', command=app.entropy)
-    calcmenu.add_command(labe='Calculate functional load...')
+    calcmenu.add_command(labe='Calculate functional load...', command=app.functional_load)
     menubar.add_cascade(label='Analysis', menu=calcmenu)
 
     helpmenu = Menu(menubar, tearoff=0)
