@@ -33,7 +33,10 @@ from math import log
 class ThreadedTask(threading.Thread):
     def __init__(self, queue, target, args, **kwargs):
         #threading.Thread.__init__(self,target=kwargs['target'], args=kwargs['args'], kwargs=kwargs['kwargs'])
-        threading.Thread.__init__(self,target=target, args=args, kwargs=kwargs['kwargs'])
+        if kwargs:
+            threading.Thread.__init__(self,target=target, args=args, kwargs=kwargs['kwargs'])
+        else:
+            threading.Thread.__init__(self,target=target, args=args)
         self.queue = queue
 
 class MultiListbox(Frame):
@@ -435,7 +438,7 @@ class GUI(Toplevel):
         except AttributeError:
             pass #this occurs if the custom corpus was created from text, not loaded directly
 
-        if transcription_errors:
+        if transcription_errors is not None:
             filename = 'error_{}_{}.txt'.format(self.new_corpus_feature_system_var.get(), self.corpus.name)
             with open(os.path.join(os.getcwd(),'ERRORS',filename), encoding='utf-8', mode='w') as f:
                 print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.\r\n'.format(self.new_corpus_feature_system_var.get()),file=f)
@@ -695,7 +698,8 @@ class GUI(Toplevel):
         self.corpus_select_screen = Toplevel()
         self.corpus_select_screen.title('Corpus select')
 
-        corpus_area = LabelFrame(self.corpus_select_screen, text='Select a corpus')
+        corpus_frame = Frame(self.corpus_select_screen)
+        corpus_area = LabelFrame(corpus_frame, text='Select a corpus')
         corpus_area.grid(sticky=W, column=0, row=0)
         subtlex_button = Radiobutton(corpus_area, text='SUBTLEX', variable=self.corpus_button_var, value='subtlex')
         subtlex_button.grid(sticky=W,row=0)
@@ -703,18 +707,24 @@ class GUI(Toplevel):
         iphod_button = Radiobutton(corpus_area, text='IPHOD', variable=self.corpus_button_var, value='iphod')
         iphod_button.grid(sticky=W,row=1)
 
-        features_area = LabelFrame(self.corpus_select_screen, text='Select a feature system')
+        features_area = LabelFrame(corpus_frame, text='Select a feature system')
         features_area.grid(sticky=E, column=1, row=0)
         spe_button = Radiobutton(features_area, text='Sound Pattern of English (Chomsky and Halle, 1967)', variable=self.features_button_var, value='spe')
         spe_button.grid(sticky=W, row=0)
         spe_button.invoke()#.select() doesn't work on ttk.Button
         hayes_button = Radiobutton(features_area, text='Hayes (2008)', variable=self.features_button_var, value='hayes')
         hayes_button.grid(sticky=W, row=1)
+        corpus_frame.grid()
 
-        ok_button = Button(self.corpus_select_screen,text='OK', command=self.confirm_corpus_selection)
+        button_frame = Frame(self.corpus_select_screen)
+        ok_button = Button(button_frame,text='OK', command=self.confirm_corpus_selection)
         ok_button.grid(row=3, column=0)#, sticky=W, padx=3)
-        cancel_button = Button(self.corpus_select_screen,text='Cancel', command=self.corpus_select_screen.destroy)
+        cancel_button = Button(button_frame,text='Cancel', command=self.corpus_select_screen.destroy)
         cancel_button.grid(row = 3, column=1)#, sticky=W, padx=3)
+        button_frame.grid()
+
+        warning_label = Label(self.corpus_select_screen, text='Please be patient. It can take up to 30 seconds to load a corpus.')
+        warning_label.grid()
 
     def confirm_corpus_selection(self):
         corpus_name = self.corpus_button_var.get()
@@ -722,24 +732,18 @@ class GUI(Toplevel):
         self.feature_system = features_name
         self.load_corpus(corpus_name, features_name)
 
-    def process_queue(self):
+    def process_load_corpus_queue(self):
         try:
-            msg = self.q.get(0)
-            if msg == 'done':
-                self.corpus_load_prog_bar.stop()
-                #self.corpus_load_prog_bar.destroy()
-                self.corpus_select_screen.destroy()
-                self.corpus = self.corpusq.get()
-                self.main_screen_refresh()
-                return
-            else:
-                self.corpus_load_prog_bar.step()
-                #self.master.after(100, self.process_queue)
-                self.corpus_select_screen.after(3, self.process_queue)
+            self.corpus = self.corpusq.get()
+            self.corpus_load_prog_bar.stop()
+            #self.corpus_load_prog_bar.destroy()
+            self.corpus_select_screen.destroy()
+            self.main_screen_refresh()
+            return
         except queue.Empty:
             #queue is empty initially for a while because it takes some time for the
             #corpus_factory.make_corpus to actually start producing words
-            self.corpus_select_screen.after(10, self.process_queue)
+            self.corpus_select_screen.after(5, self.process_load_corpus_queue)
 
     def process_custom_corpus_queue(self):
         try:
@@ -766,21 +770,53 @@ class GUI(Toplevel):
         good if size is fixed low for testing purposes, the actual program would probably want
         to load the entire corpus every time
         """
-        #pre-computed size variables
-        if size == 'all':
-            if corpus_name == 'iphod':
-                size = 54030
-            elif corpus_name == 'subtlex':
-                size = 48212
-        self.q = queue.Queue()
-        self.corpus_load_prog_bar = Progressbar(self.corpus_select_screen, mode='determinate', maximum=size)
+        if corpus_name == 'iphod':
+            if features_name == 'spe':
+                path = os.path.join(os.getcwd(), 'CORPUS', 'iphod_spe.corpus')
+            elif features_name == 'hayes':
+                path = os.path.join(os.getcwd(), 'CORPUS', 'iphod_hayes.corpus')
+        elif corpus_name == 'subtlex':
+            if features_name == 'spe':
+                path = os.path.join(os.getcwd(), 'CORPUS', 'subtlex_spe.corpus')
+            elif features_name == 'hayes':
+                path = os.path.join(os.getcwd(), 'CORPUS', 'subtlex_hayes.corpus')
+
+        self.corpus_load_prog_bar = Progressbar(self.corpus_select_screen, mode='indeterminate')
         self.corpus_load_prog_bar.grid()
-        #self.corpus_load_prog_bar.start()
-        self.corpus_load_thread = ThreadedTask(self.q,
-                                target=self.corpus_factory.make_corpus_from_gui,
-                                args=(corpus_name, features_name, size, self.q, self.corpusq))
-        self.corpus_load_thread.start()
-        self.process_queue()
+        self.corpus_load_prog_bar.start()
+        f = open(path, 'rb')
+        corpus = pickle.load(f)
+        f.close()
+        corpus.custom = False
+        self.finalize_corpus(corpus)
+        self.corpus_select_screen.destroy()
+        self.main_screen_refresh()
+        return
+
+##        self.corpus_load_thread = ThreadedTask(self.corpusq,
+##                        target=pickle.load,
+##                        args=(f,))
+##        self.corpus_load_thread.start()
+##        self.process_load_corpus_queue()
+        return
+##
+##
+##        #pre-computed size variables1
+##        if size == 'all':
+##            if corpus_name == 'iphod':
+##                size = 54030
+##            elif corpus_name == 'subtlex':
+##                size = 48212
+##        self.q = queue.Queue()
+##        self.corpus_load_prog_bar = Progressbar(self.corpus_select_screen, mode='determinate', maximum=size)
+##        self.corpus_load_prog_bar.grid()
+##        #self.corpus_load_prog_bar.start()
+##        self.corpus_load_thread = ThreadedTask(self.q,
+##                                target=self.corpus_factory.make_corpus_from_gui,
+##                                args=(corpus_name, features_name, size, self.q, self.corpusq),
+##                                )
+##        self.corpus_load_thread.start()
+##        self.process_queue()
 
     def main_screen_refresh(self):
 
