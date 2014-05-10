@@ -500,7 +500,7 @@ class GUI(Toplevel):
         self.search_popup.destroy()
 
 
-    def string_similarityilarity(self):
+    def string_similarity(self):
 
         #Check if it's even possible to do this analysis
         has_spelling = True
@@ -526,7 +526,7 @@ class GUI(Toplevel):
         self.string_similarity_popup = Toplevel()
         self.string_similarity_popup.title('String similarity')
         try:
-            selection = self.corpus_box.get(self.corpus_box.curselection())[0]
+            selection = self.corpus_box.get(self.corpus_box.curselection())[0][0]
         except TclError:
             #this means that nothing was selected in the multibox
             selection = ''
@@ -542,7 +542,7 @@ class GUI(Toplevel):
         string_similarity_filename_entry = Entry(filename_frame, textvariable=self.string_similarity_filename_var)
         string_similarity_filename_entry.delete(0,END)
         if selection:
-            string_similarity_filename_entry.insert(0,'{}_string_similarityilarity.txt'.format(selection))
+            string_similarity_filename_entry.insert(0,'{}_string_similarity.txt'.format(selection))
         string_similarity_filename_entry.grid()
         filename_frame.grid()
 
@@ -573,7 +573,7 @@ class GUI(Toplevel):
         ok_button.grid()
         if not has_spelling and has_transcription:
             ok_button.state = DISABLED
-        cancel_button = Button(self.string_similarity_popup, text='Cancel', command=self.cancel_string_similarityilarity)
+        cancel_button = Button(self.string_similarity_popup, text='Cancel', command=self.cancel_string_similarity)
         cancel_button.grid()
         info_button = Button(self.string_similarity_popup, text='About this function...', command=self.string_similarity_info)
         info_button.grid()
@@ -661,7 +661,7 @@ class GUI(Toplevel):
         string_similarity_results_box.grid()
         string_similarity_results_frame.grid()
 
-    def cancel_string_similarityilarity(self):
+    def cancel_string_similarity(self):
         self.string_similarity_popup.destroy()
 
     def donothing(self,event=None):
@@ -798,7 +798,7 @@ class GUI(Toplevel):
 ##                        args=(f,))
 ##        self.corpus_load_thread.start()
 ##        self.process_load_corpus_queue()
-        return
+
 ##
 ##
 ##        #pre-computed size variables1
@@ -2032,7 +2032,7 @@ def make_menus(root,app):
     menubar.add_cascade(label='Corpus', menu=corpusmenu)
 
     calcmenu = Menu(menubar, tearoff=0)
-    calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarityilarity)
+    calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
     calcmenu.add_command(label='Calculate entropy...', command=app.entropy)
     calcmenu.add_command(labe='Calculate functional load...', command=app.functional_load)
     menubar.add_cascade(label='Analysis', menu=calcmenu)
