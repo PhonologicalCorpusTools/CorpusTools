@@ -10,14 +10,29 @@ import corpustools
 
 
 def minpair_fl(s1, s2, corpus, frequency_measure=None, frequency_cutoff=0, relative_count=True, distinguish_homophones=False, threaded_q=False):
-    """Given a pair of Segments, calculate the functional load of the contrast between them as a count of minimal pairs.
+    """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
 
-    `s1` and `s2` : Segment
-    `corpus` : Corpus
-    `frequency_measure` : The measurement of frequency you wish to use, if using a frequency cutoff
-    `frequency_cutoff` : Minimum frequency of words to consider, if desired
-    `relative_count` : If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
-    `distinguish_homophones` : False is the value used by Wedel et al. If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual.
+    Parameters
+    ----------
+    s1 : Segment
+        The first of the segments to have their functional load calculated.
+    s2 : Segment
+        The second of the segments to have their functional load calculated.
+    corpus : Corpus
+        The domain over which functional load is calculated.
+    frequency_measure : str or None, optional
+        The measurement of frequency you wish to use, if using a frequency cutoff.
+    frequency_cutoff : number, optional
+        Minimum frequency of words to consider, if desired. Type depends on `frequency_measure`.
+    relative_count : bool, optional
+        If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
+    distinguish_homophones : bool, optional
+        If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.
+
+    Returns
+    -------
+    int or float
+        If `relative_count`==False, returns an int of the raw number of minimal pairs. If `relative_count`==True, returns a float of that count divided by the total number of words in the corpus that include either `s1` or `s2`.
      """
     if threaded_q:
         q = threaded_q
@@ -51,12 +66,25 @@ def minpair_fl(s1, s2, corpus, frequency_measure=None, frequency_cutoff=0, relat
         threaded_q.put(result)
         return None
 
-def deltah_fl(s1, s2, corpus, frequency_measure):
-    """Given a pair of segments, calculate the functional load of the contrast between them as the decrease in corpus entropy caused by a merger.
 
-    `s1` and `s2` : Segment
-    `corpus` : Corpus
-    `frequency_measure` : The measurement of frequency you wish to use
+def deltah_fl(s1, s2, corpus, frequency_measure):
+    """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
+
+    Parameters
+    ----------
+    s1 : Segment
+        The first of the segments to have their functional load calculated.
+    s2 : Segment
+        The second of the segments to have their functional load calculated.
+    corpus : Corpus
+        The domain over which functional load is calculated.
+    frequency_measure : str or None, optional
+        The measurement of frequency you wish to use, if using a frequency cutoff.
+
+    Returns
+    -------
+    float
+        The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
     """
     def neutralize(word, s1, s2):
         return tuple(['NEUTR' if s in [s1,s2] else s for s in word])
@@ -77,7 +105,16 @@ def deltah_fl(s1, s2, corpus, frequency_measure):
 
 
 def entropy(probabilities):
-    """Let's take this function from elsewhere if possible.
+    """Calculate the entropy of a choice from the provided probability distribution.
+
+    Parameters
+    ---------
+    probabilities : list of floats
+        Contains the probability of each item in the list.
+
+    Returns
+    -------
+    float
     """
     return -(sum([p*log(p,2) if p > 0 else 0 for p in probabilities]))
 
