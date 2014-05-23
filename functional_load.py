@@ -34,6 +34,7 @@ def minpair_fl(s1, s2, corpus, frequency_measure=None, frequency_cutoff=0, relat
     int or float
         If `relative_count`==False, returns an int of the raw number of minimal pairs. If `relative_count`==True, returns a float of that count divided by the total number of words in the corpus that include either `s1` or `s2`.
      """
+
     if threaded_q:
         q = threaded_q
 
@@ -66,8 +67,7 @@ def minpair_fl(s1, s2, corpus, frequency_measure=None, frequency_cutoff=0, relat
         threaded_q.put(result)
         return None
 
-
-def deltah_fl(s1, s2, corpus, frequency_measure):
+def deltah_fl(s1, s2, corpus, frequency_measure, threaded_q=False):
     """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
 
     Parameters
@@ -86,14 +86,22 @@ def deltah_fl(s1, s2, corpus, frequency_measure):
     float
         The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
     """
+
     def neutralize(word, s1, s2):
         return tuple(['NEUTR' if s in [s1,s2] else s for s in word])
 
-    freq_sum = sum([getattr(word, frequency_measure) for word in corpus])
+    if frequency_measure == 'type':
+        freq_sum = len(corpus)
+    else:
+        freq_sum = sum([getattr(word, frequency_measure) for word in corpus])
 
     original_probs = defaultdict(float)
-    for word in corpus:
-        original_probs[' '.join([str(s) for s in word.transcription])] += getattr(word, frequency_measure)/freq_sum
+    if frequency_measure == 'type':
+        for word in corpus:
+            original_probs[' '.join([str(s) for s in word.transcription])] += 1/freq_sum
+    else:
+        for word in corpus:
+            original_probs[' '.join([str(s) for s in word.transcription])] += getattr(word, frequency_measure)/freq_sum
     preneutr_h = entropy([original_probs[item] for item in original_probs])
 
     neutralized_probs = defaultdict(float)
@@ -101,8 +109,13 @@ def deltah_fl(s1, s2, corpus, frequency_measure):
         neutralized_probs[neutralize(item, s1, s2)] += original_probs[item]
     postneutr_h = entropy([neutralized_probs[item] for item in neutralized_probs])
 
-    return preneutr_h - postneutr_h
+    result = preneutr_h - postneutr_h
 
+    if not threaded_q:
+        return result
+    else:
+        threaded_q.put(result)
+        return None
 
 def entropy(probabilities):
     """Calculate the entropy of a choice from the provided probability distribution.
