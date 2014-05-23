@@ -188,6 +188,7 @@ class GUI(Toplevel):
         self.fl_seg2_var = StringVar()
         self.fl_q = queue.Queue()
         self.fl_results_table = None
+        self.fl_type_var = StringVar()
 
         #
         self.main_screen = Frame(master)
@@ -1850,10 +1851,19 @@ class GUI(Toplevel):
                 col = 0
                 row += 1
         seg2_frame.grid()
-        ipa_frame.grid(row=0,column=0,sticky=N)
 
-        option_frame = LabelFrame(self.fl_popup, text='Options')
-        min_freq_frame = LabelFrame(option_frame, text='Minimum frequency?')
+        type_frame = LabelFrame(self.fl_popup, text='Type of functional load to calculate')
+        min_pairs_type = Radiobutton(type_frame, text='Minimal pairs',
+                                variable=self.fl_type_var, value='min_pairs',
+                                command= lambda x=True:self.show_min_pairs_options(x))
+        min_pairs_type.grid(sticky=W)
+        h_type = Radiobutton(type_frame, text='Entropy',
+                            variable=self.fl_type_var, value='h',
+                            command= lambda x=False:self.show_min_pairs_options(x))
+        h_type.grid(sticky=W)
+
+        self.fl_min_pairs_option_frame = LabelFrame(self.fl_popup, text='Minimal pairs options')
+        min_freq_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Minimum frequency?')
         fl_frequency_cutoff_label = Label(min_freq_frame, text='Only consider sounds with frequency greater than...')
         fl_frequency_cutoff_label.grid(row=0, column=0)
         fl_frequency_cutoff_entry = Entry(min_freq_frame, textvariable=self.fl_frequency_cutoff_var)
@@ -1862,7 +1872,7 @@ class GUI(Toplevel):
         fl_frequency_cutoff_entry.grid(row=0, column=1)
         min_freq_frame.grid(sticky=W)
 
-        relative_count_frame = LabelFrame(option_frame, text='Relative count?')
+        relative_count_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Relative count?')
         relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
                                     value='relative', variable=self.fl_relative_count_var)
         relative_count.grid(sticky=W)
@@ -1872,7 +1882,7 @@ class GUI(Toplevel):
         relative_count_frame.grid(sticky=W)
         relative_count.invoke()
 
-        homophones_frame = LabelFrame(option_frame, text='What to do with homophones?')
+        homophones_frame = LabelFrame(self.fl_min_pairs_option_frame, text='What to do with homophones?')
         count_homophones_button = Radiobutton(homophones_frame, text='Include homophones',
                                     value='include', variable=self.fl_homophones_var)
         count_homophones_button.grid(sticky=W)
@@ -1883,7 +1893,15 @@ class GUI(Toplevel):
         ignore_homophones_button.invoke()
         homophones_frame.grid(sticky=W)
 
-        option_frame.grid(row=0,column=1,sticky=N)
+        type_frame.grid(row=0, column=0, sticky=N)
+        ipa_frame.grid(row=0,column=1, sticky=N)
+        self.fl_min_pairs_option_frame.grid(row=0,column=2,sticky=N)
+        min_pairs_type.invoke()
+        #this has to be invoked this far after widget creation because pressing
+        #the radio button calls a function that disables the min-pair-only
+        #options, and the frame containing these options isn't created until
+        #after the radion buttons
+
 
         ok_button = Button(self.fl_popup, text='Start new functional load calculations', command=lambda x=False:self.calculate_functional_load(update=x))
         ok_button.grid(row=2, column=0)
@@ -1895,6 +1913,20 @@ class GUI(Toplevel):
         about = Button(self.fl_popup, text='About this function...', command=self.about_functional_load)
         about.grid(row=2, column=2)
 
+    def show_min_pairs_options(self,visible):
+        if visible:
+            state = ACTIVE
+        if not visible:
+            state = DISABLED
+
+        for frame in self.fl_min_pairs_option_frame.winfo_children():
+            for widget in frame.winfo_children():
+                try:
+                    widget.configure(state=state)
+                except TclError:
+                    pass
+
+
     def cancel_functional_load(self):
         self.delete_fl_results_table()
         self.fl_popup.destroy()
@@ -1903,10 +1935,11 @@ class GUI(Toplevel):
         about_fl = Toplevel()
         about_fl.title('Functional load')
         desc_frame = LabelFrame(about_fl, text='Brief description')
-        desc_label = Label(desc_frame, text='This function calculate the functional load of the contrast between any two segments, based on either the number of minimal pairs or the change in entropy resulting from merging that contrast.')
+        desc_label = Label(desc_frame, text='This function calculates the functional load of the contrast between any two segments, based on either the number of minimal pairs or the change in entropy resulting from merging that contrast.')
         desc_label.grid()
         desc_frame.grid(sticky=W)
         source_frame = LabelFrame(about_fl, text='Original sources')
+
         source_label = Label(source_frame, text='Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12.')
         source_label.grid()
         source_label2 = Label(source_frame, text='Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013. High functional load inhibits phonological contrast loss: A corpus study. Cognition 128.179-86')
@@ -1934,13 +1967,20 @@ class GUI(Toplevel):
         frequency_cutoff = int(self.fl_frequency_cutoff_var.get())
         relative_count = True if self.fl_relative_count_var.get() == 'relative' else False
         distinguish_homophones = True if self.fl_homophones_var.get() == 'include' else False
-        functional_load_thread = ThreadedTask(self.fl_q,
-                                target=FL.minpair_fl,
-                                args=(s1, s2, self.corpus),
-                                kwargs={'frequency_cutoff':frequency_cutoff,
-                                'relative_count':relative_count,
-                                'distinguish_homophones':distinguish_homophones,
-                                'threaded_q':self.fl_q})
+        if self.fl_type_var.get() == 'min_pairs':
+            functional_load_thread = ThreadedTask(self.fl_q,
+                                    target=FL.minpair_fl,
+                                    args=(s1, s2, self.corpus),
+                                    kwargs={'frequency_cutoff':frequency_cutoff,
+                                    'relative_count':relative_count,
+                                    'distinguish_homophones':distinguish_homophones,
+                                    'threaded_q':self.fl_q})
+        else:
+            functional_load_thread = ThreadedTask(self.fl_q,
+                                    target=FL.deltah_fl,
+                                    args=(s1, s2, self.corpus),
+                                    kwargs={'frequency_measure':'type',
+                                            'threaded_q':self.fl_q})
         functional_load_thread.start()
         self.process_fl_queue(update)
 
@@ -1973,20 +2013,31 @@ class GUI(Toplevel):
         self.fl_results.protocol('WM_DELETE_WINDOW', self.delete_fl_results_table)
         self.update_fl_button.config(state=ACTIVE)
         self.fl_results.title('Functional load results')
-        ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
-        relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
-        #results_frame = LabelFrame(self.fl_results, text='Results')
+        if self.fl_type_var.get() == 'min_pairs':
+            fl_type = 'Minimal pairs'
+            ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
+            relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
+        else:
+            fl_type = 'Entropy'
+            ignored_homophones = 'N/A'
+            relative_count = 'N/A'
+
         self.fl_results_table = MultiListbox(self.fl_results,[('Segment 1',10),
                                                 ('Segment 2',10),
-                                                ('Functional Load',20),
+                                                ('Type of funcational load', 10),
+                                                ('Result',20),
                                                 ('Ignored homophones?',5),
                                                 ('Relative count?',5)])
         self.fl_results_table.grid()
-        self.fl_results_table.insert(END,[self.fl_seg1_var.get(), self.fl_seg2_var.get(), result,ignored_homophones,relative_count])
-        #results_frame.grid()
+        self.fl_results_table.insert(END,[self.fl_seg1_var.get(),
+                                            self.fl_seg2_var.get(),
+                                            fl_type,
+                                            result,
+                                            ignored_homophones,
+                                            relative_count])
 
         button_frame = Frame(self.fl_results)
-        print_button = Button(button_frame, text='Print results to file', command=self.print_fl_results)
+        print_button = Button(button_frame, text='Save results to file', command=self.print_fl_results)
         print_button.grid(row=0, column=0)
         close_button = Button(button_frame, text='Close this table', command=self.delete_fl_results_table)
         close_button.grid(row=0, column=1)
@@ -2002,10 +2053,17 @@ class GUI(Toplevel):
                 print('\t'.join(str(r) for r in result)+'\r\n', file=f)
 
     def update_fl_results(self, result):
-        ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
-        relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
+        if self.fl_type_var.get() == 'min_pairs':
+            fl_type = 'Minimal pairs'
+            ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
+            relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
+        else:
+            fl_type = 'Entropy'
+            ignored_homophones = 'N/A'
+            relative_count = 'N/A'
         self.fl_results_table.insert(END,[self.fl_seg1_var.get(),
                                         self.fl_seg2_var.get(),
+                                        fl_type,
                                         result,
                                         ignored_homophones,
                                         relative_count])
