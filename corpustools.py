@@ -7,6 +7,8 @@ from codecs import open
 
 
 class Segment(object):
+    """
+    """
 
     def __init__(self, symbol, feature_list=None, pos=None, master=None):
         #None defaults are for word-boundary symbols
@@ -19,6 +21,9 @@ class Segment(object):
         self.master = master
 
     def get_env(self):
+        """Returns the left and right hand sides of a Segment instance
+
+        """
         if self.master is None or self.pos is None:
             return 0
         else:
@@ -31,6 +36,9 @@ class Segment(object):
         return self.symbol
 
     def __eq__(self, other):
+        """Two segments are considered equal if their symbol attributes match
+
+        """
         if isinstance(other, Segment):
             return self.symbol == other.symbol
         else:
@@ -120,6 +128,13 @@ class FeatureSpecifier(object):
             self.matrix[''] = [Feature('*')]
 
     def get_features(self):
+        """Get the list of feature names used by a feature system
+
+        Returns
+        -------
+        features: list of str
+            List of names of features
+        """
         symbol = random.choice(list(self.matrix.keys()))
         features = [feature.name for feature in self.matrix[symbol]]
         features.sort()
@@ -138,6 +153,28 @@ class FeatureSpecifier(object):
         return len(self.matrix)
 
 class Word(object):
+    """An object representing a word in a corpus
+
+    A Corpus object creates Words from information in a user-supplied text file.
+    The names of the attributes of a Word are therefore unpredictable.
+
+    Attributes
+    ----------
+    spelling : str
+        A representation of a word that lacks phonological information.
+
+    transcription : list of Segments
+        A representation of a word that includes phonological information.
+
+    tiers : list
+        A list of tiers, which are created with the self.add_tier method. This
+        is an empty list if not tiers have been created.
+
+    descriptors : list of str
+        A list of the names of the attributes of a Word instance
+
+
+    """
 
     def __init__(self, **kwargs):
 
@@ -190,6 +227,18 @@ class Word(object):
             self._string = self.spelling
 
     def add_tier(self, tier_name, tier_features):
+        """Adds a new tier attribute to a Word instance
+
+        Parameters
+        ----------
+        tier_name : str
+            User-supplied name for the new tier
+
+        tier_features: list of str
+            User-supplied list of phonological features values that define
+            which segments are included in the tier
+
+        """
 
         new_tier = list()
         #tier_features = {feature[1:]:feature[0] for feature in tier_features}
@@ -210,6 +259,19 @@ class Word(object):
         self.tiers.append(tier_name)
 
     def remove_tier(self, tier_name):
+        """Deletes a tier attribute from a Word
+
+        Parameters
+        ----------
+        tier_name : str
+            Name of tier attribute to be deleted.
+
+        Notes
+        ----------
+        If tier_name is not a valid attribute, this function does nothing. It
+        does not raise an error.
+
+        """
         try:
             self.descriptors.remove(tier_name)
             self.tiers.remove(tier_name)
@@ -220,12 +282,31 @@ class Word(object):
 
 
     def startswith(self, query):
+        """Returns the first segment in the Word's string
+
+        """
         return query == self._string[0]
 
     def endswith(self, query):
+        """Returns the last segment in the Word's string
+
+        """
         return query == self._string[-1]
 
     def match_env(self, query):
+        """Searches for occurences of a particular environment in the word
+
+        Parameters
+        ----------
+        query : Environment
+            The environment to search for in the word
+
+
+        Returns
+        ----------
+        matches : list of Envrionments
+            This list is empty if no matches are found
+        """
 
         matches = list()
 
@@ -239,13 +320,18 @@ class Word(object):
 
     def _specify_features(self, caller):
         """
-        This is called by a CorpusFactory and is for creating a transcription
-        consisting of Segment objects that have more detailed phonological
-        information.
-        The caller argument must be an object that has an attribute called
-        'specifier' which is a FeatureSpecifier object
+        Adds a transcription attribute to a Word, consisting of Segment objects
+
+        Parameters
+        ----------
+        caller : CorpusFactory
+            Can be any object that has an attribute called 'specifier' which is
+            a FeatureSpecifier object
+
+        Notes
+        ----------
         Generally, don't call this method. Consider it a "behind the scenes"
-        method for making a corpus
+        method for making a corpus.
         """
         if self.transcription is None:
             #handles cases where no transcription is found in the CMU dictionary
@@ -265,22 +351,32 @@ class Word(object):
                                         pos, self)
                                         for pos,seg in enumerate(self.transcription)]
 
-        #self._string = self.transcription
-
     def details(self):
+        """Formatted printout of a Word's attributes and their values.
+
+        Notes
+        ----------
+        This is intended for debugging and interactive mode.
+        """
         print('-'*25)
         for description in self.descriptors:
             print('{}: {}'.format(description, getattr(self,description)))
         print('-'*25+'\n')
 
-    def transcribe(self):
-
-        if self.transcription:
-            return ''.join([seg for seg in self.transcription])
-        else:
-            return self.spelling
-
     def get_env(self,pos):
+        """Get details of a particular environment in a Word
+
+        Parameters
+        ----------
+        pos : int
+            A position in the word, so 0<=pos<=len(self)
+
+        Returns
+        ----------
+        e : Environment
+            Environment of the segment at the given position in the word
+
+        """
         if len(self) == 1:
             lhs = Segment('#')
             rhs = Segment('#')
@@ -294,10 +390,24 @@ class Word(object):
             lhs = self[pos-1]
             rhs = self[pos+1]
 
-        return Environment(lhs, rhs)
+        e = Environment(lhs, rhs)
+
+        return e
 
 
     def set_string(self, attr):
+        """Change the _string attribute of a Word
+
+        Parameters
+        ----------
+        attr : str
+            Name of the attribute that _string should reference
+
+        Notes
+        ----------
+        See the __init__ method for details on what the _string attribute does
+
+        """
         new_string = getattr(self, attr, None)
         if new_string is None:
             msg = 'cannot assign {} to string, no value was found'.format(attr)
@@ -371,6 +481,9 @@ class Environment(object):
         return self.__str__()
 
     def __eq__(self,other):
+        """Two Environments are equal if they share a left AND right hand side
+
+        """
 
         l_match = False
         r_match = False
@@ -390,8 +503,8 @@ class Environment(object):
         return l_match and r_match
 
     def __lt__(self,other):
-        """
-        Match left-hand environment only
+        """Match left-hand environment only
+
         """
 
         l_match = False
@@ -405,8 +518,8 @@ class Environment(object):
         return l_match
 
     def __gt__(self,other):
-        """
-        Match right-hand environment only
+        """Match right-hand environment only
+
         """
 
         r_match = False
@@ -427,7 +540,6 @@ class Environment(object):
 
 class Translator(object):
     """
-    Translates from plaintext to CMU and from CMU to IPA
     """
 
 
@@ -454,7 +566,25 @@ class Translator(object):
 
 
     def translate(self, lookup, input_type):
+        """Translates from plaintext to CMU and from CMU to IPA.
+        If input_type == 'text', a CMU string is returned.
+        If input_type == 'cmu', a Segment object is returned.
 
+        Parameters
+        ----------
+
+        lookup : str
+            string to be translated
+
+        input_type : str
+            encoding of lookup string
+
+        Returns
+        ----------
+
+        translation : str or Segment
+            Result of translation
+        """
 
         if input_type == 'text':
             lookup = lookup.upper()
@@ -462,16 +592,44 @@ class Translator(object):
                 lookup = self.text2cmu[lookup]
             except KeyError:
                 return None
-            return self.translate(lookup, 'cmu')
+            translation =  self.translate(lookup, 'cmu')
 
 
         elif input_type == 'cmu':
             ipaword = [self.cmu2ipa[symbol] for symbol in lookup]
             ipaword = ''.join(ipaword)
-            return ipaword
+            translation = ipaword
+
+        return translation
 
 
 class Corpus(object):
+    """
+    Attributes
+    ----------
+
+    name : str
+        Name of the corpus, used only for easy of reference
+
+    wordlist : dict
+        Dictionary where every key is a unique string representing a word in a
+        corpus, and each entry is a Word object
+
+    specifier : FeatureSpecifier
+        See the FeatureSpecifier object
+
+    inventory : list
+        list of all Segments that appear at least once in self.wordlist.values()
+
+    orthography : list
+        list of one-character strings that appear in self.wordlist.keys()
+
+    custom : bool
+        True if this is a user-supplied corpus, False if it is a built-in corpus
+
+    feature_system : str
+        Name of the feature system used for the corpus
+    """
 
     __slots__ = ['name', 'wordlist', 'specifier',
                 'inventory', 'orthography', 'custom', 'feature_system']
@@ -487,22 +645,50 @@ class Corpus(object):
         #it's directly assigned in CorpusFactory.make_corpus()
 
     def iter_sort(self):
-        """
-        Sorts the keys in the corpus dictionary, then yields the values in that
-        order
+        """Sorts the keys in the corpus dictionary, then yields the values in that order
+
         """
         sorted_list = sorted(self.wordlist.keys())
         for word in sorted_list:
             yield self.wordlist[word]
 
-    def get_random_subset(self, size):
-        new_corpus = Corpus('new_corpus')
+    def get_random_subset(self, size, new_corpus_name='randomly_generated'):
+        """Get a new corpus consisting a random selection from the current corpus
+
+        Parameters
+        ----------
+        size : int
+            Size of new corpus
+
+        new_corpus_name : str
+
+        Returns
+        ----------
+        new_corpus : Corpus
+            New corpus object with len(new_corpus) == size
+        """
+        new_corpus = Corpus(new_corpus_name)
         while len(new_corpus) < size:
             word = self.random_word()
             new_corpus.add_word(word, allow_duplicates=False)
+        new_corpus.specifier = self.specifier
         return new_corpus
 
     def add_word(self, word, allow_duplicates=True):
+        """Add a word to the Corpus.
+        If allow_duplicates is True, then words with identical spelling can
+        be added. They are kept sepearate by adding a "silent" number to them
+        which is never displayed to the user. If this allow_duplicates is False,
+        then duplicates are simply ignored.
+
+        Parameters
+        ----------
+        word : Word
+            Word object to be added
+
+        allow_duplicates : bool
+
+        """
 
         #If the word doesn't exist, add it
         try:
@@ -530,10 +716,31 @@ class Corpus(object):
                     break
 
     def random_word(self):
+        """Return a randomly selected Word
+
+        """
         word = random.choice(list(self.wordlist.keys()))
         return self.wordlist[word]
 
     def change_feature_system(self, feature_system):
+        """Changes the feature system that is used to describe Segments
+
+        Parameters
+        ----------
+        feature_system : str
+            Name of a feature file that can be used to create a FeatureSpecifier
+
+        Returns
+        ----------
+        errors : list
+            List of segments that could not be found in the feature_system file
+
+        Notes
+        ----------
+        This method is intended to be called by the GUI, and the errors list is
+        printed to file for the user to inspect.
+
+        """
         self.specifier = FeatureSpecifier(encoding=feature_system)
         errors = collections.defaultdict(list)
 
@@ -558,10 +765,38 @@ class Corpus(object):
         return errors
 
     def get_features(self):
+        """Get a list of the features used to describe Segments
+
+        Returns
+        ----------
+        list of str
+
+        """
         return self.specifier.get_features()
 
     def find(self, word, keyerror=False):
-        #word = word.lower()
+        """Search for a Word in the corpus
+        If keyerror == True, then raise a KeyError if the word is not found
+        If keyerror == False, then return an EmptyWord if the word is not found
+
+        Parameters
+        ----------
+        word : str
+            String representing the spelling of the word (not transcription)
+
+        keyerror : bool
+            Set whether a KeyError should be raised if a word is not found
+
+        Returns
+        ----------
+        result : Word or EmptyWord
+
+
+        Raises
+        ----------
+        KeyError if keyerror == True and word is not found
+
+        """
         try:
             result = self.wordlist[word]
         except KeyError:
@@ -594,7 +829,6 @@ class Corpus(object):
 
 class EmptyWord(Word):
     """
-    Returned when nothing can be found in the corpus
     """
 
     def __init__(self, spelling, error_msg):
@@ -606,8 +840,13 @@ class EmptyWord(Word):
         return 0
 
 class CorpusFactory(object):
-    """
-    Reads a file and returns a corpus object
+    """ Factory object for producing Corpus objects
+
+    Attributes
+    ----------
+    basepath : os.getcwd()
+        Used for finding the location of corpus files
+
     """
 
     essential_descriptors = ['spelling', 'transcription', 'freq']
@@ -619,10 +858,31 @@ class CorpusFactory(object):
         self.basepath = path
 
     def make_corpus_from_gui(self,corpus_name, features, size=100, q=None, corpusq=None):
-        """
-        Called from GUI. Instead of returning a corpus object, it puts it
+        """ Called from GUI. Instead of returning a corpus object, it puts it
         into a Queue. This Queue is also used to update the GUI as to how
-        many words have been read into the corpus
+        many words have been read into the corpus.
+
+        Parameters
+        ----------
+        corpus_name : str
+            User-supplied name for corpus
+
+        features : str
+            Name of feature system to use (e.g. 'spe' or 'hayes')
+
+        size : int
+            Size of corpus to create.
+
+        q : None or Queue
+            queue for updating a progress bar in the GUI
+
+        corpusq : None or Queue
+            queue for putting in the final corpus
+
+
+        See Also
+        ----------
+        The load_corpus method in corpus_gui.py
         """
         self.specifier = FeatureSpecifier(encoding=features)
 
@@ -646,6 +906,24 @@ class CorpusFactory(object):
         return
 
     def make_corpus(self,corpus_name, features, size=100):
+        """Make a new corpus
+
+        Parameters
+        ----------
+        corpus_name : str
+            User-supplied name for the corpus
+
+        features : str
+            Name of feature system to use (e.g. 'spe' or 'hayes')
+
+        size : int
+            Size of the corpus
+
+
+        Returns
+        ----------
+        corpus : Corpus
+        """
         self.specifier = FeatureSpecifier(encoding=features)
         corpus = self.get_corpus_info(corpus_name, size)
         corpus.specifier = FeatureSpecifier(encoding=features)
@@ -656,9 +934,29 @@ class CorpusFactory(object):
         return corpus
 
     def get_corpus_info(self,corpus_name, size):
-        """
-        Find the appropriate corpus file, call the approprite reader method
+        """ Find the file for a built-in corpus, call the approprite reader method
         and then return a Corpus object.
+
+        Parameters
+        ----------
+        corpus_name : str
+            Name of a built-int corpus
+
+        size : int
+            Size of corpus to create
+
+        Returns
+        ----------
+        corpus : Corpus
+
+        Raises
+        ----------
+        ValueError if corpus_name is not a recognized built-in corpus
+
+        Notes
+        ----------
+        This method is only necessary when building a corpus.
+        After that, it is faster to pickle the corpus and load from the pickle.
         """
         corpus_name = corpus_name.upper()
 
@@ -679,6 +977,25 @@ class CorpusFactory(object):
         return corpus
 
     def read_subtlex(self, corpus_path, max_size, q=None):
+        """Create built-in SUBTLEX corpus from file
+
+        Parameters
+        ----------
+        corpus_path : str
+            path to original SUBTLEX file
+
+        max_size : int
+            size of corpus
+
+        q : None or Queue
+            queue object if calling from GUI
+
+
+        Returns
+        ----------
+        corpus : Corpus
+
+        """
         corpus = Corpus('subtlex')
         translator = Translator()
         with open(corpus_path, encoding='utf-8') as f:
@@ -710,6 +1027,24 @@ class CorpusFactory(object):
         return corpus
 
     def read_iphod(self, corpus_path, max_size, q=None):
+        """Create IPHOD corpus from file
+
+        Parameters
+        ----------
+        corpus_path : str
+            path to original SUBTLEX file
+
+        max_size : int
+            size of corpus
+
+        q : None or Queue
+            queue object if calling from GUI
+
+
+        Returns
+        ----------
+        corpus : Corpus
+        """
         corpus = Corpus('iphod')
         translator = Translator()
         with open(corpus_path, encoding='utf-8') as f:
@@ -739,35 +1074,6 @@ class CorpusFactory(object):
         corpus.inventory.append(Segment('#'))
         return corpus
 
-    def read_swahili(self, corpus_path):
-        corpus = Corpus('swahili')
-        translator = Translator()
-        with open(corpus_path, encoding='utf-8') as f:
-            headers = f.readline()
-            headers = headers.split()
-            counter = 0
-            for line in f:
-                d = {attribute:value for attribute,value in zip(headers,line.split())}
-                #transcription = translator.translate(d['UnTrn'].split('.'), 'cmu')
-                word = Word(spelling=d['Spelling'], transcription=d['Transcription'], freq_per_mil=d['SFreq'],
-                syl_length=d['NSyll'], phone_length=d['NPhon'])
-                word._specify_features(self)
-                corpus.add_word(word)
-                for letter in word.spelling:
-                    if letter not in corpus.orthography:
-                        corpus.orthography.append(letter)
-                for seg in word.transcription:
-                    if seg not in corpus.inventory:
-                        corpus.inventory.append(seg)
-                counter += 1
-                if q is not None:
-                    q.put(counter)
-                if counter == max_size:
-                    break
-
-        corpus.orthography.append('#')
-        corpus.inventory.append(Segment('#'))
-        return corpus
 
 if __name__ == '__main__':
     pass
