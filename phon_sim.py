@@ -12,13 +12,63 @@ except ImportError:
     from phon_sim_helpers.distance_functions import dtw_distance, xcorr_distance
 
 def phonetic_similarity(path_mapping,
-                            num_bands = 8,
-                            num_coeffs = 20,
-                            freq_lims = (80,7800),
                             rep = 'envelopes',
                             match_function = 'dtw',
+                            num_filters = None,
+                            num_coeffs = 20,
+                            freq_lims = (80,7800),
                             output_sim = True,
                             verbose=False):
+    """Takes in an explicit mapping of full paths to .wav files to have
+    phonetic similarity computed.
+    
+    Parameters
+    ----------
+    path_mapping : iterable of iterables
+        Explicit mapping of full paths of .wav files, in the form of a
+        list of tuples to be compared.
+    rep : {'envelopes','mfcc'}, optional
+        The type of representation to convert the wav files into before
+        comparing for similarity.  Amplitude envelopes will be computed
+        when 'envelopes' is specified, and MFCCs will be computed when
+        'mfcc' is specified.
+    match_function : {'dtw', 'xcorr'}, optional
+        How similarity/distance will be calculated.  Defaults to 'dtw' to
+        use Dynamic Time Warping (can be slower) to compute distance.
+        Cross-correlation can be specified with 'xcorr', which computes
+        distance as the inverse of a maximum cross-correlation value
+        between 0 and 1.
+    num_filters : int, optional
+        The number of frequency filters to use when computing representations.
+        Defaults to 8 for amplitude envelopes and 26 for MFCCs.
+    num_coeffs : int, optional
+        The number of coefficients to use for MFCCs (not used for 
+        amplitude envelopes).  Default is 20, which captures speaker-
+        specific information, whereas 12 would be more speaker-independent.
+    freq_lims : tuple, optional
+        A tuple of the minimum frequency and maximum frequency in Hertz to use
+        for computing representations.  Defaults to (80, 7800) following
+        Lewandowski's dissertation (2012).
+    output_sim : bool, optional
+        If true (default), the function will return similarities (inverse distance).
+        If false, distance measures will be returned instead.
+    verbose : bool, optional
+        If true, command line progress will be displayed after every 50
+        mappings have been processed.  Defaults to false.
+        
+    Returns
+    -------
+    list of tuples
+        Returns a list of tuples corresponding to the `path_mapping` input,
+        with a new final element in the tuple being the similarity/distance
+        score for that mapping.
+    
+    """
+    if num_filters is None:
+        if rep == 'envelopes':
+            num_filters = 8
+        else:
+            num_filters = 26
     output_values = []
     total_mappings = len(path_mapping)
     cache = {}
@@ -27,11 +77,11 @@ def phonetic_similarity(path_mapping,
     else:
         dist_func = xcorr_distance
     if rep == 'envelopes':
-        to_rep = partial(to_envelopes,num_bands=num_bands,freq_lims=freq_lims)
+        to_rep = partial(to_envelopes,num_bands=num_filters,freq_lims=freq_lims)
     else:
         to_rep = partial(to_mfcc,freq_lims=freq_lims,
                              num_coeffs=num_coeffs,
-                             num_filters = 26, 
+                             num_filters = num_filters, 
                              win_len=0.025,
                              time_step=0.01,
                              use_power = False)
@@ -51,23 +101,76 @@ def phonetic_similarity(path_mapping,
     
 def phonetic_similarity(directory_one,directory_two,
                             all_to_all = True,
-                            num_bands = 8,
-                            num_coeffs = 20,
-                            freq_lims = (80,7800),
                             rep = 'envelopes',
                             match_function = 'dtw',
+                            num_filters = None,
+                            num_coeffs = 20,
+                            freq_lims = (80,7800),
                             output_sim = True,
                             verbose=False):
+    """Computes phonetic similarity across two directories of .wav files.
+    
+    Parameters
+    ----------
+    directory_one : str
+        Full path of the first directory to be compared.
+    directory_two : str
+        Full path of the second directory to be compared.
+    all_to_all : bool, optional
+        If true (default), do all possible comparisons between the two
+        directories.  If false, try to do pairwise comparisons between
+        files.
+    rep : {'envelopes','mfcc'}, optional
+        The type of representation to convert the wav files into before
+        comparing for similarity.  Amplitude envelopes will be computed
+        when 'envelopes' is specified, and MFCCs will be computed when
+        'mfcc' is specified.
+    match_function : {'dtw', 'xcorr'}, optional
+        How similarity/distance will be calculated.  Defaults to 'dtw' to
+        use Dynamic Time Warping (can be slower) to compute distance.
+        Cross-correlation can be specified with 'xcorr', which computes
+        distance as the inverse of a maximum cross-correlation value
+        between 0 and 1.
+    num_filters : int, optional
+        The number of frequency filters to use when computing representations.
+        Defaults to 8 for amplitude envelopes and 26 for MFCCs.
+    num_coeffs : int, optional
+        The number of coefficients to use for MFCCs (not used for 
+        amplitude envelopes).  Default is 20, which captures speaker-
+        specific information, whereas 12 would be more speaker-independent.
+    freq_lims : tuple, optional
+        A tuple of the minimum frequency and maximum frequency in Hertz to use
+        for computing representations.  Defaults to (80, 7800) following
+        Lewandowski's dissertation (2012).
+    output_sim : bool, optional
+        If true (default), the function will return similarities (inverse distance).
+        If false, distance measures will be returned instead.
+    verbose : bool, optional
+        If true, command line progress will be displayed after every 50
+        mappings have been processed.  Defaults to false.
+        
+    Returns
+    -------
+    float
+        Average distance/similarity of all the comparisons that were done
+        between the two directories.
+    
+    """
+    if num_filters is None:
+        if rep == 'envelopes':
+            num_filters = 8
+        else:
+            num_filters = 26
     if match_function == 'dtw':
         dist_func = dtw_distance
     else:
         dist_func = xcorr_distance
     if rep == 'envelopes':
-        to_rep = partial(to_envelopes,num_bands=num_bands,freq_lims=freq_lims)
+        to_rep = partial(to_envelopes,num_bands=num_filters,freq_lims=freq_lims)
     else:
         to_rep = partial(to_mfcc,freq_lims=freq_lims,
                              num_coeffs=num_coeffs,
-                             num_filters = 26, 
+                             num_filters = num_filters, 
                              win_len=0.025,
                              time_step=0.01,
                              use_power = False)

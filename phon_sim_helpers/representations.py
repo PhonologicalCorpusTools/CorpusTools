@@ -8,6 +8,25 @@ from scipy.io import wavfile
 
     
 def preproc(path,sr=None,alpha=0.97):
+    """Preprocess a .wav file for later processing.
+    
+    Parameters
+    ----------
+    path : str
+        Full path to .wav file to load.
+    sr : int, optional
+        Sampling rate to resample at, if specified.
+    alpha : float, optional
+        Alpha for preemphasis, defaults to 0.97.
+    
+    Returns
+    -------
+    int
+        Sampling rate.
+    array
+        Processed PCM.
+        
+    """
     oldsr,sig = wavfile.read(path)
     
     if sr is not None and sr != oldsr:
@@ -20,6 +39,28 @@ def preproc(path,sr=None,alpha=0.97):
     return sr,proc
 
 def filter_bank(nfft,nfilt,minFreq,maxFreq,sr):
+    """Construct a mel-frequency filter bank.
+    
+    Parameters
+    ----------
+    nfft : int
+        Number of points in the FFT.
+    nfilt : int
+        Number of mel filters.
+    minFreq : int
+        Minimum frequency in Hertz.
+    maxFreq : int
+        Maximum frequency in Hertz.
+    sr : int
+        Sampling rate of the sampled waveform.
+    
+    Returns
+    -------
+    array
+        Filter bank to multiply an FFT spectrum to create a mel-frequency
+        spectrum.
+    
+    """
 
     minMel = freqToMel(minFreq)
     maxMel = freqToMel(maxFreq)
@@ -40,13 +81,53 @@ def filter_bank(nfft,nfilt,minFreq,maxFreq,sr):
     return fbank.transpose()
 
 def freqToMel(freq):
+    """Convert a value in Hertz to a value in mel.
+    
+    Parameters
+    ----------
+    freq : numeric
+        Frequency value in Hertz to convert.
+        
+    Returns
+    -------
+    float
+        Frequency value in mel.
+    
+    """
+    
     return 2595 * log10(1+freq/700.0)
 
 def melToFreq(mel):
+    """Convert a value in mel to a value in Hertz.
+    
+    Parameters
+    ----------
+    mel : numeric
+        Frequency value in mel to convert.
+        
+    Returns
+    -------
+    float
+        Frequency value in Hertz.
+    
+    """
     return 700*(10**(mel/2595.0)-1)
 
 
 def dct_spectrum(spec):
+    """Convert a spectrum into a cepstrum via type-III DCT (following HTK).
+    
+    Parameters
+    ----------
+    spec : array
+        Spectrum to perform a DCT on.
+        
+    Returns
+    -------
+    array
+        Cepstrum of the input spectrum.
+    
+    """
     ncep=spec.shape[0]
     dctm = zeros((ncep,ncep))
     for i in range(ncep):
@@ -56,7 +137,33 @@ def dct_spectrum(spec):
     return cep
 
 def to_mfcc(filename, freq_lims,num_coeffs,win_len,time_step,num_filters = 26, use_power = False):
-    #HTK style, interpreted from RastaMat
+    """Generate MFCCs in the style of HTK from a full path to a .wav file.
+    
+    Parameters
+    ----------
+    filename : str
+        Full path to .wav file to process.
+    freq_lims : tuple
+        Minimum and maximum frequencies in Hertz to use.
+    num_coeffs : int
+        Number of coefficients of the cepstrum to return.
+    win_len : float
+        Window length in seconds to use for FFT.
+    time_step : float
+        Time step in seconds for windowing.
+    num_filters : int
+        Number of mel filters to use in the filter bank, defaults to 26.
+    use_power : bool
+        If true, use the first coefficient of the cepstrum, which is power
+        based.  Defaults to false.
+        
+    Returns
+    -------
+    2D array
+        MFCCs for each frame.  The first dimension is the time in frames,
+        the second dimension is the MFCC values.
+    
+    """
     sr, proc = preproc(filename,alpha=0.97)
     
     minHz = freq_lims[0]
@@ -90,7 +197,34 @@ def to_mfcc(filename, freq_lims,num_coeffs,win_len,time_step,num_filters = 26, u
     return mfccs
     
 
-def to_envelopes(path,num_bands,freq_lims,window_length=None,time_step=None):
+def to_envelopes(filename,freq_lims,num_bands,win_len=None,time_step=None):
+    """Generate amplitude envelopes from a full path to a .wav, following
+    Lewandowski (2012).
+    
+    Parameters
+    ----------
+    filename : str
+        Full path to .wav file to process.
+    freq_lims : tuple
+        Minimum and maximum frequencies in Hertz to use.
+    num_bands : int
+        Number of frequency bands to use.
+    win_len : float, optional
+        Window length in seconds for using windows. By default, the
+        envelopes are resampled to 120 Hz instead of windowed.
+    time_step : float
+        Time step in seconds for windowing. By default, the
+        envelopes are resampled to 120 Hz instead of windowed.
+        
+    Returns
+    -------
+    2D array
+        Amplitude envelopes over time.  If using windowing, the first 
+        dimension is the time in frames, but by default the first
+        dimension is time in samples with a 120 Hz sampling rate. 
+        The second dimension is the amplitude envelope bands.
+    
+    """
     sr, proc = preproc(path,alpha=0.97)
     proc = proc/sqrt(mean(proc**2))*0.03;
     bandLo = [ freq_lims[0]*exp(log(freq_lims[1]/freq_lims[0])/num_bands)**x for x in range(num_bands)]
