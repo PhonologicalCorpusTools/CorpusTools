@@ -1,5 +1,5 @@
 import operator
-from numpy import (zeros, floor, sqrt, sum, correlate, argmax, abs)
+from numpy import (zeros, floor, sqrt, sum, correlate, argmax, abs,inf)
 
 from scipy.spatial.distance import euclidean
 

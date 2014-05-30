@@ -1,17 +1,18 @@
+import os
 from numpy import zeros
 
 from functools import partial
 
 try:
-    from phon_sim_helpers.representations import to_envelopes, to_mfcc
-    from phon_sim_helpers.distance_functions import dtw_distance, xcorr_distance
+    from phonsim.helpers.representations import to_envelopes, to_mfcc
+    from phonsim.helpers.distance_functions import dtw_distance, xcorr_distance
 except ImportError:
     import sys
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    from phon_sim_helpers.representations import to_envelopes, to_mfcc
-    from phon_sim_helpers.distance_functions import dtw_distance, xcorr_distance
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from phonsim.helpers.representations import to_envelopes, to_mfcc
+    from phonsim.helpers.distance_functions import dtw_distance, xcorr_distance
 
-def phonetic_similarity(path_mapping,
+def phonetic_similarity_mapping(path_mapping,
                             rep = 'envelopes',
                             match_function = 'dtw',
                             num_filters = None,
@@ -91,7 +92,7 @@ def phonetic_similarity(path_mapping,
             print('Mapping %d of %d processed' % (i,total_mappings))
         for filepath in pm:
                 if filepath not in cache:
-                    cache[filepath] = to_rep(filepath,num_bands,freq_lims)
+                    cache[filepath] = to_rep(filepath)
         dist_val = dist_func(cache[pm[0]],cache[pm[1]])
         if output_sim:
             dist_val = 1/dist_val
@@ -99,7 +100,7 @@ def phonetic_similarity(path_mapping,
       
     return output_values
     
-def phonetic_similarity(directory_one,directory_two,
+def phonetic_similarity_directories(directory_one,directory_two,
                             all_to_all = True,
                             rep = 'envelopes',
                             match_function = 'dtw',

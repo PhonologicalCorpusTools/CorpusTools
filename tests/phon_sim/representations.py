@@ -1,27 +1,31 @@
 
 
 from numpy import array,sum,sqrt
+from numpy.linalg import norm
 import unittest
+import os
 try:
-    from phon_sim_helpers.representations import (to_envelopes,
+    from phonsim.helpers.representations import (to_envelopes,
                                         to_mfcc,
                                         preproc)
 except ImportError:
     import sys
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.split(os.split(test_dir)[0])[0])
-    from phon_sim_helpers.representations import (to_envelopes,
+    sys.path.append(os.path.split(os.path.split(test_dir)[0])[0])
+    from phonsim.helpers.representations import (to_envelopes,
                                         to_mfcc,
                                         preproc)
 
 from scipy.spatial.distance import euclidean
 
+TEST_DIR = r'C:\Users\michael\Documents\Testing'
+
 class EnvelopeTest(unittest.TestCase):
     def setUp(self):
-        self.air_path = r'C:\Users\michael\Documents\Testing\s129_air1.wav'
-        self.air_path16 = r'C:\Users\michael\Documents\Testing\s129_air1_16000.wav'
-        self.beer_path = r'C:\Users\michael\Documents\Testing\s129_beer1.wav'
-        self.beer_path16 = r'C:\Users\michael\Documents\Testing\s129_beer1_16000.wav'
+        self.air_path = os.path.join(TEST_DIR,'s129_air1.wav')
+        self.air_path16 = os.path.join(TEST_DIR,'s129_air1_16000.wav')
+        self.beer_path = os.path.join(TEST_DIR,'s129_beer1.wav')
+        self.beer_path16 = os.path.join(TEST_DIR,'s129_beer1_16000.wav')
         
         self.air_matlab_envs = array([[0.0233989942549329, 0.00661838476428734, 0.00788835662584308, 0.00412614464827849],
                                     [0.0102376729723930, 0.0228581500523383, 0.0197200976733908, 0.0283881404368893],
@@ -168,7 +172,7 @@ class EnvelopeTest(unittest.TestCase):
         self.matlab_matchval = 0.2266
         
     def test_envelope_gen_air(self):
-        envs = to_envelopes(self.air_path,self.num_bands,self.freq_lims)
+        envs = to_envelopes(self.air_path,self.freq_lims,self.num_bands)
         for i in range(self.num_bands):
             denom = sqrt(sum(envs[:,i]**2))
             envs[:,i] = envs[:,i]/denom
@@ -181,7 +185,7 @@ class EnvelopeTest(unittest.TestCase):
 
 class MfccTest(unittest.TestCase):
     def setUp(self):
-        self.path = r'C:\Users\MichaelM\Downloads\s129_air.wav'
+        self.path = os.path.join(TEST_DIR,'s129_air.wav')
         self.numCC = 12
         self.winLen = 512/16000
         self.timeStep = 256/16000
@@ -204,7 +208,7 @@ class MfccTest(unittest.TestCase):
         print(mfcc[0,:])
         print(self.matlabMfcc[0,:])
         self.assertEqual(mfcc.shape,self.matlabMfcc.shape)
-        self.assertTrue(numpy.linalg.norm(mfcc-self.matlabMfcc) < 1)
+        self.assertTrue(norm(mfcc-self.matlabMfcc) < 1)
         
 if __name__ == '__main__':
     unittest.main()

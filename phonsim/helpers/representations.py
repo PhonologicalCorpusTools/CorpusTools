@@ -1,6 +1,7 @@
 from numpy import (array, zeros, floor, sqrt, dot, arange, hanning,
                     sin, pi, linspace, log10, round, maximum, minimum,
-                    sum, cos, spacing, diag, correlate, argmax)
+                    sum, cos, spacing, diag, correlate, argmax, mean, exp, 
+                    log, ceil)
 from numpy.fft import fft
 
 from scipy.signal import filtfilt, butter, hilbert, resample, lfilter
@@ -34,6 +35,7 @@ def preproc(path,sr=None,alpha=0.97):
         numsamp = t * sr
         proc = resample(sig,numsamp)
     else:
+        sr = oldsr
         proc = sig
     proc = lfilter([1., -alpha],1,proc)
     return sr,proc
@@ -225,13 +227,13 @@ def to_envelopes(filename,freq_lims,num_bands,win_len=None,time_step=None):
         The second dimension is the amplitude envelope bands.
     
     """
-    sr, proc = preproc(path,alpha=0.97)
+    sr, proc = preproc(filename,alpha=0.97)
     proc = proc/sqrt(mean(proc**2))*0.03;
     bandLo = [ freq_lims[0]*exp(log(freq_lims[1]/freq_lims[0])/num_bands)**x for x in range(num_bands)]
     bandHi = [ freq_lims[0]*exp(log(freq_lims[1]/freq_lims[0])/num_bands)**(x+1) for x in range(num_bands)]
-    if window_length is not None and time_step is not None:
+    if win_len is not None and time_step is not None:
         use_windows = True
-        nperseg = int(window_length*sr)
+        nperseg = int(win_len*sr)
         noverlap = int(time_step*sr)
         window = hanning(nperseg+2)[1:nperseg+1]
         step = nperseg - noverlap

@@ -2,15 +2,17 @@
 
 from numpy import array
 import unittest
+import os
 try:
-    from phon_sim_helpers.distance_functions import (dtw_distance,
+    from phonsim.helpers.distance_functions import (dtw_distance,
                                         generate_distance_matrix,
                                         xcorr_distance)
 except ImportError:
     import sys
+    
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.split(os.split(test_dir)[0])[0])
-    from phon_sim_helpers.distance_functions import (dtw_distance,
+    sys.path.append(os.path.split(os.path.split(test_dir)[0])[0])
+    from phonsim.helpers.distance_functions import (dtw_distance,
                                         generate_distance_matrix,
                                         xcorr_distance)
 
