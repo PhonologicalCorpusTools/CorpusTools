@@ -132,6 +132,8 @@ class MultiListbox(Frame):
 class GUI(Toplevel):
 
     def __init__(self,master):
+
+        #NON-TKINTER VARIABLES
         self.master = master
         self.show_warnings = False
         self.q = queue.Queue()
@@ -140,6 +142,7 @@ class GUI(Toplevel):
         self.feature_system = None
         self.all_feature_systems = ['spe','hayes']
         self.corpus_factory = corpustools.CorpusFactory()
+        self.tooltip_delay = 1500
 
         #TKINTER VARIABLES ("globals")
         #main screen variabls
@@ -597,12 +600,17 @@ class GUI(Toplevel):
         author_label.grid()
         author_frame.grid(sticky=W)
 
-    def entropy_info(self):
+    def about_entropy(self):
 
         info_popup = Toplevel()
-        info_popup.title('About the entropy function')
+        info_popup.title('About the predictability of distribution function')
         description_frame = LabelFrame(info_popup, text='Brief description')
-        description_label = Label(description_frame, text='This function calculates the entropy of two segments')
+        description_label = Label(description_frame, text=('This function calculates'
+        ' the predictability of distribution of two sounds, using the measure of entropy'
+        ' (uncertainty). Sounds that are entirely predictably distributed (i.e., in'
+        ' complementary distribution, commonly assumed to be allophonic), will have'
+        ' an entropy of 0. Sounds that are perfectly overlapping in their distributions'
+        ' will have an entropy of 1.'))
         description_label.grid()
         description_frame.grid(sticky=W)
         citation_frame = LabelFrame(info_popup, text='Original source')
@@ -668,20 +676,22 @@ class GUI(Toplevel):
     def donothing(self,event=None):
         pass
 
-    def suggest_filename(self):
+    def suggest_entropy_filename(self):
         seg1 = self.seg1_var.get()
         seg2 = self.seg2_var.get()
         if not seg1 or not seg2:
             MessageBox.showwarning(message='Select 2 segments first!')
             return
-        filename = 'entropy_of_{}_{}_{}.txt'.format(seg1, seg2, self.entropy_typetoken_var.get())
-        self.entropy_output_file_entry.delete(0,END)
-        self.entropy_output_file_entry.insert(0,filename)
+        suggested_name = 'entropy_of_{}_{}_{}.txt'.format(seg1, seg2, self.entropy_typetoken_var.get())
+        filename = FileDialog.asksaveasfilename(initialdir=os.getcwd(),
+                                                initialfile=suggested_name,
+                                                defaultextension='.txt')
+        self.entropy_filename_var.set(filename)
 
     def save_corpus_as(self):
         """
-        pickles the corpus, makes loading it WAY easier
-        would be nice to have an option to save as pickle, or maybe "export as"
+        pickles the corpus, which makes loading it WAY easier
+        would be nice to have an option to save as pickle and also "export as"
         a .txt/csv file
         """
         filename = FileDialog.asksaveasfilename(filetypes=(('Corpus file', '*.corpus'),))
@@ -1017,9 +1027,16 @@ class GUI(Toplevel):
 
 
         self.entropy_screen = Toplevel()
-        self.entropy_screen.title('Entropy calculation')
+        self.entropy_screen.title('Predictability of distribution calculation')
 
         ipa_frame = LabelFrame(self.entropy_screen, text='Sounds')
+
+        ipa_frame_tooltip = ToolTip(ipa_frame,
+                                    delay=self.tooltip_delay,follow_mouse=True,
+                                    text=('Choose the two sounds whose '
+        'predictability of distribution you want to calculate. The order of the '
+        'two sounds is irrelevant. The symbols you see here should automatically'
+        ' match the symbols used anywhere in your corpus.'))
         segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
         seg1_frame = LabelFrame(ipa_frame, text='Choose first symbol')
@@ -1052,6 +1069,12 @@ class GUI(Toplevel):
         option_frame = LabelFrame(self.entropy_screen, text='Options')
 
         tier_frame = LabelFrame(option_frame, text='Tier')
+        tier_frame_tooltip = ToolTip(tier_frame,
+                                    delay=self.tooltip_delay, follow_mouse=True,
+                                    text=('Choose which tier predictability should'
+                                    'be calculated over (e.g., the whole transcription'
+                                    ' vs. a tier containing only [+voc] segments).'
+                                    'New tiers can be created from the Corpus menu.'))
         tier_options = ['transcription']
         word = self.corpus.random_word()
         tier_options.extend([tier for tier in word.tiers])
@@ -1060,6 +1083,13 @@ class GUI(Toplevel):
         tier_frame.grid(row=0,column=0)
 
         typetoken_frame = LabelFrame(option_frame, text='Type or Token')
+        typetoken_tooltip = ToolTip(typetoken_frame,
+                                    delay=self.tooltip_delay, follow_mouse=True,
+                                    text=('Choose what kind of frequency should '
+                                    'be used for the calculations. Type frequency'
+                                    ' means each word is counted once. Token frequency'
+                                    ' means each word is counted as often as it occurs'
+                                    ' in the corpus.'))
         type_button = Radiobutton(typetoken_frame, text='Count types', variable=self.entropy_typetoken_var, value='type')
         type_button.grid(sticky=W)
         type_button.invoke()
@@ -1070,28 +1100,41 @@ class GUI(Toplevel):
         typetoken_frame.grid(row=1, column=0)
 
         ex_frame = LabelFrame(option_frame, text='Exhaustivity and uniqueness')
+        ex_frame_tooltip = ToolTip(ex_frame,
+                                    delay=self.tooltip_delay, follow_mouse=True,
+                                    text=('Indicate whether you want the program'
+                                    ' to check for exhausitivity and/or uniqueness.'
+                                    ' Checking for exhaustivity means the program '
+                                    'will make sure that you have selected environments'
+                                    ' that cover all instances of the two sounds in the'
+                                    ' corpus. Checking for uniqueness means the program'
+                                    ' will check to make sure that the environments you'
+                                    ' have selected don\'t overlap with one another. It'
+                                    ' is recommended that both options are used unless '
+                                    'there is a specific reason to do otherwise.'))
         check_exhaustive = Checkbutton(ex_frame, text='Check for exhaustivity', variable=self.entropy_exhaustive_var)
         check_exhaustive.grid()
-        #check_exclusive = Checkbutton(ex_frame, text='Check for exclusivity', variable=self.entropy_exclusive_var)
-        #check_exclusive.grid()
+        check_exhaustive.invoke()
         check_uniqueness = Checkbutton(ex_frame, text='Check for uniqueness', variable=self.entropy_uniqueness_var)
         check_uniqueness.grid()
+        check_uniqueness.invoke()
         ex_frame.grid(row=2, column=0)
 
         output_file_frame = LabelFrame(option_frame, text='Output file name')
-        self.entropy_output_file_entry = Entry(output_file_frame, textvariable=self.entropy_filename_var)
-        self.entropy_output_file_entry.grid()
-        output_file_frame.grid(row=3, column=0)
-
-        suggest_filename_button = Button(option_frame, text='Suggest a file name', command=self.suggest_filename)
+        self.entropy_output_file_label = Label(output_file_frame, textvariable=self.entropy_filename_var)
+        self.entropy_output_file_label.grid()
+        suggest_filename_button = Button(output_file_frame,
+                                        text='Choose file name and location (a name will be suggested for you)',
+                                        command=self.suggest_entropy_filename)
         suggest_filename_button.grid()
+        output_file_frame.grid(row=3, column=0)
 
         button_frame = Frame(self.entropy_screen)
         ok_button = Button(button_frame, text='Next step...', command=self.entropy_options)
         ok_button.grid(row=0, column=0)
         cancel_button = Button(button_frame, text='Cancel', command=self.cancel_entropy)
         cancel_button.grid(row=0, column=1)
-        info_button = Button(button_frame, text='About this function...', command=self.entropy_info)
+        info_button = Button(button_frame, text='About this function...', command=self.about_entropy)
         info_button.grid(row=0, column=2)
 
         ipa_frame.grid(row=0, column=0, sticky=N)
@@ -1145,16 +1188,20 @@ class GUI(Toplevel):
         fname = self.entropy_filename_var.get()
 
         if not (seg1 and seg2 and fname):
-            MessageBox.showerror(message='Please ensure you have selected 2 segments, and entered a file name')
+            MessageBox.showerror(message='Please ensure you have selected 2 segments and chosen a output file name')
             return
-
-        if not fname.endswith('.txt'):
-            self.entropy_filename_var.set(self.entropy_filename_var.get()+'.txt')
 
         for child in self.entropy_screen.winfo_children():
             child.destroy()
 
         env_frame = LabelFrame(self.entropy_screen, text='Construct environment')
+        env_frame_tooltip = ToolTip(env_frame,
+                                    delay=self.tooltip_delay, follow_mouse=False,
+                                    text=('This screen allows you to construct multiple'
+                                    ' environments in which to calculate predictability'
+                                    ' of distribution. For each environment, you can specify'
+                                    ' either the left-hand side or the right-hand side, or '
+                                    'both. Each of these can be specified using either features or segments.'))
 
         lhs_frame = LabelFrame(env_frame, text='Left hand side')
 
@@ -1322,49 +1369,15 @@ class GUI(Toplevel):
         formatted_env = '_'.join(formatted_env)
         self.selected_envs_list.insert(END,formatted_env)
 
-
-    def calculate_entropy(self):
-        check = self.selected_envs_list.get(0)
-        if not check:
-            MessageBox.showwarning(message='Please construct at least one environment')
-            return
-
-        self.calculating_entropy_screen = Toplevel()
-        self.calculating_entropy_screen.title('Entropy results')
-        status_label = Label(self.calculating_entropy_screen, text='Calculating entropy...')
-
-        self.entropy_result_list = MultiListbox(self.calculating_entropy_screen, [('Environment',40), ('Entropy',40)])
+    def check_for_uniquess_and_exhuastivity(self, missing_words, overlapping_words, env_list):
 
         seg1 = self.seg1_var.get()
         seg2 = self.seg2_var.get()
-        count_what = self.entropy_typetoken_var.get()
-
-        env_list = [env for env in self.selected_envs_list.get(0,END)]
-        env_matches, missing_words, overlapping_words = self.calculate_H(seg1,seg2,env_list)
-        #print(env_matches)
-        H_dict = dict()
-        for env in env_matches:
-            total_tokens = sum(env_matches[env][seg1]) + sum(env_matches[env][seg2])
-            output_file_path = os.path.join(os.getcwd(), self.entropy_filename_var.get())
-            with open(output_file_path, mode='a', encoding='utf-8') as f:
-                if not total_tokens:
-                    H_dict[env] = (0,0)
-                    print('Environment {} does not exist in the corpus\n{}'.format(env, '='*15), file=f)
-                    self.entropy_result_list.insert(END, [env, 'Environment not found'])
-                else:
-                    seg1_prob = sum(env_matches[env][seg1])/total_tokens
-                    seg2_prob = sum(env_matches[env][seg2])/total_tokens
-                    seg1_H = log(seg1_prob,2)*seg1_prob if seg1_prob > 0 else 0
-                    seg2_H = log(seg2_prob,2)*seg2_prob if seg2_prob > 0 else 0
-                    H = sum([seg1_H, seg2_H])*-1
-                    self.entropy_result_list.insert(END, [env, str(H)])
-                    H_dict[env] = (H, total_tokens)
-                    print('Entropy for {} and {} in environment of {} is {}'.format(seg1, seg2, env, str(H)), file=f)
-                    print('Frequency of {}: {}\nFrequency of {}: {}\nTotal count ({}): {}\n{}\n'.format(seg1, seg1_prob, seg2, seg2_prob, count_what, total_tokens,'='*15), file=f)
 
         if self.entropy_uniqueness_var.get() and overlapping_words:
             #envs are exhastive, but some overlap
-            filename = 'overlapping_envs_'+self.entropy_filename_var.get().split('.')[0]+'.txt'
+            final = os.path.split(self.entropy_filename_var.get())[-1]
+            filename = 'overlapping_envs_'+final
             with open(os.path.join(os.getcwd(),'ERRORS', filename), mode='w', encoding='utf-8') as f:
 
                 print('The environments you selected are not unique, which means that some of them pick out the same environment in the same words.\r\n', file=f)
@@ -1383,11 +1396,12 @@ class GUI(Toplevel):
             text4 = 'Do you want to carry on with the entropy calculation anyway?'
             do_entropy = MessageBox.askyesno(message='\n'.join([text1,text2,text3,text4]))
             if not do_entropy:
-                return
+                return False
 
         if self.entropy_exhaustive_var.get() and missing_words:
             #environments are unique but non-exhaustive
-            filename = 'missing_words_'+self.entropy_filename_var.get().split('.')[0]+'.txt'
+            final = os.path.split(self.entropy_filename_var.get())[-1]
+            filename = 'missing_words_'+final
             with open(os.path.join(os.getcwd(),'ERRORS', filename), mode='w', encoding='utf-8') as f:
 
                 print('The following words have at least one of the segments you are searching for, but it occurs in an environment not included in the list you selected\r', file=f)
@@ -1413,7 +1427,60 @@ class GUI(Toplevel):
                 text6 = 'Would you still like to calculate entropy in the enviroments you supplied?'
             do_entropy = MessageBox.askyesno(message='\n\r'.join([text, text2, text3, text4, text5, text6]))
             if not do_entropy:
-                return
+                return False
+
+        #if we made it this far, the user has agreed with everything
+        #or else there were no problems to begin with
+        return True
+
+
+    def calculate_entropy(self):
+        check = self.selected_envs_list.get(0)
+        if not check:
+            MessageBox.showwarning(message='Please construct at least one environment')
+            return
+
+        self.calculating_entropy_screen = Toplevel()
+        self.calculating_entropy_screen.title('Predictability of distribution results')
+        status_label = Label(self.calculating_entropy_screen, text='Calculating entropy...')
+
+        self.entropy_result_list = MultiListbox(self.calculating_entropy_screen, [('Environment',40), ('Entropy',40)])
+        #this is created and all the results are placed into it, but it is not
+        #gridded until the corpus as passed both the uniqueness and exhausitivity
+        #checks and/or the user has agreed it is OK if it doesn't pass the checks
+
+        seg1 = self.seg1_var.get()
+        seg2 = self.seg2_var.get()
+        count_what = self.entropy_typetoken_var.get()
+
+        env_list = [env for env in self.selected_envs_list.get(0,END)]
+        env_matches, missing_words, overlapping_words = self.calculate_H(seg1,seg2,env_list)
+        do_entropy = self.check_for_uniquess_and_exhuastivity(missing_words, overlapping_words,env_list)
+        if not do_entropy:
+            return #user does not want to see the results
+
+        #at this point there are either no problems
+        #or else the user wants to see the results anyway
+        H_dict = dict()
+        for env in env_matches:
+            total_tokens = sum(env_matches[env][seg1]) + sum(env_matches[env][seg2])
+            output_file_path = os.path.join(os.getcwd(), self.entropy_filename_var.get())
+            with open(output_file_path, mode='a', encoding='utf-8') as f:
+                if not total_tokens:
+                    H_dict[env] = (0,0)
+                    print('Environment {} does not exist in the corpus\n{}'.format(env, '='*15), file=f)
+                    self.entropy_result_list.insert(END, [env, 'Environment not found'])
+                else:
+                    seg1_prob = sum(env_matches[env][seg1])/total_tokens
+                    seg2_prob = sum(env_matches[env][seg2])/total_tokens
+                    seg1_H = log(seg1_prob,2)*seg1_prob if seg1_prob > 0 else 0
+                    seg2_H = log(seg2_prob,2)*seg2_prob if seg2_prob > 0 else 0
+                    H = sum([seg1_H, seg2_H])*-1
+                    self.entropy_result_list.insert(END, [env, str(H)])
+                    H_dict[env] = (H, total_tokens)
+                    print('Entropy for {} and {} in environment of {} is {}'.format(seg1, seg2, env, str(H)), file=f)
+                    print('Frequency of {}: {}\nFrequency of {}: {}\nTotal count ({}): {}\n{}\n'.format(seg1, seg1_prob, seg2, seg2_prob, count_what, total_tokens,'='*15), file=f)
+
 
         status_label.grid()
         self.entropy_result_list.grid()
@@ -1437,7 +1504,10 @@ class GUI(Toplevel):
                         seg1, seg2, str(weighted_H), ','.join(env for env in env_list))
                 print(text, file=f)
                 status_label.grid_forget()
-                status_label.configure(text='Weighted average entropy for /{}/ and /{}/ is {}'.format(seg1, seg2, weighted_H))
+                status_text1 = 'Weighted average entropy for /{}/ and /{}/ is {}'.format(seg1, seg2, weighted_H)
+                status_text2 = 'Results have been saved to {}'.format(self.entropy_filename_var.get())
+                status_label.configure(text='\n'.join([status_text1, status_text2]))
+
                 status_label.grid()
 
     def calculate_H(self, seg1, seg2, user_supplied_envs):
@@ -1876,7 +1946,7 @@ class GUI(Toplevel):
         relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
                                     value='relative', variable=self.fl_relative_count_var)
         relative_count.grid(sticky=W)
-        raw_count = Radiobutton(relative_count_frame, text='Calculate just the number of minimal pairs',
+        raw_count = Radiobutton(relative_count_frame, text='Calculate just the raw number of minimal pairs',
                                     value='raw', variable=self.fl_relative_count_var)
         raw_count.grid(sticky=W)
         relative_count_frame.grid(sticky=W)
@@ -1903,9 +1973,9 @@ class GUI(Toplevel):
         #after the radion buttons
 
 
-        ok_button = Button(self.fl_popup, text='Start new functional load calculations', command=lambda x=False:self.calculate_functional_load(update=x))
+        ok_button = Button(self.fl_popup, text='Calculate functional load (start new results table)', command=lambda x=False:self.calculate_functional_load(update=x))
         ok_button.grid(row=2, column=0)
-        self.update_fl_button = Button(self.fl_popup, text='Update results table', command=lambda x=True:self.calculate_functional_load(update=x))
+        self.update_fl_button = Button(self.fl_popup, text='Calculate functional load (add result to table)', command=lambda x=True:self.calculate_functional_load(update=x))
         self.update_fl_button.grid()
         self.update_fl_button.config(state=DISABLED)
         cancel_button = Button(self.fl_popup, text='Cancel', command=self.cancel_functional_load)
@@ -2068,13 +2138,171 @@ class GUI(Toplevel):
                                         ignored_homophones,
                                         relative_count])
 
+
+class ToolTip:
+    """
+    Michael Lange <klappnase (at) freakmail (dot) de>
+    The ToolTip class provides a flexible tooltip widget for Tkinter; it is based on IDLE's ToolTip
+    module which unfortunately seems to be broken (at least the version I saw).
+    INITIALIZATION OPTIONS:
+    anchor :        where the text should be positioned inside the widget, must be on of "n", "s", "e", "w", "nw" and so on;
+                    default is "center"
+    bd :            borderwidth of the widget; default is 1 (NOTE: don't use "borderwidth" here)
+    bg :            background color to use for the widget; default is "lightyellow" (NOTE: don't use "background")
+    delay :         time in ms that it takes for the widget to appear on the screen when the mouse pointer has
+                    entered the parent widget; default is 1500
+    fg :            foreground (i.e. text) color to use; default is "black" (NOTE: don't use "foreground")
+    follow_mouse :  if set to 1 the tooltip will follow the mouse pointer instead of being displayed
+                    outside of the parent widget; this may be useful if you want to use tooltips for
+                    large widgets like listboxes or canvases; default is 0
+    font :          font to use for the widget; default is system specific
+    justify :       how multiple lines of text will be aligned, must be "left", "right" or "center"; default is "left"
+    padx :          extra space added to the left and right within the widget; default is 4
+    pady :          extra space above and below the text; default is 2
+    relief :        one of "flat", "ridge", "groove", "raised", "sunken" or "solid"; default is "solid"
+    state :         must be "normal" or "disabled"; if set to "disabled" the tooltip will not appear; default is "normal"
+    text :          the text that is displayed inside the widget
+    textvariable :  if set to an instance of Tkinter.StringVar() the variable's value will be used as text for the widget
+    width :         width of the widget; the default is 0, which means that "wraplength" will be used to limit the widgets width
+    wraplength :    limits the number of characters in each line; default is 150
+
+    WIDGET METHODS:
+    configure(**opts) : change one or more of the widget's options as described above; the changes will take effect the
+                        next time the tooltip shows up; NOTE: follow_mouse cannot be changed after widget initialization
+
+    Other widget methods that might be useful if you want to subclass ToolTip:
+    enter() :           callback when the mouse pointer enters the parent widget
+    leave() :           called when the mouse pointer leaves the parent widget
+    motion() :          is called when the mouse pointer moves inside the parent widget if follow_mouse is set to 1 and the
+                        tooltip has shown up to continually update the coordinates of the tooltip window
+    coords() :          calculates the screen coordinates of the tooltip window
+    create_contents() : creates the contents of the tooltip window (by default a Tkinter.Label)
+    """
+    def __init__(self, master, text='Your text here', delay=500, **opts):
+        self.master = master
+        self._opts = {'anchor':'center', 'delay':delay,
+                      'follow_mouse':0, 'font':None, 'justify':'left',
+                      'relief':'solid', 'state':'normal', 'text':text, 'textvariable':None,
+                      'width':0, 'wraplength':150}
+                      #the following options didn't play nice with ttk
+                      #and had to be removed
+                      #fg, bg, padx, pady, bd
+        self.configure(**opts)
+        self._tipwindow = None
+        self._id = None
+        self._id1 = self.master.bind("<Enter>", self.enter, '+')
+        self._id2 = self.master.bind("<Leave>", self.leave, '+')
+        self._id3 = self.master.bind("<ButtonPress>", self.leave, '+')
+        self._follow_mouse = 0
+        if self._opts['follow_mouse']:
+            self._id4 = self.master.bind("<Motion>", self.motion, '+')
+            self._follow_mouse = 1
+
+    def configure(self, **opts):
+        for key in opts:
+            value = opts.get(key)
+            if value is not None:
+                self._opts[key] = value
+            else:
+                raise KeyError('{} is not an option for ToolTip'.format(str(value)))
+
+    ##----these methods handle the callbacks on "<Enter>", "<Leave>" and "<Motion>"---------------##
+    ##----events on the parent widget; override them if you want to change the widget's behavior--##
+
+    def enter(self, event=None):
+        self._schedule()
+
+    def leave(self, event=None):
+        self._unschedule()
+        self._hide()
+
+    def motion(self, event=None):
+        if self._tipwindow and self._follow_mouse:
+            x, y = self.coords()
+            self._tipwindow.wm_geometry("+%d+%d" % (x, y))
+
+    ##------the methods that do the work:---------------------------------------------------------##
+
+    def _schedule(self):
+        self._unschedule()
+        if self._opts['state'] == 'disabled':
+            return
+        self._id = self.master.after(self._opts['delay'], self._show)
+
+    def _unschedule(self):
+        id = self._id
+        self._id = None
+        if id:
+            self.master.after_cancel(id)
+
+    def _show(self):
+        if self._opts['state'] == 'disabled':
+            self._unschedule()
+            return
+        if not self._tipwindow:
+            self._tipwindow = tw = Toplevel(self.master)
+            # hide the window until we know the geometry
+            tw.withdraw()
+            tw.wm_overrideredirect(1)
+
+            if tw.tk.call("tk", "windowingsystem") == 'aqua':
+                tw.tk.call("::tk::unsupported::MacWindowStyle", "style", tw._w, "help", "none")
+
+            self.create_contents()
+            tw.update_idletasks()
+            x, y = self.coords()
+            tw.wm_geometry("+%d+%d" % (x, y))
+            tw.deiconify()
+
+    def _hide(self):
+        tw = self._tipwindow
+        self._tipwindow = None
+        if tw:
+            tw.destroy()
+
+    ##----these methods might be overridden in derived classes:----------------------------------##
+
+    def coords(self):
+        # The tip window must be completely outside the master widget;
+        # otherwise when the mouse enters the tip window we get
+        # a leave event and it disappears, and then we get an enter
+        # event and it reappears, and so on forever :-(
+        # or we take care that the mouse pointer is always outside the tipwindow :-)
+        tw = self._tipwindow
+        twx, twy = tw.winfo_reqwidth(), tw.winfo_reqheight()
+        w, h = tw.winfo_screenwidth(), tw.winfo_screenheight()
+        # calculate the y coordinate:
+        if self._follow_mouse:
+            y = tw.winfo_pointery() + 20
+            # make sure the tipwindow is never outside the screen:
+            if y + twy > h:
+                y = y - twy - 30
+        else:
+            y = self.master.winfo_rooty() + self.master.winfo_height() + 3
+            if y + twy > h:
+                y = self.master.winfo_rooty() - twy - 3
+        # we can use the same x coord in both cases:
+        x = tw.winfo_pointerx() - twx / 2
+        if x < 0:
+            x = 0
+        elif x + twx > w:
+            x = w - twx
+        return x, y
+
+    def create_contents(self):
+        opts = self._opts.copy()
+        for opt in ('delay', 'follow_mouse', 'state'):
+            del opts[opt]
+        label = Label(self._tipwindow, **opts)
+        label.pack()
+
+
 def make_menus(root,app):
 
     menubar = Menu(root)
     filemenu = Menu(menubar, tearoff=0)
     filemenu.add_command(label='Choose built-in corpus...', command=app.choose_corpus)
-    filemenu.add_command(label='Use custom corpus...',
-    command=app.choose_custom_corpus)
+    filemenu.add_command(label='Use custom corpus...', command=app.choose_custom_corpus)
     filemenu.add_command(label='Create corpus from text...', command=app.corpus_from_text)
     filemenu.add_command(label='Save corpus as...', command=app.save_corpus_as)
     filemenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings, command=app.change_warnings)
@@ -2091,7 +2319,7 @@ def make_menus(root,app):
 
     calcmenu = Menu(menubar, tearoff=0)
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
-    calcmenu.add_command(label='Calculate entropy...', command=app.entropy)
+    calcmenu.add_command(label='Calculate predictability of distribution...', command=app.entropy)
     calcmenu.add_command(labe='Calculate functional load...', command=app.functional_load)
     menubar.add_cascade(label='Analysis', menu=calcmenu)
 
