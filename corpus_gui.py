@@ -543,11 +543,10 @@ class GUI(Toplevel):
         word1_entry.grid()
 
         filename_frame = LabelFrame(self.string_similarity_popup, text='Name for output file')
-        string_similarity_filename_entry = Entry(filename_frame, textvariable=self.string_similarity_filename_var)
-        string_similarity_filename_entry.delete(0,END)
-        if selection:
-            string_similarity_filename_entry.insert(0,'{}_string_similarity.txt'.format(selection))
-        string_similarity_filename_entry.grid()
+        output_file_label = Label(filename_frame, textvariable=self.string_similarity_filename_var)
+        output_file_label.grid()
+        filename_button = Button(filename_frame, text='Select file name and location', command=self.suggest_string_similarity_filename)
+        filename_button.grid()
         filename_frame.grid()
 
         options_frame = LabelFrame(self.string_similarity_popup, text='Options')
@@ -581,6 +580,17 @@ class GUI(Toplevel):
         cancel_button.grid()
         info_button = Button(self.string_similarity_popup, text='About this function...', command=self.string_similarity_info)
         info_button.grid()
+
+    def suggest_string_similarity_filename(self):
+
+        suggestion = self.string_similarity_query_var.get()
+        if suggestion:
+            suggestion = 'string_similarity_{}.txt'.format(suggestion)
+        else:
+            suggestion = ''
+        filename = FileDialog.asksaveasfilename(initialfile=suggestion)
+        if filename:
+            self.string_similarity_filename_var.set(filename)
 
     def string_similarity_info(self):
 
@@ -1026,10 +1036,10 @@ class GUI(Toplevel):
                 MessageBox.showwarning(message='Your corpus lacks a token frequency count. This option will be disabled.')
 
 
-        self.entropy_screen = Toplevel()
-        self.entropy_screen.title('Predictability of distribution calculation')
+        self.entropy_main_screen = Toplevel()
+        self.entropy_main_screen.title('Predictability of distribution calculation')
 
-        ipa_frame = LabelFrame(self.entropy_screen, text='Sounds')
+        ipa_frame = LabelFrame(self.entropy_main_screen, text='Sounds')
 
         ipa_frame_tooltip = ToolTip(ipa_frame,
                                     delay=self.tooltip_delay,follow_mouse=True,
@@ -1066,7 +1076,7 @@ class GUI(Toplevel):
         seg2_frame.grid()
 
 
-        option_frame = LabelFrame(self.entropy_screen, text='Options')
+        option_frame = LabelFrame(self.entropy_main_screen, text='Options')
 
         tier_frame = LabelFrame(option_frame, text='Tier')
         tier_frame_tooltip = ToolTip(tier_frame,
@@ -1113,23 +1123,23 @@ class GUI(Toplevel):
                                     ' is recommended that both options are used unless '
                                     'there is a specific reason to do otherwise.'))
         check_exhaustive = Checkbutton(ex_frame, text='Check for exhaustivity', variable=self.entropy_exhaustive_var)
+        self.entropy_exhaustive_var.set(1)
         check_exhaustive.grid()
-        check_exhaustive.invoke()
         check_uniqueness = Checkbutton(ex_frame, text='Check for uniqueness', variable=self.entropy_uniqueness_var)
         check_uniqueness.grid()
-        check_uniqueness.invoke()
+        self.entropy_uniqueness_var.set(1)
         ex_frame.grid(row=2, column=0)
 
-        output_file_frame = LabelFrame(option_frame, text='Output file name')
+        output_file_frame = LabelFrame(option_frame, text='Output file path')
         self.entropy_output_file_label = Label(output_file_frame, textvariable=self.entropy_filename_var)
         self.entropy_output_file_label.grid()
         suggest_filename_button = Button(output_file_frame,
-                                        text='Choose file name and location (a name will be suggested for you)',
+                                        text='Choose file name and location',
                                         command=self.suggest_entropy_filename)
         suggest_filename_button.grid()
         output_file_frame.grid(row=3, column=0)
 
-        button_frame = Frame(self.entropy_screen)
+        button_frame = Frame(self.entropy_main_screen)
         ok_button = Button(button_frame, text='Next step...', command=self.entropy_options)
         ok_button.grid(row=0, column=0)
         cancel_button = Button(button_frame, text='Cancel', command=self.cancel_entropy)
@@ -1179,7 +1189,7 @@ class GUI(Toplevel):
         self.seg1_var = StringVar()
         self.seg2_var = StringVar()
         self.entropy_filename_var = StringVar()
-        self.entropy_screen.destroy()
+        self.entropy_main_screen.destroy()
 
     def entropy_options(self):
 
@@ -1191,8 +1201,10 @@ class GUI(Toplevel):
             MessageBox.showerror(message='Please ensure you have selected 2 segments and chosen a output file name')
             return
 
-        for child in self.entropy_screen.winfo_children():
-            child.destroy()
+        self.entropy_main_screen.withdraw()
+        self.entropy_screen = Toplevel()
+        self.entropy_screen.title('Environments for calculating predictability of distribution')
+
 
         env_frame = LabelFrame(self.entropy_screen, text='Construct environment')
         env_frame_tooltip = ToolTip(env_frame,
@@ -1292,15 +1304,18 @@ class GUI(Toplevel):
         rhs_feature_frame.grid(row=0, column=0, sticky=N)
         rhs_seg_frame.grid(row=0, column=1, sticky=N)
         rhs_frame.grid(row=1, column=0, padx=3)
-
         env_frame.grid(row=0, column=0)
 
+
+        #BUTTON FRAME STARTS HERE
         add_env_to_list = Button(self.entropy_screen, text='Add this environment to list', command=self.confirm_entropy_options)
         add_env_to_list.grid(row=1, column=0)
         confirm_envs = Button(self.entropy_screen, text='Calculate entropy in selected environments', command=self.calculate_entropy)
         confirm_envs.grid(row=1, column=1)
+        previous_step = Button(self.entropy_screen, text='Previous step', command=self.entropy_go_back)
+        previous_step.grid(row=1, column=2)
         cancel_button = Button(self.entropy_screen, text='Cancel', command=self.entropy_screen.destroy)
-        cancel_button.grid(row=1, column=2)
+        cancel_button.grid(row=1, column=3)
 
         selected_envs_frame = Frame(self.entropy_screen)
         selected_envs_frame.grid(row=0, column=1)
@@ -1313,6 +1328,11 @@ class GUI(Toplevel):
         remove_env_button.grid()
         clear_envs = Button(selected_envs_frame, text='Remove all environments', command=lambda x=0:self.selected_envs_list.delete(x,END))
         clear_envs.grid()
+
+    def entropy_go_back(self):
+        self.entropy_screen.destroy()
+        self.entropy_main_screen.deiconify()
+        self.entropy_main_screen.focus()
 
     def remove_entropy_env(self):
         env = self.selected_envs_list.curselection()
@@ -1946,11 +1966,11 @@ class GUI(Toplevel):
         relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
                                     value='relative', variable=self.fl_relative_count_var)
         relative_count.grid(sticky=W)
+        relative_count.invoke()
         raw_count = Radiobutton(relative_count_frame, text='Calculate just the raw number of minimal pairs',
                                     value='raw', variable=self.fl_relative_count_var)
         raw_count.grid(sticky=W)
         relative_count_frame.grid(sticky=W)
-        relative_count.invoke()
 
         homophones_frame = LabelFrame(self.fl_min_pairs_option_frame, text='What to do with homophones?')
         count_homophones_button = Radiobutton(homophones_frame, text='Include homophones',
@@ -1967,21 +1987,20 @@ class GUI(Toplevel):
         ipa_frame.grid(row=0,column=1, sticky=N)
         self.fl_min_pairs_option_frame.grid(row=0,column=2,sticky=N)
         min_pairs_type.invoke()
-        #this has to be invoked this far after widget creation because pressing
-        #the radio button calls a function that disables the min-pair-only
-        #options, and the frame containing these options isn't created until
-        #after the radion buttons
+        #this has to be invoked much later than it is created because this
+        #calls a function that refers to widgets that have not yet been created
 
-
-        ok_button = Button(self.fl_popup, text='Calculate functional load (start new results table)', command=lambda x=False:self.calculate_functional_load(update=x))
-        ok_button.grid(row=2, column=0)
-        self.update_fl_button = Button(self.fl_popup, text='Calculate functional load (add result to table)', command=lambda x=True:self.calculate_functional_load(update=x))
+        button_frame = Frame(self.fl_popup)
+        ok_button = Button(button_frame, text='Calculate functional load\n(start new results table)', command=lambda x=False:self.calculate_functional_load(update=x))
+        ok_button.grid(row=0, column=0)
+        self.update_fl_button = Button(button_frame, text='Calculate functional load\n(add to current results table)', command=lambda x=True:self.calculate_functional_load(update=x))
         self.update_fl_button.grid()
         self.update_fl_button.config(state=DISABLED)
-        cancel_button = Button(self.fl_popup, text='Cancel', command=self.cancel_functional_load)
-        cancel_button.grid(row=2, column=1)
-        about = Button(self.fl_popup, text='About this function...', command=self.about_functional_load)
-        about.grid(row=2, column=2)
+        cancel_button = Button(button_frame, text='Cancel', command=self.cancel_functional_load)
+        cancel_button.grid(row=0, column=1)
+        about = Button(button_frame, text='About this function...', command=self.about_functional_load)
+        about.grid(row=0, column=2)
+        button_frame.grid()
 
     def show_min_pairs_options(self,visible):
         if visible:
@@ -2183,7 +2202,7 @@ class ToolTip:
         self._opts = {'anchor':'center', 'delay':delay,
                       'follow_mouse':0, 'font':None, 'justify':'left',
                       'relief':'solid', 'state':'normal', 'text':text, 'textvariable':None,
-                      'width':0, 'wraplength':150}
+                      'width':0, 'wraplength':300}
                       #the following options didn't play nice with ttk
                       #and had to be removed
                       #fg, bg, padx, pady, bd
