@@ -49,10 +49,16 @@ def morph_relatedness_word(corpus_name, relator_type, string_type, count_what, q
     related_data = relator.relate(query, string_type, count_what)
     end_time = time.time()
 
+    if output_filename == 'return_data':
+        return related_data
+    else:
+        print_one_word_results(output_filename, related_data, threshold)
+
+def print_one_word_results(output_filename, query, related_data, threshold):
     with open(output_filename, mode='w', encoding='utf-8') as outf:
         if not isinstance(query, str):
             query = ''.join([seg.symbol for seg in w])
-        print('Morphological relatedness to the word using the {} algorithm: {}\r\n\r\n'.format(relator_type, query), file=outf)
+        #print('Morphological relatedness to the word using the {} algorithm: {}\r\n\r\n'.format(relator_type, query), file=outf)
         #print('This algorithm ran in: ' + str(end_time-start_time))
         for word, score in related_data:
             if threshold != None:
@@ -99,13 +105,13 @@ def morph_relatedness_pairs(corpus_name, relator_type, string_type, count_what, 
             relator = string_similarity.Relator(corpus_name, ready_made_corpus)
             freq_base = relator.make_freq_base(string_type)
             related_data = list()
-            start_time = time.time()
+            #start_time = time.time()
             for line in lines:
                 w1, w2 = line.split('\t')
                 w1, w2 = re.sub(r'\s+', '', w1), re.sub(r'\s+', '', w2)
                 score = relator.string_sim(w1, w2, freq_base)
                 related_data.append( (w1, w2, score) )
-            end_time = time.time()
+            #end_time = time.time()
 
         elif relator == 'shared_morphemes':
             relator = shared_morphs.Relator(corpus_name, ready_made_corpus)
@@ -115,7 +121,7 @@ def morph_relatedness_pairs(corpus_name, relator_type, string_type, count_what, 
             print('Relator type not valid')
             return
 
-        print('Run time for relating: ' + str(end_time-start_time))
+        #print('Run time for relating: ' + str(end_time-start_time))
 
 
         related_data_return = list()
@@ -131,9 +137,12 @@ def morph_relatedness_pairs(corpus_name, relator_type, string_type, count_what, 
         if output_filename == 'return_data':
             return related_data_return
         else:
-            with open(output_filename, mode='w', encoding='utf-8') as outf:
-                for w1, w2, score in related_data_return:
-                    outf.write('{}\t{}\t{}\n'.format(w1, w2, score))
+            print_pairs_results(output_filename, related_data_return)
+
+def print_pairs_results(output_filename, related_data_return):
+    with open(output_filename, mode='w', encoding='utf-8') as outf:
+        for w1, w2, score in related_data_return:
+            outf.write('{}\t{}\t{}\n'.format(w1, w2, score))
 
 
 

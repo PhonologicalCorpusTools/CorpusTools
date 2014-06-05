@@ -159,7 +159,7 @@ class GUI(Toplevel):
         self.string_similarity_stringtype_var = StringVar()
         self.string_similarity_pairs_var = StringVar()
         self.string_similarity_comparison_type_var = StringVar()
-        self.string_similarity_threshold = StringVar()
+        self.string_similarity_threshold_var = StringVar()
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('No feature system selected')
@@ -583,17 +583,10 @@ class GUI(Toplevel):
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=0, row=1, sticky=W)
         threshold_frame = LabelFrame(options_frame, text='Return only results with relatedness greater than...')
-        threshold_entry = Entry(threshold_frame, textvariable=self.string_similarity_threshold)
+        threshold_entry = Entry(threshold_frame, textvariable=self.string_similarity_threshold_var)
         threshold_entry.grid()
         threshold_frame.grid(column=0, row=2, sticky=W)
         options_frame.grid(row=0, column=1, sticky=N)
-
-        filename_frame = LabelFrame(self.string_similarity_popup, text='Name for output file')
-        output_file_label = Label(filename_frame, textvariable=self.string_similarity_filename_var)
-        output_file_label.grid()
-        filename_button = Button(filename_frame, text='Select file name and location', command=self.suggest_string_similarity_filename)
-        filename_button.grid()
-        filename_frame.grid(row=0, column=2, sticky=N)
 
         button_frame = Frame(self.string_similarity_popup)
         ok_button = Button(button_frame, text='OK', command=self.calculate_string_similarity)
@@ -613,7 +606,7 @@ class GUI(Toplevel):
         if not filename.endswith('.txt'):
             filename += '.txt'
 
-    def suggest_string_similarity_filename(self):
+    def print_string_similarity_results(self, results):
 
         if self.string_similarity_comparison_type_var.get() == 'one':
             suggestion = self.string_similarity_query_var.get()
@@ -634,6 +627,19 @@ class GUI(Toplevel):
         filename = FileDialog.asksaveasfilename(initialfile=suggestion)
         if filename:
             self.string_similarity_filename_var.set(filename)
+
+        #RETURN TO THIS POINT
+        if self.string_similarity_comparison_type_var.get() == 'one':
+            threshold = self.string_similarity_threshold_var.get()
+            if threshold:
+                threshold = int(threshold)
+            else:
+                threshold = None
+            morph_relatedness.print_one_word_results(filename,
+                                                self.string_similarity_query_var.get(),
+                                                results, threshold)
+        else:
+            morph_relatedness.print_pairs_results(filename, results)
 
     def string_similarity_info(self):
 
@@ -695,19 +701,11 @@ class GUI(Toplevel):
                 MessageBox.showerror(message='Please select a file of word pairs')
                 return
 
-        #Then check for a filename
-        filename = self.string_similarity_filename_var.get()
-        if not filename:
-            MessageBox.showerror(message='Please enter a filename')
-            return
-        if not filename.endswith('.txt'):
-            filename += '.txt'
-
         #If it's all good, then calculate relatedness
         string_type = self.string_similarity_stringtype_var.get()
         typetoken = self.string_similarity_typetoken_var.get()
         output_filename = self.string_similarity_filename_var.get()
-        threshold = self.string_similarity_threshold.get()
+        threshold = self.string_similarity_threshold_var.get()
         if threshold:
             threshold = int(threshold)
         else:
@@ -715,28 +713,22 @@ class GUI(Toplevel):
 
         if self.string_similarity_comparison_type_var.get() == 'one':
             query = self.string_similarity_query_var.get()
-            morph_relatedness.morph_relatedness_word('', 'string_similarity',
+            results = morph_relatedness.morph_relatedness_word('', 'string_similarity',
                                                 string_type, typetoken, query,
-                                                threshold, self.corpus, output_filename)
+                                                threshold, self.corpus, output_filename='return_data')
             string_similarity_results_popup = Toplevel()
             title = 'Counting {}, Comparing {}'.format(self.string_similarity_typetoken_var.get(),
                                                      self.string_similarity_stringtype_var.get())
             string_similarity_results_popup.title(title)
-            string_similarity_results_frame = LabelFrame(string_similarity_results_popup, text='Results')
+            string_similarity_results_frame = Frame(string_similarity_results_popup)
             string_similarity_results_box = MultiListbox(string_similarity_results_popup,
-                        [('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),20),
-                        (string_type, 10)])
+                        [(string_type, 15),
+                        ('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),25),
+                        ])
 
-            #Read from results file and display in a multibox
-            with open(os.path.join(os.getcwd(),output_filename), encoding='utf-8') as f:
-                for line in f:
-                    try:
-                        score, spelling = line.split('[')
-                    except ValueError:
-                        continue
-                    score = score[1:]
-                    spelling = spelling.strip()
-                    string_similarity_results_box.insert(END,[spelling, score])
+            for result in results:
+                word, similarity = result
+                string_similarity_results_box.insert(END,[word, similarity])
 
         elif self.string_similarity_comparison_type_var.get() == 'pairs':
             query = self.string_similarity_pairs_var.get()
@@ -747,7 +739,7 @@ class GUI(Toplevel):
             title = 'Comparing pairs of words'.format(self.string_similarity_typetoken_var.get(),
                                                      self.string_similarity_stringtype_var.get())
             string_similarity_results_popup.title(title)
-            string_similarity_results_frame = LabelFrame(string_similarity_results_popup, text='Results')
+            string_similarity_results_frame = Frame(string_similarity_results_popup)
             string_similarity_results_box = MultiListbox(string_similarity_results_popup,
                         [('Word 1',20),
                         ('Word 2', 20),
@@ -760,6 +752,10 @@ class GUI(Toplevel):
         #display results on screen
         string_similarity_results_box.grid()
         string_similarity_results_frame.grid()
+        print_frame = Frame(string_similarity_results_frame)
+        print_button = Button(print_frame, text='Save results to file', command=lambda x=results: self.print_string_similarity_results(x))
+        print_button.grid()
+        print_frame.grid()
 
     def cancel_string_similarity(self):
         self.string_similarity_popup.destroy()
