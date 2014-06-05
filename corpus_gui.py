@@ -23,7 +23,8 @@ import queue
 import pickle
 import os
 import string
-import string_similarity
+#import string_similarity
+import morph_relatedness
 import functional_load as FL
 import collections
 import functional_load
@@ -156,6 +157,9 @@ class GUI(Toplevel):
         self.string_similarity_filename_var = StringVar()
         self.string_similarity_typetoken_var = StringVar()
         self.string_similarity_stringtype_var = StringVar()
+        self.string_similarity_pairs_var = StringVar()
+        self.string_similarity_comparison_type_var = StringVar()
+        self.string_similarity_threshold = StringVar()
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('No feature system selected')
@@ -535,19 +539,27 @@ class GUI(Toplevel):
             #this means that nothing was selected in the multibox
             selection = ''
 
-        word1_frame = LabelFrame(self.string_similarity_popup, text='Enter a word')
-        word1_frame.grid()
+        comparison_type_frame = LabelFrame(self.string_similarity_popup, text='Comparison type')
+        word1_frame = Frame(comparison_type_frame)
+        one_word_radiobutton = Radiobutton(word1_frame, text='Compare one word to entire corpus',
+                                    variable=self.string_similarity_comparison_type_var, value='one')
+        one_word_radiobutton.grid()
+        one_word_radiobutton.invoke()
+        word1_frame.grid(sticky=W)
         word1_entry = Entry(word1_frame, textvariable=self.string_similarity_query_var)
         word1_entry.delete(0,END)
         word1_entry.insert(0,selection)
-        word1_entry.grid()
-
-        filename_frame = LabelFrame(self.string_similarity_popup, text='Name for output file')
-        output_file_label = Label(filename_frame, textvariable=self.string_similarity_filename_var)
-        output_file_label.grid()
-        filename_button = Button(filename_frame, text='Select file name and location', command=self.suggest_string_similarity_filename)
-        filename_button.grid()
-        filename_frame.grid()
+        word1_entry.grid(sticky=W)
+        word_pairs_frame = Frame(comparison_type_frame)
+        pairs_radiobutton = Radiobutton(word_pairs_frame, text='Compare pairs of words',
+                                        variable=self.string_similarity_comparison_type_var, value='pairs')
+        pairs_radiobutton.grid()
+        get_word_pairs_button = Button(word_pairs_frame, text='Choose word pairs file', command=self.get_word_pairs_file)
+        get_word_pairs_button.grid()
+        get_word_pairs_label = Label(word_pairs_frame, textvariable=self.string_similarity_pairs_var)
+        get_word_pairs_label.grid()
+        word_pairs_frame.grid(sticky=W)
+        comparison_type_frame.grid(row=0,column=0,sticky=N)
 
         options_frame = LabelFrame(self.string_similarity_popup, text='Options')
         typetoken_frame = LabelFrame(options_frame, text='Type or Token')
@@ -558,7 +570,7 @@ class GUI(Toplevel):
         token_button.grid(sticky=W)
         if not has_frequency:
             token_button.configure(state=('disabled'))
-        typetoken_frame.grid(column=0, row=0)
+        typetoken_frame.grid(column=0, row=0, sticky=W)
         stringtype_frame = LabelFrame(options_frame, text='String type')
         spelling_button = Radiobutton(stringtype_frame, text='Compare spelling', variable=self.string_similarity_stringtype_var, value='spelling')
         spelling_button.grid(sticky=W)
@@ -569,25 +581,56 @@ class GUI(Toplevel):
         transcription_button.grid(sticky=W)
         if not has_transcription:
             transcription_button.configure(state=('disabled'))
-        stringtype_frame.grid(column=1, row=0)
-        options_frame.grid()
+        stringtype_frame.grid(column=0, row=1, sticky=W)
+        threshold_frame = LabelFrame(options_frame, text='Return only results with relatedness greater than...')
+        threshold_entry = Entry(threshold_frame, textvariable=self.string_similarity_threshold)
+        threshold_entry.grid()
+        threshold_frame.grid(column=0, row=2, sticky=W)
+        options_frame.grid(row=0, column=1, sticky=N)
 
-        ok_button = Button(self.string_similarity_popup, text='OK', command=self.calculate_string_similarity)
-        ok_button.grid()
+        filename_frame = LabelFrame(self.string_similarity_popup, text='Name for output file')
+        output_file_label = Label(filename_frame, textvariable=self.string_similarity_filename_var)
+        output_file_label.grid()
+        filename_button = Button(filename_frame, text='Select file name and location', command=self.suggest_string_similarity_filename)
+        filename_button.grid()
+        filename_frame.grid(row=0, column=2, sticky=N)
+
+        button_frame = Frame(self.string_similarity_popup)
+        ok_button = Button(button_frame, text='OK', command=self.calculate_string_similarity)
+        ok_button.grid(row=0,column=0)
         if not has_spelling and has_transcription:
             ok_button.state = DISABLED
-        cancel_button = Button(self.string_similarity_popup, text='Cancel', command=self.cancel_string_similarity)
-        cancel_button.grid()
-        info_button = Button(self.string_similarity_popup, text='About this function...', command=self.string_similarity_info)
-        info_button.grid()
+        cancel_button = Button(button_frame, text='Cancel', command=self.cancel_string_similarity)
+        cancel_button.grid(row=0, column=1)
+        info_button = Button(button_frame, text='About this function...', command=self.string_similarity_info)
+        info_button.grid(row=0,column=2)
+        button_frame.grid(row=1)
+
+    def get_word_pairs_file(self):
+        filename = FileDialog.askopenfilename()
+        if filename:
+            self.string_similarity_pairs_var.set(filename)
+        if not filename.endswith('.txt'):
+            filename += '.txt'
 
     def suggest_string_similarity_filename(self):
 
-        suggestion = self.string_similarity_query_var.get()
-        if suggestion:
-            suggestion = 'string_similarity_{}.txt'.format(suggestion)
-        else:
-            suggestion = ''
+        if self.string_similarity_comparison_type_var.get() == 'one':
+            suggestion = self.string_similarity_query_var.get()
+            if suggestion:
+                suggestion = 'string_similarity_{}.txt'.format(suggestion)
+            else:
+                suggestion = ''
+
+        elif self.string_similarity_comparison_type_var.get() == 'pairs':
+            suggestion = self.string_similarity_pairs_var.get()
+            if suggestion:
+                suggestion = os.path.split(suggestion)[-1]
+                suggestion = os.path.splitext(suggestion)[0]
+                suggestion = 'string_similarity_pairs_{}.txt'.format(suggestion)
+            else:
+                suggestion = ''
+
         filename = FileDialog.asksaveasfilename(initialfile=suggestion)
         if filename:
             self.string_similarity_filename_var.set(filename)
@@ -621,6 +664,7 @@ class GUI(Toplevel):
         ' complementary distribution, commonly assumed to be allophonic), will have'
         ' an entropy of 0. Sounds that are perfectly overlapping in their distributions'
         ' will have an entropy of 1.'))
+        description_label.config(wraplength=600)
         description_label.grid()
         description_frame.grid(sticky=W)
         citation_frame = LabelFrame(info_popup, text='Original source')
@@ -635,13 +679,21 @@ class GUI(Toplevel):
     def calculate_string_similarity(self):
 
         #First check if the word is in the corpus
-        query = self.string_similarity_query_var.get()
-        try:
-            self.corpus.find(query,keyerror=True)
-        except KeyError:
-            message = 'The word \"{}\" is not in the corpus'.format(query)
-            MessageBox.showerror(message=message)
-            return
+        comp_type = self.string_similarity_comparison_type_var.get()
+        if comp_type == 'one':
+            query = self.string_similarity_query_var.get()
+            if not query:
+                MessageBox.showerror('Please enter a word')
+            try:
+                self.corpus.find(query,keyerror=True)
+            except KeyError:
+                message = 'The word \"{}\" is not in the corpus'.format(query)
+                MessageBox.showerror(message=message)
+                return
+        elif comp_type == 'pairs':
+            if not self.string_similarity_pairs_var.get():
+                MessageBox.showerror(message='Please select a file of word pairs')
+                return
 
         #Then check for a filename
         filename = self.string_similarity_filename_var.get()
@@ -652,31 +704,60 @@ class GUI(Toplevel):
             filename += '.txt'
 
         #If it's all good, then calculate relatedness
-        relator = string_similarity.Relator(ready_made_corpus=self.corpus)
-        relator.relate(query, filename,
-                        count_what=self.string_similarity_typetoken_var.get(),
-                        string_type=self.string_similarity_stringtype_var.get())
         string_type = self.string_similarity_stringtype_var.get()
-        string_type = string_type[0].upper()+string_type[1:]
-        string_similarity_results_popup = Toplevel()
-        title = 'Counting {}, Comparing {}'.format(self.string_similarity_typetoken_var.get(),
-                                                 self.string_similarity_stringtype_var.get())
-        string_similarity_results_popup.title(title)
-        string_similarity_results_frame = LabelFrame(string_similarity_results_popup, text='Results')
-        string_similarity_results_box = MultiListbox(string_similarity_results_popup,
-                    [('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),20),
-                    (string_type, 10)])
+        typetoken = self.string_similarity_typetoken_var.get()
+        output_filename = self.string_similarity_filename_var.get()
+        threshold = self.string_similarity_threshold.get()
+        if threshold:
+            threshold = int(threshold)
+        else:
+            threshold = None
 
-        #Read from results file and display in a multibox
-        with open(os.path.join(os.getcwd(),filename), encoding='utf-8') as f:
-            for line in f:
-                try:
-                    score, spelling = line.split(']')
-                except ValueError:
-                    continue
-                score = score[1:]
-                spelling = spelling.strip()
-                string_similarity_results_box.insert(END,[score, spelling])
+        if self.string_similarity_comparison_type_var.get() == 'one':
+            query = self.string_similarity_query_var.get()
+            morph_relatedness.morph_relatedness_word('', 'string_similarity',
+                                                string_type, typetoken, query,
+                                                threshold, self.corpus, output_filename)
+            string_similarity_results_popup = Toplevel()
+            title = 'Counting {}, Comparing {}'.format(self.string_similarity_typetoken_var.get(),
+                                                     self.string_similarity_stringtype_var.get())
+            string_similarity_results_popup.title(title)
+            string_similarity_results_frame = LabelFrame(string_similarity_results_popup, text='Results')
+            string_similarity_results_box = MultiListbox(string_similarity_results_popup,
+                        [('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),20),
+                        (string_type, 10)])
+
+            #Read from results file and display in a multibox
+            with open(os.path.join(os.getcwd(),output_filename), encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        score, spelling = line.split('[')
+                    except ValueError:
+                        continue
+                    score = score[1:]
+                    spelling = spelling.strip()
+                    string_similarity_results_box.insert(END,[spelling, score])
+
+        elif self.string_similarity_comparison_type_var.get() == 'pairs':
+            query = self.string_similarity_pairs_var.get()
+            results = morph_relatedness.morph_relatedness_pairs('', 'string_similarity',
+                                                    string_type, typetoken, query,
+                                                    'return_data', threshold, self.corpus)
+            string_similarity_results_popup = Toplevel()
+            title = 'Comparing pairs of words'.format(self.string_similarity_typetoken_var.get(),
+                                                     self.string_similarity_stringtype_var.get())
+            string_similarity_results_popup.title(title)
+            string_similarity_results_frame = LabelFrame(string_similarity_results_popup, text='Results')
+            string_similarity_results_box = MultiListbox(string_similarity_results_popup,
+                        [('Word 1',20),
+                        ('Word 2', 20),
+                        ('Similarity', 20)])
+
+            for result in results:
+                w1, w2, similarity = result
+                string_similarity_results_box.insert(END,[w1, w2, similarity])
+
+        #display results on screen
         string_similarity_results_box.grid()
         string_similarity_results_frame.grid()
 
@@ -1860,7 +1941,6 @@ class GUI(Toplevel):
         #cancel_button = Button(self.feature_screen, text='Cancel', command=self.feature_screen.destroy)
         #cancel_button.grid()
 
-
     def confirm_change_feature_system(self):
 
         try_system = self.feature_system_var.get()
@@ -1901,7 +1981,8 @@ class GUI(Toplevel):
     def change_feature_system(self, event=None):
         word = self.corpus.random_word()
         if not hasattr(word, 'transcription'):
-            MessageBox.showerror(message='No transcription column was found in your corpus.\nTranscription is necessary to use feature systems')
+            MessageBox.showerror(message=('No transcription column was found in your corpus.'
+            '\nTranscription is necessary to use feature systems'))
             return
         check_system = self.feature_system_var.get()
         #check_system = check_system.lower()
