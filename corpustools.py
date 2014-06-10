@@ -753,15 +753,11 @@ class Corpus(object):
 
         old_specifier = self.specifier
         self.specifier = FeatureSpecifier(encoding=feature_system)
-        print(self.inventory)
-        print(self.specifier.matrix.keys())
         missing = [seg.symbol for seg in self.inventory if not seg.symbol in list(self.specifier.matrix.keys())]
-        print(missing)
 
         if not missing:#all(seg.symbol in self.specifier.matrix for seg in self.inventory):
         #check first if all the transcription symbol in the corpus actually
         #appear in the Specifier. If they do, then re-specify all words
-            print('SUCCESS')
             for word in self.wordlist.keys():
                 self.wordlist[word]._specify_features(self)
             errors = False
@@ -769,7 +765,6 @@ class Corpus(object):
         else:
         #if there are symbols in the corpus not in the specifier, then
         #do some error logging and don't actually change the feature system
-            print('FAILURE')
             self.specifier = old_specifier
             #missing = [seg.symbol for seg in self.inventory if not seg.symbol in self.specifier.matrix]
             #errors = collections.defaultdict(list)
