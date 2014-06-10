@@ -100,7 +100,12 @@ class FeatureSpecifier(object):
             self.feature_system = 'hayes'
         else:
             filename = encoding+'.txt'
-            sep=','
+            if 'spe' in filename:
+                sep =','
+            elif 'hayes' in filename:
+                sep = '\t'
+            else:
+                sep = ','
             self.feature_system = encoding
 ##        else:
 ##            raise ValueError('{} is not a recognized feature system'.format(encoding))
@@ -117,10 +122,10 @@ class FeatureSpecifier(object):
                     continue
                 symbol, features = line.split(sep, 1)
 
-                if encoding == 'hayes':
+                if 'hayes' in encoding:
                     self.matrix[symbol] = [Feature(sign+header[j]) for j,sign in enumerate(features.split(sep))]
-                #if encoding == 'spe':
-                else:
+
+                else:# 'spe' in encoding:
                     #assume everything is formatted like the spe file, this could be changed
                     self.matrix[symbol] = [Feature(name) for name in features.split(sep)]
 
@@ -171,7 +176,8 @@ class Word(object):
         is an empty list if not tiers have been created.
 
     descriptors : list of str
-        A list of the names of the attributes of a Word instance
+        A list of the names of the attributes of a Word instance. This is
+        automatically generated based on the contents of the original corpus
 
 
     """
@@ -678,7 +684,7 @@ class Corpus(object):
         """Add a word to the Corpus.
         If allow_duplicates is True, then words with identical spelling can
         be added. They are kept sepearate by adding a "silent" number to them
-        which is never displayed to the user. If this allow_duplicates is False,
+        which is never displayed to the user. If allow_duplicates is False,
         then duplicates are simply ignored.
 
         Parameters
@@ -741,26 +747,38 @@ class Corpus(object):
         printed to file for the user to inspect.
 
         """
-        self.specifier = FeatureSpecifier(encoding=feature_system)
-        errors = collections.defaultdict(list)
+        if feature_system == self.specifier.feature_system:
+            #no point in doing any work in this case
+            return None
 
-        if all(seg.symbol in self.specifier.matrix for seg in self.inventory):
+        old_specifier = self.specifier
+        self.specifier = FeatureSpecifier(encoding=feature_system)
+        print(self.inventory)
+        print(self.specifier.matrix.keys())
+        missing = [seg.symbol for seg in self.inventory if not seg.symbol in list(self.specifier.matrix.keys())]
+        print(missing)
+
+        if not missing:#all(seg.symbol in self.specifier.matrix for seg in self.inventory):
         #check first if all the transcription symbol in the corpus actually
         #appear in the Specifier. If they do, then re-specify all words
+            print('SUCCESS')
             for word in self.wordlist.keys():
                 self.wordlist[word]._specify_features(self)
-
+            errors = False
 
         else:
         #if there are symbols in the corpus not in the specifier, then
         #do some error logging and don't actually change the feature system
-            for word in self.wordlist.keys():
-                try:
-                    #self.wordlist[key]._specify_features(self)
-                    test = [self.specifier[w.symbol] for w in self.wordlist[word]]
-                except KeyError as e:
-                    errors[str(e)].append(''.join(seg.symbol for seg in self.wordlist[word].transcription))
-
+            print('FAILURE')
+            self.specifier = old_specifier
+            #missing = [seg.symbol for seg in self.inventory if not seg.symbol in self.specifier.matrix]
+            #errors = collections.defaultdict(list)
+            errors = {seg:list() for seg in missing}
+            for key in self.wordlist.keys():
+                word = [seg.symbol for seg in self.wordlist[key].transcription]
+                for missing_seg in missing:
+                    if missing_seg in word:
+                        errors[missing_seg].append(''.join(word))
 
         return errors
 
@@ -955,7 +973,7 @@ class CorpusFactory(object):
 
         Notes
         ----------
-        This method is only necessary when building a corpus.
+        This method is only necessary when building a corpus the first time.
         After that, it is faster to pickle the corpus and load from the pickle.
         """
         corpus_name = corpus_name.upper()

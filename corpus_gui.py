@@ -33,7 +33,6 @@ from math import log
 
 class ThreadedTask(threading.Thread):
     def __init__(self, queue, target, args, **kwargs):
-        #threading.Thread.__init__(self,target=kwargs['target'], args=kwargs['args'], kwargs=kwargs['kwargs'])
         if kwargs:
             threading.Thread.__init__(self,target=target, args=args, kwargs=kwargs['kwargs'])
         else:
@@ -93,8 +92,7 @@ class MultiListbox(Frame):
         result = []
         for l in self.lists:
             result.append(l.get(first,last))
-##        if last:
-##            return map(None, *result)
+
         return result
 
     def index(self, index):
@@ -140,7 +138,6 @@ class GUI(Toplevel):
         self.q = queue.Queue()
         self.corpusq = queue.Queue(1)
         self.corpus = None
-        self.feature_system = None
         self.all_feature_systems = ['spe','hayes']
         self.corpus_factory = corpustools.CorpusFactory()
         self.tooltip_delay = 1500
@@ -162,8 +159,9 @@ class GUI(Toplevel):
         self.string_similarity_threshold_var = StringVar()
         #corpus information variables
         self.feature_system_var = StringVar()
-        self.feature_system_var.set('No feature system selected')
-        self.recently_selected_system = 'spe'
+        self.feature_system_var.set('spe')
+        self.feature_system_option_menu_var = StringVar()
+        self.feature_system_option_menu_var.set('spe')
         self.corpus_var = StringVar()
         self.corpus_var.set('No corpus selected')
         self.corpus_size_var = IntVar()
@@ -208,7 +206,7 @@ class GUI(Toplevel):
         corpus_info_label.grid()
         size_info_label = Label(self.info_frame, text='Size: No corpus selected')#textvariable=self.corpus_size_var)
         size_info_label.grid()
-        feature_info_label = Label(self.info_frame, text='Feature system: No features selected', )#textvariable=self.feature_system_var)
+        feature_info_label = Label(self.info_frame, textvariable=self.feature_system_var)
         feature_info_label.grid()
         self.corpus_frame = Frame(self.main_screen)
         self.corpus_frame.grid()
@@ -299,7 +297,7 @@ class GUI(Toplevel):
         size_info_label = Label(self.info_frame, text='Size: {}'.format(len(self.corpus)))#textvariable=self.corpus_size_var)
         size_info_label.grid()
 
-        feature_info_label = Label(self.info_frame, text='Feature system: {}'.format(self.feature_system) )#textvariable=self.feature_system_var)
+        feature_info_label = Label(self.info_frame, text='Feature system: {}'.format(self.feature_system_var.get()) )#textvariable=self.feature_system_var)
         feature_info_label.grid()
 
     def navigate_to_corpus_file(self):
@@ -1878,7 +1876,7 @@ class GUI(Toplevel):
             self.new_name_entry.delete(0,END)
             self.new_name_entry.insert(0,suggestion)
 
-    def show_feature_system(self):
+    def show_feature_system(self, memory=None):
 
         if not self.corpus:
             MessageBox.showerror(message='No corpus selected')
@@ -1887,29 +1885,59 @@ class GUI(Toplevel):
         if self.show_warnings:
             word = self.corpus.random_word()
             if word.tiers:
-                msg = 'You have already created tiers based on a feature system.\nChanging feature systems may give unexpected results and is not recommended.'
+                msg = ('You have already created tiers based on a feature system.'
+                        '\nChanging feature systems may give unexpected results'
+                        ' and is not recommended.')
                 MessageBox.showwarning(message=msg)
 
 
+        if memory is None:
+            #memory is set the very first time you open this option window
+            #and is used in case you want to cancel
+            self.feature_system_memory = self.feature_system_var.get()
+            self.feature_system_option_menu_var.set(self.feature_system_var.get())
+        else:
+            #this is for subsequent "loops" of this function as the user
+            #browses through different systems
+            self.feature_system_memory = memory
+
         self.feature_screen = Toplevel()
         self.feature_screen.title('View/change feature system')
-        feature_system_label = Label(self.feature_screen, text='FEATURE SYSTEM: {}'.format(self.feature_system))
 
-        if self.feature_system == 'spe':
+        if self.feature_system_option_menu_var.get() == 'spe':
             filename = 'ipa2spe.txt'
             delimiter = ','
-        elif self.feature_system == 'hayes':
+        elif self.feature_system_option_menu_var.get() == 'hayes':
             filename = 'ipa2hayes.txt'
             delimiter = '\t'
         else:
-            filename = self.feature_system+'.txt'
-            delimiter = ','
+            filename = self.feature_system_option_menu_var.get()+'.txt'
+            if 'spe' in filename:
+                delimiter = ','
+            elif 'hayes' in filename:
+                delimiter = '\t'
+            else:#for some reason, this other case just won't work
+                delimiter = '\t'
 
         with open(os.path.join(os.getcwd(), 'TRANS', filename), encoding = 'utf-8') as f:
             headers = f.readline()
             headers = headers.strip()
             headers = headers.split(delimiter)
             feature_chart = MultiListbox(self.feature_screen, [(h,5) for h in headers])
+            first_line = None
+            while not first_line:
+                first_line = f.readline()
+                first_line = first_line.strip()
+            first_line = first_line.split(delimiter)
+            if len(first_line) == 1:
+                #this part should be fixing what happens if a guess about the
+                #delimiter goes wrong in the else block up above, but it
+                #doesn't seem to work
+                delimiter = ',' if delimiter == '\t' else '\t'
+                first_line = first_line[0].split(delimiter)
+            data = [first_line[0]]
+            data.extend([feature[0] for feature in first_line[1:]])
+            feature_chart.insert(END, [d for d in data])
             for line in f:
                 line = line.strip()
                 if not line: #line is blank or just a newline
@@ -1921,37 +1949,41 @@ class GUI(Toplevel):
                 data.extend(line)
                 feature_chart.insert(END, data)
 
+
         feature_chart.grid()
         choose_label = Label(self.feature_screen, text='Select a feature system')
         choose_label.grid()
-
         feature_menu = OptionMenu(self.feature_screen,#parent
-                                self.feature_system_var,#variable
-                                self.recently_selected_system,#selected option,
-                                #'SPE', 'Hayes',#options in drop-down
-                                *[fs for fs in self.all_feature_systems],
+                                self.feature_system_option_menu_var,#variable
+                                self.feature_system_option_menu_var.get(),#selected option,
+                                *[fs for fs in self.all_feature_systems], #options in drop-down
                                 command=self.change_feature_system)
+        #this is grided much later, but needs to be here
+
+
         feature_menu.grid()
-        ok_button = Button(self.feature_screen, text='OK', command=self.confirm_change_feature_system)
+        ok_button = Button(self.feature_screen, text='Convert corpus to new feature system', command=self.confirm_change_feature_system)
         ok_button.grid()
-        #cancel_button = Button(self.feature_screen, text='Cancel', command=self.feature_screen.destroy)
-        #cancel_button.grid()
+        cancel_button = Button(self.feature_screen, text='Go back to old feature system', command=self.cancel_change_feature_system)
+        cancel_button.grid()
+
+
+    def cancel_change_feature_system(self):
+        self.feature_system_var.set(self.feature_system_memory)
+        self.feature_screen.destroy()
 
     def confirm_change_feature_system(self):
 
-        try_system = self.feature_system_var.get()
-        #try_system = try_system.lower()
-
-        check_for_error = self.corpus.change_feature_system(try_system)
+        check_for_error = self.corpus.change_feature_system(self.feature_system_option_menu_var.get())
         #if there are any segments that cannot be represented in a given feature
         #system, then the corpus.change_feature_system() function returns them in a list
         #if check_for_error is an empty list, then feature changing was successful
 
         if check_for_error:
             #problems - print an error message
-            filename = 'error_{}_{}.txt'.format(try_system, self.corpus.name)
+            filename = 'error_{}_{}.txt'.format(self.feature_system_option_menu_var.get(), self.corpus.name)
             with open(os.path.join(os.getcwd(),'ERRORS',filename), encoding='utf-8', mode='w') as f:
-                print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.'.format(try_system),file=f)
+                print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.'.format(self.feature_system_option_menu_var.get()),file=f)
                 print('To fix this problem, open the features file in a text editor and add the missing symbols and appropriate feature specifications\r\n', file=f)
                 print('All feature files are (or should be!) located in the TRANS folder. If you have your own feature file, just drop it into that folder before loading CorpusTools.\r\n\r\n', file=f)
                 print('The following segments could not be represented:', file=f)
@@ -1961,16 +1993,16 @@ class GUI(Toplevel):
                     sep = '\r\n\n'
                     print('Symbol: {}\r\nWords: {}\r\n{}'.format(key,words,sep), file=f)
             msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'A file called {} has been placed in your ERRORS folder explaining this problem in more detail.'.format(
-            filename)
-            msg = '\n'.join([msg1, msg2])
+            msg2 = 'A file called {} has been placed in your ERRORS folder explaining this problem in more detail.'.format(filename)
+            msg3 = 'No changes have been made to your corpus'
+            msg = '\n'.join([msg1, msg2, msg3])
             MessageBox.showwarning(message=msg)
             self.feature_screen.destroy()
-            self.feature_system = 'spe'
 
         else:
             #no problems - update feature system and change some on-screen info
-            self.feature_system = try_system
+            self.feature_system_var.set(self.feature_system_option_menu_var.get())
+            self.feature_system_memory = self.feature_system_var.get()
             self.update_info_frame()
             self.feature_screen.destroy()
 
@@ -1980,12 +2012,9 @@ class GUI(Toplevel):
             MessageBox.showerror(message=('No transcription column was found in your corpus.'
             '\nTranscription is necessary to use feature systems'))
             return
-        check_system = self.feature_system_var.get()
-        #check_system = check_system.lower()
-        if not check_system == self.feature_system:
-            self.recently_selected_system = check_system
-            self.feature_screen.destroy()
-            self.show_feature_system()
+
+        self.feature_screen.destroy()
+        self.show_feature_system(memory=self.feature_system_memory)
 
     def functional_load(self):
         self.fl_popup = Toplevel()
