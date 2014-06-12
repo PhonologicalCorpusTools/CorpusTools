@@ -367,13 +367,11 @@ class GUI(Toplevel):
                 MessageBox.showerror(message='Could not parse the corpus.\nCheck that the delimiter you typed in matches the one used in the file.')
                 return
 
-            #headers = [h.strip().lower() for h in headers]
             headers = [h.strip() for h in headers]
             headers[0] = headers[0].strip('\ufeff')
             if 'feature_system' in headers[-1]:
                 feature_system = headers[-1].split('=')[1]
                 headers = headers[0:len(headers)-1]
-                #headers = [h.lower() for h in headers]
             elif self.new_corpus_feature_system_var.get():
                 feature_system = self.new_corpus_feature_system_var.get()
             else:
@@ -407,7 +405,11 @@ class GUI(Toplevel):
                 queue.put(1)
         queue.put(-99)#flag
         corpus.orthography.extend([letter for letter in word.spelling if not letter in corpus.orthography])
-        corpus.inventory.extend([seg for seg in word.transcription if not seg in corpus.inventory])
+        random_word = corpus.random_word()
+        if random_word.transcription is not None:
+            corpus.inventory.extend([seg for seg in word.transcription if not seg in corpus.inventory])
+        else:
+            corpus.inventory = list()
         corpus.orthography.append('#')
         corpus.inventory.append(corpustools.Segment('#'))
         corpus.specifier = corpustools.FeatureSpecifier(encoding=feature_system)
@@ -764,14 +766,11 @@ class GUI(Toplevel):
     def suggest_entropy_filename(self):
         seg1 = self.seg1_var.get()
         seg2 = self.seg2_var.get()
-        if not seg1 or not seg2:
-            MessageBox.showwarning(message='Select 2 segments first!')
-            return
         suggested_name = 'entropy_of_{}_{}_{}.txt'.format(seg1, seg2, self.entropy_typetoken_var.get())
         filename = FileDialog.asksaveasfilename(initialdir=os.getcwd(),
                                                 initialfile=suggested_name,
                                                 defaultextension='.txt')
-        self.entropy_filename_var.set(filename)
+        return filename
 
     def save_corpus_as(self):
         """
@@ -1205,14 +1204,14 @@ class GUI(Toplevel):
         self.entropy_uniqueness_var.set(1)
         ex_frame.grid(row=2, column=0)
 
-        output_file_frame = LabelFrame(option_frame, text='Output file path')
-        self.entropy_output_file_label = Label(output_file_frame, textvariable=self.entropy_filename_var)
-        self.entropy_output_file_label.grid()
-        suggest_filename_button = Button(output_file_frame,
-                                        text='Choose file name and location',
-                                        command=self.suggest_entropy_filename)
-        suggest_filename_button.grid()
-        output_file_frame.grid(row=3, column=0)
+##        output_file_frame = LabelFrame(option_frame, text='Output file path')
+##        self.entropy_output_file_label = Label(output_file_frame, textvariable=self.entropy_filename_var)
+##        self.entropy_output_file_label.grid()
+##        suggest_filename_button = Button(output_file_frame,
+##                                        text='Choose file name and location',
+##                                        command=self.suggest_entropy_filename)
+##        suggest_filename_button.grid()
+##        output_file_frame.grid(row=3, column=0)
 
         button_frame = Frame(self.entropy_main_screen)
         ok_button = Button(button_frame, text='Next step...', command=self.entropy_options)
@@ -1272,7 +1271,7 @@ class GUI(Toplevel):
         seg2 = self.seg2_var.get()
         fname = self.entropy_filename_var.get()
 
-        if not (seg1 and seg2 and fname):
+        if not (seg1 and seg2):
             MessageBox.showerror(message='Please ensure you have selected 2 segments and chosen a output file name')
             return
 
@@ -1383,14 +1382,16 @@ class GUI(Toplevel):
 
 
         #BUTTON FRAME STARTS HERE
-        add_env_to_list = Button(self.entropy_screen, text='Add this environment to list', command=self.confirm_entropy_options)
-        add_env_to_list.grid(row=1, column=0)
-        confirm_envs = Button(self.entropy_screen, text='Calculate entropy in selected environments', command=self.calculate_entropy)
-        confirm_envs.grid(row=1, column=1)
-        previous_step = Button(self.entropy_screen, text='Previous step', command=self.entropy_go_back)
-        previous_step.grid(row=1, column=2)
-        cancel_button = Button(self.entropy_screen, text='Cancel', command=self.entropy_screen.destroy)
+        button_frame = Frame(self.entropy_screen)
+        previous_step = Button(button_frame, text='Previous step', command=self.entropy_go_back)
+        previous_step.grid(row=1, column=0)
+        add_env_to_list = Button(button_frame, text='Add this environment to list', command=self.confirm_entropy_options)
+        add_env_to_list.grid(row=1, column=1)
+        confirm_envs = Button(button_frame, text='Calculate entropy in selected environments', command=self.calculate_entropy)
+        confirm_envs.grid(row=1, column=2)
+        cancel_button = Button(button_frame, text='Cancel', command=self.entropy_screen.destroy)
         cancel_button.grid(row=1, column=3)
+        button_frame.grid(row=1,column=0)
 
         selected_envs_frame = Frame(self.entropy_screen)
         selected_envs_frame.grid(row=0, column=1)
@@ -1420,7 +1421,7 @@ class GUI(Toplevel):
         rhs_features_chosen = self.rhs_selected_list.get(0)
         rhs_seg_chosen = self.rhs_seg_entry.get()
         if (lhs_features_chosen and lhs_seg_chosen) or (rhs_features_chosen and rhs_seg_chosen):
-            MessageBox.showerror(message='You have selected both features and segments for an environment. Please choose only one.')
+            MessageBox.showerror(message='You have selected both features and segments for an environment. Please enter only one and clear the other.')
             return
 
 
@@ -1539,7 +1540,16 @@ class GUI(Toplevel):
         self.calculating_entropy_screen.title('Predictability of distribution results')
         status_label = Label(self.calculating_entropy_screen, text='Calculating entropy...')
 
-        self.entropy_result_list = MultiListbox(self.calculating_entropy_screen, [('Environment',40), ('Entropy',40)])
+        self.entropy_result_list = MultiListbox(self.calculating_entropy_screen,
+                                    [('Corpus', 20),
+                                    ('Tier', 20),
+                                    ('Sound1', 10),
+                                    ('Sound2', 10),
+                                    ('Environment',40),
+                                    ('Frequency of Sound1', 20),
+                                    ('Frequency of Sound2', 20),
+                                    ('Total count',20),
+                                    ('Entropy',40)])
         #this is created and all the results are placed into it, but it is not
         #gridded until the corpus as passed both the uniqueness and exhausitivity
         #checks and/or the user has agreed it is OK if it doesn't pass the checks
@@ -1557,53 +1567,79 @@ class GUI(Toplevel):
         #at this point there are either no problems
         #or else the user wants to see the results anyway
         H_dict = dict()
+        output_file_path = os.path.join(os.getcwd(), self.entropy_filename_var.get())
         for env in env_matches:
             total_tokens = sum(env_matches[env][seg1]) + sum(env_matches[env][seg2])
-            output_file_path = os.path.join(os.getcwd(), self.entropy_filename_var.get())
-            with open(output_file_path, mode='a', encoding='utf-8') as f:
-                if not total_tokens:
-                    H_dict[env] = (0,0)
-                    print('Environment {} does not exist in the corpus\n{}'.format(env, '='*15), file=f)
-                    self.entropy_result_list.insert(END, [env, 'Environment not found'])
-                else:
-                    seg1_prob = sum(env_matches[env][seg1])/total_tokens
-                    seg2_prob = sum(env_matches[env][seg2])/total_tokens
-                    seg1_H = log(seg1_prob,2)*seg1_prob if seg1_prob > 0 else 0
-                    seg2_H = log(seg2_prob,2)*seg2_prob if seg2_prob > 0 else 0
-                    H = sum([seg1_H, seg2_H])*-1
-                    self.entropy_result_list.insert(END, [env, str(H)])
-                    H_dict[env] = (H, total_tokens)
-                    print('Entropy for {} and {} in environment of {} is {}'.format(seg1, seg2, env, str(H)), file=f)
-                    print('Frequency of {}: {}\nFrequency of {}: {}\nTotal count ({}): {}\n{}\n'.format(seg1, seg1_prob, seg2, seg2_prob, count_what, total_tokens,'='*15), file=f)
-
+            if not total_tokens:
+                H_dict[env] = (0,0)
+                data = [self.corpus.name,
+                        self.entropy_tier_var.get(),
+                        seg1,
+                        seg2,
+                        env,
+                        str(sum(env_matches[env][seg1])),
+                        str(sum(env_matches[env][seg2])),
+                        str(total_tokens),
+                        'N/A']
+                self.entropy_result_list.insert(END,data)
+            else:
+                seg1_prob = sum(env_matches[env][seg1])/total_tokens
+                seg2_prob = sum(env_matches[env][seg2])/total_tokens
+                seg1_H = log(seg1_prob,2)*seg1_prob if seg1_prob > 0 else 0
+                seg2_H = log(seg2_prob,2)*seg2_prob if seg2_prob > 0 else 0
+                H = sum([seg1_H, seg2_H])*-1
+                H_dict[env] = (H, total_tokens)
+                data = [self.corpus.name,
+                        self.entropy_tier_var.get(),
+                        seg1,
+                        seg2,
+                        env,
+                        str(sum(env_matches[env][seg1])),
+                        str(sum(env_matches[env][seg2])),
+                        str(total_tokens),
+                        str(H)]
+                self.entropy_result_list.insert(END,data)
 
         status_label.grid()
         self.entropy_result_list.grid()
         total_frequency = sum(value[1] for value in H_dict.values())
 
-        output_file_path = os.path.join(os.getcwd(), self.entropy_filename_var.get())
-        with open(output_file_path, mode='a', encoding='utf-8') as f:
-            print('CORPUS: {}\n'.format(self.corpus.name), file=f)
-            if not total_frequency:
-                print('Weighted average entropy could not be calculated because none of the following environments were found:\n {}\n{}'.format(
-                    ','.join(env for env in env_list),'='*15),
-                    file=f)
-                status_label.grid_forget()
-                status_label.configure(text='Entropy could not be calculated because none of the selected environments were found in the corpus')
-                status_label.grid()
-            else:
-                for env in env_matches:
-                    H_dict[env] = H_dict[env][0] * (H_dict[env][1] / total_frequency)
-                weighted_H = sum(H_dict[env] for env in H_dict)
-                text = 'Weighted average entropy for {} and {} is {}, considering environments:\n{}\n'.format(
-                        seg1, seg2, str(weighted_H), ','.join(env for env in env_list))
-                print(text, file=f)
-                status_label.grid_forget()
-                status_text1 = 'Weighted average entropy for /{}/ and /{}/ is {}'.format(seg1, seg2, weighted_H)
-                status_text2 = 'Results have been saved to {}'.format(self.entropy_filename_var.get())
-                status_label.configure(text='\n'.join([status_text1, status_text2]))
+        for env in env_matches:
+            H_dict[env] = H_dict[env][0] * (H_dict[env][1] / total_frequency)
+        weighted_H = sum(H_dict[env] for env in H_dict)
+        total_seg1_matches = sum([sum(env_matches[env][seg1]) for env in env_matches])
+        total_seg2_matches = sum([sum(env_matches[env][seg2]) for env in env_matches])
+        data = [self.corpus.name,
+                    self.entropy_tier_var.get(),
+                    seg1,
+                    seg2,
+                    'AVG',
+                    str(total_seg1_matches),
+                    str(total_seg2_matches),
+                    str(total_seg1_matches+total_seg2_matches),
+                    str(weighted_H)]
+        self.entropy_result_list.insert(END,data)
 
-                status_label.grid()
+        print_frame = Frame(self.calculating_entropy_screen)
+        print_button = Button(print_frame, text='Save results to file', command=self.print_entropy_results)
+        print_button.grid()
+        print_frame.grid()
+        status_label.grid_forget()
+
+    def print_entropy_results(self):
+
+        output_file_path = self.suggest_entropy_filename()
+        if not output_file_path:
+            return
+
+        results = self.entropy_result_list.get(0,END)
+        with open(output_file_path, mode='w', encoding='utf-8') as f:
+            print('\t'.join(['Corpus', 'Tier', 'Sound1', 'Sound2',
+                                'Environment', 'Frequency of Sound1',
+                                'Frequency of Sound2', 'Total count','Entropy']),
+                                file=f)
+            for result in zip(*results):
+                print('\t'.join(result), file=f)
 
     def calculate_H(self, seg1, seg2, user_supplied_envs):
 
@@ -1749,9 +1785,10 @@ class GUI(Toplevel):
 
     def corpus_from_text(self):
 
-        self.from_text_window = Toplevel('Create corpus')
+        self.from_text_window = Toplevel()
+        self.from_text_window.title('Create corpus')
         from_text_frame = LabelFrame(self.from_text_window, text='Create corpus from text')
-        choose_file_frame = LabelFrame(from_text_frame, text='Select a file')
+        choose_file_frame = LabelFrame(from_text_frame, text='Select a text file')
         self.from_text_entry = Entry(choose_file_frame)
         self.from_text_entry.grid()
         find_file = Button(choose_file_frame, text='Choose file...', command=self.navigate_to_text)
@@ -1793,7 +1830,8 @@ class GUI(Toplevel):
         #both = Radiobutton(string_type_frame, text='Corpus has both spelling and transcription', value='both', variable=self.from_corpus_string_type)
         #both.grid()
         new_corpus_feature_frame = LabelFrame(string_type_frame, text='Feature system to use (if transcription exists)')
-        new_corpus_feature_system = OptionMenu(new_corpus_feature_frame,#parent
+        new_corpus_feature_system = OptionMenu(
+            new_corpus_feature_frame,#parent
             self.new_corpus_feature_system_var,#variable
             'spe',#selected option,
             *[fs for fs in self.all_feature_systems])#options in drop-down
