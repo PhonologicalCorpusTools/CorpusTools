@@ -181,6 +181,8 @@ class GUI(Toplevel):
         self.entropy_exhaustive_var = IntVar()
         self.entropy_uniqueness_var = IntVar()
         self.entropy_exclusive_var = IntVar()
+        self.entropy_result_list = None
+        self.calculating_entropy_screen = None
         #Corpus from text variables
         self.punc_vars = [IntVar() for mark in string.punctuation]
         self.new_corpus_string_type = StringVar()
@@ -1263,6 +1265,7 @@ class GUI(Toplevel):
         self.seg1_var = StringVar()
         self.seg2_var = StringVar()
         self.entropy_filename_var = StringVar()
+        self.destroy_entropy_results_table()
         self.entropy_main_screen.destroy()
 
     def entropy_options(self):
@@ -1387,15 +1390,18 @@ class GUI(Toplevel):
         previous_step.grid(row=1, column=0)
         add_env_to_list = Button(button_frame, text='Add this environment to list', command=self.confirm_entropy_options)
         add_env_to_list.grid(row=1, column=1)
-        confirm_envs = Button(button_frame, text='Calculate entropy in selected environments', command=self.calculate_entropy)
+        confirm_envs = Button(button_frame, text='Calculate entropy in selected environments and add to results table', command=self.calculate_entropy)
         confirm_envs.grid(row=1, column=2)
+        self.start_new_envs = Button(button_frame, text='Destroy results table', command=self.destroy_entropy_results_table)
+        self.start_new_envs.grid(row=1, column=3)
+        self.start_new_envs.config(state=DISABLED)
         cancel_button = Button(button_frame, text='Cancel', command=self.entropy_screen.destroy)
-        cancel_button.grid(row=1, column=3)
+        cancel_button.grid(row=1, column=4)
         button_frame.grid(row=1,column=0)
 
         selected_envs_frame = Frame(self.entropy_screen)
         selected_envs_frame.grid(row=0, column=1)
-        selected_envs_label = Label(selected_envs_frame, text='Calculate entropy in the following environments:')
+        selected_envs_label = Label(selected_envs_frame, text='Environments created so far:')
         selected_envs_label.grid()
         self.selected_envs_list = Listbox(selected_envs_frame)
         self.selected_envs_list.configure(width=40)
@@ -1529,6 +1535,15 @@ class GUI(Toplevel):
         #or else there were no problems to begin with
         return True
 
+    def destroy_entropy_results_table(self):
+        try:
+            self.entropy_result_list.destroy()
+            self.entropy_result_list = None
+            self.calculating_entropy_screen.destroy()
+            self.calculating_entropy_screen = None
+        except (TclError, AttributeError):#widgets don't exist anyway
+            pass
+        self.start_new_envs.config(state=DISABLED)
 
     def calculate_entropy(self):
         check = self.selected_envs_list.get(0)
@@ -1536,23 +1551,9 @@ class GUI(Toplevel):
             MessageBox.showwarning(message='Please construct at least one environment')
             return
 
-        self.calculating_entropy_screen = Toplevel()
-        self.calculating_entropy_screen.title('Predictability of distribution results')
-        status_label = Label(self.calculating_entropy_screen, text='Calculating entropy...')
-
-        self.entropy_result_list = MultiListbox(self.calculating_entropy_screen,
-                                    [('Corpus', 20),
-                                    ('Tier', 20),
-                                    ('Sound1', 10),
-                                    ('Sound2', 10),
-                                    ('Environment',40),
-                                    ('Frequency of Sound1', 20),
-                                    ('Frequency of Sound2', 20),
-                                    ('Total count',20),
-                                    ('Entropy',40)])
-        #this is created and all the results are placed into it, but it is not
-        #gridded until the corpus as passed both the uniqueness and exhausitivity
-        #checks and/or the user has agreed it is OK if it doesn't pass the checks
+        if self.calculating_entropy_screen is None:
+            self.calculating_entropy_screen = Toplevel()
+            self.calculating_entropy_screen.title('Predictability of distribution results')
 
         seg1 = self.seg1_var.get()
         seg2 = self.seg2_var.get()
@@ -1566,6 +1567,21 @@ class GUI(Toplevel):
 
         #at this point there are either no problems
         #or else the user wants to see the results anyway
+        if self.entropy_result_list is None:
+            self.entropy_result_list = MultiListbox(self.calculating_entropy_screen,
+                                    [('Corpus', 20),
+                                    ('Tier', 20),
+                                    ('Sound1', 10),
+                                    ('Sound2', 10),
+                                    ('Environment',40),
+                                    ('Frequency of Sound1', 20),
+                                    ('Frequency of Sound2', 20),
+                                    ('Total count',20),
+                                    ('Entropy',40)])
+        #this is created and all the results are placed into it, but it is not
+        #gridded until the corpus as passed both the uniqueness and exhausitivity
+        #checks and/or the user has agreed it is OK if it doesn't pass the checks
+        self.calculating_entropy_screen.protocol('WM_DELETE_WINDOW', self.destroy_entropy_results_table)
         H_dict = dict()
         output_file_path = os.path.join(os.getcwd(), self.entropy_filename_var.get())
         for env in env_matches:
@@ -1600,12 +1616,10 @@ class GUI(Toplevel):
                         str(H)]
                 self.entropy_result_list.insert(END,data)
 
-        status_label.grid()
         self.entropy_result_list.grid()
         total_frequency = sum(value[1] for value in H_dict.values())
-
         for env in env_matches:
-            H_dict[env] = H_dict[env][0] * (H_dict[env][1] / total_frequency)
+            H_dict[env] = H_dict[env][0] * (H_dict[env][1] / total_frequency) if total_frequency>0 else 0
         weighted_H = sum(H_dict[env] for env in H_dict)
         total_seg1_matches = sum([sum(env_matches[env][seg1]) for env in env_matches])
         total_seg2_matches = sum([sum(env_matches[env][seg2]) for env in env_matches])
@@ -1620,11 +1634,12 @@ class GUI(Toplevel):
                     str(weighted_H)]
         self.entropy_result_list.insert(END,data)
 
-        print_frame = Frame(self.calculating_entropy_screen)
-        print_button = Button(print_frame, text='Save results to file', command=self.print_entropy_results)
-        print_button.grid()
-        print_frame.grid()
-        status_label.grid_forget()
+        if self.calculating_entropy_screen is None:
+            print_frame = Frame(self.calculating_entropy_screen)
+            print_button = Button(print_frame, text='Save results to file', command=self.print_entropy_results)
+            print_button.grid()
+            print_frame.grid()
+        self.start_new_envs.config(state=ACTIVE)
 
     def print_entropy_results(self):
 
