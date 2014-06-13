@@ -157,6 +157,8 @@ class GUI(Toplevel):
         self.string_similarity_pairs_var = StringVar()
         self.string_similarity_comparison_type_var = StringVar()
         self.string_similarity_threshold_var = StringVar()
+        self.string_similarity_one_pair1_var = StringVar()
+        self.string_similarity_one_pair2_var = StringVar()
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('spe')
@@ -545,22 +547,42 @@ class GUI(Toplevel):
         word1_frame = Frame(comparison_type_frame)
         one_word_radiobutton = Radiobutton(word1_frame, text='Compare one word to entire corpus',
                                     variable=self.string_similarity_comparison_type_var, value='one')
-        one_word_radiobutton.grid()
+        one_word_radiobutton.grid(sticky=W)
         one_word_radiobutton.invoke()
         word1_frame.grid(sticky=W)
         word1_entry = Entry(word1_frame, textvariable=self.string_similarity_query_var)
         word1_entry.delete(0,END)
         word1_entry.insert(0,selection)
         word1_entry.grid(sticky=W)
+
+        one_pair_frame = Frame(comparison_type_frame)
+        one_pair_radiobutton = Radiobutton(one_pair_frame, text='Compare a single pair of words to each other',
+                                    variable=self.string_similarity_comparison_type_var, value='one_pair')
+        one_pair_radiobutton.grid(row=0, column=0, sticky=W)
+        two_words_frame = Frame(one_pair_frame)
+        first_word_label = Label(two_words_frame, text='Word 1: ')
+        first_word_label.grid(row=1, column=0, sticky=W)
+        first_word_entry = Entry(two_words_frame, textvariable=self.string_similarity_one_pair1_var)
+        first_word_entry.grid(row=1, column=1, sticky=W)
+        second_word_label = Label(two_words_frame, text='Word 2: ')
+        second_word_label.grid(row=2, column=0, sticky=W)
+        second_word_entry = Entry(two_words_frame, textvariable=self.string_similarity_one_pair2_var)
+        second_word_entry.grid(row=2, column=1, sticky=W)
+        two_words_frame.grid(sticky=W)
+        one_pair_frame.grid(sticky=W)
+
         word_pairs_frame = Frame(comparison_type_frame)
-        pairs_radiobutton = Radiobutton(word_pairs_frame, text='Compare pairs of words',
+
+        pairs_radiobutton = Radiobutton(word_pairs_frame, text='Compare a list of pairs of words',
                                         variable=self.string_similarity_comparison_type_var, value='pairs')
-        pairs_radiobutton.grid()
+        pairs_radiobutton.grid(sticky=W)
         get_word_pairs_button = Button(word_pairs_frame, text='Choose word pairs file', command=self.get_word_pairs_file)
-        get_word_pairs_button.grid()
+        get_word_pairs_button.grid(sticky=W)
         get_word_pairs_label = Label(word_pairs_frame, textvariable=self.string_similarity_pairs_var)
-        get_word_pairs_label.grid()
+        get_word_pairs_label.grid(sticky=W)
         word_pairs_frame.grid(sticky=W)
+
+
         comparison_type_frame.grid(row=0,column=0,sticky=N)
 
         options_frame = LabelFrame(self.string_similarity_popup, text='Options')
@@ -626,11 +648,20 @@ class GUI(Toplevel):
             else:
                 suggestion = ''
 
-        filename = FileDialog.asksaveasfilename(initialfile=suggestion)
-        if filename:
-            self.string_similarity_filename_var.set(filename)
+        elif self.string_similarity_comparison_type_var.get() == 'one_pair':
+            word1 = self.string_similarity_one_pair1_var.get()
+            word2 = self.string_similarity_one_pair2_var.get()
+            if (word1 and word2):
+                suggestion = 'string_similarity_{}_{}.txt'.format(word1, word2)
+            else:
+                suggestion = ''
 
-        #RETURN TO THIS POINT
+        filename = FileDialog.asksaveasfilename(initialfile=suggestion)
+        if not filename:
+            return
+
+        self.string_similarity_filename_var.set(filename)
+
         if self.string_similarity_comparison_type_var.get() == 'one':
             threshold = self.string_similarity_threshold_var.get()
             if threshold:
@@ -691,7 +722,7 @@ class GUI(Toplevel):
         if comp_type == 'one':
             query = self.string_similarity_query_var.get()
             if not query:
-                MessageBox.showerror('Please enter a word')
+                MessageBox.showerror(message='Please enter a word')
             try:
                 self.corpus.find(query,keyerror=True)
             except KeyError:
@@ -702,6 +733,31 @@ class GUI(Toplevel):
             if not self.string_similarity_pairs_var.get():
                 MessageBox.showerror(message='Please select a file of word pairs')
                 return
+
+        elif comp_type == 'one_pair':
+            #check if results are already open
+            query1 = self.string_similarity_one_pair1_var.get()
+            query2 = self.string_similarity_one_pair2_var.get()
+            if not (query1 and query2):
+                MessageBox.showerror(message=('You selected to compare a pair,'
+                            'but only entered one word.\Please enter another word'))
+                return
+            try:
+                self.corpus.find(query1,keyerror=True)
+            except KeyError:
+                message = 'The word \"{}\" is not in the corpus'.format(query)
+                MessageBox.showerror(message=message)
+                return
+
+            try:
+                self.corpus.find(query2,keyerror=True)
+            except KeyError:
+                message = 'The word \"{}\" is not in the corpus'.format(query)
+                MessageBox.showerror(message=message)
+                return
+
+
+
 
         #If it's all good, then calculate relatedness
         string_type = self.string_similarity_stringtype_var.get()
@@ -750,6 +806,19 @@ class GUI(Toplevel):
             for result in results:
                 w1, w2, similarity = result
                 string_similarity_results_box.insert(END,[w1, w2, similarity])
+
+        elif self.string_similarity_comparison_type_var.get() == 'one_pair':
+            word1 = self.string_similarity_one_pair1_var.get()
+            word2 = self.string_similarity_one_pair2_var.get()
+            results = morph_relatedness.morph_relatedness_single_pair('', 'string_similarity', string_type, word1, word2, self.corpus)
+            string_similarity_results_popup = Toplevel()
+            string_similarity_results_popup.title('String similarity results')
+            string_similarity_results_frame = Frame(string_similarity_results_popup)
+            string_similarity_results_box = MultiListbox(string_similarity_results_popup,
+                        [('Word 1',20),
+                        ('Word 2', 20),
+                        ('Similarity', 20)])
+            string_similarity_results_box.insert(END,results)
 
         #display results on screen
         string_similarity_results_box.grid()
@@ -1386,17 +1455,24 @@ class GUI(Toplevel):
 
         #BUTTON FRAME STARTS HERE
         button_frame = Frame(self.entropy_screen)
-        previous_step = Button(button_frame, text='Previous step', command=self.entropy_go_back)
-        previous_step.grid(row=1, column=0)
-        add_env_to_list = Button(button_frame, text='Add this environment to list', command=self.confirm_entropy_options)
-        add_env_to_list.grid(row=1, column=1)
-        confirm_envs = Button(button_frame, text='Calculate entropy in selected environments and add to results table', command=self.calculate_entropy)
-        confirm_envs.grid(row=1, column=2)
-        self.start_new_envs = Button(button_frame, text='Destroy results table', command=self.destroy_entropy_results_table)
-        self.start_new_envs.grid(row=1, column=3)
+
+        left_frame = Frame(button_frame)
+        add_env_to_list = Button(left_frame, text='Add this environment to list', command=self.confirm_entropy_options)
+        add_env_to_list.grid(row=0, column=0)
+        confirm_envs = Button(left_frame, text='Calculate entropy in selected environments and add to results table', command=self.calculate_entropy)
+        confirm_envs.grid(row=0, column=1)
+        self.start_new_envs = Button(left_frame, text='Destroy results table', command=self.destroy_entropy_results_table)
+        self.start_new_envs.grid(row=0, column=2)
         self.start_new_envs.config(state=DISABLED)
-        cancel_button = Button(button_frame, text='Cancel', command=self.entropy_screen.destroy)
-        cancel_button.grid(row=1, column=4)
+        left_frame.pack(side=LEFT, expand=True)#grid(row=0, column=0, sticky=W)
+
+        right_frame = Frame(button_frame)
+        previous_step = Button(right_frame, text='Previous step', command=self.entropy_go_back)
+        previous_step.grid(row=0, column=0, sticky=E)
+        cancel_button = Button(right_frame, text='Cancel', command=self.entropy_screen.destroy)
+        cancel_button.grid(row=0, column=1, sticky=E)
+        right_frame.pack(side=RIGHT, expand=True)#(row=0, column=10, sticky=E)
+
         button_frame.grid(row=1,column=0)
 
         selected_envs_frame = Frame(self.entropy_screen)
@@ -1541,9 +1617,9 @@ class GUI(Toplevel):
             self.entropy_result_list = None
             self.calculating_entropy_screen.destroy()
             self.calculating_entropy_screen = None
+            self.start_new_envs.config(state=DISABLED)
         except (TclError, AttributeError):#widgets don't exist anyway
             pass
-        self.start_new_envs.config(state=DISABLED)
 
     def calculate_entropy(self):
         check = self.selected_envs_list.get(0)

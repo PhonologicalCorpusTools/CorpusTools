@@ -69,6 +69,17 @@ def print_one_word_results(output_filename, query, related_data, threshold):
             else:
                 outf.write(word + '\t' + str(score) + '\n')
 
+
+def morph_relatedness_single_pair(corpus_name, relator_type, string_type, w1, w2, ready_made_corpus=False):
+    relator = relator_type.lower()
+    if relator == 'string_similarity':
+        relator = string_similarity.Relator(corpus_name, ready_made_corpus)
+        freq_base = relator.make_freq_base(string_type)
+        score = relator.string_sim(w1, w2, freq_base)
+    else:
+        raise AttributeError('Relator type \'{}\' is not valid'.format(relator_type))
+    return ((w1, w2, score))
+
 def morph_relatedness_pairs(corpus_name, relator_type, string_type, count_what, input_data, output_filename=None, threshold=None, ready_made_corpus = None):
     """Given an input of pairs of words to compare to each other, returns such pairs and their relatedness scores
 
