@@ -679,8 +679,15 @@ class GUI(Toplevel):
         info_popup = Toplevel()
         info_popup.title('About the string similarity function')
         description_frame = LabelFrame(info_popup, text='Brief description')
-        text = 'This function calculates substring similarity, and can be used as a proxy for morphological relatedness'
+        text = ('This function calculates the similarity between words in the corpus,'
+                ' based on either their spelling or their transcription. Similarity '
+                'is a function of the longest common shared sequences of graphemes '
+                'or phonemes (weighted by their frequency of occurrence in the corpus), '
+                'subtracting out the non-shared graphemes or phonemes. The spelling '
+                'version was originally proposed as a measure of morphological relatedness,'
+                ' but is more accurately described as simply a measure of string similarity.')
         description_label = Label(description_frame, text=text)
+        description_label.config(wraplength=600)
         description_label.grid()
         description_frame.grid(sticky=W)
         citation_frame = LabelFrame(info_popup, text='Original source')
@@ -1578,8 +1585,7 @@ class GUI(Toplevel):
 
         if self.entropy_exhaustive_var.get() and missing_words:
             #environments are unique but non-exhaustive
-            final = os.path.split(self.entropy_filename_var.get())[-1]
-            filename = 'missing_words_'+final
+            filename = 'missing_words_entropy_{}_and_{}.txt'.format(self.seg1_var.get(), self.seg2_var.get())
             with open(os.path.join(os.getcwd(),'ERRORS', filename), mode='w', encoding='utf-8') as f:
 
                 print('The following words have at least one of the segments you are searching for, but it occurs in an environment not included in the list you selected\r', file=f)
@@ -1710,11 +1716,11 @@ class GUI(Toplevel):
                     str(weighted_H)]
         self.entropy_result_list.insert(END,data)
 
-        if self.calculating_entropy_screen is None:
-            print_frame = Frame(self.calculating_entropy_screen)
-            print_button = Button(print_frame, text='Save results to file', command=self.print_entropy_results)
-            print_button.grid()
-            print_frame.grid()
+       #if self.calculating_entropy_screen is not None:
+        print_frame = Frame(self.calculating_entropy_screen)
+        print_button = Button(print_frame, text='Save results to file', command=self.print_entropy_results)
+        print_button.grid()
+        print_frame.grid()
         self.start_new_envs.config(state=ACTIVE)
 
     def print_entropy_results(self):
@@ -2182,7 +2188,7 @@ class GUI(Toplevel):
                                 variable=self.fl_type_var, value='min_pairs',
                                 command= lambda x=True:self.show_min_pairs_options(x))
         min_pairs_type.grid(sticky=W)
-        h_type = Radiobutton(type_frame, text='Entropy',
+        h_type = Radiobutton(type_frame, text='Change in Entropy',
                             variable=self.fl_type_var, value='h',
                             command= lambda x=False:self.show_min_pairs_options(x))
         h_type.grid(sticky=W)
