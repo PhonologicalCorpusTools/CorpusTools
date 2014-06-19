@@ -2592,6 +2592,8 @@ def make_menus(root,app):
 if __name__ == '__main__':
     root = Tk()
     root.title("CorpusTools v0.15")
+    if not os.path.exists(os.path.join(os.getcwd(),'ERRORS')):
+        os.mkdir(os.path.join(os.getcwd(),'ERRORS'))
     app = GUI(root)
     make_menus(root,app)
     root.bind_all('<Control-q>', app.quit)
