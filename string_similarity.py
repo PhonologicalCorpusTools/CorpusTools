@@ -138,24 +138,48 @@ class Relator(object):
         int
             A number representing the relatedness of two words based on Khorsi (2012)
         """
-        longComSeq = self.lcs(w1, w2)
-        longest, left_over = longComSeq
-        if isinstance(longest, str) and isinstance(left_over, str):
-            longest = re.sub("[\W\d]", "", longest.strip())
-            left_over = re.sub("[\W\d]", "", left_over.strip())
-        else:
-            pass
-        total_freq = sum(value for value in freq_base.values())
+        try:
+            longComSeq = self.lcs(w1, w2)
+            longest, left_over = longComSeq
+            if isinstance(longest, str) and isinstance(left_over, str):
+                longest = re.sub("[\W\d]", "", longest.strip())
+                left_over = re.sub("[\W\d]", "", left_over.strip())
+            else:
+                pass
+            total_freq = sum(value for value in freq_base.values())
 
-        #Khorsi's algorithm 
-        if isinstance(w1, str):
-            sum1 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in longest)
-            sum2 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in left_over)
-        else:
-            sum1 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in longest)
-            sum2 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in left_over)
+            #Khorsi's algorithm 
+            if isinstance(w1, str):
+                sum1 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in longest)
+                sum2 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in left_over)
+            else:
+                sum1 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in longest)
+                sum2 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in left_over)
+    
+            return sum1-sum2
+        except ZeroDivisionError: #This happened because a spelling string is being compared to a transcription frequency base
+            word1 =  self.corpus.find(w1)
+            word2 = self.corpus.find(w2)
+            w1 = getattr(word1, 'transcription')
+            w2 = getattr(word2, 'transcription')
+            longComSeq = self.lcs(w1, w2)
+            longest, left_over = longComSeq
+            if isinstance(longest, str) and isinstance(left_over, str):
+                longest = re.sub("[\W\d]", "", longest.strip())
+                left_over = re.sub("[\W\d]", "", left_over.strip())
+            else:
+                pass
+            total_freq = sum(value for value in freq_base.values())
 
-        return sum1-sum2
+            #Khorsi's algorithm 
+            if isinstance(w1, str):
+                sum1 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in longest)
+                sum2 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in left_over)
+            else:
+                sum1 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in longest)
+                sum2 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in left_over)
+    
+            return sum1-sum2
 
     def make_freq_base(self, string, count_what = 'type'):
         """Returns a dictionary of segments mapped to their frequency of occurence in a corpus

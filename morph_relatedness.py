@@ -52,7 +52,7 @@ def morph_relatedness_word(corpus_name, relator_type, string_type, count_what, q
     if output_filename == 'return_data':
         return related_data
     else:
-        print_one_word_results(output_filename, related_data, threshold)
+        print_one_word_results(output_filename, query, related_data, threshold)
 
 def print_one_word_results(output_filename, query, related_data, threshold):
     with open(output_filename, mode='w', encoding='utf-8') as outf:
@@ -70,7 +70,7 @@ def print_one_word_results(output_filename, query, related_data, threshold):
                 outf.write(word + '\t' + str(score) + '\n')
 
 
-def morph_relatedness_single_pair(corpus_name, relator_type, string_type, w1, w2, ready_made_corpus=False):
+def morph_relatedness_single_pair(corpus_name, relator_type, string_type, w1, w2, ready_made_corpus=None):
     relator = relator_type.lower()
     if relator == 'string_similarity':
         relator = string_similarity.Relator(corpus_name, ready_made_corpus)
