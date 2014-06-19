@@ -173,7 +173,7 @@ class Word(object):
 
     tiers : list
         A list of tiers, which are created with the self.add_tier method. This
-        is an empty list if not tiers have been created.
+        is an empty list if no tiers have been created.
 
     descriptors : list of str
         A list of the names of the attributes of a Word instance. This is

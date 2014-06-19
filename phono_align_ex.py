@@ -38,10 +38,6 @@ class Aligner(object):
     def make_similarity_matrix(self, seq1=None, seq2=None):
         # print(seq1)
         # print(seq2)
-        if seq1 == None:
-            seq1 = []
-        if seq2 == None:
-            seq2 = []
 
         d = []
 
@@ -107,19 +103,19 @@ class Aligner(object):
         # print(segment2)
         if self.features_tf:
             if segment1 == 'empty':
-                fs2 = self.features[segment2]
+                fs2 = self.features[segment2.symbol]
                 return (sum(check_feature_difference('0', 
                             f.sign) for f in fs2) * self.ins_penalty)    # or should this be addition?
             elif segment2 == 'empty':
-                fs1 = self.features[segment1]
+                fs1 = self.features[segment1.symbol]
                 # print(fs1)
                 # print(fs1[0])
                 return (sum(check_feature_difference(f.sign, 
                         '0') for f in fs1) * 
                         self.del_penalty)    # or should this be addition?
             else:
-                fs1 = self.features[segment1]
-                fs2 = self.features[segment2]
+                fs1 = self.features[segment1.symbol]
+                fs2 = self.features[segment2.symbol]
                 # print(segment1)
                 # print(fs1)
                 # print(segment2)

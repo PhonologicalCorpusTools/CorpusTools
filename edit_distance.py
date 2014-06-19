@@ -46,7 +46,7 @@ class Relator(object):
         if features == None:
             features = self.corpus.specifier.matrix
         a = Aligner(features_tf=features_tf, features=features)
-        m = a.make_similarity_matrix(w1, w2)
+        m = a.make_similarity_matrix(w1.transcription, w2.transcription)
         return m[-1][-1]['f']
         
 
@@ -95,6 +95,7 @@ class Relator(object):
 
 
 if __name__ == '__main__':
+    ## TESTING
     r = Relator(corpus_name='Iphod')
-    ed = r.edit_distance(r.corpus['test'], r.corpus['testing'])
+    ed = r.edit_distance(r.corpus['ship'], r.corpus['shopping'], features_tf=False)
     print(ed)
