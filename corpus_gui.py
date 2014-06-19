@@ -1651,15 +1651,15 @@ class GUI(Toplevel):
         #or else the user wants to see the results anyway
         if self.entropy_result_list is None:
             self.entropy_result_list = MultiListbox(self.calculating_entropy_screen,
-                                    [('Corpus', 20),
-                                    ('Tier', 20),
+                                    [('Corpus', 10),
+                                    ('Tier', 15),
                                     ('Sound1', 10),
                                     ('Sound2', 10),
-                                    ('Environment',40),
-                                    ('Frequency of Sound1', 20),
-                                    ('Frequency of Sound2', 20),
-                                    ('Total count',20),
-                                    ('Entropy',40)])
+                                    ('Environment',30),
+                                    ('Frequency of Sound1', 10),
+                                    ('Frequency of Sound2', 10),
+                                    ('Total count',10),
+                                    ('Entropy',10)])
         #this is created and all the results are placed into it, but it is not
         #gridded until the corpus as passed both the uniqueness and exhausitivity
         #checks and/or the user has agreed it is OK if it doesn't pass the checks
@@ -2256,6 +2256,19 @@ class GUI(Toplevel):
                 except TclError:
                     pass
 
+    def export_to_text_file(self):
+        filename = FileDialog.asksaveasfilename()
+        if not filename:
+            return
+
+        word = self.corpus.random_word()
+        values = sorted(word.descriptors)
+        with open(filename, encoding='utf-8', mode='w') as f:
+            print(','.join(sorted(word.descriptors)), file=f)
+            for key in self.corpus.iter_sort():
+                #word = self.corpus[key]
+                for value in values:
+                    print(','.join(str(getattr(word, value)) for value in values), file=f)
 
     def cancel_functional_load(self):
         self.delete_fl_results_table()
@@ -2565,17 +2578,18 @@ def make_menus(root,app):
     filemenu.add_command(label='Use custom corpus...', command=app.choose_custom_corpus)
     filemenu.add_command(label='Create corpus from text...', command=app.corpus_from_text)
     filemenu.add_command(label='Save corpus as...', command=app.save_corpus_as)
+    filemenu.add_command(label='Export as text file...', command=app.export_to_text_file)
     filemenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings, command=app.change_warnings)
     filemenu.add_command(label="Quit", command=app.quit, accelerator='Ctrl+Q')
-    menubar.add_cascade(label="File", menu=filemenu)
-    filemenu.invoke(4)#start with the checkmark for the 'show warning' option turned on
+    menubar.add_cascade(label="Corpus", menu=filemenu)
+    filemenu.invoke(5)#start with the checkmark for the 'show warning' option turned on
 
     corpusmenu = Menu(menubar, tearoff=0)
-    corpusmenu.add_command(label='Search corpus...', command=app.search)
+    #corpusmenu.add_command(label='Search corpus...', command=app.search)
     corpusmenu.add_command(label='View/change feature system...', command=app.show_feature_system)
     corpusmenu.add_command(label='Add Tier...', command=app.create_tier)
     corpusmenu.add_command(label='Remove Tier...', command=app.destroy_tier)
-    menubar.add_cascade(label='Corpus', menu=corpusmenu)
+    menubar.add_cascade(label='Options', menu=corpusmenu)
 
     calcmenu = Menu(menubar, tearoff=0)
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
