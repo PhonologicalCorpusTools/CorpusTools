@@ -606,7 +606,7 @@ class GUI(Toplevel):
         if not has_transcription:
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=0, row=1, sticky=W)
-        threshold_frame = LabelFrame(options_frame, text='Return only results with relatedness greater than...')
+        threshold_frame = LabelFrame(options_frame, text='Return only results with similarity greater than...')
         threshold_entry = Entry(threshold_frame, textvariable=self.string_similarity_threshold_var)
         threshold_entry.grid()
         threshold_frame.grid(column=0, row=2, sticky=W)
@@ -789,11 +789,12 @@ class GUI(Toplevel):
             string_similarity_results_box = MultiListbox(string_similarity_results_popup,
                         [(string_type, 15),
                         ('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),25),
+                        ('Type or token', 10)
                         ])
 
             for result in results:
                 word, similarity = result
-                string_similarity_results_box.insert(END,[word, similarity])
+                string_similarity_results_box.insert(END,[word, similarity, typetoken])
 
         elif self.string_similarity_comparison_type_var.get() == 'pairs':
             query = self.string_similarity_pairs_var.get()
@@ -808,23 +809,27 @@ class GUI(Toplevel):
             string_similarity_results_box = MultiListbox(string_similarity_results_popup,
                         [('Word 1',20),
                         ('Word 2', 20),
-                        ('Similarity', 20)])
+                        ('Similarity', 10),
+                        ('Type or token'), 10])
 
             for result in results:
                 w1, w2, similarity = result
-                string_similarity_results_box.insert(END,[w1, w2, similarity])
+                string_similarity_results_box.insert(END,[w1, w2, similarity, typetoken])
 
         elif self.string_similarity_comparison_type_var.get() == 'one_pair':
             word1 = self.string_similarity_one_pair1_var.get()
             word2 = self.string_similarity_one_pair2_var.get()
             results = morph_relatedness.morph_relatedness_single_pair('', 'string_similarity', string_type, word1, word2, self.corpus)
+            results = list(results)
+            results.append(typetoken)
             string_similarity_results_popup = Toplevel()
             string_similarity_results_popup.title('String similarity results')
             string_similarity_results_frame = Frame(string_similarity_results_popup)
             string_similarity_results_box = MultiListbox(string_similarity_results_popup,
                         [('Word 1',20),
                         ('Word 2', 20),
-                        ('Similarity', 20)])
+                        ('Similarity', 20),
+                        ('Type or token', 10)])
             string_similarity_results_box.insert(END,results)
 
         #display results on screen
@@ -1686,6 +1691,8 @@ class GUI(Toplevel):
                 seg1_H = log(seg1_prob,2)*seg1_prob if seg1_prob > 0 else 0
                 seg2_H = log(seg2_prob,2)*seg2_prob if seg2_prob > 0 else 0
                 H = sum([seg1_H, seg2_H])*-1
+                if not H:
+                    H = H+0
                 H_dict[env] = (H, total_tokens)
                 data = [self.corpus.name,
                         self.entropy_tier_var.get(),
@@ -2193,9 +2200,9 @@ class GUI(Toplevel):
                             command= lambda x=False:self.show_min_pairs_options(x))
         h_type.grid(sticky=W)
 
-        self.fl_min_pairs_option_frame = LabelFrame(self.fl_popup, text='Minimal pairs options')
-        min_freq_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Minimum frequency?')
-        fl_frequency_cutoff_label = Label(min_freq_frame, text='Only consider sounds with frequency greater than...')
+
+        min_freq_frame = LabelFrame(self.fl_popup, text='Minimum frequency?')
+        fl_frequency_cutoff_label = Label(min_freq_frame, text='Only consider words with frequency of at least...')
         fl_frequency_cutoff_label.grid(row=0, column=0)
         fl_frequency_cutoff_entry = Entry(min_freq_frame, textvariable=self.fl_frequency_cutoff_var)
         fl_frequency_cutoff_entry.delete(0,END)
@@ -2203,6 +2210,7 @@ class GUI(Toplevel):
         fl_frequency_cutoff_entry.grid(row=0, column=1)
         min_freq_frame.grid(sticky=W)
 
+        self.fl_min_pairs_option_frame = LabelFrame(self.fl_popup, text='Options')
         relative_count_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Relative count?')
         relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
                                     value='relative', variable=self.fl_relative_count_var)
@@ -2224,7 +2232,7 @@ class GUI(Toplevel):
         ignore_homophones_button.invoke()
         homophones_frame.grid(sticky=W)
 
-        type_frame.grid(row=0, column=0, sticky=N)
+        type_frame.grid(row=0, column=0, sticky=(N,W))
         ipa_frame.grid(row=0,column=1, sticky=N)
         self.fl_min_pairs_option_frame.grid(row=0,column=2,sticky=N)
         min_pairs_type.invoke()
@@ -2370,14 +2378,16 @@ class GUI(Toplevel):
                                                 ('Type of funcational load', 10),
                                                 ('Result',20),
                                                 ('Ignored homophones?',5),
-                                                ('Relative count?',5)])
+                                                ('Relative count?',5),
+                                                ('Minimum word frequency', 10)])
         self.fl_results_table.grid()
         self.fl_results_table.insert(END,[self.fl_seg1_var.get(),
                                             self.fl_seg2_var.get(),
                                             fl_type,
                                             result,
                                             ignored_homophones,
-                                            relative_count])
+                                            relative_count,
+                                            self.fl_frequency_cutoff_var.get()])
 
         button_frame = Frame(self.fl_results)
         print_button = Button(button_frame, text='Save results to file', command=self.print_fl_results)
@@ -2409,7 +2419,8 @@ class GUI(Toplevel):
                                         fl_type,
                                         result,
                                         ignored_homophones,
-                                        relative_count])
+                                        relative_count,
+                                        self.fl_frequency_cutoff_var.get()])
 
 
 class ToolTip:
