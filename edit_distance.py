@@ -5,49 +5,50 @@ import time
 from codecs import open
 
 import corpustools
+from phono_align_ex import Aligner
 
 class Relator(object):
-    """Initializes the string similarity relator based off the algorithm of morphological relatedness found in Khorsi (2012)
-    
-    Parameters
-    ----------
-    object: list
-        contains parameters needed for the corpus which will be used in relating elements, some examples could be a corpus name or an already created corpus
-    Returns
-    -------
-    Returns a relator type which can be used to call methods
+    """Attributes: factory, corpus
     """
 
-    def edit_distance(self, w1, w2):
-        """Calculate the edit distance of two words given a set of characters and their frequencies in a corpus, Returns the value (implementation of Khorsi (2012))
+    def __init__(self, corpus_name=None, ready_made_corpus=None):
+        """Initialize a Relator object by building a corpus or utilizing an already make corpus
         
         Parameters
         ----------
-        w1: Word
-            Either a string or list of transcription characters
-        w2: Word
-            Same as w1
-        freq_base: dictionary
-            a dictionary where each segment is mapped to its frequency of occurence in a corpus
-        
+        corpus_name: string
+            The corpus name, e.g. 'Iphod'
+        ready_made_corpus: Corpus
+            A corpus that has been built, if none provided, __init__ will build one
+            
         Returns
         -------
-        int
-            A number representing the relatedness of two words based on Khorsi (2012)
+        None
         """
-        try:
-    
-            return edit_distance_score
+        if ready_made_corpus is not None:
+            self.corpus = ready_made_corpus
+            return
+        else:
+            print('Building Corpus')
+            start_time = time.time()
+            self.factory = corpustools.CorpusFactory()
+            self.corpus = self.factory.make_corpus(corpus_name, features='spe', size='all')
+            end_time = time.time()
+            print('Corpus Complete')
+            print('Corpus creation time: ' + str(end_time-start_time))
+
+
+
+    def edit_distance(self, w1, w2, features_tf=True, features=None):
+        """       
+        TO-DO
+        """
+        if features == None:
+            features = self.corpus.specifier.matrix
+        a = Aligner(features_tf=features_tf, features=features)
+        m = a.make_similarity_matrix(w1, w2)
+        return m[-1][-1]['f']
         
-        except ZeroDivisionError: #This happened because a spelling string is being compared to a transcription frequency base
-            word1 =  self.corpus.find(w1)
-            word2 = self.corpus.find(w2)
-            w1 = getattr(word1, 'transcription')
-            w2 = getattr(word2, 'transcription')
-            
-            edit_distance_score = 0
-            
-            return edit_distance_score
 
 
 
@@ -93,31 +94,7 @@ class Relator(object):
         return related_data
 
 
-    def __init__(self,corpus_name=None, ready_made_corpus=None):
-        """Initialize a Relator object by building a corpus or utilizing an already make corpus
-        
-        Parameters
-        ----------
-        corpus_name: string
-            The corpus name, e.g. 'Iphod'
-        ready_made_corpus: Corpus
-            A corpus that has been built, if none provided, __init__ will build one
-            
-        Returns
-        -------
-        None
-        """
-        if ready_made_corpus is not None:
-            self.corpus = ready_made_corpus
-            return
-        else:
-            print('Building Corpus')
-            start_time = time.time()
-            self.factory = corpustools.CorpusFactory()
-            self.corpus = self.factory.make_corpus(corpus_name, features='spe', size='all')
-            end_time = time.time()
-            print('Corpus Complete')
-            print('Corpus creation time: ' + str(end_time-start_time))
-
 if __name__ == '__main__':
-    pass
+    r = Relator(corpus_name='Iphod')
+    ed = r.edit_distance(r.corpus['test'], r.corpus['testing'])
+    print(ed)
