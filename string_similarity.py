@@ -222,63 +222,7 @@ class Relator(object):
                         freq_base[letter.symbol] += frequency
         return freq_base
 
-    def compare_word(self,w, string, count_what='type'):
-        """Used to calculate the relatedness of a single word to all other words in a corpus
-        
-        Parameters
-        ----------
-        w: Word
-            Either a string or list of segments representing a word in a corpus
-        string: string
-            The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
-            
-        Returns
-        -------
-        list
-            a list of all words in a corpus with their respective relatedness score to the input word w
-        """
-        freq_base = self.make_freq_base(string, count_what)
-        relate = list()
-        for word in self.corpus:
-            word = getattr(word, string)
-            #Skip over words that do not have transcriptions if string == 'transcription'
-            if word is None:
-                continue
-            relatedness = [self.string_sim(w, word, freq_base)]
-            relate.append( (relatedness, word) )
-
-
-        #Sort the list by most morphologically related
-        relate.sort(key=lambda t:t[0])
-        relate.reverse()
-        return relate
-
-    def word_corpus_compare(self, w, string='spelling', count_what='type'):
-        """Used to initialize the calculation of comparing a word to all other words in a corpus, returns a list in a writeable format for .txt files
-        
-        Parameters
-        ----------
-        w: Word
-            Either a string or list of segments representing a word in a corpus
-        string: string
-            The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols), defaults to 'spelling'
-        
-        Returns
-        -------
-        list
-            a list of all words in a corpus with their respective relatedness score to the input word w in a writeable format for .txt files
-        """
-        w = getattr(w, string)
-        comp = self.compare_word(w, string, count_what)
-        comp_strings = list()
-        for score, word in comp:
-            if not isinstance(word, str):
-                word = ''.join([seg.symbol for seg in word])
-            comp_strings.append( (word, score) )
-        return comp_strings
-
-
-    def relate(self, query, string_type='spelling', count_what='type'):
+    def mass_relate(self, query, string_type='spelling', count_what='type'):
         """Given an input Word, uses a corpus to calculate the relatedness of all other words in the corpus to that input Word
         
         Parameters
@@ -297,7 +241,27 @@ class Relator(object):
         """
         self.count_what = count_what
         word = self.corpus.find(query)
-        related_data = self.word_corpus_compare(word, string_type, count_what)
+        w = getattr(word, string_type)
+        freq_base = self.make_freq_base(string_type, count_what)
+        relate = list()
+        for word in self.corpus:
+            word = getattr(word, string_type)
+            #Skip over words that do not have transcriptions if string == 'transcription'
+            if word is None:
+                continue
+            relatedness = [self.string_sim(w, word, freq_base)]
+            relate.append( (relatedness, word) )
+        #Sort the list by most morphologically related
+        relate.sort(key=lambda t:t[0])
+        relate.reverse()
+        
+        comp_strings = list()
+        for score, word in relate:
+            if not isinstance(word, str):
+                word = ''.join([seg.symbol for seg in word])
+            comp_strings.append( (word, score) )
+            
+        related_data = comp_strings
         return related_data
 
 
