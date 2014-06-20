@@ -2,14 +2,14 @@ import unittest
 
 import os
 try:
-    from phonsim.helpers.distance_functions import (dtw_distance,
+    from acousticsim.helpers.distance_functions import (dtw_distance,
                                         generate_distance_matrix,
                                         xcorr_distance)
 except ImportError:
     import sys
     test_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.split(os.path.split(test_dir)[0])[0])
-    from phonsim.phon_sim import phonetic_similarity_mapping,phonetic_similarity_directories
+    from acousticsim.main import acoustic_similarity_mapping,acoustic_similarity_directories
 
 TEST_DIR = r'C:\Users\michael\Documents\Testing'
 
