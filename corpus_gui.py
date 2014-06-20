@@ -2144,6 +2144,23 @@ class GUI(Toplevel):
 
         self.feature_screen.destroy()
         self.show_feature_system(memory=self.feature_system_memory)
+        
+    def phon_sim(self):
+        self.ps_popup = Toplevel()
+        self.ps_popup.title('Acoustic similarity')
+        dir_frame = LabelFrame(self.ps_popup,text='Directories')
+        dir_one_text = Entry(dir_frame)
+        dir_one_text.grid()
+        def set_dir_one():
+            dir_one = FileDialog.askdirectory()
+            if dir_one:
+                dir_one_text.delete(0,END)
+                dir_one_text.insert(0, dir_one)
+                
+        find_dir_one = Button(dir_frame, text='Choose directory...', command=set_dir_one)
+        find_dir_one.grid()
+        
+            
 
     def functional_load(self):
         self.fl_popup = Toplevel()
@@ -2575,6 +2592,7 @@ def make_menus(root,app):
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
     calcmenu.add_command(label='Calculate predictability of distribution...', command=app.entropy)
     calcmenu.add_command(labe='Calculate functional load...', command=app.functional_load)
+    calcmenu.add_command(labe='Calculate acoustic similarity...', command=app.phon_sim)
     menubar.add_cascade(label='Analysis', menu=calcmenu)
 
     helpmenu = Menu(menubar, tearoff=0)
