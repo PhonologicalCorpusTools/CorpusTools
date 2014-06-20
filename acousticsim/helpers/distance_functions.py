@@ -28,7 +28,7 @@ def xcorr_distance(rep_one,rep_two):
     length_diff = rep_one.shape[0] - rep_two.shape[0]
     if length_diff > 0:
         longer_rep = rep_one
-        shorterEnv = rep_two
+        shorter_rep = rep_two
     else:
         longer_rep = rep_two
         shorter_rep = rep_one

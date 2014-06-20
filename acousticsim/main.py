@@ -4,15 +4,15 @@ from numpy import zeros
 from functools import partial
 
 try:
-    from phonsim.helpers.representations import to_envelopes, to_mfcc
-    from phonsim.helpers.distance_functions import dtw_distance, xcorr_distance
+    from acousticsim.helpers.representations import to_envelopes, to_mfcc
+    from acousticsim.helpers.distance_functions import dtw_distance, xcorr_distance
 except ImportError:
     import sys
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from phonsim.helpers.representations import to_envelopes, to_mfcc
-    from phonsim.helpers.distance_functions import dtw_distance, xcorr_distance
+    from acousticsim.helpers.representations import to_envelopes, to_mfcc
+    from acousticsim.helpers.distance_functions import dtw_distance, xcorr_distance
 
-def phonetic_similarity_mapping(path_mapping,
+def acoustic_similarity_mapping(path_mapping,
                             rep = 'envelopes',
                             match_function = 'dtw',
                             num_filters = None,
@@ -21,7 +21,7 @@ def phonetic_similarity_mapping(path_mapping,
                             output_sim = True,
                             verbose=False):
     """Takes in an explicit mapping of full paths to .wav files to have
-    phonetic similarity computed.
+    acoustic similarity computed.
     
     Parameters
     ----------
@@ -100,7 +100,7 @@ def phonetic_similarity_mapping(path_mapping,
       
     return output_values
     
-def phonetic_similarity_directories(directory_one,directory_two,
+def acoustic_similarity_directories(directory_one,directory_two,
                             all_to_all = True,
                             rep = 'envelopes',
                             match_function = 'dtw',
@@ -108,8 +108,10 @@ def phonetic_similarity_directories(directory_one,directory_two,
                             num_coeffs = 20,
                             freq_lims = (80,7800),
                             output_sim = True,
-                            verbose=False):
-    """Computes phonetic similarity across two directories of .wav files.
+                            verbose=False,
+                            use_multi=False,
+                            threaded_q=None):
+    """Computes acoustic similarity across two directories of .wav files.
     
     Parameters
     ----------
@@ -203,6 +205,11 @@ def phonetic_similarity_directories(directory_one,directory_two,
                     dist_val = 1 / dist_val
                 output[i,j] = dist_val
         output_val = output[output > 0].mean()
-    return output_val
+    if not threaded_q:
+        return output_val
+    else:
+        threaded_q.put(output_val)
+        return None
+    
     
 

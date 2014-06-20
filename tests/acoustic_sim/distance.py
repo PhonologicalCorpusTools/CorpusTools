@@ -4,7 +4,7 @@ from numpy import array
 import unittest
 import os
 try:
-    from phonsim.helpers.distance_functions import (dtw_distance,
+    from acousticsim.helpers.distance_functions import (dtw_distance,
                                         generate_distance_matrix,
                                         xcorr_distance)
 except ImportError:
@@ -12,7 +12,7 @@ except ImportError:
     
     test_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.split(os.path.split(test_dir)[0])[0])
-    from phonsim.helpers.distance_functions import (dtw_distance,
+    from acousticsim.helpers.distance_functions import (dtw_distance,
                                         generate_distance_matrix,
                                         xcorr_distance)
 

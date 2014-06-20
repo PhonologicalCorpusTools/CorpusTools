@@ -5,14 +5,14 @@ from numpy.linalg import norm
 import unittest
 import os
 try:
-    from phonsim.helpers.representations import (to_envelopes,
+    from acousticsim.helpers.representations import (to_envelopes,
                                         to_mfcc,
                                         preproc)
 except ImportError:
     import sys
     test_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.split(os.path.split(test_dir)[0])[0])
-    from phonsim.helpers.representations import (to_envelopes,
+    from acousticsim.helpers.representations import (to_envelopes,
                                         to_mfcc,
                                         preproc)
 
