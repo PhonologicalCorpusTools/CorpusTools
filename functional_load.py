@@ -34,7 +34,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, d
         q = threaded_q
 
     if frequency_cutoff > 0:
-        corpus = [word for word in corpus if word.freq_per_mil >= frequency_cutoff]
+        corpus = [word for word in corpus if word.freq_per_mil >= frequency_cutoff] # change to .frequency once that is fixed!
 
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
     
@@ -67,7 +67,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, d
         return None
 
 
-def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, threaded_q=False):
+def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', threaded_q=False):
     """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
 
     Parameters
@@ -78,6 +78,8 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, threaded_q=False):
         The pairs of Segments to be conflated.
     frequency_cutoff : number, optional
         Minimum frequency of words to consider, if desired.
+    type_or_token : str {'type', 'token'}
+        Specify whether entropy is based on type or token frequency.
 
     Returns
     -------
@@ -85,23 +87,26 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, threaded_q=False):
         The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
     """
 
-    if frequency_measure == 'type':
+    if frequency_cutoff > 0:
+        corpus = [word for word in corpus if word.freq_per_mil >= frequency_cutoff] # change to .frequency once that is fixed!
+
+    if type_or_token == 'type':
         freq_sum = len(corpus)
-    else:
-        freq_sum = sum([getattr(word, frequency_measure) for word in corpus])
+    elif type_or_token == 'token':
+        freq_sum = sum([word.freq_per_mil for word in corpus]) # change to .frequency once that is fixed!
 
     original_probs = defaultdict(float)
-    if frequency_measure == 'type':
+    if type_or_token == 'type':
         for word in corpus:
             original_probs[' '.join([str(s) for s in word.transcription])] += 1/freq_sum
-    else:
+    elif type_or_token == 'token':
         for word in corpus:
-            original_probs[' '.join([str(s) for s in word.transcription])] += getattr(word, frequency_measure)/freq_sum
+            original_probs[' '.join([str(s) for s in word.transcription])] += word.freq_per_mil/freq_sum # change to .frequency once that is fixed!
     preneutr_h = entropy([original_probs[item] for item in original_probs])
 
     neutralized_probs = defaultdict(float)
     for item in original_probs:
-        neutralized_probs[neutralize(item, s1, s2)] += original_probs[item]
+        neutralized_probs[' '.join([neutralize_segment(s, segment_pairs) for s in item.split(' ')])] += original_probs[item]
     postneutr_h = entropy([neutralized_probs[item] for item in neutralized_probs])
 
     result = preneutr_h - postneutr_h
@@ -129,10 +134,16 @@ def entropy(probabilities):
 
 
 def neutralize_segment(segment, segment_pairs):
+    try: # segment is a Segment
         for sp in segment_pairs:
             if segment.symbol in sp:
                 return 'NEUTR:'+''.join(sp)
         return segment.symbol
+    except: # segment is a str
+        for sp in segment_pairs:
+            if segment in sp:
+                return 'NEUTR:'+''.join(sp)
+        return segment
 
 
 
@@ -145,9 +156,10 @@ if __name__ == '__main__':
     #     c = pickle.load(f)
 
     f = corpustools.CorpusFactory()
-    c = f.make_corpus('iphod', 'hayes', size=1000)
+    c = f.make_corpus('iphod', 'hayes', size=10000)
 
     # mpfl = minpair_fl(c, [('t','d'), ('p', 'b')], frequency_cutoff = 4, relative_count = True)
     # print(mpfl)
 
-    # print(deltah_fl('v', 'f', c))
+    # dhfl = deltah_fl(c, [('t','d'), ('p', 'b')], frequency_cutoff=4, type_or_token='type')
+    # print(dhfl)
