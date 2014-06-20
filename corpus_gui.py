@@ -46,7 +46,7 @@ if not as_missing_deps:
     except ImportError:
         import sys
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        sys.path.append(os.path.split(test_dir)[0])
+        sys.path.append(os.path.split(base_dir)[0])
         import acousticsim.main as AS
 
 class ThreadedTask(threading.Thread):
