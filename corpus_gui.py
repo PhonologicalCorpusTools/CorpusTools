@@ -31,13 +31,23 @@ import functional_load
 from codecs import open
 from math import log
 
-try:
-    import acousticsim.main as AS
-except ImportError:
-    import sys
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.split(test_dir)[0])
-    import acousticsim.main as AS
+#Check numpy and scipy installation
+import pip
+
+installed_packages = [x.key for x in pip.get_installed_distributions()]
+as_missing_deps = False
+for x in ['numpy','scipy']:
+    if x not in installed_packages:
+        print('Warning! Package \'%s\' needed for acoustic similarity calculations and was not found.  Acoustic sim will not run')
+        as_missing_deps = True
+if not as_missing_deps:
+    try:
+        import acousticsim.main as AS
+    except ImportError:
+        import sys
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        sys.path.append(os.path.split(test_dir)[0])
+        import acousticsim.main as AS
 
 class ThreadedTask(threading.Thread):
     def __init__(self, queue, target, args, **kwargs):
@@ -2181,6 +2191,10 @@ class GUI(Toplevel):
         
         
     def acoustic_sim(self):
+        if as_missing_deps:
+            MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
+            '\nAcoustic similarity cannot be run without both of them installed.'))
+            return
         self.as_popup = Toplevel()
         self.as_popup.title('Acoustic similarity')
         dir_frame = LabelFrame(self.as_popup,text='Directories')
