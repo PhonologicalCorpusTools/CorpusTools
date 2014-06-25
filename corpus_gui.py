@@ -30,11 +30,15 @@ import collections
 import functional_load
 from codecs import open
 from math import log
-from PIL import Image as PIL_Image
-from PIL import ImageTk as PIL_ImageTk
+
+try:
+    from PIL import Image as PIL_Image
+    from PIL import ImageTk as PIL_ImageTk
+    use_logo = True
+except ImportError:
+    use_logo = False
 
 #Check numpy and scipy installation
-<<<<<<< HEAD
 try:
     import pip
 
@@ -53,17 +57,6 @@ try:
             sys.path.append(os.path.split(base_dir)[0])
             import acousticsim.main as AS
 except ImportError:
-=======
-#import pip
-
-#installed_packages = [x.key for x in pip.get_installed_distributions()]
-as_missing_deps = False
-##for x in ['numpy','scipy']:
-##    if x not in installed_packages:
-##        print('Warning! Package \'%s\' needed for acoustic similarity calculations and was not found.  Acoustic sim will not run')
-##        as_missing_deps = True
-if not as_missing_deps:
->>>>>>> FETCH_HEAD
     try:
         from acousticsim.main import missingdeps as as_missing_deps
     except ImportError:
@@ -280,6 +273,8 @@ class GUI(Toplevel):
             self.splash_canvas.grid()
         except FileNotFoundError:
             pass#if the image file is not found, then don't bother
+        except NameError:
+            pass
 
     def check_for_feature_systems(self):
         ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
@@ -2934,6 +2929,7 @@ def make_menus(root,app):
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
     calcmenu.add_command(label='Calculate predictability of distribution...', command=app.entropy)
     calcmenu.add_command(labe='Calculate functional load...', command=app.functional_load)
+    calcmenu.add_command(labe='Calculate acoustic similarity...', command=app.acoustic_sim)
     menubar.add_cascade(label='Analysis', menu=calcmenu)
 
     helpmenu = Menu(menubar, tearoff=0)
