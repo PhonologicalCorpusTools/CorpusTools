@@ -2941,10 +2941,11 @@ def make_menus(root,app):
 if __name__ == '__main__':
     root = Tk()
     root.title("CorpusTools v0.15")
-    try:
-        root.wm_iconbitmap(os.path.join(os.getcwd(),'sample_logo.ico'))
-    except FileNotFoundError:
-        pass#if the file isn't found, don't bother
+    if use_logo:
+        try:
+            root.wm_iconbitmap(os.path.join(os.getcwd(),'sample_logo.ico'))
+        except FileNotFoundError:
+            pass#if the file isn't found, don't bother
     if not os.path.exists(os.path.join(os.getcwd(),'ERRORS')):
         os.mkdir(os.path.join(os.getcwd(),'ERRORS'))
     app = GUI(root)
