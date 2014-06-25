@@ -57,6 +57,7 @@ def morph_relatedness_word(corpus_name, relator_type, string_type, count_what, q
     else:
         print_one_word_results(output_filename, query, related_data, threshold)
 
+
 def print_one_word_results(output_filename, query, related_data, threshold):
     with open(output_filename, mode='w', encoding='utf-8') as outf:
         if not isinstance(query, str):
@@ -85,6 +86,7 @@ def morph_relatedness_single_pair(corpus_name, relator_type, string_type, w1, w2
     else:
         raise AttributeError('Relator type \'{}\' is not valid'.format(relator_type))
     return ((w1, w2, score))
+
 
 def morph_relatedness_pairs(corpus_name, relator_type, string_type, count_what, input_data, output_filename=None, threshold=None, ready_made_corpus = None):
     """Given an input of pairs of words to compare to each other, returns such pairs and their relatedness scores
