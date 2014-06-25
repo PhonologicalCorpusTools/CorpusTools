@@ -1,16 +1,22 @@
 import os
-from numpy import zeros
+try:
+    from numpy import zeros
+    import scipy
+    missingdeps = False
+except ImportError:
+    missingdeps = True
 
 from functools import partial
 
-try:
-    from acousticsim.helpers.representations import to_envelopes, to_mfcc
-    from acousticsim.helpers.distance_functions import dtw_distance, xcorr_distance
-except ImportError:
-    import sys
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from acousticsim.helpers.representations import to_envelopes, to_mfcc
-    from acousticsim.helpers.distance_functions import dtw_distance, xcorr_distance
+if not missingdeps:
+    try:
+        from acousticsim.helpers.representations import to_envelopes, to_mfcc
+        from acousticsim.helpers.distance_functions import dtw_distance, xcorr_distance
+    except ImportError:
+        import sys
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from acousticsim.helpers.representations import to_envelopes, to_mfcc
+        from acousticsim.helpers.distance_functions import dtw_distance, xcorr_distance
 
 def acoustic_similarity_mapping(path_mapping,
                             rep = 'envelopes',

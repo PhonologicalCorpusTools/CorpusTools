@@ -32,23 +32,28 @@ from codecs import open
 from math import log
 
 #Check numpy and scipy installation
-import pip
+try:
+    import pip
 
-installed_packages = [x.key for x in pip.get_installed_distributions()]
-as_missing_deps = False
-for x in ['numpy','scipy']:
-    if x not in installed_packages:
-        print('Warning! Package \'%s\' needed for acoustic similarity calculations and was not found.  Acoustic sim will not run')
-        as_missing_deps = True
-if not as_missing_deps:
+    installed_packages = [x.key for x in pip.get_installed_distributions()]
+    as_missing_deps = False
+    for x in ['numpy','scipy']:
+        if x not in installed_packages:
+            print('Warning! Package \'%s\' needed for acoustic similarity calculations and was not found.  Acoustic sim will not run')
+            as_missing_deps = True
+    if not as_missing_deps:
+        try:
+            import acousticsim.main as AS
+        except ImportError:
+            import sys
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            sys.path.append(os.path.split(base_dir)[0])
+            import acousticsim.main as AS
+except ImportError:
     try:
-        import acousticsim.main as AS
+        from acousticsim.main import missingdeps as as_missing_deps
     except ImportError:
-        import sys
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        sys.path.append(os.path.split(base_dir)[0])
-        import acousticsim.main as AS
-
+        as_missing_deps = True
 class ThreadedTask(threading.Thread):
     def __init__(self, queue, target, args, **kwargs):
         if kwargs:
