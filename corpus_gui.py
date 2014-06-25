@@ -54,6 +54,7 @@ except ImportError:
         from acousticsim.main import missingdeps as as_missing_deps
     except ImportError:
         as_missing_deps = True
+        
 class ThreadedTask(threading.Thread):
     def __init__(self, queue, target, args, **kwargs):
         if kwargs:
