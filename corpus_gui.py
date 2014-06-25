@@ -30,8 +30,11 @@ import collections
 import functional_load
 from codecs import open
 from math import log
+from PIL import Image as PIL_Image
+from PIL import ImageTk as PIL_ImageTk
 
 #Check numpy and scipy installation
+<<<<<<< HEAD
 try:
     import pip
 
@@ -50,6 +53,17 @@ try:
             sys.path.append(os.path.split(base_dir)[0])
             import acousticsim.main as AS
 except ImportError:
+=======
+#import pip
+
+#installed_packages = [x.key for x in pip.get_installed_distributions()]
+as_missing_deps = False
+##for x in ['numpy','scipy']:
+##    if x not in installed_packages:
+##        print('Warning! Package \'%s\' needed for acoustic similarity calculations and was not found.  Acoustic sim will not run')
+##        as_missing_deps = True
+if not as_missing_deps:
+>>>>>>> FETCH_HEAD
     try:
         from acousticsim.main import missingdeps as as_missing_deps
     except ImportError:
@@ -163,8 +177,10 @@ class GUI(Toplevel):
         self.corpusq = queue.Queue(1)
         self.corpus = None
         self.all_feature_systems = ['spe','hayes']
+        #user defined features systems are added automatically at a later point
         self.corpus_factory = corpustools.CorpusFactory()
         self.tooltip_delay = 1500
+        self.warn_about_changes = False
 
         #TKINTER VARIABLES ("globals")
         #main screen variabls
@@ -236,7 +252,7 @@ class GUI(Toplevel):
         self.as_q = queue.Queue()
         self.as_results_table = None
 
-        #
+        #MAIN SCREEN STUFF
         self.main_screen = Frame(master)
         self.main_screen.grid()
         self.info_frame = Frame(self.main_screen)
@@ -252,6 +268,19 @@ class GUI(Toplevel):
         self.corpus_frame = Frame(self.main_screen)
         self.corpus_frame.grid()
 
+        #Splash image at start-up
+        try:
+            self.splash_image_path = os.path.join(os.getcwd(),'sample_logo.jpg')
+            self.splash_canvas = Canvas(self.corpus_frame)
+            self.splash_canvas['width'] = '323'
+            self.splash_canvas['height'] = '362'
+            image = PIL_Image.open(self.splash_image_path)
+            self.splash_image = PIL_ImageTk.PhotoImage(image,master=self.splash_canvas)
+            self.splash_canvas.create_image(0,0,anchor=NW,image=self.splash_image)
+            self.splash_canvas.grid()
+        except FileNotFoundError:
+            pass#if the image file is not found, then don't bother
+
     def check_for_feature_systems(self):
         ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
         for dirpath,dirname,filenames in os.walk(os.path.join(os.getcwd(),'TRANS')):
@@ -263,70 +292,13 @@ class GUI(Toplevel):
 
 
     def quit(self,event=None):
-        root.quit()
-
-    def populate_inventory(self):
-        """
-        Put the inventory on screen, making each segment a button that pops up
-        a window to view more detailed segmental information
-        """
-
-        cons_chart = ConsChart()
-        vowel_chart = VowelChart()
-        for seg,features in self.current_inventory.items():
-            if '-voc' in self.current_inventory[seg]:
-                cons_chart.match_to_chart(seg,features)
-            else:
-                vowel_chart.match_to_chart(seg,features)
-        self.inventory_bigframe.configure(text='Inventory ({})'.format(len(cons_chart.inventory)))
-        row = 1
-        col = 2
-        for cname in cons_chart.col_names:
-            col_label = Label(self.Cinventory_frame, text=cname[0])
-            col_label.grid(row=1, column=col)
-            col += 1
-
-        for vname in vowel_chart.col_names:
-            col_label = Label(self.Vinventory_frame, text=vname[0])
-            col_label.grid(row=1, column=col)
-            col += 1
-
-        for rname in cons_chart.row_names:
-            row += 1
-            col = 1
-            row_label = Label(self.Cinventory_frame, text=rname[0])
-            row_label.grid(row=row, column=col)
-            for cname in cons_chart.col_names:
-                col += 1
-                seg_box = Frame(self.Cinventory_frame, borderwidth=5, width=10)
-                seg_box.grid(row=row,column=col)
-                for seg,voiced in cons_chart.display_matrix[rname[0]][cname[0]]:
-                    if voiced:
-                        colour = 'gold'
-                    else:
-                        colour = 'white smoke'
-                    seg_button = Button(seg_box, text=seg, command=lambda symbol=seg: self.show_segment_info(symbol))
-                    seg_button.config(bg=colour)
-                    seg_button.grid()
-
-        for rname in vowel_chart.row_names:
-            row += 1
-            col = 1
-            row_label = Label(self.Vinventory_frame, text=rname[0])
-            row_label.grid(row=row, column=col)
-            for cname in vowel_chart.col_names:
-                col += 1
-                seg_box = Frame(self.Vinventory_frame)
-                seg_box.grid(row=row,column=col)
-                for seg,rounded in vowel_chart.display_matrix[rname[0]][cname[0]]:
-                    if rounded:
-                        colour = 'gold'
-                    else:
-                        colour = 'white smoke'
-                    seg_button = Button(seg_box, text=seg, command=lambda symbol=seg: self.show_segment_info(symbol))
-                    seg_button.config(bg=colour)
-                    seg_button.grid()
-
+        if self.warn_about_changes:
+            wants_to_continue = self.issue_changes_warning()
+            if wants_to_continue:
+                root.quit()
+        else:
+            #no changes to save
+            root.quit()
 
     def update_info_frame(self):
         for child in self.info_frame.winfo_children():
@@ -350,7 +322,17 @@ class GUI(Toplevel):
             suggestion = os.path.basename(custom_corpus_filename).split('.')[0]
             self.custom_corpus_name.insert(0,suggestion)
 
+    def issue_changes_warning(self):
+        should_quit = MessageBox.askyesno(message=(
+        'You have made changes to your corpus, but you haven\'t saved it. You will lose these changes if you load a new corpus now.\n Do you want to continue?'))
+        return should_quit
+
     def choose_custom_corpus(self, event=None):
+
+        if self.warn_about_changes:
+            wants_to_continue = self.issue_changes_warning()
+            if not wants_to_continue:
+                return
 
         self.custom_corpus_load_screen = Toplevel()
         self.custom_corpus_load_screen.title('Load custom corpus')
@@ -398,6 +380,7 @@ class GUI(Toplevel):
         if delimiter == 't':
             delimiter = '\t'
         self.create_custom_corpus(corpus_name, filename, delimiter)
+        self.warn_about_changes = False
 
     def custom_corpus_worker_thread(self, corpus_name, filename, delimiter, queue, corpusq):
         with open(filename, encoding='utf-8') as f:
@@ -907,9 +890,15 @@ class GUI(Toplevel):
         with open(filename, 'wb') as f:
             self.corpus.feature_system = self.feature_system
             pickle.dump(self.corpus, f)
+        self.warn_about_changes = False
 
     def choose_corpus(self,event=None):
         #This is always called from a menu
+        if self.warn_about_changes:
+            wants_to_continue = self.issue_changes_warning()
+            if not wants_to_continue:
+                return
+
         self.corpus_select_screen = Toplevel()
         self.corpus_select_screen.title('Corpus select')
 
@@ -946,6 +935,7 @@ class GUI(Toplevel):
         features_name = self.features_button_var.get()
         self.feature_system = features_name
         self.load_corpus(corpus_name, features_name)
+        self.warn_about_changes = False
 
     def process_load_corpus_queue(self):
         try:
@@ -1081,6 +1071,7 @@ class GUI(Toplevel):
         for word in self.corpus:
             word.remove_tier(target)
 
+        self.warn_about_changes = True
         self.destroy_tier_window.destroy()
         self.main_screen_refresh()
 
@@ -1096,6 +1087,7 @@ class GUI(Toplevel):
             for tier in kill_tiers:
                 word.remove_tier(tier)
 
+        self.warn_about_changes = True
         self.destroy_tier_window.destroy()
         self.main_screen_refresh()
 
@@ -1179,6 +1171,7 @@ class GUI(Toplevel):
         for word in self.corpus:
             word.add_tier(tier_name, selected_features)
 
+        self.warn_about_changes = True
         self.tier_window.destroy()
         self.main_screen_refresh()
 
@@ -1926,6 +1919,11 @@ class GUI(Toplevel):
 
     def corpus_from_text(self):
 
+        if self.warn_about_changes:
+            wants_to_continue = self.issue_changes_warning()
+            if not wants_to_continue:
+                return
+
         self.from_text_window = Toplevel()
         self.from_text_window.title('Create corpus')
         from_text_frame = LabelFrame(self.from_text_window, text='Create corpus from text')
@@ -1987,13 +1985,13 @@ class GUI(Toplevel):
 
     def parse_text(self, delimiter=' '):
 
-        if not os.path.isfile(self.from_text_entry.get()):
+        if not os.path.isfile(self.corpus_from_text_source_file.get()):
             MessageBox.showerror(message='Cannot find the file. Double check the path is correct.')
             return
-        if os.path.isfile(os.path.join(os.getcwd(),self.new_name_entry.get())):
-            carry_on = MessageBox.askyesno(message='The name you chose for the new corpus file already exists. Overwrite it?')
-            if not carry_on:
-                return
+
+        if not self.corpus_from_text_corpus_name_var.get():
+            MessageBox.showerror(message='Please enter a name for the new corpus.')
+            return
 
         string_type = self.new_corpus_string_type.get()
         word_count = collections.defaultdict(int)
@@ -2002,7 +2000,7 @@ class GUI(Toplevel):
             if var.get() == 1:
                 ignore_list.append(mark)
 
-        with open(self.from_text_entry.get(), encoding='utf-8', mode='r') as f:
+        with open(self.corpus_from_text_source_file.get(), encoding='utf-8', mode='r') as f:
             for line in f.readlines():
                 if not line or line == '\n':
                     continue
@@ -2019,7 +2017,7 @@ class GUI(Toplevel):
                     word_count[word] += 1
 
         total_words = sum(word_count.values())
-        outputfile = os.path.join(os.getcwd(), self.new_name_entry.get())
+        outputfile = os.path.join(os.getcwd(), self.corpus_from_text_corpus_name_var.get())
 
         with open(outputfile, encoding='utf-8', mode='w') as f:
             print('{},Frequency,Relative frequency,feature_system={}\r'.format(
@@ -2027,21 +2025,10 @@ class GUI(Toplevel):
             for word,freq in sorted(word_count.items()):
                 print('{},{},{}\r'.format(word,freq,freq/total_words),file=f)
 
-        MessageBox.showinfo(message='Corpus created! You can open it from File > Use custom corpus...')
+        self.warn_about_changes = False
+        MessageBox.showinfo(message='Corpus created! You can open it from Corpus > Use custom corpus...')
         self.from_text_window.destroy()
-##        see_corpus = MessageBox.askyesno(message='Corpus created! Do you want to open it now?\nYou can always open later from File>Use custom corpus...')
-##        self.from_text_window.destroy()
-##        if not see_corpus:
-##            return
-##        if self.corpus:
-##            close_existing = MessageBox.askyesno(message='You already have a corpus open. Do you want to close it and see the new one?')
-##            if not close_existing:
-##                return
-##
-##        #at this point, the user wants to load the new corpus
-##        name = self.new_name_entry.get()
-##        name = name.split('.')[0]
-##        self.create_custom_corpus(name, outputfile, delimiter=',')
+
 
     def navigate_to_text(self):
         text_file = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
@@ -2180,6 +2167,7 @@ class GUI(Toplevel):
 
         else:
             #no problems - update feature system and change some on-screen info
+            self.warn_about_changes = True
             self.feature_system_var.set(self.feature_system_option_menu_var.get())
             self.feature_system_memory = self.feature_system_var.get()
             self.update_info_frame()
@@ -2194,8 +2182,8 @@ class GUI(Toplevel):
 
         self.feature_screen.destroy()
         self.show_feature_system(memory=self.feature_system_memory)
-        
-        
+
+
     def acoustic_sim(self):
         if as_missing_deps:
             MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
@@ -2213,10 +2201,10 @@ class GUI(Toplevel):
             if dir_one:
                 dir_one_text.delete(0,END)
                 dir_one_text.insert(0, dir_one)
-                
+
         find_dir_one = Button(dir_frame, text='Choose directory...', command=set_dir_one)
         find_dir_one.grid(row=0,column=2)
-        
+
         as_dir_two_label = Label(dir_frame, text='Second directory')
         as_dir_two_label.grid(row=1, column=0)
         dir_two_text = Entry(dir_frame,textvariable=self.as_directory_two)
@@ -2226,10 +2214,10 @@ class GUI(Toplevel):
             if dir_two:
                 dir_two_text.delete(0,END)
                 dir_two_text.insert(0, dir_two)
-                
+
         find_dir_two = Button(dir_frame, text='Choose directory...', command=set_dir_two)
         find_dir_two.grid(row=1,column=2)
-        
+
         dir_frame.grid()
         self.as_option_frame = LabelFrame(self.as_popup,text='Parameters')
         representation_frame = LabelFrame(self.as_option_frame, text='Representation')
@@ -2241,7 +2229,7 @@ class GUI(Toplevel):
                                     value='envelopes', variable=self.as_representation)
         envelopes.grid(sticky=W)
         representation_frame.grid(sticky=W)
-        
+
         match_func_frame = LabelFrame(self.as_option_frame, text='Similarity algorithm')
         dtw = Radiobutton(match_func_frame, text='Dynamic time warping',
                                     value='dtw', variable=self.as_match_func)
@@ -2251,7 +2239,7 @@ class GUI(Toplevel):
                                     value='xcorr', variable=self.as_match_func)
         xcorr.grid(sticky=W)
         match_func_frame.grid(sticky=W)
-        
+
         freq_frame = LabelFrame(self.as_option_frame, text='Frequency limits')
         as_min_freq_label = Label(freq_frame, text='Minimum frequency (Hz)')
         as_min_freq_label.grid(row=0, column=0)
@@ -2259,7 +2247,7 @@ class GUI(Toplevel):
         as_min_freq_entry.delete(0,END)
         as_min_freq_entry.insert(0,'80')
         as_min_freq_entry.grid(row=0, column=1)
-        
+
         as_max_freq_label = Label(freq_frame, text='Maximum frequency (Hz)')
         as_max_freq_label.grid(row=1, column=0)
         as_max_freq_entry = Entry(freq_frame, textvariable=self.as_max_freq)
@@ -2267,7 +2255,7 @@ class GUI(Toplevel):
         as_max_freq_entry.insert(0,'7800')
         as_max_freq_entry.grid(row=1, column=1)
         freq_frame.grid(sticky=W)
-        
+
         freq_res_frame = LabelFrame(self.as_option_frame, text='Frequency resolution')
         as_num_filters_label = Label(freq_res_frame, text='Number of filters')
         as_num_filters_label.grid(row=0, column=0)
@@ -2275,7 +2263,7 @@ class GUI(Toplevel):
         as_num_filters_entry.delete(0,END)
         as_num_filters_entry.insert(0,'0')
         as_num_filters_entry.grid(row=0, column=1)
-        
+
         as_num_coeffs_label = Label(freq_res_frame, text='Number of coefficents (MFCC only)')
         as_num_coeffs_label.grid(row=1, column=0)
         as_num_coeffs_entry = Entry(freq_res_frame, textvariable=self.as_num_coeffs)
@@ -2283,7 +2271,7 @@ class GUI(Toplevel):
         as_num_coeffs_entry.insert(0,'0')
         as_num_coeffs_entry.grid(row=1, column=1)
         freq_res_frame.grid(sticky=W)
-        
+
         output_frame = LabelFrame(self.as_option_frame, text='Output')
         sim = Radiobutton(output_frame, text='Output as similarity (0 to 1)',
                                     value=True, variable=self.as_output_sim)
@@ -2293,7 +2281,7 @@ class GUI(Toplevel):
                                     value=False, variable=self.as_output_sim)
         dist.grid(sticky=W)
         output_frame.grid(sticky=W)
-        
+
         mp_frame = LabelFrame(self.as_option_frame, text='Multiprocessing')
         multi = Radiobutton(mp_frame, text='Use multiprocessing',
                                     value=True, variable=self.as_use_multi)
@@ -2303,9 +2291,9 @@ class GUI(Toplevel):
                                     value=False, variable=self.as_use_multi)
         single.grid(sticky=W)
         mp_frame.grid(sticky=W)
-        
+
         self.as_option_frame.grid()
-        
+
         button_frame = Frame(self.as_popup)
         ok_button = Button(button_frame, text='Calculate acoustic similarity\n(start new results table)', command=lambda x=False: self.calculate_acoustic_similarity(update=x))
         ok_button.grid(row=0, column=0)
@@ -2317,7 +2305,7 @@ class GUI(Toplevel):
         about = Button(button_frame, text='About this function...', command=self.about_acoustic_similarity)
         about.grid(row=0, column=2)
         button_frame.grid()
-        
+
     def cancel_acoustic_similarity(self):
         self.delete_as_results_table()
         self.as_popup.destroy()
@@ -2614,6 +2602,7 @@ class GUI(Toplevel):
                 #word = self.corpus[key]
                 for value in values:
                     print(','.join(str(getattr(word, value)) for value in values), file=f)
+        self.warn_about_changes = False
 
     def cancel_functional_load(self):
         self.delete_fl_results_table()
@@ -2921,29 +2910,30 @@ class ToolTip:
 def make_menus(root,app):
 
     menubar = Menu(root)
-    filemenu = Menu(menubar, tearoff=0)
-    filemenu.add_command(label='Choose built-in corpus...', command=app.choose_corpus)
-    filemenu.add_command(label='Use custom corpus...', command=app.choose_custom_corpus)
-    filemenu.add_command(label='Create corpus from text...', command=app.corpus_from_text)
-    filemenu.add_command(label='Save corpus as...', command=app.save_corpus_as)
-    filemenu.add_command(label='Export as text file...', command=app.export_to_text_file)
-    filemenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings, command=app.change_warnings)
-    filemenu.add_command(label="Quit", command=app.quit, accelerator='Ctrl+Q')
-    menubar.add_cascade(label="Corpus", menu=filemenu)
-    filemenu.invoke(5)#start with the checkmark for the 'show warning' option turned on
-
     corpusmenu = Menu(menubar, tearoff=0)
-    #corpusmenu.add_command(label='Search corpus...', command=app.search)
-    corpusmenu.add_command(label='View/change feature system...', command=app.show_feature_system)
-    corpusmenu.add_command(label='Add Tier...', command=app.create_tier)
-    corpusmenu.add_command(label='Remove Tier...', command=app.destroy_tier)
-    menubar.add_cascade(label='Options', menu=corpusmenu)
+    corpusmenu.add_command(label='Choose built-in corpus...', command=app.choose_corpus)
+    corpusmenu.add_command(label='Use custom corpus...', command=app.choose_custom_corpus)
+    corpusmenu.add_command(label='Create corpus from text...', command=app.corpus_from_text)
+    savemenu = Menu(corpusmenu, tearoff=0)
+    savemenu.add_command(label='Save as corpus file (faster loading in CorpusTools)...', command=app.save_corpus_as)
+    savemenu.add_command(label='Save as text file (use with spreadsheets etc.)...', command=app.export_to_text_file)
+    corpusmenu.add_cascade(label='Save', menu=savemenu)
+    corpusmenu.add_command(label="Quit", command=app.quit, accelerator='Ctrl+Q')
+    menubar.add_cascade(label="Corpus", menu=corpusmenu)
+
+    optionmenu = Menu(menubar, tearoff=0)
+    #optionmenu.add_command(label='Search corpus...', command=app.search)
+    optionmenu.add_command(label='View/change feature system...', command=app.show_feature_system)
+    optionmenu.add_command(label='Add Tier...', command=app.create_tier)
+    optionmenu.add_command(label='Remove Tier...', command=app.destroy_tier)
+    optionmenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings, command=app.change_warnings)
+    menubar.add_cascade(label='Options', menu=optionmenu)
+    optionmenu.invoke(4)#start with the checkmark for the 'show warning' option turned on
 
     calcmenu = Menu(menubar, tearoff=0)
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
     calcmenu.add_command(label='Calculate predictability of distribution...', command=app.entropy)
     calcmenu.add_command(labe='Calculate functional load...', command=app.functional_load)
-    calcmenu.add_command(labe='Calculate acoustic similarity...', command=app.acoustic_sim)
     menubar.add_cascade(label='Analysis', menu=calcmenu)
 
     helpmenu = Menu(menubar, tearoff=0)
@@ -2955,6 +2945,10 @@ def make_menus(root,app):
 if __name__ == '__main__':
     root = Tk()
     root.title("CorpusTools v0.15")
+    try:
+        root.wm_iconbitmap(os.path.join(os.getcwd(),'sample_logo.ico'))
+    except FileNotFoundError:
+        pass#if the file isn't found, don't bother
     if not os.path.exists(os.path.join(os.getcwd(),'ERRORS')):
         os.mkdir(os.path.join(os.getcwd(),'ERRORS'))
     app = GUI(root)

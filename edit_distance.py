@@ -39,15 +39,61 @@ class Relator(object):
 
 
 
-    def edit_distance(self, w1, w2, features_tf=True, features=None):
-        """       
-        TO-DO
+    def levenshtein(self, w1, w2, string_type = 'spelling'):
+        """Calculate Levenshtein (1966) edit distance between two strings. Code was acquired from:
+                    http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
+        
+        Parameters
+        ----------
+        w1: string
+            Te first string to be compared
+        w2: string
+            The second string to which the first thing is compared to
+            
+        Returns
+        -------
+            The Levenshtein edit distance between two strings (i.e. the minimum number of operations needed to change one string into another using delete, insert or substitute)
+        """
+        if len(w1) < len(w2):
+            return self.levenshtein(w2, w1)
+     
+        # len(s1) >= len(s2)
+        if len(w2) == 0:
+            return len(w1)
+     
+        previous_row = range(len(w2) + 1)
+        for i, c1 in enumerate(w1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(w2):
+                insertions = previous_row[j + 1] + 1 # j+1 instead of j since previous_row and current_row are one character longer
+                deletions = current_row[j] + 1       # than s2
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+     
+        return previous_row[-1]
+    
+    def phono_edit_distance(self, w1, w2, features_tf=True, features=None):
+        """Returns an analogue to Levenshtein edit distance but with phonological features instead of characters in a string
+        
+        Parameters:
+        w1: string
+            A string containing a transcription which will be compared to another string containing a transcription
+        w2: string
+            The other string containing a transcription to which w1 will be compared
+        features_tf: boolean
+        
+        features: phonological features
+            Features are the set feature specifications currently be used in the corpus (i.e. Hayes, SPE, etc.)
         """
         if features == None:
             features = self.corpus.specifier.matrix
         a = Aligner(features_tf=features_tf, features=features)
-        m = a.make_similarity_matrix(w1.transcription, w2.transcription)
+        #try:
+        m = a.make_similarity_matrix(w1, w2)
         return m[-1][-1]['f']
+        
+        #except AttributeError: #This occured
         
 
 
@@ -78,7 +124,7 @@ class Relator(object):
             #Skip over words that do not have transcriptions if string == 'transcription'
             if word is None:
                 continue
-            relatedness = [self.edit_distance(w, word)]
+            relatedness = [self.levenshtein(w, word)]
             relate.append( (relatedness, word) )
         #Sort the list by most morphologically related
         relate.sort(key=lambda t:t[0])
