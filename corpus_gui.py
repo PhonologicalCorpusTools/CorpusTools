@@ -61,7 +61,7 @@ except ImportError:
         from acousticsim.main import missingdeps as as_missing_deps
     except ImportError:
         as_missing_deps = True
-        
+
 class ThreadedTask(threading.Thread):
     def __init__(self, queue, target, args, **kwargs):
         if kwargs:
@@ -222,6 +222,8 @@ class GUI(Toplevel):
         self.punc_vars = [IntVar() for mark in string.punctuation]
         self.new_corpus_string_type = StringVar()
         self.new_corpus_feature_system_var = StringVar()
+        self.corpus_from_text_source_file = StringVar()
+        self.corpus_from_text_corpus_name_var = StringVar()
         #Functional load variables
         self.fl_frequency_cutoff_var = StringVar()
         self.fl_homophones_var = StringVar()
@@ -530,6 +532,9 @@ class GUI(Toplevel):
     def string_similarity(self):
 
         #Check if it's even possible to do this analysis
+        if not self.corpus:
+            MessageBox.showerror(message='No corpus selected')
+            return
         has_spelling = True
         has_transcription = True
         has_frequency = True
@@ -1035,6 +1040,10 @@ class GUI(Toplevel):
 
     def destroy_tier(self):
 
+        if not self.corpus:
+            MessageBox.showerror(message='No corpus selected')
+            return
+
         word = self.corpus.random_word()
         if not word.tiers:
             MessageBox.showerror(message='No tiers have been added yet!')
@@ -1088,6 +1097,10 @@ class GUI(Toplevel):
 
 
     def create_tier(self):
+
+        if not self.corpus:
+            MessageBox.showerror(message='No corpus selected')
+            return
 
         word = self.corpus.random_word()
         if not 'transcription' in word.descriptors:
@@ -1197,6 +1210,9 @@ class GUI(Toplevel):
 
     def entropy(self,shortcut=None):
         #check if it's possible to do this analysis
+        if not self.corpus:
+            MessageBox.showerror(message='No corpus selected')
+            return
         has_transcription = True
         has_frequency = True
         missing = list()
@@ -1923,14 +1939,14 @@ class GUI(Toplevel):
         self.from_text_window.title('Create corpus')
         from_text_frame = LabelFrame(self.from_text_window, text='Create corpus from text')
         choose_file_frame = LabelFrame(from_text_frame, text='Select a text file')
-        self.from_text_entry = Entry(choose_file_frame)
+        self.from_text_entry = Entry(choose_file_frame, textvariable=self.corpus_from_text_source_file)
         self.from_text_entry.grid()
         find_file = Button(choose_file_frame, text='Choose file...', command=self.navigate_to_text)
         find_file.grid(sticky=W)
         choose_file_frame.grid(sticky=W)
 
         new_name_frame = LabelFrame(from_text_frame, text='Name for new corpus (auto-suggested)')
-        self.new_name_entry = Entry(new_name_frame)
+        self.new_name_entry = Entry(new_name_frame, textvariable=self.corpus_from_text_corpus_name_var)
         self.new_name_entry.grid(sticky=W)
         new_name_frame.grid(sticky=W)
 
@@ -2180,6 +2196,11 @@ class GUI(Toplevel):
 
 
     def acoustic_sim(self):
+
+        if not self.corpus:
+            MessageBox.showerror(message='No corpus selected')
+            return
+
         if as_missing_deps:
             MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
             '\nAcoustic similarity cannot be run without both of them installed.'))
@@ -2479,6 +2500,11 @@ class GUI(Toplevel):
                                             result,
                                             self.as_output_sim.get()])
     def functional_load(self):
+
+        if not self.corpus:
+            MessageBox.showerror(message='No corpus selected')
+            return
+
         self.fl_popup = Toplevel()
         self.fl_popup.title('Functional load')
         ipa_frame = LabelFrame(self.fl_popup, text='Sounds')

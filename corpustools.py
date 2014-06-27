@@ -173,7 +173,7 @@ class Word(object):
 
     tiers : list
         A list of tiers, which are created with the self.add_tier method. This
-        is an empty list if no tiers have been created.
+        is an empty list if not tiers have been created.
 
     descriptors : list of str
         A list of the names of the attributes of a Word instance. This is
@@ -185,7 +185,7 @@ class Word(object):
     def __init__(self, **kwargs):
 
         self.tiers = list()
-
+        kwargs = {key.lower():value for key,value in list(kwargs.items())}
         #THINGS THAT ARE STRINGS
         string_descriptors = ['spelling', 'transcription', 'error_msg']
         for descriptor in string_descriptors:
@@ -207,7 +207,7 @@ class Word(object):
             self.frequency = self.abs_freq
 
         #CUSTOM DESCRIPTORS. STRINGS BY NECESSITY
-        custom_descriptors = [kw for kw in kwargs if (kw not in string_descriptors) and (kw not in float_descriptors)]
+        custom_descriptors = [kw.lower() for kw in kwargs if (kw not in string_descriptors) and (kw not in float_descriptors)]
         for descriptor in custom_descriptors:
             if 'tier' in descriptor:
                 #descriptor = descriptor.split('(')[0].strip()
@@ -1089,4 +1089,6 @@ class CorpusFactory(object):
 
 
 if __name__ == '__main__':
-    pass
+    factory = CorpusFactory()
+    iphod = factory.make_corpus('iphod', 'spe', size=500)
+    print(iphod.random_word().details())
