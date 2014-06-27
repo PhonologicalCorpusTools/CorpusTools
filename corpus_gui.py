@@ -278,6 +278,26 @@ class GUI(Toplevel):
         except NameError:
             pass
 
+
+    def check_for_empty_corpus(function):
+        def do_check(self):
+            if self.corpus is None:
+                MessageBox.showerror(message='No corpus selected')
+                return
+            else:
+                function(self)
+        return do_check
+
+    def check_for_unsaved_changes(function):
+        def do_check(self):
+            if self.warn_about_changes:
+                carry_on = self.issue_changes_warning()
+                if not carry_on:
+                    return
+            function(self)
+
+        return do_check
+
     def check_for_feature_systems(self):
         ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
         for dirpath,dirname,filenames in os.walk(os.path.join(os.getcwd(),'TRANS')):
@@ -287,15 +307,9 @@ class GUI(Toplevel):
                 system_name = name.split('.')[0]
                 self.all_feature_systems.append(system_name)
 
-
+    @check_for_unsaved_changes
     def quit(self,event=None):
-        if self.warn_about_changes:
-            wants_to_continue = self.issue_changes_warning()
-            if wants_to_continue:
-                root.quit()
-        else:
-            #no changes to save
-            root.quit()
+        root.quit()
 
     def update_info_frame(self):
         for child in self.info_frame.winfo_children():
@@ -324,12 +338,8 @@ class GUI(Toplevel):
         'You have made changes to your corpus, but you haven\'t saved it. You will lose these changes if you load a new corpus now.\n Do you want to continue?'))
         return should_quit
 
+    @check_for_unsaved_changes
     def choose_custom_corpus(self, event=None):
-
-        if self.warn_about_changes:
-            wants_to_continue = self.issue_changes_warning()
-            if not wants_to_continue:
-                return
 
         self.custom_corpus_load_screen = Toplevel()
         self.custom_corpus_load_screen.title('Load custom corpus')
@@ -489,11 +499,8 @@ class GUI(Toplevel):
 
         self.main_screen_refresh()
 
-
+    @check_for_empty_corpus
     def search(self):
-        if self.feature_system is None:
-            MessageBox.showerror(message='No corpus selected')
-            return
 
         self.search_popup = Toplevel()
         self.search_popup.title('Search {}'.format(self.corpus.name))
@@ -529,12 +536,10 @@ class GUI(Toplevel):
         self.search_popup.destroy()
 
 
+    @check_for_empty_corpus
     def string_similarity(self):
 
         #Check if it's even possible to do this analysis
-        if not self.corpus:
-            MessageBox.showerror(message='No corpus selected')
-            return
         has_spelling = True
         has_transcription = True
         has_frequency = True
@@ -892,13 +897,9 @@ class GUI(Toplevel):
             pickle.dump(self.corpus, f)
         self.warn_about_changes = False
 
+    @check_for_unsaved_changes
     def choose_corpus(self,event=None):
         #This is always called from a menu
-        if self.warn_about_changes:
-            wants_to_continue = self.issue_changes_warning()
-            if not wants_to_continue:
-                return
-
         self.corpus_select_screen = Toplevel()
         self.corpus_select_screen.title('Corpus select')
 
@@ -1038,11 +1039,8 @@ class GUI(Toplevel):
             self.corpus_box.insert(END,[getattr(word,d,'???') for d in word.descriptors])
         self.corpus_box.grid()
 
+    @check_for_empty_corpus
     def destroy_tier(self):
-
-        if not self.corpus:
-            MessageBox.showerror(message='No corpus selected')
-            return
 
         word = self.corpus.random_word()
         if not word.tiers:
@@ -1095,12 +1093,8 @@ class GUI(Toplevel):
         self.destroy_tier_window.destroy()
         self.main_screen_refresh()
 
-
+    @check_for_empty_corpus
     def create_tier(self):
-
-        if not self.corpus:
-            MessageBox.showerror(message='No corpus selected')
-            return
 
         word = self.corpus.random_word()
         if not 'transcription' in word.descriptors:
@@ -1208,11 +1202,10 @@ class GUI(Toplevel):
     def change_warnings(self):
         self.show_warnings = not self.show_warnings
 
+    @check_for_empty_corpus
     def entropy(self,shortcut=None):
+
         #check if it's possible to do this analysis
-        if not self.corpus:
-            MessageBox.showerror(message='No corpus selected')
-            return
         has_transcription = True
         has_frequency = True
         missing = list()
@@ -1928,12 +1921,8 @@ class GUI(Toplevel):
         #env = corpustools.Environment(lhs, rhs)
         return (lhs,rhs)
 
+    @check_for_unsaved_changes
     def corpus_from_text(self):
-
-        if self.warn_about_changes:
-            wants_to_continue = self.issue_changes_warning()
-            if not wants_to_continue:
-                return
 
         self.from_text_window = Toplevel()
         self.from_text_window.title('Create corpus')
@@ -2053,11 +2042,8 @@ class GUI(Toplevel):
             self.new_name_entry.delete(0,END)
             self.new_name_entry.insert(0,suggestion)
 
+    @check_for_empty_corpus
     def show_feature_system(self, memory=None):
-
-        if not self.corpus:
-            MessageBox.showerror(message='No corpus selected')
-            return
 
         if self.show_warnings:
             word = self.corpus.random_word()
@@ -2195,11 +2181,8 @@ class GUI(Toplevel):
         self.show_feature_system(memory=self.feature_system_memory)
 
 
+    @check_for_empty_corpus
     def acoustic_sim(self):
-
-        if not self.corpus:
-            MessageBox.showerror(message='No corpus selected')
-            return
 
         if as_missing_deps:
             MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
@@ -2499,11 +2482,9 @@ class GUI(Toplevel):
                                             self.as_num_coeffs.get(),
                                             result,
                                             self.as_output_sim.get()])
-    def functional_load(self):
 
-        if not self.corpus:
-            MessageBox.showerror(message='No corpus selected')
-            return
+    @check_for_empty_corpus
+    def functional_load(self):
 
         self.fl_popup = Toplevel()
         self.fl_popup.title('Functional load')
