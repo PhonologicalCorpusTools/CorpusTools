@@ -6,8 +6,8 @@ Created on May 13, 2014
 import morph_relatedness
 
 #Testing mass compare of one word
-#morph_relatedness.morph_relatedness_word('iphod', 'string_similarity', 'transcription', 'type', 'dog', 0, output_filename = 'test.txt')
-morph_relatedness.morph_relatedness_word('iphod', 'edit_distance', 'transcription', 'type', 'dog', output_filename = 'test4.txt')
+morph_relatedness.morph_relatedness_word('iphod', 'string_similarity', 'transcription', 'type', 'dog', 0, output_filename = 'test.txt')
+#morph_relatedness.morph_relatedness_word('iphod', 'edit_distance', 'transcription', 'type', 'dog', output_filename = 'test4.txt')
 #morph_relatedness.morph_relatedness_word('iphod', 'edit_distance', 'spelling', 'type', 'pizza', 0, output_filename = 'test5.txt')
 
 #Testing single pair comparison

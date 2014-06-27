@@ -13,6 +13,7 @@ class Relator(object):
     ----------
     object: list
         contains parameters needed for the corpus which will be used in relating elements, some examples could be a corpus name or an already created corpus
+        
     Returns
     -------
     Returns a relator type which can be used to call methods
@@ -41,6 +42,7 @@ class Relator(object):
         else:
             x1 = w2
             x2 = w1
+            
         stringMatches = []
         for i in range(len(x1)):
             i = i + 1
