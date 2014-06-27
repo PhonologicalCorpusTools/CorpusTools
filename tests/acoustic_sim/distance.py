@@ -29,15 +29,22 @@ class DTWTest(unittest.TestCase):
                             [1,5,8],
                             [7,4,9]])
     
-    def test_dtw(self):
+    def test_dtw_unnorm(self):
         distmat = generate_distance_matrix(self.source, self.target)
-        print(distmat)
-        linghelper = dtw_distance(self.source,self.target)
+        linghelper = dtw_distance(self.source,self.target,norm=False)
         
+        r_dtw_output = 31.14363
         print(linghelper)
-        dist = 24.9
-        print(dist)
-        self.assertTrue(dist == linghelper)
+        self.assertTrue(abs(r_dtw_output - linghelper) < 0.01)
+    
+    def test_dtw_norm(self):
+        distmat = generate_distance_matrix(self.source, self.target)
+        linghelper = dtw_distance(self.source,self.target,norm=True)
+        
+        r_dtw_output = 3.114363
+        print(linghelper)
+        self.assertTrue(abs(r_dtw_output - linghelper) < 0.01)
+        
         
 if __name__ == '__main__':
     unittest.main()

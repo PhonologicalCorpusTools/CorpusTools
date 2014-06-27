@@ -47,7 +47,7 @@ def xcorr_distance(rep_one,rep_two):
     matchVal = abs(matchSum[maxInd]/num_features)
     return 1/matchVal
 
-def dtw_distance(rep_one, rep_two):
+def dtw_distance(rep_one, rep_two,norm=True):
     """Computes the distance between two representations with the same 
     number of filters using Dynamic Time Warping.
     
@@ -69,7 +69,7 @@ def dtw_distance(rep_one, rep_two):
     
     assert(rep_one.shape[1] == rep_two.shape[1])
     distMat = generate_distance_matrix(rep_one,rep_two)
-    return regularDTW(distMat)
+    return regularDTW(distMat,norm=norm)
     
 def generate_distance_matrix(source,target):
     """Generates a local distance matrix for use in dynamic time warping.
@@ -96,7 +96,7 @@ def generate_distance_matrix(source,target):
             distMat[i,j] = euclidean(source[i,:],target[j,:])
     return distMat
 
-def regularDTW(distMat):
+def regularDTW(distMat,norm=True):
     """Use a local distance matrix to perform dynamic time warping.
     
     Parameters
@@ -112,19 +112,28 @@ def regularDTW(distMat):
     
     """
     sLen,tLen = distMat.shape
-    totalDistance = zeros((sLen+1,tLen+1))
-    totalDistance[0,:] = inf
-    totalDistance[:,0] = inf
-    totalDistance[0,0] = 0
-    totalDistance[1:sLen+1,1:tLen+1] = distMat
+    totalDistance = zeros((sLen,tLen))
+    totalDistance[0:sLen,0:tLen] = distMat
     
-    minDirection = zeros((sLen+1,tLen+1))
+    minDirection = zeros((sLen,tLen))
     
-    for i in range(sLen):
-        for j in range(tLen):
-            direction,minPrevDistance = min(enumerate([totalDistance[i,j],totalDistance[i,j+1],totalDistance[i+1,j]]), key=operator.itemgetter(1))
-            totalDistance[i+1,j+1] = totalDistance[i+1,j+1] + minPrevDistance
-            minDirection[i,j] = direction
+    for i in range(1,sLen):
+        totalDistance[i,0] = totalDistance[i,0] + totalDistance[i-1,0]
     
-    return totalDistance[sLen,tLen]
+    for j in range(1,tLen):
+        totalDistance[0,j] = totalDistance[0,j] + totalDistance[0,j-1]
+    
+    
+    
+    for i in range(1,sLen):
+        for j in range(1,tLen):
+            #direction,minPrevDistance = min(enumerate([totalDistance[i,j],totalDistance[i,j+1],totalDistance[i+1,j]]), key=operator.itemgetter(1))
+            #totalDistance[i+1,j+1] = totalDistance[i+1,j+1] + minPrevDistance
+            #minDirection[i,j] = direction
+            minDirection[i,j],totalDistance[i,j] = min(enumerate([totalDistance[i-1,j-1] + 2*totalDistance[i,j],
+                                                            totalDistance[i-1,j] + totalDistance[i,j],
+                                                            totalDistance[i,j-1] + totalDistance[i,j]]), key=operator.itemgetter(1))
+    if norm:
+        return totalDistance[sLen-1,tLen-1] / (sLen+tLen)
+    return totalDistance[sLen-1,tLen-1]
     
