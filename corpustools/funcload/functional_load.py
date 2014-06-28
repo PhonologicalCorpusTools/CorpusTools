@@ -4,7 +4,7 @@ from math import *
 import itertools
 import queue
 
-import corpustools
+from corpustools.corpus.classes import CorpusFactory
 
 
 
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     # with open(filename, 'rb') as f:
     #     c = pickle.load(f)
 
-    f = corpustools.CorpusFactory()
+    f = CorpusFactory()
     c = f.make_corpus('iphod', 'hayes', size=10000)
 
     # mpfl = minpair_fl(c, [('t','d'), ('p', 'b')], frequency_cutoff = 4, relative_count = True)

@@ -4,7 +4,7 @@ import re
 import time
 from codecs import open
 
-import corpustools
+from corpustools.corpus.classes import CorpusFactory
 
 class Relator(object):
     """Initializes the string similarity relator based off the algorithm of morphological relatedness found in Khorsi (2012)
@@ -287,7 +287,7 @@ class Relator(object):
         else:
             print('Building Corpus')
             start_time = time.time()
-            self.factory = corpustools.CorpusFactory()
+            self.factory = CorpusFactory()
             self.corpus = self.factory.make_corpus(corpus_name, features='spe', size='all')
             end_time = time.time()
             print('Corpus Complete')

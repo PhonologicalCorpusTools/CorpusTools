@@ -3,8 +3,8 @@ Created on May 12, 2014
 
 @author: Michael
 '''
-import string_similarity
-import edit_distance
+import corpustools.symbolsim.string_similarity as string_similarity
+import corpustools.symbolsim.edit_distance as edit_distance
 import time
 import re
 

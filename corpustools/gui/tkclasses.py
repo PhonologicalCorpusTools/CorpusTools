@@ -17,17 +17,17 @@ from tkinter import Radiobutton as OldRadiobutton
 #of the windows
 import tkinter.messagebox as MessageBox
 import tkinter.filedialog as FileDialog
-import corpustools
+from corpustools.corpus.classes import (CorpusFactory, Corpus, FeatureSpecifier,
+                                    Word, Segment)
 import threading
 import queue
 import pickle
 import os
 import string
 #import string_similarity
-import morph_relatedness
-import functional_load as FL
+import corpustools.morphrel.morph_relatedness as morph_relatedness
+import corpustools.funcload.functional_load as FL
 import collections
-import functional_load
 from codecs import open
 from math import log
 
@@ -40,27 +40,10 @@ except ImportError:
 
 #Check numpy and scipy installation
 try:
-    import pip
-
-    installed_packages = [x.key for x in pip.get_installed_distributions()]
+    import corpustools.acousticsim.main as AS
     as_missing_deps = False
-    for x in ['numpy','scipy']:
-        if x not in installed_packages:
-            print('Warning! Package \'%s\' needed for acoustic similarity calculations and was not found.  Acoustic sim will not run')
-            as_missing_deps = True
-    if not as_missing_deps:
-        try:
-            import acousticsim.main as AS
-        except ImportError:
-            import sys
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            sys.path.append(os.path.split(base_dir)[0])
-            import acousticsim.main as AS
 except ImportError:
-    try:
-        from acousticsim.main import missingdeps as as_missing_deps
-    except ImportError:
-        as_missing_deps = True
+    as_missing_deps = True
 
 class ThreadedTask(threading.Thread):
     def __init__(self, queue, target, args, **kwargs):
@@ -171,7 +154,7 @@ class GUI(Toplevel):
         self.corpus = None
         self.all_feature_systems = ['spe','hayes']
         #user defined features systems are added automatically at a later point
-        self.corpus_factory = corpustools.CorpusFactory()
+        self.corpus_factory = CorpusFactory()
         self.tooltip_delay = 1500
         self.warn_about_changes = False
 
@@ -408,8 +391,8 @@ class GUI(Toplevel):
             else:
                 feature_system = 'spe'#default
 
-            corpus = corpustools.Corpus(corpus_name)
-            self.corpus_factory.specifier = corpustools.FeatureSpecifier(encoding=feature_system)
+            corpus = Corpus(corpus_name)
+            self.corpus_factory.specifier = FeatureSpecifier(encoding=feature_system)
             segs_list = list(self.corpus_factory.specifier.matrix.keys())
             transcription_errors = collections.defaultdict(list)
             for line in f:
@@ -417,7 +400,7 @@ class GUI(Toplevel):
                 if not line: #blank or just a newline
                     continue
                 d = {attribute:value.strip() for attribute,value in zip(headers,line.split(delimiter))}
-                word = corpustools.Word(**d)
+                word = Word(**d)
                 if word.transcription:
                     #transcriptions can have phonetic symbol delimiters which is a period
                     word.transcription = word.transcription.split('.')
@@ -442,8 +425,8 @@ class GUI(Toplevel):
         else:
             corpus.inventory = list()
         corpus.orthography.append('#')
-        corpus.inventory.append(corpustools.Segment('#'))
-        corpus.specifier = corpustools.FeatureSpecifier(encoding=feature_system)
+        corpus.inventory.append(Segment('#'))
+        corpus.specifier = FeatureSpecifier(encoding=feature_system)
         corpus.custom = True
         corpusq.put(transcription_errors)
         corpusq.put(corpus)
@@ -2945,18 +2928,3 @@ def make_menus(root,app):
     menubar.add_cascade(label="Help", menu=helpmenu)
     root.config(menu=menubar)
 
-if __name__ == '__main__':
-    root = Tk()
-    root.title("CorpusTools v0.15")
-    if use_logo:
-        try:
-            root.wm_iconbitmap(os.path.join(os.getcwd(),'sample_logo.ico'))
-        except FileNotFoundError:
-            pass#if the file isn't found, don't bother
-    if not os.path.exists(os.path.join(os.getcwd(),'ERRORS')):
-        os.mkdir(os.path.join(os.getcwd(),'ERRORS'))
-    app = GUI(root)
-    make_menus(root,app)
-    root.bind_all('<Control-q>', app.quit)
-    root.bind_all('<Control-h>', app.entropy)
-    root.mainloop()

@@ -1,10 +1,11 @@
 #fun times with morphological relatedness
 import time
-import morph_relatedness
-import corpustools
 import os 
-import phono_align_ex
 from codecs import open
+
+import corpustools.morphrel.morph_relatedness as morph_relatedness
+from corpustools.corpus.classes import CorpusFactory
+import corpustools.symbolsim.phono_align_ex as phono_align_ex
 
 class Freqor(object):
     """Initializes the frequency of alternation analyzer
@@ -157,7 +158,7 @@ class Freqor(object):
         else:
             print('Building Corpus')
             start_time = time.time()
-            self.factory = corpustools.CorpusFactory()
+            self.factory = CorpusFactory()
             self.corpus = self.factory.make_corpus(corpus_name, features='hayes', size=size)
             end_time = time.time()
             #f = self.corpus.specifier.matrix
