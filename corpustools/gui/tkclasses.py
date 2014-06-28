@@ -30,6 +30,7 @@ import corpustools.funcload.functional_load as FL
 import collections
 from codecs import open
 from math import log
+import appdirs
 
 try:
     from PIL import Image as PIL_Image
@@ -145,6 +146,21 @@ class MultiListbox(Frame):
 class GUI(Toplevel):
 
     def __init__(self,master):
+
+        #App data
+        appname = 'CorpusTools'
+        appauthor = 'PCT'
+        self.data_dir = appdirs.user_data_dir(appname, appauthor)
+        self.log_dir = appdirs.user_log_dir(appname, appauthor)
+        self.trans_dir = os.path.join(self.data_dir,'TRANS')
+        if not os.path.exists(self.trans_dir):
+            os.makedirs(self.trans_dir)
+        self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
+        if not os.path.exists(self.corpus_dir):
+            os.makedirs(self.corpus_dir)
+        self.errors_dir = os.path.join(self.log_dir,'ERRORS')
+        if not os.path.exists(self.errors_dir):
+            os.makedirs(self.errors_dir)
 
         #NON-TKINTER VARIABLES
         self.master = master
@@ -283,7 +299,7 @@ class GUI(Toplevel):
 
     def check_for_feature_systems(self):
         ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
-        for dirpath,dirname,filenames in os.walk(os.path.join(os.getcwd(),'TRANS')):
+        for dirpath,dirname,filenames in os.walk(self.trans_dir):
             for name in filenames:
                 if name in ignore:
                     continue
@@ -462,7 +478,7 @@ class GUI(Toplevel):
 
         if transcription_errors is not None:
             filename = 'error_{}_{}.txt'.format(self.new_corpus_feature_system_var.get(), self.corpus.name)
-            with open(os.path.join(os.getcwd(),'ERRORS',filename), encoding='utf-8', mode='w') as f:
+            with open(os.path.join(self.errors_dir,filename), encoding='utf-8', mode='w') as f:
                 print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.\r\n'.format(self.new_corpus_feature_system_var.get()),file=f)
                 print('To fix this problem, open the features file in a text editor and add the missing symbols and appropriate feature specifications\r\n', file=f)
                 print('All feature files are (or should be!) located in the TRANS folder. If you have your own feature file, just drop it into that folder before loading CorpusTools.\r\n', file=f)
@@ -473,8 +489,8 @@ class GUI(Toplevel):
                     sep = '\r\n\n'
                     print('Symbol: {}\r\nWords: {}\r\n{}'.format(key,words,sep), file=f)
             msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'A file called {} has been placed in your ERRORS folder explaining this problem in more detail.'.format(
-            filename)
+            msg2 = 'A file called {} has been placed in your ERRORS folder ({}) explaining this problem in more detail.'.format(
+            filename,self.errors_dir)
             msg3 = 'Words with interpretable symbols will still be displayed. Consult the output file above to see how to fix this problem.'
             msg = '\n'.join([msg1, msg2, msg3])
             MessageBox.showwarning(message=msg)
@@ -961,21 +977,38 @@ class GUI(Toplevel):
         """
         if corpus_name == 'iphod':
             if features_name == 'spe':
-                path = os.path.join(os.getcwd(), 'CORPUS', 'iphod_spe.corpus')
+                path = os.path.join(self.corpus_dir, 'iphod_spe.corpus')
+                download_link = 'https://www.dropbox.com/s/c6v6tij5phacujl/iphod_spe.corpus?dl=1'
             elif features_name == 'hayes':
-                path = os.path.join(os.getcwd(), 'CORPUS', 'iphod_hayes.corpus')
+                path = os.path.join(self.corpus_dir, 'iphod_hayes.corpus')
+                download_link = 'https://www.dropbox.com/s/zs5p0l26ett17iy/iphod_hayes.corpus?dl=1'
         elif corpus_name == 'subtlex':
             if features_name == 'spe':
-                path = os.path.join(os.getcwd(), 'CORPUS', 'subtlex_spe.corpus')
+                path = os.path.join(self.corpus_dir, 'subtlex_spe.corpus')
             elif features_name == 'hayes':
-                path = os.path.join(os.getcwd(), 'CORPUS', 'subtlex_hayes.corpus')
-
+                path = os.path.join(self.corpus_dir, 'subtlex_hayes.corpus')
+        
         self.corpus_load_prog_bar = Progressbar(self.corpus_select_screen, mode='indeterminate')
         self.corpus_load_prog_bar.grid()
         self.corpus_load_prog_bar.start()
-        f = open(path, 'rb')
-        corpus = pickle.load(f)
-        f.close()
+        
+        if not os.path.exists(path) and corpus_name == 'iphod':
+            #import requests
+            #with open(path, 'wb') as handle:
+                #response = requests.get(download_link, stream=True)
+
+                ##if not response.ok:
+                    ## Something went wrong
+
+                #for block in response.iter_content(1024):
+
+                    #handle.write(block)
+            from urllib.request import urlretrieve
+            filename,headers = urlretrieve(download_link,path)
+        elif not os.path.exists(path):
+            return
+        with open(path, 'rb') as f:
+            corpus = pickle.load(f)
         corpus.custom = False
         self.finalize_corpus(corpus)
         self.corpus_select_screen.destroy()
@@ -1585,7 +1618,7 @@ class GUI(Toplevel):
             #envs are exhastive, but some overlap
             final = os.path.split(self.entropy_filename_var.get())[-1]
             filename = 'overlapping_envs_'+final
-            with open(os.path.join(os.getcwd(),'ERRORS', filename), mode='w', encoding='utf-8') as f:
+            with open(os.path.join(self.errors_dir, filename), mode='w', encoding='utf-8') as f:
 
                 print('The environments you selected are not unique, which means that some of them pick out the same environment in the same words.\r\n', file=f)
                 print('For example, the environments of \'_[-voice]\' and \'_k\', are not unique. They overlap with each other, since /k/ is [-voice].\r\n',file=f)
@@ -1599,7 +1632,7 @@ class GUI(Toplevel):
 
             text1 = 'Your environments are not unique, and two or more of them overlap.'
             text2 = 'This means that some environments will be counted more than once and your entropy values will not be reliable.'
-            text3 = 'A text file called {} explaining this problem has been placed in your ERRORS folder'.format(filename)
+            text3 = 'A text file called {} explaining this problem has been placed in your ERRORS folder ({})'.format(filename,self.errors_dir)
             text4 = 'Do you want to carry on with the entropy calculation anyway?'
             do_entropy = MessageBox.askyesno(message='\n'.join([text1,text2,text3,text4]))
             if not do_entropy:
@@ -1608,7 +1641,7 @@ class GUI(Toplevel):
         if self.entropy_exhaustive_var.get() and missing_words:
             #environments are unique but non-exhaustive
             filename = 'missing_words_entropy_{}_and_{}.txt'.format(self.seg1_var.get(), self.seg2_var.get())
-            with open(os.path.join(os.getcwd(),'ERRORS', filename), mode='w', encoding='utf-8') as f:
+            with open(os.path.join(self.errors_dir, filename), mode='w', encoding='utf-8') as f:
 
                 print('The following words have at least one of the segments you are searching for, but it occurs in an environment not included in the list you selected\r', file=f)
                 print('Segments you selected: {}, {}\r'.format(seg1, seg2), file=f)
@@ -1624,7 +1657,7 @@ class GUI(Toplevel):
                 also = ' '
             text = 'Your selection of environments was{}non-exhaustive.'.format(also)
             text2 = 'This means some words contain the segments you selected, but they do not contain the environments you selected.'
-            text3 = 'These words have been printed to the file {} in your ERRORS folder.'.format(filename)
+            text3 = 'These words have been printed to the file {} in your ERRORS folder ({}).'.format(filename,self.errors_dir)
             text4 = 'If you choose to carry on with the calculation, then environment-specific entropies will be accurate.'
             text5 = 'However, the weighted average entropy will not reflect the occurrence of the sounds in the non-included environments.'
             if self.entropy_uniqueness_var.get() and overlapping_words:
@@ -2128,7 +2161,7 @@ class GUI(Toplevel):
         if check_for_error:
             #problems - print an error message
             filename = 'error_{}_{}.txt'.format(self.feature_system_option_menu_var.get(), self.corpus.name)
-            with open(os.path.join(os.getcwd(),'ERRORS',filename), encoding='utf-8', mode='w') as f:
+            with open(os.path.join(self.errors_dir,filename), encoding='utf-8', mode='w') as f:
                 print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.'.format(self.feature_system_option_menu_var.get()),file=f)
                 print('To fix this problem, open the features file in a text editor and add the missing symbols and appropriate feature specifications\r\n', file=f)
                 print('All feature files are (or should be!) located in the TRANS folder. If you have your own feature file, just drop it into that folder before loading CorpusTools.\r\n\r\n', file=f)
@@ -2139,7 +2172,7 @@ class GUI(Toplevel):
                     sep = '\r\n\n'
                     print('Symbol: {}\r\nWords: {}\r\n{}'.format(key,words,sep), file=f)
             msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'A file called {} has been placed in your ERRORS folder explaining this problem in more detail.'.format(filename)
+            msg2 = 'A file called {} has been placed in your ERRORS folder ({}) explaining this problem in more detail.'.format(filename,self.errors_dir)
             msg3 = 'No changes have been made to your corpus'
             msg = '\n'.join([msg1, msg2, msg3])
             MessageBox.showwarning(message=msg)
@@ -2632,7 +2665,7 @@ class GUI(Toplevel):
         if self.fl_type_var.get() == 'min_pairs':
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.minpair_fl,
-                                    args=(s1, s2, self.corpus),
+                                    args=(self.corpus,(s1, s2)),
                                     kwargs={'frequency_cutoff':frequency_cutoff,
                                     'relative_count':relative_count,
                                     'distinguish_homophones':distinguish_homophones,
@@ -2640,7 +2673,7 @@ class GUI(Toplevel):
         else:
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.deltah_fl,
-                                    args=(s1, s2, self.corpus),
+                                    args=(self.corpus,(s1, s2)),
                                     kwargs={'frequency_measure':'type',
                                             'threaded_q':self.fl_q})
         functional_load_thread.start()

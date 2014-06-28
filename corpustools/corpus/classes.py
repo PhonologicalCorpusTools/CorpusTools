@@ -3,8 +3,12 @@
 import os
 import random
 import collections
+import appdirs
 from codecs import open
 
+appname = 'CorpusTools'
+appauthor = 'PCT'
+data_directory = appdirs.user_data_dir(appname, appauthor)
 
 class Segment(object):
     """
@@ -111,7 +115,7 @@ class FeatureSpecifier(object):
 ##            raise ValueError('{} is not a recognized feature system'.format(encoding))
 
         self.matrix = dict()
-        path = os.path.join(os.getcwd(), 'TRANS', filename)
+        path = os.path.join(data_directory, 'TRANS', filename)
         with open(path, encoding='utf-8', mode='r') as f:
             header = f.readline()
             header = header.split(sep)
@@ -552,7 +556,7 @@ class Translator(object):
     def __init__(self):
 
         self.text2cmu = dict()
-        path = os.path.join(os.getcwd(), 'TRANS', 'cmudict.txt')
+        path = os.path.join(data_directory, 'TRANS', 'cmudict.txt')
         with open(path, encoding='utf-8', mode='r') as cmu:
             for line in cmu:
                 line = line.lstrip('\ufeff')
@@ -562,7 +566,7 @@ class Translator(object):
                 self.text2cmu[word] = [symbol for symbol in transcription.split(' ')]
 
         self.cmu2ipa = dict()
-        path = os.path.join(os.getcwd(), 'TRANS', 'cmu2ipa.txt')
+        path = os.path.join(data_directory, 'TRANS', 'cmu2ipa.txt')
         with open(path, encoding='utf-8', mode='r') as ipa:
             for line in ipa:
                 line = line.lstrip('\ufeff')
@@ -857,7 +861,7 @@ class CorpusFactory(object):
 
     Attributes
     ----------
-    basepath : os.getcwd()
+    basepath : User app data directory
         Used for finding the location of corpus files
 
     """
@@ -865,7 +869,7 @@ class CorpusFactory(object):
     essential_descriptors = ['spelling', 'transcription', 'freq']
 
     def __init__(self):
-        self.basepath = os.getcwd()
+        self.basepath = data_directory
 
     def change_path(self, path):
         self.basepath = path
