@@ -1932,24 +1932,27 @@ class GUI(Toplevel):
         self.from_text_window = Toplevel()
         self.from_text_window.title('Create corpus')
         from_text_frame = LabelFrame(self.from_text_window, text='Create corpus from text')
-        choose_file_frame = LabelFrame(from_text_frame, text='Select a source text file to create the corpus from')
-        self.from_text_entry = Entry(choose_file_frame, textvariable=self.corpus_from_text_source_file)
-        self.from_text_entry.grid()
-        find_file = Button(choose_file_frame, text='Choose file...', command=self.navigate_to_text)
+
+        load_file_frame = Frame(from_text_frame)
+        find_file = Button(load_file_frame, text='Select a source text file to create the corpus from', command=self.navigate_to_text)
         find_file.grid(sticky=W)
-        choose_file_frame.grid(sticky=W)
+        from_text_label = Label(load_file_frame, textvariable=self.corpus_from_text_source_file)
+        from_text_label.grid(sticky=W)
+        load_file_frame.grid(sticky=W)
 
-        new_name_frame = LabelFrame(from_text_frame, text='New corpus name and save location')
-        name_label = Label(new_name_frame, text='Name for new corpus:')
-        name_label.grid(row=0,column=0,sticky=W)
-        self.new_name_entry = Entry(new_name_frame, textvariable=self.corpus_from_text_corpus_name_var)
-        self.new_name_entry.grid(row=0,column=1,sticky=W)
-
-        save_button = Button(new_name_frame, text='Select save location', command=self.suggest_corpus_from_text_name)
+        save_file_frame = Frame(from_text_frame)
+        save_button = Button(save_file_frame, text='Select save location for new corpus', command=self.suggest_corpus_from_text_name)
         save_button.grid(sticky=W)
-        save_location = Label(new_name_frame, textvariable=self.corpus_from_text_output_file)
+        save_location = Label(save_file_frame, textvariable=self.corpus_from_text_output_file)
         save_location.grid(sticky=W)
-        new_name_frame.grid(sticky=W)
+        save_file_frame.grid(sticky=W)
+        from_text_frame.grid()
+##        new_name_frame = LabelFrame(from_text_frame, text='New corpus name and save location')
+##        name_label = Label(new_name_frame, text='Name for new corpus:')
+##        name_label.grid(row=0,column=0,sticky=W)
+##        self.new_name_entry = Entry(new_name_frame)
+##        self.new_name_entry.grid(row=0,column=1,sticky=W)
+##        new_name_frame.grid(sticky=W)
 
         punc_frame = LabelFrame(from_text_frame, text='Select punctuation to ignore')
         row = 0
@@ -1998,15 +2001,11 @@ class GUI(Toplevel):
     def parse_text(self, delimiter=' '):
 
         if not os.path.isfile(self.corpus_from_text_source_file.get()):
-            MessageBox.showerror(message='Cannot find the file. Double check the path is correct.')
-            return
-
-        if not self.corpus_from_text_corpus_name_var.get():
-            MessageBox.showerror(message='Please enter a name for the new corpus.')
+            MessageBox.showerror(message='Cannot find the source file. Double check the path is correct.')
             return
 
         if not self.corpus_from_text_output_file.get():
-            MessageBox.showerror(message='Please enter a name for the corpus output file.')
+            MessageBox.showerror(message='Please select a location for the output file.')
             return
 
         string_type = self.new_corpus_string_type.get()
@@ -2033,7 +2032,7 @@ class GUI(Toplevel):
                     word_count[word] += 1
 
         total_words = sum(word_count.values())
-        outputfile = os.path.join(os.getcwd(), self.corpus_from_text_corpus_name_var.get())
+        outputfile = self.corpus_from_text_output_file.get()
 
         with open(outputfile, encoding='utf-8', mode='w') as f:
             print('{},Frequency,Relative frequency,feature_system={}\r'.format(
@@ -2049,17 +2048,13 @@ class GUI(Toplevel):
     def navigate_to_text(self):
         text_file = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
         if text_file:
-            self.from_text_entry.delete(0,END)
-            self.from_text_entry.insert(0, text_file)
+            self.corpus_from_text_source_file.set(text_file)
 
-            header,suggestion = os.path.split(text_file)
-            suggestion = suggestion.split('.')[0]
-            suggestion += '_corpus.txt'
-            self.new_name_entry.delete(0,END)
-            self.new_name_entry.insert(0,suggestion)
-
-    @check_for_empty_corpus
     def show_feature_system(self, memory=None):
+
+        if self.corpus is None:
+            MessageBox.showwarning('No corpus selected')
+            return
 
         if self.show_warnings:
             word = self.corpus.random_word()
