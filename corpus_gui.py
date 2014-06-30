@@ -883,6 +883,8 @@ class GUI(Toplevel):
     def suggest_corpus_from_text_name(self):
         filename = FileDialog.asksaveasfilename()
         if filename:
+            if not filename.endswith('.txt'):
+                filename += '.txt'
             self.corpus_from_text_output_file.set(filename)
 
     def save_corpus_as(self):
@@ -2042,6 +2044,8 @@ class GUI(Toplevel):
 
         self.warn_about_changes = False
         MessageBox.showinfo(message='Corpus created! You can open it from Corpus > Use custom corpus...')
+        if open_corpus:
+            self.load_corpus
         self.from_text_window.destroy()
 
 
