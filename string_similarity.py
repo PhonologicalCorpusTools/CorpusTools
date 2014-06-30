@@ -100,6 +100,7 @@ def string_similarity_single_pair(corpus_name, relator_type, string_type, w1, w2
         score = relator.phono_edit_distance(w1, w2, string_type)
     else:
         raise AttributeError('Relator type \'{}\' is not valid'.format(relator_type))
+        return
     
     w1, w2 = relator.get_word_string_type(w1, w2, string_type)
     return ((w1, w2, score))

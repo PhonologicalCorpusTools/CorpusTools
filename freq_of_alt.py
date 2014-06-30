@@ -1,6 +1,6 @@
 #fun times with morphological relatedness
 import time
-import morph_relatedness
+import string_similarity
 import corpustools
 import os 
 import phono_align_ex
@@ -60,7 +60,7 @@ class Freqor(object):
         end_time = time.time()
         print('File creation time: ' + str(end_time-start_time))
         
-        related_list = morph_relatedness.morph_relatedness_pairs('iphod', relator_type, string_type, count_what, 'temp_file.txt', 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
+        related_list = string_similarity.string_similarity_pairs('iphod', relator_type, string_type, count_what, 'temp_file.txt', 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
         #os.remove('temp_file.txt')
         all_words, words_with_alt = list_s1.union(list_s2), set()
         
@@ -137,7 +137,7 @@ class Freqor(object):
                 pass
         return [s1_list, s2_list]
 
-    def __init__(self,corpus_name, size, ready_made_corpus=None):
+    def __init__(self,corpus_name, size = 'all', ready_made_corpus=None):
         """Initialize a frequency of alternation analyzer by building a corpus or utilizing an already make corpus
         
         Parameters
@@ -155,14 +155,12 @@ class Freqor(object):
         """
         if ready_made_corpus is not None:
             self.corpus = ready_made_corpus
-            #f = self.corpus.specifier.matrix
         else:
             print('Building Corpus')
             start_time = time.time()
             self.factory = corpustools.CorpusFactory()
             self.corpus = self.factory.make_corpus(corpus_name, features='hayes', size=size)
             end_time = time.time()
-            #f = self.corpus.specifier.matrix
             print('Corpus Complete')
             print('Corpus creation time: ' + str(end_time-start_time))
 
