@@ -99,23 +99,30 @@ class Aligner(object):
             else:
                 return 1
 
-        # print(segment1)
-        # print(segment2)
+        if type(segment1) is str:
+            segment1symbol = segment1
+        else:
+            segment1symbol = segment1.symbol
+        if type(segment2) is str:
+            segment2symbol = segment2
+        else:
+            segment2symbol = segment2.symbol
+
         if self.features_tf:
             if segment1 == 'empty':
-                fs2 = self.features[segment2.symbol]
+                fs2 = self.features[segment2symbol]
                 return (sum(check_feature_difference('0', 
                             f.sign) for f in fs2) * self.ins_penalty)    # or should this be addition?
             elif segment2 == 'empty':
-                fs1 = self.features[segment1.symbol]
+                fs1 = self.features[segment1symbol]
                 # print(fs1)
                 # print(fs1[0])
                 return (sum(check_feature_difference(f.sign, 
                         '0') for f in fs1) * 
                         self.del_penalty)    # or should this be addition?
             else:
-                fs1 = self.features[segment1.symbol]
-                fs2 = self.features[segment2.symbol]
+                fs1 = self.features[segment1symbol]
+                fs2 = self.features[segment2symbol]
                 # print(segment1)
                 # print(fs1)
                 # print(segment2)
