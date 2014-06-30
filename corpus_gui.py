@@ -23,8 +23,7 @@ import queue
 import pickle
 import os
 import string
-#import string_similarity
-import morph_relatedness
+import string_similarity as morph_relatedness
 import functional_load as FL
 import collections
 import functional_load
@@ -224,6 +223,7 @@ class GUI(Toplevel):
         self.new_corpus_feature_system_var = StringVar()
         self.corpus_from_text_source_file = StringVar()
         self.corpus_from_text_corpus_name_var = StringVar()
+        self.corpus_from_text_output_file = StringVar()
         #Functional load variables
         self.fl_frequency_cutoff_var = StringVar()
         self.fl_homophones_var = StringVar()
@@ -880,6 +880,11 @@ class GUI(Toplevel):
                                                 defaultextension='.txt')
         return filename
 
+    def suggest_corpus_from_text_name(self):
+        filename = FileDialog.asksaveasfilename()
+        if filename:
+            self.corpus_from_text_output_file.set(filename)
+
     def save_corpus_as(self):
         """
         pickles the corpus, which makes loading it WAY easier
@@ -914,7 +919,7 @@ class GUI(Toplevel):
 
         features_area = LabelFrame(corpus_frame, text='Select a feature system')
         features_area.grid(sticky=E, column=1, row=0)
-        spe_button = Radiobutton(features_area, text='Sound Pattern of English (Chomsky and Halle, 1967)', variable=self.features_button_var, value='spe')
+        spe_button = Radiobutton(features_area, text='Sound Pattern of English (Chomsky and Halle, 1968)', variable=self.features_button_var, value='spe')
         spe_button.grid(sticky=W, row=0)
         spe_button.invoke()#.select() doesn't work on ttk.Button
         hayes_button = Radiobutton(features_area, text='Hayes (2008)', variable=self.features_button_var, value='hayes')
@@ -1927,16 +1932,23 @@ class GUI(Toplevel):
         self.from_text_window = Toplevel()
         self.from_text_window.title('Create corpus')
         from_text_frame = LabelFrame(self.from_text_window, text='Create corpus from text')
-        choose_file_frame = LabelFrame(from_text_frame, text='Select a text file')
+        choose_file_frame = LabelFrame(from_text_frame, text='Select a source text file to create the corpus from')
         self.from_text_entry = Entry(choose_file_frame, textvariable=self.corpus_from_text_source_file)
         self.from_text_entry.grid()
         find_file = Button(choose_file_frame, text='Choose file...', command=self.navigate_to_text)
         find_file.grid(sticky=W)
         choose_file_frame.grid(sticky=W)
 
-        new_name_frame = LabelFrame(from_text_frame, text='Name for new corpus (auto-suggested)')
+        new_name_frame = LabelFrame(from_text_frame, text='New corpus name and save location')
+        name_label = Label(new_name_frame, text='Name for new corpus:')
+        name_label.grid(row=0,column=0,sticky=W)
         self.new_name_entry = Entry(new_name_frame, textvariable=self.corpus_from_text_corpus_name_var)
-        self.new_name_entry.grid(sticky=W)
+        self.new_name_entry.grid(row=0,column=1,sticky=W)
+
+        save_button = Button(new_name_frame, text='Select save location', command=self.suggest_corpus_from_text_name)
+        save_button.grid(sticky=W)
+        save_location = Label(new_name_frame, textvariable=self.corpus_from_text_output_file)
+        save_location.grid(sticky=W)
         new_name_frame.grid(sticky=W)
 
         punc_frame = LabelFrame(from_text_frame, text='Select punctuation to ignore')
@@ -1991,6 +2003,10 @@ class GUI(Toplevel):
 
         if not self.corpus_from_text_corpus_name_var.get():
             MessageBox.showerror(message='Please enter a name for the new corpus.')
+            return
+
+        if not self.corpus_from_text_output_file.get():
+            MessageBox.showerror(message='Please enter a name for the corpus output file.')
             return
 
         string_type = self.new_corpus_string_type.get()
