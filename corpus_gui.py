@@ -191,6 +191,9 @@ class GUI(Toplevel):
         self.string_similarity_threshold_var = StringVar()
         self.string_similarity_one_pair1_var = StringVar()
         self.string_similarity_one_pair2_var = StringVar()
+        self.string_similarity_min_rel_var = StringVar()
+        self.string_similarity_max_rel_var = StringVar()
+        self.string_similarity_relator_type_var = StringVar()
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('spe')
@@ -568,6 +571,14 @@ class GUI(Toplevel):
             #this means that nothing was selected in the multibox
             selection = ''
 
+        relator_type_frame = LabelFrame(self.string_similarity_popup, text='String similarity algorithm')
+        self.relator_selection = Listbox(relator_type_frame, listvariable=self.string_similarity_relator_type_var)
+        self.relator_selection.insert(END, 'Khorsi')
+        self.relator_selection.insert(END, 'Edit distance')
+        self.relator_selection.insert(END, 'Phonological edit distance')
+        self.relator_selection.grid()
+        relator_type_frame.grid(row=0,column=0,sticky=N)
+
         comparison_type_frame = LabelFrame(self.string_similarity_popup, text='Comparison type')
         word1_frame = Frame(comparison_type_frame)
         one_word_radiobutton = Radiobutton(word1_frame, text='Compare one word to entire corpus',
@@ -608,7 +619,7 @@ class GUI(Toplevel):
         word_pairs_frame.grid(sticky=W)
 
 
-        comparison_type_frame.grid(row=0,column=0,sticky=N)
+        comparison_type_frame.grid(row=0,column=1,sticky=N)
 
         options_frame = LabelFrame(self.string_similarity_popup, text='Options')
         typetoken_frame = LabelFrame(options_frame, text='Type or Token')
@@ -631,11 +642,17 @@ class GUI(Toplevel):
         if not has_transcription:
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=0, row=1, sticky=W)
-        threshold_frame = LabelFrame(options_frame, text='Return only results with similarity greater than...')
-        threshold_entry = Entry(threshold_frame, textvariable=self.string_similarity_threshold_var)
-        threshold_entry.grid()
+        threshold_frame = LabelFrame(options_frame, text='Return only results with similarity between...')
+        min_label = Label(threshold_frame, text='Minimum: ')
+        min_label.grid(row=0, column=0)
+        min_rel_entry = Entry(threshold_frame, textvariable=self.string_similarity_min_rel_var)
+        min_rel_entry.grid(row=0, column=1, sticky=W)
+        max_label = Label(threshold_frame, text='Maximum: ')
+        max_label.grid(row=1, column=0)
+        max_rel_entry = Entry(threshold_frame, textvariable=self.string_similarity_max_rel_var)
+        max_rel_entry.grid(row=1, column=1, sticky=W)
         threshold_frame.grid(column=0, row=2, sticky=W)
-        options_frame.grid(row=0, column=1, sticky=N)
+        options_frame.grid(row=0, column=2, sticky=N)
 
         button_frame = Frame(self.string_similarity_popup)
         ok_button = Button(button_frame, text='OK', command=self.calculate_string_similarity)
@@ -750,6 +767,19 @@ class GUI(Toplevel):
     def calculate_string_similarity(self):
 
         #First check if the word is in the corpus
+
+        if not self.relator_selection.curselection():
+            MessageBox.showerror(message='Please select a string similarity algorithm')
+            return
+        else:
+            relator_type = self.relator_selection.get(self.relator_selection.curselection())
+            if relator_type == 'Khorsi':
+                relator_type = 'khorsi'
+            elif relator_type == 'Edit distance':
+                relator_type = 'edit_distance'
+            elif relator_type == 'Phonological edit distance':
+                relator_type = 'phono_edit_distance'
+
         comp_type = self.string_similarity_comparison_type_var.get()
         if comp_type == 'one':
             query = self.string_similarity_query_var.get()
@@ -788,44 +818,51 @@ class GUI(Toplevel):
                 MessageBox.showerror(message=message)
                 return
 
-
-
-
         #If it's all good, then calculate relatedness
         string_type = self.string_similarity_stringtype_var.get()
         typetoken = self.string_similarity_typetoken_var.get()
         output_filename = self.string_similarity_filename_var.get()
         threshold = self.string_similarity_threshold_var.get()
-        if threshold:
-            threshold = int(threshold)
+        min_rel = self.string_similarity_min_rel_var.get()
+        max_rel = self.string_similarity_max_rel_var.get()
+        if min_rel:
+            min_rel = float(min_rel)
         else:
-            threshold = None
+            min_rel = None
+
+        if max_rel:
+            max_rel = float(max_rel)
+        else:
+            max_rel = None
+
+
 
         if self.string_similarity_comparison_type_var.get() == 'one':
             query = self.string_similarity_query_var.get()
-            results = morph_relatedness.morph_relatedness_word('', 'string_similarity',
+            results = morph_relatedness.string_similarity_word('',relator_type,
                                                 string_type, typetoken, query,
-                                                threshold, self.corpus, output_filename='return_data')
+                                                min_rel, max_rel, self.corpus, output_filename='return_data')
             string_similarity_results_popup = Toplevel()
             title = 'Counting {}, Comparing {}'.format(self.string_similarity_typetoken_var.get(),
                                                      self.string_similarity_stringtype_var.get())
             string_similarity_results_popup.title(title)
             string_similarity_results_frame = Frame(string_similarity_results_popup)
             string_similarity_results_box = MultiListbox(string_similarity_results_popup,
-                        [(string_type, 15),
-                        ('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),25),
-                        ('Type or token', 10)
+                        [('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),25),
+                        (string_type, 15),
+                        ('Type or token', 10),
+                        ('Algorithm type', 10)
                         ])
 
             for result in results:
                 word, similarity = result
-                string_similarity_results_box.insert(END,[word, similarity, typetoken])
+                string_similarity_results_box.insert(END,[word, similarity, typetoken, relator_type])
 
         elif self.string_similarity_comparison_type_var.get() == 'pairs':
             query = self.string_similarity_pairs_var.get()
-            results = morph_relatedness.morph_relatedness_pairs('', 'string_similarity',
+            results = morph_relatedness.string_similarity_pairs('', relator_type,
                                                     string_type, typetoken, query,
-                                                    'return_data', threshold, self.corpus)
+                                                    'return_data', min_rel, max_rel, self.corpus)
             string_similarity_results_popup = Toplevel()
             title = 'Comparing pairs of words'.format(self.string_similarity_typetoken_var.get(),
                                                      self.string_similarity_stringtype_var.get())
@@ -835,18 +872,20 @@ class GUI(Toplevel):
                         [('Word 1',20),
                         ('Word 2', 20),
                         ('Similarity', 10),
-                        ('Type or token'), 10])
+                        ('Type or token', 10),
+                        ('Algorithm type', 10)])
 
             for result in results:
                 w1, w2, similarity = result
-                string_similarity_results_box.insert(END,[w1, w2, similarity, typetoken])
+                string_similarity_results_box.insert(END,[w1, w2, similarity, typetoken, relator_type])
 
         elif self.string_similarity_comparison_type_var.get() == 'one_pair':
             word1 = self.string_similarity_one_pair1_var.get()
             word2 = self.string_similarity_one_pair2_var.get()
-            results = morph_relatedness.morph_relatedness_single_pair('', 'string_similarity', string_type, word1, word2, self.corpus)
+            results = morph_relatedness.string_similarity_single_pair('', relator_type, string_type, word1, word2, self.corpus)
             results = list(results)
             results.append(typetoken)
+            results.append(relator_type)
             string_similarity_results_popup = Toplevel()
             string_similarity_results_popup.title('String similarity results')
             string_similarity_results_frame = Frame(string_similarity_results_popup)
@@ -854,7 +893,8 @@ class GUI(Toplevel):
                         [('Word 1',20),
                         ('Word 2', 20),
                         ('Similarity', 20),
-                        ('Type or token', 10)])
+                        ('Type or token', 10),
+                        ('Algorithm type', 10)])
             string_similarity_results_box.insert(END,results)
 
         #display results on screen
@@ -2656,6 +2696,7 @@ class GUI(Toplevel):
             else:
                 self.fl_results_table.destroy()
                 self.fl_results.destroy()
+
         s1 = self.fl_seg1_var.get()
         s2 = self.fl_seg2_var.get()
         frequency_cutoff = int(self.fl_frequency_cutoff_var.get())
@@ -2664,7 +2705,7 @@ class GUI(Toplevel):
         if self.fl_type_var.get() == 'min_pairs':
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.minpair_fl,
-                                    args=(s1, s2, self.corpus),
+                                    args=(self.corpus, s1, s2),
                                     kwargs={'frequency_cutoff':frequency_cutoff,
                                     'relative_count':relative_count,
                                     'distinguish_homophones':distinguish_homophones,
@@ -2672,7 +2713,7 @@ class GUI(Toplevel):
         else:
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.deltah_fl,
-                                    args=(s1, s2, self.corpus),
+                                    args=(self.corpus, s1, s2),
                                     kwargs={'frequency_measure':'type',
                                             'threaded_q':self.fl_q})
         functional_load_thread.start()
