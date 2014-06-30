@@ -188,7 +188,6 @@ class GUI(Toplevel):
         self.string_similarity_stringtype_var = StringVar()
         self.string_similarity_pairs_var = StringVar()
         self.string_similarity_comparison_type_var = StringVar()
-        self.string_similarity_threshold_var = StringVar()
         self.string_similarity_one_pair1_var = StringVar()
         self.string_similarity_one_pair2_var = StringVar()
         self.string_similarity_min_rel_var = StringVar()
@@ -572,10 +571,9 @@ class GUI(Toplevel):
             selection = ''
 
         relator_type_frame = LabelFrame(self.string_similarity_popup, text='String similarity algorithm')
-        self.relator_selection = Listbox(relator_type_frame, listvariable=self.string_similarity_relator_type_var)
-        self.relator_selection.insert(END, 'Khorsi')
-        self.relator_selection.insert(END, 'Edit distance')
-        self.relator_selection.insert(END, 'Phonological edit distance')
+        self.relator_selection = Listbox(relator_type_frame)
+        for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
+            self.relator_selection.insert(0, rtype)
         self.relator_selection.grid()
         relator_type_frame.grid(row=0,column=0,sticky=N)
 
