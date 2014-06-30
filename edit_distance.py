@@ -37,34 +37,40 @@ class Relator(object):
             print('Corpus Complete')
             print('Corpus creation time: ' + str(end_time-start_time))
 
-
-
-    def levenshtein(self, w1, w2, string_type = 'spelling'):
-        """Calculate Levenshtein (1966) edit distance between two strings. Code was acquired from:
-                    http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
+    def edit_distance(self, s1, s2, string_type):
+        """Returns the Levenshtein edit distance between two strings s1 and s2, code drawn from http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python.
+        The number is the number of operations needed to transform s1 into s2, three operations are possible: insert, delete, substitute
         
         Parameters
         ----------
-        w1: string
-            Te first string to be compared
-        w2: string
-            The second string to which the first thing is compared to
-            
+        s1: string
+            the first string to be compared
+        s2: string
+            the second string to be compared
+        
         Returns
         -------
-            The Levenshtein edit distance between two strings (i.e. the minimum number of operations needed to change one string into another using delete, insert or substitute)
+        int:
+            the edit distance between two strings 
         """
-        if len(w1) < len(w2):
-            return self.levenshtein(w2, w1)
+        if string_type == 'transcription':
+            try:
+                w1, w2 = self.corpus.find(s1), self.corpus.find(s2)
+                s1, s2 = getattr(w1, string_type), getattr(w2, string_type)
+            except: #This occurred because the input string is already a transcription
+                pass
+        if s1 is None or s2 is None:
+            return None
+        elif len(s1) < len(s2):
+            return self.edit_distance(s2, s1, string_type)
+
+        if len(s2) == 0:
+            return len(s1)
      
-        # len(s1) >= len(s2)
-        if len(w2) == 0:
-            return len(w1)
-     
-        previous_row = range(len(w2) + 1)
-        for i, c1 in enumerate(w1):
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
             current_row = [i + 1]
-            for j, c2 in enumerate(w2):
+            for j, c2 in enumerate(s2):
                 insertions = previous_row[j + 1] + 1 # j+1 instead of j since previous_row and current_row are one character longer
                 deletions = current_row[j] + 1       # than s2
                 substitutions = previous_row[j] + (c1 != c2)
@@ -73,8 +79,9 @@ class Relator(object):
      
         return previous_row[-1]
     
-    def phono_edit_distance(self, w1, w2, features_tf=True, features=None):
-        """Returns an analogue to Levenshtein edit distance but with phonological features instead of characters in a string
+    
+    def phono_edit_distance(self, word1, word2, string_type, features_tf=False, features=None):
+        """Returns an analogue to Levenshtein edit distance but with the option of counting phonological features instead of characters
         
         Parameters:
         w1: string
@@ -82,20 +89,22 @@ class Relator(object):
         w2: string
             The other string containing a transcription to which w1 will be compared
         features_tf: boolean
-        
+            Set to True if edit_distance using phonological features is desired or False for only characters
         features: phonological features
             Features are the set feature specifications currently be used in the corpus (i.e. Hayes, SPE, etc.)
         """
+        try:
+            w1 = getattr(word1, string_type)
+            w2 = getattr(word2, string_type)
+        except: #This occurred because word1 not a Word object and is likely a list containing a transcription
+            w1 = word1
+            w2 = word2
         if features == None:
             features = self.corpus.specifier.matrix
         a = Aligner(features_tf=features_tf, features=features)
         #try:
         m = a.make_similarity_matrix(w1, w2)
-        return m[-1][-1]['f']
-        
-        #except AttributeError: #This occured
-        
-
+        return m[-1][-1]['f']     
 
 
     def mass_relate(self, query, string_type='spelling', count_what='type'):
@@ -116,32 +125,41 @@ class Relator(object):
             a list of all words in a corpus with their respective relatedness score to the input word w in a writeable format for .txt files
         """
         self.count_what = count_what
-        word = self.corpus.find(query)
-        w = getattr(word, string_type)
+        targ_word = self.corpus.find(query)
         relate = list()
         for word in self.corpus:
-            word = getattr(word, string_type)
-            #Skip over words that do not have transcriptions if string == 'transcription'
+            #Skip over words that do not have exist in corpus
             if word is None:
                 continue
-            relatedness = [self.levenshtein(w, word)]
+            relatedness = [self.edit_distance(targ_word, word, string_type)]
             relate.append( (relatedness, word) )
         #Sort the list by most morphologically related
         relate.sort(key=lambda t:t[0])
-        relate.reverse()
-        
-        comp_strings = list()
-        for score, word in relate:
-            if not isinstance(word, str):
-                word = ''.join([seg.symbol for seg in word])
-            comp_strings.append( (word, score) )
             
-        related_data = comp_strings
-        return related_data
+        return relate
 
-
+    def get_word_string_type(self, w1, w2, string_type):
+        if string_type == 'spelling':
+            return w1, w2
+        elif string_type == 'transcription':
+            try:
+                word1 = self.corpus.find(w1)
+                w1_trans= getattr(word1, string_type)
+                w1 = ''.join([seg.symbol for seg in w1_trans])
+            except: #No transcription available
+                w1 = '*' + w1
+            try:
+                word2 = self.corpus.find(w2)
+                w2_trans = getattr(word2, string_type)
+                w2 = ''.join([seg.symbol for seg in w2_trans])
+            except: # No transcription available
+                w2 = '*' + w2
+                
+            return w1, w2
+                
+                
 if __name__ == '__main__':
     ## TESTING
     r = Relator(corpus_name='Iphod')
-    ed = r.edit_distance(r.corpus['ship'], r.corpus['shopping'], features_tf=False)
+    ed = r.phono_edit_distance(r.corpus['ship'], r.corpus['shopping'], features_tf=False)
     print(ed)

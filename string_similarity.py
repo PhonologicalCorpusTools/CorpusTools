@@ -36,13 +36,17 @@ class Relator(object):
         list or string
             the list or string of remaining elements of both w1 and w2 that are not in the longest common sequence
         """
-        if len(w1) >= len(w2):
-            x1 = w1
-            x2 = w2
-        else:
-            x1 = w2
-            x2 = w1
-            
+        try:
+            if len(w1) >= len(w2):
+                x1 = w1
+                x2 = w2
+            else:
+                x1 = w2
+                x2 = w1
+        except TypeError:
+            #print('A transcription for this element is unavailable')
+            return None
+        
         stringMatches = []
         for i in range(len(x1)):
             i = i + 1
@@ -123,7 +127,7 @@ class Relator(object):
         substrings = substrings[0:(len(w)-l+1)]
         return substrings
 
-    def string_sim(self, w1, w2, freq_base):
+    def string_sim(self, word1, word2, freq_base, string_type):
         """Calculate the string similarity of two words given a set of characters and their frequencies in a corpus, Returns the value (implementation of Khorsi (2012))
         
         Parameters
@@ -133,7 +137,9 @@ class Relator(object):
         w2: Word
             Same as w1
         freq_base: dictionary
-            a dictionary where each segment is mapped to its frequency of occurence in a corpus
+            a dictionary where each segment is mapped to its frequency of occurrence in a corpus
+        string_type: string
+            The type of segments to be used ('spelling' = Roman letters, 'transcription' = IPA symbols)
         
         Returns
         -------
@@ -141,62 +147,53 @@ class Relator(object):
             A number representing the relatedness of two words based on Khorsi (2012)
         """
         try:
-            longComSeq = self.lcs(w1, w2)
+            w1 = getattr(word1, string_type)
+            w2 = getattr(word2, string_type)
+        except: #This error is raised because the input type is a string, not a word object (likely a string containing a transcription)
+            w1 = word1
+            w2 = word2
+                                
+        longComSeq = self.lcs(w1, w2)
+        if longComSeq == None:
+            return None
+        else:
             longest, left_over = longComSeq
-            if isinstance(longest, str) and isinstance(left_over, str):
-                longest = re.sub("[\W\d]", "", longest.strip())
-                left_over = re.sub("[\W\d]", "", left_over.strip())
-            else:
-                pass
-            total_freq = sum(value for value in freq_base.values())
+            
+        if isinstance(longest, str) and isinstance(left_over, str):
+            longest = re.sub("[\W\d]", "", longest.strip())
+            left_over = re.sub("[\W\d]", "", left_over.strip())
+        else:
+            pass
+        total_freq = sum(value for value in freq_base.values())
 
-            #Khorsi's algorithm 
+        #Khorsi's algorithm
+        try: 
             if isinstance(w1, str):
                 sum1 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in longest)
                 sum2 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in left_over)
             else:
                 sum1 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in longest)
                 sum2 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in left_over)
+        except ZeroDivisionError: # This occurred because a spelling string is being compared to a transcription freq_base
+            w1, w2 = self.corpus.find(word1), self.corpus.find(word2)
+            return self.string_sim(w1, w2, freq_base, string_type)
+            
+        return sum1-sum2
     
-            return sum1-sum2
-        except ZeroDivisionError: #This happened because a spelling string is being compared to a transcription frequency base
-            word1 =  self.corpus.find(w1)
-            word2 = self.corpus.find(w2)
-            w1 = getattr(word1, 'transcription')
-            w2 = getattr(word2, 'transcription')
-            longComSeq = self.lcs(w1, w2)
-            longest, left_over = longComSeq
-            if isinstance(longest, str) and isinstance(left_over, str):
-                longest = re.sub("[\W\d]", "", longest.strip())
-                left_over = re.sub("[\W\d]", "", left_over.strip())
-            else:
-                pass
-            total_freq = sum(value for value in freq_base.values())
-
-            #Khorsi's algorithm 
-            if isinstance(w1, str):
-                sum1 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in longest)
-                sum2 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in left_over)
-            else:
-                sum1 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in longest)
-                sum2 = sum(math.log(1/(freq_base[seg.symbol]/total_freq)) for seg in left_over)
-    
-            return sum1-sum2
-
-    def make_freq_base(self, string, count_what = 'type'):
-        """Returns a dictionary of segments mapped to their frequency of occurence in a corpus
+    def make_freq_base(self, string_type, count_what = 'type'):
+        """Returns a dictionary of segments mapped to their frequency of occurrence in a corpus
         
         Parameters
         ---------
-        string: string
-            The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
+        string_type: string
+            The type of segments to be used ('spelling' = Roman letters, 'transcription' = IPA symbols)
         count_what: string
             The type of frequency, either 'type' or 'token', defaults to 'type'
         
         Returns
         -------
         dictionary
-            A dictionary where a segments maps to its frequency of occurence in a corpus
+            A dictionary where a segments maps to its frequency of occurrence in a corpus
         """
         self.count_what = count_what
         freq_base = collections.defaultdict(int)
@@ -210,7 +207,7 @@ class Relator(object):
                 else: #it's a custom corpus
                     frequency = word.frequency
 
-            word = getattr(word, string)
+            word = getattr(word, string_type)
             for letter in word:
                 try: #see if it's a str()
                     if self.count_what == 'type':
@@ -242,31 +239,46 @@ class Relator(object):
             a list of all words in a corpus with their respective relatedness score to the input word w in a writeable format for .txt files
         """
         self.count_what = count_what
-        word = self.corpus.find(query)
-        w = getattr(word, string_type)
+        targ_word = self.corpus.find(query)
         freq_base = self.make_freq_base(string_type, count_what)
         relate = list()
         for word in self.corpus:
-            word = getattr(word, string_type)
-            #Skip over words that do not have transcriptions if string == 'transcription'
+            #Skip over words that do not exist in corpus
             if word is None:
                 continue
-            relatedness = [self.string_sim(w, word, freq_base)]
+            relatedness = [self.string_sim(targ_word, word, freq_base, string_type)]
+            if relatedness is None: #Skip over words that do not have a transcription in the corpus
+                continue
+            
             relate.append( (relatedness, word) )
-        #Sort the list by most morphologically related
+        
+        #Sort the list by most related
         relate.sort(key=lambda t:t[0])
         relate.reverse()
-        
-        comp_strings = list()
-        for score, word in relate:
-            if not isinstance(word, str):
-                word = ''.join([seg.symbol for seg in word])
-            comp_strings.append( (word, score) )
+
+        return relate
+    
+    def get_word_string_type(self, w1, w2, string_type):
+        if string_type == 'spelling':
+            return w1, w2
+        elif string_type == 'transcription':
+            try:
+                word1 = self.corpus.find(w1)
+                w1_trans= getattr(word1, string_type)
+                w1 = ''.join([seg.symbol for seg in w1_trans])
+            except: #No transcription available
+                pass
+                
+            try:
+                word2 = self.corpus.find(w2)
+                w2_trans = getattr(word2, string_type)
+                w2 = ''.join([seg.symbol for seg in w2_trans])
+            except: # No transcription available
+                pass
+                
+            return w1, w2
             
-        related_data = comp_strings
-        return related_data
-
-
+    
     def __init__(self,corpus_name=None, ready_made_corpus=None):
         """Initialize a Relator object by building a corpus or utilizing an already make corpus
         
