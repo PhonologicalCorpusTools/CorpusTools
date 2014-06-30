@@ -6,7 +6,7 @@ def readme():
         return f.read()
         
 setup(name='corpustools',
-      version='0.1',
+      version='0.15',
       description='',
       long_description='',
       classifiers=[
@@ -20,7 +20,8 @@ setup(name='corpustools',
       author_email='kathleen.hall@ubc.ca, mackie@email.com, b.allen@alumni.ubc.ca, mdfry20@gmail.com, michael.mcauliffe@alumni.ubc.ca, kevinmcm@alumni.ubc.ca',
       packages=['corpustools'],
       install_requires=[
-          'markdown',
+          'appdirs',
+          'pillow'
       ],
       include_package_data=True,
       zip_safe=False)
