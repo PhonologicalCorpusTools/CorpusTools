@@ -4,8 +4,8 @@ import re
 import time
 from codecs import open
 
-from corpustools.corpus.classes import CorpusFactory
-from corpustools.symbolsim.phono_align_ex import Aligner
+import corpustools
+from phono_align_ex import Aligner
 
 class Relator(object):
     """Attributes: factory, corpus
@@ -31,56 +31,14 @@ class Relator(object):
         else:
             print('Building Corpus')
             start_time = time.time()
-            self.factory = CorpusFactory()
+            self.factory = corpustools.CorpusFactory()
             self.corpus = self.factory.make_corpus(corpus_name, features='spe', size='all')
             end_time = time.time()
             print('Corpus Complete')
             print('Corpus creation time: ' + str(end_time-start_time))
-
-    def edit_distance(self, s1, s2, string_type):
-        """Returns the Levenshtein edit distance between two strings s1 and s2, code drawn from http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python.
-        The number is the number of operations needed to transform s1 into s2, three operations are possible: insert, delete, substitute
-        
-        Parameters
-        ----------
-        s1: string
-            the first string to be compared
-        s2: string
-            the second string to be compared
-        
-        Returns
-        -------
-        int:
-            the edit distance between two strings 
-        """
-        if string_type == 'transcription':
-            try:
-                w1, w2 = self.corpus.find(s1), self.corpus.find(s2)
-                s1, s2 = getattr(w1, string_type), getattr(w2, string_type)
-            except: #This occurred because the input string is already a transcription
-                pass
-        if s1 is None or s2 is None:
-            return None
-        elif len(s1) < len(s2):
-            return self.edit_distance(s2, s1, string_type)
-
-        if len(s2) == 0:
-            return len(s1)
-     
-        previous_row = range(len(s2) + 1)
-        for i, c1 in enumerate(s1):
-            current_row = [i + 1]
-            for j, c2 in enumerate(s2):
-                insertions = previous_row[j + 1] + 1 # j+1 instead of j since previous_row and current_row are one character longer
-                deletions = current_row[j] + 1       # than s2
-                substitutions = previous_row[j] + (c1 != c2)
-                current_row.append(min(insertions, deletions, substitutions))
-            previous_row = current_row
-     
-        return previous_row[-1]
     
     
-    def phono_edit_distance(self, word1, word2, string_type, features_tf=False, features=None):
+    def phono_edit_distance(self, word1, word2, string_type, features_tf=True, features=None):
         """Returns an analogue to Levenshtein edit distance but with the option of counting phonological features instead of characters
         
         Parameters:
@@ -104,6 +62,7 @@ class Relator(object):
         a = Aligner(features_tf=features_tf, features=features)
         #try:
         m = a.make_similarity_matrix(w1, w2)
+        
         return m[-1][-1]['f']     
 
 
@@ -131,7 +90,7 @@ class Relator(object):
             #Skip over words that do not have exist in corpus
             if word is None:
                 continue
-            relatedness = [self.edit_distance(targ_word, word, string_type)]
+            relatedness = [self.phono_edit_distance(targ_word, word, string_type)]
             relate.append( (relatedness, word) )
         #Sort the list by most morphologically related
         relate.sort(key=lambda t:t[0])

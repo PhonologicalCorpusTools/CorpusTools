@@ -18,7 +18,7 @@ class Freqor(object):
     -------
     None
     """
-    def calc_freq_of_alt(self, s1, s2, relator_type, string_type, count_what, output_filename, threshold = None, phono_align = None, min_pairs_okay = None):
+    def calc_freq_of_alt(self, s1, s2, relator_type, string_type, count_what, output_filename, min_rel = None, max_rel = None, phono_align = None, min_pairs_okay = None):
         """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
         
         Parameters
@@ -33,8 +33,10 @@ class Freqor(object):
             The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
         count_what: string
             The type of frequency, either 'type' or 'token'
-        threshold: double
-            The lowest relatedness desired in the output file, defaults to None (i.e. output will have all words no matter how unrelated)
+        max_rel: double
+            Filters out all words that are higher than max_rel from a relatedness measure
+        min_rel: double
+            Filters out all words that are lower than min_rel from a relatedness measure
         phono_align: boolean (1 or 0), optional
             1 means 'only count alternations that are likely phonologically aligned,' defaults to not force phonological alignment
         min_pairs_okay: boolean (1 or 0), optional
@@ -59,8 +61,9 @@ class Freqor(object):
         end_time = time.time()
         print('File creation time: ' + str(end_time-start_time))
         
-        related_list = morph_relatedness.morph_relatedness_pairs('iphod', relator_type, string_type, count_what, 'temp_file.txt', 'return_data', threshold=threshold, ready_made_corpus = self.corpus)
+        related_list = string_similarity.string_similarity_pairs('iphod', relator_type, string_type, count_what, 'temp_file.txt', 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
         #os.remove('temp_file.txt')
+        print(len(related_list))
         all_words, words_with_alt = list_s1.union(list_s2), set()
         
         #Remove minimal pairs if necessary
@@ -136,7 +139,7 @@ class Freqor(object):
                 pass
         return [s1_list, s2_list]
 
-    def __init__(self,corpus_name, size, ready_made_corpus=None):
+    def __init__(self,corpus_name, size = 'all', ready_made_corpus=None):
         """Initialize a frequency of alternation analyzer by building a corpus or utilizing an already make corpus
         
         Parameters
@@ -154,14 +157,12 @@ class Freqor(object):
         """
         if ready_made_corpus is not None:
             self.corpus = ready_made_corpus
-            #f = self.corpus.specifier.matrix
         else:
             print('Building Corpus')
             start_time = time.time()
             self.factory = CorpusFactory()
             self.corpus = self.factory.make_corpus(corpus_name, features='hayes', size=size)
             end_time = time.time()
-            #f = self.corpus.specifier.matrix
             print('Corpus Complete')
             print('Corpus creation time: ' + str(end_time-start_time))
 

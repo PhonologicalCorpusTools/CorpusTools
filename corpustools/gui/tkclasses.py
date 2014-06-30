@@ -188,9 +188,11 @@ class GUI(Toplevel):
         self.string_similarity_stringtype_var = StringVar()
         self.string_similarity_pairs_var = StringVar()
         self.string_similarity_comparison_type_var = StringVar()
-        self.string_similarity_threshold_var = StringVar()
         self.string_similarity_one_pair1_var = StringVar()
         self.string_similarity_one_pair2_var = StringVar()
+        self.string_similarity_min_rel_var = StringVar()
+        self.string_similarity_max_rel_var = StringVar()
+        self.string_similarity_relator_type_var = StringVar()
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('spe')
@@ -223,6 +225,7 @@ class GUI(Toplevel):
         self.new_corpus_feature_system_var = StringVar()
         self.corpus_from_text_source_file = StringVar()
         self.corpus_from_text_corpus_name_var = StringVar()
+        self.corpus_from_text_output_file = StringVar()
         #Functional load variables
         self.fl_frequency_cutoff_var = StringVar()
         self.fl_homophones_var = StringVar()
@@ -567,6 +570,13 @@ class GUI(Toplevel):
             #this means that nothing was selected in the multibox
             selection = ''
 
+        relator_type_frame = LabelFrame(self.string_similarity_popup, text='String similarity algorithm')
+        self.relator_selection = Listbox(relator_type_frame)
+        for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
+            self.relator_selection.insert(0, rtype)
+        self.relator_selection.grid()
+        relator_type_frame.grid(row=0,column=0,sticky=N)
+
         comparison_type_frame = LabelFrame(self.string_similarity_popup, text='Comparison type')
         word1_frame = Frame(comparison_type_frame)
         one_word_radiobutton = Radiobutton(word1_frame, text='Compare one word to entire corpus',
@@ -607,7 +617,7 @@ class GUI(Toplevel):
         word_pairs_frame.grid(sticky=W)
 
 
-        comparison_type_frame.grid(row=0,column=0,sticky=N)
+        comparison_type_frame.grid(row=0,column=1,sticky=N)
 
         options_frame = LabelFrame(self.string_similarity_popup, text='Options')
         typetoken_frame = LabelFrame(options_frame, text='Type or Token')
@@ -630,11 +640,17 @@ class GUI(Toplevel):
         if not has_transcription:
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=0, row=1, sticky=W)
-        threshold_frame = LabelFrame(options_frame, text='Return only results with similarity greater than...')
-        threshold_entry = Entry(threshold_frame, textvariable=self.string_similarity_threshold_var)
-        threshold_entry.grid()
+        threshold_frame = LabelFrame(options_frame, text='Return only results with similarity between...')
+        min_label = Label(threshold_frame, text='Minimum: ')
+        min_label.grid(row=0, column=0)
+        min_rel_entry = Entry(threshold_frame, textvariable=self.string_similarity_min_rel_var)
+        min_rel_entry.grid(row=0, column=1, sticky=W)
+        max_label = Label(threshold_frame, text='Maximum: ')
+        max_label.grid(row=1, column=0)
+        max_rel_entry = Entry(threshold_frame, textvariable=self.string_similarity_max_rel_var)
+        max_rel_entry.grid(row=1, column=1, sticky=W)
         threshold_frame.grid(column=0, row=2, sticky=W)
-        options_frame.grid(row=0, column=1, sticky=N)
+        options_frame.grid(row=0, column=2, sticky=N)
 
         button_frame = Frame(self.string_similarity_popup)
         ok_button = Button(button_frame, text='OK', command=self.calculate_string_similarity)
@@ -749,6 +765,19 @@ class GUI(Toplevel):
     def calculate_string_similarity(self):
 
         #First check if the word is in the corpus
+
+        if not self.relator_selection.curselection():
+            MessageBox.showerror(message='Please select a string similarity algorithm')
+            return
+        else:
+            relator_type = self.relator_selection.get(self.relator_selection.curselection())
+            if relator_type == 'Khorsi':
+                relator_type = 'khorsi'
+            elif relator_type == 'Edit distance':
+                relator_type = 'edit_distance'
+            elif relator_type == 'Phonological edit distance':
+                relator_type = 'phono_edit_distance'
+
         comp_type = self.string_similarity_comparison_type_var.get()
         if comp_type == 'one':
             query = self.string_similarity_query_var.get()
@@ -787,44 +816,51 @@ class GUI(Toplevel):
                 MessageBox.showerror(message=message)
                 return
 
-
-
-
         #If it's all good, then calculate relatedness
         string_type = self.string_similarity_stringtype_var.get()
         typetoken = self.string_similarity_typetoken_var.get()
         output_filename = self.string_similarity_filename_var.get()
         threshold = self.string_similarity_threshold_var.get()
-        if threshold:
-            threshold = int(threshold)
+        min_rel = self.string_similarity_min_rel_var.get()
+        max_rel = self.string_similarity_max_rel_var.get()
+        if min_rel:
+            min_rel = float(min_rel)
         else:
-            threshold = None
+            min_rel = None
+
+        if max_rel:
+            max_rel = float(max_rel)
+        else:
+            max_rel = None
+
+
 
         if self.string_similarity_comparison_type_var.get() == 'one':
             query = self.string_similarity_query_var.get()
-            results = morph_relatedness.morph_relatedness_word('', 'string_similarity',
+            results = morph_relatedness.string_similarity_word('',relator_type,
                                                 string_type, typetoken, query,
-                                                threshold, self.corpus, output_filename='return_data')
+                                                min_rel, max_rel, self.corpus, output_filename='return_data')
             string_similarity_results_popup = Toplevel()
             title = 'Counting {}, Comparing {}'.format(self.string_similarity_typetoken_var.get(),
                                                      self.string_similarity_stringtype_var.get())
             string_similarity_results_popup.title(title)
             string_similarity_results_frame = Frame(string_similarity_results_popup)
             string_similarity_results_box = MultiListbox(string_similarity_results_popup,
-                        [(string_type, 15),
-                        ('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),25),
-                        ('Type or token', 10)
+                        [('Relatedness to \"{}\"'.format(self.string_similarity_query_var.get()),25),
+                        (string_type, 15),
+                        ('Type or token', 10),
+                        ('Algorithm type', 10)
                         ])
 
             for result in results:
                 word, similarity = result
-                string_similarity_results_box.insert(END,[word, similarity, typetoken])
+                string_similarity_results_box.insert(END,[word, similarity, typetoken, relator_type])
 
         elif self.string_similarity_comparison_type_var.get() == 'pairs':
             query = self.string_similarity_pairs_var.get()
-            results = morph_relatedness.morph_relatedness_pairs('', 'string_similarity',
+            results = morph_relatedness.string_similarity_pairs('', relator_type,
                                                     string_type, typetoken, query,
-                                                    'return_data', threshold, self.corpus)
+                                                    'return_data', min_rel, max_rel, self.corpus)
             string_similarity_results_popup = Toplevel()
             title = 'Comparing pairs of words'.format(self.string_similarity_typetoken_var.get(),
                                                      self.string_similarity_stringtype_var.get())
@@ -834,18 +870,20 @@ class GUI(Toplevel):
                         [('Word 1',20),
                         ('Word 2', 20),
                         ('Similarity', 10),
-                        ('Type or token'), 10])
+                        ('Type or token', 10),
+                        ('Algorithm type', 10)])
 
             for result in results:
                 w1, w2, similarity = result
-                string_similarity_results_box.insert(END,[w1, w2, similarity, typetoken])
+                string_similarity_results_box.insert(END,[w1, w2, similarity, typetoken, relator_type])
 
         elif self.string_similarity_comparison_type_var.get() == 'one_pair':
             word1 = self.string_similarity_one_pair1_var.get()
             word2 = self.string_similarity_one_pair2_var.get()
-            results = morph_relatedness.morph_relatedness_single_pair('', 'string_similarity', string_type, word1, word2, self.corpus)
+            results = morph_relatedness.string_similarity_single_pair('', relator_type, string_type, word1, word2, self.corpus)
             results = list(results)
             results.append(typetoken)
+            results.append(relator_type)
             string_similarity_results_popup = Toplevel()
             string_similarity_results_popup.title('String similarity results')
             string_similarity_results_frame = Frame(string_similarity_results_popup)
@@ -853,7 +891,8 @@ class GUI(Toplevel):
                         [('Word 1',20),
                         ('Word 2', 20),
                         ('Similarity', 20),
-                        ('Type or token', 10)])
+                        ('Type or token', 10),
+                        ('Algorithm type', 10)])
             string_similarity_results_box.insert(END,results)
 
         #display results on screen
@@ -878,6 +917,13 @@ class GUI(Toplevel):
                                                 initialfile=suggested_name,
                                                 defaultextension='.txt')
         return filename
+
+    def suggest_corpus_from_text_name(self):
+        filename = FileDialog.asksaveasfilename()
+        if filename:
+            if not filename.endswith('.txt'):
+                filename += '.txt'
+            self.corpus_from_text_output_file.set(filename)
 
     def save_corpus_as(self):
         """
@@ -913,7 +959,7 @@ class GUI(Toplevel):
 
         features_area = LabelFrame(corpus_frame, text='Select a feature system')
         features_area.grid(sticky=E, column=1, row=0)
-        spe_button = Radiobutton(features_area, text='Sound Pattern of English (Chomsky and Halle, 1967)', variable=self.features_button_var, value='spe')
+        spe_button = Radiobutton(features_area, text='Sound Pattern of English (Chomsky and Halle, 1968)', variable=self.features_button_var, value='spe')
         spe_button.grid(sticky=W, row=0)
         spe_button.invoke()#.select() doesn't work on ttk.Button
         hayes_button = Radiobutton(features_area, text='Hayes (2008)', variable=self.features_button_var, value='hayes')
@@ -1943,17 +1989,27 @@ class GUI(Toplevel):
         self.from_text_window = Toplevel()
         self.from_text_window.title('Create corpus')
         from_text_frame = LabelFrame(self.from_text_window, text='Create corpus from text')
-        choose_file_frame = LabelFrame(from_text_frame, text='Select a text file')
-        self.from_text_entry = Entry(choose_file_frame, textvariable=self.corpus_from_text_source_file)
-        self.from_text_entry.grid()
-        find_file = Button(choose_file_frame, text='Choose file...', command=self.navigate_to_text)
-        find_file.grid(sticky=W)
-        choose_file_frame.grid(sticky=W)
 
-        new_name_frame = LabelFrame(from_text_frame, text='Name for new corpus (auto-suggested)')
-        self.new_name_entry = Entry(new_name_frame, textvariable=self.corpus_from_text_corpus_name_var)
-        self.new_name_entry.grid(sticky=W)
-        new_name_frame.grid(sticky=W)
+        load_file_frame = Frame(from_text_frame)
+        find_file = Button(load_file_frame, text='Select a source text file to create the corpus from', command=self.navigate_to_text)
+        find_file.grid(sticky=W)
+        from_text_label = Label(load_file_frame, textvariable=self.corpus_from_text_source_file)
+        from_text_label.grid(sticky=W)
+        load_file_frame.grid(sticky=W)
+
+        save_file_frame = Frame(from_text_frame)
+        save_button = Button(save_file_frame, text='Select save location for new corpus', command=self.suggest_corpus_from_text_name)
+        save_button.grid(sticky=W)
+        save_location = Label(save_file_frame, textvariable=self.corpus_from_text_output_file)
+        save_location.grid(sticky=W)
+        save_file_frame.grid(sticky=W)
+        from_text_frame.grid()
+##        new_name_frame = LabelFrame(from_text_frame, text='New corpus name and save location')
+##        name_label = Label(new_name_frame, text='Name for new corpus:')
+##        name_label.grid(row=0,column=0,sticky=W)
+##        self.new_name_entry = Entry(new_name_frame)
+##        self.new_name_entry.grid(row=0,column=1,sticky=W)
+##        new_name_frame.grid(sticky=W)
 
         punc_frame = LabelFrame(from_text_frame, text='Select punctuation to ignore')
         row = 0
@@ -2002,11 +2058,11 @@ class GUI(Toplevel):
     def parse_text(self, delimiter=' '):
 
         if not os.path.isfile(self.corpus_from_text_source_file.get()):
-            MessageBox.showerror(message='Cannot find the file. Double check the path is correct.')
+            MessageBox.showerror(message='Cannot find the source file. Double check the path is correct.')
             return
 
-        if not self.corpus_from_text_corpus_name_var.get():
-            MessageBox.showerror(message='Please enter a name for the new corpus.')
+        if not self.corpus_from_text_output_file.get():
+            MessageBox.showerror(message='Please select a location for the output file.')
             return
 
         string_type = self.new_corpus_string_type.get()
@@ -2033,7 +2089,7 @@ class GUI(Toplevel):
                     word_count[word] += 1
 
         total_words = sum(word_count.values())
-        outputfile = os.path.join(os.getcwd(), self.corpus_from_text_corpus_name_var.get())
+        outputfile = self.corpus_from_text_output_file.get()
 
         with open(outputfile, encoding='utf-8', mode='w') as f:
             print('{},Frequency,Relative frequency,feature_system={}\r'.format(
@@ -2043,23 +2099,21 @@ class GUI(Toplevel):
 
         self.warn_about_changes = False
         MessageBox.showinfo(message='Corpus created! You can open it from Corpus > Use custom corpus...')
+        if open_corpus:
+            self.load_corpus
         self.from_text_window.destroy()
 
 
     def navigate_to_text(self):
         text_file = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
         if text_file:
-            self.from_text_entry.delete(0,END)
-            self.from_text_entry.insert(0, text_file)
+            self.corpus_from_text_source_file.set(text_file)
 
-            header,suggestion = os.path.split(text_file)
-            suggestion = suggestion.split('.')[0]
-            suggestion += '_corpus.txt'
-            self.new_name_entry.delete(0,END)
-            self.new_name_entry.insert(0,suggestion)
-
-    @check_for_empty_corpus
     def show_feature_system(self, memory=None):
+
+        if self.corpus is None:
+            MessageBox.showwarning('No corpus selected')
+            return
 
         if self.show_warnings:
             word = self.corpus.random_word()
@@ -2657,6 +2711,7 @@ class GUI(Toplevel):
             else:
                 self.fl_results_table.destroy()
                 self.fl_results.destroy()
+
         s1 = self.fl_seg1_var.get()
         s2 = self.fl_seg2_var.get()
         frequency_cutoff = int(self.fl_frequency_cutoff_var.get())
