@@ -62,6 +62,7 @@ class Relator(object):
         a = Aligner(features_tf=features_tf, features=features)
         #try:
         m = a.make_similarity_matrix(w1, w2)
+        
         return m[-1][-1]['f']     
 
 

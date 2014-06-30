@@ -11,7 +11,8 @@ factory = corpustools.CorpusFactory()
 corpus = factory.make_corpus('iphod', features='spe', size='all')
 print('Corpus Complete')
 
-string_similarity.string_similarity_word('iphod', 'phono_edit_distance', 'transcription', 'type', 'cat', 0, 5, output_filename = 'test10.txt', ready_made_corpus = corpus)
+string_similarity.string_similarity_word('iphod', 'edit_distance', 'transcription', 'type', 'cat', 0, 5, output_filename = 'test10.txt', ready_made_corpus = corpus)
+string_similarity.string_similarity_word('iphod', 'phono_edit_distance', 'transcription', 'type', 'cat', 0, 5, output_filename = 'test11.txt', ready_made_corpus = corpus)
 
 """
 #Testing mass compare of one word

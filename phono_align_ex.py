@@ -130,11 +130,6 @@ class Aligner(object):
                 # for i in range(len(fs1)):
                 #     print(fs1[i])
                 #     print(fs2[i])
-                print()
-                print(len(fs1))
-                print(fs1)
-                print(len(fs2))
-                print(fs2)
                 return (sum(check_feature_difference(fs1[i].sign, fs2[i].sign) for i in range(len(fs1))) * self.sub_penalty)    # or should this be addition?
         else:
             if segment1 == 'empty':

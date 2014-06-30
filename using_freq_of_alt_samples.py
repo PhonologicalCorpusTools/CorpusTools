@@ -28,9 +28,9 @@ def freq_of_alt_samples(corpus_name, s1, s2, relator_type, string_type, count_wh
     
     
 
-#freq = freq_of_alt.Freqor('iphod', 2000)
-#freq.calc_freq_of_alt('s', 'ʃ', 'khorsi', 'transcription', 'type', 'ess_esh_alt_with_min_pairs2000.txt', 0,20, 1, 1)
+freq = freq_of_alt.Freqor('iphod', 1000)
+freq.calc_freq_of_alt('s', 'ʃ', 'phono_edit_distance', 'transcription', 'type', 'ess_esh_alt_with_min_pairs2000.txt', 0,20, 1, 1)
 
-freq_of_alt_samples('iphod', 's', 'ʃ', 'khorsi', 'transcription', 'type', 'ess_esh_alt_with_min_pairs', -10, 20, 1, 1, 2, 4000)
+#freq_of_alt_samples('iphod', 's', 'ʃ', 'phono_edit_distance', 'transcription', 'type', 'ess_esh_alt_with_min_pairs', 0, 30, 1, 1, 2, 2000)
 
 

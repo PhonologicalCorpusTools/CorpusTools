@@ -62,6 +62,7 @@ class Freqor(object):
         
         related_list = string_similarity.string_similarity_pairs('iphod', relator_type, string_type, count_what, 'temp_file.txt', 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
         #os.remove('temp_file.txt')
+        print(len(related_list))
         all_words, words_with_alt = list_s1.union(list_s2), set()
         
         #Remove minimal pairs if necessary
