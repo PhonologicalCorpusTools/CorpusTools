@@ -3,8 +3,8 @@ from numpy import zeros
 
 from functools import partial
 
-from corpustools.acousticsim.helpers.representations import to_envelopes, to_mfcc
-from corpustools.acousticsim.helpers.distance_functions import dtw_distance, xcorr_distance
+from corpustools.acousticsim.representations import to_envelopes, to_mfcc
+from corpustools.acousticsim.distance_functions import dtw_distance, xcorr_distance
 
 def acoustic_similarity_mapping(path_mapping,
                             rep = 'envelopes',

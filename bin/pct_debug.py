@@ -6,7 +6,7 @@ print(base)
 sys.path.append(base)
 
 from tkinter import Tk
-from corpustools.gui.tkclasses import GUI, make_menus,use_logo
+from corpustools.gui.maingui import GUI, make_menus,use_logo
 
 
 root = Tk()

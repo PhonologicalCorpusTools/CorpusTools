@@ -4,8 +4,8 @@ import re
 import time
 from codecs import open
 
-import corpustools
-from phono_align_ex import Aligner
+from corpustools.corpus.classes import CorpusFactory
+from corpustools.symbolsim.phono_align_ex import Aligner
 
 class Relator(object):
     """Attributes: factory, corpus
@@ -31,7 +31,7 @@ class Relator(object):
         else:
             print('Building Corpus')
             start_time = time.time()
-            self.factory = corpustools.CorpusFactory()
+            self.factory = CorpusFactory()
             self.corpus = self.factory.make_corpus(corpus_name, features='spe', size='all')
             end_time = time.time()
             print('Corpus Complete')

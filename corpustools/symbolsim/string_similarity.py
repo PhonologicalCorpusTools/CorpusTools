@@ -3,9 +3,9 @@ Created on May 12, 2014
 
 @author: Michael
 '''
-import khorsi
-import edit_distance
-import phono_edit_distance
+import corpustools.symbolsim.khorsi as khorsi
+import corpustools.symbolsim.edit_distance as edit_distance
+import corpustools.symbolsim.phono_edit_distance as phono_edit_distance
 import time
 import re
 
