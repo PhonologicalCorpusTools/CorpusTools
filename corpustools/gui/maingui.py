@@ -192,7 +192,17 @@ class GUI(Toplevel):
         return do_check
 
     def check_for_feature_systems(self):
+        
         ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
+        links = {'cmu2ipa.txt':'https://www.dropbox.com/s/dcz1hnoix2qy8d0/cmu2ipa.txt?dl=1',
+                'ipa2hayes.txt':'https://www.dropbox.com/s/b5jnunz1m5pzsc6/ipa2hayes.txt?dl=1',
+                'ipa2spe.txt':'https://www.dropbox.com/s/40oa9f0m2v42haq/ipa2spe.txt?dl=1'}
+        for k,v in links.items():
+            path = os.path.join(self.trans_dir,k)
+            if not os.path.exists(path):
+                from urllib.request import urlretrieve
+                filename,headers = urlretrieve(v,path)
+                
         for dirpath,dirname,filenames in os.walk(self.trans_dir):
             for name in filenames:
                 if name in ignore:
