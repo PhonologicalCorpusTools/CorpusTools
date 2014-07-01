@@ -42,14 +42,13 @@ try:
 except ImportError:
     use_logo = False
 
-#Check numpy and scipy installation
 
 
 
 
 class GUI(Toplevel):
 
-    def __init__(self,master):
+    def __init__(self,master,base_path):
 
         #App data
         appname = 'CorpusTools'
@@ -158,7 +157,7 @@ class GUI(Toplevel):
 
         #Splash image at start-up
         try:
-            self.splash_image_path = os.path.join(os.getcwd(),'sample_logo.jpg')
+            self.splash_image_path = os.path.join(base_path,'logo.jpg')
             self.splash_canvas = Canvas(self.corpus_frame)
             self.splash_canvas['width'] = '323'
             self.splash_canvas['height'] = '362'
@@ -166,10 +165,8 @@ class GUI(Toplevel):
             self.splash_image = PIL_ImageTk.PhotoImage(image,master=self.splash_canvas)
             self.splash_canvas.create_image(0,0,anchor=NW,image=self.splash_image)
             self.splash_canvas.grid()
-        except FileNotFoundError:
+        except:
             pass#if the image file is not found, then don't bother
-        except NameError:
-            pass
 
 
     def check_for_empty_corpus(function):
