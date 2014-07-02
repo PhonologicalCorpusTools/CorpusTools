@@ -24,15 +24,16 @@ import queue
 import pickle
 import os
 import string
+from configparser import ConfigParser
 #import string_similarity
 import corpustools.symbolsim.string_similarity as morph_relatedness
 import corpustools.funcload.functional_load as FL
 import collections
 from codecs import open
 from math import log
-import appdirs
 
-from corpustools.gui.basegui import ThreadedTask, MultiListbox
+from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
+                                    CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR)
 from corpustools.gui.asgui import ASFunction
 
 try:
@@ -49,22 +50,15 @@ except ImportError:
 class GUI(Toplevel):
 
     def __init__(self,master,base_path):
-
-        #App data
-        appname = 'CorpusTools'
-        appauthor = 'PCT'
-        self.data_dir = appdirs.user_data_dir(appname, appauthor)
-        self.log_dir = appdirs.user_log_dir(appname, appauthor)
-        self.trans_dir = os.path.join(self.data_dir,'TRANS')
-        if not os.path.exists(self.trans_dir):
-            os.makedirs(self.trans_dir)
-        self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
-        if not os.path.exists(self.corpus_dir):
-            os.makedirs(self.corpus_dir)
+        self.config = ConfigParser()
+        self.load_config()
+        
+        #Set up logging
+        self.log_dir = LOG_DIR
         self.errors_dir = os.path.join(self.log_dir,'ERRORS')
         if not os.path.exists(self.errors_dir):
             os.makedirs(self.errors_dir)
-
+        
         #NON-TKINTER VARIABLES
         self.master = master
         self.show_warnings = False
@@ -169,6 +163,24 @@ class GUI(Toplevel):
             pass#if the image file is not found, then don't bother
 
 
+    def load_config(self):
+        if os.path.exists(CONFIG_PATH):
+            self.config.read(CONFIG_PATH)
+        else:
+            self.config['storage'] = {'directory' : DEFAULT_DATA_DIR}
+            with open(CONFIG_PATH,'w') as configfile:
+                self.config.write(configfile)
+        self.data_dir = self.config['storage']['directory']
+        
+        self.trans_dir = os.path.join(self.data_dir,'TRANS')
+        if not os.path.exists(self.trans_dir):
+            os.makedirs(self.trans_dir)
+            
+        self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
+        if not os.path.exists(self.corpus_dir):
+            os.makedirs(self.corpus_dir)
+        
+
     def check_for_empty_corpus(function):
         def do_check(self):
             if self.corpus is None:
@@ -210,6 +222,11 @@ class GUI(Toplevel):
     @check_for_unsaved_changes
     def quit(self,event=None):
         root.quit()
+
+    def show_preferences(self):
+        preferences = PreferencesWindow()
+        preferences.wait_window()
+        self.load_config()
 
     def update_info_frame(self):
         for child in self.info_frame.winfo_children():
@@ -2600,6 +2617,7 @@ def make_menus(root,app):
 
     optionmenu = Menu(menubar, tearoff=0)
     #optionmenu.add_command(label='Search corpus...', command=app.search)
+    optionmenu.add_command(label='Preferences...', command=app.show_preferences)
     optionmenu.add_command(label='View/change feature system...', command=app.show_feature_system)
     optionmenu.add_command(label='Add Tier...', command=app.create_tier)
     optionmenu.add_command(label='Remove Tier...', command=app.destroy_tier)
