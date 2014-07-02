@@ -151,27 +151,6 @@ class GUI(Toplevel):
         except:
             pass#if the image file is not found, then don't bother
 
-    def check_for_valid_corpus(function):
-        has_spelling = True
-        has_transcription = True
-        has_frequency = True
-        missing = list()
-        if self.corpus.custom:
-            random_word = self.corpus.random_word()
-            if not 'spelling' in random_word.descriptors:# or not random_word.spelling:
-                has_spelling = False
-                missing.append('spelling')
-            if not 'transcription' in random_word.descriptors:# or not random_word.transcription:
-                has_transcription = False
-                missing.append('transcription')
-            if not 'frequency' in random_word.descriptors:# or not random_word.frequency:
-                has_frequency = False
-                missing.append('token frequency')
-
-            if self.show_warnings and not (has_spelling and has_transcription and has_frequency):
-                missing = ','.join(missing)
-                MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
-        function(self)
 
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
@@ -190,6 +169,29 @@ class GUI(Toplevel):
         if not os.path.exists(self.corpus_dir):
             os.makedirs(self.corpus_dir)
         
+    def check_for_valid_corpus(function):
+        def do_check(self):
+            has_spelling = True
+            has_transcription = True
+            has_frequency = True
+            missing = list()
+            if self.corpus.custom:
+                random_word = self.corpus.random_word()
+                if not 'spelling' in random_word.descriptors:# or not random_word.spelling:
+                    has_spelling = False
+                    missing.append('spelling')
+                if not 'transcription' in random_word.descriptors:# or not random_word.transcription:
+                    has_transcription = False
+                    missing.append('transcription')
+                if not 'frequency' in random_word.descriptors:# or not random_word.frequency:
+                    has_frequency = False
+                    missing.append('token frequency')
+
+                if self.show_warnings and not (has_spelling and has_transcription and has_frequency):
+                    missing = ','.join(missing)
+                    MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
+            function(self)
+        return do_check
 
     def check_for_empty_corpus(function):
         def do_check(self):
