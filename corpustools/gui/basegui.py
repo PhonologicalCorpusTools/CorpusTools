@@ -1,6 +1,70 @@
 import threading
+import os
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
-                    YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label)
+                    YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label, 
+                    StringVar, LabelFrame,Label, Button, Entry)
+import tkinter.filedialog as FileDialog
+
+import configparser
+import appdirs
+
+appname = 'CorpusTools'
+appauthor = 'PCT'
+DEFAULT_DATA_DIR = appdirs.user_data_dir(appname, appauthor)
+CONFIG_PATH = os.path.join(DEFAULT_DATA_DIR,'config.ini')
+LOG_DIR = appdirs.user_log_dir(appname, appauthor)
+
+class PreferencesWindow(Toplevel):
+    def __init__(self,master=None, **options):
+        super(PreferencesWindow, self).__init__(master=master, **options)
+        
+        self.title('CorpusTools preferences')
+        
+        self.config = configparser.ConfigParser()
+        if os.path.exists(CONFIG_PATH):
+            self.config.read(CONFIG_PATH)
+        else:
+            self.config['storage'] = {'directory' : data_dir}
+            
+        self.storage_directory = StringVar()
+        
+        dir_frame = LabelFrame(self,text='Directories')
+        storage_dir_label = Label(dir_frame, text='Storage directory')
+        storage_dir_label.grid(row=0, column=0)
+        storage_dir_text = Entry(dir_frame,textvariable=self.storage_directory)
+        storage_dir_text.delete(0,END)
+        storage_dir_text.insert(0, self.config['storage']['directory'])
+        storage_dir_text.grid(row=0,column=1)
+        def set_dir():
+            directory = FileDialog.askdirectory()
+            if directory:
+                storage_dir_text.delete(0,END)
+                storage_dir_text.insert(0, directory)
+
+        find_dir = Button(dir_frame, text='Choose directory...', command=set_dir)
+        find_dir.grid(row=0,column=2)
+
+        dir_frame.grid()
+
+        button_frame = Frame(self)
+        print_button = Button(button_frame, text='Ok', command=self.save_config)
+        print_button.grid(row=0, column=0)
+        close_button = Button(button_frame, text='Cancel', command=self.cancel_config)
+        close_button.grid(row=0, column=1)
+        button_frame.grid()
+        
+    def save_config(self):
+        directory = self.storage_directory.get()
+        if os.path.exists(directory):
+            self.config['storage']['directory'] = directory
+            
+        with open(CONFIG_PATH,'w') as configfile:
+            self.config.write(configfile)
+        self.destroy()
+        
+    def cancel_config(self):
+        self.destroy()
+        
 
 class AboutWindow(Toplevel):
     pass

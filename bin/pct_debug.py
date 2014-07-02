@@ -2,7 +2,6 @@
 import sys
 import os
 base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-print(base)
 sys.path.append(base)
 
 from tkinter import Tk
