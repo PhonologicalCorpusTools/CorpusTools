@@ -35,6 +35,8 @@ class ASAbout(AboutWindow):
 
 class ASFunction(FunctionWindow):
     def __init__(self,master=None, **options):
+        super(ASFunction, self).__init__(master=master, **options)
+        
         self.as_directory_one = StringVar()
         self.as_directory_two = StringVar()
         self.as_representation = StringVar()
@@ -47,7 +49,6 @@ class ASFunction(FunctionWindow):
         self.as_use_multi = BooleanVar()
         self.as_q = queue.Queue()
         self.as_results_table = None
-        super(ASFunction, self).__init__(master=master, **options)
         self.title('Acoustic similarity')
         dir_frame = LabelFrame(self,text='Directories')
         as_dir_one_label = Label(dir_frame, text='First directory')

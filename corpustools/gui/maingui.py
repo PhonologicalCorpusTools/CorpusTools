@@ -84,18 +84,7 @@ class GUI(Toplevel):
         self.corpus_button_var = StringVar()
         self.features_button_var = StringVar()
         self.search_var = StringVar()
-        #string similarity variables
-        self.string_similarity_query_var = StringVar()
-        self.string_similarity_filename_var = StringVar()
-        self.string_similarity_typetoken_var = StringVar()
-        self.string_similarity_stringtype_var = StringVar()
-        self.string_similarity_pairs_var = StringVar()
-        self.string_similarity_comparison_type_var = StringVar()
-        self.string_similarity_one_pair1_var = StringVar()
-        self.string_similarity_one_pair2_var = StringVar()
-        self.string_similarity_min_rel_var = StringVar()
-        self.string_similarity_max_rel_var = StringVar()
-        self.string_similarity_relator_type_var = StringVar()
+        
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('spe')
@@ -168,6 +157,27 @@ class GUI(Toplevel):
         except:
             pass#if the image file is not found, then don't bother
 
+    def check_for_valid_corpus(function):
+        has_spelling = True
+        has_transcription = True
+        has_frequency = True
+        missing = list()
+        if self.corpus.custom:
+            random_word = self.corpus.random_word()
+            if not 'spelling' in random_word.descriptors:# or not random_word.spelling:
+                has_spelling = False
+                missing.append('spelling')
+            if not 'transcription' in random_word.descriptors:# or not random_word.transcription:
+                has_transcription = False
+                missing.append('transcription')
+            if not 'frequency' in random_word.descriptors:# or not random_word.frequency:
+                has_frequency = False
+                missing.append('token frequency')
+
+            if self.show_warnings and not (has_spelling and has_transcription and has_frequency):
+                missing = ','.join(missing)
+                MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
+        function(self)
 
     def check_for_empty_corpus(function):
         def do_check(self):
@@ -437,29 +447,11 @@ class GUI(Toplevel):
 
 
     @check_for_empty_corpus
+    @check_for_valid_corpus
     def string_similarity(self):
 
         #Check if it's even possible to do this analysis
-        has_spelling = True
-        has_transcription = True
-        has_frequency = True
-        missing = list()
-        if self.corpus.custom:
-            random_word = self.corpus.random_word()
-            if not 'spelling' in random_word.descriptors:# or not random_word.spelling:
-                has_spelling = False
-                missing.append('spelling')
-            if not 'transcription' in random_word.descriptors:# or not random_word.transcription:
-                has_transcription = False
-                missing.append('transcription')
-            if not 'frequency' in random_word.descriptors:# or not random_word.frequency:
-                has_frequency = False
-                missing.append('token frequency')
-
-            if self.show_warnings and not (has_spelling and has_transcription and has_frequency):
-                missing = ','.join(missing)
-                MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
-
+        
         self.string_similarity_popup = Toplevel()
         self.string_similarity_popup.title('String similarity')
         try:
@@ -611,31 +603,6 @@ class GUI(Toplevel):
                                                 results, threshold)
         else:
             morph_relatedness.print_pairs_results(filename, results)
-
-    def string_similarity_info(self):
-
-        info_popup = Toplevel()
-        info_popup.title('About the string similarity function')
-        description_frame = LabelFrame(info_popup, text='Brief description')
-        text = ('This function calculates the similarity between words in the corpus,'
-                ' based on either their spelling or their transcription. Similarity '
-                'is a function of the longest common shared sequences of graphemes '
-                'or phonemes (weighted by their frequency of occurrence in the corpus), '
-                'subtracting out the non-shared graphemes or phonemes. The spelling '
-                'version was originally proposed as a measure of morphological relatedness,'
-                ' but is more accurately described as simply a measure of string similarity.')
-        description_label = Label(description_frame, text=text)
-        description_label.config(wraplength=600)
-        description_label.grid()
-        description_frame.grid(sticky=W)
-        citation_frame = LabelFrame(info_popup, text='Original source')
-        citation_label = Label(citation_frame, text='Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.')
-        citation_label.grid()
-        citation_frame.grid(sticky=W)
-        author_frame = LabelFrame(info_popup, text='Coded by')
-        author_label = Label(author_frame, text='Micheal Fry')
-        author_label.grid()
-        author_frame.grid(sticky=W)
 
     def about_entropy(self):
 
