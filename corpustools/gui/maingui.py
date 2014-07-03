@@ -31,7 +31,11 @@ from math import log
 
 from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
                                     CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR, ERROR_DIR)
-from corpustools.gui.asgui import ASFunction
+try:
+    from corpustools.gui.asgui import ASFunction
+    as_enabled = True
+except ImportError:
+    as_enabled = False
 from corpustools.gui.ssgui import SSFunction
 from corpustools.gui.flgui import FLFunction
 from corpustools.gui.pdgui import PDFunction
@@ -1077,10 +1081,10 @@ class GUI(Toplevel):
 
     def acoustic_sim(self):
 
-        #if as_missing_deps:
-        #    MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
-        #    '\nAcoustic similarity cannot be run without both of them installed.'))
-        #    return
+        if not as_enabled:
+            MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
+            '\nAcoustic similarity cannot be run without both of them installed.'))
+            return
         self.as_popup = ASFunction()
         
 
