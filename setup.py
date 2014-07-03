@@ -29,7 +29,6 @@ setup(name='corpustools',
                 'corpustools.gui',
                 'corpustools.symbolsim'],
       install_requires=[
-          'appdirs',
           'pillow'
       ],
       entry_points = {
