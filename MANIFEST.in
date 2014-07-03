@@ -1,3 +1,4 @@
 include README.md
 include LICENSE
 recursive-include docs *.html *.css *.png *.gif *.ico *.jpeg
+recursive-include examples *.txt
