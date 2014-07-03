@@ -1,19 +1,48 @@
 import threading
 import os
+import sys
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
                     YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label, 
                     StringVar, LabelFrame,Label, Button, Entry)
 import tkinter.filedialog as FileDialog
 
 import configparser
-import appdirs
+
+def get_win_folders(csidl_name):
+    #Based off of appdirs
+    import ctypes
+
+    csidl_const = {
+        "CSIDL_APPDATA": 26,
+        "CSIDL_COMMON_APPDATA": 35,
+        "CSIDL_LOCAL_APPDATA": 28,
+    }[csidl_name]
+
+    buf = ctypes.create_unicode_buffer(1024)
+    ctypes.windll.shell32.SHGetFolderPathW(None, csidl_const, None, 0, buf)
+
+    return buf.value
 
 appname = 'CorpusTools'
 appauthor = 'PCT'
-DEFAULT_DATA_DIR = appdirs.user_data_dir(appname, appauthor)
+if sys.platform == 'win32': 
+    local_data = os.path.expanduser('~\\Documents')
+elif sys.platform == 'darwin':
+    local_data = os.path.expanduser('~/Library/Application Support/')
+else:
+    local_data = os.path.expanduser("~/.pct")
+    
+DEFAULT_DATA_DIR = os.path.join(local_data, appauthor, appname)
+if not os.path.exists(DEFAULT_DATA_DIR):
+    os.makedirs(DEFAULT_DATA_DIR)
 CONFIG_PATH = os.path.join(DEFAULT_DATA_DIR,'config.ini')
-LOG_DIR = appdirs.user_log_dir(appname, appauthor)
+LOG_DIR = os.path.join(local_data, appauthor, appname,'log')
+if not os.path.exists(LOG_DIR):
+    os.mkdir(LOG_DIR)
 ERROR_DIR = os.path.join(LOG_DIR,'ERRORS')
+if not os.path.exists(ERROR_DIR):
+    os.mkdir(ERROR_DIR)
+
 class PreferencesWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(PreferencesWindow, self).__init__(master=master, **options)
@@ -357,3 +386,6 @@ class ToolTip:
             del opts[opt]
         label = Label(self._tipwindow, **opts)
         label.pack()
+
+if __name__=='__main__':
+    print(DEFAULT_DATA_DIR)

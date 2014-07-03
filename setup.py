@@ -1,5 +1,6 @@
 
 from setuptools import setup
+import py2exe
 
 def readme():
     with open('README.md') as f:
@@ -26,14 +27,17 @@ setup(name='corpustools',
                 'corpustools.corpus',
                 'corpustools.freqalt',
                 'corpustools.funcload',
+                'corpustools.prod',
                 'corpustools.gui',
                 'corpustools.symbolsim'],
       install_requires=[
-          'appdirs',
-          'pillow'
+          'pillow',
+          #'numpy',
+          #'scipy'
       ],
       entry_points = {
         'console_scripts': ['pct=corpustools.pct:main'],
     },
+    console=['bin/pct.py'],
       include_package_data=True,
       zip_safe=False)

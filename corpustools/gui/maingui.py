@@ -30,7 +30,7 @@ from codecs import open
 from math import log
 
 from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
-                                    CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR)
+                                    CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR, ERROR_DIR)
 from corpustools.gui.asgui import ASFunction
 from corpustools.gui.ssgui import SSFunction
 from corpustools.gui.flgui import FLFunction
@@ -55,9 +55,7 @@ class GUI(Toplevel):
         
         #Set up logging
         self.log_dir = LOG_DIR
-        self.errors_dir = os.path.join(self.log_dir,'ERRORS')
-        if not os.path.exists(self.errors_dir):
-            os.makedirs(self.errors_dir)
+        self.errors_dir = ERROR_DIR
         
         #NON-TKINTER VARIABLES
         self.master = master
