@@ -904,10 +904,7 @@ class CorpusFactory(object):
         self.specifier = FeatureSpecifier(encoding=features)
 
         corpus_name = corpus_name.upper()
-        if corpus_name == 'SUBTLEX':
-            filename = 'SUBTLEXus_74286_words.txt'
-            func = self.read_subtlex
-        elif corpus_name == 'IPHOD':
+        if corpus_name == 'IPHOD':
             filename = 'IPhOD2_Words.txt'
             func = self.read_iphod
         else:
@@ -977,11 +974,7 @@ class CorpusFactory(object):
         """
         corpus_name = corpus_name.upper()
 
-        if corpus_name == 'SUBTLEX':
-            filename = 'SUBTLEXus_74286_words.txt'
-            func = self.read_subtlex
-
-        elif corpus_name == 'IPHOD':
+        if corpus_name == 'IPHOD':
             filename = 'IPhOD2_Words.txt'
             func = self.read_iphod
 
@@ -993,63 +986,13 @@ class CorpusFactory(object):
 
         return corpus
 
-    def read_subtlex(self, corpus_path, max_size, q=None):
-        """Create built-in SUBTLEX corpus from file
-
-        Parameters
-        ----------
-        corpus_path : str
-            path to original SUBTLEX file
-
-        max_size : int
-            size of corpus
-
-        q : None or Queue
-            queue object if calling from GUI
-
-
-        Returns
-        ----------
-        corpus : Corpus
-
-        """
-        corpus = Corpus('subtlex')
-        translator = Translator()
-        with open(corpus_path, encoding='utf-8') as f:
-            headers = f.readline()
-            headers = headers.split()
-            counter = 0
-            for line in f:
-                d = {attribute:value for attribute,value in zip(headers,line.split())}
-                transcription = translator.translate(d['Word'], 'text')
-                word = Word(spelling=d['Word'], abs_freq=d['FREQcount'], freq_per_mil=d['SUBTLWF'],
-                lowercase_freq=d['Cdlow'], log10_freq=d['Lg10WF'], transcription=transcription)
-                word._specify_features(self)
-                for letter in word.spelling:
-                    if letter not in corpus.orthography:
-                        corpus.orthography.append(letter)
-                if transcription is not None:
-                    for seg in word.transcription:
-                        if seg not in corpus.inventory:
-                            corpus.inventory.append(seg)
-                    corpus.add_word(word)
-                counter += 1
-                if q is not None:
-                    q.put(counter)
-                if counter == max_size:
-                    break
-
-        corpus.orthography.append('#')
-        corpus.inventory.append(Segment('#'))
-        return corpus
-
     def read_iphod(self, corpus_path, max_size, q=None):
         """Create IPHOD corpus from file
 
         Parameters
         ----------
         corpus_path : str
-            path to original SUBTLEX file
+            path to original IPHOD file
 
         max_size : int
             size of corpus

@@ -24,16 +24,15 @@ import queue
 import pickle
 import os
 import string
-from configparser import ConfigParser
 #import string_similarity
 import corpustools.symbolsim.string_similarity as morph_relatedness
 import corpustools.funcload.functional_load as FL
 import collections
 from codecs import open
 from math import log
+import appdirs
 
-from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
-                                    CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR)
+from corpustools.gui.basegui import ThreadedTask, MultiListbox
 from corpustools.gui.asgui import ASFunction
 
 try:
@@ -50,15 +49,22 @@ except ImportError:
 class GUI(Toplevel):
 
     def __init__(self,master,base_path):
-        self.config = ConfigParser()
-        self.load_config()
-        
-        #Set up logging
-        self.log_dir = LOG_DIR
+
+        #App data
+        appname = 'CorpusTools'
+        appauthor = 'PCT'
+        self.data_dir = appdirs.user_data_dir(appname, appauthor)
+        self.log_dir = appdirs.user_log_dir(appname, appauthor)
+        self.trans_dir = os.path.join(self.data_dir,'TRANS')
+        if not os.path.exists(self.trans_dir):
+            os.makedirs(self.trans_dir)
+        self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
+        if not os.path.exists(self.corpus_dir):
+            os.makedirs(self.corpus_dir)
         self.errors_dir = os.path.join(self.log_dir,'ERRORS')
         if not os.path.exists(self.errors_dir):
             os.makedirs(self.errors_dir)
-        
+
         #NON-TKINTER VARIABLES
         self.master = master
         self.show_warnings = False
@@ -163,24 +169,6 @@ class GUI(Toplevel):
             pass#if the image file is not found, then don't bother
 
 
-    def load_config(self):
-        if os.path.exists(CONFIG_PATH):
-            self.config.read(CONFIG_PATH)
-        else:
-            self.config['storage'] = {'directory' : DEFAULT_DATA_DIR}
-            with open(CONFIG_PATH,'w') as configfile:
-                self.config.write(configfile)
-        self.data_dir = self.config['storage']['directory']
-        
-        self.trans_dir = os.path.join(self.data_dir,'TRANS')
-        if not os.path.exists(self.trans_dir):
-            os.makedirs(self.trans_dir)
-            
-        self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
-        if not os.path.exists(self.corpus_dir):
-            os.makedirs(self.corpus_dir)
-        
-
     def check_for_empty_corpus(function):
         def do_check(self):
             if self.corpus is None:
@@ -222,11 +210,6 @@ class GUI(Toplevel):
     @check_for_unsaved_changes
     def quit(self,event=None):
         root.quit()
-
-    def show_preferences(self):
-        preferences = PreferencesWindow()
-        preferences.wait_window()
-        self.load_config()
 
     def update_info_frame(self):
         for child in self.info_frame.winfo_children():
@@ -865,9 +848,6 @@ class GUI(Toplevel):
         corpus_frame = Frame(self.corpus_select_screen)
         corpus_area = LabelFrame(corpus_frame, text='Select a corpus')
         corpus_area.grid(sticky=W, column=0, row=0)
-        subtlex_button = Radiobutton(corpus_area, text='SUBTLEX', variable=self.corpus_button_var, value='subtlex')
-        subtlex_button.grid(sticky=W,row=0)
-        subtlex_button.invoke()#.select() doesn't work on ttk.Button
         iphod_button = Radiobutton(corpus_area, text='IPHOD', variable=self.corpus_button_var, value='iphod')
         iphod_button.grid(sticky=W,row=1)
 
@@ -942,11 +922,6 @@ class GUI(Toplevel):
             elif features_name == 'hayes':
                 path = os.path.join(self.corpus_dir, 'iphod_hayes.corpus')
                 download_link = 'https://www.dropbox.com/s/zs5p0l26ett17iy/iphod_hayes.corpus?dl=1'
-        elif corpus_name == 'subtlex':
-            if features_name == 'spe':
-                path = os.path.join(self.corpus_dir, 'subtlex_spe.corpus')
-            elif features_name == 'hayes':
-                path = os.path.join(self.corpus_dir, 'subtlex_hayes.corpus')
         
         self.corpus_load_prog_bar = Progressbar(self.corpus_select_screen, mode='indeterminate')
         self.corpus_load_prog_bar.grid()
@@ -2617,7 +2592,6 @@ def make_menus(root,app):
 
     optionmenu = Menu(menubar, tearoff=0)
     #optionmenu.add_command(label='Search corpus...', command=app.search)
-    optionmenu.add_command(label='Preferences...', command=app.show_preferences)
     optionmenu.add_command(label='View/change feature system...', command=app.show_feature_system)
     optionmenu.add_command(label='Add Tier...', command=app.create_tier)
     optionmenu.add_command(label='Remove Tier...', command=app.destroy_tier)
