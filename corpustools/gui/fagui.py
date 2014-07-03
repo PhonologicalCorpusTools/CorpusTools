@@ -8,7 +8,8 @@ import tkinter.messagebox as MessageBox
 
 import queue
 
-from corpustools.gui.basegui import AboutWindow, FunctionWindow, ResultsWindow, MultiListbox, ThreadedTask
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
 
 
 class FAAbout(AboutWindow):

@@ -31,6 +31,7 @@ class ASAbout(AboutWindow):
         coder_label = Label(coder_frame, text='Michael McAuliffe')
         coder_label.grid()
         coder_frame.grid(sticky=W)
+        self.focus()
     
 
 class ASFunction(FunctionWindow):
@@ -48,7 +49,7 @@ class ASFunction(FunctionWindow):
         self.as_output_sim = BooleanVar()
         self.as_use_multi = BooleanVar()
         self.as_q = queue.Queue()
-        self.as_results_table = None
+        self.as_results = None
         self.title('Acoustic similarity')
         dir_frame = LabelFrame(self,text='Directories')
         as_dir_one_label = Label(dir_frame, text='First directory')
@@ -164,11 +165,20 @@ class ASFunction(FunctionWindow):
         about = Button(button_frame, text='About this function...', command=self.about_acoustic_similarity)
         about.grid(row=0, column=2)
         button_frame.grid()
+        self.focus()
         
     def about_acoustic_similarity(self):
         about_as = ASAbout(master=self)
         
+    def delete_as_results(self):
+
+        #clean-up function
+        if self.fl_results is not None:
+            self.fl_results.destroy()
+            self.fl_results = None
+            
     def cancel_acoustic_similarity(self):
+        self.delete_as_results()
         self.destroy()
         
     def calculate_acoustic_similarity(self,update=False):

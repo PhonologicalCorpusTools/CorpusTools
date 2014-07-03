@@ -10,7 +10,8 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.symbolsim.string_similarity as SS
 
-from corpustools.gui.basegui import AboutWindow, FunctionWindow, ResultsWindow, MultiListbox, ThreadedTask
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
 
 
 class SSAbout(AboutWindow):
@@ -37,6 +38,7 @@ class SSAbout(AboutWindow):
         author_label = Label(author_frame, text='Micheal Fry')
         author_label.grid()
         author_frame.grid(sticky=W)
+        self.focus()
     
 
 class SSFunction(FunctionWindow):
@@ -159,6 +161,8 @@ class SSFunction(FunctionWindow):
         info_button = Button(button_frame, text='About this function...', command=self.about_string_similarity)
         info_button.grid(row=0,column=2)
         button_frame.grid(row=1)
+        
+        self.focus()
         
     def about_string_similarity(self):
         about_ss = SSAbout(master=self)
