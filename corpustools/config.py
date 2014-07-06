@@ -32,6 +32,6 @@ if not os.path.exists(ERROR_DIR):
 if os.path.exists(CONFIG_PATH):
     config.read(CONFIG_PATH)
 else:
-    config['storage'] = {'directory' : data_dir}
+    config['storage'] = {'directory' : DEFAULT_DATA_DIR}
     with open(CONFIG_PATH,'w') as configfile:
         config.write(configfile)
