@@ -3,12 +3,11 @@
 import os
 import random
 import collections
-import appdirs
 from codecs import open
 
-appname = 'CorpusTools'
-appauthor = 'PCT'
-data_directory = appdirs.user_data_dir(appname, appauthor)
+from corpustools.config import config
+
+data_directory = config['storage']['directory']
 
 class Segment(object):
     """

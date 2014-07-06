@@ -17,7 +17,6 @@ from tkinter import Radiobutton as OldRadiobutton
 #of the windows
 import tkinter.messagebox as MessageBox
 import tkinter.filedialog as FileDialog
-from configparser import ConfigParser
 from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
                                     CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR, ERROR_DIR)
 import threading
@@ -32,6 +31,7 @@ from codecs import open
 from math import log
 
 from corpustools.corpus.classes import CorpusFactory
+from corpustools.config import config
 
 from corpustools.gui.basegui import ThreadedTask, MultiListbox
 from corpustools.gui.asgui import ASFunction
@@ -51,7 +51,6 @@ class GUI(Toplevel):
 
     def __init__(self,master,base_path):
 
-        self.config = ConfigParser()
         self.load_config()
         
         #Set up logging
@@ -163,12 +162,12 @@ class GUI(Toplevel):
 
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
-            self.config.read(CONFIG_PATH)
+            config.read(CONFIG_PATH)
         else:
-            self.config['storage'] = {'directory' : DEFAULT_DATA_DIR}
+            config['storage'] = {'directory' : DEFAULT_DATA_DIR}
             with open(CONFIG_PATH,'w') as configfile:
-                self.config.write(configfile)
-        self.data_dir = self.config['storage']['directory']
+                config.write(configfile)
+        self.data_dir = config['storage']['directory']
         
         self.trans_dir = os.path.join(self.data_dir,'TRANS')
         if not os.path.exists(self.trans_dir):
