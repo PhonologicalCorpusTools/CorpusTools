@@ -22,7 +22,7 @@ class PreferencesWindow(Toplevel):
         storage_dir_label.grid(row=0, column=0)
         storage_dir_text = Entry(dir_frame,textvariable=self.storage_directory)
         storage_dir_text.delete(0,END)
-        storage_dir_text.insert(0, self.config['storage']['directory'])
+        storage_dir_text.insert(0, config['storage']['directory'])
         storage_dir_text.grid(row=0,column=1)
         def set_dir():
             directory = FileDialog.askdirectory()
