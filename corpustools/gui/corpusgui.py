@@ -1,9 +1,11 @@
 
 import os
+import pickle
+import collections
 
 from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, 
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
-                    ACTIVE, Toplevel, Listbox )
+                    ACTIVE, Toplevel, Listbox, OptionMenu )
 from tkinter.ttk import Progressbar
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
@@ -11,8 +13,10 @@ import tkinter.messagebox as MessageBox
 from urllib.request import urlretrieve
 import queue
 
+from corpustools.corpus.classes import (CorpusFactory, Corpus, FeatureSpecifier,
+                                    Word, Segment)
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
-                    ResultsWindow, MultiListbox, ThreadedTask, config)
+                    ResultsWindow, MultiListbox, ThreadedTask, config, ERROR_DIR)
 
 class DownloadWindow(Toplevel):
     def __init__(self,master=None, **options):
@@ -67,6 +71,8 @@ class DownloadWindow(Toplevel):
 class CustomCorpusWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(CustomCorpusWindow, self).__init__(master=master, **options)
+        self.new_corpus_feature_system_var = StringVar()
+        self.corpus_factory = CorpusFactory()
         self.title('Load new corpus')
         custom_corpus_load_frame = LabelFrame(self, text='Corpus information')
         custom_corpus_load_frame.grid()
@@ -86,15 +92,17 @@ class CustomCorpusWindow(Toplevel):
         self.delimiter_entry.delete(0,END)
         self.delimiter_entry.insert(0,',')
         self.delimiter_entry.grid()
+        trans_dir = os.path.join(config['storage']['directory'],'TRANS')
+        all_feature_systems = [x.split('.')[0] for x in os.listdir(trans_dir) if '2' not in x]
         new_corpus_feature_frame = LabelFrame(custom_corpus_load_frame, text='Feature system to use (if transcription exists)')
         new_corpus_feature_system = OptionMenu(new_corpus_feature_frame,#parent
             self.new_corpus_feature_system_var,#variable
             'spe',#selected option,
-            *[fs for fs in self.all_feature_systems])#options in drop-down
+            *[fs for fs in all_feature_systems])#options in drop-down
         new_corpus_feature_system.grid()
         new_corpus_feature_frame.grid(sticky=W)
         ok_button = Button(self, text='OK', command=self.confirm_custom_corpus_selection)
-        cancel_button = Button(self.custom_corpus_load_screen, text='Cancel', command=self.destroy)
+        cancel_button = Button(self, text='Cancel', command=self.destroy)
         ok_button.grid()
         cancel_button.grid()
         
@@ -127,20 +135,18 @@ class CustomCorpusWindow(Toplevel):
             msg = self.q.get(0)
             if msg == -99:
                 self.custom_corpus_load_prog_bar.stop()
-                #self.corpus_load_prog_bar.destroy()
-                self.custom_corpus_load_screen.destroy()
                 transcription_errors = self.corpusq.get()
                 corpus = self.corpusq.get()
                 self.finalize_corpus(corpus, transcription_errors)
-                return
+                self.destroy()
             else:
                 self.custom_corpus_load_prog_bar.step()
                 #self.master.after(100, self.process_queue)
-                self.custom_corpus_load_screen.after(3, self.process_custom_corpus_queue)
+                self.after(3, self.process_custom_corpus_queue)
         except queue.Empty:
             #queue is empty initially for a while because it takes some time for the
             #corpus_factory.make_corpus to actually start producing worsd
-            self.custom_corpus_load_screen.after(10, self.process_custom_corpus_queue)
+            self.after(10, self.process_custom_corpus_queue)
 
     def custom_corpus_worker_thread(self, corpus_name, filename, delimiter, queue, corpusq):
         with open(filename, encoding='utf-8') as f:
@@ -198,8 +204,12 @@ class CustomCorpusWindow(Toplevel):
         corpus.inventory.append(Segment('#'))
         corpus.specifier = FeatureSpecifier(encoding=feature_system)
         corpus.custom = True
+        with open(os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'), 'wb') as f:
+            pickle.dump(corpus,f)
         corpusq.put(transcription_errors)
         corpusq.put(corpus)
+            
+        
 
     def create_custom_corpus(self, corpus_name, filename, delimiter):
 
@@ -213,9 +223,38 @@ class CustomCorpusWindow(Toplevel):
             pass
 
         self.q = queue.Queue()
-        self.custom_corpus_load_prog_bar = Progressbar(self.custom_corpus_load_screen, mode='indeterminate')
+        self.corpusq = queue.Queue(1)
+        self.custom_corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
         #this progbar is indeterminate because we can't know how big the custom corpus will be
         self.custom_corpus_load_prog_bar.grid()
+        self.custom_corpus_load_thread = ThreadedTask(self.q,
+                                target=self.custom_corpus_worker_thread,
+                                args=(corpus_name, filename, delimiter, self.q, self.corpusq))
+        self.custom_corpus_load_thread.start()
+        self.process_custom_corpus_queue()
+
+    def finalize_corpus(self, corpus, transcription_errors=None):
+        self.corpus = corpus
+        self.feature_system = corpus.specifier.feature_system
+        if transcription_errors:
+            filename = 'error_{}_{}.txt'.format(self.new_corpus_feature_system_var.get(), self.corpus.name)
+            with open(os.path.join(ERROR_DIR,filename), encoding='utf-8', mode='w') as f:
+                print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.\r\n'.format(self.new_corpus_feature_system_var.get()),file=f)
+                print('To fix this problem, open the features file in a text editor and add the missing symbols and appropriate feature specifications\r\n', file=f)
+                print('All feature files are (or should be!) located in the TRANS folder. If you have your own feature file, just drop it into that folder before loading CorpusTools.\r\n', file=f)
+                print('The following segments could not be represented:\r\n',file=f)
+                for key in sorted(list(transcription_errors.keys())):
+                    words = sorted(transcription_errors[key])
+                    words = ','.join(words)
+                    sep = '\r\n\n'
+                    print('Symbol: {}\r\nWords: {}\r\n{}'.format(key,words,sep), file=f)
+            msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
+            msg2 = 'A file called {} has been placed in your ERRORS folder ({}) explaining this problem in more detail.'.format(
+            filename,ERROR_DIR)
+            msg3 = 'Words with interpretable symbols will still be displayed. Consult the output file above to see how to fix this problem.'
+            msg = '\n'.join([msg1, msg2, msg3])
+            MessageBox.showwarning(message=msg)
+
 
 class LoadCorpusWindow(Toplevel):
     def __init__(self,master=None, **options):
@@ -245,23 +284,15 @@ class LoadCorpusWindow(Toplevel):
     def load_corpus(self):
         try:
             corpus_name = self.available_corpora.get(self.available_corpora.curselection())
-            self.corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
-            self.corpus_load_prog_bar.grid()
-            self.corpus_load_prog_bar.start()
             path = os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus')
-            if not os.path.exists(path):
-                self.corpus_load_thread = ThreadedTask(None,
-                                    target=self.process_corpus_load,
-                                    args=(path))
-                self.corpus_load_thread.start()
+            with open(path, 'rb') as f:
+                self.corpus = pickle.load(f)
         except TclError:
             pass
 
-    def process_corpus_load(self,path):
-        with open(path, 'rb') as f:
-            self.corpus = pickle.load(f)
-        self.corpus_load_prog_bar.stop()
-        self.destroy()
+    def get_corpus(self):
+        return self.corpus
+
     
     def get_available_trans(self):
         trans_dir = os.path.join(config['storage']['directory'],'TRANS')
@@ -286,6 +317,7 @@ class LoadCorpusWindow(Toplevel):
     def load_corpus_from_txt(self):
         custom = CustomCorpusWindow()
         custom.wait_window()
+        self.get_available_corpora()
     
     def create_corpus_from_text(self):
         pass
@@ -513,33 +545,3 @@ class LoadCorpusWindow(Toplevel):
 
 
         
-
-    def finalize_corpus(self, corpus, transcription_errors=None):
-        self.corpus = corpus
-        self.feature_system = corpus.specifier.feature_system
-        try:
-            self.custom_corpus_load_screen.destroy()
-        except AttributeError:
-            pass #this occurs if the custom corpus was created from text, not loaded directly
-
-        if transcription_errors is not None:
-            filename = 'error_{}_{}.txt'.format(self.new_corpus_feature_system_var.get(), self.corpus.name)
-            with open(os.path.join(self.errors_dir,filename), encoding='utf-8', mode='w') as f:
-                print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.\r\n'.format(self.new_corpus_feature_system_var.get()),file=f)
-                print('To fix this problem, open the features file in a text editor and add the missing symbols and appropriate feature specifications\r\n', file=f)
-                print('All feature files are (or should be!) located in the TRANS folder. If you have your own feature file, just drop it into that folder before loading CorpusTools.\r\n', file=f)
-                print('The following segments could not be represented:\r\n',file=f)
-                for key in sorted(list(transcription_errors.keys())):
-                    words = sorted(transcription_errors[key])
-                    words = ','.join(words)
-                    sep = '\r\n\n'
-                    print('Symbol: {}\r\nWords: {}\r\n{}'.format(key,words,sep), file=f)
-            msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'A file called {} has been placed in your ERRORS folder ({}) explaining this problem in more detail.'.format(
-            filename,self.errors_dir)
-            msg3 = 'Words with interpretable symbols will still be displayed. Consult the output file above to see how to fix this problem.'
-            msg = '\n'.join([msg1, msg2, msg3])
-            MessageBox.showwarning(message=msg)
-
-
-        self.main_screen_refresh()

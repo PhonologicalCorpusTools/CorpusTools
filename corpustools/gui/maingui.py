@@ -130,9 +130,14 @@ class GUI(Toplevel):
     def load_corpus(self):
         corpusload = LoadCorpusWindow()
         def callback():
-            self.corpus = corpusload.corpus
-            self.main_screen_refresh()
+            print(corpusload)
+            print(corpusload.corpus)
+            self.corpus = corpusload.get_corpus()
+            if self.corpus is not None:
+                self.main_screen_refresh()
         corpusload.protocol("WM_DELETE_WINDOW", callback)
+        corpusload.wait_window()
+        print('hello')
 
     def load_config(self):
         if os.path.exists(CONFIG_PATH):

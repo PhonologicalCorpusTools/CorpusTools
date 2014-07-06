@@ -645,7 +645,8 @@ class Corpus(object):
     """
 
     __slots__ = ['name', 'wordlist', 'specifier',
-                'inventory', 'orthography', 'custom', 'feature_system']
+                'inventory', 'orthography', 'custom', 'feature_system',
+                'has_frequency_value','has_spelling_value','has_transcription_value']
 
     def __init__(self, name):
         self.name = name
