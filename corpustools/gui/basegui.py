@@ -6,27 +6,8 @@ from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
                     StringVar, LabelFrame,Label, Button, Entry)
 import tkinter.filedialog as FileDialog
 
-import configparser
 
-appname = 'CorpusTools'
-appauthor = 'PCT'
-if sys.platform == 'win32': 
-    local_data = os.path.expanduser('~\\Documents')
-elif sys.platform == 'darwin':
-    local_data = os.path.expanduser('~/Library/Application Support/')
-else:
-    local_data = os.path.expanduser("~/.pct")
-    
-DEFAULT_DATA_DIR = os.path.join(local_data, appauthor, appname)
-if not os.path.exists(DEFAULT_DATA_DIR):
-    os.makedirs(DEFAULT_DATA_DIR)
-CONFIG_PATH = os.path.join(DEFAULT_DATA_DIR,'config.ini')
-LOG_DIR = os.path.join(local_data, appauthor, appname,'log')
-if not os.path.exists(LOG_DIR):
-    os.mkdir(LOG_DIR)
-ERROR_DIR = os.path.join(LOG_DIR,'ERRORS')
-if not os.path.exists(ERROR_DIR):
-    os.mkdir(ERROR_DIR)
+from corpustools.config import DEFAULT_DATA_DIR, CONFIG_PATH, LOG_DIR, ERROR_DIR, config
 
 class PreferencesWindow(Toplevel):
     def __init__(self,master=None, **options):
@@ -34,12 +15,6 @@ class PreferencesWindow(Toplevel):
         
         self.title('CorpusTools preferences')
         
-        self.config = configparser.ConfigParser()
-        if os.path.exists(CONFIG_PATH):
-            self.config.read(CONFIG_PATH)
-        else:
-            self.config['storage'] = {'directory' : data_dir}
-            
         self.storage_directory = StringVar()
         
         dir_frame = LabelFrame(self,text='Directories')
@@ -47,7 +22,7 @@ class PreferencesWindow(Toplevel):
         storage_dir_label.grid(row=0, column=0)
         storage_dir_text = Entry(dir_frame,textvariable=self.storage_directory)
         storage_dir_text.delete(0,END)
-        storage_dir_text.insert(0, self.config['storage']['directory'])
+        storage_dir_text.insert(0, config['storage']['directory'])
         storage_dir_text.grid(row=0,column=1)
         def set_dir():
             directory = FileDialog.askdirectory()
@@ -69,11 +44,16 @@ class PreferencesWindow(Toplevel):
         
     def save_config(self):
         directory = self.storage_directory.get()
-        if os.path.exists(directory):
-            self.config['storage']['directory'] = directory
+        config['storage']['directory'] = directory
             
         with open(CONFIG_PATH,'w') as configfile:
-            self.config.write(configfile)
+            config.write(configfile)
+        corpus_path = os.path.join(directory,'CORPUS')
+        if not os.path.exists(corpus_path):
+            os.makedirs(corpus_path)
+        trans_path = os.path.join(directory,'TRANS')
+        if not os.path.exists(trans_path):
+            os.makedirs(trans_path)
         self.destroy()
         
     def cancel_config(self):
