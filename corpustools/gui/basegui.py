@@ -6,9 +6,8 @@ from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
                     StringVar, LabelFrame,Label, Button, Entry)
 import tkinter.filedialog as FileDialog
 
-import configparser
 
-from corpustools.config import DEFAULT_DATA_DIR, CONFIG_PATH, LOG_DIR, ERROR_DIR
+from corpustools.config import DEFAULT_DATA_DIR, CONFIG_PATH, LOG_DIR, ERROR_DIR, config
 
 class PreferencesWindow(Toplevel):
     def __init__(self,master=None, **options):
@@ -16,12 +15,6 @@ class PreferencesWindow(Toplevel):
         
         self.title('CorpusTools preferences')
         
-        self.config = configparser.ConfigParser()
-        if os.path.exists(CONFIG_PATH):
-            self.config.read(CONFIG_PATH)
-        else:
-            self.config['storage'] = {'directory' : data_dir}
-            
         self.storage_directory = StringVar()
         
         dir_frame = LabelFrame(self,text='Directories')
@@ -52,10 +45,10 @@ class PreferencesWindow(Toplevel):
     def save_config(self):
         directory = self.storage_directory.get()
         if os.path.exists(directory):
-            self.config['storage']['directory'] = directory
+            config['storage']['directory'] = directory
             
         with open(CONFIG_PATH,'w') as configfile:
-            self.config.write(configfile)
+            config.write(configfile)
         self.destroy()
         
     def cancel_config(self):
