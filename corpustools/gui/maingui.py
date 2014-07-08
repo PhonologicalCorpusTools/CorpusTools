@@ -29,7 +29,7 @@ import collections
 from codecs import open
 from math import log
 
-from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
+from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,TableView,
                                     CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR, ERROR_DIR,config)
 try:
     from corpustools.gui.asgui import ASFunction
@@ -39,7 +39,7 @@ except ImportError:
 from corpustools.gui.ssgui import SSFunction
 from corpustools.gui.flgui import FLFunction
 from corpustools.gui.pdgui import PDFunction
-from corpustools.gui.corpusgui import LoadCorpusWindow
+from corpustools.gui.corpusgui import CorpusManager
 
 try:
     from PIL import Image as PIL_Image
@@ -103,6 +103,9 @@ class GUI(Toplevel):
         self.main_screen.grid()
         self.info_frame = Frame(self.main_screen)
         self.info_frame.grid()
+        
+        #self.corpus_table = TableView(self.main_screen)
+        #self.corpus_table.grid()
 
         self.check_for_feature_systems()
         corpus_info_label = Label(self.info_frame ,text='Corpus: No corpus selected')#textvariable=self.corpus_var)
@@ -128,16 +131,11 @@ class GUI(Toplevel):
             pass#if the image file is not found, then don't bother
 
     def load_corpus(self):
-        corpusload = LoadCorpusWindow()
-        def callback():
-            print(corpusload)
-            print(corpusload.corpus)
-            self.corpus = corpusload.get_corpus()
-            if self.corpus is not None:
-                self.main_screen_refresh()
-        corpusload.protocol("WM_DELETE_WINDOW", callback)
-        corpusload.wait_window()
-        print('hello')
+        corpusload = CorpusManager()
+        corpusload.top.wait_window()
+        self.corpus = corpusload.get_corpus()
+        if self.corpus is not None:
+            self.main_screen_refresh()
 
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
@@ -327,6 +325,8 @@ class GUI(Toplevel):
         self.warn_about_changes = False
 
     def main_screen_refresh(self):
+        #self.update_info_frame()
+        #self.corpus_table.load_corpus(self.corpus)
 
         for child in self.corpus_frame.winfo_children():
             child.grid_forget()
@@ -340,6 +340,7 @@ class GUI(Toplevel):
             #by keys, then yields the values in that order
             self.corpus_box.insert(END,[getattr(word,d,'???') for d in word.descriptors])
         self.corpus_box.grid()
+        
 
     @check_for_empty_corpus
     def destroy_tier(self):

@@ -256,30 +256,30 @@ class CustomCorpusWindow(Toplevel):
             MessageBox.showwarning(message=msg)
 
 
-class LoadCorpusWindow(Toplevel):
+class CorpusManager(object):
     def __init__(self,master=None, **options):
-        super(LoadCorpusWindow, self).__init__(master=master, **options)
-        self.title('Load corpus')
+        self.top = Toplevel()
+        self.top.title('Load corpus')
         self.corpus = None
-        corpus_frame = Frame(self)
+        corpus_frame = Frame(self.top)
         self.available_corpora = Listbox(corpus_frame)
         self.get_available_corpora()
         self.available_corpora.grid(row=0,column=0)
         self.available_trans = Listbox(corpus_frame)
         self.get_available_trans()
         self.available_trans.grid(row=0,column=1)
-        button_frame = Frame(self)
+        corpus_frame.grid(row=0,column=0)
+        button_frame = Frame(self.top)
         load_button = Button(button_frame, text='Load selected corpus', command=self.load_corpus)
         load_button.grid()
         download_button = Button(button_frame, text='Download example corpora', command=self.download_corpus)
         download_button.grid()
         load_from_txt_button = Button(button_frame, text='Load corpus from text file', command=self.load_corpus_from_txt)
         load_from_txt_button.grid()
-        create_from_txt_button = Button(button_frame, text='Create corpus from text file', command=self.create_corpus_from_text)
-        create_from_txt_button.grid()
-        button_frame.grid(row=1,column=1)
+        create_from_text_button = Button(button_frame, text='Create corpus from text file', command=self.create_corpus_from_text)
+        create_from_text_button.grid()
+        button_frame.grid(row=0,column=1)
         
-        corpus_frame.grid()
         
     def load_corpus(self):
         try:
@@ -287,6 +287,7 @@ class LoadCorpusWindow(Toplevel):
             path = os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus')
             with open(path, 'rb') as f:
                 self.corpus = pickle.load(f)
+            self.top.destroy()
         except TclError:
             pass
 

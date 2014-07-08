@@ -1,5 +1,7 @@
-
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 def readme():
     with open('README.md') as f:
@@ -38,6 +40,5 @@ setup(name='corpustools',
       entry_points = {
         'console_scripts': ['pct=corpustools.pct:main'],
     },
-      include_package_data=True,
-      zip_safe=False,
+    scripts=['bin/pct.py']
       )

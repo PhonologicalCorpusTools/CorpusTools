@@ -3,7 +3,7 @@ import os
 import sys
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
                     YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label, 
-                    StringVar, LabelFrame,Label, Button, Entry)
+                    StringVar, LabelFrame,Label, Button, Entry, Canvas)
 import tkinter.filedialog as FileDialog
 
 
@@ -347,5 +347,51 @@ class ToolTip:
         label = Label(self._tipwindow, **opts)
         label.pack()
 
-if __name__=='__main__':
-    print(DEFAULT_DATA_DIR)
+class TableView(Frame):
+    def __init__(self, root):
+
+        Frame.__init__(self, root)
+        self.headerframe = Frame(self)
+        self.headerframe.pack(side='top',fill='x')
+        self.set_header(['spelling','transcription','frequency'])
+        self.canvas = Canvas(self, borderwidth=0, background="#ffffff")
+        self.frame = Frame(self.canvas, background="#ffffff")
+        self.vsb = Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.create_window((4,4), window=self.frame, anchor="nw", 
+                                  tags="self.frame")
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+        #self.frame.bind("<Configure>", self.OnFrameConfigure)
+
+        #self.populate()
+
+    def set_header(self,header):
+        for child in self.headerframe.winfo_children():
+            child.grid_forget()
+        for i,h in enumerate(header):
+            Label(self.headerframe, text=h).grid(row=0, column=i)
+
+    def load_corpus(self,corpus):
+        ''''''
+        for child in self.frame.winfo_children():
+            child.grid_forget()
+        if corpus is None:
+            return
+        print(self.frame.grid_size())
+        random_word = corpus.random_word()
+        headers = [d for d in random_word.descriptors if not d is None or not d == '']
+        self.set_header(headers)
+        for i,word in enumerate(corpus.iter_sort()):
+            #corpus.iter_sort is a generator that sorts the corpus dictionary
+            #by keys, then yields the values in that order
+            for j,d in enumerate(word.descriptors):
+                Label(self.frame, text="%s" % str(getattr(word,d,'???'))).grid(row=i, column=j)
+            
+
+    def OnFrameConfigure(self, event):
+        '''Reset the scroll region to encompass the inner frame'''
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
