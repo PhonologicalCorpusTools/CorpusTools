@@ -23,7 +23,6 @@ import threading
 import queue
 import pickle
 import os
-import string
 from configparser import ConfigParser
 import collections
 from codecs import open
@@ -90,13 +89,6 @@ class GUI(Toplevel):
         self.corpus_size_var = IntVar()
         self.corpus_size_var.set(0)
         
-        #Corpus from text variables
-        self.punc_vars = [IntVar() for mark in string.punctuation]
-        self.new_corpus_string_type = StringVar()
-        self.new_corpus_feature_system_var = StringVar()
-        self.corpus_from_text_source_file = StringVar()
-        self.corpus_from_text_corpus_name_var = StringVar()
-        self.corpus_from_text_output_file = StringVar()
 
         #MAIN SCREEN STUFF
         self.main_screen = Frame(master)
@@ -330,7 +322,7 @@ class GUI(Toplevel):
 
         for child in self.corpus_frame.winfo_children():
             child.grid_forget()
-
+        print(self.corpus.wordlist)
         random_word = self.corpus.random_word()
         headers = [d for d in random_word.descriptors if not d is None or not d == '']
         self.corpus_box = MultiListbox(self.corpus_frame, [(h,10) for h in headers])
@@ -664,7 +656,6 @@ class GUI(Toplevel):
 
     @check_for_empty_corpus
     def functional_load(self):
-
         fl_popup = FLFunction(self.corpus)
         
 
