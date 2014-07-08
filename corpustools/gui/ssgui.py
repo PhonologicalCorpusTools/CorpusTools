@@ -1,6 +1,6 @@
 import os
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, 
+from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
                     ACTIVE, Listbox, N)
 
@@ -10,36 +10,8 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.symbolsim.string_similarity as SS
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                     ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
-
-
-class SSAbout(AboutWindow):
-    def __init__(self,master=None, **options):
-        super(SSAbout, self).__init__(master=master, **options)
-        self.title('About the string similarity function')
-        description_frame = LabelFrame(self, text='Brief description')
-        text = ('This function calculates the similarity between words in the corpus,'
-                ' based on either their spelling or their transcription. Similarity '
-                'is a function of the longest common shared sequences of graphemes '
-                'or phonemes (weighted by their frequency of occurrence in the corpus), '
-                'subtracting out the non-shared graphemes or phonemes. The spelling '
-                'version was originally proposed as a measure of morphological relatedness,'
-                ' but is more accurately described as simply a measure of string similarity.')
-        description_label = Label(description_frame, text=text)
-        description_label.config(wraplength=600)
-        description_label.grid()
-        description_frame.grid(sticky=W)
-        citation_frame = LabelFrame(self, text='Original source')
-        citation_label = Label(citation_frame, text='Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.')
-        citation_label.grid()
-        citation_frame.grid(sticky=W)
-        author_frame = LabelFrame(self, text='Coded by')
-        author_label = Label(author_frame, text='Micheal Fry')
-        author_label.grid()
-        author_frame.grid(sticky=W)
-        self.focus()
-    
 
 class SSFunction(FunctionWindow):
     def __init__(self,corpus,master=None, **options):
@@ -99,16 +71,16 @@ class SSFunction(FunctionWindow):
         pairs_radiobutton = Radiobutton(word_pairs_frame, text='Compare a list of pairs of words',
                                         variable=self.string_similarity_comparison_type_var, value='pairs')
         pairs_radiobutton.grid(sticky=W)
-        
+
         def get_word_pairs_file():
             filename = FileDialog.askopenfilename()
-            
+
             if not filename:
                 return
             if not filename.endswith('.txt'):
                 filename += '.txt'
             self.string_similarity_pairs_var.set(filename)
-            
+
         get_word_pairs_button = Button(word_pairs_frame, text='Choose word pairs file', command=get_word_pairs_file)
         get_word_pairs_button.grid(sticky=W)
         get_word_pairs_label = Label(word_pairs_frame, textvariable=self.string_similarity_pairs_var)
@@ -161,11 +133,20 @@ class SSFunction(FunctionWindow):
         info_button = Button(button_frame, text='About this function...', command=self.about_string_similarity)
         info_button.grid(row=0,column=2)
         button_frame.grid(row=1)
-        
+
         self.focus()
-        
+
     def about_string_similarity(self):
-        about_ss = SSAbout(master=self)
+        about = AboutWindow('About the string similarity function',
+                ('This function calculates the similarity between words in the corpus,'
+                ' based on either their spelling or their transcription. Similarity '
+                'is a function of the longest common shared sequences of graphemes '
+                'or phonemes (weighted by their frequency of occurrence in the corpus), '
+                'subtracting out the non-shared graphemes or phonemes. The spelling '
+                'version was originally proposed as a measure of morphological relatedness,'
+                ' but is more accurately described as simply a measure of string similarity.'),
+                ['Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.'],
+                ['Micheal Fry'])
 
 
     def print_string_similarity_results(self, results):
@@ -211,7 +192,7 @@ class SSFunction(FunctionWindow):
                                                 results, threshold)
         else:
             SS.print_pairs_results(filename, results)
-        
+
     def calculate_string_similarity(self):
 
         #First check if the word is in the corpus
@@ -307,7 +288,7 @@ class SSFunction(FunctionWindow):
             word1 = self.string_similarity_one_pair1_var.get()
             word2 = self.string_similarity_one_pair2_var.get()
             results = [SS.string_similarity_single_pair('', relator_type, string_type, word1, word2, self.corpus)]
-                                                     
+
         self.ss_results = ResultsWindow(title,header)
 
         for result in results:
@@ -317,4 +298,4 @@ class SSFunction(FunctionWindow):
 
     def cancel_string_similarity(self):
         self.destroy()
-    
+

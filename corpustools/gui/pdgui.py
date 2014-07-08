@@ -1,6 +1,6 @@
 import os
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, 
+from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
                     ACTIVE, IntVar,OptionMenu,Checkbutton, N,Listbox,
                     LEFT, E, RIGHT)
@@ -15,34 +15,10 @@ import corpustools.prod.pred_of_dist as PD
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, ERROR_DIR,
                     ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
 
-
-class PDAbout(AboutWindow):
-    def __init__(self,master=None, **options):
-        super(PDAbout, self).__init__(master=master, **options)
-        self.title('About the predictability of distribution function')
-        description_frame = LabelFrame(self, text='Brief description')
-        description_label = Label(description_frame, text=('This function calculates'
-        ' the predictability of distribution of two sounds, using the measure of entropy'
-        ' (uncertainty). Sounds that are entirely predictably distributed (i.e., in'
-        ' complementary distribution, commonly assumed to be allophonic), will have'
-        ' an entropy of 0. Sounds that are perfectly overlapping in their distributions'
-        ' will have an entropy of 1.'))
-        description_label.config(wraplength=600)
-        description_label.grid()
-        description_frame.grid(sticky=W)
-        citation_frame = LabelFrame(self, text='Original source')
-        citation_label = Label(citation_frame, text='Hall, K.C. 2009. A probabilistic model of phonological relationships from contrast to allophony. PhD dissertation, The Ohio State University.')
-        citation_label.grid()
-        citation_frame.grid(sticky=W)
-        author_frame = LabelFrame(self, text='Coded by')
-        author_label = Label(author_frame, text='Scott Mackie, Blake Allen')
-        author_label.grid()
-        author_frame.grid(sticky=W)
-
 class PDFunction(FunctionWindow):
     def __init__(self,corpus, master=None, **options):
         super(PDFunction, self).__init__(master=master, **options)
-        
+
         self.corpus = corpus
         #entropy calculation variables
         self.entropy_tier_var = StringVar()
@@ -61,65 +37,44 @@ class PDFunction(FunctionWindow):
         self.entropy_exclusive_var = IntVar()
         self.prod_results = None
         self.calculating_entropy_screen = None
-        
+
         self.ipa_frame = None
         self.option_frame = None
         self.button_frame = None
-        
+
         self.env_frame = None
         self.selected_envs_frame = None
-        
+
         self.show_segment_screen()
-        
+
         self.focus()
-    
+
     def remove_frames(self):
         if self.ipa_frame is not None:
             self.ipa_frame.destroy()
             self.ipa_frame = None
-            
+
         if self.option_frame is not None:
             self.option_frame.destroy()
             self.option_frame = None
-            
+
         if self.button_frame is not None:
             self.button_frame.destroy()
             self.button_frame = None
-            
+
         if self.env_frame is not None:
             self.env_frame.destroy()
             self.env_frame = None
-            
+
         if self.selected_envs_frame is not None:
             self.selected_envs_frame.destroy()
             self.selected_envs_frame = None
-            
-        
+
+
     def show_segment_screen(self):
         self.remove_frames()
         self.title('Predictability of distribution calculation')
         #check if it's possible to do this analysis
-        has_transcription = True
-        has_frequency = True
-        missing = list()
-        if self.corpus.custom:
-            random_word = self.corpus.random_word()
-            if not 'transcription' in random_word.descriptors:
-                has_transcription = False
-                missing.append('transcription')
-            if not 'frequency' in random_word.descriptors:
-                has_frequency = False
-                missing.append('token frequency')
-
-            if self.show_warnings and not has_transcription:
-                MessageBox.showwarning(message='Your corpus lacks a transcription column, which is necessary for this analysis')
-                return
-
-            elif self.show_warnings and not has_frequency:
-                missing = ','.join(missing)
-                MessageBox.showwarning(message='Your corpus lacks a token frequency count. This option will be disabled.')
-
-
 
         self.ipa_frame = LabelFrame(self, text='Sounds')
 
@@ -219,7 +174,7 @@ class PDFunction(FunctionWindow):
         self.ipa_frame.grid(row=0, column=0, sticky=N)
         self.option_frame.grid(row=0, column=1, sticky=N)
         self.button_frame.grid(row=1,column=0)
-        
+
     def show_environment_screen(self):
         seg1 = self.seg1_var.get()
         seg2 = self.seg2_var.get()
@@ -227,9 +182,9 @@ class PDFunction(FunctionWindow):
         if not (seg1 and seg2):
             MessageBox.showerror(message='Please ensure you have selected 2 segments and chosen a output file name')
             return
-            
+
         self.remove_frames()
-        
+
 
         self.title('Environments for calculating predictability of distribution')
 
@@ -367,12 +322,12 @@ class PDFunction(FunctionWindow):
         remove_env_button.grid()
         clear_envs = Button(self.selected_envs_frame, text='Remove all environments', command=lambda x=0:self.selected_envs_list.delete(x,END))
         clear_envs.grid()
-    
+
     def remove_entropy_env(self):
         env = self.selected_envs_list.curselection()
         if env:
             self.selected_envs_list.delete(env)
-    
+
     def add_plus_feature_lhs(self):
         try:
             feature_name = self.lhs_feature_list.get(self.lhs_feature_list.curselection())
@@ -405,7 +360,7 @@ class PDFunction(FunctionWindow):
             self.rhs_selected_list.insert(END,feature_name)
         except TclError:
             pass
-    
+
     def confirm_environments(self):
         lhs_features_chosen = self.lhs_selected_list.get(0)
         lhs_seg_chosen = self.lhs_seg_entry.get()
@@ -456,7 +411,7 @@ class PDFunction(FunctionWindow):
         formatted_env = '_'.join(formatted_env)
         self.selected_envs_list.insert(END,formatted_env)
 
-    
+
     def check_for_uniquess_and_exhuastivity(self, missing_words, overlapping_words, env_list):
 
         seg1 = self.seg1_var.get()
@@ -520,8 +475,8 @@ class PDFunction(FunctionWindow):
         #or else there were no problems to begin with
         return True
 
-    
-    
+
+
     def calculate_prod(self):
         check = self.selected_envs_list.get(0)
         if not check:
@@ -541,15 +496,15 @@ class PDFunction(FunctionWindow):
 
         #at this point there are either no problems
         #or else the user wants to see the results anyway
-        
-        
-        
+
+
+
         #this is created and all the results are placed into it, but it is not
         #gridded until the corpus as passed both the uniqueness and exhausitivity
         #checks and/or the user has agreed it is OK if it doesn't pass the checks
         results = PD.calc_prod(seg1, seg2, env_matches)
         self.update_prod_results(results)
-    
+
     def suggest_entropy_filename(self):
         seg1 = self.seg1_var.get()
         seg2 = self.seg2_var.get()
@@ -558,10 +513,18 @@ class PDFunction(FunctionWindow):
                                                 initialfile=suggested_name,
                                                 defaultextension='.txt')
         return filename
-        
+
     def about_prod(self):
-        info_popup = PDAbout()
-        
+        about = AboutWindow('About the predictability of distribution function',
+                ('This function calculates'
+                ' the predictability of distribution of two sounds, using the measure of entropy'
+                ' (uncertainty). Sounds that are entirely predictably distributed (i.e., in'
+                ' complementary distribution, commonly assumed to be allophonic), will have'
+                ' an entropy of 0. Sounds that are perfectly overlapping in their distributions'
+                ' will have an entropy of 1.'),
+                ['Hall, K.C. 2009. A probabilistic model of phonological relationships from contrast to allophony. PhD dissertation, The Ohio State University.'],
+                ['Scott Mackie', 'Blake Allen'])
+
     def create_prod_results(self):
         header = [('Corpus', 10),
                 ('Tier', 15),
@@ -580,11 +543,11 @@ class PDFunction(FunctionWindow):
             self.create_prod_results()
         for result in results:
             self.prod_results.update([self.corpus.name,self.entropy_tier_var.get()]+result)
-          
+
     def cancel_prod(self):
         self.destroy_prod_results()
         self.destroy()
-        
+
     def destroy_prod_results(self):
         try:
             self.prod_results.destroy()

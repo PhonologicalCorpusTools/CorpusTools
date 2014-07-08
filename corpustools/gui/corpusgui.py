@@ -3,7 +3,7 @@ import os
 import pickle
 import collections
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, 
+from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
                     ACTIVE, Toplevel, Listbox, OptionMenu, IntVar, Checkbutton )
 from tkinter.ttk import Progressbar
@@ -16,7 +16,7 @@ import string
 
 from corpustools.corpus.classes import (CorpusFactory, Corpus, FeatureSpecifier,
                                     Word, Segment)
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                     ResultsWindow, MultiListbox, ThreadedTask, config, ERROR_DIR)
 
 class DownloadWindow(Toplevel):
@@ -45,7 +45,7 @@ class DownloadWindow(Toplevel):
         warning_label = Label(self, text='Please be patient. It can take up to 30 seconds to download a corpus.')
         warning_label.grid()
         self.focus()
-    
+
     def confirm_download(self):
         corpus_name = self.corpus_button_var.get()
         if corpus_name == 'toy':
@@ -61,8 +61,8 @@ class DownloadWindow(Toplevel):
                                 target=self.process_download_corpus_queue,
                                 args=(download_link,path))
             self.corpus_download_thread.start()
-            
-            
+
+
 
     def process_download_corpus_queue(self,download_link,path):
         filename,headers = urlretrieve(download_link,path)
@@ -79,7 +79,7 @@ class CorpusFromTextWindow(Toplevel):
         self.corpus_from_text_source_file = StringVar()
         self.corpus_from_text_corpus_name_var = StringVar()
         self.corpus_from_text_output_file = StringVar()
-        
+
         self.title('Create corpus')
         from_text_frame = LabelFrame(self, text='Create corpus from text')
 
@@ -128,7 +128,7 @@ class CorpusFromTextWindow(Toplevel):
         #both = Radiobutton(string_type_frame, text='Corpus has both spelling and transcription', value='both', variable=self.from_corpus_string_type)
         #both.grid()
         new_corpus_feature_frame = LabelFrame(string_type_frame, text='Feature system to use (if transcription exists)')
-        
+
         trans_dir = os.path.join(config['storage']['directory'],'TRANS')
         trans = [x.split('.')[0] for x in os.listdir(trans_dir) if '2' not in x]
         new_corpus_feature_system = OptionMenu(
@@ -144,7 +144,7 @@ class CorpusFromTextWindow(Toplevel):
         ok_button.grid()
         cancel_button.grid()
         from_text_frame.grid()
-        
+
     def navigate_to_text(self):
         text_file = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
         if text_file:
@@ -178,7 +178,7 @@ class CorpusFromTextWindow(Toplevel):
                     elif string_type == 'spelling':
                         word = ''.join(word)
                     word_count[word] += 1
-                    
+
         total_words = sum(word_count.values())
         corpus_name = os.path.split(source_path)[-1].split('.')[0]
         corpus = Corpus(corpus_name)
@@ -257,7 +257,7 @@ class CustomCorpusWindow(Toplevel):
         cancel_button = Button(self, text='Cancel', command=self.destroy)
         ok_button.grid()
         cancel_button.grid()
-        
+
     def navigate_to_corpus_file(self):
         custom_corpus_filename = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
         if custom_corpus_filename:
@@ -266,7 +266,7 @@ class CustomCorpusWindow(Toplevel):
             self.custom_corpus_name.delete(0,END)
             suggestion = os.path.basename(custom_corpus_filename).split('.')[0]
             self.custom_corpus_name.insert(0,suggestion)
-   
+
     def confirm_custom_corpus_selection(self):
         filename = self.custom_corpus_path.get()
         if not os.path.exists(filename):
@@ -280,8 +280,8 @@ class CustomCorpusWindow(Toplevel):
         if delimiter == 't':
             delimiter = '\t'
         self.create_custom_corpus(corpus_name, filename, delimiter)
-        self.warn_about_changes = False 
-        
+        self.warn_about_changes = False
+
     def process_custom_corpus_queue(self):
         try:
             msg = self.q.get(0)
@@ -360,8 +360,8 @@ class CustomCorpusWindow(Toplevel):
             pickle.dump(corpus,f)
         corpusq.put(transcription_errors)
         corpusq.put(corpus)
-            
-        
+
+
 
     def create_custom_corpus(self, corpus_name, filename, delimiter):
 
@@ -422,25 +422,25 @@ class CorpusManager(object):
         self.available_trans.grid(row=0,column=1)
         corpus_frame.grid(row=0,column=0)
         button_frame = Frame(self.top)
-        load_button = Button(button_frame, 
-                                        text='Load selected corpus', 
+        load_button = Button(button_frame,
+                                        text='Load selected corpus',
                                         command=self.load_corpus)
         load_button.grid()
-        download_button = Button(button_frame, 
-                                        text='Download example corpora', 
+        download_button = Button(button_frame,
+                                        text='Download example corpora',
                                         command=self.download_corpus)
         download_button.grid()
-        load_from_txt_button = Button(button_frame, 
-                                        text='Load corpus from text file', 
+        load_from_txt_button = Button(button_frame,
+                                        text='Load corpus from text file',
                                         command=self.load_corpus_from_txt)
         load_from_txt_button.grid()
-        create_from_text_button = Button(button_frame, 
-                                    text='Create corpus from text file', 
+        create_from_text_button = Button(button_frame,
+                                    text='Create corpus from text file',
                                     command=self.create_corpus_from_text)
         create_from_text_button.grid()
         button_frame.grid(row=0,column=1)
-        
-        
+
+
     def load_corpus(self):
         try:
             corpus_name = self.available_corpora.get(self.available_corpora.curselection())
@@ -454,39 +454,39 @@ class CorpusManager(object):
     def get_corpus(self):
         return self.corpus
 
-    
+
     def get_available_trans(self):
         trans_dir = os.path.join(config['storage']['directory'],'TRANS')
         trans = [x.split('.')[0] for x in os.listdir(trans_dir) if '2' not in x]
         self.available_trans.delete(0,END)
         for t in trans:
             self.available_trans.insert(END,t)
-    
+
     def get_available_corpora(self):
         corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
         corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
         self.available_corpora.delete(0,END)
         for c in corpora:
             self.available_corpora.insert(END,c)
-        
-    
+
+
     def download_corpus(self):
         download = DownloadWindow()
         download.wait_window()
         self.get_available_corpora()
-        
+
     def load_corpus_from_txt(self):
         custom = CustomCorpusWindow()
         custom.wait_window()
         self.get_available_corpora()
-    
+
     def create_corpus_from_text(self):
         from_text_window = CorpusFromTextWindow()
         from_text_window.wait_window()
         self.get_available_corpora()
-        
 
 
 
 
-        
+
+

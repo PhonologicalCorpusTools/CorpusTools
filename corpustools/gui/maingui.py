@@ -55,11 +55,11 @@ class GUI(Toplevel):
 
     def __init__(self,master,base_path):
         self.load_config()
-        
+
         #Set up logging
         self.log_dir = LOG_DIR
         self.errors_dir = ERROR_DIR
-        
+
         #NON-TKINTER VARIABLES
         self.master = master
         self.show_warnings = False
@@ -78,7 +78,7 @@ class GUI(Toplevel):
         self.corpus_button_var = StringVar()
         self.features_button_var = StringVar()
         self.search_var = StringVar()
-        
+
         #corpus information variables
         self.feature_system_var = StringVar()
         self.feature_system_var.set('spe')
@@ -88,14 +88,14 @@ class GUI(Toplevel):
         self.corpus_var.set('No corpus selected')
         self.corpus_size_var = IntVar()
         self.corpus_size_var.set(0)
-        
+
 
         #MAIN SCREEN STUFF
         self.main_screen = Frame(master)
         self.main_screen.grid()
         self.info_frame = Frame(self.main_screen)
         self.info_frame.grid()
-        
+
         #self.corpus_table = TableView(self.main_screen)
         #self.corpus_table.grid()
 
@@ -137,15 +137,15 @@ class GUI(Toplevel):
             with open(CONFIG_PATH,'w') as configfile:
                 config.write(configfile)
         self.data_dir = config['storage']['directory']
-        
+
         self.trans_dir = os.path.join(self.data_dir,'TRANS')
         if not os.path.exists(self.trans_dir):
             os.makedirs(self.trans_dir)
-            
+
         self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
         if not os.path.exists(self.corpus_dir):
             os.makedirs(self.corpus_dir)
-        
+
     def check_for_valid_corpus(function):
         def do_check(self):
             has_spelling = True
@@ -190,7 +190,7 @@ class GUI(Toplevel):
         return do_check
 
     def check_for_feature_systems(self):
-        
+
         ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
         links = {'cmu2ipa.txt':'https://www.dropbox.com/s/dcz1hnoix2qy8d0/cmu2ipa.txt?dl=1',
                 'ipa2hayes.txt':'https://www.dropbox.com/s/b5jnunz1m5pzsc6/ipa2hayes.txt?dl=1',
@@ -200,7 +200,7 @@ class GUI(Toplevel):
             if not os.path.exists(path):
                 from urllib.request import urlretrieve
                 filename,headers = urlretrieve(v,path)
-                
+
         for dirpath,dirname,filenames in os.walk(self.trans_dir):
             for name in filenames:
                 if name in ignore:
@@ -210,7 +210,8 @@ class GUI(Toplevel):
 
     @check_for_unsaved_changes
     def quit(self,event=None):
-        root.quit()
+        self.master.quit()
+
 
     def show_preferences(self):
         preferences = PreferencesWindow()
@@ -281,12 +282,12 @@ class GUI(Toplevel):
     def string_similarity(self):
 
         #Check if it's even possible to do this analysis
-        
+
         sspopup = SSFunction(self.corpus)
-        
 
 
-    
+
+
 
     def donothing(self,event=None):
         pass
@@ -306,10 +307,11 @@ class GUI(Toplevel):
         would be nice to have an option to save as pickle and also "export as"
         a .txt/csv file
         """
-        
+
         with open(os.path.join(config['storage']['directory'],'CORPUS',self.corpus.name+'.corpus'), 'wb') as f:
             pickle.dump(self.corpus, f)
         self.warn_about_changes = False
+        MessageBox.showinfo(message='Save successful!')
 
     def main_screen_refresh(self):
         #self.update_info_frame()
@@ -326,7 +328,7 @@ class GUI(Toplevel):
             #by keys, then yields the values in that order
             self.corpus_box.insert(END,[getattr(word,d,'???') for d in word.descriptors])
         self.corpus_box.grid()
-        
+
 
     @check_for_empty_corpus
     def destroy_tier(self):
@@ -492,6 +494,7 @@ class GUI(Toplevel):
         self.show_warnings = not self.show_warnings
 
     @check_for_empty_corpus
+    @check_for_valid_corpus
     def prod(self,shortcut=None):
         pd_popup = PDFunction(self.corpus)
 
@@ -645,12 +648,12 @@ class GUI(Toplevel):
             '\nAcoustic similarity cannot be run without both of them installed.'))
             return
         self.as_popup = ASFunction()
-        
+
 
     @check_for_empty_corpus
     def functional_load(self):
         fl_popup = FLFunction(self.corpus)
-        
+
 
     @check_for_empty_corpus
     def export_to_text_file(self):
@@ -668,7 +671,7 @@ class GUI(Toplevel):
                     print(','.join(str(getattr(word, value)) for value in values), file=f)
 
 
-    
+
 
 
 

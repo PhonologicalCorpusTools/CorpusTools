@@ -1,7 +1,7 @@
 
 import os
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, 
+from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
                     ACTIVE)
 import tkinter.filedialog as FileDialog
@@ -12,32 +12,11 @@ import corpustools.acousticsim.main as AS
 
 from corpustools.gui.basegui import AboutWindow, FunctionWindow, ResultsWindow, MultiListbox, ThreadedTask
 
-class ASAbout(AboutWindow):
-    def __init__(self,master=None, **options):
-        super(ASAbout, self).__init__(master=master, **options)
-        self.title('Acoustic similarity')
-        desc_frame = LabelFrame(self, text='Brief description')
-        desc_label = Label(desc_frame, text='This function calculates the acoustic similarity of sound files in two directories by generating either MFCCs or amplitude envelopes for each sound file and using dynamic time warping or cross-correlation to get the average distance/similarity across all tokens.')
-        desc_label.grid()
-        desc_frame.grid(sticky=W)
-        source_frame = LabelFrame(self, text='Original sources')
-
-        source_label = Label(source_frame, text='Ellis, Daniel P. W. 2005. PLP and RASTA (and MFCC, and inversion) in Matlab (online web resource). http://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/.')
-        source_label.grid()
-        source_label2 = Label(source_frame, text='Lewandowski, Natalie. 2012. Talent in nonnative phonetic convergence. PhD Thesis.')
-        source_label2.grid()
-        source_frame.grid(sticky=W)
-        coder_frame = LabelFrame(self, text='Coded by')
-        coder_label = Label(coder_frame, text='Michael McAuliffe')
-        coder_label.grid()
-        coder_frame.grid(sticky=W)
-        self.focus()
-    
 
 class ASFunction(FunctionWindow):
     def __init__(self,master=None, **options):
         super(ASFunction, self).__init__(master=master, **options)
-        
+
         self.as_directory_one = StringVar()
         self.as_directory_two = StringVar()
         self.as_representation = StringVar()
@@ -166,21 +145,28 @@ class ASFunction(FunctionWindow):
         about.grid(row=0, column=2)
         button_frame.grid()
         self.focus()
-        
+
     def about_acoustic_similarity(self):
-        about_as = ASAbout(master=self)
-        
+        about = AboutWindow('Acoustic similarity',
+                ('This function calculates the acoustic similarity of sound files in two'
+                ' directories by generating either MFCCs or amplitude envelopes for each'
+                ' sound file and using dynamic time warping or cross-correlation to get '
+                'the average distance/similarity across all tokens.'),
+                ['Ellis, Daniel P. W. 2005. PLP and RASTA (and MFCC, and inversion) in Matlab (online web resource). http://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/.',
+                'Lewandowski, Natalie. 2012. Talent in nonnative phonetic convergence. PhD Thesis.'],
+                ['Michael McAuliffe'])
+
     def delete_as_results(self):
 
         #clean-up function
         if self.fl_results is not None:
             self.fl_results.destroy()
             self.fl_results = None
-            
+
     def cancel_acoustic_similarity(self):
         self.delete_as_results()
         self.destroy()
-        
+
     def calculate_acoustic_similarity(self,update=False):
         d1 = self.as_directory_one.get()
         d2 = self.as_directory_two.get()
@@ -290,7 +276,7 @@ class ASFunction(FunctionWindow):
                                             self.as_output_sim.get()])
         except TclError:
             self.show_as_result(result)
-        
-    
 
-    
+
+
+

@@ -2,8 +2,8 @@ import threading
 import os
 import sys
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
-                    YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label, 
-                    StringVar, LabelFrame,Label, Button, Entry, Canvas)
+                    YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label,
+                    StringVar, LabelFrame,Label, Button, Entry, Canvas, W)
 import tkinter.filedialog as FileDialog
 
 
@@ -12,11 +12,11 @@ from corpustools.config import DEFAULT_DATA_DIR, CONFIG_PATH, LOG_DIR, ERROR_DIR
 class PreferencesWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(PreferencesWindow, self).__init__(master=master, **options)
-        
+
         self.title('CorpusTools preferences')
-        
+
         self.storage_directory = StringVar()
-        
+
         dir_frame = LabelFrame(self,text='Directories')
         storage_dir_label = Label(dir_frame, text='Storage directory')
         storage_dir_label.grid(row=0, column=0)
@@ -41,31 +41,47 @@ class PreferencesWindow(Toplevel):
         close_button = Button(button_frame, text='Cancel', command=self.cancel_config)
         close_button.grid(row=0, column=1)
         button_frame.grid()
-        
+
     def save_config(self):
         directory = self.storage_directory.get()
         if os.path.exists(directory):
             config['storage']['directory'] = directory
-            
+
         with open(CONFIG_PATH,'w') as configfile:
             config.write(configfile)
         self.destroy()
-        
+
     def cancel_config(self):
         self.destroy()
-        
+
 
 class AboutWindow(Toplevel):
-    pass
-    
+    def __init__(self,title,description,sources,coders,wraplength=700):
+        super(AboutWindow, self).__init__()
+        self.title(title)
+        desc_frame = LabelFrame(self, text='Brief description')
+        desc_label = Label(desc_frame, text=description, wraplength=wraplength, justify=LEFT)
+        desc_label.grid()
+        desc_frame.grid(sticky=W)
+        source_frame = LabelFrame(self, text='Original sources')
+        for source in sources:
+            source_label = Label(source_frame, text=source)
+            source_label.grid(sticky=W)
+        source_frame.grid(sticky=W)
+        coder_frame = LabelFrame(self, text='Coded by')
+        coder_label = Label(coder_frame, text=','.join(coders))
+        coder_label.grid()
+        coder_frame.grid(sticky=W)
+        self.focus()
+
 class FunctionWindow(Toplevel):
     pass
-    
+
 
 class ResultsWindow(Toplevel):
     def __init__(self, title,headerline,master=None, **options):
         super(ResultsWindow, self).__init__(master=master, **options)
-        
+
         self.title(title)
 
         self.as_results_table = MultiListbox(self,headerline)
@@ -361,7 +377,7 @@ class TableView(Frame):
 
         self.vsb.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
-        self.canvas.create_window((4,4), window=self.frame, anchor="nw", 
+        self.canvas.create_window((4,4), window=self.frame, anchor="nw",
                                   tags="self.frame")
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
@@ -390,7 +406,7 @@ class TableView(Frame):
             #by keys, then yields the values in that order
             for j,d in enumerate(word.descriptors):
                 Label(self.frame, text="%s" % str(getattr(word,d,'???'))).grid(row=i, column=j)
-            
+
 
     def OnFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''

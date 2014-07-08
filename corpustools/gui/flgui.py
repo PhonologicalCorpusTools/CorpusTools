@@ -1,6 +1,6 @@
 import os
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, 
+from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
                     ACTIVE, N)
 from tkinter import Radiobutton as OldRadiobutton
@@ -10,35 +10,13 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.funcload.functional_load as FL
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                     ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
 
-
-class FLAbout(AboutWindow):
-    def __init__(self,master=None, **options):
-        super(FLAbout, self).__init__(master=master, **options)
-        self.title('Functional load')
-        desc_frame = LabelFrame(self, text='Brief description')
-        desc_label = Label(desc_frame, text='This function calculates the functional load of the contrast between any two segments, based on either the number of minimal pairs or the change in entropy resulting from merging that contrast.')
-        desc_label.grid()
-        desc_frame.grid(sticky=W)
-        source_frame = LabelFrame(self, text='Original sources')
-
-        source_label = Label(source_frame, text='Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12.')
-        source_label.grid()
-        source_label2 = Label(source_frame, text='Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013. High functional load inhibits phonological contrast loss: A corpus study. Cognition 128.179-86')
-        source_label2.grid()
-        source_frame.grid(sticky=W)
-        coder_frame = LabelFrame(self, text='Coded by')
-        coder_label = Label(coder_frame, text='Blake Allen')
-        coder_label.grid()
-        coder_frame.grid(sticky=W)
-        self.focus()
 
 class FLFunction(FunctionWindow):
     def __init__(self,corpus,master=None, **options):
         super(FLFunction, self).__init__(master=master, **options)
-        
         self.corpus = corpus
         #Functional load variables
         self.fl_frequency_cutoff_var = StringVar()
@@ -49,7 +27,7 @@ class FLFunction(FunctionWindow):
         self.fl_q = queue.Queue()
         self.fl_results_table = None
         self.fl_type_var = StringVar()
-        
+
         self.title('Functional load')
         ipa_frame = LabelFrame(self, text='Sounds')
         segs = [seg.symbol for seg in self.corpus.inventory]
@@ -141,10 +119,16 @@ class FLFunction(FunctionWindow):
         about.grid(row=0, column=2)
         button_frame.grid()
         self.focus()
-        
+
     def about_functional_load(self):
-        about_fl = FLAbout()
-        
+        about = AboutWindow('Functional load',
+                    ('This function calculates the functional load of the contrast'
+                    ' between any two segments, based on either the number of minimal'
+                    ' pairs or the change in entropy resulting from merging that contrast.'),
+                    ['Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12.',
+                    'Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013. High functional load inhibits phonological contrast loss: A corpus study. Cognition 128.179-86'],
+                    ['Blake Allen'])
+
     def calculate_functional_load(self,update=False):
         if not self.fl_seg1_var.get() or not self.fl_seg2_var.get():
             MessageBox.showwarning(message='Please select two segments.')
@@ -252,8 +236,8 @@ class FLFunction(FunctionWindow):
                                         ignored_homophones,
                                         relative_count,
                                         self.fl_frequency_cutoff_var.get()])
-                                        
+
     def cancel_functional_load(self):
         self.delete_fl_results_table()
         self.destroy()
-    
+
