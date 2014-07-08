@@ -299,20 +299,15 @@ class GUI(Toplevel):
                 filename += '.txt'
             self.corpus_from_text_output_file.set(filename)
 
-    def save_corpus_as(self):
+    @check_for_empty_corpus
+    def save_corpus(self):
         """
         pickles the corpus, which makes loading it WAY easier
         would be nice to have an option to save as pickle and also "export as"
         a .txt/csv file
         """
-        filename = FileDialog.asksaveasfilename(filetypes=(('Corpus file', '*.corpus'),))
-        if not filename:
-            return
-
-        if not filename.endswith('.corpus'):
-            filename += '.corpus'
-        with open(filename, 'wb') as f:
-            self.corpus.feature_system = self.feature_system
+        
+        with open(os.path.join(config['storage']['directory'],'CORPUS',self.corpus.name+'.corpus'), 'wb') as f:
             pickle.dump(self.corpus, f)
         self.warn_about_changes = False
 
@@ -322,7 +317,6 @@ class GUI(Toplevel):
 
         for child in self.corpus_frame.winfo_children():
             child.grid_forget()
-        print(self.corpus.wordlist)
         random_word = self.corpus.random_word()
         headers = [d for d in random_word.descriptors if not d is None or not d == '']
         self.corpus_box = MultiListbox(self.corpus_frame, [(h,10) for h in headers])
@@ -499,7 +493,6 @@ class GUI(Toplevel):
 
     @check_for_empty_corpus
     def prod(self,shortcut=None):
-
         pd_popup = PDFunction(self.corpus)
 
 
@@ -659,9 +652,9 @@ class GUI(Toplevel):
         fl_popup = FLFunction(self.corpus)
         
 
-
+    @check_for_empty_corpus
     def export_to_text_file(self):
-        filename = FileDialog.asksaveasfilename()
+        filename = FileDialog.asksaveasfilename(initialfile = self.corpus.name+'.csv')
         if not filename:
             return
 
@@ -673,7 +666,6 @@ class GUI(Toplevel):
                 #word = self.corpus[key]
                 for value in values:
                     print(','.join(str(getattr(word, value)) for value in values), file=f)
-        self.warn_about_changes = False
 
 
     
@@ -687,13 +679,11 @@ def make_menus(root,app):
     menubar = Menu(root)
     corpusmenu = Menu(menubar, tearoff=0)
     corpusmenu.add_command(label='Load corpus...', command=app.load_corpus)
+    corpusmenu.add_command(label='Save corpus...', command=app.save_corpus)
     #corpusmenu.add_command(label='Choose built-in corpus...', command=app.choose_corpus)
     #corpusmenu.add_command(label='Use custom corpus...', command=app.choose_custom_corpus)
     #corpusmenu.add_command(label='Create corpus from text...', command=app.corpus_from_text)
-    savemenu = Menu(corpusmenu, tearoff=0)
-    savemenu.add_command(label='Save as corpus file (faster loading in CorpusTools)...', command=app.save_corpus_as)
-    savemenu.add_command(label='Save as text file (use with spreadsheets etc.)...', command=app.export_to_text_file)
-    corpusmenu.add_cascade(label='Save', menu=savemenu)
+    corpusmenu.add_command(label='Export as text file (use with spreadsheets etc.)...', command=app.export_to_text_file)
     corpusmenu.add_command(label="Quit", command=app.quit, accelerator='Ctrl+Q')
     menubar.add_cascade(label="Corpus", menu=corpusmenu)
 
