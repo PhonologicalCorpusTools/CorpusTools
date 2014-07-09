@@ -103,7 +103,7 @@ class FLFunction(FunctionWindow):
 
         self.select_sounds = Toplevel()
         self.select_sounds.title('Select sounds')
-        segs = [seg.symbol for seg in self.corpus.get_inventory(]
+        segs = [seg.symbol for seg in self.corpus.get_inventory()]
         segs.sort()
 
         sound1_frame = LabelFrame(self.select_sounds, text='First sound')
