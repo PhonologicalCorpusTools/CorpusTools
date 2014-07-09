@@ -58,11 +58,16 @@ class PreferencesWindow(Toplevel):
 
     def save_config(self):
         directory = self.storage_directory.get()
-        if os.path.exists(directory):
-            config['storage']['directory'] = directory
-
+        config['storage']['directory'] = directory
+            
         with open(CONFIG_PATH,'w') as configfile:
             config.write(configfile)
+        corpus_path = os.path.join(directory,'CORPUS')
+        if not os.path.exists(corpus_path):
+            os.makedirs(corpus_path)
+        trans_path = os.path.join(directory,'TRANS')
+        if not os.path.exists(trans_path):
+            os.makedirs(trans_path)
         self.destroy()
 
     def cancel_config(self):

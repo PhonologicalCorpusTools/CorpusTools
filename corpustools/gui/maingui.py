@@ -17,13 +17,12 @@ from tkinter import Radiobutton as OldRadiobutton
 #of the windows
 import tkinter.messagebox as MessageBox
 import tkinter.filedialog as FileDialog
-from corpustools.corpus.classes import (CorpusFactory, Corpus, FeatureSpecifier,
-                                    Word, Segment)
+from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
+                                    CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR, ERROR_DIR)
 import threading
 import queue
 import pickle
 import os
-from configparser import ConfigParser
 import collections
 from codecs import open
 from math import log
@@ -63,12 +62,9 @@ class GUI(Toplevel):
         #NON-TKINTER VARIABLES
         self.master = master
         self.show_warnings = False
-        self.q = queue.Queue()
-        self.corpusq = queue.Queue(1)
         self.corpus = None
         self.all_feature_systems = ['spe','hayes']
         #user defined features systems are added automatically at a later point
-        self.corpus_factory = CorpusFactory()
         self.warn_about_changes = False
 
         #TKINTER VARIABLES ("globals")
@@ -128,7 +124,7 @@ class GUI(Toplevel):
         self.corpus = corpusload.get_corpus()
         if self.corpus is not None:
             self.main_screen_refresh()
-
+            
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
             config.read(CONFIG_PATH)
@@ -137,7 +133,6 @@ class GUI(Toplevel):
             with open(CONFIG_PATH,'w') as configfile:
                 config.write(configfile)
         self.data_dir = config['storage']['directory']
-
         self.trans_dir = os.path.join(self.data_dir,'TRANS')
         if not os.path.exists(self.trans_dir):
             os.makedirs(self.trans_dir)
@@ -145,7 +140,7 @@ class GUI(Toplevel):
         self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
         if not os.path.exists(self.corpus_dir):
             os.makedirs(self.corpus_dir)
-
+            
     def check_for_valid_corpus(function):
         def do_check(self):
             has_spelling = True
@@ -169,7 +164,7 @@ class GUI(Toplevel):
                     MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
             function(self)
         return do_check
-
+        
     def check_for_empty_corpus(function):
         def do_check(self):
             if self.corpus is None:
@@ -541,7 +536,7 @@ class GUI(Toplevel):
             else:#for some reason, this other case just won't work
                 delimiter = '\t'
 
-        with open(os.path.join(os.getcwd(), 'TRANS', filename), encoding = 'utf-8') as f:
+        with open(os.path.join(self.trans_dir, filename), encoding = 'utf-8') as f:
             headers = f.readline()
             headers = headers.strip()
             headers = headers.split(delimiter)
@@ -671,10 +666,6 @@ class GUI(Toplevel):
             print(','.join(sorted(word.descriptors)), file=f)
             for key in self.corpus.iter_sort():
                 print(','.join(make_safe(getattr(key, value)) for value in values), file=f)
-
-
-
-
 
 
 
