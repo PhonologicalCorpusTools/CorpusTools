@@ -10,8 +10,8 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.funcload.functional_load as FL
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
-                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow, InventoryFrame,
+                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip, Toplevel)
 
 
 class FLFunction(FunctionWindow):
@@ -30,33 +30,12 @@ class FLFunction(FunctionWindow):
 
         self.title('Functional load')
         ipa_frame = LabelFrame(self, text='Sounds')
-        segs = [seg.symbol for seg in self.corpus.inventory]
-        segs.sort()
-        seg1_frame = LabelFrame(ipa_frame, text='Choose first symbol')
-        colmax = 10
-        col = 0
-        row = 0
-        for seg in segs:
-            seg_button = OldRadiobutton(seg1_frame, text=seg, variable=self.fl_seg1_var, value=seg, indicatoron=0)
-            seg_button.grid(row=row, column=col)
-            col+=1
-            if col > colmax:
-                col = 0
-                row += 1
-        seg1_frame.grid()
-
-        seg2_frame = LabelFrame(ipa_frame, text='Choose second symbol')
-        colmax = 10
-        col = 0
-        row = 0
-        for seg in segs:
-            seg_button = OldRadiobutton(seg2_frame, text=seg, variable=self.fl_seg2_var, value=seg, indicatoron=0)
-            seg_button.grid(row=row, column=col)
-            col+=1
-            if col > colmax:
-                col = 0
-                row += 1
-        seg2_frame.grid()
+        select_sounds = Button(ipa_frame, text='Add pairs of sounds', command=self.select_sound_pairs)
+        select_sounds.grid()
+        remove_button = Button(ipa_frame, text='Remove selected sound pair', command=self.remove_sounds)
+        remove_button.grid()
+        self.sound_list = MultiListbox(ipa_frame, [('Sound 1', 10),('Sound 2', 10)])
+        self.sound_list.grid()
 
         type_frame = LabelFrame(self, text='Type of functional load to calculate')
         min_pairs_type = Radiobutton(type_frame, text='Minimal pairs',
@@ -120,6 +99,54 @@ class FLFunction(FunctionWindow):
         button_frame.grid()
         self.focus()
 
+    def select_sound_pairs(self):
+
+        self.select_sounds = Toplevel()
+        self.select_sounds.title('Select sounds')
+        segs = [seg.symbol for seg in self.corpus.inventory]
+        segs.sort()
+
+        sound1_frame = LabelFrame(self.select_sounds, text='First sound')
+        self.seg1_frame = InventoryFrame(segs, self.fl_seg1_var, 'Choose first symbol', master=sound1_frame)
+        self.seg1_frame.grid()
+        sound1_frame.grid()
+
+        sound2_frame = LabelFrame(self.select_sounds, text='Second sound')
+        self.seg2_frame = InventoryFrame(segs, self.fl_seg2_var, 'Choose second symbol', master=sound2_frame)
+        self.seg2_frame.grid()
+        sound2_frame.grid()
+
+        button_frame = Frame(self.select_sounds)
+        ok_button = Button(button_frame, text='Add sounds to list', command=self.add_sounds)
+        ok_button.grid(sticky=W)
+        cancel_button = Button(button_frame, text='Done', command=self.select_sounds.destroy)
+        cancel_button.grid(sticky=W)
+        button_frame.grid(row=0,column=2)
+
+    def add_sounds(self):
+        sound1 = self.fl_seg1_var.get()
+        sound2 = self.fl_seg2_var.get()
+        if not sound1 or not sound2:
+            MessageBox.showwarning('Predictability of distribution', message='Please select 2 sounds')
+            return
+
+        self.sound_list.insert(END,[sound1, sound2])
+        for widget in self.seg1_frame.winfo_children():
+            try:
+                widget.deselect()
+            except AttributeError:
+                pass
+        for widget in self.seg2_frame.winfo_children():
+            try:
+                widget.deselect()
+            except AttributeError:
+                pass
+
+    def remove_sounds(self):
+        selection = self.sound_list.curselection()
+        if selection:
+            self.sound_list.delete(self.sound_list.curselection())
+
     def about_functional_load(self):
         about = AboutWindow('Functional load',
                     ('This function calculates the functional load of the contrast'
@@ -130,8 +157,8 @@ class FLFunction(FunctionWindow):
                     ['Blake Allen'])
 
     def calculate_functional_load(self,update=False):
-        if not self.fl_seg1_var.get() or not self.fl_seg2_var.get():
-            MessageBox.showwarning(message='Please select two segments.')
+        if self.sound_list.size() == 0:
+            MessageBox.showerror(message='Please select at least one pair of segments')
             return
 
         if not update and self.fl_results_table is not None:
@@ -142,15 +169,14 @@ class FLFunction(FunctionWindow):
                 self.fl_results_table.destroy()
                 self.fl_results.destroy()
 
-        s1 = self.fl_seg1_var.get()
-        s2 = self.fl_seg2_var.get()
         frequency_cutoff = int(self.fl_frequency_cutoff_var.get())
         relative_count = True if self.fl_relative_count_var.get() == 'relative' else False
         distinguish_homophones = True if self.fl_homophones_var.get() == 'include' else False
+        seg_list = self.sound_list.get(0,END)
         if self.fl_type_var.get() == 'min_pairs':
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.minpair_fl,
-                                    args=(self.corpus,[(s1, s2)]),
+                                    args=(self.corpus,seg_list),
                                     kwargs={'frequency_cutoff':frequency_cutoff,
                                     'relative_count':relative_count,
                                     'distinguish_homophones':distinguish_homophones,
@@ -158,7 +184,7 @@ class FLFunction(FunctionWindow):
         else:
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.deltah_fl,
-                                    args=(self.corpus,[(s1, s2)]),
+                                    args=(self.corpus,seg_list),
                                     kwargs={'frequency_cutoff':frequency_cutoff,
                                             'type_or_token':'type',
                                             'threaded_q':self.fl_q})
@@ -178,11 +204,15 @@ class FLFunction(FunctionWindow):
             self.after(100, lambda x=update:self.process_fl_queue(update))
 
     def delete_fl_results(self):
-
         #clean-up function
         if self.fl_results is not None:
             self.fl_results.destroy()
             self.fl_results = None
+
+        try:
+            self.update_fl_button.config(state=DISABLED)
+        except TclError:
+            pass #the button doesn't exist, ignore the error
 
     def show_fl_result(self, result):
         if self.fl_type_var.get() == 'min_pairs':
@@ -202,7 +232,8 @@ class FLFunction(FunctionWindow):
                 ('Relative count?',5),
                 ('Minimum word frequency', 10)]
         title = 'Functional load results'
-        self.fl_results = ResultsWindow(title,header)
+        self.fl_results = ResultsWindow(title,header,delete_method=self.delete_fl_results)
+        self.fl_results.protocol('WM_DELETE_WINDOW', self.delete_fl_results)
         self.update_fl_button.config(state=ACTIVE)
         self.update_fl_results(result)
 
@@ -229,13 +260,15 @@ class FLFunction(FunctionWindow):
             fl_type = 'Entropy'
             ignored_homophones = 'N/A'
             relative_count = 'N/A'
-        self.fl_results.update([self.fl_seg1_var.get(),
-                                        self.fl_seg2_var.get(),
-                                        fl_type,
-                                        result,
-                                        ignored_homophones,
-                                        relative_count,
-                                        self.fl_frequency_cutoff_var.get()])
+        seg_list = self.sound_list.get(0,END)
+        for seg1,seg2 in zip(*seg_list):
+            self.fl_results.update([seg1,
+                                    seg2,
+                                    fl_type,
+                                    result,
+                                    ignored_homophones,
+                                    relative_count,
+                                    self.fl_frequency_cutoff_var.get()])
 
     def cancel_functional_load(self):
         self.delete_fl_results_table()

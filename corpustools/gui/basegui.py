@@ -4,19 +4,32 @@ import sys
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
                     YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label,
                     StringVar, LabelFrame,Label, Button, Entry, Canvas, W)
+from tkinter import Radiobutton as OldRadiobutton
 import tkinter.filedialog as FileDialog
 
-
 from corpustools.config import DEFAULT_DATA_DIR, CONFIG_PATH, LOG_DIR, ERROR_DIR, config
+
+class InventoryFrame(LabelFrame):
+
+    def __init__(self, inventory, var, text, colmax=10, master=None):
+        super(InventoryFrame, self).__init__(master=master, text=text)
+        ipa_frame = LabelFrame(self, text='Sounds')
+        seg1_frame = LabelFrame(ipa_frame, text=text)
+        col = 0
+        row = 0
+        for seg in inventory:
+            seg_button = OldRadiobutton(self, text=seg, variable=var, value=seg, indicatoron=0)
+            seg_button.grid(row=row, column=col)
+            col+=1
+            if col > colmax:
+                col = 0
+                row += 1
 
 class PreferencesWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(PreferencesWindow, self).__init__(master=master, **options)
-
         self.title('CorpusTools preferences')
-
         self.storage_directory = StringVar()
-
         dir_frame = LabelFrame(self,text='Directories')
         storage_dir_label = Label(dir_frame, text='Storage directory')
         storage_dir_label.grid(row=0, column=0)
@@ -24,6 +37,7 @@ class PreferencesWindow(Toplevel):
         storage_dir_text.delete(0,END)
         storage_dir_text.insert(0, config['storage']['directory'])
         storage_dir_text.grid(row=0,column=1)
+
         def set_dir():
             directory = FileDialog.askdirectory()
             if directory:
@@ -79,13 +93,15 @@ class FunctionWindow(Toplevel):
 
 
 class ResultsWindow(Toplevel):
-    def __init__(self, title,headerline,master=None, **options):
+    def __init__(self, title, headerline, master=None, delete_method=None, **options):
         super(ResultsWindow, self).__init__(master=master, **options)
 
         self.title(title)
 
         self.as_results_table = MultiListbox(self,headerline)
         self.as_results_table.grid()
+
+        self.delete_results = delete_method
 
         button_frame = Frame(self)
         print_button = Button(button_frame, text='Save results to file', command=self.save_results)
@@ -94,8 +110,9 @@ class ResultsWindow(Toplevel):
         close_button.grid(row=0, column=1)
         button_frame.grid()
 
+
     def delete_results(self):
-        self.destroy()
+        pass #see self.__init__()
 
     def save_results(self):
         filename = FileDialog.asksaveasfilename()
@@ -173,6 +190,9 @@ class MultiListbox(Frame):
             result.append(l.get(first,last))
 
         return result
+
+##    def __len__(self):
+##        return self.size()
 
     def index(self, index):
         self.lists[0].index(index)
