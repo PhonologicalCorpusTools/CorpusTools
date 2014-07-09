@@ -652,8 +652,8 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self.inventory = list() #list of Segments, if transcription exists
-        self.orthography = list() #lists of orthographic characters
+        self.inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
+        self.orthography = {'#'} #set of orthographic characters
         self.custom = False
         self.has_frequency_value = None
         self.has_spelling_value = None
@@ -673,7 +673,7 @@ class Corpus(object):
         """Return True if words in the corpus have the 'frequency' label.
         """
         if self.has_frequency_value is None:
-            random_word = self.corpus.random_word()
+            random_word = self.random_word()
             if not 'frequency' in random_word.descriptors:
                 self.has_frequency_value = False
             else:
@@ -684,7 +684,7 @@ class Corpus(object):
         """Return True if words in the corpus have the 'spelling' label.
         """
         if self.has_spelling_value is None:
-            random_word = self.corpus.random_word()
+            random_word = self.random_word()
             if not 'spelling' in random_word.descriptors:
                 self.has_spelling_value = False
             else:
@@ -695,12 +695,15 @@ class Corpus(object):
         """Return True if words in the corpus have the 'transcription' label.
         """
         if self.has_transcription_value is None:
-            random_word = self.corpus.random_word()
+            random_word = self.random_word()
             if not 'transcription' in random_word.descriptors:
                 self.has_transcription_value = False
             else:
                 self.has_transcription_value = True
         return self.has_transcription_value
+
+    def get_inventory(self):
+        return list(self.inventory.values())
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -747,6 +750,8 @@ class Corpus(object):
         #if isinstance(check, EmptyWord):
             #self.wordlist[word.spelling.lower()] = word
             self.wordlist[word.spelling] = word
+            self.orthography.update(word.spelling)
+            self.inventory.update({ seg.symbol : seg for seg in word.transcription})
             return
 
         if allow_duplicates:

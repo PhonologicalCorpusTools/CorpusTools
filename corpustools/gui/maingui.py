@@ -651,24 +651,27 @@ class GUI(Toplevel):
 
 
     @check_for_empty_corpus
+    @check_for_valid_corpus
     def functional_load(self):
         fl_popup = FLFunction(self.corpus)
 
 
     @check_for_empty_corpus
     def export_to_text_file(self):
-        filename = FileDialog.asksaveasfilename(initialfile = self.corpus.name+'.csv')
+        filename = FileDialog.asksaveasfilename(initialfile = self.corpus.name+'.txt')
         if not filename:
             return
-
+        def make_safe(value):
+            if isinstance(value,list):
+                return '.'.join(map(make_safe,value))
+            return str(value)
+            
         word = self.corpus.random_word()
         values = sorted(word.descriptors)
         with open(filename, encoding='utf-8', mode='w') as f:
             print(','.join(sorted(word.descriptors)), file=f)
             for key in self.corpus.iter_sort():
-                #word = self.corpus[key]
-                for value in values:
-                    print(','.join(str(getattr(word, value)) for value in values), file=f)
+                print(','.join(make_safe(getattr(key, value)) for value in values), file=f)
 
 
 

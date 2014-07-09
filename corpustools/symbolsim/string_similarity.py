@@ -57,13 +57,13 @@ def string_similarity_word(corpus_name, relator_type, string_type, count_what, q
         if min_rel != None:
             if max_rel != None:
                 if min_rel <= score[0] <= max_rel:
-                    filtered_data.append( (score, word) )
+                    filtered_data.append( (score[0], word) )
             elif min_rel <= score[0]:
-                filtered_data.append( (score, word) )
+                filtered_data.append( (score[0], word) )
         elif max_rel != None and score[0] <= max_rel:
-            filtered_data.append( (score, word) )
+            filtered_data.append( (score[0], word) )
         else:
-            filtered_data.append( (score, word) )
+            filtered_data.append( (score[0], word) )
                             
     if output_filename == 'return_data':
         return filtered_data

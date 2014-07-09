@@ -19,6 +19,11 @@ from corpustools.corpus.classes import (CorpusFactory, Corpus, FeatureSpecifier,
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                     ResultsWindow, MultiListbox, ThreadedTask, config, ERROR_DIR)
 
+def get_corpora_list():
+    corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
+    corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
+    return corpora
+
 class DownloadWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(DownloadWindow, self).__init__(master=master, **options)
@@ -28,7 +33,7 @@ class DownloadWindow(Toplevel):
         corpus_frame = Frame(self)
         corpus_area = LabelFrame(corpus_frame, text='Select a corpus')
         corpus_area.grid(sticky=W, column=0, row=0)
-        subtlex_button = Radiobutton(corpus_area, text='Toy', variable=self.corpus_button_var, value='toy')
+        subtlex_button = Radiobutton(corpus_area, text='Example', variable=self.corpus_button_var, value='example')
         subtlex_button.grid(sticky=W,row=0)
         subtlex_button.invoke()#.select() doesn't work on ttk.Button
         iphod_button = Radiobutton(corpus_area, text='IPHOD', variable=self.corpus_button_var, value='iphod')
@@ -48,14 +53,20 @@ class DownloadWindow(Toplevel):
 
     def confirm_download(self):
         corpus_name = self.corpus_button_var.get()
-        if corpus_name == 'toy':
-            download_link = ''
+        path = os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus')
+        if corpus_name in get_corpora_list():
+            carry_on = MessageBox.askyesno(message=(
+                'This corpus is already available locally.  Would you like to redownload it?'))
+            if not carry_on:
+                return
+            os.remove(path)
+        if corpus_name == 'example':
+            download_link = 'https://www.dropbox.com/s/a0uar9h8wtem8cf/example.corpus?dl=1'
         elif corpus_name == 'iphod':
             download_link = 'https://www.dropbox.com/s/qbvnbzoynroxc4t/iphod_spe.corpus?dl=1'
         self.corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
         self.corpus_load_prog_bar.grid()
         self.corpus_load_prog_bar.start()
-        path = os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus')
         if not os.path.exists(path):
             self.corpus_download_thread = ThreadedTask(None,
                                 target=self.process_download_corpus_queue,
@@ -91,12 +102,6 @@ class CorpusFromTextWindow(Toplevel):
         load_file_frame.grid(sticky=W)
 
         from_text_frame.grid()
-##        new_name_frame = LabelFrame(from_text_frame, text='New corpus name and save location')
-##        name_label = Label(new_name_frame, text='Name for new corpus:')
-##        name_label.grid(row=0,column=0,sticky=W)
-##        self.new_name_entry = Entry(new_name_frame)
-##        self.new_name_entry.grid(row=0,column=1,sticky=W)
-##        new_name_frame.grid(sticky=W)
 
         punc_frame = LabelFrame(from_text_frame, text='Select punctuation to ignore')
         row = 0
@@ -190,7 +195,6 @@ class CorpusFromTextWindow(Toplevel):
             line = [w,freq,freq/total_words]
             d = {attribute:value for attribute,value in zip(headers,line)}
             word = Word(**d)
-            print(d)
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters which is a period
                 word.transcription = word.transcription.split('.')
@@ -205,14 +209,6 @@ class CorpusFromTextWindow(Toplevel):
                     transcription_errors[str(e)].append(str(word))
                     continue
             corpus.add_word(word)
-        #corpus.orthography.extend([letter for letter in word.spelling if not letter in corpus.orthography])
-        #random_word = corpus.random_word()
-        #if random_word.transcription is not None:
-        #    corpus.inventory.extend([seg for seg in word.transcription if not seg in corpus.inventory])
-        #else:
-        #    corpus.inventory = list()
-        #corpus.orthography.append('#')
-        #corpus.inventory.append(Segment('#'))
         corpus.custom = True
 
         with open(os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'), 'wb') as f:
@@ -257,6 +253,7 @@ class CustomCorpusWindow(Toplevel):
         cancel_button = Button(self, text='Cancel', command=self.destroy)
         ok_button.grid()
         cancel_button.grid()
+        self.focus()
 
     def navigate_to_corpus_file(self):
         custom_corpus_filename = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
@@ -274,6 +271,11 @@ class CustomCorpusWindow(Toplevel):
 
         delimiter = self.delimiter_entry.get()
         corpus_name = self.custom_corpus_name.get()
+        if corpus_name in get_corpora_list():
+            carry_on = MessageBox.askyesno(message=(
+                'A corpus already exists with this name.  Would you like to overwrite it?'))
+            if not carry_on:
+                return
         if (not filename) or (not delimiter) or (not corpus_name):
             MessageBox.showerror(message='Information is missing. Please verify that you entered something in all the text boxes')
             return
@@ -282,25 +284,8 @@ class CustomCorpusWindow(Toplevel):
         self.create_custom_corpus(corpus_name, filename, delimiter)
         self.warn_about_changes = False
 
-    def process_custom_corpus_queue(self):
-        try:
-            msg = self.q.get(0)
-            if msg == -99:
-                self.custom_corpus_load_prog_bar.stop()
-                transcription_errors = self.corpusq.get()
-                corpus = self.corpusq.get()
-                self.finalize_corpus(corpus, transcription_errors)
-                self.destroy()
-            else:
-                self.custom_corpus_load_prog_bar.step()
-                #self.master.after(100, self.process_queue)
-                self.after(3, self.process_custom_corpus_queue)
-        except queue.Empty:
-            #queue is empty initially for a while because it takes some time for the
-            #corpus_factory.make_corpus to actually start producing worsd
-            self.after(10, self.process_custom_corpus_queue)
 
-    def custom_corpus_worker_thread(self, corpus_name, filename, delimiter, queue, corpusq):
+    def custom_corpus_worker_thread(self, corpus_name, filename, delimiter):
         with open(filename, encoding='utf-8') as f:
             headers = f.readline()
             headers = headers.split(delimiter)
@@ -344,22 +329,13 @@ class CustomCorpusWindow(Toplevel):
                         continue
 
                 corpus.add_word(word)
-                queue.put(1)
-        queue.put(-99)#flag
-        corpus.orthography.extend([letter for letter in word.spelling if not letter in corpus.orthography])
-        random_word = corpus.random_word()
-        if random_word.transcription is not None:
-            corpus.inventory.extend([seg for seg in word.transcription if not seg in corpus.inventory])
-        else:
-            corpus.inventory = list()
-        corpus.orthography.append('#')
-        corpus.inventory.append(Segment('#'))
+        
         corpus.specifier = FeatureSpecifier(encoding=feature_system)
         corpus.custom = True
+        self.finalize_corpus(corpus, transcription_errors)
         with open(os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'), 'wb') as f:
             pickle.dump(corpus,f)
-        corpusq.put(transcription_errors)
-        corpusq.put(corpus)
+        self.destroy()
 
 
 
@@ -374,16 +350,14 @@ class CustomCorpusWindow(Toplevel):
         except (pickle.UnpicklingError, ValueError):
             pass
 
-        self.q = queue.Queue()
-        self.corpusq = queue.Queue(1)
         self.custom_corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
         #this progbar is indeterminate because we can't know how big the custom corpus will be
         self.custom_corpus_load_prog_bar.grid()
-        self.custom_corpus_load_thread = ThreadedTask(self.q,
+        self.custom_corpus_load_prog_bar.start()
+        self.custom_corpus_load_thread = ThreadedTask(queue.Queue(),
                                 target=self.custom_corpus_worker_thread,
-                                args=(corpus_name, filename, delimiter, self.q, self.corpusq))
+                                args=(corpus_name, filename, delimiter))
         self.custom_corpus_load_thread.start()
-        self.process_custom_corpus_queue()
 
     def finalize_corpus(self, corpus, transcription_errors=None):
         self.corpus = corpus
@@ -463,8 +437,7 @@ class CorpusManager(object):
             self.available_trans.insert(END,t)
 
     def get_available_corpora(self):
-        corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
-        corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
+        corpora = get_corpora_list()
         self.available_corpora.delete(0,END)
         for c in corpora:
             self.available_corpora.insert(END,c)

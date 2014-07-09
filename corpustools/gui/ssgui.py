@@ -277,7 +277,7 @@ class SSFunction(FunctionWindow):
             results = SS.string_similarity_word('',relator_type,
                                                 string_type, typetoken, query,
                                                 min_rel, max_rel, self.corpus, output_filename='return_data')
-            results = [(query,x[0],x[1]) for x in results]
+            results = [(query,x[1],x[0]) for x in results]
         elif self.string_similarity_comparison_type_var.get() == 'pairs':
             query = self.string_similarity_pairs_var.get()
             results = SS.string_similarity_pairs('', relator_type,

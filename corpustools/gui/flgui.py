@@ -30,7 +30,7 @@ class FLFunction(FunctionWindow):
 
         self.title('Functional load')
         ipa_frame = LabelFrame(self, text='Sounds')
-        segs = [seg.symbol for seg in self.corpus.inventory]
+        segs = [seg.symbol for seg in self.corpus.get_inventory()]
         segs.sort()
         seg1_frame = LabelFrame(ipa_frame, text='Choose first symbol')
         colmax = 10

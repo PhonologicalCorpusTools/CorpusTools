@@ -83,7 +83,7 @@ class PDFunction(FunctionWindow):
         'predictability of distribution you want to calculate. The order of the '
         'two sounds is irrelevant. The symbols you see here should automatically'
         ' match the symbols used anywhere in your corpus.'))
-        segs = [seg.symbol for seg in self.corpus.inventory]
+        segs = [seg.symbol for seg in self.corpus.get_inventory()]
         segs.sort()
         seg1_frame = LabelFrame(self.ipa_frame, text='Choose first symbol')
         colmax = 10
@@ -139,7 +139,7 @@ class PDFunction(FunctionWindow):
         type_button.invoke()
         token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.entropy_typetoken_var, value='token')
         token_button.grid(sticky=W)
-        if not has_frequency:
+        if not self.corpus.has_frequency():
             token_button.configure(state=('disabled'))
         typetoken_frame.grid(row=1, column=0)
 
@@ -220,7 +220,7 @@ class PDFunction(FunctionWindow):
         lhs_seg_frame = LabelFrame(lhs_frame, text='Segment-based environment')
         lhs_seg_entry_explanation = Label(lhs_seg_frame, text='Select a segment to match')
         lhs_seg_entry_explanation.grid()
-        segs = [seg.symbol for seg in self.corpus.inventory]
+        segs = [seg.symbol for seg in self.corpus.get_inventory()]
         segs.sort()
         segs_frame = Frame(lhs_seg_frame)
         col = 0
@@ -266,7 +266,7 @@ class PDFunction(FunctionWindow):
         rhs_seg_frame = LabelFrame(rhs_frame, text='Segment-based environment')
         rhs_seg_entry_explanation = Label(rhs_seg_frame, text='Select a segment to match')
         rhs_seg_entry_explanation.grid()
-        segs = [seg.symbol for seg in self.corpus.inventory]
+        segs = [seg.symbol for seg in self.corpus.get_inventory()]
         segs.sort()
         segs_frame = Frame(rhs_seg_frame)
         col = 0
