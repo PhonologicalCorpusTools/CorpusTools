@@ -2,21 +2,34 @@ import threading
 import os
 import sys
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
-                    YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label, 
-                    StringVar, LabelFrame,Label, Button, Entry)
+                    YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label,
+                    StringVar, LabelFrame,Label, Button, Entry, Canvas, W)
+from tkinter import Radiobutton as OldRadiobutton
 import tkinter.filedialog as FileDialog
 
-
 from corpustools.config import DEFAULT_DATA_DIR, CONFIG_PATH, LOG_DIR, ERROR_DIR, config
+
+class InventoryFrame(LabelFrame):
+
+    def __init__(self, inventory, var, text, colmax=10, master=None):
+        super(InventoryFrame, self).__init__(master=master, text=text)
+        ipa_frame = LabelFrame(self, text='Sounds')
+        seg1_frame = LabelFrame(ipa_frame, text=text)
+        col = 0
+        row = 0
+        for seg in inventory:
+            seg_button = OldRadiobutton(self, text=seg, variable=var, value=seg, indicatoron=0)
+            seg_button.grid(row=row, column=col)
+            col+=1
+            if col > colmax:
+                col = 0
+                row += 1
 
 class PreferencesWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(PreferencesWindow, self).__init__(master=master, **options)
-        
         self.title('CorpusTools preferences')
-        
         self.storage_directory = StringVar()
-        
         dir_frame = LabelFrame(self,text='Directories')
         storage_dir_label = Label(dir_frame, text='Storage directory')
         storage_dir_label.grid(row=0, column=0)
@@ -24,6 +37,7 @@ class PreferencesWindow(Toplevel):
         storage_dir_text.delete(0,END)
         storage_dir_text.insert(0, config['storage']['directory'])
         storage_dir_text.grid(row=0,column=1)
+
         def set_dir():
             directory = FileDialog.askdirectory()
             if directory:
@@ -41,7 +55,7 @@ class PreferencesWindow(Toplevel):
         close_button = Button(button_frame, text='Cancel', command=self.cancel_config)
         close_button.grid(row=0, column=1)
         button_frame.grid()
-        
+
     def save_config(self):
         directory = self.storage_directory.get()
         config['storage']['directory'] = directory
@@ -55,26 +69,45 @@ class PreferencesWindow(Toplevel):
         if not os.path.exists(trans_path):
             os.makedirs(trans_path)
         self.destroy()
-        
+
     def cancel_config(self):
         self.destroy()
-        
+
 
 class AboutWindow(Toplevel):
-    pass
-    
+    def __init__(self,title,description,sources,coders,wraplength=700):
+        super(AboutWindow, self).__init__()
+        self.title(title)
+        desc_frame = LabelFrame(self, text='Brief description')
+        desc_label = Label(desc_frame, text=description, wraplength=wraplength, justify=LEFT)
+        desc_label.grid()
+        desc_frame.grid(sticky=W)
+        source_frame = LabelFrame(self, text='Original sources')
+        for source in sources:
+            source_label = Label(source_frame, text=source)
+            source_label.grid(sticky=W)
+        source_frame.grid(sticky=W)
+        coder_frame = LabelFrame(self, text='Coded by')
+        coder_label = Label(coder_frame, text=','.join(coders))
+        coder_label.grid()
+        coder_frame.grid(sticky=W)
+        self.focus()
+
 class FunctionWindow(Toplevel):
     pass
-    
+
 
 class ResultsWindow(Toplevel):
-    def __init__(self, title,headerline,master=None, **options):
+    def __init__(self, title, headerline, master=None, delete_method=None, **options):
         super(ResultsWindow, self).__init__(master=master, **options)
-        
+
         self.title(title)
 
         self.as_results_table = MultiListbox(self,headerline)
         self.as_results_table.grid()
+
+        self.delete_results = delete_method
+        self.protocol('WM_DELETE_WINDOW', self.delete_results)
 
         button_frame = Frame(self)
         print_button = Button(button_frame, text='Save results to file', command=self.save_results)
@@ -83,8 +116,9 @@ class ResultsWindow(Toplevel):
         close_button.grid(row=0, column=1)
         button_frame.grid()
 
+
     def delete_results(self):
-        self.destroy()
+        pass #see self.__init__()
 
     def save_results(self):
         filename = FileDialog.asksaveasfilename()
@@ -162,6 +196,9 @@ class MultiListbox(Frame):
             result.append(l.get(first,last))
 
         return result
+
+##    def __len__(self):
+##        return self.size()
 
     def index(self, index):
         self.lists[0].index(index)
@@ -352,3 +389,51 @@ class ToolTip:
         label = Label(self._tipwindow, **opts)
         label.pack()
 
+class TableView(Frame):
+    def __init__(self, root):
+
+        Frame.__init__(self, root)
+        self.headerframe = Frame(self)
+        self.headerframe.pack(side='top',fill='x')
+        self.set_header(['spelling','transcription','frequency'])
+        self.canvas = Canvas(self, borderwidth=0, background="#ffffff")
+        self.frame = Frame(self.canvas, background="#ffffff")
+        self.vsb = Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.create_window((4,4), window=self.frame, anchor="nw",
+                                  tags="self.frame")
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+        #self.frame.bind("<Configure>", self.OnFrameConfigure)
+
+        #self.populate()
+
+    def set_header(self,header):
+        for child in self.headerframe.winfo_children():
+            child.grid_forget()
+        for i,h in enumerate(header):
+            Label(self.headerframe, text=h).grid(row=0, column=i)
+
+    def load_corpus(self,corpus):
+        ''''''
+        for child in self.frame.winfo_children():
+            child.grid_forget()
+        if corpus is None:
+            return
+        print(self.frame.grid_size())
+        random_word = corpus.random_word()
+        headers = [d for d in random_word.descriptors if not d is None or not d == '']
+        self.set_header(headers)
+        for i,word in enumerate(corpus.iter_sort()):
+            #corpus.iter_sort is a generator that sorts the corpus dictionary
+            #by keys, then yields the values in that order
+            for j,d in enumerate(word.descriptors):
+                Label(self.frame, text="%s" % str(getattr(word,d,'???'))).grid(row=i, column=j)
+
+
+    def OnFrameConfigure(self, event):
+        '''Reset the scroll region to encompass the inner frame'''
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
