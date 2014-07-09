@@ -16,5 +16,4 @@ def main():
     app = GUI(root,os.path.dirname(logo_path))
     make_menus(root,app)
     root.bind_all('<Control-q>', app.quit)
-    root.bind_all('<Control-h>', app.entropy)
     root.mainloop()

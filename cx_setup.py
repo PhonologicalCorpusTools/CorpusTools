@@ -1,12 +1,24 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+
+import sys
+from cx_Freeze import setup, Executable
 
 def readme():
     with open('README.md') as f:
         return f.read()
         
+build_exe_options = {"excludes": ['scipy.signal','scipy.io',
+                                    'scipy.io.matlab',
+                                    'scipy.io.matlab.mio_utils',
+                                    'scipy.io.matlab.mio5_utils',
+                                    'scipy.io.matlab.streams','scipy.spatial.distance',
+                                    'numpy','numpy.fft',
+                                    'corpustools.acousticsim',
+                                    'corpustools.acousticsim.tests']}
+        
+base = None
+if sys.platform == "win32":
+    base = "Win32GUI"
+
 setup(name='corpustools',
       version='0.15',
       description='',
@@ -33,10 +45,13 @@ setup(name='corpustools',
                 'corpustools.gui',
                 'corpustools.symbolsim'],
       install_requires=[
-          'pillow'
+          'pillow',
+          #'numpy',
+          #'scipy'
       ],
       entry_points = {
         'console_scripts': ['pct=corpustools.pct:main'],
     },
-    scripts=['bin/pct.py']
+    console=['bin/pct.py'],
+      executables = [Executable('bin/pct.py', base=base)],
       )

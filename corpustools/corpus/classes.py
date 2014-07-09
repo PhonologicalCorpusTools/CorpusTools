@@ -4,6 +4,7 @@ import os
 import random
 import collections
 from codecs import open
+from configparser import ConfigParser
 
 from corpustools.config import config
 
@@ -641,15 +642,19 @@ class Corpus(object):
     """
 
     __slots__ = ['name', 'wordlist', 'specifier',
-                'inventory', 'orthography', 'custom', 'feature_system']
+                'inventory', 'orthography', 'custom', 'feature_system',
+                'has_frequency_value','has_spelling_value','has_transcription_value']
 
     def __init__(self, name):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self.inventory = list() #list of Segments, if transcription exists
-        self.orthography = list() #lists of orthographic characters
+        self.inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
+        self.orthography = {'#'} #set of orthographic characters
         self.custom = False
+        self.has_frequency_value = None
+        self.has_spelling_value = None
+        self.has_transcription_value = None
         #specifier is not passed as an argument because of how it's created
         #it's directly assigned in CorpusFactory.make_corpus()
 
@@ -660,6 +665,42 @@ class Corpus(object):
         sorted_list = sorted(self.wordlist.keys())
         for word in sorted_list:
             yield self.wordlist[word]
+
+    def has_frequency(self):
+        """Return True if words in the corpus have the 'frequency' label.
+        """
+        if self.has_frequency_value is None:
+            random_word = self.random_word()
+            if not 'frequency' in random_word.descriptors:
+                self.has_frequency_value = False
+            else:
+                self.has_frequency_value = True
+        return self.has_frequency_value
+
+    def has_spelling(self):
+        """Return True if words in the corpus have the 'spelling' label.
+        """
+        if self.has_spelling_value is None:
+            random_word = self.random_word()
+            if not 'spelling' in random_word.descriptors:
+                self.has_spelling_value = False
+            else:
+                self.has_spelling_value = True
+        return self.has_spelling_value
+
+    def has_transcription(self):
+        """Return True if words in the corpus have the 'transcription' label.
+        """
+        if self.has_transcription_value is None:
+            random_word = self.random_word()
+            if not 'transcription' in random_word.descriptors:
+                self.has_transcription_value = False
+            else:
+                self.has_transcription_value = True
+        return self.has_transcription_value
+
+    def get_inventory(self):
+        return list(self.inventory.values())
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -706,6 +747,8 @@ class Corpus(object):
         #if isinstance(check, EmptyWord):
             #self.wordlist[word.spelling.lower()] = word
             self.wordlist[word.spelling] = word
+            self.orthography.update(word.spelling)
+            self.inventory.update({ seg.symbol : seg for seg in word.transcription})
             return
 
         if allow_duplicates:
