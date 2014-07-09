@@ -37,6 +37,7 @@ except ImportError:
 from corpustools.gui.ssgui import SSFunction
 from corpustools.gui.flgui import FLFunction
 from corpustools.gui.pdgui import PDFunction
+from corpustools.gui.fagui import FAFunction
 from corpustools.gui.corpusgui import CorpusManager
 
 try:
@@ -124,7 +125,7 @@ class GUI(Toplevel):
         self.corpus = corpusload.get_corpus()
         if self.corpus is not None:
             self.main_screen_refresh()
-            
+
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
             config.read(CONFIG_PATH)
@@ -140,7 +141,7 @@ class GUI(Toplevel):
         self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
         if not os.path.exists(self.corpus_dir):
             os.makedirs(self.corpus_dir)
-            
+
     def check_for_valid_corpus(function):
         def do_check(self):
             has_spelling = True
@@ -164,7 +165,7 @@ class GUI(Toplevel):
                     MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
             function(self)
         return do_check
-        
+
     def check_for_empty_corpus(function):
         def do_check(self):
             if self.corpus is None:
@@ -493,6 +494,9 @@ class GUI(Toplevel):
         pd_popup = PDFunction(self.corpus)
 
 
+    def frequency_of_alternation(self):
+        fa_popup = FAFunction(self.master, self.corpus)
+
     def show_feature_system(self, memory=None):
 
         if self.corpus is None:
@@ -659,7 +663,7 @@ class GUI(Toplevel):
             if isinstance(value,list):
                 return '.'.join(map(make_safe,value))
             return str(value)
-            
+
         word = self.corpus.random_word()
         values = sorted(word.descriptors)
         with open(filename, encoding='utf-8', mode='w') as f:
@@ -695,6 +699,7 @@ def make_menus(root,app):
 
     calcmenu = Menu(menubar, tearoff=0)
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
+    calcmenu.add_command(label='Calculate frequency of alternation...', command=app.frequency_of_alternation)
     calcmenu.add_command(label='Calculate predictability of distribution...', command=app.prod)
     calcmenu.add_command(labe='Calculate functional load...', command=app.functional_load)
     calcmenu.add_command(labe='Calculate acoustic similarity...', command=app.acoustic_sim)
