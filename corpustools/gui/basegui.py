@@ -102,6 +102,7 @@ class ResultsWindow(Toplevel):
         self.as_results_table.grid()
 
         self.delete_results = delete_method
+        self.protocol('WM_DELETE_WINDOW', self.delete_results)
 
         button_frame = Frame(self)
         print_button = Button(button_frame, text='Save results to file', command=self.save_results)

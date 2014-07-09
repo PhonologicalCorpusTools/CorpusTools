@@ -233,7 +233,6 @@ class FLFunction(FunctionWindow):
                 ('Minimum word frequency', 10)]
         title = 'Functional load results'
         self.fl_results = ResultsWindow(title,header,delete_method=self.delete_fl_results)
-        self.fl_results.protocol('WM_DELETE_WINDOW', self.delete_fl_results)
         self.update_fl_button.config(state=ACTIVE)
         self.update_fl_results(result)
 
