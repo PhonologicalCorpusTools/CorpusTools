@@ -28,7 +28,7 @@ import collections
 from codecs import open
 from math import log
 
-from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,TableView,
+from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow, TableView,
                                     CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR, ERROR_DIR,config)
 try:
     from corpustools.gui.asgui import ASFunction
@@ -467,7 +467,6 @@ class GUI(Toplevel):
         self.warn_about_changes = True
         self.tier_window.destroy()
         self.main_screen_refresh()
-
 
     def add_plus_tier_feature(self):
         try:
