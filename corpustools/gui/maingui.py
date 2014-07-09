@@ -52,7 +52,7 @@ class GUI(Toplevel):
     def __init__(self,master,base_path):
 
         self.load_config()
-
+        
         #Set up logging
         self.log_dir = LOG_DIR
         self.errors_dir = ERROR_DIR
@@ -168,15 +168,15 @@ class GUI(Toplevel):
             with open(CONFIG_PATH,'w') as configfile:
                 config.write(configfile)
         self.data_dir = config['storage']['directory']
-
+        
         self.trans_dir = os.path.join(self.data_dir,'TRANS')
         if not os.path.exists(self.trans_dir):
             os.makedirs(self.trans_dir)
-
+            
         self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
         if not os.path.exists(self.corpus_dir):
             os.makedirs(self.corpus_dir)
-
+        
     def check_for_empty_corpus(function):
         def do_check(self):
             if self.corpus is None:
@@ -197,7 +197,7 @@ class GUI(Toplevel):
         return do_check
 
     def check_for_feature_systems(self):
-
+        
         ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
         links = {'cmu2ipa.txt':'https://www.dropbox.com/s/dcz1hnoix2qy8d0/cmu2ipa.txt?dl=1',
                 'ipa2hayes.txt':'https://www.dropbox.com/s/b5jnunz1m5pzsc6/ipa2hayes.txt?dl=1',
@@ -207,7 +207,7 @@ class GUI(Toplevel):
             if not os.path.exists(path):
                 from urllib.request import urlretrieve
                 filename,headers = urlretrieve(v,path)
-
+                
         for dirpath,dirname,filenames in os.walk(self.trans_dir):
             for name in filenames:
                 if name in ignore:
@@ -935,11 +935,11 @@ class GUI(Toplevel):
             elif features_name == 'hayes':
                 path = os.path.join(self.corpus_dir, 'iphod_hayes.corpus')
                 download_link = 'https://www.dropbox.com/s/zs5p0l26ett17iy/iphod_hayes.corpus?dl=1'
-
+        
         self.corpus_load_prog_bar = Progressbar(self.corpus_select_screen, mode='indeterminate')
         self.corpus_load_prog_bar.grid()
         self.corpus_load_prog_bar.start()
-
+        
         if not os.path.exists(path) and corpus_name == 'iphod':
             #import requests
             #with open(path, 'wb') as handle:
@@ -2160,7 +2160,7 @@ class GUI(Toplevel):
         #    '\nAcoustic similarity cannot be run without both of them installed.'))
         #    return
         self.as_popup = ASFunction()
-
+        
 
     @check_for_empty_corpus
     def functional_load(self):
@@ -2467,3 +2467,4 @@ def make_menus(root,app):
     helpmenu.add_command(label="About...", command=app.donothing)
     menubar.add_cascade(label="Help", menu=helpmenu)
     root.config(menu=menubar)
+
