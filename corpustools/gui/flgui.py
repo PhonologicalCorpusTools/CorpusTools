@@ -173,10 +173,11 @@ class FLFunction(FunctionWindow):
         relative_count = True if self.fl_relative_count_var.get() == 'relative' else False
         distinguish_homophones = True if self.fl_homophones_var.get() == 'include' else False
         seg_list = self.sound_list.get(0,END)
+        seg_pairs = list(zip(seg_list[0], seg_list[1]))
         if self.fl_type_var.get() == 'min_pairs':
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.minpair_fl,
-                                    args=(self.corpus,seg_list),
+                                    args=(self.corpus,seg_pairs),
                                     kwargs={'frequency_cutoff':frequency_cutoff,
                                     'relative_count':relative_count,
                                     'distinguish_homophones':distinguish_homophones,
@@ -184,7 +185,7 @@ class FLFunction(FunctionWindow):
         else:
             functional_load_thread = ThreadedTask(self.fl_q,
                                     target=FL.deltah_fl,
-                                    args=(self.corpus,seg_list),
+                                    args=(self.corpus,seg_pairs),
                                     kwargs={'frequency_cutoff':frequency_cutoff,
                                             'type_or_token':'type',
                                             'threaded_q':self.fl_q})
