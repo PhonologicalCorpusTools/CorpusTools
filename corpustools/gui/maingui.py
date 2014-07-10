@@ -495,7 +495,7 @@ class GUI(Toplevel):
 
 
     def frequency_of_alternation(self):
-        fa_popup = FAFunction(self.master, self.corpus)
+        fa_popup = FAFunction(self.corpus)
 
     def show_feature_system(self, memory=None):
 

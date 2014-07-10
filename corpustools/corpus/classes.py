@@ -700,7 +700,9 @@ class Corpus(object):
         return self.has_transcription_value
 
     def get_inventory(self):
-        return list(self.inventory.values())
+        inventory = list(self.inventory.values())
+        inventory.sort()
+        return inventory
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -747,8 +749,10 @@ class Corpus(object):
         #if isinstance(check, EmptyWord):
             #self.wordlist[word.spelling.lower()] = word
             self.wordlist[word.spelling] = word
-            self.orthography.update(word.spelling)
-            self.inventory.update({ seg.symbol : seg for seg in word.transcription})
+            if word.spelling is not None:
+                self.orthography.update(word.spelling)
+            if word.transcription is not None:
+                self.inventory.update({ seg.symbol : seg for seg in word.transcription})
             return
 
         if allow_duplicates:
@@ -799,7 +803,7 @@ class Corpus(object):
 
         old_specifier = self.specifier
         self.specifier = FeatureSpecifier(encoding=feature_system)
-        missing = [seg.symbol for seg in self.inventory if not seg.symbol in list(self.specifier.matrix.keys())]
+        missing = [seg.symbol for seg in self.get_inventory() if not seg.symbol in list(self.specifier.matrix.keys())]
 
         if not missing:#all(seg.symbol in self.specifier.matrix for seg in self.inventory):
         #check first if all the transcription symbol in the corpus actually
