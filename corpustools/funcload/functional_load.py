@@ -34,14 +34,14 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, d
         q = threaded_q
 
     if frequency_cutoff > 0:
-        corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
+        corpus = [word for word in corpus if word.get_frequency() >= frequency_cutoff]
 
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
 
-    corpus = [word for word in corpus if any([s in word for s in all_segments])]
+    corpus = [word for word in corpus if any([s in word.get_transcription() for s in all_segments])]
     scope = len(corpus)
 
-    trans_spell = [(tuple(word.transcription), word.spelling.lower()) for word in corpus]
+    trans_spell = [(tuple(word.get_transcription()), word.get_spelling().lower()) for word in corpus]
 
     neutralized = [(' '.join([neutralize_segment(seg, segment_pairs) for seg in word[0]]), word[1], word[0]) for word in list(trans_spell)]
 
@@ -88,20 +88,20 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
     """
 
     if frequency_cutoff > 0:
-        corpus = [word for word in corpus if word.freq_per_mil >= frequency_cutoff] # change to .frequency once that is fixed!
+        corpus = [word for word in corpus if word.get_frequency() >= frequency_cutoff] # change to .frequency once that is fixed!
 
     if type_or_token == 'type':
         freq_sum = len(corpus)
     elif type_or_token == 'token':
-        freq_sum = sum([word.freq_per_mil for word in corpus]) # change to .frequency once that is fixed!
+        freq_sum = sum([word.get_frequency() for word in corpus]) # change to .frequency once that is fixed!
 
     original_probs = defaultdict(float)
     if type_or_token == 'type':
         for word in corpus:
-            original_probs[' '.join([str(s) for s in word.transcription])] += 1/freq_sum
+            original_probs[' '.join([str(s) for s in word.get_transcription()])] += 1/freq_sum
     elif type_or_token == 'token':
         for word in corpus:
-            original_probs[' '.join([str(s) for s in word.transcription])] += word.freq_per_mil/freq_sum # change to .frequency once that is fixed!
+            original_probs[' '.join([str(s) for s in word.get_transcription()])] += word.get_frequency()/freq_sum # change to .frequency once that is fixed!
     preneutr_h = entropy([original_probs[item] for item in original_probs])
 
     neutralized_probs = defaultdict(float)

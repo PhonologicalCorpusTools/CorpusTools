@@ -78,34 +78,6 @@ class Relator(object):
             previous_row = current_row
      
         return previous_row[-1]
-    
-    
-    def phono_edit_distance(self, word1, word2, string_type, features_tf=False, features=None):
-        """Returns an analogue to Levenshtein edit distance but with the option of counting phonological features instead of characters
-        
-        Parameters:
-        w1: string
-            A string containing a transcription which will be compared to another string containing a transcription
-        w2: string
-            The other string containing a transcription to which w1 will be compared
-        features_tf: boolean
-            Set to True if edit_distance using phonological features is desired or False for only characters
-        features: phonological features
-            Features are the set feature specifications currently be used in the corpus (i.e. Hayes, SPE, etc.)
-        """
-        try:
-            w1 = getattr(word1, string_type)
-            w2 = getattr(word2, string_type)
-        except: #This occurred because word1 not a Word object and is likely a list containing a transcription
-            w1 = word1
-            w2 = word2
-        if features == None:
-            features = self.corpus.specifier.matrix
-        a = Aligner(features_tf=features_tf, features=features)
-        #try:
-        m = a.make_similarity_matrix(w1, w2)
-        return m[-1][-1]['f']     
-
 
     def mass_relate(self, query, string_type='spelling', count_what='type'):
         """Given an input Word, uses a corpus to calculate the relatedness of all other words in the corpus to that input Word
@@ -131,7 +103,7 @@ class Relator(object):
             #Skip over words that do not have exist in corpus
             if word is None:
                 continue
-            relatedness = [self.edit_distance(targ_word, word, string_type)]
+            relatedness = [self.edit_distance(str(targ_word), str(word), string_type)]
             relate.append( (relatedness, word) )
         #Sort the list by most morphologically related
         relate.sort(key=lambda t:t[0])

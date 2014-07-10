@@ -97,18 +97,18 @@ class SSFunction(FunctionWindow):
         type_button.invoke()
         token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.string_similarity_typetoken_var, value='token')
         token_button.grid(sticky=W)
-        if self.corpus.custom and not self.corpus.has_frequency():
+        if self.corpus.is_custom() and not self.corpus.has_frequency():
             token_button.configure(state=('disabled'))
         typetoken_frame.grid(column=0, row=0, sticky=W)
         stringtype_frame = LabelFrame(options_frame, text='String type')
         spelling_button = Radiobutton(stringtype_frame, text='Compare spelling', variable=self.string_similarity_stringtype_var, value='spelling')
         spelling_button.grid(sticky=W)
         spelling_button.invoke()
-        if self.corpus.custom and not self.corpus.has_spelling():
+        if self.corpus.is_custom() and not self.corpus.has_spelling():
             transcription_button.configure(state=('disabled'))
         transcription_button = Radiobutton(stringtype_frame, text='Compare transcription', variable=self.string_similarity_stringtype_var, value='transcription')
         transcription_button.grid(sticky=W)
-        if self.corpus.custom and not self.corpus.has_transcription():
+        if self.corpus.is_custom() and not self.corpus.has_transcription():
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=0, row=1, sticky=W)
         threshold_frame = LabelFrame(options_frame, text='Return only results with similarity between...')
@@ -126,7 +126,7 @@ class SSFunction(FunctionWindow):
         button_frame = Frame(self)
         ok_button = Button(button_frame, text='OK', command=self.calculate_string_similarity)
         ok_button.grid(row=0,column=0)
-        if self.corpus.custom and not self.corpus.has_spelling() and self.corpus.has_transcription():
+        if self.corpus.is_custom() and not self.corpus.has_spelling() and self.corpus.has_transcription():
             ok_button.state = DISABLED
         cancel_button = Button(button_frame, text='Cancel', command=self.cancel_string_similarity)
         cancel_button.grid(row=0, column=1)

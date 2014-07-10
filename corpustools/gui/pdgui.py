@@ -542,7 +542,7 @@ class PDFunction(FunctionWindow):
         if self.prod_results is None:
             self.create_prod_results()
         for result in results:
-            self.prod_results.update([self.corpus.name,self.entropy_tier_var.get()]+result)
+            self.prod_results.update([self.corpus.get_name(),self.entropy_tier_var.get()]+result)
 
     def cancel_prod(self):
         self.destroy_prod_results()

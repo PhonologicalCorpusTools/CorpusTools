@@ -200,12 +200,7 @@ class Relator(object):
         
         for word in self.corpus:
             if self.count_what == 'token':
-                if self.corpus.name.lower() == 'iphod':
-                    frequency = word.abs_freq
-                elif self.corpus.name.lower() == 'subtlex':
-                    frequency = word.freq_per_mil
-                else: #it's a custom corpus
-                    frequency = word.frequency
+                frequency = word.get_frequency()
 
             word = getattr(word, string_type)
             for letter in word:
