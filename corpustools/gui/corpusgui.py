@@ -134,7 +134,7 @@ class CorpusFromTextWindow(Toplevel):
         #both.grid()
         new_corpus_feature_frame = LabelFrame(self, text='Feature system to use (if transcription exists)')
 
-        available_systems = get_systems_list()
+        available_systems = ['']+get_systems_list()
         new_corpus_feature_system = OptionMenu(
             new_corpus_feature_frame,#parent
             self.new_corpus_feature_system_var,#variable
@@ -251,7 +251,7 @@ class CustomCorpusWindow(Toplevel):
         self.trans_delimiter_entry.delete(0,END)
         self.trans_delimiter_entry.insert(0,'.')
         self.trans_delimiter_entry.grid()
-        available_systems = get_systems_list()
+        available_systems = ['']+get_systems_list()
         new_corpus_feature_frame = LabelFrame(custom_corpus_load_frame, text='Feature system to use (if transcription exists)')
         new_corpus_feature_system = OptionMenu(new_corpus_feature_frame,#parent
             self.new_corpus_feature_system_var,#variable
@@ -392,7 +392,7 @@ class CorpusManager(object):
 
 
     def download_corpus(self):
-        download = DownloadWindow()
+        download = DownloadCorpusWindow()
         download.wait_window()
         self.get_available_corpora()
 
