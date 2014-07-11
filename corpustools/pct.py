@@ -13,7 +13,7 @@ def main():
     #    root.wm_iconbitmap(logo_path)
     #except:
     #    pass#if the file isn't found, don't bother
-    app = GUI(root,os.path.dirname(logo_path))
+    app = GUI(root)
     make_menus(root,app)
     root.bind_all('<Control-q>', app.quit)
     root.mainloop()
