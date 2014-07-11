@@ -150,8 +150,6 @@ class GUI(Toplevel):
                     missing.append('transcription')
                 if not self.corpus.has_frequency():
                     missing.append('token frequency')
-                if not self.corpus.has_feature_matrix():
-                    missing.append('feature system')
                 if self.show_warnings and missing:
                     missing = ','.join(missing)
                     MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
@@ -161,13 +159,18 @@ class GUI(Toplevel):
     def check_for_valid_feature_matrix(function):
         def do_check(self):
             corpus_inventory = self.corpus.get_inventory()
-            feature_inventory = self.corpus.get_feature_matrix().get_segments()
-            missing = []
-            for seg in corpus_inventory:
-                if seg not in feature_inventory:
-                    missing.append(str(seg))
-            if missing:
-                MessageBox.showerror(message='Some segments in the corpus inventory are not in the feature system.\nPlease go to Options->View/change feature system... to view missing segments and add them.')
+            if self.corpus.has_feature_matrix():
+                missing = []
+                feature_inventory = self.corpus.get_feature_matrix().get_segments()
+                for seg in corpus_inventory:
+                    if seg not in feature_inventory:
+                        missing.append(str(seg))
+                        
+                if missing:
+                    MessageBox.showerror(message='Some segments in the corpus inventory are not in the feature system.\nPlease go to Options->View/change feature system... to view missing segments and add them.')
+                    return
+            else:
+                MessageBox.showerror(message='Please load a feature system through the View/change feature system in the Options menu.')
                 return
             function(self)
         return do_check
@@ -408,7 +411,7 @@ class GUI(Toplevel):
         features = [feature for feature in self.selected_tier_features.get(0,END)]
         matches = list()
         for seg in self.corpus.get_inventory():
-            if all(feature in self.corpus.get_feature_matrix()[seg] for feature in features):
+            if all(feature in self.corpus.get_feature_matrix()[seg.symbol] for feature in features):
                 matches.append(seg)
 
         if not matches:
@@ -423,7 +426,7 @@ class GUI(Toplevel):
                 if x > 10:
                     x = 0
                     m.append('\n')
-            matches = ' '.join(m)
+            matches = ' '.join(map(str,m))
 
         preview_window = Toplevel()
         preview_window.title('Preview tier')
