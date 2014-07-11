@@ -65,9 +65,9 @@ class PreferencesWindow(Toplevel):
         corpus_path = os.path.join(directory,'CORPUS')
         if not os.path.exists(corpus_path):
             os.makedirs(corpus_path)
-        trans_path = os.path.join(directory,'TRANS')
-        if not os.path.exists(trans_path):
-            os.makedirs(trans_path)
+        feature_path = os.path.join(directory,'FEATURE')
+        if not os.path.exists(feature_path):
+            os.makedirs(feature_path)
         self.destroy()
 
     def cancel_config(self):

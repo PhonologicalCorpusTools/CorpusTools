@@ -12,12 +12,12 @@ def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
     words_with_overlapping_envs = defaultdict(list)
 
     for word in corpus:
-        word.set_string(tier_name) #this makes sure we loop over the right thing
-        for pos,seg in enumerate(word):
+        tier = getattr(word,tier_name)
+        for pos,seg in enumerate(tier):
             if not (seg == seg1 or seg == seg2):
                 continue
 
-            word_env = word.get_env(pos)
+            word_env = word.get_env(pos,tier_name)
             found_env_match = list()
             for user_env in user_supplied_envs:
                 key = '{}_{}'.format(user_env[0],user_env[1])

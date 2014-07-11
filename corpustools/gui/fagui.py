@@ -53,7 +53,7 @@ class FAFunction(FunctionWindow):
         type_button.invoke()
         token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.freq_alt_typetoken_var, value='token')
         token_button.grid(sticky=W)
-        if self.corpus.custom and not self.corpus.has_frequency():
+        if self.corpus.is_custom() and not self.corpus.has_frequency():
             token_button.configure(state=('disabled'))
         typetoken_frame.grid(column=0, row=0, sticky=W)
 
@@ -61,11 +61,11 @@ class FAFunction(FunctionWindow):
         spelling_button = Radiobutton(stringtype_frame, text='Compare spelling', variable=self.freq_alt_stringtype_var, value='spelling')
         spelling_button.grid(sticky=W)
         spelling_button.invoke()
-        if self.corpus.custom and not self.corpus.has_spelling():
+        if self.corpus.is_custom() and not self.corpus.has_spelling():
             transcription_button.configure(state=('disabled'))
         transcription_button = Radiobutton(stringtype_frame, text='Compare transcription', variable=self.freq_alt_stringtype_var, value='transcription')
         transcription_button.grid(sticky=W)
-        if self.corpus.custom and not self.corpus.has_transcription():
+        if self.corpus.is_custom() and not self.corpus.has_transcription():
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=0, row=1, sticky=W)
 
@@ -143,14 +143,14 @@ class FAFunction(FunctionWindow):
                         ('Distance metric', 10)]
             title = 'Frequency of alternation results'
 
-            freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
+            freqor = Freqor(self.corpus.get_name(), ready_made_corpus=self.corpus)
             results = freqor.calc_freq_of_alt(s1, s2, relator_type, string_type, count_what, phono_align=True,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok)
             self.results_table = ResultsWindow(title, header, delete_method=self.close_results_table)
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type])
 
         else:
-            freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
+            freqor = Freqor(self.corpus.get_name(), ready_made_corpus=self.corpus)
             results = freqor.calc_freq_of_alt(s1, s2, relator_type, string_type, count_what, phono_align=True,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok)
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type])

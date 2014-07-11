@@ -23,10 +23,9 @@ class Aligner(object):
         try:
             self.silence_features = self.features['empty']
         except (TypeError, KeyError):
-            rand_segment = random.choice(list(features.keys()))
             self.silence_features = {}
-            for feature in self.features[rand_segment]:
-                self.silence_features[feature.name] = '0'
+            for feature in self.features.get_feature_list():
+                self.silence_features[feature] = '0'
 
     def align(self, seq1=None, seq2=None):
         similarity_matrix = self.make_similarity_matrix(seq1, seq2)
@@ -112,12 +111,12 @@ class Aligner(object):
             if segment1 == 'empty':
                 fs2 = self.features[segment2symbol]
                 return (sum(check_feature_difference('0', 
-                            f.sign) for f in fs2) * self.ins_penalty)    # or should this be addition?
+                            f) for f in fs2) * self.ins_penalty)    # or should this be addition?
             elif segment2 == 'empty':
                 fs1 = self.features[segment1symbol]
                 # print(fs1)
                 # print(fs1[0])
-                return (sum(check_feature_difference(f.sign, 
+                return (sum(check_feature_difference(f, 
                         '0') for f in fs1) * 
                         self.del_penalty)    # or should this be addition?
             else:
@@ -130,7 +129,7 @@ class Aligner(object):
                 # for i in range(len(fs1)):
                 #     print(fs1[i])
                 #     print(fs2[i])
-                return (sum(check_feature_difference(fs1[i].sign, fs2[i].sign) for i in range(len(fs1))) * self.sub_penalty)    # or should this be addition?
+                return (sum(check_feature_difference(fs1[i], fs2[i]) for i in self.features.get_feature_list()) * self.sub_penalty)    # or should this be addition?
         else:
             if segment1 == 'empty':
                 return self.ins_penalty * underspec_cost
@@ -223,6 +222,6 @@ if __name__ == '__main__':
     import corpustools
     factory = corpustools.CorpusFactory()
     corpus = factory.make_corpus('IPhOD', features='hayes', size=20)
-    alr = Aligner(features=corpus.specifier.matrix)
+    alr = Aligner(features=corpus.get_feature_matrix())
     amt = alr.align('kənfɛs', 'kənfɛʃən')
     alr.morpho_related(amt, 's', 'ʃ')

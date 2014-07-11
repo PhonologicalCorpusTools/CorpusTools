@@ -8,16 +8,34 @@ import corpustools.symbolsim.phono_align_ex as phono_align_ex
 import corpustools.symbolsim.string_similarity as string_similarity
 
 class Freqor(object):
-    """Initializes the frequency of alternation analyzer
 
-    Parameters
-    ----------
-    object: list
-        contains parameters needed for the analyzer such as which algorithm to use for relating and which corpus to use
-    Returns
-    -------
-    None
-    """
+    def __init__(self,corpus_name, size = 'all', ready_made_corpus=None):
+        """Initialize a frequency of alternation analyzer by building a corpus or utilizing an already make corpus
+
+        Parameters
+        ----------
+        corpus_name: string
+            The corpus name, e.g. 'Iphod'
+        size: int
+            The size of the corpus
+        ready_made_corpus: Corpus
+            A corpus that has been built, if none provided, __init__ will build one
+
+        Returns
+        -------
+        None
+        """
+        if ready_made_corpus is not None:
+            self.corpus = ready_made_corpus
+        else:
+            print('Building Corpus')
+            start_time = time.time()
+            self.factory = CorpusFactory()
+            self.corpus = self.factory.make_corpus(corpus_name, features='hayes', size=size)
+            end_time = time.time()
+            print('Corpus Complete')
+            print('Corpus creation time: ' + str(end_time-start_time))
+            
     def calc_freq_of_alt(self, s1, s2, relator_type, string_type, count_what, output_filename = None,
                         min_rel = None, max_rel = None, phono_align = None, min_pairs_okay = None):
         """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
@@ -85,10 +103,11 @@ class Freqor(object):
 
         #Remove pairs that are not phonologically aligned
         if phono_align == 1:
-            al = phono_align_ex.Aligner(features=self.corpus.specifier.matrix)
+            al = phono_align_ex.Aligner(features=self.corpus.get_feature_matrix())
 
             if output_filename is None:#called from GUI
                 for w1, w2, score in related_list:
+                    print(w1,w2)
                     alignment = al.align(w1, w2)
                     #print(al.morpho_related(alignment, s1, s2))
                     if al.morpho_related(alignment, s1, s2):
@@ -151,33 +170,6 @@ class Freqor(object):
             else:
                 pass
         return [s1_list, s2_list]
-
-    def __init__(self,corpus_name, size = 'all', ready_made_corpus=None):
-        """Initialize a frequency of alternation analyzer by building a corpus or utilizing an already make corpus
-
-        Parameters
-        ----------
-        corpus_name: string
-            The corpus name, e.g. 'Iphod'
-        size: int
-            The size of the corpus
-        ready_made_corpus: Corpus
-            A corpus that has been built, if none provided, __init__ will build one
-
-        Returns
-        -------
-        None
-        """
-        if ready_made_corpus is not None:
-            self.corpus = ready_made_corpus
-        else:
-            print('Building Corpus')
-            start_time = time.time()
-            self.factory = CorpusFactory()
-            self.corpus = self.factory.make_corpus(corpus_name, features='hayes', size=size)
-            end_time = time.time()
-            print('Corpus Complete')
-            print('Corpus creation time: ' + str(end_time-start_time))
 
 
 if __name__ == '__main__':
