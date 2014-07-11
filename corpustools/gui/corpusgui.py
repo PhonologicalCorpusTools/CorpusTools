@@ -381,8 +381,23 @@ class CorpusManager(object):
                                     text='Create corpus from text file',
                                     command=self.create_corpus_from_text)
         create_from_text_button.grid()
+        remove_button = Button(button_frame,
+                                    text='Remove selected corpus',
+                                    command=self.remove_corpus)
+        remove_button.grid()
         button_frame.grid(row=0,column=1)
 
+    def remove_corpus(self):
+        try:
+            corpus_name = self.available_corpora.get(self.available_corpora.curselection())
+            carry_on = MessageBox.askyesno(message=(
+                'This will irreversibly delete the {} corpus.  Are you sure?'.format(corpus_name)))
+            if not carry_on:
+                return
+            os.remove(os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
+            self.get_available_corpora()
+        except TclError:
+            pass
 
     def load_corpus(self):
         try:
@@ -492,10 +507,14 @@ class FeatureSystemManager(object):
                                     text='Create feature system from text file',
                                     command=self.create_from_text)
         create_from_text_button.grid()
+        remove_button = Button(button_frame,
+                                    text='Remove selected feature system',
+                                    command=self.remove_system)
+        remove_button.grid()
         done_button = Button(button_frame,
                                     text='Done',
                                     command=self.top.destroy)
-        create_from_text_button.grid()
+        done_button.grid()
         button_frame.grid(row=0,column=1)
 
     def get_available_systems(self):
@@ -504,6 +523,18 @@ class FeatureSystemManager(object):
         for t in systems:
             self.available_systems.insert(END,t)
 
+    def remove_system(self):
+        try:
+            name = self.available_systems.get(self.available_systems.curselection())
+            carry_on = MessageBox.askyesno(message=(
+                'This will irreversibly delete the {} feature system.  Are you sure?'.format(name)))
+            if not carry_on:
+                return
+            os.remove(os.path.join(config['storage']['directory'],'FEATURE',name+'.feature'))
+            self.get_available_systems()
+        except TclError:
+            pass
+            
     def download(self):
         download = DownloadFeatureMatrixWindow()
         download.wait_window()
@@ -582,6 +613,9 @@ class CustomFeatureMatrixWindow(Toplevel):
             
             #delimiter is incorrect
             MessageBox.showerror(message='Could not parse the file.\nCheck that the delimiter you typed in matches the one used in the file.')
+            return
+        except KeyError:
+            MessageBox.showerror(message='Could not find a \'symbol\' column.  Please make sure that the segment symbols are in a column named \'symbol\'.')
             return
         save_binary(system,os.path.join(config['storage']['directory'],'FEATURE',name+'.feature'))
         self.destroy()
