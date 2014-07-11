@@ -9,6 +9,7 @@ import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
 
 import queue
+from math import log
 
 import corpustools.prod.pred_of_dist as PD
 
@@ -180,7 +181,7 @@ class PDFunction(FunctionWindow):
         seg2 = self.seg2_var.get()
 
         if not (seg1 and seg2):
-            MessageBox.showerror(message='Please ensure you have selected 2 segments and chosen a output file name')
+            MessageBox.showerror(message='Please ensure you have selected 2 segments')
             return
 
         self.remove_frames()
@@ -286,33 +287,12 @@ class PDFunction(FunctionWindow):
         rhs_feature_frame.grid(row=0, column=0, sticky=N)
         rhs_seg_frame.grid(row=0, column=1, sticky=N)
         rhs_frame.grid(row=1, column=0, padx=3)
+        add_env_to_list = Button(self.env_frame, text='Add this environment to list', command=self.confirm_environments)
+        add_env_to_list.grid()#row=0, column=0)
         self.env_frame.grid(row=0, column=0)
 
-
-        #BUTTON FRAME STARTS HERE
-        self.button_frame = Frame(self)
-
-        left_frame = Frame(self.button_frame)
-        add_env_to_list = Button(left_frame, text='Add this environment to list', command=self.confirm_environments)
-        add_env_to_list.grid(row=0, column=0)
-        confirm_envs = Button(left_frame, text='Calculate entropy in selected environments and add to results table', command=self.calculate_prod)
-        confirm_envs.grid(row=0, column=1)
-        self.start_new_envs = Button(left_frame, text='Destroy results table', command=self.destroy_prod_results)
-        self.start_new_envs.grid(row=0, column=2)
-        self.start_new_envs.config(state=DISABLED)
-        left_frame.pack(side=LEFT, expand=True)#grid(row=0, column=0, sticky=W)
-
-        right_frame = Frame(self.button_frame)
-        previous_step = Button(right_frame, text='Previous step', command=self.show_segment_screen)
-        previous_step.grid(row=0, column=0, sticky=E)
-        cancel_button = Button(right_frame, text='Cancel', command=self.destroy)
-        cancel_button.grid(row=0, column=1, sticky=E)
-        right_frame.pack(side=RIGHT, expand=True)#(row=0, column=10, sticky=E)
-
-        self.button_frame.grid(row=1,column=0)
-
+        #SELECTED ENVIRONMENTS FRAME
         self.selected_envs_frame = Frame(self)
-        self.selected_envs_frame.grid(row=0, column=1)
         selected_envs_label = Label(self.selected_envs_frame, text='Environments created so far:')
         selected_envs_label.grid()
         self.selected_envs_list = Listbox(self.selected_envs_frame)
@@ -322,6 +302,53 @@ class PDFunction(FunctionWindow):
         remove_env_button.grid()
         clear_envs = Button(self.selected_envs_frame, text='Remove all environments', command=lambda x=0:self.selected_envs_list.delete(x,END))
         clear_envs.grid()
+        self.selected_envs_frame.grid(row=0, column=1)
+
+        #BUTTON FRAME STARTS HERE
+        self.button_frame = Frame(self)
+
+        confirm_envs = Button(self.button_frame, text='Calculate entropy in selected environments and add to results table', command=self.calculate_prod)
+        confirm_envs.grid(sticky=W)
+        context_free = Button(self.button_frame, text='Calculate entropy across ALL environments and add to results table', command=self.calculate_prod_all_envs)
+        context_free.grid(sticky=W)
+        self.start_new_envs = Button(self.button_frame, text='Destroy results table', command=self.destroy_prod_results)
+        self.start_new_envs.grid(sticky=W)
+        self.start_new_envs.config(state=DISABLED)
+
+        previous_step = Button(self.button_frame, text='Previous step', command=self.show_segment_screen)
+        previous_step.grid(sticky=W)
+        cancel_button = Button(self.button_frame, text='Cancel', command=self.destroy)
+        cancel_button.grid(sticky=W)
+
+        self.button_frame.grid(row=0,column=2)
+
+
+
+    def calculate_prod_all_envs(self):
+        if self.selected_envs_list.size() > 0:
+            carry_on = MessageBox.askokcancel(message=('You have already selected some environments.\n'
+                                        ' Click \'OK\' to do a calculation of entorpy across ALL environments.\n'
+                                        ' Click \'Cancel\' to go back and use your specific environments.\n'))
+            if not carry_on:
+                return
+
+        seg1 = self.seg1_var.get()
+        seg2 = self.seg2_var.get()
+        type_or_token = self.entropy_typetoken_var.get()
+        seg1_count, seg2_count = PD.count_segs(self.corpus, seg1, seg2, type_or_token, self.entropy_tier_var.get())
+        H = PD.calc_prod_all_envs(seg1_count, seg2_count)
+        results = [[
+            self.corpus.name,
+            self.entropy_tier_var.get(),
+            seg1,
+            seg2,
+            'FREQ-ONLY',
+            str(seg1_count),
+            str(seg2_count),
+            str(seg1_count+seg2_count),
+            str(H)]]
+        self.update_prod_results(results)
+
 
     def remove_entropy_env(self):
         env = self.selected_envs_list.curselection()
@@ -497,12 +524,7 @@ class PDFunction(FunctionWindow):
         #at this point there are either no problems
         #or else the user wants to see the results anyway
 
-
-
-        #this is created and all the results are placed into it, but it is not
-        #gridded until the corpus as passed both the uniqueness and exhausitivity
-        #checks and/or the user has agreed it is OK if it doesn't pass the checks
-        results = PD.calc_prod(seg1, seg2, env_matches)
+        results = PD.calc_prod(self.corpus.name, self.entropy_tier_var.get(), seg1, seg2, env_matches)
         self.update_prod_results(results)
 
     def suggest_entropy_filename(self):
@@ -536,13 +558,13 @@ class PDFunction(FunctionWindow):
                 ('Total count',10),
                 ('Entropy',10)]
         title = 'Predictability of distribution results'
-        self.prod_results = ResultsWindow(title,header)
+        self.prod_results = ResultsWindow(title,header,delete_method=self.destroy_prod_results)
 
     def update_prod_results(self, results):
         if self.prod_results is None:
             self.create_prod_results()
         for result in results:
-            self.prod_results.update([self.corpus.name,self.entropy_tier_var.get()]+result)
+            self.prod_results.update(result)
 
     def cancel_prod(self):
         self.destroy_prod_results()
@@ -551,5 +573,6 @@ class PDFunction(FunctionWindow):
     def destroy_prod_results(self):
         try:
             self.prod_results.destroy()
+            self.prod_results = None
         except (TclError, AttributeError):#widgets don't exist anyway
             pass

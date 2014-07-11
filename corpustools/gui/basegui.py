@@ -59,7 +59,7 @@ class PreferencesWindow(Toplevel):
     def save_config(self):
         directory = self.storage_directory.get()
         config['storage']['directory'] = directory
-            
+
         with open(CONFIG_PATH,'w') as configfile:
             config.write(configfile)
         corpus_path = os.path.join(directory,'CORPUS')

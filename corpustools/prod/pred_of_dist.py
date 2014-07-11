@@ -2,12 +2,27 @@ from collections import defaultdict
 from math import log
 
 
+def count_segs(corpus, seg1, seg2, type_or_token, tier_name):
+    seg1_counts = 0
+    seg2_counts = 0
+
+    for word in corpus:
+        word = getattr(word, tier_name)
+        for seg in word:
+            if seg == seg1:
+                seg1_counts = seg1_counts+1 if type_or_token == 'type' else seg1_counts+word.abs_freq
+            elif seg == seg2:
+                seg2_counts = seg2_counts+1 if type_or_token == 'type' else seg2_counts+word.abs_freq
+
+    return seg1_counts, seg2_counts
+
+
 def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
 
     count_what = type_or_token
     user_supplied_envs = [formalize_env(env) for env in user_supplied_envs]
     env_matches = {'{}_{}'.format(user_env[0],user_env[1]):{seg1:[0], seg2:[0]} for user_env in user_supplied_envs}
-    
+
     words_with_missing_envs = defaultdict(list)
     words_with_overlapping_envs = defaultdict(list)
 
@@ -16,6 +31,23 @@ def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
         for pos,seg in enumerate(word):
             if not (seg == seg1 or seg == seg2):
                 continue
+
+            if (seg == seg1) and (user_supplied_envs is None):
+                if count_what == 'type':
+                    value = 1
+                elif count_what == 'token':
+                    value = word.abs_freq
+                env_matches[seg1].append(value)
+                continue
+
+            if (seg == seg2) and (user_supplied_envs is None):
+                if count_what == 'type':
+                    value = 1
+                elif count_what == 'token':
+                    value = word.abs_freq
+                env_matches[seg2].append(value)
+                continue
+
 
             word_env = word.get_env(pos)
             found_env_match = list()
@@ -97,7 +129,7 @@ def match_to_env(word_env,user_env):
         return True
     else:
         return False
-        
+
 def formalize_env(env):
 
     #there's a problem where some feature names have underscores in them
@@ -142,14 +174,26 @@ def formalize_env(env):
     #env = corpustools.Environment(lhs, rhs)
     return (lhs,rhs)
 
-def calc_prod(seg1, seg2, env_matches):
+def calc_prod_all_envs(seg1_count, seg2_count):
+    total_count = seg1_count + seg2_count
+    if total_count:
+        H = -1 * ((seg1_count/total_count) * log(seg1_count/total_count) + (seg2_count/total_count) * log(seg2_count/total_count))
+    else:
+        H = 0.0
+    return H
+
+
+def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches):
     results = []
     H_dict = dict()
+
     for env in env_matches:
         total_tokens = sum(env_matches[env][seg1]) + sum(env_matches[env][seg2])
         if not total_tokens:
             H_dict[env] = (0,0)
-            data = [seg1,
+            data = [corpus_name,
+                    tier_name,
+                    seg1,
                     seg2,
                     env,
                     str(sum(env_matches[env][seg1])),
@@ -166,7 +210,9 @@ def calc_prod(seg1, seg2, env_matches):
             if not H:
                 H = H+0
             H_dict[env] = (H, total_tokens)
-            data = [seg1,
+            data = [corpus_name,
+                    tier_name,
+                    seg1,
                     seg2,
                     env,
                     str(sum(env_matches[env][seg1])),
@@ -181,7 +227,9 @@ def calc_prod(seg1, seg2, env_matches):
     weighted_H = sum(H_dict[env] for env in H_dict)
     total_seg1_matches = sum([sum(env_matches[env][seg1]) for env in env_matches])
     total_seg2_matches = sum([sum(env_matches[env][seg2]) for env in env_matches])
-    data = [seg1,
+    data = [corpus_name,
+            tier_name,
+            seg1,
             seg2,
             'AVG',
             str(total_seg1_matches),

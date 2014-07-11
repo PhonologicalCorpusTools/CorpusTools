@@ -158,6 +158,6 @@ class FAFunction(FunctionWindow):
     def close_results_table(self):
         try:
             self.results_table.destroy()
-        except TclError:
+        except (TclError, AttributeError):
             pass#doesn't exist to be destroyed
         self.update_fa_button.config(state=DISABLED)
