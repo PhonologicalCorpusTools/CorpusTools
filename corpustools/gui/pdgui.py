@@ -124,9 +124,11 @@ class PDFunction(FunctionWindow):
         tier_options = ['transcription']
         word = self.corpus.random_word()
         tier_options.extend([tier for tier in word.tiers])
-        tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,'transcription',*tier_options)
+        tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,*tier_options)
         tier_options_menu.grid()
         tier_frame.grid(row=0,column=0)
+        
+        self.entropy_tier_var.set(tier_options[0])
 
         typetoken_frame = LabelFrame(self.option_frame, text='Type or Token')
         typetoken_tooltip = ToolTip(typetoken_frame, follow_mouse=True,

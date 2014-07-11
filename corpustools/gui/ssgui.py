@@ -111,7 +111,7 @@ class SSFunction(FunctionWindow):
         if self.corpus.custom and not self.corpus.has_transcription():
             transcription_button.configure(state=('disabled'))
         stringtype_frame.grid(column=0, row=1, sticky=W)
-        threshold_frame = LabelFrame(options_frame, text='Return only results with similarity between...')
+        threshold_frame = LabelFrame(options_frame, text='Return only results between...')
         min_label = Label(threshold_frame, text='Minimum: ')
         min_label.grid(row=0, column=0)
         min_rel_entry = Entry(threshold_frame, textvariable=self.string_similarity_min_rel_var)
@@ -147,51 +147,6 @@ class SSFunction(FunctionWindow):
                 ' but is more accurately described as simply a measure of string similarity.'),
                 ['Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.'],
                 ['Micheal Fry'])
-
-
-    def print_string_similarity_results(self, results):
-
-        if self.string_similarity_comparison_type_var.get() == 'one':
-            suggestion = self.string_similarity_query_var.get()
-            if suggestion:
-                suggestion = 'string_similarity_{}.txt'.format(suggestion)
-            else:
-                suggestion = ''
-
-        elif self.string_similarity_comparison_type_var.get() == 'pairs':
-            suggestion = self.string_similarity_pairs_var.get()
-            if suggestion:
-                suggestion = os.path.split(suggestion)[-1]
-                suggestion = os.path.splitext(suggestion)[0]
-                suggestion = 'string_similarity_pairs_{}.txt'.format(suggestion)
-            else:
-                suggestion = ''
-
-        elif self.string_similarity_comparison_type_var.get() == 'one_pair':
-            word1 = self.string_similarity_one_pair1_var.get()
-            word2 = self.string_similarity_one_pair2_var.get()
-            if (word1 and word2):
-                suggestion = 'string_similarity_{}_{}.txt'.format(word1, word2)
-            else:
-                suggestion = ''
-
-        filename = FileDialog.asksaveasfilename(initialfile=suggestion)
-        if not filename:
-            return
-
-        self.string_similarity_filename_var.set(filename)
-
-        if self.string_similarity_comparison_type_var.get() == 'one':
-            threshold = self.string_similarity_threshold_var.get()
-            if threshold:
-                threshold = int(threshold)
-            else:
-                threshold = None
-            SS.print_one_word_results(filename,
-                                                self.string_similarity_query_var.get(),
-                                                results, threshold)
-        else:
-            SS.print_pairs_results(filename, results)
 
     def calculate_string_similarity(self):
 
@@ -237,14 +192,14 @@ class SSFunction(FunctionWindow):
             try:
                 self.corpus.find(query1,keyerror=True)
             except KeyError:
-                message = 'The word \"{}\" is not in the corpus'.format(query)
+                message = 'The word \"{}\" is not in the corpus'.format(query1)
                 MessageBox.showerror(message=message)
                 return
 
             try:
                 self.corpus.find(query2,keyerror=True)
             except KeyError:
-                message = 'The word \"{}\" is not in the corpus'.format(query)
+                message = 'The word \"{}\" is not in the corpus'.format(query2)
                 MessageBox.showerror(message=message)
                 return
 
@@ -268,7 +223,7 @@ class SSFunction(FunctionWindow):
 
         header = [('Word 1',20),
                     ('Word 2', 20),
-                    ('Similarity', 10),
+                    ('Result', 10),
                     ('Type or token', 10),
                     ('Algorithm type', 10)]
         title = 'String similarity results'
@@ -293,6 +248,8 @@ class SSFunction(FunctionWindow):
 
         for result in results:
             w1, w2, similarity = result
+            if relator_type != 'khorsi':
+                typetoken = 'N/A'
             self.ss_results.update([w1, w2, similarity, typetoken, relator_type])
 
 

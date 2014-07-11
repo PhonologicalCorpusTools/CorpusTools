@@ -105,8 +105,8 @@ class ResultsWindow(Toplevel):
 
         self.as_results_table = MultiListbox(self,headerline)
         self.as_results_table.grid()
-
-        self.delete_results = delete_method
+        if delete_method is not None:
+            self.delete_results = delete_method
         self.protocol('WM_DELETE_WINDOW', self.delete_results)
 
         button_frame = Frame(self)
@@ -118,7 +118,7 @@ class ResultsWindow(Toplevel):
 
 
     def delete_results(self):
-        pass #see self.__init__()
+        self.destroy()
 
     def save_results(self):
         filename = FileDialog.asksaveasfilename()
