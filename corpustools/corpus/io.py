@@ -201,6 +201,8 @@ def load_corpus_text(corpus_name,path, delimiter, ignore_list,trans_delimiter='.
                 continue
             #print(line)
             line = line.split(delimiter)
+            if len(line) == 1:
+                raise(DelimiterError)
             for word in line:
                 word = word.strip()
                 
@@ -262,6 +264,10 @@ def load_feature_matrix_csv(name,path,delimiter):
         reader = DictReader(f,delimiter=delimiter)
         for line in reader:
             if line:
+                if len(line.keys()) == 1:
+                    raise(DelimiterError)
+                if 'symbol' not in line:
+                    raise(KeyError)
                 text_input.append(line)
             
     feature_matrix = FeatureMatrix(name,text_input)
