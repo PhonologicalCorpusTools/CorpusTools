@@ -411,7 +411,7 @@ class GUI(Toplevel):
         features = [feature for feature in self.selected_tier_features.get(0,END)]
         matches = list()
         for seg in self.corpus.get_inventory():
-            if all(feature in self.corpus.get_feature_matrix()[seg] for feature in features):
+            if all(feature in self.corpus.get_feature_matrix()[seg.symbol] for feature in features):
                 matches.append(seg)
 
         if not matches:
@@ -426,7 +426,7 @@ class GUI(Toplevel):
                 if x > 10:
                     x = 0
                     m.append('\n')
-            matches = ' '.join(m)
+            matches = ' '.join(map(str,m))
 
         preview_window = Toplevel()
         preview_window.title('Preview tier')
