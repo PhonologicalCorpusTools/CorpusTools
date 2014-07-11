@@ -725,6 +725,8 @@ class Corpus(object):
         
     def set_feature_matrix(self,matrix):
         self.specifier = matrix
+        for word in self:
+            word._specify_features(self.specifier)
         
     def has_feature_matrix(self):
         return self.specifier is not None
