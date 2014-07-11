@@ -6,9 +6,24 @@ from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
 from urllib.request import urlretrieve
 
 class DelimiterError(Exception):
+    """
+    Exception for having wrong delimiter for text file
+    """
     pass
 
 def download_binary(name,path):
+    """
+    Download a binary file
+    
+    Attributes
+    ----------
+    name : str
+        Identifier of file to download
+        
+    path : str
+        Full path for where to save downloaded file
+    
+    """
     if name == 'example':
         download_link = 'https://www.dropbox.com/s/a0uar9h8wtem8cf/example.corpus?dl=1'
     elif name == 'iphod':
@@ -20,15 +35,72 @@ def download_binary(name,path):
     filename,headers = urlretrieve(download_link,path)
 
 def load_binary(path):
+    """
+    Unpickle a binary file
+    
+    Attributes
+    ----------
+    path : str
+        Full path of binary file to load
+        
+    Returns
+    -------
+    Object
+        Object generated from the text file
+    """
     with open(path,'rb') as f:
         obj = pickle.load(f)
     return obj
     
 def save_binary(obj,path):
+    """
+    Pickle a Corpus or FeatureMatrix object for later loading
+    
+    Attributes
+    ----------
+    obj : Corpus or FeatureMatrix
+        Object to save
+    
+    path : str
+        Full path for where to save object
+    
+    """
     with open(path,'wb') as f:
         pickle.dump(obj,f)
     
 def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_system_path = ''):
+    """
+    Load a corpus from a column-delimited text file
+    
+    Attributes
+    ----------
+    corpus_name : str
+        Informative identifier to refer to corpus
+        
+    path : str
+        Full path to text file
+        
+    delimiter : str
+        Character to use for spliting lines into columns
+        
+    trans_delimiter : str
+        Character to use for splitting transcriptions into a list
+        of segments. If it equals '', each character in the transcription
+        is interpreted as a segment.  Defaults to '.'
+    
+    feature_system_path : str
+        Full path to pickled FeatureMatrix to use with the Corpus
+        
+    Returns
+    -------
+    Corpus
+        Corpus object generated from the text file
+        
+    dictionary
+        Dictionary with segments not in the FeatureMatrix (if specified)
+        as keys and a list of words containing those segments as values
+        
+    """
     corpus = Corpus(corpus_name)
     corpus.custom = True
     if feature_system_path:
@@ -75,7 +147,48 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
     
     return corpus,transcription_errors
 
-def load_corpus_text(path,corpus_name, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling'):
+def load_corpus_text(corpus_name,path, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling'):
+    """
+    Load a corpus from a text file containing running text either in
+    orthography or transcription
+    
+    Attributes
+    ----------
+    corpus_name : str
+        Informative identifier to refer to corpus
+        
+    path : str
+        Full path to text file
+        
+    delimiter : str
+        Character to use for spliting text into words
+        
+    ignore_list : list of strings
+        List of characters to ignore when parsing the text
+        
+    trans_delimiter : str
+        Character to use for splitting transcriptions into a list
+        of segments. If it equals '', each character in the transcription
+        is interpreted as a segment.  Defaults to '.'
+    
+    feature_system_path : str
+        Full path to pickled FeatureMatrix to use with the Corpus
+        
+    string_type : str
+        Specifies whether text files contains spellings or transcriptions.
+        Defaults to 'spelling'
+        
+        
+    Returns
+    -------
+    Corpus
+        Corpus object generated from the text file
+        
+    dictionary
+        Dictionary with segments not in the FeatureMatrix (if specified)
+        as keys and a list of words containing those segments as values
+    
+    """
     word_count = collections.defaultdict(int)
     corpus = Corpus(corpus_name)
     corpus.custom = True
@@ -123,10 +236,30 @@ def load_corpus_text(path,corpus_name, delimiter, ignore_list,trans_delimiter='.
         corpus.add_word(word)
     return corpus,transcription_errors
 
-def load_feature_matrix_csv(name,path,sep):
+def load_feature_matrix_csv(name,path,delimiter):
+    """
+    Load a FeatureMatrix from a column-delimited text file
+    
+    Attributes
+    ----------
+    name : str
+        Informative identifier to refer to feature system
+        
+    path : str
+        Full path to text file
+        
+    delimiter : str
+        Character to use for spliting lines into columns
+        
+    Returns
+    -------
+    FeatureMatrix
+        FeatureMatrix generated from the text file
+    
+    """
     text_input = []
     with open(path, encoding='utf-8-sig', mode='r') as f:
-        reader = DictReader(f,delimiter=sep)
+        reader = DictReader(f,delimiter=delimiter)
         for line in reader:
             if line:
                 text_input.append(line)
@@ -134,25 +267,81 @@ def load_feature_matrix_csv(name,path,sep):
     feature_matrix = FeatureMatrix(name,text_input)
     return feature_matrix
 
-def make_safe(value):
+def make_safe(value, delimiter):
+    """
+    Recursively parse transcription lists into strings for saving
+    
+    Attributes
+    ----------
+    value : object
+        Object to make into string
+        
+    delimiter : str
+        Character to mark boundaries between list elements
+        
+    Returns
+    -------
+    str
+        Safe string
+    
+    """
     if isinstance(value,list):
-        return '.'.join(map(make_safe,value))
+        return delimiter.join(map(make_safe,value))
     return str(value)
     
-def export_corpus_csv(corpus,path):
+def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.'):
+    """
+    Save a corpus as a column-delimited text file
+    
+    Attributes
+    ----------
+    corpus : Corpus
+        Corpus to save to text file
+        
+    path : str
+        Full path to write text file
+        
+    delimiter : str
+        Character to mark boundaries between columns.  Defaults to ','
+        
+    trans_delimiter : str
+        Character to mark boundaries in transcriptions.  Defaults to '.'
+    
+    """
     word = corpus.random_word()
     header = sorted(word.descriptors)
     with open(path, encoding='utf-8', mode='w') as f:
-        print(','.join(header), file=f)
+        print(delimiter.join(header), file=f)
         for key in corpus.iter_sort():
-            print(','.join(make_safe(getattr(key, value)) for value in header), file=f)
+            print(delimiter.join(make_safe(getattr(key, value),trans_delimiter) for value in header), file=f)
     
-def export_feature_matrix_csv(feature_matrix,path):
+def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
+    """
+    Save a FeatureMatrix as a column-delimited text file
+    
+    Attributes
+    ----------
+    feature_matrix : FeatureMatrix
+        FeatureMatrix to save to text file
+        
+    path : str
+        Full path to write text file
+        
+    delimiter : str
+        Character to mark boundaries between columns.  Defaults to ','
+    
+    """
     with open(path, encoding='utf-8', mode='w') as f:
         header = ['symbol'] + feature_matrix.get_feature_list()
-        writer = DictWriter(f, header,delimiter=',')
+        writer = DictWriter(f, header,delimiter=delimiter)
         writer.writerow({h: h for h in header})
-        for seg in feature_matrix:
-            outdict = feature_matrix[seg]
-            outdict['symbol'] = seg
+        for seg in feature_matrix.get_segments():
+            #If FeatureMatrix uses dictionaries
+            #outdict = feature_matrix[seg]
+            #outdict['symbol'] = seg
+            #writer.writerow(outdict)
+            if seg in ['#','']: #wtf
+                continue
+            featline = feature_matrix.seg_to_feat_line(seg)
+            outdict = {header[i]: featline[i] for i in range(len(header))}
             writer.writerow(outdict)

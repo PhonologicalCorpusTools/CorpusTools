@@ -44,11 +44,11 @@ setup(name='corpustools',
                 'corpustools.prod',
                 'corpustools.gui',
                 'corpustools.symbolsim'],
-      install_requires=[
-          'pillow',
+      #install_requires=[
+      #    'pillow',
           #'numpy',
           #'scipy'
-      ],
+      #],
       entry_points = {
         'console_scripts': ['pct=corpustools.pct:main'],
     },

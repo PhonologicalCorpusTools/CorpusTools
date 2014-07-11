@@ -40,12 +40,12 @@ from corpustools.gui.corpusgui import (CorpusManager, FeatureSystemManager,
                                     EditFeatureSystemWindow, save_binary,
                                     export_corpus_csv,export_feature_matrix_csv)
 
-try:
-    from PIL import Image as PIL_Image
-    from PIL import ImageTk as PIL_ImageTk
-    use_logo = True
-except ImportError:
-    use_logo = False
+#try:
+#    from PIL import Image as PIL_Image
+#    from PIL import ImageTk as PIL_ImageTk
+#    use_logo = True
+#except ImportError:
+#    use_logo = False
 
 
 
@@ -101,17 +101,17 @@ class GUI(Toplevel):
         self.corpus_frame.grid()
 
         #Splash image at start-up
-        try:
-            self.splash_image_path = os.path.join(base_path,'logo.jpg')
-            self.splash_canvas = Canvas(self.corpus_frame)
-            self.splash_canvas['width'] = '323'
-            self.splash_canvas['height'] = '362'
-            image = PIL_Image.open(self.splash_image_path)
-            self.splash_image = PIL_ImageTk.PhotoImage(image,master=self.splash_canvas)
-            self.splash_canvas.create_image(0,0,anchor=NW,image=self.splash_image)
-            self.splash_canvas.grid()
-        except:
-            pass#if the image file is not found, then don't bother
+        #try:
+        #    self.splash_image_path = os.path.join(base_path,'logo.jpg')
+        #    self.splash_canvas = Canvas(self.corpus_frame)
+        #    self.splash_canvas['width'] = '323'
+        #    self.splash_canvas['height'] = '362'
+        #    image = PIL_Image.open(self.splash_image_path)
+        #    self.splash_image = PIL_ImageTk.PhotoImage(image,master=self.splash_canvas)
+        #    self.splash_canvas.create_image(0,0,anchor=NW,image=self.splash_image)
+        #    self.splash_canvas.grid()
+        #except:
+        #    pass#if the image file is not found, then don't bother
 
     def load_corpus(self):
         corpusload = CorpusManager()

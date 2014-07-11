@@ -29,6 +29,9 @@ def get_systems_list():
     return systems
 
 class DownloadCorpusWindow(Toplevel):
+    """
+    Window for downloading corpora
+    """
     def __init__(self,master=None, **options):
         super(DownloadCorpusWindow, self).__init__(master=master, **options)
         self.corpus_button_var = StringVar()
@@ -81,6 +84,9 @@ class DownloadCorpusWindow(Toplevel):
         self.destroy()
 
 class CorpusFromTextWindow(Toplevel):
+    """
+    Window for generating a corpus from a file of running text
+    """
     def __init__(self,master=None, **options):
         super(CorpusFromTextWindow, self).__init__(master=master, **options)
         #Corpus from text variables
@@ -200,7 +206,7 @@ class CorpusFromTextWindow(Toplevel):
                                                 'FEATURE',
                                                 feature_system+'.feature')
 
-        corpus,transcription_errors = load_corpus_text(source_path,corpus_name,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
+        corpus,transcription_errors = load_corpus_text(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
         self.finalize_corpus(corpus,transcription_errors)
         save_binary(corpus, os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
         
@@ -223,6 +229,9 @@ class CorpusFromTextWindow(Toplevel):
             self.corpus.get_feature_matrix().validate()
 
 class CustomCorpusWindow(Toplevel):
+    """
+    Window for parsing a column-delimited text file into a Corpus
+    """
     def __init__(self,master=None, **options):
         super(CustomCorpusWindow, self).__init__(master=master, **options)
         self.new_corpus_feature_system_var = StringVar()
@@ -319,8 +328,7 @@ class CustomCorpusWindow(Toplevel):
         except DelimiterError:
             
             #delimiter is incorrect
-            MessageBox.showerror(message='Could not parse the corpus.\n\
-Check that the delimiter you typed in matches the one used in the file.')
+            MessageBox.showerror(message='Could not parse the corpus.\n\Check that the delimiter you typed in matches the one used in the file.')
             return
         self.finalize_corpus(corpus,errors)
         save_binary(corpus,os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
@@ -344,6 +352,9 @@ Check that the delimiter you typed in matches the one used in the file.')
 
 
 class CorpusManager(object):
+    """
+    Main window for dealing with corpora
+    """
     def __init__(self,master=None, **options):
         self.top = Toplevel()
         self.top.title('Load corpus')
@@ -407,6 +418,9 @@ class CorpusManager(object):
         self.get_available_corpora()
 
 class DownloadFeatureMatrixWindow(Toplevel):
+    """
+    Window for downloading FeatureMatrix binaries
+    """
     def __init__(self,master=None, **options):
         super(DownloadFeatureMatrixWindow, self).__init__(master=master, **options)
         self.system_button_var = StringVar()
@@ -457,6 +471,9 @@ class DownloadFeatureMatrixWindow(Toplevel):
         self.destroy()
 
 class FeatureSystemManager(object):
+    """
+    Main window for dealing with feature systems
+    """
     def __init__(self):
         self.top = Toplevel()
         self.top.title('Manage feature systems')
@@ -498,6 +515,9 @@ class FeatureSystemManager(object):
         self.get_available_systems()
 
 class CustomFeatureMatrixWindow(Toplevel):
+    """
+    Window for parsing column-delimited feature matrix
+    """
     def __init__(self,master=None, **options):
         super(CustomFeatureMatrixWindow, self).__init__(master=master, **options)
         self.title('Import feature system')
@@ -567,6 +587,9 @@ class CustomFeatureMatrixWindow(Toplevel):
         self.destroy()
 
 class EditSegmentWindow(object):
+    """
+    Window for editing or adding a segment to a feature system 
+    """
     def __init__(self,feature_list,possible_values, initial_data = None):
         self.top = Toplevel()
         self.top.title('Add a segment')
@@ -617,6 +640,9 @@ class EditSegmentWindow(object):
         self.top.destroy()
         
 class AddFeatureWindow(object):
+    """
+    Window for adding a new feature to a feature system
+    """
     def __init__(self,feature_list):
         self.top = Toplevel()
         self.top.title('Add a feature')
@@ -648,6 +674,9 @@ class AddFeatureWindow(object):
 
 
 class EditFeatureSystemWindow(object):
+    """
+    Window for editing and changing the feature system used by a corpus
+    """
     def __init__(self,corpus):
         self.change = False
         self.feature_system_option_menu_var = StringVar()
