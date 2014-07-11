@@ -70,13 +70,12 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
                         word._specify_features(corpus.get_feature_matrix())
                     except KeyError as e:
                         transcription_errors[str(e)].append(str(word))
-                        continue
 
             corpus.add_word(word)
     
     return corpus,transcription_errors
 
-def load_corpus_text(path,corpus_name, delimiter, ignore_list,trans_delimiter='.',feature_system_path=''):
+def load_corpus_text(path,corpus_name, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling'):
     word_count = collections.defaultdict(int)
     corpus = Corpus(corpus_name)
     corpus.custom = True
@@ -87,26 +86,30 @@ def load_corpus_text(path,corpus_name, delimiter, ignore_list,trans_delimiter='.
         for line in f.readlines():
             if not line or line == '\n':
                 continue
+            #print(line)
             line = line.split(delimiter)
             for word in line:
                 word = word.strip()
-                word = [letter for letter in word if not letter in ignore_list]
+                
+                if string_type == 'transcription':
+                    word = word.strip(trans_delimiter)
+                    trans = word.split(trans_delimiter)
+                    word = trans_delimiter.join([s for s in trans if not s in ignore_list])
+                elif string_type == 'spelling':
+                    word = [letter for letter in word if not letter in ignore_list]
+                    word = ''.join(word)
                 if not word:
                     continue
-                if string_type == 'transcription':
-                    word = trans_delimiter.join(word)
-                elif string_type == 'spelling':
-                    word = ''.join(word)
                 word_count[word] += 1
 
     total_words = sum(word_count.values())
-    headers = [string_type,'Frequency','Relative frequency']
+    headers = [string_type,'frequency']
     transcription_errors = collections.defaultdict(list)
     for w,freq in sorted(word_count.items()):
-        line = [w,freq,freq/total_words]
+        line = [w,freq]
         d = {attribute:value for attribute,value in zip(headers,line)}
         for k,v in d.items():
-            if trans_delimiter in v or k == 'transcription' or 'tier' in k:
+            if k == 'transcription' or 'tier' in k:
                 d[k] = v.split(trans_delimiter)
         word = Word(**d)
         if word.transcription:
@@ -117,7 +120,6 @@ def load_corpus_text(path,corpus_name, delimiter, ignore_list,trans_delimiter='.
                     word._specify_features(corpus.get_feature_matrix())
                 except KeyError as e:
                     transcription_errors[str(e)].append(str(word))
-                    continue
         corpus.add_word(word)
     return corpus,transcription_errors
 

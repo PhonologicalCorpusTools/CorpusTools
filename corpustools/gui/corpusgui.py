@@ -1,9 +1,10 @@
 
 import os
+import collections
 
 from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
-                    ACTIVE, Toplevel, Listbox, OptionMenu, IntVar, Checkbutton )
+                    ACTIVE, Toplevel, Listbox, OptionMenu, IntVar, Checkbutton, E )
 from tkinter.ttk import Progressbar
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
@@ -132,7 +133,7 @@ class CorpusFromTextWindow(Toplevel):
         trans_only.grid()
         #both = Radiobutton(string_type_frame, text='Corpus has both spelling and transcription', value='both', variable=self.from_corpus_string_type)
         #both.grid()
-        new_corpus_feature_frame = LabelFrame(string_type_frame, text='Feature system to use (if transcription exists)')
+        new_corpus_feature_frame = LabelFrame(self, text='Feature system to use (if transcription exists)')
 
         available_systems = get_systems_list()
         new_corpus_feature_system = OptionMenu(
@@ -142,6 +143,20 @@ class CorpusFromTextWindow(Toplevel):
         new_corpus_feature_system.grid()
         new_corpus_feature_frame.grid(sticky=W)
         string_type_frame.grid(sticky=W)
+        delim_frame = LabelFrame(from_text_frame, text='Delimiters')
+        delimiter_label = Label(delim_frame, text='Word delimiter (defaults to space)')
+        delimiter_label.grid()
+        self.delimiter_entry = Entry(delim_frame)
+        self.delimiter_entry.delete(0,END)
+        self.delimiter_entry.insert(0,' ')
+        self.delimiter_entry.grid()
+        trans_delimiter_label = Label(delim_frame, text='Transcription delimiter (No character means every symbol\n will be interpreted as a segment)')
+        trans_delimiter_label.grid()
+        self.trans_delimiter_entry = Entry(delim_frame)
+        self.trans_delimiter_entry.delete(0,END)
+        self.trans_delimiter_entry.insert(0,'.')
+        self.trans_delimiter_entry.grid()
+        delim_frame.grid(sticky=E)
         ok_button = Button(from_text_frame, text='Create corpus', command=self.parse_text)
         cancel_button = Button(from_text_frame, text='Cancel', command=self.destroy)
         ok_button.grid()
@@ -166,30 +181,47 @@ class CorpusFromTextWindow(Toplevel):
             if var.get() == 1:
                 ignore_list.append(mark)
 
-        def parse_text(self, delimiter=' '):
-            source_path = self.corpus_from_text_source_file.get()
-            if not os.path.isfile(source_path):
-                MessageBox.showerror(message='Cannot find the source file. Double check the path is correct.')
+        string_type = self.new_corpus_string_type.get()
+        ignore_list = list()
+        for mark,var in zip(string.punctuation, self.punc_vars):
+            if var.get() == 1:
+                ignore_list.append(mark)
+
+        delimiter = self.delimiter_entry.get()
+        trans_delimiter = self.trans_delimiter_entry.get()
+        
+        if trans_delimiter in ignore_list:
+            MessageBox.showerror(message='Transcription delimiter is currently set to being ignored,')
+            return
+
+        corpus_name = os.path.split(source_path)[-1].split('.')[0]
+        feature_system = self.new_corpus_feature_system_var.get()
+        if feature_system:
+            feature_system = os.path.join(config['storage']['directory'],
+                                                'FEATURE',
+                                                feature_system+'.feature')
+
+        corpus,transcription_errors = load_corpus_text(source_path,corpus_name,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
+        self.finalize_corpus(corpus,transcription_errors)
+        save_binary(corpus, os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
+        
+        self.destroy()
+
+
+    def finalize_corpus(self, corpus, transcription_errors=None):
+        self.corpus = corpus
+        if transcription_errors:
+            not_found = sorted(list(transcription_errors.keys()))
+            msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
+            msg2 = 'The symbols that were missing were {}.\n'.format(', '.join(not_found))
+            msg3 = 'Would you like to create all of them as unspecified?  You can edit them later by going to Options-> View/change feature system...\nYou can also manually create the segments in there.'
+            msg = '\n'.join([msg1, msg2, msg3])
+            carry_on = MessageBox.askyesno(message=msg)
+            if not carry_on:
                 return
-
-            string_type = self.new_corpus_string_type.get()
-            ignore_list = list()
-            for mark,var in zip(string.punctuation, self.punc_vars):
-                if var.get() == 1:
-                    ignore_list.append(mark)
-
-            corpus_name = os.path.split(source_path)[-1].split('.')[0]
-            feature_system = self.new_corpus_feature_system_var.get()
-            if feature_system:
-                feature_system = os.path.join(config['storage']['directory'],
-                                                    'FEATURE',
-                                                    feature_system+'.feature')
-
-            corpus = load_corpus_text(source_path,corpus_name,ignore_list,trans_delimiter,feature_system)
-               
-            save_binary(corpus, os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
-            
-            self.destroy()
+            for s in not_found:
+                self.corpus.get_feature_matrix().add_segment(s.strip('\''),{})
+            self.corpus.get_feature_matrix().validate()
 
 class CustomCorpusWindow(Toplevel):
     def __init__(self,master=None, **options):
@@ -298,25 +330,18 @@ class CustomCorpusWindow(Toplevel):
 
     def finalize_corpus(self, corpus, transcription_errors=None):
         self.corpus = corpus
-        self.feature_system = corpus.get_feature_matrix()
         if transcription_errors:
-            filename = 'error_{}_{}.txt'.format(self.new_corpus_feature_system_var.get(), self.corpus.get_name())
-            with open(os.path.join(ERROR_DIR,filename), encoding='utf-8', mode='w') as f:
-                print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.\r\n'.format(self.new_corpus_feature_system_var.get()),file=f)
-                print('To fix this problem, open the features file in a text editor and add the missing symbols and appropriate feature specifications\r\n', file=f)
-                print('All feature files are (or should be!) located in the TRANS folder. If you have your own feature file, just drop it into that folder before loading CorpusTools.\r\n', file=f)
-                print('The following segments could not be represented:\r\n',file=f)
-                for key in sorted(list(transcription_errors.keys())):
-                    words = sorted(transcription_errors[key])
-                    words = ','.join(words)
-                    sep = '\r\n\n'
-                    print('Symbol: {}\r\nWords: {}\r\n{}'.format(key,words,sep), file=f)
+            not_found = sorted(list(transcription_errors.keys()))
             msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'A file called {} has been placed in your ERRORS folder ({}) explaining this problem in more detail.'.format(
-            filename,ERROR_DIR)
-            msg3 = 'Words with interpretable symbols will still be displayed. Consult the output file above to see how to fix this problem.'
+            msg2 = 'The symbols that were missing were {}.\n'.format(', '.join(not_found))
+            msg3 = 'Would you like to create all of them as unspecified?  You can edit them later by going to Options-> View/change feature system...\nYou can also manually create the segments in there.'
             msg = '\n'.join([msg1, msg2, msg3])
-            MessageBox.showwarning(message=msg)
+            carry_on = MessageBox.askyesno(message=msg)
+            if not carry_on:
+                return
+            for s in not_found:
+                self.corpus.get_feature_matrix().add_segment(s.strip('\''),{})
+            self.corpus.get_feature_matrix().validate()
 
 
 class CorpusManager(object):
@@ -640,9 +665,9 @@ class EditFeatureSystemWindow(object):
                                 *get_systems_list(), #options in drop-down
                                 command=self.change_feature_system)
         #this is grided much later, but needs to be here
-
-        self.feature_system_option_menu_var.set(self.feature_matrix.get_name())
-        self.change_feature_system()
+        if self.corpus.has_feature_matrix():
+            self.feature_system_option_menu_var.set(self.feature_matrix.get_name())
+            self.change_feature_system()
 
         feature_menu.grid()
         add_segment_button = Button(self.top, text='Remove all segments not used by the corpus', command=self.tailor_to_corpus)
@@ -699,7 +724,7 @@ class EditFeatureSystemWindow(object):
     
     def change_feature_system(self, event = None):
         feature_system = self.feature_system_option_menu_var.get()
-        if feature_system != self.feature_matrix.get_name():
+        if self.feature_matrix is None or feature_system != self.feature_matrix.get_name():
             self.feature_matrix = load_binary(os.path.join(config['storage']['directory'],'FEATURE',feature_system+'.feature'))
         for child in self.feature_frame.winfo_children():
             child.destroy()

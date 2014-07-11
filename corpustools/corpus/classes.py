@@ -253,6 +253,7 @@ class Word(object):
     def __init__(self, **kwargs):
 
         self.tiers = list()
+        self.transcription = None
         kwargs = {key.lower():value for key,value in list(kwargs.items())}
         #THINGS THAT ARE STRINGS
         string_descriptors = ['spelling', 'error_msg']
