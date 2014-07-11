@@ -599,17 +599,23 @@ class EditSegmentWindow(object):
         add_frame = Frame(self.top)
         seg_label = Label(add_frame, text='Symbol')
         seg_label.grid(row=0,column=0)
-        seg_entry = Entry(add_frame,textvariable=self.seg_var)
+        seg_entry = Entry(add_frame,textvariable=self.seg_var,width=5)
         seg_entry.grid(row=1,column=0)
+        #HACK - Should have dynamic scaling of widgets based on size of window
+        colmax = 12
         col = 1
+        row = 0
         for f, v in self.feature_vars.items():
             label = Label(add_frame, text=f)
-            label.grid(row=0,column = col)
+            label.grid(row=row,column = col)
             entry = OptionMenu(add_frame,#parent
                                 v,#variable
                                 *possible_values)
-            entry.grid(row=1,column = col)
-            col += 1
+            entry.grid(row=row+1,column = col)
+            col+=1
+            if col > colmax:
+                col = 0
+                row += 2
         add_frame.grid()
         
         if initial_data:
