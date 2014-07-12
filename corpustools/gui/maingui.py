@@ -54,6 +54,11 @@ from corpustools.gui.corpusgui import (CorpusManager, FeatureSystemManager,
 class GUI(Toplevel):
 
     def __init__(self,master,base_path):
+        self.show_warnings = BooleanVar()
+        self.show_tooltips = BooleanVar()
+        
+        self.show_warnings.set(True)
+        self.show_tooltips.set(True)
         self.load_config()
 
         #Set up logging
@@ -62,7 +67,6 @@ class GUI(Toplevel):
 
         #NON-TKINTER VARIABLES
         self.master = master
-        self.show_warnings = False
         self.corpus = None
         #user defined features systems are added automatically at a later point
         self.warn_about_changes = False
@@ -150,7 +154,7 @@ class GUI(Toplevel):
                     missing.append('transcription')
                 if not self.corpus.has_frequency():
                     missing.append('token frequency')
-                if self.show_warnings and missing:
+                if self.show_warnings.get() and missing:
                     missing = ','.join(missing)
                     MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
             function(self)
@@ -281,7 +285,7 @@ class GUI(Toplevel):
     @check_for_valid_corpus
     @check_for_valid_feature_matrix
     def string_similarity(self):
-        sspopup = SSFunction(self.corpus)
+        sspopup = SSFunction(self.corpus, show_tooltips = self.show_tooltips.get())
  
     def donothing(self,event=None):
         pass
@@ -341,7 +345,7 @@ class GUI(Toplevel):
 
     def kill_tier(self):
         target = self.kill_tiers_list.get(self.kill_tiers_list.curselection())
-        if target and self.show_warnings:
+        if target and self.show_warnings.get():
             msg = 'Are you sure you want to remove the {} tier?\nYou cannot undo this action.'.format(target)
             confirmed = MessageBox.askyesno(message=msg)
             if not confirmed:
@@ -355,7 +359,7 @@ class GUI(Toplevel):
         self.main_screen_refresh()
 
     def kill_all_tiers(self):
-        if self.show_warnings:
+        if self.show_warnings.get():
             msg = 'Are you sure you want to remove all the tiers?\nYou cannot undo this action'
             confirmed = MessageBox.askyesno(message=msg)
             if not confirmed:
@@ -474,25 +478,22 @@ class GUI(Toplevel):
         if feature:
             self.selected_tier_features.delete(feature)
 
-    def change_warnings(self):
-        self.show_warnings = not self.show_warnings
-
     @check_for_empty_corpus
     @check_for_valid_corpus
     @check_for_valid_feature_matrix
     def prod(self,shortcut=None):
-        pd_popup = PDFunction(self.corpus)
+        pd_popup = PDFunction(self.corpus, show_tooltips = self.show_tooltips.get())
 
 
     @check_for_empty_corpus
     @check_for_valid_corpus
     @check_for_valid_feature_matrix
     def frequency_of_alternation(self):
-        fa_popup = FAFunction(self.corpus)
+        fa_popup = FAFunction(self.corpus, show_tooltips = self.show_tooltips.get())
 
     @check_for_empty_corpus
     def show_feature_system(self):
-        if self.show_warnings:
+        if self.show_warnings.get():
             word = self.corpus.random_word()
             if word.tiers:
                 msg = ('You have already created tiers based on a feature system.'
@@ -515,14 +516,14 @@ class GUI(Toplevel):
             MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
             '\nAcoustic similarity cannot be run without both of them installed.'))
             return
-        self.as_popup = ASFunction()
+        self.as_popup = ASFunction(show_tooltips = self.show_tooltips.get())
 
 
     @check_for_empty_corpus
     @check_for_valid_corpus
     @check_for_valid_feature_matrix
     def functional_load(self):
-        fl_popup = FLFunction(self.corpus)
+        fl_popup = FLFunction(self.corpus, show_tooltips = self.show_tooltips.get())
 
 
     @check_for_empty_corpus
@@ -565,9 +566,9 @@ def make_menus(root,app):
     optionmenu.add_command(label='View/change feature system...', command=app.show_feature_system)
     optionmenu.add_command(label='Add Tier...', command=app.create_tier)
     optionmenu.add_command(label='Remove Tier...', command=app.destroy_tier)
-    optionmenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings, command=app.change_warnings)
+    optionmenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings)
+    optionmenu.add_checkbutton(label='Show tooltips', onvalue=True, offvalue=False, variable=app.show_tooltips)
     menubar.add_cascade(label='Options', menu=optionmenu)
-    optionmenu.invoke(4)#start with the checkmark for the 'show warning' option turned on
 
     calcmenu = Menu(menubar, tearoff=0)
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)

@@ -94,7 +94,11 @@ class AboutWindow(Toplevel):
         self.focus()
 
 class FunctionWindow(Toplevel):
-    pass
+    def __init__(self, master=None, **options):
+        if 'show_tooltips' in options:
+            self.show_tooltips = options.get('show_tooltips')
+            del options['show_tooltips']
+        super(FunctionWindow, self).__init__(master=master, **options)
 
 
 class ResultsWindow(Toplevel):

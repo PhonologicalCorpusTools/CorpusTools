@@ -10,8 +10,8 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.symbolsim.string_similarity as SS
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
-                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+                                    ResultsWindow, ThreadedTask, ToolTip)
 
 class SSFunction(FunctionWindow):
     def __init__(self,corpus,master=None, **options):

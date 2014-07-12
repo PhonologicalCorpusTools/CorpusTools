@@ -11,7 +11,7 @@ import queue
 import corpustools.funcload.functional_load as FL
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, InventoryFrame,
-                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip, Toplevel)
+                    ResultsWindow, ThreadedTask, ToolTip, Toplevel)
 
 
 class FLFunction(FunctionWindow):
