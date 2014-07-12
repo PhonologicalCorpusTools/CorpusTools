@@ -11,7 +11,7 @@ import queue
 from corpustools.freqalt.freq_of_alt import Freqor
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
-                    ResultsWindow, InventoryFrame, MultiListbox, ThreadedTask, ToolTip)
+                    ResultsWindow, InventoryFrame, ThreadedTask, ToolTip)
 
 class FAFunction(FunctionWindow):
 

@@ -10,7 +10,8 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.acousticsim.main as AS
 
-from corpustools.gui.basegui import AboutWindow, FunctionWindow, ResultsWindow, MultiListbox, ThreadedTask
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+                                    ResultsWindow, ThreadedTask, ToolTip)
 
 
 class ASFunction(FunctionWindow):
@@ -31,6 +32,11 @@ class ASFunction(FunctionWindow):
         self.results = None
         self.title('Acoustic similarity')
         dir_frame = LabelFrame(self,text='Directories')
+        if self.show_tooltips:
+            dir_frame_tooltip = ToolTip(dir_frame, follow_mouse=False,
+                                    text='Choose two directories to compare sound files between.')
+
+        
         dir_one_label = Label(dir_frame, text='First directory')
         dir_one_label.grid(row=0, column=0)
         dir_one_text = Entry(dir_frame,textvariable=self.directory_one)
@@ -60,6 +66,10 @@ class ASFunction(FunctionWindow):
         dir_frame.grid()
         option_frame = LabelFrame(self,text='Parameters')
         representation_frame = LabelFrame(option_frame, text='Representation')
+        if self.show_tooltips:
+            representation_frame_tooltip = ToolTip(representation_frame, follow_mouse=False,
+                                    text='Choose how to represent acoustic waveforms.')
+
         mfcc = Radiobutton(representation_frame, text='MFCC',
                                     value='mfcc', variable=self.representation)
         mfcc.grid(sticky=W)
@@ -70,6 +80,9 @@ class ASFunction(FunctionWindow):
         representation_frame.grid(sticky=W)
 
         match_func_frame = LabelFrame(option_frame, text='Similarity algorithm')
+        if self.show_tooltips:
+            match_frame_tooltip = ToolTip(match_func_frame, follow_mouse=False,
+                                    text='Choose how to compare representations.')
         dtw = Radiobutton(match_func_frame, text='Dynamic time warping',
                                     value='dtw', variable=self.match_func)
         dtw.grid(sticky=W)
@@ -80,6 +93,9 @@ class ASFunction(FunctionWindow):
         match_func_frame.grid(sticky=W)
 
         freq_frame = LabelFrame(option_frame, text='Frequency limits')
+        if self.show_tooltips:
+            freq_frame_tooltip = ToolTip(freq_frame, follow_mouse=False,
+                                    text='Choose frequency range.')
         min_freq_label = Label(freq_frame, text='Minimum frequency (Hz)')
         min_freq_label.grid(row=0, column=0)
         min_freq_entry = Entry(freq_frame, textvariable=self.min_freq)
@@ -96,6 +112,12 @@ class ASFunction(FunctionWindow):
         freq_frame.grid(sticky=W)
 
         freq_res_frame = LabelFrame(option_frame, text='Frequency resolution')
+        if self.show_tooltips:
+            freq_res_frame_tooltip = ToolTip(freq_res_frame, follow_mouse=False,
+                                    text=('Choose how many filters to divide the frequency range'
+                                            ' and how many coefficients to use for MFCC generation.'
+                                            ' Leave as \'0\' for reasonable defaults based on the'
+                                            ' representation.'))
         num_filters_label = Label(freq_res_frame, text='Number of filters')
         num_filters_label.grid(row=0, column=0)
         num_filters_entry = Entry(freq_res_frame, textvariable=self.num_filters)
@@ -112,6 +134,11 @@ class ASFunction(FunctionWindow):
         freq_res_frame.grid(sticky=W)
 
         output_frame = LabelFrame(option_frame, text='Output')
+        if self.show_tooltips:
+            output_frame_tooltip = ToolTip(output_frame, follow_mouse=False,
+                                    text=('Choose whether the result should be similarity'
+                                            ' or distance. Similarity is inverse distance,'
+                                            ' and distance is inverse similarity'))
         sim = Radiobutton(output_frame, text='Output as similarity (0 to 1)',
                                     value=True, variable=self.output_sim)
         sim.grid(sticky=W)
@@ -122,6 +149,10 @@ class ASFunction(FunctionWindow):
         output_frame.grid(sticky=W)
 
         mp_frame = LabelFrame(option_frame, text='Multiprocessing')
+        if self.show_tooltips:
+            mp_frame_tooltip = ToolTip(mp_frame, follow_mouse=False,
+                                    text=('Choose whether to use multiple processes.'
+                                            ' Multiprocessing is currently not supported'))
         multi = Radiobutton(mp_frame, text='Use multiprocessing',
                                     value=True, variable=self.use_multi)
         multi.grid(sticky=W)
