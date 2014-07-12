@@ -88,12 +88,12 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
     """
 
     if frequency_cutoff > 0:
-        corpus = [word for word in corpus if word.freq_per_mil >= frequency_cutoff] # change to .frequency once that is fixed!
+        corpus = [word for word in corpus if word.frequency >= frequency_cutoff] # change to .frequency once that is fixed!
 
     if type_or_token == 'type':
         freq_sum = len(corpus)
     elif type_or_token == 'token':
-        freq_sum = sum([word.freq_per_mil for word in corpus]) # change to .frequency once that is fixed!
+        freq_sum = sum([word.frequency for word in corpus]) # change to .frequency once that is fixed!
 
     original_probs = defaultdict(float)
     if type_or_token == 'type':
@@ -116,6 +116,41 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
     else:
         threaded_q.put(result)
         return None
+
+def collapse_segpairs_fl(**kwargs):
+    corpus = kwargs.get('corpus')
+    func_type = kwargs.get('func_type')
+    segment_pairs = kwargs.get('segment_pairs')
+    frequency_cutoff = kwargs.get('frequency_cutoff')
+    relative_count = kwargs.get('relative_count')
+    distinguish_homophones = kwargs.get('distinguish_homophones')
+    q = kwargs.get('threaded_q')
+    if func_type == 'min_pairs':
+        fl = minpair_fl(corpus, segment_pairs, frequency_cutoff, relative_count, distinguish_homophones)
+    elif func_type == 'entropy':
+        fl = deltah_fl(corpus, segment_pairs, frequency_cutoff, type_or_token)
+    q.put(fl)
+
+
+
+def individual_segpairs_fl(**kwargs):
+    corpus = kwargs.get('corpus')
+    func_type = kwargs.get('func_type')
+    segment_pairs = kwargs.get('segment_pairs')
+    frequency_cutoff = kwargs.get('frequency_cutoff')
+    relative_count = kwargs.get('relative_count')
+    distinguish_homophones = kwargs.get('distinguish_homophones')
+    q = kwargs.get('threaded_q')
+
+    results = list()
+    for pair in segment_pairs:
+        if func_type == 'min_pairs':
+            fl = minpair_fl(corpus, pair, frequency_cutoff, relative_count, distinguish_homophones)
+        elif func_type == 'entropy':
+            fl = deltah_fl(corpus, pair, frequency_cutoff, type_or_token)
+        results.append(fl)
+
+    q.put(results)
 
 
 def entropy(probabilities):

@@ -121,9 +121,9 @@ class PDFunction(FunctionWindow):
                                     'be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
                                     'New tiers can be created from the Corpus menu.'))
-        tier_options = ['transcription']
+        #tier_options = ['transcription']
         word = self.corpus.random_word()
-        tier_options.extend([tier for tier in word.tiers])
+        tier_options=[tier for tier in word.tiers]
         tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,'transcription',*tier_options)
         tier_options_menu.grid()
         tier_frame.grid(row=0,column=0)
@@ -182,6 +182,10 @@ class PDFunction(FunctionWindow):
 
         if not (seg1 and seg2):
             MessageBox.showerror(message='Please ensure you have selected 2 segments')
+            return
+
+        if not (self.entropy_tier_var.get()):
+            MessageBox.showerror(message='Please select a tier')
             return
 
         self.remove_frames()
@@ -305,7 +309,7 @@ class PDFunction(FunctionWindow):
         self.selected_envs_frame.grid(row=0, column=1)
 
         #BUTTON FRAME STARTS HERE
-        self.button_frame = Frame(self)
+        self.button_frame = LabelFrame(self.selected_envs_frame, text='Calculation options')
 
         confirm_envs = Button(self.button_frame, text='Calculate entropy in selected environments and add to results table', command=self.calculate_prod)
         confirm_envs.grid(sticky=W)
@@ -320,14 +324,14 @@ class PDFunction(FunctionWindow):
         cancel_button = Button(self.button_frame, text='Cancel', command=self.destroy)
         cancel_button.grid(sticky=W)
 
-        self.button_frame.grid(row=0,column=2)
+        self.button_frame.grid()
 
 
 
     def calculate_prod_all_envs(self):
         if self.selected_envs_list.size() > 0:
             carry_on = MessageBox.askokcancel(message=('You have already selected some environments.\n'
-                                        ' Click \'OK\' to do a calculation of entorpy across ALL environments.\n'
+                                        ' Click \'OK\' to do a calculation of entropy across ALL environments.\n'
                                         ' Click \'Cancel\' to go back and use your specific environments.\n'))
             if not carry_on:
                 return
@@ -563,6 +567,7 @@ class PDFunction(FunctionWindow):
     def update_prod_results(self, results):
         if self.prod_results is None:
             self.create_prod_results()
+            self.start_new_envs.config(state=ACTIVE)
         for result in results:
             self.prod_results.update(result)
 
