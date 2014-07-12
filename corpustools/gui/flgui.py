@@ -12,8 +12,7 @@ import time
 import corpustools.funcload.functional_load as FL
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, InventoryFrame,
-                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip, Toplevel,
-                    ToolTip)
+                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip, Toplevel)
 
 
 class FLFunction(FunctionWindow):
@@ -33,7 +32,8 @@ class FLFunction(FunctionWindow):
 
         self.title('Functional load')
         ipa_frame = LabelFrame(self, text='Sounds')
-        ipa_frame_tip = ToolTip(ipa_frame, text=('Add (a) pair(s) of sounds whose contrast to collapse.'
+        if self.show_tooltips:
+            ipa_frame_tip = ToolTip(ipa_frame, text=('Add (a) pair(s) of sounds whose contrast to collapse.'
                                     ' For example, if you\'re interested in the functional load of the [s]'
                                     ' / [z] contrast, you only need to add that pair. If, though, you\'re'
                                     ' interested in the functional load of the voicing contrast among obstruents,'
@@ -49,7 +49,8 @@ class FLFunction(FunctionWindow):
         min_pairs_type = Radiobutton(type_frame, text='Minimal pairs',
                                 variable=self.fl_type_var, value='min_pairs',
                                 command= lambda x=True:self.show_min_pairs_options(x))
-        min_pairs_tip = ToolTip(min_pairs_type, text=('Calculate the functional load of the'
+        if self.show_tooltips:
+            min_pairs_tip = ToolTip(min_pairs_type, text=('Calculate the functional load of the'
                         ' contrast between two sets of segments as a count of minimal pairs'
                         ' distinguished by paired segments in the set (e.g. +/-voice obstruent pairs).'
                         ' This is the method used by Wedel et al. (2013).'))
@@ -57,7 +58,8 @@ class FLFunction(FunctionWindow):
         h_type = Radiobutton(type_frame, text='Change in Entropy',
                             variable=self.fl_type_var, value='h',
                             command= lambda x=False:self.show_min_pairs_options(x))
-        h_type_tip = ToolTip(h_type, text=('Calculate the functional load of the contrast '
+        if self.show_tooltips:
+            h_type_tip = ToolTip(h_type, text=('Calculate the functional load of the contrast '
                             'between between two sets of segments as the decrease in corpus'
                             ' entropy caused by a merger of paired segments in the set '
                             '(e.g. +/-voice obstruent pairs).'))
@@ -84,7 +86,8 @@ class FLFunction(FunctionWindow):
         pairs_together.select()
         seg_pairing_frame.grid()
         relative_count_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Relative count?')
-        options_tip = ToolTip(relative_count_frame, text=('The raw count of minimal pairs will'
+        if self.show_tooltips:
+            options_tip = ToolTip(relative_count_frame, text=('The raw count of minimal pairs will'
                             ' be divided by the number of words that include any of the target segments '
                             'present in the list at the left.'))
         relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
@@ -99,7 +102,8 @@ class FLFunction(FunctionWindow):
         homophones_frame = LabelFrame(self.fl_min_pairs_option_frame, text='What to do with homophones?')
         count_homophones_button = Radiobutton(homophones_frame, text='Include homophones',
                                     value='include', variable=self.fl_homophones_var)
-        count_homophone_tip = ToolTip(count_homophones_button, text=('This setting will overcount alternative'
+        if self.show_tooltips:
+            count_homophone_tip = ToolTip(count_homophones_button, text=('This setting will overcount alternative'
                             ' spellings of the same word, e.g. axel~actual and axle~actual, '
                             'but will allow you to count e.g. sock~shock twice, once for each'
                             ' meaning of \'sock\' (footwear vs. punch)'))
@@ -107,7 +111,8 @@ class FLFunction(FunctionWindow):
         ignore_homophones_button = Radiobutton(homophones_frame,
                                 text='Ignore homophones (i.e. count each phonological form once)',
                                 value = 'ignore', variable=self.fl_homophones_var)
-        ignore_homphones_tip = ToolTip(ignore_homophones_button, text=('This setting will count sock~shock (sock=clothing)'
+        if self.show_tooltips:
+            ignore_homphones_tip = ToolTip(ignore_homophones_button, text=('This setting will count sock~shock (sock=clothing)'
                             ' and sock~shock (sock=punch) as just one minimal pair, but will avoid overcounting words'
                             ' with spelling variations. This is the version used by Wedel et al. (2013).'))
         ignore_homophones_button.grid(sticky=W)

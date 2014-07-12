@@ -122,10 +122,8 @@ class PDFunction(FunctionWindow):
                                     'be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
                                     'New tiers can be created from the Corpus menu.'))
-        #tier_options = ['transcription']
+        tier_options = ['transcription']
         word = self.corpus.random_word()
-        tier_options=[tier for tier in word.tiers]
-        tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,'transcription',*tier_options)
         tier_options.extend([tier for tier in word.tiers])
         tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,*tier_options)
         tier_options_menu.grid()
