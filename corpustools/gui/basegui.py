@@ -94,7 +94,11 @@ class AboutWindow(Toplevel):
         self.focus()
 
 class FunctionWindow(Toplevel):
-    pass
+    def __init__(self, master=None, **options):
+        if 'show_tooltips' in options:
+            self.show_tooltips = options.get('show_tooltips')
+            del options['show_tooltips']
+        super(FunctionWindow, self).__init__(master=master, **options)
 
 
 class ResultsWindow(Toplevel):
@@ -105,8 +109,8 @@ class ResultsWindow(Toplevel):
 
         self.as_results_table = MultiListbox(self,headerline)
         self.as_results_table.grid()
-
-        self.delete_results = delete_method
+        if delete_method is not None:
+            self.delete_results = delete_method
         self.protocol('WM_DELETE_WINDOW', self.delete_results)
 
         button_frame = Frame(self)
@@ -118,7 +122,7 @@ class ResultsWindow(Toplevel):
 
 
     def delete_results(self):
-        pass #see self.__init__()
+        self.destroy()
 
     def save_results(self):
         filename = FileDialog.asksaveasfilename()

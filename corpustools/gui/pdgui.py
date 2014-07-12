@@ -14,7 +14,7 @@ from math import log
 import corpustools.prod.pred_of_dist as PD
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, ERROR_DIR,
-                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip)
+                    ResultsWindow, ThreadedTask, ToolTip)
 
 class PDFunction(FunctionWindow):
     def __init__(self,corpus, master=None, **options):
@@ -78,12 +78,12 @@ class PDFunction(FunctionWindow):
         #check if it's possible to do this analysis
 
         self.ipa_frame = LabelFrame(self, text='Sounds')
-
-        ipa_frame_tooltip = ToolTip(self.ipa_frame,follow_mouse=True,
+        if self.show_tooltips:
+            ipa_frame_tooltip = ToolTip(self.ipa_frame,follow_mouse=True,
                                     text=('Choose the two sounds whose '
-        'predictability of distribution you want to calculate. The order of the '
-        'two sounds is irrelevant. The symbols you see here should automatically'
-        ' match the symbols used anywhere in your corpus.'))
+            'predictability of distribution you want to calculate. The order of the '
+            'two sounds is irrelevant. The symbols you see here should automatically'
+            ' match the symbols used anywhere in your corpus.'))
         segs = [seg.symbol for seg in self.corpus.get_inventory()]
         segs.sort()
         seg1_frame = LabelFrame(self.ipa_frame, text='Choose first symbol')
@@ -116,7 +116,8 @@ class PDFunction(FunctionWindow):
         self.option_frame = LabelFrame(self, text='Options')
 
         tier_frame = LabelFrame(self.option_frame, text='Tier')
-        tier_frame_tooltip = ToolTip(tier_frame, follow_mouse=True,
+        if self.show_tooltips:
+            tier_frame_tooltip = ToolTip(tier_frame, follow_mouse=True,
                                     text=('Choose which tier predictability should'
                                     'be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
@@ -125,11 +126,16 @@ class PDFunction(FunctionWindow):
         word = self.corpus.random_word()
         tier_options=[tier for tier in word.tiers]
         tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,'transcription',*tier_options)
+        tier_options.extend([tier for tier in word.tiers])
+        tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,*tier_options)
         tier_options_menu.grid()
         tier_frame.grid(row=0,column=0)
 
+        self.entropy_tier_var.set(tier_options[0])
+
         typetoken_frame = LabelFrame(self.option_frame, text='Type or Token')
-        typetoken_tooltip = ToolTip(typetoken_frame, follow_mouse=True,
+        if self.show_tooltips:
+            typetoken_tooltip = ToolTip(typetoken_frame, follow_mouse=True,
                                     text=('Choose what kind of frequency should '
                                     'be used for the calculations. Type frequency'
                                     ' means each word is counted once. Token frequency'
@@ -145,7 +151,8 @@ class PDFunction(FunctionWindow):
         typetoken_frame.grid(row=1, column=0)
 
         ex_frame = LabelFrame(self.option_frame, text='Exhaustivity and uniqueness')
-        ex_frame_tooltip = ToolTip(ex_frame, follow_mouse=True,
+        if self.show_tooltips:
+            ex_frame_tooltip = ToolTip(ex_frame, follow_mouse=True,
                                     text=('Indicate whether you want the program'
                                     ' to check for exhausitivity and/or uniqueness.'
                                     ' Checking for exhaustivity means the program '
@@ -195,7 +202,8 @@ class PDFunction(FunctionWindow):
 
 
         self.env_frame = LabelFrame(self, text='Construct environment')
-        env_frame_tooltip = ToolTip(self.env_frame, follow_mouse=False,
+        if self.show_tooltips:
+            env_frame_tooltip = ToolTip(self.env_frame, follow_mouse=False,
                                     text=('This screen allows you to construct multiple'
                                     ' environments in which to calculate predictability'
                                     ' of distribution. For each environment, you can specify'
@@ -530,15 +538,6 @@ class PDFunction(FunctionWindow):
 
         results = PD.calc_prod(self.corpus.name, self.entropy_tier_var.get(), seg1, seg2, env_matches)
         self.update_prod_results(results)
-
-    def suggest_entropy_filename(self):
-        seg1 = self.seg1_var.get()
-        seg2 = self.seg2_var.get()
-        suggested_name = 'entropy_of_{}_{}_{}.txt'.format(seg1, seg2, self.entropy_typetoken_var.get())
-        filename = FileDialog.asksaveasfilename(initialdir=os.getcwd(),
-                                                initialfile=suggested_name,
-                                                defaultextension='.txt')
-        return filename
 
     def about_prod(self):
         about = AboutWindow('About the predictability of distribution function',

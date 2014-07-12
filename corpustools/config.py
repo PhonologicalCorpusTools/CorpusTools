@@ -14,7 +14,7 @@ appauthor = 'PCT'
 if sys.platform == 'win32': 
     local_data = os.path.expanduser('~\\Documents')
 elif sys.platform == 'darwin':
-    local_data = os.path.expanduser('~/Library/Application Support/')
+    local_data = os.path.expanduser('~/Documents')
 else:
     local_data = os.path.expanduser("~/.pct")
     

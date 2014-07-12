@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------------
-# Name:        module1
+# Name: module1
 # Purpose:
 #
-# Author:      JSMIII
+# Author: JSMIII
 #
-# Created:     08/01/2014
-# Copyright:   (c) JSMIII 2014
-# Licence:     <your licence>
+# Created: 08/01/2014
+# Copyright: (c) JSMIII 2014
+# Licence: <your licence>
 #-------------------------------------------------------------------------------
 #!/usr/bin/env python
 
@@ -17,11 +17,9 @@ from tkinter import Radiobutton as OldRadiobutton
 #of the windows
 import tkinter.messagebox as MessageBox
 import tkinter.filedialog as FileDialog
-from corpustools.gui.basegui import (ThreadedTask, MultiListbox, PreferencesWindow,
-                                    CONFIG_PATH, DEFAULT_DATA_DIR, LOG_DIR, ERROR_DIR)
+
 import threading
 import queue
-import pickle
 import os
 import collections
 from codecs import open
@@ -38,14 +36,16 @@ from corpustools.gui.ssgui import SSFunction
 from corpustools.gui.flgui import FLFunction
 from corpustools.gui.pdgui import PDFunction
 from corpustools.gui.fagui import FAFunction
-from corpustools.gui.corpusgui import CorpusManager
+from corpustools.gui.corpusgui import (CorpusManager, FeatureSystemManager,
+                                    EditFeatureSystemWindow, save_binary,
+                                    export_corpus_csv,export_feature_matrix_csv)
 
-try:
-    from PIL import Image as PIL_Image
-    from PIL import ImageTk as PIL_ImageTk
-    use_logo = True
-except ImportError:
-    use_logo = False
+#try:
+#    from PIL import Image as PIL_Image
+#    from PIL import ImageTk as PIL_ImageTk
+#    use_logo = True
+#except ImportError:
+#    use_logo = False
 
 
 
@@ -53,7 +53,12 @@ except ImportError:
 
 class GUI(Toplevel):
 
-    def __init__(self,master,base_path):
+    def __init__(self,master):
+        self.show_warnings = BooleanVar()
+        self.show_tooltips = BooleanVar()
+        
+        self.show_warnings.set(True)
+        self.show_tooltips.set(True)
         self.load_config()
 
         #Set up logging
@@ -62,9 +67,7 @@ class GUI(Toplevel):
 
         #NON-TKINTER VARIABLES
         self.master = master
-        self.show_warnings = False
         self.corpus = None
-        self.all_feature_systems = ['spe','hayes']
         #user defined features systems are added automatically at a later point
         self.warn_about_changes = False
 
@@ -77,10 +80,6 @@ class GUI(Toplevel):
         self.search_var = StringVar()
 
         #corpus information variables
-        self.feature_system_var = StringVar()
-        self.feature_system_var.set('spe')
-        self.feature_system_option_menu_var = StringVar()
-        self.feature_system_option_menu_var.set('spe')
         self.corpus_var = StringVar()
         self.corpus_var.set('No corpus selected')
         self.corpus_size_var = IntVar()
@@ -96,28 +95,27 @@ class GUI(Toplevel):
         #self.corpus_table = TableView(self.main_screen)
         #self.corpus_table.grid()
 
-        self.check_for_feature_systems()
         corpus_info_label = Label(self.info_frame ,text='Corpus: No corpus selected')#textvariable=self.corpus_var)
         corpus_info_label.grid()
         size_info_label = Label(self.info_frame, text='Size: No corpus selected')#textvariable=self.corpus_size_var)
         size_info_label.grid()
-        feature_info_label = Label(self.info_frame, textvariable=self.feature_system_var)
+        feature_info_label = Label(self.info_frame, text='Feature system: No corpus selected')
         feature_info_label.grid()
         self.corpus_frame = Frame(self.main_screen)
         self.corpus_frame.grid()
 
         #Splash image at start-up
-        try:
-            self.splash_image_path = os.path.join(base_path,'logo.jpg')
-            self.splash_canvas = Canvas(self.corpus_frame)
-            self.splash_canvas['width'] = '323'
-            self.splash_canvas['height'] = '362'
-            image = PIL_Image.open(self.splash_image_path)
-            self.splash_image = PIL_ImageTk.PhotoImage(image,master=self.splash_canvas)
-            self.splash_canvas.create_image(0,0,anchor=NW,image=self.splash_image)
-            self.splash_canvas.grid()
-        except:
-            pass#if the image file is not found, then don't bother
+        #try:
+        #    self.splash_image_path = os.path.join(base_path,'logo.jpg')
+        #    self.splash_canvas = Canvas(self.corpus_frame)
+        #    self.splash_canvas['width'] = '323'
+        #    self.splash_canvas['height'] = '362'
+        #    image = PIL_Image.open(self.splash_image_path)
+        #    self.splash_image = PIL_ImageTk.PhotoImage(image,master=self.splash_canvas)
+        #    self.splash_canvas.create_image(0,0,anchor=NW,image=self.splash_image)
+        #    self.splash_canvas.grid()
+        #except:
+        #    pass#if the image file is not found, then don't bother
 
     def load_corpus(self):
         corpusload = CorpusManager()
@@ -126,6 +124,10 @@ class GUI(Toplevel):
         if self.corpus is not None:
             self.main_screen_refresh()
 
+    def load_feature_matrices(self):
+        matrixload = FeatureSystemManager()
+        matrixload.top.wait_window()
+
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
             config.read(CONFIG_PATH)
@@ -133,38 +135,50 @@ class GUI(Toplevel):
             config['storage'] = {'directory' : DEFAULT_DATA_DIR}
             with open(CONFIG_PATH,'w') as configfile:
                 config.write(configfile)
-        self.data_dir = config['storage']['directory']
-        self.trans_dir = os.path.join(self.data_dir,'TRANS')
-        if not os.path.exists(self.trans_dir):
-            os.makedirs(self.trans_dir)
+        data_dir = config['storage']['directory']
+        feature_dir = os.path.join(data_dir,'FEATURE')
+        if not os.path.exists(feature_dir):
+            os.makedirs(feature_dir)
 
-        self.corpus_dir = os.path.join(self.data_dir,'CORPUS')
-        if not os.path.exists(self.corpus_dir):
-            os.makedirs(self.corpus_dir)
+        corpus_dir = os.path.join(data_dir,'CORPUS')
+        if not os.path.exists(corpus_dir):
+            os.makedirs(corpus_dir)
 
     def check_for_valid_corpus(function):
         def do_check(self):
-            has_spelling = True
-            has_transcription = True
-            has_frequency = True
             missing = list()
-            if self.corpus.custom:
-                random_word = self.corpus.random_word()
-                if not 'spelling' in random_word.descriptors:# or not random_word.spelling:
-                    has_spelling = False
+            if self.corpus.is_custom():
+                if not self.corpus.has_spelling():
                     missing.append('spelling')
-                if not 'transcription' in random_word.descriptors:# or not random_word.transcription:
-                    has_transcription = False
+                if not self.corpus.has_transcription():
                     missing.append('transcription')
-                if not 'frequency' in random_word.descriptors:# or not random_word.frequency:
-                    has_frequency = False
+                if not self.corpus.has_frequency():
                     missing.append('token frequency')
-
-                if self.show_warnings and not (has_spelling and has_transcription and has_frequency):
+                if self.show_warnings.get() and missing:
                     missing = ','.join(missing)
                     MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
             function(self)
         return do_check
+
+    def check_for_valid_feature_matrix(function):
+        def do_check(self):
+            corpus_inventory = self.corpus.get_inventory()
+            if self.corpus.has_feature_matrix():
+                missing = []
+                feature_inventory = self.corpus.get_feature_matrix().get_segments()
+                for seg in corpus_inventory:
+                    if seg not in feature_inventory:
+                        missing.append(str(seg))
+                        
+                if missing:
+                    MessageBox.showerror(message='Some segments in the corpus inventory are not in the feature system.\nPlease go to Options->View/change feature system... to view missing segments and add them.')
+                    return
+            else:
+                MessageBox.showerror(message='Please load a feature system through the View/change feature system in the Options menu.')
+                return
+            function(self)
+        return do_check
+        
 
     def check_for_empty_corpus(function):
         def do_check(self):
@@ -185,24 +199,6 @@ class GUI(Toplevel):
 
         return do_check
 
-    def check_for_feature_systems(self):
-
-        ignore = ['cmu2ipa.txt', 'cmudict.txt', 'ipa2hayes.txt', 'ipa2spe.txt']
-        links = {'cmu2ipa.txt':'https://www.dropbox.com/s/dcz1hnoix2qy8d0/cmu2ipa.txt?dl=1',
-                'ipa2hayes.txt':'https://www.dropbox.com/s/b5jnunz1m5pzsc6/ipa2hayes.txt?dl=1',
-                'ipa2spe.txt':'https://www.dropbox.com/s/40oa9f0m2v42haq/ipa2spe.txt?dl=1'}
-        for k,v in links.items():
-            path = os.path.join(self.trans_dir,k)
-            if not os.path.exists(path):
-                from urllib.request import urlretrieve
-                filename,headers = urlretrieve(v,path)
-
-        for dirpath,dirname,filenames in os.walk(self.trans_dir):
-            for name in filenames:
-                if name in ignore:
-                    continue
-                system_name = name.split('.')[0]
-                self.all_feature_systems.append(system_name)
 
     @check_for_unsaved_changes
     def quit(self,event=None):
@@ -218,13 +214,25 @@ class GUI(Toplevel):
         for child in self.info_frame.winfo_children():
             child.destroy()
 
-        corpus_info_label = Label(self.info_frame ,text='Corpus: {}'.format(self.corpus.name))#textvariable=self.corpus_var)
+        if self.corpus is not None:
+            corpus_name = self.corpus.get_name()
+            corpus_size = len(self.corpus)
+        else:
+            corpus_name = "No corpus selected"
+            corpus_size = "No corpus selected"
+
+        corpus_info_label = Label(self.info_frame ,text='Corpus: {}'.format(corpus_name))#textvariable=self.corpus_var)
         corpus_info_label.grid()
 
-        size_info_label = Label(self.info_frame, text='Size: {}'.format(len(self.corpus)))#textvariable=self.corpus_size_var)
+        size_info_label = Label(self.info_frame, text='Size: {}'.format(corpus_size))#textvariable=self.corpus_size_var)
         size_info_label.grid()
 
-        feature_info_label = Label(self.info_frame, text='Feature system: {}'.format(self.feature_system_var.get()) )#textvariable=self.feature_system_var)
+        if self.corpus.has_feature_matrix():
+            system_name = self.corpus.get_feature_matrix().get_name()
+        else:
+            system_name = 'None'
+            
+        feature_info_label = Label(self.info_frame, text='Feature system: {}'.format(system_name))#textvariable=self.feature_system_var)
         feature_info_label.grid()
 
 
@@ -240,7 +248,7 @@ class GUI(Toplevel):
     def search(self):
 
         self.search_popup = Toplevel()
-        self.search_popup.title('Search {}'.format(self.corpus.name))
+        self.search_popup.title('Search {}'.format(self.corpus.get_name()))
         search_frame = LabelFrame(self.search_popup, text='Enter search term')
         search_entry = Entry(search_frame, textvariable=self.search_var)
         search_entry.grid()
@@ -275,26 +283,12 @@ class GUI(Toplevel):
 
     @check_for_empty_corpus
     @check_for_valid_corpus
+    @check_for_valid_feature_matrix
     def string_similarity(self):
-
-        #Check if it's even possible to do this analysis
-
-        sspopup = SSFunction(self.corpus)
-
-
-
-
-
+        sspopup = SSFunction(self.corpus, show_tooltips = self.show_tooltips.get())
+ 
     def donothing(self,event=None):
         pass
-
-
-    def suggest_corpus_from_text_name(self):
-        filename = FileDialog.asksaveasfilename()
-        if filename:
-            if not filename.endswith('.txt'):
-                filename += '.txt'
-            self.corpus_from_text_output_file.set(filename)
 
     @check_for_empty_corpus
     def save_corpus(self):
@@ -303,9 +297,9 @@ class GUI(Toplevel):
         would be nice to have an option to save as pickle and also "export as"
         a .txt/csv file
         """
-
-        with open(os.path.join(config['storage']['directory'],'CORPUS',self.corpus.name+'.corpus'), 'wb') as f:
-            pickle.dump(self.corpus, f)
+        save_binary(self.corpus,os.path.join(
+                        config['storage']['directory'],'CORPUS',
+                        self.corpus.get_name()+'.corpus'))
         self.warn_about_changes = False
         MessageBox.showinfo(message='Save successful!')
 
@@ -351,7 +345,7 @@ class GUI(Toplevel):
 
     def kill_tier(self):
         target = self.kill_tiers_list.get(self.kill_tiers_list.curselection())
-        if target and self.show_warnings:
+        if target and self.show_warnings.get():
             msg = 'Are you sure you want to remove the {} tier?\nYou cannot undo this action.'.format(target)
             confirmed = MessageBox.askyesno(message=msg)
             if not confirmed:
@@ -365,7 +359,7 @@ class GUI(Toplevel):
         self.main_screen_refresh()
 
     def kill_all_tiers(self):
-        if self.show_warnings:
+        if self.show_warnings.get():
             msg = 'Are you sure you want to remove all the tiers?\nYou cannot undo this action'
             confirmed = MessageBox.askyesno(message=msg)
             if not confirmed:
@@ -420,10 +414,9 @@ class GUI(Toplevel):
 
         features = [feature for feature in self.selected_tier_features.get(0,END)]
         matches = list()
-        for seg in self.corpus.inventory:
-        #for key,value in self.corpus.specifier.matrix.items():
-            if all(feature in self.corpus.specifier.matrix[seg.symbol] for feature in features):
-                matches.append(seg.symbol)
+        for seg in self.corpus.get_inventory():
+            if all(feature in self.corpus.get_feature_matrix()[seg.symbol] for feature in features):
+                matches.append(seg)
 
         if not matches:
             matches = 'No segments in this corpus have this combination of feature values'
@@ -437,7 +430,7 @@ class GUI(Toplevel):
                 if x > 10:
                     x = 0
                     m.append('\n')
-            matches = ' '.join(m)
+            matches = ' '.join(map(str,m))
 
         preview_window = Toplevel()
         preview_window.title('Preview tier')
@@ -485,25 +478,22 @@ class GUI(Toplevel):
         if feature:
             self.selected_tier_features.delete(feature)
 
-    def change_warnings(self):
-        self.show_warnings = not self.show_warnings
+    @check_for_empty_corpus
+    @check_for_valid_corpus
+    @check_for_valid_feature_matrix
+    def prod(self,shortcut=None):
+        pd_popup = PDFunction(self.corpus, show_tooltips = self.show_tooltips.get())
+
 
     @check_for_empty_corpus
     @check_for_valid_corpus
-    def prod(self,shortcut=None):
-        pd_popup = PDFunction(self.corpus)
-
-
+    @check_for_valid_feature_matrix
     def frequency_of_alternation(self):
-        fa_popup = FAFunction(self.corpus)
+        fa_popup = FAFunction(self.corpus, show_tooltips = self.show_tooltips.get())
 
-    def show_feature_system(self, memory=None):
-
-        if self.corpus is None:
-            MessageBox.showwarning('No corpus selected')
-            return
-
-        if self.show_warnings:
+    @check_for_empty_corpus
+    def show_feature_system(self):
+        if self.show_warnings.get():
             word = self.corpus.random_word()
             if word.tiers:
                 msg = ('You have already created tiers based on a feature system.'
@@ -512,132 +502,13 @@ class GUI(Toplevel):
                 MessageBox.showwarning(message=msg)
 
 
-        if memory is None:
-            #memory is set the very first time you open this option window
-            #and is used in case you want to cancel
-            self.feature_system_memory = self.feature_system_var.get()
-            self.feature_system_option_menu_var.set(self.feature_system_var.get())
-        else:
-            #this is for subsequent "loops" of this function as the user
-            #browses through different systems
-            self.feature_system_memory = memory
 
-        self.feature_screen = Toplevel()
-        self.feature_screen.title('View/change feature system')
-
-        if self.feature_system_option_menu_var.get() == 'spe':
-            filename = 'ipa2spe.txt'
-            delimiter = ','
-        elif self.feature_system_option_menu_var.get() == 'hayes':
-            filename = 'ipa2hayes.txt'
-            delimiter = '\t'
-        else:
-            filename = self.feature_system_option_menu_var.get()+'.txt'
-            if 'spe' in filename:
-                delimiter = ','
-            elif 'hayes' in filename:
-                delimiter = '\t'
-            else:#for some reason, this other case just won't work
-                delimiter = '\t'
-
-        with open(os.path.join(self.trans_dir, filename), encoding = 'utf-8') as f:
-            headers = f.readline()
-            headers = headers.strip()
-            headers = headers.split(delimiter)
-            feature_chart = MultiListbox(self.feature_screen, [(h,5) for h in headers])
-            first_line = None
-            while not first_line:
-                first_line = f.readline()
-                first_line = first_line.strip()
-            first_line = first_line.split(delimiter)
-            if len(first_line) == 1:
-                #this part should be fixing what happens if a guess about the
-                #delimiter goes wrong in the else block up above, but it
-                #doesn't seem to work
-                delimiter = ',' if delimiter == '\t' else '\t'
-                first_line = first_line[0].split(delimiter)
-            data = [first_line[0]]
-            data.extend([feature[0] for feature in first_line[1:]])
-            feature_chart.insert(END, [d for d in data])
-            for line in f:
-                line = line.strip()
-                if not line: #line is blank or just a newline
-                    continue
-                line = line.split(delimiter)
-                symbol = line[0]
-                line = [feature[0] for feature in line[1:]]
-                data = [symbol]
-                data.extend(line)
-                feature_chart.insert(END, data)
-
-
-        feature_chart.grid()
-        choose_label = Label(self.feature_screen, text='Select a feature system')
-        choose_label.grid()
-        feature_menu = OptionMenu(self.feature_screen,#parent
-                                self.feature_system_option_menu_var,#variable
-                                self.feature_system_option_menu_var.get(),#selected option,
-                                *[fs for fs in self.all_feature_systems], #options in drop-down
-                                command=self.change_feature_system)
-        #this is grided much later, but needs to be here
-
-
-        feature_menu.grid()
-        ok_button = Button(self.feature_screen, text='Convert corpus to new feature system', command=self.confirm_change_feature_system)
-        ok_button.grid()
-        cancel_button = Button(self.feature_screen, text='Go back to old feature system', command=self.cancel_change_feature_system)
-        cancel_button.grid()
-
-
-    def cancel_change_feature_system(self):
-        self.feature_system_var.set(self.feature_system_memory)
-        self.feature_screen.destroy()
-
-    def confirm_change_feature_system(self):
-
-        check_for_error = self.corpus.change_feature_system(self.feature_system_option_menu_var.get())
-        #if there are any segments that cannot be represented in a given feature
-        #system, then the corpus.change_feature_system() function returns them in a list
-        #if check_for_error is an empty list, then feature changing was successful
-
-        if check_for_error:
-            #problems - print an error message
-            filename = 'error_{}_{}.txt'.format(self.feature_system_option_menu_var.get(), self.corpus.name)
-            with open(os.path.join(self.errors_dir,filename), encoding='utf-8', mode='w') as f:
-                print('Some words in your corpus contain symbols that have no match in the \'{}\' feature system you\'ve selected.'.format(self.feature_system_option_menu_var.get()),file=f)
-                print('To fix this problem, open the features file in a text editor and add the missing symbols and appropriate feature specifications\r\n', file=f)
-                print('All feature files are (or should be!) located in the TRANS folder. If you have your own feature file, just drop it into that folder before loading CorpusTools.\r\n\r\n', file=f)
-                print('The following segments could not be represented:', file=f)
-                for key in sorted(list(check_for_error.keys())):
-                    words = sorted(check_for_error[key])
-                    words = ','.join(words)
-                    sep = '\r\n\n'
-                    print('Symbol: {}\r\nWords: {}\r\n{}'.format(key,words,sep), file=f)
-            msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'A file called {} has been placed in your ERRORS folder ({}) explaining this problem in more detail.'.format(filename,self.errors_dir)
-            msg3 = 'No changes have been made to your corpus'
-            msg = '\n'.join([msg1, msg2, msg3])
-            MessageBox.showwarning(message=msg)
-            self.feature_screen.destroy()
-
-        else:
-            #no problems - update feature system and change some on-screen info
-            self.warn_about_changes = True
-            self.feature_system_var.set(self.feature_system_option_menu_var.get())
-            self.feature_system_memory = self.feature_system_var.get()
-            self.update_info_frame()
-            self.feature_screen.destroy()
-
-    def change_feature_system(self, event=None):
-        word = self.corpus.random_word()
-        if not hasattr(word, 'transcription'):
-            MessageBox.showerror(message=('No transcription column was found in your corpus.'
-            '\nTranscription is necessary to use feature systems'))
-            return
-
-        self.feature_screen.destroy()
-        self.show_feature_system(memory=self.feature_system_memory)
-
+        feature_screen = EditFeatureSystemWindow(self.corpus)
+        feature_screen.top.wait_window()
+        if feature_screen.change:
+            self.corpus.set_feature_matrix(feature_screen.get_feature_matrix())
+        self.main_screen_refresh()
+        
 
     def acoustic_sim(self):
 
@@ -645,32 +516,32 @@ class GUI(Toplevel):
             MessageBox.showerror(message=('Missing dependencies for either \'numpy\', \'scipy\' or both.'
             '\nAcoustic similarity cannot be run without both of them installed.'))
             return
-        self.as_popup = ASFunction()
+        self.as_popup = ASFunction(show_tooltips = self.show_tooltips.get())
 
 
     @check_for_empty_corpus
     @check_for_valid_corpus
+    @check_for_valid_feature_matrix
     def functional_load(self):
-        fl_popup = FLFunction(self.corpus)
+        fl_popup = FLFunction(self.corpus, show_tooltips = self.show_tooltips.get())
 
 
     @check_for_empty_corpus
-    def export_to_text_file(self):
-        filename = FileDialog.asksaveasfilename(initialfile = self.corpus.name+'.txt')
+    def export_corpus_to_text_file(self):
+        filename = FileDialog.asksaveasfilename(initialfile = self.corpus.get_name()+'.txt')
         if not filename:
             return
-        def make_safe(value):
-            if isinstance(value,list):
-                return '.'.join(map(make_safe,value))
-            return str(value)
 
-        word = self.corpus.random_word()
-        values = sorted(word.descriptors)
-        with open(filename, encoding='utf-8', mode='w') as f:
-            print(','.join(sorted(word.descriptors)), file=f)
-            for key in self.corpus.iter_sort():
-                print(','.join(make_safe(getattr(key, value)) for value in values), file=f)
+        export_corpus_csv(self.corpus,filename)
 
+    @check_for_empty_corpus
+    def export_feature_matrix_to_text_file(self):
+        matrix = self.corpus.get_feature_matrix()
+        filename = FileDialog.asksaveasfilename(initialfile = matrix.get_name()+'.txt')
+        if not filename:
+            return
+
+        export_feature_matrix_csv(matrix,filename)
 
 
 
@@ -679,11 +550,13 @@ def make_menus(root,app):
     menubar = Menu(root)
     corpusmenu = Menu(menubar, tearoff=0)
     corpusmenu.add_command(label='Load corpus...', command=app.load_corpus)
-    corpusmenu.add_command(label='Save corpus...', command=app.save_corpus)
+    corpusmenu.add_command(label='Manage feature systems...', command=app.load_feature_matrices)
+    corpusmenu.add_command(label='Save corpus', command=app.save_corpus)
     #corpusmenu.add_command(label='Choose built-in corpus...', command=app.choose_corpus)
     #corpusmenu.add_command(label='Use custom corpus...', command=app.choose_custom_corpus)
     #corpusmenu.add_command(label='Create corpus from text...', command=app.corpus_from_text)
-    corpusmenu.add_command(label='Export as text file (use with spreadsheets etc.)...', command=app.export_to_text_file)
+    corpusmenu.add_command(label='Export corpus as text file (use with spreadsheets etc.)...', command=app.export_corpus_to_text_file)
+    corpusmenu.add_command(label='Export feature system as text file...', command=app.export_feature_matrix_to_text_file)
     corpusmenu.add_command(label="Quit", command=app.quit, accelerator='Ctrl+Q')
     menubar.add_cascade(label="Corpus", menu=corpusmenu)
 
@@ -693,9 +566,9 @@ def make_menus(root,app):
     optionmenu.add_command(label='View/change feature system...', command=app.show_feature_system)
     optionmenu.add_command(label='Add Tier...', command=app.create_tier)
     optionmenu.add_command(label='Remove Tier...', command=app.destroy_tier)
-    optionmenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings, command=app.change_warnings)
+    optionmenu.add_checkbutton(label='Show warnings', onvalue=True, offvalue=False, variable=app.show_warnings)
+    optionmenu.add_checkbutton(label='Show tooltips', onvalue=True, offvalue=False, variable=app.show_tooltips)
     menubar.add_cascade(label='Options', menu=optionmenu)
-    optionmenu.invoke(4)#start with the checkmark for the 'show warning' option turned on
 
     calcmenu = Menu(menubar, tearoff=0)
     calcmenu.add_command(label='Calculate string similarity...', command=app.string_similarity)
@@ -710,4 +583,3 @@ def make_menus(root,app):
     helpmenu.add_command(label="About...", command=app.donothing)
     menubar.add_cascade(label="Help", menu=helpmenu)
     root.config(menu=menubar)
-

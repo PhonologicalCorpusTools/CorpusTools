@@ -49,22 +49,20 @@ class Freqor(object):
             The frequency of alternation of two sounds in a given corpus
         """
 
-        print('Gathering Lists of Words with sounds')
+        #print('Gathering Lists of Words with sounds')
         list_s1, list_s2 = self.get_lists(s1, s2, string_type)
-        print('Number of words with sound 1: ' + str(len(list_s1)))
-        print('Number of words with sound 2: ' + str(len(list_s2)))
+        #print('Number of words with sound 1: ' + str(len(list_s1)))
+        #print('Number of words with sound 2: ' + str(len(list_s2)))
 
         start_time = time.time()
-        with open('temp_file.txt', mode='w', encoding='utf-8') as outf:
-            for word_s1 in list_s1:
-                for word_s2 in list_s2:
-                    outf.write('{}\t{}\r\n'.format(word_s1, word_s2))
-        end_time = time.time()
-        print('File creation time: ' + str(end_time-start_time))
-
-        related_list = string_similarity.string_similarity_pairs('iphod', relator_type, string_type, count_what, 'temp_file.txt', 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
-        #os.remove('temp_file.txt')
-        print(len(related_list))
+        comparisons = list()
+        
+        
+        for word_s1 in list_s1:
+            for word_s2 in list_s2:
+                    comparisons.append( (word_s1, word_s2) )
+        
+        related_list = string_similarity.string_similarity_pairs('iphod', relator_type, string_type, count_what, comparisons, 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
         all_words, words_with_alt = list_s1.union(list_s2), set()
 
         #Remove minimal pairs if necessary
@@ -109,9 +107,6 @@ class Freqor(object):
 
                 end_time = time.time()
                 freq_of_alt = len(words_with_alt)/len(all_words)
-                print('Total number of words:' + str(len(all_words)))
-                print('Total words with alternation:' + str(len(words_with_alt)))
-                print('The frequency of alternation is: ' + str(freq_of_alt))
 
 
                 outf2.write('\r\nStats\r\n------\r\n')
@@ -121,7 +116,7 @@ class Freqor(object):
                 outf2.write('total_words\t{}\r\n'.format(len(all_words)))
                 outf2.write('total_words_alter\t{}\r\n'.format(len(words_with_alt)))
                 outf2.write('freq_of_alter\t{}\r\n'.format(freq_of_alt))
-                return freq_of_alt
+                return len(all_words), len(words_with_alt), freq_of_alt
 
     def get_lists(self, s1, s2, string):
         """Given two sounds, returns list of Words from the current corpus that have such sounds
