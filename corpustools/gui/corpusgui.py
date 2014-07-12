@@ -28,6 +28,12 @@ def get_systems_list():
     systems = [x.split('.')[0] for x in os.listdir(system_dir)]
     return systems
 
+def corpus_name_to_path(name):
+    return os.path.join(config['storage']['directory'],'CORPUS',name+'.corpus')
+
+def system_name_to_path(name):
+    return os.path.join(config['storage']['directory'],'FEATURE',name+'.feature')
+
 class DownloadCorpusWindow(Toplevel):
     """
     Window for downloading corpora
@@ -60,7 +66,7 @@ class DownloadCorpusWindow(Toplevel):
 
     def confirm_download(self):
         corpus_name = self.corpus_button_var.get()
-        path = os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus')
+        path = corpus_name_to_path(corpus_name)
         if corpus_name in get_corpora_list():
             carry_on = MessageBox.askyesno(message=(
                 'This corpus is already available locally. Would you like to redownload it?'))
@@ -202,13 +208,11 @@ class CorpusFromTextWindow(Toplevel):
         corpus_name = os.path.split(source_path)[-1].split('.')[0]
         feature_system = self.new_corpus_feature_system_var.get()
         if feature_system:
-            feature_system = os.path.join(config['storage']['directory'],
-                                                'FEATURE',
-                                                feature_system+'.feature')
+            feature_system = system_name_to_path(feature_system)
 
         corpus,transcription_errors = load_corpus_text(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
         self.finalize_corpus(corpus,transcription_errors)
-        save_binary(corpus, os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
+        save_binary(corpus, corpus_name_to_path(corpus_name))
         
         self.destroy()
 
@@ -320,9 +324,7 @@ class CustomCorpusWindow(Toplevel):
     def custom_corpus_thread(self, corpus_name, filename, delimiter, trans_delimiter):
         feature_system = self.new_corpus_feature_system_var.get()
         if feature_system:
-            feature_system = os.path.join(config['storage']['directory'],
-                                                'FEATURE',
-                                                feature_system+'.feature')
+            feature_system = system_name_to_path(feature_system)
         try:
             corpus, errors = load_corpus_csv(corpus_name, filename, delimiter, trans_delimiter,feature_system)
         except DelimiterError:
@@ -331,7 +333,7 @@ class CustomCorpusWindow(Toplevel):
             MessageBox.showerror(message='Could not parse the corpus.\n\Check that the delimiter you typed in matches the one used in the file.')
             return
         self.finalize_corpus(corpus,errors)
-        save_binary(corpus,os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
+        save_binary(corpus,corpus_name_to_path(corpus_name))
         self.destroy()
 
 
@@ -394,7 +396,7 @@ class CorpusManager(object):
                 'This will irreversibly delete the {} corpus.  Are you sure?'.format(corpus_name)))
             if not carry_on:
                 return
-            os.remove(os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
+            os.remove(corpus_name_to_path(corpus_name))
             self.get_available_corpora()
         except TclError:
             pass
@@ -402,7 +404,9 @@ class CorpusManager(object):
     def load_corpus(self):
         try:
             corpus_name = self.available_corpora.get(self.available_corpora.curselection())
-            self.corpus = load_binary(os.path.join(config['storage']['directory'],'CORPUS',corpus_name+'.corpus'))
+            self.corpus = load_binary(corpus_name_to_path(corpus_name))
+            if self.corpus.has_feature_matrix() and self.corpus.specifier.name not in get_systems_list():
+                save_binary(self.corpus.specifier,system_name_to_path(self.corpus.specifier.name))
             self.top.destroy()
         except TclError:
             pass
@@ -463,7 +467,7 @@ class DownloadFeatureMatrixWindow(Toplevel):
 
     def confirm_download(self):
         system_name = self.system_button_var.get()
-        path = os.path.join(config['storage']['directory'],'FEATURE',system_name+'.feature')
+        path = system_name_to_path('FEATURE',system_name)
         if system_name in get_systems_list():
             carry_on = MessageBox.askyesno(message=(
                 'This system is already available locally. Would you like to redownload it?'))
@@ -530,7 +534,7 @@ class FeatureSystemManager(object):
                 'This will irreversibly delete the {} feature system.  Are you sure?'.format(name)))
             if not carry_on:
                 return
-            os.remove(os.path.join(config['storage']['directory'],'FEATURE',name+'.feature'))
+            os.remove(system_name_to_path(name))
             self.get_available_systems()
         except TclError:
             pass
@@ -617,7 +621,7 @@ class CustomFeatureMatrixWindow(Toplevel):
         except KeyError:
             MessageBox.showerror(message='Could not find a \'symbol\' column.  Please make sure that the segment symbols are in a column named \'symbol\'.')
             return
-        save_binary(system,os.path.join(config['storage']['directory'],'FEATURE',name+'.feature'))
+        save_binary(system,system_name_to_path(name))
         self.destroy()
 
 class EditSegmentWindow(object):
@@ -829,7 +833,7 @@ class EditFeatureSystemWindow(object):
     def change_feature_system(self, event = None):
         feature_system = self.feature_system_option_menu_var.get()
         if self.feature_matrix is None or feature_system != self.feature_matrix.get_name():
-            self.feature_matrix = load_binary(os.path.join(config['storage']['directory'],'FEATURE',feature_system+'.feature'))
+            self.feature_matrix = load_binary(system_name_to_path(feature_system))
         for child in self.feature_frame.winfo_children():
             child.destroy()
         headers = ['symbol'] + self.feature_matrix.get_feature_list()
