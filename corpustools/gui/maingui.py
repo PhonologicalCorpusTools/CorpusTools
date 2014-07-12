@@ -53,7 +53,7 @@ from corpustools.gui.corpusgui import (CorpusManager, FeatureSystemManager,
 
 class GUI(Toplevel):
 
-    def __init__(self,master,base_path):
+    def __init__(self,master):
         self.show_warnings = BooleanVar()
         self.show_tooltips = BooleanVar()
         

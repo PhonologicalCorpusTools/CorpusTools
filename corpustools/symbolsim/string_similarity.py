@@ -138,67 +138,99 @@ def string_similarity_pairs(corpus_name, relator_type, string_type, count_what, 
     """
 
     relator = relator_type.lower()
-    with open(input_data, mode='r', encoding='utf-8') as inf:
-        lines = inf.readlines()
-
+    if isinstance(input_data, str):
+        with open(input_data, mode='r', encoding='utf-8') as inf:
+            lines = inf.readlines()
+    
         if relator == 'khorsi':
             relator = khorsi.Relator(corpus_name, ready_made_corpus)
             freq_base = relator.make_freq_base(string_type)
             related_data = list()
-
             for line in lines:
                 w1, w2 = line.split('\t')
                 w1, w2 = re.sub(r'\s+', '', w1), re.sub(r'\s+', '', w2)
                 score = relator.khorsi(w1, w2, freq_base, string_type)
                 w1, w2 = relator.get_word_string_type(w1, w2, string_type)
                 related_data.append( (w1, w2, score) )
-
+    
         elif relator == 'edit_distance':
             relator = edit_distance.Relator(corpus_name, ready_made_corpus)
             related_data = list()
-
             for line in lines:
                 w1, w2 = line.split('\t')
                 w1, w2 = re.sub(r'\s+', '', w1), re.sub(r'\s+', '', w2)
                 score = relator.edit_distance(w1, w2, string_type)
                 w1, w2 = relator.get_word_string_type(w1, w2, string_type)
                 related_data.append( (w1, w2, score) )
+                
         elif relator == 'phono_edit_distance':
             relator = phono_edit_distance.Relator(corpus_name, ready_made_corpus)
             related_data = list()
-
             for line in lines:
                 w1, w2 = line.split('\t')
                 w1, w2 = re.sub(r'\s+', '', w1), re.sub(r'\s+', '', w2)
                 score = relator.phono_edit_distance(w1, w2, string_type)
                 w1, w2 = relator.get_word_string_type(w1, w2, string_type)
                 related_data.append( (w1, w2, score) )
+                
+        elif relator == 'axb':
+            relator = axb.Relator(corpus_name)
+        else:
+            print('Relator type not valid')
+            return
+        
+    else:
+        if relator == 'khorsi':
+            relator = khorsi.Relator(corpus_name, ready_made_corpus)
+            freq_base = relator.make_freq_base(string_type)
+            related_data = list()
+    
+            for w1, w2 in input_data:
+                score = relator.khorsi(w1, w2, freq_base, string_type)
+                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
+                related_data.append( (w1, w2, score) )
+    
+        elif relator == 'edit_distance':
+            relator = edit_distance.Relator(corpus_name, ready_made_corpus)
+            related_data = list()
+            for w1, w2 in input_data:
+                score = relator.edit_distance(w1, w2, string_type)
+                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
+                related_data.append( (w1, w2, score) )
+                
+        elif relator == 'phono_edit_distance':
+            relator = phono_edit_distance.Relator(corpus_name, ready_made_corpus)
+            related_data = list()
+            for w1, w2 in input_data:
+                score = relator.phono_edit_distance(w1, w2, string_type)
+                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
+                related_data.append( (w1, w2, score) )
+                
         elif relator == 'axb':
             relator = axb.Relator(corpus_name)
         else:
             print('Relator type not valid')
             return
 
-
-        filtered_data = list()
-        for w1, w2, score in related_data:
-            if score == None: #A relatedness score is unavailable
-                continue
-            elif min_rel != None:
-                if max_rel != None:
-                    if min_rel <= score <= max_rel:
-                        filtered_data.append( (w1, w2, score) )
-                elif min_rel <= score:
+    filtered_data = list()
+    for w1, w2, score in related_data:
+        if score == None: #A relatedness score is unavailable
+            continue
+        elif min_rel != None:
+            if max_rel != None:
+                if min_rel <= score <= max_rel:
                     filtered_data.append( (w1, w2, score) )
-            elif max_rel != None and score <= max_rel:
+            elif min_rel <= score:
                 filtered_data.append( (w1, w2, score) )
-            else:
-                filtered_data.append( (w1, w2, score) )
-
-        if output_filename == 'return_data':
-            return filtered_data
+        elif max_rel != None and score <= max_rel:
+            filtered_data.append( (w1, w2, score) )
         else:
-            print_pairs_results(output_filename, filtered_data)
+            filtered_data.append( (w1, w2, score) )
+
+    if output_filename == 'return_data':
+        return filtered_data
+    else:
+        print_pairs_results(output_filename, filtered_data)
 
 def print_pairs_results(output_filename, related_data_return):
     with open(output_filename, mode='w', encoding='utf-8') as outf:
