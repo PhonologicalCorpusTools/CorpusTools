@@ -16,7 +16,7 @@ from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                     export_corpus_csv, export_feature_matrix_csv,
                                     load_feature_matrix_csv,DelimiterError)
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
-                    ResultsWindow, MultiListbox, ThreadedTask, config, ERROR_DIR)
+                    ResultsWindow, TableView, ThreadedTask, config, ERROR_DIR)
 
 def get_corpora_list():
     corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
@@ -723,13 +723,14 @@ class EditFeatureSystemWindow(object):
         self.corpus = corpus
         self.feature_matrix = self.corpus.get_feature_matrix()
         self.top = Toplevel()
+        self.top.geometry("%dx%d%+d%+d" % (860,600,250,250))
         self.top.title('Edit feature system')
 
         self.feature_frame = Frame(self.top)
-        self.feature_frame.grid()
+        self.feature_frame.pack(side='top',expand=True,fill='both')
         
         option_frame = Frame(self.top)
-        option_frame.grid()
+        option_frame.pack()
         change_frame = LabelFrame(option_frame,text='Change feature systems')
         feature_menu = OptionMenu(change_frame,#parent
                                 self.feature_system_option_menu_var,#variable
@@ -833,15 +834,16 @@ class EditFeatureSystemWindow(object):
         for child in self.feature_frame.winfo_children():
             child.destroy()
         headers = ['symbol'] + self.feature_matrix.get_feature_list()
-        self.feature_chart = MultiListbox(self.feature_frame, [(h,5) for h in headers])
+        self.feature_chart = TableView(self.feature_frame, [(h,5) for h in headers])
         for seg in self.feature_matrix.get_segments():
             #Workaround, grr
             if seg in ['#','']: #wtf are these segments?
                 continue
-            self.feature_chart.insert(END,self.feature_matrix.seg_to_feat_line(seg))
+            self.feature_chart.append(self.feature_matrix.seg_to_feat_line(seg))
 
 
-        self.feature_chart.grid()
+        self.feature_chart.pack(expand=True,fill='both')
+        
         
     
     def confirm_change_feature_system(self):

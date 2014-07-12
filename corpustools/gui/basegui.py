@@ -108,8 +108,8 @@ class ResultsWindow(Toplevel):
 
         self.title(title)
 
-        self.as_results_table = MultiListbox(self,headerline)
-        self.as_results_table.grid()
+        self._table = TableView(self,headerline)
+        self._table.pack(expand=True,fill='both')
         if delete_method is not None:
             self.delete_results = delete_method
         self.protocol('WM_DELETE_WINDOW', self.delete_results)
@@ -119,7 +119,7 @@ class ResultsWindow(Toplevel):
         print_button.grid(row=0, column=0)
         close_button = Button(button_frame, text='Close this table', command=self.delete_results)
         close_button.grid(row=0, column=1)
-        button_frame.grid()
+        button_frame.pack(side= 'bottom')
 
 
     def delete_results(self):
@@ -130,12 +130,12 @@ class ResultsWindow(Toplevel):
         if not filename.endswith('.txt'):
             filename += '.txt'
         with open(filename, mode='w', encoding='utf-8') as f:
-            print('\t'.join([h for h in self.as_results_table.headers]), file=f)
-            for result in zip(*self.as_results_table.get(0)):
+            print('\t'.join([h for h in self._table.headers]), file=f)
+            for result in zip(*self._table.get(0)):
                 print('\t'.join(str(r) for r in result)+'\r\n', file=f)
 
     def update(self, resultline):
-        self.as_results_table.insert(END,resultline)
+        self._table.append(resultline)
 
 
 class ThreadedTask(threading.Thread):
@@ -151,15 +151,15 @@ class MultiListbox(Frame):
         #Compatability check
         if isinstance(columns[0],tuple):
             columns = [x[0] for x in columns]
-        self.headers = tuple(columns)
+        self._headers = tuple(columns)
         self._labels = []
         self._lbs = []
         Frame.__init__(self, master)
         
         self.grid_rowconfigure(1,weight=1)
         
-        for i, h in enumerate(self.headers):
-            self.grid_columnconfigure(i,weight=1)
+        for i, h in enumerate(self._headers):
+            self.grid_columnconfigure(i,minsize=len(h),weight=1)
             l = Label(self, text=h, borderwidth=1, relief=RAISED)
             self._labels.append(l)
             l.grid(column = i, row=0, sticky='news', padx=0, pady=0)
@@ -196,6 +196,14 @@ class MultiListbox(Frame):
         e.g., when defining callbacks for bound events.
         """
         return tuple(self._labels)
+    
+    @property
+    def headers(self):
+        """
+        A tuple containing the names of the columns used by this
+        multi-column listbox.
+        """
+        return self._headers
     
     @property   
     def listboxes(self):
@@ -277,7 +285,7 @@ class MultiListbox(Frame):
         x1 = event.x + event.widget.winfo_x()
         x2 = lb.winfo_x() + lb.winfo_width()
 
-        lb['width'] = max(3, lb['width'] + int((x1-x2)/charwidth))
+        lb['width'] = max(5, lb['width'] + int((x1-x2)/charwidth))
 
     def _resize_column_buttonrelease_cb(self, event):
         event.widget.unbind('<ButtonRelease-%d>' % event.num)
@@ -361,7 +369,6 @@ class TableView(object):
             self._rows = [[v for v in row] for row in rows]
             
         self._mlistbox = MultiListbox(self._frame, column_names)
-        self._mlistbox.pack(side='left',expand=True, fill='both')
         
         
         sb = Scrollbar(self._frame, orient='vertical',
@@ -371,12 +378,18 @@ class TableView(object):
         #    listbox['yscrollcommand'] = sb.set
         sb.pack(side='right', fill='y')
         self._scrollbar = sb
+        self._mlistbox.pack(side='left',expand=True, fill='both')
         
         self._sortkey = None
         for i, l in enumerate(self._mlistbox.column_labels):
             l.bind('<Button-1>', self._sort)
         
         self._populate()
+    
+    @property
+    def headers(self):
+        """A list of the names of the columns in this table."""
+        return self._mlistbox.headers
     
     def insert(self, row_index, rowvalue):
         """
@@ -388,7 +401,6 @@ class TableView(object):
         :param rowvalue: A tuple of cell values, one for each column
             in the new row.
         """
-        self._checkrow(rowvalue)
         self._rows.insert(row_index, rowvalue)
         self._mlistbox.insert(row_index, rowvalue)
     
