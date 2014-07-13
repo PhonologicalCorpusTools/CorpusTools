@@ -260,24 +260,33 @@ class Relator(object):
     
     def get_word_string_type(self, w1, w2, string_type):
         if string_type == 'spelling':
-            return w1, w2
-        elif string_type == 'transcription':
             try:
-                word1 = self.corpus.find(w1)
-                w1_trans= getattr(word1, string_type)
+                w1 = getattr(w1, string_type)
+                w2 = getattr(w2, string_type)
+                return w1, w2
+            except:
+                return w1, w2
+        else:
+            try:
+                w1_trans = getattr(w1, string_type)
+                w2_trans = getattr(w2, string_type)
                 w1 = ''.join([seg.symbol for seg in w1_trans])
-            except: #No transcription available
-                pass
-                
-            try:
-                word2 = self.corpus.find(w2)
-                w2_trans = getattr(word2, string_type)
                 w2 = ''.join([seg.symbol for seg in w2_trans])
-            except: # No transcription available
-                pass
-                
+                return w1, w2
+            except:
+                try:
+                    word1 = self.corpus.find(w1)
+                    w1_trans= getattr(word1, string_type)
+                    w1 = ''.join([seg.symbol for seg in w1_trans])
+                except: #No transcription available
+                    w1 = 'N/A'
+                try:
+                    word2 = self.corpus.find(w2)
+                    w2_trans = getattr(word2, string_type)
+                    w2 = ''.join([seg.symbol for seg in w2_trans])
+                except: # No transcription available
+                    w2 = 'N/A'                
             return w1, w2
-            
     
     def __init__(self,corpus_name=None, ready_made_corpus=None):
         """Initialize a Relator object by building a corpus or utilizing an already make corpus
