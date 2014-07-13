@@ -56,7 +56,15 @@ class Freqor(object):
             for word_s2 in list_s2:
                     comparisons.append( (word_s1, word_s2) )
         
-        related_list = string_similarity.string_similarity_pairs('iphod', relator_type, string_type, count_what, comparisons, 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
+        #Default values for relatedness:
+        if relator_type == 'khorsi' and min_rel is None:
+            min_rel = -15
+        elif relator_type == 'edit_distance' and max_rel is None:
+            max_rel = 8
+        elif relator_type == 'phono_edit_distance' and max_rel is None:
+            max_rel = 8
+        
+        related_list = string_similarity.string_similarity_pairs('', relator_type, string_type, count_what, comparisons, 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
         all_words, words_with_alt = set(), set()
 
         #Remove minimal pairs if necessary
