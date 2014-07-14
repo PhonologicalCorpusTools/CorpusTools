@@ -327,7 +327,7 @@ class PDFunction(FunctionWindow):
 
         previous_step = Button(self.button_frame, text='Previous step', command=self.show_segment_screen)
         previous_step.grid(sticky=W)
-        cancel_button = Button(self.button_frame, text='Cancel', command=self.destroy)
+        cancel_button = Button(self.button_frame, text='Cancel', command=self.cancel_prod)
         cancel_button.grid(sticky=W)
 
         self.button_frame.grid()
@@ -535,7 +535,7 @@ class PDFunction(FunctionWindow):
         #at this point there are either no problems
         #or else the user wants to see the results anyway
 
-        results = PD.calc_prod(self.corpus.name, self.entropy_tier_var.get(), seg1, seg2, env_matches)
+        results = PD.calc_prod(self.corpus.name, self.entropy_tier_var.get(), seg1, seg2, env_matches, type_or_token)
         self.update_prod_results(results)
 
     def about_prod(self):
