@@ -36,8 +36,6 @@ class Aligner(object):
 
 
     def make_similarity_matrix(self, seq1=None, seq2=None):
-        # print(seq1)
-        # print(seq2)
 
         d = []
 
@@ -89,7 +87,6 @@ class Aligner(object):
 
 
     def compare_segments(self, segment1, segment2, underspec_cost=.25):
-        # print(self.features['t'])
 
         def check_feature_difference(val1, val2):  
             if val1 == val2:
@@ -112,32 +109,23 @@ class Aligner(object):
             if segment1 == 'empty':
                 fs2 = self.features[segment2symbol]
                 return (sum(check_feature_difference('0', 
-                            f.sign) for f in fs2) * self.ins_penalty)    # or should this be addition?
+                            f.sign) for f in fs2) * self.ins_penalty)
             elif segment2 == 'empty':
                 fs1 = self.features[segment1symbol]
-                # print(fs1)
-                # print(fs1[0])
                 return (sum(check_feature_difference(f.sign, 
                         '0') for f in fs1) * 
-                        self.del_penalty)    # or should this be addition?
+                        self.del_penalty)
             else:
                 fs1 = self.features[segment1symbol]
                 fs2 = self.features[segment2symbol]
-                # print(segment1)
-                # print(fs1)
-                # print(segment2)
-                # print(fs2)
-                # for i in range(len(fs1)):
-                #     print(fs1[i])
-                #     print(fs2[i])
-                return (sum(check_feature_difference(fs1[i].sign, fs2[i].sign) for i in range(len(fs1))) * self.sub_penalty)    # or should this be addition?
+                return (sum(check_feature_difference(fs1[i].sign, fs2[i].sign) for i in range(len(fs1))) * self.sub_penalty)
         else:
             if segment1 == 'empty':
                 return self.ins_penalty * underspec_cost
             elif segment2 == 'empty':
                 return self.del_penalty * underspec_cost
             else:
-                return int(segment1!=segment2) * self.sub_penalty   # or should this be addition (with, in this case, a boolean condition)?
+                return int(segment1!=segment2) * self.sub_penalty
 
 
     def generate_alignment(self, seq1, seq2, d):
