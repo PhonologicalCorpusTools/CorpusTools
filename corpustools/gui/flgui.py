@@ -240,7 +240,7 @@ class FLFunction(FunctionWindow):
                                     'segment_pairs':seg_pairs,
                                     'func_type':'entropy',
                                     'frequency_cutoff':frequency_cutoff,
-                                    'type_or_token':'type',
+                                    # 'type_or_token':'type',
                                     'threaded_q':self.fl_q})
 
         functional_load_thread.start()

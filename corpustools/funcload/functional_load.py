@@ -124,6 +124,7 @@ def collapse_segpairs_fl(**kwargs):
     frequency_cutoff = kwargs.get('frequency_cutoff')
     relative_count = kwargs.get('relative_count')
     distinguish_homophones = kwargs.get('distinguish_homophones')
+    type_or_token = kwargs.get('type_or_token')
     q = kwargs.get('threaded_q')
     if func_type == 'min_pairs':
         fl = minpair_fl(corpus, segment_pairs, frequency_cutoff, relative_count, distinguish_homophones)
@@ -140,10 +141,12 @@ def individual_segpairs_fl(**kwargs):
     frequency_cutoff = kwargs.get('frequency_cutoff')
     relative_count = kwargs.get('relative_count')
     distinguish_homophones = kwargs.get('distinguish_homophones')
+    type_or_token = kwargs.get('type_or_token')
     q = kwargs.get('threaded_q')
 
     results = list()
     for pair in segment_pairs:
+        print(pair)
         if func_type == 'min_pairs':
             fl = minpair_fl(corpus, pair, frequency_cutoff, relative_count, distinguish_homophones)
         elif func_type == 'entropy':
