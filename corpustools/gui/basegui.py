@@ -147,7 +147,7 @@ class ThreadedTask(threading.Thread):
         self.queue = queue
 
 class MultiListbox(Frame):
-    def __init__(self, master, columns):
+    def __init__(self, master, columns,main_cols=[]):
         #Compatability check
         if isinstance(columns[0],tuple):
             columns = [x[0] for x in columns]
@@ -159,14 +159,21 @@ class MultiListbox(Frame):
         self.grid_rowconfigure(1,weight=1)
         
         for i, h in enumerate(self._headers):
-            self.grid_columnconfigure(i,minsize=len(h),weight=1)
-            l = Label(self, text=h, borderwidth=1, relief=RAISED)
+            if i not in main_cols:
+                self.grid_columnconfigure(i,minsize=len(h),weight=1)
+                l = Label(self, text=h, borderwidth=1, relief=RAISED)
+                lb = Listbox(self, borderwidth=1, selectborderwidth=0,relief=FLAT, exportselection=False)
+            
+            else:
+                self.grid_columnconfigure(i,minsize=len(h),weight=0)
+                l = Label(self, text=h, borderwidth=1, relief=RAISED,width=len(h))
+                lb = Listbox(self, borderwidth=1,width=len(h), selectborderwidth=0,relief=FLAT, exportselection=False)
+            
             self._labels.append(l)
             l.grid(column = i, row=0, sticky='news', padx=0, pady=0)
             l.column_index = i
             #l.bind('<Button-1>', self._resize_column)
             
-            lb = Listbox(self, borderwidth=1, selectborderwidth=0,relief=FLAT, exportselection=False)
             self._lbs.append(lb)
             lb.grid(column=i, row=1, sticky='news', padx=0, pady=0)
             lb.column_index = i
@@ -279,12 +286,12 @@ class MultiListbox(Frame):
 
     def _resize_column_motion_cb(self, event):
         lb = self._lbs[self._resize_column_index]
-        charwidth = lb.winfo_width() / float(lb['width'])
+        charwidth = lb.winfo_width() / lb['width']
 
         x1 = event.x + event.widget.winfo_x()
         x2 = lb.winfo_x() + lb.winfo_width()
 
-        lb['width'] = max(5, lb['width'] + int((x1-x2)/charwidth))
+        lb['width'] = max(3, lb['width'] + int((x1-x2)/charwidth))
 
     def _resize_column_buttonrelease_cb(self, event):
         event.widget.unbind('<ButtonRelease-%d>' % event.num)
@@ -358,16 +365,25 @@ class MultiListbox(Frame):
 
 
 class TableView(object):
-    def __init__(self, master, column_names, rows = None):
+    def __init__(self, master, column_names, rows = None, main_cols = []):
+        #Compatability check
+        if isinstance(column_names[0],tuple):
+            column_names = [x[0] for x in column_names]
         self._num_columns = len(column_names)
+        self._column_mapping = {x:i for i,x in enumerate(column_names)}
         self._frame = Frame(master)
         
         if rows is None: 
             self._rows = []
         else: 
             self._rows = [[v for v in row] for row in rows]
+        self._all_rows = self._rows
             
-        self._mlistbox = MultiListbox(self._frame, column_names)
+        try:
+            main_cols = [self._column_mapping[x] for x in main_cols]
+        except KeyError:
+            main_cols = []
+        self._mlistbox = MultiListbox(self._frame, column_names,main_cols)
         
         
         sb = Scrollbar(self._frame, orient='vertical',
@@ -543,6 +559,17 @@ class TableView(object):
         """:see: ``MultiListbox.select()``"""
         self._mlistbox.select(index, delta, see)
     
+    def filter_by_in(self, **kwargs):
+        for k,v in kwargs.items():
+            try:
+                c = self._column_mapping[k]
+            except KeyError:
+                continue
+            if v:
+                self._rows = [x for x in self._all_rows if x[c] in v]
+            else:
+                self._rows = self._all_rows
+        self._populate()
     
     def sort_by(self, column_index): 
         
@@ -566,13 +593,15 @@ class TableView(object):
 
         # If they click on the far-left of far-right of a column's
         # label, then resize rather than sorting.
-        if self._mlistbox._resize_column(event):
-            return 'continue'
+        #if self._mlistbox._resize_column(event):
+        #    return 'continue'
 
         # Otherwise, sort.
-        else:
-            self.sort_by(column_index)
-            return 'continue'
+        #else:
+        #    self.sort_by(column_index)
+        #    return 'continue'
+        self.sort_by(column_index)
+        return 'continue'
 
 class ToolTip:
     """

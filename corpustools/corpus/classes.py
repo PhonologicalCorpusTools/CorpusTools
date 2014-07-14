@@ -154,7 +154,7 @@ class FeatureMatrix(object):
                     if f == f2.name:
                         break
                 else:
-                    self.matrix[s][v].append(Feature(default_value+f))
+                    self.matrix[s].append(Feature(default_value+f))
     
     def get_name(self):
         """
@@ -207,7 +207,7 @@ class FeatureMatrix(object):
         
         """
         
-        self.features.append(feature)
+        self.features.update({feature})
         self.validate()
     
     def get_segments(self):
