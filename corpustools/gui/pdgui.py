@@ -128,7 +128,7 @@ class PDFunction(FunctionWindow):
         tier_options_menu = OptionMenu(tier_frame,self.entropy_tier_var,*tier_options)
         tier_options_menu.grid()
         tier_frame.grid(row=0,column=0)
-        
+
         self.entropy_tier_var.set(tier_options[0])
 
         typetoken_frame = LabelFrame(self.option_frame, text='Type or Token')
@@ -187,6 +187,10 @@ class PDFunction(FunctionWindow):
 
         if not (seg1 and seg2):
             MessageBox.showerror(message='Please ensure you have selected 2 segments')
+            return
+
+        if not (self.entropy_tier_var.get()):
+            MessageBox.showerror(message='Please select a tier')
             return
 
         self.remove_frames()
@@ -311,7 +315,7 @@ class PDFunction(FunctionWindow):
         self.selected_envs_frame.grid(row=0, column=1)
 
         #BUTTON FRAME STARTS HERE
-        self.button_frame = Frame(self)
+        self.button_frame = LabelFrame(self.selected_envs_frame, text='Calculation options')
 
         confirm_envs = Button(self.button_frame, text='Calculate entropy in selected environments and add to results table', command=self.calculate_prod)
         confirm_envs.grid(sticky=W)
@@ -323,17 +327,17 @@ class PDFunction(FunctionWindow):
 
         previous_step = Button(self.button_frame, text='Previous step', command=self.show_segment_screen)
         previous_step.grid(sticky=W)
-        cancel_button = Button(self.button_frame, text='Cancel', command=self.destroy)
+        cancel_button = Button(self.button_frame, text='Cancel', command=self.cancel_prod)
         cancel_button.grid(sticky=W)
 
-        self.button_frame.grid(row=0,column=2)
+        self.button_frame.grid()
 
 
 
     def calculate_prod_all_envs(self):
         if self.selected_envs_list.size() > 0:
             carry_on = MessageBox.askokcancel(message=('You have already selected some environments.\n'
-                                        ' Click \'OK\' to do a calculation of entorpy across ALL environments.\n'
+                                        ' Click \'OK\' to do a calculation of entropy across ALL environments.\n'
                                         ' Click \'Cancel\' to go back and use your specific environments.\n'))
             if not carry_on:
                 return
@@ -352,7 +356,8 @@ class PDFunction(FunctionWindow):
             str(seg1_count),
             str(seg2_count),
             str(seg1_count+seg2_count),
-            str(H)]]
+            str(H),
+            type_or_token]]
         self.update_prod_results(results)
 
 
@@ -530,7 +535,7 @@ class PDFunction(FunctionWindow):
         #at this point there are either no problems
         #or else the user wants to see the results anyway
 
-        results = PD.calc_prod(self.corpus.name, self.entropy_tier_var.get(), seg1, seg2, env_matches)
+        results = PD.calc_prod(self.corpus.name, self.entropy_tier_var.get(), seg1, seg2, env_matches, type_or_token)
         self.update_prod_results(results)
 
     def about_prod(self):
@@ -553,13 +558,15 @@ class PDFunction(FunctionWindow):
                 ('Frequency of Sound1', 10),
                 ('Frequency of Sound2', 10),
                 ('Total count',10),
-                ('Entropy',10)]
+                ('Entropy',10),
+                ('Type or token', 10)]
         title = 'Predictability of distribution results'
         self.prod_results = ResultsWindow(title,header,delete_method=self.destroy_prod_results)
 
     def update_prod_results(self, results):
         if self.prod_results is None:
             self.create_prod_results()
+            self.start_new_envs.config(state=ACTIVE)
         for result in results:
             self.prod_results.update(result)
 
@@ -571,5 +578,7 @@ class PDFunction(FunctionWindow):
         try:
             self.prod_results.destroy()
             self.prod_results = None
-        except (TclError, AttributeError):#widgets don't exist anyway
+        except AttributeError:#widgets don't exist anyway
             pass
+
+        self.start_new_envs.config(state=DISABLED)

@@ -183,7 +183,7 @@ def calc_prod_all_envs(seg1_count, seg2_count):
     return H
 
 
-def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches):
+def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
     results = []
     H_dict = dict()
 
@@ -199,7 +199,8 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches):
                     str(sum(env_matches[env][seg1])),
                     str(sum(env_matches[env][seg2])),
                     str(total_tokens),
-                    'N/A']
+                    'N/A',
+                    type_or_token]
             results.append(data)
         else:
             seg1_prob = sum(env_matches[env][seg1])/total_tokens
@@ -218,7 +219,8 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches):
                     str(sum(env_matches[env][seg1])),
                     str(sum(env_matches[env][seg2])),
                     str(total_tokens),
-                    str(H)]
+                    str(H),
+                    type_or_token]
             results.append(data)
 
     total_frequency = sum(value[1] for value in H_dict.values())
@@ -235,6 +237,7 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches):
             str(total_seg1_matches),
             str(total_seg2_matches),
             str(total_seg1_matches+total_seg2_matches),
-            str(weighted_H)]
+            str(weighted_H),
+            type_or_token]
     results.append(data)
     return results

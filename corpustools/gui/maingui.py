@@ -88,9 +88,9 @@ class GUI(Toplevel):
 
         #MAIN SCREEN STUFF
         self.main_screen = Frame(master)
-        self.main_screen.grid()
+        self.main_screen.pack(expand=True,fill='both')
         self.info_frame = Frame(self.main_screen)
-        self.info_frame.grid()
+        self.info_frame.pack()
 
         #self.corpus_table = TableView(self.main_screen)
         #self.corpus_table.grid()
@@ -102,7 +102,7 @@ class GUI(Toplevel):
         feature_info_label = Label(self.info_frame, text='Feature system: No corpus selected')
         feature_info_label.grid()
         self.corpus_frame = Frame(self.main_screen)
-        self.corpus_frame.grid()
+        self.corpus_frame.pack(expand=True,fill='both')
 
         #Splash image at start-up
         #try:
@@ -308,16 +308,13 @@ class GUI(Toplevel):
         #self.corpus_table.load_corpus(self.corpus)
 
         for child in self.corpus_frame.winfo_children():
-            child.grid_forget()
+            child.pack_forget()
         random_word = self.corpus.random_word()
         headers = [d for d in random_word.descriptors if not d is None or not d == '']
-        self.corpus_box = MultiListbox(self.corpus_frame, [(h,10) for h in headers])
+        rows = [[getattr(word,d,'???') for d in word.descriptors] for word in self.corpus.iter_sort()]
+        self.corpus_box = TableView(self.corpus_frame, headers,rows)
         self.update_info_frame()
-        for word in self.corpus.iter_sort():
-            #corpus.iter_sort is a generator that sorts the corpus dictionary
-            #by keys, then yields the values in that order
-            self.corpus_box.insert(END,[getattr(word,d,'???') for d in word.descriptors])
-        self.corpus_box.grid()
+        self.corpus_box.pack(expand=True,fill='both')
 
 
     @check_for_empty_corpus

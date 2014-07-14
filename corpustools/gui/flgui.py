@@ -8,10 +8,11 @@ import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
 
 import queue
+import time
 import corpustools.funcload.functional_load as FL
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, InventoryFrame,
-                    ResultsWindow, ThreadedTask, ToolTip, Toplevel)
+                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip, Toplevel)
 
 
 class FLFunction(FunctionWindow):
@@ -24,12 +25,19 @@ class FLFunction(FunctionWindow):
         self.fl_relative_count_var = StringVar()
         self.fl_seg1_var = StringVar()
         self.fl_seg2_var = StringVar()
+        self.entropy_pairs_var = StringVar()
         self.fl_q = queue.Queue()
-        self.fl_results_table = None
+        self.fl_results = None
         self.fl_type_var = StringVar()
 
         self.title('Functional load')
         ipa_frame = LabelFrame(self, text='Sounds')
+        if self.show_tooltips:
+            ipa_frame_tip = ToolTip(ipa_frame, text=('Add (a) pair(s) of sounds whose contrast to collapse.'
+                                    ' For example, if you\'re interested in the functional load of the [s]'
+                                    ' / [z] contrast, you only need to add that pair. If, though, you\'re'
+                                    ' interested in the functional load of the voicing contrast among obstruents,'
+                                    ' you may need to add (p, b), (t, d), and (k, g).'))
         select_sounds = Button(ipa_frame, text='Add pairs of sounds', command=self.select_sound_pairs)
         select_sounds.grid()
         remove_button = Button(ipa_frame, text='Remove selected sound pair', command=self.remove_sounds)
@@ -41,10 +49,20 @@ class FLFunction(FunctionWindow):
         min_pairs_type = Radiobutton(type_frame, text='Minimal pairs',
                                 variable=self.fl_type_var, value='min_pairs',
                                 command= lambda x=True:self.show_min_pairs_options(x))
+        if self.show_tooltips:
+            min_pairs_tip = ToolTip(min_pairs_type, text=('Calculate the functional load of the'
+                        ' contrast between two sets of segments as a count of minimal pairs'
+                        ' distinguished by paired segments in the set (e.g. +/-voice obstruent pairs).'
+                        ' This is the method used by Wedel et al. (2013).'))
         min_pairs_type.grid(sticky=W)
         h_type = Radiobutton(type_frame, text='Change in Entropy',
                             variable=self.fl_type_var, value='h',
                             command= lambda x=False:self.show_min_pairs_options(x))
+        if self.show_tooltips:
+            h_type_tip = ToolTip(h_type, text=('Calculate the functional load of the contrast '
+                            'between between two sets of segments as the decrease in corpus'
+                            ' entropy caused by a merger of paired segments in the set '
+                            '(e.g. +/-voice obstruent pairs).'))
         h_type.grid(sticky=W)
 
 
@@ -57,8 +75,23 @@ class FLFunction(FunctionWindow):
         fl_frequency_cutoff_entry.grid(row=0, column=1)
         min_freq_frame.grid(sticky=W)
 
-        self.fl_min_pairs_option_frame = LabelFrame(self, text='Options')
+        self.fl_option_frame = LabelFrame(self, text='Options')
+        seg_pairing_frame = LabelFrame(self.fl_option_frame, text='How to handle multiple segment pairs')
+        pairs_together = Radiobutton(seg_pairing_frame, text='Calculate functional load of all segment pairs together',
+                                    variable=self.entropy_pairs_var, value='together')
+        pairs_together.grid(sticky=W)
+        pairs_individually = Radiobutton(seg_pairing_frame, text='Calculate functional load of each segment pair individually',
+                                    variable=self.entropy_pairs_var, value='individual')
+        pairs_individually.grid(sticky=W)
+        pairs_together.select()
+        seg_pairing_frame.grid()
+
+        self.fl_min_pairs_option_frame = LabelFrame(self, text='Minimal pair options')
         relative_count_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Relative count?')
+        if self.show_tooltips:
+            options_tip = ToolTip(relative_count_frame, text=('The raw count of minimal pairs will'
+                            ' be divided by the number of words that include any of the target segments '
+                            'present in the list at the left.'))
         relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
                                     value='relative', variable=self.fl_relative_count_var)
         relative_count.grid(sticky=W)
@@ -71,17 +104,27 @@ class FLFunction(FunctionWindow):
         homophones_frame = LabelFrame(self.fl_min_pairs_option_frame, text='What to do with homophones?')
         count_homophones_button = Radiobutton(homophones_frame, text='Include homophones',
                                     value='include', variable=self.fl_homophones_var)
+        if self.show_tooltips:
+            count_homophone_tip = ToolTip(count_homophones_button, text=('This setting will overcount alternative'
+                            ' spellings of the same word, e.g. axel~actual and axle~actual, '
+                            'but will allow you to count e.g. sock~shock twice, once for each'
+                            ' meaning of \'sock\' (footwear vs. punch)'))
         count_homophones_button.grid(sticky=W)
         ignore_homophones_button = Radiobutton(homophones_frame,
                                 text='Ignore homophones (i.e. count each phonological form once)',
                                 value = 'ignore', variable=self.fl_homophones_var)
+        if self.show_tooltips:
+            ignore_homphones_tip = ToolTip(ignore_homophones_button, text=('This setting will count sock~shock (sock=clothing)'
+                            ' and sock~shock (sock=punch) as just one minimal pair, but will avoid overcounting words'
+                            ' with spelling variations. This is the version used by Wedel et al. (2013).'))
         ignore_homophones_button.grid(sticky=W)
         ignore_homophones_button.invoke()
         homophones_frame.grid(sticky=W)
 
         type_frame.grid(row=0, column=0, sticky=(N,W))
         ipa_frame.grid(row=0,column=1, sticky=N)
-        self.fl_min_pairs_option_frame.grid(row=0,column=2,sticky=N)
+        self.fl_option_frame.grid(row=0,column=2,sticky=N)
+        self.fl_min_pairs_option_frame.grid(row=1,column=2,sticky=N)
         min_pairs_type.invoke()
         #this has to be invoked much later than it is created because this
         #calls a function that refers to widgets that have not yet been created
@@ -161,37 +204,50 @@ class FLFunction(FunctionWindow):
             MessageBox.showerror(message='Please select at least one pair of segments')
             return
 
-        if not update and self.fl_results_table is not None:
+        if not update and self.fl_results is not None:
             carryon = MessageBox.askyesno(message='You have functional load results open in a table already.\nWould you like to start a new table?')
             if not carryon:
                 return
             else:
-                self.fl_results_table.destroy()
                 self.fl_results.destroy()
 
+        seg_list = self.sound_list.get(0,END)
+        seg_pairs = list(zip(seg_list[0], seg_list[1]))
         frequency_cutoff = int(self.fl_frequency_cutoff_var.get())
         relative_count = True if self.fl_relative_count_var.get() == 'relative' else False
         distinguish_homophones = True if self.fl_homophones_var.get() == 'include' else False
-        seg_list = self.sound_list.get(0,END)
-        seg_pairs = list(zip(seg_list[0], seg_list[1]))
+
+        if self.entropy_pairs_var.get() == 'individual':
+            target = FL.individual_segpairs_fl
+        else:
+            target = FL.collapse_segpairs_fl
+
         if self.fl_type_var.get() == 'min_pairs':
             functional_load_thread = ThreadedTask(self.fl_q,
-                                    target=FL.minpair_fl,
-                                    args=(self.corpus,seg_pairs),
-                                    kwargs={'frequency_cutoff':frequency_cutoff,
+                                    target=target,
+                                    args={},
+                                    kwargs={
+                                    'corpus':self.corpus,
+                                    'segment_pairs':seg_pairs,
+                                    'func_type':'min_pairs',
+                                    'frequency_cutoff':frequency_cutoff,
                                     'relative_count':relative_count,
                                     'distinguish_homophones':distinguish_homophones,
                                     'threaded_q':self.fl_q})
         else:
             functional_load_thread = ThreadedTask(self.fl_q,
-                                    target=FL.deltah_fl,
-                                    args=(self.corpus,seg_pairs),
-                                    kwargs={'frequency_cutoff':frequency_cutoff,
-                                            'type_or_token':'type',
-                                            'threaded_q':self.fl_q})
+                                    target=target,
+                                    args={},
+                                    kwargs={
+                                    'corpus':self.corpus,
+                                    'segment_pairs':seg_pairs,
+                                    'func_type':'entropy',
+                                    'frequency_cutoff':frequency_cutoff,
+                                    # 'type_or_token':'type',
+                                    'threaded_q':self.fl_q})
+
         functional_load_thread.start()
         self.process_fl_queue(update)
-
 
     def process_fl_queue(self,update):
         try:
@@ -261,16 +317,28 @@ class FLFunction(FunctionWindow):
             ignored_homophones = 'N/A'
             relative_count = 'N/A'
         seg_list = self.sound_list.get(0,END)
-        for seg1,seg2 in zip(*seg_list):
+
+        if self.entropy_pairs_var.get() == 'individual':
+            for result,seg1,seg2 in zip(result, *seg_list):
+                self.fl_results.update([seg1,
+                                        seg2,
+                                        fl_type,
+                                        result,
+                                        ignored_homophones,
+                                        relative_count,
+                                        self.fl_frequency_cutoff_var.get()])
+        else:
+            seg1 = ','.join(seg_list[0])
+            seg2 = ','.join(seg_list[1])
             self.fl_results.update([seg1,
-                                    seg2,
-                                    fl_type,
-                                    result,
-                                    ignored_homophones,
-                                    relative_count,
-                                    self.fl_frequency_cutoff_var.get()])
+                                        seg2,
+                                        fl_type,
+                                        result,
+                                        ignored_homophones,
+                                        relative_count,
+                                        self.fl_frequency_cutoff_var.get()])
 
     def cancel_functional_load(self):
-        self.delete_fl_results_table()
+        self.delete_fl_results()
         self.destroy()
 

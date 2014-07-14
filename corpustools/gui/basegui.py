@@ -1,5 +1,6 @@
 import threading
 import os
+import operator
 import sys
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
                     YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label,
@@ -107,8 +108,8 @@ class ResultsWindow(Toplevel):
 
         self.title(title)
 
-        self.as_results_table = MultiListbox(self,headerline)
-        self.as_results_table.grid()
+        self._table = TableView(self,headerline)
+        self._table.pack(expand=True,fill='both')
         if delete_method is not None:
             self.delete_results = delete_method
         self.protocol('WM_DELETE_WINDOW', self.delete_results)
@@ -118,7 +119,7 @@ class ResultsWindow(Toplevel):
         print_button.grid(row=0, column=0)
         close_button = Button(button_frame, text='Close this table', command=self.delete_results)
         close_button.grid(row=0, column=1)
-        button_frame.grid()
+        button_frame.pack(side= 'bottom')
 
 
     def delete_results(self):
@@ -129,12 +130,12 @@ class ResultsWindow(Toplevel):
         if not filename.endswith('.txt'):
             filename += '.txt'
         with open(filename, mode='w', encoding='utf-8') as f:
-            print('\t'.join([h for h in self.as_results_table.headers]), file=f)
-            for result in zip(*self.as_results_table.get(0)):
+            print('\t'.join([h for h in self._table.headers]), file=f)
+            for result in zip(*self._table.get(0)):
                 print('\t'.join(str(r) for r in result)+'\r\n', file=f)
 
     def update(self, resultline):
-        self.as_results_table.insert(END,resultline)
+        self._table.append(resultline)
 
 
 class ThreadedTask(threading.Thread):
@@ -146,57 +147,170 @@ class ThreadedTask(threading.Thread):
         self.queue = queue
 
 class MultiListbox(Frame):
-    def __init__(self, master, lists):
+    def __init__(self, master, columns,main_cols=[]):
+        #Compatability check
+        if isinstance(columns[0],tuple):
+            columns = [x[0] for x in columns]
+        self._headers = tuple(columns)
+        self._labels = []
+        self._lbs = []
         Frame.__init__(self, master)
-        self.lists = []
-        self.headers = [l for l,w in lists]
-        for l,w in lists:
-            frame = Frame(self); frame.pack(side=LEFT, expand=YES, fill=BOTH)
-            Label(frame, text=l, borderwidth=1, relief=RAISED).pack(fill=X)
-            lb = Listbox(frame, width=w, borderwidth=0, selectborderwidth=0,relief=FLAT, exportselection=FALSE)
-            lb.pack(expand=YES, fill=BOTH)
-            self.lists.append(lb)
-            lb.bind('<B1-Motion>', lambda e, s=self: s._select(e.y))
-            lb.bind('<Button-1>', lambda e, s=self: s._select(e.y))
+        
+        self.grid_rowconfigure(1,weight=1)
+        
+        for i, h in enumerate(self._headers):
+            if i not in main_cols:
+                self.grid_columnconfigure(i,minsize=len(h),weight=1)
+                l = Label(self, text=h, borderwidth=1, relief=RAISED)
+                lb = Listbox(self, borderwidth=1, selectborderwidth=0,relief=FLAT, exportselection=False)
+            
+            else:
+                self.grid_columnconfigure(i,minsize=len(h),weight=0)
+                l = Label(self, text=h, borderwidth=1, relief=RAISED,width=len(h))
+                lb = Listbox(self, borderwidth=1,width=len(h), selectborderwidth=0,relief=FLAT, exportselection=False)
+            
+            self._labels.append(l)
+            l.grid(column = i, row=0, sticky='news', padx=0, pady=0)
+            l.column_index = i
+            #l.bind('<Button-1>', self._resize_column)
+            
+            self._lbs.append(lb)
+            lb.grid(column=i, row=1, sticky='news', padx=0, pady=0)
+            lb.column_index = i
+            
+            lb.bind('<B1-Motion>', self._select)
+            lb.bind('<Button-1>', self._select)
             lb.bind('<Leave>', lambda e: 'break')
             lb.bind('<B2-Motion>', lambda e, s=self: s._b2motion(e.x, e.y))
             lb.bind('<Button-2>', lambda e, s=self: s._button2(e.x, e.y))
-        frame = Frame(self); frame.pack(side=LEFT, fill=Y)
-        Label(frame, borderwidth=1, relief=RAISED).pack(fill=X)
-        sb = Scrollbar(frame, orient=VERTICAL, command=self._scroll)
-        sb.pack(expand=YES, fill=Y)
-        self.lists[0]['yscrollcommand']=sb.set
+            lb.bind('<MouseWheel>', lambda e: self._scroll(e.delta))
+            
+        #self.bind('<Button-1>', self._resize_column)
+        self.bind('<Up>', lambda e: self.select(delta=-1))
+        self.bind('<Down>', lambda e: self.select(delta=1))
+        self.bind('<Prior>', lambda e: self.select(delta=-self._pagesize()))
+        self.bind('<Next>', lambda e: self.select(delta=self._pagesize()))
 
-    def _select(self, y):
-        row = self.lists[0].nearest(y)
-        self.selection_clear(0, END)
-        self.selection_set(row)
+    @property
+    def column_labels(self):
+        """
+        A tuple containing the ``Tkinter.Label`` widgets used to
+        display the label of each column.  If this multi-column
+        listbox was created without labels, then this will be an empty
+        tuple.  These widgets will all be augmented with a
+        ``column_index`` attribute, which can be used to determine
+        which column they correspond to.  This can be convenient,
+        e.g., when defining callbacks for bound events.
+        """
+        return tuple(self._labels)
+    
+    @property
+    def headers(self):
+        """
+        A tuple containing the names of the columns used by this
+        multi-column listbox.
+        """
+        return self._headers
+    
+    @property   
+    def listboxes(self):
+        """
+        A tuple containing the ``Tkinter.Listbox`` widgets used to
+        display individual columns.  These widgets will all be
+        augmented with a ``column_index`` attribute, which can be used
+        to determine which column they correspond to.  This can be
+        convenient, e.g., when defining callbacks for bound events.
+        """
+        return tuple(self._lbs)
+
+    def _select(self, e):
+        i = e.widget.nearest(e.y)
+        self.selection_clear(0, 'end')
+        self.selection_set(i)
         return 'break'
 
     def _button2(self, x, y):
-        for l in self.lists:
+        for l in self._lbs:
             l.scan_mark(x, y)
         return 'break'
 
     def _b2motion(self, x, y):
-        for l in self.lists:
+        for l in self._lbs:
             l.scan_dragto(x, y)
         return 'break'
 
-    def _scroll(self, *args):
-        for l in self.lists:
+    def _scrollbar(self, *args):
+        for l in self._lbs:
             l.yview(*args)
 
+    def _scroll(self, delta):
+        if delta > 0:
+            delta = -1
+        else:
+            delta = 1
+        for l in self._lbs:
+            l.yview_scroll(delta,'units')
+        return 'break'
+
+    def _resize_column(self, event):
+        """
+        Callback used to resize a column of the table.  Return ``True``
+        if the column is actually getting resized (if the user clicked
+        on the far left or far right 5 pixels of a label); and
+        ``False`` otherwies.
+        """
+        # If we're already waiting for a button release, then ignore
+        # the new button press.
+        if event.widget.bind('<ButtonRelease>'):
+            return False
+
+        # Decide which column (if any) to resize.
+        self._resize_column_index = None
+        if event.widget is self:
+            for i, lb in enumerate(self._listboxes):
+                if abs(event.x-(lb.winfo_x()+lb.winfo_width())) < 10:
+                    self._resize_column_index = i
+        elif event.x > (event.widget.winfo_width()-5):
+            self._resize_column_index = event.widget.column_index
+        elif event.x < 5 and event.widget.column_index != 0:
+            self._resize_column_index = event.widget.column_index-1
+
+        # Bind callbacks that are used to resize it.
+        if self._resize_column_index is not None:
+            event.widget.bind('<Motion>', self._resize_column_motion_cb)
+            event.widget.bind('<ButtonRelease-%d>' % event.num,
+                              self._resize_column_buttonrelease_cb)
+            return True
+        else:
+            return False
+
+    def _resize_column_motion_cb(self, event):
+        lb = self._lbs[self._resize_column_index]
+        charwidth = lb.winfo_width() / lb['width']
+
+        x1 = event.x + event.widget.winfo_x()
+        x2 = lb.winfo_x() + lb.winfo_width()
+
+        lb['width'] = max(3, lb['width'] + int((x1-x2)/charwidth))
+
+    def _resize_column_buttonrelease_cb(self, event):
+        event.widget.unbind('<ButtonRelease-%d>' % event.num)
+        event.widget.unbind('<Motion>')
+
+    def _pagesize(self):
+        """:return: The number of rows that makes up one page"""
+        return int(self.index('@0,1000000')) - int(self.index('@0,0'))
+
     def curselection(self):
-        return self.lists[0].curselection()
+        return self._lbs[0].curselection()
 
     def delete(self, first, last=None):
-        for l in self.lists:
+        for l in self._lbs:
             l.delete(first, last)
 
     def get(self, first, last=END):
         result = []
-        for l in self.lists:
+        for l in self._lbs:
             result.append(l.get(first,last))
 
         return result
@@ -205,36 +319,289 @@ class MultiListbox(Frame):
 ##        return self.size()
 
     def index(self, index):
-        self.lists[0].index(index)
+        self._lbs[0].index(index)
 
     def insert(self, index, *elements):
         for e in elements:
             i = 0
-            for l in self.lists:
+            for l in self._lbs:
                 l.insert(index, e[i])
                 i = i + 1
 
     def size(self):
-        return self.lists[0].size()
+        return self._lbs[0].size()
 
     def see(self, index):
-        for l in self.lists:
+        for l in self._lbs:
             l.see(index)
 
     def selection_anchor(self, index):
-        for l in self.lists:
+        for l in self._lbs:
             l.selection_anchor(index)
 
     def selection_clear(self, first, last=None):
-        for l in self.lists:
+        for l in self._lbs:
             l.selection_clear(first, last)
 
     def selection_includes(self, index):
-        return self.lists[0].selection_includes(index)
+        return self._lbs[0].selection_includes(index)
 
     def selection_set(self, first, last=None):
-        for l in self.lists:
+        for l in self._lbs:
             l.selection_set(first, last)
+            
+    def yview(self, *args, **kwargs):
+        for lb in self._lbs: 
+            v = lb.yview(*args, **kwargs)
+        return v # if called with no arguments
+        
+    def yview_moveto(self, *args, **kwargs):
+        for lb in self._lbs: 
+            lb.yview_moveto(*args, **kwargs)
+            
+    def yview_scroll(self, *args, **kwargs):
+        for lb in self._lbs: 
+            lb.yview_scroll(*args, **kwargs)
+
+
+class TableView(object):
+    def __init__(self, master, column_names, rows = None, main_cols = []):
+        #Compatability check
+        if isinstance(column_names[0],tuple):
+            column_names = [x[0] for x in column_names]
+        self._num_columns = len(column_names)
+        self._column_mapping = {x:i for i,x in enumerate(column_names)}
+        self._frame = Frame(master)
+        
+        if rows is None: 
+            self._rows = []
+        else: 
+            self._rows = [[v for v in row] for row in rows]
+        self._all_rows = self._rows
+            
+        try:
+            main_cols = [self._column_mapping[x] for x in main_cols]
+        except KeyError:
+            main_cols = []
+        self._mlistbox = MultiListbox(self._frame, column_names,main_cols)
+        
+        
+        sb = Scrollbar(self._frame, orient='vertical',
+                           command=self._mlistbox.yview)
+        self._mlistbox.listboxes[0]['yscrollcommand'] = sb.set
+        #for listbox in self._mlb.listboxes:
+        #    listbox['yscrollcommand'] = sb.set
+        sb.pack(side='right', fill='y')
+        self._scrollbar = sb
+        self._mlistbox.pack(side='left',expand=True, fill='both')
+        
+        self._sortkey = None
+        for i, l in enumerate(self._mlistbox.column_labels):
+            l.bind('<Button-1>', self._sort)
+        
+        self._populate()
+    
+    @property
+    def headers(self):
+        """A list of the names of the columns in this table."""
+        return self._mlistbox.headers
+    
+    def insert(self, row_index, rowvalue):
+        """
+        Insert a new row into the table, so that its row index will be
+        ``row_index``.  If the table contains any rows whose row index
+        is greater than or equal to ``row_index``, then they will be
+        shifted down.
+
+        :param rowvalue: A tuple of cell values, one for each column
+            in the new row.
+        """
+        self._rows.insert(row_index, rowvalue)
+        self._mlistbox.insert(row_index, rowvalue)
+    
+    def extend(self, rowvalues):
+        """
+        Add new rows at the end of the table.
+
+        :param rowvalues: A list of row values used to initialze the
+            table.  Each row value should be a tuple of cell values,
+            one for each column in the row.
+        """
+        for rowvalue in rowvalues: self.append(rowvalue)
+    
+    def append(self, rowvalue):
+        """
+        Add a new row to the end of the table.
+
+        :param rowvalue: A tuple of cell values, one for each column
+            in the new row.
+        """
+        self.insert(len(self._rows), rowvalue)
+    
+    def clear(self):
+        """
+        Delete all rows in this table.
+        """
+        self._rows = []
+        self._mlistbox.delete(0, 'end')
+        
+    def __getitem__(self, index):
+        """
+        Return the value of a row or a cell in this table.  If
+        ``index`` is an integer, then the row value for the ``index``th
+        row.  This row value consists of a tuple of cell values, one
+        for each column in the row.  If ``index`` is a tuple of two
+        integers, ``(i,j)``, then return the value of the cell in the
+        ``i``th row and the ``j``th column.
+        """
+        if isinstance(index, tuple) and len(index)==2:
+            return self._rows[index[0]][index[1]]
+        else:
+            return tuple(self._rows[index])
+    
+    def __setitem__(self, index, val):
+        """
+        Replace the value of a row or a cell in this table with
+        ``val``.
+
+        If ``index`` is an integer, then ``val`` should be a row value
+        (i.e., a tuple of cell values, one for each column).  In this
+        case, the values of the ``index``th row of the table will be
+        replaced with the values in ``val``.
+
+        If ``index`` is a tuple of integers, ``(i,j)``, then replace the
+        value of the cell in the ``i``th row and ``j``th column with
+        ``val``.
+        """
+
+
+        # table[i,j] = val
+        if isinstance(index, tuple) and len(index)==2:
+            i, j = index[0],index[1]
+            self._rows[i][j] = val
+            self._mlb.listboxes[j].insert(i, val)
+            self._mlb.listboxes[j].delete(i+1)
+
+        # table[i] = val
+        else:
+            self._rows[index] = list(val)
+            self._mlistbox.insert(index, val)
+            self._mlistbox.delete(index+1)
+    
+    def __delitem__(self, row_index):
+        """
+        Delete the ``row_index``th row from this table.
+        """
+        del self._rows[row_index]
+        self._mlistbox.delete(row_index)
+    
+    def __len__(self):
+        """
+        :return: the number of rows in this table.
+        """
+        return len(self._rows)
+    
+    def _populate(self):
+        self._mlistbox.delete(0, 'end')
+        for i, row in enumerate(self._rows):
+            self._mlistbox.insert('end', row)
+        
+    def pack(self, *args, **kwargs): 
+        self._frame.pack(*args, **kwargs)
+
+    def grid(self, *args, **kwargs): 
+        self._frame.grid(*args, **kwargs)
+
+    def focus(self): 
+        self._mlistbox.focus()
+
+    def bind(self, sequence=None, func=None, add=None): 
+        self._mlistbox.bind(sequence, func, add)
+
+    def rowconfigure(self, row_index, cnf={}, **kw): 
+        self._mlistbox.rowconfigure(row_index, cnf, **kw)
+
+    def columnconfigure(self, col_index, cnf={}, **kw): 
+        self._mlistbox.columnconfigure(col_index, cnf, **kw)
+
+    def itemconfigure(self, row_index, col_index, cnf=None, **kw): 
+        return self._mlistbox.itemconfigure(row_index, col_index, cnf, **kw)
+
+    def bind_to_labels(self, sequence=None, func=None, add=None): 
+        return self._mlistbox.bind_to_labels(sequence, func, add)
+
+    def bind_to_listboxes(self, sequence=None, func=None, add=None): 
+        return self._mlistbox.bind_to_listboxes(sequence, func, add)
+
+    def bind_to_columns(self, sequence=None, func=None, add=None): 
+        return self._mlistbox.bind_to_columns(sequence, func, add) 
+    
+    def show_column(self, column_index):
+        """:see: ``MultiListbox.show_column()``"""
+        self._mlistbox.show_column(column_index)
+    
+    def hide_column(self, column_index):
+        """:see: ``MultiListbox.hide_column()``"""
+        self._mlistbox.hide_column(column_index)
+    
+    def selected_row(self):
+        """
+        Return the index of the currently selected row, or None if
+        no row is selected.  To get the row value itself, use
+        ``table[table.selected_row()]``.
+        """
+        sel = self._mlistbox.curselection()
+        if sel: 
+            return int(sel[0])
+        return None
+    
+    def select(self, index=None, delta=None, see=True):
+        """:see: ``MultiListbox.select()``"""
+        self._mlistbox.select(index, delta, see)
+    
+    def filter_by_in(self, **kwargs):
+        for k,v in kwargs.items():
+            try:
+                c = self._column_mapping[k]
+            except KeyError:
+                continue
+            if v:
+                self._rows = [x for x in self._all_rows if x[c] in v]
+            else:
+                self._rows = self._all_rows
+        self._populate()
+    
+    def sort_by(self, column_index): 
+        
+        selection = self.selected_row()
+        if column_index == self._sortkey: 
+            self._rows.reverse() 
+        else: 
+            self._rows.sort(key=operator.itemgetter(column_index), 
+                reverse=False) 
+            self._sortkey = column_index # Redraw the table. 
+        self._populate() 
+        for r, row in enumerate(self._rows):
+            if id(row) == selection:
+                self._mlistbox.select(r, see=see)
+                break
+
+    def _sort(self, event):
+        """Event handler for clicking on a column label -- sort by
+        that column."""
+        column_index = event.widget.column_index
+
+        # If they click on the far-left of far-right of a column's
+        # label, then resize rather than sorting.
+        #if self._mlistbox._resize_column(event):
+        #    return 'continue'
+
+        # Otherwise, sort.
+        #else:
+        #    self.sort_by(column_index)
+        #    return 'continue'
+        self.sort_by(column_index)
+        return 'continue'
 
 class ToolTip:
     """
@@ -392,52 +759,3 @@ class ToolTip:
             del opts[opt]
         label = Label(self._tipwindow, **opts)
         label.pack()
-
-class TableView(Frame):
-    def __init__(self, root):
-
-        Frame.__init__(self, root)
-        self.headerframe = Frame(self)
-        self.headerframe.pack(side='top',fill='x')
-        self.set_header(['spelling','transcription','frequency'])
-        self.canvas = Canvas(self, borderwidth=0, background="#ffffff")
-        self.frame = Frame(self.canvas, background="#ffffff")
-        self.vsb = Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.vsb.set)
-
-        self.vsb.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.canvas.create_window((4,4), window=self.frame, anchor="nw",
-                                  tags="self.frame")
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-        #self.frame.bind("<Configure>", self.OnFrameConfigure)
-
-        #self.populate()
-
-    def set_header(self,header):
-        for child in self.headerframe.winfo_children():
-            child.grid_forget()
-        for i,h in enumerate(header):
-            Label(self.headerframe, text=h).grid(row=0, column=i)
-
-    def load_corpus(self,corpus):
-        ''''''
-        for child in self.frame.winfo_children():
-            child.grid_forget()
-        if corpus is None:
-            return
-        print(self.frame.grid_size())
-        random_word = corpus.random_word()
-        headers = [d for d in random_word.descriptors if not d is None or not d == '']
-        self.set_header(headers)
-        for i,word in enumerate(corpus.iter_sort()):
-            #corpus.iter_sort is a generator that sorts the corpus dictionary
-            #by keys, then yields the values in that order
-            for j,d in enumerate(word.descriptors):
-                Label(self.frame, text="%s" % str(getattr(word,d,'???'))).grid(row=i, column=j)
-
-
-    def OnFrameConfigure(self, event):
-        '''Reset the scroll region to encompass the inner frame'''
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))

@@ -3,6 +3,7 @@ from collections import defaultdict
 from math import *
 import itertools
 import queue
+import copy
 
 from corpustools.corpus.classes import CorpusFactory
 
@@ -55,7 +56,6 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, d
     if distinguish_homophones == False:
         minpairs = list(set([mp[0][0] for mp in minpairs]))
 
-    # print(minpairs)
     result = len(minpairs)
     if relative_count:
         result /= scope
@@ -86,22 +86,23 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
     float
         The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
     """
-
+    if type_or_token == None:
+        type_or_token = 'token'
     if frequency_cutoff > 0:
-        corpus = [word for word in corpus if word.freq_per_mil >= frequency_cutoff] # change to .frequency once that is fixed!
+        corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
 
     if type_or_token == 'type':
         freq_sum = len(corpus)
-    elif type_or_token == 'token':
-        freq_sum = sum([word.freq_per_mil for word in corpus]) # change to .frequency once that is fixed!
+    else: # token frequencies
+        freq_sum = sum([word.frequency for word in corpus])
 
     original_probs = defaultdict(float)
     if type_or_token == 'type':
         for word in corpus:
-            original_probs[' '.join([str(s) for s in word.transcription])] += 1/freq_sum
+            original_probs[' '.join([str(s) for s in word.transcription])] += 1.0/freq_sum
     elif type_or_token == 'token':
         for word in corpus:
-            original_probs[' '.join([str(s) for s in word.transcription])] += word.freq_per_mil/freq_sum # change to .frequency once that is fixed!
+            original_probs[' '.join([str(s) for s in word.transcription])] += float(word.frequency)/freq_sum
     preneutr_h = entropy([original_probs[item] for item in original_probs])
 
     neutralized_probs = defaultdict(float)
@@ -110,12 +111,52 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
     postneutr_h = entropy([neutralized_probs[item] for item in neutralized_probs])
 
     result = preneutr_h - postneutr_h
+    if result < 1e-10:
+        result = 0.0
 
     if not threaded_q:
         return result
     else:
         threaded_q.put(result)
         return None
+
+def collapse_segpairs_fl(**kwargs):
+    corpus = kwargs.get('corpus')
+    func_type = kwargs.get('func_type')
+    segment_pairs = kwargs.get('segment_pairs')
+    frequency_cutoff = kwargs.get('frequency_cutoff')
+    relative_count = kwargs.get('relative_count')
+    distinguish_homophones = kwargs.get('distinguish_homophones')
+    type_or_token = kwargs.get('type_or_token')
+    q = kwargs.get('threaded_q')
+    if func_type == 'min_pairs':
+        fl = minpair_fl(corpus, segment_pairs, frequency_cutoff, relative_count, distinguish_homophones)
+    elif func_type == 'entropy':
+        fl = deltah_fl(corpus, segment_pairs, frequency_cutoff, type_or_token)
+    q.put(fl)
+
+
+
+def individual_segpairs_fl(**kwargs):
+    corpus = kwargs.get('corpus')
+    func_type = kwargs.get('func_type')
+    segment_pairs = kwargs.get('segment_pairs')
+    frequency_cutoff = kwargs.get('frequency_cutoff')
+    relative_count = kwargs.get('relative_count')
+    distinguish_homophones = kwargs.get('distinguish_homophones')
+    type_or_token = kwargs.get('type_or_token')
+    q = kwargs.get('threaded_q')
+
+    results = list()
+    for pair in segment_pairs:
+        corpus_copy = copy.deepcopy(corpus)
+        if func_type == 'min_pairs':
+            fl = minpair_fl(corpus_copy, [pair], frequency_cutoff, relative_count, distinguish_homophones)
+        elif func_type == 'entropy':
+            fl = deltah_fl(corpus_copy, [pair], frequency_cutoff, type_or_token)
+        results.append(fl)
+
+    q.put(results)
 
 
 def entropy(probabilities):

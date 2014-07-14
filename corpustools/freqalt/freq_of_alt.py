@@ -49,26 +49,30 @@ class Freqor(object):
             The frequency of alternation of two sounds in a given corpus
         """
 
-        #print('Gathering Lists of Words with sounds')
         list_s1, list_s2 = self.get_lists(s1, s2, string_type)
-        #print('Number of words with sound 1: ' + str(len(list_s1)))
-        #print('Number of words with sound 2: ' + str(len(list_s2)))
-
-        start_time = time.time()
         comparisons = list()
-        
         
         for word_s1 in list_s1:
             for word_s2 in list_s2:
                     comparisons.append( (word_s1, word_s2) )
         
-        related_list = string_similarity.string_similarity_pairs('iphod', relator_type, string_type, count_what, comparisons, 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
-        all_words, words_with_alt = list_s1.union(list_s2), set()
+        #Default values for relatedness:
+        if relator_type == 'khorsi' and min_rel is None:
+            min_rel = -15
+        elif relator_type == 'edit_distance' and max_rel is None:
+            max_rel = 8
+        elif relator_type == 'phono_edit_distance' and max_rel is None:
+            max_rel = 8
+        
+        related_list = string_similarity.string_similarity_pairs('', relator_type, string_type, count_what, comparisons, 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
+        all_words, words_with_alt = set(), set()
 
         #Remove minimal pairs if necessary
         if min_pairs_okay == 0:
             new_related_list = list()
             for w1, w2, score in related_list:
+                all_words.add(w1)
+                all_words.add(w2)
                 if len(w1) != len(w2):
                     new_related_list.append( (w1, w2, score) )
                 else:
@@ -130,19 +134,19 @@ class Freqor(object):
         string: string
             The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
         """
-        s1_list = set()
-        s2_list = set()
+        s1_list = list()
+        s2_list = list()
         for w in self.corpus:
             word = getattr(w, string)
             if not isinstance(word, str):
                 word = ''.join(seg.symbol for seg in word)
             if s1 in word and s2 in word:
-                s1_list.add(word)
-                s2_list.add(word)
+                s1_list.append(w)
+                s2_list.append(w)
             elif s1 in word:
-                s1_list.add(word)
+                s1_list.append(w)
             elif s2 in word:
-                s2_list.add(word)
+                s2_list.append(w)
             else:
                 pass
         return [s1_list, s2_list]

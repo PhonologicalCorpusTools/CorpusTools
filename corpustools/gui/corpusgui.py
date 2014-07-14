@@ -16,13 +16,13 @@ from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                     export_corpus_csv, export_feature_matrix_csv,
                                     load_feature_matrix_csv,DelimiterError)
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
-                    ResultsWindow, MultiListbox, ThreadedTask, config, ERROR_DIR)
+                    ResultsWindow, TableView, ThreadedTask, config, ERROR_DIR)
 
 def get_corpora_list():
     corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
     corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
     return corpora
-    
+
 def get_systems_list():
     system_dir = os.path.join(config['storage']['directory'],'FEATURE')
     systems = [x.split('.')[0] for x in os.listdir(system_dir)]
@@ -204,9 +204,10 @@ class CorpusFromTextWindow(Toplevel):
 
         delimiter = self.delimiter_entry.get()
         trans_delimiter = self.trans_delimiter_entry.get()
-        
+
         if string_type == 'transcription' and trans_delimiter in ignore_list:
             MessageBox.showerror(message='Transcription delimiter is currently set to being ignored, please remove it from the punctuation to be ignored.')
+
             return
 
         corpus_name = os.path.split(source_path)[-1].split('.')[0]
@@ -221,7 +222,7 @@ class CorpusFromTextWindow(Toplevel):
             return
         self.finalize_corpus(corpus,transcription_errors)
         save_binary(corpus, corpus_name_to_path(corpus_name))
-        
+
         self.destroy()
 
 
@@ -310,7 +311,7 @@ class CustomCorpusWindow(Toplevel):
         if (not filename) or (not delimiter) or (not corpus_name):
             MessageBox.showerror(message='Information is missing. Please verify that you entered something in all the text boxes')
             return
-            
+
         if delimiter == 't':
             delimiter = '\t'
         if delimiter == trans_delimiter:
@@ -336,7 +337,7 @@ class CustomCorpusWindow(Toplevel):
         try:
             corpus, errors = load_corpus_csv(corpus_name, filename, delimiter, trans_delimiter,feature_system)
         except DelimiterError:
-            
+
             #delimiter is incorrect
             MessageBox.showerror(message='Could not parse the corpus.\n\Check that the delimiter you typed in matches the one used in the file.')
             return
@@ -378,23 +379,23 @@ class CorpusManager(object):
         load_button = Button(button_frame,
                                         text='Load selected corpus',
                                         command=self.load_corpus)
-        load_button.grid()
+        load_button.grid(sticky=W)
         download_button = Button(button_frame,
                                         text='Download example corpora',
                                         command=self.download_corpus)
-        download_button.grid()
+        download_button.grid(sticky=W)
         load_from_txt_button = Button(button_frame,
-                                        text='Load corpus from text file',
+                                        text='Load corpus from pre-formatted text file',
                                         command=self.load_corpus_from_txt)
-        load_from_txt_button.grid()
+        load_from_txt_button.grid(sticky=W)
         create_from_text_button = Button(button_frame,
-                                    text='Create corpus from text file',
+                                    text='Create corpus from running text',
                                     command=self.create_corpus_from_text)
-        create_from_text_button.grid()
+        create_from_text_button.grid(sticky=W)
         remove_button = Button(button_frame,
                                     text='Remove selected corpus',
                                     command=self.remove_corpus)
-        remove_button.grid()
+        remove_button.grid(sticky=W)
         button_frame.grid(row=0,column=1)
 
     def remove_corpus(self):
@@ -499,7 +500,7 @@ class DownloadFeatureMatrixWindow(Toplevel):
 
     def download(self,system_name,path):
         download_binary(system_name,path)
-        
+
         self.prog_bar.stop()
         self.destroy()
 
@@ -552,7 +553,7 @@ class FeatureSystemManager(object):
             self.get_available_systems()
         except TclError:
             pass
-            
+
     def download(self):
         download = DownloadFeatureMatrixWindow()
         download.wait_window()
@@ -578,7 +579,7 @@ class CustomFeatureMatrixWindow(Toplevel):
         self.path_entry.grid()
         select_button = Button(load_frame, text='Choose file...', command=self.navigate_to_file)
         select_button.grid()
-        name_label = Label(load_frame, text='Name for corpus (auto-suggested)')
+        name_label = Label(load_frame, text='Name for feature system (auto-suggested)')
         name_label.grid()
         self.name_entry = Entry(load_frame)
         self.name_entry.grid()
@@ -618,7 +619,7 @@ class CustomFeatureMatrixWindow(Toplevel):
         if (not filename) or (not delimiter) or (not system_name):
             MessageBox.showerror(message='Information is missing. Please verify that you entered something in all the text boxes')
             return
-            
+
         if delimiter == 't':
             delimiter = '\t'
         self.create(system_name, filename, delimiter)
@@ -628,7 +629,7 @@ class CustomFeatureMatrixWindow(Toplevel):
         try:
             system = load_feature_matrix_csv(name, filename, delimiter)
         except DelimiterError:
-            
+
             #delimiter is incorrect
             MessageBox.showerror(message='Could not parse the file.\nCheck that the delimiter you typed in matches the one used in the file.')
             return
@@ -640,7 +641,7 @@ class CustomFeatureMatrixWindow(Toplevel):
 
 class EditSegmentWindow(object):
     """
-    Window for editing or adding a segment to a feature system 
+    Window for editing or adding a segment to a feature system
     """
     def __init__(self,feature_list,possible_values, initial_data = None):
         self.top = Toplevel()
@@ -669,7 +670,7 @@ class EditSegmentWindow(object):
                 col = 0
                 row += 2
         add_frame.grid()
-        
+
         if initial_data:
             init_seg, init_feats = initial_data
             self.seg_var.set(init_seg)
@@ -683,20 +684,20 @@ class EditSegmentWindow(object):
                     break
             for k,v in self.feature_vars.items():
                 v.set(default)
-        
+
         button_frame = Frame(self.top)
         ok_button = Button(button_frame, text='Ok', command=self.confirm_add)
         ok_button.grid(row=1,column=0)
         cancel_button = Button(button_frame, text='Cancel', command=self.top.destroy)
         cancel_button.grid(row=1,column=1)
         button_frame.grid()
-        
+
     def confirm_add(self):
         self.featspec = {f:v.get() for f,v in self.feature_vars.items()}
         self.seg = self.seg_var.get()
         self.commit = True
         self.top.destroy()
-        
+
 class AddFeatureWindow(object):
     """
     Window for adding a new feature to a feature system
@@ -713,14 +714,14 @@ class AddFeatureWindow(object):
         seg_entry = Entry(add_frame,textvariable=self.feature_var)
         seg_entry.grid(row=1,column=0)
         add_frame.grid()
-        
+
         button_frame = Frame(self.top)
         ok_button = Button(button_frame, text='Ok', command=self.confirm_add)
         ok_button.grid(row=1,column=0)
         cancel_button = Button(button_frame, text='Cancel', command=self.top.destroy)
         cancel_button.grid(row=1,column=1)
         button_frame.grid()
-        
+
     def confirm_add(self):
         self.feature = self.feature_var.get()
         if self.feature in self.feature_list:
@@ -728,7 +729,7 @@ class AddFeatureWindow(object):
             return
         self.commit = True
         self.top.destroy()
-        
+
 
 
 class EditFeatureSystemWindow(object):
@@ -741,13 +742,14 @@ class EditFeatureSystemWindow(object):
         self.corpus = corpus
         self.feature_matrix = self.corpus.get_feature_matrix()
         self.top = Toplevel()
+        self.top.geometry("%dx%d%+d%+d" % (860,600,250,250))
         self.top.title('Edit feature system')
 
         self.feature_frame = Frame(self.top)
-        self.feature_frame.grid()
-        
+        self.feature_frame.pack(side='top',expand=True,fill='both')
+
         option_frame = Frame(self.top)
-        option_frame.grid()
+        option_frame.pack()
         change_frame = LabelFrame(option_frame,text='Change feature systems')
         feature_menu = OptionMenu(change_frame,#parent
                                 self.feature_system_option_menu_var,#variable
@@ -760,7 +762,7 @@ class EditFeatureSystemWindow(object):
 
         feature_menu.grid()
         change_frame.grid(row=0,column=0,sticky=N)
-        
+
         modify_frame = LabelFrame(option_frame,text='Modify the feature system')
         add_segment_button = Button(modify_frame, text='Add segment', command=self.add_segment)
         add_segment_button.grid()
@@ -769,29 +771,33 @@ class EditFeatureSystemWindow(object):
         add_feature_button = Button(modify_frame, text='Add feature', command=self.add_feature)
         add_feature_button.grid()
         modify_frame.grid(row=0,column=1,sticky=N)
-        
+
         coverage_frame = LabelFrame(option_frame,text='Corpus inventory coverage')
-        remove_button = Button(coverage_frame, text='Remove all segments not used by the corpus', command=self.tailor_to_corpus)
-        remove_button.grid()
+        hide_button = Button(coverage_frame, text='Hide all segments not used by the corpus', command=self.tailor_to_corpus)
+        hide_button.grid()
+        show_button = Button(coverage_frame, text='Show all segments', command=self.show_all)
+        show_button.grid()
         check_coverage_button = Button(coverage_frame, text='Check corpus inventory coverage', command=self.check_coverage)
         check_coverage_button.grid()
         coverage_frame.grid(row=0,column=2,sticky=N)
-        
+
         button_frame = Frame(option_frame)
         ok_button = Button(button_frame, text='Save changes to this corpus\'s feature system', command=self.confirm_change_feature_system)
         ok_button.grid(sticky=W)
         cancel_button = Button(button_frame, text='Cancel', command=self.top.destroy)
         cancel_button.grid()
         button_frame.grid(row=1,column=1)
-    
+
     def edit_segment(self):
         try:
-            seg = self.feature_chart.get(self.feature_chart.curselection()[0],self.feature_chart.curselection()[0])
+            seg = self.feature_chart[self.feature_chart.selected_row(),0]
             seg = seg[0][0]
-        except TclError:
-            MessageBox.showerror(message='Please select a segment to edit.')
+        except TypeError:
             return
-        initial_data = (seg,self.feature_matrix[seg])
+
+        #Compatability hack
+        #initial_data = (seg,self.feature_matrix[seg])
+        initial_data = (seg,{x.name:x.sign for x in self.feature_matrix[seg]})
         addwindow = EditSegmentWindow(self.feature_matrix.get_feature_list(),
                                         self.feature_matrix.get_possible_values(),
                                         initial_data)
@@ -799,28 +805,28 @@ class EditFeatureSystemWindow(object):
         if addwindow.commit:
             self.feature_matrix.add_segment(addwindow.seg,addwindow.featspec)
         self.change_feature_system()
-    
+
     def add_segment(self):
         addwindow = EditSegmentWindow(self.feature_matrix.get_feature_list(),self.feature_matrix.get_possible_values())
         addwindow.top.wait_window()
         if addwindow.commit:
             self.feature_matrix.add_segment(addwindow.seg,addwindow.featspec)
         self.change_feature_system()
-        
+
     def add_feature(self):
         addwindow = AddFeatureWindow(self.feature_matrix.get_feature_list())
         addwindow.top.wait_window()
         if addwindow.commit:
             self.feature_matrix.add_feature(addwindow.feature)
         self.change_feature_system()
-    
+
     def tailor_to_corpus(self):
-        corpus_inventory = self.corpus.get_inventory()
-        for s in self.feature_matrix.get_segments():
-            if s not in corpus_inventory:
-                del self.feature_matrix[s]
-        self.change_feature_system()
-    
+        inventory = self.corpus.get_inventory()
+        self.feature_chart.filter_by_in(symbol=inventory)
+
+    def show_all(self):
+        self.feature_chart.filter_by_in(symbol=[])
+
     def check_coverage(self):
         corpus_inventory = self.corpus.get_inventory()
         feature_inventory = self.feature_matrix.get_segments()
@@ -842,8 +848,8 @@ class EditFeatureSystemWindow(object):
             m.wait_window()
             return
         MessageBox.showinfo(message='All segments are specified for features!')
-        
-    
+
+
     def change_feature_system(self, event = None):
         feature_system = self.feature_system_option_menu_var.get()
         if self.feature_matrix is None or feature_system != self.feature_matrix.get_name():
@@ -851,20 +857,21 @@ class EditFeatureSystemWindow(object):
         for child in self.feature_frame.winfo_children():
             child.destroy()
         headers = ['symbol'] + self.feature_matrix.get_feature_list()
-        self.feature_chart = MultiListbox(self.feature_frame, [(h,5) for h in headers])
+        self.feature_chart = TableView(self.feature_frame, headers, main_cols=['symbol'])
         for seg in self.feature_matrix.get_segments():
             #Workaround, grr
             if seg in ['#','']: #wtf are these segments?
                 continue
-            self.feature_chart.insert(END,self.feature_matrix.seg_to_feat_line(seg))
+            self.feature_chart.append(self.feature_matrix.seg_to_feat_line(seg))
 
 
-        self.feature_chart.grid()
-        
-    
+        self.feature_chart.pack(expand=True,fill='both')
+
+
+
     def confirm_change_feature_system(self):
         self.change = True
         self.top.destroy()
-        
+
     def get_feature_matrix(self):
         return self.feature_matrix
