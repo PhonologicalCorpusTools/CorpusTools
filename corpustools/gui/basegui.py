@@ -220,8 +220,7 @@ class MultiListbox(Frame):
         i = e.widget.nearest(e.y)
         self.selection_clear(0, 'end')
         self.selection_set(i)
-        self.activate(i)
-        self.focus()
+        return 'break'
 
     def _button2(self, x, y):
         for l in self._lbs:

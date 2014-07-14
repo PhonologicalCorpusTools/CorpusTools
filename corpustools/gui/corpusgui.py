@@ -773,7 +773,7 @@ class EditFeatureSystemWindow(object):
     
     def edit_segment(self):
         try:
-            seg = self.feature_chart.get(self.feature_chart.curselection()[0],self.feature_chart.curselection()[0])
+            seg = self.feature_chart[self.feature_chart.selected_row(),0]
             seg = seg[0][0]
         except TclError:
             MessageBox.showerror(message='Please select a segment to edit.')
