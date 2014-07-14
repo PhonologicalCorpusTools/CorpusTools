@@ -75,8 +75,8 @@ class FLFunction(FunctionWindow):
         fl_frequency_cutoff_entry.grid(row=0, column=1)
         min_freq_frame.grid(sticky=W)
 
-        self.fl_min_pairs_option_frame = LabelFrame(self, text='Options')
-        seg_pairing_frame = LabelFrame(self.fl_min_pairs_option_frame, text='How to handle multiple segment pairs')
+        self.fl_option_frame = LabelFrame(self, text='Options')
+        seg_pairing_frame = LabelFrame(self.fl_option_frame, text='How to handle multiple segment pairs')
         pairs_together = Radiobutton(seg_pairing_frame, text='Calculate functional load of all segment pairs together',
                                     variable=self.entropy_pairs_var, value='together')
         pairs_together.grid(sticky=W)
@@ -85,6 +85,8 @@ class FLFunction(FunctionWindow):
         pairs_individually.grid(sticky=W)
         pairs_together.select()
         seg_pairing_frame.grid()
+
+        self.fl_min_pairs_option_frame = LabelFrame(self, text='Minimal pair options')
         relative_count_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Relative count?')
         if self.show_tooltips:
             options_tip = ToolTip(relative_count_frame, text=('The raw count of minimal pairs will'
@@ -121,7 +123,8 @@ class FLFunction(FunctionWindow):
 
         type_frame.grid(row=0, column=0, sticky=(N,W))
         ipa_frame.grid(row=0,column=1, sticky=N)
-        self.fl_min_pairs_option_frame.grid(row=0,column=2,sticky=N)
+        self.fl_option_frame.grid(row=0,column=2,sticky=N)
+        self.fl_min_pairs_option_frame.grid(row=1,column=2,sticky=N)
         min_pairs_type.invoke()
         #this has to be invoked much later than it is created because this
         #calls a function that refers to widgets that have not yet been created
