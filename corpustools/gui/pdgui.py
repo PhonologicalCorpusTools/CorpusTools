@@ -356,7 +356,8 @@ class PDFunction(FunctionWindow):
             str(seg1_count),
             str(seg2_count),
             str(seg1_count+seg2_count),
-            str(H)]]
+            str(H),
+            type_or_token]]
         self.update_prod_results(results)
 
 
@@ -557,7 +558,8 @@ class PDFunction(FunctionWindow):
                 ('Frequency of Sound1', 10),
                 ('Frequency of Sound2', 10),
                 ('Total count',10),
-                ('Entropy',10)]
+                ('Entropy',10),
+                ('Type or token', 10)]
         title = 'Predictability of distribution results'
         self.prod_results = ResultsWindow(title,header,delete_method=self.destroy_prod_results)
 
@@ -576,5 +578,7 @@ class PDFunction(FunctionWindow):
         try:
             self.prod_results.destroy()
             self.prod_results = None
-        except (TclError, AttributeError):#widgets don't exist anyway
+        except AttributeError:#widgets don't exist anyway
             pass
+
+        self.start_new_envs.config(state=DISABLED)
