@@ -146,11 +146,10 @@ def individual_segpairs_fl(**kwargs):
 
     results = list()
     for pair in segment_pairs:
-        print(pair)
         if func_type == 'min_pairs':
-            fl = minpair_fl(corpus, pair, frequency_cutoff, relative_count, distinguish_homophones)
+            fl = minpair_fl(corpus, [pair], frequency_cutoff, relative_count, distinguish_homophones)
         elif func_type == 'entropy':
-            fl = deltah_fl(corpus, pair, frequency_cutoff, type_or_token)
+            fl = deltah_fl(corpus, [pair], frequency_cutoff, type_or_token)
         results.append(fl)
 
     q.put(results)
