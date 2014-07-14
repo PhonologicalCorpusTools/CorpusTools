@@ -42,6 +42,7 @@ class DownloadCorpusWindow(Toplevel):
         super(DownloadCorpusWindow, self).__init__(master=master, **options)
         self.corpus_button_var = StringVar()
         self.corpusq = queue.Queue()
+        self.corpus_download_thread = None
         self.title('Download corpora')
         corpus_frame = Frame(self)
         corpus_area = LabelFrame(corpus_frame, text='Select a corpus')
@@ -56,13 +57,16 @@ class DownloadCorpusWindow(Toplevel):
         button_frame = Frame(self)
         ok_button = Button(button_frame,text='OK', command=self.confirm_download)
         ok_button.grid(row=3, column=0)#, sticky=W, padx=3)
-        cancel_button = Button(button_frame,text='Cancel', command=self.destroy)
+        cancel_button = Button(button_frame,text='Cancel', command=self.cancel_download)
         cancel_button.grid(row = 3, column=1)#, sticky=W, padx=3)
         button_frame.grid()
 
         warning_label = Label(self, text='Please be patient. It can take up to 30 seconds to download a corpus.')
         warning_label.grid()
         self.focus()
+
+    def cancel_download(self):
+        self.destroy()
 
     def confirm_download(self):
         corpus_name = self.corpus_button_var.get()
@@ -201,16 +205,20 @@ class CorpusFromTextWindow(Toplevel):
         delimiter = self.delimiter_entry.get()
         trans_delimiter = self.trans_delimiter_entry.get()
         
-        if trans_delimiter in ignore_list:
-            MessageBox.showerror(message='Transcription delimiter is currently set to being ignored,')
+        if string_type == 'transcription' and trans_delimiter in ignore_list:
+            MessageBox.showerror(message='Transcription delimiter is currently set to being ignored, please remove it from the punctuation to be ignored.')
             return
 
         corpus_name = os.path.split(source_path)[-1].split('.')[0]
         feature_system = self.new_corpus_feature_system_var.get()
         if feature_system:
             feature_system = system_name_to_path(feature_system)
-
-        corpus,transcription_errors = load_corpus_text(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
+        
+        try:
+            corpus,transcription_errors = load_corpus_text(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
+        except DelimiterError as e:
+            MessageBox.showerror(message=str(e))
+            return
         self.finalize_corpus(corpus,transcription_errors)
         save_binary(corpus, corpus_name_to_path(corpus_name))
         
@@ -404,12 +412,18 @@ class CorpusManager(object):
     def load_corpus(self):
         try:
             corpus_name = self.available_corpora.get(self.available_corpora.curselection())
-            self.corpus = load_binary(corpus_name_to_path(corpus_name))
-            if self.corpus.has_feature_matrix() and self.corpus.specifier.name not in get_systems_list():
-                save_binary(self.corpus.specifier,system_name_to_path(self.corpus.specifier.name))
-            self.top.destroy()
         except TclError:
-            pass
+            return
+            
+        try:
+            self.corpus = load_binary(corpus_name_to_path(corpus_name))
+        except EOFError:
+            MessageBox.showerror(message='The corpus file is corrupted.  Please redownload or regenerate the corpus')
+            
+            return
+        if self.corpus.has_feature_matrix() and self.corpus.specifier.name not in get_systems_list():
+            save_binary(self.corpus.specifier,system_name_to_path(self.corpus.specifier.name))
+        self.top.destroy()
 
     def get_corpus(self):
         return self.corpus
@@ -467,7 +481,7 @@ class DownloadFeatureMatrixWindow(Toplevel):
 
     def confirm_download(self):
         system_name = self.system_button_var.get()
-        path = system_name_to_path('FEATURE',system_name)
+        path = system_name_to_path(system_name)
         if system_name in get_systems_list():
             carry_on = MessageBox.askyesno(message=(
                 'This system is already available locally. Would you like to redownload it?'))

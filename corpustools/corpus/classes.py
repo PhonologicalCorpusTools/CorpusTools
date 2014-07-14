@@ -121,6 +121,9 @@ class FeatureMatrix(object):
         self.matrix['#'] = [Feature('#')]
         self.matrix[''] = [Feature('*')]
 
+    def for_pickle(self):
+        output = {}
+        return output
 
     def get_features(self):
         """Get the list of feature names used by a feature system
@@ -354,6 +357,10 @@ class Word(object):
             self._string = self.transcription
         else:
             self._string = self.spelling
+
+    def for_pickle(self):
+        output = {}
+        return output
 
     def get_frequency(self):
         for f in ['frequency','abs_freq', 'freq_per_mil',
@@ -833,6 +840,13 @@ class Corpus(object):
         sorted_list = sorted(self.wordlist.keys())
         for word in sorted_list:
             yield self.wordlist[word]
+
+    def for_pickle(self):
+        output = {}
+        output['name'] = self.name
+        output['specifier'] = self.specifier.for_pickle()
+        output['wordlist'] = {k:v.for_pickle() for k,v in self.wordlist.items()}
+        return output
 
     def get_name(self):
         """

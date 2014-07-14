@@ -195,20 +195,24 @@ def load_corpus_text(corpus_name,path, delimiter, ignore_list,trans_delimiter='.
     if feature_system_path:
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
+    trans_check = False
     with open(path, encoding='utf-8', mode='r') as f:
+        if delimiter not in f.read():
+            raise(DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.'))
         for line in f.readlines():
             if not line or line == '\n':
                 continue
             #print(line)
             line = line.split(delimiter)
-            if len(line) == 1:
-                raise(DelimiterError)
+                
             for word in line:
                 word = word.strip()
                 
                 if string_type == 'transcription':
                     word = word.strip(trans_delimiter)
                     trans = word.split(trans_delimiter)
+                    if len(trans) > 1:
+                        trans_check = True
                     word = trans_delimiter.join([s for s in trans if not s in ignore_list])
                 elif string_type == 'spelling':
                     word = [letter for letter in word if not letter in ignore_list]
@@ -216,7 +220,8 @@ def load_corpus_text(corpus_name,path, delimiter, ignore_list,trans_delimiter='.
                 if not word:
                     continue
                 word_count[word] += 1
-
+    if string_type == 'transcription' and not trans_check:
+        raise(DelimiterError('The transcription delimiter was never found in transcriptions. Please specify another delimiter.'))
     total_words = sum(word_count.values())
     headers = [string_type,'frequency']
     transcription_errors = collections.defaultdict(list)
