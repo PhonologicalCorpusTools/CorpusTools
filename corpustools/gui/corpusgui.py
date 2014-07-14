@@ -564,7 +564,7 @@ class CustomFeatureMatrixWindow(Toplevel):
         self.path_entry.grid()
         select_button = Button(load_frame, text='Choose file...', command=self.navigate_to_file)
         select_button.grid()
-        name_label = Label(load_frame, text='Name for corpus (auto-suggested)')
+        name_label = Label(load_frame, text='Name for feature system (auto-suggested)')
         name_label.grid()
         self.name_entry = Entry(load_frame)
         self.name_entry.grid()
@@ -758,8 +758,10 @@ class EditFeatureSystemWindow(object):
         modify_frame.grid(row=0,column=1,sticky=N)
         
         coverage_frame = LabelFrame(option_frame,text='Corpus inventory coverage')
-        remove_button = Button(coverage_frame, text='Remove all segments not used by the corpus', command=self.tailor_to_corpus)
-        remove_button.grid()
+        hide_button = Button(coverage_frame, text='Hide all segments not used by the corpus', command=self.tailor_to_corpus)
+        hide_button.grid()
+        show_button = Button(coverage_frame, text='Show all segments', command=self.show_all)
+        show_button.grid()
         check_coverage_button = Button(coverage_frame, text='Check corpus inventory coverage', command=self.check_coverage)
         check_coverage_button.grid()
         coverage_frame.grid(row=0,column=2,sticky=N)
@@ -773,12 +775,14 @@ class EditFeatureSystemWindow(object):
     
     def edit_segment(self):
         try:
-            seg = self.feature_chart.get(self.feature_chart.curselection()[0],self.feature_chart.curselection()[0])
+            seg = self.feature_chart[self.feature_chart.selected_row(),0]
             seg = seg[0][0]
-        except TclError:
-            MessageBox.showerror(message='Please select a segment to edit.')
+        except TypeError:
             return
-        initial_data = (seg,self.feature_matrix[seg])
+            
+        #Compatability hack
+        #initial_data = (seg,self.feature_matrix[seg])
+        initial_data = (seg,{x.name:x.sign for x in self.feature_matrix[seg]})
         addwindow = EditSegmentWindow(self.feature_matrix.get_feature_list(),
                                         self.feature_matrix.get_possible_values(),
                                         initial_data)
@@ -802,11 +806,11 @@ class EditFeatureSystemWindow(object):
         self.change_feature_system()
     
     def tailor_to_corpus(self):
-        corpus_inventory = self.corpus.get_inventory()
-        for s in self.feature_matrix.get_segments():
-            if s not in corpus_inventory:
-                del self.feature_matrix[s]
-        self.change_feature_system()
+        inventory = self.corpus.get_inventory()
+        self.feature_chart.filter_by_in(symbol=inventory)
+        
+    def show_all(self):
+        self.feature_chart.filter_by_in(symbol=[])
     
     def check_coverage(self):
         corpus_inventory = self.corpus.get_inventory()
@@ -838,7 +842,7 @@ class EditFeatureSystemWindow(object):
         for child in self.feature_frame.winfo_children():
             child.destroy()
         headers = ['symbol'] + self.feature_matrix.get_feature_list()
-        self.feature_chart = TableView(self.feature_frame, [(h,5) for h in headers])
+        self.feature_chart = TableView(self.feature_frame, headers, main_cols=['symbol'])
         for seg in self.feature_matrix.get_segments():
             #Workaround, grr
             if seg in ['#','']: #wtf are these segments?
