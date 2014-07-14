@@ -185,22 +185,3 @@ def neutralize_segment(segment, segment_pairs):
             if segment in sp:
                 return 'NEUTR:'+''.join(sp)
         return segment
-
-
-
-if __name__ == '__main__':
-    # TESTING
-    import pickle
-    import os
-    # filename = os.path.join(os.getcwd(), 'CORPUS', 'iphod_hayes.corpus')
-    # with open(filename, 'rb') as f:
-    #     c = pickle.load(f)
-
-    f = CorpusFactory()
-    c = f.make_corpus('iphod', 'hayes', size=10000)
-
-    # mpfl = minpair_fl(c, [('t','d'), ('p', 'b')], frequency_cutoff = 4, relative_count = True)
-    # print(mpfl)
-
-    # dhfl = deltah_fl(c, [('t','d'), ('p', 'b')], frequency_cutoff=4, type_or_token='type')
-    # print(dhfl)

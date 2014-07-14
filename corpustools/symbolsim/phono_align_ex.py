@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 ## Based on aligner.js (by Michael Becker and Blake Allen),
 ## which in turn was based on Peter Kleiweg's Levenshtein Demo.
 
@@ -165,7 +164,7 @@ class Aligner(object):
                 else:
                     core.append(chunk)
 
-        def acceptable_core(cr, s1, s2): # refactor this function.
+        def acceptable_core(cr, s1, s2):
             found_alternation = False
             def acceptable_chunk(chunk, s1, s2):
                 if chunk['elem1'] == chunk['elem2']:
@@ -177,7 +176,6 @@ class Aligner(object):
                 else:
                     return False
             chunk_statuses = [acceptable_chunk(chunk, s1, s2) for chunk in cr]
-            # print(chunk_statuses)
             if False not in chunk_statuses:
                 if 'alternation' in chunk_statuses:
                     return True
