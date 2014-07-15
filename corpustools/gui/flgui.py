@@ -23,6 +23,7 @@ class FLFunction(FunctionWindow):
         self.fl_frequency_cutoff_var = StringVar()
         self.fl_homophones_var = StringVar()
         self.fl_relative_count_var = StringVar()
+        self.fl_type_or_token_var = StringVar()
         self.fl_seg1_var = StringVar()
         self.fl_seg2_var = StringVar()
         self.entropy_pairs_var = StringVar()
@@ -135,10 +136,25 @@ class FLFunction(FunctionWindow):
         ignore_homophones_button.invoke()
         homophones_frame.grid(sticky=W)
 
+
+        self.fl_deltah_option_frame = LabelFrame(self, text='Change in entropy options')
+        type_or_token_frame = LabelFrame(self.fl_deltah_option_frame, text='Use type or token frequencies?')
+        use_type = Radiobutton(type_or_token_frame, text='Type',
+                                    value='type', variable=self.fl_type_or_token_var)
+        use_type.grid(sticky=W)
+        use_type.invoke()
+        use_token = Radiobutton(type_or_token_frame, text='Token',
+                                    value='token', variable=self.fl_type_or_token_var)
+        use_token.grid(sticky=W)
+        type_or_token_frame.grid(sticky=W)
+        use_type.invoke()
+
+
         type_frame.grid(row=0, column=0, sticky=(N,W))
         ipa_frame.grid(row=0,column=1, sticky=N)
         self.fl_option_frame.grid(row=0,column=2,sticky=N)
         self.fl_min_pairs_option_frame.grid(row=1,column=2,sticky=N)
+        self.fl_deltah_option_frame.grid(row=2,column=2,sticky=N)
         min_pairs_type.invoke()
         #this has to be invoked much later than it is created because this
         #calls a function that refers to widgets that have not yet been created
@@ -257,7 +273,7 @@ class FLFunction(FunctionWindow):
                                     'segment_pairs':seg_pairs,
                                     'func_type':'entropy',
                                     'frequency_cutoff':frequency_cutoff,
-                                    # 'type_or_token':'type',
+                                    'type_or_token':self.fl_type_or_token_var.get(),
                                     'threaded_q':self.fl_q})
 
         functional_load_thread.start()
@@ -311,13 +327,22 @@ class FLFunction(FunctionWindow):
     def show_min_pairs_options(self,visible):
         if visible:
             state = ACTIVE
+            otherstate = DISABLED
         if not visible:
             state = DISABLED
+            otherstate = ACTIVE
 
         for frame in self.fl_min_pairs_option_frame.winfo_children():
             for widget in frame.winfo_children():
                 try:
                     widget.configure(state=state)
+                except TclError:
+                    pass
+
+        for frame in self.fl_deltah_option_frame.winfo_children():
+            for widget in frame.winfo_children():
+                try:
+                    widget.configure(state=otherstate)
                 except TclError:
                     pass
 
