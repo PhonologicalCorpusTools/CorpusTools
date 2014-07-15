@@ -61,7 +61,7 @@ class DownloadCorpusWindow(Toplevel):
         cancel_button.grid(row = 3, column=1)#, sticky=W, padx=3)
         button_frame.grid()
 
-        warning_label = Label(self, text='Please be patient. It can take up to 30 seconds to download a corpus.')
+        warning_label = Label(self, text='Please be patient. It can take up to 30 seconds to download a corpus.\nThis window will close when finished.')
         warning_label.grid()
         self.focus()
 
@@ -77,20 +77,21 @@ class DownloadCorpusWindow(Toplevel):
             if not carry_on:
                 return
             os.remove(path)
-        self.corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
-        self.corpus_load_prog_bar.grid()
-        self.corpus_load_prog_bar.start()
+        #self.corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
+        #self.corpus_load_prog_bar.grid()
+        #self.corpus_load_prog_bar.start()
         if not os.path.exists(path):
-            self.corpus_download_thread = ThreadedTask(None,
-                                target=self.download_corpus,
-                                args=(corpus_name,path))
-            self.corpus_download_thread.start()
+            self.download_corpus(corpus_name,path)
+            #self.corpus_download_thread = ThreadedTask(None,
+            #                    target=self.download_corpus,
+            #                    args=(corpus_name,path))
+            #self.corpus_download_thread.start()
 
 
 
     def download_corpus(self,corpus_name,path):
         download_binary(corpus_name,path)
-        self.corpus_load_prog_bar.stop()
+        #self.corpus_load_prog_bar.stop()
         self.destroy()
 
 class CorpusFromTextWindow(Toplevel):
@@ -214,7 +215,7 @@ class CorpusFromTextWindow(Toplevel):
         feature_system = self.new_corpus_feature_system_var.get()
         if feature_system:
             feature_system = system_name_to_path(feature_system)
-        
+
         try:
             corpus,transcription_errors = load_corpus_text(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
         except DelimiterError as e:
@@ -415,12 +416,12 @@ class CorpusManager(object):
             corpus_name = self.available_corpora.get(self.available_corpora.curselection())
         except TclError:
             return
-            
+
         try:
             self.corpus = load_binary(corpus_name_to_path(corpus_name))
         except EOFError:
             MessageBox.showerror(message='The corpus file is corrupted.  Please redownload or regenerate the corpus')
-            
+
             return
         if self.corpus.has_feature_matrix() and self.corpus.specifier.name not in get_systems_list():
             save_binary(self.corpus.specifier,system_name_to_path(self.corpus.specifier.name))
