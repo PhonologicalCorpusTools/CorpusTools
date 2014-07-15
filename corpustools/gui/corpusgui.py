@@ -41,7 +41,8 @@ class DownloadCorpusWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(DownloadCorpusWindow, self).__init__(master=master, **options)
         self.corpus_button_var = StringVar()
-        self.corpusq = queue.Queue()
+        self.queue = queue.LifoQueue()
+        self.pbar_value = IntVar()
         self.corpus_download_thread = None
         self.title('Download corpora')
         corpus_frame = Frame(self)
@@ -77,15 +78,29 @@ class DownloadCorpusWindow(Toplevel):
             if not carry_on:
                 return
             os.remove(path)
-        #self.corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
-        #self.corpus_load_prog_bar.grid()
-        #self.corpus_load_prog_bar.start()
+        self.prog_bar = Progressbar(self, mode='determinate', variable=self.pbar_value,maximum=100)
+        self.prog_bar.grid()
+        self.pbar_value.set(0.0)
         if not os.path.exists(path):
-            self.download_corpus(corpus_name,path)
-            #self.corpus_download_thread = ThreadedTask(None,
-            #                    target=self.download_corpus,
-            #                    args=(corpus_name,path))
-            #self.corpus_download_thread.start()
+            #self.download_corpus(corpus_name,path)
+            self.corpus_download_thread = ThreadedTask(self.queue,
+                                target=download_binary,
+                                args=(corpus_name,path),
+                                kwargs={'queue':self.queue})
+            self.corpus_download_thread.start()
+            self.process_queue()
+
+    def process_queue(self):
+        try:
+            msg = self.queue.get()
+            if msg == -99:
+                self.prog_bar.stop()
+                self.destroy()
+            else:
+                self.pbar_value.set(msg)
+                self.master.after(1, self.process_queue)
+        except queue.Empty:
+            self.master.after(1, self.process_queue)
 
 
 
@@ -100,13 +115,15 @@ class CorpusFromTextWindow(Toplevel):
     """
     def __init__(self,master=None, **options):
         super(CorpusFromTextWindow, self).__init__(master=master, **options)
+
+        self.queue = queue.LifoQueue()
+        self.corpusq = queue.Queue()
+
         #Corpus from text variables
         self.punc_vars = [IntVar() for mark in string.punctuation]
         self.new_corpus_string_type = StringVar()
         self.new_corpus_feature_system_var = StringVar()
         self.corpus_from_text_source_file = StringVar()
-        self.corpus_from_text_corpus_name_var = StringVar()
-        self.corpus_from_text_output_file = StringVar()
 
         self.title('Create corpus')
         from_text_frame = LabelFrame(self, text='Create corpus from text')
@@ -212,19 +229,43 @@ class CorpusFromTextWindow(Toplevel):
             return
 
         corpus_name = os.path.split(source_path)[-1].split('.')[0]
+
+        self.prog_bar = Progressbar(self, mode='indeterminate')
+        #this progbar is indeterminate because we can't know how big the custom corpus will be
+        self.prog_bar.grid()
+        self.prog_bar.start()
+
         feature_system = self.new_corpus_feature_system_var.get()
         if feature_system:
             feature_system = system_name_to_path(feature_system)
 
-        try:
-            corpus,transcription_errors = load_corpus_text(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type)
-        except DelimiterError as e:
-            MessageBox.showerror(message=str(e))
-            return
-        self.finalize_corpus(corpus,transcription_errors)
-        save_binary(corpus, corpus_name_to_path(corpus_name))
+        self.custom_corpus_load_thread = ThreadedTask(self.queue,
+                                target=load_corpus_text,
+                                args=(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type),
+                                kwargs={'pqueue':self.queue,'oqueue':self.corpusq})
+        self.custom_corpus_load_thread.start()
+        #self.custom_corpus_thread(corpus_name, filename, delimiter, trans_delimiter)
+        self.process_queue()
 
-        self.destroy()
+    def process_queue(self):
+        try:
+            msg = self.queue.get()
+            if msg == -99:
+                self.prog_bar.stop()
+                source_path = self.corpus_from_text_source_file.get()
+                corpus_name = os.path.split(source_path)[-1].split('.')[0]
+                corpus = self.corpusq.get()
+                errors = self.corpusq.get()
+                self.finalize_corpus(corpus,errors)
+                save_binary(corpus,corpus_name_to_path(corpus_name))
+                self.destroy()
+            elif isinstance(msg,DelimiterError):
+                MessageBox.showerror(message=str(msg))
+                return
+            else:
+                self.master.after(1, self.process_queue)
+        except queue.Empty:
+            self.master.after(1, self.process_queue)
 
 
     def finalize_corpus(self, corpus, transcription_errors=None):
@@ -250,6 +291,10 @@ class CustomCorpusWindow(Toplevel):
         super(CustomCorpusWindow, self).__init__(master=master, **options)
         self.new_corpus_feature_system_var = StringVar()
         self.title('Load new corpus')
+
+        self.queue = queue.LifoQueue()
+        self.corpusq = queue.Queue()
+
         custom_corpus_load_frame = LabelFrame(self, text='Corpus information')
         custom_corpus_load_frame.grid()
         corpus_path_label = Label(custom_corpus_load_frame, text='Path to corpus')
@@ -322,30 +367,41 @@ class CustomCorpusWindow(Toplevel):
 
     def create_custom_corpus(self, corpus_name, filename, delimiter, trans_delimiter):
 
-        self.custom_corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
+        self.prog_bar = Progressbar(self, mode='indeterminate')
         #this progbar is indeterminate because we can't know how big the custom corpus will be
-        #self.custom_corpus_load_prog_bar.grid()
-        #self.custom_corpus_load_prog_bar.start()
-        #self.custom_corpus_load_thread = ThreadedTask(queue.Queue(),
-        #                        target=self.custom_corpus_thread,
-        #                        args=(corpus_name, filename, delimiter, trans_delimiter))
-        #self.custom_corpus_load_thread.start()
-        self.custom_corpus_thread(corpus_name, filename, delimiter, trans_delimiter)
+        self.prog_bar.grid()
+        self.prog_bar.start()
 
-    def custom_corpus_thread(self, corpus_name, filename, delimiter, trans_delimiter):
         feature_system = self.new_corpus_feature_system_var.get()
         if feature_system:
             feature_system = system_name_to_path(feature_system)
-        try:
-            corpus, errors = load_corpus_csv(corpus_name, filename, delimiter, trans_delimiter,feature_system)
-        except DelimiterError:
 
-            #delimiter is incorrect
-            MessageBox.showerror(message='Could not parse the corpus.\n\Check that the delimiter you typed in matches the one used in the file.')
-            return
-        self.finalize_corpus(corpus,errors)
-        save_binary(corpus,corpus_name_to_path(corpus_name))
-        self.destroy()
+        self.custom_corpus_load_thread = ThreadedTask(self.queue,
+                                target=load_corpus_csv,
+                                args=(corpus_name, filename, delimiter, trans_delimiter),
+                                kwargs={'pqueue':self.queue,'oqueue':self.corpusq})
+        self.custom_corpus_load_thread.start()
+        #self.custom_corpus_thread(corpus_name, filename, delimiter, trans_delimiter)
+        self.process_queue()
+
+    def process_queue(self):
+        try:
+            msg = self.queue.get()
+            if msg == -99:
+                self.prog_bar.stop()
+                corpus_name = self.custom_corpus_name.get()
+                corpus = self.corpusq.get()
+                errors = self.corpusq.get()
+                self.finalize_corpus(corpus,errors)
+                save_binary(corpus,corpus_name_to_path(corpus_name))
+                self.destroy()
+            elif isinstance(msg,DelimiterError):
+                MessageBox.showerror(message=str(msg))
+                return
+            else:
+                self.master.after(1, self.process_queue)
+        except queue.Empty:
+            self.master.after(1, self.process_queue)
 
 
     def finalize_corpus(self, corpus, transcription_errors=None):
@@ -460,6 +516,8 @@ class DownloadFeatureMatrixWindow(Toplevel):
     def __init__(self,master=None, **options):
         super(DownloadFeatureMatrixWindow, self).__init__(master=master, **options)
         self.system_button_var = StringVar()
+        self.pbar_value = IntVar()
+        self.queue = queue.Queue()
         self.title('Download feature systems')
         system_frame = Frame(self)
         system_area = LabelFrame(system_frame, text='Select a feature system')
@@ -491,21 +549,34 @@ class DownloadFeatureMatrixWindow(Toplevel):
             if not carry_on:
                 return
             os.remove(path)
-        self.prog_bar = Progressbar(self, mode='indeterminate')
+        self.prog_bar = Progressbar(self, mode='determinate', variable=self.pbar_value,maximum=100)
         self.prog_bar.grid()
-        self.prog_bar.start()
+        self.pbar_value.set(0.0)
         if not os.path.exists(path):
-            #self.system_download_thread = ThreadedTask(None,
-            #                    target=self.download,
-            #                    args=(system_name,path))
-            #self.system_download_thread.start()
-            self.download(system_name,path)
+            self.system_download_thread = ThreadedTask(None,
+                                target=download_binary,
+                                args=(system_name,path),
+                                kwargs={'queue':self.queue})
+            self.system_download_thread.start()
+            self.process_queue()
+            #self.download(system_name,path)
+
+    def process_queue(self):
+        try:
+            msg = self.queue.get()
+            if msg == -99:
+                self.prog_bar.stop()
+                self.destroy()
+            else:
+                self.pbar_value.set(msg)
+                self.master.after(1, self.process_queue)
+        except queue.Empty:
+            self.master.after(1, self.process_queue)
 
     def download(self,system_name,path):
         download_binary(system_name,path)
 
         self.prog_bar.stop()
-        self.destroy()
 
 class FeatureSystemManager(object):
     """

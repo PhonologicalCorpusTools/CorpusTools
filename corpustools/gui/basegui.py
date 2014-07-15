@@ -151,8 +151,10 @@ class ThreadedTask(threading.Thread):
         self.queue = queue
 
 class MultiListbox(Frame):
-    def __init__(self, master, columns,main_cols=[]):
+    def __init__(self, master, columns,main_cols=None):
         #Compatability check
+        if main_cols is None:
+            main_cols = list()
         if isinstance(columns[0],tuple):
             columns = [x[0] for x in columns]
         self._headers = tuple(columns)
