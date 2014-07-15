@@ -324,12 +324,13 @@ class CustomCorpusWindow(Toplevel):
 
         self.custom_corpus_load_prog_bar = Progressbar(self, mode='indeterminate')
         #this progbar is indeterminate because we can't know how big the custom corpus will be
-        self.custom_corpus_load_prog_bar.grid()
-        self.custom_corpus_load_prog_bar.start()
-        self.custom_corpus_load_thread = ThreadedTask(queue.Queue(),
-                                target=self.custom_corpus_thread,
-                                args=(corpus_name, filename, delimiter, trans_delimiter))
-        self.custom_corpus_load_thread.start()
+        #self.custom_corpus_load_prog_bar.grid()
+        #self.custom_corpus_load_prog_bar.start()
+        #self.custom_corpus_load_thread = ThreadedTask(queue.Queue(),
+        #                        target=self.custom_corpus_thread,
+        #                        args=(corpus_name, filename, delimiter, trans_delimiter))
+        #self.custom_corpus_load_thread.start()
+        self.custom_corpus_thread(corpus_name, filename, delimiter, trans_delimiter)
 
     def custom_corpus_thread(self, corpus_name, filename, delimiter, trans_delimiter):
         feature_system = self.new_corpus_feature_system_var.get()
@@ -494,10 +495,11 @@ class DownloadFeatureMatrixWindow(Toplevel):
         self.prog_bar.grid()
         self.prog_bar.start()
         if not os.path.exists(path):
-            self.system_download_thread = ThreadedTask(None,
-                                target=self.download,
-                                args=(system_name,path))
-            self.system_download_thread.start()
+            #self.system_download_thread = ThreadedTask(None,
+            #                    target=self.download,
+            #                    args=(system_name,path))
+            #self.system_download_thread.start()
+            self.download(system_name,path)
 
     def download(self,system_name,path):
         download_binary(system_name,path)
