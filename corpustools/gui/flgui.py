@@ -79,9 +79,22 @@ class FLFunction(FunctionWindow):
         seg_pairing_frame = LabelFrame(self.fl_option_frame, text='How to handle multiple segment pairs')
         pairs_together = Radiobutton(seg_pairing_frame, text='Calculate functional load of all segment pairs together',
                                     variable=self.entropy_pairs_var, value='together')
+        if self.show_tooltips:
+            pairs_together_tip = ToolTip(pairs_together, text=('Choose this option if you\'re interested in the'
+                                ' functional load of a particular contrast among a group of segments.'
+                                ' E.g., if you want to know the functional load of the voicing contrast'
+                                ' among obstruents, you can calculate that by adding the relevant pairs'
+                                ' (p/b, t/d, k/g...) and selecting this option before calculating functional load'))
         pairs_together.grid(sticky=W)
         pairs_individually = Radiobutton(seg_pairing_frame, text='Calculate functional load of each segment pair individually',
                                     variable=self.entropy_pairs_var, value='individual')
+        if self.show_tooltips:
+            pairs_individually_tip = ToolTip(pairs_individually, text=('Choose this option if you want to calculate the '
+                                    'functional loads of a series of segment pairs separately. E.g., if you want to know'
+                                    ' the functional load of the m/n contrast, that of the l/r contrast, and that of the'
+                                    ' s/z contrast, you can add all three of those pairs and select this option before '
+                                    'calculating functional load. This would be equivalent to adding (and then calculating'
+                                    ' functional load and removing) each pair one at a time.'))
         pairs_individually.grid(sticky=W)
         pairs_together.select()
         seg_pairing_frame.grid()
