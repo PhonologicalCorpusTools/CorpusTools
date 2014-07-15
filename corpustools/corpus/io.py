@@ -147,7 +147,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
 
     return corpus,transcription_errors
 
-def load_corpus_text(corpus_name,path, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling'):
+def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling'):
     """
     Load a corpus from a text file containing running text either in
     orthography or transcription
@@ -196,13 +196,14 @@ def load_corpus_text(corpus_name,path, delimiter, ignore_list,trans_delimiter='.
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
     trans_check = False
-    with open(path, encoding='utf-8', mode='r') as f:
-        if delimiter not in f.read():
+    with open(path, encoding='utf-8-sig', mode='r') as f:
+        text = f.read()
+        if delimiter not in text:
             raise(DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.'))
-        for line in f.readlines():
+        for line in text.splitlines():
             if not line or line == '\n':
                 continue
-            #print(line)
+            print(line)
             line = line.split(delimiter)
 
             for word in line:
@@ -232,6 +233,7 @@ def load_corpus_text(corpus_name,path, delimiter, ignore_list,trans_delimiter='.
             if k == 'transcription' or 'tier' in k:
                 d[k] = v.split(trans_delimiter)
         word = Word(**d)
+        print(d)
         if word.transcription:
             if not word.spelling:
                 word.spelling = ''.join(map(str,word.transcription))
