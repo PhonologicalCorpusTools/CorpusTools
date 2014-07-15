@@ -108,6 +108,8 @@ class ResultsWindow(Toplevel):
             #Used for TableView
             main_cols = options.get('main_cols')
             del options['main_cols']
+        else:
+            main_cols = None
         super(ResultsWindow, self).__init__(master=master, **options)
 
         self.title(title)
@@ -371,10 +373,12 @@ class MultiListbox(Frame):
 
 
 class TableView(object):
-    def __init__(self, master, column_names, rows = None, main_cols = []):
+    def __init__(self, master, column_names, rows = None, main_cols = None):
         #Compatability check
         if isinstance(column_names[0],tuple):
             column_names = [x[0] for x in column_names]
+        if main_cols is None:
+            main_cols = list()
         self._num_columns = len(column_names)
         self._column_mapping = {x:i for i,x in enumerate(column_names)}
         self._frame = Frame(master)
