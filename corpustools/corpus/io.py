@@ -203,7 +203,6 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
         for line in text.splitlines():
             if not line or line == '\n':
                 continue
-            print(line)
             line = line.split(delimiter)
 
             for word in line:
@@ -233,7 +232,6 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
             if k == 'transcription' or 'tier' in k:
                 d[k] = v.split(trans_delimiter)
         word = Word(**d)
-        print(d)
         if word.transcription:
             if not word.spelling:
                 word.spelling = ''.join(map(str,word.transcription))
