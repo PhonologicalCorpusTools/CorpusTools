@@ -11,7 +11,7 @@ class DelimiterError(Exception):
     """
     pass
 
-def download_binary(name,path):
+def download_binary(name,path, queue = None):
     """
     Download a binary file
 
@@ -24,6 +24,9 @@ def download_binary(name,path):
         Full path for where to save downloaded file
 
     """
+    def report(blocknum, bs, size):
+        if queue is not None:
+            queue.put((blocknum * bs * 100) / size)
     if name == 'example':
         download_link = 'https://www.dropbox.com/s/a0uar9h8wtem8cf/example.corpus?dl=1'
     elif name == 'iphod':
@@ -32,7 +35,9 @@ def download_binary(name,path):
         download_link = 'https://www.dropbox.com/s/k73je4tbk6i4u4e/spe.feature?dl=1'
     elif name == 'hayes':
         download_link = 'https://www.dropbox.com/s/qe9xiq4k68cp2qx/hayes.feature?dl=1'
-    filename,headers = urlretrieve(download_link,path)
+    filename,headers = urlretrieve(download_link,path, reporthook=report)
+    if queue is not None:
+        queue.put(-99)
 
 def load_binary(path):
     """
@@ -68,7 +73,7 @@ def save_binary(obj,path):
     with open(path,'wb') as f:
         pickle.dump(obj,f)
 
-def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_system_path = ''):
+def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_system_path = '',pqueue=None,oqueue=None):
     """
     Load a corpus from a column-delimited text file
 
@@ -110,7 +115,11 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
         headers = f.readline()
         headers = headers.split(delimiter)
         if len(headers)==1:
-            raise(DelimiterError)
+            e = DelimiterError('Could not parse the corpus.\n\Check that the delimiter you typed in matches the one used in the file.')
+            if pqueue is not None:
+                pqueue.put(e)
+            else:
+                raise(e)
 
         headers = [h.strip() for h in headers]
         headers[0] = headers[0].strip('\ufeff')
@@ -121,7 +130,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
 
         transcription_errors = collections.defaultdict(list)
 
-        for line in f:
+        for line in f.readlines():
             line = line.strip()
             if not line: #blank or just a newline
                 continue
@@ -144,10 +153,18 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
                         transcription_errors[str(e)].append(str(word))
 
             corpus.add_word(word)
+            if pqueue is not None:
+                pqueue.put(1)
 
-    return corpus,transcription_errors
+    if pqueue is not None:
+        pqueue.put(-99)
+    if oqueue is not None:
+        oqueue.put(corpus)
+        oqueue.put(transcription_errors)
+    else:
+        return corpus,transcription_errors
 
-def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling'):
+def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling',pqueue=None,oqueue=None):
     """
     Load a corpus from a text file containing running text either in
     orthography or transcription
@@ -199,7 +216,11 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
     with open(path, encoding='utf-8-sig', mode='r') as f:
         text = f.read()
         if delimiter not in text:
-            raise(DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.'))
+            e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
+            if pqueue is not None:
+                pqueue.put(e)
+            else:
+                raise(e)
         for line in text.splitlines():
             if not line or line == '\n':
                 continue
@@ -221,7 +242,11 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
                     continue
                 word_count[word] += 1
     if string_type == 'transcription' and not trans_check:
-        raise(DelimiterError('The transcription delimiter was never found in transcriptions. Please specify another delimiter.'))
+        e = DelimiterError('The transcription delimiter was never found in transcriptions. Please specify another delimiter.')
+        if pqueue is not None:
+            pqueue.put(e)
+        else:
+            raise(e)
     total_words = sum(word_count.values())
     headers = [string_type,'frequency']
     transcription_errors = collections.defaultdict(list)
@@ -241,7 +266,16 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
                 except KeyError as e:
                     transcription_errors[str(e)].append(str(word))
         corpus.add_word(word)
-    return corpus,transcription_errors
+        if pqueue is not None:
+            pqueue.put(1)
+
+    if pqueue is not None:
+        pqueue.put(-99)
+    if oqueue is not None:
+        oqueue.put(corpus)
+        oqueue.put(transcription_errors)
+    else:
+        return corpus,transcription_errors
 
 def load_feature_matrix_csv(name,path,delimiter):
     """
