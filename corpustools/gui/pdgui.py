@@ -561,7 +561,10 @@ class PDFunction(FunctionWindow):
                 ('Entropy',10),
                 ('Type or token', 10)]
         title = 'Predictability of distribution results'
-        self.prod_results = ResultsWindow(title,header,delete_method=self.destroy_prod_results)
+        self.prod_results = ResultsWindow(title,
+                                    header,
+                                    delete_method=self.destroy_prod_results,
+                                    main_cols=['Sound1','Sound2'])
 
     def update_prod_results(self, results):
         if self.prod_results is None:
