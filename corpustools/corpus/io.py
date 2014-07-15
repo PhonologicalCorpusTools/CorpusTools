@@ -148,7 +148,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
                     word.spelling = ''.join(map(str,word.transcription))
                 if corpus.has_feature_matrix():
                     try:
-                        word._specify_features(corpus.get_feature_matrix())
+                        word._specify_features(corpus.specifier)
                     except KeyError as e:
                         transcription_errors[str(e)].append(str(word))
 

@@ -378,7 +378,7 @@ class CustomCorpusWindow(Toplevel):
 
         self.custom_corpus_load_thread = ThreadedTask(self.queue,
                                 target=load_corpus_csv,
-                                args=(corpus_name, filename, delimiter, trans_delimiter),
+                                args=(corpus_name, filename, delimiter, trans_delimiter,feature_system),
                                 kwargs={'pqueue':self.queue,'oqueue':self.corpusq})
         self.custom_corpus_load_thread.start()
         #self.custom_corpus_thread(corpus_name, filename, delimiter, trans_delimiter)
