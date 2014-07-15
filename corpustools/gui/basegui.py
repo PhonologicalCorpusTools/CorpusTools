@@ -104,11 +104,15 @@ class FunctionWindow(Toplevel):
 
 class ResultsWindow(Toplevel):
     def __init__(self, title, headerline, master=None, delete_method=None, **options):
+        if 'main_cols' in options:
+            #Used for TableView
+            main_cols = options.get('main_cols')
+            del options['main_cols']
         super(ResultsWindow, self).__init__(master=master, **options)
 
         self.title(title)
 
-        self._table = TableView(self,headerline)
+        self._table = TableView(self,headerline,main_cols = main_cols)
         self._table.pack(expand=True,fill='both')
         if delete_method is not None:
             self.delete_results = delete_method
@@ -155,36 +159,36 @@ class MultiListbox(Frame):
         self._labels = []
         self._lbs = []
         Frame.__init__(self, master)
-        
+
         self.grid_rowconfigure(1,weight=1)
-        
+
         for i, h in enumerate(self._headers):
             if i not in main_cols:
                 self.grid_columnconfigure(i,minsize=len(h),weight=1)
                 l = Label(self, text=h, borderwidth=1, relief=RAISED)
                 lb = Listbox(self, borderwidth=1, selectborderwidth=0,relief=FLAT, exportselection=False)
-            
+
             else:
                 self.grid_columnconfigure(i,minsize=len(h),weight=0)
                 l = Label(self, text=h, borderwidth=1, relief=RAISED,width=len(h))
                 lb = Listbox(self, borderwidth=1,width=len(h), selectborderwidth=0,relief=FLAT, exportselection=False)
-            
+
             self._labels.append(l)
             l.grid(column = i, row=0, sticky='news', padx=0, pady=0)
             l.column_index = i
             #l.bind('<Button-1>', self._resize_column)
-            
+
             self._lbs.append(lb)
             lb.grid(column=i, row=1, sticky='news', padx=0, pady=0)
             lb.column_index = i
-            
+
             lb.bind('<B1-Motion>', self._select)
             lb.bind('<Button-1>', self._select)
             lb.bind('<Leave>', lambda e: 'break')
             lb.bind('<B2-Motion>', lambda e, s=self: s._b2motion(e.x, e.y))
             lb.bind('<Button-2>', lambda e, s=self: s._button2(e.x, e.y))
             lb.bind('<MouseWheel>', lambda e: self._scroll(e.delta))
-            
+
         #self.bind('<Button-1>', self._resize_column)
         self.bind('<Up>', lambda e: self.select(delta=-1))
         self.bind('<Down>', lambda e: self.select(delta=1))
@@ -203,7 +207,7 @@ class MultiListbox(Frame):
         e.g., when defining callbacks for bound events.
         """
         return tuple(self._labels)
-    
+
     @property
     def headers(self):
         """
@@ -211,8 +215,8 @@ class MultiListbox(Frame):
         multi-column listbox.
         """
         return self._headers
-    
-    @property   
+
+    @property
     def listboxes(self):
         """
         A tuple containing the ``Tkinter.Listbox`` widgets used to
@@ -349,18 +353,18 @@ class MultiListbox(Frame):
     def selection_set(self, first, last=None):
         for l in self._lbs:
             l.selection_set(first, last)
-            
+
     def yview(self, *args, **kwargs):
-        for lb in self._lbs: 
+        for lb in self._lbs:
             v = lb.yview(*args, **kwargs)
         return v # if called with no arguments
-        
+
     def yview_moveto(self, *args, **kwargs):
-        for lb in self._lbs: 
+        for lb in self._lbs:
             lb.yview_moveto(*args, **kwargs)
-            
+
     def yview_scroll(self, *args, **kwargs):
-        for lb in self._lbs: 
+        for lb in self._lbs:
             lb.yview_scroll(*args, **kwargs)
 
 
@@ -372,20 +376,20 @@ class TableView(object):
         self._num_columns = len(column_names)
         self._column_mapping = {x:i for i,x in enumerate(column_names)}
         self._frame = Frame(master)
-        
-        if rows is None: 
+
+        if rows is None:
             self._rows = []
-        else: 
+        else:
             self._rows = [[v for v in row] for row in rows]
         self._all_rows = self._rows
-            
+
         try:
             main_cols = [self._column_mapping[x] for x in main_cols]
         except KeyError:
             main_cols = []
         self._mlistbox = MultiListbox(self._frame, column_names,main_cols)
-        
-        
+
+
         sb = Scrollbar(self._frame, orient='vertical',
                            command=self._mlistbox.yview)
         self._mlistbox.listboxes[0]['yscrollcommand'] = sb.set
@@ -394,18 +398,18 @@ class TableView(object):
         sb.pack(side='right', fill='y')
         self._scrollbar = sb
         self._mlistbox.pack(side='left',expand=True, fill='both')
-        
+
         self._sortkey = None
         for i, l in enumerate(self._mlistbox.column_labels):
             l.bind('<Button-1>', self._sort)
-        
+
         self._populate()
-    
+
     @property
     def headers(self):
         """A list of the names of the columns in this table."""
         return self._mlistbox.headers
-    
+
     def insert(self, row_index, rowvalue):
         """
         Insert a new row into the table, so that its row index will be
@@ -418,7 +422,7 @@ class TableView(object):
         """
         self._rows.insert(row_index, rowvalue)
         self._mlistbox.insert(row_index, rowvalue)
-    
+
     def extend(self, rowvalues):
         """
         Add new rows at the end of the table.
@@ -428,7 +432,7 @@ class TableView(object):
             one for each column in the row.
         """
         for rowvalue in rowvalues: self.append(rowvalue)
-    
+
     def append(self, rowvalue):
         """
         Add a new row to the end of the table.
@@ -437,14 +441,14 @@ class TableView(object):
             in the new row.
         """
         self.insert(len(self._rows), rowvalue)
-    
+
     def clear(self):
         """
         Delete all rows in this table.
         """
         self._rows = []
         self._mlistbox.delete(0, 'end')
-        
+
     def __getitem__(self, index):
         """
         Return the value of a row or a cell in this table.  If
@@ -458,7 +462,7 @@ class TableView(object):
             return self._rows[index[0]][index[1]]
         else:
             return tuple(self._rows[index])
-    
+
     def __setitem__(self, index, val):
         """
         Replace the value of a row or a cell in this table with
@@ -487,63 +491,63 @@ class TableView(object):
             self._rows[index] = list(val)
             self._mlistbox.insert(index, val)
             self._mlistbox.delete(index+1)
-    
+
     def __delitem__(self, row_index):
         """
         Delete the ``row_index``th row from this table.
         """
         del self._rows[row_index]
         self._mlistbox.delete(row_index)
-    
+
     def __len__(self):
         """
         :return: the number of rows in this table.
         """
         return len(self._rows)
-    
+
     def _populate(self):
         self._mlistbox.delete(0, 'end')
         for i, row in enumerate(self._rows):
             self._mlistbox.insert('end', row)
-        
-    def pack(self, *args, **kwargs): 
+
+    def pack(self, *args, **kwargs):
         self._frame.pack(*args, **kwargs)
 
-    def grid(self, *args, **kwargs): 
+    def grid(self, *args, **kwargs):
         self._frame.grid(*args, **kwargs)
 
-    def focus(self): 
+    def focus(self):
         self._mlistbox.focus()
 
-    def bind(self, sequence=None, func=None, add=None): 
+    def bind(self, sequence=None, func=None, add=None):
         self._mlistbox.bind(sequence, func, add)
 
-    def rowconfigure(self, row_index, cnf={}, **kw): 
+    def rowconfigure(self, row_index, cnf={}, **kw):
         self._mlistbox.rowconfigure(row_index, cnf, **kw)
 
-    def columnconfigure(self, col_index, cnf={}, **kw): 
+    def columnconfigure(self, col_index, cnf={}, **kw):
         self._mlistbox.columnconfigure(col_index, cnf, **kw)
 
-    def itemconfigure(self, row_index, col_index, cnf=None, **kw): 
+    def itemconfigure(self, row_index, col_index, cnf=None, **kw):
         return self._mlistbox.itemconfigure(row_index, col_index, cnf, **kw)
 
-    def bind_to_labels(self, sequence=None, func=None, add=None): 
+    def bind_to_labels(self, sequence=None, func=None, add=None):
         return self._mlistbox.bind_to_labels(sequence, func, add)
 
-    def bind_to_listboxes(self, sequence=None, func=None, add=None): 
+    def bind_to_listboxes(self, sequence=None, func=None, add=None):
         return self._mlistbox.bind_to_listboxes(sequence, func, add)
 
-    def bind_to_columns(self, sequence=None, func=None, add=None): 
-        return self._mlistbox.bind_to_columns(sequence, func, add) 
-    
+    def bind_to_columns(self, sequence=None, func=None, add=None):
+        return self._mlistbox.bind_to_columns(sequence, func, add)
+
     def show_column(self, column_index):
         """:see: ``MultiListbox.show_column()``"""
         self._mlistbox.show_column(column_index)
-    
+
     def hide_column(self, column_index):
         """:see: ``MultiListbox.hide_column()``"""
         self._mlistbox.hide_column(column_index)
-    
+
     def selected_row(self):
         """
         Return the index of the currently selected row, or None if
@@ -551,14 +555,14 @@ class TableView(object):
         ``table[table.selected_row()]``.
         """
         sel = self._mlistbox.curselection()
-        if sel: 
+        if sel:
             return int(sel[0])
         return None
-    
+
     def select(self, index=None, delta=None, see=True):
         """:see: ``MultiListbox.select()``"""
         self._mlistbox.select(index, delta, see)
-    
+
     def filter_by_in(self, **kwargs):
         for k,v in kwargs.items():
             try:
@@ -570,17 +574,17 @@ class TableView(object):
             else:
                 self._rows = self._all_rows
         self._populate()
-    
-    def sort_by(self, column_index): 
-        
+
+    def sort_by(self, column_index):
+
         selection = self.selected_row()
-        if column_index == self._sortkey: 
-            self._rows.reverse() 
-        else: 
-            self._rows.sort(key=operator.itemgetter(column_index), 
-                reverse=False) 
-            self._sortkey = column_index # Redraw the table. 
-        self._populate() 
+        if column_index == self._sortkey:
+            self._rows.reverse()
+        else:
+            self._rows.sort(key=operator.itemgetter(column_index),
+                reverse=False)
+            self._sortkey = column_index # Redraw the table.
+        self._populate()
         for r, row in enumerate(self._rows):
             if id(row) == selection:
                 self._mlistbox.select(r, see=see)
