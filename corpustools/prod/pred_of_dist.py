@@ -187,6 +187,7 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
     results = []
     H_dict = dict()
 
+    #CALCULATE ENTROPY IN INDIVIDUAL ENVIRONMENTS FIRST
     for env in env_matches:
         total_tokens = sum(env_matches[env][seg1]) + sum(env_matches[env][seg2])
         if not total_tokens:
@@ -198,8 +199,8 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
                     env,
                     str(sum(env_matches[env][seg1])),
                     str(sum(env_matches[env][seg2])),
-                    str(total_tokens),
-                    'N/A',
+                    0,#total_tokens
+                    '0.0',#frequency of environment
                     type_or_token]
             results.append(data)
         else:
@@ -209,7 +210,7 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
             seg2_H = log(seg2_prob,2)*seg2_prob if seg2_prob > 0 else 0
             H = sum([seg1_H, seg2_H])*-1
             if not H:
-                H = H+0
+                H = H+0 #avoid the -0.0 problem
             H_dict[env] = (H, total_tokens)
             data = [corpus_name,
                     tier_name,
@@ -218,11 +219,16 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
                     env,
                     str(sum(env_matches[env][seg1])),
                     str(sum(env_matches[env][seg2])),
-                    str(total_tokens),
+                    total_tokens,
                     str(H),
                     type_or_token]
             results.append(data)
 
+    total_env_count = sum([result[7] for result in results])
+    for result in results:
+        result[7] = str(result[7]/total_env_count)
+
+    #CALCULATE WEIGHTED ENTROPY LAST
     total_frequency = sum(value[1] for value in H_dict.values())
     for env in env_matches:
         H_dict[env] = H_dict[env][0] * (H_dict[env][1] / total_frequency) if total_frequency>0 else 0
@@ -236,7 +242,7 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
             'AVG',
             str(total_seg1_matches),
             str(total_seg2_matches),
-            str(total_seg1_matches+total_seg2_matches),
+            str((total_seg1_matches+total_seg2_matches)/total_env_count),
             str(weighted_H),
             type_or_token]
     results.append(data)

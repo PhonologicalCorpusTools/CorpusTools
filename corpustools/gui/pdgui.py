@@ -551,15 +551,15 @@ class PDFunction(FunctionWindow):
 
     def create_prod_results(self):
         header = [('Corpus', 10),
+                ('Type or token', 10),
                 ('Tier', 15),
                 ('Sound1', 10),
                 ('Sound2', 10),
                 ('Environment',30),
                 ('Frequency of Sound1', 10),
                 ('Frequency of Sound2', 10),
-                ('Total count',10),
-                ('Entropy',10),
-                ('Type or token', 10)]
+                ('Frequency of environment',10),
+                ('Entropy',10)]
         title = 'Predictability of distribution results'
         self.prod_results = ResultsWindow(title,header,delete_method=self.destroy_prod_results)
 
