@@ -60,9 +60,10 @@ class FLFunction(FunctionWindow):
                             command= lambda x=False:self.show_min_pairs_options(x))
         if self.show_tooltips:
             h_type_tip = ToolTip(h_type, text=('Calculate the functional load of the contrast '
-                            'between between two sets of segments as the decrease in corpus'
-                            ' entropy caused by a merger of paired segments in the set '
-                            '(e.g. +/-voice obstruent pairs).'))
+                            'between between two sets of segments as the decrease in corpus '
+                            'entropy caused by a merger of paired segments in the set '
+                            '(e.g. +/-voice obstruent pairs). This is the method used by '
+                            'Surendran & Niyogi (2003).'))
         h_type.grid(sticky=W)
 
 
@@ -105,7 +106,7 @@ class FLFunction(FunctionWindow):
             options_tip = ToolTip(relative_count_frame, text=('The raw count of minimal pairs will'
                             ' be divided by the number of words that include any of the target segments '
                             'present in the list at the left.'))
-        relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to corpus size',
+        relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to number of possible minimal pairs',
                                     value='relative', variable=self.fl_relative_count_var)
         relative_count.grid(sticky=W)
         relative_count.invoke()
