@@ -87,11 +87,11 @@ def print_one_word_results(output_filename, query, string_type, related_data, mi
             
             outf.write(w + '\t' + str(score) + '\n')
             
-def string_similarity_single_pair(corpus_name, relator_type, string_type, w1, w2, ready_made_corpus=None):
+def string_similarity_single_pair(corpus_name, relator_type, string_type, count_what, w1, w2, ready_made_corpus=None):
     relator = relator_type.lower()
     if relator == 'khorsi':
         relator = khorsi.Relator(corpus_name, ready_made_corpus)
-        freq_base = relator.make_freq_base(string_type)
+        freq_base = relator.make_freq_base(string_type, count_what = count_what)
         score = relator.khorsi(w1, w2, freq_base, string_type)
     elif relator == 'edit_distance':
         relator = edit_distance.Relator(corpus_name, ready_made_corpus)

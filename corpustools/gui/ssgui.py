@@ -242,7 +242,7 @@ class SSFunction(FunctionWindow):
         elif self.string_similarity_comparison_type_var.get() == 'one_pair':
             word1 = self.string_similarity_one_pair1_var.get()
             word2 = self.string_similarity_one_pair2_var.get()
-            results = [SS.string_similarity_single_pair('', relator_type, string_type, word1, word2, self.corpus)]
+            results = [SS.string_similarity_single_pair('', relator_type, string_type, typetoken, word1, word2, self.corpus)]
 
         self.ss_results = ResultsWindow(title,header)
 
