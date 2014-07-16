@@ -10,7 +10,7 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.symbolsim.string_similarity as SS
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                                     ResultsWindow, ThreadedTask, ToolTip)
 
 class SSFunction(FunctionWindow):
@@ -28,14 +28,15 @@ class SSFunction(FunctionWindow):
         self.string_similarity_one_pair2_var = StringVar()
         self.string_similarity_min_rel_var = StringVar()
         self.string_similarity_max_rel_var = StringVar()
-        self.string_similarity_relator_type_var = StringVar()
+        self.relator_type_var = StringVar()
         self.title('String similarity')
 
         relator_type_frame = LabelFrame(self, text='String similarity algorithm')
-        self.relator_selection = Listbox(relator_type_frame)
         for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
-            self.relator_selection.insert(0, rtype)
-        self.relator_selection.grid()
+            rb = Radiobutton(relator_type_frame, text=rtype,variable=self.relator_type_var,
+                            value=rtype, command=self.check_relator_type)
+            rb.grid(sticky=W)
+        rb.select()
         relator_type_frame.grid(row=0,column=0,sticky=N)
 
         comparison_type_frame = LabelFrame(self, text='Comparison type')
@@ -91,26 +92,26 @@ class SSFunction(FunctionWindow):
         comparison_type_frame.grid(row=0,column=1,sticky=N)
 
         options_frame = LabelFrame(self, text='Options')
-        typetoken_frame = LabelFrame(options_frame, text='Type or Token')
-        type_button = Radiobutton(typetoken_frame, text='Count types', variable=self.string_similarity_typetoken_var, value='type')
+        self.typetoken_frame = LabelFrame(options_frame, text='Type or Token')
+        type_button = Radiobutton(self.typetoken_frame, text='Count types', variable=self.string_similarity_typetoken_var, value='type')
         type_button.grid(sticky=W)
         type_button.invoke()
-        token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.string_similarity_typetoken_var, value='token')
+        token_button = Radiobutton(self.typetoken_frame, text='Count tokens', variable=self.string_similarity_typetoken_var, value='token')
         token_button.grid(sticky=W)
         if self.corpus.custom and not self.corpus.has_frequency():
             token_button.configure(state=('disabled'))
-        typetoken_frame.grid(column=0, row=0, sticky=W)
-        stringtype_frame = LabelFrame(options_frame, text='String type')
-        spelling_button = Radiobutton(stringtype_frame, text='Compare spelling', variable=self.string_similarity_stringtype_var, value='spelling')
-        spelling_button.grid(sticky=W)
-        spelling_button.invoke()
+        self.typetoken_frame.grid(column=0, row=0, sticky=W)
+        self.stringtype_frame = LabelFrame(options_frame, text='String type')
+        self.spelling_button = Radiobutton(self.stringtype_frame, text='Compare spelling', variable=self.string_similarity_stringtype_var, value='spelling')
+        self.spelling_button.grid(sticky=W)
+        self.spelling_button.select()
         if self.corpus.custom and not self.corpus.has_spelling():
-            transcription_button.configure(state=('disabled'))
-        transcription_button = Radiobutton(stringtype_frame, text='Compare transcription', variable=self.string_similarity_stringtype_var, value='transcription')
-        transcription_button.grid(sticky=W)
+            self.spelling_button.configure(state=('disabled'))
+        self.transcription_button = Radiobutton(self.stringtype_frame, text='Compare transcription', variable=self.string_similarity_stringtype_var, value='transcription')
+        self.transcription_button.grid(sticky=W)
         if self.corpus.custom and not self.corpus.has_transcription():
             transcription_button.configure(state=('disabled'))
-        stringtype_frame.grid(column=0, row=1, sticky=W)
+        self.stringtype_frame.grid(column=0, row=1, sticky=W)
         threshold_frame = LabelFrame(options_frame, text='Return only results between...')
         min_label = Label(threshold_frame, text='Minimum: ')
         min_label.grid(row=0, column=0)
@@ -136,6 +137,25 @@ class SSFunction(FunctionWindow):
 
         self.focus()
 
+
+    def check_relator_type(self):
+        relator_type = self.relator_type_var.get()
+        if not relator_type == 'Khorsi':
+            for child in self.typetoken_frame.winfo_children():
+                child.config(state=DISABLED)
+        else:
+           for child in self.typetoken_frame.winfo_children():
+                child.config(state=ACTIVE)
+
+        if relator_type == 'Phonological edit distance':
+            self.spelling_button.config(state=DISABLED)
+            self.transcription_button.select()
+        else:
+            self.spelling_button.config(state=ACTIVE)
+
+
+
+
     def about_string_similarity(self):
         about = AboutWindow('About the string similarity function',
                 ('This function calculates the similarity between words in the corpus,'
@@ -152,17 +172,13 @@ class SSFunction(FunctionWindow):
 
         #First check if the word is in the corpus
 
-        if not self.relator_selection.curselection():
-            MessageBox.showerror(message='Please select a string similarity algorithm')
-            return
-        else:
-            relator_type = self.relator_selection.get(self.relator_selection.curselection())
-            if relator_type == 'Khorsi':
-                relator_type = 'khorsi'
-            elif relator_type == 'Edit distance':
-                relator_type = 'edit_distance'
-            elif relator_type == 'Phonological edit distance':
-                relator_type = 'phono_edit_distance'
+        relator_type = self.relator_type_var.get()
+        if relator_type == 'Khorsi':
+            relator_type = 'khorsi'
+        elif relator_type == 'Edit distance':
+            relator_type = 'edit_distance'
+        elif relator_type == 'Phonological edit distance':
+            relator_type = 'phono_edit_distance'
 
         comp_type = self.string_similarity_comparison_type_var.get()
         if comp_type == 'one':

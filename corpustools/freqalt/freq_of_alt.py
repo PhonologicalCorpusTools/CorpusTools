@@ -18,14 +18,14 @@ class Freqor(object):
     -------
     None
     """
-    def calc_freq_of_alt(self, s1, s2, relator_type, string_type, count_what, output_filename = None,
+    def calc_freq_of_alt(self, s1, s2, relator_type, count_what, string_type='transcription', output_filename = None,
                         min_rel = None, max_rel = None, phono_align = None, min_pairs_okay = None, from_gui=False):
         """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
 
         Parameters
         ----------
         s1: char
-            A sound segment, e.g. 's', 'ÃƒÅ Ã†â€™',
+            A sound segment, e.g. 's', 'ÃƒÆ’Ã…Â Ãƒâ€ Ã¢â‚¬â„¢',
         s2: char
             A sound segment
         relator_type: string
@@ -41,7 +41,7 @@ class Freqor(object):
         phono_align: boolean (1 or 0), optional
             1 means 'only count alternations that are likely phonologically aligned,' defaults to not force phonological alignment
         min_pairs_okay: boolean (1 or 0), optional
-            1 means allow minimal pairs (e.g. in English, 's' and 'ÃƒÅ Ã†â€™' do not alternate in minimal pairs, i.e. diss/dish is not an alternation, so allowing minimal pairs may skew results)
+            1 means allow minimal pairs (e.g. in English, 's' and 'ÃƒÆ’Ã…Â Ãƒâ€ Ã¢â‚¬â„¢' do not alternate in minimal pairs, i.e. diss/dish is not an alternation, so allowing minimal pairs may skew results)
 
         Returns
         -------
@@ -129,7 +129,7 @@ class Freqor(object):
         Parameters
         ----------
         s1: char
-            A sound segment, e.g. 's', 'ÃƒÅ Ã†â€™',
+            A sound segment, e.g. 's', 'ÃƒÆ’Ã…Â Ãƒâ€ Ã¢â‚¬â„¢',
         s2: char
             A sound segment
         string: string
