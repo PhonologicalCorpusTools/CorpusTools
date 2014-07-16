@@ -45,6 +45,7 @@ class PDFunction(FunctionWindow):
 
         self.env_frame = None
         self.selected_envs_frame = None
+        self.start_new_envs = None
 
         self.show_segment_screen()
 
@@ -581,7 +582,10 @@ class PDFunction(FunctionWindow):
         try:
             self.prod_results.destroy()
             self.prod_results = None
-        except AttributeError:#widgets don't exist anyway
+        except AttributeError: #widgets don't exist anyway
             pass
 
-        self.start_new_envs.config(state=DISABLED)
+        try:
+            self.start_new_envs.config(state=DISABLED)
+        except AttributeError:
+            pass #widget doesn't exist
