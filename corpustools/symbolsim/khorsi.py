@@ -146,12 +146,23 @@ class Relator(object):
         int
             A number representing the relatedness of two words based on Khorsi (2012)
         """
-        try:
+        if isinstance(word1, str):
+            word1 = self.corpus.find(word1)
             w1 = getattr(word1, string_type)
+        else:
+            try:
+                w1 = getattr(word1, string_type)
+            except:
+                w1 = word1
+         
+        if isinstance(word2, str):
+            word2 = self.corpus.find(word2)
             w2 = getattr(word2, string_type)
-        except: #This error is raised because the input type is a string, not a word object (likely a string containing a transcription)
-            w1 = word1
-            w2 = word2
+        else:
+            try:
+                w2 = getattr(word2, string_type)
+            except:
+                w2 = word2    
                                 
         longComSeq = self.lcs(w1, w2)
         if longComSeq == None:

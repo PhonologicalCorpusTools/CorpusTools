@@ -59,6 +59,7 @@ class Relator(object):
                 s1, s2 = getattr(w1, string_type), getattr(w2, string_type)
             except: #This occurred because the input string is already a transcription
                 pass
+            
         if s1 is None or s2 is None:
             return None
         elif len(s1) < len(s2):
