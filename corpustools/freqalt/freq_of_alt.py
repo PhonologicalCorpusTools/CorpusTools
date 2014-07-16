@@ -19,13 +19,13 @@ class Freqor(object):
     None
     """
     def calc_freq_of_alt(self, s1, s2, relator_type, string_type, count_what, output_filename = None,
-                        min_rel = None, max_rel = None, phono_align = None, min_pairs_okay = None):
+                        min_rel = None, max_rel = None, phono_align = None, min_pairs_okay = None, from_gui=False):
         """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
 
         Parameters
         ----------
         s1: char
-            A sound segment, e.g. 's', 'ÃŠÆ’',
+            A sound segment, e.g. 's', 'ÃƒÅ Ã†â€™',
         s2: char
             A sound segment
         relator_type: string
@@ -41,7 +41,7 @@ class Freqor(object):
         phono_align: boolean (1 or 0), optional
             1 means 'only count alternations that are likely phonologically aligned,' defaults to not force phonological alignment
         min_pairs_okay: boolean (1 or 0), optional
-            1 means allow minimal pairs (e.g. in English, 's' and 'ÃŠÆ’' do not alternate in minimal pairs, i.e. diss/dish is not an alternation, so allowing minimal pairs may skew results)
+            1 means allow minimal pairs (e.g. in English, 's' and 'ÃƒÅ Ã†â€™' do not alternate in minimal pairs, i.e. diss/dish is not an alternation, so allowing minimal pairs may skew results)
 
         Returns
         -------
@@ -51,11 +51,11 @@ class Freqor(object):
 
         list_s1, list_s2 = self.get_lists(s1, s2, string_type)
         comparisons = list()
-        
+
         for word_s1 in list_s1:
             for word_s2 in list_s2:
                     comparisons.append( (word_s1, word_s2) )
-        
+
         #Default values for relatedness:
         if relator_type == 'khorsi' and min_rel is None:
             min_rel = -15
@@ -63,7 +63,7 @@ class Freqor(object):
             max_rel = 8
         elif relator_type == 'phono_edit_distance' and max_rel is None:
             max_rel = 8
-        
+
         related_list = string_similarity.string_similarity_pairs('', relator_type, string_type, count_what, comparisons, 'return_data', min_rel = min_rel, max_rel = max_rel, ready_made_corpus = self.corpus)
         all_words, words_with_alt = set(), set()
 
@@ -89,38 +89,39 @@ class Freqor(object):
         if phono_align == 1:
             al = phono_align_ex.Aligner(features=self.corpus.specifier.matrix)
 
-            if output_filename is None:#called from GUI
+            if from_gui and not output_filename:
                 for w1, w2, score in related_list:
                     alignment = al.align(w1, w2)
                     #print(al.morpho_related(alignment, s1, s2))
                     if al.morpho_related(alignment, s1, s2):
                         words_with_alt.add(w1)
                         words_with_alt.add(w2)
+
                 freq_of_alt = len(words_with_alt)/len(all_words)
                 return len(all_words), len(words_with_alt), freq_of_alt
 
 
-            with open(output_filename, mode='w', encoding='utf-8') as outf2:
-                for w1, w2, score in related_list:
-                    alignment = al.align(w1, w2)
-                    #print(al.morpho_related(alignment, s1, s2))
-                    if al.morpho_related(alignment, s1, s2):
-                        words_with_alt.add(w1)
-                        words_with_alt.add(w2)
-                        outf2.write('{}\t{}\t{}\r\n'.format(w1, w2, score))
+            if output_filename:
+                with open(output_filename, mode='w', encoding='utf-8') as outf2:
+                    for w1, w2, score in related_list:
+                        alignment = al.align(w1, w2)
+                        #print(al.morpho_related(alignment, s1, s2))
+                        if al.morpho_related(alignment, s1, s2):
+                            words_with_alt.add(w1)
+                            words_with_alt.add(w2)
+                            outf2.write('{}\t{}\t{}\r\n'.format(w1, w2, score))
 
-                end_time = time.time()
-                freq_of_alt = len(words_with_alt)/len(all_words)
+                    end_time = time.time()
+                    freq_of_alt = len(words_with_alt)/len(all_words)
 
 
-                outf2.write('\r\nStats\r\n------\r\n')
-                outf2.write('run_time\t{}\r\n'.format(end_time-start_time))
-                outf2.write('words_with_{}\t{}\r\n'.format(s1, len(list_s1)))
-                outf2.write('words_with_{}\t{}\r\n'.format(s2, len(list_s2)))
-                outf2.write('total_words\t{}\r\n'.format(len(all_words)))
-                outf2.write('total_words_alter\t{}\r\n'.format(len(words_with_alt)))
-                outf2.write('freq_of_alter\t{}\r\n'.format(freq_of_alt))
-                return len(all_words), len(words_with_alt), freq_of_alt
+                    outf2.write('\r\nStats\r\n------\r\n')
+                    outf2.write('words_with_{}\t{}\r\n'.format(s1, len(list_s1)))
+                    outf2.write('words_with_{}\t{}\r\n'.format(s2, len(list_s2)))
+                    outf2.write('total_words\t{}\r\n'.format(len(all_words)))
+                    outf2.write('total_words_alter\t{}\r\n'.format(len(words_with_alt)))
+                    outf2.write('freq_of_alter\t{}\r\n'.format(freq_of_alt))
+                    return len(all_words), len(words_with_alt), freq_of_alt
 
     def get_lists(self, s1, s2, string):
         """Given two sounds, returns list of Words from the current corpus that have such sounds
@@ -128,7 +129,7 @@ class Freqor(object):
         Parameters
         ----------
         s1: char
-            A sound segment, e.g. 's', 'ÃŠÆ’',
+            A sound segment, e.g. 's', 'ÃƒÅ Ã†â€™',
         s2: char
             A sound segment
         string: string
