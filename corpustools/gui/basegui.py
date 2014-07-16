@@ -137,7 +137,7 @@ class ResultsWindow(Toplevel):
             filename += '.txt'
         with open(filename, mode='w', encoding='utf-8') as f:
             print('\t'.join([h for h in self._table.headers]), file=f)
-            for result in zip(*self._table.get(0)):
+            for result in self._table.rows:
                 print('\t'.join(str(r) for r in result)+'\r\n', file=f)
 
     def update(self, resultline):
@@ -415,6 +415,10 @@ class TableView(object):
     def headers(self):
         """A list of the names of the columns in this table."""
         return self._mlistbox.headers
+
+    @property
+    def rows(self):
+        return self._rows
 
     def insert(self, row_index, rowvalue):
         """
