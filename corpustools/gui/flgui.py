@@ -302,14 +302,6 @@ class FLFunction(FunctionWindow):
             pass #the button doesn't exist, ignore the error
 
     def show_fl_result(self, result):
-        if self.fl_type_var.get() == 'min_pairs':
-            fl_type = 'Minimal pairs'
-            ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
-            relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
-        else:
-            fl_type = 'Entropy'
-            ignored_homophones = 'N/A'
-            relative_count = 'N/A'
 
         header = [('Segment 1',10),
                 ('Segment 2',10),
@@ -317,7 +309,8 @@ class FLFunction(FunctionWindow):
                 ('Result',20),
                 ('Ignored homophones?',5),
                 ('Relative count?',5),
-                ('Minimum word frequency', 10)]
+                ('Minimum word frequency', 10),
+                ('Type or token', 10)]
         title = 'Functional load results'
         self.fl_results = ResultsWindow(title,header,delete_method=self.delete_fl_results)
         self.update_fl_button.config(state=ACTIVE)
@@ -356,6 +349,7 @@ class FLFunction(FunctionWindow):
             ignored_homophones = 'N/A'
             relative_count = 'N/A'
         seg_list = self.sound_list.get(0,END)
+        type_or_token = self.fl_type_or_token_var.get()
 
         if self.entropy_pairs_var.get() == 'individual':
             for result,seg1,seg2 in zip(result, *seg_list):
@@ -365,7 +359,8 @@ class FLFunction(FunctionWindow):
                                         result,
                                         ignored_homophones,
                                         relative_count,
-                                        self.fl_frequency_cutoff_var.get()])
+                                        self.fl_frequency_cutoff_var.get(),
+                                        type_or_token])
         else:
             seg1 = ','.join(seg_list[0])
             seg2 = ','.join(seg_list[1])
@@ -375,7 +370,8 @@ class FLFunction(FunctionWindow):
                                         result,
                                         ignored_homophones,
                                         relative_count,
-                                        self.fl_frequency_cutoff_var.get()])
+                                        self.fl_frequency_cutoff_var.get(),
+                                        type_or_token])
 
     def cancel_functional_load(self):
         self.delete_fl_results()
