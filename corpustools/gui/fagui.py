@@ -27,6 +27,7 @@ class FAFunction(FunctionWindow):
         self.freq_alt_max_rel_var = StringVar()
         self.freq_alt_min_pairs_var = StringVar()
         self.corpus = corpus
+        self.results_table = None
         self.title('Frequency of alternation')
         self.focus()
 
@@ -88,6 +89,15 @@ class FAFunction(FunctionWindow):
         max_rel_entry.grid(row=1, column=1, sticky=W)
         threshold_frame.grid(column=0, row=3, sticky=W)
 
+        output_frame = LabelFrame(options_frame, text='Output all alternations to file?')
+        label = Label(output_frame, text='Enter a file name (leave blank for no output file)')
+        self.output_entry = Entry(output_frame)
+        navigate = Button(output_frame, text='Select file location', command=self.choose_output_location)
+        label.grid(row=0, column=0, sticky=W)
+        self.output_entry.grid(row=1, column=0, sticky=W)
+        navigate.grid(row=1, column=1, sticky=W)
+        output_frame.grid(column=0,row=4,sticky=W)
+
         options_frame.grid(row=0, column=2, sticky=N, padx=10)
         top_frame.grid(row=0,column=0)
 
@@ -105,6 +115,14 @@ class FAFunction(FunctionWindow):
         self.close_results_table()
         self.destroy()
 
+    def choose_output_location(self):
+        filename = FileDialog.asksaveasfilename()
+        if filename:
+            if not filename.endswith('.txt'):
+                filename = filename+'.txt'
+            self.output_entry.delete(0,END)
+            self.output_entry.insert(0,filename)
+
     def calculate_freq_of_alt(self, update=False):
         s1 = self.seg1_var.get()
         s2 = self.seg2_var.get()
@@ -115,6 +133,14 @@ class FAFunction(FunctionWindow):
         if not index:
             MessageBox.showerror(message='Please select a distance metric')
             return
+        if not update and self.results_table is not None:
+            kill_results = MessageBox.askyesno(message=('You already have a results window open.\n'
+                                            'Do you want to destroy it and start a new calculation?'))
+            if not kill_results:
+                return
+            else:
+                self.close_results_table()
+
         relator_type = self.relator_selection.get(index)
         if relator_type == 'Khorsi':
             relator_type = 'khorsi'
@@ -132,6 +158,9 @@ class FAFunction(FunctionWindow):
         max_ = self.freq_alt_max_rel_var.get()
         max_rel = int(max_) if max_ else None
         min_pairs_ok = True if self.freq_alt_min_pairs_var.get() == 'include' else False
+        output_file = self.output_entry.get()
+        if not output_file:
+            outputfile = None
 
         if not update:
             header = [('Sound 1',20),
@@ -145,19 +174,22 @@ class FAFunction(FunctionWindow):
 
             freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
             results = freqor.calc_freq_of_alt(s1, s2, relator_type, string_type, count_what, phono_align=True,
-                                            min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok)
+                                            min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
+                                            from_gui=True, output_filename=output_file)
             self.results_table = ResultsWindow(title, header, delete_method=self.close_results_table)
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type])
 
         else:
             freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
             results = freqor.calc_freq_of_alt(s1, s2, relator_type, string_type, count_what, phono_align=True,
-                                            min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok)
+                                            min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
+                                            from_gui=True, output_filename=output_file)
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type])
 
     def close_results_table(self):
         try:
             self.results_table.destroy()
+            self.results_table = None
         except (TclError, AttributeError):
             pass#doesn't exist to be destroyed
         self.update_fa_button.config(state=DISABLED)
