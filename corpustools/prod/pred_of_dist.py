@@ -10,9 +10,9 @@ def count_segs(corpus, seg1, seg2, type_or_token, tier_name):
         word = getattr(word, tier_name)
         for seg in word:
             if seg == seg1:
-                seg1_counts = seg1_counts+1 if type_or_token == 'type' else seg1_counts+word.abs_freq
+                seg1_counts = seg1_counts+1 if type_or_token == 'type' else seg1_counts+word.frequency
             elif seg == seg2:
-                seg2_counts = seg2_counts+1 if type_or_token == 'type' else seg2_counts+word.abs_freq
+                seg2_counts = seg2_counts+1 if type_or_token == 'type' else seg2_counts+word.frequency
 
     return seg1_counts, seg2_counts
 
@@ -36,7 +36,7 @@ def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
                 if count_what == 'type':
                     value = 1
                 elif count_what == 'token':
-                    value = word.abs_freq
+                    value = word.frequency
                 env_matches[seg1].append(value)
                 continue
 
@@ -44,7 +44,7 @@ def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
                 if count_what == 'type':
                     value = 1
                 elif count_what == 'token':
-                    value = word.abs_freq
+                    value = word.frequency
                 env_matches[seg2].append(value)
                 continue
 
@@ -57,7 +57,7 @@ def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
                     if count_what == 'type':
                         value = 1
                     elif count_what == 'token':
-                        value = word.abs_freq
+                        value = word.frequency
                     if seg == seg1:
                         env_matches[key][seg1].append(value)
                         #print(env_matches[key][seg1])
