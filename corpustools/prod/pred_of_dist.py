@@ -7,8 +7,8 @@ def count_segs(corpus, seg1, seg2, type_or_token, tier_name):
     seg2_counts = 0
 
     for word in corpus:
-        word = getattr(word, tier_name)
-        for seg in word:
+        tier = getattr(word, tier_name)
+        for seg in tier:
             if seg == seg1:
                 seg1_counts = seg1_counts+1 if type_or_token == 'type' else seg1_counts+word.frequency
             elif seg == seg2:
@@ -27,8 +27,8 @@ def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
     words_with_overlapping_envs = defaultdict(list)
 
     for word in corpus:
-        word.set_string(tier_name) #this makes sure we loop over the right thing
-        for pos,seg in enumerate(word):
+        #word.set_string(tier_name) #this makes sure we loop over the right thing
+        for pos,seg in enumerate(getattr(word, tier_name)):
             if not (seg == seg1 or seg == seg2):
                 continue
 
