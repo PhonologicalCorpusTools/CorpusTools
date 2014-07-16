@@ -1,4 +1,5 @@
 
+
 import sys
 from cx_Freeze import setup, Executable
 
@@ -36,22 +37,11 @@ setup(name='corpustools',
       author='Phonological Corpus Tools',
       author_email='kathleen.hall@ubc.ca',
       packages=['corpustools', 
-                'corpustools.acousticsim',
-                'corpustools.acousticsim.tests',
                 'corpustools.corpus',
                 'corpustools.freqalt',
                 'corpustools.funcload',
                 'corpustools.prod',
                 'corpustools.gui',
                 'corpustools.symbolsim'],
-      #install_requires=[
-      #    'pillow',
-          #'numpy',
-          #'scipy'
-      #],
-      entry_points = {
-        'console_scripts': ['pct=corpustools.pct:main'],
-    },
-    console=['bin/pct.py'],
       executables = [Executable('bin/pct.py', base=base)],
       )
