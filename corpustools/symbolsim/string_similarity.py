@@ -144,7 +144,7 @@ def string_similarity_pairs(corpus_name, relator_type, string_type, count_what, 
     
         if relator == 'khorsi':
             relator = khorsi.Relator(corpus_name, ready_made_corpus)
-            freq_base = relator.make_freq_base(string_type)
+            freq_base = relator.make_freq_base(string_type, count_what = count_what)
             related_data = list()
             for line in lines:
                 w1, w2 = line.split('\t')
