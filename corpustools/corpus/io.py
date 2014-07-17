@@ -331,7 +331,7 @@ def make_safe(value, delimiter):
 
     """
     if isinstance(value,list):
-        return delimiter.join(map(make_safe,value))
+        return delimiter.join(map(lambda x: make_safe(x, delimiter),value))
     return str(value)
 
 def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.'):
