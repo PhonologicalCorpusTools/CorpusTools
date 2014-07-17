@@ -99,7 +99,7 @@ class FeatureMatrix(object):
         Dictionaries in the list should contain feature names as keys
         and feature values as values, as well as a special key-value pair
         for the symbol
-    
+
     """
 
     def __init__(self, name,feature_entries):
@@ -116,7 +116,7 @@ class FeatureMatrix(object):
             self.matrix[s['symbol']] = [Feature(sign+name) for name,sign in s.items() if name != 'symbol']
             #So much easier with a dictionary
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
-            
+
         #What are these?
         self.matrix['#'] = [Feature('#')]
         self.matrix[''] = [Feature('*')]
@@ -136,7 +136,7 @@ class FeatureMatrix(object):
         features = list(self.features)
         features.sort()
         return features
-        
+
     def validate(self):
         """
         Make sure that all segments in the matrix have all the features.
@@ -158,22 +158,22 @@ class FeatureMatrix(object):
                         break
                 else:
                     self.matrix[s].append(Feature(default_value+f))
-    
+
     def get_name(self):
         """
         Return an informative identifier for this feature system
-        
+
         Returns
         -------
         str
             Name of FeatureMatrix
         """
         return self.name
-    
+
     def get_feature_list(self):
         """
         Get a list of features that are used in this feature system
-        
+
         Returns
         -------
         list
@@ -182,11 +182,11 @@ class FeatureMatrix(object):
         features = list(self.features)
         features.sort()
         return features
-    
+
     def add_segment(self,seg,feat_spec):
         """
         Add a segment with a feature specification to the feature system
-        
+
         Attributes
         ----------
         seg : str
@@ -194,64 +194,64 @@ class FeatureMatrix(object):
 
         feat_spec : dictionary
             Dictionary with features as keys and feature values as values
-        
+
         """
         #Wheee more dictionarties to lists of feature then back to dictionaries!
         self.matrix[seg] = [Feature(sign+name) for name,sign in feat_spec.items()]
-        
+
     def add_feature(self,feature):
         """
         Add a feature to the feature system
-        
+
         Attributes
         ----------
         feature : str
             Name of the feature to add to the feature system
-        
+
         """
-        
+
         self.features.update({feature})
         self.validate()
-    
+
     def get_segments(self):
         """
         Return a list of segment symbols that are specified in the feature
         system
-        
+
         Returns
         -------
         list
             List of all the segments with feature specifications
         """
         return list(self.matrix.keys())
-        
+
     def get_possible_values(self):
         """
         Get the set of feature values used in the feature system
-        
+
         Returns
         -------
         set
             Set of feature values
         """
         return self.possible_values
-        
+
     def seg_to_feat_line(self,symbol):
         """
         Get a list of feature values for a given segment in the order
         that features are return in get_feature_list
-        
+
         Use for display purposes
-    
+
         Attributes
         ----------
         symbol : str
             Segment symbol to look up
-        
+
         Returns
         -------
         list
-            List of feature values for the symbol, as well as the symbol itself 
+            List of feature values for the symbol, as well as the symbol itself
         """
         feats = self.matrix[symbol]
         featline = [symbol]
@@ -264,10 +264,10 @@ class FeatureMatrix(object):
         #featline = [seg] + [ self.matrix[seg][feat]
         #                    for feat in self.get_feature_list()]
         return featline
-        
+
     def __getitem__(self,item):
         return self.matrix[item]
-        
+
     def __delitem__(self,item):
         del self.matrix[item]
 
@@ -368,7 +368,7 @@ class Word(object):
             if f in self.descriptors:
                 return f
         return 0.0
-        
+
     def add_tier(self, tier_name, tier_features):
         """Adds a new tier attribute to a Word instance
 
@@ -436,7 +436,7 @@ class Word(object):
         """
         return query == self._string[-1]
 
-    def match_env(self, query):
+    def match_env(self, query, tier_name):
         """Searches for occurences of a particular environment in the word
 
         Parameters
@@ -452,49 +452,49 @@ class Word(object):
         """
 
         matches = list()
-
-        for pos,seg in enumerate(self.string):
-            env = self.get_env(pos)
+        tier = getattr(self,tier_name)
+        for pos,seg in enumerate(tier):
+            env = self.get_env(pos, tier_name)
             if env == query:
                 matches.append(env)
 
         return matches
-        
+
     def get_spelling(self):
         """
         Get the orthography of the word
-        
+
         Returns
         -------
         str
             Orthographic spelling
         """
         return self.spelling
-        
+
     def get_transcription(self):
         """
         Return the transcription of the word in the form of a list of
         Segment objects
-        
+
         Returns
         -------
         list of Segments
             List containing the transcription for the word
         """
         return self.transcription
-        
+
     def get_transcription_string(self):
         """
         Returns the transcription of the word as a string delimited by
         '.'
-        
+
         Returns
         -------
         str
             String representation of the transcription
         """
         return '.'.join(map(str,self.transcription))
-        
+
 
     def _specify_features(self, specifier):
         """
@@ -541,7 +541,7 @@ class Word(object):
             print('{}: {}'.format(description, getattr(self,description)))
         print('-'*25+'\n')
 
-    def get_env(self,pos):
+    def get_env(self,pos,tier_name):
         """Get details of a particular environment in a Word
 
         Parameters
@@ -555,18 +555,19 @@ class Word(object):
             Environment of the segment at the given position in the word
 
         """
+        tier = getattr(self,tier_name)
         if len(self) == 1:
             lhs = Segment('#')
             rhs = Segment('#')
         elif pos == 0:
             lhs = Segment('#')
-            rhs = self[pos+1]
+            rhs = tier[pos+1]
         elif pos == len(self)-1:
-            lhs = self[pos-1]
+            lhs = tier[pos-1]
             rhs = Segment('#')
         else:
-            lhs = self[pos-1]
-            rhs = self[pos+1]
+            lhs = tier[pos-1]
+            rhs = tier[pos+1]
 
         e = Environment(lhs, rhs)
 
@@ -577,7 +578,7 @@ class Word(object):
         """
         Depreciated - being explicit about what is being analyzed is
         better than relying on context to disambiguate
-        
+
         Change the _string attribute of a Word
 
         Parameters
@@ -851,18 +852,18 @@ class Corpus(object):
     def get_name(self):
         """
         Get an informative identifier for the corpus
-        
+
         Returns
         -------
         str
             Corpus's name
         """
         return self.name
-        
+
     def is_custom(self):
         """
         Returns True if the corpus is user made versus supplied by PCT
-        
+
         Returns
         -------
         bool
@@ -873,19 +874,19 @@ class Corpus(object):
     def get_feature_matrix(self):
         """
         Return the feature system used in the corpus
-        
+
         Returns
         -------
         FeatureMatrix
             Currently used feature system
         """
         return self.specifier
-        
+
     def set_feature_matrix(self,matrix):
         """
         Set the feature system to be used by the corpus and make sure
         every word is using it too.
-        
+
         Attributes
         ----------
         matrix : FeatureMatrix
@@ -894,11 +895,11 @@ class Corpus(object):
         self.specifier = matrix
         for word in self:
             word._specify_features(self.specifier)
-        
+
     def has_feature_matrix(self):
         """
         Check whether the corpus has a feature system
-        
+
         Returns
         -------
         bool
@@ -909,7 +910,7 @@ class Corpus(object):
     def has_frequency(self):
         """
         Return True if words in the corpus have the 'frequency' label
-        
+
         Returns
         -------
         bool
@@ -920,7 +921,7 @@ class Corpus(object):
     def has_spelling(self):
         """
         Return True if words in the corpus have the 'spelling' label
-        
+
         Returns
         -------
         bool
@@ -931,7 +932,7 @@ class Corpus(object):
     def has_transcription(self):
         """
         Return True if words in the corpus have the 'transcription' label
-        
+
         Returns
         -------
         bool
@@ -942,7 +943,7 @@ class Corpus(object):
     def get_inventory(self):
         """
         Returns a sorted list of segments used in transcriptions
-        
+
         Returns
         -------
         list

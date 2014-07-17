@@ -6,7 +6,7 @@ from cx_Freeze import setup, Executable
 def readme():
     with open('README.md') as f:
         return f.read()
-        
+
 build_exe_options = {"excludes": ['scipy.signal','scipy.io',
                                     'scipy.io.matlab',
                                     'scipy.io.matlab.mio_utils',
@@ -15,7 +15,7 @@ build_exe_options = {"excludes": ['scipy.signal','scipy.io',
                                     'numpy','numpy.fft',
                                     'corpustools.acousticsim',
                                     'corpustools.acousticsim.tests']}
-        
+
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
@@ -36,12 +36,15 @@ setup(name='corpustools',
       url='https://github.com/kchall/CorpusTools',
       author='Phonological Corpus Tools',
       author_email='kathleen.hall@ubc.ca',
-      packages=['corpustools', 
+      packages=['corpustools',
                 'corpustools.corpus',
                 'corpustools.freqalt',
                 'corpustools.funcload',
                 'corpustools.prod',
                 'corpustools.gui',
                 'corpustools.symbolsim'],
-      executables = [Executable('bin/pct.py', base=base)],
+      executables = [Executable('bin/pct.py',
+                            base=base,
+                            shortcutDir='StartMenuFolder',
+                            shortcutName='Phonological CorpusTools')],
       )

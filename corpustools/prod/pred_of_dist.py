@@ -49,7 +49,7 @@ def check_envs(corpus, seg1, seg2, type_or_token, user_supplied_envs,tier_name):
                 continue
 
 
-            word_env = word.get_env(pos)
+            word_env = word.get_env(pos, tier_name)
             found_env_match = list()
             for user_env in user_supplied_envs:
                 key = '{}_{}'.format(user_env[0],user_env[1])
@@ -85,7 +85,6 @@ def match_to_env(word_env,user_env):
     lhs,rhs = user_env
     l_match = False
     r_match = False
-
     if not lhs:
         l_match = True
         #empty side is a wildcard, so an automatic matches
