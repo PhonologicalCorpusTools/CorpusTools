@@ -14,7 +14,7 @@ Download the file 'corpustools-0.15-amd64.msi' from the Phonological CorpusTools
 
 ### Mac OS X
 
-Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/macosx/pct.zip/download . Unzip this file to access 'pct.app'. You can then double-click this file to run Phonological CorpusTools.
+Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/macosx/pct.zip/download . Unzip this file to access 'pct.app' (most likely by double-clicking it). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application. 
 
 ### Linux
 
@@ -25,11 +25,11 @@ There is currently no executable option available for Linux operating systems. P
 
 ### Windows, Mac OS X, or Linux
 
-Dependencies (be sure these are installed first):
+Dependencies:
 - Python 3.3 or higher: https://www.python.org/downloads/release/python-341/
-- Tk: http://www.tcl.tk/software/tcltk/
+- Tk: http://www.tcl.tk/software/tcltk/ (It's likely that this is already included with your current version of Python.)
 
-Download the source code for Phonological CorpusTools. In the top level directory, there is a file called 'setup.py'. Run it in *one* of the following ways:
+Download the source code for Phonological CorpusTools here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/corpustools-0.15.zip/download . (If you prefer, you can find a tarball here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/corpustools-0.15.tar.gz/download) After expanding the file, you will find a file called 'setup.py' in the top level directory. Run it in *one* of the following ways:
 
 1. Double-click it. If this doesn't work, access the file properties and ensure that you have permission to run the file; if not, give them to yourself. In Windows, this may require that you open the file in Administrator mode (also accessible through file properties). If your computer opens the .py file in a text editor rather than running it, you can access the file properties to set Python 3.x as the default program to use with run .py files. If the file is opened in IDLE (a Python editor), you can use the "Run" button in the IDLE interface to run the script instead.
 
