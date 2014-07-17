@@ -56,7 +56,7 @@ class GUI(Toplevel):
     def __init__(self,master):
         self.show_warnings = BooleanVar()
         self.show_tooltips = BooleanVar()
-        
+
         self.show_warnings.set(True)
         self.show_tooltips.set(True)
         self.load_config()
@@ -169,7 +169,7 @@ class GUI(Toplevel):
                 for seg in corpus_inventory:
                     if seg not in feature_inventory:
                         missing.append(str(seg))
-                        
+
                 if missing:
                     MessageBox.showerror(message='Some segments in the corpus inventory are not in the feature system.\nPlease go to Options->View/change feature system... to view missing segments and add them.')
                     return
@@ -178,7 +178,7 @@ class GUI(Toplevel):
                 return
             function(self)
         return do_check
-        
+
 
     def check_for_empty_corpus(function):
         def do_check(self):
@@ -231,7 +231,7 @@ class GUI(Toplevel):
             system_name = self.corpus.get_feature_matrix().get_name()
         else:
             system_name = 'None'
-            
+
         feature_info_label = Label(self.info_frame, text='Feature system: {}'.format(system_name))#textvariable=self.feature_system_var)
         feature_info_label.grid()
 
@@ -286,7 +286,7 @@ class GUI(Toplevel):
     @check_for_valid_feature_matrix
     def string_similarity(self):
         sspopup = SSFunction(self.corpus, show_tooltips = self.show_tooltips.get())
- 
+
     def donothing(self,event=None):
         pass
 
@@ -505,7 +505,7 @@ class GUI(Toplevel):
         if feature_screen.change:
             self.corpus.set_feature_matrix(feature_screen.get_feature_matrix())
         self.main_screen_refresh()
-        
+
 
     def acoustic_sim(self):
 
