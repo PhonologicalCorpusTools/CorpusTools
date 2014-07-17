@@ -8,11 +8,13 @@ This document contains installation instructions. For a description of available
 
 ### Windows
 
-???
+(NOTE: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -> System and Security -> System.)
+
+Download the file 'corpustools-0.15-amd64.msi' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/win64/corpustools-0.15-amd64.msi/download . Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
 
 ### Mac OS X
 
-Download the Phonological CorpusTools file from SourceForge (pct.zip). Unzip this file to access pct.app. This file can be run by double-clicking it (???) to launch Phonological CorpusTools.
+Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/macosx/pct.zip/download . Unzip this file to access 'pct.app'. You can then double-click this file to run Phonological CorpusTools.
 
 ### Linux
 
@@ -33,4 +35,4 @@ Download the source code for Phonological CorpusTools. In the top level director
 
 2. Open a terminal window and run the file. In Linux or Mac OS X, there should be a Terminal application pre-installed. In Windows, you may need to install Cygwin ( https://www.cygwin.com/ ). Once the terminal window is open, nagivate to the top level CorpusTools folder---the one that has setup.py in it. (Use the command 'cd' to navigate your filesystem; Google "terminal change directory" for further instructions.) Once in the correct directory, run this command: "python3 setup.py install" (no quotes). You may lack proper permissions to run this file, in which case on Linux or Mac OS X you can instead run "sudo python3 setup.py install". If Python 3.x is the only version of Python on your system, it may be possible or necessary to use the command "python" rather than "python3".
 
-3. Phonological CorpusTools is installed! Run it from a terminal window using the command "pct". You can also open a "Run" dialogue and use the command "pct" there. In Windows, the Run tool is usuall found in All Programs -> Accessories.
+Phonological CorpusTools should now be installed! Run it from a terminal window using the command "pct". You can also open a "Run" dialogue and use the command "pct" there. In Windows, the Run tool is usuall found in All Programs -> Accessories.
