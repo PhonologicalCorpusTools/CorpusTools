@@ -307,7 +307,14 @@ def load_feature_matrix_csv(name,path,delimiter):
                     raise(DelimiterError)
                 if 'symbol' not in line:
                     raise(KeyError)
-                text_input.append(line)
+                #Compat
+                newline = {}
+                for k,v in line.items():
+                    if k == 'symbol':
+                        newline[k] = v
+                    else:
+                        newline[k] = v[0]
+                text_input.append(newline)
 
     feature_matrix = FeatureMatrix(name,text_input)
     return feature_matrix
