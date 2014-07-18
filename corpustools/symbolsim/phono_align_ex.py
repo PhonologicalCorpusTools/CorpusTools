@@ -22,10 +22,10 @@ class Aligner(object):
         try:
             self.silence_features = self.features['empty']
         except (TypeError, KeyError):
-            rand_segment = random.choice(list(features.keys()))
+            feature_names = self.features.get_feature_list()
             self.silence_features = {}
-            for feature in self.features[rand_segment]:
-                self.silence_features[feature.name] = '0'
+            for feature in feature_names:
+                self.silence_features[feature] = '0'
 
     def align(self, seq1=None, seq2=None):
         similarity_matrix = self.make_similarity_matrix(seq1, seq2)

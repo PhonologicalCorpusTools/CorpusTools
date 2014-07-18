@@ -113,13 +113,14 @@ class FeatureMatrix(object):
                 self.features = {k for k in s.keys() if k != 'symbol'}
             #wheee, let's turn dictionaries of strings in lists of features so we can then generate dictionaries of strings!
             #compatability, yay!
-            self.matrix[s['symbol']] = [Feature(sign+name) for name,sign in s.items() if name != 'symbol']
+            #self.matrix[s['symbol']] = [Feature(sign+name) for name,sign in s.items() if name != 'symbol']
+            self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
             #So much easier with a dictionary
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
 
         #What are these?
-        self.matrix['#'] = [Feature('#')]
-        self.matrix[''] = [Feature('*')]
+        self.matrix['#'] = {'#':''}
+        self.matrix[''] = {'*':''}
 
     def get_features(self):
         """Get the list of feature names used by a feature system
@@ -139,21 +140,23 @@ class FeatureMatrix(object):
         If not, add an unspecified value for that feature to them.
         """
         for v in self.possible_values:
-            if v not in ['+','-']:
+            if v not in ['+','-','.']:
                 default_value = v
                 break
-        #This is so much easier with dictionaries!
-        #for k,v in self.matrix.items():
-        #    for f in self.features:
-        #        if f not in v:
-        #            self.matrix[k][f] = default_value
-        for f in self.features:
-            for s,v in self.matrix.items():
-                for f2 in v:
-                    if f == f2.name:
-                        break
-                else:
-                    self.matrix[s].append(Feature(default_value+f))
+        #dictionary
+        for k,v in self.matrix.items():
+            for f in self.features:
+                if f not in v:
+                    self.matrix[k][f] = default_value
+                    
+        #Feature
+        #for f in self.features:
+        #    for s,v in self.matrix.items():
+        #        for f2 in v:
+        #            if f == f2.name:
+        #                break
+        #        else:
+        #            self.matrix[s].append(Feature(default_value+f))
 
     def get_name(self):
         """
@@ -193,7 +196,8 @@ class FeatureMatrix(object):
 
         """
         #Wheee more dictionarties to lists of feature then back to dictionaries!
-        self.matrix[seg] = [Feature(sign+name) for name,sign in feat_spec.items()]
+        #self.matrix[seg] = [Feature(sign+name) for name,sign in feat_spec.items()]
+        self.matrix[seg] = feat_spec
 
     def add_feature(self,feature):
         """
@@ -249,20 +253,21 @@ class FeatureMatrix(object):
         list
             List of feature values for the symbol, as well as the symbol itself
         """
-        feats = self.matrix[symbol]
-        featline = [symbol]
-        for feat in self.get_feature_list():
-            for f in feats:
-                if f.name == feat:
-                    featline.append(f.sign)
-                    break
-        #look ups are so much easier with a dictionary!
-        #featline = [seg] + [ self.matrix[seg][feat]
-        #                    for feat in self.get_feature_list()]
+        #Feature
+        #feats = self.matrix[symbol]
+        #featline = [symbol]
+        #for feat in self.get_feature_list():
+        #    for f in feats:
+        #        if f.name == feat:
+        #            featline.append(f.sign)
+        #            break
+        #dictionary
+        featline = [symbol] + [ self.matrix[symbol][feat]
+                            for feat in self.get_feature_list()]
         return featline
 
     def __getitem__(self,item):
-        return self.matrix[item]
+        return [Feature(sign+name) for name,sign in self.matrix[item].items()]
 
     def __delitem__(self,item):
         del self.matrix[item]

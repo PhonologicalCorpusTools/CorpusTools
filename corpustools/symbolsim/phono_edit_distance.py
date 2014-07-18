@@ -71,7 +71,7 @@ class Relator(object):
 
 
         if features == None:
-            features = self.corpus.specifier.matrix
+            features = self.corpus.specifier
         a = Aligner(features_tf=features_tf, features=features)
         
         m = a.make_similarity_matrix(w1, w2)
