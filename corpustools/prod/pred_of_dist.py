@@ -1,5 +1,5 @@
 from collections import defaultdict
-from math import log
+from math import log2 as log
 
 
 def count_segs(corpus, seg1, seg2, type_or_token, tier_name):
