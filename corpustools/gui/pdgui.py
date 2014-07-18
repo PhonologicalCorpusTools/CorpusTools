@@ -9,7 +9,7 @@ import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
 
 import queue
-from math import log
+from math import log2 as log
 
 import corpustools.prod.pred_of_dist as PD
 
