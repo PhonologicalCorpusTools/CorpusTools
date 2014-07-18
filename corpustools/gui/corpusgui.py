@@ -257,7 +257,7 @@ class CorpusFromTextWindow(Toplevel):
                 corpus = self.corpusq.get()
                 errors = self.corpusq.get()
                 self.finalize_corpus(corpus,errors)
-                save_binary(corpus,corpus_name_to_path(corpus_name))
+                save_binary(self.corpus,corpus_name_to_path(corpus_name))
                 self.destroy()
             elif isinstance(msg,DelimiterError):
                 MessageBox.showerror(message=str(msg))
