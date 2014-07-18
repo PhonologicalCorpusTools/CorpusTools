@@ -129,6 +129,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
 
 
         transcription_errors = collections.defaultdict(list)
+        trans_check = False
 
         for line in f.readlines():
             line = line.strip()
@@ -138,9 +139,12 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
             for k,v in d.items():
                 if k == 'transcription' or 'tier' in k:
                     if trans_delimiter:
-                        d[k] = v.split(trans_delimiter)
+                        trans = v.split(trans_delimiter)
                     else:
-                        d[k] = list(v)
+                        trans = [x for x in v]
+                    if not trans_check and len(trans) > 1:
+                        trans_check = True
+                    d[k] = trans
             word = Word(**d)
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters which is a period
@@ -230,11 +234,14 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
                 word = word.strip()
 
                 if string_type == 'transcription':
-                    word = word.strip(trans_delimiter)
-                    trans = word.split(trans_delimiter)
-                    if len(trans) > 1:
+                    if trans_delimiter:
+                        word = word.strip(trans_delimiter)
+                        trans = word.split(trans_delimiter)
+                    else:
+                        trans = [x for x in word.strip()]
+                    if not trans_check and len(trans) > 1:
                         trans_check = True
-                    word = trans_delimiter.join([s for s in trans if not s in ignore_list])
+                    word = trans_delimiter.join(trans)
                 elif string_type == 'spelling':
                     word = [letter for letter in word if not letter in ignore_list]
                     word = ''.join(word)
@@ -255,7 +262,11 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
         d = {attribute:value for attribute,value in zip(headers,line)}
         for k,v in d.items():
             if k == 'transcription' or 'tier' in k:
-                d[k] = v.split(trans_delimiter)
+                if trans_delimiter:
+                    trans = v.split(trans_delimiter)
+                else:
+                    trans = [x for x in v]
+                d[k] = trans
         word = Word(**d)
         if word.transcription:
             if not word.spelling:
