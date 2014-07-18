@@ -121,10 +121,6 @@ class FeatureMatrix(object):
         self.matrix['#'] = [Feature('#')]
         self.matrix[''] = [Feature('*')]
 
-    def for_pickle(self):
-        output = {}
-        return output
-
     def get_features(self):
         """Get the list of feature names used by a feature system
 
@@ -358,9 +354,12 @@ class Word(object):
         else:
             self._string = self.spelling
 
-    def for_pickle(self):
-        output = {}
-        return output
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        for k,v in state.items():
+            if k == 'transcription' or 'tier' in k:
+                state[k] = [x.symbol for x in v] #Only store string symbols
+        return state
 
     def get_frequency(self):
         for f in ['frequency','abs_freq', 'freq_per_mil',
@@ -817,9 +816,9 @@ class Corpus(object):
         Name of the feature system used for the corpus
     """
 
-    __slots__ = ['name', 'wordlist', 'specifier',
-                'inventory', 'orthography', 'custom', 'feature_system',
-                'has_frequency_value','has_spelling_value','has_transcription_value']
+    #__slots__ = ['name', 'wordlist', 'specifier',
+    #            'inventory', 'orthography', 'custom', 'feature_system',
+    #            'has_frequency_value','has_spelling_value','has_transcription_value']
 
     def __init__(self, name):
         self.name = name
@@ -834,6 +833,14 @@ class Corpus(object):
         #specifier is not passed as an argument because of how it's created
         #it's directly assigned in CorpusFactory.make_corpus()
 
+    def __setstate__(self,state):
+        self.__dict__.update(state)
+        self._specify_features()
+        
+    def _specify_features(self):
+        for word in self:
+            word._specify_features(self.specifier)
+
     def iter_sort(self):
         """Sorts the keys in the corpus dictionary, then yields the values in that order
 
@@ -841,13 +848,6 @@ class Corpus(object):
         sorted_list = sorted(self.wordlist.keys())
         for word in sorted_list:
             yield self.wordlist[word]
-
-    def for_pickle(self):
-        output = {}
-        output['name'] = self.name
-        output['specifier'] = self.specifier.for_pickle()
-        output['wordlist'] = {k:v.for_pickle() for k,v in self.wordlist.items()}
-        return output
 
     def get_name(self):
         """
@@ -893,8 +893,7 @@ class Corpus(object):
             New feature system to use in the corpus
         """
         self.specifier = matrix
-        for word in self:
-            word._specify_features(self.specifier)
+        self._specify_features()
 
     def has_feature_matrix(self):
         """
