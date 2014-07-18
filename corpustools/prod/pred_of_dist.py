@@ -1,5 +1,5 @@
 from collections import defaultdict
-from math import log2 as log
+from math import log2
 
 
 def count_segs(corpus, seg1, seg2, type_or_token, tier_name):
@@ -176,7 +176,7 @@ def formalize_env(env):
 def calc_prod_all_envs(seg1_count, seg2_count):
     total_count = seg1_count + seg2_count
     if total_count:
-        H = -1 * ((seg1_count/total_count) * log(seg1_count/total_count) + (seg2_count/total_count) * log(seg2_count/total_count))
+        H = -1 * ((seg1_count/total_count) * log2(seg1_count/total_count) + (seg2_count/total_count) * log2(seg2_count/total_count))
     else:
         H = 0.0
     return H
@@ -205,8 +205,8 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
         else:
             seg1_prob = sum(env_matches[env][seg1])/total_tokens
             seg2_prob = sum(env_matches[env][seg2])/total_tokens
-            seg1_H = log(seg1_prob,2)*seg1_prob if seg1_prob > 0 else 0
-            seg2_H = log(seg2_prob,2)*seg2_prob if seg2_prob > 0 else 0
+            seg1_H = log2(seg1_prob)*seg1_prob if seg1_prob > 0 else 0
+            seg2_H = log2(seg2_prob)*seg2_prob if seg2_prob > 0 else 0
             H = sum([seg1_H, seg2_H])*-1
             if not H:
                 H = H+0 #avoid the -0.0 problem
