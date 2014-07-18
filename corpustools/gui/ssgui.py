@@ -2,7 +2,7 @@ import os
 
 from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
-                    ACTIVE, Listbox, N)
+                    ACTIVE, NORMAL, Listbox, N)
 
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
@@ -42,7 +42,8 @@ class SSFunction(FunctionWindow):
         comparison_type_frame = LabelFrame(self, text='Comparison type')
         word1_frame = Frame(comparison_type_frame)
         one_word_radiobutton = Radiobutton(word1_frame, text='Compare one word to entire corpus',
-                                    variable=self.string_similarity_comparison_type_var, value='one')
+                                    variable=self.string_similarity_comparison_type_var, value='one',
+                                    command=self.check_comparison_type)
         one_word_radiobutton.grid(sticky=W)
         one_word_radiobutton.invoke()
         word1_frame.grid(sticky=W)
@@ -53,7 +54,8 @@ class SSFunction(FunctionWindow):
 
         one_pair_frame = Frame(comparison_type_frame)
         one_pair_radiobutton = Radiobutton(one_pair_frame, text='Compare a single pair of words to each other',
-                                    variable=self.string_similarity_comparison_type_var, value='one_pair')
+                                    variable=self.string_similarity_comparison_type_var, value='one_pair',
+                                    command=self.check_comparison_type)
         one_pair_radiobutton.grid(row=0, column=0, sticky=W)
         two_words_frame = Frame(one_pair_frame)
         first_word_label = Label(two_words_frame, text='Word 1: ')
@@ -70,7 +72,8 @@ class SSFunction(FunctionWindow):
         word_pairs_frame = Frame(comparison_type_frame)
 
         pairs_radiobutton = Radiobutton(word_pairs_frame, text='Compare a list of pairs of words',
-                                        variable=self.string_similarity_comparison_type_var, value='pairs')
+                                        variable=self.string_similarity_comparison_type_var, value='pairs',
+                                        command=self.check_comparison_type)
         pairs_radiobutton.grid(sticky=W)
 
         def get_word_pairs_file():
@@ -112,16 +115,16 @@ class SSFunction(FunctionWindow):
         if self.corpus.custom and not self.corpus.has_transcription():
             transcription_button.configure(state=('disabled'))
         self.stringtype_frame.grid(column=0, row=1, sticky=W)
-        threshold_frame = LabelFrame(options_frame, text='Return only results between...')
-        min_label = Label(threshold_frame, text='Minimum: ')
+        self.threshold_frame = LabelFrame(options_frame, text='Return only results between...')
+        min_label = Label(self.threshold_frame, text='Minimum: ')
         min_label.grid(row=0, column=0)
-        min_rel_entry = Entry(threshold_frame, textvariable=self.string_similarity_min_rel_var)
+        min_rel_entry = Entry(self.threshold_frame, textvariable=self.string_similarity_min_rel_var)
         min_rel_entry.grid(row=0, column=1, sticky=W)
-        max_label = Label(threshold_frame, text='Maximum: ')
+        max_label = Label(self.threshold_frame, text='Maximum: ')
         max_label.grid(row=1, column=0)
-        max_rel_entry = Entry(threshold_frame, textvariable=self.string_similarity_max_rel_var)
+        max_rel_entry = Entry(self.threshold_frame, textvariable=self.string_similarity_max_rel_var)
         max_rel_entry.grid(row=1, column=1, sticky=W)
-        threshold_frame.grid(column=0, row=2, sticky=W)
+        self.threshold_frame.grid(column=0, row=2, sticky=W)
         options_frame.grid(row=0, column=2, sticky=N)
 
         button_frame = Frame(self)
@@ -137,6 +140,17 @@ class SSFunction(FunctionWindow):
 
         self.focus()
 
+    def check_comparison_type(self):
+        if not self.string_similarity_comparison_type_var.get() == 'one':
+            for child in self.threshold_frame.winfo_children():
+                child.config(state=DISABLED)
+        else:
+            for child in self.threshold_frame.winfo_children():
+                try:
+                    child.config(state=ACTIVE)#Label widget
+                except TclError:
+                    child.config(state=NORMAL)#Entry widget
+
 
     def check_relator_type(self):
         relator_type = self.relator_type_var.get()
@@ -145,7 +159,7 @@ class SSFunction(FunctionWindow):
                 child.config(state=DISABLED)
         else:
            for child in self.typetoken_frame.winfo_children():
-                child.config(state=ACTIVE)
+                child.config(state=NORMAL)
 
         if relator_type == 'Phonological edit distance':
             self.spelling_button.config(state=DISABLED)
