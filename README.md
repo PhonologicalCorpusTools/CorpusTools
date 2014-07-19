@@ -1,7 +1,9 @@
 Phonological CorpusTools
 ========================
 
-This document contains installation instructions. For a description of available functionality, please refer to the manual included alongside this file.
+This document contains installation instructions for Phonological CorpusTools (PCT). For a description of available functionality, please refer to the manual included alongside this file.
+
+NOTE: The acoustic similarity module in Phonological CorpusTools currently only works if you have intalled PCT using the fallback installation (setup.py) instructions below.
 
 
 ## Standard installation (executable)
@@ -28,6 +30,11 @@ There is currently no executable option available for Linux operating systems. P
 Dependencies:
 - Python 3.3 or higher: https://www.python.org/downloads/release/python-341/
 - Tk: http://www.tcl.tk/software/tcltk/ (It's likely that this is already included with your current version of Python.)
+
+If you expect to use the acoustic similarity module, there are additional dependencies:
+- NumPy: http://www.numpy.org/
+- SciPy: http://www.scipy.org/
+(If you are on Windows and can't successfully use the acoustic similarity module after installing from the above sources, you may want to try installing from the precompiled binaries here: http://www.lfd.uci.edu/~gohlke/pythonlibs/ .)
 
 Download the source code for Phonological CorpusTools here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/corpustools-0.15.zip/download . (If you prefer, you can find a tarball here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/corpustools-0.15.tar.gz/download) After expanding the file, you will find a file called 'setup.py' in the top level directory. Run it in *one* of the following ways:
 
