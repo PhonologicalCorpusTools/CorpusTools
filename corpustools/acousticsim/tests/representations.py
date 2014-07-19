@@ -5,14 +5,16 @@ from numpy.linalg import norm
 import unittest
 import os
 try:
-    from acousticsim.helpers.representations import (to_envelopes,
+    from corpustools.acousticsim.representations import (to_envelopes,
                                         to_mfcc,
                                         preproc)
 except ImportError:
     import sys
+
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.split(os.path.split(test_dir)[0])[0])
-    from acousticsim.helpers.representations import (to_envelopes,
+    corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
+    sys.path.append(corpustools_path)
+    from corpustools.acousticsim.representations import (to_envelopes,
                                         to_mfcc,
                                         preproc)
 
@@ -26,7 +28,7 @@ class EnvelopeTest(unittest.TestCase):
         self.air_path16 = os.path.join(TEST_DIR,'s129_air1_16000.wav')
         self.beer_path = os.path.join(TEST_DIR,'s129_beer1.wav')
         self.beer_path16 = os.path.join(TEST_DIR,'s129_beer1_16000.wav')
-        
+
         self.air_matlab_envs = array([[0.0233989942549329, 0.00661838476428734, 0.00788835662584308, 0.00412614464827849],
                                     [0.0102376729723930, 0.0228581500523383, 0.0197200976733908, 0.0283881404368893],
                                     [0.0110221325778860, 0.0249923113474565, 0.0371321010810126, 0.0570672046506576],
@@ -164,13 +166,13 @@ class EnvelopeTest(unittest.TestCase):
                                     [0.00282498623820616, 0.00112124125488321, 0.00222309433185589, 0.00165112021461859],
                                     [0.00457756291438307, 0.00209956063996889, 0.00203563033564244, 0.00160934200343425],
                                     [0.00514296585574954, 0.00241866904237660, 0.00215954340821088, 0.00166590524748192]])
-        
+
         self.num_bands = 4
-        
+
         self.freq_lims = (80,7800)
-        
+
         self.matlab_matchval = 0.2266
-        
+
     def test_envelope_gen_air(self):
         envs = to_envelopes(self.air_path,self.freq_lims,self.num_bands)
         for i in range(self.num_bands):
@@ -181,7 +183,7 @@ class EnvelopeTest(unittest.TestCase):
         print(summed_dist)
         self.assertTrue(summed_dist < 0.0001)
 
- 
+
 
 class MfccTest(unittest.TestCase):
     def setUp(self):
@@ -201,14 +203,14 @@ class MfccTest(unittest.TestCase):
 [0.373716538623152, -6.62965757557485, -16.5092881621301, -21.0992730280629, -20.4609651648216, -12.7298062150581, -18.4196560006050, -10.5920322822895, -9.41600245822621, -11.9569334992839, -7.91868052324521, -10.1726402630870, -9.30256422374479, -15.1870511639641, -13.2688157069128, -19.7632580764917, -23.8643799558447, -22.3723092771984, -28.4977778627909, -28.6850505208693, -24.7917075615466, -27.7105208258874, -22.3597708013816, -22.5551348781499, -17.3131153594454, -12.8282169680205, -19.5892973500126, -16.6483062602605, 5.67960237302644, 4.67088909829900],
 [-0.675238025032723, -7.11061387431964, -5.17508446842980, -10.5212212424821, -13.9805489146265, -13.0061255295009, -3.64179395901407, -7.91220410028818, -4.00798644588149, 0.879635385743963, -1.92576390229584, -0.945979929033468, -8.03356167639994, -8.19428854317041, -9.71472510299975, -3.36371354773745, -9.07884965960712, -8.51285161791480, -2.18590648310040, -4.94417508499088, -12.4482627686985, -11.0186159837084, -13.5392266043389, -4.01147231787475, -6.68541157507647, 1.15077006378276, 4.36083825903835, -0.0784899881400669, 2.39120487305976, 6.96171151639114],
 [-6.13712683890103, -16.4927199016897, -20.0860315069963, -18.4941511304746, -14.5817833836632, -17.0004302747678, -23.0626149594185, -25.4933397070600, -25.6098187418918, -26.7680163388017, -25.6837265697137, -24.1669783698173, -15.2342441407717, -8.79764589747416, -10.0669535117613, -15.7704813653120, -6.08710629242132, -4.97639281300427, -8.27492379405294, -5.95022483646383, -4.16756615405278, -4.59388534133343, 2.09293761452189, 4.04413716017460, 4.15034451697720, 5.02532196424412, 7.37755061519176, 8.72889651641524, -2.19735786739655, -6.72737187527193]]).T
-    
-    
+
+
     def test(self):
         mfcc = to_mfcc(self.path,(0,8000),self.numCC,self.winLen,self.timeStep)
         print(mfcc[0,:])
         print(self.matlabMfcc[0,:])
         self.assertEqual(mfcc.shape,self.matlabMfcc.shape)
         self.assertTrue(norm(mfcc-self.matlabMfcc) < 1)
-        
+
 if __name__ == '__main__':
     unittest.main()
