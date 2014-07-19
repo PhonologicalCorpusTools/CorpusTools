@@ -412,7 +412,9 @@ class GUI(Toplevel):
         features = [feature for feature in self.selected_tier_features.get(0,END)]
         matches = list()
         for seg in self.corpus.get_inventory():
-            if all(feature in self.corpus.get_feature_matrix()[seg.symbol] for feature in features):
+            if seg in ['#','']: #wtf?
+                continue
+            if all(feature[0] == self.corpus.specifier[seg.symbol,feature[1:]] for feature in features):
                 matches.append(seg)
 
         if not matches:

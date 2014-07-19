@@ -148,7 +148,7 @@ class FeatureMatrix(object):
             for f in self.features:
                 if f not in v:
                     self.matrix[k][f] = default_value
-                    
+
         #Feature
         #for f in self.features:
         #    for s,v in self.matrix.items():
@@ -267,7 +267,10 @@ class FeatureMatrix(object):
         return featline
 
     def __getitem__(self,item):
-        return [Feature(sign+name) for name,sign in self.matrix[item].items()]
+        if isinstance(item,int):
+            return [Feature(sign+name) for name,sign in self.matrix[item].items()]
+        elif isinstance(item,tuple):
+            return self.matrix[item[0]][item[1]]
 
     def __delitem__(self,item):
         del self.matrix[item]
@@ -524,14 +527,11 @@ class Word(object):
             check = self.transcription[0]
             if isinstance(check, str):
                 self.transcription = [Segment(seg,
-                                        pos, self,
-                                        specifier[seg])
+                                        pos, self)
                                         for pos,seg in enumerate(self.transcription)]
-            elif isinstance(check, Segment):
-                self.transcription = [Segment(seg.symbol,
-                                        pos, self,
-                                        specifier[seg.symbol])
-                                        for pos,seg in enumerate(self.transcription)]
+            features = specifier.get_feature_list()
+            for s in self.transcription:
+                s.features = {f:specifier[s.symbol,f] for f in features}
 
     def details(self):
         """Formatted printout of a Word's attributes and their values.
@@ -560,13 +560,13 @@ class Word(object):
 
         """
         tier = getattr(self,tier_name)
-        if len(self) == 1:
+        if len(tier) == 1:
             lhs = Segment('#')
             rhs = Segment('#')
         elif pos == 0:
             lhs = Segment('#')
             rhs = tier[pos+1]
-        elif pos == len(self)-1:
+        elif pos == len(tier)-1:
             lhs = tier[pos-1]
             rhs = Segment('#')
         else:
@@ -841,7 +841,7 @@ class Corpus(object):
     def __setstate__(self,state):
         self.__dict__.update(state)
         self._specify_features()
-        
+
     def _specify_features(self):
         for word in self:
             word._specify_features(self.specifier)
