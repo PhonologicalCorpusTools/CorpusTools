@@ -34,6 +34,7 @@ class FAFunction(FunctionWindow):
 
         top_frame = Frame(self)
         inv_frame = LabelFrame(top_frame, text='Select two sounds')
+        inv_frame_tooltip = ToolTip(inv_frame, text='Select the two sounds you wish to check for alternations.')
         seg1_frame = InventoryFrame(self.corpus.get_inventory(), self.seg1_var, 'Sound 1', master=inv_frame)
         seg1_frame.grid()
         seg2_frame = InventoryFrame(self.corpus.get_inventory(), self.seg2_var, 'Sound 2', master=inv_frame)
@@ -41,6 +42,11 @@ class FAFunction(FunctionWindow):
         inv_frame.grid(row=0,column=0,sticky=N,padx=10)
 
         relator_type_frame = LabelFrame(top_frame, text='Distance metric')
+        relator_type_tooltip = ToolTip(relator_type_frame, text=('Select which algorithm to'
+                                        ' use for calculating the similarity of words. This '
+                                        'is used to determine if two words could be considered'
+                                        ' an example of an alternation. For more information, '
+                                        'refer to "About this function" on the string similarity analysis option.'))
         for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
             rb = Radiobutton(relator_type_frame, text=rtype,variable=self.relator_type_var,
                             value=rtype, command=self.check_relator_type)
@@ -51,6 +57,11 @@ class FAFunction(FunctionWindow):
         options_frame = LabelFrame(top_frame, text='Options')
 
         self.typetoken_frame = LabelFrame(options_frame, text='Type or Token')
+        typetoken_tooltip = ToolTip(self.typetoken_frame, text=('Select which type of frequency to use'
+                                    ' for calculating similarity (only relevant for Khorsi). Type'
+                                    ' frequency means each letter is counted once per word. Token '
+                                    'frequency means each letter is counted as many times as its '
+                                    'words frequency in the corpus. '))
         type_button = Radiobutton(self.typetoken_frame, text='Count types', variable=self.freq_alt_typetoken_var, value='type')
         type_button.grid(sticky=W)
         type_button.invoke()
@@ -60,19 +71,11 @@ class FAFunction(FunctionWindow):
             token_button.configure(state=('disabled'))
         self.typetoken_frame.grid(column=0, row=0, sticky=W)
 
-##        stringtype_frame = LabelFrame(options_frame, text='String type')
-##        spelling_button = Radiobutton(stringtype_frame, text='Compare spelling', variable=self.freq_alt_stringtype_var, value='spelling')
-##        spelling_button.grid(sticky=W)
-##        spelling_button.invoke()
-##        if self.corpus.custom and not self.corpus.has_spelling():
-##            transcription_button.configure(state=('disabled'))
-##        transcription_button = Radiobutton(stringtype_frame, text='Compare transcription', variable=self.freq_alt_stringtype_var, value='transcription')
-##        transcription_button.grid(sticky=W)
-##        if self.corpus.custom and not self.corpus.has_transcription():
-##            transcription_button.configure(state=('disabled'))
-##        stringtype_frame.grid(column=0, row=1, sticky=W)
-
         min_pairs_frame = LabelFrame(options_frame, text='What to do with minimal pairs')
+        min_pairs_tooltip = ToolTip(min_pairs_frame, text=('Select whether to include minimal'
+                                    ' pairs as possible alternations. For example, if you possess'
+                                    ' knowledge that minimal pairs should never be counted as an'
+                                    ' alternation in the corpus, select "ignore minimal pairs".'))
         ignore_min_pairs = Radiobutton(min_pairs_frame, text='Ignore minimal pairs', variable=self.freq_alt_min_pairs_var, value='ignore')
         ignore_min_pairs.grid()
         include_min_pairs = Radiobutton(min_pairs_frame, text='Include minimal pairs', variable=self.freq_alt_min_pairs_var, value='include')
@@ -81,6 +84,9 @@ class FAFunction(FunctionWindow):
         min_pairs_frame.grid(column=0,row=2,sticky=W)
 
         threshold_frame = LabelFrame(options_frame, text='Threshold values')
+        threshold_tooltip = ToolTip(threshold_frame, text=('These values set the minimum similarity'
+                            ' or maximum distance needed in order to consider two words to be'
+                            ' considered a potential example of an alternation. '))
         min_label = Label(threshold_frame, text='Minimum distance (Khorsi only)')
         min_label.grid(row=0, column=0, sticky=W)
         self.min_rel_entry = Entry(threshold_frame, textvariable=self.freq_alt_min_rel_var)
@@ -94,6 +100,10 @@ class FAFunction(FunctionWindow):
         threshold_frame.grid(column=0, row=3, sticky=W)
 
         output_frame = LabelFrame(options_frame, text='Output all alternations to file?')
+        output_frame_tooltip = ToolTip(master=output_frame, text=('Enter a filename for the list '
+                                'of words with an alternation of the target two sounds to be outputted'
+                                ' to.  This is recommended as a means of double checking the quality '
+                                'of alternations as determined by the algorithm.'))
         label = Label(output_frame, text='Enter a file name (leave blank for no output file)')
         self.output_entry = Entry(output_frame)
         navigate = Button(output_frame, text='Select file location', command=self.choose_output_location)
