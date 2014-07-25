@@ -42,7 +42,6 @@ class SSFunction(FunctionWindow):
             rb = Radiobutton(relator_type_frame, text=rtype,variable=self.relator_type_var,
                             value=rtype, command=self.check_relator_type)
             rb.grid(sticky=W)
-        rb.select()
         relator_type_frame.grid(row=0,column=0,sticky=N)
 
         comparison_type_frame = LabelFrame(self, text='Comparison type')
@@ -162,6 +161,7 @@ class SSFunction(FunctionWindow):
 
         self.focus()
         one_word_radiobutton.invoke()
+        rb.invoke()
 
     def check_comparison_type(self):
         if not self.string_similarity_comparison_type_var.get() == 'one':

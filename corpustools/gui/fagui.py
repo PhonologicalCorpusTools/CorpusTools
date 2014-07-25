@@ -125,6 +125,7 @@ class FAFunction(FunctionWindow):
         cancel_button = Button(bottom_frame, text='Cancel', command=self.cancel_freq_of_alt)
         cancel_button.grid(row=0,column=2)
         bottom_frame.grid(row=1,column=0)
+        rb.invoke()
 
     def cancel_freq_of_alt(self):
         self.close_results_table()
