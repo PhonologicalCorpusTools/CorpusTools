@@ -103,13 +103,13 @@ class Aligner(object):
             segment2symbol = segment2
         else:
             segment2symbol = segment2.symbol
-
         if self.features_tf:
             if segment1 == 'empty':
                 fs2 = self.features[segment2symbol]
                 return (sum(check_feature_difference('0', 
                             f.sign) for f in fs2) * self.ins_penalty)
             elif segment2 == 'empty':
+                
                 fs1 = self.features[segment1symbol]
                 return (sum(check_feature_difference(f.sign, 
                         '0') for f in fs1) * 

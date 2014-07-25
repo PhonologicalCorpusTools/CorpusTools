@@ -111,7 +111,7 @@ class SSFunction(FunctionWindow):
         self.transcription_button = Radiobutton(self.stringtype_frame, text='Compare transcription', variable=self.string_similarity_stringtype_var, value='transcription')
         self.transcription_button.grid(sticky=W)
         if self.corpus.custom and not self.corpus.has_transcription():
-            transcription_button.configure(state=('disabled'))
+            self.transcription_button.configure(state=('disabled'))
         self.stringtype_frame.grid(column=0, row=1, sticky=W)
         self.threshold_frame = LabelFrame(options_frame, text='Return only results between...')
         min_label = Label(self.threshold_frame, text='Minimum: ')

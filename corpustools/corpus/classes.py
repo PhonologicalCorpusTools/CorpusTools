@@ -267,7 +267,7 @@ class FeatureMatrix(object):
         return featline
 
     def __getitem__(self,item):
-        if isinstance(item,int):
+        if isinstance(item,str):
             return [Feature(sign+name) for name,sign in self.matrix[item].items()]
         elif isinstance(item,tuple):
             return self.matrix[item[0]][item[1]]
@@ -365,7 +365,7 @@ class Word(object):
     def __getstate__(self):
         state = self.__dict__.copy()
         for k,v in state.items():
-            if k == 'transcription' or 'tier' in k:
+            if (k == 'transcription' or 'tier' in k) and v is not None:
                 state[k] = [x.symbol for x in v] #Only store string symbols
         return state
 

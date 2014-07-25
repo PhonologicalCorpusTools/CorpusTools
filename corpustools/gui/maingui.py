@@ -213,7 +213,7 @@ class GUI(Toplevel):
     def update_info_frame(self):
         for child in self.info_frame.winfo_children():
             child.destroy()
-
+            
         if self.corpus is not None:
             corpus_name = self.corpus.get_name()
             corpus_size = len(self.corpus)
