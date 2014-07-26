@@ -29,6 +29,8 @@ def preproc(path,sr=None,alpha=0.97):
         
     """
     oldsr,sig = wavfile.read(path)
+
+    sig = sig[:,1]
     
     if sr is not None and sr != oldsr:
         t = len(sig)/oldsr
@@ -182,7 +184,7 @@ def to_mfcc(filename, freq_lims,num_coeffs,win_len,time_step,num_filters = 26, u
     
     filterbank = filter_bank(nperseg,num_filters,minHz,maxHz,sr)
     step = nperseg - noverlap
-    indices = arange(0, proc.shape[-1]-nperseg+1, step)
+    indices = arange(0, proc.shape[0]-nperseg+1, step)
     num_frames = len(indices)
     
     mfccs = zeros((num_frames,num_coeffs))
