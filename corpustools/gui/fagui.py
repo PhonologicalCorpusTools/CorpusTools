@@ -1,7 +1,7 @@
 import os
 
 from tkinter import (LabelFrame, Label, W, N, Entry, Button, Radiobutton, Listbox,
-                    Frame, StringVar, BooleanVar, END, DISABLED, TclError,
+                    Checkbutton, Frame, StringVar, BooleanVar, END, DISABLED, TclError,
                     ACTIVE, NORMAL)
 import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
@@ -27,6 +27,7 @@ class FAFunction(FunctionWindow):
         self.freq_alt_max_rel_var = StringVar()
         self.freq_alt_min_pairs_var = StringVar()
         self.relator_type_var = StringVar()
+        self.align_var = BooleanVar()
         self.corpus = corpus
         self.results_table = None
         self.title('Frequency of alternation')
@@ -113,6 +114,11 @@ class FAFunction(FunctionWindow):
         self.output_entry.grid(row=1, column=1, sticky=W)
         output_frame.grid(column=0,row=4,sticky=W)
 
+        phono_align_frame = LabelFrame(options_frame, text='Aligment')
+        align_button = Checkbutton(phono_align_frame, text='Do phonological alignment?', variable=self.align_var)
+        align_button.grid()
+        phono_align_frame.grid(sticky=W)
+
         options_frame.grid(row=0, column=2, sticky=N, padx=10)
         top_frame.grid(row=0,column=0)
 
@@ -185,6 +191,11 @@ class FAFunction(FunctionWindow):
         max_ = self.freq_alt_max_rel_var.get()
         max_rel = int(max_) if max_ else None
         min_pairs_ok = True if self.freq_alt_min_pairs_var.get() == 'include' else False
+        alignment = self.align_var.get()
+        if alignment:
+            align_text = 'yes'
+        else:
+            align_text = 'no'
         output_file = self.output_entry.get()
         if not output_file:
             outputfile = None
@@ -196,22 +207,24 @@ class FAFunction(FunctionWindow):
                         ('Total words with alternations', 10),
                         ('Frequency of alternation', 10),
                         ('Type or token', 10),
-                        ('Distance metric', 10)]
+                        ('Distance metric', 10),
+                        ('Phonological alignment?', 10)]
             title = 'Frequency of alternation results'
 
             freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
-            results = freqor.calc_freq_of_alt(s1, s2, relator_type, count_what, phono_align=True,
+            results = freqor.calc_freq_of_alt(s1, s2, relator_type, count_what,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
-                                            from_gui=True, output_filename=output_file)
+                                            from_gui=True, phono_align=alignment, output_filename=output_file)
+
             self.results_table = ResultsWindow(title, header, delete_method=self.close_results_table)
-            self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type])
+            self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
 
         else:
             freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
-            results = freqor.calc_freq_of_alt(s1, s2, relator_type, count_what, phono_align=True,
+            results = freqor.calc_freq_of_alt(s1, s2, relator_type, count_what, phono_align=alignment,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
                                             from_gui=True, output_filename=output_file)
-            self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type])
+            self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
 
     def close_results_table(self):
         try:
