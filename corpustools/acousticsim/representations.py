@@ -30,7 +30,7 @@ def preproc(path,sr=None,alpha=0.97):
     """
     oldsr,sig = wavfile.read(path)
 
-    sig = sig[:,1]
+    sig = sig[:,0]
     
     if sr is not None and sr != oldsr:
         t = len(sig)/oldsr
