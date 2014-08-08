@@ -12,7 +12,7 @@ NOTE: The acoustic similarity module in Phonological CorpusTools currently only 
 
 (NOTE: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -> System and Security -> System.)
 
-Download the file 'corpustools-0.15-amd64.msi' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/win64/corpustools-0.15-amd64.msi/download . Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
+Download the file 'corpustools-0.15-amd64.msi' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/win64/Phonological%20CorpusTools-0.15-amd64.msi/download . Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
 
 ### Mac OS X
 
