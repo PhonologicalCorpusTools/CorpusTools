@@ -38,7 +38,8 @@ from corpustools.gui.pdgui import PDFunction
 from corpustools.gui.fagui import FAFunction
 from corpustools.gui.corpusgui import (CorpusManager, FeatureSystemManager,
                                     EditFeatureSystemWindow, save_binary,
-                                    export_corpus_csv,export_feature_matrix_csv)
+                                    export_corpus_csv,export_feature_matrix_csv,
+                                    AddTierWindow, RemoveTierWindow)
 
 #try:
 #    from PIL import Image as PIL_Image
@@ -179,7 +180,6 @@ class GUI(Toplevel):
             function(self)
         return do_check
 
-
     def check_for_empty_corpus(function):
         def do_check(self):
             if self.corpus is None:
@@ -199,11 +199,9 @@ class GUI(Toplevel):
 
         return do_check
 
-
     @check_for_unsaved_changes
     def quit(self,event=None):
         self.master.quit()
-
 
     def show_preferences(self):
         preferences = PreferencesWindow()
@@ -213,7 +211,7 @@ class GUI(Toplevel):
     def update_info_frame(self):
         for child in self.info_frame.winfo_children():
             child.destroy()
-            
+
         if self.corpus is not None:
             corpus_name = self.corpus.get_name()
             corpus_size = len(self.corpus)
@@ -235,14 +233,12 @@ class GUI(Toplevel):
         feature_info_label = Label(self.info_frame, text='Feature system: {}'.format(system_name))#textvariable=self.feature_system_var)
         feature_info_label.grid()
 
-
     def issue_changes_warning(self):
         if not self.warn_about_changes:
             return
         should_quit = MessageBox.askyesno(message=(
         'You have made changes to your corpus, but you haven\'t saved it. You will lose these changes if you load a new corpus now.\n Do you want to continue?'))
         return should_quit
-
 
     @check_for_empty_corpus
     def search(self):
@@ -280,7 +276,6 @@ class GUI(Toplevel):
                 break
         self.search_popup.destroy()
 
-
     @check_for_empty_corpus
     @check_for_valid_corpus
     @check_for_valid_feature_matrix
@@ -316,7 +311,6 @@ class GUI(Toplevel):
         self.update_info_frame()
         self.corpus_box.pack(expand=True,fill='both')
 
-
     @check_for_empty_corpus
     def destroy_tier(self):
 
@@ -324,158 +318,25 @@ class GUI(Toplevel):
         if not word.tiers:
             MessageBox.showerror(message='No tiers have been added yet!')
             return
-
-        self.destroy_tier_window = Toplevel()
-        self.destroy_tier_window.title('Tiers')
-        choose_tier = LabelFrame(self.destroy_tier_window, text='Select tier to remove')
-        self.kill_tiers_list = Listbox(choose_tier)
-        for tier_name in sorted(word.tiers):
-            self.kill_tiers_list.insert(END,tier_name)
-        self.kill_tiers_list.grid()
-        kill_switch = Button(choose_tier, text='Remove', command=self.kill_tier)
-        kill_all = Button(choose_tier, text='Remove all', command=self.kill_all_tiers)
-        kill_switch.grid()
-        kill_all.grid()
-        choose_tier.grid()
-        ok_button = Button(self.destroy_tier_window, text='Done', command=self.destroy_tier_window.destroy)
-        ok_button.grid()
-
-    def kill_tier(self):
-        target = self.kill_tiers_list.get(self.kill_tiers_list.curselection())
-        if target and self.show_warnings.get():
-            msg = 'Are you sure you want to remove the {} tier?\nYou cannot undo this action.'.format(target)
-            confirmed = MessageBox.askyesno(message=msg)
-            if not confirmed:
-                return
-
-        for word in self.corpus:
-            word.remove_tier(target)
-
-        self.warn_about_changes = True
-        self.destroy_tier_window.destroy()
-        self.main_screen_refresh()
-
-    def kill_all_tiers(self):
-        if self.show_warnings.get():
-            msg = 'Are you sure you want to remove all the tiers?\nYou cannot undo this action'
-            confirmed = MessageBox.askyesno(message=msg)
-            if not confirmed:
-                return
-
-        kill_tiers = self.kill_tiers_list.get(0,END)
-        for word in self.corpus:
-            for tier in kill_tiers:
-                word.remove_tier(tier)
-
-        self.warn_about_changes = True
-        self.destroy_tier_window.destroy()
-        self.main_screen_refresh()
+        destroy_tier_window = RemoveTierWindow(self.corpus,self.show_warnings.get())
+        destroy_tier_window.top.wait_window()
+        if destroy_tier_window.change:
+            self.corpus = destroy_tier_window.corpus
+            self.warn_about_changes = True
+            self.main_screen_refresh()
 
     @check_for_empty_corpus
     def create_tier(self):
-
         word = self.corpus.random_word()
         if not 'transcription' in word.descriptors:
             MessageBox.showerror(message='No transcription column was found in your corpus. This is required for Tiers.')
             return
-        self.tier_window = Toplevel()
-        self.tier_window.title('Create tier')
-        tier_name_frame = LabelFrame(self.tier_window, text='What do you want to call this tier?')
-        self.tier_name_entry = Entry(tier_name_frame)
-        self.tier_name_entry.grid()
-        tier_name_frame.grid(row=0,column=0)
-        tier_frame = LabelFrame(self.tier_window, text='What features define this tier?')
-        self.tier_feature_list = Listbox(tier_frame)
-        for feature_name in self.corpus.get_features():
-            self.tier_feature_list.insert(END,feature_name)
-        self.tier_feature_list.grid(row=0,column=0)
-        tier_frame.grid(row=1, column=0,sticky=N)
-        add_plus_feature = Button(tier_frame, text='Add [+feature]', command=self.add_plus_tier_feature)
-        add_plus_feature.grid(row=1,column=0)
-        add_minus_feature = Button(tier_frame, text='Add [-feature]', command=self.add_minus_tier_feature)
-        add_minus_feature.grid(row=2,column=0)
-        selected_frame = LabelFrame(self.tier_window, text='Selected features')
-        self.selected_tier_features = Listbox(selected_frame)
-        self.selected_tier_features.grid()
-        selected_frame.grid(row=1,column=1,sticky=N)
-        remove_feature = Button(selected_frame, text='Remove feature', command=self.remove_tier_feature)
-        remove_feature.grid()
-        ok_button = Button(self.tier_window, text='Create tier', command=self.add_tier_to_corpus)
-        preview_button = Button(self.tier_window, text='Preview tier', command=self.preview_tier)
-        cancel_button = Button(self.tier_window, text='Cancel', command=self.tier_window.destroy)
-        ok_button.grid(row=2,column=0)
-        preview_button.grid(row=2,column=1)
-        cancel_button.grid(row=2,column=2)
-
-    def preview_tier(self):
-
-        features = [feature for feature in self.selected_tier_features.get(0,END)]
-        matches = list()
-        for seg in self.corpus.get_inventory():
-            if seg in ['#','']: #wtf?
-                continue
-            if all(feature[0] == self.corpus.specifier[seg.symbol,feature[1:]] for feature in features):
-                matches.append(seg)
-
-        if not matches:
-            matches = 'No segments in this corpus have this combination of feature values'
-        else:
-            matches.sort()
-            m = list()
-            x=0
-            while matches:
-                m.append(matches.pop(0))
-                x+=1
-                if x > 10:
-                    x = 0
-                    m.append('\n')
-            matches = ' '.join(map(str,m))
-
-        preview_window = Toplevel()
-        preview_window.title('Preview tier')
-        preview_frame = LabelFrame(preview_window, text='This tier will contain these segments:')
-        segs = Label(preview_frame, text=matches, justify=LEFT, anchor=W)
-        segs.grid()
-        preview_frame.grid()
-
-    def add_tier_to_corpus(self):
-        tier_name = self.tier_name_entry.get()
-        selected_features = self.selected_tier_features.get(0,END)
-
-        if not tier_name:
-            MessageBox.showerror(message='Please enter a name for this tier')
-            return
-        if not selected_features:
-            MessageBox.showerror(message='No features define this tier. Please select at least one feature')
-            return
-
-        for word in self.corpus:
-            word.add_tier(tier_name, selected_features)
-
-        self.warn_about_changes = True
-        self.tier_window.destroy()
-        self.main_screen_refresh()
-
-    def add_plus_tier_feature(self):
-        try:
-            feature_name = self.tier_feature_list.get(self.tier_feature_list.curselection())
-            feature_name = '+'+feature_name
-            self.selected_tier_features.insert(END,feature_name)
-        except TclError:
-            pass
-
-    def add_minus_tier_feature(self):
-        try:
-            feature_name = self.tier_feature_list.get(self.tier_feature_list.curselection())
-            feature_name = '-'+feature_name
-            self.selected_tier_features.insert(END,feature_name)
-        except TclError:
-            pass
-
-    def remove_tier_feature(self):
-        feature = self.selected_tier_features.curselection()
-        if feature:
-            self.selected_tier_features.delete(feature)
+        tier_window = AddTierWindow(self.corpus)
+        tier_window.top.wait_window()
+        if tier_window.change:
+            self.corpus = tier_window.corpus
+            self.warn_about_changes = True
+            self.main_screen_refresh()
 
     @check_for_empty_corpus
     @check_for_valid_corpus
@@ -508,7 +369,6 @@ class GUI(Toplevel):
             self.corpus.set_feature_matrix(feature_screen.get_feature_matrix())
         self.main_screen_refresh()
 
-
     def acoustic_sim(self):
 
         if not as_enabled:
@@ -517,13 +377,11 @@ class GUI(Toplevel):
             return
         self.as_popup = ASFunction(show_tooltips = self.show_tooltips.get())
 
-
     @check_for_empty_corpus
     @check_for_valid_corpus
     @check_for_valid_feature_matrix
     def functional_load(self):
         fl_popup = FLFunction(self.corpus, show_tooltips = self.show_tooltips.get())
-
 
     @check_for_empty_corpus
     def export_corpus_to_text_file(self):
@@ -541,7 +399,6 @@ class GUI(Toplevel):
             return
 
         export_feature_matrix_csv(matrix,filename)
-
 
 
 def make_menus(root,app):

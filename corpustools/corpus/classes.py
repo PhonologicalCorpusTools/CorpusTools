@@ -835,12 +835,30 @@ class Corpus(object):
         self.has_frequency_value = None
         self.has_spelling_value = None
         self.has_transcription_value = None
-        #specifier is not passed as an argument because of how it's created
-        #it's directly assigned in CorpusFactory.make_corpus()
+        self._tiers = []
+
+    @property
+    def tiers(self):
+        return self._tiers
+
+    def add_tier(self, tier_name, tier_features):
+        if tier_name not in self._tiers:
+            self._tiers.append(tier_name)
+        for word in self:
+            word.add_tier(tier_name,tier_features)
+
+    def remove_tier(self, tier_name):
+        for word in self:
+            word.remove_tier(tier_name)
 
     def __setstate__(self,state):
         self.__dict__.update(state)
         self._specify_features()
+
+        #Backwards compatability
+        if '_tiers' not in state:
+            word = self.random_word()
+            self._tiers = word.tiers
 
     def _specify_features(self):
         for word in self:
