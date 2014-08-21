@@ -27,14 +27,21 @@ shortcut_table = [
      )
     ]
 
-build_exe_options = {"excludes": ['scipy.signal','scipy.io',
-                                    'scipy.io.matlab',
-                                    'scipy.io.matlab.mio_utils',
-                                    'scipy.io.matlab.mio5_utils',
-                                    'scipy.io.matlab.streams','scipy.spatial.distance',
-                                    'numpy','numpy.fft',
-                                    'corpustools.acousticsim',
-                                    'corpustools.acousticsim.tests']}
+build_exe_options = {"excludes": ['corpustools.acousticsim.tests'],
+                    "includes": [
+                            "numpy.lib.format",
+                            "numpy.linalg",
+                            "numpy.linalg._umath_linalg",
+                            "numpy.linalg.lapack_lite",
+                            "scipy.io.matlab.streams",
+                            "scipy.integrate",
+                            "scipy.integrate.vode",
+                            #"scipy.sparse.linalg.dsolve.umfpack",
+                            "scipy.integrate.lsoda",
+                            "scipy.special",
+                            "scipy.special._ufuncs_cxx",
+                            "scipy.sparse.csgraph._validation",
+                            "sys"]}
 
 msi_data = {"Shortcut": shortcut_table}
 
@@ -70,6 +77,7 @@ setup(name='Phonological CorpusTools',
                 'corpustools.funcload',
                 'corpustools.prod',
                 'corpustools.gui',
+                'corpustools.acousticsim',
                 'corpustools.symbolsim'],
       executables = [Executable('bin/pct.py',
                             #targetName = 'PhonologicalCorpusTools',
