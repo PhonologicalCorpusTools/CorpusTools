@@ -225,7 +225,10 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
 
     total_env_count = sum([result[7] for result in results])
     for result in results:
-        result[7] = str(result[7]/total_env_count)
+        try:
+            result[7] = str(result[7]/total_env_count)
+        except ZeroDivisionError:
+            result[7] = '0'
 
     #CALCULATE WEIGHTED ENTROPY LAST
     total_frequency = sum(value[1] for value in H_dict.values())

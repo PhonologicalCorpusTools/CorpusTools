@@ -88,7 +88,7 @@ class FAFunction(FunctionWindow):
         threshold_tooltip = ToolTip(threshold_frame, text=('These values set the minimum similarity'
                             ' or maximum distance needed in order to consider two words to be'
                             ' considered a potential example of an alternation. '))
-        min_label = Label(threshold_frame, text='Minimum distance (Khorsi only)')
+        min_label = Label(threshold_frame, text='Minimum similarity (Khorsi only)')
         min_label.grid(row=0, column=0, sticky=W)
         self.min_rel_entry = Entry(threshold_frame, textvariable=self.freq_alt_min_rel_var)
         self.min_rel_entry.insert(0,'-15')
