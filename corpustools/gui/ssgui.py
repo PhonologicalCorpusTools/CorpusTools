@@ -32,6 +32,12 @@ class SSFunction(FunctionWindow):
         self.title('String similarity')
 
         relator_type_frame = LabelFrame(self, text='String similarity algorithm')
+        relator_type_tooltip = ToolTip(relator_type_frame, text=('Select which algorithm'
+                                        ' to use for calculating similarity. For Khorsi, '
+                                        'a larger number means strings are more similar. '
+                                        'For edit distance, a smaller number means strings '
+                                        'are more similar (with 0 being identical). For more'
+                                        ' information, click on â€˜About this functionâ€¦â€™.'))
         for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
             rb = Radiobutton(relator_type_frame, text=rtype,variable=self.relator_type_var,
                             value=rtype, command=self.check_relator_type)
@@ -39,6 +45,11 @@ class SSFunction(FunctionWindow):
         relator_type_frame.grid(row=0,column=0,sticky=N)
 
         comparison_type_frame = LabelFrame(self, text='Comparison type')
+        comparison_type_tooltip = ToolTip(comparison_type_frame, text=('Select how you would'
+                                ' like to use string similarity. You can 1) calculate the'
+                                ' similarity of one word to all other words in the corpus,'
+                                ' 2) calculate the similarity of 2 words to each other, 3)'
+                                ' calculate the similarity of a list of pairs of words in a text file.'))
         word1_frame = Frame(comparison_type_frame)
         one_word_radiobutton = Radiobutton(word1_frame, text='Compare one word to entire corpus',
                                     variable=self.string_similarity_comparison_type_var, value='one',
@@ -94,6 +105,11 @@ class SSFunction(FunctionWindow):
 
         options_frame = LabelFrame(self, text='Options')
         self.typetoken_frame = LabelFrame(options_frame, text='Type or Token')
+        typetoken_tooltip = ToolTip(self.typetoken_frame, text=('Select which type of frequency to use'
+                                    ' for calculating similarity (only relevant for Khorsi). Type '
+                                    'frequency means each letter is counted once per word. Token '
+                                    'frequency means each letter is counted as many times as its '
+                                    'word\'s frequency in the corpus.'))
         type_button = Radiobutton(self.typetoken_frame, text='Count types', variable=self.string_similarity_typetoken_var, value='type')
         type_button.grid(sticky=W)
         type_button.invoke()
@@ -103,6 +119,9 @@ class SSFunction(FunctionWindow):
             token_button.configure(state=('disabled'))
         self.typetoken_frame.grid(column=0, row=0, sticky=W)
         self.stringtype_frame = LabelFrame(options_frame, text='String type')
+        stringtype_tooltip = ToolTip(self.stringtype_frame, text=('Select whether to calculate similarity'
+                                ' on the spelling of a word (perhaps more useful for morphological purposes)'
+                                ' or transcription of a word (perhaps more useful for phonological purposes).'))
         self.spelling_button = Radiobutton(self.stringtype_frame, text='Compare spelling', variable=self.string_similarity_stringtype_var, value='spelling')
         self.spelling_button.grid(sticky=W)
         self.spelling_button.select()
@@ -111,9 +130,13 @@ class SSFunction(FunctionWindow):
         self.transcription_button = Radiobutton(self.stringtype_frame, text='Compare transcription', variable=self.string_similarity_stringtype_var, value='transcription')
         self.transcription_button.grid(sticky=W)
         if self.corpus.custom and not self.corpus.has_transcription():
-            transcription_button.configure(state=('disabled'))
+            self.transcription_button.configure(state=('disabled'))
         self.stringtype_frame.grid(column=0, row=1, sticky=W)
         self.threshold_frame = LabelFrame(options_frame, text='Return only results between...')
+        theshold_tooltip = ToolTip(self.threshold_frame, text=('Select the range of similarity'
+                                ' scores for the algorithm to filter out.  For example, a minimum'
+                                ' of -10 for Khorsi or a maximum of 8 for edit distance will likely'
+                                ' filter out words that are highly different from each other.'))
         min_label = Label(self.threshold_frame, text='Minimum: ')
         min_label.grid(row=0, column=0)
         min_rel_entry = Entry(self.threshold_frame, textvariable=self.string_similarity_min_rel_var)
@@ -138,6 +161,7 @@ class SSFunction(FunctionWindow):
 
         self.focus()
         one_word_radiobutton.invoke()
+        rb.invoke()
 
     def check_comparison_type(self):
         if not self.string_similarity_comparison_type_var.get() == 'one':
@@ -160,11 +184,11 @@ class SSFunction(FunctionWindow):
            for child in self.typetoken_frame.winfo_children():
                 child.config(state=NORMAL)
 
-        if relator_type == 'Phonological edit distance':
-            self.spelling_button.config(state=DISABLED)
-            self.transcription_button.select()
-        else:
-            self.spelling_button.config(state=ACTIVE)
+##        if relator_type == 'Phonological edit distance':
+##            self.spelling_button.config(state=DISABLED)
+##            self.transcription_button.select()
+##        else:
+##            self.spelling_button.config(state=ACTIVE)
 
 
 

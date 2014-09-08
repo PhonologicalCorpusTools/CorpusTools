@@ -78,7 +78,7 @@ class Freqor(object):
         #Remove pairs that are not phonologically aligned if specified
         if phono_align == 1:
             new_related_list = list()
-            al = phono_align_ex.Aligner(features=self.corpus.specifier.matrix)
+            al = phono_align_ex.Aligner(features=self.corpus.specifier)
             for w1, w2, score in related_list:
                 alignment = al.align(w1, w2)
                 if al.morpho_related(alignment, s1, s2):

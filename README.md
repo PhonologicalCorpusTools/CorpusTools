@@ -12,7 +12,7 @@ NOTE: The acoustic similarity module in Phonological CorpusTools currently only 
 
 (NOTE: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -> System and Security -> System.)
 
-Download the file 'corpustools-0.15-amd64.msi' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/win64/corpustools-0.15-amd64.msi/download . Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
+Download the file 'corpustools-0.15-amd64.msi' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/win64/Phonological%20CorpusTools-0.15-amd64.msi/download . Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
 
 ### Mac OS X
 
@@ -29,7 +29,8 @@ There is currently no executable option available for Linux operating systems. P
 
 Dependencies:
 - Python 3.3 or higher: https://www.python.org/downloads/release/python-341/
-- Tk: http://www.tcl.tk/software/tcltk/ (It's likely that this is already included with your current version of Python.)
+- Setuptools: https://pypi.python.org/pypi/setuptools
+- Tk: http://www.tcl.tk/software/tcltk/
 
 If you expect to use the acoustic similarity module, there are additional dependencies:
 - NumPy: http://www.numpy.org/

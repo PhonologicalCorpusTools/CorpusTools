@@ -5,7 +5,7 @@ from tkinter import Tk
 from corpustools.gui.maingui import GUI, make_menus#,use_logo
 
 def main():
-    
+
     root = Tk()
     root.title("CorpusTools v0.15")
     #logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.ico')
@@ -17,3 +17,6 @@ def main():
     make_menus(root,app)
     root.bind_all('<Control-q>', app.quit)
     root.mainloop()
+
+if __name__ == '__main__':
+    main()

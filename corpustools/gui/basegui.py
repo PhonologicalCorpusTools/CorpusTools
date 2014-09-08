@@ -193,6 +193,8 @@ class MultiListbox(Frame):
             lb.bind('<Button-2>', lambda e, s=self: s._button2(e.x, e.y))
             lb.bind('<MouseWheel>', lambda e: self._scroll(e.delta))
 
+            #lb.unbind_all('<MouseWheel>')
+
         #self.bind('<Button-1>', self._resize_column)
         self.bind('<Up>', lambda e: self.select(delta=-1))
         self.bind('<Down>', lambda e: self.select(delta=1))
