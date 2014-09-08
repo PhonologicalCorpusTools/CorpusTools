@@ -33,6 +33,52 @@ def create_unspecified_test_corpus():
         corpus.add_word(Word(**w))
     return corpus
 
+def create_specified_test_corpus():
+    corpus = create_unspecified_test_corpus()
+    fm_input = [{'symbol':'ɑ','EXTRA':'-','LONG':'-','ant':'-','back':'+','cont':'+','cor':'-',
+                'del_rel':'n','distr':'n','glot_cl':'-','hi_subgl_pr':'-','high':'-',
+                'lat':'n','low':'+','mv_glot_cl':'n','nasal':'-','round':'-','son':'+',
+                'strid':'-','tense':'-','voc':'+','voice':'+'},
+                {'symbol':'u','EXTRA':'-','LONG':'-','ant':'-','back':'+','cont':'+','cor':'-',
+                'del_rel':'n','distr':'n','glot_cl':'-','hi_subgl_pr':'-','high':'+',
+                'lat':'n','low':'-','mv_glot_cl':'n','nasal':'-','round':'+','son':'+',
+                'strid':'-','tense':'+','voc':'+','voice':'+'},
+                {'symbol':'o','EXTRA':'-','LONG':'-','ant':'-','back':'+','cont':'+','cor':'-',
+                'del_rel':'n','distr':'n','glot_cl':'-','hi_subgl_pr':'-','high':'-',
+                'lat':'n','low':'-','mv_glot_cl':'n','nasal':'-','round':'+','son':'+',
+                'strid':'-','tense':'+','voc':'+','voice':'+'},
+                {'symbol':'e','EXTRA':'-','LONG':'-','ant':'-','back':'-','cont':'+','cor':'-',
+                'del_rel':'n','distr':'n','glot_cl':'-','hi_subgl_pr':'-','high':'-',
+                'lat':'n','low':'-','mv_glot_cl':'n','nasal':'-','round':'-','son':'+',
+                'strid':'-','tense':'+','voc':'+','voice':'+'},
+                {'symbol':'s','EXTRA':'-','LONG':'-','ant':'+','back':'-','cont':'+','cor':'+',
+                'del_rel':'n','distr':'-','glot_cl':'-','hi_subgl_pr':'-','high':'-',
+                'lat':'-','low':'-','mv_glot_cl':'n','nasal':'-','round':'-','son':'-',
+                'strid':'+','tense':'.','voc':'-','voice':'-'},
+                {'symbol':'m','EXTRA':'-','LONG':'-','ant':'+','back':'-','cont':'-','cor':'-',
+                'del_rel':'-','distr':'+','glot_cl':'-','hi_subgl_pr':'-','high':'-',
+                'lat':'n','low':'-','mv_glot_cl':'n','nasal':'+','round':'-','son':'+',
+                'strid':'-','tense':'-','voc':'-','voice':'+'},
+                {'symbol':'i','EXTRA':'-','LONG':'-','ant':'-','back':'-','cont':'+','cor':'-',
+                'del_rel':'n','distr':'n','glot_cl':'-','hi_subgl_pr':'-','high':'+',
+                'lat':'n','low':'-','mv_glot_cl':'n','nasal':'-','round':'-','son':'+',
+                'strid':'-','tense':'+','voc':'+','voice':'+'},
+                {'symbol':'n','EXTRA':'-','LONG':'-','ant':'+','back':'-','cont':'-','cor':'+',
+                'del_rel':'-','distr':'-','glot_cl':'-','hi_subgl_pr':'-','high':'-',
+                'lat':'-','low':'-','mv_glot_cl':'n','nasal':'+','round':'-','son':'+',
+                'strid':'-','tense':'-','voc':'-','voice':'+'},
+                {'symbol':'ʃ','EXTRA':'-','LONG':'-','ant':'-','back':'-','cont':'+','cor':'+',
+                'del_rel':'n','distr':'+','glot_cl':'-','hi_subgl_pr':'-','high':'+',
+                'lat':'-','low':'-','mv_glot_cl':'n','nasal':'-','round':'-','son':'-',
+                'strid':'+','tense':'.','voc':'-','voice':'-'},
+                {'symbol':'t','EXTRA':'-','LONG':'-','ant':'+','back':'-','cont':'-','cor':'+',
+                'del_rel':'-','distr':'-','glot_cl':'-','hi_subgl_pr':'-','high':'-',
+                'lat':'-','low':'-','mv_glot_cl':'n','nasal':'-','round':'-','son':'-',
+                'strid':'-','tense':'.','voc':'-','voice':'-'}]
+    fm = FeatureMatrix('spe',fm_input)
+    corpus.set_feature_matrix(fm)
+    return corpus
+
 class WordTest(unittest.TestCase):
     def setUp(self):
         self.basic = {'spelling':'test',

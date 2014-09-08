@@ -237,6 +237,10 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
     weighted_H = sum(H_dict[env] for env in H_dict)
     total_seg1_matches = sum([sum(env_matches[env][seg1]) for env in env_matches])
     total_seg2_matches = sum([sum(env_matches[env][seg2]) for env in env_matches])
+    try:
+        avg_h = str((total_seg1_matches+total_seg2_matches)/total_env_count)
+    except ZeroDivisionError:
+        avg_h = '0.0'
     data = [corpus_name,
             tier_name,
             seg1,
@@ -244,7 +248,7 @@ def calc_prod(corpus_name, tier_name, seg1, seg2, env_matches, type_or_token):
             'AVG',
             str(total_seg1_matches),
             str(total_seg2_matches),
-            str((total_seg1_matches+total_seg2_matches)/total_env_count),
+            avg_h,
             str(weighted_H),
             type_or_token]
     results.append(data)
