@@ -18,7 +18,7 @@ except ImportError:
                                     load_feature_matrix_csv,DelimiterError)
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix)
-from corpustools.corpus.tests.classes import create_unspecified_test_corpus
+from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
 
 TEST_DIR = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading'
 
