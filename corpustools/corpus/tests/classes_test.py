@@ -82,11 +82,20 @@ def create_specified_test_corpus():
 
 class CorpusTest(unittest.TestCase):
     def setUp(self):
-        self.corpus_data = [{'spelling':'tusa','transcription':['t','u','s','ɑ'],'frequency':32.0}]
+        self.basic_info = [{'spelling':'a','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'b','transcription':['a','c'],'frequency':32.0},
+                            {'spelling':'c','transcription':['c','a','b'],'frequency':32.0},
+                            {'spelling':'d','transcription':['a','d'],'frequency':32.0},]
 
-    def test_load(self):
+
+        self.homograph_info = [{'spelling':'a','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'a','transcription':['a','c'],'frequency':32.0},
+                            {'spelling':'c','transcription':['c','a','b'],'frequency':32.0},
+                            {'spelling':'d','transcription':['a','d'],'frequency':32.0},]
+
+    def test_basic(self):
         corpus = Corpus('test')
-        for w in self.corpus_data:
+        for w in self.basic_info:
             self.assertRaises(KeyError,corpus.find,w['spelling'],True)
             corpus.add_word(Word(**w))
             self.assertEqual(corpus[w['spelling']],Word(**w))
@@ -94,49 +103,60 @@ class CorpusTest(unittest.TestCase):
             self.assertTrue(w['spelling'] in corpus)
 
         self.assertEqual(corpus.inventory,{'#':Segment('#'),
-                                        't':Segment('t'),
-                                        'u':Segment('u'),
-                                        's':Segment('s'),
-                                        'ɑ':Segment('ɑ')})
+                                        'a':Segment('a'),
+                                        'b':Segment('b'),
+                                        'c':Segment('c'),
+                                        'd':Segment('d')})
 
 
-        self.assertEqual(corpus.orthography,{'#','t','u','s','a'})
+        self.assertEqual(corpus.orthography,{'#','a','b','c','d'})
+
+    def test_homographs(self):
+        corpus = Corpus('test')
+        for w in self.homograph_info:
+            corpus.add_word(Word(**w))
+
+
+        #Error, should find return an iterable of homographs?
+        self.assertEqual([x.spelling for x in corpus.find('a')],['a','a'])
+
+
 
 class WordTest(unittest.TestCase):
     def setUp(self):
         self.basic = {'spelling':'test',
-                    'transcription':['T','EH','S','T'],
+                    'transcription':['a','b','c','d'],
                     'frequency':'14.0'}
 
         self.tiered = {'spelling':'testing',
-                    'transcription':['T','EH','S','T','IH','N','G'],
-                    'vowel_tier':['EH','IH'],
-                    'cons_tier':['T','S','T','N','G'],
+                    'transcription':['a','b','c','d','e','f','g'],
+                    'tier1':['b','e'],
+                    'tier2':['a','c','e','f','g'],
                     'frequency':'28.0'}
 
         self.extra = {'spelling':'test',
-                    'transcription':['T','EH','S','T'],
+                    'transcription':['a','b','c','d'],
                     'frequency':'14.0',
                     'num_sylls':'3.0',
                     'some_other_label':'something'}
 
         self.empty = {}
 
-        self.trans_only = {'transcription':['T','EH','S','T'],
+        self.trans_only = {'transcription':['a','b','c','d'],
                     'frequency':'14.0'}
 
         self.spelling_only = {'spelling':'test',
                     'frequency':'14.0'}
 
         self.no_freq = {'spelling':'test',
-                    'transcription':['T','EH','S','T']}
+                    'transcription':['a','b','c','d']}
 
     def test_word_init(self):
         t = Word(**self.basic)
         self.assertEqual(t.spelling, self.basic['spelling'])
         self.assertEqual(t.frequency, float(self.basic['frequency']))
 
-        self.assertRaises(AttributeError,getattr,t,'vowel_tier')
+        self.assertRaises(AttributeError,getattr,t,'tier1')
 
     def test_basic_word(self):
         t = Word(**self.basic)
@@ -147,7 +167,7 @@ class WordTest(unittest.TestCase):
 
         self.assertEqual(t.spelling, self.basic['spelling'])
 
-        self.assertRaises(AttributeError,getattr,t,'vowel_tier')
+        self.assertRaises(AttributeError,getattr,t,'tier1')
 
     def test_tiered_word(self):
         t = Word(**self.tiered)
@@ -159,9 +179,9 @@ class WordTest(unittest.TestCase):
 
         self.assertEqual(t.spelling, self.tiered['spelling'])
 
-        self.assertEqual(t.vowel_tier,self.tiered['vowel_tier'])
+        self.assertEqual(t.tier1,self.tiered['tier1'])
 
-        self.assertEqual(t.cons_tier,self.tiered['cons_tier'])
+        self.assertEqual(t.tier2,self.tiered['tier2'])
 
     def test_extra_word(self):
         t = Word(**self.extra)
@@ -189,7 +209,7 @@ class WordTest(unittest.TestCase):
 
         self.assertEqual(t.spelling, None)
 
-        self.assertRaises(AttributeError,getattr,t,'vowel_tier')
+        self.assertRaises(AttributeError,getattr,t,'tier1')
 
     def test_spelling_only_word(self):
         t = Word(**self.spelling_only)
@@ -200,7 +220,7 @@ class WordTest(unittest.TestCase):
 
         self.assertEqual(t.spelling, self.spelling_only['spelling'])
 
-        self.assertRaises(AttributeError,getattr,t,'vowel_tier')
+        self.assertRaises(AttributeError,getattr,t,'tier1')
 
     def test_no_freq_word(self):
         t = Word(**self.no_freq)
@@ -212,7 +232,164 @@ class WordTest(unittest.TestCase):
 
         self.assertEqual(t.spelling, self.no_freq['spelling'])
 
-        self.assertRaises(AttributeError,getattr,t,'vowel_tier')
+        self.assertRaises(AttributeError,getattr,t,'tier1')
+
+class FeatureMatrixTest(unittest.TestCase):
+    def setUp(self):
+        self.basic_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+','feature2':'-'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'-'}]
+
+        self.dots_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+','feature2':'.'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'.'}]
+
+        self.missing_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'-'}]
+
+        self.missing_with_default_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'n'}]
+
+        self.missing_dots_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'.'}]
+
+    def test_basic(self):
+        fm = FeatureMatrix('test',self.basic_info)
+        self.assertTrue(fm.name == 'test')
+
+        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+        self.assertEqual(fm.get_feature_list(), ['feature1','feature2'])
+
+        self.assertEqual(fm.get_possible_values(),{'+','-'})
+
+        #fails, should be sorted list?
+        self.assertEqual(fm.get_segments(),['','#','a','b','c','d'])
+
+    def test_dots(self):
+        fm = FeatureMatrix('test',self.dots_info)
+
+
+        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+        self.assertEqual(fm.get_feature_list(), ['feature1','feature2'])
+
+        self.assertEqual(fm.get_possible_values(),{'+','-','.'})
+
+        self.assertEqual(fm['b','feature2'],'.')
+
+        #Fails, should be sorted list of features? Or set of features? Would need to be hashed then
+        self.assertEqual(fm['b'][1].sign,'.')
+
+    def test_missing(self):
+        fm = FeatureMatrix('test',self.missing_info)
+
+        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+
+        self.assertEqual(fm.get_possible_values(),{'+','-'})
+
+        #Error, there should be a default default value?
+        fm.validate()
+
+    def test_missing_with_default(self):
+        fm = FeatureMatrix('test',self.missing_with_default_info)
+
+        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+
+        self.assertEqual(fm.get_possible_values(),{'+','-','n'})
+
+        fm.validate()
+
+        self.assertEqual(fm['b','feature2'], 'n')
+
+    def test_add_segment(self):
+        fm = FeatureMatrix('test',self.basic_info)
+
+        fm.add_segment('e',{'feature1':'+','feature2':'-'})
+
+        self.assertEqual(fm['e','feature1'],'+')
+
+        #Fails, need to raise exception if the added segment contains a feature that no other segment has
+        self.assertRaises(AttributeError,fm.add_segment,'e',{'feature1':'+','feature3':'-'})
+
+    def test_add_feature(self):
+
+        fm = FeatureMatrix('test',self.missing_with_default_info)
+        fm.add_feature('feature3')
+
+        self.assertEqual(fm['a','feature3'], 'n')
+
+        fm = FeatureMatrix('test',self.basic_info)
+
+        #Error, no default value
+        fm.add_feature('feature3')
+
+class CorpusFeatureMatrixTest(unittest.TestCase):
+    def setUp(self):
+        self.corpus_basic_info = [{'spelling':'a','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'b','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'c','transcription':['c','a','b'],'frequency':32.0},
+                            {'spelling':'d','transcription':['a','d'],'frequency':32.0},]
+
+        self.feature_basic_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+','feature2':'-'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'-'}]
+
+        self.feature_no_d_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+','feature2':'-'},
+                            {'symbol':'c','feature1':'-','feature2':'+'}]
+
+
+    def test_basic(self):
+        corpus = Corpus('test')
+        for w in self.corpus_basic_info:
+            corpus.add_word(Word(**w))
+
+        fm = FeatureMatrix('test',self.feature_basic_info)
+
+        corpus.set_feature_matrix(fm)
+
+        self.assertEqual(corpus['a'].transcription[0].features,{'feature1':'+','feature2':'+'})
+
+
+    def test_coverage(self):
+        #Not implemented yet
+        raise(NotImplementedError)
+
+
+    def test_add_tier(self):
+        corpus = Corpus('test')
+        for w in self.corpus_basic_info:
+            corpus.add_word(Word(**w))
+
+        fm = FeatureMatrix('test',self.feature_basic_info)
+
+        corpus.set_feature_matrix(fm)
+
+        corpus.add_tier('t',['+feature1'])
+
+        self.assertEqual(corpus['d'].t, [corpus['d'].transcription[0]])
+
+        corpus.remove_tier('t')
+
+        self.assertRaises(AttributeError,getattr,corpus['d'],'t')
+
+
+class EnvironmentTest(unittest.TestCase):
+    pass
+
+class SegmentTest(unittest.TestCase):
+    pass
+
+class FeatureTest(unittest.TestCase):
+    pass
 
 if __name__ == '__main__':
     unittest.main()
