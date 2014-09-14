@@ -614,8 +614,15 @@ class Word(object):
 
 
     def __eq__(self, other):
-        #return self._string == other._string
-        return self.spelling == other.spelling
+        if not isinstance(other,Word):
+            return False
+        if self.spelling != other.spelling:
+            return False
+        if self.transcription != other.transcription:
+            return False
+        if self.frequency != other.frequency:
+            return False
+        return True
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -837,6 +844,17 @@ class Corpus(object):
         self.has_transcription_value = None
         self._tiers = []
 
+    def __eq__(self, other):
+        if not isinstance(other,Corpus):
+            return False
+        if self.wordlist != other.wordlist:
+            #print('different wordlists')
+            return False
+        #if self.specifier != other.specifier:
+        #    print('different specifciers')
+        #    return False
+        return True
+
     @property
     def tiers(self):
         return self._tiers
@@ -861,8 +879,9 @@ class Corpus(object):
             self._tiers = word.tiers
 
     def _specify_features(self):
-        for word in self:
-            word._specify_features(self.specifier)
+        if self.has_feature_matrix():
+            for word in self:
+                word._specify_features(self.specifier)
 
     def iter_sort(self):
         """Sorts the keys in the corpus dictionary, then yields the values in that order
