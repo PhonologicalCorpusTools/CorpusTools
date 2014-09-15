@@ -7,13 +7,14 @@ from codecs import open
 import corpustools
 
 class Relator(object):
-    """Initializes the string similarity relator based off the algorithm of morphological relatedness found in Khorsi (2012)
-    
+    """Initializes the string similarity relator based off the algorithm
+    of morphological relatedness found in Khorsi (2012)
+
     Parameters
     ----------
     object: list
         contains parameters needed for the corpus which will be used in relating elements, some examples could be a corpus name or an already created corpus
-        
+
     Returns
     -------
     Returns a relator type which can be used to call methods
@@ -21,14 +22,14 @@ class Relator(object):
 
     def lcs(self, w1, w2):
         """Returns the longest common sequence of two strings or lists of transcription characters and the remainder elements not in the longest common sequence
-        
+
         Parameters
         ----------
         w1: Word
             Either a string or list of transcription characters
         w2: Word
             Same as w1
-        
+
         Returns
         -------
         list or string
@@ -46,7 +47,7 @@ class Relator(object):
         except TypeError:
             #print('A transcription for this element is unavailable')
             return None
-        
+
         stringMatches = []
         for i in range(len(x1)):
             i = i + 1
@@ -87,15 +88,15 @@ class Relator(object):
 
     def sublist(self,small, big):
         """Scott wrote this
-        
+
         Parameters
         ----------
-        
-            
+
+
         Returns
         -------
-        
-             
+
+
         """
         for i in range(len(big)-len(small)+1):
             for j in range(len(small)):
@@ -107,18 +108,18 @@ class Relator(object):
 
     def substring(self, w, l):
         """Returns all substrings of a word w of length l
-        
+
         Parameters
         ----------
         w: string
             a string representing a word (e.g. 'pressure')
         l: int
             a integer of a certain length
-            
+
         Returns
         -------
         list
-            A list of strings where each string is a properly ordered subset of w (i.e. if w='pressure', l='2', returns [pr, re, es ..., re]) 
+            A list of strings where each string is a properly ordered subset of w (i.e. if w='pressure', l='2', returns [pr, re, es ..., re])
         """
         #return all substrings of a word w of length l from 1 letter to the entire word
         substrings = []
@@ -129,7 +130,7 @@ class Relator(object):
 
     def khorsi(self, word1, word2, freq_base, string_type):
         """Calculate the string similarity of two words given a set of characters and their frequencies in a corpus, Returns the value (implementation of Khorsi (2012))
-        
+
         Parameters
         ----------
         w1: Word
@@ -140,7 +141,7 @@ class Relator(object):
             a dictionary where each segment is mapped to its frequency of occurrence in a corpus
         string_type: string
             The type of segments to be used ('spelling' = Roman letters, 'transcription' = IPA symbols)
-        
+
         Returns
         -------
         int
@@ -154,7 +155,7 @@ class Relator(object):
                 w1 = getattr(word1, string_type)
             except:
                 w1 = word1
-         
+
         if isinstance(word2, str):
             word2 = self.corpus.find(word2)
             w2 = getattr(word2, string_type)
@@ -162,14 +163,14 @@ class Relator(object):
             try:
                 w2 = getattr(word2, string_type)
             except:
-                w2 = word2    
-                                
+                w2 = word2
+
         longComSeq = self.lcs(w1, w2)
         if longComSeq == None:
             return None
         else:
             longest, left_over = longComSeq
-            
+
         if isinstance(longest, str) and isinstance(left_over, str):
             longest = re.sub("[\W\d]", "", longest.strip())
             left_over = re.sub("[\W\d]", "", left_over.strip())
@@ -178,7 +179,7 @@ class Relator(object):
         total_freq = sum(value for value in freq_base.values())
 
         #Khorsi's algorithm
-        try: 
+        try:
             if isinstance(w1, str):
                 sum1 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in longest)
                 sum2 = sum(math.log(1/(freq_base[letter]/total_freq)) for letter in left_over)
@@ -188,19 +189,19 @@ class Relator(object):
         except ZeroDivisionError: # This occurred because a spelling string is being compared to a transcription freq_base
             w1, w2 = self.corpus.find(word1), self.corpus.find(word2)
             return self.khorsi(w1, w2, freq_base, string_type)
-            
+
         return sum1-sum2
-    
+
     def make_freq_base(self, string_type, count_what = 'type'):
         """Returns a dictionary of segments mapped to their frequency of occurrence in a corpus
-        
+
         Parameters
         ---------
         string_type: string
             The type of segments to be used ('spelling' = Roman letters, 'transcription' = IPA symbols)
         count_what: string
             The type of frequency, either 'type' or 'token', defaults to 'type'
-        
+
         Returns
         -------
         dictionary
@@ -208,7 +209,7 @@ class Relator(object):
         """
         self.count_what = count_what
         freq_base = collections.defaultdict(int)
-        
+
         for word in self.corpus:
             if self.count_what == 'token':
                 #frequency = word.frequency
@@ -233,7 +234,7 @@ class Relator(object):
 
     def mass_relate(self, query, string_type='spelling', count_what='type'):
         """Given an input Word, uses a corpus to calculate the relatedness of all other words in the corpus to that input Word
-        
+
         Parameters
         ----------
         query: Word
@@ -242,7 +243,7 @@ class Relator(object):
             The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols), defaults to 'spelling'
         count_what: string
             The type of frequency, either 'type' or 'token', defaults to 'type'
-        
+
         Returns
         -------
         list
@@ -259,15 +260,15 @@ class Relator(object):
             relatedness = [self.khorsi(targ_word, word, freq_base, string_type)]
             if relatedness is None: #Skip over words that do not have a transcription in the corpus
                 continue
-            
+
             relate.append( (relatedness, word) )
-        
+
         #Sort the list by most related
         relate.sort(key=lambda t:t[0])
         relate.reverse()
 
         return relate
-    
+
     def get_word_string_type(self, w1, w2, string_type):
         if string_type == 'spelling':
             try:
@@ -295,34 +296,19 @@ class Relator(object):
                     w2_trans = getattr(word2, string_type)
                     w2 = ''.join([seg.symbol for seg in w2_trans])
                 except: # No transcription available
-                    w2 = 'N/A'                
+                    w2 = 'N/A'
             return w1, w2
-    
-    def __init__(self,corpus_name=None, ready_made_corpus=None):
-        """Initialize a Relator object by building a corpus or utilizing an already make corpus
-        
+
+    def __init__(self, corpus):
+        """Initialize a Relator object by utilizing an already made corpus
+
         Parameters
         ----------
-        corpus_name: string
-            The corpus name, e.g. 'Iphod'
-        ready_made_corpus: Corpus
-            A corpus that has been built, if none provided, __init__ will build one
-            
+        corpus: Corpus
+            The corpus to use
+
         Returns
         -------
         None
         """
-        if ready_made_corpus is not None:
-            self.corpus = ready_made_corpus
-            return
-        else:
-            print('Building Corpus')
-            start_time = time.time()
-            self.factory = corpustools.CorpusFactory()
-            self.corpus = self.factory.make_corpus(corpus_name, features='spe', size='all')
-            end_time = time.time()
-            print('Corpus Complete')
-            print('Corpus creation time: ' + str(end_time-start_time))
-
-if __name__ == '__main__':
-    pass
+        self.corpus = corpus
