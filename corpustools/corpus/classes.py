@@ -108,6 +108,7 @@ class FeatureMatrix(object):
         self.features = None
         self.possible_values = set()
         self.matrix = {}
+        self._default_value = 'n'
         for s in feature_entries:
             if self.features is None:
                 self.features = {k for k in s.keys() if k != 'symbol'}
@@ -121,6 +122,13 @@ class FeatureMatrix(object):
         #What are these?
         self.matrix['#'] = {'#':''}
         self.matrix[''] = {'*':''}
+
+    def __setstate__(self,state):
+        self.__dict__.update(state)
+
+        #Backwards compatability
+        if '_default_value' not in state:
+            self._default_value = 'n'
 
     def get_features(self):
         """Get the list of feature names used by a feature system
@@ -147,7 +155,7 @@ class FeatureMatrix(object):
         for k,v in self.matrix.items():
             for f in self.features:
                 if f not in v:
-                    self.matrix[k][f] = default_value
+                    self.matrix[k][f] = self._default_value
 
         #Feature
         #for f in self.features:
@@ -195,8 +203,12 @@ class FeatureMatrix(object):
             Dictionary with features as keys and feature values as values
 
         """
-        #Wheee more dictionarties to lists of feature then back to dictionaries!
-        #self.matrix[seg] = [Feature(sign+name) for name,sign in feat_spec.items()]
+
+        #Validation
+        for f in feat_spec.keys():
+            if f not in self.features:
+                raise(AttributeError('The segment \'%s\' has a feature \'%s\' that is not defined for this feature matrix' %(seg,f)))
+
         self.matrix[seg] = feat_spec
 
     def add_feature(self,feature):
@@ -313,67 +325,42 @@ class Word(object):
 
         self.tiers = list()
         self.transcription = None
+        self.spelling = None
         kwargs = {key.lower():value for key,value in list(kwargs.items())}
-        #THINGS THAT ARE STRINGS
-        string_descriptors = ['spelling', 'error_msg']
-        for descriptor in string_descriptors:
-            setattr(self, descriptor, kwargs.get(descriptor))
 
-        #THINGS THAT ARE NUMBERS
-        float_descriptors = ['abs_freq', 'syl_length', 'freq_per_mil', 'phone_length',
-        'lowercase_freq', 'log10_freq', 'frequency']
-        for descriptor in float_descriptors:
-            try:
-                setattr(self, descriptor, float(kwargs.get(descriptor)))
-            except TypeError:
-                pass
-            #if getattr(self, descriptor) is not None:
-             # setattr(self, descriptor, float(kwargs.get(descriptor)))
-        if hasattr(self, 'frequency'):
-            self.abs_freq = self.frequency
-        elif hasattr(self, 'abs_freq'):
-            self.frequency = self.abs_freq
-
-        self.descriptors = ['spelling']
-        #List and other descriptors
-        custom_descriptors = [kw.lower() for kw in kwargs if (kw not in string_descriptors) and (kw not in float_descriptors)]
-        for descriptor in custom_descriptors:
-            if 'tier' in descriptor:
-                self.tiers.append(descriptor)
-                tier = kwargs.get(descriptor)
-                tier = [Segment(seg,pos,self) for pos,seg in enumerate(tier)]
-                setattr(self, descriptor, tier)
-            elif descriptor == 'transcription':
-                self.descriptors.append('transcription')
-                trans = kwargs.get(descriptor)
-                self.transcription = [Segment(seg,pos,self) for pos,seg in enumerate(trans)]
+        for key, value in kwargs.items():
+            key = key.lower()
+            if isinstance(value,list):
+                #transcription type stuff
+                if key != 'transcription':
+                    self.tiers.append(key)
+                value = [Segment(seg,pos,self) for pos,seg in enumerate(value)]
             else:
-                setattr(self, descriptor, kwargs.get(descriptor))
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+            setattr(self,key, value)
+        if self.spelling is None and self.transcription is None:
+            raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
+        if self.spelling is None:
+            self.spelling = ''.join(map(str,self.transcription))
 
-
-        self.descriptors = ['spelling']
-        if self.transcription is not None:
-            self.descriptors.append('transcription')
-
-        self.descriptors.extend([kw for kw in sorted(kwargs) if not kw in self.descriptors])
-
-        if self.transcription is not None:
-            self._string = self.transcription
-        else:
-            self._string = self.spelling
 
     def __getstate__(self):
         state = self.__dict__.copy()
         for k,v in state.items():
-            if (k == 'transcription' or 'tier' in k) and v is not None:
+            if (k == 'transcription' or k in self.tiers) and v is not None:
                 state[k] = [x.symbol for x in v] #Only store string symbols
         return state
 
     def get_frequency(self):
         for f in ['frequency','abs_freq', 'freq_per_mil',
         'lowercase_freq', 'log10_freq']:
-            if f in self.descriptors:
-                return f
+            try:
+                return getattr(self,f)
+            except AttributeError:
+                pass
         return 0.0
 
     def add_tier(self, tier_name, tier_features):
@@ -405,7 +392,6 @@ class Word(object):
             #self.tiers[name] = list()
             setattr(self,tier_name,new_tier)
 
-        self.descriptors.append(tier_name)
         self.tiers.append(tier_name)
 
     def remove_tier(self, tier_name):
@@ -423,7 +409,6 @@ class Word(object):
 
         """
         try:
-            self.descriptors.remove(tier_name)
             self.tiers.remove(tier_name)
             delattr(self, tier_name)
         except ValueError:
@@ -500,6 +485,8 @@ class Word(object):
         str
             String representation of the transcription
         """
+        if self.transcription is None:
+            return None
         return '.'.join(map(str,self.transcription))
 
 
@@ -518,10 +505,7 @@ class Word(object):
         Generally, don't call this method. Consider it a "behind the scenes"
         method for making a corpus.
         """
-        if self.transcription is None:
-            #handles cases where no transcription is found in the CMU dictionary
-            self._string = [letter for letter in self.spelling]
-        elif self.transcription == '#':
+        if self.transcription == '#':
             self.transcription = [Segment('#', None)]
         else:
             check = self.transcription[0]
@@ -577,45 +561,25 @@ class Word(object):
 
         return e
 
-
-    def set_string(self, attr):
-        """
-        Depreciated - being explicit about what is being analyzed is
-        better than relying on context to disambiguate
-
-        Change the _string attribute of a Word
-
-        Parameters
-        ----------
-        attr : str
-            Name of the attribute that _string should reference
-
-        Notes
-        ----------
-        See the __init__ method for details on what the _string attribute does
-
-        """
-        new_string = getattr(self, attr, None)
-        if new_string is None:
-            msg = 'cannot assign {} to string, no value was found'.format(attr)
-            raise ValueError(msg)
-        else:
-            self._string = new_string
-
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
         #returning self._string is problematic, because sometimes it's a list
         #and print functions don't like that, and raise a TypeError
-        if not type(self._string) == str:
-            return ''.join([str(x) for x in self._string])
-        return self._string
+        return '<Word: \'%s\'>' % self.spelling
 
 
     def __eq__(self, other):
-        #return self._string == other._string
-        return self.spelling == other.spelling
+        if not isinstance(other,Word):
+            return False
+        if self.spelling != other.spelling:
+            return False
+        if self.transcription != other.transcription:
+            return False
+        if self.frequency != other.frequency:
+            return False
+        return True
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -631,32 +595,6 @@ class Word(object):
 
     def __ge__(self, other):
         return self.spelling >= other.spelling
-
-    def __contains__(self,item):
-        return item in [seg for seg in self._string]
-
-    def __len__(self):
-        return len(self._string)
-
-    def __getitem__(self,key):
-        if not isinstance(key,int):
-            raise TypeError('index must be an integer')
-        else:
-            return self._string[key]
-
-    def __setitem__(self,key,value):
-        if not isinstance(key,int):
-            raise TypeError('index must be an integer')
-        self._string[key] = value
-
-    def __iter__(self):
-        """
-        Depreciated - Given that there are multiple representations for
-        a Word object, it's better to be explicit about what representation
-        is being iterated over
-        """
-        for seg in self._string:
-            yield seg
 
 class Environment(object):
 
@@ -837,6 +775,17 @@ class Corpus(object):
         self.has_transcription_value = None
         self._tiers = []
 
+    def __eq__(self, other):
+        if not isinstance(other,Corpus):
+            return False
+        if self.wordlist != other.wordlist:
+            #print('different wordlists')
+            return False
+        #if self.specifier != other.specifier:
+        #    print('different specifciers')
+        #    return False
+        return True
+
     @property
     def tiers(self):
         return self._tiers
@@ -861,8 +810,9 @@ class Corpus(object):
             self._tiers = word.tiers
 
     def _specify_features(self):
-        for word in self:
-            word._specify_features(self.specifier)
+        if self.has_feature_matrix():
+            for word in self:
+                word._specify_features(self.specifier)
 
     def iter_sort(self):
         """Sorts the keys in the corpus dictionary, then yields the values in that order
@@ -1031,7 +981,7 @@ class Corpus(object):
             elif self.has_transcription_value is None:
                 self.has_transcription_value = False
             if self.has_frequency_value is None:
-                if 'frequency' in word.descriptors:
+                if word.get_frequency():
                     self.has_frequency_value = True
                 else:
                     self.has_frequency_value = False
@@ -1120,7 +1070,7 @@ class Corpus(object):
         """
         return self.specifier.get_features()
 
-    def find(self, word, keyerror=False):
+    def find(self, word, keyerror=True):
         """Search for a Word in the corpus
         If keyerror == True, then raise a KeyError if the word is not found
         If keyerror == False, then return an EmptyWord if the word is not found
@@ -1148,7 +1098,7 @@ class Corpus(object):
         except KeyError:
             try:
                 key = '{} (1)'.format(word)
-                result = self.wordlist[key]
+                result = [self.wordlist[key]]
             except KeyError:
                 if keyerror:
                     raise KeyError('The word \"{}\" is not in the corpus'.format(word))

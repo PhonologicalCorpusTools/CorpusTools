@@ -159,6 +159,12 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
             corpus.add_word(word)
             if pqueue is not None:
                 pqueue.put(1)
+    if corpus.has_transcription() and not trans_check:
+        e = DelimiterError('Could not parse transcriptions with that delimiter.\n\Check that the transcription delimiter you typed in matches the one used in the file.')
+        if pqueue is not None:
+            pqueue.put(e)
+        else:
+            raise(e)
 
     if pqueue is not None:
         pqueue.put(-99)

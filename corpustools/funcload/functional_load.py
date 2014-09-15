@@ -39,7 +39,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, d
 
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
 
-    corpus = [word for word in corpus if any([s in word for s in all_segments])]
+    corpus = [word for word in corpus if any([s in word.transcription for s in all_segments])]
     scope = len(corpus)
 
     trans_spell = [(tuple(word.transcription), word.spelling.lower()) for word in corpus]
