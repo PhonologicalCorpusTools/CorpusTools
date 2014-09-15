@@ -1,7 +1,7 @@
 import unittest
 
 try:
-    from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
+    from corpustools.corpus.tests.classes_test import create_specified_test_corpus
 except ImportError:
     import sys
     import os

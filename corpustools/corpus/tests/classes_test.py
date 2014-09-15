@@ -207,7 +207,7 @@ class WordTest(unittest.TestCase):
 
         self.assertEqual(t.frequency, float(self.trans_only['frequency']))
 
-        self.assertEqual(t.spelling, None)
+        self.assertEqual(t.spelling, 'abcd')
 
         self.assertRaises(AttributeError,getattr,t,'tier1')
 
@@ -271,7 +271,7 @@ class FeatureMatrixTest(unittest.TestCase):
         self.assertEqual(fm.get_possible_values(),{'+','-'})
 
         #fails, should be sorted list?
-        self.assertEqual(fm.get_segments(),['','#','a','b','c','d'])
+        self.assertEqual(sorted(fm.get_segments()),sorted(['','#','a','b','c','d']))
 
     def test_dots(self):
         fm = FeatureMatrix('test',self.dots_info)
@@ -285,7 +285,7 @@ class FeatureMatrixTest(unittest.TestCase):
         self.assertEqual(fm['b','feature2'],'.')
 
         #Fails, should be sorted list of features? Or set of features? Would need to be hashed then
-        self.assertEqual(fm['b'][1].sign,'.')
+        self.assertEqual(sorted(fm['b'],key=lambda x: x.name)[1].sign,'.')
 
     def test_missing(self):
         fm = FeatureMatrix('test',self.missing_info)
