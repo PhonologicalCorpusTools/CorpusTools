@@ -10,7 +10,7 @@ import tkinter.messagebox as MessageBox
 
 import queue
 
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
+from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ExhaustivityError, UniquenessError
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, ERROR_DIR,
                     ResultsWindow, ThreadedTask, ToolTip)
@@ -495,8 +495,14 @@ class PDFunction(FunctionWindow):
         tier_name = self.entropy_tier_var.get()
 
         env_list = [env for env in self.selected_envs_list.get(0,END)]
-
-        result = calc_prod(self.corpus,seg1,seg2,env_list,tier_name, type_or_token,all_info=True,strict=bool(self.enforce_strict_var.get()))
+        try:
+            result = calc_prod(self.corpus,seg1,seg2,env_list,tier_name, type_or_token,all_info=True,strict=bool(self.enforce_strict_var.get()))
+        except (ExhaustivityError,UniquenessError) as e:
+            conf = 'Would you like to calculate predictability of distribution anyway?'
+            redo_entropy = MessageBox.askyesno(message='\n'.join([str(e),conf]))
+            if not redo_entropy:
+                return
+            result = calc_prod(self.corpus,seg1,seg2,env_list,tier_name, type_or_token,all_info=True,strict=False)
         results = []
         for k,v in result.items():
             #small hack

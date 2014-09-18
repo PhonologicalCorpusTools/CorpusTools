@@ -6,7 +6,7 @@ from warnings import warn
 class ExhaustivityError(Exception):
     pass
 
-class UniquenessWarning(Warning):
+class UniquenessError(Warning):
     pass
 
 class ExhaustivityError(Exception):
@@ -182,6 +182,36 @@ def formalize_env(env):
     return (lhs,rhs)
 
 def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription', type_or_token = 'type', all_info = False):
+    """
+    Main function for calculating predictability of distribution for
+    two segments over a corpus, regardless of environment.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        The Corpus object to use
+    seg1 : string
+        The first segment
+    seg2 : string
+        The second segment
+    tier_name : string
+        Name of the Corpus tier to use for finding environments, defaults
+        to 'transcription'
+    type_or_token : string
+        Specify whether to use type frequency or token frequency in
+        calculating predictability of distribution
+    all_info : bool
+        If true, all the intermediate numbers for calculating predictability
+        of distribution will be returned.  If false, only the final entropy
+        will be returned.  Defaults to False.
+
+    Returns
+    -------
+    float or list
+        A list of [entropy, frequency of environment, frequency of seg1,
+        frequency of seg2] if all_info is True, or just entropy if
+        all_info is False.
+    """
     seg1_count, seg2_count = count_segs(corpus, seg1, seg2, tier_name, type_or_token)
     total_count = seg1_count + seg2_count
     if total_count:
@@ -194,6 +224,43 @@ def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription', type_or_
 
 
 def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription', type_or_token='type', strict = True, all_info = False):
+    """
+    Main function for calculating predictability of distribution for
+    two segments over specified environments in a corpus.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        The Corpus object to use
+    seg1 : string
+        The first segment
+    seg2 : string
+        The second segment
+    envs : list of strings
+        List of strings that specify environments either using features
+        or segments
+    tier_name : string
+        Name of the Corpus tier to use for finding environments, defaults
+        to 'transcription'
+    type_or_token : string
+        Specify whether to use type frequency or token frequency in
+        calculating predictability of distribution
+    strict : bool
+        If true, exceptions will be raised for non-exhausive environments
+        and non-unique environments.  If false, only warnings will be
+        shown.  Defaults to True.
+    all_info : bool
+        If true, all the intermediate numbers for calculating predictability
+        of distribution will be returned.  If false, only the final entropy
+        will be returned.  Defaults to False.
+
+    Returns
+    -------
+    dictionary
+        Keys are the environments specified and values are either a list
+        of [entropy, frequency of environment, frequency of seg1, frequency
+        of seg2] if all_info is True, or just entropy if all_info is False.
+    """
     env_matches, miss_envs, overlap_envs = check_envs(corpus, seg1, seg2, envs,tier_name, type_or_token)
     if miss_envs:
         error_string = 'The environments {} for {} were not applicable to the following words: {}'.format(
