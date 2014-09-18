@@ -257,7 +257,7 @@ class Relator(object):
             #Skip over words that do not exist in corpus
             if word is None:
                 continue
-            relatedness = [self.khorsi(targ_word, word, freq_base, string_type)]
+            relatedness = self.khorsi(targ_word, word, freq_base, string_type)
             if relatedness is None: #Skip over words that do not have a transcription in the corpus
                 continue
 
