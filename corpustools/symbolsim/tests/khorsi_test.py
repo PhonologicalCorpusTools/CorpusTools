@@ -76,10 +76,75 @@ class KhorsiTest(unittest.TestCase):
         self.assertEqual(freq_base,expected)
 
     def test_lcs_spelling(self):
-        self.assertEqual(self.relator.lcs('atema','atema'),('atema',''))
-        self.assertEqual(self.relator.lcs('atema','mashomisi'),('ma','shomisiate'))
+        expected = [('atema','atema','atema',''),
+                    ('atema','enuta','e','atmatnua'),
+                    ('atema','mashomisi','ma','ateshomisi'),
+                    ('atema','mata','ma','ateta'),
+                    ('atema','nata','at','emana'),
+                    ('atema','sasi','a','temasasi'),
+                    ('atema','shashi','a','temashshi'),
+                    ('atema','shisata','at','emashisa'),
+                    ('atema','shushoma','ma','ateshusho'),
+                    ('atema','ta','t','aemaa'),
+                    ('atema','tatomi','at','ematomi'),
+                    ('atema','tishenishu','t','aemaishenishu'),
+                    ('atema','toni','t','aemaoni'),
+                    ('atema','tusa','t','aemausa'),
+                    ('atema','ʃi','','atemaʃi'),
+                    ('sasi','atema','a','temassi'),
+                    ('sasi','enuta','a','ssienut'),
+                    ('sasi','mashomisi','as','simhomisi'),
+                    ('sasi','mata','a','ssimta'),
+                    ('sasi','nata','a','ssinta'),
+                    ('sasi','sasi','sasi',''),
+                    ('sasi','shashi','as','sishhi'),
+                    ('sasi','shisata','sa','sishita'),
+                    ('sasi','shushoma','s','asiahushom'),
+                    ('sasi','ta','a','ssit'),
+                    ('sasi','tatomi','a','ssittomi'),
+                    ('sasi','tishenishu','s','asitihenishu'),
+                    ('sasi','toni','i','saston'),
+                    ('sasi','tusa','sa','situ'),
+                    ('sasi','ʃi','i','sasʃ'),
+                    ]
+        for v in expected:
+            print(v)
+            calced = self.relator.lcs(v[0],v[1])
+            calced = (calced[0],sorted(calced[1]))
+            self.assertEqual(calced,(v[2],sorted(v[3])))
 
     def test_lcs_transcription(self):
+        expected = [('atema','atema','atema',''),
+                    ('atema','enuta','',''),
+                    ('atema','mashomisi','',''),
+                    ('atema','mata','',''),
+                    ('atema','nata','',''),
+                    ('atema','sasi','',''),
+                    ('atema','shashi','',''),
+                    ('atema','shisata','',''),
+                    ('atema','shushoma','',''),
+                    ('atema','ta','',''),
+                    ('atema','tatomi','',''),
+                    ('atema','tishenishu','',''),
+                    ('atema','toni','',''),
+                    ('atema','tusa','',''),
+                    ('atema','ʃi','',''),
+                    ('sasi','atema','',''),
+                    ('sasi','enuta','',''),
+                    ('sasi','mashomisi','',''),
+                    ('sasi','mata','',''),
+                    ('sasi','nata','',''),
+                    ('sasi','sasi','',''),
+                    ('sasi','shashi','',''),
+                    ('sasi','shisata','',''),
+                    ('sasi','shushoma','',''),
+                    ('sasi','ta','',''),
+                    ('sasi','tatomi','',''),
+                    ('sasi','tishenishu','',''),
+                    ('sasi','toni','',''),
+                    ('sasi','tusa','',''),
+                    ('sasi','ʃi','',''),
+                    ]
         self.assertEqual(self.relator.lcs(['ɑ','t','e','m','ɑ'],['ɑ','t','e','m','ɑ']),(['ɑ','t','e','m','ɑ'],[]))
         self.assertEqual(self.relator.lcs(['ɑ','t','e','m','ɑ'],['m','ɑ','ʃ','o','m','i','s','i']),(['m','ɑ'],['ʃ','o','m','i','s','i','ɑ','t','e']))
 
@@ -103,6 +168,8 @@ class KhorsiTest(unittest.TestCase):
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = self.relator.mass_relate('atema',string_type='spelling',count_what = 'type')
+        print(expected)
+        print(calced)
         for i, v in enumerate(expected):
             print(v[1],calced[i][1])
             self.assertAlmostEqual(calced[i][0],v[0])
