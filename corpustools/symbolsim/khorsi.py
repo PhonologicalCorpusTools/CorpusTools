@@ -20,71 +20,62 @@ class Relator(object):
     Returns a relator type which can be used to call methods
     """
 
-    def lcs(self, w1, w2):
+    def lcs(self, x1, x2):
         """Returns the longest common sequence of two strings or lists of transcription characters and the remainder elements not in the longest common sequence
 
         Parameters
         ----------
-        w1: Word
-            Either a string or list of transcription characters
-        w2: Word
-            Same as w1
+        x1: list
+            List of strings
+        x2: list
+            List of strings
 
         Returns
         -------
-        list or string
-            the list or string of the longest common sequence of two strings or lists
-        list or string
-            the list or string of remaining elements of both w1 and w2 that are not in the longest common sequence
+        list
+            the list of the longest common sequence of two lists
+        list
+            the list of remaining elements of both x1 and x2 that are not in the longest common sequence
         """
-        try:
-            if len(w1) >= len(w2):
-                x1 = w1
-                x2 = w2
-            else:
-                x1 = w2
-                x2 = w1
-        except TypeError:
-            #print('A transcription for this element is unavailable')
-            return None
+        if len(x1) >= len(x2):
+            longer = x1
+            shorter = w2
+        else:
+            longer = w2
+            shorter = w1
 
         stringMatches = []
-        for i in range(len(x1)):
-            i = i + 1
+        largestMatch = None
+        for i in range(len(shorter),0,-1):
             #Get all possible substrings of word x1
-            substrings = self.substring(x2, i)
-            #Compare all substrings to see which is the longest that matches a substring in word x2
-            if isinstance(x1, str):
-                for j in substrings:
-                    if x1.find(j) != -1:
-                        stringMatches.append(j)
-            else:
-                for j in substrings:
-                    if self.sublist(j,x1):
-                        stringMatches.append(j)
+            shorter_strings = self.substring(shorter, i)
+            longer_strings = self.substring(longer, i)
 
-        #Remove the longest common sequence if it exists
-        if len(stringMatches)!=0:
-            large = max(stringMatches, key=len)
+            s = shorter_strings & longer_strings
+
+            if len(s):
+                largestMatch = sorted(list(s))[0]
+                break
         else:
-            large = ''
-        try:
-            leftOver = x1.replace(large, '')
-            leftOver2 = x2.replace(large, '')
-            leftOver = leftOver + leftOver2
-        except AttributeError:
-            if large:
-                leftOver = list()
-                slices = self.sublist(large,x1)
-                leftOver.extend(x1[:slices[0]])
-                leftOver.extend(x1[slices[1]:])
-                slices = self.sublist(large,x2)
-                leftOver.extend(x2[:slices[0]])
-                leftOver.extend(x2[slices[1]:])
-            else:
-                leftOver = [seg for seg in x1]
-                leftOver.extend([seg for seg in x2])
-        return large, leftOver
+            return [], longer+shorter
+
+        lcs = s.split('.') #back to list
+        leftover = []
+        for i in range(longer):
+            begin = i
+            end = i+len(lcs)
+            if longer[begin:end] == lcs:
+                break
+        leftover.extend(longer[:begin])
+        leftover.extend(longer[end:])
+        for i in range(shorter):
+            begin = i
+            end = i+len(lcs)
+            if shorter[begin:end] == lcs:
+                break
+        leftover.extend(shorter[:begin])
+        leftover.extend(shorter[end:])
+        return lcs,leftover
 
     def sublist(self,small, big):
         """Scott wrote this
@@ -121,11 +112,13 @@ class Relator(object):
         list
             A list of strings where each string is a properly ordered subset of w (i.e. if w='pressure', l='2', returns [pr, re, es ..., re])
         """
-        #return all substrings of a word w of length l from 1 letter to the entire word
-        substrings = []
+        #return all unique substrings of a word w of length l from 1 letter to the entire word
+        substrings = set([])
         for i in range(len(w)):
-            substrings.append(w[i:(i+l)])
-        substrings = substrings[0:(len(w)-l+1)]
+            sub = w[i:(i+l)]
+            if len(sub) < l:
+                continue
+            substrings.update(['.'.join(sub)])
         return substrings
 
     def khorsi(self, word1, word2, freq_base, string_type):
