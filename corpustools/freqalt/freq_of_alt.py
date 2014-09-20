@@ -40,28 +40,32 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
     """
 
     list_s1, list_s2 = get_lists(corpus, s1, s2, string_type)
-    comparisons = list()
+    query = list()
 
     for word_s1 in list_s1:
         for word_s2 in list_s2:
-                comparisons.append( (word_s1, word_s2) )
+                query.append( (word_s1.spelling, word_s2.spelling) )
 
-    related_list = string_similarity_pairs(corpus,
-                        relator_type, string_type, count_what,
-                        comparisons, 'return_data', min_rel = min_rel,
-                        max_rel = max_rel)
+    related_list = string_similarity(corpus, query, relator_type,
+                                                string_type = string_type,
+                                                tier_name = string_type,
+                                                count_what = count_what,
+                                                min_rel = min_rel,
+                                                max_rel = max_rel)
 
 
     #Remove minimal pairs if specified
     if min_pairs_okay == 0:
         new_related_list = list()
         for w1, w2, score in related_list:
-            if len(w1) != len(w2):
+            t1 = w1.transcription
+            t2 = w2.transcription
+            if len(t1) != len(t2):
                 new_related_list.append( (w1, w2, score) )
             else:
                 count_diff = 0
-                for i in range(len(w1)):
-                    if w1[i] != w2[i]:
+                for i in range(len(t1)):
+                    if t1[i] != t2[i]:
                         count_diff += 1
                 if count_diff > 1:
                     new_related_list.append( (w1, w2, score) )
@@ -73,16 +77,16 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
         new_related_list = list()
         al = phono_align_ex.Aligner(features=corpus.specifier)
         for w1, w2, score in related_list:
-            alignment = al.align(w1, w2)
+            alignment = al.align(w1.transcription, w2.transcription)
             if al.morpho_related(alignment, s1, s2):
-                words_with_alt.add(w1)
-                words_with_alt.add(w2)
+                words_with_alt.add(w1.spelling)
+                words_with_alt.add(w2.spelling)
                 new_related_list.append( (w1, w2, score) )
         related_list = new_related_list
     else:
         for w1, w2, score in related_list:
-            words_with_alt.add(w1)
-            words_with_alt.add(w2)
+            words_with_alt.add(w1.spelling) #Hacks
+            words_with_alt.add(w2.spelling)
 
     #Calculate frequency of alternation using sets to ensure no duplicates (i.e. words with both s1 and s2)
     all_words = set()
