@@ -3,17 +3,26 @@
 from corpustools.symbolsim.phono_align_ex import Aligner
 
 def phono_edit_distance(word1, word2, tier_name, features):
-    """Returns an analogue to Levenshtein edit distance but with the option of counting phonological features instead of characters
+    """Returns an analogue to Levenshtein edit distance but uses
+    phonological features instead of characters
 
     Parameters:
-    w1: string
-        A string containing a transcription which will be compared to another string containing a transcription
-    w2: string
-        The other string containing a transcription to which w1 will be compared
-    features_tf: boolean
-        Set to True if edit_distance using phonological features is desired or False for only characters
-    features: phonological features
-        Features are the set feature specifications currently be used in the corpus (i.e. Hayes, SPE, etc.)
+    word1: Word
+        Word object containing transcription tiers which will be compared
+        to another word containing transcription tiers
+    word2: Word
+        The other word containing transcription tiers to which word1 will
+        be compared
+    tier_name: string
+        Name of the transcription tier to use for comparisons
+    features: FeatureMatrix
+        FeatureMatrix that contains all the segments in both transcriptions
+        to be compared
+
+    Returns
+    -------
+    float
+        the phonological edit distance between two words
     """
 
     w1 = getattr(word1,tier_name)

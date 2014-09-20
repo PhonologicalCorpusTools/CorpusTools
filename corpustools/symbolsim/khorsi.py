@@ -1,27 +1,25 @@
-import math
-import collections
-import re
-import time
-from codecs import open
 
-import corpustools
+from collections import defaultdict
+from math import log
 
 def lcs(x1, x2):
-    """Returns the longest common sequence of two strings or lists of transcription characters and the remainder elements not in the longest common sequence
+    """Returns the longest common sequence of two lists of characters
+    and the remainder elements not in the longest common sequence
 
     Parameters
     ----------
     x1: list
-        List of strings
+        List of characters
     x2: list
-        List of strings
+        List of characters
 
     Returns
     -------
     list
         the list of the longest common sequence of two lists
     list
-        the list of remaining elements of both x1 and x2 that are not in the longest common sequence
+        the list of remaining elements of both x1 and x2 that are not in
+        the longest common sequence
     """
     if len(x1) >= len(x2):
         longer = x1
@@ -73,15 +71,15 @@ def substring_set(w, l):
 
     Parameters
     ----------
-    w: string
-        a string representing a word (e.g. 'pressure')
+    w: list
+        List of characters representing a word
     l: int
-        a integer of a certain length
+        Length of substrings to generate
 
     Returns
     -------
-    list
-        A list of strings where each string is a properly ordered subset of w (i.e. if w='pressure', l='2', returns [pr, re, es ..., re])
+    set
+        A set of substrings of the specified length
     """
     #return all unique substrings of a word w of length l from 1 letter to the entire word
     substrings = set([])
@@ -93,14 +91,15 @@ def substring_set(w, l):
     return substrings
 
 def khorsi(word1, word2, freq_base, string_type):
-    """Calculate the string similarity of two words given a set of characters and their frequencies in a corpus, Returns the value (implementation of Khorsi (2012))
+    """Calculate the string similarity of two words given a set of
+    characters and their frequencies in a corpus based on Khorsi (2012)
 
     Parameters
     ----------
-    w1: Word
-        Word object
-    w2: Word
-        Word object
+    word1: Word
+        First Word object to compare
+    word2: Word
+        Second Word object to compare
     freq_base: dictionary
         a dictionary where each segment is mapped to its frequency of occurrence in a corpus
     string_type: string
@@ -108,7 +107,7 @@ def khorsi(word1, word2, freq_base, string_type):
 
     Returns
     -------
-    int
+    float
         A number representing the relatedness of two words based on Khorsi (2012)
     """
     w1 = getattr(word1, string_type)
@@ -124,16 +123,18 @@ def khorsi(word1, word2, freq_base, string_type):
     longest, left_over = lcs(w1, w2)
 
     #Khorsi's algorithm
-    lcs_sum = sum(math.log(1/(freq_base[x]/freq_base['total'])) for x in longest)
-    leftover_sum = sum(math.log(1/(freq_base[x]/freq_base['total'])) for x in left_over)
+    lcs_sum = sum(log(1/(freq_base[x]/freq_base['total'])) for x in longest)
+    leftover_sum = sum(log(1/(freq_base[x]/freq_base['total'])) for x in left_over)
 
-    return lcs_sum-leftover_sum
+    return lcs_sum - leftover_sum
 
 def make_freq_base(corpus, string_type, count_what = 'type'):
     """Returns a dictionary of segments mapped to their frequency of occurrence in a corpus
 
     Parameters
     ---------
+    corpus: Corpus
+        Corpus over which to generate frequency statistics
     string_type: string
         The type of segments to be used ('spelling' = Roman letters, 'transcription' = IPA symbols)
     count_what: string
@@ -144,7 +145,7 @@ def make_freq_base(corpus, string_type, count_what = 'type'):
     dictionary
         A dictionary where a segments maps to its frequency of occurrence in a corpus
     """
-    freq_base = collections.defaultdict(int)
+    freq_base = defaultdict(int)
 
     for word in corpus:
         if count_what == 'token':

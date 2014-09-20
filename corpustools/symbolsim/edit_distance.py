@@ -1,22 +1,28 @@
 
-def edit_distance(w1, w2, string_type):
-    """Returns the Levenshtein edit distance between two strings s1 and s2, code drawn from http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python.
-    The number is the number of operations needed to transform s1 into s2, three operations are possible: insert, delete, substitute
+def edit_distance(word1, word2, string_type):
+    """Returns the Levenshtein edit distance between a string from
+    two words word1 and word2, code drawn from
+    http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python.
+    The number is the number of operations needed to transform word1 into word2,
+    three operations are possible: insert, delete, substitute
 
     Parameters
     ----------
-    s1: Word
+    word1: Word
         the first word object to be compared
-    s2: Word
+    word2: Word
         the second word object to be compared
+    string_type : string
+        String specifying what attribute of the Word objects to compare,
+        can be "spelling", "transcription" or a tier
 
     Returns
     -------
     int:
-        the edit distance between two strings
+        the edit distance between two words
     """
-    s1 = getattr(w1, string_type)
-    s2 = getattr(w2, string_type)
+    s1 = getattr(word1, string_type)
+    s2 = getattr(word2, string_type)
 
     if len(s1) >= len(s2):
         longer = s1

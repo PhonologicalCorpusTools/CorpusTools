@@ -10,7 +10,7 @@ except ImportError:
     sys.path.append(corpustools_path)
     from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
 
-from corpustools.symbolsim.string_similarity import mass_relate
+from corpustools.symbolsim.string_similarity import string_similarity
 
 class EditDistanceTest(unittest.TestCase):
     def setUp(self):
@@ -33,7 +33,7 @@ class EditDistanceTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('tusa'),3),
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),5)]
         expected.sort(key=lambda t:t[1])
-        calced = mass_relate(self.corpus,'atema','edit_distance',string_type='spelling')
+        calced = string_similarity(self.corpus,'atema','edit_distance',string_type='spelling')
         calced.sort(key=lambda t:t[1])
         for i, v in enumerate(expected):
             self.assertEqual(calced[i],v)
@@ -54,7 +54,7 @@ class EditDistanceTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('tusa'),3),
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),3)]
         expected.sort(key=lambda t:t[1])
-        calced = mass_relate(self.corpus,'sasi','edit_distance',string_type='spelling')
+        calced = string_similarity(self.corpus,'sasi','edit_distance',string_type='spelling')
         calced.sort(key=lambda t:t[1])
         for i, v in enumerate(expected):
             self.assertEqual(calced[i],v)
@@ -76,7 +76,7 @@ class EditDistanceTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('tusa'),3),
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),5)]
         expected.sort(key=lambda t:t[1])
-        calced = mass_relate(self.corpus,'atema','edit_distance',string_type='transcription')
+        calced = string_similarity(self.corpus,'atema','edit_distance',string_type='transcription')
         calced.sort(key=lambda t:t[1])
         for i, v in enumerate(expected):
             self.assertEqual(calced[i],v)
@@ -97,7 +97,7 @@ class EditDistanceTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('tusa'),3),
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),3)]
         expected.sort(key=lambda t:t[1])
-        calced = mass_relate(self.corpus,'sasi','edit_distance',string_type='transcription')
+        calced = string_similarity(self.corpus,'sasi','edit_distance',string_type='transcription')
         calced.sort(key=lambda t:t[1])
         for i, v in enumerate(expected):
             self.assertEqual(calced[i],v)
