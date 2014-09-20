@@ -157,34 +157,3 @@ def make_freq_base(corpus, string_type, count_what = 'type'):
     freq_base['total'] = sum(value for value in freq_base.values())
     return freq_base
 
-def mass_relate(corpus, query, string_type='spelling', count_what='type'):
-    """Given an input Word, uses a corpus to calculate the relatedness of all other words in the corpus to that input Word
-
-    Parameters
-    ----------
-    query: Word
-        Either a string or list of segments representing a word in a corpus
-    string_type: string
-        The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols), defaults to 'spelling'
-    count_what: string
-        The type of frequency, either 'type' or 'token', defaults to 'type'
-
-    Returns
-    -------
-    list
-        a list of all words in a corpus with their respective relatedness score to the input word w in a writeable format for .txt files
-    """
-    targ_word = corpus.find(query)
-    freq_base = make_freq_base(corpus,string_type, count_what)
-    relate = list()
-    for word in corpus:
-        relatedness = khorsi(targ_word, word, freq_base, string_type)
-
-        relate.append( (relatedness, word) )
-
-    #Sort the list by most related
-    relate.sort(key=lambda t:t[0])
-    relate.reverse()
-
-    return relate
-

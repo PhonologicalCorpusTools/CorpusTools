@@ -3,111 +3,71 @@ Created on May 12, 2014
 
 @author: Michael
 '''
-import corpustools.symbolsim.khorsi as khorsi
-import corpustools.symbolsim.edit_distance as edit_distance
-import corpustools.symbolsim.phono_edit_distance as phono_edit_distance
-import time
-import re
+from functools import partial
+
+from corpustools.symbolsim.khorsi import make_freq_base, khorsi
+from corpustools.symbolsim.edit_distance import edit_distance
+from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
+
 
 class StringSimilarityError(Exception):
     pass
 
-def string_similarity_word(corpus, relator_type, string_type, count_what, query, min_rel=None, max_rel=None, output_filename = None):
-    """Given input parameters, creates a text file containing a target word and all other words in a corpus with a relatedness score
-
+def mass_relate(corpus, query, algorithm, **kwargs):
+    """Given an input Word, uses a corpus to calculate the relatedness of
+    all other words in the corpus to that input Word
 
     Parameters
     ----------
-    corpus: Corpus
-        The corpus object to use
-    relator_type: string
-        The type of relator to be used to measure relatedness, e.g. 'khorsi'
+    query: Word
+        Either a string or list of segments representing a word in a corpus
     string_type: string
-        The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
-    count_what: string
-        The type of frequency, either 'type' or 'token'
-    query: string
-        The target word to be compared to the corpus
-    max_rel: double
-        Filters out all words that are higher than max_rel from a relatedness measure
-    min_rel: double
-        Filters out all words that are lower than min_rel from a relatedness measure
+        The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols), defaults to 'spelling'
 
     Returns
     -------
-    None - writes a text file
+    list
+        a list of all words in a corpus with their respective relatedness score to the input word w in a writeable format for .txt files
     """
-
-    relator = relator_type.lower()
-    if relator == 'khorsi':
-        relator = khorsi.Relator(corpus)
-    elif relator == 'edit_distance':
-        relator = edit_distance.Relator(corpus)
-    elif relator == 'phono_edit_distance':
-        relator = phono_edit_distance.Relator(corpus)
-    elif relator == 'axb':
-        raise(NotImplementedError('AXB is currently not supported.'))
-        relator = axb.Relator(corpus)
+    string_type = kwargs.get('string_type','spelling')
+    count_what = kwargs.get('count_what','type')
+    if algorithm == 'khorsi':
+        freq_base = make_freq_base(corpus,string_type,count_what)
+        relate_func = partial(khorsi,freq_base=freq_base,
+                                string_type = string_type)
+    elif algorithm == 'edit_distance':
+        relate_func =  partial(edit_distance, string_type = string_type)
+    elif algorithm == 'phono_edit_distance':
+        tier_name = kwargs.get('tier_name','transcription')
+        relate_func = partial(phono_edit_distance,tier_name = tier_name, features = corpus.specifier)
     else:
-        raise(StringSimilarityError('Relator type \'{}\' is not valid'.format(relator_type)))
-
-    related_data = relator.mass_relate(query, string_type, count_what)
-
-    filtered_data = list();
-    for score, word in related_data:
-        if min_rel != None:
-            if max_rel != None:
-                if min_rel <= score[0] <= max_rel:
-                    filtered_data.append( (score[0], word) )
-            elif min_rel <= score[0]:
-                filtered_data.append( (score[0], word) )
-        elif max_rel != None and score[0] <= max_rel:
-            filtered_data.append( (score[0], word) )
-        else:
-            filtered_data.append( (score[0], word) )
-
-    if output_filename == 'return_data':
-        return filtered_data
-    else:
-        print_one_word_results(output_filename, query, string_type, filtered_data, min_rel, max_rel)
-
-
-def print_one_word_results(output_filename, query, string_type, related_data, min_rel, max_rel):
-    with open(output_filename, mode='w', encoding='utf-8') as outf:
-        for score, word in related_data:
-            if isinstance(word, str):
-                w = word
-            else:
-                w = getattr(word, string_type)
-
-            if not isinstance(w, str):
-                w = ''.join([seg.symbol for seg in w])
-
-            if isinstance(score, list):
-                score = score[0]
-
-            outf.write(w + '\t' + str(score) + '\n')
-
-def string_similarity_single_pair(corpus, relator_type, string_type, count_what, w1, w2):
-    relator = relator_type.lower()
-    if relator == 'khorsi':
-        relator = khorsi.Relator(corpus)
-        freq_base = relator.make_freq_base(string_type, count_what = count_what)
-        score = relator.khorsi(w1, w2, freq_base, string_type)
-    elif relator == 'edit_distance':
-        relator = edit_distance.Relator(corpus)
-        score = relator.edit_distance(w1, w2, string_type)
-    elif relator == 'phono_edit_distance':
-        relator = phono_edit_distance.Relator(corpus)
-        score = relator.phono_edit_distance(w1, w2, string_type)
-    else:
-        raise(StringSimilarityError('Relator type \'{}\' is not valid'.format(relator_type)))
-
-    w1, w2 = relator.get_word_string_type(w1, w2, string_type)
-    return ((w1, w2, score))
+        raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
+    if isinstance(query,str):
+        targ_word = corpus.find(query)
+        relate = list()
+        for word in corpus:
+            relatedness = relate_func(targ_word, word)
+            relate.append( (targ_word,word,relatedness) )
+        #Sort the list by most morphologically related
+        relate.sort(key=lambda t:t[-1])
+        if relate[0][1] != targ_word:
+            relate.reverse()
+    elif isinstance(query, list):
+        relate = list()
+        for q1,q2 in query:
+            w1 = corpus.find(q1)
+            w2 = corpus.find(q2)
+            relatedness = relate_func(w1,w2)
+            relate.append( (w1,w2,relatedness) )
+    elif isinstance(query, tuple):
+        w1 = corpus.find(query[0])
+        w2 = corpus.find(query[1])
+        relatedness = relate_func(w1,w2)
+        relate = [(w1,w2,relatedness)]
+    return relate
 
 
-def string_similarity_pairs(corpus, relator_type, string_type, count_what, input_data, output_filename=None, min_rel=None, max_rel=None):
+def string_similarity(corpus, query, algorithm, **kwargs):
     """Given an input of pairs of words to compare to each other, returns such pairs and their relatedness scores
 
     Parameters
@@ -135,80 +95,11 @@ def string_similarity_pairs(corpus, relator_type, string_type, count_what, input
     If output_filename == None, a list the pairs and their relatedness scores is returned
     """
 
-    relator = relator_type.lower()
-    if isinstance(input_data, str):
-        with open(input_data, mode='r', encoding='utf-8') as inf:
-            lines = inf.readlines()
 
-        if relator == 'khorsi':
-            relator = khorsi.Relator(corpus)
-            freq_base = relator.make_freq_base(string_type, count_what = count_what)
-            related_data = list()
-            for line in lines:
-                w1, w2 = line.split('\t')
-                w1, w2 = re.sub(r'\s+', '', w1), re.sub(r'\s+', '', w2)
-                score = relator.khorsi(w1, w2, freq_base, string_type)
-                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
-                related_data.append( (w1, w2, score) )
+    related_data = mass_relate(corpus,query,algorithm, **kwargs)
 
-        elif relator == 'edit_distance':
-            relator = edit_distance.Relator(corpus)
-            related_data = list()
-            for line in lines:
-                w1, w2 = line.split('\t')
-                w1, w2 = re.sub(r'\s+', '', w1), re.sub(r'\s+', '', w2)
-                score = relator.edit_distance(w1, w2, string_type)
-                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
-                related_data.append( (w1, w2, score) )
-
-        elif relator == 'phono_edit_distance':
-            relator = phono_edit_distance.Relator(corpus)
-            related_data = list()
-            for line in lines:
-                w1, w2 = line.split('\t')
-                w1, w2 = re.sub(r'\s+', '', w1), re.sub(r'\s+', '', w2)
-                score = relator.phono_edit_distance(w1, w2, string_type)
-                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
-                related_data.append( (w1, w2, score) )
-
-        elif relator == 'axb':
-            raise(NotImplementedError('AXB is currently not supported.'))
-            relator = axb.Relator(corpus)
-        else:
-            raise(StringSimilarityError('Relator type \'{}\' is not valid'.format(relator_type)))
-
-    else:
-        if relator == 'khorsi':
-            relator = khorsi.Relator(corpus)
-            freq_base = relator.make_freq_base(string_type)
-            related_data = list()
-
-            for w1, w2 in input_data:
-                score = relator.khorsi(w1, w2, freq_base, string_type)
-                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
-                related_data.append( (w1, w2, score) )
-
-        elif relator == 'edit_distance':
-            relator = edit_distance.Relator(corpus)
-            related_data = list()
-            for w1, w2 in input_data:
-                score = relator.edit_distance(w1, w2, string_type)
-                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
-                related_data.append( (w1, w2, score) )
-
-        elif relator == 'phono_edit_distance':
-            relator = phono_edit_distance.Relator(corpus)
-            related_data = list()
-            for w1, w2 in input_data:
-                score = relator.phono_edit_distance(w1, w2, string_type)
-                w1, w2 = relator.get_word_string_type(w1, w2, string_type)
-                related_data.append( (w1, w2, score) )
-
-        elif relator == 'axb':
-            raise(NotImplementedError('AXB is currently not supported.'))
-            relator = axb.Relator(corpus)
-        else:
-            raise(StringSimilarityError('Relator type \'{}\' is not valid'.format(relator_type)))
+    min_rel = kwargs.get('min_rel', None)
+    max_rel = kwargs.get('max_rel', None)
 
     filtered_data = list()
     for w1, w2, score in related_data:
@@ -225,13 +116,6 @@ def string_similarity_pairs(corpus, relator_type, string_type, count_what, input
         else:
             filtered_data.append( (w1, w2, score) )
 
-    if output_filename == 'return_data':
-        return filtered_data
-    else:
-        print_pairs_results(output_filename, filtered_data)
+    return filtered_data
 
-def print_pairs_results(output_filename, related_data_return):
-    with open(output_filename, mode='w', encoding='utf-8') as outf:
-        for w1, w2, score in related_data_return:
-            outf.write('{}\t{}\t{}\n'.format(w1, w2, score))
 

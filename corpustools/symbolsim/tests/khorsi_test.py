@@ -10,7 +10,8 @@ except ImportError:
     sys.path.append(corpustools_path)
     from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
 
-from corpustools.symbolsim.khorsi import lcs, make_freq_base, mass_relate
+from corpustools.symbolsim.khorsi import lcs, make_freq_base
+from corpustools.symbolsim.string_similarity import mass_relate
 
 class KhorsiTest(unittest.TestCase):
     def setUp(self):
@@ -173,7 +174,7 @@ class KhorsiTest(unittest.TestCase):
                     (-17.53815687,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'atema',string_type='spelling',count_what = 'type')
+        calced = mass_relate(self.corpus,'atema','khorsi',string_type='spelling',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -194,7 +195,7 @@ class KhorsiTest(unittest.TestCase):
                     (-7.54617756,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'sasi',string_type='spelling',count_what = 'type')
+        calced = mass_relate(self.corpus,'sasi','khorsi',string_type='spelling',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -216,7 +217,7 @@ class KhorsiTest(unittest.TestCase):
                     (-22.4838445,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'atema',string_type='spelling',count_what = 'token')
+        calced = mass_relate(self.corpus,'atema','khorsi',string_type='spelling',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -237,7 +238,7 @@ class KhorsiTest(unittest.TestCase):
                     (-10.12650306,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'sasi',string_type='spelling',count_what = 'token')
+        calced = mass_relate(self.corpus,'sasi','khorsi',string_type='spelling',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -259,7 +260,7 @@ class KhorsiTest(unittest.TestCase):
                     (-14.60340869,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'atema',string_type='transcription',count_what = 'type')
+        calced = mass_relate(self.corpus,'atema','khorsi',string_type='transcription',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -280,7 +281,7 @@ class KhorsiTest(unittest.TestCase):
                     (-6.943894326,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'sasi',string_type='transcription',count_what = 'type')
+        calced = mass_relate(self.corpus,'sasi','khorsi',string_type='transcription',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -302,7 +303,7 @@ class KhorsiTest(unittest.TestCase):
                     (-15.68503325,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'atema',string_type='transcription',count_what = 'token')
+        calced = mass_relate(self.corpus,'atema','khorsi',string_type='transcription',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -323,7 +324,7 @@ class KhorsiTest(unittest.TestCase):
                     (-5.994066536,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = mass_relate(self.corpus,'sasi',string_type='transcription',count_what = 'token')
+        calced = mass_relate(self.corpus,'sasi','khorsi',string_type='transcription',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 

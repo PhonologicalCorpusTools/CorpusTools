@@ -4,7 +4,7 @@ import os
 from codecs import open
 
 import corpustools.symbolsim.phono_align_ex as phono_align_ex
-from corpustools.symbolsim.string_similarity import (string_similarity_pairs,
+from corpustools.symbolsim.string_similarity import (string_similarity,
                                                     )
 
 
