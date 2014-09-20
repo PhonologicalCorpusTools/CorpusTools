@@ -157,42 +157,42 @@ class KhorsiTest(unittest.TestCase):
 
 
     def test_mass_relate_spelling_type(self):
-        expected = [(11.0766887,self.corpus.find('atema')),
-                    (-14.09489383,self.corpus.find('enuta')),
-                    (-18.35890071,self.corpus.find('mashomisi')),
-                    (-6.270847817,self.corpus.find('mata')),
-                    (-8.494720336,self.corpus.find('nata')),
-                    (-13.57140897,self.corpus.find('sasi')),
-                    (-18.17657916,self.corpus.find('shashi')),
-                    (-13.51516925,self.corpus.find('shisata')),
-                    (-16.90806783,self.corpus.find('shushoma')),
-                    (-8.717863887,self.corpus.find('ta')),
-                    (-13.53912249,self.corpus.find('tatomi')),
-                    (-28.78151269,self.corpus.find('tishenishu')),
-                    (-15.17933206,self.corpus.find('toni')),
-                    (-13.53067344,self.corpus.find('tusa')),
-                    (-17.53815687,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('atema'),self.corpus.find('atema'),11.0766887),
+                    (self.corpus.find('atema'),self.corpus.find('enuta'),-14.09489383),
+                    (self.corpus.find('atema'),self.corpus.find('mashomisi'),-18.35890071),
+                    (self.corpus.find('atema'),self.corpus.find('mata'),-6.270847817),
+                    (self.corpus.find('atema'),self.corpus.find('nata'),-8.494720336),
+                    (self.corpus.find('atema'),self.corpus.find('sasi'),-13.57140897),
+                    (self.corpus.find('atema'),self.corpus.find('shashi'),-18.17657916),
+                    (self.corpus.find('atema'),self.corpus.find('shisata'),-13.51516925),
+                    (self.corpus.find('atema'),self.corpus.find('shushoma'),-16.90806783),
+                    (self.corpus.find('atema'),self.corpus.find('ta'),-8.717863887),
+                    (self.corpus.find('atema'),self.corpus.find('tatomi'),-13.53912249),
+                    (self.corpus.find('atema'),self.corpus.find('tishenishu'),-28.78151269),
+                    (self.corpus.find('atema'),self.corpus.find('toni'),-15.17933206),
+                    (self.corpus.find('atema'),self.corpus.find('tusa'),-13.53067344),
+                    (self.corpus.find('atema'),self.corpus.find('ʃi'),-17.53815687),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'atema','khorsi',string_type='spelling',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
-        expected = [(-13.57140897,self.corpus.find('atema')),
-                    (-15.36316844,self.corpus.find('enuta')),
-                    (-16.92481569,self.corpus.find('mashomisi')),
-                    (-10.28799462,self.corpus.find('mata')),
-                    (-10.69345973,self.corpus.find('nata')),
-                    (7.323034009,self.corpus.find('sasi')),
-                    (-8.971692634,self.corpus.find('shashi')),
-                    (-10.26267682,self.corpus.find('shisata')),
-                    (-20.30229654,self.corpus.find('shushoma')),
-                    (-6.088289546,self.corpus.find('ta')),
-                    (-15.73786189,self.corpus.find('tatomi')),
-                    (-25.52902026,self.corpus.find('tishenishu')),
-                    (-11.13974683,self.corpus.find('toni')),
-                    (-5.449867265,self.corpus.find('tusa')),
-                    (-7.54617756,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-13.57140897),
+                    (self.corpus.find('sasi'),self.corpus.find('enuta'),-15.36316844),
+                    (self.corpus.find('sasi'),self.corpus.find('mashomisi'),-16.92481569),
+                    (self.corpus.find('sasi'),self.corpus.find('mata'),-10.28799462),
+                    (self.corpus.find('sasi'),self.corpus.find('nata'),-10.69345973),
+                    (self.corpus.find('sasi'),self.corpus.find('sasi'),7.323034009),
+                    (self.corpus.find('sasi'),self.corpus.find('shashi'),-8.971692634),
+                    (self.corpus.find('sasi'),self.corpus.find('shisata'),-10.26267682),
+                    (self.corpus.find('sasi'),self.corpus.find('shushoma'),-20.30229654),
+                    (self.corpus.find('sasi'),self.corpus.find('ta'),-6.088289546),
+                    (self.corpus.find('sasi'),self.corpus.find('tatomi'),-15.73786189),
+                    (self.corpus.find('sasi'),self.corpus.find('tishenishu'),-25.52902026),
+                    (self.corpus.find('sasi'),self.corpus.find('toni'),-11.13974683),
+                    (self.corpus.find('sasi'),self.corpus.find('tusa'),-5.449867265),
+                    (self.corpus.find('sasi'),self.corpus.find('ʃi'),-7.54617756),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'sasi','khorsi',string_type='spelling',count_what = 'type')
@@ -200,42 +200,42 @@ class KhorsiTest(unittest.TestCase):
             self.assertAlmostEqual(calced[i][0],v[0])
 
     def test_mass_relate_spelling_token(self):
-        expected = [(12.9671688,self.corpus.find('atema')),
-                    (-16.49795651,self.corpus.find('enuta')),
-                    (-17.65533907,self.corpus.find('mashomisi')),
-                    (-7.337667817,self.corpus.find('mata')),
-                    (-9.088485208,self.corpus.find('nata')),
-                    (-13.8251823,self.corpus.find('sasi')),
-                    (-17.52074498,self.corpus.find('shashi')),
-                    (-12.59737574,self.corpus.find('shisata')),
-                    (-14.82488063,self.corpus.find('shushoma')),
-                    (-9.8915809,self.corpus.find('ta')),
-                    (-14.6046824,self.corpus.find('tatomi')),
-                    (-27.61147254,self.corpus.find('tishenishu')),
-                    (-16.14809881,self.corpus.find('toni')),
-                    (-13.8308605,self.corpus.find('tusa')),
-                    (-22.4838445,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('atema'),self.corpus.find('atema'),12.9671688),
+                    (self.corpus.find('atema'),self.corpus.find('enuta'),-16.49795651),
+                    (self.corpus.find('atema'),self.corpus.find('mashomisi'),-17.65533907),
+                    (self.corpus.find('atema'),self.corpus.find('mata'),-7.337667817),
+                    (self.corpus.find('atema'),self.corpus.find('nata'),-9.088485208),
+                    (self.corpus.find('atema'),self.corpus.find('sasi'),-13.8251823),
+                    (self.corpus.find('atema'),self.corpus.find('shashi'),-17.52074498),
+                    (self.corpus.find('atema'),self.corpus.find('shisata'),-12.59737574),
+                    (self.corpus.find('atema'),self.corpus.find('shushoma'),-14.82488063),
+                    (self.corpus.find('atema'),self.corpus.find('ta'),-9.8915809),
+                    (self.corpus.find('atema'),self.corpus.find('tatomi'),-14.6046824),
+                    (self.corpus.find('atema'),self.corpus.find('tishenishu'),-27.61147254),
+                    (self.corpus.find('atema'),self.corpus.find('toni'),-16.14809881),
+                    (self.corpus.find('atema'),self.corpus.find('tusa'),-13.8308605),
+                    (self.corpus.find('atema'),self.corpus.find('ʃi'),-22.4838445)]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'atema','khorsi',string_type='spelling',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
-        expected = [(-13.8251823,self.corpus.find('atema')),
-                    (-14.48366705,self.corpus.find('enuta')),
-                    (-16.62778969,self.corpus.find('mashomisi')),
-                    (-10.46022702,self.corpus.find('mata')),
-                    (-10.55425597,self.corpus.find('nata')),
-                    (6.832376308,self.corpus.find('sasi')),
-                    (-7.235843913,self.corpus.find('shashi')),
-                    (-9.913037922,self.corpus.find('shisata')),
-                    (-19.77169406,self.corpus.find('shushoma')),
-                    (-5.382988852,self.corpus.find('ta')),
-                    (-16.07045316,self.corpus.find('tatomi')),
-                    (-24.92713472,self.corpus.find('tishenishu')),
-                    (-11.39132061,self.corpus.find('toni')),
-                    (-5.172159875,self.corpus.find('tusa')),
-                    (-10.12650306,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-13.8251823),
+                    (self.corpus.find('sasi'),self.corpus.find('enuta'),-14.48366705),
+                    (self.corpus.find('sasi'),self.corpus.find('mashomisi'),-16.62778969),
+                    (self.corpus.find('sasi'),self.corpus.find('mata'),-10.46022702),
+                    (self.corpus.find('sasi'),self.corpus.find('nata'),-10.55425597),
+                    (self.corpus.find('sasi'),self.corpus.find('sasi'),6.832376308),
+                    (self.corpus.find('sasi'),self.corpus.find('shashi'),-7.235843913),
+                    (self.corpus.find('sasi'),self.corpus.find('shisata'),-9.913037922),
+                    (self.corpus.find('sasi'),self.corpus.find('shushoma'),-19.77169406),
+                    (self.corpus.find('sasi'),self.corpus.find('ta'),-5.382988852),
+                    (self.corpus.find('sasi'),self.corpus.find('tatomi'),-16.07045316),
+                    (self.corpus.find('sasi'),self.corpus.find('tishenishu'),-24.92713472),
+                    (self.corpus.find('sasi'),self.corpus.find('toni'),-11.39132061),
+                    (self.corpus.find('sasi'),self.corpus.find('tusa'),-5.172159875),
+                    (self.corpus.find('sasi'),self.corpus.find('ʃi'),-10.12650306)]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'sasi','khorsi',string_type='spelling',count_what = 'token')
@@ -243,42 +243,42 @@ class KhorsiTest(unittest.TestCase):
             self.assertAlmostEqual(calced[i][0],v[0])
 
     def test_mass_relate_transcription_type(self):
-        expected = [(10.54988612,self.corpus.find('atema')),
-                    (-13.35737022,self.corpus.find('enuta')),
-                    (-16.64202823,self.corpus.find('mashomisi')),
-                    (-5.95476627,self.corpus.find('mata')),
-                    (-8.178638789,self.corpus.find('nata')),
-                    (-14.85026877,self.corpus.find('sasi')),
-                    (-13.67469544,self.corpus.find('shashi')),
-                    (-12.0090178,self.corpus.find('shisata')),
-                    (-12.51154463,self.corpus.find('shushoma')),
-                    (-8.296421824,self.corpus.find('ta')),
-                    (-13.01231991,self.corpus.find('tatomi')),
-                    (-23.85818691,self.corpus.find('tishenishu')),
-                    (-14.54716897,self.corpus.find('toni')),
-                    (-13.85402179,self.corpus.find('tusa')),
-                    (-14.60340869,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('atema'),self.corpus.find('atema'),10.54988612),
+                    (self.corpus.find('atema'),self.corpus.find('enuta'),-13.35737022),
+                    (self.corpus.find('atema'),self.corpus.find('mashomisi'),-16.64202823),
+                    (self.corpus.find('atema'),self.corpus.find('mata'),-5.95476627),
+                    (self.corpus.find('atema'),self.corpus.find('nata'),-8.178638789),
+                    (self.corpus.find('atema'),self.corpus.find('sasi'),-14.85026877),
+                    (self.corpus.find('atema'),self.corpus.find('shashi'),-13.67469544),
+                    (self.corpus.find('atema'),self.corpus.find('shisata'),-12.0090178),
+                    (self.corpus.find('atema'),self.corpus.find('shushoma'),-12.51154463),
+                    (self.corpus.find('atema'),self.corpus.find('ta'),-8.296421824),
+                    (self.corpus.find('atema'),self.corpus.find('tatomi'),-13.01231991),
+                    (self.corpus.find('atema'),self.corpus.find('tishenishu'),-23.85818691),
+                    (self.corpus.find('atema'),self.corpus.find('toni'),-14.54716897),
+                    (self.corpus.find('atema'),self.corpus.find('tusa'),-13.85402179),
+                    (self.corpus.find('atema'),self.corpus.find('ʃi'),-14.60340869),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'atema','khorsi',string_type='transcription',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
-        expected = [(-14.85026877,self.corpus.find('atema')),
-                    (-16.64202823,self.corpus.find('enuta')),
-                    (-12.94778139,self.corpus.find('mashomisi')),
-                    (-11.67221494,self.corpus.find('mata')),
-                    (-12.07768004,self.corpus.find('nata')),
-                    (8.812614836,self.corpus.find('sasi')),
-                    (-11.93742415,self.corpus.find('shashi')),
-                    (-7.90637444,self.corpus.find('shisata')),
-                    (-18.22899329,self.corpus.find('shushoma')),
-                    (-7.683230889,self.corpus.find('ta')),
-                    (-16.91136117,self.corpus.find('tatomi')),
-                    (-21.83498509,self.corpus.find('tishenishu')),
-                    (-12.52396715,self.corpus.find('toni')),
-                    (-5.239146233,self.corpus.find('tusa')),
-                    (-6.943894326,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-14.85026877),
+                    (self.corpus.find('sasi'),self.corpus.find('enuta'),-16.64202823),
+                    (self.corpus.find('sasi'),self.corpus.find('mashomisi'),-12.94778139),
+                    (self.corpus.find('sasi'),self.corpus.find('mata'),-11.67221494),
+                    (self.corpus.find('sasi'),self.corpus.find('nata'),-12.07768004),
+                    (self.corpus.find('sasi'),self.corpus.find('sasi'),8.812614836),
+                    (self.corpus.find('sasi'),self.corpus.find('shashi'),-11.93742415),
+                    (self.corpus.find('sasi'),self.corpus.find('shisata'),-7.90637444),
+                    (self.corpus.find('sasi'),self.corpus.find('shushoma'),-18.22899329),
+                    (self.corpus.find('sasi'),self.corpus.find('ta'),-7.683230889),
+                    (self.corpus.find('sasi'),self.corpus.find('tatomi'),-16.91136117),
+                    (self.corpus.find('sasi'),self.corpus.find('tishenishu'),-21.83498509),
+                    (self.corpus.find('sasi'),self.corpus.find('toni'),-12.52396715),
+                    (self.corpus.find('sasi'),self.corpus.find('tusa'),-5.239146233),
+                    (self.corpus.find('sasi'),self.corpus.find('ʃi'),-6.943894326),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'sasi','khorsi',string_type='transcription',count_what = 'type')
@@ -286,42 +286,42 @@ class KhorsiTest(unittest.TestCase):
             self.assertAlmostEqual(calced[i][0],v[0])
 
     def test_mass_relate_transcription_token(self):
-        expected = [(12.10974787,self.corpus.find('atema')),
-                    (-15.29756722,self.corpus.find('enuta')),
-                    (-16.05808867,self.corpus.find('mashomisi')),
-                    (-8.574032654,self.corpus.find('mata')),
-                    (-6.823215263,self.corpus.find('nata')),
-                    (-14.77671518,self.corpus.find('sasi')),
-                    (-13.71767966,self.corpus.find('shashi')),
-                    (-11.34309371,self.corpus.find('shisata')),
-                    (-11.19329949,self.corpus.find('shushoma')),
-                    (-9.205644162,self.corpus.find('ta')),
-                    (-13.74726148,self.corpus.find('tatomi')),
-                    (-23.12247048,self.corpus.find('tishenishu')),
-                    (-15.1191937,self.corpus.find('toni')),
-                    (-13.79217439,self.corpus.find('tusa')),
-                    (-15.68503325,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('atema'),12.10974787,self.corpus.find('atema')),
+                    (self.corpus.find('atema'),-15.29756722,self.corpus.find('enuta')),
+                    (self.corpus.find('atema'),-16.05808867,self.corpus.find('mashomisi')),
+                    (self.corpus.find('atema'),-8.574032654,self.corpus.find('mata')),
+                    (self.corpus.find('atema'),-6.823215263,self.corpus.find('nata')),
+                    (self.corpus.find('atema'),-14.77671518,self.corpus.find('sasi')),
+                    (self.corpus.find('atema'),-13.71767966,self.corpus.find('shashi')),
+                    (self.corpus.find('atema'),-11.34309371,self.corpus.find('shisata')),
+                    (self.corpus.find('atema'),-11.19329949,self.corpus.find('shushoma')),
+                    (self.corpus.find('atema'),-9.205644162,self.corpus.find('ta')),
+                    (self.corpus.find('atema'),-13.74726148,self.corpus.find('tatomi')),
+                    (self.corpus.find('atema'),-23.12247048,self.corpus.find('tishenishu')),
+                    (self.corpus.find('atema'),-15.1191937,self.corpus.find('toni')),
+                    (self.corpus.find('atema'),-13.79217439,self.corpus.find('tusa')),
+                    (self.corpus.find('atema'),-15.68503325,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'atema','khorsi',string_type='transcription',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
-        expected = [(-14.77671518,self.corpus.find('atema')),
-                    (-15.43519993,self.corpus.find('enuta')),
-                    (-13.96361833,self.corpus.find('mashomisi')),
-                    (-11.58324408,self.corpus.find('mata')),
-                    (-11.67727303,self.corpus.find('nata')),
-                    (8.126877557,self.corpus.find('sasi')),
-                    (-9.734809346,self.corpus.find('shashi')),
-                    (-7.840021077,self.corpus.find('shisata')),
-                    (-15.95332831,self.corpus.find('shushoma')),
-                    (-6.848974285,self.corpus.find('ta')),
-                    (-16.85050186,self.corpus.find('tatomi')),
-                    (-20.51761446,self.corpus.find('tishenishu')),
-                    (-12.51433768,self.corpus.find('toni')),
-                    (-4.829191506,self.corpus.find('tusa')),
-                    (-5.994066536,self.corpus.find('ʃi')),]
+        expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-14.77671518),
+                    (self.corpus.find('sasi'),self.corpus.find('enuta'),-15.43519993),
+                    (self.corpus.find('sasi'),self.corpus.find('mashomisi'),-13.96361833),
+                    (self.corpus.find('sasi'),self.corpus.find('mata'),-11.58324408),
+                    (self.corpus.find('sasi'),self.corpus.find('nata'),-11.67727303),
+                    (self.corpus.find('sasi'),self.corpus.find('sasi'),8.126877557),
+                    (self.corpus.find('sasi'),self.corpus.find('shashi'),-9.734809346),
+                    (self.corpus.find('sasi'),self.corpus.find('shisata'),-7.840021077),
+                    (self.corpus.find('sasi'),self.corpus.find('shushoma'),-15.95332831),
+                    (self.corpus.find('sasi'),self.corpus.find('ta'),-6.848974285),
+                    (self.corpus.find('sasi'),self.corpus.find('tatomi'),-16.85050186),
+                    (self.corpus.find('sasi'),self.corpus.find('tishenishu'),-20.51761446),
+                    (self.corpus.find('sasi'),self.corpus.find('toni'),-12.51433768),
+                    (self.corpus.find('sasi'),self.corpus.find('tusa'),-4.829191506),
+                    (self.corpus.find('sasi'),self.corpus.find('ʃi'),-5.994066536),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
         calced = mass_relate(self.corpus,'sasi','khorsi',string_type='transcription',count_what = 'token')
