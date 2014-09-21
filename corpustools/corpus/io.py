@@ -245,6 +245,7 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
                         trans = word.split(trans_delimiter)
                     else:
                         trans = [x for x in word.strip()]
+                    trans = [t for t in trans if not t in ignore_list]
                     if not trans_check and len(trans) > 1:
                         trans_check = True
                     word = trans_delimiter.join(trans)
@@ -277,15 +278,10 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
         if word.transcription:
             if not word.spelling:
                 word.spelling = ''.join(map(str,word.transcription))
-            if corpus.has_feature_matrix():
-                try:
-                    word._specify_features(corpus.get_feature_matrix())
-                except KeyError as e:
-                    transcription_errors[str(e)].append(str(word))
         corpus.add_word(word)
         if pqueue is not None:
             pqueue.put(1)
-
+    transcription_errors = corpus.check_coverage()
     if pqueue is not None:
         pqueue.put(-99)
     if oqueue is not None:

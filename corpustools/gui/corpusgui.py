@@ -223,11 +223,6 @@ class CorpusFromTextWindow(Toplevel):
         delimiter = self.delimiter_entry.get()
         trans_delimiter = self.trans_delimiter_entry.get()
 
-        if string_type == 'transcription' and trans_delimiter in ignore_list:
-            MessageBox.showerror(message='Transcription delimiter is currently set to being ignored, please remove it from the punctuation to be ignored.')
-
-            return
-
         corpus_name = os.path.split(source_path)[-1].split('.')[0]
 
         self.prog_bar = Progressbar(self, mode='indeterminate')
@@ -271,7 +266,7 @@ class CorpusFromTextWindow(Toplevel):
     def finalize_corpus(self, corpus, transcription_errors=None):
         self.corpus = corpus
         if transcription_errors:
-            not_found = sorted(list(transcription_errors.keys()))
+            not_found = sorted(transcription_errors)
             msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
             msg2 = 'The symbols that were missing were {}.\n'.format(', '.join(not_found))
             msg3 = 'Would you like to create all of them as unspecified? You can edit them later by going to Options-> View/change feature system...\nYou can also manually create the segments in there.'
@@ -280,7 +275,7 @@ class CorpusFromTextWindow(Toplevel):
             if not carry_on:
                 return
             for s in not_found:
-                self.corpus.get_feature_matrix().add_segment(s.strip('\''),{})
+                self.corpus.get_feature_matrix().add_segment(s,{})
             self.corpus.get_feature_matrix().validate()
 
 class CustomCorpusWindow(Toplevel):

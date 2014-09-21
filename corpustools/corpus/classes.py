@@ -326,6 +326,7 @@ class Word(object):
         self.tiers = list()
         self.transcription = None
         self.spelling = None
+        self.descriptors = ['spelling','transcription']
         kwargs = {key.lower():value for key,value in list(kwargs.items())}
 
         for key, value in kwargs.items():
@@ -341,6 +342,7 @@ class Word(object):
                 except ValueError:
                     pass
             setattr(self,key, value)
+            self.descriptors.append(key)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
@@ -813,6 +815,11 @@ class Corpus(object):
         if self.has_feature_matrix():
             for word in self:
                 word._specify_features(self.specifier)
+
+    def check_coverage(self):
+        if not self.has_feature_matrix():
+            return []
+        return [x for x in self.inventory.keys() if x not in self.specifier]
 
     def iter_sort(self):
         """Sorts the keys in the corpus dictionary, then yields the values in that order
