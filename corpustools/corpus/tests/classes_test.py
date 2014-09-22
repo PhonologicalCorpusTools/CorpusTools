@@ -360,8 +360,15 @@ class CorpusFeatureMatrixTest(unittest.TestCase):
 
 
     def test_coverage(self):
-        #Not implemented yet
-        raise(NotImplementedError)
+        corpus = Corpus('test')
+        for w in self.corpus_basic_info:
+            corpus.add_word(Word(**w))
+
+        fm = FeatureMatrix('test',self.feature_no_d_info)
+
+        corpus.set_feature_matrix(fm)
+
+        self.assertEqual(corpus.check_coverage(),['d'])
 
 
     def test_add_tier(self):
