@@ -123,6 +123,13 @@ class FeatureMatrix(object):
         self.matrix['#'] = {'#':''}
         self.matrix[''] = {'*':''}
 
+    def __eq__(self, other):
+        if not isinstance(other,FeatureMatrix):
+            return False
+        if self.matrix == other.matrix:
+            return True
+        return False
+
     def __setstate__(self,state):
         self.__dict__.update(state)
 
@@ -732,6 +739,8 @@ class Translator(object):
 
         return translation
 
+class CorpusIntegrityError(Exception):
+    pass
 
 class Corpus(object):
     """
@@ -804,7 +813,10 @@ class Corpus(object):
 
     def __setstate__(self,state):
         self.__dict__.update(state)
-        self._specify_features()
+        try:
+            self._specify_features()
+        except KeyError:
+            raise(CorpusIntegrityError("Specification of features failed, please recreate the corpus"))
 
         #Backwards compatability
         if '_tiers' not in state:

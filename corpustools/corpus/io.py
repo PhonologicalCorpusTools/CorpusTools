@@ -325,11 +325,12 @@ def load_feature_matrix_csv(name,path,delimiter):
                 for k,v in line.items():
                     if k == 'symbol':
                         newline[k] = v
-                    else:
+                    elif v is not None:
                         newline[k] = v[0]
                 text_input.append(newline)
 
     feature_matrix = FeatureMatrix(name,text_input)
+    feature_matrix.validate()
     return feature_matrix
 
 def make_safe(value, delimiter):

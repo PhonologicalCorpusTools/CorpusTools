@@ -44,6 +44,10 @@ class CustomCorpusTextTest(unittest.TestCase):
     def setUp(self):
         self.spelling_path = os.path.join(TEST_DIR,'test_text_spelling.txt')
         self.transcription_path = os.path.join(TEST_DIR,'test_text_transcription.txt')
+        self.transcription_morphemes_path = os.path.join(TEST_DIR,'test_text_transcription_morpheme_boundaries.txt')
+
+        self.full_feature_matrix_path = os.path.join(TEST_DIR,'basic.feature')
+        self.missing_feature_matrix_path = os.path.join(TEST_DIR, 'missing_segments.feature')
 
     def test_load_spelling_no_ignore(self):
         self.assertRaises(DelimiterError, load_corpus_text, 'test', self.spelling_path,"?",[])
@@ -68,6 +72,31 @@ class CustomCorpusTextTest(unittest.TestCase):
         c,errors = load_corpus_text('test',self.transcription_path,' ',[],string_type='transcription',trans_delimiter='.')
 
         self.assertEqual(sorted(c.inventory.keys()), sorted(['#','a','b','c','d']))
+
+    def test_load_transcription_morpheme(self):
+        c,errors = load_corpus_text('test',self.transcription_morphemes_path,' ',['-','=','.'],string_type='transcription',trans_delimiter='.')
+
+        self.assertEqual(c['cab'].frequency, 2)
+
+    def test_load_with_fm(self):
+        c,errors = load_corpus_text('test',self.transcription_path,' ',
+                    ['-','=','.'],string_type='transcription',trans_delimiter='.',
+                    feature_system_path = self.full_feature_matrix_path)
+
+        self.assertEqual(c.specifier,load_binary(self.full_feature_matrix_path))
+
+        self.assertEqual(c['cab'].frequency, 1)
+
+        self.assertEqual(c.check_coverage(),[])
+
+        c,errors = load_corpus_text('test',self.transcription_path,' ',
+                    ['-','=','.'],string_type='transcription',trans_delimiter='.',
+                    feature_system_path = self.missing_feature_matrix_path)
+
+        self.assertEqual(c.specifier,load_binary(self.missing_feature_matrix_path))
+
+        self.assertEqual(sorted(c.check_coverage()),sorted(['b','c','d']))
+
 
 class BinaryCorpusLoadTest(unittest.TestCase):
     def setUp(self):
@@ -106,6 +135,47 @@ class BinaryCorpusDownloadTest(unittest.TestCase):
 
         example_c = load_binary(self.example_path)
         self.assertEqual(c,example_c)
+
+class FeatureMatrixCsvTest(unittest.TestCase):
+    def setUp(self):
+        self.basic_path = os.path.join(TEST_DIR,'test_feature_matrix.txt')
+        self.missing_value_path = os.path.join(TEST_DIR,'test_feature_matrix_missing_value.txt')
+        self.extra_feature_path = os.path.join(TEST_DIR,'test_feature_matrix_extra_feature.txt')
+
+    def test_basic(self):
+        self.assertRaises(DelimiterError,load_feature_matrix_csv,'test',self.basic_path,' ')
+        fm = load_feature_matrix_csv('test',self.basic_path,',')
+
+        self.assertEqual(fm.name,'test')
+        self.assertEqual(fm['a','feature1'], '+')
+
+    def test_missing_value(self):
+        fm = load_feature_matrix_csv('test',self.missing_value_path,',')
+
+        self.assertEqual(fm['d','feature2'],'n')
+
+    def test_extra_feature(self):
+        fm = load_feature_matrix_csv('test',self.extra_feature_path,',')
+
+        self.assertRaises(KeyError,fm.__getitem__,('a','feature3'))
+
+class BinaryFeatureMatrixSaveTest(unittest.TestCase):
+    def setUp(self):
+        self.basic_path = os.path.join(TEST_DIR,'test_feature_matrix.txt')
+        self.basic_save_path = os.path.join(TEST_DIR,'basic.feature')
+        self.missing_segment_path = os.path.join(TEST_DIR,'test_feature_matrix_missing_segment.txt')
+        self.missing_save_path = os.path.join(TEST_DIR,'missing_segments.feature')
+
+    def test_save(self):
+        fm = load_feature_matrix_csv('test',self.basic_path,',')
+        save_binary(fm,self.basic_save_path)
+        saved_fm = load_binary(self.basic_save_path)
+        self.assertEqual(fm,saved_fm)
+
+        fm = load_feature_matrix_csv('test',self.missing_segment_path,',')
+        save_binary(fm,self.missing_save_path)
+        saved_fm = load_binary(self.missing_save_path)
+        self.assertEqual(fm,saved_fm)
 
 
 
