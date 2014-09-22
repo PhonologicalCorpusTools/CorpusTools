@@ -32,17 +32,17 @@ class DTWTest(unittest.TestCase):
 
     def test_dtw_unnorm(self):
         distmat = generate_distance_matrix(self.source, self.target)
-        linghelper = dtw_distance(self.source,self.target,norm=False)
+        dist = dtw_distance(self.source,self.target,norm=False)
 
         r_dtw_output = 31.14363
-        self.assertTrue(abs(r_dtw_output - linghelper) < 0.01)
+        self.assertAlmostEqual(r_dtw_output, dist,places=5)
 
     def test_dtw_norm(self):
         distmat = generate_distance_matrix(self.source, self.target)
-        linghelper = dtw_distance(self.source,self.target,norm=True)
+        dist = dtw_distance(self.source,self.target,norm=True)
 
         r_dtw_output = 3.114363
-        self.assertTrue(abs(r_dtw_output - linghelper) < 0.01)
+        self.assertAlmostEqual(r_dtw_output,dist,places=5)
 
 
 if __name__ == '__main__':
