@@ -16,7 +16,7 @@ def acoustic_similarity_mapping(path_mapping,
                             verbose=False):
     """Takes in an explicit mapping of full paths to .wav files to have
     acoustic similarity computed.
-    
+
     Parameters
     ----------
     path_mapping : iterable of iterables
@@ -37,7 +37,7 @@ def acoustic_similarity_mapping(path_mapping,
         The number of frequency filters to use when computing representations.
         Defaults to 8 for amplitude envelopes and 26 for MFCCs.
     num_coeffs : int, optional
-        The number of coefficients to use for MFCCs (not used for 
+        The number of coefficients to use for MFCCs (not used for
         amplitude envelopes).  Default is 20, which captures speaker-
         specific information, whereas 12 would be more speaker-independent.
     freq_lims : tuple, optional
@@ -50,14 +50,14 @@ def acoustic_similarity_mapping(path_mapping,
     verbose : bool, optional
         If true, command line progress will be displayed after every 50
         mappings have been processed.  Defaults to false.
-        
+
     Returns
     -------
     list of tuples
         Returns a list of tuples corresponding to the `path_mapping` input,
         with a new final element in the tuple being the similarity/distance
         score for that mapping.
-    
+
     """
     if num_filters is None:
         if rep == 'envelopes':
@@ -76,11 +76,11 @@ def acoustic_similarity_mapping(path_mapping,
     else:
         to_rep = partial(to_mfcc,freq_lims=freq_lims,
                              num_coeffs=num_coeffs,
-                             num_filters = num_filters, 
+                             num_filters = num_filters,
                              win_len=0.025,
                              time_step=0.01,
                              use_power = False)
-          
+
     for i,pm in enumerate(path_mapping):
         if verbose and i % 50 == 0:
             print('Mapping %d of %d processed' % (i,total_mappings))
@@ -91,9 +91,9 @@ def acoustic_similarity_mapping(path_mapping,
         if output_sim:
             dist_val = 1/dist_val
         output_values.append([pm[0],pm[1],dist_val])
-      
+
     return output_values
-    
+
 def acoustic_similarity_directories(directory_one,directory_two,
                             all_to_all = True,
                             rep = 'envelopes',
@@ -106,7 +106,7 @@ def acoustic_similarity_directories(directory_one,directory_two,
                             use_multi=False,
                             threaded_q=None):
     """Computes acoustic similarity across two directories of .wav files.
-    
+
     Parameters
     ----------
     directory_one : str
@@ -132,7 +132,7 @@ def acoustic_similarity_directories(directory_one,directory_two,
         The number of frequency filters to use when computing representations.
         Defaults to 8 for amplitude envelopes and 26 for MFCCs.
     num_coeffs : int, optional
-        The number of coefficients to use for MFCCs (not used for 
+        The number of coefficients to use for MFCCs (not used for
         amplitude envelopes).  Default is 20, which captures speaker-
         specific information, whereas 12 would be more speaker-independent.
     freq_lims : tuple, optional
@@ -145,13 +145,13 @@ def acoustic_similarity_directories(directory_one,directory_two,
     verbose : bool, optional
         If true, command line progress will be displayed after every 50
         mappings have been processed.  Defaults to false.
-        
+
     Returns
     -------
     float
         Average distance/similarity of all the comparisons that were done
         between the two directories.
-    
+
     """
     if num_filters is None:
         if rep == 'envelopes':
@@ -167,14 +167,14 @@ def acoustic_similarity_directories(directory_one,directory_two,
     else:
         to_rep = partial(to_mfcc,freq_lims=freq_lims,
                              num_coeffs=num_coeffs,
-                             num_filters = num_filters, 
+                             num_filters = num_filters,
                              win_len=0.025,
                              time_step=0.01,
                              use_power = False)
-                             
-    files_one = os.listdir(directory_one)
+
+    files_one = [x for x in os.listdir(directory_one) if x.lower().endswith('.wav')]
     len_one = len(files_one)
-    files_two = os.listdir(directory_two)
+    files_two = [x for x in os.listdir(directory_two) if x.lower().endswith('.wav')]
     len_two = len(files_two)
     if not all_to_all and len_one == len_two:
         output = zeros((len_one,))
@@ -204,6 +204,6 @@ def acoustic_similarity_directories(directory_one,directory_two,
     else:
         threaded_q.put(output_val)
         return None
-    
-    
+
+
 
