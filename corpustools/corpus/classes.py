@@ -3,7 +3,9 @@
 import os
 import random
 import collections
-from codecs import open
+
+class CorpusIntegrityError(Exception):
+    pass
 
 class Segment(object):
     """
@@ -122,6 +124,13 @@ class FeatureMatrix(object):
         #What are these?
         self.matrix['#'] = {'#':''}
         self.matrix[''] = {'*':''}
+
+    def __eq__(self, other):
+        if not isinstance(other,FeatureMatrix):
+            return False
+        if self.matrix == other.matrix:
+            return True
+        return False
 
     def __setstate__(self,state):
         self.__dict__.update(state)
@@ -732,7 +741,6 @@ class Translator(object):
 
         return translation
 
-
 class Corpus(object):
     """
     Attributes
@@ -803,13 +811,17 @@ class Corpus(object):
             word.remove_tier(tier_name)
 
     def __setstate__(self,state):
-        self.__dict__.update(state)
-        self._specify_features()
+        try:
+            self.__dict__.update(state)
+            self._specify_features()
 
-        #Backwards compatability
-        if '_tiers' not in state:
-            word = self.random_word()
-            self._tiers = word.tiers
+            #Backwards compatability
+            if '_tiers' not in state:
+                word = self.random_word()
+                self._tiers = word.tiers
+        except Exception as e:
+            raise(CorpusIntegrityError("An error occurred while loading the corpus: {}.\nPlease redownload or recreate the corpus.".format(str(e))))
+
 
     def _specify_features(self):
         if self.has_feature_matrix():

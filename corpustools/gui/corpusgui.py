@@ -11,6 +11,8 @@ import tkinter.messagebox as MessageBox
 import queue
 import string
 
+from corpustools.corpus.classes import CorpusIntegrityError
+
 from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                     load_corpus_csv,load_corpus_text,
                                     export_corpus_csv, export_feature_matrix_csv,
@@ -471,8 +473,8 @@ class CorpusManager(object):
 
         try:
             self.corpus = load_binary(corpus_name_to_path(corpus_name))
-        except EOFError:
-            MessageBox.showerror(message='The corpus file is corrupted.  Please redownload or regenerate the corpus')
+        except CorpusIntegrityError as e:
+            MessageBox.showerror(message=str(e))
 
             return
         if self.corpus.has_feature_matrix() and self.corpus.specifier.name not in get_systems_list():
