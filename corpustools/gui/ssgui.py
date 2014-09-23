@@ -8,7 +8,8 @@ import tkinter.filedialog as FileDialog
 import tkinter.messagebox as MessageBox
 
 import queue
-import corpustools.symbolsim.string_similarity as SS
+from corpustools.symbolsim.string_similarity import string_similarity
+from corpustools.symbolsim.io import read_pairs_file
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                                     ResultsWindow, ThreadedTask, ToolTip)
@@ -209,6 +210,7 @@ class SSFunction(FunctionWindow):
 
         #First check if the word is in the corpus
 
+        string_type = self.string_similarity_stringtype_var.get()
         relator_type = self.relator_type_var.get()
         if relator_type == 'Khorsi':
             relator_type = 'khorsi'
@@ -216,6 +218,7 @@ class SSFunction(FunctionWindow):
             relator_type = 'edit_distance'
         elif relator_type == 'Phonological edit distance':
             relator_type = 'phono_edit_distance'
+            string_type = 'transcription'
 
         comp_type = self.string_similarity_comparison_type_var.get()
         if comp_type == 'one':
@@ -257,7 +260,6 @@ class SSFunction(FunctionWindow):
                 return
 
         #If it's all good, then calculate relatedness
-        string_type = self.string_similarity_stringtype_var.get()
         typetoken = self.string_similarity_typetoken_var.get()
         output_filename = self.string_similarity_filename_var.get()
         min_rel = self.string_similarity_min_rel_var.get()
@@ -277,33 +279,33 @@ class SSFunction(FunctionWindow):
         header = [('Word 1',20),
                     ('Word 2', 20),
                     ('Result', 10),
+                    ('String type', 10),
                     ('Type or token', 10),
                     ('Algorithm type', 10)]
         title = 'String similarity results'
         if self.string_similarity_comparison_type_var.get() == 'one':
             query = self.string_similarity_query_var.get()
-            results = SS.string_similarity_word('',relator_type,
-                                                string_type, typetoken, query,
-                                                min_rel, max_rel, self.corpus, output_filename='return_data')
-            results = [(query,x[1],x[0]) for x in results]
         elif self.string_similarity_comparison_type_var.get() == 'pairs':
-            query = self.string_similarity_pairs_var.get()
-            results = SS.string_similarity_pairs('', relator_type,
-                                                    string_type, typetoken, query,
-                                                    'return_data', min_rel, max_rel, self.corpus)
+            pairs_path = self.string_similarity_pairs_var.get()
+            query = read_pairs_file(pairs_path)
 
         elif self.string_similarity_comparison_type_var.get() == 'one_pair':
             word1 = self.string_similarity_one_pair1_var.get()
             word2 = self.string_similarity_one_pair2_var.get()
-            results = [SS.string_similarity_single_pair('', relator_type, string_type, typetoken, word1, word2, self.corpus)]
-
+            query = (word1,word2)
+        results = string_similarity(self.corpus, query, relator_type,
+                                                string_type = string_type,
+                                                tier_name = string_type,
+                                                count_what = typetoken,
+                                                min_rel = min_rel,
+                                                max_rel = max_rel)
         self.ss_results = ResultsWindow(title,header)
 
         for result in results:
             w1, w2, similarity = result
             if relator_type != 'khorsi':
                 typetoken = 'N/A'
-            self.ss_results.update([w1, w2, similarity, typetoken, relator_type])
+            self.ss_results.update([w1.spelling, w2.spelling, similarity, string_type, typetoken, relator_type])
 
 
     def cancel_string_similarity(self):
