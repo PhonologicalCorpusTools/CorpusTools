@@ -8,7 +8,7 @@ import tkinter.messagebox as MessageBox
 
 import queue
 
-from corpustools.freqalt.freq_of_alt import Freqor
+from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                     ResultsWindow, InventoryFrame, ThreadedTask, ToolTip)
@@ -211,8 +211,7 @@ class FAFunction(FunctionWindow):
                         ('Phonological alignment?', 10)]
             title = 'Frequency of alternation results'
 
-            freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
-            results = freqor.calc_freq_of_alt(s1, s2, relator_type, count_what,
+            results = calc_freq_of_alt(self.corpus, s1, s2, relator_type, count_what,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
                                             from_gui=True, phono_align=alignment, output_filename=output_file)
 
@@ -220,8 +219,7 @@ class FAFunction(FunctionWindow):
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
 
         else:
-            freqor = Freqor(self.corpus.name, ready_made_corpus=self.corpus)
-            results = freqor.calc_freq_of_alt(s1, s2, relator_type, count_what, phono_align=alignment,
+            results = freqor.calc_freq_of_alt(self.corpus, s1, s2, relator_type, count_what, phono_align=alignment,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
                                             from_gui=True, output_filename=output_file)
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
