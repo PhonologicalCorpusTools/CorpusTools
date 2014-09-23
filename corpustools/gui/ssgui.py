@@ -38,7 +38,7 @@ class SSFunction(FunctionWindow):
                                         'a larger number means strings are more similar. '
                                         'For edit distance, a smaller number means strings '
                                         'are more similar (with 0 being identical). For more'
-                                        ' information, click on â€˜About this functionâ€¦â€™.'))
+                                        ' information, click on \'About this function\'.'))
         for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
             rb = Radiobutton(relator_type_frame, text=rtype,variable=self.relator_type_var,
                             value=rtype, command=self.check_relator_type)
@@ -185,11 +185,11 @@ class SSFunction(FunctionWindow):
            for child in self.typetoken_frame.winfo_children():
                 child.config(state=NORMAL)
 
-##        if relator_type == 'Phonological edit distance':
-##            self.spelling_button.config(state=DISABLED)
-##            self.transcription_button.select()
-##        else:
-##            self.spelling_button.config(state=ACTIVE)
+        if relator_type == 'Phonological edit distance':
+            self.spelling_button.config(state=DISABLED)
+            self.transcription_button.select()
+        else:
+            self.spelling_button.config(state=ACTIVE)
 
 
 
