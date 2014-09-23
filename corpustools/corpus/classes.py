@@ -351,7 +351,8 @@ class Word(object):
                 except ValueError:
                     pass
             setattr(self,key, value)
-            self.descriptors.append(key)
+            if key not in self.descriptors:
+                self.descriptors.append(key)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
