@@ -219,7 +219,7 @@ class FAFunction(FunctionWindow):
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
 
         else:
-            results = freqor.calc_freq_of_alt(self.corpus, s1, s2, relator_type, count_what, phono_align=alignment,
+            results = calc_freq_of_alt(self.corpus, s1, s2, relator_type, count_what, phono_align=alignment,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
                                             from_gui=True, output_filename=output_file)
             self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
