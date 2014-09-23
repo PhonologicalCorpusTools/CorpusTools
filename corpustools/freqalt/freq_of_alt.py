@@ -69,7 +69,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
                         count_diff += 1
                 if count_diff > 1:
                     new_related_list.append( (w1, w2, score) )
-    related_list = new_related_list
+        related_list = new_related_list
 
     words_with_alt = set()
     #Remove pairs that are not phonologically aligned if specified
