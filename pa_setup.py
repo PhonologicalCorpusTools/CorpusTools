@@ -9,13 +9,15 @@ from setuptools import setup
 
 APP = ['bin/pct.py']
 DATA_FILES = []
-OPTIONS = {'argv_emulation': True}
+OPTIONS = {'argv_emulation': True,
+            "includes":['scipy','numpy']}
 
 setup(
     app=APP,
     data_files=DATA_FILES,
     options={'py2app': OPTIONS},
       packages=['corpustools', 
+                'corpustools.acousticsim',
                 'corpustools.corpus',
                 'corpustools.freqalt',
                 'corpustools.funcload',
