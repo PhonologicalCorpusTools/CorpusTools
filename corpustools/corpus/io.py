@@ -107,7 +107,6 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
 
     """
     corpus = Corpus(corpus_name)
-    corpus.custom = True
     if feature_system_path:
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
@@ -126,9 +125,6 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
         if 'feature_system' in headers[-1]:
             headers = headers[0:len(headers)-1]
 
-
-
-        transcription_errors = collections.defaultdict(list)
         trans_check = False
 
         for line in f.readlines():
@@ -150,11 +146,6 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
                 #transcriptions can have phonetic symbol delimiters which is a period
                 if not word.spelling:
                     word.spelling = ''.join(map(str,word.transcription))
-                if corpus.has_feature_matrix():
-                    try:
-                        word._specify_features(corpus.specifier)
-                    except KeyError as e:
-                        transcription_errors[str(e)].append(str(word))
 
             corpus.add_word(word)
             if pqueue is not None:
@@ -166,6 +157,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
         else:
             raise(e)
 
+    transcription_errors = corpus.check_coverage()
     if pqueue is not None:
         pqueue.put(-99)
     if oqueue is not None:
@@ -263,7 +255,6 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
             raise(e)
     total_words = sum(word_count.values())
     headers = [string_type,'frequency']
-    transcription_errors = collections.defaultdict(list)
     for w,freq in sorted(word_count.items()):
         line = [w,freq]
         d = {attribute:value for attribute,value in zip(headers,line)}
