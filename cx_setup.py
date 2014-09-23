@@ -27,7 +27,12 @@ shortcut_table = [
      )
     ]
 
-build_exe_options = {"excludes": ['corpustools.acousticsim.tests'],
+build_exe_options = {"excludes": [
+                        'corpustools.acousticsim.tests',
+                        'corpustools.corpus.tests',
+                        'corpustools.funcload.tests',
+                        'corpustools.prod.tests',
+                        'matplotlib'],
                     "includes": [
                             "numpy.lib.format",
                             "numpy.linalg",
