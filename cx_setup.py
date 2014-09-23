@@ -61,7 +61,7 @@ if sys.platform == "win32":
     base = "Win32GUI"
 
 setup(name='Phonological CorpusTools',
-      version='0.15',
+      version='0.15.1',
       description='',
       long_description='',
       classifiers=[

@@ -36,6 +36,8 @@ class EnvelopeTest(unittest.TestCase):
 
 
     def test_envelope_gen(self):
+        if not os.path.exists(TEST_DIR):
+            return
         for f in filenames:
             wavpath = os.path.join(TEST_DIR,f+'.wav')
             matpath = os.path.join(TEST_DIR,f+'_lewandowski_env.mat')
@@ -56,6 +58,8 @@ class MfccTest(unittest.TestCase):
         self.num_filters = 20
 
     def test(self):
+        if not os.path.exists(TEST_DIR):
+            return
         for f in filenames:
             wavpath = os.path.join(TEST_DIR,f+'.wav')
             matpath = os.path.join(TEST_DIR,f+'_mfcc.mat')
