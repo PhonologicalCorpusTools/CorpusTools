@@ -305,8 +305,8 @@ class GUI(Toplevel):
         for child in self.corpus_frame.winfo_children():
             child.pack_forget()
         random_word = self.corpus.random_word()
-        headers = [d for d in random_word.descriptors if not d is None or not d == '']
-        rows = [[getattr(word,d,'???') for d in word.descriptors] for word in self.corpus.iter_sort()]
+        headers = [d for d in random_word.descriptors + random_word.tiers if not d is None or not d == '']
+        rows = [[getattr(word,d,'???') for d in word.descriptors+word.tiers] for word in self.corpus.iter_sort()]
         self.corpus_box = TableView(self.corpus_frame, headers,rows)
         self.update_info_frame()
         self.corpus_box.pack(expand=True,fill='both')
