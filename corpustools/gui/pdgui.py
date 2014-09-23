@@ -352,7 +352,7 @@ class PDFunction(FunctionWindow):
             self.entropy_tier_var.get(),
             seg1,
             seg2,
-            'FREQ-ONLY',
+            'ALL',#'FREQ-ONLY',
             str(seg1_count),
             str(seg2_count),
             str(seg1_count+seg2_count),
@@ -581,10 +581,10 @@ class PDFunction(FunctionWindow):
         try:
             self.prod_results.destroy()
             self.prod_results = None
-        except AttributeError: #widgets don't exist anyway
+        except (AttributeError, TclError): #widgets don't exist anyway
             pass
 
         try:
             self.start_new_envs.config(state=DISABLED)
-        except AttributeError:
+        except (AttributeError, TclError):
             pass #widget doesn't exist
