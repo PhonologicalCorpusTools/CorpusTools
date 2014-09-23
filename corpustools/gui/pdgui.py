@@ -457,8 +457,8 @@ class PDFunction(FunctionWindow):
 
         if self.entropy_uniqueness_var.get() and overlapping_words:
             #envs are exhastive, but some overlap
-            final = os.path.split(self.entropy_filename_var.get())[-1]
-            filename = 'overlapping_envs_'+final
+            #final = os.path.split(self.entropy_filename_var.get())[-1]
+            filename = 'overlapping_envs_{}_{}.txt'.format(seg1, seg2)
             with open(os.path.join(ERROR_DIR, filename), mode='w', encoding='utf-8') as f:
 
                 print('The environments you selected are not unique, which means that some of them pick out the same environment in the same words.\r\n', file=f)
