@@ -28,6 +28,7 @@ class FAFunction(FunctionWindow):
         self.freq_alt_min_pairs_var = StringVar()
         self.relator_type_var = StringVar()
         self.align_var = BooleanVar()
+        self.use_subset_var = StringVar()
         self.corpus = corpus
         self.results_table = None
         self.title('Frequency of alternation')
@@ -100,6 +101,29 @@ class FAFunction(FunctionWindow):
         self.max_rel_entry.grid(row=1, column=1, sticky=W)
         threshold_frame.grid(column=0, row=3, sticky=W)
 
+
+        phono_align_frame = LabelFrame(options_frame, text='Aligment')
+        align_button = Checkbutton(phono_align_frame, text='Do phonological alignment?', variable=self.align_var)
+        align_button.grid()
+        phono_align_frame.grid(column=0, row=4, sticky=W)
+
+
+        subset_frame = LabelFrame(options_frame, text='Corpus size')
+        subset_frame_tooltip = ToolTip(master=subset_frame, text=('Select this option to only '
+                                        'calculate frequency of alternation over a randomly-'
+                                        'selected subset of your corpus. This may be useful '
+                                        'for large corpora where calculating frequency of alternation '
+                                        'takes a very long time, or for doing Monte Carlo techniques. '
+                                        'Leave blank to use the entire corpus. Enter an integer to '
+                                        'get a subset of that exact size. Enter a decimal number to '
+                                        'get a proportionally sized subset, e.g. 0.25 will '
+                                        'get a subset that is a quarter the size of your original corpus.'))
+        use_subset_label = Label(subset_frame, text='Use only a subset of your corpus?')
+        use_subset_label.grid(column=0,row=0)
+        use_subset_entry = Entry(subset_frame, textvariable=self.use_subset_var)
+        use_subset_entry.grid(column=1,row=0)
+        subset_frame.grid(column=0, row=5, sticky=W)
+
         output_frame = LabelFrame(options_frame, text='Output all alternations to file?')
         output_frame_tooltip = ToolTip(master=output_frame, text=('Enter a filename for the list '
                                 'of words with an alternation of the target two sounds to be outputted'
@@ -112,12 +136,7 @@ class FAFunction(FunctionWindow):
         label.grid(row=0, column=0, sticky=W)
         navigate.grid(row=1, column=0, sticky=W)
         self.output_entry.grid(row=1, column=1, sticky=W)
-        output_frame.grid(column=0,row=4,sticky=W)
-
-        phono_align_frame = LabelFrame(options_frame, text='Aligment')
-        align_button = Checkbutton(phono_align_frame, text='Do phonological alignment?', variable=self.align_var)
-        align_button.grid()
-        phono_align_frame.grid(sticky=W)
+        output_frame.grid(column=0,row=6,sticky=W)
 
         options_frame.grid(row=0, column=2, sticky=N, padx=10)
         top_frame.grid(row=0,column=0)
@@ -162,6 +181,39 @@ class FAFunction(FunctionWindow):
     def calculate_freq_of_alt(self, update=False):
         s1 = self.seg1_var.get()
         s2 = self.seg2_var.get()
+
+        use_subset = self.use_subset_var.get()
+        use_corpus = None
+
+        if not use_subset:
+            n = None
+
+        elif use_subset.isnumeric():
+            #use_corpus = self.corpus.random_subset(int(use_subset))
+            n = int(use_subset)
+
+        else:
+            try:
+                use_subset = float(use_subset)
+                n = round(len(self.corpus)*use_subset)
+                #use_corpus = self.corpus.get_random_subset(use_subset)
+            except ValueError:
+                MessageBox.showwarning(message='You select to use a random subset of your corpus, but entered '
+                                        'a value that was not a number.\nPlease enter a new value, or '
+                                        'else leave the box blank to use the entire corpus')
+                return
+
+        if n is None:
+            use_corpus = self.corpus
+        elif n > len(self.corpus) or n <= 0:
+            MessageBox.showwarning(message='You either entered \'0\', or else your number is larger than the size of your corpus.'
+                                    '\nPlease enter a new number, or else leave the box blank to use the entire corpus.')
+            return
+
+        else:
+            use_corpus = self.corpus.get_random_subset(n)
+
+
         if not s1 and s2:
             MessageBox.showerror(message='Please select 2 sounds')
             return
@@ -211,7 +263,7 @@ class FAFunction(FunctionWindow):
                         ('Phonological alignment?', 10)]
             title = 'Frequency of alternation results'
 
-            results = calc_freq_of_alt(self.corpus, s1, s2, relator_type, count_what,
+            results = calc_freq_of_alt(use_corpus, s1, s2, relator_type, count_what,
                                             min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
                                             from_gui=True, phono_align=alignment, output_filename=output_file)
 

@@ -12,11 +12,11 @@ NOTE: The acoustic similarity module in Phonological CorpusTools currently only 
 
 (NOTE: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -> System and Security -> System.)
 
-Download the file 'corpustools-0.15-amd64.msi' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/win64/Phonological%20CorpusTools-0.15-amd64.msi/download . Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
+Download the latest version's installer from the Phonological CorpusTools page on SourceForge (http://sourceforge.net/projects/phonologicalcorpustools). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
 
 ### Mac OS X
 
-Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge. It can be found here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/macosx/pct.zip/download . Unzip this file to access 'pct.app' (most likely by double-clicking it). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application. 
+Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge (http://sourceforge.net/projects/phonologicalcorpustools). Unzip this file to access 'pct.app' (most likely by double-clicking it). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application. 
 
 ### Linux
 
@@ -37,7 +37,7 @@ If you expect to use the acoustic similarity module, there are additional depend
 - SciPy: http://www.scipy.org/
 (If you are on Windows and can't successfully use the acoustic similarity module after installing from the above sources, you may want to try installing from the precompiled binaries here: http://www.lfd.uci.edu/~gohlke/pythonlibs/ .)
 
-Download the source code for Phonological CorpusTools here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/corpustools-0.15.zip/download . (If you prefer, you can find a tarball here: http://sourceforge.net/projects/phonologicalcorpustools/files/0.15/corpustools-0.15.tar.gz/download) After expanding the file, you will find a file called 'setup.py' in the top level directory. Run it in *one* of the following ways:
+Download the latest version of the source code for Phonological CorpusTools from the SourceForge page (http://sourceforge.net/projects/phonologicalcorpustools). After expanding the file, you will find a file called 'setup.py' in the top level directory. Run it in *one* of the following ways:
 
 1. Double-click it. If this doesn't work, access the file properties and ensure that you have permission to run the file; if not, give them to yourself. In Windows, this may require that you open the file in Administrator mode (also accessible through file properties). If your computer opens the .py file in a text editor rather than running it, you can access the file properties to set Python 3.x as the default program to use with run .py files. If the file is opened in IDLE (a Python editor), you can use the "Run" button in the IDLE interface to run the script instead.
 

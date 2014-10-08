@@ -352,7 +352,7 @@ class PDFunction(FunctionWindow):
             self.entropy_tier_var.get(),
             seg1,
             seg2,
-            'FREQ-ONLY',
+            'ALL',#'FREQ-ONLY',
             str(seg1_count),
             str(seg2_count),
             str(seg1_count+seg2_count),
@@ -457,8 +457,8 @@ class PDFunction(FunctionWindow):
 
         if self.entropy_uniqueness_var.get() and overlapping_words:
             #envs are exhastive, but some overlap
-            final = os.path.split(self.entropy_filename_var.get())[-1]
-            filename = 'overlapping_envs_'+final
+            #final = os.path.split(self.entropy_filename_var.get())[-1]
+            filename = 'overlapping_envs_{}_{}.txt'.format(seg1, seg2)
             with open(os.path.join(ERROR_DIR, filename), mode='w', encoding='utf-8') as f:
 
                 print('The environments you selected are not unique, which means that some of them pick out the same environment in the same words.\r\n', file=f)
@@ -581,10 +581,10 @@ class PDFunction(FunctionWindow):
         try:
             self.prod_results.destroy()
             self.prod_results = None
-        except AttributeError: #widgets don't exist anyway
+        except (AttributeError, TclError): #widgets don't exist anyway
             pass
 
         try:
             self.start_new_envs.config(state=DISABLED)
-        except AttributeError:
+        except (AttributeError, TclError):
             pass #widget doesn't exist

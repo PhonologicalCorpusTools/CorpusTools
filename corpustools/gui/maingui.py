@@ -237,7 +237,7 @@ class GUI(Toplevel):
         if not self.warn_about_changes:
             return
         should_quit = MessageBox.askyesno(message=(
-        'You have made changes to your corpus, but you haven\'t saved it. You will lose these changes if you load a new corpus now.\n Do you want to continue?'))
+        'You have made changes to your corpus, but you haven\'t saved it.\n Do you want to continue?'))
         return should_quit
 
     @check_for_empty_corpus
