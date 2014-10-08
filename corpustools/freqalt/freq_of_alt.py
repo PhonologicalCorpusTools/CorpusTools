@@ -9,7 +9,7 @@ from corpustools.symbolsim.string_similarity import (string_similarity,
 
 
 def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='transcription', output_filename = None,
-                    min_rel = None, max_rel = None, phono_align = None, min_pairs_okay = None, from_gui=False):
+                    min_rel = None, max_rel = None, phono_align = False, min_pairs_okay = False, from_gui=False):
     """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
 
     Parameters
@@ -69,7 +69,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
                         count_diff += 1
                 if count_diff > 1:
                     new_related_list.append( (w1, w2, score) )
-    related_list = new_related_list
+        related_list = new_related_list
 
     words_with_alt = set()
     #Remove pairs that are not phonologically aligned if specified
@@ -99,10 +99,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
 
     freq_of_alt = len(words_with_alt)/len(all_words)
 
-    if from_gui and not output_filename:
-        return len(all_words), len(words_with_alt), freq_of_alt
-
-    elif from_gui and output_filename:
+    if output_filename:
         with open(output_filename, mode='w', encoding='utf-8') as outf2:
             outf2.write('{}\t{}\t{}\r\n\r\n'.format('FirstWord', 'SecondWord', 'RelatednessScore'))
             for w1, w2, score in related_list:
@@ -114,7 +111,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
             outf2.write('total_words_alter\t{}\r\n'.format(len(words_with_alt)))
             outf2.write('freq_of_alter\t{}\r\n'.format(freq_of_alt))
 
-        return len(all_words), len(words_with_alt), freq_of_alt
+    return len(all_words), len(words_with_alt), freq_of_alt
 
 def get_lists(corpus, s1, s2, string):
     """Given two sounds, returns list of Words from the current corpus that have such sounds
