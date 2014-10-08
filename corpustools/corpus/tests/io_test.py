@@ -29,6 +29,8 @@ class CustomCorpusTest(unittest.TestCase):
         self.spe_path = os.path.join(TEST_DIR,'spe.txt')
 
     def test_corpus_csv(self):
+        if not os.path.exists(TEST_DIR):
+            return
         self.assertRaises(DelimiterError,load_corpus_csv,'example',self.example_path,delimiter='\t')
         self.assertRaises(DelimiterError,load_corpus_csv,'example',self.example_path,delimiter=',',trans_delimiter='/')
         #c = load_corpus_csv('example',self.example_path,delimiter=',')
@@ -50,6 +52,8 @@ class CustomCorpusTextTest(unittest.TestCase):
         self.missing_feature_matrix_path = os.path.join(TEST_DIR, 'missing_segments.feature')
 
     def test_load_spelling_no_ignore(self):
+        if not os.path.exists(TEST_DIR):
+            return
         self.assertRaises(DelimiterError, load_corpus_text, 'test', self.spelling_path,"?",[])
 
         c,errors = load_corpus_text('test',self.spelling_path,' ',[],string_type='spelling')
@@ -58,12 +62,16 @@ class CustomCorpusTextTest(unittest.TestCase):
 
 
     def test_load_spelling_ignore(self):
+        if not os.path.exists(TEST_DIR):
+            return
         c,errors = load_corpus_text('test',self.spelling_path,' ',["'",'.'],string_type='spelling')
 
         self.assertEqual(c['ab'].frequency, 3)
         self.assertEqual(c['cabd'].frequency, 1)
 
     def test_load_transcription(self):
+        if not os.path.exists(TEST_DIR):
+            return
         self.assertRaises(DelimiterError,load_corpus_text,'test',
                                 self.transcription_path," ",[],
                                 string_type='transcription',
@@ -74,11 +82,15 @@ class CustomCorpusTextTest(unittest.TestCase):
         self.assertEqual(sorted(c.inventory.keys()), sorted(['#','a','b','c','d']))
 
     def test_load_transcription_morpheme(self):
+        if not os.path.exists(TEST_DIR):
+            return
         c,errors = load_corpus_text('test',self.transcription_morphemes_path,' ',['-','=','.'],string_type='transcription',trans_delimiter='.')
 
         self.assertEqual(c['cab'].frequency, 2)
 
     def test_load_with_fm(self):
+        if not os.path.exists(TEST_DIR):
+            return
         c,errors = load_corpus_text('test',self.transcription_path,' ',
                     ['-','=','.'],string_type='transcription',trans_delimiter='.',
                     feature_system_path = self.full_feature_matrix_path)
@@ -103,6 +115,8 @@ class BinaryCorpusLoadTest(unittest.TestCase):
         self.example_path = os.path.join(TEST_DIR,'example.corpus')
 
     def test_load(self):
+        if not os.path.exists(TEST_DIR):
+            return
         c = load_binary(self.example_path)
 
         example_c = create_unspecified_test_corpus()
@@ -112,10 +126,14 @@ class BinaryCorpusLoadTest(unittest.TestCase):
 
 class BinaryCorpusSaveTest(unittest.TestCase):
     def setUp(self):
+        if not os.path.exists(TEST_DIR):
+            return
         self.corpus = create_unspecified_test_corpus()
         self.path = os.path.join(TEST_DIR,'testsave.corpus')
 
     def test_save(self):
+        if not os.path.exists(TEST_DIR):
+            return
         save_binary(self.corpus,self.path)
 
         c = load_binary(self.path)
@@ -129,6 +147,8 @@ class BinaryCorpusDownloadTest(unittest.TestCase):
         self.example_path = os.path.join(TEST_DIR,'example.corpus')
 
     def test_download(self):
+        if not os.path.exists(TEST_DIR):
+            return
         download_binary(self.name,self.path)
 
         c = load_binary(self.path)
@@ -143,6 +163,8 @@ class FeatureMatrixCsvTest(unittest.TestCase):
         self.extra_feature_path = os.path.join(TEST_DIR,'test_feature_matrix_extra_feature.txt')
 
     def test_basic(self):
+        if not os.path.exists(TEST_DIR):
+            return
         self.assertRaises(DelimiterError,load_feature_matrix_csv,'test',self.basic_path,' ')
         fm = load_feature_matrix_csv('test',self.basic_path,',')
 
@@ -150,11 +172,15 @@ class FeatureMatrixCsvTest(unittest.TestCase):
         self.assertEqual(fm['a','feature1'], '+')
 
     def test_missing_value(self):
+        if not os.path.exists(TEST_DIR):
+            return
         fm = load_feature_matrix_csv('test',self.missing_value_path,',')
 
         self.assertEqual(fm['d','feature2'],'n')
 
     def test_extra_feature(self):
+        if not os.path.exists(TEST_DIR):
+            return
         fm = load_feature_matrix_csv('test',self.extra_feature_path,',')
 
         self.assertRaises(KeyError,fm.__getitem__,('a','feature3'))
@@ -167,6 +193,8 @@ class BinaryFeatureMatrixSaveTest(unittest.TestCase):
         self.missing_save_path = os.path.join(TEST_DIR,'missing_segments.feature')
 
     def test_save(self):
+        if not os.path.exists(TEST_DIR):
+            return
         fm = load_feature_matrix_csv('test',self.basic_path,',')
         save_binary(fm,self.basic_save_path)
         saved_fm = load_binary(self.basic_save_path)

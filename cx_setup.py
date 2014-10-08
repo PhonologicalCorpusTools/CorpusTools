@@ -34,6 +34,7 @@ build_exe_options = {"excludes": [
                         'corpustools.prod.tests',
                         'matplotlib'],
                     "includes": [
+                            "tkinter",
                             "numpy.lib.format",
                             "numpy.linalg",
                             "numpy.linalg._umath_linalg",
@@ -46,7 +47,9 @@ build_exe_options = {"excludes": [
                             "scipy.special",
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
-                            "sys"]}
+                            "sys"],
+                            #'icon':'./resources/logo.ico'
+                            }
 
 msi_data = {"Shortcut": shortcut_table}
 
@@ -56,12 +59,18 @@ bdist_msi_options = {
         'initial_target_dir': r'[ProgramFiles64Folder]\%s\%s' % (group_name, exe_name),
         'data':msi_data}
 
+bdist_mac_options = {#'iconfile':'./resources/logo.ico',
+                    'bundle_name':'Phonological CorpusTools',
+                    #'include_frameworks':["/Library/Frameworks/Tcl.framework",
+                    #                    "/Library/Frameworks/Tk.framework"]
+                                        }
+
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
 setup(name='Phonological CorpusTools',
-      version='0.15',
+      version='0.15.1',
       description='',
       long_description='',
       classifiers=[
@@ -89,8 +98,10 @@ setup(name='Phonological CorpusTools',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            icon='docs/images/logo.ico')],
+                            #icon='docs/images/logo.ico'
+                            )],
       options={
           'bdist_msi': bdist_msi_options,
-          'build_exe': build_exe_options}
+          'build_exe': build_exe_options,
+          'bdist_mac':bdist_mac_options}
       )

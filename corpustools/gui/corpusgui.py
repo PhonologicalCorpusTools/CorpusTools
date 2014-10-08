@@ -261,6 +261,7 @@ class CorpusFromTextWindow(Toplevel):
                 return
             else:
                 self.master.after(1, self.process_queue)
+
         except queue.Empty:
             self.master.after(1, self.process_queue)
 
