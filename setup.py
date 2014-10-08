@@ -6,9 +6,9 @@ except ImportError:
 def readme():
     with open('README.md') as f:
         return f.read()
-        
+
 setup(name='corpustools',
-      version='0.15',
+      version='0.15.1',
       description='',
       long_description='',
       classifiers=[
@@ -23,7 +23,7 @@ setup(name='corpustools',
       url='https://github.com/kchall/CorpusTools',
       author='Phonological Corpus Tools',
       author_email='kathleen.hall@ubc.ca',
-      packages=['corpustools', 
+      packages=['corpustools',
                 'corpustools.acousticsim',
                 'corpustools.acousticsim.tests',
                 'corpustools.corpus',
