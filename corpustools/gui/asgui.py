@@ -10,7 +10,7 @@ import tkinter.messagebox as MessageBox
 import queue
 import corpustools.acousticsim.main as AS
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow, 
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
                                     ResultsWindow, ThreadedTask, ToolTip)
 
 
@@ -36,7 +36,7 @@ class ASFunction(FunctionWindow):
             dir_frame_tooltip = ToolTip(dir_frame, follow_mouse=False,
                                     text='Choose two directories to compare sound files between.')
 
-        
+
         dir_one_label = Label(dir_frame, text='First directory')
         dir_one_label.grid(row=0, column=0)
         dir_one_text = Entry(dir_frame,textvariable=self.directory_one)
@@ -253,6 +253,7 @@ class ASFunction(FunctionWindow):
                                     'freq_lims': (min_freq,max_freq),
                                     'output_sim':output_sim,
                                     'use_multi':use_multi,
+                                    'return_all':True,
                                     'threaded_q':self.q})
         acoustic_similarity_thread.start()
         self.process_queue(update)
@@ -295,6 +296,17 @@ class ASFunction(FunctionWindow):
         elif self.match_func.get() == 'xcorr':
             match_func = 'Cross-correlation'
         try:
+            for o in result[0]:
+                self.results.update([os.path.split(o[0])[1],
+                                            os.path.split(o[1])[1],
+                                            rep,
+                                            match_func,
+                                            self.min_freq.get(),
+                                            self.max_freq.get(),
+                                            self.num_filters.get(),
+                                            self.num_coeffs.get(),
+                                            o[2],
+                                            self.output_sim.get()])
             self.results.update([os.path.split(self.directory_one.get())[1],
                                             os.path.split(self.directory_two.get())[1],
                                             rep,
@@ -303,7 +315,7 @@ class ASFunction(FunctionWindow):
                                             self.max_freq.get(),
                                             self.num_filters.get(),
                                             self.num_coeffs.get(),
-                                            result,
+                                            result[-1],
                                             self.output_sim.get()])
         except TclError:
             self.show_result(result)

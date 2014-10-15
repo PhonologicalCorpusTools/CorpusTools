@@ -6,14 +6,44 @@ from functools import partial
 from corpustools.acousticsim.representations import to_envelopes, to_mfcc
 from corpustools.acousticsim.distance_functions import dtw_distance, xcorr_distance
 
-def acoustic_similarity_mapping(path_mapping,
-                            rep = 'envelopes',
-                            match_function = 'dtw',
-                            num_filters = None,
-                            num_coeffs = 20,
-                            freq_lims = (80,7800),
-                            output_sim = True,
-                            verbose=False):
+
+def _build_to_rep(**kwargs):
+    rep = kwargs.get('rep', 'mfcc')
+
+
+    num_filters = kwargs.get('num_filters',None)
+    num_coeffs = kwargs.get('num_coeffs', 20)
+
+    freq_lims = kwargs.get('freq_lims', (80, 7800))
+
+    win_len = kwargs.get('win_len', 0.025)
+    time_step = kwargs.get('time_step', 0.01)
+
+    use_power = kwargs.get('use_power', True)
+
+    if num_filters is None:
+        if rep == 'envelopes':
+            num_filters = 8
+        else:
+            num_filters = 26
+
+
+    if rep == 'envelopes':
+        to_rep = partial(to_envelopes,
+                                num_bands=num_filters,
+                                freq_lims=freq_lims)
+    elif rep == 'mfcc':
+        to_rep = partial(to_mfcc,freq_lims=freq_lims,
+                                    num_coeffs=num_coeffs,
+                                    num_filters = num_filters,
+                                    win_len=win_len,
+                                    time_step=time_step,
+                                    use_power = use_power)
+    else:
+        return None
+    return to_rep
+
+def acoustic_similarity_mapping(path_mapping,**kwargs):
     """Takes in an explicit mapping of full paths to .wav files to have
     acoustic similarity computed.
 
@@ -59,31 +89,23 @@ def acoustic_similarity_mapping(path_mapping,
         score for that mapping.
 
     """
-    if num_filters is None:
-        if rep == 'envelopes':
-            num_filters = 8
-        else:
-            num_filters = 26
-    output_values = []
-    total_mappings = len(path_mapping)
-    cache = {}
-    if match_function == 'dtw':
-        dist_func = dtw_distance
-    else:
-        dist_func = xcorr_distance
-    if rep == 'envelopes':
-        to_rep = partial(to_envelopes,num_bands=num_filters,freq_lims=freq_lims)
-    else:
-        to_rep = partial(to_mfcc,freq_lims=freq_lims,
-                             num_coeffs=num_coeffs,
-                             num_filters = num_filters,
-                             win_len=0.025,
-                             time_step=0.01,
-                             use_power = False)
 
+    to_rep = _build_to_rep(**kwargs)
+
+    num_cores = kwargs.get('num_cores', 1)
+    output_sim = kwargs.get('output_sim',False)
+
+    match_function = kwargs.get('match_function', 'dtw')
+    cache = kwargs.get('cache',None)
+    if match_function == 'xcorr':
+        dist_func = xcorr_distance
+    elif match_function == 'dct':
+        dist_func = dct_distance
+    else:
+        dist_func = dtw_distance
+    cache = dict()
+    output_values = list()
     for i,pm in enumerate(path_mapping):
-        if verbose and i % 50 == 0:
-            print('Mapping %d of %d processed' % (i,total_mappings))
         for filepath in pm:
                 if filepath not in cache:
                     cache[filepath] = to_rep(filepath)
@@ -94,17 +116,7 @@ def acoustic_similarity_mapping(path_mapping,
 
     return output_values
 
-def acoustic_similarity_directories(directory_one,directory_two,
-                            all_to_all = True,
-                            rep = 'envelopes',
-                            match_function = 'dtw',
-                            num_filters = None,
-                            num_coeffs = 20,
-                            freq_lims = (80,7800),
-                            output_sim = True,
-                            verbose=False,
-                            use_multi=False,
-                            threaded_q=None):
+def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
     """Computes acoustic similarity across two directories of .wav files.
 
     Parameters
@@ -153,52 +165,20 @@ def acoustic_similarity_directories(directory_one,directory_two,
         between the two directories.
 
     """
-    if num_filters is None:
-        if rep == 'envelopes':
-            num_filters = 8
-        else:
-            num_filters = 26
-    if match_function == 'dtw':
-        dist_func = dtw_distance
-    else:
-        dist_func = xcorr_distance
-    if rep == 'envelopes':
-        to_rep = partial(to_envelopes,num_bands=num_filters,freq_lims=freq_lims)
-    else:
-        to_rep = partial(to_mfcc,freq_lims=freq_lims,
-                             num_coeffs=num_coeffs,
-                             num_filters = num_filters,
-                             win_len=0.025,
-                             time_step=0.01,
-                             use_power = False)
 
     files_one = [x for x in os.listdir(directory_one) if x.lower().endswith('.wav')]
-    len_one = len(files_one)
     files_two = [x for x in os.listdir(directory_two) if x.lower().endswith('.wav')]
-    len_two = len(files_two)
-    if not all_to_all and len_one == len_two:
-        output = zeros((len_one,))
-        for i in range(len_one):
-            if verbose and i % 50 == 0:
-                print('Mapping %d of %d processed' % (i,len_one))
-            rep_one = to_rep(os.path.join(directory_one,files_one[i]))
-            rep_two = to_rep(os.path.join(directory_two,files_two[i]))
-            dist_val = dist_func(rep_one,rep_two)
-            if output_sim:
-                dist_val = 1 / dist_val
-            output[i] = dist_val
-        output_val = output.mean()
-    else:
-        output = zeros((len_one,len_two))
-        for i in range(len_one):
-            rep_one = to_rep(os.path.join(directory_one,files_one[i]))
-            for j in range(len_two):
-                rep_two = to_rep(os.path.join(directory_two,files_two[j]))
-                dist_val = dist_func(rep_one,rep_two)
-                if output_sim:
-                    dist_val = 1 / dist_val
-                output[i,j] = dist_val
-        output_val = output[output > 0].mean()
+
+    path_mapping = [ (os.path.join(directory_one,x),
+                        os.path.join(directory_two,y))
+                        for x in files_one
+                        for y in files_two]
+    output = acoustic_similarity_mapping(path_mapping, **kwargs)
+    output_val = sum([x[-1] for x in output]) / len(output)
+
+    threaded_q = kwargs.get('threaded_q', None)
+    if kwargs.get('return_all', False):
+        output_val = output,output_val
     if not threaded_q:
         return output_val
     else:
