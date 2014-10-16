@@ -5,6 +5,8 @@ import collections
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
 from urllib.request import urlretrieve
 
+import time
+
 class DelimiterError(Exception):
     """
     Exception for having wrong delimiter for text file
@@ -53,8 +55,10 @@ def load_binary(path):
     Object
         Object generated from the text file
     """
+    begin = time.time()
     with open(path,'rb') as f:
         obj = pickle.load(f)
+    print("Load binary time: ",time.time()-begin)
     return obj
 
 def save_binary(obj,path):
@@ -106,6 +110,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
         as keys and a list of words containing those segments as values
 
     """
+    begin = time.time()
     corpus = Corpus(corpus_name)
     if feature_system_path:
         feature_matrix = load_binary(feature_system_path)
@@ -158,6 +163,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
             raise(e)
 
     transcription_errors = corpus.check_coverage()
+    print("Loading time: ",time.time()-begin)
     if pqueue is not None:
         pqueue.put(-99)
     if oqueue is not None:

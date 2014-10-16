@@ -11,24 +11,22 @@ class Segment(object):
     """
     """
 
-    def __init__(self, symbol, pos=None, master=None, feature_list=None):
+    def __init__(self, symbol):
         #None defaults are for word-boundary symbols
         self.symbol = symbol
-        if feature_list is None:
-            self.features = {'#':'#'}
-        else:
-            self.features = {feature.name:feature.sign for feature in feature_list}
-        self.pos = pos
-        self.master = master
+        self.features = dict()
 
-    def get_env(self):
-        """Returns the left and right hand sides of a Segment instance
+    def specify(self,feature_dict):
+        self.features = feature_dict
 
-        """
-        if self.master is None or self.pos is None:
-            return 0
-        else:
-            return self.master.get_env(self.pos)
+    def feature_match(self,specification):
+        for f in specification:
+            try:
+                if self.features[f[1:]]!=f[0]:
+                    return False
+            except KeyError:
+                return False
+        return True
 
     def __repr__(self):
         return self.__str__()
@@ -69,23 +67,61 @@ class Segment(object):
     def __len__(self):
         return len(self.symbol)
 
-class Feature(object):
+class Transcription(object):
+    def __init__(self,seg_list):
+        self._list = seg_list
 
-    def __init__(self, string):
-        self.sign = string[0]
-        self.name = string[1:]
+    def __getitem__(self, key):
+        if isinstance(key,int):
+            return self._list[key]
+        raise(KeyError)
 
     def __str__(self):
-        return self.sign+self.name
+        return '.'.join(self._list)
 
-    def __repr__(self):
-        return self.__str__()
+    def __iter__(self):
+        for s in self._list:
+            yield s
 
     def __eq__(self, other):
-        return self.__str__() == other.__str__()
+        if not isinstance(other, Transcription) and not isinstance(other,list):
+            return False
+
+        if len(other) != len(self):
+            return False
+        for i,s  in enumerate(self):
+            if s != other[i]:
+                return False
+        return True
+
+    def generate_tier(self, tier_segments):
+        new_tier = list()
+        for s in self:
+            if s in tier_segments:
+                new_tier.append(s)
+        return new_tier
+
+    def get_env(self,pos):
+
+        if len(self) == 1:
+            lhs = '#'
+            rhs = '#'
+        elif pos == 0:
+            lhs = '#'
+            rhs = self[pos+1]
+        elif pos == len(self)-1:
+            lhs = self[pos-1]
+            rhs = '#'
+        else:
+            lhs = self[pos-1]
+            rhs = self[pos+1]
+        return lhs,rhs
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __len__(self):
+        return len(self._list)
 
 class FeatureMatrix(object):
     """
@@ -289,7 +325,7 @@ class FeatureMatrix(object):
 
     def __getitem__(self,item):
         if isinstance(item,str):
-            return [Feature(sign+name) for name,sign in self.matrix[item].items()]
+            return self.matrix[item]
         elif isinstance(item,tuple):
             return self.matrix[item[0]][item[1]]
 
@@ -330,6 +366,8 @@ class Word(object):
 
     """
 
+    _corpus = None
+
     def __init__(self, **kwargs):
 
         self.tiers = list()
@@ -344,8 +382,8 @@ class Word(object):
                 #transcription type stuff
                 if key != 'transcription':
                     self.tiers.append(key)
-                value = [Segment(seg,pos,self) for pos,seg in enumerate(value)]
-            else:
+                value = Transcription(value)
+            elif key != 'spelling':
                 try:
                     value = float(value)
                 except ValueError:
@@ -358,12 +396,11 @@ class Word(object):
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
-
     def __getstate__(self):
         state = self.__dict__.copy()
-        for k,v in state.items():
-            if (k == 'transcription' or k in self.tiers) and v is not None:
-                state[k] = [x.symbol for x in v] #Only store string symbols
+        #for k,v in state.items():
+        #    if (k == 'transcription' or k in self.tiers) and v is not None:
+        #        state[k] = [x.symbol for x in v] #Only store string symbols
         return state
 
     def get_frequency(self):
@@ -375,7 +412,7 @@ class Word(object):
                 pass
         return 0.0
 
-    def add_tier(self, tier_name, tier_features):
+    def add_tier(self, tier_name, tier_segments):
         """Adds a new tier attribute to a Word instance
 
         Parameters
@@ -388,23 +425,10 @@ class Word(object):
             which segments are included in the tier
 
         """
-
-        new_tier = list()
-        #tier_features = {feature[1:]:feature[0] for feature in tier_features}
-        for seg in self.transcription:
-            if all(seg.features[feature[1:]]==feature[0] for feature in tier_features):
-                new_tier.append(seg)
-        if new_tier:
-            for pos,seg in enumerate(new_tier):
-                seg.pos = pos
-                seg.master = self
-            #self.tiers[name] = new_tier
-            setattr(self,tier_name,new_tier)
-        else:
-            #self.tiers[name] = list()
-            setattr(self,tier_name,new_tier)
-
-        self.tiers.append(tier_name)
+        new_tier = self.transcription.generate_tier(tier_segments)
+        setattr(self,tier_name,new_tier)
+        if tier_name not in self.tiers:
+            self.tiers.append(tier_name)
 
     def remove_tier(self, tier_name):
         """Deletes a tier attribute from a Word
@@ -501,34 +525,6 @@ class Word(object):
             return None
         return '.'.join(map(str,self.transcription))
 
-
-    def _specify_features(self, specifier):
-        """
-        Adds a transcription attribute to a Word, consisting of Segment objects
-
-        Parameters
-        ----------
-        caller : CorpusFactory
-            Can be any object that has an attribute called 'specifier' which is
-            a FeatureSpecifier object
-
-        Notes
-        ----------
-        Generally, don't call this method. Consider it a "behind the scenes"
-        method for making a corpus.
-        """
-        if self.transcription == '#':
-            self.transcription = [Segment('#', None)]
-        else:
-            check = self.transcription[0]
-            if isinstance(check, str):
-                self.transcription = [Segment(seg,
-                                        pos, self)
-                                        for pos,seg in enumerate(self.transcription)]
-            features = specifier.get_feature_list()
-            for s in self.transcription:
-                s.features = {f:specifier[s.symbol,f] for f in features}
-
     def details(self):
         """Formatted printout of a Word's attributes and their values.
 
@@ -556,20 +552,8 @@ class Word(object):
 
         """
         tier = getattr(self,tier_name)
-        if len(tier) == 1:
-            lhs = Segment('#')
-            rhs = Segment('#')
-        elif pos == 0:
-            lhs = Segment('#')
-            rhs = tier[pos+1]
-        elif pos == len(tier)-1:
-            lhs = tier[pos-1]
-            rhs = Segment('#')
-        else:
-            lhs = tier[pos-1]
-            rhs = tier[pos+1]
-
-        e = Environment(lhs, rhs)
+        lhs, rhs = tier.get_env(pos)
+        e = Environment(self._corpus.specifier[lhs], self._corpus.specifier[rhs])
 
         return e
 
@@ -677,71 +661,6 @@ class Environment(object):
         return not self.__eq__(other)
 
 
-
-class Translator(object):
-    """
-    """
-
-
-    def __init__(self):
-
-        self.text2cmu = dict()
-        path = os.path.join(data_directory, 'TRANS', 'cmudict.txt')
-        with open(path, encoding='utf-8', mode='r') as cmu:
-            for line in cmu:
-                line = line.lstrip('\ufeff')
-                line = line.strip()
-                word, transcription = line.split(' ',1)
-                transcription = transcription.strip()
-                self.text2cmu[word] = [symbol for symbol in transcription.split(' ')]
-
-        self.cmu2ipa = dict()
-        path = os.path.join(data_directory, 'TRANS', 'cmu2ipa.txt')
-        with open(path, encoding='utf-8', mode='r') as ipa:
-            for line in ipa:
-                line = line.lstrip('\ufeff')
-                line = line.strip()
-                cmu_symbol, ipa_symbol = line.split(',')
-                self.cmu2ipa[cmu_symbol] = ipa_symbol
-
-
-    def translate(self, lookup, input_type):
-        """Translates from plaintext to CMU and from CMU to IPA.
-        If input_type == 'text', a CMU string is returned.
-        If input_type == 'cmu', a Segment object is returned.
-
-        Parameters
-        ----------
-
-        lookup : str
-            string to be translated
-
-        input_type : str
-            encoding of lookup string
-
-        Returns
-        ----------
-
-        translation : str or Segment
-            Result of translation
-        """
-
-        if input_type == 'text':
-            lookup = lookup.upper()
-            try:#temporary fix for while SUBTLEX still has words not in CMU
-                lookup = self.text2cmu[lookup]
-            except KeyError:
-                return None
-            translation =  self.translate(lookup, 'cmu')
-
-
-        elif input_type == 'cmu':
-            ipaword = [self.cmu2ipa[symbol] for symbol in lookup]
-            ipaword = ''.join(ipaword)
-            translation = ipaword
-
-        return translation
-
 class Corpus(object):
     """
     Attributes
@@ -790,22 +709,26 @@ class Corpus(object):
         if not isinstance(other,Corpus):
             return False
         if self.wordlist != other.wordlist:
-            #print('different wordlists')
             return False
-        #if self.specifier != other.specifier:
-        #    print('different specifciers')
-        #    return False
         return True
 
     @property
     def tiers(self):
         return self._tiers
 
+    def features_to_segments(self, feature_description):
+        segments = list()
+        for k,v in self.inventory.items():
+            if v.feature_match(feature_description):
+                segments.append(k)
+        return segments
+
     def add_tier(self, tier_name, tier_features):
         if tier_name not in self._tiers:
             self._tiers.append(tier_name)
+        tier_segs = self.features_to_segments(tier_features)
         for word in self:
-            word.add_tier(tier_name,tier_features)
+            word.add_tier(tier_name,tier_segs)
 
     def remove_tier(self, tier_name):
         for word in self:
@@ -817,17 +740,25 @@ class Corpus(object):
             self._specify_features()
 
             #Backwards compatability
+            word = self.random_word()
             if '_tiers' not in state:
-                word = self.random_word()
                 self._tiers = word.tiers
+            if not isinstance(word.transcription, Transcription):
+                for w in self:
+                    w.transcription = Transcription(w.transcription)
+                    for t in w.tiers:
+                        setattr(w,t,Transcription(getattr(w,t)))
         except Exception as e:
             raise(CorpusIntegrityError("An error occurred while loading the corpus: {}.\nPlease redownload or recreate the corpus.".format(str(e))))
 
 
     def _specify_features(self):
         if self.has_feature_matrix():
-            for word in self:
-                word._specify_features(self.specifier)
+            for k in self.inventory.keys():
+                try:
+                    self.inventory[k].specify(self.specifier[k])
+                except KeyError:
+                    pass
 
     def check_coverage(self):
         if not self.has_feature_matrix():
@@ -982,10 +913,25 @@ class Corpus(object):
         allow_duplicates : bool
 
         """
-
+        word._corpus = self
         #If the word doesn't exist, add it
         try:
             check = self.find(word.spelling, keyerror=True)
+            if allow_duplicates:
+                #Some words have more than one entry in a corpus, e.g. "live" and "live"
+                #so they need to be assigned unique keys
+
+                n = 0
+                while True:
+                    n += 1
+                    #key = '{} ({})'.format(word.spelling.lower(),n)
+                    key = '{} ({})'.format(word.spelling,n)
+                    try:
+                        check = self.find(key, keyerror=True)
+                    except KeyError:
+                    #if isinstance(check, EmptyWord):
+                        self.wordlist[key] = word
+                        break
         except KeyError:
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
@@ -994,34 +940,21 @@ class Corpus(object):
                     self.has_spelling_value = True
             elif self.has_spelling_value is None:
                 self.has_spelling_value = False
-            if word.transcription is not None:
-                self.inventory.update({ seg.symbol : seg for seg in word.transcription})
-                if self.has_transcription_value is None:
-                    self.has_transcription_value = True
-            elif self.has_transcription_value is None:
-                self.has_transcription_value = False
             if self.has_frequency_value is None:
                 if word.get_frequency():
                     self.has_frequency_value = True
                 else:
                     self.has_frequency_value = False
-            return
 
-        if allow_duplicates:
-            #Some words have more than one entry in a corpus, e.g. "live" and "live"
-            #so they need to be assigned unique keys
+        if word.transcription is not None:
+            for s in word.transcription:
+                if s not in self.inventory:
+                    self.inventory[s] = Segment(s)
+            if self.has_transcription_value is None:
+                self.has_transcription_value = True
+        elif self.has_transcription_value is None:
+            self.has_transcription_value = False
 
-            n = 0
-            while True:
-                n += 1
-                #key = '{} ({})'.format(word.spelling.lower(),n)
-                key = '{} ({})'.format(word.spelling,n)
-                try:
-                    check = self.find(key, keyerror=True)
-                except KeyError:
-                #if isinstance(check, EmptyWord):
-                    self.wordlist[key] = word
-                    break
 
     def random_word(self):
         """Return a randomly selected Word
@@ -1029,56 +962,6 @@ class Corpus(object):
         """
         word = random.choice(list(self.wordlist.keys()))
         return self.wordlist[word]
-
-    def change_feature_system(self, feature_system):
-        """Changes the feature system that is used to describe Segments
-
-        Parameters
-        ----------
-        feature_system : str
-            Name of a feature file that can be used to create a FeatureSpecifier
-
-        Returns
-        ----------
-        errors : list
-            List of segments that could not be found in the feature_system file
-
-        Notes
-        ----------
-        This method is intended to be called by the GUI, and the errors list is
-        printed to file for the user to inspect.
-
-        """
-        #DO NOT USE
-        if feature_system == self.specifier.feature_system:
-            #no point in doing any work in this case
-            return None
-
-        old_specifier = self.specifier
-        self.specifier = FeatureSpecifier(encoding=feature_system)
-        missing = [seg.symbol for seg in self.get_inventory() if not seg.symbol in list(self.specifier.matrix.keys())]
-
-        if not missing:#all(seg.symbol in self.specifier.matrix for seg in self.inventory):
-        #check first if all the transcription symbol in the corpus actually
-        #appear in the Specifier. If they do, then re-specify all words
-            for word in self.wordlist.keys():
-                self.wordlist[word]._specify_features(self)
-            errors = False
-
-        else:
-        #if there are symbols in the corpus not in the specifier, then
-        #do some error logging and don't actually change the feature system
-            self.specifier = old_specifier
-            #missing = [seg.symbol for seg in self.inventory if not seg.symbol in self.specifier.matrix]
-            #errors = collections.defaultdict(list)
-            errors = {seg:list() for seg in missing}
-            for key in self.wordlist.keys():
-                word = [seg.symbol for seg in self.wordlist[key].transcription]
-                for missing_seg in missing:
-                    if missing_seg in word:
-                        errors[missing_seg].append(''.join(word))
-
-        return errors
 
     def get_features(self):
         """Get a list of the features used to describe Segments
@@ -1154,187 +1037,3 @@ class EmptyWord(Word):
 
     def __len__(self):
         return 0
-
-class CorpusFactory(object):
-    """ Factory object for producing Corpus objects
-
-    Attributes
-    ----------
-    basepath : User app data directory
-        Used for finding the location of corpus files
-
-    """
-
-    essential_descriptors = ['spelling', 'transcription', 'freq']
-
-    def __init__(self):
-        self.basepath = data_directory
-
-    def change_path(self, path):
-        self.basepath = path
-
-    def make_corpus_from_gui(self,corpus_name, features, size=100, q=None, corpusq=None):
-        """ Called from GUI. Instead of returning a corpus object, it puts it
-        into a Queue. This Queue is also used to update the GUI as to how
-        many words have been read into the corpus.
-
-        Parameters
-        ----------
-        corpus_name : str
-            User-supplied name for corpus
-
-        features : str
-            Name of feature system to use (e.g. 'spe' or 'hayes')
-
-        size : int
-            Size of corpus to create.
-
-        q : None or Queue
-            queue for updating a progress bar in the GUI
-
-        corpusq : None or Queue
-            queue for putting in the final corpus
-
-
-        See Also
-        ----------
-        The load_corpus method in corpus_gui.py
-        """
-        self.specifier = FeatureSpecifier(encoding=features)
-
-        corpus_name = corpus_name.upper()
-        if corpus_name == 'IPHOD':
-            filename = 'IPhOD2_Words.txt'
-            func = self.read_iphod
-        else:
-            raise ValueError('{} is not a recognizable corpus name'.format(corpus_name))
-
-        corpus_path = os.path.join(self.basepath, corpus_name, filename)
-        corpus = func(corpus_path, size, q)
-        q.put('done')
-
-        corpus.specifier = FeatureSpecifier(encoding=features)
-
-        corpusq.put(corpus)
-        return
-
-    def make_corpus(self,corpus_name, features, size=100):
-        """Make a new corpus
-
-        Parameters
-        ----------
-        corpus_name : str
-            User-supplied name for the corpus
-
-        features : str
-            Name of feature system to use (e.g. 'spe' or 'hayes')
-
-        size : int
-            Size of the corpus
-
-
-        Returns
-        ----------
-        corpus : Corpus
-        """
-        self.specifier = FeatureSpecifier(encoding=features)
-        corpus = self.get_corpus_info(corpus_name, size)
-        corpus.specifier = FeatureSpecifier(encoding=features)
-        #new_matrix = dict()
-        #for seg in self.specifier.matrix:
-        #    new_matrix[seg] = {feature.name:feature.sign for feature in self.specifier.matrix[seg]}
-        #corpus.specifier = new_matrix
-        return corpus
-
-    def get_corpus_info(self,corpus_name, size):
-        """ Find the file for a built-in corpus, call the approprite reader method
-        and then return a Corpus object.
-
-        Parameters
-        ----------
-        corpus_name : str
-            Name of a built-int corpus
-
-        size : int
-            Size of corpus to create
-
-        Returns
-        ----------
-        corpus : Corpus
-
-        Raises
-        ----------
-        ValueError if corpus_name is not a recognized built-in corpus
-
-        Notes
-        ----------
-        This method is only necessary when building a corpus the first time.
-        After that, it is faster to pickle the corpus and load from the pickle.
-        """
-        corpus_name = corpus_name.upper()
-
-        if corpus_name == 'IPHOD':
-            filename = 'IPhOD2_Words.txt'
-            func = self.read_iphod
-
-        else:
-            raise ValueError('{} is not a recognizable corpus name'.format(corpus_name))
-
-        corpus_path = os.path.join(self.basepath, corpus_name, filename)
-        corpus = func(corpus_path, size)
-
-        return corpus
-
-    def read_iphod(self, corpus_path, max_size, q=None):
-        """Create IPHOD corpus from file
-
-        Parameters
-        ----------
-        corpus_path : str
-            path to original IPHOD file
-
-        max_size : int
-            size of corpus
-
-        q : None or Queue
-            queue object if calling from GUI
-
-
-        Returns
-        ----------
-        corpus : Corpus
-        """
-        corpus = Corpus('iphod')
-        translator = Translator()
-        with open(corpus_path, encoding='utf-8') as f:
-            headers = f.readline()
-            headers = headers.split()
-            counter = 0
-            for line in f:
-                d = {attribute:value for attribute,value in zip(headers,line.split())}
-                transcription = translator.translate(d['UnTrn'].split('.'), 'cmu')
-                word = Word(spelling=d['Word'], transcription=transcription, freq_per_mil=d['SFreq'],
-                syl_length=d['NSyll'], phone_length=d['NPhon'])
-                word._specify_features(self)
-                corpus.add_word(word)
-                for letter in word.spelling:
-                    if letter not in corpus.orthography:
-                        corpus.orthography.append(letter)
-                for seg in word.transcription:
-                    if seg not in corpus.inventory:
-                        corpus.inventory.append(seg)
-                counter += 1
-                if q is not None:
-                    q.put(counter)
-                if counter == max_size:
-                    break
-
-        corpus.orthography.append('#')
-        corpus.inventory.append(Segment('#'))
-        return corpus
-
-
-if __name__ == '__main__':
-    factory = CorpusFactory()
-    iphod = factory.make_corpus('iphod', 'spe', size=500)
-    print(iphod.random_word().details())
