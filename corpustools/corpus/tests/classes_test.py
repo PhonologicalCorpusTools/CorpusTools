@@ -285,7 +285,7 @@ class FeatureMatrixTest(unittest.TestCase):
         self.assertEqual(fm['b','feature2'],'.')
 
         #Fails, should be sorted list of features? Or set of features? Would need to be hashed then
-        self.assertEqual(sorted(fm['b'],key=lambda x: x.name)[1].sign,'.')
+        self.assertEqual(fm['b']['feature2'],'.')
 
     def test_missing(self):
         fm = FeatureMatrix('test',self.missing_info)
