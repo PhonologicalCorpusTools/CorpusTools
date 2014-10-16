@@ -72,7 +72,7 @@ class Transcription(object):
         self._list = seg_list
 
     def __getitem__(self, key):
-        if isinstance(key,int):
+        if isinstance(key,int) or isinstance(key,slice):
             return self._list[key]
         raise(KeyError)
 
@@ -82,6 +82,11 @@ class Transcription(object):
     def __iter__(self):
         for s in self._list:
             yield s
+
+    def __add__(self, other):
+        if not isinstance(other,Transcription):
+            raise(TypeError)
+        return self._list + other._list
 
     def __eq__(self, other):
         if not isinstance(other, Transcription) and not isinstance(other,list):
