@@ -46,17 +46,10 @@ class ProdTest(unittest.TestCase):
         expected["AVG"] = 0.9496532099899153
         type_or_token = 'token'
         tier = 'transcription'
-        env_matches, missing_words, overlapping_words = check_envs(self.corpus,
-                                                                    seg1,seg2,
-                                                                    type_or_token,
-                                                                    env_list,
-                                                                    tier)
-        results = calc_prod(self.corpus.name, tier, seg1, seg2, env_matches, type_or_token)
-        #hack
-        for line in results:
-            key = line[4].replace("'",'').replace(' ',"")
-            h = float(line[8])
-            self.assertAlmostEqual(expected[key],h)
+        result = calc_prod(self.corpus,seg1,seg2,env_list,tier, type_or_token)
+        for k,v in result.items():
+            k = str(k).replace("'",'').replace(' ','')
+            self.assertAlmostEqual(expected[k],v)
 
     def test_prod_type(self):
         seg1 = 's'
@@ -69,17 +62,10 @@ class ProdTest(unittest.TestCase):
         expected["AVG"] = 0.9241743523004413
         type_or_token = 'type'
         tier = 'transcription'
-        env_matches, missing_words, overlapping_words = check_envs(self.corpus,
-                                                                    seg1,seg2,
-                                                                    type_or_token,
-                                                                    env_list,
-                                                                    tier)
-        results = calc_prod(self.corpus.name, tier, seg1, seg2, env_matches, type_or_token)
-        #hack
-        for line in results:
-            key = line[4].replace("'",'').replace(' ',"")
-            h = float(line[8])
-            self.assertAlmostEqual(expected[key],h)
+        result = calc_prod(self.corpus,seg1,seg2,env_list,tier, type_or_token,all_info=False)
+        for k,v in result.items():
+            k = str(k).replace("'",'').replace(' ','')
+            self.assertAlmostEqual(expected[k],v)
 
 
 if __name__ == '__main__':
