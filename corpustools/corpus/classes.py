@@ -553,7 +553,7 @@ class Word(object):
         """
         tier = getattr(self,tier_name)
         lhs, rhs = tier.get_env(pos)
-        e = Environment(self._corpus.specifier[lhs], self._corpus.specifier[rhs])
+        e = Environment(lhs, rhs)
 
         return e
 
@@ -599,63 +599,23 @@ class Environment(object):
         self.rhs = rhs
 
     def __str__(self):
-        return '_'.join([self.lhs.symbol, self.rhs.symbol])
+        return '_'.join([self.lhs, self.rhs])
 
-    def __repr__(self):
-        return self.__str__()
+    def __hash__(self):
+        return hash((lhs,rhs))
 
     def __eq__(self,other):
         """Two Environments are equal if they share a left AND right hand side
 
         """
+        if not isinstance(other,Environment):
+            return False
 
-        l_match = False
-        r_match = False
-
-        if not self.lhs or not other.lhs:
-            #no left hand side specified, automatic match
-            l_match = True
-        elif self.lhs == other.lhs:
-            l_match = True
-
-        if not self.rhs or not other.rhs:
-            #no right hand side specified, automatic match
-            r_match = True
-        elif self.rhs == other.rhs:
-            r_match = True
-
-        return l_match and r_match
-
-    def __lt__(self,other):
-        """Match left-hand environment only
-
-        """
-
-        l_match = False
-
-        if not self.lhs or not other.lhs:
-            #no left hand side specified, automatic match
-            l_match = True
-        elif self.lhs == other.lhs:
-            l_match = True
-
-        return l_match
-
-    def __gt__(self,other):
-        """Match right-hand environment only
-
-        """
-
-        r_match = False
-
-        if not self.rhs or not other.rhs:
-            #no left hand side specified, automatic match
-            r_match = True
-        elif self.rhs == other.rhs:
-            r_match = True
-
-        return r_match
-
+        if other.lhs != self.lhs:
+            return False
+        if other.rhs != self.rhs:
+            return False
+        return True
 
     def __ne__(self,other):
         return not self.__eq__(other)
