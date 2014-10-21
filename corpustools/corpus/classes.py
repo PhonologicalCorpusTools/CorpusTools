@@ -20,12 +20,19 @@ class Segment(object):
         self.features = feature_dict
 
     def feature_match(self,specification):
-        for f in specification:
+        if isinstance(specification,str):
             try:
-                if self.features[f[1:]]!=f[0]:
+                if self.features[specification[1:]]!=specification[0]:
                     return False
             except KeyError:
                 return False
+        elif isinstance(specification,list):
+            for f in specification:
+                try:
+                    if self.features[f[1:]]!=f[0]:
+                        return False
+                except KeyError:
+                    return False
         return True
 
     def __repr__(self):
@@ -346,6 +353,110 @@ class FeatureMatrix(object):
     def __len__(self):
         return len(self.matrix)
 
+class Speaker(object):
+    def __init__(self,identifier, **kwargs):
+
+        self.identifier = identifier
+
+        for k,v in kwargs.items():
+            setattr(self,k,v)
+
+class Discourse(object):
+    def __init__(self, identifier, **kwargs):
+
+        self.identifier = identifier
+
+        for k,v in kwargs.items():
+            setattr(self,k,v)
+
+        self.words = dict()
+
+        self.lexicon = Corpus(identifier+' lexicon')
+
+    def add_word(self,wordtoken):
+        self.words[wordtoken.begin] = wordtoken
+        self.lexicon.add_word(wordtoken.wordtype)
+
+    def __getitem__(self, key):
+        if isinstance(key, float) or isinstance(key, int):
+            #Find the word token at a given time
+            keys = filter(lambda x: x > 0,[key - x for x in self.words.keys()])
+
+            return self.words[min(keys)]
+        raise(TypeError)
+
+    def __iter__(self):
+        for k in sorted(self.words.keys()):
+            yield self.words[k]
+
+    def find_wordtype(self,wordtype):
+        return list(x for x in self if x.wordtype == wordtype)
+
+    def calc_frequency(self,query):
+        if isinstance(query, tuple):
+            count = 0
+            base = query[0]
+            for x in self.find_wordtype(base):
+                cur = query[0]
+                for i in range(1,len(query)):
+                    if cur.following_token != query[i]:
+                        break
+                    cur = cur.following_token
+                else:
+                    count += 1
+            return count
+        elif isinstance(query, Word):
+            return len(self.find_wordtype(query))
+
+class WordToken(object):
+    def __init__(self,**kwargs):
+        self.wordtype = kwargs.pop('word',None)
+        self._transcription = kwargs.pop('transcription',None)
+        if self._transcription is not None:
+            self._transcription = Transcription(self._transcription)
+        self._spelling = kwargs.pop('spelling',None)
+
+        self.begin = kwargs.pop('begin',None)
+        self.end = kwargs.pop('end',None)
+
+        self.previous_token = kwargs.pop('previous_token',None)
+        self.following_token = kwargs.pop('following_token',None)
+
+        self.discourse = kwargs.pop('discourse',None)
+        self.speaker = kwargs.pop('speaker',None)
+
+        for k,v in kwargs.items():
+            setattr(self,k,v)
+
+    @property
+    def duration(self):
+        return self.end - self.begin
+
+    @property
+    def spelling(self):
+        if self._spelling is not None:
+            return self._spelling
+        if self.wordtype is not None:
+            return self.wordtype.spelling
+        return None
+
+    @property
+    def transcription(self):
+        if self._transcription is not None:
+            return self._transcription
+        if self.wordtype is not None:
+            return self.wordtype.transcription
+        return None
+
+    @property
+    def previous_conditional_probability(self):
+        if self.previous_token is not None:
+            return self.discourse.calc_frequency(
+                                (self.previous_token.wordtype,self.wordtype)
+                                ) / self.discourse.calc_frequency(self.previous_token.wordtype)
+        return None
+
+
 class Word(object):
     """An object representing a word in a corpus
 
@@ -455,20 +566,6 @@ class Word(object):
         except ValueError:
             pass #tier_name does not exist
 
-
-
-    def startswith(self, query):
-        """Returns the first segment in the Word's string
-
-        """
-        return query == self._string[0]
-
-    def endswith(self, query):
-        """Returns the last segment in the Word's string
-
-        """
-        return query == self._string[-1]
-
     def match_env(self, query, tier_name):
         """Searches for occurences of a particular environment in the word
 
@@ -492,43 +589,6 @@ class Word(object):
                 matches.append(env)
 
         return matches
-
-    def get_spelling(self):
-        """
-        Get the orthography of the word
-
-        Returns
-        -------
-        str
-            Orthographic spelling
-        """
-        return self.spelling
-
-    def get_transcription(self):
-        """
-        Return the transcription of the word in the form of a list of
-        Segment objects
-
-        Returns
-        -------
-        list of Segments
-            List containing the transcription for the word
-        """
-        return self.transcription
-
-    def get_transcription_string(self):
-        """
-        Returns the transcription of the word as a string delimited by
-        '.'
-
-        Returns
-        -------
-        str
-            String representation of the transcription
-        """
-        if self.transcription is None:
-            return None
-        return '.'.join(map(str,self.transcription))
 
     def details(self):
         """Formatted printout of a Word's attributes and their values.
@@ -578,8 +638,6 @@ class Word(object):
             return False
         if self.transcription != other.transcription:
             return False
-        if self.frequency != other.frequency:
-            return False
         return True
 
     def __ne__(self, other):
@@ -624,6 +682,88 @@ class Environment(object):
 
     def __ne__(self,other):
         return not self.__eq__(other)
+
+
+class EnvironmentFilter(object):
+    def __init__(self, corpus, env):
+
+        #there's a problem where some feature names have underscores in them
+        #so doing lhs,rhs=env.split('_') causes unpacking problems
+        #this in an awakward work-around that checks to see if either side of
+        #the environment is a list of features, by looking for brackets, then
+        #splits by brackets if necessary. However, I can't split out any
+        #starting brackets [ because I also use those for identifying lists
+        #at a later point
+        #otherwise, if its just segment envrionments, split by underscore
+        if ']_[' in env:
+            #both sides are lists
+            lhs, rhs = env.split(']_')
+        elif '_[' in env:
+            #only the right hand side is a list of a features
+            lhs, rhs = env.split('_', maxsplit=1)
+        elif ']_' in env:
+            #only the left hand side is a list of features
+            lhs, rhs = env.split(']_')
+        else: #both sides are segments
+            lhs, rhs = env.split('_')
+
+        if not lhs:
+            self.lhs_string  = ''
+            self.lhs = list()
+        elif lhs.startswith('['):
+            self.lhs_string = lhs
+            lhs = lhs.lstrip('[')
+            lhs = lhs.rstrip(']')
+            #lhs = {feature[1:]:feature[0] for feature in lhs.split(',')}
+            lhs = lhs.split(',')
+            self.lhs = corpus.features_to_segments(lhs)
+        #else it's a segment, just leave it as the string it already is
+        else:
+            self.lhs_string = lhs
+            self.lhs = [lhs]
+
+        if not rhs:
+            self.rhs_string  = ''
+            self.rhs = list()
+        elif rhs.startswith('['):
+            self.rhs_string = rhs
+            rhs = rhs.lstrip('[')
+            rhs = rhs.rstrip(']')
+            #rhs = {feature[1:]:feature[0] for feature in rhs.split(',')}
+            rhs = rhs.split(',')
+            self.rhs = corpus.features_to_segments(rhs)
+        #else it's a segment, just leave it as the string it already is
+        else:
+            self.rhs_string = rhs
+            self.rhs = [rhs]
+
+    def __str__(self):
+        return '_'.join([self.lhs_string,self.rhs_string])
+
+    def __eq__(self, other):
+        if not hasattr(other,'lhs'):
+            return False
+        if not hasattr(other,'rhs'):
+            return False
+        if self.lhs != other.lhs:
+            return False
+        if self.rhs != other.rhs:
+            return False
+        return True
+
+    def __hash__(self):
+        return hash((self.rhs_string, self.lhs_string))
+
+    def __contains__(self, item):
+        if not isinstance(item, Environment):
+            return False
+        if self.rhs:
+            if item.rhs not in self.rhs:
+                return False
+        if self.lhs:
+            if item.lhs not in self.lhs:
+                return False
+        return True
 
 
 class Corpus(object):
