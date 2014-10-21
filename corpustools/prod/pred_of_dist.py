@@ -3,7 +3,7 @@ from math import log2
 
 from warnings import warn
 
-from corpustools.corpus.classes import Environment as WordEnvironment
+from corpustools.corpus.classes import EnvironmentFilter
 
 class ExhaustivityError(Exception):
     pass
@@ -16,87 +16,6 @@ class ExhaustivityWarning(Warning):
 
 class UniquenessWarning(Warning):
     pass
-
-class Environment(object):
-    def __init__(self, corpus, env):
-
-        #there's a problem where some feature names have underscores in them
-        #so doing lhs,rhs=env.split('_') causes unpacking problems
-        #this in an awakward work-around that checks to see if either side of
-        #the environment is a list of features, by looking for brackets, then
-        #splits by brackets if necessary. However, I can't split out any
-        #starting brackets [ because I also use those for identifying lists
-        #at a later point
-        #otherwise, if its just segment envrionments, split by underscore
-        if ']_[' in env:
-            #both sides are lists
-            lhs, rhs = env.split(']_')
-        elif '_[' in env:
-            #only the right hand side is a list of a features
-            lhs, rhs = env.split('_', maxsplit=1)
-        elif ']_' in env:
-            #only the left hand side is a list of features
-            lhs, rhs = env.split(']_')
-        else: #both sides are segments
-            lhs, rhs = env.split('_')
-
-        if not lhs:
-            self.lhs_string  = ''
-            self.lhs = list()
-        elif lhs.startswith('['):
-            self.lhs_string = lhs
-            lhs = lhs.lstrip('[')
-            lhs = lhs.rstrip(']')
-            #lhs = {feature[1:]:feature[0] for feature in lhs.split(',')}
-            lhs = lhs.split(',')
-            self.lhs = corpus.features_to_segments(lhs)
-        #else it's a segment, just leave it as the string it already is
-        else:
-            self.lhs_string = lhs
-            self.lhs = [lhs]
-
-        if not rhs:
-            self.rhs_string  = ''
-            self.rhs = list()
-        elif rhs.startswith('['):
-            self.rhs_string = rhs
-            rhs = rhs.lstrip('[')
-            rhs = rhs.rstrip(']')
-            #rhs = {feature[1:]:feature[0] for feature in rhs.split(',')}
-            rhs = rhs.split(',')
-            self.rhs = corpus.features_to_segments(rhs)
-        #else it's a segment, just leave it as the string it already is
-        else:
-            self.rhs_string = rhs
-            self.rhs = [rhs]
-
-    def __str__(self):
-        return '_'.join([self.lhs_string,self.rhs_string])
-
-    def __eq__(self, other):
-        if not hasattr(other,'lhs'):
-            return False
-        if not hasattr(other,'rhs'):
-            return False
-        if self.lhs != other.lhs:
-            return False
-        if self.rhs != other.rhs:
-            return False
-        return True
-
-    def __hash__(self):
-        return hash((self.rhs_string, self.lhs_string))
-
-    def __contains__(self, item):
-        if not isinstance(item, WordEnvironment):
-            return False
-        if self.rhs:
-            if item.rhs not in self.rhs:
-                return False
-        if self.lhs:
-            if item.lhs not in self.lhs:
-                return False
-        return True
 
 
 def count_segs(corpus, seg1, seg2, tier_name, type_or_token):
@@ -116,7 +35,7 @@ def count_segs(corpus, seg1, seg2, tier_name, type_or_token):
 
 def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token):
 
-    envs = [Environment(corpus, env) for env in envs]
+    envs = [EnvironmentFilter(corpus, env) for env in envs]
     env_matches = {env:{seg1:[0], seg2:[0]} for env in envs}
 
     missing_envs = set()
