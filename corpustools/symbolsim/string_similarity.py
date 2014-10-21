@@ -70,17 +70,17 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         related_data.sort(key=lambda t:t[-1])
         if related_data[0][1] != targ_word:
             related_data.reverse()
-    elif isinstance(query, list):
-        for q1,q2 in query:
-            w1 = corpus.find(q1)
-            w2 = corpus.find(q2)
-            relatedness = relate_func(w1,w2)
-            related_data.append( (w1,w2,relatedness) )
     elif isinstance(query, tuple):
         w1 = corpus.find(query[0])
         w2 = corpus.find(query[1])
         relatedness = relate_func(w1,w2)
         related_data.append((w1,w2,relatedness))
+    elif hasattr(query,'__iter__'):
+        for q1,q2 in query:
+            w1 = corpus.find(q1)
+            w2 = corpus.find(q2)
+            relatedness = relate_func(w1,w2)
+            related_data.append( (w1,w2,relatedness) )
 
     min_rel = kwargs.get('min_rel', None)
     max_rel = kwargs.get('max_rel', None)
