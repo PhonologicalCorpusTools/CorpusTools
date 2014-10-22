@@ -171,6 +171,26 @@ class CorpusFromTextWindow(Toplevel):
         select_frame.grid(row=row,column=0)
         punc_frame.grid(sticky=W)
 
+
+        string_type_frame = LabelFrame(from_text_frame, text='Does your corpus use spelling or transcription?')
+        spelling_only = Radiobutton(string_type_frame, text='Corpus uses spelling',
+                            value='spelling', variable=self.new_corpus_string_type)
+        spelling_only.grid(sticky=W)
+        spelling_only.invoke()
+        trans_only = Radiobutton(string_type_frame, text='Corpus uses transcription',
+                            value='transcription', variable=self.new_corpus_string_type)
+        trans_only.grid(sticky=W)
+        new_corpus_feature_frame = LabelFrame(string_type_frame, text='Feature system to use (if transcription exists)')
+
+        available_systems = ['']+get_systems_list()
+        new_corpus_feature_system = OptionMenu(
+            new_corpus_feature_frame,#parent
+            self.new_corpus_feature_system_var,#variable
+            *available_systems)#options in drop-down
+        new_corpus_feature_system.grid()
+        new_corpus_feature_frame.grid(sticky=W)
+        string_type_frame.grid(sticky=W)
+
         button_frame = Frame(self.main_frame)
         next_step = Button(button_frame, text='Next step', command=self.parse_text)
         next_step.grid(row=0, column=0)
@@ -178,47 +198,6 @@ class CorpusFromTextWindow(Toplevel):
         cancel.grid(row=0, column=1)
         button_frame.grid()
 
-
-##    def other(self):
-##        string_type_frame = LabelFrame(from_text_frame, text='Spelling or transcription')
-##        spelling_only = Radiobutton(string_type_frame, text='Corpus uses spelling',
-##                            value='spelling', variable=self.new_corpus_string_type)
-##        spelling_only.grid()
-##        spelling_only.invoke()
-##        trans_only = Radiobutton(string_type_frame, text='Corpus uses transcription',
-##                            value='transcription', variable=self.new_corpus_string_type)
-##        trans_only.grid()
-##        #both = Radiobutton(string_type_frame, text='Corpus has both spelling and transcription', value='both', variable=self.from_corpus_string_type)
-##        #both.grid()
-##        new_corpus_feature_frame = LabelFrame(self, text='Feature system to use (if transcription exists)')
-##
-##        available_systems = ['']+get_systems_list()
-##        new_corpus_feature_system = OptionMenu(
-##            new_corpus_feature_frame,#parent
-##            self.new_corpus_feature_system_var,#variable
-##            *available_systems)#options in drop-down
-##        new_corpus_feature_system.grid()
-##        new_corpus_feature_frame.grid(sticky=W)
-##        string_type_frame.grid(sticky=W)
-##        delim_frame = LabelFrame(from_text_frame, text='Delimiters')
-##        delimiter_label = Label(delim_frame, text='Word delimiter (defaults to space)')
-##        delimiter_label.grid()
-##        self.delimiter_entry = Entry(delim_frame)
-##        self.delimiter_entry.delete(0,END)
-##        self.delimiter_entry.insert(0,' ')
-##        self.delimiter_entry.grid()
-##        trans_delimiter_label = Label(delim_frame, text='Transcription delimiter (No character means every symbol\n will be interpreted as a segment)')
-##        trans_delimiter_label.grid()
-##        self.trans_delimiter_entry = Entry(delim_frame)
-##        self.trans_delimiter_entry.delete(0,END)
-##        self.trans_delimiter_entry.insert(0,'.')
-##        self.trans_delimiter_entry.grid()
-##        delim_frame.grid(sticky=E)
-##        ok_button = Button(from_text_frame, text='Create corpus', command=self.parse_text)
-##        cancel_button = Button(from_text_frame, text='Cancel', command=self.destroy)
-##        ok_button.grid()
-##        cancel_button.grid()
-##        from_text_frame.grid()
 
     def navigate_to_text(self):
         text_file = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
@@ -263,7 +242,7 @@ class CorpusFromTextWindow(Toplevel):
         row = 0
         col = 0
         colmax = 10
-        for symbol in symbols:
+        for symbol in sorted(symbols):
             button = Button(inventory_frame, text=symbol, command= lambda x=symbol:self.add_to_digraph(x))
             button.grid(row=row, column=col, sticky=W)
             col += 1
@@ -291,9 +270,9 @@ class CorpusFromTextWindow(Toplevel):
         list_frame.grid(row=1,column=1)
 
         next_step = Button(digraph_frame, text='Create corpus', command=self.create_corpus)
-        next_step.grid()
+        next_step.grid()#row=2,column=0)
         cancel = Button(digraph_frame, text='Cancel', command=self.destroy)
-        cancel.grid()
+        cancel.grid()#row=2,column=1)
 
         digraph_frame.grid()
 
@@ -343,6 +322,7 @@ class CorpusFromTextWindow(Toplevel):
                 corpus_name = os.path.split(source_path)[-1].split('.')[0]
                 corpus = self.corpusq.get()
                 errors = self.corpusq.get()
+                self.finalize_corpus(corpus, errors)
                 save_binary(corpus,corpus_name_to_path(corpus_name))
                 self.destroy()
             elif isinstance(msg,DelimiterError):
