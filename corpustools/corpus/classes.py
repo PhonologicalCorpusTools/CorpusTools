@@ -335,8 +335,8 @@ class Word(object):
         self.tiers = list()
         self.transcription = None
         self.spelling = None
+        self.frequency = 1
         self.descriptors = ['spelling','transcription']
-        kwargs = {key.lower():value for key,value in list(kwargs.items())}
 
         for key, value in kwargs.items():
             key = key.lower()
@@ -345,11 +345,9 @@ class Word(object):
                 if key != 'transcription':
                     self.tiers.append(key)
                 value = [Segment(seg,pos,self) for pos,seg in enumerate(value)]
-            else:
-                try:
-                    value = float(value)
-                except ValueError:
-                    pass
+            elif isinstance(value, str) and key in ['frequency','abs_freq',
+                            'freq_per_mil', 'lowercase_freq', 'log10_freq']:
+                value = float(value)
             setattr(self,key, value)
             if key not in self.descriptors:
                 self.descriptors.append(key)
@@ -357,7 +355,6 @@ class Word(object):
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
-
 
     def __getstate__(self):
         state = self.__dict__.copy()

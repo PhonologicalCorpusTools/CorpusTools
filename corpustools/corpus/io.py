@@ -1,6 +1,7 @@
 from csv import DictReader, DictWriter
 import pickle
 import collections
+import re
 
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
 from urllib.request import urlretrieve
@@ -166,7 +167,9 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
     else:
         return corpus,transcription_errors
 
-def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='.',feature_system_path='',string_type='spelling',pqueue=None,oqueue=None):
+def load_corpus_text(corpus_name, path, delimiter, ignore_list, digraph_list,
+                    trans_delimiter='',feature_system_path='',
+                    string_type='transcription',pqueue=None,oqueue=None):
     """
     Load a corpus from a text file containing running text either in
     orthography or transcription
@@ -211,9 +214,14 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
     word_count = collections.defaultdict(int)
     corpus = Corpus(corpus_name)
     corpus.custom = True
+    pattern = '|'.join(d for d in digraph_list)
+    pattern += '|\w'
+    digraph_re = re.compile(pattern)
+
     if feature_system_path:
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
+
     trans_check = False
     with open(path, encoding='utf-8-sig', mode='r') as f:
         text = f.read()
@@ -223,6 +231,7 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
                 pqueue.put(e)
             else:
                 raise(e)
+
         for line in text.splitlines():
             if not line or line == '\n':
                 continue
@@ -230,48 +239,61 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list,trans_delimiter='
 
             for word in line:
                 word = word.strip()
+                word = digraph_re.findall(word)
+                word = [x for x in word if not x in ignore_list]
+                spell = ''.join(word)
+                d = {'spelling': spell, 'transcription': word}
+                word = Word(**d)
+                corpus.add_word(word, allow_duplicates=False)
+                word_count[word.spelling] += 1
 
-                if string_type == 'transcription':
-                    if trans_delimiter:
-                        word = word.strip(trans_delimiter)
-                        trans = word.split(trans_delimiter)
-                    else:
-                        trans = [x for x in word.strip()]
-                    trans = [t for t in trans if not t in ignore_list]
-                    if not trans_check and len(trans) > 1:
-                        trans_check = True
-                    word = trans_delimiter.join(trans)
-                elif string_type == 'spelling':
-                    word = [letter for letter in word if not letter in ignore_list]
-                    word = ''.join(word)
-                if not word:
-                    continue
-                word_count[word] += 1
-    if string_type == 'transcription' and not trans_check:
-        e = DelimiterError('The transcription delimiter was never found in transcriptions. Please specify another delimiter.')
-        if pqueue is not None:
-            pqueue.put(e)
-        else:
-            raise(e)
-    total_words = sum(word_count.values())
-    headers = [string_type,'frequency']
-    for w,freq in sorted(word_count.items()):
-        line = [w,freq]
-        d = {attribute:value for attribute,value in zip(headers,line)}
-        for k,v in d.items():
-            if k == 'transcription' or 'tier' in k:
-                if trans_delimiter:
-                    trans = v.split(trans_delimiter)
-                else:
-                    trans = [x for x in v]
-                d[k] = trans
-        word = Word(**d)
-        if word.transcription:
-            if not word.spelling:
-                word.spelling = ''.join(map(str,word.transcription))
-        corpus.add_word(word)
-        if pqueue is not None:
-            pqueue.put(1)
+        for key,value in word_count.items():
+            corpus[key].frequency = value
+##                if word:
+##                    trans_check = True
+##                    word_count[word] += 1
+##                if string_type == 'transcription':
+##                    if trans_delimiter:
+##                        word = word.strip(trans_delimiter)
+##                        trans = word.split(trans_delimiter)
+##                    else:
+##                        trans = [x for x in word.strip()]
+##                    trans = [t for t in trans if not t in ignore_list]
+##                    if not trans_check and len(trans) > 1:
+##                        trans_check = True
+##                    word = trans_delimiter.join(trans)
+##                elif string_type == 'spelling':
+##                    word = [letter for letter in word if not letter in ignore_list]
+##                    word = ''.join(word)
+##                if not word:
+##                    continue
+##                word_count[word] += 1
+##    if string_type == 'transcription' and not trans_check:
+##        e = DelimiterError('The transcription delimiter was never found in transcriptions. Please specify another delimiter.')
+##        if pqueue is not None:
+##            pqueue.put(e)
+##        else:
+##            raise(e)
+##    total_words = sum(word_count.values())
+##    headers = [string_type,'frequency']
+##    for w,freq in sorted(word_count.items()):
+##        line = [w,freq]
+##        d = {attribute:value for attribute,value in zip(headers,line)}
+##        for k,v in d.items():
+##            if k == 'transcription' or 'tier' in k:
+##                if trans_delimiter:
+##                    trans = v.split(trans_delimiter)
+##                else:
+##                    trans = [x for x in v]
+##                d[k] = trans
+##        word = Word(**d)
+##        if word.transcription:
+##            if not word.spelling:
+##                word.spelling = ''.join(map(str,word.transcription))
+##        corpus.add_word(word)
+##        if pqueue is not None:
+##            pqueue.put(1)
+
     transcription_errors = corpus.check_coverage()
     if pqueue is not None:
         pqueue.put(-99)
