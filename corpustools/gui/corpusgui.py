@@ -347,8 +347,8 @@ class CorpusFromTextWindow(Toplevel):
             if not carry_on:
                 return
             for s in not_found:
-                self.corpus.get_feature_matrix().add_segment(s,{})
-            self.corpus.get_feature_matrix().validate()
+                self.corpus.specifier.add_segment(s,{})
+            self.corpus.sepecifier.validate()
 
 class CustomCorpusWindow(Toplevel):
     """
@@ -483,8 +483,8 @@ class CustomCorpusWindow(Toplevel):
             if not carry_on:
                 return
             for s in not_found:
-                self.corpus.get_feature_matrix().add_segment(s.strip('\''),{})
-            self.corpus.get_feature_matrix().validate()
+                self.corpus.specifier.add_segment(s.strip('\''),{})
+            self.corpus.specifier.validate()
 
 
 class CorpusManager(object):
@@ -881,7 +881,7 @@ class EditFeatureSystemWindow(object):
         self.change = False
         self.feature_system_option_menu_var = StringVar()
         self.corpus = corpus
-        self.feature_matrix = self.corpus.get_feature_matrix()
+        self.feature_matrix = self.corpus.specifier
         self.top = Toplevel()
         self.top.geometry("%dx%d%+d%+d" % (860,600,250,250))
         self.top.title('Edit feature system')
@@ -897,8 +897,8 @@ class EditFeatureSystemWindow(object):
                                 *get_systems_list(), #options in drop-down
                                 command=self.change_feature_system)
         #this is grided much later, but needs to be here
-        if self.corpus.has_feature_matrix():
-            self.feature_system_option_menu_var.set(self.feature_matrix.get_name())
+        if self.corpus.specifier is not None:
+            self.feature_system_option_menu_var.set(self.feature_matrix.name)
             self.change_feature_system()
 
         feature_menu.grid()
@@ -938,8 +938,8 @@ class EditFeatureSystemWindow(object):
         #Compatability hack
         #initial_data = (seg,self.feature_matrix[seg])
         initial_data = (seg,{x.name:x.sign for x in self.feature_matrix[seg]})
-        addwindow = EditSegmentWindow(self.feature_matrix.get_feature_list(),
-                                        self.feature_matrix.get_possible_values(),
+        addwindow = EditSegmentWindow(self.feature_matrix.features,
+                                        self.feature_matrix.possible_values,
                                         initial_data)
         addwindow.top.wait_window()
         if addwindow.commit:
@@ -947,29 +947,29 @@ class EditFeatureSystemWindow(object):
         self.change_feature_system()
 
     def add_segment(self):
-        addwindow = EditSegmentWindow(self.feature_matrix.get_feature_list(),self.feature_matrix.get_possible_values())
+        addwindow = EditSegmentWindow(self.feature_matrix.features,self.feature_matrix.possible_values)
         addwindow.top.wait_window()
         if addwindow.commit:
             self.feature_matrix.add_segment(addwindow.seg,addwindow.featspec)
         self.change_feature_system()
 
     def add_feature(self):
-        addwindow = AddFeatureWindow(self.feature_matrix.get_feature_list())
+        addwindow = AddFeatureWindow(self.feature_matrix.features)
         addwindow.top.wait_window()
         if addwindow.commit:
             self.feature_matrix.add_feature(addwindow.feature)
         self.change_feature_system()
 
     def tailor_to_corpus(self):
-        inventory = self.corpus.get_inventory()
+        inventory = self.corpus.inventory
         self.feature_chart.filter_by_in(symbol=inventory)
 
     def show_all(self):
         self.feature_chart.filter_by_in(symbol=[])
 
     def check_coverage(self):
-        corpus_inventory = self.corpus.get_inventory()
-        feature_inventory = self.feature_matrix.get_segments()
+        corpus_inventory = self.corpus.inventory
+        feature_inventory = self.feature_matrix.segments
         missing = []
         for seg in corpus_inventory:
             if seg not in feature_inventory:
@@ -992,13 +992,13 @@ class EditFeatureSystemWindow(object):
 
     def change_feature_system(self, event = None):
         feature_system = self.feature_system_option_menu_var.get()
-        if self.feature_matrix is None or feature_system != self.feature_matrix.get_name():
+        if self.feature_matrix is None or feature_system != self.feature_matrix.name:
             self.feature_matrix = load_binary(system_name_to_path(feature_system))
         for child in self.feature_frame.winfo_children():
             child.destroy()
-        headers = ['symbol'] + self.feature_matrix.get_feature_list()
+        headers = ['symbol'] + self.feature_matrix.features
         self.feature_chart = TableView(self.feature_frame, headers, main_cols=['symbol'])
-        for seg in self.feature_matrix.get_segments():
+        for seg in self.feature_matrix.segments:
             #Workaround, grr
             if seg in ['#','']: #wtf are these segments?
                 continue
@@ -1029,7 +1029,7 @@ class AddTierWindow(object):
         tier_name_frame.grid(row=0,column=0)
         tier_frame = LabelFrame(self.top, text='What features define this tier?')
         self.tier_feature_list = Listbox(tier_frame)
-        for feature_name in self.corpus.get_features():
+        for feature_name in self.corpus.specifier.features:
             self.tier_feature_list.insert(END,feature_name)
         self.tier_feature_list.grid(row=0,column=0)
         tier_frame.grid(row=1, column=0,sticky=N)
@@ -1056,10 +1056,10 @@ class AddTierWindow(object):
 
         features = [feature for feature in self.selected_tier_features.get(0,END)]
         matches = list()
-        for seg in self.corpus.get_inventory():
+        for seg in self.corpus.inventory:
             if seg in ['#','']: #wtf?
                 continue
-            if all(feature[0] == self.corpus.specifier[seg.symbol,feature[1:]] for feature in features):
+            if seg.feature_match(features):
                 matches.append(seg)
 
         if not matches:
@@ -1085,7 +1085,7 @@ class AddTierWindow(object):
 
     def add_tier_to_corpus(self):
         tier_name = self.tier_name_entry.get()
-        selected_features = self.selected_tier_features.get(0,END)
+        selected_features = list(self.selected_tier_features.get(0,END))
 
         if not tier_name:
             MessageBox.showerror(message='Please enter a name for this tier')
