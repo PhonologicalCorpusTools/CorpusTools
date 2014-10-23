@@ -478,7 +478,7 @@ class CorpusManager(object):
             MessageBox.showerror(message=str(e))
 
             return
-        if self.corpus.has_feature_matrix() and self.corpus.specifier.name not in get_systems_list():
+        if self.corpus.specifier is not None and self.corpus.specifier.name not in get_systems_list():
             save_binary(self.corpus.specifier,system_name_to_path(self.corpus.specifier.name))
         self.top.destroy()
 

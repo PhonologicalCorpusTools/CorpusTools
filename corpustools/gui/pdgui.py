@@ -83,7 +83,7 @@ class PDFunction(FunctionWindow):
             'predictability of distribution you want to calculate. The order of the '
             'two sounds is irrelevant. The symbols you see here should automatically'
             ' match the symbols used anywhere in your corpus.'))
-        segs = [seg.symbol for seg in self.corpus.get_inventory()]
+        segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
         seg1_frame = LabelFrame(self.ipa_frame, text='Choose first symbol')
         colmax = 10
@@ -143,8 +143,6 @@ class PDFunction(FunctionWindow):
         type_button.invoke()
         token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.entropy_typetoken_var, value='token')
         token_button.grid(sticky=W)
-        if not self.corpus.has_frequency():
-            token_button.configure(state=('disabled'))
         typetoken_frame.grid(row=1, column=0)
 
         ex_frame = LabelFrame(self.option_frame, text='Exhaustivity and uniqueness')
@@ -210,7 +208,7 @@ class PDFunction(FunctionWindow):
         lhs_feature_entry_explanation = Label(lhs_feature_frame, text='Select one or more features to match')
         lhs_feature_entry_explanation.grid(row=0)
         self.lhs_feature_list = Listbox(lhs_feature_frame)
-        for feature_name in self.corpus.get_features():
+        for feature_name in self.corpus.specifier.features:
             self.lhs_feature_list.insert(END,feature_name)
         self.lhs_feature_list.grid(row=1, column=0)
         self.lhs_selected_list = Listbox(lhs_feature_frame)
@@ -227,7 +225,7 @@ class PDFunction(FunctionWindow):
         lhs_seg_frame = LabelFrame(lhs_frame, text='Segment-based environment')
         lhs_seg_entry_explanation = Label(lhs_seg_frame, text='Select a segment to match')
         lhs_seg_entry_explanation.grid()
-        segs = [seg.symbol for seg in self.corpus.get_inventory()]
+        segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
         segs_frame = Frame(lhs_seg_frame)
         col = 0
@@ -256,7 +254,7 @@ class PDFunction(FunctionWindow):
         rhs_feature_entry_explanation = Label(rhs_feature_frame, text='Select one or more features to match')
         rhs_feature_entry_explanation.grid(row=0)
         self.rhs_feature_list = Listbox(rhs_feature_frame)
-        for feature_name in self.corpus.get_features():
+        for feature_name in self.corpus.specifier.features:
             self.rhs_feature_list.insert(END,feature_name)
         self.rhs_feature_list.grid(row=1, column=0)
         self.rhs_selected_list = Listbox(rhs_feature_frame)
@@ -273,7 +271,7 @@ class PDFunction(FunctionWindow):
         rhs_seg_frame = LabelFrame(rhs_frame, text='Segment-based environment')
         rhs_seg_entry_explanation = Label(rhs_seg_frame, text='Select a segment to match')
         rhs_seg_entry_explanation.grid()
-        segs = [seg.symbol for seg in self.corpus.get_inventory()]
+        segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
         segs_frame = Frame(rhs_seg_frame)
         col = 0

@@ -3,12 +3,14 @@
 import os
 import random
 import collections
+import math
 
 class CorpusIntegrityError(Exception):
     pass
 
 class Segment(object):
     """
+    Class for segment symbols
     """
 
     def __init__(self, symbol):
@@ -19,7 +21,12 @@ class Segment(object):
     def specify(self,feature_dict):
         self.features = feature_dict
 
-    def feature_match(self,specification):
+    def feature_match(self, specification):
+        """
+        Return true if segment matches specification, false otherwise.
+        Specification can be a single feature value '+feature' or a list of
+        feature values ['+feature1','-feature2']
+        """
         if isinstance(specification,str):
             try:
                 if self.features[specification[1:]]!=specification[0]:
@@ -75,6 +82,9 @@ class Segment(object):
         return len(self.symbol)
 
 class Transcription(object):
+    """
+    Transcription object, sequence of symbols
+    """
     def __init__(self,seg_list):
         self._list = seg_list
 
@@ -91,6 +101,9 @@ class Transcription(object):
             yield s
 
     def __add__(self, other):
+        """
+        Allow for Transcriptions to be added to get all the segments in each
+        """
         if not isinstance(other,Transcription):
             raise(TypeError)
         return self._list + other._list
@@ -106,14 +119,20 @@ class Transcription(object):
                 return False
         return True
 
-    def generate_tier(self, tier_segments):
-        new_tier = list()
+    def match_segments(self, segments):
+        """
+        Returns a matching segments from a list of segments
+        """
+        match = list()
         for s in self:
-            if s in tier_segments:
-                new_tier.append(s)
-        return new_tier
+            if s in segments:
+                match.append(s)
+        return match
 
     def get_env(self,pos):
+        """
+        Return the symbol to the left and the symbol to the right of the position
+        """
 
         if len(self) == 1:
             lhs = '#'
@@ -153,20 +172,15 @@ class FeatureMatrix(object):
     """
 
     def __init__(self, name,feature_entries):
-
         self.name = name
-        self.features = None
+        self._features = None
         self.possible_values = set()
         self.matrix = {}
         self._default_value = 'n'
         for s in feature_entries:
-            if self.features is None:
-                self.features = {k for k in s.keys() if k != 'symbol'}
-            #wheee, let's turn dictionaries of strings in lists of features so we can then generate dictionaries of strings!
-            #compatability, yay!
-            #self.matrix[s['symbol']] = [Feature(sign+name) for name,sign in s.items() if name != 'symbol']
+            if self._features is None:
+                self._features = {k for k in s.keys() if k != 'symbol'}
             self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
-            #So much easier with a dictionary
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
 
         #What are these?
@@ -181,23 +195,13 @@ class FeatureMatrix(object):
         return False
 
     def __setstate__(self,state):
+        if '_features' not in state:
+            state['_features'] = state['features']
         self.__dict__.update(state)
 
         #Backwards compatability
         if '_default_value' not in state:
             self._default_value = 'n'
-
-    def get_features(self):
-        """Get the list of feature names used by a feature system
-
-        Returns
-        -------
-        features: list of str
-            List of names of features
-        """
-        features = list(self.features)
-        features.sort()
-        return features
 
     def validate(self):
         """
@@ -210,42 +214,22 @@ class FeatureMatrix(object):
                 break
         #dictionary
         for k,v in self.matrix.items():
-            for f in self.features:
+            for f in self._features:
                 if f not in v:
                     self.matrix[k][f] = self._default_value
 
-        #Feature
-        #for f in self.features:
-        #    for s,v in self.matrix.items():
-        #        for f2 in v:
-        #            if f == f2.name:
-        #                break
-        #        else:
-        #            self.matrix[s].append(Feature(default_value+f))
 
-    def get_name(self):
-        """
-        Return an informative identifier for this feature system
-
-        Returns
-        -------
-        str
-            Name of FeatureMatrix
-        """
-        return self.name
-
-    def get_feature_list(self):
+    @property
+    def features(self):
         """
         Get a list of features that are used in this feature system
 
         Returns
         -------
         list
-            List of the names of all features in the matrix
+            Sorted list of the names of all features in the matrix
         """
-        features = list(self.features)
-        features.sort()
-        return features
+        return sorted(list(self._features))
 
     def add_segment(self,seg,feat_spec):
         """
@@ -263,7 +247,7 @@ class FeatureMatrix(object):
 
         #Validation
         for f in feat_spec.keys():
-            if f not in self.features:
+            if f not in self._features:
                 raise(AttributeError('The segment \'%s\' has a feature \'%s\' that is not defined for this feature matrix' %(seg,f)))
 
         self.matrix[seg] = feat_spec
@@ -279,10 +263,11 @@ class FeatureMatrix(object):
 
         """
 
-        self.features.update({feature})
+        self._features.update({feature})
         self.validate()
 
-    def get_segments(self):
+    @property
+    def segments(self):
         """
         Return a list of segment symbols that are specified in the feature
         system
@@ -293,17 +278,6 @@ class FeatureMatrix(object):
             List of all the segments with feature specifications
         """
         return list(self.matrix.keys())
-
-    def get_possible_values(self):
-        """
-        Get the set of feature values used in the feature system
-
-        Returns
-        -------
-        set
-            Set of feature values
-        """
-        return self.possible_values
 
     def seg_to_feat_line(self,symbol):
         """
@@ -322,17 +296,8 @@ class FeatureMatrix(object):
         list
             List of feature values for the symbol, as well as the symbol itself
         """
-        #Feature
-        #feats = self.matrix[symbol]
-        #featline = [symbol]
-        #for feat in self.get_feature_list():
-        #    for f in feats:
-        #        if f.name == feat:
-        #            featline.append(f.sign)
-        #            break
-        #dictionary
         featline = [symbol] + [ self.matrix[symbol][feat]
-                            for feat in self.get_feature_list()]
+                            for feat in self.features]
         return featline
 
     def __getitem__(self,item):
@@ -363,7 +328,6 @@ class Speaker(object):
 
 class Discourse(object):
     def __init__(self, identifier, **kwargs):
-
         self.identifier = identifier
 
         for k,v in kwargs.items():
@@ -484,16 +448,22 @@ class Word(object):
 
     _corpus = None
 
+    _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
+        'lowercase_freq', 'log10_freq']
+
     def __init__(self, **kwargs):
 
         self.tiers = list()
         self.transcription = None
         self.spelling = None
+        self.frequency = 1
         self.descriptors = ['spelling','transcription']
         kwargs = {key.lower():value for key,value in list(kwargs.items())}
 
         for key, value in kwargs.items():
             key = key.lower()
+            if key in self._freq_names:
+                key = 'frequency'
             if isinstance(value,list):
                 #transcription type stuff
                 if key != 'transcription':
@@ -501,7 +471,9 @@ class Word(object):
                 value = Transcription(value)
             elif key != 'spelling':
                 try:
-                    value = float(value)
+                    f = float(value)
+                    if not math.isnan(f) and not math.isinf(f):
+                        value = f
                 except ValueError:
                     pass
             setattr(self,key, value)
@@ -519,15 +491,6 @@ class Word(object):
         #        state[k] = [x.symbol for x in v] #Only store string symbols
         return state
 
-    def get_frequency(self):
-        for f in ['frequency','abs_freq', 'freq_per_mil',
-        'lowercase_freq', 'log10_freq']:
-            try:
-                return getattr(self,f)
-            except AttributeError:
-                pass
-        return 0.0
-
     def add_tier(self, tier_name, tier_segments):
         """Adds a new tier attribute to a Word instance
 
@@ -541,7 +504,8 @@ class Word(object):
             which segments are included in the tier
 
         """
-        new_tier = self.transcription.generate_tier(tier_segments)
+        matching_segs = self.transcription.match_segments(tier_segments)
+        new_tier = matching_segs
         setattr(self,tier_name,new_tier)
         if tier_name not in self.tiers:
             self.tiers.append(tier_name)
@@ -565,30 +529,6 @@ class Word(object):
             delattr(self, tier_name)
         except ValueError:
             pass #tier_name does not exist
-
-    def match_env(self, query, tier_name):
-        """Searches for occurences of a particular environment in the word
-
-        Parameters
-        ----------
-        query : Environment
-            The environment to search for in the word
-
-
-        Returns
-        ----------
-        list of Envrionments
-            This list is empty if no matches are found
-        """
-
-        matches = list()
-        tier = getattr(self,tier_name)
-        for pos,seg in enumerate(tier):
-            env = self.get_env(pos, tier_name)
-            if env == query:
-                matches.append(env)
-
-        return matches
 
     def details(self):
         """Formatted printout of a Word's attributes and their values.
@@ -623,12 +563,10 @@ class Word(object):
         return e
 
     def __repr__(self):
-        return self.__str__()
+        return '<Word: \'%s\'>' % self.spelling
 
     def __str__(self):
-        #returning self._string is problematic, because sometimes it's a list
-        #and print functions don't like that, and raise a TypeError
-        return '<Word: \'%s\'>' % self.spelling
+        return self.spelling
 
 
     def __eq__(self, other):
@@ -802,12 +740,12 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self.inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
+        self._inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
         self.orthography = {'#'} #set of orthographic characters
         self.custom = False
-        self.has_frequency_value = None
-        self.has_spelling_value = None
-        self.has_transcription_value = None
+        self.has_frequency = True
+        self.has_spelling = False
+        self.has_transcription = False
         self._tiers = []
 
     def __eq__(self, other):
@@ -823,7 +761,7 @@ class Corpus(object):
 
     def features_to_segments(self, feature_description):
         segments = list()
-        for k,v in self.inventory.items():
+        for k,v in self._inventory.items():
             if v.feature_match(feature_description):
                 segments.append(k)
         return segments
@@ -841,6 +779,12 @@ class Corpus(object):
 
     def __setstate__(self,state):
         try:
+            if '_inventory' not in state:
+                state['_inventory'] = state['inventory']
+            if 'has_spelling' not in state:
+                state['has_spelling'] = state['has_spelling_value']
+            if 'has_transcription' not in state:
+                state['has_transcription'] = state['has_transcription_value']
             self.__dict__.update(state)
             self._specify_features()
 
@@ -858,17 +802,17 @@ class Corpus(object):
 
 
     def _specify_features(self):
-        if self.has_feature_matrix():
-            for k in self.inventory.keys():
+        if self.specifier is not None:
+            for k in self._inventory.keys():
                 try:
-                    self.inventory[k].specify(self.specifier[k])
+                    self._inventory[k].specify(self.specifier[k])
                 except KeyError:
                     pass
 
     def check_coverage(self):
-        if not self.has_feature_matrix():
+        if not self.specifier is not None:
             return []
-        return [x for x in self.inventory.keys() if x not in self.specifier]
+        return [x for x in self._inventory.keys() if x not in self.specifier]
 
     def iter_sort(self):
         """Sorts the keys in the corpus dictionary, then yields the values in that order
@@ -877,39 +821,6 @@ class Corpus(object):
         sorted_list = sorted(self.wordlist.keys())
         for word in sorted_list:
             yield self.wordlist[word]
-
-    def get_name(self):
-        """
-        Get an informative identifier for the corpus
-
-        Returns
-        -------
-        str
-            Corpus's name
-        """
-        return self.name
-
-    def is_custom(self):
-        """
-        Returns True if the corpus is user made versus supplied by PCT
-
-        Returns
-        -------
-        bool
-            True if corpus is user-created, otherwise False
-        """
-        return self.custom
-
-    def get_feature_matrix(self):
-        """
-        Return the feature system used in the corpus
-
-        Returns
-        -------
-        FeatureMatrix
-            Currently used feature system
-        """
-        return self.specifier
 
     def set_feature_matrix(self,matrix):
         """
@@ -924,62 +835,17 @@ class Corpus(object):
         self.specifier = matrix
         self._specify_features()
 
-    def has_feature_matrix(self):
-        """
-        Check whether the corpus has a feature system
-
-        Returns
-        -------
-        bool
-            True if corpus has a feature system, otherwise False
-        """
-        return self.specifier is not None
-
-    def has_frequency(self):
-        """
-        Return True if words in the corpus have the 'frequency' label
-
-        Returns
-        -------
-        bool
-            True if corpus has a frequency value, otherwise False
-        """
-        return self.has_frequency_value
-
-    def has_spelling(self):
-        """
-        Return True if words in the corpus have the 'spelling' label
-
-        Returns
-        -------
-        bool
-            True if corpus has spellings, otherwise False
-        """
-        return self.has_spelling_value
-
-    def has_transcription(self):
-        """
-        Return True if words in the corpus have the 'transcription' label
-
-        Returns
-        -------
-        bool
-            True if corpus has transcriptions, otherwise False
-        """
-        return self.has_transcription_value
-
-    def get_inventory(self):
+    @property
+    def inventory(self):
         """
         Returns a sorted list of segments used in transcriptions
 
         Returns
         -------
         list
-            List of segment symbols used in transcriptions in the corpus
+            Sorted list of segment symbols used in transcriptions in the corpus
         """
-        inventory = list(self.inventory.values())
-        inventory.sort()
-        return inventory
+        return sorted(list(self._inventory.values()))
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -1041,25 +907,15 @@ class Corpus(object):
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
                 self.orthography.update(word.spelling)
-                if self.has_spelling_value is None:
-                    self.has_spelling_value = True
-            elif self.has_spelling_value is None:
-                self.has_spelling_value = False
-            if self.has_frequency_value is None:
-                if word.get_frequency():
-                    self.has_frequency_value = True
-                else:
-                    self.has_frequency_value = False
+                if not self.has_spelling:
+                    self.has_spelling = True
 
         if word.transcription is not None:
             for s in word.transcription:
-                if s not in self.inventory:
-                    self.inventory[s] = Segment(s)
-            if self.has_transcription_value is None:
-                self.has_transcription_value = True
-        elif self.has_transcription_value is None:
-            self.has_transcription_value = False
-
+                if s not in self._inventory:
+                    self._inventory[s] = Segment(s)
+            if not self.has_transcription:
+                self.has_transcription = True
 
     def random_word(self):
         """Return a randomly selected Word
@@ -1076,7 +932,7 @@ class Corpus(object):
         list of str
 
         """
-        return self.specifier.get_features()
+        return self.specifier.features
 
     def find(self, word, keyerror=True):
         """Search for a Word in the corpus
@@ -1129,16 +985,3 @@ class Corpus(object):
 
     def __iter__(self):
         return iter(self.wordlist.values())
-
-
-class EmptyWord(Word):
-    """
-    """
-
-    def __init__(self, spelling, error_msg):
-        self.error_msg = error_msg
-        super().__init__(spelling=spelling, error_msg=self.error_msg)
-        self._string = [letter for letter in self.spelling]
-
-    def __len__(self):
-        return 0
