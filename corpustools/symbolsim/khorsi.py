@@ -146,7 +146,7 @@ def make_freq_base(corpus, string_type, count_what = 'type'):
 
     for word in corpus:
         if count_what == 'token':
-            freq = word.get_frequency()
+            freq = word.frequency
         else:
             freq = 1
 
