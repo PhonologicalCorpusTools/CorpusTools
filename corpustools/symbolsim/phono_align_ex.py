@@ -22,7 +22,7 @@ class Aligner(object):
         try:
             self.silence_features = self.features['empty']
         except (TypeError, KeyError):
-            feature_names = self.features.get_feature_list()
+            feature_names = self.features.features
             self.silence_features = {}
             for feature in feature_names:
                 self.silence_features[feature] = '0'

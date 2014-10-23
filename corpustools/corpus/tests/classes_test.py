@@ -229,8 +229,7 @@ class WordTest(unittest.TestCase):
         self.assertEqual(str(t.transcription),
                         '.'.join(self.no_freq['transcription']))
 
-        self.assertRaises(AttributeError,getattr,t,'frequency')
-        #self.assertEqual(t.frequency, None)
+        self.assertEqual(t.frequency, 1)
 
         self.assertEqual(t.spelling, self.no_freq['spelling'])
 
@@ -267,22 +266,20 @@ class FeatureMatrixTest(unittest.TestCase):
         fm = FeatureMatrix('test',self.basic_info)
         self.assertTrue(fm.name == 'test')
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
-        self.assertEqual(fm.get_feature_list(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-'})
+        self.assertEqual(fm.possible_values,{'+','-'})
 
         #fails, should be sorted list?
-        self.assertEqual(sorted(fm.get_segments()),sorted(['','#','a','b','c','d']))
+        self.assertEqual(sorted(fm.segments),sorted(['','#','a','b','c','d']))
 
     def test_dots(self):
         fm = FeatureMatrix('test',self.dots_info)
 
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
-        self.assertEqual(fm.get_feature_list(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-','.'})
+        self.assertEqual(fm.possible_values,{'+','-','.'})
 
         self.assertEqual(fm['b','feature2'],'.')
 
@@ -292,9 +289,9 @@ class FeatureMatrixTest(unittest.TestCase):
     def test_missing(self):
         fm = FeatureMatrix('test',self.missing_info)
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-'})
+        self.assertEqual(fm.possible_values,{'+','-'})
 
         #Error, there should be a default default value?
         fm.validate()
@@ -302,9 +299,9 @@ class FeatureMatrixTest(unittest.TestCase):
     def test_missing_with_default(self):
         fm = FeatureMatrix('test',self.missing_with_default_info)
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-','n'})
+        self.assertEqual(fm.possible_values,{'+','-','n'})
 
         fm.validate()
 
