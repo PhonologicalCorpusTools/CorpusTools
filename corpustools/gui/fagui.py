@@ -37,9 +37,9 @@ class FAFunction(FunctionWindow):
         top_frame = Frame(self)
         inv_frame = LabelFrame(top_frame, text='Select two sounds')
         inv_frame_tooltip = ToolTip(inv_frame, text='Select the two sounds you wish to check for alternations.')
-        seg1_frame = InventoryFrame(self.corpus.get_inventory(), self.seg1_var, 'Sound 1', master=inv_frame)
+        seg1_frame = InventoryFrame(self.corpus.inventory, self.seg1_var, 'Sound 1', master=inv_frame)
         seg1_frame.grid()
-        seg2_frame = InventoryFrame(self.corpus.get_inventory(), self.seg2_var, 'Sound 2', master=inv_frame)
+        seg2_frame = InventoryFrame(self.corpus.inventory, self.seg2_var, 'Sound 2', master=inv_frame)
         seg2_frame.grid()
         inv_frame.grid(row=0,column=0,sticky=N,padx=10)
 
@@ -69,8 +69,6 @@ class FAFunction(FunctionWindow):
         type_button.invoke()
         token_button = Radiobutton(self.typetoken_frame, text='Count tokens', variable=self.freq_alt_typetoken_var, value='token')
         token_button.grid(sticky=W)
-        if self.corpus.custom and not self.corpus.has_frequency():
-            token_button.configure(state=('disabled'))
         self.typetoken_frame.grid(column=0, row=0, sticky=W)
 
         min_pairs_frame = LabelFrame(options_frame, text='What to do with minimal pairs')

@@ -3,14 +3,17 @@
 import unittest
 import os
 try:
-    from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix,Segment)
+    import corpustools
 except ImportError:
     import sys
 
     test_dir = os.path.dirname(os.path.abspath(__file__))
     corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
     sys.path.append(corpustools_path)
-    from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix,Segment)
+
+from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
+                                        Environment, EnvironmentFilter, Transcription,
+                                        WordToken, Discourse)
 
 def create_unspecified_test_corpus():
     corpus_data = [{'spelling':'atema','transcription':['ɑ','t','e','m','ɑ'],'frequency':11.0},
@@ -160,7 +163,7 @@ class WordTest(unittest.TestCase):
 
     def test_basic_word(self):
         t = Word(**self.basic)
-        self.assertEqual(t.get_transcription_string(),
+        self.assertEqual(str(t.transcription),
                         '.'.join(self.basic['transcription']))
 
         self.assertEqual(t.frequency, float(self.basic['frequency']))
@@ -172,7 +175,7 @@ class WordTest(unittest.TestCase):
     def test_tiered_word(self):
         t = Word(**self.tiered)
 
-        self.assertEqual(t.get_transcription_string(),
+        self.assertEqual(str(t.transcription),
                         '.'.join(self.tiered['transcription']))
 
         self.assertEqual(t.frequency, float(self.tiered['frequency']))
@@ -186,7 +189,7 @@ class WordTest(unittest.TestCase):
     def test_extra_word(self):
         t = Word(**self.extra)
 
-        self.assertEqual(t.get_transcription_string(),
+        self.assertEqual(str(t.transcription),
                         '.'.join(self.extra['transcription']))
 
         self.assertEqual(t.spelling, self.extra['spelling'])
@@ -202,7 +205,7 @@ class WordTest(unittest.TestCase):
 
     def test_trans_only_word(self):
         t = Word(**self.trans_only)
-        self.assertEqual(t.get_transcription_string(),
+        self.assertEqual(str(t.transcription),
                         '.'.join(self.trans_only['transcription']))
 
         self.assertEqual(t.frequency, float(self.trans_only['frequency']))
@@ -213,7 +216,6 @@ class WordTest(unittest.TestCase):
 
     def test_spelling_only_word(self):
         t = Word(**self.spelling_only)
-        self.assertEqual(t.get_transcription_string(),None)
         self.assertEqual(t.transcription,None)
 
         self.assertEqual(t.frequency, float(self.spelling_only['frequency']))
@@ -224,11 +226,10 @@ class WordTest(unittest.TestCase):
 
     def test_no_freq_word(self):
         t = Word(**self.no_freq)
-        self.assertEqual(t.get_transcription_string(),
+        self.assertEqual(str(t.transcription),
                         '.'.join(self.no_freq['transcription']))
 
-        self.assertRaises(AttributeError,getattr,t,'frequency')
-        #self.assertEqual(t.frequency, None)
+        self.assertEqual(t.frequency, 1)
 
         self.assertEqual(t.spelling, self.no_freq['spelling'])
 
@@ -265,34 +266,32 @@ class FeatureMatrixTest(unittest.TestCase):
         fm = FeatureMatrix('test',self.basic_info)
         self.assertTrue(fm.name == 'test')
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
-        self.assertEqual(fm.get_feature_list(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-'})
+        self.assertEqual(fm.possible_values,{'+','-'})
 
         #fails, should be sorted list?
-        self.assertEqual(sorted(fm.get_segments()),sorted(['','#','a','b','c','d']))
+        self.assertEqual(sorted(fm.segments),sorted(['','#','a','b','c','d']))
 
     def test_dots(self):
         fm = FeatureMatrix('test',self.dots_info)
 
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
-        self.assertEqual(fm.get_feature_list(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-','.'})
+        self.assertEqual(fm.possible_values,{'+','-','.'})
 
         self.assertEqual(fm['b','feature2'],'.')
 
         #Fails, should be sorted list of features? Or set of features? Would need to be hashed then
-        self.assertEqual(sorted(fm['b'],key=lambda x: x.name)[1].sign,'.')
+        self.assertEqual(fm['b']['feature2'],'.')
 
     def test_missing(self):
         fm = FeatureMatrix('test',self.missing_info)
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-'})
+        self.assertEqual(fm.possible_values,{'+','-'})
 
         #Error, there should be a default default value?
         fm.validate()
@@ -300,9 +299,9 @@ class FeatureMatrixTest(unittest.TestCase):
     def test_missing_with_default(self):
         fm = FeatureMatrix('test',self.missing_with_default_info)
 
-        self.assertEqual(fm.get_features(), ['feature1','feature2'])
+        self.assertEqual(fm.features, ['feature1','feature2'])
 
-        self.assertEqual(fm.get_possible_values(),{'+','-','n'})
+        self.assertEqual(fm.possible_values,{'+','-','n'})
 
         fm.validate()
 
@@ -356,7 +355,7 @@ class CorpusFeatureMatrixTest(unittest.TestCase):
 
         corpus.set_feature_matrix(fm)
 
-        self.assertEqual(corpus['a'].transcription[0].features,{'feature1':'+','feature2':'+'})
+        #self.assertEqual(corpus['a'].transcription[0].features,{'feature1':'+','feature2':'+'})
 
 
     def test_coverage(self):
@@ -388,15 +387,166 @@ class CorpusFeatureMatrixTest(unittest.TestCase):
 
         self.assertRaises(AttributeError,getattr,corpus['d'],'t')
 
+    def test_feats_to_segs(self):
+        corpus = Corpus('test')
+        for w in self.corpus_basic_info:
+            corpus.add_word(Word(**w))
+
+        fm = FeatureMatrix('test',self.feature_basic_info)
+
+        corpus.set_feature_matrix(fm)
+
+        self.assertEqual(sorted(corpus.features_to_segments(['+feature1'])),sorted(['a','b']))
+
+class TranscriptionTest(unittest.TestCase):
+    def setUp(self):
+        self.cab = ['c','a','b']
+        self.ab = ['a','b']
+        self.ad = ['a','d']
+
+    def test_add(self):
+        ab = Transcription(self.ab)
+        ad = Transcription(self.ad)
+
+        self.assertEqual(['a','b','a','d'], ab + ad)
+
+    def test_tier(self):
+        ab = Transcription(self.ab)
+        self.assertEqual(['a'], ab.generate_tier(['a']))
+
+        cab = Transcription(self.cab)
+        self.assertEqual(['c','b'], cab.generate_tier(['c','b']))
+
+    def test_get(self):
+        cab = Transcription(self.cab)
+        self.assertEqual(['c'], cab[:1])
+        self.assertEqual('c', cab[0])
+        self.assertRaises(IndexError,cab.__getitem__,4)
+
+    def test_environment(self):
+        cab = Transcription(self.cab)
+
+        self.assertEqual(('c','b'), cab.get_env(1))
+        self.assertEqual(('#','a'), cab.get_env(0))
+        self.assertEqual(('a','#'), cab.get_env(2))
 
 class EnvironmentTest(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.corpus_info = [{'spelling':'a','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'b','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'c','transcription':['c','a','b'],'frequency':32.0},
+                            {'spelling':'d','transcription':['a','d'],'frequency':32.0},]
+
+        self.feature_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+','feature2':'-'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'-'}]
+
+class EnvironmentFilterTest(unittest.TestCase):
+    def setUp(self):
+        self.corpus_info = [{'spelling':'a','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'b','transcription':['a','b'],'frequency':32.0},
+                            {'spelling':'c','transcription':['c','a','b'],'frequency':32.0},
+                            {'spelling':'d','transcription':['a','d'],'frequency':32.0},]
+
+        self.feature_info = [{'symbol':'a','feature1':'+','feature2':'+'},
+                            {'symbol':'b','feature1':'+','feature2':'-'},
+                            {'symbol':'c','feature1':'-','feature2':'+'},
+                            {'symbol':'d','feature1':'-','feature2':'-'}]
+
+        self.corpus = Corpus('test')
+        for w in self.corpus_info:
+            self.corpus.add_word(Word(**w))
+
+        fm = FeatureMatrix('test',self.feature_info)
+
+        self.corpus.set_feature_matrix(fm)
+
+    def test_init(self):
+        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_')
+        self.assertEqual(sorted(envfilt.lhs),sorted(['a','b']))
+        self.assertEqual(envfilt.rhs,[])
+
+        envfilt = EnvironmentFilter(self.corpus,'_[-feature1]')
+        self.assertEqual(sorted(envfilt.rhs),sorted(['c','d']))
+        self.assertEqual(envfilt.lhs,[])
+
+        envfilt = EnvironmentFilter(self.corpus,'_[-feature1,-feature2]')
+        self.assertEqual(sorted(envfilt.rhs),sorted(['d']))
+
+    def test_contains(self):
+        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_')
+        env1 = Environment('a','b')
+        env2 = Environment('c','#')
+        env3 = Environment('a','c')
+
+        self.assertTrue(env1 in envfilt)
+        self.assertFalse(env2 in envfilt)
+
+        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_[+feature1]')
+        self.assertTrue(env1 in envfilt)
+        self.assertFalse(env2 in envfilt)
+        self.assertFalse(env3 in envfilt)
+
 
 class SegmentTest(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.basic_info = {'a':{'feature1':'+','feature2':'+'},
+                            'b':{'feature1':'+','feature2':'-'},
+                            'c':{'feature1':'-','feature2':'+'},
+                            'd':{'feature1':'-','feature2':'-'}}
 
-class FeatureTest(unittest.TestCase):
-    pass
+    def test_match_feature(self):
+        for s,v in self.basic_info.items():
+            seg = Segment(s)
+            seg.specify(v)
+            for feature, value in v.items():
+                for fv in ['+','-']:
+                    if fv == value:
+                        self.assertTrue(seg.feature_match([fv+feature]))
+                        self.assertTrue(seg.feature_match(fv+feature))
+                    else:
+                        self.assertTrue(not seg.feature_match([fv+feature]))
+
+class WordTokenTest(unittest.TestCase):
+    def setUp(self):
+        self.word_tokens = [{'begin':0,'end':1,'spelling':'a','transcription':['a','b']},
+                        {'begin':1,'end':2,'spelling':'c','transcription':['c','a','b']},
+                        {'begin':2,'end':3,'spelling':'a','transcription':['a','b']},
+                        {'begin':3,'end':4,'spelling':'d','transcription':['a','d']}]
+
+        self.word_type_only = {'begin':0,'end':1,'wordtype':Word(**{'spelling':'a','transcription':['a','b']})}
+
+        self.word_type_and = {'begin':0,'end':1,'spelling':'a2','transcription':['a','b2'],
+                            'wordtype':Word(**{'spelling':'a','transcription':['a','b']})}
+
+    def test_init(self):
+        wt = WordToken(**self.word_type_only)
+        self.assertEqual(wt.spelling,'a')
+        self.assertEqual(str(wt.transcription),'a.b')
+
+        wt = WordToken(**self.word_type_and)
+        self.assertEqual(wt.spelling,'a2')
+        self.assertEqual(str(wt.transcription),'a.b2')
+
+    def test_duration(self):
+        for wt in self.word_tokens:
+            w = WordToken(**wt)
+            self.assertEqual(w.duration, 1)
+
+class DiscourseTest(unittest.TestCase):
+    def setUp(self):
+        self.word_tokens = [{'begin':0,'end':1,'spelling':'a','transcription':['a','b']},
+                        {'begin':1,'end':2,'spelling':'c','transcription':['c','a','b']},
+                        {'begin':2,'end':3,'spelling':'a','transcription':['a','b']},
+                        {'begin':3,'end':4,'spelling':'d','transcription':['a','d']}]
+
+    def test_init(self):
+        pass
+
+    def test_previous_conditional_probability(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

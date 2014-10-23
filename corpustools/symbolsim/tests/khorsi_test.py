@@ -149,8 +149,8 @@ class KhorsiTest(unittest.TestCase):
                     ('sasi','ʃi',['i'],['s','ɑ','s','ʃ']),
                     ]
         for v in expected:
-            x1 = [x.symbol for x in self.corpus[v[0]].transcription]
-            x2 = [x.symbol for x in self.corpus[v[1]].transcription]
+            x1 = self.corpus[v[0]].transcription
+            x2 = self.corpus[v[1]].transcription
             calced = lcs(x1,x2)
             calced = (calced[0],sorted(calced[1]))
             self.assertEqual(calced,(v[2],sorted(v[3])))

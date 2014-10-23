@@ -10,7 +10,7 @@ from codecs import open
 
 class Aligner(object):
 
-    def __init__(self, features_tf=True, ins_penalty=1, del_penalty=1, 
+    def __init__(self, features_tf=True, ins_penalty=1, del_penalty=1,
                  sub_penalty=1, tolerance=0, features=None):
         self.features_tf = features_tf
         self.ins_penalty = ins_penalty
@@ -22,7 +22,7 @@ class Aligner(object):
         try:
             self.silence_features = self.features['empty']
         except (TypeError, KeyError):
-            feature_names = self.features.get_feature_list()
+            feature_names = self.features.features
             self.silence_features = {}
             for feature in feature_names:
                 self.silence_features[feature] = '0'
@@ -87,7 +87,7 @@ class Aligner(object):
 
     def compare_segments(self, segment1, segment2, underspec_cost=.25):
 
-        def check_feature_difference(val1, val2):  
+        def check_feature_difference(val1, val2):
             if val1 == val2:
                 return 0
             elif val1 == '0' or val2 == '0':
@@ -106,18 +106,18 @@ class Aligner(object):
         if self.features_tf:
             if segment1 == 'empty':
                 fs2 = self.features[segment2symbol]
-                return (sum(check_feature_difference('0', 
-                            f.sign) for f in fs2) * self.ins_penalty)
+                return (sum(check_feature_difference('0',
+                            sign) for sign in fs2.values()) * self.ins_penalty)
             elif segment2 == 'empty':
-                
+
                 fs1 = self.features[segment1symbol]
-                return (sum(check_feature_difference(f.sign, 
-                        '0') for f in fs1) * 
+                return (sum(check_feature_difference(sign,
+                        '0') for sign in fs1.values()) *
                         self.del_penalty)
             else:
                 fs1 = self.features[segment1symbol]
                 fs2 = self.features[segment2symbol]
-                return (sum(check_feature_difference(fs1[i].sign, fs2[i].sign) for i in range(len(fs1))) * self.sub_penalty)
+                return (sum(check_feature_difference(fs1[k], fs2[k]) for k in fs1.keys()) * self.sub_penalty)
         else:
             if segment1 == 'empty':
                 return self.ins_penalty * underspec_cost
@@ -205,7 +205,7 @@ def make_feature_dict(feature_file):
 
 
 if __name__ == '__main__':
-    
+
     import corpustools
     factory = corpustools.CorpusFactory()
     corpus = factory.make_corpus('IPhOD', features='hayes', size=20)

@@ -5,10 +5,6 @@ import itertools
 import queue
 import copy
 
-from corpustools.corpus.classes import CorpusFactory
-
-
-
 
 def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, distinguish_homophones=False, threaded_q=False):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.

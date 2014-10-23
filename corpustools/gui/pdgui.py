@@ -10,7 +10,7 @@ import tkinter.messagebox as MessageBox
 
 import queue
 
-import corpustools.prod.pred_of_dist as PD
+from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ExhaustivityError, UniquenessError
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, ERROR_DIR,
                     ResultsWindow, ThreadedTask, ToolTip)
@@ -32,8 +32,7 @@ class PDFunction(FunctionWindow):
         self.lhs_seg_var = StringVar()
         self.rhs_seg_var = StringVar()
         self.entropy_filename_var = StringVar()
-        self.entropy_exhaustive_var = IntVar()
-        self.entropy_uniqueness_var = IntVar()
+        self.enforce_strict_var = IntVar()
         self.entropy_exclusive_var = IntVar()
         self.prod_results = None
         self.calculating_entropy_screen = None
@@ -84,7 +83,7 @@ class PDFunction(FunctionWindow):
             'predictability of distribution you want to calculate. The order of the '
             'two sounds is irrelevant. The symbols you see here should automatically'
             ' match the symbols used anywhere in your corpus.'))
-        segs = [seg.symbol for seg in self.corpus.get_inventory()]
+        segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
         seg1_frame = LabelFrame(self.ipa_frame, text='Choose first symbol')
         colmax = 10
@@ -144,8 +143,6 @@ class PDFunction(FunctionWindow):
         type_button.invoke()
         token_button = Radiobutton(typetoken_frame, text='Count tokens', variable=self.entropy_typetoken_var, value='token')
         token_button.grid(sticky=W)
-        if not self.corpus.has_frequency():
-            token_button.configure(state=('disabled'))
         typetoken_frame.grid(row=1, column=0)
 
         ex_frame = LabelFrame(self.option_frame, text='Exhaustivity and uniqueness')
@@ -161,12 +158,9 @@ class PDFunction(FunctionWindow):
                                     ' have selected don\'t overlap with one another. It'
                                     ' is recommended that both options are used unless '
                                     'there is a specific reason to do otherwise.'))
-        check_exhaustive = Checkbutton(ex_frame, text='Check for exhaustivity', variable=self.entropy_exhaustive_var)
-        self.entropy_exhaustive_var.set(1)
-        check_exhaustive.grid()
-        check_uniqueness = Checkbutton(ex_frame, text='Check for uniqueness', variable=self.entropy_uniqueness_var)
-        check_uniqueness.grid()
-        self.entropy_uniqueness_var.set(1)
+        enforce_strict = Checkbutton(ex_frame, text='Enforce for exhaustivity and uniqueness for environments', variable=self.enforce_strict_var)
+        self.enforce_strict_var.set(1)
+        enforce_strict.grid()
         ex_frame.grid(row=2, column=0)
 
         self.button_frame = Frame(self)
@@ -214,7 +208,7 @@ class PDFunction(FunctionWindow):
         lhs_feature_entry_explanation = Label(lhs_feature_frame, text='Select one or more features to match')
         lhs_feature_entry_explanation.grid(row=0)
         self.lhs_feature_list = Listbox(lhs_feature_frame)
-        for feature_name in self.corpus.get_features():
+        for feature_name in self.corpus.specifier.features:
             self.lhs_feature_list.insert(END,feature_name)
         self.lhs_feature_list.grid(row=1, column=0)
         self.lhs_selected_list = Listbox(lhs_feature_frame)
@@ -231,7 +225,7 @@ class PDFunction(FunctionWindow):
         lhs_seg_frame = LabelFrame(lhs_frame, text='Segment-based environment')
         lhs_seg_entry_explanation = Label(lhs_seg_frame, text='Select a segment to match')
         lhs_seg_entry_explanation.grid()
-        segs = [seg.symbol for seg in self.corpus.get_inventory()]
+        segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
         segs_frame = Frame(lhs_seg_frame)
         col = 0
@@ -260,7 +254,7 @@ class PDFunction(FunctionWindow):
         rhs_feature_entry_explanation = Label(rhs_feature_frame, text='Select one or more features to match')
         rhs_feature_entry_explanation.grid(row=0)
         self.rhs_feature_list = Listbox(rhs_feature_frame)
-        for feature_name in self.corpus.get_features():
+        for feature_name in self.corpus.specifier.features:
             self.rhs_feature_list.insert(END,feature_name)
         self.rhs_feature_list.grid(row=1, column=0)
         self.rhs_selected_list = Listbox(rhs_feature_frame)
@@ -277,7 +271,7 @@ class PDFunction(FunctionWindow):
         rhs_seg_frame = LabelFrame(rhs_frame, text='Segment-based environment')
         rhs_seg_entry_explanation = Label(rhs_seg_frame, text='Select a segment to match')
         rhs_seg_entry_explanation.grid()
-        segs = [seg.symbol for seg in self.corpus.get_inventory()]
+        segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
         segs_frame = Frame(rhs_seg_frame)
         col = 0
@@ -331,35 +325,6 @@ class PDFunction(FunctionWindow):
         cancel_button.grid(sticky=W)
 
         self.button_frame.grid()
-
-
-
-    def calculate_prod_all_envs(self):
-        if self.selected_envs_list.size() > 0:
-            carry_on = MessageBox.askokcancel(message=('You have already selected some environments.\n'
-                                        ' Click \'OK\' to do a calculation of entropy across ALL environments.\n'
-                                        ' Click \'Cancel\' to go back and use your specific environments.\n'))
-            if not carry_on:
-                return
-
-        seg1 = self.seg1_var.get()
-        seg2 = self.seg2_var.get()
-        type_or_token = self.entropy_typetoken_var.get()
-        seg1_count, seg2_count = PD.count_segs(self.corpus, seg1, seg2, type_or_token, self.entropy_tier_var.get())
-        H = PD.calc_prod_all_envs(seg1_count, seg2_count)
-        results = [[
-            self.corpus.name,
-            self.entropy_tier_var.get(),
-            seg1,
-            seg2,
-            'ALL',#'FREQ-ONLY',
-            str(seg1_count),
-            str(seg2_count),
-            str(seg1_count+seg2_count),
-            str(H),
-            type_or_token]]
-        self.update_prod_results(results)
-
 
     def remove_entropy_env(self):
         env = self.selected_envs_list.curselection()
@@ -457,8 +422,8 @@ class PDFunction(FunctionWindow):
 
         if self.entropy_uniqueness_var.get() and overlapping_words:
             #envs are exhastive, but some overlap
-            #final = os.path.split(self.entropy_filename_var.get())[-1]
-            filename = 'overlapping_envs_{}_{}.txt'.format(seg1, seg2)
+            final = os.path.split(self.entropy_filename_var.get())[-1]
+            filename = 'overlapping_envs_'+final
             with open(os.path.join(ERROR_DIR, filename), mode='w', encoding='utf-8') as f:
 
                 print('The environments you selected are not unique, which means that some of them pick out the same environment in the same words.\r\n', file=f)
@@ -525,17 +490,58 @@ class PDFunction(FunctionWindow):
         seg1 = self.seg1_var.get()
         seg2 = self.seg2_var.get()
         type_or_token = self.entropy_typetoken_var.get()
+        tier_name = self.entropy_tier_var.get()
 
         env_list = [env for env in self.selected_envs_list.get(0,END)]
-        env_matches, missing_words, overlapping_words = PD.check_envs(self.corpus,seg1,seg2,type_or_token,env_list,self.entropy_tier_var.get())
-        do_entropy = self.check_for_uniquess_and_exhuastivity(missing_words, overlapping_words,env_list)
-        if not do_entropy:
-            return #user does not want to see the results
+        try:
+            result = calc_prod(self.corpus,seg1,seg2,env_list,tier_name, type_or_token,all_info=True,strict=bool(self.enforce_strict_var.get()))
+        except (ExhaustivityError,UniquenessError) as e:
+            conf = 'Would you like to calculate predictability of distribution anyway?'
+            redo_entropy = MessageBox.askyesno(message='\n'.join([str(e),conf]))
+            if not redo_entropy:
+                return
+            result = calc_prod(self.corpus,seg1,seg2,env_list,tier_name, type_or_token,all_info=True,strict=False)
+        results = []
+        for env,v in result.items():
+            #small hack
+            #env = k.replace("'",'').replace(' ','')
 
-        #at this point there are either no problems
-        #or else the user wants to see the results anyway
+            results.append([self.corpus.name,
+                    tier_name,
+                    seg1,
+                    seg2,
+                    env,
+                    str(v[2]), # freq of seg1
+                    str(v[3]), #freq of seg2
+                    str(v[1]), #total_tokens
+                    str(v[0]), #H
+                    type_or_token])
+        self.update_prod_results(results)
 
-        results = PD.calc_prod(self.corpus.name, self.entropy_tier_var.get(), seg1, seg2, env_matches, type_or_token)
+    def calculate_prod_all_envs(self):
+        if self.selected_envs_list.size() > 0:
+            carry_on = MessageBox.askokcancel(message=('You have already selected some environments.\n'
+                                        ' Click \'OK\' to do a calculation of entropy across ALL environments.\n'
+                                        ' Click \'Cancel\' to go back and use your specific environments.\n'))
+            if not carry_on:
+                return
+
+        seg1 = self.seg1_var.get()
+        seg2 = self.seg2_var.get()
+        type_or_token = self.entropy_typetoken_var.get()
+        tier_name = self.entropy_tier_var.get()
+        H = calc_prod_all_envs(self.corpus, seg1, seg2, tier_name, type_or_token,all_info = True)
+        results = [[
+            self.corpus.name,
+            tier_name,
+            seg1,
+            seg2,
+            'FREQ-ONLY',
+            str(H[2]), #seg1 count
+            str(H[3]), #seg2 count
+            str(H[1]), #total_count
+            str(H[0]), #H
+            type_or_token]]
         self.update_prod_results(results)
 
     def about_prod(self):
@@ -581,10 +587,10 @@ class PDFunction(FunctionWindow):
         try:
             self.prod_results.destroy()
             self.prod_results = None
-        except (AttributeError, TclError): #widgets don't exist anyway
+        except AttributeError: #widgets don't exist anyway
             pass
 
         try:
             self.start_new_envs.config(state=DISABLED)
-        except (AttributeError, TclError):
+        except AttributeError:
             pass #widget doesn't exist
