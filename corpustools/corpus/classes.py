@@ -458,7 +458,6 @@ class Word(object):
         self.spelling = None
         self.frequency = 1
         self.descriptors = ['spelling','transcription']
-        kwargs = {key.lower():value for key,value in list(kwargs.items())}
 
         for key, value in kwargs.items():
             key = key.lower()
