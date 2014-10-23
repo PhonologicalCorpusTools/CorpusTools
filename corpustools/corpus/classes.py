@@ -504,7 +504,7 @@ class Word(object):
 
         """
         matching_segs = self.transcription.match_segments(tier_segments)
-        new_tier = matching_segs
+        new_tier = Transcription(matching_segs)
         setattr(self,tier_name,new_tier)
         if tier_name not in self.tiers:
             self.tiers.append(tier_name)
@@ -768,7 +768,9 @@ class Corpus(object):
     def add_tier(self, tier_name, tier_features):
         if tier_name not in self._tiers:
             self._tiers.append(tier_name)
+        print(tier_features)
         tier_segs = self.features_to_segments(tier_features)
+        print(tier_segs)
         for word in self:
             word.add_tier(tier_name,tier_segs)
 
