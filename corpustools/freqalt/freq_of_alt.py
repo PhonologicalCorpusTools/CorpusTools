@@ -40,11 +40,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
     """
 
     list_s1, list_s2 = get_lists(corpus, s1, s2, string_type)
-    query = list()
-
-    for word_s1 in list_s1:
-        for word_s2 in list_s2:
-                query.append( (word_s1.spelling, word_s2.spelling) )
+    query = ((w1.spelling,w2.spelling) for w1 in list_s1 for w2 in list_s2)
 
     related_list = string_similarity(corpus, query, relator_type,
                                                 string_type = string_type,
@@ -129,8 +125,6 @@ def get_lists(corpus, s1, s2, string):
     s2_list = list()
     for w in corpus:
         word = getattr(w, string)
-        if not isinstance(word, str):
-            word = ''.join(seg.symbol for seg in word)
         if s1 in word and s2 in word:
             s1_list.append(w)
             s2_list.append(w)

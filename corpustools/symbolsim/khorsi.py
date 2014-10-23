@@ -116,9 +116,6 @@ def khorsi(word1, word2, freq_base, string_type):
     if string_type == 'spelling':
         w1 = list(w1)
         w2 = list(w2)
-    else:
-        w1 = [x.symbol for x in w1]
-        w2 = [x.symbol for x in w2]
 
     longest, left_over = lcs(w1, w2)
 

@@ -121,7 +121,7 @@ class GUI(Toplevel):
     def load_corpus(self):
         corpusload = CorpusManager()
         corpusload.top.wait_window()
-        self.corpus = corpusload.get_corpus()
+        self.corpus = corpusload.corpus
         if self.corpus is not None:
             self.main_screen_refresh()
 
@@ -148,25 +148,22 @@ class GUI(Toplevel):
     def check_for_valid_corpus(function):
         def do_check(self):
             missing = list()
-            if self.corpus.is_custom():
-                if not self.corpus.has_spelling():
-                    missing.append('spelling')
-                if not self.corpus.has_transcription():
-                    missing.append('transcription')
-                if not self.corpus.has_frequency():
-                    missing.append('token frequency')
-                if self.show_warnings.get() and missing:
-                    missing = ','.join(missing)
-                    MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
+            if not self.corpus.has_spelling:
+                missing.append('spelling')
+            if not self.corpus.has_transcription:
+                missing.append('transcription')
+            if self.show_warnings.get() and missing:
+                missing = ','.join(missing)
+                MessageBox.showwarning(message='Some information neccessary for this analysis is missing from your corpus: {}\nYou will not be able to select every option'.format(missing))
             function(self)
         return do_check
 
     def check_for_valid_feature_matrix(function):
         def do_check(self):
-            corpus_inventory = self.corpus.get_inventory()
-            if self.corpus.has_feature_matrix():
+            corpus_inventory = self.corpus.inventory
+            if self.corpus.specifier is not None:
                 missing = []
-                feature_inventory = self.corpus.get_feature_matrix().get_segments()
+                feature_inventory = self.corpus.specifier.segments
                 for seg in corpus_inventory:
                     if seg not in feature_inventory:
                         missing.append(str(seg))
@@ -213,7 +210,7 @@ class GUI(Toplevel):
             child.destroy()
 
         if self.corpus is not None:
-            corpus_name = self.corpus.get_name()
+            corpus_name = self.corpus.name
             corpus_size = len(self.corpus)
         else:
             corpus_name = "No corpus selected"
@@ -225,8 +222,8 @@ class GUI(Toplevel):
         size_info_label = Label(self.info_frame, text='Size: {}'.format(corpus_size))#textvariable=self.corpus_size_var)
         size_info_label.grid()
 
-        if self.corpus.has_feature_matrix():
-            system_name = self.corpus.get_feature_matrix().get_name()
+        if self.corpus.specifier is not None:
+            system_name = self.corpus.specifier.name
         else:
             system_name = 'None'
 
@@ -244,7 +241,7 @@ class GUI(Toplevel):
     def search(self):
 
         self.search_popup = Toplevel()
-        self.search_popup.title('Search {}'.format(self.corpus.get_name()))
+        self.search_popup.title('Search {}'.format(self.corpus.name))
         search_frame = LabelFrame(self.search_popup, text='Enter search term')
         search_entry = Entry(search_frame, textvariable=self.search_var)
         search_entry.grid()
@@ -294,7 +291,7 @@ class GUI(Toplevel):
         """
         save_binary(self.corpus,os.path.join(
                         config['storage']['directory'],'CORPUS',
-                        self.corpus.get_name()+'.corpus'))
+                        self.corpus.name+'.corpus'))
         self.warn_about_changes = False
         MessageBox.showinfo(message='Save successful!')
 
@@ -366,7 +363,7 @@ class GUI(Toplevel):
         feature_screen = EditFeatureSystemWindow(self.corpus)
         feature_screen.top.wait_window()
         if feature_screen.change:
-            self.corpus.set_feature_matrix(feature_screen.get_feature_matrix())
+            self.corpus.set_feature_matrix(feature_screen.specifier)
         self.main_screen_refresh()
 
     def acoustic_sim(self):
@@ -385,7 +382,7 @@ class GUI(Toplevel):
 
     @check_for_empty_corpus
     def export_corpus_to_text_file(self):
-        filename = FileDialog.asksaveasfilename(initialfile = self.corpus.get_name()+'.txt')
+        filename = FileDialog.asksaveasfilename(initialfile = self.corpus.name+'.txt')
         if not filename:
             return
 
@@ -393,8 +390,8 @@ class GUI(Toplevel):
 
     @check_for_empty_corpus
     def export_feature_matrix_to_text_file(self):
-        matrix = self.corpus.get_feature_matrix()
-        filename = FileDialog.asksaveasfilename(initialfile = matrix.get_name()+'.txt')
+        matrix = self.corpus.specifier
+        filename = FileDialog.asksaveasfilename(initialfile = matrix.name+'.txt')
         if not filename:
             return
 
