@@ -1,8 +1,8 @@
 import os
 import collections
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
-                    Frame, StringVar, BooleanVar, END, DISABLED, TclError,
+from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, Message,
+                    Frame, StringVar, BooleanVar, END, DISABLED, TclError, ANCHOR,
                     ACTIVE, Toplevel, Listbox, OptionMenu, IntVar, Checkbutton, E, N, S )
 from tkinter.ttk import Progressbar
 import tkinter.filedialog as FileDialog
@@ -17,7 +17,7 @@ from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                     load_corpus_csv,load_corpus_text,
                                     export_corpus_csv, export_feature_matrix_csv,
                                     load_feature_matrix_csv,DelimiterError)
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
+from corpustools.gui.basegui import (AboutWindow, FunctionWindow, ToolTip,
                     ResultsWindow, TableView, ThreadedTask, config, ERROR_DIR)
 
 def get_corpora_list():
@@ -122,14 +122,19 @@ class CorpusFromTextWindow(Toplevel):
         self.corpusq = queue.Queue()
 
         #Corpus from text variables
-        self.punc_vars = [IntVar() for mark in string.punctuation]
+        self.punc_vars = [StringVar() for mark in string.punctuation]
         self.new_corpus_string_type = StringVar()
         self.new_corpus_feature_system_var = StringVar()
         self.corpus_from_text_source_file = StringVar()
 
         self.title('Create corpus')
-        from_text_frame = LabelFrame(self, text='Create corpus from text')
+        self.main_frame = Frame(self)
+        self.main_frame.grid()
 
+        self.start()
+
+    def start(self):
+        from_text_frame = LabelFrame(self.main_frame, text='Create corpus from text')
         load_file_frame = Frame(from_text_frame)
         find_file = Button(load_file_frame, text='Select a source text file to create the corpus from', command=self.navigate_to_text)
         find_file.grid(sticky=W)
@@ -139,12 +144,17 @@ class CorpusFromTextWindow(Toplevel):
 
         from_text_frame.grid()
 
+
         punc_frame = LabelFrame(from_text_frame, text='Select punctuation to ignore')
+        punc_frame_tooltip = ToolTip(punc_frame, text=('Punctuation that is ignored will not '
+                'appear in your corpus. This is mainly useful if you are loading in text '
+                'using a practical orthography, or a transcription with morpheme breaks'))
         row = 0
         col = 0
         colmax = 10
         for mark,var in zip(string.punctuation, self.punc_vars):
-            check_button = Checkbutton(punc_frame, text=mark, variable=var)
+            check_button = Checkbutton(punc_frame, text=mark,
+                            variable=var, onvalue=mark, offvalue='')
             check_button.grid(row=row, column=col)
             col += 1
             if col > colmax:
@@ -152,23 +162,25 @@ class CorpusFromTextWindow(Toplevel):
                 row += 1
         row += 1
         select_frame = Frame(punc_frame)
-        select_all = Button(select_frame, text='Select all', command=lambda x=1: [var.set(x) for var in self.punc_vars])
+        select_all = Button(select_frame, text='Select all',
+                command=lambda x=1: [cb.invoke() for cb in punc_frame.winfo_children() if hasattr(cb, 'invoke')])
         select_all.grid(row=0,column=0)
-        deselect_all = Button(select_frame, text='Deselect all', command=lambda x=0: [var.set(x) for var in self.punc_vars])
+        deselect_all = Button(select_frame, text='Deselect all',
+                    command=lambda x='': [var.set(x) for var in self.punc_vars])
         deselect_all.grid(row=0, column=1)
         select_frame.grid(row=row,column=0)
         punc_frame.grid(sticky=W)
-        string_type_frame = LabelFrame(from_text_frame, text='Spelling or transcription')
-        spelling_only = Radiobutton(string_type_frame, text='Corpus uses orthography',
+
+
+        string_type_frame = LabelFrame(from_text_frame, text='Does your corpus use spelling or transcription?')
+        spelling_only = Radiobutton(string_type_frame, text='Corpus uses spelling',
                             value='spelling', variable=self.new_corpus_string_type)
-        spelling_only.grid()
+        spelling_only.grid(sticky=W)
         spelling_only.invoke()
         trans_only = Radiobutton(string_type_frame, text='Corpus uses transcription',
                             value='transcription', variable=self.new_corpus_string_type)
-        trans_only.grid()
-        #both = Radiobutton(string_type_frame, text='Corpus has both spelling and transcription', value='both', variable=self.from_corpus_string_type)
-        #both.grid()
-        new_corpus_feature_frame = LabelFrame(self, text='Feature system to use (if transcription exists)')
+        trans_only.grid(sticky=W)
+        new_corpus_feature_frame = LabelFrame(string_type_frame, text='Feature system to use (if transcription exists)')
 
         available_systems = ['']+get_systems_list()
         new_corpus_feature_system = OptionMenu(
@@ -178,25 +190,14 @@ class CorpusFromTextWindow(Toplevel):
         new_corpus_feature_system.grid()
         new_corpus_feature_frame.grid(sticky=W)
         string_type_frame.grid(sticky=W)
-        delim_frame = LabelFrame(from_text_frame, text='Delimiters')
-        delimiter_label = Label(delim_frame, text='Word delimiter (defaults to space)')
-        delimiter_label.grid()
-        self.delimiter_entry = Entry(delim_frame)
-        self.delimiter_entry.delete(0,END)
-        self.delimiter_entry.insert(0,' ')
-        self.delimiter_entry.grid()
-        trans_delimiter_label = Label(delim_frame, text='Transcription delimiter (No character means every symbol\n will be interpreted as a segment)')
-        trans_delimiter_label.grid()
-        self.trans_delimiter_entry = Entry(delim_frame)
-        self.trans_delimiter_entry.delete(0,END)
-        self.trans_delimiter_entry.insert(0,'.')
-        self.trans_delimiter_entry.grid()
-        delim_frame.grid(sticky=E)
-        ok_button = Button(from_text_frame, text='Create corpus', command=self.parse_text)
-        cancel_button = Button(from_text_frame, text='Cancel', command=self.destroy)
-        ok_button.grid()
-        cancel_button.grid()
-        from_text_frame.grid()
+
+        button_frame = Frame(self.main_frame)
+        next_step = Button(button_frame, text='Next step', command=self.parse_text)
+        next_step.grid(row=0, column=0)
+        cancel = Button(button_frame, text='Cancel', command=self.destroy)
+        cancel.grid(row=0, column=1)
+        button_frame.grid()
+
 
     def navigate_to_text(self):
         text_file = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
@@ -209,25 +210,91 @@ class CorpusFromTextWindow(Toplevel):
             MessageBox.showerror(message='Cannot find the source file. Double check the path is correct.')
             return
 
-        string_type = self.new_corpus_string_type.get()
-        word_count = collections.defaultdict(int)
-        ignore_list = list()
-        for mark,var in zip(string.punctuation, self.punc_vars):
-            if var.get() == 1:
-                ignore_list.append(mark)
+        with open(source_path, encoding='utf-8') as f:
+            symbols = set()
+            for line in f.readlines():
+                line = line.strip()
+                line = line.split(delimiter)
+                for word in line:
+                    symbols.update(word)
+            symbols = list(symbols)
 
-        string_type = self.new_corpus_string_type.get()
-        ignore_list = list()
-        for mark,var in zip(string.punctuation, self.punc_vars):
-            if var.get() == 1:
-                ignore_list.append(mark)
+            symbols = [s for s in symbols
+                        if not s in [v.get() for v in self.punc_vars]]
 
-        delimiter = self.delimiter_entry.get()
-        trans_delimiter = self.trans_delimiter_entry.get()
 
+        if not symbols:
+            MessageBox.showerror(message='The source file seems to be empty! Double check the path is correct')
+            return
+
+        for child in self.main_frame.winfo_children():
+            child.destroy()
+
+        digraph_frame = LabelFrame(self.main_frame, text='Dealing with digraphs')
+        message = ('The box below shows all of the symbols that were found in your corpus.'
+                    'By default, CorpusTools assumes your corpus has a one-sound-one-symbol writing system. If there are '
+                    'any sequences of symbols that should be treated as a single unit, you can tell CorpusTools about '
+                    'them now.')
+        explain_label = Message(digraph_frame, text=message)
+        explain_label.grid(row=0,column=0)
+
+        inventory_frame = LabelFrame(digraph_frame)
+        row = 0
+        col = 0
+        colmax = 10
+        for symbol in sorted(symbols):
+            button = Button(inventory_frame, text=symbol, command= lambda x=symbol:self.add_to_digraph(x))
+            button.grid(row=row, column=col, sticky=W)
+            col += 1
+            if col > colmax:
+                col = 0
+                row += 1
+        inventory_frame.grid(row=1,column=0)
+
+        self.current_frame = LabelFrame(digraph_frame, text='Current digraph')
+        self.current_digraph = Entry(self.current_frame)
+        self.current_digraph.grid()
+        ok = Button(self.current_frame, text='Add current digraph to list', command=self.add_digraph_to_list)
+        ok.grid()
+        self.current_frame.grid(row=2,column=0)
+
+        list_frame = LabelFrame(digraph_frame)
+        self.digraph_list = Listbox(list_frame)
+        self.digraph_list.grid()
+        remove_one = Button(list_frame, text='Remove selected',
+                        command=lambda x=self.digraph_list: x.delete(ANCHOR))
+        clear = Button(list_frame, text='Clear all',
+                        command=lambda x=self.digraph_list: x.delete(0,END))
+        remove_one.grid(row=1,column=0)
+        clear.grid(row=1,column=1)
+        list_frame.grid(row=1,column=1)
+
+        next_step = Button(digraph_frame, text='Create corpus', command=self.create_corpus)
+        next_step.grid()#row=2,column=0)
+        cancel = Button(digraph_frame, text='Cancel', command=self.destroy)
+        cancel.grid()#row=2,column=1)
+
+        digraph_frame.grid()
+
+    def add_to_digraph(self, symbol):
+        self.current_digraph.insert(END, symbol)
+
+    def add_digraph_to_list(self):
+        self.digraph_list.insert(END,self.current_digraph.get())
+        self.current_digraph.delete(0,END)
+
+    def create_corpus(self, delimiter=' '):
+        #string_type = self.new_corpus_string_type.get()
+        string_type = 'transcription'
+        ignore_list = [v.get() for v in self.punc_vars if v.get()]
+        digraph_list = self.digraph_list.get(0,END)
+
+        #delimiter = self.delimiter_entry.get()
+        #trans_delimiter = self.trans_delimiter_entry.get()
+        source_path = self.corpus_from_text_source_file.get()
         corpus_name = os.path.split(source_path)[-1].split('.')[0]
 
-        self.prog_bar = Progressbar(self, mode='indeterminate')
+        self.prog_bar = Progressbar(self.main_frame, mode='indeterminate')
         #this progbar is indeterminate because we can't know how big the custom corpus will be
         self.prog_bar.grid()
         self.prog_bar.start()
@@ -235,13 +302,15 @@ class CorpusFromTextWindow(Toplevel):
         feature_system = self.new_corpus_feature_system_var.get()
         if feature_system:
             feature_system = system_name_to_path(feature_system)
+        else:
+            feature_system = False
 
         self.custom_corpus_load_thread = ThreadedTask(self.queue,
                                 target=load_corpus_text,
-                                args=(corpus_name,source_path,delimiter,ignore_list,trans_delimiter,feature_system,string_type),
-                                kwargs={'pqueue':self.queue,'oqueue':self.corpusq})
+                                args=(corpus_name,source_path, delimiter,ignore_list, digraph_list),
+                                kwargs={'pqueue':self.queue,'oqueue':self.corpusq,
+                                'feature_system_path':feature_system})
         self.custom_corpus_load_thread.start()
-        #self.custom_corpus_thread(corpus_name, filename, delimiter, trans_delimiter)
         self.process_queue()
 
     def process_queue(self):
@@ -253,17 +322,17 @@ class CorpusFromTextWindow(Toplevel):
                 corpus_name = os.path.split(source_path)[-1].split('.')[0]
                 corpus = self.corpusq.get()
                 errors = self.corpusq.get()
-                self.finalize_corpus(corpus,errors)
-                save_binary(self.corpus,corpus_name_to_path(corpus_name))
+                self.finalize_corpus(corpus, errors)
+                save_binary(corpus,corpus_name_to_path(corpus_name))
                 self.destroy()
             elif isinstance(msg,DelimiterError):
                 MessageBox.showerror(message=str(msg))
                 return
             else:
-                self.master.after(1, self.process_queue)
+                self.master.after(10, self.process_queue)
 
         except queue.Empty:
-            self.master.after(1, self.process_queue)
+            self.master.after(10, self.process_queue)
 
 
     def finalize_corpus(self, corpus, transcription_errors=None):
