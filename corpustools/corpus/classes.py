@@ -758,6 +758,21 @@ class Corpus(object):
     def tiers(self):
         return self._tiers
 
+    @property
+    def attributes(self):
+        att = list()
+        if self.has_spelling:
+            att.append('spelling')
+        if self.has_transcription:
+            att.append('transcription')
+        att.append('frequency')
+        att += self.tiers
+        return att
+
+    @property
+    def words(self):
+        return sorted(list(self.wordlist.keys()))
+
     def features_to_segments(self, feature_description):
         segments = list()
         for k,v in self._inventory.items():
