@@ -115,7 +115,7 @@ class DownloadCorpusDialog(QDialog):
 
         self.exampleRadio = QRadioButton('Example toy corpus')
         self.iphodRadio = QRadioButton('IPHOD')
-        hbox = QHBoxLayout()
+        hbox = QVBoxLayout()
         hbox.addWidget(self.exampleRadio)
         hbox.addWidget(self.iphodRadio)
         corporaFrame.setLayout(hbox)
