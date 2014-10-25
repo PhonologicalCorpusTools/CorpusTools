@@ -8,6 +8,12 @@ from .models import CorpusModel
 
 from .corpusgui import CorpusLoadDialog
 
+from .ssgui import SSDialog
+from .asgui import ASDialog
+from .flgui import FLDialog
+from .fagui import FADialog
+from .pdgui import PDDialog
+
 
 class MainWindow(QMainWindow):
 
@@ -71,19 +77,34 @@ class MainWindow(QMainWindow):
         pass
 
     def stringSim(self):
-        pass
+        dialog = SSDialog(self)
+        result = dialog.exec_()
+        if result:
+            pass
 
     def freqOfAlt(self):
-        pass
+        dialog = FADialog(self)
+        result = dialog.exec_()
+        if result:
+            pass
 
     def predOfDist(self):
-        pass
+        dialog = PDDialog(self)
+        result = dialog.exec_()
+        if result:
+            pass
 
     def funcLoad(self):
-        pass
+        dialog = FLDialog(self)
+        result = dialog.exec_()
+        if result:
+            pass
 
     def acousticSim(self):
-        pass
+        dialog = ASDialog(self)
+        result = dialog.exec_()
+        if result:
+            pass
 
     def toggleWarnings(self):
         pass
