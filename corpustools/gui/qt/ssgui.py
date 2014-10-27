@@ -4,27 +4,24 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
                             QFileDialog, QComboBox)
 
+from .widgets import RadioSelectWidget
+
 class SSDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
 
+        self.corpus = corpus
         layout = QVBoxLayout()
 
         sslayout = QHBoxLayout()
 
-        algorithmFrame = QGroupBox('String similarity algorithm')
-
-        self.khorsiRadio = QRadioButton('Khorsi')
-        self.editDistRadio = QRadioButton('Edit distance')
-        self.phonEditDistRadio = QRadioButton('Phonological edit distance')
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.khorsiRadio)
-        vbox.addWidget(self.editDistRadio)
-        vbox.addWidget(self.phonEditDistRadio)
-        algorithmFrame.setLayout(vbox)
+        self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
+                                            {'Khorsi':'khorsi',
+                                            'Edit distance':'edit_distance',
+                                            'Phonological edit distance':'phono_edit_distance'})
 
 
-        sslayout.addWidget(algorithmFrame)
+        sslayout.addWidget(self.algorithmWidget)
 
         compFrame = QGroupBox('Comparison type')
 
@@ -56,31 +53,17 @@ class SSDialog(QDialog):
 
         optionLayout = QVBoxLayout()
 
-        typeTokenFrame = QGroupBox('Type or token')
+        self.typeTokenWidget = RadioSelectWidget('Type or token',
+                                            {'Count types':'type',
+                                            'Count tokens':'token'})
 
-        self.typeRadio = QRadioButton('Count types')
-        self.tokenRadio = QRadioButton('Count tokens')
+        optionLayout.addWidget(self.typeTokenWidget)
 
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.typeRadio)
-        vbox.addWidget(self.tokenRadio)
+        self.stringTypeWidget = RadioSelectWidget('String type',
+                                            {'Compare spelling':'spelling',
+                                            'Compare transcription':'transcription'})
 
-        typeTokenFrame.setLayout(vbox)
-
-        optionLayout.addWidget(typeTokenFrame)
-
-        stringTypeFrame = QGroupBox('String type')
-
-        self.spellingRadio = QRadioButton('Compare spelling')
-        self.transRadio = QRadioButton('Compare transcription')
-
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.spellingRadio)
-        vbox.addWidget(self.transRadio)
-
-        stringTypeFrame.setLayout(vbox)
-
-        optionLayout.addWidget(stringTypeFrame)
+        optionLayout.addWidget(self.stringTypeWidget)
 
         threshFrame = QGroupBox('Return only results between...')
 
@@ -121,3 +104,5 @@ class SSDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
+
+        self.setWindowTitle('String similarity')
