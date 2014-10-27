@@ -1,5 +1,5 @@
 
-from PyQt5.QtWidgets import QTableView, QAbstractItemView
+from PyQt5.QtWidgets import QTableView, QAbstractItemView, QWidget, QHeaderView
 
 class TableWidget(QTableView):
     def __init__(self,parent=None):
@@ -15,3 +15,9 @@ class TableWidget(QTableView):
         #header = self.horizontalHeader()
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+class ResultsWindow(QWidget):
+    def __init__(self,title,parent=None):
+        QWidget.__init__(self,parent)
+        self.dataModel = None

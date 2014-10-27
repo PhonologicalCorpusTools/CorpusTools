@@ -9,6 +9,8 @@ from corpustools.config import config
 
 from corpustools.corpus.io import load_binary, download_binary, load_corpus_csv, save_binary
 
+from .widgets import FileWidget
+
 def get_corpora_list():
     corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
     corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
@@ -227,16 +229,11 @@ class CorpusFromCsvDialog(QDialog):
 
         formLayout = QFormLayout()
 
-        pathLayout = QHBoxLayout()
-        self.pathEdit = QLineEdit()
-        pathButton = QPushButton('Choose file...')
-        pathButton.clicked.connect(self.pathSet)
-        pathLayout.addWidget(self.pathEdit)
-        pathLayout.addWidget(pathButton)
-        pathFrame = QFrame()
-        pathFrame.setLayout(pathLayout)
 
-        formLayout.addRow(QLabel('Path to corpus'),pathFrame)
+        self.pathFrame = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
+        self.pathFrame.pathEdit.textChanged.connect(self.updateName)
+
+        formLayout.addRow(QLabel('Path to corpus'),self.pathFrame)
 
         self.nameEdit = QLineEdit()
         formLayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
@@ -275,11 +272,8 @@ class CorpusFromCsvDialog(QDialog):
 
         self.setLayout(layout)
 
-    def pathSet(self):
-        filename = QFileDialog.getOpenFileName(self,'Open corpus csv', filter='Text files (*.txt *.csv)')
-        if filename:
-            self.pathEdit.setText(filename[0])
-            self.nameEdit.setText(os.path.split(filename[0])[1].split('.')[0])
+    def updateName(self):
+        self.nameEdit.setText(os.path.split(self.pathFrame.value())[1].split('.')[0])
 
     def accept(self):
         path = self.pathEdit.text()

@@ -77,25 +77,25 @@ class MainWindow(QMainWindow):
         pass
 
     def stringSim(self):
-        dialog = SSDialog(self)
+        dialog = SSDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
             pass
 
     def freqOfAlt(self):
-        dialog = FADialog(self)
+        dialog = FADialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
             pass
 
     def predOfDist(self):
-        dialog = PDDialog(self)
+        dialog = PDDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
             pass
 
     def funcLoad(self):
-        dialog = FLDialog(self)
+        dialog = FLDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
             pass
