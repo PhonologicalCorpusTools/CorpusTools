@@ -18,17 +18,19 @@ def neighborhood_density(corpus, query, max_distance=1, use_token_frequency=Fals
     float
         The number of neighbors for the queried word.
     """
-    query_transcription = corpus.find(query).transcription
-    neighbors = [w for w in corpus if (len(w.transcription) <= len(query)+max_distance
-                                   and len(w) >= len(query)-max_distance 
-                                   and is_neighbor(w.transcription, query_transcription, max_distance))]
-
     def is_neighbor(w, query, max_distance):
         return edit_distance(w, query, 'transcription') <= max_distance
+    
+    query_transcription = corpus.find(query).transcription
+    neighbors = [w for w in corpus if (len(w.transcription) <= len(query_transcription)+max_distance
+                                   and len(w.transcription) >= len(query_transcription)-max_distance 
+                                   and is_neighbor(w.transcription, query_transcription, max_distance))]
+
+
 
     # add option for token frequency
 
-    return len(neighbors)
+    return len(neighbors)-1
 
 
 
