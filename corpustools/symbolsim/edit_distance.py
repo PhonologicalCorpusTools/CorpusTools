@@ -1,3 +1,4 @@
+from corpustools.corpus.classes import Word
 
 def edit_distance(word1, word2, string_type):
     """Returns the Levenshtein edit distance between a string from
@@ -21,8 +22,15 @@ def edit_distance(word1, word2, string_type):
     int:
         the edit distance between two words
     """
-    s1 = getattr(word1, string_type)
-    s2 = getattr(word2, string_type)
+    if isinstance(word1, Word):
+        s1 = getattr(word1, string_type)
+    else:
+        s1 = word1
+    
+    if isinstance(word2, Word):
+        s2 = getattr(word2, string_type)
+    else:
+        s2 = word2
 
     if len(s1) >= len(s2):
         longer = s1
