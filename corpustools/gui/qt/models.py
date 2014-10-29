@@ -109,4 +109,36 @@ class EnvironmentModel(QAbstractTableModel):
 
 class ResultsModel(QAbstractTableModel):
     def __init__(self, header, data, parent=None):
-        super(ResultsModel, self).__init__(parent = parent)
+        QAbstractTableModel.__init__(self,parent)
+
+        self.columns = header
+
+        self.data = data
+
+    def rowCount(self,parent=None):
+        return len(self.data)
+
+    def columnCount(self,parent=None):
+        return len(self.columns)
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return None
+        elif role != Qt.DisplayRole:
+            return None
+        data = self.data[index.row()][index.column()]
+        if isinstance(data,float):
+            data = str(round(data,3))
+        elif isinstance(data,bool):
+            if data:
+                data = 'Yes'
+            else:
+                data = 'No'
+        return data
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.columns[col]
+        return QAbstractTableModel.headerData(self, col, orientation, role)
+
+

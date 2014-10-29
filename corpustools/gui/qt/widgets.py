@@ -2,7 +2,8 @@
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox, QSizePolicy, QButtonGroup)
+                            QFileDialog, QComboBox, QSizePolicy, QButtonGroup,
+                            QGridLayout)
 
 from .views import TableWidget
 
@@ -58,8 +59,10 @@ class InventoryBox(QGroupBox):
 
         self.inventory = inventory
 
-        box = QFormLayout()
+        box = QGridLayout()
         self.btnGroup = QButtonGroup()
+        row = 0
+        col = 0
         for s in inventory:
             btn = QPushButton(s.symbol)
             btn.setCheckable(True)
@@ -67,8 +70,12 @@ class InventoryBox(QGroupBox):
             btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
             btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
 
-            box.insertRow(0,btn)
+            box.addWidget(btn,row,col)
             self.btnGroup.addButton(btn)
+            col += 1
+            if col > 11:
+                col = 0
+                row += 1
 
         self.setLayout(box)
 
@@ -212,6 +219,9 @@ class SegmentPairSelectWidget(QGroupBox):
             for s in selected:
                 self.table.model().removeRow(s.row())
 
+    def value(self):
+        return self.table.model().pairs
+
 class EnvironmentDialog(QDialog):
     def __init__(self, inventory,parent=None):
         QDialog.__init__(self,parent)
@@ -354,3 +364,26 @@ class RadioSelectWidget(QGroupBox):
     def enable(self):
         for w in self.widgets:
             w.setEnabled(True)
+
+class ProgressDialog(QDialog):
+    def __init__(self,title,description,parent=None):
+        QDialog.__init__(self,parent)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel(description))
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.cancelButton)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle(title)
+
+    def accept(self,obj):
+        print('accepting??')
+        QDialog.accept(self)
