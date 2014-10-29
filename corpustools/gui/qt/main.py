@@ -1,10 +1,11 @@
 from PyQt5.QtGui import QFont, QKeySequence
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QHBoxLayout, QLabel, QAction,
                             QApplication, QWidget)
 
 from .config import Settings, PreferencesDialog
-from .views import TableWidget
-from .models import CorpusModel
+from .views import TableWidget, ResultsWindow
+from .models import CorpusModel, ResultsModel
 
 from .corpusgui import CorpusLoadDialog
 
@@ -98,7 +99,9 @@ class MainWindow(QMainWindow):
         dialog = FLDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
-            pass
+            dataModel = ResultsModel(dialog.header,dialog.results)
+            window = ResultsWindow('Functional load results',dataModel,self)
+            self.addDockWidget(Qt.RightDockWidgetArea, window)
 
     def acousticSim(self):
         dialog = ASDialog(self)

@@ -1,5 +1,9 @@
 
-from PyQt5.QtWidgets import QTableView, QAbstractItemView, QWidget, QHeaderView
+import csv
+
+from PyQt5.QtWidgets import (QTableView, QAbstractItemView, QWidget,
+                            QHeaderView, QDockWidget, QPushButton,
+                            QVBoxLayout, QFileDialog, QFrame)
 
 class TableWidget(QTableView):
     def __init__(self,parent=None):
@@ -15,9 +19,31 @@ class TableWidget(QTableView):
         #header = self.horizontalHeader()
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive|QHeaderView.Stretch|QHeaderView.ResizeToContents)
 
-class ResultsWindow(QWidget):
-    def __init__(self,title,parent=None):
-        QWidget.__init__(self,parent)
-        self.dataModel = None
+class ResultsWindow(QDockWidget):
+    def __init__(self, title, dataModel, parent=None):
+        QDockWidget.__init__(self, title, parent)
+
+        layout = QVBoxLayout()
+        self.table = TableWidget()
+        self.table.setModel(dataModel)
+        layout.addWidget(self.table)
+
+        self.saveButton = QPushButton('Save to file')
+        self.saveButton.clicked.connect(self.save)
+        frame = QFrame()
+        frame.setLayout(layout)
+        self.setWidget(frame)
+        self.table.resizeColumnsToContents()
+
+    def save(self):
+        filename = QFileDialog.getSaveFileName(self,'Choose save file',
+                        filter = 'Text files (*.txt *.csv)')
+        if filename:
+
+            with open(filename, mode='w', encoding='utf-8') as f:
+                writer = csv.writer(f, delimiter='\t')
+                writer.writerow(self.table.model().columns)
+                for row in self.table.model().data:
+                    writer.writerow(row)
