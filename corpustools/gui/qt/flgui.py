@@ -3,7 +3,7 @@ from PyQt5.QtCore import pyqtSignal as Signal,QThread
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox)
+                            QFileDialog, QComboBox,QProgressDialog, QCheckBox)
 
 from .widgets import SegmentPairSelectWidget, RadioSelectWidget, ProgressDialog
 
@@ -22,7 +22,6 @@ class FLWorker(QThread):
         self.kwargs = kwargs
 
     def run(self):
-        print('beginning')
         kwargs = self.kwargs
         self.results = list()
         if kwargs['pair_behavior'] == 'individual':
@@ -51,7 +50,6 @@ class FLWorker(QThread):
                         kwargs['frequency_cutoff'],
                         kwargs['type_or_token'])
             self.results.append(res)
-        print('emitting')
         self.dataReady.emit(self.results)
 
 
@@ -107,13 +105,16 @@ class FLDialog(QDialog):
 
         box = QVBoxLayout()
 
-        self.relativeCountWidget = RadioSelectWidget('Relative count',
-                                                    {'Use counts relative to number of possible pairs':True,
-                                                    'Use raw counts':False})
+        #self.relativeCountWidget = RadioSelectWidget('Relative count',
+        #                                            {'Use counts relative to number of possible pairs':True,
+        #                                            'Use raw counts':False})
 
-        self.homophoneWidget = RadioSelectWidget('Homophones',
-                                                {'Include homophones':True,
-                                                'Ignore homophones':False})
+        #self.homophoneWidget = RadioSelectWidget('Homophones',
+        #                                        {'Include homophones':True,
+        #                                        'Ignore homophones':False})
+
+        self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
+        self.homophoneWidget = QCheckBox('Include homophones')
 
         box.addWidget(self.relativeCountWidget)
         box.addWidget(self.homophoneWidget)
@@ -174,17 +175,18 @@ class FLDialog(QDialog):
         kwargs = {'corpus':self.corpus,
                 'segment_pairs':self.segPairWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
-                'relative_count':self.relativeCountWidget.value(),
-                'distinguish_homophones':self.homophoneWidget.value(),
+                'relative_count':self.relativeCountWidget.isChecked(),
+                'distinguish_homophones':self.homophoneWidget.isChecked(),
                 'pair_behavior':self.segPairOptionsWidget.value(),
                 'type_or_token':self.typeTokenWidget.value(),
                 'func_type':self.algorithmWidget.value()}
         self.thread.setParams(kwargs)
-        self.thread.start()
 
-        dialog = ProgressDialog('Calculating functional load...','Please be patient.',self)
+        dialog = QProgressDialog('Calculating functional load...','Cancel',0,0)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(dialog.accept)
+
+        self.thread.start()
 
         result = dialog.exec_()
         if result:
@@ -200,14 +202,24 @@ class FLDialog(QDialog):
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        for i, r in enumerate(results):
-            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                self.algorithmWidget.value(),
-                                r,
-                                self.homophoneWidget.value(),
-                                self.relativeCountWidget.value(),
-                                frequency_cutoff,
-                                self.typeTokenWidget.value()])
+        if self.segPairOptionsWidget.value() == 'individual':
+            for i, r in enumerate(results):
+                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                    self.algorithmWidget.value(),
+                                    r,
+                                    self.homophoneWidget.isChecked(),
+                                    self.relativeCountWidget.isChecked(),
+                                    frequency_cutoff,
+                                    self.typeTokenWidget.value()])
+        else:
+            self.results.append([', '.join(x[0] for x in seg_pairs),
+                                ', '.join(x[1] for x in seg_pairs),
+                                    self.algorithmWidget.value(),
+                                    results[0],
+                                    self.homophoneWidget.isChecked(),
+                                    self.relativeCountWidget.isChecked(),
+                                    frequency_cutoff,
+                                    self.typeTokenWidget.value()])
 
     def newTable(self):
         self.update = False

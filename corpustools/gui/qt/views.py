@@ -19,30 +19,34 @@ class TableWidget(QTableView):
         #header = self.horizontalHeader()
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive|QHeaderView.Stretch|QHeaderView.ResizeToContents)
+        #self.horizontalHeader().setMinimumSectionSize(100)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-class ResultsWindow(QDockWidget):
+class ResultsWindow(QWidget):
     def __init__(self, title, dataModel, parent=None):
-        QDockWidget.__init__(self, title, parent)
+        QWidget.__init__(self)#, parent)
 
         layout = QVBoxLayout()
         self.table = TableWidget()
         self.table.setModel(dataModel)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         layout.addWidget(self.table)
 
         self.saveButton = QPushButton('Save to file')
         self.saveButton.clicked.connect(self.save)
-        frame = QFrame()
-        frame.setLayout(layout)
-        self.setWidget(frame)
+        layout.addWidget(self.saveButton)
+        #frame = QFrame()
+        self.setLayout(layout)
+        #self.setWidget(frame)
         self.table.resizeColumnsToContents()
+        self.setWindowTitle(title)
 
     def save(self):
         filename = QFileDialog.getSaveFileName(self,'Choose save file',
                         filter = 'Text files (*.txt *.csv)')
         if filename:
 
-            with open(filename, mode='w', encoding='utf-8') as f:
+            with open(filename[0], mode='w', encoding='utf-8') as f:
                 writer = csv.writer(f, delimiter='\t')
                 writer.writerow(self.table.model().columns)
                 for row in self.table.model().data:

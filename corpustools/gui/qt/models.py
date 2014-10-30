@@ -1,5 +1,5 @@
 
-from PyQt5.QtCore import QAbstractTableModel, Qt
+from PyQt5.QtCore import QAbstractTableModel, Qt, QSize
 
 class CorpusModel(QAbstractTableModel):
     def __init__(self, corpus, parent=None):
@@ -134,11 +134,31 @@ class ResultsModel(QAbstractTableModel):
                 data = 'Yes'
             else:
                 data = 'No'
+        else:
+            data = str(data)
         return data
+
+    def sort(self, Ncol, order):
+        """Sort table by given column number.
+        """
+        self.layoutAboutToBeChanged.emit()
+        self.arraydata = sorted(self.arraydata, key=operator.itemgetter(Ncol))
+        if order == Qt.DescendingOrder:
+            self.arraydata.reverse()
+        self.layoutChanged.emit()
 
     def headerData(self, col, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self.columns[col]
+        #elif role == Qt.SizeHintRole:
+        #    return QSize(100,23)
         return QAbstractTableModel.headerData(self, col, orientation, role)
+
+
+    def addData(self,extra):
+        self.layoutAboutToBeChanged.emit()
+        self.data += extra
+        self.layoutChanged.emit()
+
 
 

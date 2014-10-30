@@ -338,6 +338,9 @@ class EnvironmentSelectWidget(QGroupBox):
             for s in selected:
                 self.table.model().removeRow(s.row())
 
+    def value(self):
+        return [x[0] for x in self.table.model().environments]
+
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options,parent=None):
         QGroupBox.__init__(self,title,parent)
@@ -355,6 +358,12 @@ class RadioSelectWidget(QGroupBox):
         for w in self.widgets:
             if w.isChecked():
                 return self.options[w.text()]
+        return ''
+
+    def name(self):
+        for w in self.widgets:
+            if w.isChecked():
+                return w.text()
         return ''
 
     def disable(self):
