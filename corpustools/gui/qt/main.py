@@ -45,6 +45,13 @@ class MainWindow(QMainWindow):
         self.createMenus()
         self.corpusModel = None
 
+
+        self.FLWindow = None
+        self.PDWindow = None
+        self.FAWindow = None
+        self.SSWindow = None
+        self.ASWindow = None
+
     def loadCorpus(self):
         dialog = CorpusLoadDialog(self)
         result = dialog.exec_()
@@ -93,21 +100,37 @@ class MainWindow(QMainWindow):
         dialog = PDDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
-            pass
+            if self.PDWindow is not None and dialog.update:
+                self.PDWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.PDWindow = ResultsWindow('Predictability of distribution results',dataModel,self)
+                self.PDWindow.show()
+                #self.addDockWidget(Qt.RightDockWidgetArea, window)
 
     def funcLoad(self):
         dialog = FLDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
-            dataModel = ResultsModel(dialog.header,dialog.results)
-            window = ResultsWindow('Functional load results',dataModel,self)
-            self.addDockWidget(Qt.RightDockWidgetArea, window)
+            if self.FLWindow is not None and dialog.update:
+                self.FLWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.FLWindow = ResultsWindow('Functional load results',dataModel,self)
+                self.FLWindow.show()
+                #self.addDockWidget(Qt.RightDockWidgetArea, window)
 
     def acousticSim(self):
         dialog = ASDialog(self)
         result = dialog.exec_()
         if result:
-            pass
+            if self.ASWindow is not None and dialog.update:
+                self.ASWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.ASWindow = ResultsWindow('Acoustic similarity results',dataModel,self)
+                self.ASWindow.show()
+                #self.addDockWidget(Qt.RightDockWidgetArea, window)
 
     def toggleWarnings(self):
         pass
