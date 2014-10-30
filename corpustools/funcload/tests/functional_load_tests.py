@@ -7,7 +7,9 @@ except ImportError:
     import os
     test_dir = os.path.dirname(os.path.abspath(__file__))
     corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
+    print(corpustools_path)
     sys.path.append(corpustools_path)
+    import corpustools
     from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
 from corpustools.funcload.functional_load import minpair_fl, deltah_fl
 from corpustools.corpus.classes import Segment

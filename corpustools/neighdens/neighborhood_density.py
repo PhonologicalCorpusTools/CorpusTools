@@ -30,6 +30,8 @@ def neighborhood_density(corpus, query, max_distance=1, use_token_frequency=Fals
 
     # add option for token frequency
 
+    # add option to return list of neighbors
+
     return len(neighbors)-1
 
 
