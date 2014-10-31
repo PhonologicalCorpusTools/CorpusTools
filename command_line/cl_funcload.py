@@ -2,18 +2,8 @@ import argparse
 import os
 import csv
 
-try:
-    from corpustools.corpus.io import load_binary
-except ImportError:
-    import sys
-    import os
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-    print(corpustools_path)
-    sys.path.append(corpustools_path)
-    import corpustools
-    from corpustools.corpus.io import load_binary
-    from corpustools.funcload.functional_load import *
+from corpustools.corpus.io import load_binary
+from corpustools.funcload.functional_load import *
 
 #### Parse command-line arguments
 parser = argparse.ArgumentParser(description = \
