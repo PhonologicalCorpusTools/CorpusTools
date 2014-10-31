@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
                             QFileDialog, QComboBox,QProgressDialog, QCheckBox)
 
+from collections import OrderedDict
+
 from .widgets import DirectoryWidget, RadioSelectWidget
 import os
 import corpustools.acousticsim.main as AS
@@ -60,14 +62,16 @@ class ASDialog(QDialog):
         optionLayout = QVBoxLayout()
 
         self.representationWidget = RadioSelectWidget('Represenation',
-                                                        {'MFCC':'mfcc',
-                                                        'Amplitude envelopes':'envelopes'})
+                                                        OrderedDict([('MFCC','mfcc'),
+                                                        ('Amplitude envelopes','envelopes')]),
+                                                        {'MFCC':self.mfccSelected,
+                                                        'Amplitude envelopes':self.envelopesSelected})
 
         optionLayout.addWidget(self.representationWidget)
 
         self.distAlgWidget = RadioSelectWidget('Distance algorithm',
-                                                        {'Dynamic time warping':'dtw',
-                                                        'Cross-correlation':'xcorr'})
+                                                        OrderedDict([('Dynamic time warping','dtw'),
+                                                        ('Cross-correlation','xcorr')]))
 
         optionLayout.addWidget(self.distAlgWidget)
 
@@ -147,6 +151,12 @@ class ASDialog(QDialog):
         self.setWindowTitle('Acoustic similarity')
 
         self.thread = ASWorker()
+
+    def mfccSelected(self):
+        self.coeffEdit.setEnabled(True)
+
+    def envelopesSelected(self):
+        self.coeffEdit.setEnabled(False)
 
     def calcAS(self):
         rep = self.representationWidget.value()

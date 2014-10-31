@@ -5,7 +5,9 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
                             QFileDialog, QComboBox,QProgressDialog, QCheckBox)
 
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget, ProgressDialog
+from collections import OrderedDict
+
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget
 
 import corpustools.funcload.functional_load as FL
 
@@ -79,16 +81,18 @@ class FLDialog(QDialog):
         layout.addWidget(flFrame)
 
         self.algorithmWidget = RadioSelectWidget('Functional load algorithm',
-                                            {'Minimal pairs':'min_pairs',
-                                            'Change in entropy':'entropy'})
+                                            OrderedDict([('Minimal pairs','min_pairs'),
+                                            ('Change in entropy','entropy')]),
+                                            {'Minimal pairs': self.minPairsSelected,
+                                            'Change in entropy': self.entropySelected})
 
         fllayout.addWidget(self.algorithmWidget)
 
         optionLayout = QVBoxLayout()
 
         self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
-                                                {'All segment pairs together':'together',
-                                                'Each segment pair individually':'individual'})
+                                                OrderedDict([('All segment pairs together','together'),
+                                                ('Each segment pair individually','individual')]))
 
         optionLayout.addWidget(self.segPairOptionsWidget)
 
@@ -128,8 +132,8 @@ class FLDialog(QDialog):
         box = QVBoxLayout()
 
         self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
-                                                    {'Type':'type',
-                                                    'Token':'token'})
+                                                    OrderedDict([('Type','type'),
+                                                    ('Token','token')]))
 
         box.addWidget(self.typeTokenWidget)
         entropyOptionFrame.setLayout(box)
@@ -166,6 +170,16 @@ class FLDialog(QDialog):
         self.setWindowTitle('Functional load')
 
         self.thread = FLWorker()
+
+    def minPairsSelected(self):
+        self.typeTokenWidget.disable()
+        self.relativeCountWidget.setEnabled(True)
+        self.homophoneWidget.setEnabled(True)
+
+    def entropySelected(self):
+        self.typeTokenWidget.enable()
+        self.relativeCountWidget.setEnabled(False)
+        self.homophoneWidget.setEnabled(False)
 
     def calcFL(self):
         try:

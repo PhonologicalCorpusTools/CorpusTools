@@ -5,27 +5,23 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
                             QFileDialog, QComboBox)
 
+from collections import OrderedDict
+
 from corpustools.config import config
 
 from corpustools.corpus.io import load_binary, download_binary, load_corpus_csv, save_binary
 
-from .widgets import FileWidget
+from .widgets import FileWidget, RadioSelectWidget
+
+from .featuregui import get_systems_list, system_name_to_path
 
 def get_corpora_list():
     corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
     corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
     return corpora
 
-def get_systems_list():
-    system_dir = os.path.join(config['storage']['directory'],'FEATURE')
-    systems = [x.split('.')[0] for x in os.listdir(system_dir)]
-    return systems
-
 def corpus_name_to_path(name):
     return os.path.join(config['storage']['directory'],'CORPUS',name+'.corpus')
-
-def system_name_to_path(name):
-    return os.path.join(config['storage']['directory'],'FEATURE',name+'.feature')
 
 class CorpusLoadDialog(QDialog):
     def __init__(self, parent):
@@ -83,6 +79,8 @@ class CorpusLoadDialog(QDialog):
 
         self.setLayout(layout)
 
+        self.setWindowTitle('Load corpora')
+
     def accept(self):
         selected = [x.text() for x in self.corporaList.selectedItems()]
         if selected:
@@ -113,17 +111,11 @@ class DownloadCorpusDialog(QDialog):
         QDialog.__init__(self, parent)
 
         layout = QVBoxLayout()
-        corporaFrame = QGroupBox('Select a corpus')
+        self.corporaWidget = RadioSelectWidget('Select a corpus',
+                                        OrderedDict([('Example toy corpus','example'),
+                                        ('IPHOD','iphod')]))
 
-        self.exampleRadio = QRadioButton('Example toy corpus')
-        self.iphodRadio = QRadioButton('IPHOD')
-        hbox = QVBoxLayout()
-        hbox.addWidget(self.exampleRadio)
-        hbox.addWidget(self.iphodRadio)
-        corporaFrame.setLayout(hbox)
-
-
-        layout.addWidget(corporaFrame)
+        layout.addWidget(self.corporaWidget)
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
@@ -143,32 +135,11 @@ class DownloadCorpusDialog(QDialog):
         self.setLayout(layout)
 
     def accept(self):
-        if self.exampleRadio.isChecked():
-            name = 'example'
-        elif self.iphodRadio.isChecked():
-            name = 'iphod'
+        name = self.corporaWidget.value()
         download_binary(name,corpus_name_to_path(name))
         QDialog.accept(self)
 
 class CorpusFromTextDialog(QDialog):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        layout = QVBoxLayout()
-
-        self.acceptButton = QPushButton('Ok')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-class AddFeatureDialog(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
         layout = QVBoxLayout()
@@ -300,62 +271,5 @@ class CorpusFromCsvDialog(QDialog):
         save_binary(corpus,corpus_name_to_path(name))
 
         QDialog.accept(self)
-
-
-
-class DownloadFeatureMatrixDialog(QDialog):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        layout = QVBoxLayout()
-
-        self.acceptButton = QPushButton('Ok')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-class EditFeatureMatrixDialog(QDialog):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        layout = QVBoxLayout()
-
-        self.acceptButton = QPushButton('Ok')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-class EditSegmentDialog(QDialog):
-    def __init__(self, parent):
-        QDialog.__init__(self, parent)
-        layout = QVBoxLayout()
-
-        self.acceptButton = QPushButton('Ok')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
 
 
