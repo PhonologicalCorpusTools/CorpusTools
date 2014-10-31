@@ -9,6 +9,8 @@ from .models import CorpusModel, ResultsModel
 
 from .corpusgui import CorpusLoadDialog
 
+from .featuregui import FeatureMatrixManager
+
 from .ssgui import SSDialog
 from .asgui import ASDialog
 from .flgui import FLDialog
@@ -61,7 +63,8 @@ class MainWindow(QMainWindow):
 
 
     def loadFeatureMatrices(self):
-        pass
+        dialog = FeatureMatrixManager(self)
+        result = dialog.exec_()
 
     def saveCorpus(self):
         pass
@@ -88,13 +91,23 @@ class MainWindow(QMainWindow):
         dialog = SSDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
-            pass
+            if self.SSWindow is not None and dialog.update:
+                self.SSWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.SSWindow = ResultsWindow('String similarity results',dataModel,self)
+                self.SSWindow.show()
 
     def freqOfAlt(self):
         dialog = FADialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
-            pass
+            if self.FAWindow is not None and dialog.update:
+                self.FAWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.FAWindow = ResultsWindow('Frequency of alternation results',dataModel,self)
+                self.FAWindow.show()
 
     def predOfDist(self):
         dialog = PDDialog(self, self.corpusModel.corpus)
@@ -106,7 +119,6 @@ class MainWindow(QMainWindow):
                 dataModel = ResultsModel(dialog.header,dialog.results)
                 self.PDWindow = ResultsWindow('Predictability of distribution results',dataModel,self)
                 self.PDWindow.show()
-                #self.addDockWidget(Qt.RightDockWidgetArea, window)
 
     def funcLoad(self):
         dialog = FLDialog(self, self.corpusModel.corpus)
@@ -118,7 +130,6 @@ class MainWindow(QMainWindow):
                 dataModel = ResultsModel(dialog.header,dialog.results)
                 self.FLWindow = ResultsWindow('Functional load results',dataModel,self)
                 self.FLWindow.show()
-                #self.addDockWidget(Qt.RightDockWidgetArea, window)
 
     def acousticSim(self):
         dialog = ASDialog(self)
@@ -130,7 +141,6 @@ class MainWindow(QMainWindow):
                 dataModel = ResultsModel(dialog.header,dialog.results)
                 self.ASWindow = ResultsWindow('Acoustic similarity results',dataModel,self)
                 self.ASWindow.show()
-                #self.addDockWidget(Qt.RightDockWidgetArea, window)
 
     def toggleWarnings(self):
         pass

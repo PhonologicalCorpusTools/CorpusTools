@@ -25,6 +25,8 @@ class FileWidget(QFrame):
         pathLayout.addWidget(pathButton)
         self.setLayout(pathLayout)
 
+        self.textChanged = self.pathEdit.textChanged
+
     def pathSet(self):
         filename = QFileDialog.getOpenFileName(self,self.title, filter=self.filefilter)
         if filename:
@@ -342,7 +344,7 @@ class EnvironmentSelectWidget(QGroupBox):
         return [x[0] for x in self.table.model().environments]
 
 class RadioSelectWidget(QGroupBox):
-    def __init__(self,title,options,parent=None):
+    def __init__(self,title,options, actions=None,parent=None):
         QGroupBox.__init__(self,title,parent)
 
         self.options = options
@@ -350,6 +352,8 @@ class RadioSelectWidget(QGroupBox):
         self.widgets = []
         for key in options.keys():
             w = QRadioButton(key)
+            if actions is not None:
+                w.clicked.connect(actions[key])
             self.widgets.append(w)
             vbox.addWidget(w)
         self.setLayout(vbox)
@@ -373,26 +377,3 @@ class RadioSelectWidget(QGroupBox):
     def enable(self):
         for w in self.widgets:
             w.setEnabled(True)
-
-class ProgressDialog(QDialog):
-    def __init__(self,title,description,parent=None):
-        QDialog.__init__(self,parent)
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel(description))
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.cancelButton)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-        self.setLayout(layout)
-
-        self.setWindowTitle(title)
-
-    def accept(self,obj):
-        print('accepting??')
-        QDialog.accept(self)
