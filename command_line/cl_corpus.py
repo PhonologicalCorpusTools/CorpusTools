@@ -1,5 +1,6 @@
 import argparse
 import os
+import codecs
 
 from corpustools.corpus.io import load_corpus_csv, save_binary
 
@@ -15,13 +16,15 @@ args = parser.parse_args()
 
 ####
 
+delimiter = codecs.getdecoder("unicode_escape")(args.delimiter)[0]
+
 try: # Unix filepaths
     filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name)
     corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name, 
-            args.delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'/'+args.feature_file_name)
+            delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'/'+args.feature_file_name)
     save_binary(corpus, filename+'.corpus')
 except FileNotFoundError: # Windows filepaths
     filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name)
     corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name, 
-            args.delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'\\'+args.feature_file_name)
+            delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'\\'+args.feature_file_name)
     save_binary(corpus, filename+'.corpus')
