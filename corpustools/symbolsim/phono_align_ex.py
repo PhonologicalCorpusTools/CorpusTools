@@ -19,13 +19,14 @@ class Aligner(object):
         self.tolerance = tolerance
         self.features = features
 
-        try:
-            self.silence_features = self.features['empty']
-        except (TypeError, KeyError):
-            feature_names = self.features.features
-            self.silence_features = {}
-            for feature in feature_names:
-                self.silence_features[feature] = '0'
+        if features_tf:
+            try:
+                self.silence_features = self.features['empty']
+            except (TypeError, KeyError):
+                feature_names = self.features.features
+                self.silence_features = {}
+                for feature in feature_names:
+                    self.silence_features[feature] = '0'
 
     def align(self, seq1=None, seq2=None):
         similarity_matrix = self.make_similarity_matrix(seq1, seq2)
@@ -120,11 +121,11 @@ class Aligner(object):
                 return (sum(check_feature_difference(fs1[k], fs2[k]) for k in fs1.keys()) * self.sub_penalty)
         else:
             if segment1 == 'empty':
-                return self.ins_penalty * underspec_cost
+                return 1
             elif segment2 == 'empty':
-                return self.del_penalty * underspec_cost
+                return 1
             else:
-                return int(segment1!=segment2) * self.sub_penalty
+                return int(segment1!=segment2)
 
 
     def generate_alignment(self, seq1, seq2, d):

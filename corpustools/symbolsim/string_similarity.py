@@ -96,6 +96,10 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             elif min_rel <= score:
                 filtered_data.append( (w1, w2, score) )
         elif max_rel != None and score <= max_rel:
+            print('')
+            print(w1)
+            print(w2)
+            print(score)
             filtered_data.append( (w1, w2, score) )
         else:
             filtered_data.append( (w1, w2, score) )
