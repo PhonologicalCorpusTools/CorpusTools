@@ -362,7 +362,7 @@ class RadioSelectWidget(QGroupBox):
         for w in self.widgets:
             if w.isChecked():
                 return self.options[w.text()]
-        return ''
+        return None
 
     def name(self):
         for w in self.widgets:
