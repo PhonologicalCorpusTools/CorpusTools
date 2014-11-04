@@ -3,28 +3,126 @@ import os
 import operator
 import sys
 from tkinter import (Toplevel, Frame, Listbox, Scrollbar, END, BOTH, LEFT,
-                    YES, X, FALSE, VERTICAL, Y, RAISED, FLAT, Label,
-                    StringVar, LabelFrame,Label, Button, Entry, Canvas, W)
+                    YES, X, FALSE, VERTICAL, Y, SUNKEN, RAISED, FLAT, Label,
+                    StringVar, LabelFrame,Label, Button, Entry, Canvas, W, N)
 from tkinter import Radiobutton as OldRadiobutton
 import tkinter.filedialog as FileDialog
 
 from corpustools.config import DEFAULT_DATA_DIR, CONFIG_PATH, LOG_DIR, ERROR_DIR, config
 
+
 class InventoryFrame(LabelFrame):
 
-    def __init__(self, inventory, var, text, colmax=10, master=None):
-        super(InventoryFrame, self).__init__(master=master, text=text)
-        ipa_frame = LabelFrame(self, text='Sounds')
-        seg1_frame = LabelFrame(ipa_frame, text=text)
-        col = 0
-        row = 0
-        for seg in inventory:
-            seg_button = OldRadiobutton(self, text=seg, variable=var, value=seg, indicatoron=0)
-            seg_button.grid(row=row, column=col)
+    def __init__(self, corpus, var, title, master=None):
+        super().__init__(master=master)
+        self.corpus = corpus
+        self.seg_var = var
+        self.configure(text=title)
+        self.buttons = list()
+        self.Cinventory_frame = LabelFrame(self)
+        self.Vinventory_frame = LabelFrame(self)
+        self.Cinventory_frame.grid(row=0,column=0,sticky=N, padx=5)
+        self.Vinventory_frame.grid(row=0,column=1,sticky=N, padx=5)
+
+
+    def show(self, hide=None):
+        """
+        Put the inventory on screen, making each segment a button that pops up
+        a window to view more detailed segmental information.
+
+        Arguments
+        ---------
+        hide    Can be 'C', 'V', or None. The strings hide either vowels or consonants
+                from being displayed. If hide is None, both are displayed.
+        """
+
+        if hide == 'V':
+            self.chosen_chart = ConsChart(self.Cinventory_frame)
+            self.populate_chart()
+            self.chosen_chart.grid()
+        elif hide == 'C':
+            self.chosen_chart = VowelChart(self.Vinventory_frame)
+            self.populate_chart()
+            self.chosen_chart.grid()
+        elif hide is None:
+            self.chosen_chart = ConsChart(self.Cinventory_frame)
+            self.populate_chart()
+            self.chosen_chart.grid()
+            self.chosen_chart = VowelChart(self.Vinventory_frame)
+            self.populate_chart()
+            self.chosen_chart.grid()
+
+    def populate_chart(self):
+
+        for seg in self.corpus.inventory:
+            if seg == '#':
+                continue
+            features = self.corpus.segment_to_features(seg)
+            if ((isinstance(self.chosen_chart, VowelChart) and (features['voc']=='+'))
+                or
+                (isinstance(self.chosen_chart, ConsChart) and (features['voc']=='-'))):
+
+                self.chosen_chart.match_to_chart(seg,features)
+
+        if isinstance(self.chosen_chart, ConsChart):
+            word = 'Consonant'
+        else:
+            word = 'Vowel'
+
+        self.chosen_chart.master.config(text='{} inventory'.format(word))
+
+        row = 1
+        col = 2
+
+        for cname in self.chosen_chart.col_names:
+            col_label = Label(self.chosen_chart.master, text=cname)
+            col_label.grid(row=1, column=col)
+            col += 1
+
+        for rname in self.chosen_chart.row_names:
+            row += 1
+            col = 1
+            row_label = Label(self.chosen_chart.master, text=rname)
+            row_label.grid(row=row, column=col)
+            for cname in self.chosen_chart.col_names:
+                col += 1
+                seg_box = Frame(self.chosen_chart.master, borderwidth=10)
+                seg_row = 0
+                seg_col = 0
+                seg_col_max = 4
+                seg_list = sorted(self.chosen_chart.display_matrix[rname][cname], key=lambda x: x[1]==False)
+
+                for seg,voiced in seg_list:
+                    seg_button = Button(seg_box, text=seg, background='grey')
+                    seg_button.bind('<Button-1>', self.select_seg)
+                    self.buttons.append(seg_button)
+                    seg_button.grid(row=seg_row, column=seg_col)
+                    seg_col += 1
+                    if seg_col == seg_col_max:
+                        seg_col = 0
+                        seg_row += 1
+                seg_box.grid(row=row,column=col)
+        row+=1
+        col=1
+        row_label = Label(self.chosen_chart.master, text='Uncategorized')
+        row_label.grid(row=row, column=col)
+        nomatch_box = Frame(self.chosen_chart.master, borderwidth=10)
+        for seg,marked in self.chosen_chart.display_matrix['nomatch']:
             col+=1
-            if col > colmax:
-                col = 0
-                row += 1
+            seg_box.grid(row=row, column=col)
+            seg_button = Button(nomatch_box, text=seg, background='grey')
+            seg_button.bind('<Button-1>', self.select_seg)
+            self.buttons.append(seg_button)
+            seg_button.grid()
+
+    def select_seg(self, event=None):
+        button = event.widget
+        seg_symbol = button.config('text')[-1]
+        self.seg_var.set(seg_symbol)
+        for b in self.buttons:
+            b.config(background='grey')
+        button.config(background='gold')
+
 
 class PreferencesWindow(Toplevel):
     def __init__(self,master=None, **options):
@@ -100,6 +198,96 @@ class FunctionWindow(Toplevel):
             self.show_tooltips = options.get('show_tooltips')
             del options['show_tooltips']
         super(FunctionWindow, self).__init__(master=master, **options)
+
+
+class IPAChart():
+    """
+    Base class for Consonant and Vowel charts. Includes methods for matching
+    a Segment to a chart
+    """
+
+    def match_to_chart(self,input_seg,input_features):
+        """
+        Takes a Segment as input an places it in the appropriate row
+        and column in a Chart
+        """
+
+        #the original code this comes from assumed a list as input, so I convert
+        #to one here. I also erase any 'n' values for the moment and treat them
+        #as '-' values.
+        input_features = [v+k if not v=='n' else '-'+k for (k,v) in input_features.items()]
+
+        #segments can be coloured in on a chart to show an additional feature
+        #value. right now voiced consonants are coloured in, and voiceless one
+        #are not and rounded vowels are coloured in while unrounced vowels
+        #are not
+        if ('-voc' in input_features) and ('+voice' in input_features):
+            marked = True
+        elif ('+voc' in input_features) and ('+round' in input_features):
+            marked = True
+        else:
+            marked = False
+
+        rmatch = False
+        cmatch = False
+        for rname,rfeatures in self.row_descriptions:
+            if all([feature in input_features for feature in rfeatures.split(',')]):
+                rmatch = rname
+                break
+
+        for cname,cfeatures in self.col_descriptions:
+            if all([feature in input_features for feature in cfeatures.split(',')]):
+                cmatch = cname
+                break
+
+        if not rmatch or not cmatch:
+            self.display_matrix['nomatch'].append((input_seg, marked))
+        else:
+            self.display_matrix[rmatch][cmatch].append((input_seg, marked))
+
+
+class VowelChart(Frame, IPAChart):
+
+    def __init__(self, master):
+        super(VowelChart,self).__init__(master)
+        self.row_descriptions = [('high','-low,+high'),
+                                ('low mid','-low,-high'),
+                                ('high mid','+low,+high'),
+                                ('low','+low,-high')]
+        self.row_names = [height for height,description in self.row_descriptions]
+        self.col_descriptions = [('front','-back'),
+                                ('mid','nback'),
+                                ('back','+back')]
+        self.col_names = [back for back,description in self.col_descriptions]
+        self.display_matrix = {rname:{cname:list() for cname in self.col_names} for rname in self.row_names}
+        self.display_matrix['nomatch'] = list()
+
+class ConsChart(Frame, IPAChart):
+    """
+    Frame for displaying only consonants. Roughly divided up using IPA-style
+    articulatory features, e.g. "labial", "dental", "palatal", etc. and
+    same for manners "stop", "nasal", "fricative", etc.
+    """
+
+    def __init__(self, master):
+        super(ConsChart,self).__init__(master)
+        self.row_descriptions = [('stop','-cont,-nasal,-son,-voc'),
+                            ('nasal','+nasal,+son,-voc'),
+                            ('-son nasal','+nasal,-son,-voc'),
+                            ('fricative','+cont,-son,-nasal,-voc'),
+                            ('lateral','+lat,-nasal,+son,-voc'),
+                            ('approximant','+son,-nasal,-voc')]
+        self.col_descriptions = [('labial','+ant,-cor,-back'),
+                            ('dental','+cor,+ant,-back'),
+                            ('coronal','+cor,-ant,-back'),
+                            ('palatal','-cor,-back,-ant'),
+                            ('velar','-cor,-ant,+back,+high'),
+                            ('uvular','-cor,-ant,+back,-high'),
+                            ('glottal', '+glot_cl,-cor,-ant'),]
+        self.col_names = ['labial', 'dental', 'coronal', 'palatal', 'velar', 'uvular', 'glottal']
+        self.row_names = ['stop', 'nasal', '-son nasal', 'fricative', 'lateral', 'approximant']
+        self.display_matrix = {rname:{cname:list() for cname in self.col_names} for rname in self.row_names}
+        self.display_matrix['nomatch'] = list()
 
 
 class ResultsWindow(Toplevel):
