@@ -104,8 +104,6 @@ class DownloadCorpusWindow(Toplevel):
         except queue.Empty:
             self.master.after(1, self.process_queue)
 
-
-
     def download_corpus(self,corpus_name,path):
         download_binary(corpus_name,path)
         #self.corpus_load_prog_bar.stop()

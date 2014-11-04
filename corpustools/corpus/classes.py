@@ -765,6 +765,14 @@ class Corpus(object):
                 segments.append(k)
         return segments
 
+    def segment_to_features(self, seg):
+        try:
+            features = self.specifier.matrix[seg]
+        except TypeError:
+            features = self.specifier.matrix[seg.symbol]
+        return features
+
+
     def add_tier(self, tier_name, tier_features):
         if tier_name not in self._tiers:
             self._tiers.append(tier_name)

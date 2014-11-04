@@ -37,11 +37,14 @@ class FAFunction(FunctionWindow):
         top_frame = Frame(self)
         inv_frame = LabelFrame(top_frame, text='Select two sounds')
         inv_frame_tooltip = ToolTip(inv_frame, text='Select the two sounds you wish to check for alternations.')
-        seg1_frame = InventoryFrame(self.corpus.inventory, self.seg1_var, 'Sound 1', master=inv_frame)
+        seg1_frame = InventoryFrame(self.corpus, self.seg1_var, 'Sound 1', master=inv_frame)
+        seg1_frame.show()
         seg1_frame.grid()
-        seg2_frame = InventoryFrame(self.corpus.inventory, self.seg2_var, 'Sound 2', master=inv_frame)
+        seg2_frame = InventoryFrame(self.corpus, self.seg2_var, 'Sound 2', master=inv_frame)
+        seg2_frame.show()
         seg2_frame.grid()
         inv_frame.grid(row=0,column=0,sticky=N,padx=10)
+        top_frame.grid()
 
         relator_type_frame = LabelFrame(top_frame, text='Distance metric')
         relator_type_tooltip = ToolTip(relator_type_frame, text=('Select which algorithm to'
