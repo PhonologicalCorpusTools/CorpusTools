@@ -3,7 +3,8 @@ from PyQt5.QtCore import pyqtSignal as Signal,QThread
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox,QProgressDialog, QCheckBox)
+                            QFileDialog, QComboBox,QProgressDialog, QCheckBox,
+                            QMessageBox)
 
 from collections import OrderedDict
 
@@ -164,6 +165,7 @@ class SSDialog(QDialog):
         self.compType = 'file'
 
     def calcSS(self):
+        from corpustools.corpus.classes import Word
         if self.minEdit.text() == '':
             min_rel = None
         else:
@@ -172,18 +174,88 @@ class SSDialog(QDialog):
             max_rel = None
         else:
             max_rel = float(self.maxEdit.text())
+        #Error checking
+        relType = self.algorithmWidget.value()
+        if relType is None:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a string similarity algorithm.")
+            return
+        typeToken = self.typeTokenWidget.value()
+        if typeToken is None and relType == 'khorsi':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify type or token frequency.")
+            return
+        strType = self.stringTypeWidget.value()
+        if strType is None and relType != 'phono_edit_distance':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a string type.")
+            return
         kwargs = {'corpus':self.corpus,
-                'relator_type':self.algorithmWidget.value(),
-                'string_type':self.stringTypeWidget.value(),
+                'relator_type': relType,
+                'string_type':strType,
                 'tier_name':self.stringTypeWidget.value(),
-                'count_what':self.typeTokenWidget.value(),
+                'count_what':typeToken,
                 'min_rel':min_rel,
                 'max_rel':max_rel}
-        if self.compType == 'one':
-            kwargs['query'] = self.oneWordEdit.text()
+        if self.compType is None:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a comparison type.")
+            return
+        elif self.compType == 'one':
+            text = self.oneWordEdit.text()
+            if not text:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify a word.")
+                return
+            try:
+                word = self.corpus.find(text)
+            except KeyError:
+                from corpustools.corpus.classes import Word
+                if strType == 'spelling':
+                    word = Word(spelling = text)
+                else:
+                    reply = QMessageBox.critical(self,
+                        "Invalid information", "'{}' was not found in corpus.".format(text))
+                    return
+            kwargs['query'] = word
         elif self.compType == 'two':
-            kwargs['query'] = (self.wordOneEdit.text(),self.wordTwoEdit.text())
+            textOne = self.wordOneEdit.text()
+            textTwo = self.wordTwoEdit.text()
+            if not textOne or not textTwo:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify both words.")
+                return
+            try:
+                wordOne = self.corpus.find(textOne)
+            except KeyError:
+                from corpustools.corpus.classes import Word
+                if strType == 'spelling':
+                    wordOne = Word(spelling = textOne)
+                else:
+                    reply = QMessageBox.critical(self,
+                        "Invalid information", "'{}' was not found in corpus.".format(textOne))
+                    return
+            try:
+                wordTwo = self.corpus.find(textTwo)
+            except KeyError:
+                if strType == 'spelling':
+                    wordTwo = Word(spelling = textTwo)
+                else:
+                    reply = QMessageBox.critical(self,
+                        "Invalid information", "'{}' was not found in corpus.".format(textTwo))
+                    return
+
+            kwargs['query'] = (wordOne,wordTwo)
         elif self.compType == 'file':
+            pairs_path = self.fileWidget.value()
+            if not pairs_path:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please enter a file path.")
+                return
+            if not os.path.exists(pairs_path):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The file path entered was not found.")
+                return
             kwargs['query'] = read_pairs_file(pairs_path)
         self.thread.setParams(kwargs)
 
