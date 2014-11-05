@@ -25,7 +25,7 @@ def read_segment_pairs(spfile):
 ####
 
 with open(args.segment_pairs_file_name) as segpairs_file:
-    corpus = load_binary(args.corpus_file_name)
+    corpus = load_binary(args.corpus_file_name)[0]
     segpairs = [line for line in csv.reader(segpairs_file, delimiter='\t') if len(line) > 0]
 
     result = minpair_fl(corpus, segpairs)
