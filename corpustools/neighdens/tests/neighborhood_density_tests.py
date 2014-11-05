@@ -1,16 +1,12 @@
 import unittest
 
-try:
-    from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
-except ImportError:
-    import sys
-    import os
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-    print(corpustools_path)
-    sys.path.append(corpustools_path)
-    import corpustools
-    from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
+import sys
+import os
+test_dir = os.path.dirname(os.path.abspath(__file__))
+corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
+print(corpustools_path)
+sys.path.insert(0, corpustools_path)
+from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
 
 from corpustools.neighdens.neighborhood_density import neighborhood_density
 from corpustools.corpus.classes import Segment
