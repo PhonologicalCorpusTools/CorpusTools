@@ -119,6 +119,30 @@ class Transcription(object):
                 return False
         return True
 
+    def __lt__(self,other):
+        if isinstance(other, Transcription):
+            return self._list < other._list
+        else:
+            return self._list < other
+
+    def __le__(self,other):
+        if isinstance(other, Transcription):
+            return (self._list == other._list or self._list < other._list)
+        else:
+            return self._list <= other
+
+    def __ge__(self,other):
+        if isinstance(other, Transcription):
+            return (self._list == other._list or self._list > other._list)
+        else:
+            return self._list >= other
+
+    def __gt__(self,other):
+        if isinstance(other, Transcription):
+            return self._list > other._list
+        else:
+            return self._list > other
+
     def match_segments(self, segments):
         """
         Returns a matching segments from a list of segments
@@ -218,6 +242,9 @@ class FeatureMatrix(object):
                 if f not in v:
                     self.matrix[k][f] = self._default_value
 
+    @property
+    def default_value(self):
+        return self._default_value
 
     @property
     def features(self):
@@ -788,6 +815,10 @@ class Corpus(object):
             word.add_tier(tier_name,tier_segs)
 
     def remove_tier(self, tier_name):
+        for i in range(len(self._tiers)):
+            if self._tiers[i] == tier_name:
+                del self._tiers[i]
+                break
         for word in self:
             word.remove_tier(tier_name)
 

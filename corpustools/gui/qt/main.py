@@ -7,9 +7,11 @@ from .config import Settings, PreferencesDialog
 from .views import TableWidget, ResultsWindow
 from .models import CorpusModel, ResultsModel
 
-from .corpusgui import CorpusLoadDialog
+from .corpusgui import (CorpusLoadDialog, AddTierDialog, RemoveTierDialog,
+                        ExportCorpusDialog)
 
-from .featuregui import FeatureMatrixManager
+from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
+                        ExportFeatureSystemDialog)
 
 from .ssgui import SSDialog
 from .asgui import ASDialog
@@ -30,8 +32,8 @@ class MainWindow(QMainWindow):
         self.move(self.settings['pos'])
 
         self.corpusTable = TableWidget(self)
-        font = QFont("Courier New", 14)
-        self.corpusTable.setFont(font)
+        #font = QFont("Courier New", 14)
+        #self.corpusTable.setFont(font)
         self.wrapper = QWidget()
         layout = QHBoxLayout(self.wrapper)
         layout.addWidget(self.corpusTable)
@@ -70,22 +72,36 @@ class MainWindow(QMainWindow):
         pass
 
     def exportCorpus(self):
-        pass
+        dialog = ExportCorpusDialog(self,self.corpusModel.corpus)
+        result = dialog.exec_()
+        if result:
+            pass
 
     def exportFeatureMatrix(self):
-        pass
+        dialog = ExportFeatureSystemDialog(self,self.corpusModel.corpus)
+        result = dialog.exec_()
+        if result:
+            pass
 
     def showPreferences(self):
         pass
 
     def showFeatureSystem(self):
-        pass
+        dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
 
     def createTier(self):
-        pass
+        dialog = AddTierDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.addTier(dialog.tierName, dialog.featureList)
+            self.corpusTable.horizontalHeader().resizeSections()
 
     def destroyTier(self):
-        pass
+        dialog = RemoveTierDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.removeTiers(dialog.tiers)
+            self.corpusTable.horizontalHeader().resizeSections()
 
     def stringSim(self):
         dialog = SSDialog(self, self.corpusModel.corpus)

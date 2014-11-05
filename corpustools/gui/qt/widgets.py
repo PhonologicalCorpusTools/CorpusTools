@@ -135,11 +135,8 @@ class FeatureBox(QGroupBox):
         self.envList.clear()
 
     def value(self):
-        string = ','.join([self.envList.itemAt(i,0).text() for i in range(self.envList.count())])
-        if string:
-            string = '[{}]'.format(string)
+        return [self.envList.itemAt(i,0).text() for i in range(self.envList.count())]
 
-        return string
 
 class SegmentPairDialog(QDialog):
     def __init__(self, inventory,parent=None):
