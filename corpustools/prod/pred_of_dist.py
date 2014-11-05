@@ -159,8 +159,8 @@ def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription', type_or_token
                     ' ,'.join(str(w) for w in miss_envs))
         if strict:
             raise(ExhaustivityError(error_string))
-        else:
-            warn(error_string, ExhaustivityWarning)
+        #else:
+        #    warn(error_string, ExhaustivityWarning)
 
     if overlap_envs:
         error_string = 'The following environments for {} overlapped:\n'.format(' and '.join([seg1, seg2]))
@@ -170,8 +170,8 @@ def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription', type_or_token
                     ' ,'.join(str(env) for env in v))
         if strict:
             raise(UniquenessError(error_string))
-        else:
-            warn(error_string, UniquenessWarning)
+        #else:
+        #    warn(error_string, UniquenessWarning)
 
     H_dict = OrderedDict()
 

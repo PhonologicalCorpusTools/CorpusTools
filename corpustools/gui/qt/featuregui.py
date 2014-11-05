@@ -28,6 +28,24 @@ def get_systems_list():
 def system_name_to_path(name):
     return os.path.join(config['storage']['directory'],'FEATURE',name+'.feature')
 
+class FeatureSystemSelect(QComboBox):
+    def __init__(self,parent=None,default = None):
+        QComboBox.__init__(self,parent)
+
+        self.addItem('')
+        for i,s in enumerate(get_systems_list()):
+            self.addItem(s)
+            if default is not None and s == default:
+                self.setCurrentIndex(i+1)
+
+    def value(self):
+        return self.currentText()
+
+    def path(self):
+        if self.value() != '':
+            return system_name_to_path(self.value())
+        return None
+
 class ExportFeatureSystemDialog(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
@@ -115,6 +133,11 @@ class DownloadFeatureMatrixDialog(QDialog):
         inlayout.addWidget(self.transWidget)
         inlayout.addWidget(self.featureWidget)
 
+        inframe = QFrame()
+        inframe.setLayout(inlayout)
+
+        layout.addWidget(inframe)
+
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
@@ -151,12 +174,7 @@ class EditFeatureMatrixDialog(QDialog):
 
         changeFrame = QGroupBox('Change feature systems')
         box = QFormLayout()
-        self.changeWidget = QComboBox()
-        self.changeWidget.addItem('')
-        for i,s in enumerate(get_systems_list()):
-            self.changeWidget.addItem(s)
-            if self.specifier is not None and s == self.specifier.name:
-                self.changeWidget.setCurrentIndex(i+1)
+        self.changeWidget = FeatureSystemSelect(default=self.specifier.name)
         self.changeWidget.currentIndexChanged.connect(self.changeFeatureSystem)
         box.addRow(self.changeWidget)
 
@@ -225,11 +243,11 @@ class EditFeatureMatrixDialog(QDialog):
         self.setWindowTitle('Edit feature system')
 
     def changeFeatureSystem(self):
-        name = self.changeWidget.currentText()
-        if name == '':
+        path = self.changeWidget.path()
+        if path is not None:
             self.specifier = None
         else:
-            self.specifier = load_binary(system_name_to_path(name))
+            self.specifier = load_binary(path)
         self.table.setModel(FeatureSystemModel(self.specifier))
 
     def addSegment(self):
@@ -341,7 +359,6 @@ class EditSegmentDialog(QDialog):
                     "Missing information", "Please specify a segment symbol.")
             return
         if self.seg in self.specifier and self.add:
-
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate symbol",
                     "The symbol '{}' already exists.  Overwrite?".format(self.seg), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
