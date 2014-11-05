@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
 
 from collections import OrderedDict
 
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, SaveFileWidget
 
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
@@ -128,7 +128,7 @@ class FADialog(QDialog):
 
         fileFrame = QGroupBox('Output file')
 
-        self.fileWidget = FileWidget('Select file location','Text files (*.txt)')
+        self.fileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
 
         vbox = QHBoxLayout()
         vbox.addWidget(self.fileWidget)

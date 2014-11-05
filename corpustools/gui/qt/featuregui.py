@@ -12,13 +12,14 @@ import codecs
 from corpustools.config import config
 
 from corpustools.corpus.io import (load_binary, download_binary,
-                    load_feature_matrix_csv, save_binary, DelimiterError)
+                    load_feature_matrix_csv, save_binary, DelimiterError,
+                    export_feature_matrix_csv)
 
 from .views import TableWidget
 
 from .models import FeatureSystemModel
 
-from .widgets import FileWidget, RadioSelectWidget
+from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
 
 def get_systems_list():
     system_dir = os.path.join(config['storage']['directory'],'FEATURE')
@@ -49,7 +50,25 @@ class FeatureSystemSelect(QComboBox):
 class ExportFeatureSystemDialog(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
+
+        self.specifier = corpus.specifier
         layout = QVBoxLayout()
+
+        inlayout = QFormLayout()
+
+        self.pathWidget = SaveFileWidget('Select file location','Text files (*.txt *.csv)')
+
+        inlayout.addRow('File name:',self.pathWidget)
+
+        self.columnDelimiterEdit = QLineEdit()
+        self.columnDelimiterEdit.setText(',')
+
+        inlayout.addRow('Column delimiter:',self.columnDelimiterEdit)
+
+        inframe = QFrame()
+        inframe.setLayout(inlayout)
+
+        layout.addWidget(inframe)
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
@@ -67,6 +86,24 @@ class ExportFeatureSystemDialog(QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle('Export feature system')
+
+    def accept(self):
+        filename = self.pathWidget.value()
+
+        if filename == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to save the corpus.")
+            return
+
+        colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+        if len(colDelim) != 1:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The column delimiter must be a single character.")
+            return
+
+        export_feature_matrix_csv(self.specifier,filename,colDelim)
+
+        QDialog.accept(self)
 
 class AddFeatureDialog(QDialog):
     def __init__(self, parent, specifier):
