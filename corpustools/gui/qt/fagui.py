@@ -3,7 +3,8 @@ from PyQt5.QtCore import pyqtSignal as Signal,QThread
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox, QCheckBox, QProgressDialog)
+                            QFileDialog, QComboBox, QCheckBox, QProgressDialog,
+                            QMessageBox)
 
 from collections import OrderedDict
 
@@ -50,10 +51,12 @@ class FADialog(QDialog):
                 'Type or token',
                 'Distance metric',
                 'Phonological alignment?']
-    def __init__(self, parent, corpus):
+
+    def __init__(self, parent, corpus, showToolTips):
         QDialog.__init__(self, parent)
 
         self.corpus = corpus
+        self.showToolTips = showToolTips
         layout = QVBoxLayout()
 
         falayout = QHBoxLayout()
@@ -84,9 +87,6 @@ class FADialog(QDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
-        #self.minPairsWidget = RadioSelectWidget('Minimal pairs',
-        #                                    {'Ignore minimal pairs':'ignore',
-        #                                    'Include minimal pairs':'include'})
         self.minPairsWidget = QCheckBox('Include minimal pairs')
 
         optionLayout.addWidget(self.minPairsWidget)
@@ -164,14 +164,73 @@ class FADialog(QDialog):
 
         layout.addWidget(acFrame)
 
+        if self.showToolTips:
+            self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which algorithm to'
+                                        ' use for calculating the similarity of words. This '
+                                        'is used to determine if two words could be considered'
+                                        ' an example of an alternation. For more information, '
+                                        'refer to "About this function" on the string similarity analysis option.'
+            "</FONT>"))
+            self.segPairWidget.setToolTip(("<FONT COLOR=black>"
+            'Select the two sounds you wish to check for alternations.'
+            "</FONT>"))
+            self.typeTokenWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which type of frequency to use'
+                                    ' for calculating similarity (only relevant for Khorsi). Type'
+                                    ' frequency means each letter is counted once per word. Token '
+                                    'frequency means each letter is counted as many times as its '
+                                    'words frequency in the corpus.'
+            "</FONT>"))
+            self.minPairsWidget.setToolTip(("<FONT COLOR=black>"
+            'Select whether to include minimal'
+                                    ' pairs as possible alternations. For example, if you possess'
+                                    ' knowledge that minimal pairs should never be counted as an'
+                                    ' alternation in the corpus, select "ignore minimal pairs".'
+            "</FONT>"))
+            threshFrame.setToolTip(("<FONT COLOR=black>"
+            'These values set the minimum similarity'
+                            ' or maximum distance needed in order to consider two words to be'
+                            ' considered a potential example of an alternation.'
+            "</FONT>"))
+            corpusSizeFrame.setToolTip(("<FONT COLOR=black>"
+            'Select this option to only '
+                                        'calculate frequency of alternation over a randomly-'
+                                        'selected subset of your corpus. This may be useful '
+                                        'for large corpora where calculating frequency of alternation '
+                                        'takes a very long time, or for doing Monte Carlo techniques. '
+                                        'Leave blank to use the entire corpus. Enter an integer to '
+                                        'get a subset of that exact size. Enter a decimal number to '
+                                        'get a proportionally sized subset, e.g. 0.25 will '
+                                        'get a subset that is a quarter the size of your original corpus.'
+            "</FONT>"))
+            self.fileWidget.setToolTip(("<FONT COLOR=black>"
+            'Enter a filename for the list '
+                                'of words with an alternation of the target two sounds to be outputted'
+                                ' to.  This is recommended as a means of double checking the quality '
+                                'of alternations as determined by the algorithm.'
+            "</FONT>"))
         self.setLayout(layout)
 
         self.setWindowTitle('Frequency of alternation')
 
         self.thread = FAWorker()
 
-    def calcFA(self):
-        pair_behaviour = 'individual'
+        self.progressDialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,0)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def generateKwargs(self):
+        pairBehaviour = 'individual'
+        kwargs = {'include_minimal_pairs':self.minPairsWidget.isChecked(),
+                    'phono_align':self.alignCheck.isChecked(),
+                    'count_what':self.typeTokenWidget.value()}
+        segPairs = self.segPairWidget.value()
+        if len(segPairs) == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one segment pair.")
+            return None
+        kwargs['segment_pairs'] = segPairs
         rel_type = self.algorithmWidget.value()
         if rel_type == 'khorsi':
             max_rel = None
@@ -185,10 +244,6 @@ class FADialog(QDialog):
                 max_rel = float(self.maxEdit.text())
             except ValueError:
                 max_rel = None
-        if self.fileWidget.value() != '':
-            out_file = self.fileWidget.text()
-        else:
-            out_file = None
         try:
             n = int(self.corpusSizeEdit.text())
             if n <= 0 or n >= len(self.corpus):
@@ -197,25 +252,27 @@ class FADialog(QDialog):
                 corpus = self.corpus.get_random_subset(n)
         except ValueError:
             corpus = self.corpus
-        kwargs = {'corpus':corpus,
-                'segment_pairs':self.segPairWidget.value(),
-                'relator_type': rel_type,
-                'min_rel':min_rel,
-                'max_rel':max_rel,
-                'include_minimal_pairs':self.minPairsWidget.isChecked(),
-                'phono_align':self.alignCheck.isChecked(),
-                'pair_behavior':pair_behaviour,
-                'count_what':self.typeTokenWidget.value(),
-                'output_filename': out_file}
-        self.thread.setParams(kwargs)
+        if self.fileWidget.value() != '':
+            out_file = self.fileWidget.text()
+        else:
+            out_file = None
+        kwargs['relator_type'] = rel_type
+        kwargs['corpus'] = corpus
+        kwargs['min_rel'] = min_rel
+        kwargs['max_rel'] = max_rel
+        kwargs['pair_behavior'] = pairBehaviour
+        kwargs['output_filename'] = out_file
+        return kwargs
 
-        dialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,0)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(dialog.accept)
+    def calcFA(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
 
         self.thread.start()
 
-        result = dialog.exec_()
+        result = self.progressDialog.exec_()
         if result:
             self.accept()
         else:

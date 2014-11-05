@@ -82,7 +82,10 @@ class InventoryBox(QGroupBox):
         self.setLayout(box)
 
     def value(self):
-        return self.btnGroup.checkedButton().text()
+        checked = self.btnGroup.checkedButton()
+        if checked is None:
+            return ''
+        return checked.text()
 
 class FeatureBox(QGroupBox):
     def __init__(self, title,features,parent=None):
@@ -232,7 +235,10 @@ class EnvironmentDialog(QDialog):
 
         self.envType = QComboBox()
         self.envType.addItem('Segments')
-        self.envType.addItem('Features')
+        if len(self.features) > 0:
+            self.envType.addItem('Features')
+        else:
+            layout.addWidget(QLabel('Features for environment selection are not available without a feature system.'))
 
         self.envType.currentIndexChanged.connect(self.generateFrames)
 
@@ -341,7 +347,7 @@ class EnvironmentSelectWidget(QGroupBox):
         return [x[0] for x in self.table.model().environments]
 
 class RadioSelectWidget(QGroupBox):
-    def __init__(self,title,options, actions=None,parent=None):
+    def __init__(self,title,options, actions=None, enabled=None,parent=None):
         QGroupBox.__init__(self,title,parent)
 
         self.options = options
@@ -351,8 +357,11 @@ class RadioSelectWidget(QGroupBox):
             w = QRadioButton(key)
             if actions is not None:
                 w.clicked.connect(actions[key])
+            if enabled is not None:
+                w.setEnabled(enabled[key])
             self.widgets.append(w)
             vbox.addWidget(w)
+        self.widgets[0].setChecked(True)
         self.setLayout(vbox)
 
     def value(self):

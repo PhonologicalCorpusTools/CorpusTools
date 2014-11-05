@@ -1,7 +1,7 @@
 from PyQt5.QtGui import QFont, QKeySequence
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QHBoxLayout, QLabel, QAction,
-                            QApplication, QWidget)
+                            QApplication, QWidget, QMessageBox)
 
 from .config import Settings, PreferencesDialog
 from .views import TableWidget, ResultsWindow
@@ -27,6 +27,9 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1000, 800)
 
         self.settings = Settings()
+
+        self.showWarnings = True
+        self.showToolTips = True
 
         self.resize(self.settings['size'])
         self.move(self.settings['pos'])
@@ -55,6 +58,26 @@ class MainWindow(QMainWindow):
         self.FAWindow = None
         self.SSWindow = None
         self.ASWindow = None
+
+    def check_for_empty_corpus(function):
+        def do_check(self):
+            if self.corpusModel is None or self.corpusModel.corpus is None:
+                reply = QMessageBox.critical(self,
+                        "Missing corpus", "There is no corpus loaded.")
+                return
+            else:
+                function(self)
+        return do_check
+
+    def check_for_transcription(function):
+        def do_check(self):
+            if not self.corpusModel.corpus.has_transcription:
+                reply = QMessageBox.critical(self,
+                        "Missing transcription", "This corpus has no transcriptions, so the requested cannot be performed.")
+                return
+            else:
+                function(self)
+        return do_check
 
     def loadCorpus(self):
         dialog = CorpusLoadDialog(self)
@@ -103,8 +126,9 @@ class MainWindow(QMainWindow):
             self.corpusModel.removeTiers(dialog.tiers)
             self.corpusTable.horizontalHeader().resizeSections()
 
+    @check_for_empty_corpus
     def stringSim(self):
-        dialog = SSDialog(self, self.corpusModel.corpus)
+        dialog = SSDialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.SSWindow is not None and dialog.update:
@@ -114,8 +138,10 @@ class MainWindow(QMainWindow):
                 self.SSWindow = ResultsWindow('String similarity results',dataModel,self)
                 self.SSWindow.show()
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def freqOfAlt(self):
-        dialog = FADialog(self, self.corpusModel.corpus)
+        dialog = FADialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FAWindow is not None and dialog.update:
@@ -125,8 +151,10 @@ class MainWindow(QMainWindow):
                 self.FAWindow = ResultsWindow('Frequency of alternation results',dataModel,self)
                 self.FAWindow.show()
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def predOfDist(self):
-        dialog = PDDialog(self, self.corpusModel.corpus)
+        dialog = PDDialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PDWindow is not None and dialog.update:
@@ -136,8 +164,10 @@ class MainWindow(QMainWindow):
                 self.PDWindow = ResultsWindow('Predictability of distribution results',dataModel,self)
                 self.PDWindow.show()
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def funcLoad(self):
-        dialog = FLDialog(self, self.corpusModel.corpus)
+        dialog = FLDialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FLWindow is not None and dialog.update:
@@ -148,7 +178,7 @@ class MainWindow(QMainWindow):
                 self.FLWindow.show()
 
     def acousticSim(self):
-        dialog = ASDialog(self)
+        dialog = ASDialog(self,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.ASWindow is not None and dialog.update:
@@ -159,10 +189,10 @@ class MainWindow(QMainWindow):
                 self.ASWindow.show()
 
     def toggleWarnings(self):
-        pass
+        self.showWarnings = not self.showWarnings
 
-    def toggleTooltips(self):
-        pass
+    def toggleToolTips(self):
+        self.showToolTips = not self.showToolTips
 
     def about(self):
         pass
@@ -228,10 +258,16 @@ class MainWindow(QMainWindow):
         self.toggleWarningsAct = QAction( "Show warnings",
                 self,
                 statusTip="Show warnings", triggered=self.toggleWarnings)
+        self.toggleWarningsAct.setCheckable(True)
+        if self.showWarnings:
+            self.toggleWarningsAct.setChecked(True)
 
-        self.toggleTooltipsAct = QAction( "Show tooltips",
+        self.toggleToolTipsAct = QAction( "Show tooltips",
                 self,
-                statusTip="Show tooltips", triggered=self.toggleTooltips)
+                statusTip="Show tooltips", triggered=self.toggleToolTips)
+        self.toggleToolTipsAct.setCheckable(True)
+        if self.showToolTips:
+            self.toggleToolTipsAct.setChecked(True)
 
         self.quitAct = QAction("&Quit", self, shortcut="Ctrl+Q",
                 statusTip="Quit the application", triggered=self.close)
@@ -261,7 +297,7 @@ class MainWindow(QMainWindow):
         self.editMenu.addAction(self.addTierAct)
         self.editMenu.addAction(self.removeTierAct)
         self.editMenu.addAction(self.toggleWarningsAct)
-        self.editMenu.addAction(self.toggleTooltipsAct)
+        self.editMenu.addAction(self.toggleToolTipsAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.stringsimAct)

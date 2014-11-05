@@ -3,7 +3,8 @@ from PyQt5.QtCore import pyqtSignal as Signal,QThread
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox,QProgressDialog, QCheckBox)
+                            QFileDialog, QComboBox,QProgressDialog, QCheckBox,
+                            QMessageBox)
 
 from collections import OrderedDict
 
@@ -40,9 +41,25 @@ class ASDialog(QDialog):
             'Number of coefficients',
             'Result',
             'Is similarity?']
-    def __init__(self, parent):
+
+    ABOUT = [('This function calculates the acoustic similarity of sound files in two'
+                ' directories by generating either MFCCs or amplitude envelopes for each'
+                ' sound file and using dynamic time warping or cross-correlation to get '
+                'the average distance/similarity across all tokens.'),
+                '',
+                'Coded by Michael McAuliffe',
+                '',
+                'References',
+                ('Ellis, Daniel P. W. 2005. PLP and RASTA (and MFCC, and'
+                ' inversion) in Matlab (online web resource).'
+                ' http://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/.'),
+                ('Lewandowski, Natalie. 2012. Talent in nonnative phonetic'
+                ' convergence. PhD Thesis.')]
+
+    def __init__(self, parent, showToolTips):
         QDialog.__init__(self, parent)
 
+        self.showToolTips = showToolTips
         layout = QVBoxLayout()
 
         aslayout = QHBoxLayout()
@@ -101,16 +118,10 @@ class ASDialog(QDialog):
 
         optionLayout.addWidget(freqResFrame)
 
-        #self.outputSimWidget = RadioSelectWidget('Output',
-        #                                                {'Output as similarity (0 to 1)':True,
-        #                                                'Output as distance':False})
         self.outputSimWidget = QCheckBox('Output as similarity (0 to 1)')
 
         optionLayout.addWidget(self.outputSimWidget)
 
-        #self.multiprocessingWidget = RadioSelectWidget('Multiprocessing',
-        #                                                {'Use multiprocessing':True,
-        #                                                'Use single core':False})
         self.multiprocessingWidget = QCheckBox('Use multiprocessing')
 
         optionLayout.addWidget(self.multiprocessingWidget)
@@ -145,6 +156,35 @@ class ASDialog(QDialog):
         acFrame.setLayout(acLayout)
 
         layout.addWidget(acFrame)
+
+        if self.showToolTips:
+            directoryFrame.setToolTip(("<FONT COLOR=black>"
+            'Choose two directories to compare sound files between.'
+            "</FONT>"))
+            self.representationWidget.setToolTip(("<FONT COLOR=black>"
+            'Choose how to represent acoustic waveforms.'
+            "</FONT>"))
+            self.distAlgWidget.setToolTip(("<FONT COLOR=black>"
+            'Choose how to compare representations.'
+            "</FONT>"))
+            freqLimFrame.setToolTip(("<FONT COLOR=black>"
+            'Choose frequency range.'
+            "</FONT>"))
+            freqResFrame.setToolTip(("<FONT COLOR=black>"
+            'Choose how many filters to divide the frequency range'
+                                            ' and how many coefficients to use for MFCC generation.'
+                                            ' Leave blank for reasonable defaults based on the'
+                                            ' representation.'
+            "</FONT>"))
+            self.outputSimWidget.setToolTip(("<FONT COLOR=black>"
+            'Choose whether the result should be similarity'
+                                            ' or distance. Similarity is inverse distance,'
+                                            ' and distance is inverse similarity'
+            "</FONT>"))
+            self.multiprocessingWidget.setToolTip(("<FONT COLOR=black>"
+            'Choose whether to use multiple processes.'
+                                            ' Multiprocessing is currently not supported'
+            "</FONT>"))
 
         self.setLayout(layout)
 
@@ -236,4 +276,5 @@ class ASDialog(QDialog):
         self.calcAS()
 
     def about(self):
-        pass
+        reply = QMessageBox.information(self,
+                "About predictability of distribution", '\n'.join(self.ABOUT))

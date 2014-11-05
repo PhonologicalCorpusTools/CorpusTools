@@ -41,21 +41,42 @@ class SSDialog(QDialog):
                 'String type',
                 'Type or token',
                 'Algorithm type']
-    def __init__(self, parent, corpus):
+
+    ABOUT = [('This function calculates the similarity between words in the corpus,'
+                ' based on either their spelling or their transcription. Similarity '
+                'is a function of the longest common shared sequences of graphemes '
+                'or phonemes (weighted by their frequency of occurrence in the corpus), '
+                'subtracting out the non-shared graphemes or phonemes. The spelling '
+                'version was originally proposed as a measure of morphological relatedness,'
+                ' but is more accurately described as simply a measure of string similarity.'),
+                '',
+                'Coded by Michael Fry',
+                '',
+                'References'
+                'Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.']
+
+    def __init__(self, parent, corpus, showToolTips):
         QDialog.__init__(self, parent)
 
         self.corpus = corpus
+        self.showToolTips = showToolTips
         layout = QVBoxLayout()
+        if not self.corpus.has_transcription:
+            layout.addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
 
         sslayout = QHBoxLayout()
 
+        algEnabled = {'Khorsi':True,
+                    'Edit distance':True,
+                    'Phonological edit distance':self.corpus.has_transcription}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([('Khorsi','khorsi'),
                                             ('Edit distance','edit_distance'),
                                             ('Phonological edit distance','phono_edit_distance')]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
-                                            'Phonological edit distance':self.phonoEditDistSelected})
+                                            'Phonological edit distance':self.phonoEditDistSelected},
+                                            algEnabled)
 
 
         sslayout.addWidget(self.algorithmWidget)
@@ -101,9 +122,12 @@ class SSDialog(QDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
+        stringEnabled = {'Compare spelling':True,
+                        'Compare transcription': self.corpus.has_transcription}
         self.stringTypeWidget = RadioSelectWidget('String type',
-                                            {'Compare spelling':'spelling',
-                                            'Compare transcription':'transcription'})
+                                    OrderedDict([('Compare spelling', 'spelling'),
+                                    ('Compare transcription','transcription')]),
+                                    enabled = stringEnabled)
 
         optionLayout.addWidget(self.stringTypeWidget)
 
@@ -148,6 +172,41 @@ class SSDialog(QDialog):
         acFrame.setLayout(acLayout)
 
         layout.addWidget(acFrame)
+
+        if self.showToolTips:
+            self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which algorithm'
+                                        ' to use for calculating similarity. For Khorsi,'
+                                        ' a larger number means strings are more similar.'
+                                        ' For edit distance, a smaller number means strings'
+                                        ' are more similar (with 0 being identical). For more'
+                                        ' information, click on \'About this function\'.'
+            "</FONT>"))
+            compFrame.setToolTip(("<FONT COLOR=black>"
+            'Select how you would'
+                                ' like to use string similarity. You can 1) calculate the'
+                                ' similarity of one word to all other words in the corpus,'
+                                ' 2) calculate the similarity of 2 words to each other, 3)'
+                                ' calculate the similarity of a list of pairs of words in a text file.'
+            "</FONT>"))
+            self.typeTokenWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which type of frequency to use'
+                                    ' for calculating similarity (only relevant for Khorsi). Type '
+                                    'frequency means each letter is counted once per word. Token '
+                                    'frequency means each letter is counted as many times as its '
+                                    'word\'s frequency in the corpus.'
+            "</FONT>"))
+            self.stringTypeWidget.setToolTip(("<FONT COLOR=black>"
+            'Select whether to calculate similarity'
+                                ' on the spelling of a word (perhaps more useful for morphological purposes)'
+                                ' or transcription of a word (perhaps more useful for phonological purposes).'
+            "</FONT>"))
+            threshFrame.setToolTip(("<FONT COLOR=black>"
+            'Select the range of similarity'
+                                ' scores for the algorithm to filter out.  For example, a minimum'
+                                ' of -10 for Khorsi or a maximum of 8 for edit distance will likely'
+                                ' filter out words that are highly different from each other.'
+            "</FONT>"))
 
         self.setLayout(layout)
 
@@ -217,7 +276,7 @@ class SSDialog(QDialog):
                     reply = QMessageBox.critical(self,
                         "Invalid information", "'{}' was not found in corpus.".format(text))
                     return
-            kwargs['query'] = word
+            kwargs['query'] = word.spelling
         elif self.compType == 'two':
             textOne = self.wordOneEdit.text()
             textTwo = self.wordTwoEdit.text()
@@ -245,7 +304,7 @@ class SSDialog(QDialog):
                         "Invalid information", "'{}' was not found in corpus.".format(textTwo))
                     return
 
-            kwargs['query'] = (wordOne,wordTwo)
+            kwargs['query'] = (wordOne.spelling,wordTwo.spelling)
         elif self.compType == 'file':
             pairs_path = self.fileWidget.value()
             if not pairs_path:
@@ -297,7 +356,8 @@ class SSDialog(QDialog):
         self.calcSS()
 
     def about(self):
-        pass
+        reply = QMessageBox.information(self,
+                "About string similarity", '\n'.join(self.ABOUT))
 
     def khorsiSelected(self):
         self.stringTypeWidget.enable()

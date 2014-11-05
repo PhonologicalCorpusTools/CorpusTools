@@ -1,4 +1,5 @@
 import os
+import codecs
 
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
@@ -13,7 +14,7 @@ from corpustools.corpus.io import load_binary, download_binary, load_corpus_csv,
 
 from .widgets import FileWidget, RadioSelectWidget, FeatureBox
 
-from .featuregui import get_systems_list, system_name_to_path
+from .featuregui import FeatureSystemSelect
 
 def get_corpora_list():
     corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
@@ -326,10 +327,10 @@ class CorpusFromCsvDialog(QDialog):
         formLayout = QFormLayout()
 
 
-        self.pathFrame = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
-        self.pathFrame.pathEdit.textChanged.connect(self.updateName)
+        self.pathWidget = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
+        self.pathWidget.pathEdit.textChanged.connect(self.updateName)
 
-        formLayout.addRow(QLabel('Path to corpus'),self.pathFrame)
+        formLayout.addRow(QLabel('Path to corpus'),self.pathWidget)
 
         self.nameEdit = QLineEdit()
         formLayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
@@ -342,12 +343,9 @@ class CorpusFromCsvDialog(QDialog):
         self.transDelimiterEdit.setText('.')
         formLayout.addRow(QLabel('Transcription delimiter'),self.transDelimiterEdit)
 
-        self.featureSystemEdit = QComboBox()
-        self.featureSystemEdit.addItem('')
-        for fs in get_systems_list():
-            self.featureSystemEdit.addItem(fs)
+        self.featureSystemSelect = FeatureSystemSelect()
 
-        formLayout.addRow(QLabel('Feature system (if applicable)'),self.featureSystemEdit)
+        formLayout.addRow(QLabel('Feature system (if applicable)'),self.featureSystemSelect)
 
         formFrame = QFrame()
         formFrame.setLayout(formLayout)
@@ -371,16 +369,39 @@ class CorpusFromCsvDialog(QDialog):
         self.setWindowTitle('Create corpus from csv')
 
     def updateName(self):
-        self.nameEdit.setText(os.path.split(self.pathFrame.value())[1].split('.')[0])
+        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
 
     def accept(self):
-        path = self.pathEdit.text()
+        path = self.pathWidget.value()
+        if path == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to the csv file.")
+            return
+        if not os.path.exists(path):
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The specified file does not exist.")
+            return
+
         name = self.nameEdit.text()
-        colDelim = self.columnDelimiterEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name to the csv file.")
+            return
+        if name in get_corpora_list():
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+        if len(colDelim) != 1:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The column delimiter must be a single character.")
+            return
         transDelim = self.transDelimiterEdit.text()
-        featureSystem = self.featureSystemEdit.currentText()
-        if featureSystem:
-            featureSystem = system_name_to_path(featureSystem)
+
+        featureSystem = self.featureSystemSelect.path()
         corpus,errors = load_corpus_csv(name, path, colDelim, transDelim,featureSystem)
 
         if errors:
@@ -388,7 +409,7 @@ class CorpusFromCsvDialog(QDialog):
                     "{} were all missing from the feature system.  Would you like to initialize them as unspecified?".format(', '.join(errors.keys())), QMessageBox.NoButton, self)
             msgBox.addButton("Yes", QMessageBox.AcceptRole)
             msgBox.addButton("No", QMessageBox.RejectRole)
-            if msgBox.exec_() != QMessageBox.AcceptRole:
+            if msgBox.exec_() == QMessageBox.AcceptRole:
                 for s in errors:
                     corpus.specifier.add_segment(s.strip('\''),{})
                 corpus.specifier.validate()

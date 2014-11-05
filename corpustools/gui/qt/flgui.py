@@ -3,7 +3,8 @@ from PyQt5.QtCore import pyqtSignal as Signal,QThread
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox,QProgressDialog, QCheckBox)
+                            QFileDialog, QComboBox,QProgressDialog, QCheckBox,
+                            QMessageBox)
 
 from collections import OrderedDict
 
@@ -65,10 +66,26 @@ class FLDialog(QDialog):
                 'Relative count?',
                 'Minimum word frequency',
                 'Type or token']
-    def __init__(self, parent, corpus):
+
+    ABOUT = [('This function calculates the functional load of the contrast'
+                    ' between any two segments, based on either the number of minimal'
+                    ' pairs or the change in entropy resulting from merging that contrast.'),
+                    '',
+                    'Coded by Blake Allen',
+                    '',
+                    'References',
+                    ('Surendran, Dinoj & Partha Niyogi. 2003. Measuring'
+                    ' the functional load of phonological contrasts.'
+                    ' In Tech. Rep. No. TR-2003-12.'),
+                    ('Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013.'
+                    ' High functional load inhibits phonological contrast'
+                    ' loss: A corpus study. Cognition 128.179-86')]
+
+    def __init__(self, parent, corpus, showToolTips):
         QDialog.__init__(self, parent)
 
         self.corpus = corpus
+        self.showToolTips = showToolTips
         layout = QVBoxLayout()
 
         flFrame = QFrame()
@@ -108,14 +125,6 @@ class FLDialog(QDialog):
         minPairOptionFrame = QGroupBox('Minimal pair options')
 
         box = QVBoxLayout()
-
-        #self.relativeCountWidget = RadioSelectWidget('Relative count',
-        #                                            {'Use counts relative to number of possible pairs':True,
-        #                                            'Use raw counts':False})
-
-        #self.homophoneWidget = RadioSelectWidget('Homophones',
-        #                                        {'Include homophones':True,
-        #                                        'Ignore homophones':False})
 
         self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
         self.homophoneWidget = QCheckBox('Include homophones')
@@ -165,11 +174,46 @@ class FLDialog(QDialog):
 
         layout.addWidget(acFrame)
 
+        if self.showToolTips:
+            self.homophoneWidget.setToolTip(("<FONT COLOR=black>"
+            'This setting will overcount alternative'
+                            ' spellings of the same word, e.g. axel~actual and axle~actual,'
+                            ' but will allow you to count e.g. sock~shock twice, once for each'
+                            ' meaning of \'sock\' (footwear vs. punch)'
+            "</FONT>"))
+
+            self.relativeCountWidget.setToolTip(("<FONT COLOR=black>"
+            'The raw count of minimal pairs will'
+                            ' be divided by the number of words that include any of the target segments'
+                            ' present in the list at the left.'
+            "</FONT>"))
+            self.segPairOptionsWidget.setToolTip(("<FONT COLOR=black>"
+            'Choose either to calculate the'
+                                ' functional load of a particular contrast among a group of segments'
+                                ' to calculate the functional loads of a series of segment pairs separately.'
+            "</FONT>"))
+            self.segPairWidget.setToolTip(("<FONT COLOR=black>"
+            'Add pairs of sounds whose contrast to collapse.'
+                                    ' For example, if you\'re interested in the functional load of the [s]'
+                                    ' / [z] contrast, you only need to add that pair. If, though, you\'re'
+                                    ' interested in the functional load of the voicing contrast among obstruents,'
+                                    ' you may need to add (p, b), (t, d), and (k, g).'
+            "</FONT>"))
+            self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
+            'Calculate the functional load either using'
+                            ' the contrast between two sets of segments as a count of minimal pairs'
+                            ' or using the decrease in corpus'
+                            ' entropy caused by a merger of paired segments in the set.'
+            "</FONT>"))
         self.setLayout(layout)
 
         self.setWindowTitle('Functional load')
 
         self.thread = FLWorker()
+
+        self.progressDialog = QProgressDialog('Calculating functional load...','Cancel',0,0)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
 
     def minPairsSelected(self):
         self.typeTokenWidget.disable()
@@ -181,28 +225,35 @@ class FLDialog(QDialog):
         self.relativeCountWidget.setEnabled(False)
         self.homophoneWidget.setEnabled(False)
 
-    def calcFL(self):
+    def generateKwargs(self):
+        segPairs = self.segPairWidget.value()
+        if len(segPairs) == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one segment pair.")
+            return None
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        kwargs = {'corpus':self.corpus,
-                'segment_pairs':self.segPairWidget.value(),
+        return {'corpus':self.corpus,
+                'segment_pairs':segPairs,
                 'frequency_cutoff':frequency_cutoff,
                 'relative_count':self.relativeCountWidget.isChecked(),
                 'distinguish_homophones':self.homophoneWidget.isChecked(),
                 'pair_behavior':self.segPairOptionsWidget.value(),
                 'type_or_token':self.typeTokenWidget.value(),
                 'func_type':self.algorithmWidget.value()}
-        self.thread.setParams(kwargs)
 
-        dialog = QProgressDialog('Calculating functional load...','Cancel',0,0)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(dialog.accept)
+
+    def calcFL(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
 
         self.thread.start()
 
-        result = dialog.exec_()
+        result = self.progressDialog.exec_()
         if result:
             self.accept()
         else:
@@ -244,4 +295,5 @@ class FLDialog(QDialog):
         self.calcFL()
 
     def about(self):
-        pass
+        reply = QMessageBox.information(self,
+                "About functional load", '\n'.join(self.ABOUT))
