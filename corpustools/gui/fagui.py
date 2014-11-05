@@ -143,9 +143,9 @@ class FAFunction(FunctionWindow):
         top_frame.grid(row=0,column=0)
 
         bottom_frame = Frame(self)
-        ok_button = Button(bottom_frame, text='Calculate alignment\n(start new results table)', command=self.calculate_freq_of_alt)
+        ok_button = Button(bottom_frame, text='Calculate frequency of alternation\n(start new results table)', command=self.calculate_freq_of_alt)
         ok_button.grid(row=0,column=0)
-        self.update_fa_button = Button(bottom_frame, text='Calculate alignment\n(add to current results table)', command=lambda x=True:self.calculate_freq_of_alt(update=x))
+        self.update_fa_button = Button(bottom_frame, text='Calculate frequency of alternation\n(add to current results table)', command=lambda x=True:self.calculate_freq_of_alt(update=x))
         self.update_fa_button.grid(row=0,column=1)
         self.update_fa_button.config(state=DISABLED)
         cancel_button = Button(bottom_frame, text='Cancel', command=self.cancel_freq_of_alt)
