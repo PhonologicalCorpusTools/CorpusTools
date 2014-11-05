@@ -10,9 +10,10 @@ from collections import OrderedDict
 
 from corpustools.config import config
 
-from corpustools.corpus.io import load_binary, download_binary, load_corpus_csv, save_binary
+from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
+                                    save_binary,export_corpus_csv)
 
-from .widgets import FileWidget, RadioSelectWidget, FeatureBox
+from .widgets import FileWidget, RadioSelectWidget, FeatureBox, SaveFileWidget
 
 from .featuregui import FeatureSystemSelect
 
@@ -420,7 +421,31 @@ class CorpusFromCsvDialog(QDialog):
 class ExportCorpusDialog(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
+
+        self.corpus = corpus
+
         layout = QVBoxLayout()
+
+        inlayout = QFormLayout()
+
+        self.pathWidget = SaveFileWidget('Select file location','Text files (*.txt *.csv)')
+
+        inlayout.addRow('File name:',self.pathWidget)
+
+        self.columnDelimiterEdit = QLineEdit()
+        self.columnDelimiterEdit.setText(',')
+
+        inlayout.addRow('Column delimiter:',self.columnDelimiterEdit)
+
+        self.transDelimiterEdit = QLineEdit()
+        self.transDelimiterEdit.setText('.')
+
+        inlayout.addRow('Transcription delimiter:',self.transDelimiterEdit)
+
+        inframe = QFrame()
+        inframe.setLayout(inlayout)
+
+        layout.addWidget(inframe)
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
@@ -439,3 +464,21 @@ class ExportCorpusDialog(QDialog):
 
         self.setWindowTitle('Export corpus')
 
+    def accept(self):
+        filename = self.pathWidget.value()
+
+        if filename == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to save the corpus.")
+            return
+
+        colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+        if len(colDelim) != 1:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The column delimiter must be a single character.")
+            return
+        transDelim = self.transDelimiterEdit.text()
+
+        export_corpus_csv(self.corpus,filename,colDelim,transDelim)
+
+        QDialog.accept(self)

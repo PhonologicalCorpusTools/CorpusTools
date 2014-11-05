@@ -373,10 +373,10 @@ def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
 
     """
     with open(path, encoding='utf-8', mode='w') as f:
-        header = ['symbol'] + feature_matrix.get_feature_list()
+        header = ['symbol'] + feature_matrix.features
         writer = DictWriter(f, header,delimiter=delimiter)
         writer.writerow({h: h for h in header})
-        for seg in feature_matrix.get_segments():
+        for seg in feature_matrix.segments:
             #If FeatureMatrix uses dictionaries
             #outdict = feature_matrix[seg]
             #outdict['symbol'] = seg

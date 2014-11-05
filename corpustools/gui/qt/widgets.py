@@ -35,6 +35,32 @@ class FileWidget(QFrame):
     def value(self):
         return self.pathEdit.text()
 
+class SaveFileWidget(QFrame):
+    def __init__(self,title,filefilter,parent=None):
+        QFrame.__init__(self,parent)
+
+        self.title = title
+
+        self.filefilter = filefilter
+
+        pathLayout = QHBoxLayout()
+        self.pathEdit = QLineEdit()
+        pathButton = QPushButton('Choose file...')
+        pathButton.clicked.connect(self.pathSet)
+        pathLayout.addWidget(self.pathEdit)
+        pathLayout.addWidget(pathButton)
+        self.setLayout(pathLayout)
+
+        self.textChanged = self.pathEdit.textChanged
+
+    def pathSet(self):
+        filename = QFileDialog.getSaveFileName(self,self.title, filter=self.filefilter)
+        if filename:
+            self.pathEdit.setText(filename[0])
+
+    def value(self):
+        return self.pathEdit.text()
+
 class DirectoryWidget(QFrame):
     def __init__(self,parent=None):
         QFrame.__init__(self,parent)
