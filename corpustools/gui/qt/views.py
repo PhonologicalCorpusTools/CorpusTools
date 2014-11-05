@@ -21,6 +21,7 @@ class TableWidget(QTableView):
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
         #self.horizontalHeader().setMinimumSectionSize(100)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.setSortingEnabled(True)
 
 class ResultsWindow(QWidget):
     def __init__(self, title, dataModel, parent=None):

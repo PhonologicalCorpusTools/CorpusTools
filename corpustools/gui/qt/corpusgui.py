@@ -3,7 +3,7 @@ import os
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox)
+                            QFileDialog, QComboBox, QMessageBox)
 
 from collections import OrderedDict
 
@@ -11,7 +11,7 @@ from corpustools.config import config
 
 from corpustools.corpus.io import load_binary, download_binary, load_corpus_csv, save_binary
 
-from .widgets import FileWidget, RadioSelectWidget
+from .widgets import FileWidget, RadioSelectWidget, FeatureBox
 
 from .featuregui import get_systems_list, system_name_to_path
 
@@ -53,6 +53,8 @@ class CorpusLoadDialog(QDialog):
 
         self.downloadButton.clicked.connect(self.openDownloadWindow)
         self.loadFromCsvButton.clicked.connect(self.openCsvWindow)
+        self.loadFromTextButton.clicked.connect(self.openTextWindow)
+        self.removeButton.clicked.connect(self.removeCorpus)
 
         buttonFrame = QFrame()
         buttonFrame.setLayout(buttonLayout)
@@ -99,6 +101,20 @@ class CorpusLoadDialog(QDialog):
         if result:
             self.getAvailableCorpora()
 
+    def openTextWindow(self):
+        pass
+
+    def removeCorpus(self):
+        corpus = self.corporaList.currentItem().text()
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove corpus",
+                "This will permanently remove '{}'.  Are you sure?".format(corpus), QMessageBox.NoButton, self)
+        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
+            return
+        os.remove(corpus_name_to_path(corpus))
+        self.getAvailableCorpora()
+
     def getAvailableCorpora(self):
         self.corporaList.clear()
         corpora = get_corpora_list()
@@ -134,6 +150,8 @@ class DownloadCorpusDialog(QDialog):
 
         self.setLayout(layout)
 
+        self.setWindowTitle('Download corpora')
+
     def accept(self):
         name = self.corporaWidget.value()
         download_binary(name,corpus_name_to_path(name))
@@ -157,41 +175,148 @@ class CorpusFromTextDialog(QDialog):
 
         layout.addWidget(acFrame)
 
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create corpus from text')
+
 class AddTierDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
+
+        self.corpus = corpus
+
         layout = QVBoxLayout()
 
-        self.acceptButton = QPushButton('Ok')
+        nameFrame = QGroupBox('Name of tier')
+        self.nameEdit = QLineEdit()
+
+        box = QFormLayout()
+        box.addRow(self.nameEdit)
+
+        nameFrame.setLayout(box)
+
+        layout.addWidget(nameFrame)
+
+        self.featureWidget = FeatureBox('Select features to define the tier',corpus.specifier.features)
+
+        layout.addWidget(self.featureWidget)
+
+        self.createButton = QPushButton('Create tier')
+        self.previewButton = QPushButton('Preview tier')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.previewButton)
         acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
+        self.createButton.clicked.connect(self.accept)
+        self.previewButton.clicked.connect(self.preview)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
         layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create tier')
+
+    def preview(self):
+        featureList = self.featureWidget.value()
+        if not featureList:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one feature.")
+            return
+        segList = self.corpus.features_to_segments(featureList)
+        notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
+
+        reply = QMessageBox.information(self,
+                "Tier preview", "Segments included: {}\nSegments excluded: {}".format(', '.join(segList),', '.join(notInSegList)))
+
+
+    def accept(self):
+        self.tierName = self.nameEdit.text()
+        if self.tierName == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        if self.tierName in self.corpus.tiers:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "{} is already the name of a tier.  Overwrite?", QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+
+        self.featureList = self.featureWidget.value()
+        if not self.featureList:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one feature.")
+            return
+        QDialog.accept(self)
 
 class RemoveTierDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
         layout = QVBoxLayout()
 
-        self.acceptButton = QPushButton('Ok')
+        self.tierSelect = QListWidget()
+        for t in corpus.tiers:
+            self.tierSelect.addItem(t)
+
+        layout.addWidget(self.tierSelect)
+
+        self.removeSelectedButton = QPushButton('Remove selected tiers')
+        self.removeAllButton = QPushButton('Remove all tiers')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.removeSelectedButton)
+        acLayout.addWidget(self.removeAllButton)
         acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
+        self.removeSelectedButton.clicked.connect(self.removeSelected)
+        self.removeAllButton.clicked.connect(self.removeAll)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
         layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Remove tier')
+
+    def removeSelected(self):
+        selected = self.tierSelect.selectedItems()
+        if not selected:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a tier to remove.")
+            return
+        self.tiers = [x.text() for x in selected]
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove tiers",
+                "This will permanently remove the tiers: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
+            return
+
+        QDialog.accept(self)
+
+    def removeAll(self):
+        if self.tierSelect.count() == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "There are no tiers to remove.")
+            return
+        self.tiers = [self.tierSelect.item(i).text() for i in range(self.tierSelect.count())]
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove tiers",
+                "This will permanently remove the tiers: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
+            return
+
+        QDialog.accept(self)
 
 class CorpusFromCsvDialog(QDialog):
     def __init__(self, parent):
@@ -243,6 +368,8 @@ class CorpusFromCsvDialog(QDialog):
 
         self.setLayout(layout)
 
+        self.setWindowTitle('Create corpus from csv')
+
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.pathFrame.value())[1].split('.')[0])
 
@@ -257,19 +384,37 @@ class CorpusFromCsvDialog(QDialog):
         corpus,errors = load_corpus_csv(name, path, colDelim, transDelim,featureSystem)
 
         if errors:
-            not_found = sorted(list(errors.keys()))
-            msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'The symbols that were missing were {}.\n'.format(', '.join(not_found))
-            msg3 = 'Would you like to create all of them as unspecified? You can edit them later by going to Options-> View/change feature system...\nYou can also manually create the segments in there.'
-            msg = '\n'.join([msg1, msg2, msg3])
-            carry_on = MessageBox.askyesno(message=msg)
-            if not carry_on:
-                return
-            for s in not_found:
-                corpus.specifier.add_segment(s.strip('\''),{})
-            corpus.specifier.validate()
+            msgBox = QMessageBox(QMessageBox.Warning, "Missing symbols",
+                    "{} were all missing from the feature system.  Would you like to initialize them as unspecified?".format(', '.join(errors.keys())), QMessageBox.NoButton, self)
+            msgBox.addButton("Yes", QMessageBox.AcceptRole)
+            msgBox.addButton("No", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                for s in errors:
+                    corpus.specifier.add_segment(s.strip('\''),{})
+                corpus.specifier.validate()
         save_binary(corpus,corpus_name_to_path(name))
 
         QDialog.accept(self)
 
+class ExportCorpusDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self, parent)
+        layout = QVBoxLayout()
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Export corpus')
 
