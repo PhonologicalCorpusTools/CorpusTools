@@ -8,8 +8,11 @@ from corpustools.symbolsim.string_similarity import (string_similarity,
                                                     )
 
 
-def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='transcription', output_filename = None,
-                    min_rel = None, max_rel = None, phono_align = False, min_pairs_okay = False, from_gui=False, stop_check = None):
+def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
+                    string_type='transcription', output_filename = None,
+                    min_rel = None, max_rel = None, phono_align = False,
+                    min_pairs_okay = False, from_gui=False, stop_check = None,
+                    call_back = None):
     """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
 
     Parameters
@@ -40,7 +43,24 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
     """
 
     list_s1, list_s2 = get_lists(corpus, s1, s2, string_type)
-    query = ((w1.spelling,w2.spelling) for w1 in list_s1 for w2 in list_s2)
+    query = list((w1.spelling,w2.spelling) for w1 in list_s1 for w2 in list_s2)
+    if call_back is not None:
+        total = len(query)
+        mult = 1
+        if min_rel is not None or max_rel is not None:
+            mult += 1
+            cur = total * 2
+        else:
+            cur = total
+        if not min_pairs_okay:
+            mult += 1
+        if phono_align:
+            mult += 1
+        total *= mult
+        print('check')
+        call_back(0,total)
+
+
 
     related_list = string_similarity(corpus, query, relator_type,
                                                 string_type = string_type,
@@ -48,7 +68,8 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
                                                 count_what = count_what,
                                                 min_rel = min_rel,
                                                 max_rel = max_rel,
-                                                stop_check = stop_check)
+                                                stop_check = stop_check,
+                                                call_back = call_back)
     if stop_check is not None and stop_check():
         return
 
@@ -58,6 +79,9 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
         for w1, w2, score in related_list:
             if stop_check is not None and stop_check():
                 return
+            if call_back is not None:
+                cur += 1
+                call_back(cur,0)
             t1 = w1.transcription
             t2 = w2.transcription
             if len(t1) != len(t2):
@@ -79,6 +103,9 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
         for w1, w2, score in related_list:
             if stop_check is not None and stop_check():
                 return
+            if call_back is not None:
+                cur += 1
+                call_back(cur,0)
             alignment = al.align(w1.transcription, w2.transcription)
             if al.morpho_related(alignment, s1, s2):
                 words_with_alt.add(w1.spelling)
@@ -117,7 +144,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what, string_type='tran
 
     return len(all_words), len(words_with_alt), freq_of_alt
 
-def get_lists(corpus, s1, s2, string):
+def get_lists(corpus, s1, s2, string, call_back = None):
     """Given two sounds, returns list of Words from the current corpus that have such sounds
 
     Parameters

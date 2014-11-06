@@ -13,7 +13,7 @@ from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, Sav
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
 class FAWorker(QThread):
-    updateProgress = Signal(str)
+    updateProgress = Signal(int)
 
     dataReady = Signal(object)
 
@@ -24,12 +24,21 @@ class FAWorker(QThread):
     def setParams(self, kwargs):
         self.kwargs = kwargs
         self.stopped = False
+        self.total = None
+        self.intermed = None
 
     def stop(self):
         self.stopped = True
 
     def stopCheck(self):
         return self.stopped
+
+    def emitProgress(self,progress, total):
+
+        if self.total is None:
+            print(progress, total)
+            self.total = total
+        self.updateProgress.emit(int((progress/self.total)*100))
 
     def run(self):
         kwargs = self.kwargs
@@ -43,7 +52,8 @@ class FAWorker(QThread):
                                 min_pairs_okay=kwargs['include_minimal_pairs'],
                                 from_gui=True, phono_align=kwargs['phono_align'],
                                 output_filename=kwargs['output_filename'],
-                                stop_check = self.stopCheck)
+                                stop_check = self.stopCheck,
+                                call_back = self.emitProgress)
                 if self.stopped:
                     return
                 self.results.append(res)
@@ -226,9 +236,15 @@ class FADialog(QDialog):
 
         self.thread = FAWorker()
 
-        self.progressDialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,0)
+        self.progressDialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,100)
+        self.thread.updateProgress.connect(self.updateProgress)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
 
     def generateKwargs(self):
         pairBehaviour = 'individual'

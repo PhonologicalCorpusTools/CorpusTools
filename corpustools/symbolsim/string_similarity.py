@@ -48,6 +48,10 @@ def string_similarity(corpus, query, algorithm, **kwargs):
     string_type = kwargs.get('string_type','spelling')
     count_what = kwargs.get('count_what','type')
     stop_check = kwargs.get('stop_check',None)
+    call_back = kwargs.get('call_back',None)
+    min_rel = kwargs.get('min_rel', None)
+    max_rel = kwargs.get('max_rel', None)
+
     if algorithm == 'khorsi':
         freq_base = make_freq_base(corpus,string_type,count_what)
         relate_func = partial(khorsi,freq_base=freq_base,
@@ -62,9 +66,20 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     related_data = list()
     if isinstance(query,str):
+        if call_back is not None:
+            total = len(corpus)
+            if min_rel is not None or max_rel is not None:
+                total *= 2
+            cur = 0
         targ_word = corpus.find(query)
         relate = list()
         for word in corpus:
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 50 == 0:
+                    call_back(cur, total)
             relatedness = relate_func(targ_word, word)
             related_data.append( (targ_word,word,relatedness) )
         #Sort the list by most morphologically related
@@ -77,21 +92,38 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         relatedness = relate_func(w1,w2)
         related_data.append((w1,w2,relatedness))
     elif hasattr(query,'__iter__'):
+        if call_back is not None:
+            try:
+                total = len(query)
+                if min_rel is not None or max_rel is not None:
+                    total *= 2
+            except TypeError:
+                total = 0
+            cur = 0
         for q1,q2 in query:
             if stop_check is not None and stop_check():
                 return
+            if call_back is not None:
+                cur += 1
+                if cur % 50 == 0:
+                    call_back(cur,total)
             w1 = corpus.find(q1)
             w2 = corpus.find(q2)
             relatedness = relate_func(w1,w2)
             related_data.append( (w1,w2,relatedness) )
 
-    min_rel = kwargs.get('min_rel', None)
-    max_rel = kwargs.get('max_rel', None)
+    if min_rel is None and max_rel is None:
+        return related_data
 
     filtered_data = list()
     for w1, w2, score in related_data:
         if stop_check is not None and stop_check():
             return
+
+        if call_back is not None:
+            cur += 1
+            if cur % 50 == 0:
+                call_back(cur,total)
         if score == None: #A relatedness score is unavailable
             continue
         elif min_rel != None:
