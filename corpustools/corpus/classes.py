@@ -86,6 +86,8 @@ class Transcription(object):
     Transcription object, sequence of symbols
     """
     def __init__(self,seg_list):
+        if seg_list is None:
+            seg_list = []
         self._list = seg_list
 
     def __getitem__(self, key):
@@ -773,6 +775,8 @@ class Corpus(object):
         self.has_spelling = False
         self.has_transcription = False
         self._tiers = []
+        self.transcription_freq_base = None
+        self.spelling_freq_base = None
 
     def __eq__(self, other):
         if not isinstance(other,Corpus):
@@ -838,6 +842,10 @@ class Corpus(object):
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' not in state:
                 state['has_transcription'] = state['has_transcription_value']
+            if 'transcription_freq_base' not in state:
+                state['transcription_freq_base'] = None
+            if 'spelling_freq_base' not in state:
+                state['spelling_freq_base'] = None
             self.__dict__.update(state)
             self._specify_features()
 

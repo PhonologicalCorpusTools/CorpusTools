@@ -14,6 +14,7 @@ from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
 class FAWorker(QThread):
     updateProgress = Signal(int)
+    updateProgressText = Signal(str)
 
     dataReady = Signal(object)
 
@@ -33,12 +34,16 @@ class FAWorker(QThread):
     def stopCheck(self):
         return self.stopped
 
-    def emitProgress(self,progress, total):
-
-        if self.total is None:
-            print(progress, total)
-            self.total = total
+    def emitProgress(self,*args):
+        if isinstance(args[0],str):
+            self.updateProgressText.emit(args[0])
+            return
+        else:
+            progress = args[0]
+            if len(args) > 1:
+                self.total = args[1]
         self.updateProgress.emit(int((progress/self.total)*100))
+
 
     def run(self):
         kwargs = self.kwargs
@@ -237,9 +242,16 @@ class FADialog(QDialog):
         self.thread = FAWorker()
 
         self.progressDialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,100)
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
         self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
 
     def updateProgress(self,progress):
         self.progressDialog.setValue(progress)
@@ -299,6 +311,8 @@ class FADialog(QDialog):
         self.thread.start()
 
         result = self.progressDialog.exec_()
+        print('dialog closed')
+        self.progressDialog.reset()
         if result:
             self.accept()
         else:

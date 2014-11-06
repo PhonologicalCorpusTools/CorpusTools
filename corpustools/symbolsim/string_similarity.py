@@ -45,15 +45,22 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         and the final element is their relatedness score
     """
 
-    string_type = kwargs.get('string_type','spelling')
-    count_what = kwargs.get('count_what','type')
-    stop_check = kwargs.get('stop_check',None)
-    call_back = kwargs.get('call_back',None)
+    string_type = kwargs.get('string_type', 'spelling')
+    count_what = kwargs.get('count_what', 'type')
+    stop_check = kwargs.get('stop_check', None)
+    call_back = kwargs.get('call_back', None)
     min_rel = kwargs.get('min_rel', None)
     max_rel = kwargs.get('max_rel', None)
 
     if algorithm == 'khorsi':
-        freq_base = make_freq_base(corpus,string_type,count_what)
+        if string_type == 'spelling':
+            if corpus.spelling_freq_base is None:
+                corpus.spelling_freq_base = make_freq_base(corpus,string_type,count_what)
+            freq_base = corpus.spelling_freq_base
+        else:
+            if corpus.transcription_freq_base is None:
+                corpus.transcription_freq_base = make_freq_base(corpus,string_type,count_what)
+            freq_base = corpus.transcription_freq_base
         relate_func = partial(khorsi,freq_base=freq_base,
                                 string_type = string_type)
     elif algorithm == 'edit_distance':
@@ -71,6 +78,8 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             if min_rel is not None or max_rel is not None:
                 total *= 2
             cur = 0
+            call_back('Calculating string similarity...')
+            call_back(cur,total)
         targ_word = corpus.find(query)
         relate = list()
         for word in corpus:
@@ -79,8 +88,13 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             if call_back is not None:
                 cur += 1
                 if cur % 50 == 0:
-                    call_back(cur, total)
+                    call_back(cur)
             relatedness = relate_func(targ_word, word)
+
+            if min_rel is not None and relatedness < min_rel:
+                continue
+            if max_rel is not None and relatedness > max_rel:
+                continue
             related_data.append( (targ_word,word,relatedness) )
         #Sort the list by most morphologically related
         related_data.sort(key=lambda t:t[-1])
@@ -93,54 +107,28 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         related_data.append((w1,w2,relatedness))
     elif hasattr(query,'__iter__'):
         if call_back is not None:
-            try:
-                total = len(query)
-                if min_rel is not None or max_rel is not None:
-                    total *= 2
-            except TypeError:
-                total = 0
+            total = len(query)
             cur = 0
+            call_back('Calculating string similarity...')
+            if total:
+                call_back(cur,total)
         for q1,q2 in query:
             if stop_check is not None and stop_check():
                 return
             if call_back is not None:
                 cur += 1
                 if cur % 50 == 0:
-                    call_back(cur,total)
+                    call_back(cur)
             w1 = corpus.find(q1)
             w2 = corpus.find(q2)
             relatedness = relate_func(w1,w2)
+            if min_rel is not None and relatedness < min_rel:
+                continue
+            if max_rel is not None and relatedness > max_rel:
+                continue
             related_data.append( (w1,w2,relatedness) )
 
-    if min_rel is None and max_rel is None:
-        return related_data
+    return related_data
 
-    filtered_data = list()
-    for w1, w2, score in related_data:
-        if stop_check is not None and stop_check():
-            return
-
-        if call_back is not None:
-            cur += 1
-            if cur % 50 == 0:
-                call_back(cur,total)
-        if score == None: #A relatedness score is unavailable
-            continue
-        elif min_rel != None:
-            if max_rel != None:
-                if min_rel <= score <= max_rel:
-                    filtered_data.append( (w1, w2, score) )
-            elif min_rel <= score:
-                filtered_data.append( (w1, w2, score) )
-        elif max_rel != None and score <= max_rel:
-            print('')
-            print(w1)
-            print(w2)
-            print(score)
-            filtered_data.append( (w1, w2, score) )
-        else:
-            filtered_data.append( (w1, w2, score) )
-
-    return filtered_data
 
 
