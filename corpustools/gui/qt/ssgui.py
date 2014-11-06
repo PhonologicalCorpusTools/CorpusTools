@@ -13,7 +13,7 @@ from corpustools.symbolsim.io import read_pairs_file
 from .widgets import RadioSelectWidget, FileWidget
 
 class SSWorker(QThread):
-    updateProgress = Signal(str)
+    updateProgress = Signal(int)
 
     dataReady = Signal(object)
 
@@ -24,12 +24,18 @@ class SSWorker(QThread):
     def setParams(self, kwargs):
         self.kwargs = kwargs
         self.stopped = False
+        self.total = None
 
     def stop(self):
         self.stopped = True
 
     def stopCheck(self):
         return self.stopped
+
+    def emitProgress(self,progress, total):
+        if self.total is None:
+            self.total = total
+        self.updateProgress.emit(int((progress/self.total)*100))
 
     def run(self):
         kwargs = self.kwargs
@@ -40,7 +46,8 @@ class SSWorker(QThread):
                                         count_what = kwargs['count_what'],
                                         min_rel = kwargs['min_rel'],
                                         max_rel = kwargs['max_rel'],
-                                        stop_check = self.stopCheck)
+                                        stop_check = self.stopCheck,
+                                        call_back = self.emitProgress)
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -225,6 +232,15 @@ class SSDialog(QDialog):
 
         self.thread = SSWorker()
 
+        self.progressDialog = QProgressDialog('Calculating string similarity...','Cancel',0,100)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        #self.progressDialog.repaint()
+
     def oneWordSelected(self):
         self.compType = 'one'
 
@@ -328,15 +344,9 @@ class SSDialog(QDialog):
                 return
             kwargs['query'] = read_pairs_file(pairs_path)
         self.thread.setParams(kwargs)
-
-        dialog = QProgressDialog('Calculating string similarity...','Cancel',0,0)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(dialog.accept)
-
         self.thread.start()
 
-        result = dialog.exec_()
-        if result:
+        if self.progressDialog.exec_():
             self.accept()
         else:
             self.thread.stop()
