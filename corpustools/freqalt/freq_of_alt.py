@@ -42,91 +42,89 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
         The frequency of alternation of two sounds in a given corpus
     """
 
-    list_s1, list_s2 = get_lists(corpus, s1, s2, string_type)
-    query = list((w1.spelling,w2.spelling) for w1 in list_s1 for w2 in list_s2)
+    list_s1 = list()
+    list_s2 = list()
+    all_words = set()
     if call_back is not None:
-        total = len(query)
-        mult = 1
-        if min_rel is not None or max_rel is not None:
-            mult += 1
-            cur = total * 2
-        else:
-            cur = total
-        if not min_pairs_okay:
-            mult += 1
-        if phono_align:
-            mult += 1
-        total *= mult
-        print('check')
-        call_back(0,total)
+        call_back('Finding instances of segments...')
+        call_back(0,len(corpus))
+        cur = 0
+    for w in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        word = getattr(w, string_type)
+        if s1 in word:
+            list_s1.append(w)
+            all_words.add(w.spelling)
+        if s2 in word:
+            list_s2.append(w)
+            all_words.add(w.spelling)
 
 
 
-    related_list = string_similarity(corpus, query, relator_type,
+    if call_back is not None:
+        call_back('Creating comparison list...')
+        call_back(0,len(list_s1)*len(list_s2))
+        cur = 0
+    related_list = list()
+    if phono_align:
+        al = phono_align_ex.Aligner(features=corpus.specifier)
+    for w1 in list_s1:
+        for w2 in list_s2:
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 10000 == 0:
+                    #print(len(related_list))
+                    call_back(cur)
+            if w1 == w2:
+                continue
+            ss = string_similarity(corpus, (w1.spelling,w2.spelling), relator_type,
                                                 string_type = string_type,
                                                 tier_name = string_type,
-                                                count_what = count_what,
-                                                min_rel = min_rel,
-                                                max_rel = max_rel,
-                                                stop_check = stop_check,
-                                                call_back = call_back)
-    if stop_check is not None and stop_check():
-        return
+                                                count_what = count_what)
+            if min_rel is not None and ss[0][-1] < min_rel:
+                continue
+            if max_rel is not None and ss[0][-1] > max_rel:
+                continue
+            if not min_pairs_okay:
+                if len(w1.transcription) == len(w2.transcription):
+                    count_diff = 0
+                    for i in range(len(w1.transcription)):
+                        if w1.transcription[i] != w2.transcription[i]:
+                            count_diff += 1
+                            if count_diff > 1:
+                                break
+                    if count_diff == 1:
+                        continue
+            if phono_align:
+                alignment = al.align(w1.transcription, w2.transcription)
+                if not al.morpho_related(alignment, s1, s2):
+                    continue
 
-    #Remove minimal pairs if specified
-    if not min_pairs_okay:
-        new_related_list = list()
-        for w1, w2, score in related_list:
-            if stop_check is not None and stop_check():
-                return
-            if call_back is not None:
-                cur += 1
-                call_back(cur,0)
-            t1 = w1.transcription
-            t2 = w2.transcription
-            if len(t1) != len(t2):
-                new_related_list.append( (w1, w2, score) )
-            else:
-                count_diff = 0
-                for i in range(len(t1)):
-                    if t1[i] != t2[i]:
-                        count_diff += 1
-                if count_diff > 1:
-                    new_related_list.append( (w1, w2, score) )
-        related_list = new_related_list
+            related_list.append(ss[0])
 
     words_with_alt = set()
-    #Remove pairs that are not phonologically aligned if specified
-    if phono_align:
-        new_related_list = list()
-        al = phono_align_ex.Aligner(features=corpus.specifier)
-        for w1, w2, score in related_list:
-            if stop_check is not None and stop_check():
-                return
-            if call_back is not None:
-                cur += 1
-                call_back(cur,0)
-            alignment = al.align(w1.transcription, w2.transcription)
-            if al.morpho_related(alignment, s1, s2):
-                words_with_alt.add(w1.spelling)
-                words_with_alt.add(w2.spelling)
-                new_related_list.append( (w1, w2, score) )
-        related_list = new_related_list
-    else:
-        for w1, w2, score in related_list:
-            if stop_check is not None and stop_check():
-                return
-            words_with_alt.add(w1.spelling) #Hacks
-            words_with_alt.add(w2.spelling)
+    if call_back is not None:
+        call_back('Calculating frequency of alternation...')
+        call_back(0,len(related_list))
+        cur = 0
+    for w1, w2, score in related_list:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        words_with_alt.add(w1.spelling) #Hacks
+        words_with_alt.add(w2.spelling)
 
-    #Calculate frequency of alternation using sets to ensure no duplicates (i.e. words with both s1 and s2)
-    all_words = set()
-    for word in list_s1:
-        w = getattr(word, 'spelling')
-        all_words.add(w)
-    for word in list_s2:
-        w = getattr(word, 'spelling')
-        all_words.add(w)
+    #Calculate frequency of alternation using sets to ensure no duplicates (i.e. words with both s1 and s2
 
     freq_of_alt = len(words_with_alt)/len(all_words)
 
@@ -143,30 +141,3 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             outf2.write('freq_of_alter\t{}\r\n'.format(freq_of_alt))
 
     return len(all_words), len(words_with_alt), freq_of_alt
-
-def get_lists(corpus, s1, s2, string, call_back = None):
-    """Given two sounds, returns list of Words from the current corpus that have such sounds
-
-    Parameters
-    ----------
-    s1: char
-        A sound segment, e.g. 's', 'ÃƒÆ’Ã…Â Ãƒâ€ Ã¢â‚¬â„¢',
-    s2: char
-        A sound segment
-    string: string
-        The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
-    """
-    s1_list = list()
-    s2_list = list()
-    for w in corpus:
-        word = getattr(w, string)
-        if s1 in word and s2 in word:
-            s1_list.append(w)
-            s2_list.append(w)
-        elif s1 in word:
-            s1_list.append(w)
-        elif s2 in word:
-            s2_list.append(w)
-        else:
-            pass
-    return [s1_list, s2_list]
