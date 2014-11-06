@@ -47,6 +47,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     string_type = kwargs.get('string_type','spelling')
     count_what = kwargs.get('count_what','type')
+    stop_check = kwargs.get('stop_check',None)
     if algorithm == 'khorsi':
         freq_base = make_freq_base(corpus,string_type,count_what)
         relate_func = partial(khorsi,freq_base=freq_base,
@@ -77,6 +78,8 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         related_data.append((w1,w2,relatedness))
     elif hasattr(query,'__iter__'):
         for q1,q2 in query:
+            if stop_check is not None and stop_check():
+                return
             w1 = corpus.find(q1)
             w2 = corpus.find(q2)
             relatedness = relate_func(w1,w2)
@@ -87,6 +90,8 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     filtered_data = list()
     for w1, w2, score in related_data:
+        if stop_check is not None and stop_check():
+            return
         if score == None: #A relatedness score is unavailable
             continue
         elif min_rel != None:

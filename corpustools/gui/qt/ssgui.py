@@ -19,19 +19,30 @@ class SSWorker(QThread):
 
     def __init__(self):
         QThread.__init__(self)
+        self.stopped = False
 
     def setParams(self, kwargs):
         self.kwargs = kwargs
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+
+    def stopCheck(self):
+        return self.stopped
 
     def run(self):
         kwargs = self.kwargs
         self.results = string_similarity(kwargs['corpus'], kwargs['query'],
                                         kwargs['relator_type'],
-                                                string_type = kwargs['string_type'],
-                                                tier_name = kwargs['tier_name'],
-                                                count_what = kwargs['count_what'],
-                                                min_rel = kwargs['min_rel'],
-                                                max_rel = kwargs['max_rel'])
+                                        string_type = kwargs['string_type'],
+                                        tier_name = kwargs['tier_name'],
+                                        count_what = kwargs['count_what'],
+                                        min_rel = kwargs['min_rel'],
+                                        max_rel = kwargs['max_rel'],
+                                        stop_check = self.stopCheck)
+        if self.stopped:
+            return
         self.dataReady.emit(self.results)
 
 class SSDialog(QDialog):
@@ -328,7 +339,7 @@ class SSDialog(QDialog):
         if result:
             self.accept()
         else:
-            self.thread.terminate()
+            self.thread.stop()
 
     def setResults(self, results):
         self.results = list()

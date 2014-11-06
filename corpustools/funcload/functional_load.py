@@ -6,7 +6,9 @@ import queue
 import copy
 
 
-def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, distinguish_homophones=False, threaded_q=False):
+def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
+        relative_count=True, distinguish_homophones=False, threaded_q=False,
+        stop_check = None):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
 
     Parameters
@@ -32,16 +34,23 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, d
 
     if frequency_cutoff > 0:
         corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
-
+    if stop_check is not None and stop_check():
+        return
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
 
     corpus = [word for word in corpus if any([s in word.transcription for s in all_segments])]
+    if stop_check is not None and stop_check():
+        return
     scope = len(corpus)
 
     trans_spell = [(tuple(word.transcription), word.spelling.lower()) for word in corpus]
+    if stop_check is not None and stop_check():
+        return
 
     neutralized = [(' '.join([neutralize_segment(seg, segment_pairs) for seg in word[0]]), word[1], word[0]) for word in list(trans_spell)]
 
+    if stop_check is not None and stop_check():
+        return
 
     def matches(first, second):
         return (first[0] == second[0] and first[1] != second[1]
@@ -63,7 +72,8 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0, relative_count=True, d
         return None
 
 
-def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', threaded_q=False):
+def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
+            type_or_token='token', threaded_q=False,stop_check=None):
     """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
 
     Parameters
@@ -86,6 +96,8 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
         type_or_token = 'token'
     if frequency_cutoff > 0:
         corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
+    if stop_check is not None and stop_check():
+        return
 
     if type_or_token == 'type':
         freq_sum = len(corpus)
@@ -99,6 +111,9 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
     elif type_or_token == 'token':
         for word in corpus:
             original_probs[' '.join([str(s) for s in word.transcription])] += float(word.frequency)/freq_sum
+
+    if stop_check is not None and stop_check():
+        return
     preneutr_h = entropy([original_probs[item] for item in original_probs])
 
     neutralized_probs = defaultdict(float)
@@ -106,6 +121,8 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0, type_or_token='token', 
         neutralized_probs[' '.join([neutralize_segment(s, segment_pairs) for s in item.split(' ')])] += original_probs[item]
     postneutr_h = entropy([neutralized_probs[item] for item in neutralized_probs])
 
+    if stop_check is not None and stop_check():
+        return
     result = preneutr_h - postneutr_h
     if result < 1e-10:
         result = 0.0

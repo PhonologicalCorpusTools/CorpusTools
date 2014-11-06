@@ -19,9 +19,17 @@ class FAWorker(QThread):
 
     def __init__(self):
         QThread.__init__(self)
+        self.stopped = False
 
     def setParams(self, kwargs):
         self.kwargs = kwargs
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+
+    def stopCheck(self):
+        return self.stopped
 
     def run(self):
         kwargs = self.kwargs
@@ -34,8 +42,10 @@ class FAWorker(QThread):
                                 min_rel=kwargs['min_rel'], max_rel=kwargs['max_rel'],
                                 min_pairs_okay=kwargs['include_minimal_pairs'],
                                 from_gui=True, phono_align=kwargs['phono_align'],
-                                output_filename=kwargs['output_filename'])
-
+                                output_filename=kwargs['output_filename'],
+                                stop_check = self.stopCheck)
+                if self.stopped:
+                    return
                 self.results.append(res)
         else:
             raise(NotImplementedError)
@@ -276,7 +286,7 @@ class FADialog(QDialog):
         if result:
             self.accept()
         else:
-            self.thread.terminate()
+            self.thread.stop()
 
     def setResults(self, results):
         self.results = list()

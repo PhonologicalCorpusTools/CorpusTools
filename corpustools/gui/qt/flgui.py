@@ -20,9 +20,17 @@ class FLWorker(QThread):
 
     def __init__(self):
         QThread.__init__(self)
+        self.stopped = False
 
     def setParams(self, kwargs):
         self.kwargs = kwargs
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+
+    def stopCheck(self):
+        return self.stopped
 
     def run(self):
         kwargs = self.kwargs
@@ -34,11 +42,15 @@ class FLWorker(QThread):
                     res = FL.minpair_fl(kwargs['corpus'], [pair],
                             kwargs['frequency_cutoff'],
                             kwargs['relative_count'],
-                            kwargs['distinguish_homophones'])
+                            kwargs['distinguish_homophones'],
+                            stop_check = self.stopCheck)
                 elif kwargs['func_type'] == 'entropy':
                     res = FL.deltah_fl(kwargs['corpus'], [pair],
                             kwargs['frequency_cutoff'],
-                            kwargs['type_or_token'])
+                            kwargs['type_or_token'],
+                            stop_check = self.stopCheck)
+                if self.stopped:
+                    return
                 self.results.append(res)
         else:
             if kwargs['func_type'] == 'min_pairs':
@@ -46,12 +58,16 @@ class FLWorker(QThread):
                             kwargs['segment_pairs'],
                             kwargs['frequency_cutoff'],
                             kwargs['relative_count'],
-                            kwargs['distinguish_homophones'])
+                            kwargs['distinguish_homophones'],
+                            stop_check = self.stopCheck)
             elif kwargs['func_type'] == 'entropy':
                 res = FL.deltah_fl(kwargs['corpus'],
-                        kwargs['segment_pairs'],
-                        kwargs['frequency_cutoff'],
-                        kwargs['type_or_token'])
+                            kwargs['segment_pairs'],
+                            kwargs['frequency_cutoff'],
+                            kwargs['type_or_token'],
+                            stop_check = self.stopCheck)
+            if self.stopped:
+                return
             self.results.append(res)
         self.dataReady.emit(self.results)
 
@@ -257,7 +273,7 @@ class FLDialog(QDialog):
         if result:
             self.accept()
         else:
-            self.thread.terminate()
+            self.thread.stop()
 
 
     def setResults(self,results):
