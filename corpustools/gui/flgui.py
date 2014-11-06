@@ -176,16 +176,16 @@ class FLFunction(FunctionWindow):
 
         self.select_sounds = Toplevel()
         self.select_sounds.title('Select sounds')
-        segs = [seg.symbol for seg in self.corpus.inventory]
-        segs.sort()
 
         sound1_frame = LabelFrame(self.select_sounds, text='First sound')
-        self.seg1_frame = InventoryFrame(segs, self.fl_seg1_var, 'Choose first symbol', master=sound1_frame)
+        self.seg1_frame = InventoryFrame(self.corpus, self.fl_seg1_var, 'Choose first symbol', master=sound1_frame)
+        self.seg1_frame.show()
         self.seg1_frame.grid()
         sound1_frame.grid()
 
         sound2_frame = LabelFrame(self.select_sounds, text='Second sound')
-        self.seg2_frame = InventoryFrame(segs, self.fl_seg2_var, 'Choose second symbol', master=sound2_frame)
+        self.seg2_frame = InventoryFrame(self.corpus, self.fl_seg2_var, 'Choose second symbol', master=sound2_frame)
+        self.seg2_frame.show()
         self.seg2_frame.grid()
         sound2_frame.grid()
 
