@@ -54,13 +54,13 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     if algorithm == 'khorsi':
         if string_type == 'spelling':
-            if corpus.spelling_freq_base is None:
-                corpus.spelling_freq_base = make_freq_base(corpus,string_type,count_what)
-            freq_base = corpus.spelling_freq_base
+            if corpus.spelling_freq_base[count_what] is None:
+                corpus.spelling_freq_base[count_what] = make_freq_base(corpus,string_type,count_what)
+            freq_base = corpus.spelling_freq_base[count_what]
         else:
-            if corpus.transcription_freq_base is None:
-                corpus.transcription_freq_base = make_freq_base(corpus,string_type,count_what)
-            freq_base = corpus.transcription_freq_base
+            if corpus.transcription_freq_base[count_what] is None:
+                corpus.transcription_freq_base[count_what] = make_freq_base(corpus,string_type,count_what)
+            freq_base = corpus.transcription_freq_base[count_what]
         relate_func = partial(khorsi,freq_base=freq_base,
                                 string_type = string_type)
     elif algorithm == 'edit_distance':

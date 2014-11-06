@@ -775,8 +775,8 @@ class Corpus(object):
         self.has_spelling = False
         self.has_transcription = False
         self._tiers = []
-        self.transcription_freq_base = None
-        self.spelling_freq_base = None
+        self.transcription_freq_base = {'token':None, 'type':None}
+        self.spelling_freq_base = {'token':None, 'type':None}
 
     def __eq__(self, other):
         if not isinstance(other,Corpus):
@@ -843,9 +843,9 @@ class Corpus(object):
             if 'has_transcription' not in state:
                 state['has_transcription'] = state['has_transcription_value']
             if 'transcription_freq_base' not in state:
-                state['transcription_freq_base'] = None
+                state['transcription_freq_base'] = {'token':None, 'type':None}
             if 'spelling_freq_base' not in state:
-                state['spelling_freq_base'] = None
+                state['spelling_freq_base'] = {'token':None, 'type':None}
             self.__dict__.update(state)
             self._specify_features()
 

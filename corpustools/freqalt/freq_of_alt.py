@@ -67,7 +67,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
 
 
     if call_back is not None:
-        call_back('Creating comparison list...')
+        call_back('Calculating string similarities...')
         call_back(0,len(list_s1)*len(list_s2))
         cur = 0
     related_list = list()
