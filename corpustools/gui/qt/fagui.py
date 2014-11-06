@@ -119,7 +119,9 @@ class FADialog(QDialog):
         threshFrame = QGroupBox('Threshold values')
 
         self.minEdit = QLineEdit()
+        self.minEdit.setText('-15')
         self.maxEdit = QLineEdit()
+        self.maxEdit.setText('6')
 
         vbox = QFormLayout()
         vbox.addRow('Minimum similarity (Khorsi):',self.minEdit)
@@ -241,13 +243,17 @@ class FADialog(QDialog):
 
         self.thread = FAWorker()
 
-        self.progressDialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,100)
+        self.progressDialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Calculating frequency of alternation')
         self.progressDialog.setAutoClose(False)
         self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
         self.thread.updateProgress.connect(self.updateProgress)
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+        self.algorithmWidget.initialClick()
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
@@ -311,12 +317,10 @@ class FADialog(QDialog):
         self.thread.start()
 
         result = self.progressDialog.exec_()
-        print('dialog closed')
+
         self.progressDialog.reset()
-        if result:
-            self.accept()
-        else:
-            self.thread.stop()
+        #if result:
+        #    self.accept()
 
     def setResults(self, results):
         self.results = list()

@@ -390,6 +390,9 @@ class RadioSelectWidget(QGroupBox):
         self.widgets[0].setChecked(True)
         self.setLayout(vbox)
 
+    def initialClick(self):
+        self.widgets[0].click()
+
     def value(self):
         for w in self.widgets:
             if w.isChecked():
