@@ -13,7 +13,7 @@ import queue
 from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ExhaustivityError, UniquenessError
 
 from corpustools.gui.basegui import (AboutWindow, FunctionWindow, ERROR_DIR,
-                    ResultsWindow, ThreadedTask, ToolTip)
+                    ResultsWindow, ThreadedTask, ToolTip, InventoryFrame)
 
 class PDFunction(FunctionWindow):
     def __init__(self,corpus, master=None, **options):
@@ -85,32 +85,15 @@ class PDFunction(FunctionWindow):
             ' match the symbols used anywhere in your corpus.'))
         segs = [seg.symbol for seg in self.corpus.inventory]
         segs.sort()
-        seg1_frame = LabelFrame(self.ipa_frame, text='Choose first symbol')
-        colmax = 10
-        col = 0
-        row = 0
-        for seg in segs:
-            seg_button = OldRadiobutton(seg1_frame, text=seg, variable=self.seg1_var, value=seg, indicatoron=0)
-            seg_button.grid(row=row, column=col)
-            col+=1
-            if col > colmax:
-                col = 0
-                row += 1
+        inv_frame = LabelFrame(self.ipa_frame, text='Select two sound')
+        seg1_frame = InventoryFrame(self.corpus, self.seg1_var, 'First sound', inv_frame)
+        seg1_frame.show()
         seg1_frame.grid()
 
-        seg2_frame = LabelFrame(self.ipa_frame, text='Choose second symbol')
-        colmax = 10
-        col = 0
-        row = 0
-        for seg in segs:
-            seg_button = OldRadiobutton(seg2_frame, text=seg, variable=self.seg2_var, value=seg, indicatoron=0)
-            seg_button.grid(row=row, column=col)
-            col+=1
-            if col > colmax:
-                col = 0
-                row += 1
+        seg2_frame = InventoryFrame(self.corpus, self.seg2_var, 'Second sound', inv_frame)
+        seg2_frame.show()
         seg2_frame.grid()
-
+        inv_frame.grid()
 
         self.option_frame = LabelFrame(self, text='Options')
 
