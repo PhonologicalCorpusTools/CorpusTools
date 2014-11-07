@@ -8,6 +8,103 @@ import math
 class CorpusIntegrityError(Exception):
     pass
 
+#spe: low,high,tense
+#hayes:low,high,tense
+vowel_height_descriptors = {{('-','+','+'):'Close',
+                            ('-','+','-'): 'Near-close',
+                            ('-','-','+'): 'Close-mid',
+                            ('-','-','-'): 'Open-mid',
+                            ('+','-','-'): 'Near-open',
+                            ('+','-','+'): 'Open',
+                            }}
+#spe: back, tense
+#hayes: back, front, tense
+vowel_back_descriptors = {'spe':{('+','+'):'Back',
+                            ('+','-'):'Near-back',
+                            ('n','+'):'Central',
+                            ('n','-'):'Central',
+                            ('-','-'):'Near-front'},
+                            ('-','+'):'Front'},
+                    'hayes':{
+                            ('+','-','+'): 'Back',
+                            ('+','-','-'): 'Near-back',
+                            ('-','-','-'): 'Central',
+                            ('-','-','+'): 'Central',
+                            ('-','+','-'): 'Near-front',
+                            ('-','+','+'): 'Front',
+                            }}
+
+#spe: round
+#hayes: round
+vowel_round_descriptors = {('+'):'Rounded',
+                            ('-'):'Unrounded'}
+
+
+#I hate features cuz they r so dum!
+#spe: ant, cor, back, high, glot_cl
+#hayes: labial, labiodental, anterior, coronal, dorsal, back
+
+consonant_place_descriptors = {'spe':{('+','-','-','-','-'):'Labial',
+                                    ('+','-','-','-','+'):'Labial',
+                                    ('+','-','-','+','+'):'Labial',
+                                    ('+','-','-','+','-'):'Labial',
+                                    ('+','+','-','-','-'):'Dental',
+                                    ('+','+','-','+','-'):'Dental',
+                                    ('+','+','-','-','+'):'Dental',
+                                    ('+','+','-','+','+'):'Dental',
+                                    ('-','+','-','-','-'):'Alveolar',
+                                    ('-','+','-','-','+'):'Alveolar',
+                                    ('-','+','-','+','-'):'Alveopalatal',
+                                    ('-','+','-','+','+'):'Alveopalatal',
+                                    ('-','-','-','-','-'):'Palatal',
+                                    ('-','-','-','+','-'):'Palatal',
+                                    ('-','-','-','-','+'):'Palatal',
+                                    ('-','-','-','+','+'):'Palatal',
+                                    ('-','-','+','+','-'):'Velar',
+                                    ('-','-','+','+','+'):'Velar',
+                                    ('-','-','+','-','-'):'Uvular',
+                                    ('-','-','+','-','+'):'Uvular',
+                                    ('-','-','+','-','+'):'Glottal',
+                                    ('-','-','+','+','+'):'Glottal',
+                                    ('-','-','-','-','+'):'Glottal',
+                                    ('-','-','-','+','+'):'Glottal',
+                                'hayes':{('+','-','-','-','-','0'):'Labial',
+                                    ('-','+','-','-','-','0'):'Labiodental',
+                                    ('-','-','+','+','-','0'):'Dental',
+                                    ('-','-','-','+','-','0'):'Alveopalatal',
+                                    ('-','-','-','+','+','0'):'Palatal',
+                                    ('-','-','-','-','+','0'):'Velar',
+                                    ('-','-','-','-','+','+'):'Uvular',
+                                    }}}
+
+    self.row_descriptions = [('stop','-cont,-nasal,-son,-voc'),
+                        ('nasal','+nasal,+son,-voc'),
+                        ('-son nasal','+nasal,-son,-voc'),
+                        ('fricative','+cont,-son,-nasal,-voc'),
+                        ('lateral','+lat,-nasal,+son,-voc'),
+                        ('approximant','+son,-nasal,-voc')]
+#spe: son, cont, nasal, lat, del_rel
+#hayes: sonorant, continuant, nasal, lateral, delayed_release, tap, trill
+consonant_manner_descriptors = {'spe':{('-','-','-','-','-'): 'Stop',
+                                        ('+','-','+','-','-'): 'Nasal',
+                                        ('-','-','+','-','-'): 'Nasal',
+                                        ('-','+','-','-','-'): 'Fricative',
+                                        ('-','-','-','-','+'): 'Affricate',
+                                        ('+','+','-','-','-'):'Approximate',
+                                        ('+','+','-','+','-'): 'Lateral approximate'},
+                                'hayes':{('-','-','-','-','-','-','-'):'Stop'
+                                        ('+','-','+','-','-','-','-'): 'Nasal',
+                                        ('-','-','+','-','-','-','-'): 'Nasal',
+                                        ('+','+','-','-','-','-','+'): 'Trill',
+                                        ('-','+','-','-','-','+','-'): 'Tap',
+                                        ('-','+','-','-','-','-','-'): 'Fricative',
+                                        ('-','-','-','-','+','-','-'): 'Affricate',
+                                        ('+','+','-','-','-','-','-'):'Approximate',
+                                        ('+','+','-','+','-','-','-'): 'Lateral approximate'}}
+
+consonant_voice_descriptors = {('+'): 'Voiced',
+                                ('-'): 'Voiceless'}
+
 class Segment(object):
     """
     Class for segment symbols
@@ -17,6 +114,24 @@ class Segment(object):
         #None defaults are for word-boundary symbols
         self.symbol = symbol
         self.features = dict()
+
+    def categorize(self):
+        if len(self.features) == 0:
+            return None
+        if 'voc' in self.features:
+            feat_type = 'spe'
+        elif 'consonantal' in self.features:
+            feat_type = 'hayes'
+
+        if feat_type == 'spe':
+            if self.features['voc'] == '+':
+                pass
+            elif self.features['voc'] == '-':
+                pass
+            else:
+                return None
+        elif feat_type == 'hayes':
+            pass
 
     def specify(self,feature_dict):
         self.features = feature_dict
