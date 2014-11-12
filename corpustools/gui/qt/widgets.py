@@ -1,4 +1,5 @@
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
@@ -82,28 +83,144 @@ class DirectoryWidget(QFrame):
         return self.pathEdit.text()
 
 class InventoryBox(QGroupBox):
+    consonantColumns = ['Labial','Labiodental','Dental','Alveolar','Alveopalatal','Retroflex',
+                    'Palatal','Velar','Uvular','Pharyngeal','Epiglottal','Glottal']
+
+    consonantRows = ['Stop','Nasal','Fricative','Affricate','Approximate','Trill','Tap',
+                    'Lateral fricative','Lateral approximate','Lateral flap']
+
+    vowelColumns = ['Front','Near front','Central','Near back','Back']
+
+    vowelRows = ['Close','Near close','Close mid','Mid','Open mid','Near open','Open']
+
     def __init__(self, title,inventory,parent=None):
         QGroupBox.__init__(self,title,parent)
 
         self.inventory = inventory
+        #find cats
+        consColumns = set()
+        consRows = set()
+        vowColumns = set()
+        vowRows = set()
+        for s in self.inventory:
+            c = s.category
+            if c is not None:
+                if c[0] == 'Vowel':
+                    vowColumns.add(c[2])
+                    vowRows.add(c[1])
+                elif c[0] == 'Consonant':
+                    consColumns.add(c[1])
+                    consRows.add(c[2])
 
-        box = QGridLayout()
         self.btnGroup = QButtonGroup()
-        row = 0
-        col = 0
-        for s in inventory:
-            btn = QPushButton(s.symbol)
-            btn.setCheckable(True)
-            btn.setAutoExclusive(True)
-            btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
-            btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+        if len(consColumns) and len(vowColumns):
+            box = QVBoxLayout()
+            smallbox = QHBoxLayout()
+            cons = QGroupBox('Consonants')
+            consBox = QGridLayout()
+            cons.setLayout(consBox)
+            consColumns = [ x for x in self.consonantColumns if x in consColumns]
+            consColMapping = {x:i+1 for i,x in enumerate(consColumns)}
+            consRows = [ x for x in self.consonantRows if x in consRows]
+            consRowMapping = {x:i+1 for i,x in enumerate(consRows)}
 
-            box.addWidget(btn,row,col)
-            self.btnGroup.addButton(btn)
-            col += 1
-            if col > 11:
-                col = 0
-                row += 1
+
+            for j in range(len(consRows)):
+                consBox.addWidget(QLabel(consRows[j]),j+1,0)
+            for i in range(len(consColumns)):
+                consBox.addWidget(QLabel(consColumns[i]),0,i+1)
+                for j in range(len(consRows)):
+                    b = QGridLayout()
+                    consBox.addLayout(b,j+1,i+1)
+
+            vow = QGroupBox('Vowels')
+            vowBox = QGridLayout()
+            vowBox.setAlignment(Qt.AlignTop)
+            vow.setLayout(vowBox)
+            vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
+            vowColMapping = {x:i+1 for i,x in enumerate(vowColumns)}
+            vowRows = [ x for x in self.vowelRows if x in vowRows]
+            vowRowMapping = {x:i+1 for i,x in enumerate(vowRows)}
+            diphBox = QHBoxLayout()
+            vowBox.addLayout(diphBox,len(vowRows)+1,1,1,len(vowColumns))
+            vowBox.addWidget(QLabel('Diphthongs'),len(vowRows)+1,0)
+            for j in range(len(vowRows)):
+                vowBox.addWidget(QLabel(vowRows[j]),j+1,0)
+
+            for i in range(len(vowColumns)):
+                vowBox.addWidget(QLabel(vowColumns[i]),0,i+1)
+                for j in range(len(vowRows)):
+                    b = QGridLayout()
+                    vowBox.addLayout(b,j+1,i+1)
+
+            unk = QGroupBox('Unknown')
+            unkBox = QGridLayout()
+            unk.setLayout(unkBox)
+
+            unkRow = 0
+            unkCol = -1
+            for s in inventory:
+                cat = s.category
+                btn = QPushButton(s.symbol)
+                btn.setCheckable(True)
+                btn.setAutoExclusive(True)
+                btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
+                btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+                self.btnGroup.addButton(btn)
+                if cat is None:
+                    unkCol += 1
+                    if unkCol > 11:
+                        unkCol = 0
+                        unkRow += 1
+                    unkBox.addWidget(btn,unkRow,unkCol)
+
+                elif cat[0] == 'Vowel':
+                    col = vowColMapping[cat[2]]
+                    row = vowRowMapping[cat[1]]
+                    if cat[3] == 'Unrounded':
+                        colTwo = 0
+                    else:
+                        colTwo = 1
+                    cell = vowBox.itemAtPosition(row,col)
+
+                    cell.layout().addWidget(btn,0,colTwo)
+                elif cat[0] == 'Consonant':
+                    col = consColMapping[cat[1]]
+                    row = consRowMapping[cat[2]]
+                    if cat[3] == 'Voiceless':
+                        colTwo = 0
+                    else:
+                        colTwo = 1
+                    cell = consBox.itemAtPosition(row,col)
+                    cell.layout().addWidget(btn,0,colTwo)
+                elif cat[0] == 'Diphthong':
+                    diphBox.addWidget(btn)
+            smallbox.addWidget(cons)
+
+            smallbox.addWidget(vow)
+            b = QFrame()
+            b.setLayout(smallbox)
+            box.addWidget(b)
+            box.addWidget(unk)
+        else:
+            box = QGridLayout()
+
+
+            row = 0
+            col = 0
+            for s in inventory:
+                btn = QPushButton(s.symbol)
+                btn.setCheckable(True)
+                btn.setAutoExclusive(True)
+                btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
+                btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+
+                box.addWidget(btn,row,col)
+                self.btnGroup.addButton(btn)
+                col += 1
+                if col > 11:
+                    col = 0
+                    row += 1
 
         self.setLayout(box)
 
