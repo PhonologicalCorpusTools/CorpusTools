@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
                             QFileDialog, QComboBox, QSizePolicy, QButtonGroup,
-                            QGridLayout)
+                            QGridLayout, QTableWidget, QWidget, QAbstractItemView,
+                            QHeaderView)
 
 from .views import TableWidget
 
@@ -117,43 +118,85 @@ class InventoryBox(QGroupBox):
             box = QVBoxLayout()
             smallbox = QHBoxLayout()
             cons = QGroupBox('Consonants')
-            consBox = QGridLayout()
+            consBox = QVBoxLayout()
+            consTable = QTableWidget()
+            consBox.addWidget(consTable)
             cons.setLayout(consBox)
+
             consColumns = [ x for x in self.consonantColumns if x in consColumns]
-            consColMapping = {x:i+1 for i,x in enumerate(consColumns)}
+            consColMapping = {x:i for i,x in enumerate(consColumns)}
             consRows = [ x for x in self.consonantRows if x in consRows]
-            consRowMapping = {x:i+1 for i,x in enumerate(consRows)}
+            consRowMapping = {x:i for i,x in enumerate(consRows)}
+
+            consTable.setColumnCount(len(consColumns))
+            consTable.setRowCount(len(consRows))
+            consTable.setHorizontalHeaderLabels(consColumns)
+            consTable.setVerticalHeaderLabels(consRows)
+            consTable.resizeRowsToContents()
+            consTable.resizeColumnsToContents()
+            consTable.setSelectionMode(QAbstractItemView.NoSelection)
+            consTable.horizontalHeader().setSectionsClickable(False)
+            consTable.horizontalHeader().resizeSections()
+            consTable.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+
+            consTable.verticalHeader().setSectionsClickable(False)
+            consTable.verticalHeader().resizeSections()
+            consTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
 
-            for j in range(len(consRows)):
-                consBox.addWidget(QLabel(consRows[j]),j+1,0)
             for i in range(len(consColumns)):
-                consBox.addWidget(QLabel(consColumns[i]),0,i+1)
                 for j in range(len(consRows)):
+                    wid = QWidget()
                     b = QGridLayout()
-                    consBox.addLayout(b,j+1,i+1)
+                    b.setAlignment(Qt.AlignCenter);
+                    b.setContentsMargins(0, 0, 0, 0);
+                    wid.setLayout(b)
+                    consTable.setCellWidget(j,i,wid)
 
             vow = QGroupBox('Vowels')
             vowBox = QGridLayout()
             vowBox.setAlignment(Qt.AlignTop)
+            vowTable = QTableWidget()
+            vowBox.addWidget(vowTable)
             vow.setLayout(vowBox)
             vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
-            vowColMapping = {x:i+1 for i,x in enumerate(vowColumns)}
+            vowColMapping = {x:i for i,x in enumerate(vowColumns)}
             vowRows = [ x for x in self.vowelRows if x in vowRows]
-            vowRowMapping = {x:i+1 for i,x in enumerate(vowRows)}
-            diphBox = QHBoxLayout()
-            vowBox.addLayout(diphBox,len(vowRows)+1,1,1,len(vowColumns))
-            vowBox.addWidget(QLabel('Diphthongs'),len(vowRows)+1,0)
-            for j in range(len(vowRows)):
-                vowBox.addWidget(QLabel(vowRows[j]),j+1,0)
+            vowRowMapping = {x:i for i,x in enumerate(vowRows)}
+
+            vowTable.setColumnCount(len(vowColumns))
+            vowTable.setRowCount(len(vowRows) + 1)
+            vowTable.setHorizontalHeaderLabels(vowColumns)
+            vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
+            vowTable.resizeRowsToContents()
+            vowTable.resizeColumnsToContents()
+            vowTable.setSelectionMode(QAbstractItemView.NoSelection)
+            vowTable.horizontalHeader().setSectionsClickable(False)
+            vowTable.horizontalHeader().resizeSections()
+            vowTable.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+
+            vowTable.verticalHeader().setSectionsClickable(False)
+            vowTable.verticalHeader().resizeSections()
+            vowTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
             for i in range(len(vowColumns)):
-                vowBox.addWidget(QLabel(vowColumns[i]),0,i+1)
                 for j in range(len(vowRows)):
+                    wid = QWidget()
                     b = QGridLayout()
-                    vowBox.addLayout(b,j+1,i+1)
+                    b.setAlignment(Qt.AlignCenter)
+                    b.setContentsMargins(0, 0, 0, 0)
+                    wid.setLayout(b)
+                    vowTable.setCellWidget(j,i,wid)
 
-            unk = QGroupBox('Unknown')
+            vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
+            wid = QWidget()
+            diphBox = QHBoxLayout()
+            diphBox.setAlignment(Qt.AlignCenter)
+            diphBox.setContentsMargins(0, 0, 0, 0)
+            wid.setLayout(diphBox)
+            vowTable.setCellWidget(len(vowRows),0,wid)
+
+            unk = QGroupBox('Other')
             unkBox = QGridLayout()
             unk.setLayout(unkBox)
 
@@ -181,7 +224,7 @@ class InventoryBox(QGroupBox):
                         colTwo = 0
                     else:
                         colTwo = 1
-                    cell = vowBox.itemAtPosition(row,col)
+                    cell = vowTable.cellWidget(row,col)
 
                     cell.layout().addWidget(btn,0,colTwo)
                 elif cat[0] == 'Consonant':
@@ -191,7 +234,7 @@ class InventoryBox(QGroupBox):
                         colTwo = 0
                     else:
                         colTwo = 1
-                    cell = consBox.itemAtPosition(row,col)
+                    cell = consTable.cellWidget(row,col)
                     cell.layout().addWidget(btn,0,colTwo)
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
