@@ -62,14 +62,51 @@ class Segment(object):
         category = []
         if feat_type == 'spe':
             if self.features['voc'] == '+':
-                category.append('Vowel')
-                #Height, backness, roundness
-                category.append(vowel_height_descriptors[(self.features['low'],
-                                                        self.features['high'],
-                                                        self.features['tense'])])
-                category.append(vowel_back_descriptors['spe'][(self.features['back'],
-                                                        self.features['tense'])])
-                category.append(vowel_round_descriptors[self.features['round']])
+                if self.features['high'] == '.':
+                    category.append('Diphthong')
+                    if self.features['back'] == '-':
+                        category.append('Front')
+                    else:
+                        category.append('Back')
+                else:
+                    category.append('Vowel')
+                    #Height, backness, roundness
+                    if self.features['low'] == '-' and self.features['high'] == '+':
+                        if self.features['tense'] == '+':
+                            category.append('Close')
+                        else:
+                            category.append('Near close')
+                    elif self.features['low'] == '-' and self.features['high'] == '-':
+                        if self.features['tense'] == '+':
+                            category.append('Close mid')
+                        else:
+                            category.append('Open mid')
+                    elif self.features['low'] == '+' and self.features['high'] == '-':
+                        if self.features['tense'] == '+':
+                            category.append('Open')
+                        else:
+                            category.append('Open')
+                    else:
+                        category.append(None)
+
+                    if self.features['back'] == '+':
+                        if self.features['tense'] == '+':
+                            category.append('Back')
+                        else:
+                            category.append('Near back')
+                    elif self.features['back'] == 'n':
+                        category.append('Central')
+                    elif self.features['back'] == '-':
+                        if self.features['tense'] == '+':
+                            category.append('Front')
+                        else:
+                            category.append('Near front')
+                    else:
+                        category.append(None)
+                    if self.features['round'] == '+':
+                        category.append('Rounded')
+                    else:
+                        category.append('Unrounded')
             elif self.features['voc'] == '-':
                 category.append('Consonant')
                 #Place, manner, voicing
