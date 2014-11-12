@@ -281,7 +281,7 @@ class EditFeatureMatrixDialog(QDialog):
 
     def changeFeatureSystem(self):
         path = self.changeWidget.path()
-        if path is not None:
+        if path is None:
             self.specifier = None
         else:
             self.specifier = load_binary(path)

@@ -114,6 +114,9 @@ class Segment(object):
                         self.features['back'] == '-'):
                             category.append('Labial')
                 elif (self.features['ant'] == '+' and self.features['cor'] == '-' and
+                        self.features['back'] == '+' and self.features['high'] == '+'):
+                            category.append('Labial')
+                elif (self.features['ant'] == '+' and self.features['cor'] == '-' and
                         self.features['back'] == '-'):
                             category.append('Labiodental')
                 elif (self.features['ant'] == '+' and self.features['cor'] == '+' and
@@ -134,10 +137,10 @@ class Segment(object):
                 elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
                         self.features['back'] == '+' and self.features['high'] == '-'):
                             category.append('Uvular')
-                elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
+                elif (self.features['low'] == '+' and
                         self.features['back'] == '+'):
                             category.append('Pharyngeal')
-                elif (self.features['glot_cl'] == '+'):
+                elif (self.features['low'] == '+' and self.features['back'] == '-'):
                             category.append('Glottal')
                 else:
                     category.append(None)
