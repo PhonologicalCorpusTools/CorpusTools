@@ -2,14 +2,11 @@
 
 import unittest
 import os
-try:
-    import corpustools
-except ImportError:
-    import sys
+import sys
 
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-    sys.path.append(corpustools_path)
+test_dir = os.path.dirname(os.path.abspath(__file__))
+corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
+sys.path.insert(0,corpustools_path)
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
@@ -497,6 +494,25 @@ class SegmentTest(unittest.TestCase):
                             'b':{'feature1':'+','feature2':'-'},
                             'c':{'feature1':'-','feature2':'+'},
                             'd':{'feature1':'-','feature2':'-'}}
+
+        self.corpus = create_specified_test_corpus()
+
+    def test_categories(self):
+        cats = {'ɑ':['Vowel','Open','Back','Unrounded'],
+                'u':['Vowel','Close','Back','Rounded'],
+                'o':['Vowel','Close mid','Back','Rounded'],
+                'e':['Vowel','Close mid','Front','Unrounded'],
+                's':['Consonant','Dental','Fricative','Voiceless'],
+                'm':['Consonant','Labial','Nasal','Voiced'],
+                'i':['Vowel','Close','Front','Unrounded'],
+                'n':['Consonant','Dental','Nasal','Voiced'],
+                'ʃ':['Consonant','Alveopalatal','Fricative','Voiceless'],
+                't':['Consonant','Dental','Stop','Voiceless']}
+        inv = self.corpus._inventory
+
+        for k,v in cats.items():
+            self.assertEqual(inv[k].category,v)
+
 
     def test_match_feature(self):
         for s,v in self.basic_info.items():

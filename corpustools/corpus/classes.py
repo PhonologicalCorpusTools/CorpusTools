@@ -8,31 +8,6 @@ import math
 class CorpusIntegrityError(Exception):
     pass
 
-#spe: low,high,tense
-#hayes:low,high,tense
-vowel_height_descriptors = {('-','+','+'):'Close',
-                            ('-','+','-'): 'Near-close',
-                            ('-','-','+'): 'Close-mid',
-                            ('-','-','-'): 'Open-mid',
-                            ('+','-','-'): 'Near-open',
-                            ('+','-','+'): 'Open',
-                            }
-#spe: back, tense
-#hayes: back, front, tense
-vowel_back_descriptors = {'spe':{('+','+'):'Back',
-                            ('+','-'):'Near-back',
-                            ('n','+'):'Central',
-                            ('n','-'):'Central',
-                            ('-','-'):'Near-front',
-                            ('-','+'):'Front'},
-                    'hayes':{
-                            ('+','-','+'): 'Back',
-                            ('+','-','-'): 'Near-back',
-                            ('-','-','-'): 'Central',
-                            ('-','-','+'): 'Central',
-                            ('-','+','-'): 'Near-front',
-                            ('-','+','+'): 'Front',
-                            }}
 
 #spe: round
 #hayes: round
@@ -74,7 +49,8 @@ class Segment(object):
         self.symbol = symbol
         self.features = dict()
 
-    def categorize(self):
+    @property
+    def category(self):
         if len(self.features) == 0:
             return None
         if 'voc' in self.features:
@@ -91,7 +67,7 @@ class Segment(object):
                 category.append(vowel_height_descriptors[(self.features['low'],
                                                         self.features['high'],
                                                         self.features['tense'])])
-                category.append(vowel_back_descriptors[(self.features['back'],
+                category.append(vowel_back_descriptors['spe'][(self.features['back'],
                                                         self.features['tense'])])
                 category.append(vowel_round_descriptors[self.features['round']])
             elif self.features['voc'] == '-':
@@ -146,24 +122,61 @@ class Segment(object):
                     category.append(None)
                 if self.features['voice'] == '+':
                     category.append('Voiced')
-                if self.features['voice'] == '-':
+                elif self.features['voice'] == '-':
                     category.append('Voiceless')
                 else:
                     category.append(None)
             else:
                 return None
         elif feat_type == 'hayes':
-            if self.features['consonantal'] == '-':
+            if self.features['diphthong'] == '+':
+                category.append('Diphthong')
+                if self.features['front_diphthong'] == '+':
+                    category.append('Front')
+                else:
+                    category.append('Back')
+            elif self.features['syllabic'] == '+':
                 category.append('Vowel')
                 #Height, backness, roundness
-                category.append(vowel_height_descriptors[(self.features['low'],
-                                                        self.features['high'],
-                                                        self.features['tense'])])
-                category.append(vowel_back_descriptors[(self.features['back'],
-                                                        self.features['front'],
-                                                        self.features['tense'])])
-                category.append(vowel_round_descriptors[self.features['round']])
-            elif self.features['consonantal'] == '+':
+                if self.features['low'] == '-' and self.features['high'] == '+':
+                    if self.features['tense'] == '+':
+                        category.append('Close')
+                    else:
+                        category.append('Near close')
+                elif self.features['low'] == '-' and self.features['high'] == '-':
+                    if self.features['tense'] == '+':
+                        category.append('Close mid')
+                    else:
+                        category.append('Open mid')
+                elif self.features['low'] == '+' and self.features['high'] == '-':
+                    if self.features['tense'] == '+':
+                        category.append('Open')
+                    else:
+                        category.append('Open')
+                else:
+                    category.append(None)
+
+                if self.features['back'] == '+' and self.features['front'] == '-':
+                    if self.features['tense'] == '+':
+                        category.append('Back')
+                    else:
+                        category.append('Near back')
+                elif self.features['back'] == '-' and self.features['front'] == '-':
+                    category.append('Central')
+                elif self.features['back'] == '-' and self.features['front'] == '+':
+                    if self.features['tense'] == '+':
+                        category.append('Front')
+                    else:
+                        category.append('Near front')
+                else:
+                    category.append(None)
+                if self.features['round'] == '+':
+                    category.append('Rounded')
+                else:
+                    category.append('Unrounded')
+
+            elif self.features['syllabic'] == '-':
+                category.append('Consonant')
                 if self.features['labial'] == '+':
                     category.append('Labial')
                 elif self.features['labiodental'] == '+':
@@ -173,6 +186,8 @@ class Segment(object):
                 elif self.features['anterior'] == '-' and self.features['coronal'] == '+':
                     category.append('Alveopalatal')
                 elif self.features['dorsal'] == '+' and self.features['coronal'] == '+':
+                    category.append('Palatal')
+                elif self.features['dorsal'] == '+' and self.features['front'] == '+':
                     category.append('Palatal')
                 elif self.features['dorsal'] == '+'and self.features['back'] == '+':
                     category.append('Uvular')
@@ -202,6 +217,10 @@ class Segment(object):
                     category.append('Lateral approximate')
                 else:
                     category.append(None)
+                if self.features['voice'] == '+':
+                    category.append('Voiced')
+                else:
+                    category.append('Voiceless')
             else:
                 return None
         return category
