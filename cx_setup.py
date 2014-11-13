@@ -3,15 +3,21 @@
 import sys
 import os
 import scipy.special
+import PyQt5
 from cx_Freeze import setup, Executable
 
 def readme():
     with open('README.md') as f:
         return f.read()
 
+
+ufuncs_path = scipy.special._ufuncs.__file__
+incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1])]
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
+    libegl = os.path.join(os.path.dirname(PyQt5.__file__),'libEGL.dll')
+    incl_files.append((libegl,os.path.split(libegl)[1]))
 
 group_name = 'PCT'
 
@@ -40,7 +46,7 @@ build_exe_options = {"excludes": [
                         'corpustools.prod.tests',
                         'matplotlib',
                         "tkinter",],
-                    "include_files":[(scipy.special._ufuncs.__file__,os.path.split(scipy.special._ufuncs.__file__)[1])],
+                    "include_files":incl_files,
                     "includes": [
                             "numpy",
                             "scipy",
@@ -76,7 +82,7 @@ bdist_mac_options = {#'iconfile':'./resources/logo.ico',
 
 
 setup(name='Phonological CorpusTools',
-      version='0.15.1',
+      version='1.0.0',
       description='',
       long_description='',
       classifiers=[
@@ -99,12 +105,12 @@ setup(name='Phonological CorpusTools',
                 'corpustools.gui.qt',
                 'corpustools.acousticsim',
                 'corpustools.symbolsim'],
-      executables = [Executable('bin/pct_qt.py',
-                            #targetName = 'PhonologicalCorpusTools',
+      executables = [Executable('bin/pct.py',
+                            #targetName = 'pct',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            #icon='docs/images/logo.ico'
+                            icon='docs/images/logo.ico'
                             )],
       options={
           'bdist_msi': bdist_msi_options,
