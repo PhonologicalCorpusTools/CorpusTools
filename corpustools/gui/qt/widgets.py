@@ -1,4 +1,6 @@
 
+from itertools import combinations
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
@@ -114,6 +116,7 @@ class InventoryBox(QGroupBox):
                     consRows.add(c[2])
 
         self.btnGroup = QButtonGroup()
+        self.btnGroup.setExclusive(False)
         if len(consColumns) and len(vowColumns):
             box = QVBoxLayout()
             smallbox = QHBoxLayout()
@@ -206,9 +209,9 @@ class InventoryBox(QGroupBox):
                 cat = s.category
                 btn = QPushButton(s.symbol)
                 btn.setCheckable(True)
-                btn.setAutoExclusive(True)
+                btn.setAutoExclusive(False)
                 btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
-                btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+                #btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
                 self.btnGroup.addButton(btn)
                 if cat is None:
                     unkCol += 1
@@ -248,13 +251,11 @@ class InventoryBox(QGroupBox):
         else:
             box = QGridLayout()
 
-
             row = 0
             col = 0
             for s in inventory:
                 btn = QPushButton(s.symbol)
                 btn.setCheckable(True)
-                btn.setAutoExclusive(True)
                 btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
                 btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
 
@@ -268,10 +269,17 @@ class InventoryBox(QGroupBox):
         self.setLayout(box)
 
     def value(self):
-        checked = self.btnGroup.checkedButton()
-        if checked is None:
-            return ''
-        return checked.text()
+        if self.btnGroup.exclusive():
+            checked = self.btnGroup.checkedButton()
+            if checked is None:
+                return ''
+            return checked.text()
+        else:
+            value = []
+            for b in self.btnGroup.buttons():
+                if b.isChecked():
+                    value.append(b.text())
+            return value
 
 class FeatureBox(QGroupBox):
     def __init__(self, title,features,parent=None):
@@ -331,20 +339,15 @@ class SegmentPairDialog(QDialog):
     def __init__(self, inventory,parent=None):
         QDialog.__init__(self,parent)
 
-        self.pair = ['','']
-
         layout = QVBoxLayout()
 
         segFrame = QFrame()
 
         segLayout = QHBoxLayout()
 
-        self.segOneFrame = InventoryBox('Segment 1',inventory)
-        self.segTwoFrame = InventoryBox('Segment 2',inventory)
+        self.segFrame = InventoryBox('Segments',inventory)
 
-        segLayout.addWidget(self.segOneFrame)
-
-        segLayout.addWidget(self.segTwoFrame)
+        segLayout.addWidget(self.segFrame)
 
         segFrame.setLayout(segLayout)
 
@@ -368,8 +371,8 @@ class SegmentPairDialog(QDialog):
         self.setWindowTitle('Select segment pair')
 
     def accept(self):
-        self.pair = [self.segOneFrame.value(),
-                        self.segTwoFrame.value()]
+        selected = self.segFrame.value()
+        self.pairs = combinations(selected,2)
         QDialog.accept(self)
 
 
@@ -398,14 +401,14 @@ class SegmentPairSelectWidget(QGroupBox):
         dialog = SegmentPairDialog(self.inventory)
         result = dialog.exec_()
         if result:
-            self.table.model().addRow(dialog.pair)
+            for p in dialog.pairs:
+                self.table.model().addRow(p)
 
     def removePair(self):
         select = self.table.selectionModel()
         if select.hasSelection():
-            selected = select.selectedRows()
-            for s in selected:
-                self.table.model().removeRow(s.row())
+            selected = [s.row() for s in select.selectedRows()]
+            self.table.model().removeRows(selected)
 
     def value(self):
         return self.table.model().pairs
@@ -446,12 +449,15 @@ class EnvironmentDialog(QDialog):
 
         layout.addWidget(self.envFrame)
 
-        self.acceptButton = QPushButton('Ok')
+        self.oneButton = QPushButton('Add')
+        self.anotherButton = QPushButton('Add and create another')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.oneButton)
+        acLayout.addWidget(self.anotherButton)
         acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
+        self.oneButton.clicked.connect(self.one)
+        self.anotherButton.clicked.connect(self.another)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
@@ -489,10 +495,22 @@ class EnvironmentDialog(QDialog):
         elif self.envType.currentText() == 'Features':
             self.createFeatureFrame()
 
+    def one(self):
+        self.addOneMore = False
+        self.accept()
+
+    def another(self):
+        self.addOneMore = True
+        self.accept()
+
     def accept(self):
 
         self.env = '{}_{}'.format(self.lhs.value(),self.rhs.value())
         QDialog.accept(self)
+
+    def reject(self):
+        self.addOneMore = False
+        QDialog.reject(self)
 
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self,inventory,parent=None):
@@ -518,9 +536,12 @@ class EnvironmentSelectWidget(QGroupBox):
 
     def envPopup(self):
         dialog = EnvironmentDialog(self.inventory)
-        result = dialog.exec_()
-        if result:
-            self.table.model().addRow([dialog.env])
+        addOneMore = True
+        while addOneMore:
+            result = dialog.exec_()
+            if result:
+                self.table.model().addRow([dialog.env])
+            addOneMore = dialog.addOneMore
 
     def removeEnv(self):
         select = self.table.selectionModel()
