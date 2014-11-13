@@ -297,7 +297,7 @@ class FADialog(QDialog):
         except ValueError:
             corpus = self.corpus
         if self.fileWidget.value() != '':
-            out_file = self.fileWidget.text()
+            out_file = self.fileWidget.value()
         else:
             out_file = None
         kwargs['relator_type'] = rel_type
@@ -319,8 +319,8 @@ class FADialog(QDialog):
         result = self.progressDialog.exec_()
 
         self.progressDialog.reset()
-        #if result:
-        #    self.accept()
+        if result:
+            self.accept()
 
     def setResults(self, results):
         self.results = list()
