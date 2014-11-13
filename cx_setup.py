@@ -1,11 +1,17 @@
 
 
 import sys
+import os
+import scipy.special
 from cx_Freeze import setup, Executable
 
 def readme():
     with open('README.md') as f:
         return f.read()
+
+base = None
+if sys.platform == "win32":
+    base = "Win32GUI"
 
 group_name = 'PCT'
 
@@ -32,9 +38,12 @@ build_exe_options = {"excludes": [
                         'corpustools.corpus.tests',
                         'corpustools.funcload.tests',
                         'corpustools.prod.tests',
-                        'matplotlib'],
+                        'matplotlib',
+                        "tkinter",],
+                    "include_files":[(scipy.special._ufuncs.__file__,os.path.split(scipy.special._ufuncs.__file__)[1])],
                     "includes": [
-                            "tkinter",
+                            "numpy",
+                            "scipy",
                             "numpy.lib.format",
                             "numpy.linalg",
                             "numpy.linalg._umath_linalg",
@@ -65,9 +74,6 @@ bdist_mac_options = {#'iconfile':'./resources/logo.ico',
                     #                    "/Library/Frameworks/Tk.framework"]
                                         }
 
-base = None
-if sys.platform == "win32":
-    base = "Win32GUI"
 
 setup(name='Phonological CorpusTools',
       version='0.15.1',
@@ -90,10 +96,10 @@ setup(name='Phonological CorpusTools',
                 'corpustools.freqalt',
                 'corpustools.funcload',
                 'corpustools.prod',
-                'corpustools.gui',
+                'corpustools.gui.qt',
                 'corpustools.acousticsim',
                 'corpustools.symbolsim'],
-      executables = [Executable('bin/pct.py',
+      executables = [Executable('bin/pct_qt.py',
                             #targetName = 'PhonologicalCorpusTools',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,

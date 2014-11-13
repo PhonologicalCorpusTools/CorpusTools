@@ -13,20 +13,50 @@ import os
 import corpustools.acousticsim.main as AS
 
 class ASWorker(QThread):
-    updateProgress = Signal(str)
+    updateProgress = Signal(int)
+    updateProgressText = Signal(str)
 
     dataReady = Signal(object)
 
     def __init__(self):
         QThread.__init__(self)
+        self.stopped = False
 
     def setParams(self, kwargs):
+        kwargs['stop_check'] = self.stopCheck
+        kwargs['call_back'] = self.emitProgress
         self.kwargs = kwargs
+        self.stopped = False
+        self.total = None
+
+    def stop(self):
+        self.stopped = True
+
+    def stopCheck(self):
+        return self.stopped
+
+    def emitProgress(self,*args):
+        if isinstance(args[0],str):
+            self.updateProgressText.emit(args[0])
+            return
+        else:
+            progress = args[0]
+            if len(args) > 1:
+                self.total = args[1]
+        self.updateProgress.emit(int((progress/self.total)*100))
 
     def run(self):
         kwargs = self.kwargs
         self.results = list()
-        self.results.append(AS.acoustic_similarity_directories(**kwargs))
+        output = AS.acoustic_similarity_directories(**kwargs)
+        if self.stopped:
+            return
+        output_list, output_val = output
+        for o in output_list:
+            self.results.append([os.path.split(o[0])[1],
+                                            os.path.split(o[1])[1],o[2]])
+        self.results.append([os.path.split(kwargs['directory_one'])[1],
+                                            os.path.split(kwargs['directory_one'])[1],output_val])
         self.dataReady.emit(self.results)
 
 class ASDialog(QDialog):
@@ -192,6 +222,24 @@ class ASDialog(QDialog):
 
         self.thread = ASWorker()
 
+        self.progressDialog = QProgressDialog('Calculating acoustic similarity...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Calculating acoustic similarity')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
     def mfccSelected(self):
         self.coeffEdit.setEnabled(True)
 
@@ -236,35 +284,32 @@ class ASDialog(QDialog):
                 'num_coeffs':coeffs,
                 'freq_lims':freq_lims,
                 'output_sim':self.outputSimWidget.isChecked(),
-                'use_multi':self.multiprocessingWidget.isChecked()}
+                'use_multi':self.multiprocessingWidget.isChecked(),
+                'return_all':True}
         self.thread.setParams(kwargs)
-
-        dialog = QProgressDialog('Calculating acoustic similarity...','Cancel',0,0)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(dialog.accept)
 
         self.thread.start()
 
-        result = dialog.exec_()
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
         if result:
             self.accept()
-        else:
-            self.thread.terminate()
 
 
     def setResults(self,results):
         self.results = list()
 
         for r in results:
-            self.results.append([os.path.split(self.directoryOne.value())[1],
-                            os.path.split(self.directoryTwo.value())[1],
+            self.results.append([r[0],
+                            r[1],
                             self.representationWidget.name(),
                             self.distAlgWidget.name(),
                             float(self.minFreqEdit.text()),
                             float(self.maxFreqEdit.text()),
                             int(self.filterEdit.text()),
                             int(self.coeffEdit.text()),
-                            r,
+                            r[2],
                             self.outputSimWidget.isChecked()])
 
     def newTable(self):

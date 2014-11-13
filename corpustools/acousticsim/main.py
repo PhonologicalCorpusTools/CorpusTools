@@ -90,6 +90,8 @@ def acoustic_similarity_mapping(path_mapping,**kwargs):
 
     """
 
+    stop_check = kwargs.get('stop_check',None)
+    call_back = kwargs.get('call_back',None)
     to_rep = _build_to_rep(**kwargs)
 
     num_cores = kwargs.get('num_cores', 1)
@@ -105,10 +107,20 @@ def acoustic_similarity_mapping(path_mapping,**kwargs):
         dist_func = dtw_distance
     cache = dict()
     output_values = list()
+    if call_back is not None:
+        call_back('Calculating acoustic similarity...')
+        call_back(0,len(path_mapping))
+        cur = 0
     for i,pm in enumerate(path_mapping):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
         for filepath in pm:
-                if filepath not in cache:
-                    cache[filepath] = to_rep(filepath)
+            if filepath not in cache:
+                cache[filepath] = to_rep(filepath)
         dist_val = dist_func(cache[pm[0]],cache[pm[1]])
         if output_sim:
             dist_val = 1/dist_val
@@ -166,14 +178,30 @@ def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
 
     """
 
+    stop_check = kwargs.get('stop_check',None)
+    call_back = kwargs.get('call_back',None)
+
     files_one = [x for x in os.listdir(directory_one) if x.lower().endswith('.wav')]
     files_two = [x for x in os.listdir(directory_two) if x.lower().endswith('.wav')]
+    if call_back is not None:
+        call_back('Mapping directories...')
+        call_back(0,len(files_one)*len(files_two))
+        cur = 0
+    path_mapping = list()
+    for x in files_one:
+        for y in files_two:
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 100 == 0:
+                    call_back(cur)
+            path_mapping.append((os.path.join(directory_one,x),
+                        os.path.join(directory_two,y)))
 
-    path_mapping = [ (os.path.join(directory_one,x),
-                        os.path.join(directory_two,y))
-                        for x in files_one
-                        for y in files_two]
     output = acoustic_similarity_mapping(path_mapping, **kwargs)
+    if stop_check is not None and stop_check():
+        return
     output_val = sum([x[-1] for x in output]) / len(output)
 
     threaded_q = kwargs.get('threaded_q', None)
