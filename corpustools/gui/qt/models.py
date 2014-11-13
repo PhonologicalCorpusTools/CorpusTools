@@ -91,9 +91,11 @@ class SegmentPairModel(QAbstractTableModel):
         self.pairs.append(pair)
         self.layoutChanged.emit()
 
-    def removeRow(self,ind):
+    def removeRows(self,inds):
+        inds = sorted(inds, reverse=True)
         self.layoutAboutToBeChanged.emit()
-        del self.pairs[ind]
+        for i in inds:
+            del self.pairs[i]
         self.layoutChanged.emit()
 
 class EnvironmentModel(QAbstractTableModel):

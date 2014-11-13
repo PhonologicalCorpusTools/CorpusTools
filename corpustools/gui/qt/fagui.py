@@ -26,7 +26,6 @@ class FAWorker(QThread):
         self.kwargs = kwargs
         self.stopped = False
         self.total = None
-        self.intermed = None
 
     def stop(self):
         self.stopped = True

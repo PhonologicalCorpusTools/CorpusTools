@@ -1,10 +1,11 @@
 import os
 import codecs
 
+from PyQt5.QtCore import pyqtSignal as Signal,QThread
 from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
                             QVBoxLayout, QPushButton, QFrame, QGridLayout,
                             QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox, QMessageBox)
+                            QFileDialog, QComboBox, QMessageBox, QProgressDialog)
 
 from collections import OrderedDict
 
@@ -25,6 +26,32 @@ def get_corpora_list():
 def corpus_name_to_path(name):
     return os.path.join(config['storage']['directory'],'CORPUS',name+'.corpus')
 
+class LoadWorker(QThread):
+
+    dataReady = Signal(object)
+
+    def __init__(self):
+        QThread.__init__(self)
+        self.stopped = False
+
+    def setParams(self, kwargs):
+        self.kwargs = kwargs
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+
+    def stopCheck(self):
+        return self.stopped
+
+    def run(self):
+        if self.stopCheck():
+            return
+        self.results = load_binary(self.kwargs['path'])
+        if self.stopCheck():
+            return
+        self.dataReady.emit(self.results)
+
 class CorpusLoadDialog(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
@@ -40,6 +67,8 @@ class CorpusLoadDialog(QDialog):
         listLayout.addWidget(self.corporaList)
         listFrame.setLayout(listLayout)
         self.getAvailableCorpora()
+
+        self.corporaList.doubleClicked.connect(self.accept)
 
         formLayout.addWidget(listFrame)
 
@@ -85,11 +114,29 @@ class CorpusLoadDialog(QDialog):
 
         self.setWindowTitle('Load corpora')
 
+        self.thread = LoadWorker()
+
+        self.progressDialog = QProgressDialog('Loading...','Cancel',0,0,self)
+        self.progressDialog.setWindowTitle('Loading corpus')
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def setResults(self, results):
+        self.corpus = results
+
     def accept(self):
         selected = [x.text() for x in self.corporaList.selectedItems()]
         if selected:
-            self.corpus = load_binary(corpus_name_to_path(selected[0]))
-            QDialog.accept(self)
+            self.thread.setParams({'path':corpus_name_to_path(selected[0])})
+
+            self.thread.start()
+
+            result = self.progressDialog.exec_()
+
+            self.progressDialog.reset()
+            if result:
+                QDialog.accept(self)
 
     def openDownloadWindow(self):
         dialog = DownloadCorpusDialog(self)
