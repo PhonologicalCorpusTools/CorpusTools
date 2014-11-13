@@ -139,11 +139,11 @@ class InventoryBox(QGroupBox):
             consTable.resizeColumnsToContents()
             consTable.setSelectionMode(QAbstractItemView.NoSelection)
             consTable.horizontalHeader().setSectionsClickable(False)
-            consTable.horizontalHeader().resizeSections()
+            #consTable.horizontalHeader().resizeSections()
             consTable.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
             consTable.verticalHeader().setSectionsClickable(False)
-            consTable.verticalHeader().resizeSections()
+            #consTable.verticalHeader().resizeSections()
             consTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
 
@@ -175,11 +175,11 @@ class InventoryBox(QGroupBox):
             vowTable.resizeColumnsToContents()
             vowTable.setSelectionMode(QAbstractItemView.NoSelection)
             vowTable.horizontalHeader().setSectionsClickable(False)
-            vowTable.horizontalHeader().resizeSections()
+            #vowTable.horizontalHeader().resizeSections()
             vowTable.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
             vowTable.verticalHeader().setSectionsClickable(False)
-            vowTable.verticalHeader().resizeSections()
+            #vowTable.verticalHeader().resizeSections()
             vowTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
 
             for i in range(len(vowColumns)):
