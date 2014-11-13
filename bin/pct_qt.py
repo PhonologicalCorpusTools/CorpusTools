@@ -1,6 +1,6 @@
 from multiprocessing import freeze_support
 import sys
-from exnetexplorer.main import QApplication, MainWindow
+from corpustools.gui.qt.main import MainWindow,QApplication
 
 
 if __name__ == '__main__':
