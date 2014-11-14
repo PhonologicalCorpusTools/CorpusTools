@@ -12,31 +12,9 @@ from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
 from .widgets import RadioSelectWidget, FileWidget
 
-class SSWorker(QThread):
-    updateProgress = Signal(int)
+from .windows import FunctionWorker
 
-    dataReady = Signal(object)
-
-    def __init__(self):
-        QThread.__init__(self)
-        self.stopped = False
-
-    def setParams(self, kwargs):
-        self.kwargs = kwargs
-        self.stopped = False
-        self.total = None
-
-    def stop(self):
-        self.stopped = True
-
-    def stopCheck(self):
-        return self.stopped
-
-    def emitProgress(self,progress, total):
-        if self.total is None:
-            self.total = total
-        self.updateProgress.emit(int((progress/self.total)*100))
-
+class SSWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = string_similarity(kwargs['corpus'], kwargs['query'],
@@ -46,8 +24,8 @@ class SSWorker(QThread):
                                         count_what = kwargs['count_what'],
                                         min_rel = kwargs['min_rel'],
                                         max_rel = kwargs['max_rel'],
-                                        stop_check = self.stopCheck,
-                                        call_back = self.emitProgress)
+                                        stop_check = kwargs['stop_check'],
+                                        call_back = kwargs['call_back'])
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -232,14 +210,23 @@ class SSDialog(QDialog):
 
         self.thread = SSWorker()
 
-        self.progressDialog = QProgressDialog('Calculating string similarity...','Cancel',0,100)
+        self.progressDialog = QProgressDialog('Calculating string similarity...','Cancel',0,100, self)
+        self.progressDialog.setWindowTitle('Calculating string similarity')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
         self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
 
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
     def updateProgress(self,progress):
         self.progressDialog.setValue(progress)
-        #self.progressDialog.repaint()
+        self.progressDialog.repaint()
 
     def oneWordSelected(self):
         self.compType = 'one'
@@ -346,10 +333,11 @@ class SSDialog(QDialog):
         self.thread.setParams(kwargs)
         self.thread.start()
 
-        if self.progressDialog.exec_():
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
             self.accept()
-        else:
-            self.thread.stop()
 
     def setResults(self, results):
         self.results = list()

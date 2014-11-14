@@ -131,7 +131,7 @@ class MainWindow(QMainWindow):
         dialog = SSDialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
-            if self.SSWindow is not None and dialog.update:
+            if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
                 self.SSWindow.table.model().addData(dialog.results)
             else:
                 dataModel = ResultsModel(dialog.header,dialog.results)
@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
         dialog = FADialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
-            if self.FAWindow is not None and dialog.update:
+            if self.FAWindow is not None and dialog.update and self.FAWindow.isVisible():
                 self.FAWindow.table.model().addData(dialog.results)
             else:
                 dataModel = ResultsModel(dialog.header,dialog.results)
@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
         dialog = PDDialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
-            if self.PDWindow is not None and dialog.update:
+            if self.PDWindow is not None and self.PDWindow.isVisible():
                 self.PDWindow.table.model().addData(dialog.results)
             else:
                 dataModel = ResultsModel(dialog.header,dialog.results)
@@ -170,7 +170,7 @@ class MainWindow(QMainWindow):
         dialog = FLDialog(self, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
-            if self.FLWindow is not None and dialog.update:
+            if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
                 self.FLWindow.table.model().addData(dialog.results)
             else:
                 dataModel = ResultsModel(dialog.header,dialog.results)
@@ -181,7 +181,7 @@ class MainWindow(QMainWindow):
         dialog = ASDialog(self,self.showToolTips)
         result = dialog.exec_()
         if result:
-            if self.ASWindow is not None and dialog.update:
+            if self.ASWindow is not None and dialog.update and self.ASWindow.isVisible():
                 self.ASWindow.table.model().addData(dialog.results)
             else:
                 dataModel = ResultsModel(dialog.header,dialog.results)

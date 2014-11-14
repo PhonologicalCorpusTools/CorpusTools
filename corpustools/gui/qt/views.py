@@ -23,6 +23,14 @@ class TableWidget(QTableView):
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.setSortingEnabled(True)
 
+    def sizeHint(self):
+        header = self.horizontalHeader()
+        width = header.length()
+        sh = header.sizeHint()
+        sh.setWidth(width+50)
+        sh.setHeight((width+50)*9/16)
+        return sh
+
 class ResultsWindow(QWidget):
     def __init__(self, title, dataModel, parent=None):
         QWidget.__init__(self)#, parent)
@@ -40,7 +48,14 @@ class ResultsWindow(QWidget):
         self.setLayout(layout)
         #self.setWidget(frame)
         self.table.resizeColumnsToContents()
+        #self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.setWindowTitle(title)
+        self.table.adjustSize()
+        self.resize(self.sizeHint())
+
+    def sizeHint(self):
+        sh = self.table.sizeHint()
+        return sh
 
     def save(self):
         filename = QFileDialog.getSaveFileName(self,'Choose save file',

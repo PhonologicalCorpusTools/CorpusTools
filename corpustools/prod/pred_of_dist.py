@@ -18,11 +18,21 @@ class UniquenessWarning(Warning):
     pass
 
 
-def count_segs(corpus, seg1, seg2, tier_name, type_or_token):
+def count_segs(corpus, seg1, seg2, tier_name, type_or_token, stop_check, call_back):
     seg1_counts = 0
     seg2_counts = 0
 
+    if call_back is not None:
+        call_back('Finding instances of segments...')
+        call_back(0,len(corpus))
+        cur = 0
     for word in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
         tier = getattr(word, tier_name)
         for seg in tier:
             if seg == seg1:
@@ -33,7 +43,7 @@ def count_segs(corpus, seg1, seg2, tier_name, type_or_token):
     return seg1_counts, seg2_counts
 
 
-def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token):
+def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token, stop_check, call_back):
 
     envs = [EnvironmentFilter(corpus, env) for env in envs]
     env_matches = {env:{seg1:[0], seg2:[0]} for env in envs}
@@ -41,7 +51,17 @@ def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token):
     missing_envs = set()
     overlapping_envs = defaultdict(set)
 
+    if call_back is not None:
+        call_back('Finding instances of environments...')
+        call_back(0,len(corpus))
+        cur = 0
     for word in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
         for pos,seg in enumerate(getattr(word, tier_name)):
             if not (seg == seg1 or seg == seg2):
                 continue
@@ -71,7 +91,9 @@ def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token):
 
     return env_matches, missing_envs, overlapping_envs
 
-def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription', type_or_token = 'type', all_info = False):
+def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription',
+                type_or_token = 'type', all_info = False, stop_check = None,
+                call_back = None):
     """
     Main function for calculating predictability of distribution for
     two segments over a corpus, regardless of environment.
@@ -102,7 +124,10 @@ def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription', type_or_
         frequency of seg2] if all_info is True, or just entropy if
         all_info is False.
     """
-    seg1_count, seg2_count = count_segs(corpus, seg1, seg2, tier_name, type_or_token)
+    returned  = count_segs(corpus, seg1, seg2, tier_name, type_or_token,stop_check,call_back)
+    if stop_check is not None and stop_check():
+        return
+    seg1_count, seg2_count = returned
     total_count = seg1_count + seg2_count
     if total_count:
         H = -1 * ((seg1_count/total_count) * log2(seg1_count/total_count) + (seg2_count/total_count) * log2(seg2_count/total_count))
@@ -113,7 +138,9 @@ def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription', type_or_
     return H
 
 
-def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription', type_or_token='type', strict = True, all_info = False):
+def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription',
+        type_or_token='type', strict = True, all_info = False, stop_check = None,
+                call_back = None):
     """
     Main function for calculating predictability of distribution for
     two segments over specified environments in a corpus.
@@ -151,7 +178,11 @@ def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription', type_or_token
         of [entropy, frequency of environment, frequency of seg1, frequency
         of seg2] if all_info is True, or just entropy if all_info is False.
     """
-    env_matches, miss_envs, overlap_envs = check_envs(corpus, seg1, seg2, envs,tier_name, type_or_token)
+    returned = check_envs(corpus, seg1, seg2, envs,tier_name, type_or_token, stop_check, call_back)
+
+    if stop_check is not None and stop_check():
+        return
+    env_matches, miss_envs, overlap_envs = returned
     if miss_envs:
         error_string = 'The environments {} for {} were not applicable to the following environments: {}'.format(
                     ' ,'.join(str(env) for env in envs),
@@ -179,7 +210,17 @@ def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription', type_or_token
     total_seg1_matches = 0
     total_seg2_matches = 0
     total_frequency = 0
+
+    if call_back is not None:
+        call_back('Calculating predictability of distribution...')
+        call_back(0,len(corpus))
+        cur = 0
     for env in env_matches:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         seg1_matches = sum(env_matches[env][seg1])
         seg2_matches = sum(env_matches[env][seg2])
         total_seg1_matches += seg1_matches

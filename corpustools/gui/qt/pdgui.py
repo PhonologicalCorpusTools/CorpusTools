@@ -8,20 +8,13 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
 
 from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSelectWidget
 
+from .windows import FunctionWorker
+
 from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ExhaustivityError, UniquenessError
 
-class PDWorker(QThread):
-    updateProgress = Signal(str)
-
-    dataReady = Signal(object)
+class PDWorker(FunctionWorker):
 
     errorEncountered = Signal(object)
-
-    def __init__(self):
-        QThread.__init__(self)
-
-    def setParams(self, kwargs):
-        self.kwargs = kwargs
 
     def run(self):
         kwargs = self.kwargs
@@ -36,9 +29,13 @@ class PDWorker(QThread):
                             kwargs['tier'],
                             kwargs['type_token'],
                             kwargs['strict'],
-                            True)
+                            True,
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
                     except Exception as e:
                         self.errorEncountered.emit(e)
+                        return
+                    if self.stopped:
                         return
                     self.results.append(res)
             else:
@@ -52,9 +49,13 @@ class PDWorker(QThread):
                         res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
                             kwargs['tier'],
                             kwargs['type_token'],
-                            True)
+                            True,
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
                     except Exception as e:
                         self.errorEncountered.emit(e)
+                        return
+                    if self.stopped:
                         return
                     self.results.append(res)
             else:
@@ -215,10 +216,23 @@ class PDDialog(QDialog):
         self.thread = PDWorker()
         self.thread.errorEncountered.connect(self.handleError)
 
-        self.progressDialog = QProgressDialog('Calculating predictability of distribution...','Cancel',0,0)
+        self.progressDialog = QProgressDialog('Calculating predictability of distribution...','Cancel',0,100, self)
+        self.progressDialog.setWindowTitle('Calculating predictability of distribution')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
-        self.thread.errorEncountered.connect(self.progressDialog.reject)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
 
     def handleError(self,error):
         reply = QMessageBox.critical(self,
@@ -261,29 +275,26 @@ class PDDialog(QDialog):
         if kwargs is None:
             return
         self.thread.setParams(kwargs)
-
-
         self.thread.start()
 
         result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
         if result:
             self.accept()
-        else:
-            self.thread.terminate()
 
     def calcAllPD(self):
         kwargs = self.generateKwargs(allEnv=True)
         if kwargs is None:
             return
         self.thread.setParams(kwargs)
-
         self.thread.start()
 
         result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
         if result:
             self.accept()
-        else:
-            self.thread.terminate()
 
 
     def setResults(self,results):
