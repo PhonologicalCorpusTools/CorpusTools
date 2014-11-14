@@ -268,6 +268,11 @@ class InventoryBox(QGroupBox):
 
         self.setLayout(box)
 
+    def setExclusive(self, b):
+        self.btnGroup.setExclusive(b)
+        for btn in self.btnGroup.buttons():
+            btn.setAutoExclusive(b)
+
     def value(self):
         if self.btnGroup.exclusive():
             checked = self.btnGroup.checkedButton()
@@ -332,7 +337,10 @@ class FeatureBox(QGroupBox):
         self.envList.clear()
 
     def value(self):
-        return [self.envList.itemAt(i,0).text() for i in range(self.envList.count())]
+        val = [self.envList.item(i).text() for i in range(self.envList.count())]
+        if not val:
+            return ''
+        return '[{}]'.format(','.join(val))
 
 
 class SegmentPairDialog(QDialog):
@@ -391,6 +399,7 @@ class SegmentPairSelectWidget(QGroupBox):
 
         self.table = TableWidget()
         self.table.setModel(SegmentPairModel())
+        self.table.resizeColumnsToContents()
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)
@@ -435,8 +444,10 @@ class EnvironmentDialog(QDialog):
         layout.addWidget(self.envType)
 
         self.lhs = InventoryBox('Left hand side',self.inventory)
+        self.lhs.setExclusive(True)
 
         self.rhs = InventoryBox('Right hand side',self.inventory)
+        self.rhs.setExclusive(True)
 
         self.envFrame = QFrame()
 
@@ -484,9 +495,11 @@ class EnvironmentDialog(QDialog):
         self.lhs.deleteLater()
         self.rhs.deleteLater()
         self.lhs = InventoryBox('Left hand side',self.inventory)
+        self.lhs.setExclusive(True)
         self.envLayout.addWidget(self.lhs)
 
         self.rhs = InventoryBox('Right hand side',self.inventory)
+        self.lhs.setExclusive(True)
         self.envLayout.addWidget(self.rhs)
 
     def generateFrames(self,ind=0):
@@ -527,6 +540,7 @@ class EnvironmentSelectWidget(QGroupBox):
 
         self.table = TableWidget()
         self.table.setModel(EnvironmentModel())
+        self.table.resizeColumnsToContents()
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)

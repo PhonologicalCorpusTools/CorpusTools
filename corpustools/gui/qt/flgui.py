@@ -9,29 +9,12 @@ from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
 from collections import OrderedDict
 
 from .widgets import SegmentPairSelectWidget, RadioSelectWidget
+from .windows import FunctionWorker
 
 import corpustools.funcload.functional_load as FL
 
 
-class FLWorker(QThread):
-    updateProgress = Signal(str)
-
-    dataReady = Signal(object)
-
-    def __init__(self):
-        QThread.__init__(self)
-        self.stopped = False
-
-    def setParams(self, kwargs):
-        self.kwargs = kwargs
-        self.stopped = False
-
-    def stop(self):
-        self.stopped = True
-
-    def stopCheck(self):
-        return self.stopped
-
+class FLWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
@@ -43,12 +26,14 @@ class FLWorker(QThread):
                             kwargs['frequency_cutoff'],
                             kwargs['relative_count'],
                             kwargs['distinguish_homophones'],
-                            stop_check = self.stopCheck)
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
                 elif kwargs['func_type'] == 'entropy':
                     res = FL.deltah_fl(kwargs['corpus'], [pair],
                             kwargs['frequency_cutoff'],
                             kwargs['type_or_token'],
-                            stop_check = self.stopCheck)
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
                 if self.stopped:
                     return
                 self.results.append(res)
@@ -59,13 +44,15 @@ class FLWorker(QThread):
                             kwargs['frequency_cutoff'],
                             kwargs['relative_count'],
                             kwargs['distinguish_homophones'],
-                            stop_check = self.stopCheck)
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
             elif kwargs['func_type'] == 'entropy':
                 res = FL.deltah_fl(kwargs['corpus'],
                             kwargs['segment_pairs'],
                             kwargs['frequency_cutoff'],
                             kwargs['type_or_token'],
-                            stop_check = self.stopCheck)
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
             if self.stopped:
                 return
             self.results.append(res)
@@ -227,9 +214,23 @@ class FLDialog(QDialog):
 
         self.thread = FLWorker()
 
-        self.progressDialog = QProgressDialog('Calculating functional load...','Cancel',0,0)
+        self.progressDialog = QProgressDialog('Calculating functional load...','Cancel',0,100, self)
+        self.progressDialog.setWindowTitle('Calculating functional load')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
 
     def minPairsSelected(self):
         self.typeTokenWidget.disable()
@@ -270,10 +271,10 @@ class FLDialog(QDialog):
         self.thread.start()
 
         result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
         if result:
             self.accept()
-        else:
-            self.thread.stop()
 
 
     def setResults(self,results):

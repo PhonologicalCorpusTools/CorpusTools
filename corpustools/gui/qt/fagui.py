@@ -10,40 +10,11 @@ from collections import OrderedDict
 
 from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, SaveFileWidget
 
+from .windows import FunctionWorker
+
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
-class FAWorker(QThread):
-    updateProgress = Signal(int)
-    updateProgressText = Signal(str)
-
-    dataReady = Signal(object)
-
-    def __init__(self):
-        QThread.__init__(self)
-        self.stopped = False
-
-    def setParams(self, kwargs):
-        self.kwargs = kwargs
-        self.stopped = False
-        self.total = None
-
-    def stop(self):
-        self.stopped = True
-
-    def stopCheck(self):
-        return self.stopped
-
-    def emitProgress(self,*args):
-        if isinstance(args[0],str):
-            self.updateProgressText.emit(args[0])
-            return
-        else:
-            progress = args[0]
-            if len(args) > 1:
-                self.total = args[1]
-        self.updateProgress.emit(int((progress/self.total)*100))
-
-
+class FAWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
@@ -56,8 +27,8 @@ class FAWorker(QThread):
                                 min_pairs_okay=kwargs['include_minimal_pairs'],
                                 from_gui=True, phono_align=kwargs['phono_align'],
                                 output_filename=kwargs['output_filename'],
-                                stop_check = self.stopCheck,
-                                call_back = self.emitProgress)
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
                 if self.stopped:
                     return
                 self.results.append(res)

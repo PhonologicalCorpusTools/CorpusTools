@@ -4,11 +4,12 @@ from math import *
 import itertools
 import queue
 import copy
+from math import factorial
 
 
 def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         relative_count=True, distinguish_homophones=False, threaded_q=False,
-        stop_check = None):
+        stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
 
     Parameters
@@ -33,37 +34,62 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         q = threaded_q
 
     if frequency_cutoff > 0:
+
         corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
     if stop_check is not None and stop_check():
         return
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
 
-    corpus = [word for word in corpus if any([s in word.transcription for s in all_segments])]
+    neutralized = list()
+    if call_back is not None:
+        call_back('Finding and neutralizing instances of segments...')
+        call_back(0,len(corpus))
+        cur = 0
+    for w in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
+            continue
+        if any([s in w.transcription for s in all_segments]):
+            n = [neutralize_segment(seg, segment_pairs)
+                    for seg in w.transcription]
+            neutralized.append(('.'.join(n), w.spelling.lower(), w.transcription))
     if stop_check is not None and stop_check():
         return
-    scope = len(corpus)
 
-    trans_spell = [(tuple(word.transcription), word.spelling.lower()) for word in corpus]
-    if stop_check is not None and stop_check():
-        return
-
-    neutralized = [(' '.join([neutralize_segment(seg, segment_pairs) for seg in word[0]]), word[1], word[0]) for word in list(trans_spell)]
-
-    if stop_check is not None and stop_check():
-        return
 
     def matches(first, second):
         return (first[0] == second[0] and first[1] != second[1]
-            and 'NEUTR:' in first[0] and 'NEUTR:' in second[0] and first[2] != second[2])
+            and first[0].startswith('NEUTR:') and second[0].startswith('NEUTR:')
+            and first[2] != second[2])
 
-    minpairs = [(first, second) for first, second in itertools.combinations(neutralized, 2) if matches(first, second)]
+    minpairs = list()
+    if call_back is not None:
+        call_back('Counting minimal pairs...')
+        call_back(0,factorial(len(neutralized))/(factorial(len(neutralized)-2))*2)
+        cur = 0
+    for first,second in itertools.combinations(neutralized, 2):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        if not matches(first,second):
+            continue
+        minpairs.append((str(first[2]),str(second[2])))
 
-    if distinguish_homophones == False:
-        minpairs = list(set([mp[0][0] for mp in minpairs]))
+
+    if not distinguish_homophones:
+        minpairs = set(minpairs)
 
     result = len(minpairs)
     if relative_count:
-        result /= scope
+        result /= len(neutralized)
 
     if not threaded_q:
         return result
@@ -73,7 +99,8 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
 
 
 def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
-            type_or_token='token', threaded_q=False,stop_check=None):
+            type_or_token='token', threaded_q=False,
+        stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
 
     Parameters
@@ -92,33 +119,49 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
     float
         The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
     """
-    if type_or_token == None:
-        type_or_token = 'token'
-    if frequency_cutoff > 0:
-        corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
-    if stop_check is not None and stop_check():
-        return
-
-    if type_or_token == 'type':
-        freq_sum = len(corpus)
-    else: # token frequencies
-        freq_sum = sum([word.frequency for word in corpus])
-
+    if call_back is not None:
+        call_back('Finding instances of segments...')
+        call_back(0,len(corpus))
+        cur = 0
+    freq_sum = 0
     original_probs = defaultdict(float)
-    if type_or_token == 'type':
-        for word in corpus:
-            original_probs[' '.join([str(s) for s in word.transcription])] += 1.0/freq_sum
-    elif type_or_token == 'token':
-        for word in corpus:
-            original_probs[' '.join([str(s) for s in word.transcription])] += float(word.frequency)/freq_sum
+    for w in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
+            continue
+
+        if type_or_token == 'type':
+            f = 1
+        else:
+            f = w.frequency
+
+        original_probs[str(w.transcription)] += f
+        freq_sum += f
+
+    original_probs = {k:v/freq_sum for k,v in original_probs.items()}
 
     if stop_check is not None and stop_check():
         return
     preneutr_h = entropy([original_probs[item] for item in original_probs])
 
     neutralized_probs = defaultdict(float)
-    for item in original_probs:
-        neutralized_probs[' '.join([neutralize_segment(s, segment_pairs) for s in item.split(' ')])] += original_probs[item]
+    if call_back is not None:
+        call_back('Neutralizing instances of segments...')
+        call_back(0,len(list(original_probs.keys())))
+        cur = 0
+    for k,v in original_probs.items():
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        neutralized_probs['.'.join([neutralize_segment(s, segment_pairs) for s in k.split('.')])] += v
     postneutr_h = entropy([neutralized_probs[item] for item in neutralized_probs])
 
     if stop_check is not None and stop_check():
