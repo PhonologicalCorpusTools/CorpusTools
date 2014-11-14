@@ -1,14 +1,15 @@
-from multiprocessing import freeze_support
+
+import os
 import sys
+base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0,base)
 from corpustools.gui.qt.main import MainWindow,QApplication
 
-
 if __name__ == '__main__':
-    freeze_support()
+
     app = QApplication(sys.argv)
 
     main = MainWindow()
     main.show()
 
     sys.exit(app.exec_())
-

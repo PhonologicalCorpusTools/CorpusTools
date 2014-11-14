@@ -8,6 +8,37 @@ import math
 class CorpusIntegrityError(Exception):
     pass
 
+
+#spe: round
+#hayes: round
+vowel_round_descriptors = {('+'):'Rounded',
+                            ('-'):'Unrounded'}
+
+
+#I hate features cuz they r so dum!
+
+
+#spe: son, cont, nasal, lat, del_rel
+#hayes: sonorant, continuant, nasal, lateral, delayed_release, tap, trill
+consonant_manner_descriptors = {'spe':{('-','-','-','-','-'): 'Stop',
+                                        ('+','-','+','-','-'): 'Nasal',
+                                        ('-','-','+','-','-'): 'Nasal',
+                                        ('-','+','-','-','-'): 'Fricative',
+                                        ('-','-','-','-','+'): 'Affricate',
+                                        ('+','+','-','-','-'):'Approximate',
+                                        ('+','+','-','+','-'): 'Lateral approximate'},
+                                'hayes':{('-','-','-','-','-','-','-'):'Stop',
+                                        ('+','-','+','-','-','-','-'): 'Nasal',
+                                        ('-','-','+','-','-','-','-'): 'Nasal',
+                                        ('+','+','-','-','-','-','+'): 'Trill',
+                                        ('-','+','-','-','-','+','-'): 'Tap',
+                                        ('-','+','-','-','-','-','-'): 'Fricative',
+                                        ('-','-','-','-','+','-','-'): 'Affricate',
+                                        ('+','+','-','-','-','-','-'):'Approximate',
+                                        ('+','+','-','+','-','-','-'): 'Lateral approximate'}}
+
+consonant_voice_descriptors = {('+'): 'Voiced',
+                                ('-'): 'Voiceless'}
 class Segment(object):
     """
     Class for segment symbols
@@ -17,6 +48,222 @@ class Segment(object):
         #None defaults are for word-boundary symbols
         self.symbol = symbol
         self.features = dict()
+
+    @property
+    def category(self):
+        if len(self.features) == 0:
+            return None
+        if 'voc' in self.features:
+            feat_type = 'spe'
+        elif 'consonantal' in self.features:
+            feat_type = 'hayes'
+        else:
+            return None
+        category = []
+        if feat_type == 'spe':
+            if self.features['voc'] == '+':
+                if self.features['high'] == '.':
+                    category.append('Diphthong')
+                    if self.features['back'] == '-':
+                        category.append('Front')
+                    else:
+                        category.append('Back')
+                else:
+                    category.append('Vowel')
+                    #Height, backness, roundness
+                    if self.features['low'] == '-' and self.features['high'] == '+':
+                        if self.features['tense'] == '+':
+                            category.append('Close')
+                        else:
+                            category.append('Near close')
+                    elif self.features['low'] == '-' and self.features['high'] == '-':
+                        if self.features['tense'] == '+':
+                            category.append('Close mid')
+                        else:
+                            category.append('Open mid')
+                    elif self.features['low'] == '+' and self.features['high'] == '-':
+                        if self.features['tense'] == '+':
+                            category.append('Open')
+                        else:
+                            category.append('Open')
+                    else:
+                        category.append(None)
+
+                    if self.features['back'] == '+':
+                        if self.features['tense'] == '+':
+                            category.append('Back')
+                        else:
+                            category.append('Near back')
+                    elif self.features['back'] == 'n':
+                        category.append('Central')
+                    elif self.features['back'] == '-':
+                        if self.features['tense'] == '+':
+                            category.append('Front')
+                        else:
+                            category.append('Near front')
+                    else:
+                        category.append(None)
+                    if self.features['round'] == '+':
+                        category.append('Rounded')
+                    else:
+                        category.append('Unrounded')
+            elif self.features['voc'] == '-':
+                category.append('Consonant')
+                #Place, manner, voicing
+                if (self.features['ant'] == '+' and self.features['cor'] == '-' and
+                        self.features['back'] == '-'):
+                            category.append('Labial')
+                elif (self.features['ant'] == '+' and self.features['cor'] == '-' and
+                        self.features['back'] == '+' and self.features['high'] == '+'):
+                            category.append('Labial')
+                elif (self.features['ant'] == '+' and self.features['cor'] == '-' and
+                        self.features['back'] == '-'):
+                            category.append('Labiodental')
+                elif (self.features['ant'] == '+' and self.features['cor'] == '+' and
+                        self.features['back'] == '-'):
+                            category.append('Dental')
+                elif (self.features['ant'] == '-' and self.features['cor'] == '+' and
+                        self.features['back'] == '-' and self.features['high'] == '-'):
+                            category.append('Alveolar')
+                elif (self.features['ant'] == '-' and self.features['cor'] == '+' and
+                        self.features['back'] == '-' and self.features['high'] == '+'):
+                            category.append('Alveopalatal')
+                elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
+                        self.features['back'] == '-'):
+                            category.append('Palatal')
+                elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
+                        self.features['back'] == '+' and self.features['high'] == '+'):
+                            category.append('Velar')
+                elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
+                        self.features['back'] == '+' and self.features['high'] == '-'):
+                            category.append('Uvular')
+                elif (self.features['low'] == '+' and
+                        self.features['back'] == '+'):
+                            category.append('Pharyngeal')
+                elif (self.features['low'] == '+' and self.features['back'] == '-'):
+                            category.append('Glottal')
+                else:
+                    category.append(None)
+                if (self.features['son'] == '-' and self.features['nasal'] == '-' and
+                        self.features['cont'] == '-'):
+                            category.append('Stop')
+                elif (self.features['nasal'] == '+'):
+                            category.append('Nasal')
+                elif (self.features['son'] == '-' and self.features['nasal'] == '-' and
+                        self.features['cont'] == '+'):
+                            category.append('Fricative')
+                elif (self.features['del_rel'] == '+'):
+                            category.append('Affricate')
+                elif (self.features['son'] == '+' and self.features['nasal'] == '-'):
+                            category.append('Approximate')
+                elif (self.features['son'] == '+' and self.features['lat'] == '+'):
+                            category.append('Lateral approximate')
+                else:
+                    category.append(None)
+                if self.features['voice'] == '+':
+                    category.append('Voiced')
+                elif self.features['voice'] == '-':
+                    category.append('Voiceless')
+                else:
+                    category.append(None)
+            else:
+                return None
+        elif feat_type == 'hayes':
+            if self.features['diphthong'] == '+':
+                category.append('Diphthong')
+                if self.features['front_diphthong'] == '+':
+                    category.append('Front')
+                else:
+                    category.append('Back')
+            elif self.features['syllabic'] == '+':
+                category.append('Vowel')
+                #Height, backness, roundness
+                if self.features['low'] == '-' and self.features['high'] == '+':
+                    if self.features['tense'] == '+':
+                        category.append('Close')
+                    else:
+                        category.append('Near close')
+                elif self.features['low'] == '-' and self.features['high'] == '-':
+                    if self.features['tense'] == '+':
+                        category.append('Close mid')
+                    else:
+                        category.append('Open mid')
+                elif self.features['low'] == '+' and self.features['high'] == '-':
+                    if self.features['tense'] == '+':
+                        category.append('Open')
+                    else:
+                        category.append('Open')
+                else:
+                    category.append(None)
+
+                if self.features['back'] == '+' and self.features['front'] == '-':
+                    if self.features['tense'] == '+':
+                        category.append('Back')
+                    else:
+                        category.append('Near back')
+                elif self.features['back'] == '-' and self.features['front'] == '-':
+                    category.append('Central')
+                elif self.features['back'] == '-' and self.features['front'] == '+':
+                    if self.features['tense'] == '+':
+                        category.append('Front')
+                    else:
+                        category.append('Near front')
+                else:
+                    category.append(None)
+                if self.features['round'] == '+':
+                    category.append('Rounded')
+                else:
+                    category.append('Unrounded')
+
+            elif self.features['syllabic'] == '-':
+                category.append('Consonant')
+                if self.features['labial'] == '+':
+                    category.append('Labial')
+                elif self.features['labiodental'] == '+':
+                    category.append('Labiodental')
+                elif self.features['anterior'] == '+' and self.features['coronal'] == '+':
+                    category.append('Dental')
+                elif self.features['anterior'] == '-' and self.features['coronal'] == '+':
+                    category.append('Alveopalatal')
+                elif self.features['dorsal'] == '+' and self.features['coronal'] == '+':
+                    category.append('Palatal')
+                elif self.features['dorsal'] == '+' and self.features['front'] == '+':
+                    category.append('Palatal')
+                elif self.features['dorsal'] == '+'and self.features['back'] == '+':
+                    category.append('Uvular')
+                elif self.features['dorsal'] == '+':
+                    category.append('Velar')
+                elif (self.features['dorsal'] == '-' and self.features['coronal'] == '-'):
+                    category.append('Glottal')
+                else:
+                    category.append(None)
+                if (self.features['sonorant'] == '-' and self.features['continuant'] == '-'
+                        and self.features['nasal'] == '-' and self.features['delayed_release'] == '-'):
+                    category.append('Stop')
+                elif (self.features['nasal'] == '+'):
+                    category.append('Nasal')
+                elif (self.features['trill'] == '+'):
+                    category.append('Trill')
+                elif (self.features['tap'] == '+'):
+                    category.append('Tap')
+                elif (self.features['sonorant'] == '-' and self.features['continuant'] == '+'):
+                    category.append('Fricative')
+                elif (self.features['sonorant'] == '-' and self.features['continuant'] == '-'
+                        and self.features['delayed_release'] == '+'):
+                    category.append('Affricate')
+                elif (self.features['sonorant'] == '+' and self.features['lateral'] == '-'):
+                    category.append('Approximate')
+                elif (self.features['sonorant'] == '+' and self.features['lateral'] == '+'):
+                    category.append('Lateral approximate')
+                else:
+                    category.append(None)
+                if self.features['voice'] == '+':
+                    category.append('Voiced')
+                else:
+                    category.append('Voiceless')
+            else:
+                return None
+        return category
 
     def specify(self,feature_dict):
         self.features = feature_dict
@@ -86,6 +333,8 @@ class Transcription(object):
     Transcription object, sequence of symbols
     """
     def __init__(self,seg_list):
+        if seg_list is None:
+            seg_list = []
         self._list = seg_list
 
     def __getitem__(self, key):
@@ -118,6 +367,30 @@ class Transcription(object):
             if s != other[i]:
                 return False
         return True
+
+    def __lt__(self,other):
+        if isinstance(other, Transcription):
+            return self._list < other._list
+        else:
+            return self._list < other
+
+    def __le__(self,other):
+        if isinstance(other, Transcription):
+            return (self._list == other._list or self._list < other._list)
+        else:
+            return self._list <= other
+
+    def __ge__(self,other):
+        if isinstance(other, Transcription):
+            return (self._list == other._list or self._list > other._list)
+        else:
+            return self._list >= other
+
+    def __gt__(self,other):
+        if isinstance(other, Transcription):
+            return self._list > other._list
+        else:
+            return self._list > other
 
     def match_segments(self, segments):
         """
@@ -218,6 +491,9 @@ class FeatureMatrix(object):
                 if f not in v:
                     self.matrix[k][f] = self._default_value
 
+    @property
+    def default_value(self):
+        return self._default_value
 
     @property
     def features(self):
@@ -746,6 +1022,8 @@ class Corpus(object):
         self.has_spelling = False
         self.has_transcription = False
         self._tiers = []
+        self.transcription_freq_base = {'token':None, 'type':None}
+        self.spelling_freq_base = {'token':None, 'type':None}
 
     def __eq__(self, other):
         if not isinstance(other,Corpus):
@@ -757,6 +1035,21 @@ class Corpus(object):
     @property
     def tiers(self):
         return self._tiers
+
+    @property
+    def attributes(self):
+        att = list()
+        if self.has_spelling:
+            att.append('spelling')
+        if self.has_transcription:
+            att.append('transcription')
+        att.append('frequency')
+        att += self.tiers
+        return att
+
+    @property
+    def words(self):
+        return sorted(list(self.wordlist.keys()))
 
     def features_to_segments(self, feature_description):
         segments = list()
@@ -781,6 +1074,10 @@ class Corpus(object):
             word.add_tier(tier_name,tier_segs)
 
     def remove_tier(self, tier_name):
+        for i in range(len(self._tiers)):
+            if self._tiers[i] == tier_name:
+                del self._tiers[i]
+                break
         for word in self:
             word.remove_tier(tier_name)
 
@@ -792,6 +1089,10 @@ class Corpus(object):
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' not in state:
                 state['has_transcription'] = state['has_transcription_value']
+            if 'transcription_freq_base' not in state:
+                state['transcription_freq_base'] = {'token':None, 'type':None}
+            if 'spelling_freq_base' not in state:
+                state['spelling_freq_base'] = {'token':None, 'type':None}
             self.__dict__.update(state)
             self._specify_features()
 
