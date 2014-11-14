@@ -1,11 +1,23 @@
 
 
 import sys
+import os
+import scipy.special
+import PyQt5
 from cx_Freeze import setup, Executable
 
 def readme():
     with open('README.md') as f:
         return f.read()
+
+
+ufuncs_path = scipy.special._ufuncs.__file__
+incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1])]
+base = None
+if sys.platform == "win32":
+    base = "Win32GUI"
+    libegl = os.path.join(os.path.dirname(PyQt5.__file__),'libEGL.dll')
+    incl_files.append((libegl,os.path.split(libegl)[1]))
 
 group_name = 'PCT'
 
@@ -32,9 +44,12 @@ build_exe_options = {"excludes": [
                         'corpustools.corpus.tests',
                         'corpustools.funcload.tests',
                         'corpustools.prod.tests',
-                        'matplotlib'],
+                        'matplotlib',
+                        "tkinter",],
+                    "include_files":incl_files,
                     "includes": [
-                            "tkinter",
+                            "numpy",
+                            "scipy",
                             "numpy.lib.format",
                             "numpy.linalg",
                             "numpy.linalg._umath_linalg",
@@ -47,8 +62,7 @@ build_exe_options = {"excludes": [
                             "scipy.special",
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
-                            "sys"],
-                            #'icon':'./resources/logo.ico'
+                            "sys"]
                             }
 
 msi_data = {"Shortcut": shortcut_table}
@@ -59,18 +73,16 @@ bdist_msi_options = {
         'initial_target_dir': r'[ProgramFiles64Folder]\%s\%s' % (group_name, exe_name),
         'data':msi_data}
 
-bdist_mac_options = {#'iconfile':'./resources/logo.ico',
+bdist_mac_options = {'iconfile':'docs/images/icon.icns',
+                    'qt_menu_nib':'/usr/local/Cellar/qt5/5.3.2/plugins/platforms',
                     'bundle_name':'Phonological CorpusTools',
                     #'include_frameworks':["/Library/Frameworks/Tcl.framework",
                     #                    "/Library/Frameworks/Tk.framework"]
                                         }
-
-base = None
-if sys.platform == "win32":
-    base = "Win32GUI"
+bdist_dmg_options = {'applications_shortcut':True}
 
 setup(name='Phonological CorpusTools',
-      version='0.15.1',
+      version='1.0.0',
       description='',
       long_description='',
       classifiers=[
@@ -90,18 +102,19 @@ setup(name='Phonological CorpusTools',
                 'corpustools.freqalt',
                 'corpustools.funcload',
                 'corpustools.prod',
-                'corpustools.gui',
+                'corpustools.gui.qt',
                 'corpustools.acousticsim',
                 'corpustools.symbolsim'],
       executables = [Executable('bin/pct.py',
-                            #targetName = 'PhonologicalCorpusTools',
+                            #targetName = 'pct',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            #icon='docs/images/logo.ico'
+                            icon='docs/images/icon.icns'
                             )],
       options={
           'bdist_msi': bdist_msi_options,
           'build_exe': build_exe_options,
-          'bdist_mac':bdist_mac_options}
+          'bdist_mac':bdist_mac_options,
+          'bdist_dmg':bdist_dmg_options}
       )
