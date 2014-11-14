@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.setMinimumSize(1000, 800)
+        self.setMinimumSize(400, 400)
 
         self.settings = Settings()
 
@@ -194,6 +194,12 @@ class MainWindow(QMainWindow):
     def toggleToolTips(self):
         self.showToolTips = not self.showToolTips
 
+    def toggleInventory(self):
+        pass
+
+    def toggleText(self):
+        pass
+
     def about(self):
         pass
 
@@ -269,6 +275,16 @@ class MainWindow(QMainWindow):
         if self.showToolTips:
             self.toggleToolTipsAct.setChecked(True)
 
+        self.showInventoryAct = QAction( "Show inventory",
+                self,
+                statusTip="Show inventory", triggered=self.toggleInventory)
+        self.showInventoryAct.setCheckable(True)
+
+        self.showTextAct = QAction( "Show corpus text",
+                self,
+                statusTip="Show text", triggered=self.toggleText)
+        self.showTextAct.setCheckable(True)
+
         self.quitAct = QAction("&Quit", self, shortcut="Ctrl+Q",
                 statusTip="Quit the application", triggered=self.close)
 
@@ -307,7 +323,8 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.acousticsimAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
-
+        self.viewMenu.addAction(self.showInventoryAct)
+        self.viewMenu.addAction(self.showTextAct)
         self.menuBar().addSeparator()
 
         self.helpMenu = self.menuBar().addMenu("&Help")
