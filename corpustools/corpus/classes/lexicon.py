@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 
-import os
 import random
 import collections
 import math
@@ -8,37 +6,6 @@ import math
 class CorpusIntegrityError(Exception):
     pass
 
-
-#spe: round
-#hayes: round
-vowel_round_descriptors = {('+'):'Rounded',
-                            ('-'):'Unrounded'}
-
-
-#I hate features cuz they r so dum!
-
-
-#spe: son, cont, nasal, lat, del_rel
-#hayes: sonorant, continuant, nasal, lateral, delayed_release, tap, trill
-consonant_manner_descriptors = {'spe':{('-','-','-','-','-'): 'Stop',
-                                        ('+','-','+','-','-'): 'Nasal',
-                                        ('-','-','+','-','-'): 'Nasal',
-                                        ('-','+','-','-','-'): 'Fricative',
-                                        ('-','-','-','-','+'): 'Affricate',
-                                        ('+','+','-','-','-'):'Approximate',
-                                        ('+','+','-','+','-'): 'Lateral approximate'},
-                                'hayes':{('-','-','-','-','-','-','-'):'Stop',
-                                        ('+','-','+','-','-','-','-'): 'Nasal',
-                                        ('-','-','+','-','-','-','-'): 'Nasal',
-                                        ('+','+','-','-','-','-','+'): 'Trill',
-                                        ('-','+','-','-','-','+','-'): 'Tap',
-                                        ('-','+','-','-','-','-','-'): 'Fricative',
-                                        ('-','-','-','-','+','-','-'): 'Affricate',
-                                        ('+','+','-','-','-','-','-'):'Approximate',
-                                        ('+','+','-','+','-','-','-'): 'Lateral approximate'}}
-
-consonant_voice_descriptors = {('+'): 'Voiced',
-                                ('-'): 'Voiceless'}
 class Segment(object):
     """
     Class for segment symbols
@@ -594,109 +561,6 @@ class FeatureMatrix(object):
     def __len__(self):
         return len(self.matrix)
 
-class Speaker(object):
-    def __init__(self,identifier, **kwargs):
-
-        self.identifier = identifier
-
-        for k,v in kwargs.items():
-            setattr(self,k,v)
-
-class Discourse(object):
-    def __init__(self, identifier, **kwargs):
-        self.identifier = identifier
-
-        for k,v in kwargs.items():
-            setattr(self,k,v)
-
-        self.words = dict()
-
-        self.lexicon = Corpus(identifier+' lexicon')
-
-    def add_word(self,wordtoken):
-        self.words[wordtoken.begin] = wordtoken
-        self.lexicon.add_word(wordtoken.wordtype)
-
-    def __getitem__(self, key):
-        if isinstance(key, float) or isinstance(key, int):
-            #Find the word token at a given time
-            keys = filter(lambda x: x > 0,[key - x for x in self.words.keys()])
-
-            return self.words[min(keys)]
-        raise(TypeError)
-
-    def __iter__(self):
-        for k in sorted(self.words.keys()):
-            yield self.words[k]
-
-    def find_wordtype(self,wordtype):
-        return list(x for x in self if x.wordtype == wordtype)
-
-    def calc_frequency(self,query):
-        if isinstance(query, tuple):
-            count = 0
-            base = query[0]
-            for x in self.find_wordtype(base):
-                cur = query[0]
-                for i in range(1,len(query)):
-                    if cur.following_token != query[i]:
-                        break
-                    cur = cur.following_token
-                else:
-                    count += 1
-            return count
-        elif isinstance(query, Word):
-            return len(self.find_wordtype(query))
-
-class WordToken(object):
-    def __init__(self,**kwargs):
-        self.wordtype = kwargs.pop('word',None)
-        self._transcription = kwargs.pop('transcription',None)
-        if self._transcription is not None:
-            self._transcription = Transcription(self._transcription)
-        self._spelling = kwargs.pop('spelling',None)
-
-        self.begin = kwargs.pop('begin',None)
-        self.end = kwargs.pop('end',None)
-
-        self.previous_token = kwargs.pop('previous_token',None)
-        self.following_token = kwargs.pop('following_token',None)
-
-        self.discourse = kwargs.pop('discourse',None)
-        self.speaker = kwargs.pop('speaker',None)
-
-        for k,v in kwargs.items():
-            setattr(self,k,v)
-
-    @property
-    def duration(self):
-        return self.end - self.begin
-
-    @property
-    def spelling(self):
-        if self._spelling is not None:
-            return self._spelling
-        if self.wordtype is not None:
-            return self.wordtype.spelling
-        return None
-
-    @property
-    def transcription(self):
-        if self._transcription is not None:
-            return self._transcription
-        if self.wordtype is not None:
-            return self.wordtype.transcription
-        return None
-
-    @property
-    def previous_conditional_probability(self):
-        if self.previous_token is not None:
-            return self.discourse.calc_frequency(
-                                (self.previous_token.wordtype,self.wordtype)
-                                ) / self.discourse.calc_frequency(self.previous_token.wordtype)
-        return None
-
-
 class Word(object):
     """An object representing a word in a corpus
 
@@ -749,7 +613,7 @@ class Word(object):
                     f = float(value)
                     if not math.isnan(f) and not math.isinf(f):
                         value = f
-                except ValueError:
+                except (ValueError, TypeError):
                     pass
             setattr(self,key, value)
             if key not in self.descriptors:
@@ -1065,7 +929,6 @@ class Corpus(object):
             features = self.specifier.matrix[seg.symbol]
         return features
 
-
     def add_tier(self, tier_name, tier_features):
         if tier_name not in self._tiers:
             self._tiers.append(tier_name)
@@ -1225,6 +1088,19 @@ class Corpus(object):
             if not self.has_transcription:
                 self.has_transcription = True
 
+    def get_or_create_word(self, spelling, transcription):
+        words = self.find_all(spelling)
+        for w in words:
+            if transcription is not None:
+                transcription = '.'.join(transcription)
+            if str(w.transcription) == transcription:
+                word = w
+                break
+        else:
+            word = Word(spelling=spelling,transcription=transcription)
+            self.add_word(word)
+        return word
+
     def random_word(self):
         """Return a randomly selected Word
 
@@ -1278,6 +1154,21 @@ class Corpus(object):
                     result = EmptyWord(word, 'Word could not be found in the corpus')
 
         return result
+
+    def find_all(self,spelling):
+        words = list()
+        try:
+            words.append(self.wordlist[spelling])
+            count = 0
+            while True:
+                count += 1
+                try:
+                    words.append(self.wordlist['{} ({})'.format(spelling,count)])
+                except KeyError:
+                    break
+        except KeyError:
+            pass
+        return words
 
     def __contains__(self,item):
         return self.wordlist.__contains__(item)

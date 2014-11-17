@@ -526,44 +526,6 @@ class SegmentTest(unittest.TestCase):
                     else:
                         self.assertTrue(not seg.feature_match([fv+feature]))
 
-class WordTokenTest(unittest.TestCase):
-    def setUp(self):
-        self.word_tokens = [{'begin':0,'end':1,'spelling':'a','transcription':['a','b']},
-                        {'begin':1,'end':2,'spelling':'c','transcription':['c','a','b']},
-                        {'begin':2,'end':3,'spelling':'a','transcription':['a','b']},
-                        {'begin':3,'end':4,'spelling':'d','transcription':['a','d']}]
-
-        self.word_type_only = {'begin':0,'end':1,'wordtype':Word(**{'spelling':'a','transcription':['a','b']})}
-
-        self.word_type_and = {'begin':0,'end':1,'spelling':'a2','transcription':['a','b2'],
-                            'wordtype':Word(**{'spelling':'a','transcription':['a','b']})}
-
-    def test_init(self):
-        wt = WordToken(**self.word_type_only)
-        self.assertEqual(wt.spelling,'a')
-        self.assertEqual(str(wt.transcription),'a.b')
-
-        wt = WordToken(**self.word_type_and)
-        self.assertEqual(wt.spelling,'a2')
-        self.assertEqual(str(wt.transcription),'a.b2')
-
-    def test_duration(self):
-        for wt in self.word_tokens:
-            w = WordToken(**wt)
-            self.assertEqual(w.duration, 1)
-
-class DiscourseTest(unittest.TestCase):
-    def setUp(self):
-        self.word_tokens = [{'begin':0,'end':1,'spelling':'a','transcription':['a','b']},
-                        {'begin':1,'end':2,'spelling':'c','transcription':['c','a','b']},
-                        {'begin':2,'end':3,'spelling':'a','transcription':['a','b']},
-                        {'begin':3,'end':4,'spelling':'d','transcription':['a','d']}]
-
-    def test_init(self):
-        pass
-
-    def test_previous_conditional_probability(self):
-        pass
 
 
 if __name__ == '__main__':
