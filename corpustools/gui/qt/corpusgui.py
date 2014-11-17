@@ -12,9 +12,10 @@ from collections import OrderedDict
 from corpustools.config import config
 
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
-                                    save_binary,export_corpus_csv)
+                                    save_binary,export_corpus_csv, inspect_directory)
 
-from .widgets import FileWidget, RadioSelectWidget, FeatureBox, SaveFileWidget
+from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
+                    SaveFileWidget, DirectoryWidget)
 
 from .featuregui import FeatureSystemSelect
 
@@ -76,22 +77,24 @@ class CorpusLoadDialog(QDialog):
         self.downloadButton = QPushButton('Download example corpora')
         self.loadFromCsvButton = QPushButton('Load corpus from pre-formatted text file')
         self.loadFromTextButton = QPushButton('Create corpus from running text')
+        self.importSpontaneousButton = QPushButton('Import spontaneous speech corpus')
         self.removeButton = QPushButton('Remove selected corpus')
         buttonLayout.addWidget(self.downloadButton)
         buttonLayout.addWidget(self.loadFromCsvButton)
         buttonLayout.addWidget(self.loadFromTextButton)
+        buttonLayout.addWidget(self.importSpontaneousButton)
         buttonLayout.addWidget(self.removeButton)
 
         self.downloadButton.clicked.connect(self.openDownloadWindow)
         self.loadFromCsvButton.clicked.connect(self.openCsvWindow)
         self.loadFromTextButton.clicked.connect(self.openTextWindow)
+        self.importSpontaneousButton.clicked.connect(self.importSpontaneousWindow)
         self.removeButton.clicked.connect(self.removeCorpus)
 
         buttonFrame = QFrame()
         buttonFrame.setLayout(buttonLayout)
 
         formLayout.addWidget(buttonFrame)
-
 
         formFrame = QFrame()
         formFrame.setLayout(formLayout)
@@ -148,6 +151,11 @@ class CorpusLoadDialog(QDialog):
         dialog = CorpusFromCsvDialog(self)
         result = dialog.exec_()
         if result:
+            self.getAvailableCorpora()
+
+    def importSpontaneousWindow(self):
+        dialog = SpontaneousSpeechDialog(self)
+        if dialog.exec_():
             self.getAvailableCorpora()
 
     def openTextWindow(self):
@@ -527,5 +535,44 @@ class ExportCorpusDialog(QDialog):
         transDelim = self.transDelimiterEdit.text()
 
         export_corpus_csv(self.corpus,filename,colDelim,transDelim)
+
+        QDialog.accept(self)
+
+class SpontaneousSpeechDialog(QDialog):
+    def __init__(self,parent):
+        QDialog.__init__(self,parent)
+
+        layout = QVBoxLayout()
+
+        inlayout = QFormLayout()
+
+        self.directoryWidget = DirectoryWidget()
+        inlayout.addRow('Corpus directory:',self.directoryWidget)
+
+        inframe = QFrame()
+        inframe.setLayout(inlayout)
+
+        layout.addWidget(inframe)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Import spontaneous speech corpus')
+
+    def accept(self):
+
+        self.corpus = inspect_directory(self.directoryWidget.value())
 
         QDialog.accept(self)
