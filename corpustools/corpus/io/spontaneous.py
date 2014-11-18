@@ -17,7 +17,8 @@ def inspect_directory(directory):
         print("loop\n")
         print(root,subdirs,files)
 
-def import_spontaneous_speech_corpus(name,directory):
+def import_spontaneous_speech_corpus(directory):
+    name = os.path.split(directory)[1]
     corpus = SpontaneousSpeechCorpus(name,directory)
 
     dialogs = {}

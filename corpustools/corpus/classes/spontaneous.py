@@ -1,4 +1,6 @@
 
+from collections import OrderedDict
+
 from .lexicon import Transcription, Corpus
 
 class Speaker(object):
@@ -16,16 +18,16 @@ class SpontaneousSpeechCorpus(object):
 
         self.lexicon = Corpus(name+' lexicon')
 
-        self.discourses = []
+        self.discourses = OrderedDict()
 
     def add_discourse(self, data, discourse_info):
         d = Discourse(**discourse_info)
         previous_time = None
         for line in data:
-            print(line)
             spelling = line['word']
             transcription = line['ur']
             word = self.lexicon.get_or_create_word(spelling, transcription)
+            word.frequency += 1
             if previous_time is not None:
                 wordtoken = WordToken(word=word, transcription=line['sr'],
                                 begin = line['begin'], end = line['end'],
@@ -33,13 +35,12 @@ class SpontaneousSpeechCorpus(object):
             else:
                 wordtoken = WordToken(word=word, transcription=line['sr'],
                                 begin = line['begin'], end = line['end'])
-            print(wordtoken)
             d.add_word(wordtoken)
             if previous_time is not None:
-                d[previous_time].following_token = wordtoken
+                d[previous_time].following_token_time = wordtoken.begin
 
             previous_time = wordtoken.begin
-        self.discourses.append(d)
+        self.discourses[d.identifier] = d
 
 class Discourse(object):
     def __init__(self, **kwargs):
@@ -58,8 +59,6 @@ class Discourse(object):
         if isinstance(key, float) or isinstance(key, int):
             #Find the word token at a given time
             keys = filter(lambda x: x >= key,self.words.keys())
-            #print(list(keys))
-            #print(list(map(lambda x: key - x, keys)))
             t = min(keys,key = lambda x: x - key)
             return self.words[t]
         raise(TypeError)
@@ -98,8 +97,16 @@ class WordToken(object):
         self.begin = kwargs.pop('begin',None)
         self.end = kwargs.pop('end',None)
 
-        self.previous_token = kwargs.pop('previous_token',None)
-        self.following_token = kwargs.pop('following_token',None)
+        prev = kwargs.pop('previous_token',None)
+        if prev is None:
+            self.previous_token_time = None
+        else:
+            self.previous_token_time = prev.begin
+        foll = kwargs.pop('following_token',None)
+        if foll is None:
+            self.following_token_time = None
+        else:
+            self.following_token_time = foll.begin
 
         self.discourse = kwargs.pop('discourse',None)
         self.speaker = kwargs.pop('speaker',None)
@@ -128,6 +135,18 @@ class WordToken(object):
     def __repr__(self):
         return '<WordToken: {}, {}, {}-{}>'.format(str(self.wordtype),
                             str(self.transcription),self.begin,self.end)
+
+    @property
+    def previous_token(self):
+        if self.discourse is not None and self.previous_token_time is not None:
+            return self.discourse[self.previous_token_time]
+        return None
+
+    @property
+    def following_token(self):
+        if self.discourse is not None and self.following_token_time is not None:
+            return self.discourse[self.following_token_time]
+        return None
 
     @property
     def duration(self):

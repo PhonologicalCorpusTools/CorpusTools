@@ -76,6 +76,8 @@ class SpontaneousSpeechCorpusTest(unittest.TestCase):
         self.assertEqual(d[2].following_token, d[3])
         self.assertEqual(d[3].following_token, None)
 
+        self.assertEqual(d[0].wordtype.frequency,2)
+        self.assertEqual(d[1].wordtype.frequency,1)
 
 if __name__ == '__main__':
     unittest.main()

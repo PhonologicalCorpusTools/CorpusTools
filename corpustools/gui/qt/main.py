@@ -1,11 +1,11 @@
 from PyQt5.QtGui import QFont, QKeySequence
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QHBoxLayout, QLabel, QAction,
-                            QApplication, QWidget, QMessageBox)
+                            QApplication, QWidget, QMessageBox,QSplitter)
 
 from .config import Settings, PreferencesDialog
-from .views import TableWidget, ResultsWindow
-from .models import CorpusModel, ResultsModel
+from .views import TableWidget, TreeWidget, TextView, ResultsWindow
+from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, RemoveTierDialog,
                         ExportCorpusDialog)
@@ -35,11 +35,22 @@ class MainWindow(QMainWindow):
         self.move(self.settings['pos'])
 
         self.corpusTable = TableWidget(self)
+        self.discourseTree = TreeWidget(self)
+        self.discourseTree.hide()
+        self.textWidget = TextView(self)
+        self.textWidget.hide()
         #font = QFont("Courier New", 14)
         #self.corpusTable.setFont(font)
+        splitter = QSplitter()
+        splitter.addWidget(self.discourseTree)
+        splitter.addWidget(self.corpusTable)
+        splitter.addWidget(self.textWidget)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 0)
+        splitter.setStretchFactor(2, 1)
         self.wrapper = QWidget()
-        layout = QHBoxLayout(self.wrapper)
-        layout.addWidget(self.corpusTable)
+        layout = QHBoxLayout()
+        layout.addWidget(splitter)
         self.wrapper.setLayout(layout)
         self.setCentralWidget(self.wrapper)
 
@@ -79,11 +90,27 @@ class MainWindow(QMainWindow):
                 function(self)
         return do_check
 
+    def changeText(self):
+        name = self.discourseTree.model().itemFromIndex(self.discourseTree.selectedIndexes()[0]).text()
+        if hasattr(self.corpus, 'lexicon'):
+            self.textWidget.setModel(DiscourseModel(self.corpus.discourses[name]))
+
     def loadCorpus(self):
         dialog = CorpusLoadDialog(self)
         result = dialog.exec_()
         if result:
-            self.corpusModel = CorpusModel(dialog.corpus)
+            self.corpus = dialog.corpus
+            if hasattr(self.corpus,'lexicon'):
+                c = self.corpus.lexicon
+                self.discourseTree.show()
+                self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
+                self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
+                self.discourseTree.resizeColumnToContents(0)
+                self.textWidget.show()
+            else:
+                c = self.corpus
+            self.corpusModel = CorpusModel(c)
             self.corpusTable.setModel(self.corpusModel)
 
 
