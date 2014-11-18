@@ -596,7 +596,7 @@ class Word(object):
         self.tiers = list()
         self.transcription = None
         self.spelling = None
-        self.frequency = 1
+        self.frequency = 0
         self.descriptors = ['spelling','transcription']
 
         for key, value in kwargs.items():
@@ -1090,10 +1090,10 @@ class Corpus(object):
 
     def get_or_create_word(self, spelling, transcription):
         words = self.find_all(spelling)
+        if transcription is None:
+            transcription = list()
         for w in words:
-            if transcription is not None:
-                transcription = '.'.join(transcription)
-            if str(w.transcription) == transcription:
+            if str(w.transcription) == '.'.join(transcription):
                 word = w
                 break
         else:

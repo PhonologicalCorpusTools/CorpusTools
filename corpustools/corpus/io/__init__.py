@@ -6,4 +6,4 @@ from .csv import (load_corpus_csv, load_feature_matrix_csv, export_corpus_csv,
 
 from .text_orthography import load_corpus_text
 
-from .spontaneous import inspect_directory
+from .spontaneous import import_spontaneous_speech_corpus

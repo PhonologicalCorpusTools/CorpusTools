@@ -12,7 +12,7 @@ from collections import OrderedDict
 from corpustools.config import config
 
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
-                                    save_binary,export_corpus_csv, inspect_directory)
+                                    save_binary,export_corpus_csv, import_spontaneous_speech_corpus)
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget)
@@ -573,6 +573,7 @@ class SpontaneousSpeechDialog(QDialog):
 
     def accept(self):
 
-        self.corpus = inspect_directory(self.directoryWidget.value())
+        corpus = import_spontaneous_speech_corpus(self.directoryWidget.value())
+        save_binary(corpus,corpus_name_to_path(corpus.name))
 
         QDialog.accept(self)

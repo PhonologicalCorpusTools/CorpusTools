@@ -1,5 +1,25 @@
 
-from PyQt5.QtCore import QAbstractTableModel, Qt, QSize
+from PyQt5.QtCore import (QAbstractTableModel, Qt, QSize,
+                        )
+from PyQt5.QtGui import QStandardItemModel,QStandardItem
+
+class SpontaneousSpeechCorpusModel(QStandardItemModel):
+    def __init__(self,corpus, parent = None):
+        QStandardItemModel.__init__(self, parent)
+
+        self.corpus = corpus
+
+        for d in self.corpus.discourses.values():
+            self.appendRow(QStandardItem(d.identifier))
+
+class DiscourseModel(QStandardItemModel):
+    def __init__(self,discourse, parent = None):
+        QStandardItemModel.__init__(self, parent)
+
+        self.discourse = discourse
+
+        for w in self.discourse:
+            self.appendRow(QStandardItem(str(w)))
 
 class CorpusModel(QAbstractTableModel):
     def __init__(self, corpus, parent=None):
