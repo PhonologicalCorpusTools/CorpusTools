@@ -27,6 +27,7 @@ class SpontaneousSpeechCorpus(object):
             spelling = line['word']
             transcription = line['ur']
             word = self.lexicon.get_or_create_word(spelling, transcription)
+            print(word)
             word.frequency += 1
             if previous_time is not None:
                 wordtoken = WordToken(word=word, transcription=line['sr'],
@@ -35,6 +36,7 @@ class SpontaneousSpeechCorpus(object):
             else:
                 wordtoken = WordToken(word=word, transcription=line['sr'],
                                 begin = line['begin'], end = line['end'])
+            word.wordtokens.append(wordtoken)
             d.add_word(wordtoken)
             if previous_time is not None:
                 d[previous_time].following_token_time = wordtoken.begin

@@ -598,6 +598,7 @@ class Word(object):
         self.spelling = None
         self.frequency = 0
         self.descriptors = ['spelling','transcription']
+        self.wordtokens = list()
 
         for key, value in kwargs.items():
             key = key.lower()
@@ -629,6 +630,13 @@ class Word(object):
         #    if (k == 'transcription' or k in self.tiers) and v is not None:
         #        state[k] = [x.symbol for x in v] #Only store string symbols
         return state
+
+    def __setstate__(self, state):
+        if 'wordtokens' not in state:
+            state['wordtokens'] = list()
+        self.__dict__.update(state)
+
+
 
     def add_tier(self, tier_name, tier_segments):
         """Adds a new tier attribute to a Word instance
@@ -961,6 +969,10 @@ class Corpus(object):
 
             #Backwards compatability
             word = self.random_word()
+            for k,v in self.wordlist.items():
+                print(k)
+                print(dir(v))
+                print(v)
             if '_tiers' not in state:
                 self._tiers = word.tiers
             if not isinstance(word.transcription, Transcription):
@@ -1106,6 +1118,7 @@ class Corpus(object):
 
         """
         word = random.choice(list(self.wordlist.keys()))
+        print(word)
         return self.wordlist[word]
 
     def get_features(self):

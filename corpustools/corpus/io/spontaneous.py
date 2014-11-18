@@ -41,6 +41,7 @@ def import_spontaneous_speech_corpus(directory):
         discourse_info = {'identifier':d,
                             }
         corpus.add_discourse(data, discourse_info)
+    print(corpus.lexicon.wordlist)
     return corpus
 
 def phone_match(one,two):

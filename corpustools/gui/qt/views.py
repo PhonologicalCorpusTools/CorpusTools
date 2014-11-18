@@ -4,10 +4,12 @@ import csv
 from PyQt5.QtWidgets import (QTableView, QAbstractItemView, QWidget,
                             QHeaderView, QDockWidget, QPushButton,
                             QVBoxLayout, QFileDialog, QFrame, QTreeView,
-                            QAbstractItemView, QStyle, QMenu, QAction)
+                            QAbstractItemView, QStyle, QMenu, QAction, QDialog)
 
 from PyQt5.QtCore import QRectF, Qt, QModelIndex, QItemSelection
 from PyQt5.QtGui import QPainter, QFontMetrics, QPen, QRegion
+
+from .models import VariantModel
 
 class TableWidget(QTableView):
     def __init__(self,parent=None):
@@ -59,9 +61,18 @@ class LexiconView(TableWidget):
         menu.addAction(variantsAction)
         variantsAction = QAction(self)
         variantsAction.setText('Show pronunciation variants')
-        #saveRepAction.triggered.connect(lambda: self.saveRep(self.indexAt(pos)))
+        variantsAction.triggered.connect(lambda: self.showVariants(self.indexAt(pos)))
         menu.addAction(variantsAction)
         action = menu.exec_(self.viewport().mapToGlobal(pos))
+
+    def showVariants(self, index):
+        variantDialog = QDialog()
+        layout = QVBoxLayout()
+        table = TableWidget()
+        layout.addWidget(table)
+        table.setModel(VariantModel(self.model().wordObject(index.row()).wordtokens))
+        variantDialog.setLayout(layout)
+        variantDialog.exec_()
 
 
 class TextView(QAbstractItemView):
