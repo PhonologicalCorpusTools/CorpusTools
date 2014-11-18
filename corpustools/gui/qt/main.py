@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QMainWindow, QHBoxLayout, QLabel, QAction,
                             QApplication, QWidget, QMessageBox,QSplitter)
 
 from .config import Settings, PreferencesDialog
-from .views import TableWidget, TreeWidget, TextView, ResultsWindow
+from .views import TableWidget, TreeWidget, TextView, ResultsWindow, LexiconView
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, RemoveTierDialog,
@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         self.resize(self.settings['size'])
         self.move(self.settings['pos'])
 
-        self.corpusTable = TableWidget(self)
+        self.corpusTable = LexiconView(self)
         self.discourseTree = TreeWidget(self)
         self.discourseTree.hide()
         self.textWidget = TextView(self)
@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.corpusTable)
         splitter.addWidget(self.textWidget)
         splitter.setStretchFactor(0, 0)
-        splitter.setStretchFactor(1, 0)
+        splitter.setStretchFactor(1, 1)
         splitter.setStretchFactor(2, 1)
         self.wrapper = QWidget()
         layout = QHBoxLayout()
@@ -101,18 +101,18 @@ class MainWindow(QMainWindow):
         if result:
             self.corpus = dialog.corpus
             if hasattr(self.corpus,'lexicon'):
+                self.setMinimumSize(800, 400)
                 c = self.corpus.lexicon
                 self.discourseTree.show()
                 self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
                 self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
                 #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
-                self.discourseTree.resizeColumnToContents(0)
+                #self.discourseTree.resizeColumnToContents(0)
                 self.textWidget.show()
             else:
                 c = self.corpus
             self.corpusModel = CorpusModel(c)
             self.corpusTable.setModel(self.corpusModel)
-
 
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self)

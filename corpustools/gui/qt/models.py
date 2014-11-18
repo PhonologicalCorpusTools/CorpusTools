@@ -17,9 +17,12 @@ class DiscourseModel(QStandardItemModel):
         QStandardItemModel.__init__(self, parent)
 
         self.discourse = discourse
+        self.setHorizontalHeaderLabels(['Discourses'])
 
         for w in self.discourse:
-            self.appendRow(QStandardItem(str(w)))
+            i = QStandardItem(str(w))
+            i.setFlags(i.flags() | (not Qt.ItemIsEditable))
+            self.appendRow(i)
 
 class CorpusModel(QAbstractTableModel):
     def __init__(self, corpus, parent=None):

@@ -4,7 +4,7 @@ import csv
 from PyQt5.QtWidgets import (QTableView, QAbstractItemView, QWidget,
                             QHeaderView, QDockWidget, QPushButton,
                             QVBoxLayout, QFileDialog, QFrame, QTreeView,
-                            QAbstractItemView, QStyle)
+                            QAbstractItemView, QStyle, QMenu, QAction)
 
 from PyQt5.QtCore import QRectF, Qt, QModelIndex, QItemSelection
 from PyQt5.QtGui import QPainter, QFontMetrics, QPen, QRegion
@@ -24,16 +24,45 @@ class TableWidget(QTableView):
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
         #self.horizontalHeader().setMinimumSectionSize(100)
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        #self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.setSortingEnabled(True)
 
-    def sizeHint(self):
-        header = self.horizontalHeader()
-        width = header.length()
-        sh = header.sizeHint()
-        sh.setWidth(width+50)
-        sh.setHeight((width+50)*9/16)
-        return sh
+    def setModel(self,model):
+        super(TableWidget, self).setModel(model)
+        #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+    #def minimumSizeHint(self):
+        #header = self.horizontalHeader()
+        #fm = QFontMetrics(self.font())
+        #width = 0
+        #for x in x:
+
+            #width += fm.width(text)
+            #width += 10
+        #width = header.length()
+        #sh = header.sizeHint()
+        #sh.setWidth(width-100)
+        #return sh
+
+class LexiconView(TableWidget):
+    def __init__(self,parent=None):
+        super(LexiconView, self).__init__(parent=parent)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showMenu)
+
+    def showMenu(self, pos):
+        menu = QMenu()
+
+        variantsAction = QAction(self)
+        variantsAction.setText('Show neighbours')
+        menu.addAction(variantsAction)
+        variantsAction = QAction(self)
+        variantsAction.setText('Show pronunciation variants')
+        #saveRepAction.triggered.connect(lambda: self.saveRep(self.indexAt(pos)))
+        menu.addAction(variantsAction)
+        action = menu.exec_(self.viewport().mapToGlobal(pos))
+
 
 class TextView(QAbstractItemView):
     ExtraHeight = 3
@@ -42,12 +71,30 @@ class TextView(QAbstractItemView):
         QAbstractItemView.__init__(self, parent)
 
         self.hashIsDirty = False
+        self.hasAudio = False
         self.rectForRow = dict()
-        #self.setFocusPolicy(
+
         self.horizontalScrollBar().setRange(0,0)
         self.verticalScrollBar().setRange(0,0)
         self.idealHeight = 0
         self.idealWidth = 0
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showMenu)
+
+    def showMenu(self, pos):
+        menu = QMenu()
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+        lookupAction = QAction(self)
+        lookupAction.setText('Look up word')
+        menu.addAction(lookupAction)
+        if self.hasAudio:
+            playAudioAction = QAction(self)
+            playAudioAction.setText('Play audio')
+            menu.addAction(playAudioAction)
+        action = menu.exec_(self.viewport().mapToGlobal(pos))
+
 
     def setModel(self,model):
         QAbstractItemView.setModel(self, model)
@@ -263,7 +310,28 @@ class TextView(QAbstractItemView):
         self.setCurrentIndex(self.indexAt(event.pos()))
 
 class TreeWidget(QTreeView):
-    pass
+    def __init__(self,parent=None):
+        super(TreeWidget, self).__init__(parent=parent)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showMenu)
+        self.setColumnWidth(0,40)
+
+    def edit(self, index, trigger, event):
+        if trigger == QAbstractItemView.DoubleClicked:
+            return False
+        return QTreeView.edit(self, index, trigger, event)
+
+    def showMenu(self, pos):
+        menu = QMenu()
+
+        buildAction = QAction(self)
+        buildAction.setText('Build lexicon')
+        menu.addAction(buildAction)
+        combineAction = QAction(self)
+        combineAction.setText('Combine sub dialogs')
+        #saveRepAction.triggered.connect(lambda: self.saveRep(self.indexAt(pos)))
+        menu.addAction(combineAction)
+        action = menu.exec_(self.viewport().mapToGlobal(pos))
 
 class ResultsWindow(QWidget):
     def __init__(self, title, dataModel, parent=None):
