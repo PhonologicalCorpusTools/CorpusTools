@@ -1,4 +1,6 @@
 
+from collections import Counter
+
 from PyQt5.QtCore import (QAbstractTableModel, Qt, QSize,
                         )
 from PyQt5.QtGui import QStandardItemModel,QStandardItem
@@ -8,6 +10,7 @@ class SpontaneousSpeechCorpusModel(QStandardItemModel):
         QStandardItemModel.__init__(self, parent)
 
         self.corpus = corpus
+        self.setHorizontalHeaderItem (0,QStandardItem('Discourses'))
 
         for d in self.corpus.discourses.values():
             self.appendRow(QStandardItem(d.identifier))
@@ -17,7 +20,6 @@ class DiscourseModel(QStandardItemModel):
         QStandardItemModel.__init__(self, parent)
 
         self.discourse = discourse
-        self.setHorizontalHeaderLabels(['Discourses'])
 
         for w in self.discourse:
             i = QStandardItem(str(w))
@@ -50,6 +52,9 @@ class CorpusModel(QAbstractTableModel):
         if order == Qt.DescendingOrder:
             self.rows.reverse()
         self.layoutChanged.emit()
+
+    def wordObject(self,row):
+        return self.corpus[self.rows[row]]
 
     def data(self, index, role=None):
         if not index.isValid():
@@ -120,6 +125,47 @@ class SegmentPairModel(QAbstractTableModel):
         for i in inds:
             del self.pairs[i]
         self.layoutChanged.emit()
+
+class VariantModel(QAbstractTableModel):
+    def __init__(self, wordtokens, parent=None):
+        super(VariantModel, self).__init__(parent)
+
+        self.rows = [(k,v) for k,v in Counter(str(x.transcription) for x in wordtokens).items()]
+
+        self.columns = ['Variant', 'Count']
+
+        self.allData = self.rows
+
+    def rowCount(self,parent=None):
+        return len(self.rows)
+
+    def columnCount(self,parent=None):
+        return len(self.columns)
+
+    def sort(self, col, order):
+        """sort table by given column number col"""
+        self.layoutAboutToBeChanged.emit()
+        self.rows = sorted(self.rows,
+                key=lambda x: self.rows[x][col])
+        if order == Qt.DescendingOrder:
+            self.rows.reverse()
+        self.layoutChanged.emit()
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return None
+        elif role != Qt.DisplayRole:
+            return None
+        row = index.row()
+        col = index.column()
+        data = self.rows[row][col]
+
+        return data
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.columns[col]
+        return None
 
 class EnvironmentModel(QAbstractTableModel):
     def __init__(self,parent = None):

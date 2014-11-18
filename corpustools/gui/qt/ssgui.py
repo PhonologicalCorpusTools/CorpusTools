@@ -151,6 +151,7 @@ class SSDialog(QDialog):
         layout.addWidget(ssFrame)
 
         self.newTableButton = QPushButton('Calculate string similarity\n(start new results table)')
+        self.newTableButton.setDefault(True)
         self.oldTableButton = QPushButton('Calculate string similarity\n(add to current results table)')
         self.cancelButton = QPushButton('Cancel')
         self.aboutButton = QPushButton('About this function...')
