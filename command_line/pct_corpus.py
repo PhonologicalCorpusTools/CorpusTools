@@ -2,7 +2,8 @@ import argparse
 import os
 import codecs
 
-from corpustools.corpus.io import load_corpus_csv, save_binary
+from corpustools.corpus.io.csv import load_corpus_csv
+from corpustools.corpus.io.binary import save_binary
 
 #### Parse command-line arguments
 parser = argparse.ArgumentParser(description = \

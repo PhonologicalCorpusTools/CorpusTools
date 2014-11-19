@@ -2,7 +2,7 @@ import argparse
 import os
 import csv
 
-from corpustools.corpus.io import load_binary
+from corpustools.corpus.io.binary import load_binary
 from corpustools.neighdens.neighborhood_density import neighborhood_density
 
 #### Parse command-line arguments
@@ -25,7 +25,6 @@ def read_segment_pairs(spfile):
 
 ####
 
-corpus = load_binary(args.corpus_file_name)
-print(type(corpus))
-print(len(corpus[0])) # !?!?!?!?!?!
-print(neighborhood_density(corpus[0], args.query))
+corpus = load_binary(args.corpus_file_name)[0]
+print(args.query)
+print(neighborhood_density(corpus, args.query))
