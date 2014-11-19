@@ -10,10 +10,20 @@ class SpontaneousSpeechCorpusModel(QStandardItemModel):
         QStandardItemModel.__init__(self, parent)
 
         self.corpus = corpus
-        self.setHorizontalHeaderItem (0,QStandardItem('Discourses'))
+        self.setHorizontalHeaderItem (0,QStandardItem('Corpus'))
+        self.setHorizontalHeaderItem (1,QStandardItem('Speakers'))
+        self.setHorizontalHeaderItem (2,QStandardItem('Discourses'))
 
+        corpusItem = QStandardItem(self.corpus.name)
+        self.appendRow(corpusItem)
+        speakerItem = QStandardItem('s01')
+        corpusItem.appendRow(speakerItem)
         for d in self.corpus.discourses.values():
-            self.appendRow(QStandardItem(d.identifier))
+            speakerItem.appendRow(QStandardItem(d.identifier))
+
+    def createLexicon(self,row):
+        d = self.item(row).text()
+        return self.corpus.discourses[d].create_lexicon()
 
 class DiscourseModel(QStandardItemModel):
     def __init__(self,discourse, parent = None):
@@ -31,6 +41,7 @@ class CorpusModel(QAbstractTableModel):
         super(CorpusModel, self).__init__(parent)
 
         self.corpus = corpus
+        self.nonLexHidden = False
 
         self.columns = self.corpus.attributes
 
@@ -51,6 +62,14 @@ class CorpusModel(QAbstractTableModel):
                 key=lambda x: getattr(self.corpus[x],self.columns[col]))
         if order == Qt.DescendingOrder:
             self.rows.reverse()
+        self.layoutChanged.emit()
+
+    def hideNonLexical(self, b):
+        self.nonLexHidden = b
+        self.layoutAboutToBeChanged.emit()
+        self.rows = self.allData
+        if b:
+            self.rows = [x for x in self.rows if str(self.corpus[x].transcription) != '']
         self.layoutChanged.emit()
 
     def wordObject(self,row):
@@ -136,6 +155,8 @@ class VariantModel(QAbstractTableModel):
 
         self.allData = self.rows
 
+        self.sort(1,Qt.DescendingOrder)
+
     def rowCount(self,parent=None):
         return len(self.rows)
 
@@ -146,7 +167,7 @@ class VariantModel(QAbstractTableModel):
         """sort table by given column number col"""
         self.layoutAboutToBeChanged.emit()
         self.rows = sorted(self.rows,
-                key=lambda x: self.rows[x][col])
+                key=lambda x: x[col])
         if order == Qt.DescendingOrder:
             self.rows.reverse()
         self.layoutChanged.emit()
