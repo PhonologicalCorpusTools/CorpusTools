@@ -17,31 +17,54 @@ def inspect_directory(directory):
         print("loop\n")
         print(root,subdirs,files)
 
-def import_spontaneous_speech_corpus(directory):
+def import_spontaneous_speech_corpus(directory, stop_check = None, call_back = None):
     name = os.path.split(directory)[1]
     corpus = SpontaneousSpeechCorpus(name,directory)
 
     dialogs = {}
     words = []
     phones = []
+    if call_back is not None:
+        call_back('Finding files...')
+        call_back(0,1)
+        cur = 0
     for root, subdirs, files in os.walk(directory):
+        if stop_check is not None and stop_check():
+            return
         for f in files:
             if f.endswith('.words'):
                 words.append(os.path.join(root,f))
             elif f.endswith('.phones'):
                 phones.append(os.path.join(root,f))
+    if call_back is not None:
+        call_back('Matching files...')
+        call_back(0,len(words))
+        cur = 0
     for p in words:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         name = os.path.splitext(os.path.split(p)[1])[0]
         for p2 in phones:
             if name == os.path.splitext(os.path.split(p2)[1])[0]:
                 dialogs[name] = (p,p2)
                 break
+    if call_back is not None:
+        call_back('Processing discourses...')
+        call_back(0,len(dialogs))
+        cur = 0
     for d, v in dialogs.items():
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         data = files_to_data(*v)
         discourse_info = {'identifier':d,
                             }
         corpus.add_discourse(data, discourse_info)
-    print(corpus.lexicon.wordlist)
     return corpus
 
 def phone_match(one,two):

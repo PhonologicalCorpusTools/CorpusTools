@@ -36,6 +36,7 @@ class MainWindow(QMainWindow):
 
         self.corpusTable = LexiconView(self)
         self.discourseTree = TreeWidget(self)
+        self.discourseTree.newLexicon.connect(lambda x: self.corpusTable.setModel(CorpusModel(x)))
         self.discourseTree.hide()
         self.textWidget = TextView(self)
         self.textWidget.hide()

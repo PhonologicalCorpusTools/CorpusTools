@@ -37,7 +37,8 @@ class FunctionWorker(QThread):
             progress = args[0]
             if len(args) > 1:
                 self.total = args[1]
-        self.updateProgress.emit(int((progress/self.total)*100))
+        if self.total:
+            self.updateProgress.emit(int((progress/self.total)*100))
 
 class FunctionDialog(QDialog):
     header = None

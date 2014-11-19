@@ -626,6 +626,7 @@ class Word(object):
 
     def __getstate__(self):
         state = self.__dict__.copy()
+        state['wordtokens'] = list()
         #for k,v in state.items():
         #    if (k == 'transcription' or k in self.tiers) and v is not None:
         #        state[k] = [x.symbol for x in v] #Only store string symbols
@@ -969,10 +970,6 @@ class Corpus(object):
 
             #Backwards compatability
             word = self.random_word()
-            for k,v in self.wordlist.items():
-                print(k)
-                print(dir(v))
-                print(v)
             if '_tiers' not in state:
                 self._tiers = word.tiers
             if not isinstance(word.transcription, Transcription):
@@ -1118,7 +1115,6 @@ class Corpus(object):
 
         """
         word = random.choice(list(self.wordlist.keys()))
-        print(word)
         return self.wordlist[word]
 
     def get_features(self):

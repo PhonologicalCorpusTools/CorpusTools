@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QTableView, QAbstractItemView, QWidget,
                             QVBoxLayout, QFileDialog, QFrame, QTreeView,
                             QAbstractItemView, QStyle, QMenu, QAction, QDialog)
 
-from PyQt5.QtCore import QRectF, Qt, QModelIndex, QItemSelection
+from PyQt5.QtCore import QRectF, Qt, QModelIndex, QItemSelection, pyqtSignal as Signal
 from PyQt5.QtGui import QPainter, QFontMetrics, QPen, QRegion
 
 from .models import VariantModel
@@ -56,17 +56,31 @@ class LexiconView(TableWidget):
     def showMenu(self, pos):
         menu = QMenu()
 
+        neighbourAction = QAction(self)
+        neighbourAction.setText('List neighbours')
+        menu.addAction(neighbourAction)
+
+        hideAction = QAction(self)
+        nonlexhidden = self.model().nonLexHidden
+        if nonlexhidden:
+            hideAction.setText('Show non-lexical items')
+        else:
+            hideAction.setText('Hide non-lexical items')
+        hideAction.triggered.connect(lambda: self.hideNonLexical(not nonlexhidden))
+        menu.addAction(hideAction)
+
         variantsAction = QAction(self)
-        variantsAction.setText('Show neighbours')
-        menu.addAction(variantsAction)
-        variantsAction = QAction(self)
-        variantsAction.setText('Show pronunciation variants')
+        variantsAction.setText('List pronunciation variants')
         variantsAction.triggered.connect(lambda: self.showVariants(self.indexAt(pos)))
         menu.addAction(variantsAction)
         action = menu.exec_(self.viewport().mapToGlobal(pos))
 
+    def hideNonLexical(self,b):
+        self.model().hideNonLexical(b)
+
     def showVariants(self, index):
         variantDialog = QDialog()
+        variantDialog.setWindowTitle('Pronunciation variants')
         layout = QVBoxLayout()
         table = TableWidget()
         layout.addWidget(table)
@@ -321,6 +335,7 @@ class TextView(QAbstractItemView):
         self.setCurrentIndex(self.indexAt(event.pos()))
 
 class TreeWidget(QTreeView):
+    newLexicon = Signal(object)
     def __init__(self,parent=None):
         super(TreeWidget, self).__init__(parent=parent)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -332,17 +347,26 @@ class TreeWidget(QTreeView):
             return False
         return QTreeView.edit(self, index, trigger, event)
 
+    def setModel(self, model):
+        QTreeView.setModel(self, model)
+        self.expandToDepth(0)
+
     def showMenu(self, pos):
         menu = QMenu()
 
         buildAction = QAction(self)
         buildAction.setText('Build lexicon')
+        buildAction.triggered.connect(lambda: self.buildNewLexicon(self.indexAt(pos)))
         menu.addAction(buildAction)
         combineAction = QAction(self)
         combineAction.setText('Combine sub dialogs')
         #saveRepAction.triggered.connect(lambda: self.saveRep(self.indexAt(pos)))
         menu.addAction(combineAction)
         action = menu.exec_(self.viewport().mapToGlobal(pos))
+
+    def buildNewLexicon(self, index):
+        lexicon = self.model().createLexicon(index.row())
+        self.newLexicon.emit(lexicon)
 
 class ResultsWindow(QWidget):
     def __init__(self, title, dataModel, parent=None):

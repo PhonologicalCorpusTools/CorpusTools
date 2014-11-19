@@ -14,6 +14,8 @@ from corpustools.config import config
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
                                     save_binary,export_corpus_csv, import_spontaneous_speech_corpus)
 
+from .windows import FunctionWorker
+
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget)
 
@@ -27,24 +29,7 @@ def get_corpora_list():
 def corpus_name_to_path(name):
     return os.path.join(config['storage']['directory'],'CORPUS',name+'.corpus')
 
-class LoadWorker(QThread):
-
-    dataReady = Signal(object)
-
-    def __init__(self):
-        QThread.__init__(self)
-        self.stopped = False
-
-    def setParams(self, kwargs):
-        self.kwargs = kwargs
-        self.stopped = False
-
-    def stop(self):
-        self.stopped = True
-
-    def stopCheck(self):
-        return self.stopped
-
+class LoadWorker(FunctionWorker):
     def run(self):
         if self.stopCheck():
             return
@@ -52,6 +37,14 @@ class LoadWorker(QThread):
         if self.stopCheck():
             return
         self.dataReady.emit(self.results)
+
+class SpontaneousLoadWorker(FunctionWorker):
+    def run(self):
+
+        corpus = import_spontaneous_speech_corpus(self.kwargs['directory'],
+                                                stop_check=self.kwargs['stop_check'],
+                                                call_back = self.kwargs['call_back'])
+        self.dataReady.emit(corpus)
 
 class CorpusLoadDialog(QDialog):
     def __init__(self, parent):
@@ -541,7 +534,7 @@ class ExportCorpusDialog(QDialog):
 class SpontaneousSpeechDialog(QDialog):
     def __init__(self,parent):
         QDialog.__init__(self,parent)
-
+        self.corpus = None
         layout = QVBoxLayout()
 
         inlayout = QFormLayout()
@@ -571,9 +564,39 @@ class SpontaneousSpeechDialog(QDialog):
 
         self.setWindowTitle('Import spontaneous speech corpus')
 
+        self.thread = SpontaneousLoadWorker()
+
+        self.progressDialog = QProgressDialog('Importing...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Importing spontaneous speech corpus')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
+    def setResults(self, results):
+        self.corpus = results
+
     def accept(self):
+        self.thread.setParams({'directory':self.directoryWidget.value()})
 
-        corpus = import_spontaneous_speech_corpus(self.directoryWidget.value())
-        save_binary(corpus,corpus_name_to_path(corpus.name))
+        self.thread.start()
 
-        QDialog.accept(self)
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            if self.corpus is not None:
+                save_binary(self.corpus,corpus_name_to_path(self.corpus.name))
+            QDialog.accept(self)
+

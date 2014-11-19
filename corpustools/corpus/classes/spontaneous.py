@@ -20,6 +20,16 @@ class SpontaneousSpeechCorpus(object):
 
         self.discourses = OrderedDict()
 
+    def __iter__(self):
+        for d in self.discourses.values():
+            yield d
+
+    def __setstate__(self,state):
+        self.__dict__.update(state)
+        for d in self:
+            for wt in d:
+                wt.wordtype.wordtokens.append(wt)
+
     def add_discourse(self, data, discourse_info):
         d = Discourse(**discourse_info)
         previous_time = None
@@ -27,7 +37,6 @@ class SpontaneousSpeechCorpus(object):
             spelling = line['word']
             transcription = line['ur']
             word = self.lexicon.get_or_create_word(spelling, transcription)
-            print(word)
             word.frequency += 1
             if previous_time is not None:
                 wordtoken = WordToken(word=word, transcription=line['sr'],
@@ -68,6 +77,14 @@ class Discourse(object):
     def __iter__(self):
         for k in sorted(self.words.keys()):
             yield self.words[k]
+
+    def create_lexicon(self):
+        corpus = Corpus(self.identifier + ' lexicon')
+        for token in self:
+            word = corpus.get_or_create_word(token.wordtype.spelling,token.wordtype.transcription)
+            word.frequency += 1
+            token.wordtype = word
+        return corpus
 
     def find_wordtype(self,wordtype):
         return list(x for x in self if x.wordtype == wordtype)
