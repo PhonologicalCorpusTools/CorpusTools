@@ -1,10 +1,5 @@
 
-from PyQt5.QtCore import pyqtSignal as Signal,QThread
-from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
-                            QVBoxLayout, QPushButton, QFrame, QGridLayout,
-                            QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox,QProgressDialog, QCheckBox,
-                            QMessageBox)
+from .imports import *
 
 from collections import OrderedDict
 

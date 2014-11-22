@@ -1,13 +1,7 @@
 
 from itertools import combinations
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
-                            QVBoxLayout, QPushButton, QFrame, QGridLayout,
-                            QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox, QSizePolicy, QButtonGroup,
-                            QGridLayout, QTableWidget, QWidget, QAbstractItemView,
-                            QHeaderView)
+from .imports import *
 
 from .views import TableWidget
 

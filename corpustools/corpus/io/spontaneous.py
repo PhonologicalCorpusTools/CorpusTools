@@ -17,13 +17,46 @@ def inspect_directory(directory):
         print("loop\n")
         print(root,subdirs,files)
 
+def align_dialog_info(words, phones, wavs, stop_check, call_back):
+
+    if call_back is not None:
+        call_back('Matching files...')
+        call_back(0,len(words))
+        cur = 0
+    dialogs = {}
+    for p in words:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
+        name = os.path.splitext(os.path.split(p)[1])[0]
+        dialogs[name] = {'words':p}
+    for p2 in phones:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
+        name = os.path.splitext(os.path.split(p2)[1])[0]
+        dialogs[name]['phones'] = p2
+    for p3 in wavs:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
+        name = os.path.splitext(os.path.split(p3)[1])[0]
+        dialogs[name]['wav'] = p3
+    return dialogs
+
 def import_spontaneous_speech_corpus(directory, stop_check = None, call_back = None):
     name = os.path.split(directory)[1]
     corpus = SpontaneousSpeechCorpus(name,directory)
 
-    dialogs = {}
     words = []
     phones = []
+    wavs = []
     if call_back is not None:
         call_back('Finding files...')
         call_back(0,1)
@@ -36,21 +69,9 @@ def import_spontaneous_speech_corpus(directory, stop_check = None, call_back = N
                 words.append(os.path.join(root,f))
             elif f.endswith('.phones'):
                 phones.append(os.path.join(root,f))
-    if call_back is not None:
-        call_back('Matching files...')
-        call_back(0,len(words))
-        cur = 0
-    for p in words:
-        if stop_check is not None and stop_check():
-            return
-        if call_back is not None:
-            cur += 1
-            call_back(cur)
-        name = os.path.splitext(os.path.split(p)[1])[0]
-        for p2 in phones:
-            if name == os.path.splitext(os.path.split(p2)[1])[0]:
-                dialogs[name] = (p,p2)
-                break
+            elif f.endswith('.wav'):
+                wavs.append(os.path.join(root,f))
+    dialogs = align_dialog_info(words, phones, wavs, stop_check, call_back)
     if call_back is not None:
         call_back('Processing discourses...')
         call_back(0,len(dialogs))
@@ -61,9 +82,15 @@ def import_spontaneous_speech_corpus(directory, stop_check = None, call_back = N
         if call_back is not None:
             cur += 1
             call_back(cur)
-        data = files_to_data(*v)
-        discourse_info = {'identifier':d,
+        if 'words' not in v:
+            continue
+        if 'phones' not in v:
+            continue
+        data = files_to_data(v['words'], v['phones'])
+        discourse_info = {'identifier':d
                             }
+        if 'wav' in v:
+            discourse_info['wav_path'] = v['wav']
         corpus.add_discourse(data, discourse_info)
     return corpus
 

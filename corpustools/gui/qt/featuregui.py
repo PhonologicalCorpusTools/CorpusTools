@@ -1,10 +1,7 @@
 import os
 import copy
 
-from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
-                            QVBoxLayout, QPushButton, QFrame, QGridLayout,
-                            QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox, QMessageBox, QHeaderView)
+from .imports import *
 
 from collections import OrderedDict
 import codecs
