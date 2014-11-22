@@ -1,18 +1,14 @@
-
+import os
 from collections import Counter
 
-from PyQt5.QtCore import (QAbstractTableModel, Qt, QSize,
-                        )
-from PyQt5.QtGui import QStandardItemModel,QStandardItem
+from .imports import *
 
 class SpontaneousSpeechCorpusModel(QStandardItemModel):
     def __init__(self,corpus, parent = None):
         QStandardItemModel.__init__(self, parent)
 
         self.corpus = corpus
-        self.setHorizontalHeaderItem (0,QStandardItem('Corpus'))
-        self.setHorizontalHeaderItem (1,QStandardItem('Speakers'))
-        self.setHorizontalHeaderItem (2,QStandardItem('Discourses'))
+        self.setHorizontalHeaderItem (0,QStandardItem('Discourses'))
 
         corpusItem = QStandardItem(self.corpus.name)
         self.appendRow(corpusItem)
@@ -30,11 +26,27 @@ class DiscourseModel(QStandardItemModel):
         QStandardItemModel.__init__(self, parent)
 
         self.discourse = discourse
-
+        self.posToTime = []
+        self.timeToPos = {}
         for w in self.discourse:
+            self.timeToPos[w.begin] = len(self.posToTime)
+            self.posToTime.append(w.begin)
             i = QStandardItem(str(w))
             i.setFlags(i.flags() | (not Qt.ItemIsEditable))
             self.appendRow(i)
+
+    def rowsToTimes(self,rows):
+        return [self.posToTime[x] for x in rows]
+
+    def timesToRows(self, times):
+        return [self.timeToPos[x] for x in times]
+
+    def hasAudio(self):
+        return self.discourse.has_audio()
+
+    def wordTokenObject(self,row):
+        token = self.discourse[self.posToTime[row]]
+        return token
 
 class CorpusModel(QAbstractTableModel):
     def __init__(self, corpus, parent=None):

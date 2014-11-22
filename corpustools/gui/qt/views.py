@@ -1,15 +1,29 @@
 
 import csv
+from corpustools.config import TMP_DIR
 
-from PyQt5.QtWidgets import (QTableView, QAbstractItemView, QWidget,
-                            QHeaderView, QDockWidget, QPushButton,
-                            QVBoxLayout, QFileDialog, QFrame, QTreeView,
-                            QAbstractItemView, QStyle, QMenu, QAction, QDialog)
-
-from PyQt5.QtCore import QRectF, Qt, QModelIndex, QItemSelection, pyqtSignal as Signal
-from PyQt5.QtGui import QPainter, QFontMetrics, QPen, QRegion
+from .imports import *
 
 from .models import VariantModel
+from .windows import FunctionWorker
+
+class AudioWorker(FunctionWorker):
+    def run(self):
+        #if not QSound.isAvailable():
+        #    print('uh oh')
+        for p in self.kwargs['files']:
+            print(p)
+            s = QSound(p)
+            print(s.loops())
+            s.play()
+            while s.loopsRemaining():
+                print(s.loopsRemaining())
+                if self.stopped:
+                    break
+            if self.stopped:
+                s.stop()
+                break
+
 
 class TableWidget(QTableView):
     def __init__(self,parent=None):
@@ -32,26 +46,73 @@ class TableWidget(QTableView):
     def setModel(self,model):
         super(TableWidget, self).setModel(model)
         #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        try:
+            self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        except AttributeError:
+            self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
-    #def minimumSizeHint(self):
-        #header = self.horizontalHeader()
-        #fm = QFontMetrics(self.font())
-        #width = 0
-        #for x in x:
-
-            #width += fm.width(text)
-            #width += 10
-        #width = header.length()
-        #sh = header.sizeHint()
-        #sh.setWidth(width-100)
-        #return sh
-
-class LexiconView(TableWidget):
+class LexiconView(QWidget):
+    selectTokens = Signal(object)
     def __init__(self,parent=None):
         super(LexiconView, self).__init__(parent=parent)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.showMenu)
+
+        self.setStyleSheet( """ TableWidget::item:selected:active {
+                                     background: lightblue;
+                                }
+                                TableWidget::item:selected:!active {
+                                     background: lightblue;
+                                }
+                                TableWidget::item:selected:disabled {
+                                     background: lightblue;
+                                }
+                                TableWidget::item:selected:!disabled {
+                                     background: lightblue;
+                                }
+                                """
+                                )
+
+        self.table = TableWidget(self)
+        layout = QVBoxLayout()
+        self.searchField = QLineEdit()
+        self.searchField.returnPressed.connect(self.search)
+        layout.addWidget(self.searchField, alignment = Qt.AlignRight)
+        layout.addWidget(self.table)
+
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.showMenu)
+
+        self.setLayout(layout)
+
+    def search(self):
+        text = self.searchField.text()
+        if not text:
+            return
+        model = self.table.model()
+        curSelection = self.table.selectionModel().selectedRows()
+        if curSelection:
+            row = curSelection[-1].row() + 1
+        else:
+            row = 0
+        start = model.index(row,0)
+        matches = model.match(start, Qt.DisplayRole, text, 1, Qt.MatchContains)
+        if matches:
+            index = matches[0]
+            self.table.selectionModel().select(index,
+                    QItemSelectionModel.SelectCurrent|QItemSelectionModel.Rows)
+            self.table.scrollTo(index,QAbstractItemView.PositionAtCenter)
+        else:
+            start = model.index(0,0)
+            matches = model.match(start, Qt.DisplayRole, text, 1, Qt.MatchContains)
+            if matches:
+                index = matches[0]
+                self.table.selectionModel().select(index,
+                    QItemSelectionModel.SelectCurrent|QItemSelectionModel.Rows)
+                self.table.scrollTo(index,QAbstractItemView.PositionAtCenter)
+            else:
+                self.table.selectionModel().clear()
+
+    def setModel(self, model):
+        self.table.setModel(model)
 
     def showMenu(self, pos):
         menu = QMenu()
@@ -61,7 +122,7 @@ class LexiconView(TableWidget):
         menu.addAction(neighbourAction)
 
         hideAction = QAction(self)
-        nonlexhidden = self.model().nonLexHidden
+        nonlexhidden = self.table.model().nonLexHidden
         if nonlexhidden:
             hideAction.setText('Show non-lexical items')
         else:
@@ -71,12 +132,21 @@ class LexiconView(TableWidget):
 
         variantsAction = QAction(self)
         variantsAction.setText('List pronunciation variants')
-        variantsAction.triggered.connect(lambda: self.showVariants(self.indexAt(pos)))
+        variantsAction.triggered.connect(lambda: self.showVariants(self.table.indexAt(pos)))
         menu.addAction(variantsAction)
-        action = menu.exec_(self.viewport().mapToGlobal(pos))
+
+        findTokensAction = QAction(self)
+        findTokensAction.setText('Find all tokens')
+        findTokensAction.triggered.connect(lambda: self.findTokens(self.table.indexAt(pos)))
+        menu.addAction(findTokensAction)
+        action = menu.exec_(self.table.viewport().mapToGlobal(pos))
 
     def hideNonLexical(self,b):
-        self.model().hideNonLexical(b)
+        self.table.model().hideNonLexical(b)
+
+    def findTokens(self, index):
+        tokens = self.table.model().wordObject(index.row()).wordtokens
+        self.selectTokens.emit(tokens)
 
     def showVariants(self, index):
         variantDialog = QDialog()
@@ -84,7 +154,7 @@ class LexiconView(TableWidget):
         layout = QVBoxLayout()
         table = TableWidget()
         layout.addWidget(table)
-        table.setModel(VariantModel(self.model().wordObject(index.row()).wordtokens))
+        table.setModel(VariantModel(self.table.model().wordObject(index.row()).wordtokens))
         variantDialog.setLayout(layout)
         variantDialog.exec_()
 
@@ -93,33 +163,15 @@ class TextView(QAbstractItemView):
     ExtraHeight = 3
     ExtraWidth = 10
     def __init__(self, parent=None):
+        self.idealHeight = 0
+        self.idealWidth = 0
         QAbstractItemView.__init__(self, parent)
 
         self.hashIsDirty = False
-        self.hasAudio = False
         self.rectForRow = dict()
 
         self.horizontalScrollBar().setRange(0,0)
         self.verticalScrollBar().setRange(0,0)
-        self.idealHeight = 0
-        self.idealWidth = 0
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.showMenu)
-
-    def showMenu(self, pos):
-        menu = QMenu()
-        index = self.indexAt(pos)
-        if not index.isValid():
-            return
-        lookupAction = QAction(self)
-        lookupAction.setText('Look up word')
-        menu.addAction(lookupAction)
-        if self.hasAudio:
-            playAudioAction = QAction(self)
-            playAudioAction.setText('Play audio')
-            menu.addAction(playAudioAction)
-        action = menu.exec_(self.viewport().mapToGlobal(pos))
-
 
     def setModel(self,model):
         QAbstractItemView.setModel(self, model)
@@ -332,7 +384,110 @@ class TextView(QAbstractItemView):
 
     def mousePressEvent(self, event):
         QAbstractItemView.mousePressEvent(self, event)
-        self.setCurrentIndex(self.indexAt(event.pos()))
+        #self.setCurrentIndex(self.indexAt(event.pos()))
+
+class DiscourseView(QWidget):
+    def __init__(self,parent=None):
+        super(DiscourseView, self).__init__(parent=parent)
+        self.audioThread = AudioWorker()
+        self.setupActions()
+        self.audioThread.finished.connect(self.audioFinished)
+        self.setStyleSheet( """ TextView::item:selected:active {
+                                     background: lightblue;
+                                }
+                                TextView::item:selected:!active {
+                                     background: lightblue;
+                                }
+                                TextView::item:selected:disabled {
+                                     background: lightblue;
+                                }
+                                TextView::item:selected:!disabled {
+                                     background: lightblue;
+                                }
+                                """
+                                )
+
+        self.text = TextView(self)
+        self.text.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.text.customContextMenuRequested.connect(self.showMenu)
+
+        layout = QVBoxLayout()
+        self.searchField = QLineEdit()
+        self.searchField.returnPressed.connect(self.search)
+        layout.addWidget(self.searchField, alignment = Qt.AlignRight)
+        layout.addWidget(self.text)
+
+        self.playbar = QToolBar()
+
+        self.playbar.addAction(self.playStopAction)
+        self.playbar.hide()
+        layout.addWidget(self.playbar, alignment=Qt.AlignHCenter)
+
+        self.setLayout(layout)
+
+    def setModel(self,model):
+        if model.hasAudio():
+            self.playbar.show()
+        else:
+            self.playbar.hide()
+        self.text.setModel(model)
+
+    def search(self):
+        pass
+
+    def showMenu(self, pos):
+        menu = QMenu()
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+        lookupAction = QAction(self)
+        lookupAction.setText('Look up word')
+        menu.addAction(lookupAction)
+        if self.model().hasAudio():
+            playAudioAction = QAction(self)
+            playAudioAction.setText('Play audio')
+            menu.addAction(playAudioAction)
+            playAudioAction.triggered.connect(self.playAudio)
+        action = menu.exec_(self.viewport().mapToGlobal(pos))
+
+    def playStopAudio(self):
+        print('triggered')
+        if self.audioThread.isRunning():
+            self.audioThread.stop()
+            self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        else:
+            self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaStop))
+            rows = [x.row() for x in self.text.selectionModel().selectedRows()]
+            times = self.text.model().rowsToTimes(rows)
+            filenames = self.text.model().discourse.extract_tokens(times,TMP_DIR)
+            #QSound.play(filenames[0])
+            print('params')
+            self.audioThread.setParams({'files':filenames})
+
+            print('start thread')
+            self.audioThread.start()
+            #for f in filenames:
+            #    s = QSound(f)
+            #    s.loopsRemaining()
+
+    def audioFinished(self):
+        self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+
+    def highlightTokens(self, tokens):
+        if self.model() is None:
+            return
+        self.selectionModel().clear()
+        times = [x.begin for x in tokens if x.discourse == self.model().discourse]
+        rows = self.model().timesToRows(times)
+        for r in rows:
+            index = self.model().index(r,0)
+            self.selectionModel().select(index, QItemSelectionModel.Select)
+
+    def setupActions(self):
+        self.playStopAction = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), self.tr("Play"), self)
+        self.playStopAction.setShortcut(Qt.NoModifier + Qt.Key_Space)
+        self.playStopAction.setDisabled(False)
+        self.playStopAction.triggered.connect(self.playStopAudio)
 
 class TreeWidget(QTreeView):
     newLexicon = Signal(object)
@@ -341,6 +496,7 @@ class TreeWidget(QTreeView):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.showMenu)
         self.setColumnWidth(0,40)
+        self._selection_model = None
 
     def edit(self, index, trigger, event):
         if trigger == QAbstractItemView.DoubleClicked:
@@ -349,7 +505,11 @@ class TreeWidget(QTreeView):
 
     def setModel(self, model):
         QTreeView.setModel(self, model)
+        self._selection_model = QTreeView.selectionModel(self)
         self.expandToDepth(0)
+
+    def selectionModel(self):
+        return self._selection_model
 
     def showMenu(self, pos):
         menu = QMenu()
@@ -360,7 +520,6 @@ class TreeWidget(QTreeView):
         menu.addAction(buildAction)
         combineAction = QAction(self)
         combineAction.setText('Combine sub dialogs')
-        #saveRepAction.triggered.connect(lambda: self.saveRep(self.indexAt(pos)))
         menu.addAction(combineAction)
         action = menu.exec_(self.viewport().mapToGlobal(pos))
 

@@ -1,11 +1,7 @@
 import os
 import codecs
 
-from PyQt5.QtCore import pyqtSignal as Signal,QThread
-from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
-                            QVBoxLayout, QPushButton, QFrame, QGridLayout,
-                            QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox, QMessageBox, QProgressDialog)
+from .imports import *
 
 from collections import OrderedDict
 

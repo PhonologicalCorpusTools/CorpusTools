@@ -1,6 +1,5 @@
 
-from PyQt5.QtWidgets import QDialog,QVBoxLayout,QPushButton,QWidget
-from PyQt5.QtCore import QSettings,QSize,QPoint
+from .imports import *
 
 from corpustools.config import CONFIG_PATH
 

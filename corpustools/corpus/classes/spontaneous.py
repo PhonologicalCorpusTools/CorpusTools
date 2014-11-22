@@ -3,6 +3,9 @@ from collections import OrderedDict
 
 from .lexicon import Transcription, Corpus
 
+import os
+import wave
+
 class Speaker(object):
     def __init__(self,identifier, **kwargs):
 
@@ -74,9 +77,43 @@ class Discourse(object):
             return self.words[t]
         raise(TypeError)
 
+    def has_audio(self):
+        if hasattr(self,'wav_path') and os.path.exists(self.wav_path):
+            return True
+        return False
+
+
     def __iter__(self):
         for k in sorted(self.words.keys()):
             yield self.words[k]
+
+    def extract_tokens(self, tokens, output_dir):
+        if not self.has_audio():
+            return
+        filenames = []
+        with wave.open(self.wav_path,'r') as w_in:
+            sr = w_in.getframerate()
+            bitdepth = w_in.getsampwidth()
+            for t in tokens:
+                wt = self[t]
+                name = '{}_{}.wav'.format(self.identifier,wt.begin)
+                wt.wav_path = os.path.join(output_dir,name)
+                filenames.append(wt.wav_path)
+                if os.path.exists(wt.wav_path):
+                    continue
+
+                begpos = int(wt.begin * sr)
+                endpos = int(wt.end * sr)
+                duration = endpos - begpos
+                w_in.setpos(begpos)
+                data = w_in.readframes(duration)
+                with wave.open(wt.wav_path,'w') as w_out:
+                    w_out.setnchannels(1)
+                    w_out.setframerate(sr)
+                    w_out.setsampwidth(bitdepth)
+                    w_out.writeframes(data)
+        return filenames
+
 
     def create_lexicon(self):
         corpus = Corpus(self.identifier + ' lexicon')
@@ -132,6 +169,13 @@ class WordToken(object):
 
         for k,v in kwargs.items():
             setattr(self,k,v)
+
+        self.wavpath = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['wavpath'] = None
+        return state
 
     def __eq__(self, other):
         if not isinstance(other,WordToken):

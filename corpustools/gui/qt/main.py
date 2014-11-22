@@ -1,10 +1,11 @@
-from PyQt5.QtGui import QFont, QKeySequence
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QMainWindow, QHBoxLayout, QLabel, QAction,
-                            QApplication, QWidget, QMessageBox,QSplitter)
+import os
+
+from .imports import *
+
+from corpustools.config import TMP_DIR
 
 from .config import Settings, PreferencesDialog
-from .views import TableWidget, TreeWidget, TextView, ResultsWindow, LexiconView
+from .views import TableWidget, TreeWidget, DiscourseView, ResultsWindow, LexiconView
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, RemoveTierDialog,
@@ -38,7 +39,7 @@ class MainWindow(QMainWindow):
         self.discourseTree = TreeWidget(self)
         self.discourseTree.newLexicon.connect(lambda x: self.corpusTable.setModel(CorpusModel(x)))
         self.discourseTree.hide()
-        self.textWidget = TextView(self)
+        self.textWidget = DiscourseView(self)
         self.textWidget.hide()
         #font = QFont("Courier New", 14)
         #self.corpusTable.setFont(font)
@@ -70,6 +71,9 @@ class MainWindow(QMainWindow):
         self.FAWindow = None
         self.SSWindow = None
         self.ASWindow = None
+
+        if not os.path.exists(TMP_DIR):
+            os.mkdir(TMP_DIR)
 
     def check_for_empty_corpus(function):
         def do_check(self):
@@ -109,6 +113,7 @@ class MainWindow(QMainWindow):
                 self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
                 #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
                 #self.discourseTree.resizeColumnToContents(0)
+                self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
                 self.textWidget.show()
             else:
                 c = self.corpus
@@ -358,3 +363,9 @@ class MainWindow(QMainWindow):
         self.helpMenu = self.menuBar().addMenu("&Help")
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.aboutAct)
+
+    def closeEvent(self, event):
+        tmpfiles = os.listdir(TMP_DIR)
+        for f in tmpfiles:
+            os.remove(os.path.join(TMP_DIR,f))
+        super(MainWindow, self).closeEvent(event)
