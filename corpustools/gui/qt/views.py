@@ -177,6 +177,11 @@ class TextView(QAbstractItemView):
         QAbstractItemView.setModel(self, model)
         self.hashIsDirty = True
 
+    def edit(self, index, trigger, event):
+        if trigger == QAbstractItemView.DoubleClicked:
+            return False
+        return QTreeView.edit(self, index, trigger, event)
+
     def calculateRectsIfNecessary(self):
         if not self.hashIsDirty:
             return
@@ -392,6 +397,8 @@ class DiscourseView(QWidget):
         self.audioThread = AudioWorker()
         self.setupActions()
         self.audioThread.finished.connect(self.audioFinished)
+
+        self.text = TextView(self)
         self.setStyleSheet( """ TextView::item:selected:active {
                                      background: lightblue;
                                 }
@@ -406,8 +413,6 @@ class DiscourseView(QWidget):
                                 }
                                 """
                                 )
-
-        self.text = TextView(self)
         self.text.setContextMenuPolicy(Qt.CustomContextMenu)
         self.text.customContextMenuRequested.connect(self.showMenu)
 
@@ -426,14 +431,39 @@ class DiscourseView(QWidget):
         self.setLayout(layout)
 
     def setModel(self,model):
+        self.text.setModel(model)
         if model.hasAudio():
             self.playbar.show()
         else:
             self.playbar.hide()
-        self.text.setModel(model)
 
     def search(self):
-        pass
+        text = self.searchField.text()
+        if not text:
+            return
+        model = self.text.model()
+        curSelection = self.text.selectionModel().selectedRows()
+        if curSelection:
+            row = curSelection[-1].row() + 1
+        else:
+            row = 0
+        start = model.index(row,0)
+        matches = model.match(start, Qt.DisplayRole, text, 1, Qt.MatchContains)
+        if matches:
+            index = matches[0]
+            self.text.selectionModel().select(index,
+                    QItemSelectionModel.SelectCurrent)
+            self.text.scrollTo(index,QAbstractItemView.PositionAtCenter)
+        else:
+            start = model.index(0,0)
+            matches = model.match(start, Qt.DisplayRole, text, 1, Qt.MatchContains)
+            if matches:
+                index = matches[0]
+                self.text.selectionModel().select(index,
+                    QItemSelectionModel.SelectCurrent)
+                self.text.scrollTo(index,QAbstractItemView.PositionAtCenter)
+            else:
+                self.text.selectionModel().clear()
 
     def showMenu(self, pos):
         menu = QMenu()
