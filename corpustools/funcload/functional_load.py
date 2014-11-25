@@ -88,7 +88,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         minpairs = set(minpairs)
 
     result = len(minpairs)
-    if relative_count:
+    if relative_count and len(neutralized) > 0:
         result /= len(neutralized)
 
     if not threaded_q:
