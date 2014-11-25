@@ -26,5 +26,5 @@ def read_segment_pairs(spfile):
 ####
 
 corpus = load_binary(args.corpus_file_name)[0]
-print(args.query)
+
 print(neighborhood_density(corpus, args.query))
