@@ -18,6 +18,8 @@ class FileWidget(QFrame):
         pathLayout = QHBoxLayout()
         self.pathEdit = QLineEdit()
         pathButton = QPushButton('Choose file...')
+        pathButton.setAutoDefault(False)
+        pathButton.setDefault(False)
         pathButton.clicked.connect(self.pathSet)
         pathLayout.addWidget(self.pathEdit)
         pathLayout.addWidget(pathButton)
@@ -44,6 +46,8 @@ class SaveFileWidget(QFrame):
         pathLayout = QHBoxLayout()
         self.pathEdit = QLineEdit()
         pathButton = QPushButton('Choose file...')
+        pathButton.setAutoDefault(False)
+        pathButton.setDefault(False)
         pathButton.clicked.connect(self.pathSet)
         pathLayout.addWidget(self.pathEdit)
         pathLayout.addWidget(pathButton)
@@ -66,6 +70,8 @@ class DirectoryWidget(QFrame):
         pathLayout = QHBoxLayout()
         self.pathEdit = QLineEdit()
         pathButton = QPushButton('Choose directory...')
+        pathButton.setAutoDefault(False)
+        pathButton.setDefault(False)
         pathButton.clicked.connect(self.pathSet)
         pathLayout.addWidget(self.pathEdit)
         pathLayout.addWidget(pathButton)
@@ -78,6 +84,38 @@ class DirectoryWidget(QFrame):
 
     def value(self):
         return self.pathEdit.text()
+
+class InventoryTable(QTableWidget):
+    def __init__(self):
+        QTableWidget.__init__(self)
+        try:
+            self.horizontalHeader().setSectionsClickable(False)
+            self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            self.verticalHeader().setSectionsClickable(False)
+            self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        except AttributeError:
+            self.horizontalHeader().setClickable(False)
+            self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+            self.verticalHeader().setClickable(False)
+            self.verticalHeader().setResizeMode(QHeaderView.Fixed)
+
+        self.setSelectionMode(QAbstractItemView.NoSelection)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+    def resize(self):
+        self.resizeRowsToContents()
+        self.resizeColumnsToContents()
+        hor = self.horizontalHeader()
+        ver = self.verticalHeader()
+        width = ver.sizeHint().width()
+        for i in range(hor.count()):
+            width += hor.sectionSize(i)
+        height = hor.sizeHint().height()
+        for i in range(ver.count()):
+            height += ver.sectionSize(i)
+        self.setFixedSize(width, height)
+
 
 class InventoryBox(QGroupBox):
     consonantColumns = ['Labial','Labiodental','Dental','Alveolar','Alveopalatal','Retroflex',
@@ -116,7 +154,7 @@ class InventoryBox(QGroupBox):
             smallbox = QHBoxLayout()
             cons = QGroupBox('Consonants')
             consBox = QVBoxLayout()
-            consTable = QTableWidget()
+            consTable = InventoryTable()
             consBox.addWidget(consTable)
             cons.setLayout(consBox)
 
@@ -129,17 +167,7 @@ class InventoryBox(QGroupBox):
             consTable.setRowCount(len(consRows))
             consTable.setHorizontalHeaderLabels(consColumns)
             consTable.setVerticalHeaderLabels(consRows)
-            consTable.resizeRowsToContents()
-            consTable.resizeColumnsToContents()
-            consTable.setSelectionMode(QAbstractItemView.NoSelection)
-            consTable.horizontalHeader().setSectionsClickable(False)
-            #consTable.horizontalHeader().resizeSections()
-            consTable.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-
-            consTable.verticalHeader().setSectionsClickable(False)
-            #consTable.verticalHeader().resizeSections()
-            consTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
-
+            consTable.resize()
 
             for i in range(len(consColumns)):
                 for j in range(len(consRows)):
@@ -153,8 +181,8 @@ class InventoryBox(QGroupBox):
             vow = QGroupBox('Vowels')
             vowBox = QGridLayout()
             vowBox.setAlignment(Qt.AlignTop)
-            vowTable = QTableWidget()
-            vowBox.addWidget(vowTable)
+            vowTable = InventoryTable()
+            vowBox.addWidget(vowTable, alignment=Qt.AlignLeft|Qt.AlignTop)
             vow.setLayout(vowBox)
             vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
             vowColMapping = {x:i for i,x in enumerate(vowColumns)}
@@ -165,16 +193,7 @@ class InventoryBox(QGroupBox):
             vowTable.setRowCount(len(vowRows) + 1)
             vowTable.setHorizontalHeaderLabels(vowColumns)
             vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
-            vowTable.resizeRowsToContents()
-            vowTable.resizeColumnsToContents()
-            vowTable.setSelectionMode(QAbstractItemView.NoSelection)
-            vowTable.horizontalHeader().setSectionsClickable(False)
-            #vowTable.horizontalHeader().resizeSections()
-            vowTable.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-
-            vowTable.verticalHeader().setSectionsClickable(False)
-            #vowTable.verticalHeader().resizeSections()
-            vowTable.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            vowTable.resize()
 
             for i in range(len(vowColumns)):
                 for j in range(len(vowRows)):
@@ -240,8 +259,8 @@ class InventoryBox(QGroupBox):
             smallbox.addWidget(vow)
             b = QFrame()
             b.setLayout(smallbox)
-            box.addWidget(b)
-            box.addWidget(unk)
+            box.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
+            box.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
         else:
             box = QGridLayout()
 
@@ -295,6 +314,7 @@ class FeatureBox(QGroupBox):
         layout.addWidget(self.featureList)
 
         buttonLayout = QVBoxLayout()
+        buttonLayout.setSpacing(0)
         self.plusButton = QPushButton('Add [+feature]')
         self.minusButton = QPushButton('Add [-feature]')
         self.clearButton = QPushButton('Clear all')
@@ -303,13 +323,13 @@ class FeatureBox(QGroupBox):
         self.minusButton.clicked.connect(self.addMinus)
         self.clearButton.clicked.connect(self.clearAll)
 
-        buttonLayout.addWidget(self.plusButton)
-        buttonLayout.addWidget(self.minusButton)
-        buttonLayout.addWidget(self.clearButton)
+        buttonLayout.addWidget(self.plusButton, alignment = Qt.AlignCenter)
+        buttonLayout.addWidget(self.minusButton, alignment = Qt.AlignCenter)
+        buttonLayout.addWidget(self.clearButton, alignment = Qt.AlignCenter)
 
         buttonFrame = QFrame()
         buttonFrame.setLayout(buttonLayout)
-        layout.addWidget(buttonFrame)
+        layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
 
         self.envList = QListWidget()
 
@@ -369,7 +389,7 @@ class SegmentPairDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
-
+        self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Select segment pair')
 
     def accept(self):
@@ -390,6 +410,10 @@ class SegmentPairSelectWidget(QGroupBox):
         self.addButton.clicked.connect(self.segPairPopup)
         self.removeButton = QPushButton('Remove selected sound pair')
         self.removeButton.clicked.connect(self.removePair)
+        self.addButton.setAutoDefault(False)
+        self.addButton.setDefault(False)
+        self.removeButton.setAutoDefault(False)
+        self.removeButton.setDefault(False)
 
         self.table = TableWidget()
         self.table.setModel(SegmentPairModel())
@@ -435,7 +459,7 @@ class EnvironmentDialog(QDialog):
         self.envType.currentIndexChanged.connect(self.generateFrames)
 
         layout.addWidget(QLabel('Basis for building environment:'))
-        layout.addWidget(self.envType)
+        layout.addWidget(self.envType, alignment = Qt.AlignLeft)
 
         self.lhs = InventoryBox('Left hand side',self.inventory)
         self.lhs.setExclusive(True)
@@ -458,9 +482,9 @@ class EnvironmentDialog(QDialog):
         self.anotherButton = QPushButton('Add and create another')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
-        acLayout.addWidget(self.oneButton)
-        acLayout.addWidget(self.anotherButton)
-        acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
         self.oneButton.clicked.connect(self.one)
         self.anotherButton.clicked.connect(self.another)
         self.cancelButton.clicked.connect(self.reject)
@@ -468,10 +492,10 @@ class EnvironmentDialog(QDialog):
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
-        layout.addWidget(acFrame)
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
-
+        self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Create environment')
 
 
@@ -531,6 +555,10 @@ class EnvironmentSelectWidget(QGroupBox):
         self.addButton.clicked.connect(self.envPopup)
         self.removeButton = QPushButton('Remove selected environments')
         self.removeButton.clicked.connect(self.removeEnv)
+        self.addButton.setAutoDefault(False)
+        self.addButton.setDefault(False)
+        self.removeButton.setAutoDefault(False)
+        self.removeButton.setDefault(False)
 
         self.table = TableWidget()
         self.table.setModel(EnvironmentModel())

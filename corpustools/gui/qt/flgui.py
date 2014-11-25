@@ -1,13 +1,12 @@
 
-from .imports import *
 
 from collections import OrderedDict
 
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget
-from .windows import FunctionWorker
-
 import corpustools.funcload.functional_load as FL
 
+from .imports import *
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget
+from .windows import FunctionWorker, FunctionDialog
 
 class FLWorker(FunctionWorker):
     def run(self):
@@ -55,7 +54,7 @@ class FLWorker(FunctionWorker):
 
 
 
-class FLDialog(QDialog):
+class FLDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
                 'Type of funcational load',
@@ -65,7 +64,7 @@ class FLDialog(QDialog):
                 'Minimum word frequency',
                 'Type or token']
 
-    ABOUT = [('This function calculates the functional load of the contrast'
+    _about = [('This function calculates the functional load of the contrast'
                     ' between any two segments, based on either the number of minimal'
                     ' pairs or the change in entropy resulting from merging that contrast.'),
                     '',
@@ -79,12 +78,13 @@ class FLDialog(QDialog):
                     ' High functional load inhibits phonological contrast'
                     ' loss: A corpus study. Cognition 128.179-86')]
 
+    name = 'functional load'
+
     def __init__(self, parent, corpus, showToolTips):
-        QDialog.__init__(self, parent)
+        FunctionDialog.__init__(self, parent, FLWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips
-        layout = QVBoxLayout()
 
         flFrame = QFrame()
         fllayout = QHBoxLayout()
@@ -92,8 +92,6 @@ class FLDialog(QDialog):
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
 
         fllayout.addWidget(self.segPairWidget)
-
-        layout.addWidget(flFrame)
 
         self.algorithmWidget = RadioSelectWidget('Functional load algorithm',
                                             OrderedDict([('Minimal pairs','min_pairs'),
@@ -152,25 +150,7 @@ class FLDialog(QDialog):
         fllayout.addWidget(optionFrame)
         flFrame.setLayout(fllayout)
 
-
-        self.newTableButton = QPushButton('Calculate functional load\n(start new results table)')
-        self.oldTableButton = QPushButton('Calculate functional load\n(add to current results table)')
-        self.cancelButton = QPushButton('Cancel')
-        self.aboutButton = QPushButton('About this function...')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.newTableButton)
-        acLayout.addWidget(self.oldTableButton)
-        acLayout.addWidget(self.cancelButton)
-        acLayout.addWidget(self.aboutButton)
-        self.newTableButton.clicked.connect(self.newTable)
-        self.oldTableButton.clicked.connect(self.oldTable)
-        self.aboutButton.clicked.connect(self.about)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
+        self.layout().insertWidget(0,flFrame)
 
         if self.showToolTips:
             self.homophoneWidget.setToolTip(("<FONT COLOR=black>"
@@ -203,29 +183,6 @@ class FLDialog(QDialog):
                             ' or using the decrease in corpus'
                             ' entropy caused by a merger of paired segments in the set.'
             "</FONT>"))
-        self.setLayout(layout)
-
-        self.setWindowTitle('Functional load')
-
-        self.thread = FLWorker()
-
-        self.progressDialog = QProgressDialog('Calculating functional load...','Cancel',0,100, self)
-        self.progressDialog.setWindowTitle('Calculating functional load')
-        self.progressDialog.setAutoClose(False)
-        self.progressDialog.setAutoReset(False)
-        self.progressDialog.canceled.connect(self.thread.stop)
-        self.thread.updateProgress.connect(self.updateProgress)
-        self.thread.updateProgressText.connect(self.updateProgressText)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(self.progressDialog.accept)
-
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
 
     def minPairsSelected(self):
         self.typeTokenWidget.disable()
@@ -256,8 +213,7 @@ class FLDialog(QDialog):
                 'type_or_token':self.typeTokenWidget.value(),
                 'func_type':self.algorithmWidget.value()}
 
-
-    def calcFL(self):
+    def calc(self):
         kwargs = self.generateKwargs()
         if kwargs is None:
             return
@@ -270,7 +226,6 @@ class FLDialog(QDialog):
         self.progressDialog.reset()
         if result:
             self.accept()
-
 
     def setResults(self,results):
         self.results = list()
@@ -297,15 +252,3 @@ class FLDialog(QDialog):
                                     self.relativeCountWidget.isChecked(),
                                     frequency_cutoff,
                                     self.typeTokenWidget.value()])
-
-    def newTable(self):
-        self.update = False
-        self.calcFL()
-
-    def oldTable(self):
-        self.update = True
-        self.calcFL()
-
-    def about(self):
-        reply = QMessageBox.information(self,
-                "About functional load", '\n'.join(self.ABOUT))

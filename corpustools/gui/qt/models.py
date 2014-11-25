@@ -236,15 +236,15 @@ class EnvironmentModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
 class ResultsModel(QAbstractTableModel):
-    def __init__(self, header, data, parent=None):
+    def __init__(self, header, results, parent=None):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = header
 
-        self.data = data
+        self.results = results
 
     def rowCount(self,parent=None):
-        return len(self.data)
+        return len(self.results)
 
     def columnCount(self,parent=None):
         return len(self.columns)
@@ -254,7 +254,7 @@ class ResultsModel(QAbstractTableModel):
             return None
         elif role != Qt.DisplayRole:
             return None
-        data = self.data[index.row()][index.column()]
+        data = self.results[index.row()][index.column()]
         if isinstance(data,float):
             data = str(round(data,3))
         elif isinstance(data,bool):
@@ -270,9 +270,9 @@ class ResultsModel(QAbstractTableModel):
         """Sort table by given column number.
         """
         self.layoutAboutToBeChanged.emit()
-        self.data = sorted(self.data, key=lambda x: x[col])
+        self.results = sorted(self.results, key=lambda x: x[col])
         if order == Qt.DescendingOrder:
-            self.data.reverse()
+            self.results.reverse()
         self.layoutChanged.emit()
 
     def headerData(self, col, orientation, role):
@@ -285,7 +285,7 @@ class ResultsModel(QAbstractTableModel):
 
     def addData(self,extra):
         self.layoutAboutToBeChanged.emit()
-        self.data += extra
+        self.results += extra
         self.layoutChanged.emit()
 
 

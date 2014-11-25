@@ -37,9 +37,50 @@ class FunctionWorker(QThread):
 
 class FunctionDialog(QDialog):
     header = None
-    ABOUT = None
-    def __init__(self,functionName,parent):
-        pass
+    _about = None
+    name = ''
+    def __init__(self,parent, worker):
+        QDialog.__init__(self, parent)
+
+        layout = QVBoxLayout()
+
+        self.newTableButton = QPushButton('Calculate {}\n(start new results table)'.format(self.name))
+        self.newTableButton.setDefault(True)
+        self.oldTableButton = QPushButton('Calculate {}\n(add to current results table)'.format(self.name))
+        self.cancelButton = QPushButton('Cancel')
+        self.aboutButton = QPushButton('About {}...'.format(self.name))
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.newTableButton)
+        acLayout.addWidget(self.oldTableButton)
+        acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.aboutButton)
+        self.newTableButton.clicked.connect(self.newTable)
+        self.oldTableButton.clicked.connect(self.oldTable)
+        self.aboutButton.clicked.connect(self.about)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+        self.setLayout(layout)
+
+        self.setWindowTitle(self.name.title())
+
+        self.thread = worker
+
+        self.progressDialog = QProgressDialog('Calculating {}...'.format(self.name),'Cancel',0,100, self)
+        self.progressDialog.setWindowTitle('Calculating {}'.format(self.name))
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def setResults(self, results):
+        self.results = results
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
@@ -59,3 +100,7 @@ class FunctionDialog(QDialog):
     def oldTable(self):
         self.update = True
         self.calc()
+
+    def about(self):
+        reply = QMessageBox.information(self,
+                "About {}".format(self.name), '\n'.join(self._about))

@@ -1,6 +1,6 @@
 
 try:
-    #raise(ImportError)
+    raise(ImportError)
     from PySide.QtCore import (QRectF, Qt, QSettings,QAbstractTableModel,
                 QSize,QPoint, Signal, QThread,QModelIndex)
     from PySide.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
@@ -14,7 +14,7 @@ try:
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,
                                 QTableWidget,QSound,QItemSelection, QItemSelectionModel,
-                                QToolBar)
+                                QToolBar, QStyledItemDelegate)
 
     print('PySide version')
 except ImportError:
@@ -32,6 +32,6 @@ except ImportError:
                                 QProgressDialog, QCheckBox, QMessageBox,QTableView,
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,
-                                QTableWidget, QToolBar)
+                                QTableWidget, QToolBar, QStyledItemDelegate)
     from PyQt5.QtMultimedia import QSound
     print('PyQt5 version')

@@ -51,6 +51,13 @@ class TableWidget(QTableView):
         except AttributeError:
             self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
+    def calcWidth(self):
+        header = self.horizontalHeader()
+        width = self.horizontalOffset()
+        for i in range(header.count()):
+            width += header.sectionSize(i)
+        return width
+
 class LexiconView(QWidget):
     selectTokens = Signal(object)
     def __init__(self,parent=None):
@@ -176,6 +183,7 @@ class TextView(QAbstractItemView):
     def setModel(self,model):
         QAbstractItemView.setModel(self, model)
         self.hashIsDirty = True
+        self.setItemDelegate(QStyledItemDelegate())
 
     def edit(self, index, trigger, event):
         if trigger == QAbstractItemView.DoubleClicked:
@@ -564,7 +572,10 @@ class ResultsWindow(QWidget):
         layout = QVBoxLayout()
         self.table = TableWidget()
         self.table.setModel(dataModel)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        try:
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        except AttributeError:
+            self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
         layout.addWidget(self.table)
 
         self.saveButton = QPushButton('Save to file')
@@ -574,14 +585,10 @@ class ResultsWindow(QWidget):
         self.setLayout(layout)
         #self.setWidget(frame)
         self.table.resizeColumnsToContents()
-        #self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.setWindowTitle(title)
         self.table.adjustSize()
-        self.resize(self.sizeHint())
-
-    def sizeHint(self):
-        sh = self.table.sizeHint()
-        return sh
+        self.setFixedWidth(self.table.calcWidth()+41)
+        self.resize(self.maximumWidth(),400)
 
     def save(self):
         filename = QFileDialog.getSaveFileName(self,'Choose save file',
