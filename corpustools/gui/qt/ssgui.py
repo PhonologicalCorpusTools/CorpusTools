@@ -7,7 +7,7 @@ from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
 from .widgets import RadioSelectWidget, FileWidget
 
-from .windows import FunctionWorker
+from .windows import FunctionWorker, FunctionDialog
 
 class SSWorker(FunctionWorker):
     def run(self):
@@ -25,7 +25,7 @@ class SSWorker(FunctionWorker):
             return
         self.dataReady.emit(self.results)
 
-class SSDialog(QDialog):
+class SSDialog(FunctionDialog):
     header = ['Word 1',
                 'Word 2',
                 'Result',
@@ -33,7 +33,7 @@ class SSDialog(QDialog):
                 'Type or token',
                 'Algorithm type']
 
-    ABOUT = [('This function calculates the similarity between words in the corpus,'
+    _about = [('This function calculates the similarity between words in the corpus,'
                 ' based on either their spelling or their transcription. Similarity '
                 'is a function of the longest common shared sequences of graphemes '
                 'or phonemes (weighted by their frequency of occurrence in the corpus), '
@@ -46,12 +46,14 @@ class SSDialog(QDialog):
                 'References'
                 'Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.']
 
+    name = 'string similarity'
+
     def __init__(self, parent, corpus, showToolTips):
-        QDialog.__init__(self, parent)
+        FunctionDialog.__init__(self, parent, SSWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips
-        layout = QVBoxLayout()
+
         if not self.corpus.has_transcription:
             layout.addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
 
@@ -135,7 +137,6 @@ class SSDialog(QDialog):
 
         optionLayout.addWidget(threshFrame)
 
-
         optionFrame.setLayout(optionLayout)
 
         sslayout.addWidget(optionFrame)
@@ -143,27 +144,8 @@ class SSDialog(QDialog):
         ssFrame = QFrame()
         ssFrame.setLayout(sslayout)
 
-        layout.addWidget(ssFrame)
+        self.layout().insertWidget(0,ssFrame)
 
-        self.newTableButton = QPushButton('Calculate string similarity\n(start new results table)')
-        self.newTableButton.setDefault(True)
-        self.oldTableButton = QPushButton('Calculate string similarity\n(add to current results table)')
-        self.cancelButton = QPushButton('Cancel')
-        self.aboutButton = QPushButton('About this function...')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.newTableButton)
-        acLayout.addWidget(self.oldTableButton)
-        acLayout.addWidget(self.cancelButton)
-        acLayout.addWidget(self.aboutButton)
-        self.newTableButton.clicked.connect(self.newTable)
-        self.oldTableButton.clicked.connect(self.oldTable)
-        self.aboutButton.clicked.connect(self.about)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
 
         if self.showToolTips:
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
@@ -200,29 +182,6 @@ class SSDialog(QDialog):
                                 ' filter out words that are highly different from each other.'
             "</FONT>"))
 
-        self.setLayout(layout)
-
-        self.setWindowTitle('String similarity')
-
-        self.thread = SSWorker()
-
-        self.progressDialog = QProgressDialog('Calculating string similarity...','Cancel',0,100, self)
-        self.progressDialog.setWindowTitle('Calculating string similarity')
-        self.progressDialog.setAutoClose(False)
-        self.progressDialog.setAutoReset(False)
-        self.progressDialog.canceled.connect(self.thread.stop)
-        self.thread.updateProgress.connect(self.updateProgress)
-        self.thread.updateProgressText.connect(self.updateProgressText)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(self.progressDialog.accept)
-
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
 
     def oneWordSelected(self):
         self.compType = 'one'
@@ -233,7 +192,7 @@ class SSDialog(QDialog):
     def fileSelected(self):
         self.compType = 'file'
 
-    def calcSS(self):
+    def calc(self):
         from corpustools.corpus.classes import Word
         if self.minEdit.text() == '':
             min_rel = None
@@ -350,19 +309,6 @@ class SSDialog(QDialog):
             self.results.append([w1, w2, similarity,
                         self.stringTypeWidget.value(), typetoken,
                         self.algorithmWidget.value()])
-
-
-    def newTable(self):
-        self.update = False
-        self.calcSS()
-
-    def oldTable(self):
-        self.update = True
-        self.calcSS()
-
-    def about(self):
-        reply = QMessageBox.information(self,
-                "About string similarity", '\n'.join(self.ABOUT))
 
     def khorsiSelected(self):
         self.stringTypeWidget.enable()
