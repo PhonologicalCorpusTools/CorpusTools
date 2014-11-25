@@ -33,7 +33,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
     if threaded_q:
         q = threaded_q
 
-    if frequency_cutoff > 0:
+    if frequency_cutoff > 0.0:
 
         corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
     if stop_check is not None and stop_check():
@@ -132,7 +132,7 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
+        if frequency_cutoff > 0.0 and w.frequency < frequency_cutoff:
             continue
 
         if type_or_token == 'type':
