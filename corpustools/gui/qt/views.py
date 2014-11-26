@@ -188,7 +188,7 @@ class TextView(QAbstractItemView):
     def edit(self, index, trigger, event):
         if trigger == QAbstractItemView.DoubleClicked:
             return False
-        return QTreeView.edit(self, index, trigger, event)
+        return QAbstractItemView.edit(self, index, trigger, event)
 
     def calculateRectsIfNecessary(self):
         if not self.hashIsDirty:
