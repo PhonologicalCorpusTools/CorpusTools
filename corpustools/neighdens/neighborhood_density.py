@@ -1,25 +1,28 @@
+from corpustools.corpus.classes import Word
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi, make_freq_base
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
-def neighborhood_density(corpus, query, string_type = 'transcription', algorithm = 'edit_distance', max_distance = 1, tiername = 'transcription', count_what='type'):
+def neighborhood_density(corpus, query, string_type = 'transcription', algorithm = 'edit_distance', max_distance = 1, tiername = 'transcription', count_what='type', segment_delimiter=''):
     """Calculate the neighborhood density of a particular word in the corpus. 
     Parameters
     ----------
     corpus : Corpus
         The domain over which functional load is calculated.
-    query : Word or list of strings
+    query : Word or list of str
         The word whose neighborhood density to calculate.
-    string_type : string
+    string_type : str
         If 'spelling', will calculate neighborhood density on spelling. If 'transcription' will calculate neighborhood density on transcriptions
-    algorithm : string
+    algorithm : str
         The algorithm used to determine distance
     max_distance : number, optional
         Maximum edit distance from the queried word to consider a word a neighbor.
-    tiername : string
+    tiername : str
         The tiername to calculate distance on
-    count_what : string
+    count_what : str
         If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency
+    segment_delimiter : str
+        If not None, splits the query by this str to make a transcription/spelling list for the query's Word object.
 
     Returns
     -------
@@ -36,8 +39,11 @@ def neighborhood_density(corpus, query, string_type = 'transcription', algorithm
                 corpus.transcription_freq_base[count_what] = make_freq_base(corpus,string_type,count_what)
             freq_base = corpus.transcription_freq_base[count_what]
             return khorsi(w, query, freq_base, 'transcription') >= max_distance
-        
-    query_word = corpus.find(query)
+    
+    try:
+        query_word = corpus.find(query)
+    except:
+        query_word = Word(string_type: query.split(segment_delimiter))
     if algorithm == 'edit_distance':
         neighbors = [w for w in corpus if (len(w.transcription) <= len(query_word.transcription)+max_distance
                                        and len(w.transcription) >= len(query_word.transcription)-max_distance 
@@ -46,11 +52,7 @@ def neighborhood_density(corpus, query, string_type = 'transcription', algorithm
         neighbors = [w for w in corpus if is_neighbor(w, query_word, algorithm, max_distance)]
 
 
-    # add option for token frequency
-
-    # add option to return list of neighbors
-
-    return len(neighbors)-1
+    return (len(neighbors)-1, set(neighbors)-set(query_word))
 
 
 
