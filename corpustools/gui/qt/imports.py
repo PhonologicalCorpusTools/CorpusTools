@@ -1,6 +1,6 @@
 
 try:
-    raise(ImportError)
+    #raise(ImportError)
     from PySide.QtCore import (QRectF, Qt, QSettings,QAbstractTableModel,
                 QSize,QPoint, Signal, QThread,QModelIndex)
     from PySide.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,

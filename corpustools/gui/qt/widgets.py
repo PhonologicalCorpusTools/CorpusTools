@@ -182,7 +182,7 @@ class InventoryBox(QGroupBox):
             vowBox = QGridLayout()
             vowBox.setAlignment(Qt.AlignTop)
             vowTable = InventoryTable()
-            vowBox.addWidget(vowTable, alignment=Qt.AlignLeft|Qt.AlignTop)
+            vowBox.addWidget(vowTable,0, Qt.AlignLeft|Qt.AlignTop)
             vow.setLayout(vowBox)
             vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
             vowColMapping = {x:i for i,x in enumerate(vowColumns)}
@@ -300,12 +300,12 @@ class InventoryBox(QGroupBox):
             return value
 
 class FeatureBox(QGroupBox):
-    def __init__(self, title,features,parent=None):
+    def __init__(self, title,inventory,parent=None):
         QGroupBox.__init__(self,title,parent)
 
-
+        self.inventory = inventory
+        self.inspectInventory()
         layout = QHBoxLayout()
-        self.features = features
 
         self.featureList = QListWidget()
 
@@ -315,16 +315,15 @@ class FeatureBox(QGroupBox):
 
         buttonLayout = QVBoxLayout()
         buttonLayout.setSpacing(0)
-        self.plusButton = QPushButton('Add [+feature]')
-        self.minusButton = QPushButton('Add [-feature]')
+        self.buttons = list()
+        for v in self.values:
+            b = QPushButton('Add [{}feature]'.format(v))
+            b.clicked.connect(lambda: self.addFeature(v))
+            buttonLayout.addWidget(b, alignment = Qt.AlignCenter)
+            self.buttons.append(b)
+
         self.clearButton = QPushButton('Clear all')
-
-        self.plusButton.clicked.connect(self.addPlus)
-        self.minusButton.clicked.connect(self.addMinus)
         self.clearButton.clicked.connect(self.clearAll)
-
-        buttonLayout.addWidget(self.plusButton, alignment = Qt.AlignCenter)
-        buttonLayout.addWidget(self.minusButton, alignment = Qt.AlignCenter)
         buttonLayout.addWidget(self.clearButton, alignment = Qt.AlignCenter)
 
         buttonFrame = QFrame()
@@ -337,15 +336,17 @@ class FeatureBox(QGroupBox):
 
         self.setLayout(layout)
 
-    def addPlus(self):
-        curFeature = self.featureList.currentItem()
-        if curFeature:
-            self.envList.addItem('+'+curFeature.text())
+    def inspectInventory(self):
+        self.features = self.inventory[-1].features.keys()
+        self.values = set()
+        for v in self.inventory:
+            self.values.update(v.features.values())
+        self.values = sorted([x for x in self.values if x != ''])
 
-    def addMinus(self):
+    def addFeature(self, value):
         curFeature = self.featureList.currentItem()
         if curFeature:
-            self.envList.addItem('-'+curFeature.text())
+            self.envList.addItem(value+curFeature.text())
 
     def clearAll(self):
         self.envList.clear()
@@ -503,10 +504,10 @@ class EnvironmentDialog(QDialog):
         self.lhs.deleteLater()
         self.rhs.deleteLater()
 
-        self.lhs = FeatureBox('Left hand side',self.features)
+        self.lhs = FeatureBox('Left hand side',self.inventory)
         self.envLayout.addWidget(self.lhs)
 
-        self.rhs = FeatureBox('Right hand side',self.features)
+        self.rhs = FeatureBox('Right hand side',self.inventory)
         self.envLayout.addWidget(self.rhs)
 
     def createSegmentFrame(self):
