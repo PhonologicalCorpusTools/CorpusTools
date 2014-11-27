@@ -3,7 +3,7 @@ import collections
 import re
 
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
-from corpustools.corpus.io.binary import *
+from corpustools.corpus.io.binary import save_binary, load_binary
 
 import time
 
