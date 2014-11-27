@@ -3,7 +3,7 @@ from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi, make_freq_base
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
-def neighborhood_density(corpus, query, string_type = 'transcription', algorithm = 'edit_distance', max_distance = 1, tiername = 'transcription', count_what='type', segment_delimiter=''):
+def neighborhood_density(corpus, query, string_type = 'transcription', algorithm = 'edit_distance', max_distance = 1, tiername = 'transcription', count_what='type', segment_delimiter=None):
     """Calculate the neighborhood density of a particular word in the corpus. 
     Parameters
     ----------
@@ -22,7 +22,7 @@ def neighborhood_density(corpus, query, string_type = 'transcription', algorithm
     count_what : str
         If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency
     segment_delimiter : str
-        If not None, splits the query by this str to make a transcription/spelling list for the query's Word object.
+        If not None, splits the query by this str to make a transcription/spelling list for the query's Word object. If None, split everywhere.
 
     Returns
     -------
@@ -43,7 +43,10 @@ def neighborhood_density(corpus, query, string_type = 'transcription', algorithm
     try:
         query_word = corpus.find(query)
     except:
-        query_word = Word(string_type: query.split(segment_delimiter))
+        if segment_delimiter == None:
+            query_word = Word(**{string_type: list(query)})
+        else:
+            query_word = Word(**{string_type: query.split(segment_delimiter)})
     if algorithm == 'edit_distance':
         neighbors = [w for w in corpus if (len(w.transcription) <= len(query_word.transcription)+max_distance
                                        and len(w.transcription) >= len(query_word.transcription)-max_distance 

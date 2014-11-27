@@ -16,7 +16,7 @@ parser.add_argument('-a', '--algorithm', default= 'edit_distance', help="The alg
 parser.add_argument('-d', '--max_distance', type=int, default = 1, help="Maximum edit distance from the queried word to consider a word a neighbor.")
 parser.add_argument('-t', '--tiername', default = 'transcription', help="The name of the tier on which to calculate distance")
 parser.add_argument('-w', '--count_what', default ='type', help="If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency.")
-parser.add_argument('-e', '--segment_delimiter', default='', help="If not None, splits the query by this str to make a transcription/spelling list for the query's Word object.")
+parser.add_argument('-e', '--segment_delimiter', default=None, help="If not None, splits the query by this str to make a transcription/spelling list for the query's Word object.")
 parser.add_argument('-o', '--outfile', help='Name of output file')
 
 args = parser.parse_args()
