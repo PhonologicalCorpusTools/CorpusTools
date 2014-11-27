@@ -36,7 +36,7 @@ def neighborhood_density(corpus, query, string_type = 'transcription', algorithm
             return phono_edit_distance(w, query, tiername, corpus.specifier) <= max_distance
         elif algorithm == 'khorsi':
             if corpus.transcription_freq_base[count_what] is None:
-                corpus.transcription_freq_base[count_what] = make_freq_base(corpus,string_type,count_what)
+                corpus.transcription_freq_base[count_what] = make_freq_base(corpus, string_type, count_what)
             freq_base = corpus.transcription_freq_base[count_what]
             return khorsi(w, query, freq_base, 'transcription') >= max_distance
     
@@ -48,14 +48,15 @@ def neighborhood_density(corpus, query, string_type = 'transcription', algorithm
         else:
             query_word = Word(**{string_type: query.split(segment_delimiter)})
     if algorithm == 'edit_distance':
-        neighbors = [w for w in corpus if (len(w.transcription) <= len(query_word.transcription)+max_distance
+        matches = [str(getattr(w, string_type)) for w in corpus if (len(w.transcription) <= len(query_word.transcription)+max_distance
                                        and len(w.transcription) >= len(query_word.transcription)-max_distance 
                                        and is_neighbor(w, query_word, algorithm, max_distance))]
     else:
-        neighbors = [w for w in corpus if is_neighbor(w, query_word, algorithm, max_distance)]
+        matches = [str(getattr(w, string_type)) for w in corpus if is_neighbor(w, query_word, algorithm, max_distance)]
 
+    neighbors = set(matches)-set([str(getattr(query_word, string_type))])
 
-    return (len(neighbors)-1, set(neighbors)-set(query_word))
+    return (len(neighbors), neighbors)
 
 
 
