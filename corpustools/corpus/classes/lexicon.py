@@ -1150,6 +1150,7 @@ class Corpus(object):
         KeyError if keyerror == True and word is not found
 
         """
+        print(self.wordlist)
         try:
             result = self.wordlist[word]
         except KeyError:

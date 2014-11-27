@@ -49,7 +49,7 @@ class FreqAltTest(unittest.TestCase):
 
         result = calc_freq_of_alt(self.corpus,'s','ʃ','edit_distance','type', max_rel = 2,
                                     phono_align=True)
-        self.assertEqual(result,(8,3,0.375))
+        self.assertEqual(result,(8,2,0.25))
 
         result = calc_freq_of_alt(self.corpus,'s','ʃ','edit_distance','token', max_rel = 4,
                                     phono_align=True)
@@ -61,7 +61,7 @@ class FreqAltTest(unittest.TestCase):
 
         result = calc_freq_of_alt(self.corpus,'s','ʃ','edit_distance','token', max_rel = 4,
                                     phono_align=False)
-        self.assertEqual(result,(8,3,0.375))
+        self.assertEqual(result,(8,6,0.75))
 
         result = calc_freq_of_alt(self.corpus,'s','ʃ','phono_edit_distance','type', max_rel = 6,
                                     phono_align=True)
