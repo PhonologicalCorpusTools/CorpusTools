@@ -1,16 +1,11 @@
 
-from PyQt5.QtCore import pyqtSignal as Signal,QThread
-from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
-                            QVBoxLayout, QPushButton, QFrame, QGridLayout,
-                            QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox, QCheckBox, QProgressDialog,
-                            QMessageBox)
+from .imports import *
 
 from collections import OrderedDict
 
 from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, SaveFileWidget
 
-from .windows import FunctionWorker
+from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
@@ -37,7 +32,7 @@ class FAWorker(FunctionWorker):
             self.results.append(res)
         self.dataReady.emit(self.results)
 
-class FADialog(QDialog):
+class FADialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
                 'Total words in corpus',
@@ -47,12 +42,27 @@ class FADialog(QDialog):
                 'Distance metric',
                 'Phonological alignment?']
 
+    _about = [('This function calculates the frequency of alternation '
+                    'of two segments'),
+                    '',
+                    'Coded by Michael Fry',
+                    #'',
+                    #'References',
+                    #('Surendran, Dinoj & Partha Niyogi. 2003. Measuring'
+                    #' the functional load of phonological contrasts.'
+                    #' In Tech. Rep. No. TR-2003-12.'),
+                    #('Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013.'
+                    #' High functional load inhibits phonological contrast'
+                    #' loss: A corpus study. Cognition 128.179-86')
+                    ]
+
+    name = 'frequency of alternation'
+
     def __init__(self, parent, corpus, showToolTips):
-        QDialog.__init__(self, parent)
+        FunctionDialog.__init__(self, parent, FAWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips
-        layout = QVBoxLayout()
 
         falayout = QHBoxLayout()
 
@@ -141,25 +151,7 @@ class FADialog(QDialog):
         faframe = QFrame()
         faframe.setLayout(falayout)
 
-        layout.addWidget(faframe)
-
-        self.newTableButton = QPushButton('Calculate frequency of alternation\n(new table)')
-        self.oldTableButton = QPushButton('Calculate frequency of alternation\n(add to current table)')
-        self.cancelButton = QPushButton('Cancel')
-        self.aboutButton = QPushButton('About this function...')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.newTableButton)
-        acLayout.addWidget(self.oldTableButton)
-        acLayout.addWidget(self.cancelButton)
-        acLayout.addWidget(self.aboutButton)
-        self.newTableButton.clicked.connect(self.newTable)
-        self.oldTableButton.clicked.connect(self.oldTable)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
+        self.layout().insertWidget(0, faframe)
 
         if self.showToolTips:
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
@@ -207,32 +199,8 @@ class FADialog(QDialog):
                                 ' to.  This is recommended as a means of double checking the quality '
                                 'of alternations as determined by the algorithm.'
             "</FONT>"))
-        self.setLayout(layout)
-
-        self.setWindowTitle('Frequency of alternation')
-
-        self.thread = FAWorker()
-
-        self.progressDialog = QProgressDialog('Calculating frequency of alternation...','Cancel',0,100,self)
-        self.progressDialog.setWindowTitle('Calculating frequency of alternation')
-        self.progressDialog.setAutoClose(False)
-        self.progressDialog.setAutoReset(False)
-        self.progressDialog.canceled.connect(self.thread.stop)
-        self.thread.updateProgress.connect(self.updateProgress)
-        self.thread.updateProgressText.connect(self.updateProgressText)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(self.progressDialog.accept)
 
         self.algorithmWidget.initialClick()
-
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
-
 
     def generateKwargs(self):
         pairBehaviour = 'individual'
@@ -278,7 +246,7 @@ class FADialog(QDialog):
         kwargs['output_filename'] = out_file
         return kwargs
 
-    def calcFA(self):
+    def calc(self):
         kwargs = self.generateKwargs()
         if kwargs is None:
             return
@@ -308,17 +276,6 @@ class FADialog(QDialog):
 
         else:
             pass
-
-    def newTable(self):
-        self.update = False
-        self.calcFA()
-
-    def oldTable(self):
-        self.update = True
-        self.calcFA()
-
-    def about(self):
-        pass
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()

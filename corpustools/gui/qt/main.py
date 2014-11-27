@@ -1,11 +1,12 @@
-from PyQt5.QtGui import QFont, QKeySequence
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QMainWindow, QHBoxLayout, QLabel, QAction,
-                            QApplication, QWidget, QMessageBox)
+import os
+
+from .imports import *
+
+from corpustools.config import TMP_DIR
 
 from .config import Settings, PreferencesDialog
-from .views import TableWidget, ResultsWindow
-from .models import CorpusModel, ResultsModel
+from .views import TableWidget, TreeWidget, DiscourseView, ResultsWindow, LexiconView
+from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, RemoveTierDialog,
                         ExportCorpusDialog)
@@ -34,12 +35,24 @@ class MainWindow(QMainWindow):
         self.resize(self.settings['size'])
         self.move(self.settings['pos'])
 
-        self.corpusTable = TableWidget(self)
+        self.corpusTable = LexiconView(self)
+        self.discourseTree = TreeWidget(self)
+        self.discourseTree.newLexicon.connect(lambda x: self.corpusTable.setModel(CorpusModel(x)))
+        self.discourseTree.hide()
+        self.textWidget = DiscourseView(self)
+        self.textWidget.hide()
         #font = QFont("Courier New", 14)
         #self.corpusTable.setFont(font)
+        splitter = QSplitter()
+        splitter.addWidget(self.discourseTree)
+        splitter.addWidget(self.corpusTable)
+        splitter.addWidget(self.textWidget)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(2, 1)
         self.wrapper = QWidget()
-        layout = QHBoxLayout(self.wrapper)
-        layout.addWidget(self.corpusTable)
+        layout = QHBoxLayout()
+        layout.addWidget(splitter)
         self.wrapper.setLayout(layout)
         self.setCentralWidget(self.wrapper)
 
@@ -58,6 +71,9 @@ class MainWindow(QMainWindow):
         self.FAWindow = None
         self.SSWindow = None
         self.ASWindow = None
+
+        if not os.path.exists(TMP_DIR):
+            os.mkdir(TMP_DIR)
 
     def check_for_empty_corpus(function):
         def do_check(self):
@@ -79,13 +95,30 @@ class MainWindow(QMainWindow):
                 function(self)
         return do_check
 
+    def changeText(self):
+        name = self.discourseTree.model().itemFromIndex(self.discourseTree.selectedIndexes()[0]).text()
+        if hasattr(self.corpus, 'lexicon'):
+            self.textWidget.setModel(DiscourseModel(self.corpus.discourses[name]))
+
     def loadCorpus(self):
         dialog = CorpusLoadDialog(self)
         result = dialog.exec_()
         if result:
-            self.corpusModel = CorpusModel(dialog.corpus)
+            self.corpus = dialog.corpus
+            if hasattr(self.corpus,'lexicon'):
+                self.setMinimumSize(800, 400)
+                c = self.corpus.lexicon
+                self.discourseTree.show()
+                self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
+                self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
+                #self.discourseTree.resizeColumnToContents(0)
+                self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
+                self.textWidget.show()
+            else:
+                c = self.corpus
+            self.corpusModel = CorpusModel(c)
             self.corpusTable.setModel(self.corpusModel)
-
 
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self)
@@ -330,3 +363,9 @@ class MainWindow(QMainWindow):
         self.helpMenu = self.menuBar().addMenu("&Help")
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.aboutAct)
+
+    def closeEvent(self, event):
+        tmpfiles = os.listdir(TMP_DIR)
+        for f in tmpfiles:
+            os.remove(os.path.join(TMP_DIR,f))
+        super(MainWindow, self).closeEvent(event)

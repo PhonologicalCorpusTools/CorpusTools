@@ -1,11 +1,59 @@
+import os
+from collections import Counter
 
-from PyQt5.QtCore import QAbstractTableModel, Qt, QSize
+from .imports import *
+
+class SpontaneousSpeechCorpusModel(QStandardItemModel):
+    def __init__(self,corpus, parent = None):
+        QStandardItemModel.__init__(self, parent)
+
+        self.corpus = corpus
+        self.setHorizontalHeaderItem (0,QStandardItem('Discourses'))
+
+        corpusItem = QStandardItem(self.corpus.name)
+        self.appendRow(corpusItem)
+        speakerItem = QStandardItem('s01')
+        corpusItem.appendRow(speakerItem)
+        for d in self.corpus.discourses.values():
+            speakerItem.appendRow(QStandardItem(d.identifier))
+
+    def createLexicon(self,row):
+        d = self.item(row).text()
+        return self.corpus.discourses[d].create_lexicon()
+
+class DiscourseModel(QStandardItemModel):
+    def __init__(self,discourse, parent = None):
+        QStandardItemModel.__init__(self, parent)
+
+        self.discourse = discourse
+        self.posToTime = []
+        self.timeToPos = {}
+        for w in self.discourse:
+            self.timeToPos[w.begin] = len(self.posToTime)
+            self.posToTime.append(w.begin)
+            i = QStandardItem(str(w))
+            i.setFlags(i.flags() | (not Qt.ItemIsEditable))
+            self.appendRow(i)
+
+    def rowsToTimes(self,rows):
+        return [self.posToTime[x] for x in rows]
+
+    def timesToRows(self, times):
+        return [self.timeToPos[x] for x in times]
+
+    def hasAudio(self):
+        return self.discourse.has_audio()
+
+    def wordTokenObject(self,row):
+        token = self.discourse[self.posToTime[row]]
+        return token
 
 class CorpusModel(QAbstractTableModel):
     def __init__(self, corpus, parent=None):
         super(CorpusModel, self).__init__(parent)
 
         self.corpus = corpus
+        self.nonLexHidden = False
 
         self.columns = self.corpus.attributes
 
@@ -27,6 +75,17 @@ class CorpusModel(QAbstractTableModel):
         if order == Qt.DescendingOrder:
             self.rows.reverse()
         self.layoutChanged.emit()
+
+    def hideNonLexical(self, b):
+        self.nonLexHidden = b
+        self.layoutAboutToBeChanged.emit()
+        self.rows = self.allData
+        if b:
+            self.rows = [x for x in self.rows if str(self.corpus[x].transcription) != '']
+        self.layoutChanged.emit()
+
+    def wordObject(self,row):
+        return self.corpus[self.rows[row]]
 
     def data(self, index, role=None):
         if not index.isValid():
@@ -98,6 +157,49 @@ class SegmentPairModel(QAbstractTableModel):
             del self.pairs[i]
         self.layoutChanged.emit()
 
+class VariantModel(QAbstractTableModel):
+    def __init__(self, wordtokens, parent=None):
+        super(VariantModel, self).__init__(parent)
+
+        self.rows = [(k,v) for k,v in Counter(str(x.transcription) for x in wordtokens).items()]
+
+        self.columns = ['Variant', 'Count']
+
+        self.allData = self.rows
+
+        self.sort(1,Qt.DescendingOrder)
+
+    def rowCount(self,parent=None):
+        return len(self.rows)
+
+    def columnCount(self,parent=None):
+        return len(self.columns)
+
+    def sort(self, col, order):
+        """sort table by given column number col"""
+        self.layoutAboutToBeChanged.emit()
+        self.rows = sorted(self.rows,
+                key=lambda x: x[col])
+        if order == Qt.DescendingOrder:
+            self.rows.reverse()
+        self.layoutChanged.emit()
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return None
+        elif role != Qt.DisplayRole:
+            return None
+        row = index.row()
+        col = index.column()
+        data = self.rows[row][col]
+
+        return data
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.columns[col]
+        return None
+
 class EnvironmentModel(QAbstractTableModel):
     def __init__(self,parent = None):
         QAbstractTableModel.__init__(self,parent)
@@ -134,15 +236,15 @@ class EnvironmentModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
 class ResultsModel(QAbstractTableModel):
-    def __init__(self, header, data, parent=None):
+    def __init__(self, header, results, parent=None):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = header
 
-        self.data = data
+        self.results = results
 
     def rowCount(self,parent=None):
-        return len(self.data)
+        return len(self.results)
 
     def columnCount(self,parent=None):
         return len(self.columns)
@@ -152,7 +254,7 @@ class ResultsModel(QAbstractTableModel):
             return None
         elif role != Qt.DisplayRole:
             return None
-        data = self.data[index.row()][index.column()]
+        data = self.results[index.row()][index.column()]
         if isinstance(data,float):
             data = str(round(data,3))
         elif isinstance(data,bool):
@@ -168,9 +270,9 @@ class ResultsModel(QAbstractTableModel):
         """Sort table by given column number.
         """
         self.layoutAboutToBeChanged.emit()
-        self.data = sorted(self.data, key=lambda x: x[col])
+        self.results = sorted(self.results, key=lambda x: x[col])
         if order == Qt.DescendingOrder:
-            self.data.reverse()
+            self.results.reverse()
         self.layoutChanged.emit()
 
     def headerData(self, col, orientation, role):
@@ -183,7 +285,7 @@ class ResultsModel(QAbstractTableModel):
 
     def addData(self,extra):
         self.layoutAboutToBeChanged.emit()
-        self.data += extra
+        self.results += extra
         self.layoutChanged.emit()
 
 
