@@ -34,3 +34,5 @@ else:
     config['storage'] = {'directory' : DEFAULT_DATA_DIR}
     with open(CONFIG_PATH,'w') as configfile:
         config.write(configfile)
+
+TMP_DIR = os.path.join(DEFAULT_DATA_DIR,'TMP')

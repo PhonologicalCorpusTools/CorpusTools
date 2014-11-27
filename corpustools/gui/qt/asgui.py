@@ -1,50 +1,14 @@
 
-from PyQt5.QtCore import pyqtSignal as Signal,QThread
-from PyQt5.QtWidgets import (QDialog, QListWidget, QGroupBox, QHBoxLayout,
-                            QVBoxLayout, QPushButton, QFrame, QGridLayout,
-                            QRadioButton, QLabel, QFormLayout, QLineEdit,
-                            QFileDialog, QComboBox,QProgressDialog, QCheckBox,
-                            QMessageBox)
-
+import os
 from collections import OrderedDict
 
-from .widgets import DirectoryWidget, RadioSelectWidget
-import os
 import corpustools.acousticsim.main as AS
 
-class ASWorker(QThread):
-    updateProgress = Signal(int)
-    updateProgressText = Signal(str)
+from .imports import *
+from .widgets import DirectoryWidget, RadioSelectWidget
+from .windows import FunctionWorker, FunctionDialog
 
-    dataReady = Signal(object)
-
-    def __init__(self):
-        QThread.__init__(self)
-        self.stopped = False
-
-    def setParams(self, kwargs):
-        kwargs['stop_check'] = self.stopCheck
-        kwargs['call_back'] = self.emitProgress
-        self.kwargs = kwargs
-        self.stopped = False
-        self.total = None
-
-    def stop(self):
-        self.stopped = True
-
-    def stopCheck(self):
-        return self.stopped
-
-    def emitProgress(self,*args):
-        if isinstance(args[0],str):
-            self.updateProgressText.emit(args[0])
-            return
-        else:
-            progress = args[0]
-            if len(args) > 1:
-                self.total = args[1]
-        self.updateProgress.emit(int((progress/self.total)*100))
-
+class ASWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
@@ -55,11 +19,13 @@ class ASWorker(QThread):
         for o in output_list:
             self.results.append([os.path.split(o[0])[1],
                                             os.path.split(o[1])[1],o[2]])
+        if self.stopped:
+            return
         self.results.append([os.path.split(kwargs['directory_one'])[1],
                                             os.path.split(kwargs['directory_one'])[1],output_val])
         self.dataReady.emit(self.results)
 
-class ASDialog(QDialog):
+class ASDialog(FunctionDialog):
 
     header = ['Directory 1',
             'Directory 2',
@@ -72,7 +38,7 @@ class ASDialog(QDialog):
             'Result',
             'Is similarity?']
 
-    ABOUT = [('This function calculates the acoustic similarity of sound files in two'
+    _about = [('This function calculates the acoustic similarity of sound files in two'
                 ' directories by generating either MFCCs or amplitude envelopes for each'
                 ' sound file and using dynamic time warping or cross-correlation to get '
                 'the average distance/similarity across all tokens.'),
@@ -86,12 +52,12 @@ class ASDialog(QDialog):
                 ('Lewandowski, Natalie. 2012. Talent in nonnative phonetic'
                 ' convergence. PhD Thesis.')]
 
+    name = 'acoustic similarity'
+
     def __init__(self, parent, showToolTips):
-        QDialog.__init__(self, parent)
+        FunctionDialog.__init__(self, parent, ASWorker())
 
         self.showToolTips = showToolTips
-        layout = QVBoxLayout()
-
         aslayout = QHBoxLayout()
 
         directoryFrame = QGroupBox('Directories')
@@ -166,26 +132,7 @@ class ASDialog(QDialog):
 
         asframe.setLayout(aslayout)
 
-        layout.addWidget(asframe)
-
-        self.newTableButton = QPushButton('Calculate acoustic similarity\n(start new results table)')
-        self.oldTableButton = QPushButton('Calculate acoustic similarity\n(add to current results table)')
-        self.cancelButton = QPushButton('Cancel')
-        self.aboutButton = QPushButton('About this function...')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.newTableButton)
-        acLayout.addWidget(self.oldTableButton)
-        acLayout.addWidget(self.cancelButton)
-        acLayout.addWidget(self.aboutButton)
-        self.newTableButton.clicked.connect(self.newTable)
-        self.oldTableButton.clicked.connect(self.oldTable)
-        self.aboutButton.clicked.connect(self.about)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
+        self.layout().insertWidget(0,asframe)
 
         if self.showToolTips:
             directoryFrame.setToolTip(("<FONT COLOR=black>"
@@ -216,29 +163,6 @@ class ASDialog(QDialog):
                                             ' Multiprocessing is currently not supported'
             "</FONT>"))
 
-        self.setLayout(layout)
-
-        self.setWindowTitle('Acoustic similarity')
-
-        self.thread = ASWorker()
-
-        self.progressDialog = QProgressDialog('Calculating acoustic similarity...','Cancel',0,100,self)
-        self.progressDialog.setWindowTitle('Calculating acoustic similarity')
-        self.progressDialog.setAutoClose(False)
-        self.progressDialog.setAutoReset(False)
-        self.progressDialog.canceled.connect(self.thread.stop)
-        self.thread.updateProgress.connect(self.updateProgress)
-        self.thread.updateProgressText.connect(self.updateProgressText)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(self.progressDialog.accept)
-
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
 
     def mfccSelected(self):
         self.coeffEdit.setEnabled(True)
@@ -246,7 +170,7 @@ class ASDialog(QDialog):
     def envelopesSelected(self):
         self.coeffEdit.setEnabled(False)
 
-    def calcAS(self):
+    def calc(self):
         rep = self.representationWidget.value()
         alg = self.distAlgWidget.value()
         if self.filterEdit.text() in ['','0']:
@@ -312,14 +236,3 @@ class ASDialog(QDialog):
                             r[2],
                             self.outputSimWidget.isChecked()])
 
-    def newTable(self):
-        self.update = False
-        self.calcAS()
-
-    def oldTable(self):
-        self.update = True
-        self.calcAS()
-
-    def about(self):
-        reply = QMessageBox.information(self,
-                "About predictability of distribution", '\n'.join(self.ABOUT))
