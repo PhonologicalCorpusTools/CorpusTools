@@ -3,8 +3,11 @@ from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi, make_freq_base
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
-def neighborhood_density(corpus, query, string_type = 'transcription', algorithm = 'edit_distance', max_distance = 1, tiername = 'transcription', count_what='type', segment_delimiter=None):
-    """Calculate the neighborhood density of a particular word in the corpus. 
+def neighborhood_density(corpus, query, string_type = 'transcription',
+            algorithm = 'edit_distance', max_distance = 1,
+            tiername = 'transcription', count_what='type', segment_delimiter=None,
+            stop_check = None, call_back = None):
+    """Calculate the neighborhood density of a particular word in the corpus.
     Parameters
     ----------
     corpus : Corpus
@@ -30,30 +33,46 @@ def neighborhood_density(corpus, query, string_type = 'transcription', algorithm
         The number of neighbors for the queried word.
     """
     def is_neighbor(w, query, algorithm, max_distance):
-        if algorithm is 'edit_distance':
-            return edit_distance(w, query, 'transcription') <= max_distance
-        elif algorithm == 'phonological_edit_distance':
+        if algorithm == 'edit_distance':
+            return edit_distance(w, query, string_type) <= max_distance
+        elif algorithm == 'phonological_edit_distance' and string_type == 'transcription':
             return phono_edit_distance(w, query, tiername, corpus.specifier) <= max_distance
         elif algorithm == 'khorsi':
             if corpus.transcription_freq_base[count_what] is None:
                 corpus.transcription_freq_base[count_what] = make_freq_base(corpus, string_type, count_what)
             freq_base = corpus.transcription_freq_base[count_what]
-            return khorsi(w, query, freq_base, 'transcription') >= max_distance
-    
+            return khorsi(w, query, freq_base, string_type) >= max_distance
+        else:
+            return False
+
     try:
         query_word = corpus.find(query)
-    except:
+    except KeyError:
         if segment_delimiter == None:
             query_word = Word(**{string_type: list(query)})
         else:
             query_word = Word(**{string_type: query.split(segment_delimiter)})
-    if algorithm == 'edit_distance':
-        matches = [str(getattr(w, string_type)) for w in corpus if (len(w.transcription) <= len(query_word.transcription)+max_distance
-                                       and len(w.transcription) >= len(query_word.transcription)-max_distance 
-                                       and is_neighbor(w, query_word, algorithm, max_distance))]
-    else:
-        matches = [str(getattr(w, string_type)) for w in corpus if is_neighbor(w, query_word, algorithm, max_distance)]
-
+    matches = list()
+    if call_back is not None:
+        call_back('Finding neighbors...')
+        call_back(0,len(corpus))
+        cur = 0
+    print(max_distance)
+    for w in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 10 == 0:
+                call_back(cur)
+        if algorithm == 'edit_distance':
+            if len(getattr(w, string_type)) >= len(getattr(query_word, string_type))+max_distance:
+                continue
+            if len(getattr(w, string_type)) <= len(getattr(query_word, string_type))-max_distance:
+                continue
+        if not is_neighbor(w, query_word, algorithm, max_distance):
+            continue
+        matches.append(str(getattr(w, string_type)))
     neighbors = set(matches)-set([str(getattr(query_word, string_type))])
 
     return (len(neighbors), neighbors)
