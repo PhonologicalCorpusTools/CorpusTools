@@ -5,8 +5,8 @@ from collections import OrderedDict
 
 from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
-from .widgets import RadioSelectWidget, FileWidget
 
+from .widgets import RadioSelectWidget, FileWidget
 from .windows import FunctionWorker, FunctionDialog
 
 class SSWorker(FunctionWorker):
@@ -28,7 +28,7 @@ class SSWorker(FunctionWorker):
 class SSDialog(FunctionDialog):
     header = ['Word 1',
                 'Word 2',
-                'Result',
+                'String similarity',
                 'String type',
                 'Type or token',
                 'Algorithm type']
@@ -192,7 +192,7 @@ class SSDialog(FunctionDialog):
     def fileSelected(self):
         self.compType = 'file'
 
-    def calc(self):
+    def generateKwargs(self):
         from corpustools.corpus.classes import Word
         if self.minEdit.text() == '':
             min_rel = None
@@ -204,20 +204,8 @@ class SSDialog(FunctionDialog):
             max_rel = float(self.maxEdit.text())
         #Error checking
         relType = self.algorithmWidget.value()
-        if relType is None:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a string similarity algorithm.")
-            return
         typeToken = self.typeTokenWidget.value()
-        if typeToken is None and relType == 'khorsi':
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify type or token frequency.")
-            return
         strType = self.stringTypeWidget.value()
-        if strType is None and relType != 'phono_edit_distance':
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a string type.")
-            return
         kwargs = {'corpus':self.corpus,
                 'relator_type': relType,
                 'string_type':strType,
@@ -238,7 +226,6 @@ class SSDialog(FunctionDialog):
             try:
                 word = self.corpus.find(text)
             except KeyError:
-                from corpustools.corpus.classes import Word
                 if strType == 'spelling':
                     word = Word(spelling = text)
                 else:
@@ -285,6 +272,12 @@ class SSDialog(FunctionDialog):
                         "Invalid information", "The file path entered was not found.")
                 return
             kwargs['query'] = read_pairs_file(pairs_path)
+        return kwargs
+
+    def calc(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
         self.thread.setParams(kwargs)
         self.thread.start()
 
