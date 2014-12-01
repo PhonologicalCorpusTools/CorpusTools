@@ -4,20 +4,16 @@ import sys
 import os
 test_dir = os.path.dirname(os.path.abspath(__file__))
 corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-print(corpustools_path)
 sys.path.insert(0, corpustools_path)
 from corpustools.corpus.tests.lexicon_test import create_unspecified_test_corpus
 
 from corpustools.neighdens.neighborhood_density import neighborhood_density
-from corpustools.corpus.classes import Segment
 
-
-
-class MinPairsTest(unittest.TestCase):
+class NeighDenTest(unittest.TestCase):
     def setUp(self):
         self.corpus = create_unspecified_test_corpus()
 
-    def test_non_minimal_pair_corpus(self):
+    def test_basic_corpus(self):
         calls = [({'corpus': self.corpus,
                         'query':'mata',
                         'max_distance':1},1.0),
