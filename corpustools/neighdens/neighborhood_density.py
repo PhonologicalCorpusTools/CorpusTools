@@ -65,9 +65,9 @@ def neighborhood_density(corpus, query, string_type = 'transcription',
             if cur % 10 == 0:
                 call_back(cur)
         if algorithm == 'edit_distance':
-            if len(getattr(w, string_type)) >= len(getattr(query_word, string_type))+max_distance:
+            if len(getattr(w, string_type)) > len(getattr(query_word, string_type))+max_distance:
                 continue
-            if len(getattr(w, string_type)) <= len(getattr(query_word, string_type))-max_distance:
+            if len(getattr(w, string_type)) < len(getattr(query_word, string_type))-max_distance:
                 continue
         if not is_neighbor(w, query_word, algorithm, max_distance):
             continue
