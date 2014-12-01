@@ -6,7 +6,7 @@ test_dir = os.path.dirname(os.path.abspath(__file__))
 corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
 print(corpustools_path)
 sys.path.insert(0, corpustools_path)
-from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
+from corpustools.corpus.tests.lexicon_test import create_unspecified_test_corpus
 
 from corpustools.neighdens.neighborhood_density import neighborhood_density
 from corpustools.corpus.classes import Segment
@@ -28,7 +28,7 @@ class MinPairsTest(unittest.TestCase):
         for c,v in calls:
             result = neighborhood_density(**c)
             msgcall = 'Call: {}\nExpected: {}\nActually got:{}'.format(c,v,result)
-            self.assertTrue(abs(result-v) < 0.0001,msg=msgcall)
+            self.assertTrue(abs(result[0]-v) < 0.0001,msg=msgcall)
 
 
 if __name__ == '__main__':
