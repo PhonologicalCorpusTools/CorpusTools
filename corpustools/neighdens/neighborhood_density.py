@@ -57,7 +57,6 @@ def neighborhood_density(corpus, query, string_type = 'transcription',
         call_back('Finding neighbors...')
         call_back(0,len(corpus))
         cur = 0
-    print(max_distance)
     for w in corpus:
         if stop_check is not None and stop_check():
             return
