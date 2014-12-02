@@ -26,7 +26,6 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.setMinimumSize(400, 400)
 
         self.settings = Settings()
 
@@ -73,6 +72,7 @@ class MainWindow(QMainWindow):
         self.SSWindow = None
         self.ASWindow = None
         self.NDWindow = None
+        self.setMinimumSize(self.menuBar().sizeHint().width(), 400)
 
         if not os.path.exists(TMP_DIR):
             os.mkdir(TMP_DIR)
@@ -293,9 +293,13 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate neighborhood density", triggered=self.neighDen)
 
-        self.stringsimAct = QAction( "Calculate string similarity...",
+        self.stringSimFileAct = QAction( "Calculate string similarity...",
                 self,
-                statusTip="Calculate string similarity", triggered=self.stringSim)
+                statusTip="Calculate string similarity for a file of string pairs")#, triggered=self.stringSim)
+
+        self.stringSimAct = QAction( "Calculate string similarity...",
+                self,
+                statusTip="Calculate string similarity for corpus", triggered=self.stringSim)
 
         self.freqaltAct = QAction( "Calculate frequency of alternation...",
                 self,
@@ -309,9 +313,13 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate functional load", triggered=self.funcLoad)
 
-        self.acousticsimAct = QAction( "Calculate acoustic similarity...",
+        self.acousticSimFileAct = QAction( "Calculate acoustic similarity...",
                 self,
-                statusTip="Calculate acoustic similarity", triggered=self.acousticSim)
+                statusTip="Calculate acoustic similarity for files", triggered=self.acousticSim)
+
+        self.acousticSimAct = QAction( "Calculate acoustic similarity...",
+                self,
+                statusTip="Calculate acoustic similarity for corpus")#, triggered=self.acousticSim)
 
         self.toggleWarningsAct = QAction( "Show warnings",
                 self,
@@ -348,8 +356,16 @@ class MainWindow(QMainWindow):
                 statusTip="Help information",
                 triggered=self.about)
 
+        self.batchNeighDenAct = QAction("Add neighborhood density...", self,
+                statusTip="Calculate all words' neighborhood density and add as a column",
+                triggered=self.about)
+
+        self.batchPhonProbAct = QAction("Add phonotactic probability...", self,
+                statusTip="Calculate all words' phonotactic probability and add as a column",
+                triggered=self.about)
+
     def createMenus(self):
-        self.fileMenu = self.menuBar().addMenu("&Corpus")
+        self.fileMenu = self.menuBar().addMenu("&File")
         self.fileMenu.addAction(self.loadCorpusAct)
         self.fileMenu.addAction(self.manageFeatureSystemsAct)
         self.fileMenu.addSeparator()
@@ -361,19 +377,29 @@ class MainWindow(QMainWindow):
 
         self.editMenu = self.menuBar().addMenu("&Options")
         self.editMenu.addAction(self.editPreferencesAct)
-        self.editMenu.addAction(self.viewFeatureSystemAct)
-        self.editMenu.addAction(self.addTierAct)
-        self.editMenu.addAction(self.removeTierAct)
         self.editMenu.addAction(self.toggleWarningsAct)
         self.editMenu.addAction(self.toggleToolTipsAct)
 
-        self.analysisMenu = self.menuBar().addMenu("&Analysis")
-        self.analysisMenu.addAction(self.stringsimAct)
+        self.enhanceMenu = self.menuBar().addMenu("&Corpus")
+        self.enhanceMenu.addAction(self.addTierAct)
+        self.enhanceMenu.addAction(self.removeTierAct)
+        self.enhanceMenu.addAction(self.batchNeighDenAct)
+        self.enhanceMenu.addAction(self.batchPhonProbAct)
+
+        self.featureMenu = self.menuBar().addMenu("&Features")
+        self.featureMenu.addAction(self.viewFeatureSystemAct)
+
+        self.analysisMenu = self.menuBar().addMenu("Corpus &analysis")
+        self.analysisMenu.addAction(self.stringSimAct)
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.prodAct)
         self.analysisMenu.addAction(self.funcloadAct)
-        self.analysisMenu.addAction(self.acousticsimAct)
         self.analysisMenu.addAction(self.neighDenAct)
+        self.analysisMenu.addAction(self.acousticSimAct)
+
+        self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
+        self.otherMenu.addAction(self.stringSimFileAct)
+        self.otherMenu.addAction(self.acousticSimFileAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
         self.viewMenu.addAction(self.showInventoryAct)

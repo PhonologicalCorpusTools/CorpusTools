@@ -81,6 +81,7 @@ class LexiconView(QWidget):
         self.table = TableWidget(self)
         layout = QVBoxLayout()
         self.searchField = QLineEdit()
+        self.searchField.setPlaceholderText('Search...')
         self.searchField.returnPressed.connect(self.search)
         layout.addWidget(self.searchField, alignment = Qt.AlignRight)
         layout.addWidget(self.table)
@@ -426,6 +427,7 @@ class DiscourseView(QWidget):
 
         layout = QVBoxLayout()
         self.searchField = QLineEdit()
+        self.searchField.setPlaceholderText('Search...')
         self.searchField.returnPressed.connect(self.search)
         layout.addWidget(self.searchField, alignment = Qt.AlignRight)
         layout.addWidget(self.text)
