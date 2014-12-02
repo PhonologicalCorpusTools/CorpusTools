@@ -77,6 +77,8 @@ class DirectoryWidget(QFrame):
         pathLayout.addWidget(pathButton)
         self.setLayout(pathLayout)
 
+        self.textChanged = self.pathEdit.textChanged
+
     def pathSet(self):
         filename = QFileDialog.getExistingDirectory(self,"Choose a directory")
         if filename:

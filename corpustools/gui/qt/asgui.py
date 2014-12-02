@@ -5,7 +5,7 @@ from collections import OrderedDict
 import corpustools.acousticsim.main as AS
 
 from .imports import *
-from .widgets import DirectoryWidget, RadioSelectWidget
+from .widgets import DirectoryWidget, RadioSelectWidget, FileWidget
 from .windows import FunctionWorker, FunctionDialog
 
 class ASWorker(FunctionWorker):
@@ -60,17 +60,36 @@ class ASDialog(FunctionDialog):
         self.showToolTips = showToolTips
         aslayout = QHBoxLayout()
 
-        directoryFrame = QGroupBox('Directories')
-        box = QFormLayout()
+        compFrame = QGroupBox('Comparison type')
 
-        self.directoryOne = DirectoryWidget()
-        self.directoryTwo = DirectoryWidget()
-        box.addRow('First directory:',self.directoryOne)
-        box.addRow('Second directory:',self.directoryTwo)
+        vbox = QFormLayout()
+        self.compType = None
+        self.oneDirectoryRadio = QRadioButton('Analyze single directory')
+        self.oneDirectoryRadio.clicked.connect(self.oneDirectorySelected)
+        self.oneDirectoryWidget = DirectoryWidget()
+        self.oneDirectoryWidget.textChanged.connect(self.oneDirectoryRadio.click)
+        self.twoDirectoryRadio = QRadioButton('Compare two directories')
+        self.twoDirectoryRadio.clicked.connect(self.twoDirectoriesSelected)
+        self.directoryOneWidget = DirectoryWidget()
+        self.directoryOneWidget.textChanged.connect(self.twoDirectoryRadio.click)
+        self.directoryTwoWidget = DirectoryWidget()
+        self.directoryTwoWidget.textChanged.connect(self.twoDirectoryRadio.click)
+        self.fileRadio = QRadioButton('Use list of full path comparisons')
+        self.fileRadio.clicked.connect(self.fileSelected)
+        self.fileWidget = FileWidget('Select a word pairs file', 'Text file (*.txt *.csv)')
+        self.fileWidget.textChanged.connect(self.fileRadio.click)
 
-        directoryFrame.setLayout(box)
+        vbox.addRow(self.oneDirectoryRadio)
+        vbox.addRow('Directory:',self.oneDirectoryWidget)
+        vbox.addRow(self.twoDirectoryRadio)
+        vbox.addRow('First directory:',self.directoryOneWidget)
+        vbox.addRow('Second directory:',self.directoryTwoWidget)
+        vbox.addRow(self.fileRadio)
+        vbox.addRow(self.fileWidget)
 
-        aslayout.addWidget(directoryFrame)
+        compFrame.setLayout(vbox)
+
+        aslayout.addWidget(compFrame)
 
         optionLayout = QVBoxLayout()
 
@@ -135,7 +154,7 @@ class ASDialog(FunctionDialog):
         self.layout().insertWidget(0,asframe)
 
         if self.showToolTips:
-            directoryFrame.setToolTip(("<FONT COLOR=black>"
+            compFrame.setToolTip(("<FONT COLOR=black>"
             'Choose two directories to compare sound files between.'
             "</FONT>"))
             self.representationWidget.setToolTip(("<FONT COLOR=black>"
@@ -163,6 +182,14 @@ class ASDialog(FunctionDialog):
                                             ' Multiprocessing is currently not supported'
             "</FONT>"))
 
+    def oneDirectorySelected(self):
+        self.compType = 'one'
+
+    def twoDirectoriesSelected(self):
+        self.compType = 'two'
+
+    def fileSelected(self):
+        self.compType = 'file'
 
     def mfccSelected(self):
         self.coeffEdit.setEnabled(True)
