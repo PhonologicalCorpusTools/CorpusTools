@@ -11,7 +11,7 @@ import tkinter.messagebox as MessageBox
 import queue
 import string
 
-from corpustools.corpus.classes import CorpusIntegrityError
+from corpustools.corpus.classes.lexicon import CorpusIntegrityError
 
 from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                     load_corpus_csv,load_corpus_text,

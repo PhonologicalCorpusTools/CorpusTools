@@ -7,7 +7,7 @@ import copy
 from math import factorial
 
 
-def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
+def minpair_fl(corpus, segment_or_pairs, frequency_cutoff=0,
         relative_count=True, distinguish_homophones=False, threaded_q=False,
         stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
@@ -16,8 +16,8 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
     ----------
     corpus : Corpus
         The domain over which functional load is calculated.
-    segment_pairs : list of length-2 tuples of Segments
-        The pairs of Segments to be conflated.
+    segment_or_pairs : segment (str) OR list of length-2 tuples of segment (str)s
+        The segment to have its relative FL calculated OR the pairs of segment (str)s to be conflated.
     frequency_cutoff : number, optional
         Minimum frequency of words to consider, if desired.
     relative_count : bool, optional
@@ -34,11 +34,17 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         q = threaded_q
 
     if frequency_cutoff > 0.0:
-
         corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
+
     if stop_check is not None and stop_check():
         return
-    all_segments = list(itertools.chain.from_iterable(segment_pairs))
+
+    if isinstance(segment_or_pairs, str):
+        all_segments = list(set(itertools.chain_from_iterable([segment for word in corpus for segment in word.transcription])))
+        segment = segment_or_pairs[:]
+        segment_or_pairs = [(segment,other) for other in all_segments if other != segment]
+
+    target_segments = list(itertools.chain.from_iterable(segment_or_pairs))
 
     neutralized = list()
     if call_back is not None:
@@ -54,8 +60,8 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
                 call_back(cur)
         if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
             continue
-        if any([s in w.transcription for s in all_segments]):
-            n = [neutralize_segment(seg, segment_pairs)
+        if any([s in w.transcription for s in target_segments]):
+            n = [neutralize_segment(seg, segment_or_pairs)
                     for seg in w.transcription]
             neutralized.append(('.'.join(n), w.spelling.lower(), w.transcription))
     if stop_check is not None and stop_check():
@@ -98,7 +104,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         return None
 
 
-def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
+def deltah_fl(corpus, segment_or_pairs, frequency_cutoff=0,
             type_or_token='token', threaded_q=False,
         stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
@@ -107,8 +113,8 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
     ----------
     corpus : Corpus
         The domain over which functional load is calculated.
-    segment_pairs : list of length-2 tuples of Segments
-        The pairs of Segments to be conflated.
+    segment_or_pairs : segment (str) OR list of length-2 tuples of segment (str)s
+        The segment to have its relative FL calculated OR the pairs of segment (str)s to be conflated.
     frequency_cutoff : number, optional
         Minimum frequency of words to consider, if desired.
     type_or_token : str {'type', 'token'}
@@ -161,7 +167,7 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        neutralized_probs['.'.join([neutralize_segment(s, segment_pairs) for s in k.split('.')])] += v
+        neutralized_probs['.'.join([neutralize_segment(s, segment_or_pairs) for s in k.split('.')])] += v
     postneutr_h = entropy([neutralized_probs[item] for item in neutralized_probs])
 
     if stop_check is not None and stop_check():
@@ -179,16 +185,16 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
 def collapse_segpairs_fl(**kwargs):
     corpus = kwargs.get('corpus')
     func_type = kwargs.get('func_type')
-    segment_pairs = kwargs.get('segment_pairs')
+    segment_or_pairs = kwargs.get('segment_or_pairs')
     frequency_cutoff = kwargs.get('frequency_cutoff')
     relative_count = kwargs.get('relative_count')
     distinguish_homophones = kwargs.get('distinguish_homophones')
     type_or_token = kwargs.get('type_or_token')
     q = kwargs.get('threaded_q')
     if func_type == 'min_pairs':
-        fl = minpair_fl(corpus, segment_pairs, frequency_cutoff, relative_count, distinguish_homophones)
+        fl = minpair_fl(corpus, segment_or_pairs, frequency_cutoff, relative_count, distinguish_homophones)
     elif func_type == 'entropy':
-        fl = deltah_fl(corpus, segment_pairs, frequency_cutoff, type_or_token)
+        fl = deltah_fl(corpus, segment_or_pairs, frequency_cutoff, type_or_token)
     q.put(fl)
 
 
@@ -196,7 +202,7 @@ def collapse_segpairs_fl(**kwargs):
 def individual_segpairs_fl(**kwargs):
     corpus = kwargs.get('corpus')
     func_type = kwargs.get('func_type')
-    segment_pairs = kwargs.get('segment_pairs')
+    segment_or_pairs = kwargs.get('segment_or_pairs')
     frequency_cutoff = kwargs.get('frequency_cutoff')
     relative_count = kwargs.get('relative_count')
     distinguish_homophones = kwargs.get('distinguish_homophones')
@@ -204,7 +210,7 @@ def individual_segpairs_fl(**kwargs):
     q = kwargs.get('threaded_q')
 
     results = list()
-    for pair in segment_pairs:
+    for pair in segment_or_pairs:
         corpus_copy = copy.deepcopy(corpus)
         if func_type == 'min_pairs':
             fl = minpair_fl(corpus_copy, [pair], frequency_cutoff, relative_count, distinguish_homophones)
@@ -231,7 +237,7 @@ def entropy(probabilities):
 
 
 def neutralize_segment(segment, segment_pairs):
-    try: # segment is a Segment
+    try: # segment is a segment (str)
         for sp in segment_pairs:
             if segment.symbol in sp:
                 return 'NEUTR:'+''.join(sp)
