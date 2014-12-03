@@ -34,12 +34,16 @@ setup(name='corpustools',
                 'corpustools.gui',
                 'corpustools.gui.qt',
                 'corpustools.symbolsim',
-                'corpustools.neighdens'],
+                'corpustools.neighdens',
+                'command_line'],
       #install_requires=[
       #    'pillow'
       #],
       entry_points = {
-        'console_scripts': ['pct=corpustools.pct:main'],
+        'console_scripts': ['pct=corpustools.pct:main',
+                            'pct_corpus=command_line.pct_corpus:main',
+                            'pct_funcload=command_line.pct_funcload:main',
+                            'pct_neighdens=command_line.pct_neighdens:main'],
     },
     scripts=['bin/pct.py']
       )
