@@ -54,16 +54,19 @@ class SpontaneousSpeechCorpus(object):
                 d[previous_time].following_token_time = wordtoken.begin
 
             previous_time = wordtoken.begin
-        self.discourses[d.identifier] = d
+        self.discourses[str(d)] = d
 
 class Discourse(object):
     def __init__(self, **kwargs):
-        self.identifier = ''
+        self.name = ''
 
         for k,v in kwargs.items():
             setattr(self,k,v)
 
         self.words = dict()
+
+    def __str__(self):
+        return self.name
 
     def add_word(self,wordtoken):
         wordtoken.discourse = self

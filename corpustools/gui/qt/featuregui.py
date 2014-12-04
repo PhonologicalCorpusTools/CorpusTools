@@ -26,13 +26,21 @@ def get_systems_list():
     return systems
 
 def get_feature_system_styles():
-    systems = get_systems_list()
-    systems = [x.split('2')[1] for x in systems]
+    systems = list()
+    for s in get_systems_list():
+        deets = s.split('2')
+        if len(deets) == 1:
+            continue
+        systems.append(deets[1])
     return list(set(systems))
 
 def get_transcription_system_styles():
-    systems = get_systems_list()
-    systems = [x.split('2')[0] for x in systems]
+    systems = list()
+    for s in get_systems_list():
+        deets = s.split('2')
+        if len(deets) == 1:
+            continue
+        systems.append(deets[0])
     return list(set(systems))
 
 def system_name_to_path(name):

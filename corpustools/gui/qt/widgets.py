@@ -13,6 +13,7 @@ class PunctuationWidget(QGroupBox):
 
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
+        layout = QVBoxLayout()
         box = QGridLayout()
 
         row = 0
@@ -30,8 +31,30 @@ class PunctuationWidget(QGroupBox):
             if col > 11:
                 col = 0
                 row += 1
+        boxFrame = QFrame()
+        boxFrame.setLayout(box)
+        layout.addWidget(boxFrame)
 
-        self.setLayout(box)
+        buttonlayout = QHBoxLayout()
+        self.checkAll = QPushButton('Check all')
+        self.checkAll.clicked.connect(self.check)
+        self.uncheckAll = QPushButton('Uncheck all')
+        self.uncheckAll.clicked.connect(self.uncheck)
+        buttonlayout.addWidget(self.checkAll, alignment = Qt.AlignLeft)
+        buttonlayout.addWidget(self.uncheckAll, alignment = Qt.AlignLeft)
+        buttonframe = QFrame()
+        buttonframe.setLayout(buttonlayout)
+
+        layout.addWidget(buttonframe)
+        self.setLayout(layout)
+
+    def check(self):
+        for b in self.btnGroup.buttons():
+            b.setChecked(True)
+
+    def uncheck(self):
+        for b in self.btnGroup.buttons():
+            b.setChecked(False)
 
     def value(self):
         value = []
@@ -40,6 +63,16 @@ class PunctuationWidget(QGroupBox):
                 value.append(b.text())
         return value
 
+class DigraphWidget(QGroupBox):
+    def __init__(self,parent = None):
+        QGroupBox.__init__(self,'Digraphs',parent)
+        layout = QVBoxLayout()
+
+        self.editField = QLineEdit()
+        layout.addWidget(self.editField)
+        self.button = QPushButton('Construct a digraph')
+        layout.addWidget(self.button)
+        self.setLayout(layout)
 
 class FileWidget(QFrame):
     def __init__(self,title,filefilter,parent=None):

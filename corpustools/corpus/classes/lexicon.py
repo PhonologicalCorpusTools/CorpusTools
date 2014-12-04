@@ -633,6 +633,9 @@ class Word(object):
         return state
 
     def __setstate__(self, state):
+        self.transcription = None
+        self.spelling = None
+        self.frequency = 0
         if 'wordtokens' not in state:
             state['wordtokens'] = list()
         self.__dict__.update(state)
