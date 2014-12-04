@@ -2,7 +2,10 @@
 import os
 from collections import OrderedDict
 
-import corpustools.acousticsim.main as AS
+#import corpustools.acousticsim.main as AS
+from acousticsim.main import (acoustic_similarity_mapping,
+                            acoustic_similarity_directories,
+                            analyze_directory)
 
 from .imports import *
 from .widgets import DirectoryWidget, RadioSelectWidget, FileWidget
@@ -12,17 +15,21 @@ class ASWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
-        output = AS.acoustic_similarity_directories(**kwargs)
-        if self.stopped:
-            return
-        output_list, output_val = output
+        if kwargs['type'] == 'one':
+            output_list = analyze_directory(kwargs['query'], **kwargs)
+        elif kwargs['type'] == 'two':
+            output = acoustic_similarity_directories(*kwargs['query'],**kwargs)
+            if self.stopped:
+                return
+            output_list, output_val = output
+            output_list.append([kwargs['query'][0],kwargs['query'][1],output_val])
+        elif kwargs['type'] == 'files':
+            output_list = acoustic_similarity_mapping(kwargs['query'], **kwargs)
         for o in output_list:
             self.results.append([os.path.split(o[0])[1],
                                             os.path.split(o[1])[1],o[2]])
         if self.stopped:
             return
-        self.results.append([os.path.split(kwargs['directory_one'])[1],
-                                            os.path.split(kwargs['directory_one'])[1],output_val])
         self.dataReady.emit(self.results)
 
 class ASDialog(FunctionDialog):
@@ -197,7 +204,7 @@ class ASDialog(FunctionDialog):
     def envelopesSelected(self):
         self.coeffEdit.setEnabled(False)
 
-    def calc(self):
+    def generateKwargs(self):
         rep = self.representationWidget.value()
         alg = self.distAlgWidget.value()
         if self.filterEdit.text() in ['','0']:
@@ -227,8 +234,7 @@ class ASDialog(FunctionDialog):
         except ValueError:
             return
         kwargs = {
-                'directory_one': self.directoryOne.value(),
-                'directory_two': self.directoryTwo.value(),
+                'type': self.compType,
                 'rep':rep,
                 'match_func':alg,
                 'num_filters':filters,
@@ -237,6 +243,20 @@ class ASDialog(FunctionDialog):
                 'output_sim':self.outputSimWidget.isChecked(),
                 'use_multi':self.multiprocessingWidget.isChecked(),
                 'return_all':True}
+        if self.compType is None:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a comparison type.")
+            return
+        elif self.compType == 'one':
+            kwargs['query'] = self.oneDirectoryWidget.value()
+        elif self.compType == 'two':
+            kwargs['query'] = [self.directoryOneWidget.value(), self.directoryTwoWidget.value()]
+        elif self.compType == 'file':
+            raise(NotImplementedError)
+        return kwargs
+
+    def calc(self):
+        kwargs = self.generateKwargs()
         self.thread.setParams(kwargs)
 
         self.thread.start()
