@@ -48,9 +48,15 @@ def main():
         segpairs_or_segment = args.pairs_file_name_or_segment
 
     if args.algorithm == 'minpair':
-        result = minpair_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones)
+        if args.relative_fl:
+            result = relative_minpair_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones)
+        else:
+            result = minpair_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones)
     elif args.algorithm == 'deltah':
-        result = deltah_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, type_or_token=args.type_or_token)
+        if args.relative_fl:
+            result = relative_deltah_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, type_or_token=args.type_or_token)
+        else:
+            result = deltah_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, type_or_token=args.type_or_token)
     else:
         raise Exception('-a / --algorithm must be set to either \'minpair\' or \'deltah\'.')
 
