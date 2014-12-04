@@ -475,18 +475,13 @@ class DiscourseView(QWidget):
 
     def showMenu(self, pos):
         menu = QMenu()
-        index = self.indexAt(pos)
+        index = self.text.indexAt(pos)
         if not index.isValid():
             return
         lookupAction = QAction(self)
         lookupAction.setText('Look up word')
         menu.addAction(lookupAction)
-        if self.model().hasAudio():
-            playAudioAction = QAction(self)
-            playAudioAction.setText('Play audio')
-            menu.addAction(playAudioAction)
-            playAudioAction.triggered.connect(self.playAudio)
-        action = menu.exec_(self.viewport().mapToGlobal(pos))
+        action = menu.exec_(self.text.viewport().mapToGlobal(pos))
 
     def playStopAudio(self):
         print('triggered')
@@ -512,14 +507,14 @@ class DiscourseView(QWidget):
         self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
 
     def highlightTokens(self, tokens):
-        if self.model() is None:
+        if self.text.model() is None:
             return
-        self.selectionModel().clear()
-        times = [x.begin for x in tokens if x.discourse == self.model().discourse]
-        rows = self.model().timesToRows(times)
+        self.text.selectionModel().clear()
+        times = [x.begin for x in tokens if x.discourse == self.text.model().discourse]
+        rows = self.text.model().timesToRows(times)
         for r in rows:
-            index = self.model().index(r,0)
-            self.selectionModel().select(index, QItemSelectionModel.Select)
+            index = self.text.model().index(r,0)
+            self.text.selectionModel().select(index, QItemSelectionModel.Select)
 
     def setupActions(self):
         self.playStopAction = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), self.tr("Play"), self)

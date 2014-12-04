@@ -15,7 +15,7 @@ class SpontaneousSpeechCorpusModel(QStandardItemModel):
         speakerItem = QStandardItem('s01')
         corpusItem.appendRow(speakerItem)
         for d in self.corpus.discourses.values():
-            speakerItem.appendRow(QStandardItem(d.identifier))
+            speakerItem.appendRow(QStandardItem(str(d)))
 
     def createLexicon(self,row):
         d = self.item(row).text()
