@@ -1,4 +1,4 @@
-
+import string
 from itertools import combinations
 
 from .imports import *
@@ -6,6 +6,40 @@ from .imports import *
 from .views import TableWidget
 
 from .models import SegmentPairModel, EnvironmentModel
+
+class PunctuationWidget(QGroupBox):
+    def __init__(self,parent = None):
+        QGroupBox.__init__(self,'Punctuation to ignore',parent)
+
+        self.btnGroup = QButtonGroup()
+        self.btnGroup.setExclusive(False)
+        box = QGridLayout()
+
+        row = 0
+        col = 0
+        for s in string.punctuation:
+            btn = QPushButton(s)
+            btn.setCheckable(True)
+            btn.setAutoExclusive(False)
+            btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
+            btn.setMaximumWidth(btn.fontMetrics().boundingRect(s).width() + 14)
+
+            box.addWidget(btn,row,col)
+            self.btnGroup.addButton(btn)
+            col += 1
+            if col > 11:
+                col = 0
+                row += 1
+
+        self.setLayout(box)
+
+    def value(self):
+        value = []
+        for b in self.btnGroup.buttons():
+            if b.isChecked():
+                value.append(b.text())
+        return value
+
 
 class FileWidget(QFrame):
     def __init__(self,title,filefilter,parent=None):

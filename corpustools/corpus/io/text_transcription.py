@@ -1,12 +1,15 @@
-
+import os
+import re
 
 from corpustools.corpus.classes import Corpus, Word
 
 from .csv import DelimiterError
 
-def load_corpus_text(corpus_name, path, delimiter, ignore_list, digraph_list,
-                    trans_delimiter='',feature_system_path='',
-                    string_type='transcription',pqueue=None,oqueue=None):
+from .binary import load_binary
+
+def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph_list = None,
+                    trans_delimiter = None,feature_system_path = None,
+                    stop_check = None, call_back = None, pqueue = None, oqueue = None):
     """
     Load a corpus from a text file containing running text either in
     orthography or transcription
@@ -48,14 +51,16 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list, digraph_list,
         as keys and a list of words containing those segments as values
 
     """
-    word_count = collections.defaultdict(int)
     corpus = Corpus(corpus_name)
     corpus.custom = True
-    pattern = '|'.join(d for d in digraph_list)
-    pattern += '|\w'
-    digraph_re = re.compile(pattern)
+    if digraph_list is not None:
+        pattern = '|'.join(d for d in digraph_list)
+        pattern += '|\w'
+        digraph_re = re.compile(pattern)
 
-    if feature_system_path:
+    if feature_system_path is not None:
+        if not os.path.exists(feature_system_path):
+            raise(OSError("The feature path specified ({}) does not exist".format(feature_system_path)))
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
 
@@ -76,17 +81,20 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list, digraph_list,
 
             for word in line:
                 word = word.strip()
-                word = digraph_re.findall(word)
-                word = [x for x in word if not x in ignore_list]
-                spell = ''.join(word)
-                d = {'spelling': spell, 'transcription': word}
+                if trans_delimiter is not None:
+                    trans = word.split(trans_delimiter)
+                    if not trans_check and len(trans) > 1:
+                        trans_check = True
+                elif digraph_list is not None:
+                    trans = digraph_re.findall(word)
+                trans = [x for x in trans if not x in ignore_list]
+                spell = ''.join(trans)
+                d = {'spelling': spell, 'transcription': trans}
                 word = Word(**d)
                 corpus.add_word(word, allow_duplicates=False)
-                word_count[word.spelling] += 1
-
-        for key,value in word_count.items():
-            corpus[key].frequency = value
-
+                corpus[word.spelling].frequency += 1
+    if not trans_check:
+        raise(DelimiterError('The transcription delimiter specified does not create multiple segments. Please specify another delimiter.'))
     transcription_errors = corpus.check_coverage()
     if pqueue is not None:
         pqueue.put(-99)
@@ -94,4 +102,4 @@ def load_corpus_text(corpus_name, path, delimiter, ignore_list, digraph_list,
         oqueue.put(corpus)
         oqueue.put(transcription_errors)
     else:
-        return corpus,transcription_errors
+        return corpus

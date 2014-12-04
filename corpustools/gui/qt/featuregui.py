@@ -18,26 +18,104 @@ from .models import FeatureSystemModel
 
 from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
 
+from .windows import DownloadWorker
+
 def get_systems_list():
     system_dir = os.path.join(config['storage']['directory'],'FEATURE')
     systems = [x.split('.')[0] for x in os.listdir(system_dir)]
     return systems
 
+def get_feature_system_styles():
+    systems = get_systems_list()
+    systems = [x.split('2')[1] for x in systems]
+    return list(set(systems))
+
+def get_transcription_system_styles():
+    systems = get_systems_list()
+    systems = [x.split('2')[0] for x in systems]
+    return list(set(systems))
+
 def system_name_to_path(name):
     return os.path.join(config['storage']['directory'],'FEATURE',name+'.feature')
 
-class FeatureSystemSelect(QComboBox):
-    def __init__(self,parent=None,default = None):
-        QComboBox.__init__(self,parent)
+class FeatureSystemSelect(QGroupBox):
+    changed  = Signal()
+    def __init__(self,parent=None,default = None, add = False):
+        QGroupBox.__init__(self,'Transcription and features',parent)
+        layout = QFormLayout()
 
-        self.addItem('')
-        for i,s in enumerate(get_systems_list()):
-            self.addItem(s)
-            if default is not None and s == default:
-                self.setCurrentIndex(i+1)
+        self.transSystem = QComboBox()
+        if add:
+            self.transSystem.addItem('Custom')
+        else:
+            self.transSystem.addItem('None')
+        if default is not None:
+            default_deets = default.split('2')
+            if len(default_deets) == 1:
+                default_trans = 'None'
+                default_feat = 'None'
+            else:
+                default_trans,default_feat = default_deets
+
+        for i,s in enumerate(get_transcription_system_styles()):
+            self.transSystem.addItem(s)
+            if default is not None and s == default_trans:
+                self.transSystem.setCurrentIndex(i+1)
+        self.transSystem.currentIndexChanged.connect(self.toggleTransName)
+        layout.addRow(QLabel('Transcription system'),self.transSystem)
+
+        self.transName = QLineEdit()
+        if add:
+            layout.addRow(QLabel('Transcription system name (if custom)'),self.transName)
+
+        self.featureSystem = QComboBox()
+        if add:
+            self.featureSystem.addItem('Custom')
+        else:
+            self.featureSystem.addItem('None')
+        for i,s in enumerate(get_feature_system_styles()):
+            self.featureSystem.addItem(s)
+            if default is not None and s == default_feat:
+                self.featureSystem.setCurrentIndex(i+1)
+        self.featureSystem.currentIndexChanged.connect(self.toggleFeatName)
+        layout.addRow(QLabel('Feature system'),self.featureSystem)
+
+        self.featName = QLineEdit()
+        if add:
+            layout.addRow(QLabel('Feature system name (if custom)'),self.featName)
+
+        self.setLayout(layout)
+
+    def toggleTransName(self, ind = None):
+        if self.transSystem.currentText() == 'Custom':
+            self.transName.setDisabled(False)
+        else:
+            self.transName.setDisabled(True)
+        self.changed.emit()
+
+    def toggleFeatName(self, ind = None):
+        if self.featureSystem.currentText() == 'Custom':
+            self.featName.setDisabled(False)
+        else:
+            self.featName.setDisabled(True)
+        self.changed.emit()
 
     def value(self):
-        return self.currentText()
+        trans = self.transSystem.currentText()
+        feat = self.featureSystem.currentText()
+        if trans == 'None':
+            return ''
+        if feat == 'None':
+            return ''
+        if trans == 'Custom':
+            trans = self.transName.text()
+            if trans == '':
+                return ''
+        if feat == 'Custom':
+            feat = self.featName.text()
+            if feat == '':
+                return ''
+        return '2'.join([trans,feat])
 
     def path(self):
         if self.value() != '':
@@ -154,7 +232,7 @@ class DownloadFeatureMatrixDialog(QDialog):
 
         self.transWidget = RadioSelectWidget('Select a transcription system',
                                             OrderedDict([('IPA','ipa'),
-                                                        ('ARPABET','arpa'),
+                                                        ('ARPABET (CMU)','arpabet'),
                                                         ('XSAMPA','sampa'),
                                                         ('CELEX','celex'),
                                                         ('DISC','disc'),
@@ -189,6 +267,45 @@ class DownloadFeatureMatrixDialog(QDialog):
 
         self.setWindowTitle('Download feature system')
 
+        self.thread = DownloadWorker()
+
+        self.progressDialog = QProgressDialog('Downloading...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Download feature system')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.finished.connect(self.progressDialog.accept)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
+    def accept(self):
+        name = self.transWidget.value() + '2' + self.featureWidget.value()
+        if name in get_systems_list():
+            msgBox = QMessageBox(QMessageBox.Warning, "Overwrite system",
+                    "The system '{}' is already available.  Would you like to overwrite it?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+
+        self.thread.setParams({'name':name,'path':system_name_to_path(name)})
+
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            QDialog.accept(self)
+
 class EditFeatureMatrixDialog(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
@@ -201,7 +318,10 @@ class EditFeatureMatrixDialog(QDialog):
 
         self.table = TableWidget()
         self.table.setModel(FeatureSystemModel(self.specifier))
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        try:
+            self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         layout.addWidget(self.table)
 
         optionLayout = QHBoxLayout()
@@ -209,7 +329,7 @@ class EditFeatureMatrixDialog(QDialog):
         changeFrame = QGroupBox('Change feature systems')
         box = QFormLayout()
         self.changeWidget = FeatureSystemSelect(default=self.specifier.name)
-        self.changeWidget.currentIndexChanged.connect(self.changeFeatureSystem)
+        self.changeWidget.changed.connect(self.changeFeatureSystem)
         box.addRow(self.changeWidget)
 
         changeFrame.setLayout(box)
@@ -493,15 +613,15 @@ class SystemFromCsvDialog(QDialog):
 
 
         self.pathWidget = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
-        self.pathWidget.textChanged.connect(self.updateName)
 
         formLayout.addRow(QLabel('Path to feature system'),self.pathWidget)
 
-        self.nameEdit = QLineEdit()
-        formLayout.addRow(QLabel('Name for feature system (auto-suggested)'),self.nameEdit)
+        self.featureSystemSelect = FeatureSystemSelect(add=True)
+
+        formLayout.addRow(self.featureSystemSelect)
 
         self.columnDelimiterEdit = QLineEdit()
-        self.columnDelimiterEdit.setText(',')
+        self.columnDelimiterEdit.setText('\\t')
         formLayout.addRow(QLabel('Column delimiter (enter \'\\t\' for tab)'),self.columnDelimiterEdit)
 
         formFrame = QFrame()
@@ -525,33 +645,36 @@ class SystemFromCsvDialog(QDialog):
 
         self.setWindowTitle('Create feature system from csv')
 
-    def updateName(self):
-        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
-
     def accept(self):
         path = self.pathWidget.value()
+        if path == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to the csv file.")
+            return
         if not os.path.exists(path):
-            dialog = QMessageBox()
-            dialog.setText('Feature matrix file could not be located. Please verify the path and file name.')
-            dialog.exec_()
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "Feature matrix file could not be located. Please verify the path and file name.")
             return
 
-        name = self.nameEdit.text()
+        name = self.featureSystemSelect.value()
         colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
-        if (not path) or (not colDelim) or (not name):
-            MessageBox.showerror(message='Information is missing. Please verify that you entered something in all the text boxes')
+        if not colDelim:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a column delimiter.")
+            return
+        if not name:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the transcription and feature systems.")
             return
         try:
             system = load_feature_matrix_csv(name, path, colDelim)
         except DelimiterError:
-            dialog = QMessageBox()
-            dialog.setText('Could not parse the file.\nCheck that the delimiter you typed in matches the one used in the file.')
-            dialog.exec_()
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "Could not parse the file.\nCheck that the delimiter you typed in matches the one used in the file.")
             return
         except KeyError:
-            dialog = QMessageBox()
-            dialog.setText('Could not find a \'symbol\' column.  Please make sure that the segment symbols are in a column named \'symbol\'.')
-            dialog.exec_()
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Could not find a 'symbol' column.  Please make sure that the segment symbols are in a column named 'symbol'.")
             return
         save_binary(system,system_name_to_path(name))
 
