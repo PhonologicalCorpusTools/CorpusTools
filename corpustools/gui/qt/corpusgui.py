@@ -398,7 +398,7 @@ class CorpusFromSpellingTextDialog(QDialog):
                     'path':path,
                     'delimiter': wordDelim,
                     'ignore_list': ignore_list,
-                    'ignore_cae': self.ignoreCase.isChecked(),
+                    'ignore_case': self.ignoreCase.isChecked(),
                     'support_corpus_path': supportCorpus}
         return kwargs
 
