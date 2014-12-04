@@ -204,7 +204,7 @@ def relative_minpair_fl(corpus, segment, frequency_cutoff=0,
     segment = segment[:]
     segment_pairs = [(segment,other) for other in all_segments if other != segment]
     results = []
-    for sp in segment_pairs:)
+    for sp in segment_pairs:
         results.append(minpair_fl(corpus, [sp], frequency_cutoff=frequency_cutoff,
             relative_count=relative_count, distinguish_homophones=distinguish_homophones, threaded_q=threaded_q,
             stop_check=stop_check, call_back=call_back))
@@ -241,7 +241,7 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff=0,
                 type_or_token=type_or_token, threaded_q=threaded_q,
                 stop_check=stop_check, call_back=call_back))
     return sum(results)/len(segment_pairs)
-    
+
 
 
 def collapse_segpairs_fl(**kwargs):
