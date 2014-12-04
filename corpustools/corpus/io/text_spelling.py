@@ -4,8 +4,8 @@ from corpustools.corpus.classes import Corpus, Word
 
 from .csv import DelimiterError
 
-def load_corpus_spelling(corpus_name, path, delimiter, ignore_list,
-                            support_corpus_path = ''):
+def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
+                            support_corpus_path = None):
     """
     Load a corpus from a text file containing running text either in
     orthography or transcription
@@ -35,9 +35,10 @@ def load_corpus_spelling(corpus_name, path, delimiter, ignore_list,
         as keys and a list of words containing those segments as values
 
     """
-    word_count = collections.defaultdict(int)
     corpus = Corpus(corpus_name)
-    if support_corpus_path:
+    if support_corpus_path is not None:
+        if not os.path.exists(support_corpus_path):
+            raise(OSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
         support = load_binary(support_corpus_path)
 
     with open(path, encoding='utf-8-sig', mode='r') as f:
@@ -53,6 +54,7 @@ def load_corpus_spelling(corpus_name, path, delimiter, ignore_list,
 
             for word in line:
                 spell = word.strip()
+                spell = ''.join(x for x in spell if not x in ignore_list)
                 trans = None
                 if support_corpus_path:
                     try:
@@ -62,9 +64,6 @@ def load_corpus_spelling(corpus_name, path, delimiter, ignore_list,
                 d = {'spelling': spell, 'transcription': trans}
                 word = Word(**d)
                 corpus.add_word(word, allow_duplicates=False)
-                word_count[word.spelling] += 1
-
-        for key,value in word_count.items():
-            corpus[key].frequency = value
+                corpus[word.spelling].frequency += 1
 
     return corpus

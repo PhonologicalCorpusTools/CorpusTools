@@ -1,6 +1,8 @@
 
 from .imports import *
 
+from corpustools.corpus.io import download_binary
+
 class FunctionWorker(QThread):
     updateProgress = Signal(int)
     updateProgressText = Signal(str)
@@ -104,3 +106,12 @@ class FunctionDialog(QDialog):
     def about(self):
         reply = QMessageBox.information(self,
                 "About {}".format(self.name), '\n'.join(self._about))
+
+class DownloadWorker(FunctionWorker):
+    def run(self):
+        if self.stopCheck():
+            return
+        self.results = download_binary(self.kwargs['name'],self.kwargs['path'], call_back = self.kwargs['call_back'])
+        if self.stopCheck():
+            return
+        self.dataReady.emit(self.results)
