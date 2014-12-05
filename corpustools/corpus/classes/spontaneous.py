@@ -29,9 +29,6 @@ class SpontaneousSpeechCorpus(object):
 
     def __setstate__(self,state):
         self.__dict__.update(state)
-        for d in self:
-            for wt in d:
-                wt.wordtype.wordtokens.append(wt)
 
     def add_discourse(self, data, discourse_info):
         d = Discourse(**discourse_info)
@@ -85,6 +82,10 @@ class Discourse(object):
             return True
         return False
 
+    def __setstate__(self,state):
+        self.__dict__.update(state)
+        for wt in self:
+            wt.wordtype.wordtokens.append(wt)
 
     def __iter__(self):
         for k in sorted(self.words.keys()):

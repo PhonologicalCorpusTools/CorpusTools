@@ -1130,7 +1130,7 @@ class Corpus(object):
         """
         return self.specifier.features
 
-    def find(self, word, keyerror=True):
+    def find(self, word, keyerror=True, ignore_case = False):
         """Search for a Word in the corpus
         If keyerror == True, then raise a KeyError if the word is not found
         If keyerror == False, then return an EmptyWord if the word is not found
@@ -1153,19 +1153,24 @@ class Corpus(object):
         KeyError if keyerror == True and word is not found
 
         """
-        try:
-            result = self.wordlist[word]
-        except KeyError:
+        patterns = [word]
+        if ignore_case:
+            patterns.append(word.lower())
+            patterns.append(word.title())
+        for w in patterns:
+            key = w
             try:
-                key = '{} (1)'.format(word)
-                result = [self.wordlist[key]]
+                result = self.wordlist[w]
+                return result
             except KeyError:
-                if keyerror:
-                    raise KeyError('The word \"{}\" is not in the corpus'.format(word))
-                else:
-                    result = EmptyWord(word, 'Word could not be found in the corpus')
+                try:
+                    key = '{} (1)'.format(w)
+                    result = [self.wordlist[key]]
+                    return result
+                except KeyError:
+                    pass
 
-        return result
+        raise KeyError('The word \"{}\" is not in the corpus'.format(word))
 
     def find_all(self,spelling):
         words = list()

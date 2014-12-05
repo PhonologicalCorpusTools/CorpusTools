@@ -70,14 +70,15 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
             if not line or line == '\n':
                 continue
             line = line.split(delimiter)
-
             for word in line:
                 spell = word.strip()
                 spell = ''.join(x for x in spell if not x in ignore_list)
+                if spell == '':
+                    continue
                 trans = None
                 if support_corpus_path is not None:
                     try:
-                        trans = support.find(spell).transcription
+                        trans = support.find(spell, ignore_case = ignore_case).transcription
                     except KeyError:
                         pass
                 word = corpus.get_or_create_word(spell, trans)
@@ -96,7 +97,6 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
 
                 previous_time = wordtoken.begin
                 begin += 1
-
     discourse.lexicon = corpus
 
     return discourse
