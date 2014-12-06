@@ -98,7 +98,7 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
                     trans = digraph_re.findall(word)
                 else:
                     trans = list(word)
-                trans = [x for x in trans if not x in ignore_list]
+                trans = [x for x in trans if not x in ignore_list and x != '']
                 spell = ''.join(trans)
                 word = corpus.get_or_create_word(spell, trans)
                 word.frequency += 1
