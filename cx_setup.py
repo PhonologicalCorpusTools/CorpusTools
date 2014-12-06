@@ -45,6 +45,8 @@ build_exe_options = {"excludes": [
                         'corpustools.funcload.tests',
                         'corpustools.prod.tests',
                         'matplotlib',
+                        "tcl",
+                        'ttk',
                         "tkinter",],
                     "include_files":incl_files,
                     "includes": [
@@ -62,6 +64,7 @@ build_exe_options = {"excludes": [
                             "scipy.special",
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
+                            "acousticsim",
                             "sys"]
                             }
 
@@ -105,7 +108,7 @@ setup(name='Phonological CorpusTools',
                 'corpustools.funcload',
                 'corpustools.prod',
                 'corpustools.gui.qt',
-                'corpustools.acousticsim',
+                #'corpustools.acousticsim',
                 'corpustools.symbolsim',
                 'corpustools.neighdens'],
       executables = [Executable('bin/pct.py',
