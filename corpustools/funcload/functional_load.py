@@ -85,7 +85,6 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
             continue
         minpairs.append((str(first[2]),str(second[2])))
 
-
     if not distinguish_homophones:
         minpairs = set(minpairs)
 
@@ -212,8 +211,8 @@ def relative_minpair_fl(corpus, segment, frequency_cutoff=0,
     results = []
     for sp in segment_pairs:
         results.append(minpair_fl(corpus, [sp], frequency_cutoff=frequency_cutoff,
-            relative_count=relative_count, distinguish_homophones=distinguish_homophones, threaded_q=threaded_q,
-            stop_check=stop_check, call_back=call_back))
+            relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type,
+            threaded_q=threaded_q, stop_check=stop_check, call_back=call_back))
     return sum(results)/len(segment_pairs)
 
 
@@ -246,8 +245,8 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff=0,
     results = []
     for sp in segment_pairs:
         results.append(deltah_fl(corpus, [sp], frequency_cutoff=frequency_cutoff,
-                type_or_token=type_or_token, threaded_q=threaded_q,
-                stop_check=stop_check, call_back=call_back))
+                type_or_token=type_or_token, sequence_type=sequence_type,
+                threaded_q=threaded_q, stop_check=stop_check, call_back=call_back))
     return sum(results)/len(segment_pairs)
 
 
