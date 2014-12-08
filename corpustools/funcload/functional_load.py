@@ -8,7 +8,7 @@ from math import factorial
 
 
 def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
-        relative_count=True, distinguish_homophones=False, tier='transcription',
+        relative_count=True, distinguish_homophones=False, sequence_type='transcription',
         threaded_q=False, stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
 
@@ -24,7 +24,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
     distinguish_homophones : bool, optional
         If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.
-    tier : string
+    sequence_type : string
         The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
 
     Returns
@@ -56,10 +56,10 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
                 call_back(cur)
         if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
             continue
-        if any([s in getattr(w, tier) for s in all_segments]):
+        if any([s in getattr(w, sequence_type) for s in all_segments]):
             n = [neutralize_segment(seg, segment_pairs)
-                    for seg in getattr(w, tier)]
-            neutralized.append(('.'.join(n), w.spelling.lower(), getattr(w, tier)))
+                    for seg in getattr(w, sequence_type)]
+            neutralized.append(('.'.join(n), w.spelling.lower(), getattr(w, sequence_type)))
     if stop_check is not None and stop_check():
         return
 
@@ -101,7 +101,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
 
 
 def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
-            type_or_token='token', tier='transcription',
+            type_or_token='token', sequence_type='transcription',
             threaded_q=False, stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
 
@@ -115,7 +115,7 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
         Minimum frequency of words to consider, if desired.
     type_or_token : str {'type', 'token'}
         Specify whether entropy is based on type or token frequency.
-    tier : string
+    sequence_type : string
         The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
 
     Returns
@@ -144,7 +144,7 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
         else:
             f = w.frequency
 
-        original_probs[str(getattr(w, tier))] += f
+        original_probs[str(getattr(w, sequence_type))] += f
         freq_sum += f
 
     original_probs = {k:v/freq_sum for k,v in original_probs.items()}
@@ -182,7 +182,7 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
 
 
 def relative_minpair_fl(corpus, segment, frequency_cutoff=0,
-            relative_count=True, distinguish_homophones=False, tier='transcription',
+            relative_count=True, distinguish_homophones=False, sequence_type='transcription',
             threaded_q=False, stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a segment and all other segments, as a count of minimal pairs.
 
@@ -198,13 +198,15 @@ def relative_minpair_fl(corpus, segment, frequency_cutoff=0,
         If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
     distinguish_homophones : bool, optional
         If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.
+    sequence_type : string
+        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
 
     Returns
     -------
     int or float
         If `relative_count`==False, returns an int of the raw number of minimal pairs. If `relative_count`==True, returns a float of that count divided by the total number of words in the corpus that include either `s1` or `s2`.
     """
-    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(word, tier)])))
+    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(word, sequence_type)])))
     segment = segment[:]
     segment_pairs = [(segment,other) for other in all_segments if other != segment]
     results = []
@@ -216,7 +218,7 @@ def relative_minpair_fl(corpus, segment, frequency_cutoff=0,
 
 
 def relative_deltah_fl(corpus, segment, frequency_cutoff=0,
-                type_or_token='token', tier='transcription',
+                type_or_token='token', sequence_type='transcription',
                 threaded_q=False, stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a segment and all other segments, as the decrease in corpus entropy caused by a merger.
 
@@ -230,13 +232,15 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff=0,
         Minimum frequency of words to consider, if desired.
     type_or_token : str {'type', 'token'}
         Specify whether entropy is based on type or token frequency.
+    sequence_type : string
+        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
 
     Returns
     -------
     float
         The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
     """
-    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(w, tier)])))
+    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(w, sequence_type)])))
     segment = segment[:]
     segment_pairs = [(segment,other) for other in all_segments if other != segment]
     results = []
@@ -256,12 +260,12 @@ def collapse_segpairs_fl(**kwargs):
     relative_count = kwargs.get('relative_count')
     distinguish_homophones = kwargs.get('distinguish_homophones')
     type_or_token = kwargs.get('type_or_token')
-    tier = kwargs.get('tier')
+    sequence_type = kwargs.get('sequence_type')
     q = kwargs.get('threaded_q')
     if func_type == 'min_pairs':
-        fl = minpair_fl(corpus, segment_pairs, frequency_cutoff, relative_count, distinguish_homophones, tier)
+        fl = minpair_fl(corpus, segment_pairs, frequency_cutoff, relative_count, distinguish_homophones, sequence_type)
     elif func_type == 'entropy':
-        fl = deltah_fl(corpus, segment_pairs, frequency_cutoff, type_or_token, tier)
+        fl = deltah_fl(corpus, segment_pairs, frequency_cutoff, type_or_token, sequence_type)
     q.put(fl)
 
 
@@ -274,16 +278,16 @@ def individual_segpairs_fl(**kwargs):
     relative_count = kwargs.get('relative_count')
     distinguish_homophones = kwargs.get('distinguish_homophones')
     type_or_token = kwargs.get('type_or_token')
-    tier = kwargs.get('tier')
+    sequence_type = kwargs.get('sequence_type')
     q = kwargs.get('threaded_q')
 
     results = list()
     for pair in segment_pairs:
         corpus_copy = copy.deepcopy(corpus)
         if func_type == 'min_pairs':
-            fl = minpair_fl(corpus_copy, [pair], frequency_cutoff, relative_count, distinguish_homophones, tier)
+            fl = minpair_fl(corpus_copy, [pair], frequency_cutoff, relative_count, distinguish_homophones, sequence_type)
         elif func_type == 'entropy':
-            fl = deltah_fl(corpus_copy, [pair], frequency_cutoff, type_or_token, tier)
+            fl = deltah_fl(corpus_copy, [pair], frequency_cutoff, type_or_token, sequence_type)
         results.append(fl)
 
     q.put(results)
