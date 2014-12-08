@@ -131,9 +131,9 @@ class LexiconView(QWidget):
         hideAction = QAction(self)
         nonlexhidden = self.table.model().nonLexHidden
         if nonlexhidden:
-            hideAction.setText('Show non-lexical items')
+            hideAction.setText('Show non-transcribed items')
         else:
-            hideAction.setText('Hide non-lexical items')
+            hideAction.setText('Hide non-transcribed items')
         hideAction.triggered.connect(lambda: self.hideNonLexical(not nonlexhidden))
         menu.addAction(hideAction)
 
@@ -440,7 +440,7 @@ class DiscourseView(QWidget):
 
     def setModel(self,model):
         self.text.setModel(model)
-        if model.hasAudio():
+        if AUDIO_ENABLED and model.hasAudio():
             self.playbar.show()
         else:
             self.playbar.hide()

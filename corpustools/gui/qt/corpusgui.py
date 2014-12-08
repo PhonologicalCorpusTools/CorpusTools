@@ -9,12 +9,14 @@ from corpustools.config import config
 
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
                                     load_spelling_corpus, load_transcription_corpus,
+                                    inspect_transcription_corpus,
                                     save_binary,export_corpus_csv, import_spontaneous_speech_corpus)
 
 from .windows import FunctionWorker, DownloadWorker
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
-                    SaveFileWidget, DirectoryWidget, PunctuationWidget)
+                    SaveFileWidget, DirectoryWidget, PunctuationWidget,
+                    DigraphWidget)
 
 from corpustools.gui.qt.featuregui import FeatureSystemSelect
 
@@ -422,6 +424,7 @@ class CorpusFromSpellingTextDialog(QDialog):
 class CorpusFromTranscriptionTextDialog(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
+        self.characters = set()
         layout = QVBoxLayout()
 
         mainlayout = QHBoxLayout()
@@ -430,6 +433,7 @@ class CorpusFromTranscriptionTextDialog(QDialog):
 
         self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
+        self.pathWidget.pathEdit.textChanged.connect(self.getCharacters)
 
         iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
 
@@ -455,8 +459,8 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         self.transDelimiter = QLineEdit()
         translayout.addRow(QLabel('Transcription delimiter'),self.transDelimiter)
 
-        self.digraphs = QLineEdit()
-        translayout.addRow(QLabel('Digraphs'),self.digraphs)
+        self.digraphs = DigraphWidget(self)
+        translayout.addRow(self.digraphs)
 
         transframe = QGroupBox('Transcription details')
         transframe.setLayout(translayout)
@@ -496,6 +500,26 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
 
+    def ignoreList(self):
+        return self.punctuation.value()
+
+    def delimiters(self):
+        wordDelim = self.wordDelimiter.text()
+        if wordDelim == '' or wordDelim == ' ':
+            wordDelim = None
+        transDelim = self.transDelimiter.text()
+        if transDelim == '':
+            transDelim = None
+        return wordDelim, transDelim
+
+
+    def getCharacters(self):
+        path = self.pathWidget.value()
+        if path != '' and os.path.exists(path):
+            self.characters = inspect_transcription_corpus(path)
+        else:
+            self.characters = set()
+
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
         self.progressDialog.reset()
@@ -522,12 +546,7 @@ class CorpusFromTranscriptionTextDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a name to the csv file.")
             return
-        wordDelim = self.wordDelimiter.text()
-        if wordDelim == '' or wordDelim == ' ':
-            wordDelim = None
-        transDelim = self.transDelimiter.text()
-        if transDelim == '':
-            transDelim = None
+        wordDelim, transDelim = self.delimiters()
         feature_system_path = self.featureSystem.path()
         ignore_list = self.punctuation.value()
 
@@ -543,7 +562,7 @@ class CorpusFromTranscriptionTextDialog(QDialog):
                     'path':path,
                     'delimiter': wordDelim,
                     'ignore_list': ignore_list,
-                    'digraph_list': None,
+                    'digraph_list': self.digraphs.value(),
                     'trans_delimiter': transDelim,
                     'feature_system_path': feature_system_path}
         return kwargs

@@ -6,6 +6,6 @@ from .csv import (load_corpus_csv, load_feature_matrix_csv, export_corpus_csv,
 
 from .text_spelling import load_spelling_corpus
 
-from .text_transcription import load_transcription_corpus
+from .text_transcription import load_transcription_corpus, inspect_transcription_corpus
 
 from .spontaneous import import_spontaneous_speech_corpus
