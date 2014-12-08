@@ -29,9 +29,6 @@ class SpontaneousSpeechCorpus(object):
 
     def __setstate__(self,state):
         self.__dict__.update(state)
-        for d in self:
-            for wt in d:
-                wt.wordtype.wordtokens.append(wt)
 
     def add_discourse(self, data, discourse_info):
         d = Discourse(**discourse_info)
@@ -54,16 +51,19 @@ class SpontaneousSpeechCorpus(object):
                 d[previous_time].following_token_time = wordtoken.begin
 
             previous_time = wordtoken.begin
-        self.discourses[d.identifier] = d
+        self.discourses[str(d)] = d
 
 class Discourse(object):
     def __init__(self, **kwargs):
-        self.identifier = ''
+        self.name = ''
 
         for k,v in kwargs.items():
             setattr(self,k,v)
 
         self.words = dict()
+
+    def __str__(self):
+        return self.name
 
     def add_word(self,wordtoken):
         wordtoken.discourse = self
@@ -82,6 +82,10 @@ class Discourse(object):
             return True
         return False
 
+    def __setstate__(self,state):
+        self.__dict__.update(state)
+        for wt in self:
+            wt.wordtype.wordtokens.append(wt)
 
     def __iter__(self):
         for k in sorted(self.words.keys()):

@@ -110,9 +110,12 @@ class MainWindow(QMainWindow):
             if hasattr(self.corpus,'lexicon'):
                 self.setMinimumSize(800, 400)
                 c = self.corpus.lexicon
-                self.discourseTree.show()
-                self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
-                self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                if hasattr(self.corpus,'discourses'):
+                    self.discourseTree.show()
+                    self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
+                    self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                else:
+                    self.textWidget.setModel(DiscourseModel(self.corpus))
                 #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
                 #self.discourseTree.resizeColumnToContents(0)
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
