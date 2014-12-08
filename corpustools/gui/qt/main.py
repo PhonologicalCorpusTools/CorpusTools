@@ -19,6 +19,7 @@ from .asgui import ASDialog
 from .flgui import FLDialog
 from .fagui import FADialog
 from .pdgui import PDDialog
+from .ndgui import NDDialog
 
 
 class MainWindow(QMainWindow):
@@ -71,6 +72,7 @@ class MainWindow(QMainWindow):
         self.FAWindow = None
         self.SSWindow = None
         self.ASWindow = None
+        self.NDWindow = None
 
         if not os.path.exists(TMP_DIR):
             os.mkdir(TMP_DIR)
@@ -224,6 +226,19 @@ class MainWindow(QMainWindow):
                 self.ASWindow = ResultsWindow('Acoustic similarity results',dataModel,self)
                 self.ASWindow.show()
 
+    @check_for_empty_corpus
+    def neighDen(self):
+        dialog = NDDialog(self, self.corpusModel.corpus,self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
+                self.NDWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.NDWindow = ResultsWindow('Neighborhood density results',dataModel,self)
+                self.NDWindow.show()
+
+
     def toggleWarnings(self):
         self.showWarnings = not self.showWarnings
 
@@ -276,6 +291,10 @@ class MainWindow(QMainWindow):
         self.removeTierAct = QAction( "Remove tier...",
                 self,
                 statusTip="Remove tier", triggered=self.destroyTier)
+
+        self.neighDenAct = QAction( "Calculate neighborhood density...",
+                self,
+                statusTip="Calculate neighborhood density", triggered=self.neighDen)
 
         self.stringsimAct = QAction( "Calculate string similarity...",
                 self,
@@ -357,6 +376,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.prodAct)
         self.analysisMenu.addAction(self.funcloadAct)
         self.analysisMenu.addAction(self.acousticsimAct)
+        self.analysisMenu.addAction(self.neighDenAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
         self.viewMenu.addAction(self.showInventoryAct)

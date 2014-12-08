@@ -9,7 +9,7 @@ from corpustools.symbolsim.string_similarity import (string_similarity,
 
 
 def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
-                    string_type='transcription', output_filename = None,
+                    sequence_type='transcription', output_filename = None,
                     min_rel = None, max_rel = None, phono_align = False,
                     min_pairs_okay = False, from_gui=False, stop_check = None,
                     call_back = None):
@@ -23,7 +23,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
         A sound segment
     relator_type: string
         The type of relator to be used to measure relatedness, e.g. 'string_similarity'
-    string_type: string
+    sequence_type: string
         The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
     count_what: string
         The type of frequency, either 'type' or 'token'
@@ -56,7 +56,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        word = getattr(w, string_type)
+        word = getattr(w, sequence_type)
         if s1 in word:
             list_s1.append(w)
             all_words.add(w.spelling)
@@ -85,8 +85,8 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             if w1 == w2:
                 continue
             ss = string_similarity(corpus, (w1.spelling,w2.spelling), relator_type,
-                                                string_type = string_type,
-                                                tier_name = string_type,
+                                                sequence_type = sequence_type,
+                                                tier_name = sequence_type,
                                                 count_what = count_what)
             if min_rel is not None and ss[0][-1] < min_rel:
                 continue
