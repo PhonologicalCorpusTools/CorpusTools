@@ -7,6 +7,13 @@ from .csv import DelimiterError
 
 from .binary import load_binary
 
+def inspect_transcription_corpus(path):
+    characters = set()
+    with open(path, encoding='utf-8-sig', mode='r') as f:
+        for line in f.readlines():
+            characters.update(line)
+    return characters
+
 def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph_list = None,
                     trans_delimiter = None,feature_system_path = None,
                     stop_check = None, call_back = None):
@@ -90,16 +97,18 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
 
             for word in line:
                 word = word.strip()
-                if trans_delimiter is not None:
+                if trans_delimiter is not None and trans_delimiter in word:
                     trans = word.strip(trans_delimiter).split(trans_delimiter)
                     if not trans_check and len(trans) > 1:
                         trans_check = True
-                elif digraph_list is not None:
+                elif digraph_list is not None and len(word) > 1:
                     trans = digraph_re.findall(word)
                 else:
                     trans = list(word)
                 trans = [x for x in trans if not x in ignore_list and x != '']
                 spell = ''.join(trans)
+                if spell == '':
+                    continue
                 word = corpus.get_or_create_word(spell, trans)
                 word.frequency += 1
                 if previous_time is not None:
