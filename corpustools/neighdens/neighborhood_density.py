@@ -12,8 +12,8 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
     ----------
     corpus : Corpus
         The domain over which functional load is calculated.
-    query : Word or list of str
-        The word whose neighborhood density to calculate.
+    query : Word (or, dispreferred: str or list of str)
+        The word whose neighborhood density to calculate. Can be coerced into a Word from a string or list of strings, e.g. if the query is not in the corpus or if called from command line.
     sequence_type : str
         If 'spelling', will calculate neighborhood density on spelling. If 'transcription' will calculate neighborhood density on transcriptions. Otherwise, calculate on specified tier.
     algorithm : str
@@ -45,13 +45,17 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
         else:
             return False
 
-    try:
-        query_word = corpus.find(query)
-    except KeyError:
-        if segment_delimiter == None:
-            query_word = Word(**{sequence_type: list(query)})
-        else:
-            query_word = Word(**{sequence_type: query.split(segment_delimiter)})
+    if isinstance(query, Word):
+        query_word = query
+    else:
+        try:
+            query_word = corpus.find(query)
+        except KeyError:
+            if segment_delimiter == None:
+                query_word = Word(**{sequence_type: list(query)})
+            else:
+                query_word = Word(**{sequence_type: query.split(segment_delimiter)})
+
     matches = list()
     if call_back is not None:
         call_back('Finding neighbors...')
