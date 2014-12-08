@@ -6,6 +6,7 @@ from corpustools.corpus.io import download_binary
 class FunctionWorker(QThread):
     updateProgress = Signal(int)
     updateProgressText = Signal(str)
+    errorEncountered = Signal(object)
 
     dataReady = Signal(object)
 
@@ -70,6 +71,7 @@ class FunctionDialog(QDialog):
         self.setWindowTitle(self.name.title())
 
         self.thread = worker
+        self.thread.errorEncountered.connect(self.handleError)
 
         self.progressDialog = QProgressDialog('Calculating {}...'.format(self.name),'Cancel',0,100, self)
         self.progressDialog.setWindowTitle('Calculating {}'.format(self.name))
@@ -80,6 +82,12 @@ class FunctionDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def handleError(self,error):
+        reply = QMessageBox.critical(self,
+                "Error encountered", str(error))
+        self.progressDialog.cancel()
+        return None
 
     def setResults(self, results):
         self.results = results
