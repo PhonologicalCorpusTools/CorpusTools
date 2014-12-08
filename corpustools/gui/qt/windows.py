@@ -1,9 +1,12 @@
 
 from .imports import *
 
+from corpustools.corpus.io import download_binary
+
 class FunctionWorker(QThread):
     updateProgress = Signal(int)
     updateProgressText = Signal(str)
+    errorEncountered = Signal(object)
 
     dataReady = Signal(object)
 
@@ -68,6 +71,7 @@ class FunctionDialog(QDialog):
         self.setWindowTitle(self.name.title())
 
         self.thread = worker
+        self.thread.errorEncountered.connect(self.handleError)
 
         self.progressDialog = QProgressDialog('Calculating {}...'.format(self.name),'Cancel',0,100, self)
         self.progressDialog.setWindowTitle('Calculating {}'.format(self.name))
@@ -78,6 +82,12 @@ class FunctionDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def handleError(self,error):
+        reply = QMessageBox.critical(self,
+                "Error encountered", str(error))
+        self.progressDialog.cancel()
+        return None
 
     def setResults(self, results):
         self.results = results
@@ -104,3 +114,12 @@ class FunctionDialog(QDialog):
     def about(self):
         reply = QMessageBox.information(self,
                 "About {}".format(self.name), '\n'.join(self._about))
+
+class DownloadWorker(FunctionWorker):
+    def run(self):
+        if self.stopCheck():
+            return
+        self.results = download_binary(self.kwargs['name'],self.kwargs['path'], call_back = self.kwargs['call_back'])
+        if self.stopCheck():
+            return
+        self.dataReady.emit(self.results)

@@ -17,15 +17,17 @@ class FLWorker(FunctionWorker):
             for pair in kwargs['segment_pairs']:
                 if kwargs['func_type'] == 'min_pairs':
                     res = FL.minpair_fl(kwargs['corpus'], [pair],
-                            kwargs['frequency_cutoff'],
-                            kwargs['relative_count'],
-                            kwargs['distinguish_homophones'],
+                            frequency_cutoff = kwargs['frequency_cutoff'],
+                            relative_count = kwargs['relative_count'],
+                            distinguish_homophones= kwargs['distinguish_homophones'],
+                            sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
                 elif kwargs['func_type'] == 'entropy':
                     res = FL.deltah_fl(kwargs['corpus'], [pair],
-                            kwargs['frequency_cutoff'],
-                            kwargs['type_or_token'],
+                            frequency_cutoff=kwargs['frequency_cutoff'],
+                            type_or_token=kwargs['type_or_token'],
+                            sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
                 if self.stopped:
@@ -35,16 +37,18 @@ class FLWorker(FunctionWorker):
             if kwargs['func_type'] == 'min_pairs':
                 res = FL.minpair_fl(kwargs['corpus'],
                             kwargs['segment_pairs'],
-                            kwargs['frequency_cutoff'],
-                            kwargs['relative_count'],
-                            kwargs['distinguish_homophones'],
+                            frequency_cutoff=kwargs['frequency_cutoff'],
+                            relative_count = kwargs['relative_count'],
+                            distinguish_homophones= kwargs['distinguish_homophones'],
+                            sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
             elif kwargs['func_type'] == 'entropy':
                 res = FL.deltah_fl(kwargs['corpus'],
                             kwargs['segment_pairs'],
-                            kwargs['frequency_cutoff'],
-                            kwargs['type_or_token'],
+                            frequency_cutoff=kwargs['frequency_cutoff'],
+                            type_or_token=kwargs['type_or_token'],
+                            sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
             if self.stopped:
@@ -93,13 +97,35 @@ class FLDialog(FunctionDialog):
 
         fllayout.addWidget(self.segPairWidget)
 
+        secondPane = QFrame()
+
+        l = QVBoxLayout()
+
         self.algorithmWidget = RadioSelectWidget('Functional load algorithm',
                                             OrderedDict([('Minimal pairs','min_pairs'),
                                             ('Change in entropy','entropy')]),
                                             {'Minimal pairs': self.minPairsSelected,
                                             'Change in entropy': self.entropySelected})
 
-        fllayout.addWidget(self.algorithmWidget)
+        l.addWidget(self.algorithmWidget)
+
+
+        self.tierWidget = QComboBox()
+        self.tierWidget.addItem('transcription')
+        for t in corpus.tiers:
+            self.tierWidget.addItem(t)
+
+        tierFrame = QGroupBox('Tier')
+
+        box = QVBoxLayout()
+        box.addWidget(self.tierWidget)
+        tierFrame.setLayout(box)
+
+        l.addWidget(tierFrame)
+
+        secondPane.setLayout(l)
+
+        fllayout.addWidget(secondPane)
 
         optionLayout = QVBoxLayout()
 
@@ -206,6 +232,7 @@ class FLDialog(FunctionDialog):
             frequency_cutoff = 0.0
         return {'corpus':self.corpus,
                 'segment_pairs':segPairs,
+                'sequence_type': self.tierWidget.currentText(),
                 'frequency_cutoff':frequency_cutoff,
                 'relative_count':self.relativeCountWidget.isChecked(),
                 'distinguish_homophones':self.homophoneWidget.isChecked(),
