@@ -3,14 +3,10 @@ from corpustools.symbolsim.phono_align_ex import Aligner
 
 al = Aligner(features_tf=False)
 
-def edit_distance(word1, word2, string_type):
-    if string_type == 'transcription':
-        m = al.make_similarity_matrix(word1.transcription, word2.transcription)
-        return m[-1][-1]['f']
-    elif string_type == 'spelling':
-        m = al.make_similarity_matrix(word1.spelling, word2.spelling)
-        return m[-1][-1]['f']
-
+def edit_distance(word1, word2, sequence_type):
+    m = al.make_similarity_matrix(getattr(word1, sequence_type), getattr(word2, sequence_type))
+    return m[-1][-1]['f']
+    
 # def edit_distance(word1, word2, string_type):
 #     """Returns the Levenshtein edit distance between a string from
 #     two words word1 and word2, code drawn from
