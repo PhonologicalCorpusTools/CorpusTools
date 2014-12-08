@@ -7,6 +7,7 @@ import corpustools.symbolsim.phono_align_ex as phono_align_ex
 from corpustools.symbolsim.string_similarity import (string_similarity,
                                                     )
 
+from .io import print_freqalt_results
 
 def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
                     sequence_type='transcription', output_filename = None,
@@ -129,15 +130,6 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
     freq_of_alt = len(words_with_alt)/len(all_words)
 
     if output_filename:
-        with open(output_filename, mode='w', encoding='utf-8') as outf2:
-            outf2.write('{}\t{}\t{}\r\n\r\n'.format('FirstWord', 'SecondWord', 'RelatednessScore'))
-            for w1, w2, score in related_list:
-                outf2.write('{}\t{}\t{}\r\n'.format(w1, w2, score))
-            outf2.write('\r\nStats\r\n------\r\n')
-            outf2.write('words_with_{}\t{}\r\n'.format(s1, len(list_s1)))
-            outf2.write('words_with_{}\t{}\r\n'.format(s2, len(list_s2)))
-            outf2.write('total_words\t{}\r\n'.format(len(all_words)))
-            outf2.write('total_words_alter\t{}\r\n'.format(len(words_with_alt)))
-            outf2.write('freq_of_alter\t{}\r\n'.format(freq_of_alt))
+        print_freqalt_results(output_filename, related_list)
 
     return len(all_words), len(words_with_alt), freq_of_alt
