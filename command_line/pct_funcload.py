@@ -29,7 +29,7 @@ def main():
     parser.add_argument('-r', '--relative_count', type=check_bool, default=True, help='For minimal pair FL: whether or not to divide the number of minimal pairs by the number of possible minimal pairs (words with either segment).')
     parser.add_argument('-d', '--distinguish_homophones', type=check_bool, default=False, help="For minimal pair FL: if False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.")
     parser.add_argument('-t', '--type_or_token', default='token', help='For change in entropy FL: specifies whether entropy is based on type or token frequency.')
-    parser.add_argument('-e', '--relative_fl', type=check_bool, default=False, help="If True, instead of reading the ")
+    parser.add_argument('-e', '--relative_fl', type=check_bool, default=False, help="If True, calculate the relative FL of a single segment by averaging across the functional loads of it and all other segments.")
     parser.add_argument('-s', '--sequence_type', default='transcription', help="The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.")
     parser.add_argument('-o', '--outfile', help='Name of output file')
 
