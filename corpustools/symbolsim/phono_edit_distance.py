@@ -2,7 +2,7 @@
 
 from corpustools.symbolsim.phono_align_ex import Aligner
 
-def phono_edit_distance(word1, word2, tier_name, features):
+def phono_edit_distance(word1, word2, sequence_type, features):
     """Returns an analogue to Levenshtein edit distance but uses
     phonological features instead of characters
 
@@ -13,8 +13,8 @@ def phono_edit_distance(word1, word2, tier_name, features):
     word2: Word
         The other word containing transcription tiers to which word1 will
         be compared
-    tier_name: string
-        Name of the transcription tier to use for comparisons
+    sequence_type: string
+        Name of the sequence type (transcription or a tier) to use for comparisons
     features: FeatureMatrix
         FeatureMatrix that contains all the segments in both transcriptions
         to be compared
@@ -25,8 +25,8 @@ def phono_edit_distance(word1, word2, tier_name, features):
         the phonological edit distance between two words
     """
 
-    w1 = getattr(word1,tier_name)
-    w2 = getattr(word2,tier_name)
+    w1 = getattr(word1,sequence_type)
+    w2 = getattr(word2,sequence_type)
 
 
     a = Aligner(features_tf=True, features=features)

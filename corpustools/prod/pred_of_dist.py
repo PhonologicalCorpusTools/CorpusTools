@@ -18,7 +18,7 @@ class UniquenessWarning(Warning):
     pass
 
 
-def count_segs(corpus, seg1, seg2, tier_name, type_or_token, stop_check, call_back):
+def count_segs(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, call_back):
     seg1_counts = 0
     seg2_counts = 0
 
@@ -33,7 +33,7 @@ def count_segs(corpus, seg1, seg2, tier_name, type_or_token, stop_check, call_ba
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        tier = getattr(word, tier_name)
+        tier = getattr(word, sequence_type)
         for seg in tier:
             if seg == seg1:
                 seg1_counts = seg1_counts+1 if type_or_token == 'type' else seg1_counts+word.frequency
@@ -43,7 +43,7 @@ def count_segs(corpus, seg1, seg2, tier_name, type_or_token, stop_check, call_ba
     return seg1_counts, seg2_counts
 
 
-def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token, stop_check, call_back):
+def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_check, call_back):
 
     envs = [EnvironmentFilter(corpus, env) for env in envs]
     env_matches = {env:{seg1:[0], seg2:[0]} for env in envs}
@@ -62,11 +62,11 @@ def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token, stop_check, c
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        for pos,seg in enumerate(getattr(word, tier_name)):
+        for pos,seg in enumerate(getattr(word, sequence_type)):
             if not (seg == seg1 or seg == seg2):
                 continue
 
-            word_env = word.get_env(pos, tier_name)
+            word_env = word.get_env(pos, sequence_type)
             found_env_match = list()
             for env in envs:
                 if word_env in env:
@@ -91,7 +91,7 @@ def check_envs(corpus, seg1, seg2, envs, tier_name, type_or_token, stop_check, c
 
     return env_matches, missing_envs, overlapping_envs
 
-def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription',
+def calc_prod_all_envs(corpus, seg1, seg2, sequence_type = 'transcription',
                 type_or_token = 'type', all_info = False, stop_check = None,
                 call_back = None):
     """
@@ -106,7 +106,7 @@ def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription',
         The first segment
     seg2 : string
         The second segment
-    tier_name : string
+    sequence_type : string
         Name of the Corpus tier to use for finding environments, defaults
         to 'transcription'
     type_or_token : string
@@ -124,7 +124,7 @@ def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription',
         frequency of seg2] if all_info is True, or just entropy if
         all_info is False.
     """
-    returned  = count_segs(corpus, seg1, seg2, tier_name, type_or_token,stop_check,call_back)
+    returned  = count_segs(corpus, seg1, seg2, sequence_type, type_or_token,stop_check,call_back)
     if stop_check is not None and stop_check():
         return
     seg1_count, seg2_count = returned
@@ -138,7 +138,7 @@ def calc_prod_all_envs(corpus, seg1, seg2, tier_name = 'transcription',
     return H
 
 
-def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription',
+def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
         type_or_token='type', strict = True, all_info = False, stop_check = None,
                 call_back = None):
     """
@@ -156,7 +156,7 @@ def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription',
     envs : list of strings
         List of strings that specify environments either using features
         or segments
-    tier_name : string
+    sequence_type : string
         Name of the Corpus tier to use for finding environments, defaults
         to 'transcription'
     type_or_token : string
@@ -178,7 +178,7 @@ def calc_prod(corpus, seg1, seg2, envs, tier_name='transcription',
         of [entropy, frequency of environment, frequency of seg1, frequency
         of seg2] if all_info is True, or just entropy if all_info is False.
     """
-    returned = check_envs(corpus, seg1, seg2, envs,tier_name, type_or_token, stop_check, call_back)
+    returned = check_envs(corpus, seg1, seg2, envs,sequence_type, type_or_token, stop_check, call_back)
 
     if stop_check is not None and stop_check():
         return
