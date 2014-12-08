@@ -1,12 +1,14 @@
+import os
 
 from .imports import *
 
 from collections import OrderedDict
 
 from corpustools.neighdens.neighborhood_density import neighborhood_density
+from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget, FileWidget
+from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget
 
 
 class NDWorker(FunctionWorker):
@@ -14,14 +16,16 @@ class NDWorker(FunctionWorker):
         kwargs = self.kwargs
         self.results = list()
         for q in kwargs['query']:
-            self.results.append([q,neighborhood_density(kwargs['corpus'], q,
+            res = neighborhood_density(kwargs['corpus'], q,
                                         algorithm = kwargs['algorithm'],
-                                        string_type = kwargs['string_type'],
-                                        #tier_name = kwargs['tier_name'],
+                                        sequence_type = kwargs['sequence_type'],
                                         count_what = kwargs['count_what'],
                                         max_distance = kwargs['max_distance'],
                                         stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])[0]])
+                                        call_back = kwargs['call_back'])
+            if kwargs['output_filename'] is not None:
+                print_neighden_results(kwargs['output_filename'],res[1])
+            self.results.append([q,res[0]])
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -108,14 +112,20 @@ class NDDialog(FunctionDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
-        stringEnabled = {'Compare spelling':True,
-                        'Compare transcription': self.corpus.has_transcription}
-        self.stringTypeWidget = RadioSelectWidget('String type',
-                                    OrderedDict([('Compare spelling', 'spelling'),
-                                    ('Compare transcription','transcription')]),
-                                    enabled = stringEnabled)
+        self.tierWidget = QComboBox()
+        self.tierWidget.addItem('spelling')
+        if self.corpus.has_transcription:
+            self.tierWidget.addItem('transcription')
+        for t in self.corpus.tiers:
+            self.tierWidget.addItem(t)
 
-        optionLayout.addWidget(self.stringTypeWidget)
+        tierFrame = QGroupBox('Tier')
+
+        box = QVBoxLayout()
+        box.addWidget(self.tierWidget)
+        tierFrame.setLayout(box)
+
+        optionLayout.addWidget(tierFrame)
 
         threshFrame = QGroupBox('Max distance/min similarity')
 
@@ -128,6 +138,17 @@ class NDDialog(FunctionDialog):
         threshFrame.setLayout(vbox)
 
         optionLayout.addWidget(threshFrame)
+
+        fileFrame = QGroupBox('Output file')
+
+        self.saveFileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
+
+        vbox = QHBoxLayout()
+        vbox.addWidget(self.saveFileWidget)
+
+        fileFrame.setLayout(vbox)
+
+        optionLayout.addWidget(fileFrame)
 
         optionFrame.setLayout(optionLayout)
 
@@ -152,13 +173,16 @@ class NDDialog(FunctionDialog):
 
         alg = self.algorithmWidget.value()
         typeToken = self.typeTokenWidget.value()
-        strType = self.stringTypeWidget.value()
 
         kwargs = {'corpus':self.corpus,
                 'algorithm': alg,
-                'string_type':strType,
+                'sequence_type':self.tierWidget.currentText(),
                 'count_what':typeToken,
                 'max_distance':max_distance}
+        out_file = self.saveFileWidget.value()
+        if out_file == '':
+            out_file = None
+        kwargs['output_filename'] = out_file
 
         if self.compType is None:
             reply = QMessageBox.critical(self,
@@ -172,8 +196,6 @@ class NDDialog(FunctionDialog):
                 return
             kwargs['query'] = [text]
         elif self.compType == 'file':
-            #Not implemented yet
-            return
             pairs_path = self.fileWidget.value()
             if not pairs_path:
                 reply = QMessageBox.critical(self,
@@ -183,7 +205,7 @@ class NDDialog(FunctionDialog):
                 reply = QMessageBox.critical(self,
                         "Invalid information", "The file path entered was not found.")
                 return
-            kwargs['query'] = read_pairs_file(pairs_path)
+            kwargs['query'] = load_words_neighden(pairs_path)
         return kwargs
 
     def calc(self):
@@ -210,7 +232,7 @@ class NDDialog(FunctionDialog):
             else:
                 typetoken = self.typeTokenWidget.value()
             self.results.append([w, nd,
-                        self.stringTypeWidget.value(), typetoken,
+                        self.tierWidget.currentText(), typetoken,
                         self.algorithmWidget.value()])
 
     def khorsiSelected(self):

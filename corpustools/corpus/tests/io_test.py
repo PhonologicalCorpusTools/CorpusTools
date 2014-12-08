@@ -1,26 +1,20 @@
 import unittest
 
 import os
-try:
-    from corpustools.corpus.io import (download_binary, save_binary, load_binary,
-                                    load_corpus_csv,load_corpus_text,
-                                    export_corpus_csv, export_feature_matrix_csv,
-                                    load_feature_matrix_csv,DelimiterError)
-except ImportError:
-    import sys
+import sys
 
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-    sys.path.append(corpustools_path)
-    from corpustools.corpus.io import (download_binary, save_binary, load_binary,
-                                    load_corpus_csv,load_corpus_text,
-                                    export_corpus_csv, export_feature_matrix_csv,
-                                    load_feature_matrix_csv,DelimiterError)
+test_dir = os.path.dirname(os.path.abspath(__file__))
+corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
+sys.path.insert(0,corpustools_path)
+from corpustools.corpus.io import (download_binary, save_binary, load_binary,
+                                load_corpus_csv,load_spelling_corpus, load_transcription_corpus,
+                                export_corpus_csv, export_feature_matrix_csv,
+                                load_feature_matrix_csv,DelimiterError)
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix)
-from corpustools.corpus.tests.classes_test import create_unspecified_test_corpus
+from corpustools.corpus.tests.lexicon_test import create_unspecified_test_corpus
 
-TEST_DIR = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading'
+TEST_DIR = r'C:\Users\SpeechInContext\Downloads\CorpusTools_test_files\CorpusTools_test_files\corpus_loading'
 
 class CustomCorpusTest(unittest.TestCase):
     def setUp(self):
@@ -35,7 +29,7 @@ class CustomCorpusTest(unittest.TestCase):
         self.assertRaises(DelimiterError,load_corpus_csv,'example',self.example_path,delimiter=',',trans_delimiter='/')
         #c = load_corpus_csv('example',self.example_path,delimiter=',')
 
-        c,errors = load_corpus_csv('example',self.example_path,delimiter=',')
+        c = load_corpus_csv('example',self.example_path,delimiter=',')
 
         example_c = create_unspecified_test_corpus()
 
@@ -54,9 +48,9 @@ class CustomCorpusTextTest(unittest.TestCase):
     def test_load_spelling_no_ignore(self):
         if not os.path.exists(TEST_DIR):
             return
-        self.assertRaises(DelimiterError, load_corpus_text, 'test', self.spelling_path,"?",[])
+        self.assertRaises(DelimiterError, load_spelling_corpus, 'test', self.spelling_path,"?",[])
 
-        c,errors = load_corpus_text('test',self.spelling_path,' ',[],string_type='spelling')
+        c = load_spelling_corpus('test',self.spelling_path,' ',[])
 
         self.assertEqual(c['ab'].frequency, 2)
 
@@ -64,7 +58,7 @@ class CustomCorpusTextTest(unittest.TestCase):
     def test_load_spelling_ignore(self):
         if not os.path.exists(TEST_DIR):
             return
-        c,errors = load_corpus_text('test',self.spelling_path,' ',["'",'.'],string_type='spelling')
+        c = load_spelling_corpus('test',self.spelling_path,' ',["'",'.'])
 
         self.assertEqual(c['ab'].frequency, 3)
         self.assertEqual(c['cabd'].frequency, 1)
@@ -72,27 +66,26 @@ class CustomCorpusTextTest(unittest.TestCase):
     def test_load_transcription(self):
         if not os.path.exists(TEST_DIR):
             return
-        self.assertRaises(DelimiterError,load_corpus_text,'test',
+        self.assertRaises(DelimiterError,load_transcription_corpus,'test',
                                 self.transcription_path," ",[],
-                                string_type='transcription',
                                 trans_delimiter = ',')
 
-        c,errors = load_corpus_text('test',self.transcription_path,' ',[],string_type='transcription',trans_delimiter='.')
+        c = load_transcription_corpus('test',self.transcription_path,' ',[],trans_delimiter='.')
 
-        self.assertEqual(sorted(c.inventory.keys()), sorted(['#','a','b','c','d']))
+        self.assertEqual(sorted(c.inventory), sorted(['#','a','b','c','d']))
 
     def test_load_transcription_morpheme(self):
         if not os.path.exists(TEST_DIR):
             return
-        c,errors = load_corpus_text('test',self.transcription_morphemes_path,' ',['-','=','.'],string_type='transcription',trans_delimiter='.')
+        c = load_transcription_corpus('test',self.transcription_morphemes_path,' ',['-','=','.'],trans_delimiter='.')
 
         self.assertEqual(c['cab'].frequency, 2)
 
     def test_load_with_fm(self):
         if not os.path.exists(TEST_DIR):
             return
-        c,errors = load_corpus_text('test',self.transcription_path,' ',
-                    ['-','=','.'],string_type='transcription',trans_delimiter='.',
+        c = load_transcription_corpus('test',self.transcription_path,' ',
+                    ['-','=','.'],trans_delimiter='.',
                     feature_system_path = self.full_feature_matrix_path)
 
         self.assertEqual(c.specifier,load_binary(self.full_feature_matrix_path))
@@ -101,8 +94,8 @@ class CustomCorpusTextTest(unittest.TestCase):
 
         self.assertEqual(c.check_coverage(),[])
 
-        c,errors = load_corpus_text('test',self.transcription_path,' ',
-                    ['-','=','.'],string_type='transcription',trans_delimiter='.',
+        c = load_transcription_corpus('test',self.transcription_path,' ',
+                    ['-','=','.'],trans_delimiter='.',
                     feature_system_path = self.missing_feature_matrix_path)
 
         self.assertEqual(c.specifier,load_binary(self.missing_feature_matrix_path))

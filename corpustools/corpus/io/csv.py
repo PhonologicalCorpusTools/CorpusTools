@@ -3,7 +3,7 @@ import collections
 import re
 
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
-from corpustools.corpus.io.binary import *
+from corpustools.corpus.io.binary import save_binary, load_binary
 
 import time
 
@@ -107,7 +107,7 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
         oqueue.put(corpus)
         oqueue.put(transcription_errors)
     else:
-        return corpus,transcription_errors
+        return corpus
 
 def load_feature_matrix_csv(name,path,delimiter):
     """

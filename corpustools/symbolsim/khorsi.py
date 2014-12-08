@@ -55,6 +55,8 @@ def lcs(x1, x2):
             lcs = None
         if lcs is not None:
             break
+    if lcs is None:
+        lcs = []
     leftover.extend(shorter[:begin])
     leftover.extend(shorter[end:])
     for i in range(len(longer)):
@@ -112,7 +114,6 @@ def khorsi(word1, word2, freq_base, sequence_type):
     """
     w1 = getattr(word1, sequence_type)
     w2 = getattr(word2, sequence_type)
-
     longest, left_over = lcs(w1, w2)
 
     #Khorsi's algorithm
