@@ -392,8 +392,8 @@ class MainWindow(QMainWindow):
         self.enhanceMenu = self.menuBar().addMenu("&Corpus")
         self.enhanceMenu.addAction(self.addTierAct)
         self.enhanceMenu.addAction(self.removeTierAct)
-        self.enhanceMenu.addAction(self.batchNeighDenAct)
-        self.enhanceMenu.addAction(self.batchPhonProbAct)
+        #self.enhanceMenu.addAction(self.batchNeighDenAct)
+        #self.enhanceMenu.addAction(self.batchPhonProbAct)
 
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
@@ -405,7 +405,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.prodAct)
         self.analysisMenu.addAction(self.funcloadAct)
         self.analysisMenu.addAction(self.neighDenAct)
-        self.analysisMenu.addAction(self.acousticSimAct)
+        #self.analysisMenu.addAction(self.acousticSimAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
