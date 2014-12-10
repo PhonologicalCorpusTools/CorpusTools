@@ -106,7 +106,7 @@ def acoustic_similarity_mapping(path_mapping,**kwargs):
     else:
         dist_func = dtw_distance
     cache = dict()
-    output_values = list()
+    asim = dict()
     if call_back is not None:
         call_back('Calculating acoustic similarity...')
         call_back(0,len(path_mapping))
@@ -116,17 +116,28 @@ def acoustic_similarity_mapping(path_mapping,**kwargs):
             return
         if call_back is not None:
             cur += 1
-            if cur % 100 == 0:
+            if cur % 2 == 0:
                 call_back(cur)
+        basetup = tuple(os.path.basename(x) for x in pm)
+        allgood = False
         for filepath in pm:
+            if not filepath.lower().endswith('.wav'):
+                break
             if filepath not in cache:
-                cache[filepath] = to_rep(filepath)
-        dist_val = dist_func(cache[pm[0]],cache[pm[1]])
+                cache[os.path.basename(filepath)] = to_rep(filepath)
+        else:
+            allgood = True
+        if not allgood:
+            continue
+        dist_val = dist_func(cache[basetup[0]],cache[basetup[1]])
         if output_sim:
-            dist_val = 1/dist_val
-        output_values.append([pm[0],pm[1],dist_val])
+            try:
+                dist_val = 1/dist_val
+            except ZeroDivisionError:
+                dist_val = 1
+        asim[basetup]=dist_val
 
-    return output_values
+    return asim
 
 def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
     """Computes acoustic similarity across two directories of .wav files.
@@ -194,7 +205,7 @@ def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
                 return
             if call_back is not None:
                 cur += 1
-                if cur % 100 == 0:
+                if cur % 2 == 0:
                     call_back(cur)
             path_mapping.append((os.path.join(directory_one,x),
                         os.path.join(directory_two,y)))
@@ -202,7 +213,7 @@ def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
     output = acoustic_similarity_mapping(path_mapping, **kwargs)
     if stop_check is not None and stop_check():
         return
-    output_val = sum([x[-1] for x in output]) / len(output)
+    output_val = sum(output.values()) / len(output)
 
     threaded_q = kwargs.get('threaded_q', None)
     if kwargs.get('return_all', False):
@@ -212,6 +223,89 @@ def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
     else:
         threaded_q.put(output_val)
         return None
+
+def analyze_directories(directories, **kwargs):
+    stop_check = kwargs.get('stop_check',None)
+    call_back = kwargs.get('call_back',None)
+
+    files = []
+
+    if call_back is not None:
+        call_back('Mapping directories...')
+        call_back(0,len(directories))
+        cur = 0
+    for d in directories:
+        if not os.path.isdir(d):
+            continue
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 3 == 0:
+                call_back(cur)
+
+        files += [os.path.join(d,x) for x in os.listdir(d) if x.lower().endswith('.wav')]
+
+    if call_back is not None:
+        call_back('Mapping directories...')
+        call_back(0,len(files)*len(files))
+        cur = 0
+    path_mapping = list()
+    for x in files:
+        for y in files:
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 20 == 0:
+                    call_back(cur)
+            if not x.lower().endswith('.wav'):
+                continue
+            if not y.lower().endswith('.wav'):
+                continue
+            if x == y:
+                continue
+            path_mapping.append((x,y))
+
+    result = acoustic_similarity_mapping(path_mapping, **kwargs)
+    return result
+
+def analyze_directory(directory, **kwargs):
+    stop_check = kwargs.get('stop_check',None)
+    call_back = kwargs.get('call_back',None)
+
+    all_files = list()
+    wavs = list()
+    directories = list()
+    for f in os.listdir(directory):
+        path = os.path.join(directory,f)
+        all_files.append(path)
+        if f.lower().endswith('.wav'):
+            wavs.append(path)
+        if os.path.isdir(f):
+            directories.append(f)
+    if not wavs:
+        return analyze_directories(directories, **kwargs)
+
+
+    if call_back is not None:
+        call_back('Mapping files...')
+        call_back(0,len(wavs)*len(wavs))
+        cur = 0
+    path_mapping = list()
+    for x in wavs:
+        for y in wavs:
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 20 == 0:
+                    call_back(cur)
+            if x == y:
+                continue
+            path_mapping.append((x,y))
+    result = acoustic_similarity_mapping(path_mapping, **kwargs)
+    return result
 
 
 
