@@ -15,7 +15,7 @@ class SpontaneousSpeechCorpusModel(QStandardItemModel):
         speakerItem = QStandardItem('s01')
         corpusItem.appendRow(speakerItem)
         for d in self.corpus.discourses.values():
-            speakerItem.appendRow(QStandardItem(d.identifier))
+            speakerItem.appendRow(QStandardItem(str(d)))
 
     def createLexicon(self,row):
         d = self.item(row).text()
@@ -107,9 +107,9 @@ class CorpusModel(QAbstractTableModel):
             return self.columns[col]
         return None
 
-    def addTier(self,tierName, featureList):
+    def addTier(self,tierName, segList):
         self.layoutAboutToBeChanged.emit()
-        self.corpus.add_tier(tierName, featureList)
+        self.corpus.add_tier(tierName, segList)
         self.columns = self.corpus.attributes
         self.layoutChanged.emit()
 
@@ -297,7 +297,7 @@ class FeatureSystemModel(QAbstractTableModel):
 
 
     def rowCount(self,parent=None):
-        return len(self.data)
+        return len(self.rows)
 
     def columnCount(self,parent=None):
         return len(self.columns)
@@ -307,15 +307,15 @@ class FeatureSystemModel(QAbstractTableModel):
             return None
         elif role != Qt.DisplayRole:
             return None
-        return self.data[index.row()][index.column()]
+        return self.rows[index.row()][index.column()]
 
     def sort(self, col, order):
         """Sort table by given column number.
         """
         self.layoutAboutToBeChanged.emit()
-        self.data = sorted(self.data, key=lambda x: x[col])
+        self.rows = sorted(self.rows, key=lambda x: x[col])
         if order == Qt.DescendingOrder:
-            self.data.reverse()
+            self.rows.reverse()
         self.layoutChanged.emit()
 
     def headerData(self, col, orientation, role):
@@ -325,16 +325,16 @@ class FeatureSystemModel(QAbstractTableModel):
 
     def filter(self,segments):
         self.layoutAboutToBeChanged.emit()
-        self.data = [x for x in self.alldata if x[0] in segments]
+        self.rows = [x for x in self.allrows if x[0] in segments]
         self.layoutChanged.emit()
 
     def showAll(self):
         self.layoutAboutToBeChanged.emit()
-        self.data = self.alldata
+        self.rows = self.allrows
         self.layoutChanged.emit()
 
     def generateData(self):
-        self.data = list()
+        self.rows = list()
         self.columns = ['symbol']
         if self.specifier is None:
             return
@@ -342,8 +342,8 @@ class FeatureSystemModel(QAbstractTableModel):
         for x in self.specifier.segments:
             if x in ['','#']:
                 continue
-            self.data.append([x]+[self.specifier[x,y] for y in self.specifier.features])
-        self.alldata = self.data
+            self.rows.append([x]+[self.specifier[x,y] for y in self.specifier.features])
+        self.allrows = self.rows
 
     def addSegment(self,seg,feat):
         self.layoutAboutToBeChanged.emit()

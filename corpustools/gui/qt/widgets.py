@@ -1,4 +1,4 @@
-
+import string
 from itertools import combinations
 
 from .imports import *
@@ -6,6 +6,167 @@ from .imports import *
 from .views import TableWidget
 
 from .models import SegmentPairModel, EnvironmentModel
+
+class PunctuationWidget(QGroupBox):
+    def __init__(self,parent = None):
+        QGroupBox.__init__(self,'Punctuation to ignore',parent)
+
+        self.btnGroup = QButtonGroup()
+        self.btnGroup.setExclusive(False)
+        layout = QVBoxLayout()
+        box = QGridLayout()
+
+        row = 0
+        col = 0
+        for s in string.punctuation:
+            btn = QPushButton(s)
+            btn.setCheckable(True)
+            btn.setAutoExclusive(False)
+            btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
+            btn.setMaximumWidth(btn.fontMetrics().boundingRect(s).width() + 14)
+
+            box.addWidget(btn,row,col)
+            self.btnGroup.addButton(btn)
+            col += 1
+            if col > 11:
+                col = 0
+                row += 1
+        boxFrame = QFrame()
+        boxFrame.setLayout(box)
+        layout.addWidget(boxFrame)
+
+        buttonlayout = QHBoxLayout()
+        self.checkAll = QPushButton('Check all')
+        self.checkAll.clicked.connect(self.check)
+        self.uncheckAll = QPushButton('Uncheck all')
+        self.uncheckAll.clicked.connect(self.uncheck)
+        buttonlayout.addWidget(self.checkAll, alignment = Qt.AlignLeft)
+        buttonlayout.addWidget(self.uncheckAll, alignment = Qt.AlignLeft)
+        buttonframe = QFrame()
+        buttonframe.setLayout(buttonlayout)
+
+        layout.addWidget(buttonframe)
+        self.setLayout(layout)
+
+    def check(self):
+        for b in self.btnGroup.buttons():
+            b.setChecked(True)
+
+    def uncheck(self):
+        for b in self.btnGroup.buttons():
+            b.setChecked(False)
+
+    def value(self):
+        value = []
+        for b in self.btnGroup.buttons():
+            if b.isChecked():
+                value.append(b.text())
+        return value
+
+class DigraphDialog(QDialog):
+    def __init__(self, characters, parent = None):
+        QDialog.__init__(self, parent)
+        layout = QFormLayout()
+        self.digraphLine = QLineEdit()
+        layout.addRow(QLabel('Digraph'),self.digraphLine)
+        symbolframe = QGroupBox('Characters')
+        box = QGridLayout()
+
+        row = 0
+        col = 0
+        for s in characters:
+            btn = QPushButton(s)
+            btn.clicked.connect(self.addCharacter)
+            btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
+            btn.setMaximumWidth(btn.fontMetrics().boundingRect(s).width() + 14)
+
+            box.addWidget(btn,row,col)
+            col += 1
+            if col > 11:
+                col = 0
+                row += 1
+        symbolframe.setLayout(box)
+        layout.addRow(symbolframe)
+        self.oneButton = QPushButton('Add')
+        self.anotherButton = QPushButton('Add and create another')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.oneButton.clicked.connect(self.one)
+        self.anotherButton.clicked.connect(self.another)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addRow(acFrame)
+        self.setLayout(layout)
+        self.setFixedSize(self.sizeHint())
+        self.setWindowTitle('Construct Digraph')
+
+    def addCharacter(self):
+        self.digraphLine.setText(self.digraphLine.text()+self.sender().text())
+
+    def one(self):
+        self.addOneMore = False
+        self.accept()
+
+    def another(self):
+        self.addOneMore = True
+        self.accept()
+
+    def value(self):
+        return self.digraphLine.text()
+
+    def reject(self):
+        self.addOneMore = False
+        QDialog.reject(self)
+
+
+
+class DigraphWidget(QGroupBox):
+    def __init__(self,parent = None):
+        self._parent = parent
+        QGroupBox.__init__(self,'Digraphs',parent)
+        layout = QVBoxLayout()
+
+        self.editField = QLineEdit()
+        layout.addWidget(self.editField)
+        self.button = QPushButton('Construct a digraph')
+        self.button.clicked.connect(self.construct)
+        layout.addWidget(self.button)
+        self.setLayout(layout)
+
+    def construct(self):
+        minus = set(self._parent.ignoreList())
+        wd, td = self._parent.delimiters()
+        delims = []
+        if wd is None:
+            delims.extend([' ','\t','\n'])
+        else:
+            delims.append(wd)
+        if td is not None:
+            delims.append(td)
+        minus.update(delims)
+        possible = sorted(self._parent.characters - minus, key = lambda x: x.lower())
+        dialog = DigraphDialog(possible,self)
+        addOneMore = True
+        while addOneMore:
+            if dialog.exec_():
+                v = dialog.value()
+                if v != '' and v not in self.value():
+                    val = self.value() + [v]
+                    self.editField.setText(','.join(val))
+            dialog.digraphLine.setText('')
+            addOneMore = dialog.addOneMore
+
+
+    def value(self):
+        text = self.editField.text()
+        values = [x.strip() for x in text.split(',') if x.strip() != '']
+        return values
 
 class FileWidget(QFrame):
     def __init__(self,title,filefilter,parent=None):
@@ -320,7 +481,8 @@ class FeatureBox(QGroupBox):
         self.buttons = list()
         for v in self.values:
             b = QPushButton('Add [{}feature]'.format(v))
-            b.clicked.connect(lambda: self.addFeature(v))
+            b.value = v
+            b.clicked.connect(self.addFeature)
             buttonLayout.addWidget(b, alignment = Qt.AlignCenter)
             self.buttons.append(b)
 
@@ -345,10 +507,10 @@ class FeatureBox(QGroupBox):
             self.values.update(v.features.values())
         self.values = sorted([x for x in self.values if x != ''])
 
-    def addFeature(self, value):
+    def addFeature(self):
         curFeature = self.featureList.currentItem()
         if curFeature:
-            self.envList.addItem(value+curFeature.text())
+            self.envList.addItem(self.sender().value+curFeature.text())
 
     def clearAll(self):
         self.envList.clear()

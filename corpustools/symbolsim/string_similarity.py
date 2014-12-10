@@ -28,7 +28,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
     algorithm: string
         The algorithm of string similarity to be used, currently supports
         'khorsi', 'edit_distance', and 'phono_edit_distance'
-    string_type: string
+    sequence_type: string
         Specifies whether to use 'spelling', 'transcription' or the name of a
         transcription tier to use for comparisons
     count_what: string
@@ -45,7 +45,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         and the final element is their relatedness score
     """
 
-    string_type = kwargs.get('string_type', 'spelling')
+    sequence_type = kwargs.get('sequence_type', 'spelling')
     count_what = kwargs.get('count_what', 'type')
     stop_check = kwargs.get('stop_check', None)
     call_back = kwargs.get('call_back', None)
@@ -53,21 +53,21 @@ def string_similarity(corpus, query, algorithm, **kwargs):
     max_rel = kwargs.get('max_rel', None)
 
     if algorithm == 'khorsi':
-        if string_type == 'spelling':
+        if sequence_type == 'spelling':
             if corpus.spelling_freq_base[count_what] is None:
-                corpus.spelling_freq_base[count_what] = make_freq_base(corpus,string_type,count_what)
+                corpus.spelling_freq_base[count_what] = make_freq_base(corpus,sequence_type,count_what)
             freq_base = corpus.spelling_freq_base[count_what]
         else:
             if corpus.transcription_freq_base[count_what] is None:
-                corpus.transcription_freq_base[count_what] = make_freq_base(corpus,string_type,count_what)
+                corpus.transcription_freq_base[count_what] = make_freq_base(corpus,sequence_type,count_what)
             freq_base = corpus.transcription_freq_base[count_what]
         relate_func = partial(khorsi,freq_base=freq_base,
-                                string_type = string_type)
+                                sequence_type = sequence_type)
     elif algorithm == 'edit_distance':
-        relate_func =  partial(edit_distance, string_type = string_type)
+        relate_func =  partial(edit_distance, sequence_type = sequence_type)
     elif algorithm == 'phono_edit_distance':
         tier_name = kwargs.get('tier_name','transcription')
-        relate_func = partial(phono_edit_distance,tier_name = tier_name, features = corpus.specifier)
+        relate_func = partial(phono_edit_distance,sequence_type = sequence_type, features = corpus.specifier)
     else:
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
 
