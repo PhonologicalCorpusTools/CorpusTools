@@ -16,18 +16,23 @@ class ASWorker(FunctionWorker):
         kwargs = self.kwargs
         self.results = list()
         if kwargs['type'] == 'one':
-            output_list = analyze_directory(kwargs['query'], **kwargs)
+            asim = analyze_directory(kwargs['query'], **kwargs)
         elif kwargs['type'] == 'two':
-            output = acoustic_similarity_directories(*kwargs['query'],**kwargs)
+            asim, output_val = acoustic_similarity_directories(*kwargs['query'],**kwargs)
+
+            #asim[(kwargs['query'][0],kwargs['query'][1])] = output_val
+        elif kwargs['type'] == 'files':
+            asim = acoustic_similarity_mapping(kwargs['query'], **kwargs)
+        if self.stopped:
+            return
+        print(asim.keys())
+        for k,v in asim.items():
             if self.stopped:
                 return
-            output_list, output_val = output
-            output_list.append([kwargs['query'][0],kwargs['query'][1],output_val])
-        elif kwargs['type'] == 'files':
-            output_list = acoustic_similarity_mapping(kwargs['query'], **kwargs)
-        for o in output_list:
-            self.results.append([os.path.split(o[0])[1],
-                                            os.path.split(o[1])[1],o[2]])
+            self.results.append(list(k) + [v])
+
+        if kwargs['type'] == 'two':
+            self.results.append([os.path.split(kwargs['query'][0])[1],os.path.split(kwargs['query'][1])[1], output_val])
         if self.stopped:
             return
         self.dataReady.emit(self.results)
