@@ -3,6 +3,7 @@ from numpy import zeros
 
 from functools import partial
 
+from corpustools.acousticsim import AcousticSimError
 from corpustools.acousticsim.representations import to_envelopes, to_mfcc
 from corpustools.acousticsim.distance_functions import dtw_distance, xcorr_distance
 
@@ -136,7 +137,8 @@ def acoustic_similarity_mapping(path_mapping,**kwargs):
             except ZeroDivisionError:
                 dist_val = 1
         asim[basetup]=dist_val
-
+    if len(asim) == 0:
+        raise(AcousticSimError("The path mapping does not contain any wav files"))
     return asim
 
 def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
@@ -193,7 +195,11 @@ def acoustic_similarity_directories(directory_one,directory_two,**kwargs):
     call_back = kwargs.get('call_back',None)
 
     files_one = [x for x in os.listdir(directory_one) if x.lower().endswith('.wav')]
+    if len(files_one) == 0:
+        raise(AcousticSimError("The first directory does not contain any wav files"))
     files_two = [x for x in os.listdir(directory_two) if x.lower().endswith('.wav')]
+    if len(files_two) == 0:
+        raise(AcousticSimError("The second directory does not contain any wav files"))
     if call_back is not None:
         call_back('Mapping directories...')
         call_back(0,len(files_one)*len(files_two))
@@ -245,6 +251,8 @@ def analyze_directories(directories, **kwargs):
                 call_back(cur)
 
         files += [os.path.join(d,x) for x in os.listdir(d) if x.lower().endswith('.wav')]
+    if len(files) == 0:
+        raise(AcousticSimError("The directory does not contain any wav files"))
 
     if call_back is not None:
         call_back('Mapping directories...')

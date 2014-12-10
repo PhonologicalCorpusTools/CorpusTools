@@ -410,10 +410,10 @@ class MainWindow(QMainWindow):
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 
-        self.viewMenu = self.menuBar().addMenu("&Windows")
-        self.viewMenu.addAction(self.showInventoryAct)
-        self.viewMenu.addAction(self.showTextAct)
-        self.menuBar().addSeparator()
+        #self.viewMenu = self.menuBar().addMenu("&Windows")
+        #self.viewMenu.addAction(self.showInventoryAct)
+        #self.viewMenu.addAction(self.showTextAct)
+        #self.menuBar().addSeparator()
 
         self.helpMenu = self.menuBar().addMenu("&Help")
         self.helpMenu.addAction(self.helpAct)
