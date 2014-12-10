@@ -2,27 +2,54 @@
 import os
 from collections import OrderedDict
 
-import corpustools.acousticsim.main as AS
+from corpustools.acousticsim.io import load_path_mapping
+
+from corpustools.acousticsim.main import(acoustic_similarity_mapping,
+#from acousticsim.main import (acoustic_similarity_mapping,
+                            acoustic_similarity_directories,
+                            analyze_directory)
 
 from .imports import *
-from .widgets import DirectoryWidget, RadioSelectWidget
+from .widgets import DirectoryWidget, RadioSelectWidget, FileWidget
 from .windows import FunctionWorker, FunctionDialog
 
 class ASWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
-        output = AS.acoustic_similarity_directories(**kwargs)
+        if kwargs['type'] == 'one':
+            try:
+                asim = analyze_directory(kwargs['query'], **kwargs)
+            except Exception as e:
+                self.errorEncountered.emit(e)
+                return
+        elif kwargs['type'] == 'two':
+            try:
+                asim, output_val = acoustic_similarity_directories(*kwargs['query'],**kwargs)
+            except Exception as e:
+                self.errorEncountered.emit(e)
+                return
+
+            #asim[(kwargs['query'][0],kwargs['query'][1])] = output_val
+        elif kwargs['type'] == 'file':
+            try:
+                asim = acoustic_similarity_mapping(kwargs['query'], **kwargs)
+            except Exception as e:
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
             return
-        output_list, output_val = output
-        for o in output_list:
-            self.results.append([os.path.split(o[0])[1],
-                                            os.path.split(o[1])[1],o[2]])
+        for k,v in asim.items():
+            if self.stopped:
+                return
+            self.results.append(list(k) + [v])
+
+        if kwargs['type'] == 'two':
+            self.results.append([os.path.basename(kwargs['query'][0]),os.path.basename(kwargs['query'][1]), output_val])
+        else:
+            self.results.append(['AVG', 'AVG',sum(asim.values())/len(asim)])
         if self.stopped:
             return
-        self.results.append([os.path.split(kwargs['directory_one'])[1],
-                                            os.path.split(kwargs['directory_one'])[1],output_val])
         self.dataReady.emit(self.results)
 
 class ASDialog(FunctionDialog):
@@ -60,17 +87,36 @@ class ASDialog(FunctionDialog):
         self.showToolTips = showToolTips
         aslayout = QHBoxLayout()
 
-        directoryFrame = QGroupBox('Directories')
-        box = QFormLayout()
+        compFrame = QGroupBox('Comparison type')
 
-        self.directoryOne = DirectoryWidget()
-        self.directoryTwo = DirectoryWidget()
-        box.addRow('First directory:',self.directoryOne)
-        box.addRow('Second directory:',self.directoryTwo)
+        vbox = QFormLayout()
+        self.compType = None
+        self.oneDirectoryRadio = QRadioButton('Analyze single directory')
+        self.oneDirectoryRadio.clicked.connect(self.oneDirectorySelected)
+        self.oneDirectoryWidget = DirectoryWidget()
+        self.oneDirectoryWidget.textChanged.connect(self.oneDirectoryRadio.click)
+        self.twoDirectoryRadio = QRadioButton('Compare two directories')
+        self.twoDirectoryRadio.clicked.connect(self.twoDirectoriesSelected)
+        self.directoryOneWidget = DirectoryWidget()
+        self.directoryOneWidget.textChanged.connect(self.twoDirectoryRadio.click)
+        self.directoryTwoWidget = DirectoryWidget()
+        self.directoryTwoWidget.textChanged.connect(self.twoDirectoryRadio.click)
+        self.fileRadio = QRadioButton('Use list of full path comparisons')
+        self.fileRadio.clicked.connect(self.fileSelected)
+        self.fileWidget = FileWidget('Select a word pairs file', 'Text file (*.txt *.csv)')
+        self.fileWidget.textChanged.connect(self.fileRadio.click)
 
-        directoryFrame.setLayout(box)
+        vbox.addRow(self.oneDirectoryRadio)
+        vbox.addRow('Directory:',self.oneDirectoryWidget)
+        vbox.addRow(self.twoDirectoryRadio)
+        vbox.addRow('First directory:',self.directoryOneWidget)
+        vbox.addRow('Second directory:',self.directoryTwoWidget)
+        vbox.addRow(self.fileRadio)
+        vbox.addRow(self.fileWidget)
 
-        aslayout.addWidget(directoryFrame)
+        compFrame.setLayout(vbox)
+
+        aslayout.addWidget(compFrame)
 
         optionLayout = QVBoxLayout()
 
@@ -135,7 +181,7 @@ class ASDialog(FunctionDialog):
         self.layout().insertWidget(0,asframe)
 
         if self.showToolTips:
-            directoryFrame.setToolTip(("<FONT COLOR=black>"
+            compFrame.setToolTip(("<FONT COLOR=black>"
             'Choose two directories to compare sound files between.'
             "</FONT>"))
             self.representationWidget.setToolTip(("<FONT COLOR=black>"
@@ -163,6 +209,14 @@ class ASDialog(FunctionDialog):
                                             ' Multiprocessing is currently not supported'
             "</FONT>"))
 
+    def oneDirectorySelected(self):
+        self.compType = 'one'
+
+    def twoDirectoriesSelected(self):
+        self.compType = 'two'
+
+    def fileSelected(self):
+        self.compType = 'file'
 
     def mfccSelected(self):
         self.coeffEdit.setEnabled(True)
@@ -170,7 +224,7 @@ class ASDialog(FunctionDialog):
     def envelopesSelected(self):
         self.coeffEdit.setEnabled(False)
 
-    def calc(self):
+    def generateKwargs(self):
         rep = self.representationWidget.value()
         alg = self.distAlgWidget.value()
         if self.filterEdit.text() in ['','0']:
@@ -200,8 +254,7 @@ class ASDialog(FunctionDialog):
         except ValueError:
             return
         kwargs = {
-                'directory_one': self.directoryOne.value(),
-                'directory_two': self.directoryTwo.value(),
+                'type': self.compType,
                 'rep':rep,
                 'match_func':alg,
                 'num_filters':filters,
@@ -210,6 +263,55 @@ class ASDialog(FunctionDialog):
                 'output_sim':self.outputSimWidget.isChecked(),
                 'use_multi':self.multiprocessingWidget.isChecked(),
                 'return_all':True}
+        if self.compType is None:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a comparison type.")
+            return
+        elif self.compType == 'one':
+            kwargs['query'] = self.oneDirectoryWidget.value()
+        elif self.compType == 'two':
+            dirOne = self.directoryOneWidget.value()
+            if dirOne == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify the first directory.")
+                return
+            if not os.path.exists(dirOne):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The first directory does not exist.")
+                return
+            dirTwo = self.directoryTwoWidget.value()
+            if dirTwo == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify the second directory.")
+                return
+            if not os.path.exists(dirTwo):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The second directory does not exist.")
+                return
+
+            kwargs['query'] = [dirOne, dirTwo]
+        elif self.compType == 'file':
+            path = self.fileWidget.value()
+            if path == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify a path mapping file.")
+                return
+            if not os.path.exists(path):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The specified path mapping file does not exist.")
+                return
+            try:
+                kwargs['query'] = load_path_mapping(path)
+            except OSError as e:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", str(e))
+                return
+        return kwargs
+
+    def calc(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
         self.thread.setParams(kwargs)
 
         self.thread.start()
