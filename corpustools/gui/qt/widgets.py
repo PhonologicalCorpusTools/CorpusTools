@@ -479,7 +479,8 @@ class FeatureBox(QGroupBox):
         self.buttons = list()
         for v in self.values:
             b = QPushButton('Add [{}feature]'.format(v))
-            b.clicked.connect(lambda: self.addFeature(v))
+            b.value = v
+            b.clicked.connect(self.addFeature)
             buttonLayout.addWidget(b, alignment = Qt.AlignCenter)
             self.buttons.append(b)
 
@@ -504,10 +505,10 @@ class FeatureBox(QGroupBox):
             self.values.update(v.features.values())
         self.values = sorted([x for x in self.values if x != ''])
 
-    def addFeature(self, value):
+    def addFeature(self):
         curFeature = self.featureList.currentItem()
         if curFeature:
-            self.envList.addItem(value+curFeature.text())
+            self.envList.addItem(self.sender().value+curFeature.text())
 
     def clearAll(self):
         self.envList.clear()

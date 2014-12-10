@@ -149,7 +149,7 @@ class PDDialog(FunctionDialog):
                             ' two sounds is irrelevant. The symbols you see here should automatically'
                             ' match the symbols used anywhere in your corpus.'
                             "</FONT>"))
-            self.tierWidget.setToolTip(("<FONT COLOR=black>"
+            tierFrame.setToolTip(("<FONT COLOR=black>"
                                     'Choose which tier predictability should'
                                     ' be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
