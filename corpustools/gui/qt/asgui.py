@@ -18,13 +18,25 @@ class ASWorker(FunctionWorker):
         kwargs = self.kwargs
         self.results = list()
         if kwargs['type'] == 'one':
-            asim = analyze_directory(kwargs['query'], **kwargs)
+            try:
+                asim = analyze_directory(kwargs['query'], **kwargs)
+            except Exception as e:
+                self.errorEncountered.emit(e)
+                return
         elif kwargs['type'] == 'two':
-            asim, output_val = acoustic_similarity_directories(*kwargs['query'],**kwargs)
+            try:
+                asim, output_val = acoustic_similarity_directories(*kwargs['query'],**kwargs)
+            except Exception as e:
+                self.errorEncountered.emit(e)
+                return
 
             #asim[(kwargs['query'][0],kwargs['query'][1])] = output_val
         elif kwargs['type'] == 'file':
-            asim = acoustic_similarity_mapping(kwargs['query'], **kwargs)
+            try:
+                asim = acoustic_similarity_mapping(kwargs['query'], **kwargs)
+            except Exception as e:
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
             return
         for k,v in asim.items():
