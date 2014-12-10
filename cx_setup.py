@@ -15,7 +15,7 @@ ufuncs_path = scipy.special._ufuncs.__file__
 incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1])]
 base = None
 if sys.platform == "win32":
-    base = "Win32GUI"
+    #base = "Win32GUI"
     libegl = os.path.join(os.path.dirname(PyQt5.__file__),'libEGL.dll')
     incl_files.append((libegl,os.path.split(libegl)[1]))
 
@@ -45,6 +45,8 @@ build_exe_options = {"excludes": [
                         'corpustools.funcload.tests',
                         'corpustools.prod.tests',
                         'matplotlib',
+                        "tcl",
+                        'ttk',
                         "tkinter",],
                     "include_files":incl_files,
                     "includes": [
@@ -62,6 +64,7 @@ build_exe_options = {"excludes": [
                             "scipy.special",
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
+                            "acousticsim",
                             "sys"]
                             }
 
@@ -105,7 +108,7 @@ setup(name='Phonological CorpusTools',
                 'corpustools.funcload',
                 'corpustools.prod',
                 'corpustools.gui.qt',
-                'corpustools.acousticsim',
+                #'corpustools.acousticsim',
                 'corpustools.symbolsim',
                 'corpustools.neighdens'],
       executables = [Executable('bin/pct.py',

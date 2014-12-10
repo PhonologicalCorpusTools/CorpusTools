@@ -81,6 +81,7 @@ class LexiconView(QWidget):
         self.table = TableWidget(self)
         layout = QVBoxLayout()
         self.searchField = QLineEdit()
+        self.searchField.setPlaceholderText('Search...')
         self.searchField.returnPressed.connect(self.search)
         layout.addWidget(self.searchField, alignment = Qt.AlignRight)
         layout.addWidget(self.table)
@@ -426,6 +427,7 @@ class DiscourseView(QWidget):
 
         layout = QVBoxLayout()
         self.searchField = QLineEdit()
+        self.searchField.setPlaceholderText('Search...')
         self.searchField.returnPressed.connect(self.search)
         layout.addWidget(self.searchField, alignment = Qt.AlignRight)
         layout.addWidget(self.text)
@@ -593,5 +595,5 @@ class ResultsWindow(QWidget):
             with open(filename[0], mode='w', encoding='utf-8') as f:
                 writer = csv.writer(f, delimiter='\t')
                 writer.writerow(self.table.model().columns)
-                for row in self.table.model().data:
+                for row in self.table.model().results:
                     writer.writerow(row)

@@ -1,1 +1,3 @@
 
+class AcousticSimError(Exception):
+    pass
