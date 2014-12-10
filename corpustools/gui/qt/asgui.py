@@ -2,8 +2,10 @@
 import os
 from collections import OrderedDict
 
-#import corpustools.acousticsim.main as AS
-from acousticsim.main import (acoustic_similarity_mapping,
+from corpustools.acousticsim.io import load_path_mapping
+
+from corpustools.acousticsim.main import(acoustic_similarity_mapping,
+#from acousticsim.main import (acoustic_similarity_mapping,
                             acoustic_similarity_directories,
                             analyze_directory)
 
@@ -21,18 +23,19 @@ class ASWorker(FunctionWorker):
             asim, output_val = acoustic_similarity_directories(*kwargs['query'],**kwargs)
 
             #asim[(kwargs['query'][0],kwargs['query'][1])] = output_val
-        elif kwargs['type'] == 'files':
+        elif kwargs['type'] == 'file':
             asim = acoustic_similarity_mapping(kwargs['query'], **kwargs)
         if self.stopped:
             return
-        print(asim.keys())
         for k,v in asim.items():
             if self.stopped:
                 return
             self.results.append(list(k) + [v])
 
         if kwargs['type'] == 'two':
-            self.results.append([os.path.split(kwargs['query'][0])[1],os.path.split(kwargs['query'][1])[1], output_val])
+            self.results.append([os.path.basename(kwargs['query'][0]),os.path.basename(kwargs['query'][1]), output_val])
+        else:
+            self.results.append(['AVG', 'AVG',sum(asim.values())/len(asim)])
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -255,13 +258,48 @@ class ASDialog(FunctionDialog):
         elif self.compType == 'one':
             kwargs['query'] = self.oneDirectoryWidget.value()
         elif self.compType == 'two':
-            kwargs['query'] = [self.directoryOneWidget.value(), self.directoryTwoWidget.value()]
+            dirOne = self.directoryOneWidget.value()
+            if dirOne == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify the first directory.")
+                return
+            if not os.path.exists(dirOne):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The first directory does not exist.")
+                return
+            dirTwo = self.directoryTwoWidget.value()
+            if dirTwo == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify the second directory.")
+                return
+            if not os.path.exists(dirTwo):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The second directory does not exist.")
+                return
+
+            kwargs['query'] = [dirOne, dirTwo]
         elif self.compType == 'file':
-            raise(NotImplementedError)
+            path = self.fileWidget.value()
+            if path == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify a path mapping file.")
+                return
+            if not os.path.exists(path):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The specified path mapping file does not exist.")
+                return
+            try:
+                kwargs['query'] = load_path_mapping(path)
+            except OSError as e:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", str(e))
+                return
         return kwargs
 
     def calc(self):
         kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
         self.thread.setParams(kwargs)
 
         self.thread.start()

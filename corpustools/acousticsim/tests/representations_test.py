@@ -3,19 +3,14 @@
 from numpy import array,sum,sqrt
 import unittest
 import os
-try:
-    from corpustools.acousticsim.representations import (to_envelopes,
-                                        to_mfcc,
-                                        preproc)
-except ImportError:
-    import sys
+import sys
 
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-    sys.path.append(corpustools_path)
-    from corpustools.acousticsim.representations import (to_envelopes,
-                                        to_mfcc,
-                                        preproc)
+test_dir = os.path.dirname(os.path.abspath(__file__))
+corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
+sys.path.insert(0,corpustools_path)
+from corpustools.acousticsim.representations import (to_envelopes,
+                                    to_mfcc,
+                                    preproc)
 
 from scipy.io import loadmat
 

@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         def do_check(self):
             if not self.corpusModel.corpus.has_transcription:
                 reply = QMessageBox.critical(self,
-                        "Missing transcription", "This corpus has no transcriptions, so the requested cannot be performed.")
+                        "Missing transcription", "This corpus has no transcriptions, so the requested action cannot be performed.")
                 return
             else:
                 function(self)
@@ -144,17 +144,23 @@ class MainWindow(QMainWindow):
     def showPreferences(self):
         pass
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def showFeatureSystem(self):
         dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def createTier(self):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.tierName, dialog.featureList)
             self.corpusTable.horizontalHeader().resizeSections()
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def destroyTier(self):
         dialog = RemoveTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
@@ -313,11 +319,11 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate functional load", triggered=self.funcLoad)
 
-        self.acousticSimFileAct = QAction( "Calculate acoustic similarity...",
+        self.acousticSimFileAct = QAction( "Calculate acoustic similarity (for files)...",
                 self,
                 statusTip="Calculate acoustic similarity for files", triggered=self.acousticSim)
 
-        self.acousticSimAct = QAction( "Calculate acoustic similarity...",
+        self.acousticSimAct = QAction( "Calculate acoustic similarity (from corpus)...",
                 self,
                 statusTip="Calculate acoustic similarity for corpus")#, triggered=self.acousticSim)
 
@@ -389,17 +395,17 @@ class MainWindow(QMainWindow):
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
 
-        self.analysisMenu = self.menuBar().addMenu("Corpus &analysis")
+        self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.stringSimAct)
+        #self.analysisMenu.addAction(self.stringSimFileAct)
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.prodAct)
         self.analysisMenu.addAction(self.funcloadAct)
         self.analysisMenu.addAction(self.neighDenAct)
         self.analysisMenu.addAction(self.acousticSimAct)
+        self.analysisMenu.addAction(self.acousticSimFileAct)
 
-        self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
-        self.otherMenu.addAction(self.stringSimFileAct)
-        self.otherMenu.addAction(self.acousticSimFileAct)
+        #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
         self.viewMenu.addAction(self.showInventoryAct)

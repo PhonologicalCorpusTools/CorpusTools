@@ -1,17 +1,13 @@
 import unittest
 
 import os
-try:
-    from corpustools.acousticsim.main import (acoustic_similarity_mapping,
-                                        acoustic_similarity_directories)
-except ImportError:
-    import sys
+import sys
 
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-    sys.path.append(corpustools_path)
-    from corpustools.acousticsim.main import (acoustic_similarity_mapping,
-                                        acoustic_similarity_directories)
+test_dir = os.path.dirname(os.path.abspath(__file__))
+corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
+sys.path.insert(0,corpustools_path)
+from corpustools.acousticsim.main import (acoustic_similarity_mapping,
+                                    acoustic_similarity_directories)
 
 TEST_DIR = r'C:\Users\michael\Documents\Testing'
 
