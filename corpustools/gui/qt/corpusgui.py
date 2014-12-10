@@ -16,7 +16,7 @@ from .windows import FunctionWorker, DownloadWorker
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
-                    DigraphWidget)
+                    DigraphWidget, InventoryBox)
 
 from corpustools.gui.qt.featuregui import FeatureSystemSelect
 
@@ -602,9 +602,26 @@ class AddTierDialog(QDialog):
 
         layout.addWidget(nameFrame)
 
-        self.featureWidget = FeatureBox('Select features to define the tier',corpus.inventory)
+        self.createType = QComboBox()
+        self.createType.addItem('Segments')
+        if self.corpus.specifier is not None:
+            self.createType.addItem('Features')
+        else:
+            layout.addWidget(QLabel('Features for tier creation are not available without a feature system.'))
 
-        layout.addWidget(self.featureWidget)
+        self.createType.currentIndexChanged.connect(self.generateFrames)
+
+        layout.addWidget(QLabel('Basis for building environment:'))
+        layout.addWidget(self.createType, alignment = Qt.AlignLeft)
+        self.createFrame = QFrame()
+        createLayout = QVBoxLayout()
+        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
+
+        createLayout.addWidget(self.createWidget)
+
+        self.createFrame.setLayout(createLayout)
+
+        layout.addWidget(self.createFrame)
 
         self.createButton = QPushButton('Create tier')
         self.previewButton = QPushButton('Preview tier')
@@ -626,14 +643,36 @@ class AddTierDialog(QDialog):
 
         self.setWindowTitle('Create tier')
 
+    def createFeatureFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = FeatureBox('Features to define the tier',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def createSegmentFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def generateFrames(self,ind=0):
+        if self.createType.currentText() == 'Segments':
+            self.createSegmentFrame()
+        elif self.createType.currentText() == 'Features':
+            self.createFeatureFrame()
+
     def preview(self):
-        featureList = self.featureWidget.value()
-        if not featureList:
+        createType = self.createType.currentText()
+        createList = self.createWidget.value()
+        if not createList:
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one feature.")
+                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
             return
-        featureList = featureList[1:-1]
-        segList = self.corpus.features_to_segments(featureList)
+        if createType == 'Features':
+            createList = createList[1:-1]
+            segList = self.corpus.features_to_segments(createList)
+        else:
+            segList = createList
         notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
 
         reply = QMessageBox.information(self,
@@ -655,12 +694,17 @@ class AddTierDialog(QDialog):
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
 
-        featureList = self.featureWidget.value()
-        if not featureList:
+        createType = self.createType.currentText()
+        createList = self.createWidget.value()
+        if not createList:
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one feature.")
+                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
             return
-        self.featureList = featureList[1:-1]
+        if createType == 'Features':
+            createList = createList[1:-1]
+            self.segList = self.corpus.features_to_segments(createList)
+        else:
+            self.segList = createList
         QDialog.accept(self)
 
 class RemoveTierDialog(QDialog):

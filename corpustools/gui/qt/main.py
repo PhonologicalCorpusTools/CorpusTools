@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
     def createTier(self):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
-            self.corpusModel.addTier(dialog.tierName, dialog.featureList)
+            self.corpusModel.addTier(dialog.tierName, dialog.segList)
             self.corpusTable.table.horizontalHeader().resizeSections()
 
     def destroyTier(self):

@@ -228,7 +228,7 @@ class WordTest(unittest.TestCase):
         self.assertEqual(str(t.transcription),
                         '.'.join(self.no_freq['transcription']))
 
-        self.assertEqual(t.frequency, 1)
+        self.assertEqual(t.frequency, 0)
 
         self.assertEqual(t.spelling, self.no_freq['spelling'])
 
@@ -378,8 +378,7 @@ class CorpusFeatureMatrixTest(unittest.TestCase):
 
         corpus.set_feature_matrix(fm)
 
-        corpus.add_tier('t',['+feature1'])
-
+        corpus.add_tier('t','+feature1')
         self.assertEqual(corpus['d'].t, [corpus['d'].transcription[0]])
 
         corpus.remove_tier('t')
@@ -498,7 +497,7 @@ class SegmentTest(unittest.TestCase):
         self.corpus = create_specified_test_corpus()
 
     def test_categories(self):
-        cats = {'ɑ':['Vowel','Open','Back','Unrounded'],
+        cats = {'ɑ':['Vowel','Open','Near back','Unrounded'],
                 'u':['Vowel','Close','Back','Rounded'],
                 'o':['Vowel','Close mid','Back','Rounded'],
                 'e':['Vowel','Close mid','Front','Unrounded'],
