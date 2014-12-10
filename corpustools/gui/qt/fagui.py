@@ -18,6 +18,7 @@ class FAWorker(FunctionWorker):
             for pair in kwargs['segment_pairs']:
                 res = calc_freq_of_alt(kwargs['corpus'], pair[0], pair[1],
                                 kwargs['relator_type'], kwargs['count_what'],
+                                sequence_type = kwargs['sequence_type'],
                                 min_rel=kwargs['min_rel'], max_rel=kwargs['max_rel'],
                                 min_pairs_okay=kwargs['include_minimal_pairs'],
                                 from_gui=True, phono_align=kwargs['phono_align'],
@@ -85,6 +86,19 @@ class FADialog(FunctionDialog):
         optionFrame = QGroupBox('Options')
 
         optionLayout = QVBoxLayout()
+
+        self.tierWidget = QComboBox()
+        self.tierWidget.addItem('transcription')
+        for t in corpus.tiers:
+            self.tierWidget.addItem(t)
+
+        tierFrame = QGroupBox('Tier')
+
+        box = QVBoxLayout()
+        box.addWidget(self.tierWidget)
+        tierFrame.setLayout(box)
+
+        optionLayout.addWidget(tierFrame)
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
@@ -164,6 +178,13 @@ class FADialog(FunctionDialog):
             self.segPairWidget.setToolTip(("<FONT COLOR=black>"
             'Select the two sounds you wish to check for alternations.'
             "</FONT>"))
+
+            tierFrame.setToolTip(("<FONT COLOR=black>"
+                                    'Choose which tier frequency of alternation should'
+                                    ' be calculated over (e.g., the whole transcription'
+                                    ' vs. a tier containing only [+voc] segments).'
+                                    ' New tiers can be created from the Corpus menu.'
+                                    "</FONT>"))
             self.typeTokenWidget.setToolTip(("<FONT COLOR=black>"
             'Select which type of frequency to use'
                                     ' for calculating similarity (only relevant for Khorsi). Type'
@@ -238,6 +259,7 @@ class FADialog(FunctionDialog):
             out_file = self.fileWidget.value()
         else:
             out_file = None
+        kwargs['sequence_type'] = self.tierWidget.currentText()
         kwargs['relator_type'] = rel_type
         kwargs['corpus'] = corpus
         kwargs['min_rel'] = min_rel

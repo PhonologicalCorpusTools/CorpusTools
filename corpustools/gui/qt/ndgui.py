@@ -106,12 +106,6 @@ class NDDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token',
-                                            {'Count types':'type',
-                                            'Count tokens':'token'})
-
-        optionLayout.addWidget(self.typeTokenWidget)
-
         self.tierWidget = QComboBox()
         self.tierWidget.addItem('spelling')
         if self.corpus.has_transcription:
@@ -126,6 +120,12 @@ class NDDialog(FunctionDialog):
         tierFrame.setLayout(box)
 
         optionLayout.addWidget(tierFrame)
+
+        self.typeTokenWidget = RadioSelectWidget('Type or token',
+                                            {'Count types':'type',
+                                            'Count tokens':'token'})
+
+        optionLayout.addWidget(self.typeTokenWidget)
 
         threshFrame = QGroupBox('Max distance/min similarity')
 
@@ -158,6 +158,15 @@ class NDDialog(FunctionDialog):
         ndFrame.setLayout(ndlayout)
 
         self.layout().insertWidget(0,ndFrame)
+
+        if self.showToolTips:
+
+            tierFrame.setToolTip(("<FONT COLOR=black>"
+            'Select whether to calculate neighborhood density'
+                                ' on the spelling of a word (perhaps more useful for morphological purposes)'
+                                ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
+                                ' in the corpus.'
+            "</FONT>"))
 
     def oneWordSelected(self):
         self.compType = 'one'

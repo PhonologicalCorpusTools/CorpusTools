@@ -106,11 +106,6 @@ class SSDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token',
-                                            {'Count types':'type',
-                                            'Count tokens':'token'})
-
-        optionLayout.addWidget(self.typeTokenWidget)
         self.tierWidget = QComboBox()
         self.tierWidget.addItem('spelling')
         if self.corpus.has_transcription:
@@ -125,6 +120,12 @@ class SSDialog(FunctionDialog):
         tierFrame.setLayout(box)
 
         optionLayout.addWidget(tierFrame)
+
+        self.typeTokenWidget = RadioSelectWidget('Type or token',
+                                            {'Count types':'type',
+                                            'Count tokens':'token'})
+
+        optionLayout.addWidget(self.typeTokenWidget)
 
         threshFrame = QGroupBox('Return only results between...')
 
@@ -175,7 +176,8 @@ class SSDialog(FunctionDialog):
             tierFrame.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate similarity'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
-                                ' or transcription of a word (perhaps more useful for phonological purposes).'
+                                ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
+                                ' in the corpus.'
             "</FONT>"))
             threshFrame.setToolTip(("<FONT COLOR=black>"
             'Select the range of similarity'

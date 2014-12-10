@@ -109,6 +109,12 @@ class FLDialog(FunctionDialog):
 
         l.addWidget(self.algorithmWidget)
 
+        secondPane.setLayout(l)
+
+        fllayout.addWidget(secondPane)
+
+        optionLayout = QVBoxLayout()
+
 
         self.tierWidget = QComboBox()
         self.tierWidget.addItem('transcription')
@@ -121,13 +127,7 @@ class FLDialog(FunctionDialog):
         box.addWidget(self.tierWidget)
         tierFrame.setLayout(box)
 
-        l.addWidget(tierFrame)
-
-        secondPane.setLayout(l)
-
-        fllayout.addWidget(secondPane)
-
-        optionLayout = QVBoxLayout()
+        optionLayout.addWidget(tierFrame)
 
         self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
                                                 OrderedDict([('All segment pairs together','together'),
@@ -138,7 +138,7 @@ class FLDialog(FunctionDialog):
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
         self.minFreqEdit = QLineEdit()
-        box.addRow('Only consider words with frequency of at least:',self.minFreqEdit)
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
         minFreqFrame.setLayout(box)
 
@@ -191,11 +191,17 @@ class FLDialog(FunctionDialog):
                             ' be divided by the number of words that include any of the target segments'
                             ' present in the list at the left.'
             "</FONT>"))
+            tierFrame.setToolTip(("<FONT COLOR=black>"
+                                    'Choose which tier functional load should'
+                                    ' be calculated over (e.g., the whole transcription'
+                                    ' vs. a tier containing only [+voc] segments).'
+                                    ' New tiers can be created from the Corpus menu.'
+                                    "</FONT>"))
             self.segPairOptionsWidget.setToolTip(("<FONT COLOR=black>"
             'Choose either to calculate the'
                                 ' functional load of a particular contrast among a group of segments'
                                 ' to calculate the functional loads of a series of segment pairs separately.'
-            "</FONT>"))
+                                "</FONT>"))
             self.segPairWidget.setToolTip(("<FONT COLOR=black>"
             'Add pairs of sounds whose contrast to collapse.'
                                     ' For example, if you\'re interested in the functional load of the [s]'

@@ -602,7 +602,7 @@ class AddTierDialog(QDialog):
 
         layout.addWidget(nameFrame)
 
-        self.featureWidget = FeatureBox('Select features to define the tier',corpus.specifier.features)
+        self.featureWidget = FeatureBox('Select features to define the tier',corpus.inventory)
 
         layout.addWidget(self.featureWidget)
 
@@ -632,6 +632,7 @@ class AddTierDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one feature.")
             return
+        featureList = featureList[1:-1]
         segList = self.corpus.features_to_segments(featureList)
         notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
 
@@ -654,11 +655,12 @@ class AddTierDialog(QDialog):
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
 
-        self.featureList = self.featureWidget.value()
-        if not self.featureList:
+        featureList = self.featureWidget.value()
+        if not featureList:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one feature.")
             return
+        self.featureList = featureList[1:-1]
         QDialog.accept(self)
 
 class RemoveTierDialog(QDialog):

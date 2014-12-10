@@ -156,13 +156,13 @@ class MainWindow(QMainWindow):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.tierName, dialog.featureList)
-            self.corpusTable.horizontalHeader().resizeSections()
+            self.corpusTable.table.horizontalHeader().resizeSections()
 
     def destroyTier(self):
         dialog = RemoveTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.removeTiers(dialog.tiers)
-            self.corpusTable.horizontalHeader().resizeSections()
+            self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
     def stringSim(self):
