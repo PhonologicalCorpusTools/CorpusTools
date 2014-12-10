@@ -107,9 +107,9 @@ class CorpusModel(QAbstractTableModel):
             return self.columns[col]
         return None
 
-    def addTier(self,tierName, featureList):
+    def addTier(self,tierName, segList):
         self.layoutAboutToBeChanged.emit()
-        self.corpus.add_tier(tierName, featureList)
+        self.corpus.add_tier(tierName, segList)
         self.columns = self.corpus.attributes
         self.layoutChanged.emit()
 

@@ -941,10 +941,13 @@ class Corpus(object):
             features = self.specifier.matrix[seg.symbol]
         return features
 
-    def add_tier(self, tier_name, tier_features):
+    def add_tier(self, tier_name, spec):
         if tier_name not in self._tiers:
             self._tiers.append(tier_name)
-        tier_segs = self.features_to_segments(tier_features)
+        if isinstance(spec, str):
+            tier_segs = self.features_to_segments(spec)
+        else:
+            tier_segs = spec
         for word in self:
             word.add_tier(tier_name,tier_segs)
 

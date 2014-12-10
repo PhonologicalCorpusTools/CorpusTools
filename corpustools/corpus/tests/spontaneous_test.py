@@ -61,11 +61,11 @@ class SpontaneousSpeechCorpusTest(unittest.TestCase):
     def test_init(self):
         corpus = SpontaneousSpeechCorpus('','')
 
-        discourse_info = {'identifier':'',
+        discourse_info = {'name':'',
                             }
         corpus.add_discourse(self.word_tokens, discourse_info)
 
-        d = corpus.discourses[0]
+        d = corpus.discourses['']
         self.assertEqual(d[0].previous_token, None)
         self.assertEqual(d[1].previous_token, d[0])
         self.assertEqual(d[2].previous_token, d[1])

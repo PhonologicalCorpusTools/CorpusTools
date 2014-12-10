@@ -67,7 +67,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         relate_func =  partial(edit_distance, sequence_type = sequence_type)
     elif algorithm == 'phono_edit_distance':
         tier_name = kwargs.get('tier_name','transcription')
-        relate_func = partial(phono_edit_distance,tier_name = tier_name, features = corpus.specifier)
+        relate_func = partial(phono_edit_distance,sequence_type = sequence_type, features = corpus.specifier)
     else:
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
 

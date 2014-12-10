@@ -87,7 +87,6 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
                 continue
             ss = string_similarity(corpus, (w1.spelling,w2.spelling), relator_type,
                                                 sequence_type = sequence_type,
-                                                tier_name = sequence_type,
                                                 count_what = count_what)
             if min_rel is not None and ss[0][-1] < min_rel:
                 continue
