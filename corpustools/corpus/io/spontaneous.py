@@ -10,13 +10,6 @@ word_file_extensions = ['words','wrd']
 FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
 
-def inspect_directory(directory):
-    #directory = corpus.directory
-
-    for root, subdirs, files in os.walk(directory):
-        print("loop\n")
-        print(root,subdirs,files)
-
 def align_dialog_info(words, phones, wavs, stop_check, call_back):
 
     if call_back is not None:
@@ -87,7 +80,7 @@ def import_spontaneous_speech_corpus(directory, stop_check = None, call_back = N
         if 'phones' not in v:
             continue
         data = files_to_data(v['words'], v['phones'])
-        discourse_info = {'identifier':d
+        discourse_info = {'name':d
                             }
         if 'wav' in v:
             discourse_info['wav_path'] = v['wav']

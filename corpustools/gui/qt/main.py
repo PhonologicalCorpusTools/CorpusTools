@@ -110,9 +110,12 @@ class MainWindow(QMainWindow):
             if hasattr(self.corpus,'lexicon'):
                 self.setMinimumSize(800, 400)
                 c = self.corpus.lexicon
-                self.discourseTree.show()
-                self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
-                self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                if hasattr(self.corpus,'discourses'):
+                    self.discourseTree.show()
+                    self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
+                    self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                else:
+                    self.textWidget.setModel(DiscourseModel(self.corpus))
                 #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
                 #self.discourseTree.resizeColumnToContents(0)
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
@@ -156,8 +159,8 @@ class MainWindow(QMainWindow):
     def createTier(self):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
-            self.corpusModel.addTier(dialog.tierName, dialog.featureList)
-            self.corpusTable.horizontalHeader().resizeSections()
+            self.corpusModel.addTier(dialog.tierName, dialog.segList)
+            self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -165,7 +168,7 @@ class MainWindow(QMainWindow):
         dialog = RemoveTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.removeTiers(dialog.tiers)
-            self.corpusTable.horizontalHeader().resizeSections()
+            self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
     def stringSim(self):

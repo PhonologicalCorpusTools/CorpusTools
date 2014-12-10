@@ -55,6 +55,8 @@ def lcs(x1, x2):
             lcs = None
         if lcs is not None:
             break
+    if lcs is None:
+        lcs = []
     leftover.extend(shorter[:begin])
     leftover.extend(shorter[end:])
     for i in range(len(longer)):
@@ -90,7 +92,7 @@ def substring_set(w, l):
         substrings.update(['.'.join(sub)])
     return substrings
 
-def khorsi(word1, word2, freq_base, string_type):
+def khorsi(word1, word2, freq_base, sequence_type):
     """Calculate the string similarity of two words given a set of
     characters and their frequencies in a corpus based on Khorsi (2012)
 
@@ -102,7 +104,7 @@ def khorsi(word1, word2, freq_base, string_type):
         Second Word object to compare
     freq_base: dictionary
         a dictionary where each segment is mapped to its frequency of occurrence in a corpus
-    string_type: string
+    sequence_type: string
         The type of segments to be used ('spelling' = Roman letters, 'transcription' = IPA symbols)
 
     Returns
@@ -110,13 +112,8 @@ def khorsi(word1, word2, freq_base, string_type):
     float
         A number representing the relatedness of two words based on Khorsi (2012)
     """
-    w1 = getattr(word1, string_type)
-    w2 = getattr(word2, string_type)
-
-    if string_type == 'spelling':
-        w1 = list(w1)
-        w2 = list(w2)
-
+    w1 = getattr(word1, sequence_type)
+    w2 = getattr(word2, sequence_type)
     longest, left_over = lcs(w1, w2)
 
     #Khorsi's algorithm
@@ -125,14 +122,14 @@ def khorsi(word1, word2, freq_base, string_type):
 
     return lcs_sum - leftover_sum
 
-def make_freq_base(corpus, string_type, count_what = 'type'):
+def make_freq_base(corpus, sequence_type, count_what = 'type'):
     """Returns a dictionary of segments mapped to their frequency of occurrence in a corpus
 
     Parameters
     ---------
     corpus: Corpus
         Corpus over which to generate frequency statistics
-    string_type: string
+    sequence_type: string
         The type of segments to be used ('spelling' = Roman letters, 'transcription' = IPA symbols)
     count_what: string
         The type of frequency, either 'type' or 'token', defaults to 'type'
@@ -150,7 +147,7 @@ def make_freq_base(corpus, string_type, count_what = 'type'):
         else:
             freq = 1
 
-        for x in getattr(word, string_type):
+        for x in getattr(word, sequence_type):
             freq_base[str(x)] += freq
     freq_base['total'] = sum(value for value in freq_base.values())
     return freq_base

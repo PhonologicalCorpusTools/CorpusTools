@@ -7,9 +7,10 @@ import corpustools.symbolsim.phono_align_ex as phono_align_ex
 from corpustools.symbolsim.string_similarity import (string_similarity,
                                                     )
 
+from .io import print_freqalt_results
 
 def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
-                    string_type='transcription', output_filename = None,
+                    sequence_type='transcription', output_filename = None,
                     min_rel = None, max_rel = None, phono_align = False,
                     min_pairs_okay = False, from_gui=False, stop_check = None,
                     call_back = None):
@@ -23,7 +24,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
         A sound segment
     relator_type: string
         The type of relator to be used to measure relatedness, e.g. 'string_similarity'
-    string_type: string
+    sequence_type: string
         The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
     count_what: string
         The type of frequency, either 'type' or 'token'
@@ -56,7 +57,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        word = getattr(w, string_type)
+        word = getattr(w, sequence_type)
         if s1 in word:
             list_s1.append(w)
             all_words.add(w.spelling)
@@ -85,8 +86,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             if w1 == w2:
                 continue
             ss = string_similarity(corpus, (w1.spelling,w2.spelling), relator_type,
-                                                string_type = string_type,
-                                                tier_name = string_type,
+                                                sequence_type = sequence_type,
                                                 count_what = count_what)
             if min_rel is not None and ss[0][-1] < min_rel:
                 continue
@@ -129,15 +129,6 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
     freq_of_alt = len(words_with_alt)/len(all_words)
 
     if output_filename:
-        with open(output_filename, mode='w', encoding='utf-8') as outf2:
-            outf2.write('{}\t{}\t{}\r\n\r\n'.format('FirstWord', 'SecondWord', 'RelatednessScore'))
-            for w1, w2, score in related_list:
-                outf2.write('{}\t{}\t{}\r\n'.format(w1, w2, score))
-            outf2.write('\r\nStats\r\n------\r\n')
-            outf2.write('words_with_{}\t{}\r\n'.format(s1, len(list_s1)))
-            outf2.write('words_with_{}\t{}\r\n'.format(s2, len(list_s2)))
-            outf2.write('total_words\t{}\r\n'.format(len(all_words)))
-            outf2.write('total_words_alter\t{}\r\n'.format(len(words_with_alt)))
-            outf2.write('freq_of_alter\t{}\r\n'.format(freq_of_alt))
+        print_freqalt_results(output_filename, related_list)
 
     return len(all_words), len(words_with_alt), freq_of_alt

@@ -12,15 +12,12 @@ from .windows import FunctionWorker, FunctionDialog
 class SSWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
-        self.results = string_similarity(kwargs['corpus'], kwargs['query'],
-                                        kwargs['relator_type'],
-                                        string_type = kwargs['string_type'],
-                                        tier_name = kwargs['tier_name'],
-                                        count_what = kwargs['count_what'],
-                                        min_rel = kwargs['min_rel'],
-                                        max_rel = kwargs['max_rel'],
-                                        stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])
+        #try:
+        #    self.results = string_similarity(**kwargs)
+        #except Exception as e:
+        #    self.errorEncountered.emit(e)
+        #    return
+        self.results = string_similarity(**kwargs)
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -109,20 +106,26 @@ class SSDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        self.tierWidget = QComboBox()
+        self.tierWidget.addItem('spelling')
+        if self.corpus.has_transcription:
+            self.tierWidget.addItem('transcription')
+        for t in self.corpus.tiers:
+            self.tierWidget.addItem(t)
+
+        tierFrame = QGroupBox('Tier')
+
+        box = QVBoxLayout()
+        box.addWidget(self.tierWidget)
+        tierFrame.setLayout(box)
+
+        optionLayout.addWidget(tierFrame)
+
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             {'Count types':'type',
                                             'Count tokens':'token'})
 
         optionLayout.addWidget(self.typeTokenWidget)
-
-        stringEnabled = {'Compare spelling':True,
-                        'Compare transcription': self.corpus.has_transcription}
-        self.stringTypeWidget = RadioSelectWidget('String type',
-                                    OrderedDict([('Compare spelling', 'spelling'),
-                                    ('Compare transcription','transcription')]),
-                                    enabled = stringEnabled)
-
-        optionLayout.addWidget(self.stringTypeWidget)
 
         threshFrame = QGroupBox('Return only results between...')
 
@@ -170,10 +173,11 @@ class SSDialog(FunctionDialog):
                                     'frequency means each letter is counted as many times as its '
                                     'word\'s frequency in the corpus.'
             "</FONT>"))
-            self.stringTypeWidget.setToolTip(("<FONT COLOR=black>"
+            tierFrame.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate similarity'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
-                                ' or transcription of a word (perhaps more useful for phonological purposes).'
+                                ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
+                                ' in the corpus.'
             "</FONT>"))
             threshFrame.setToolTip(("<FONT COLOR=black>"
             'Select the range of similarity'
@@ -194,25 +198,26 @@ class SSDialog(FunctionDialog):
 
     def generateKwargs(self):
         from corpustools.corpus.classes import Word
-        if self.minEdit.text() == '':
-            min_rel = None
-        else:
-            min_rel = float(self.minEdit.text())
-        if self.maxEdit.text() == '':
-            max_rel = None
-        else:
-            max_rel = float(self.maxEdit.text())
-        #Error checking
-        relType = self.algorithmWidget.value()
-        typeToken = self.typeTokenWidget.value()
-        strType = self.stringTypeWidget.value()
+        min_rel = None
+        if self.minEdit.text() != '':
+            try:
+                min_rel = float(self.minEdit.text())
+            except ValueError:
+                pass
+
+        max_rel = None
+        if self.maxEdit.text() != '':
+            try:
+                max_rel = float(self.maxEdit.text())
+            except ValueError:
+                pass
         kwargs = {'corpus':self.corpus,
-                'relator_type': relType,
-                'string_type':strType,
-                'tier_name':self.stringTypeWidget.value(),
-                'count_what':typeToken,
+                'algorithm': self.algorithmWidget.value(),
+                'sequence_type':self.tierWidget.currentText(),
+                'count_what': self.typeTokenWidget.value(),
                 'min_rel':min_rel,
                 'max_rel':max_rel}
+        #Error checking
         if self.compType is None:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a comparison type.")
@@ -300,7 +305,7 @@ class SSDialog(FunctionDialog):
             else:
                 typetoken = self.typeTokenWidget.value()
             self.results.append([w1, w2, similarity,
-                        self.stringTypeWidget.value(), typetoken,
+                        self.tierWidget.currentText(), typetoken,
                         self.algorithmWidget.value()])
 
     def khorsiSelected(self):
