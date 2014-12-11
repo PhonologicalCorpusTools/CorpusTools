@@ -1,0 +1,149 @@
+
+
+from .imports import *
+
+from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
+                        RadioSelectWidget, InventoryBox, FeatureBox)
+
+from .windows import FunctionWorker, FunctionDialog
+
+from corpustools.corpus.classes.lexicon import EnvironmentFilter
+
+class PSWorker(FunctionWorker):
+    def run(self):
+        kwargs = self.kwargs
+        corpus = kwargs.pop('corpus')
+        self.results = corpus.phonological_search(**kwargs)
+
+        self.dataReady.emit(self.results)
+
+class PhonoSearchDialog(FunctionDialog):
+    header = ['Word',
+                'Transcription',
+                'Segment',
+                'Environment']
+    ABOUT = ['']
+
+    name = 'Phonological search'
+    def __init__(self, parent, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, PSWorker())
+
+        self.corpus = corpus
+        self.showToolTips = showToolTips
+
+        psFrame = QFrame()
+        pslayout = QHBoxLayout()
+
+
+        self.targetFrame = QFrame()
+        targetLayout = QVBoxLayout()
+
+        self.targetType = QComboBox()
+        self.targetType.addItem('Segments')
+        if self.corpus.specifier is not None:
+            self.targetType.addItem('Features')
+        else:
+            targetLayout.addWidget(QLabel('Phonological search based on features is not available without a feature system.'))
+
+        self.targetType.currentIndexChanged.connect(self.generateFrames)
+
+        targetLayout.addWidget(QLabel('Basis for search:'))
+        targetLayout.addWidget(self.targetType, alignment = Qt.AlignLeft)
+
+        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
+
+        targetLayout.addWidget(self.targetWidget)
+
+        self.targetFrame.setLayout(targetLayout)
+
+        pslayout.addWidget(self.targetFrame)
+
+        self.envWidget = EnvironmentSelectWidget(self.corpus.inventory)
+        pslayout.addWidget(self.envWidget)
+
+
+        optionLayout = QVBoxLayout()
+        self.tierWidget = QComboBox()
+        self.tierWidget.addItem('transcription')
+        for t in corpus.tiers:
+            self.tierWidget.addItem(t)
+
+        tierFrame = QGroupBox('Tier')
+
+        box = QVBoxLayout()
+        box.addWidget(self.tierWidget)
+        tierFrame.setLayout(box)
+
+        optionLayout.addWidget(tierFrame)
+
+        optionFrame = QGroupBox('Options')
+
+        optionFrame.setLayout(optionLayout)
+
+        pslayout.addWidget(optionFrame)
+
+        psFrame.setLayout(pslayout)
+        self.layout().insertWidget(0,psFrame)
+        self.setWindowTitle('Phonological search')
+
+    def createFeatureFrame(self):
+        self.targetWidget.deleteLater()
+
+        self.targetWidget = FeatureBox('Features of segments to search',self.corpus.inventory)
+        self.targetFrame.layout().addWidget(self.targetWidget)
+
+    def createSegmentFrame(self):
+        self.targetWidget.deleteLater()
+
+        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
+        self.targetFrame.layout().addWidget(self.targetWidget)
+
+    def generateFrames(self,ind=0):
+        if self.createType.currentText() == 'Segments':
+            self.createSegmentFrame()
+        elif self.createType.currentText() == 'Features':
+            self.createFeatureFrame()
+
+    def generateKwargs(self):
+        kwargs = {}
+        targetType = self.targetType.currentText()
+        targetList = self.targetWidget.value()
+        if not targetList:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one {}.".format(targetType[:-1].lower()))
+            return
+        if targetType == 'Features':
+            targetList = targetList[1:-1]
+            kwargs['seg_list'] = self.corpus.features_to_segments(targetList)
+        else:
+            kwargs['seg_list'] = targetList
+        kwargs['corpus'] = self.corpus
+        kwargs['sequence_type'] = self.tierWidget.currentText()
+        envs = self.envWidget.value()
+        if len(envs) > 0:
+            kwargs['envs'] = envs
+        return kwargs
+
+    def calc(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            self.accept()
+
+    def setResults(self,results):
+        self.results = list()
+        for w,f in results:
+            segs = [x[0] for x in f]
+            try:
+                envs = [str(x[1]) for x in f]
+            except IndexError:
+                envs = []
+            self.results.append([str(w), str(getattr(w,self.tierWidget.currentText(),'')),', '.join(segs),
+                                ', '.join(envs)])
