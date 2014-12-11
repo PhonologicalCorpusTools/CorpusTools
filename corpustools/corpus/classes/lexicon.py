@@ -640,6 +640,14 @@ class Word(object):
             state['wordtokens'] = list()
         self.__dict__.update(state)
 
+    def add_abstract_tier(self, tier_name, tier_segments):
+        tier = list()
+        for s in self.transcription:
+            for k,v in tier_segments.items():
+                if s in v:
+                    tier.append(k)
+                    break
+        setattr(self,tier_name,''.join(tier))
 
 
     def add_tier(self, tier_name, tier_segments):
@@ -900,10 +908,9 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
-        self._tiers = []
+        self._tiers = list()
+        self._additional = list()
         self._freq_base = dict()
-        self.transcription_freq_base = {'token':None, 'type':None}
-        self.spelling_freq_base = {'token':None, 'type':None}
 
     def __eq__(self, other):
         if not isinstance(other,Corpus):
@@ -986,6 +993,7 @@ class Corpus(object):
             att.append('transcription')
         att.append('frequency')
         att += self.tiers
+        att += self._additional
         return att
 
     @property
@@ -1005,6 +1013,12 @@ class Corpus(object):
         except TypeError:
             features = self.specifier.matrix[seg.symbol]
         return features
+
+    def add_abstract_tier(self, tier_name, spec):
+        if tier_name not in self._additional:
+            self._additional.append(tier_name)
+        for word in self:
+            word.add_abstract_tier(tier_name,spec)
 
     def add_tier(self, tier_name, spec):
         if tier_name not in self._tiers:
@@ -1034,6 +1048,8 @@ class Corpus(object):
                 state['has_transcription'] = state['has_transcription_value']
             if '_freq_base' not in state:
                 state['_freq_base'] = dict()
+            if '_additional' not in state:
+                state['_additional'] = list()
             self.__dict__.update(state)
             self._specify_features()
 
