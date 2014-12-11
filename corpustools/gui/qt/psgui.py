@@ -3,7 +3,8 @@
 from .imports import *
 
 from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
-                        RadioSelectWidget, InventoryBox, FeatureBox)
+                        RadioSelectWidget, InventoryBox, FeatureBox,
+                        TierWidget)
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -24,7 +25,7 @@ class PhonoSearchDialog(FunctionDialog):
                 'Environment']
     ABOUT = ['']
 
-    name = 'Phonological search'
+    name = 'phonological search'
     def __init__(self, parent, corpus, showToolTips):
         FunctionDialog.__init__(self, parent, PSWorker())
 
@@ -63,18 +64,10 @@ class PhonoSearchDialog(FunctionDialog):
 
 
         optionLayout = QVBoxLayout()
-        self.tierWidget = QComboBox()
-        self.tierWidget.addItem('transcription')
-        for t in corpus.tiers:
-            self.tierWidget.addItem(t)
 
-        tierFrame = QGroupBox('Tier')
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         optionFrame = QGroupBox('Options')
 
@@ -119,7 +112,7 @@ class PhonoSearchDialog(FunctionDialog):
         else:
             kwargs['seg_list'] = targetList
         kwargs['corpus'] = self.corpus
-        kwargs['sequence_type'] = self.tierWidget.currentText()
+        kwargs['sequence_type'] = self.tierWidget.value()
         envs = self.envWidget.value()
         if len(envs) > 0:
             kwargs['envs'] = envs
@@ -146,5 +139,5 @@ class PhonoSearchDialog(FunctionDialog):
                 envs = [str(x[1]) for x in f]
             except IndexError:
                 envs = []
-            self.results.append([str(w), str(getattr(w,self.tierWidget.currentText(),'')),', '.join(segs),
+            self.results.append([str(w), str(getattr(w,self.tierWidget.displayValue())),', '.join(segs),
                                 ', '.join(envs)])

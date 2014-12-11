@@ -3,6 +3,55 @@ from collections import Counter
 
 from .imports import *
 
+class FilterModel(QAbstractTableModel):
+    conditionalMapping = {'__eq__':'==',
+                    '__neq__':'!=',
+                    '__gt__':'>',
+                    '__gte__':'>=',
+                    '__lt__':'<',
+                    '__lte__':'<='}
+    def __init__(self,parent = None):
+        QAbstractTableModel.__init__(self,parent)
+
+        self.columns = ['']
+        self.filters = list()
+
+    def rowCount(self,parent=None):
+        return len(self.filters)
+
+    def columnCount(self,parent=None):
+        return len(self.columns)
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return None
+        elif role != Qt.DisplayRole:
+            return None
+        f = self.filters[index.row()][index.column()]
+        if f[0].att_type == 'numeric':
+            return_data = ' '.join([str(f[0]),self.conditionalMapping[f[1]], str(f[2])])
+        else:
+            s = ', '.join(f[1])
+            if len(s) > 20:
+                s = s[:10] + '...' + s[-10:]
+            return_data = ' '.join([str(f[0]),s])
+        return return_data
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.columns[col]
+        return None
+
+    def addRow(self,env):
+        self.layoutAboutToBeChanged.emit()
+        self.filters.append(env)
+        self.layoutChanged.emit()
+
+    def removeRow(self,ind):
+        self.layoutAboutToBeChanged.emit()
+        del self.filters[ind]
+        self.layoutChanged.emit()
+
 class SpontaneousSpeechCorpusModel(QStandardItemModel):
     def __init__(self,corpus, parent = None):
         QStandardItemModel.__init__(self, parent)
@@ -71,7 +120,7 @@ class CorpusModel(QAbstractTableModel):
         """sort table by given column number col"""
         self.layoutAboutToBeChanged.emit()
         self.rows = sorted(self.rows,
-                key=lambda x: getattr(self.corpus[x],self.columns[col]))
+                key=lambda x: getattr(self.corpus[x],self.columns[col].name))
         if order == Qt.DescendingOrder:
             self.rows.reverse()
         self.layoutChanged.emit()
@@ -94,7 +143,7 @@ class CorpusModel(QAbstractTableModel):
             return None
         row = index.row()
         col = index.column()
-        data = getattr(self.corpus[self.rows[row]],self.columns[col])
+        data = getattr(self.corpus[self.rows[row]],self.columns[col].name)
 
         if isinstance(data,float):
             data = str(round(data,3))
@@ -104,7 +153,7 @@ class CorpusModel(QAbstractTableModel):
 
     def headerData(self, col, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.columns[col]
+            return self.columns[col].display_name
         return None
 
     def addTier(self,tierName, segList):
@@ -119,10 +168,10 @@ class CorpusModel(QAbstractTableModel):
         self.columns = self.corpus.attributes
         self.layoutChanged.emit()
 
-    def removeTiers(self,tiers):
+    def removeAttributes(self,attributes):
         self.layoutAboutToBeChanged.emit()
-        for t in tiers:
-            self.corpus.remove_tier(t)
+        for a in attributes:
+            self.corpus.remove_attribute(a)
         self.columns = self.corpus.attributes
         self.layoutChanged.emit()
 

@@ -5,7 +5,7 @@ from collections import OrderedDict
 from corpustools.mutualinfo.mutual_information import pointwise_mi
 
 from .imports import *
-from .widgets import BigramWidget
+from .widgets import BigramWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
 
 class MIWorker(FunctionWorker):
@@ -31,8 +31,8 @@ class MIWorker(FunctionWorker):
 class MIDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
-                'Mutual information',
-                'Tier']
+                'Transcription tier',
+                'Mutual information']
 
     _about = [('This function calculates the mutual information for a bigram'
                     ' of any two segments, based on their unigram and bigram'
@@ -60,19 +60,9 @@ class MIDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        self.tierWidget = QComboBox()
-        self.tierWidget.addItem('transcription')
-        for t in corpus.tiers:
-            self.tierWidget.addItem(t)
-
-        tierFrame = QGroupBox('Tier')
-
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -83,7 +73,7 @@ class MIDialog(FunctionDialog):
         self.layout().insertWidget(0,miFrame)
 
         if self.showToolTips:
-            tierFrame.setToolTip(("<FONT COLOR=black>"
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
                                     'Choose which tier mutual information should'
                                     ' be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
@@ -102,7 +92,7 @@ class MIDialog(FunctionDialog):
             return None
         return {'corpus':self.corpus,
                 'segment_pairs':[tuple(y for y in x) for x in segPairs],
-                'sequence_type': self.tierWidget.currentText()}
+                'sequence_type': self.tierWidget.value()}
 
     def calc(self):
         kwargs = self.generateKwargs()
@@ -123,5 +113,5 @@ class MIDialog(FunctionDialog):
         seg_pairs = [tuple(y for y in x) for x in self.segPairWidget.value()]
         for i, r in enumerate(results):
             self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                r,
-                                self.tierWidget.currentText()])
+                                self.tierWidget.displayValue(),
+                                r])
