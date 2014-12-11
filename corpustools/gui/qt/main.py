@@ -20,6 +20,7 @@ from .flgui import FLDialog
 from .fagui import FADialog
 from .pdgui import PDDialog
 from .ndgui import NDDialog
+from .psgui import PhonoSearchDialog
 
 
 class MainWindow(QMainWindow):
@@ -72,6 +73,7 @@ class MainWindow(QMainWindow):
         self.SSWindow = None
         self.ASWindow = None
         self.NDWindow = None
+        self.PhonoSearchWindow = None
         self.setMinimumSize(self.menuBar().sizeHint().width(), 400)
 
         if not os.path.exists(TMP_DIR):
@@ -244,6 +246,14 @@ class MainWindow(QMainWindow):
                 self.NDWindow = ResultsWindow('Neighborhood density results',dataModel,self)
                 self.NDWindow.show()
 
+    def phonoSearch(self):
+        dialog = PhonoSearchDialog(self,self.corpusModel.corpus,self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            dataModel = ResultsModel(dialog.header,dialog.results)
+            self.PhonoSearchWindow = ResultsWindow('Phonological search results',dataModel,self)
+            self.PhonoSearchWindow.show()
+
 
     def toggleWarnings(self):
         self.showWarnings = not self.showWarnings
@@ -297,6 +307,10 @@ class MainWindow(QMainWindow):
         self.removeTierAct = QAction( "Remove tier...",
                 self,
                 statusTip="Remove tier", triggered=self.destroyTier)
+
+        self.phonoSearchAct = QAction( "Phonological search...",
+                self,
+                statusTip="Search transcriptions", triggered=self.phonoSearch)
 
         self.neighDenAct = QAction( "Calculate neighborhood density...",
                 self,
@@ -389,9 +403,10 @@ class MainWindow(QMainWindow):
         self.editMenu.addAction(self.toggleWarningsAct)
         self.editMenu.addAction(self.toggleToolTipsAct)
 
-        self.enhanceMenu = self.menuBar().addMenu("&Corpus")
-        self.enhanceMenu.addAction(self.addTierAct)
-        self.enhanceMenu.addAction(self.removeTierAct)
+        self.corpusMenu = self.menuBar().addMenu("&Corpus")
+        self.corpusMenu.addAction(self.addTierAct)
+        self.corpusMenu.addAction(self.removeTierAct)
+        self.corpusMenu.addAction(self.phonoSearchAct)
         #self.enhanceMenu.addAction(self.batchNeighDenAct)
         #self.enhanceMenu.addAction(self.batchPhonProbAct)
 
