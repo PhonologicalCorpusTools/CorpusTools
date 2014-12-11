@@ -20,6 +20,7 @@ from .flgui import FLDialog
 from .fagui import FADialog
 from .pdgui import PDDialog
 from .ndgui import NDDialog
+from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 
@@ -74,6 +75,7 @@ class MainWindow(QMainWindow):
         self.SSWindow = None
         self.ASWindow = None
         self.NDWindow = None
+        self.PPWindow = None
         self.MIWindow = None
         self.PhonoSearchWindow = None
         self.setMinimumSize(self.menuBar().sizeHint().width(), 400)
@@ -261,6 +263,19 @@ class MainWindow(QMainWindow):
                 self.NDWindow = ResultsWindow('Neighborhood density results',dataModel,self)
                 self.NDWindow.show()
 
+    @check_for_empty_corpus
+    @check_for_transcription
+    def phonoProb(self):
+        dialog = PPDialog(self, self.corpusModel.corpus,self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            if self.PPWindow is not None and dialog.update and self.NDWindow.isVisible():
+                self.PPWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.PPWindow = ResultsWindow('Phonotactic probability results',dataModel,self)
+                self.PPWindow.show()
+
     def phonoSearch(self):
         dialog = PhonoSearchDialog(self,self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
@@ -330,6 +345,10 @@ class MainWindow(QMainWindow):
         self.neighDenAct = QAction( "Calculate neighborhood density...",
                 self,
                 statusTip="Calculate neighborhood density", triggered=self.neighDen)
+
+        self.phonoProbAct = QAction( "Calculate phonotactic probability...",
+                self,
+                statusTip="Calculate phonotactic probability", triggered=self.phonoProb)
 
         self.stringSimFileAct = QAction( "Calculate string similarity...",
                 self,
@@ -439,6 +458,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.prodAct)
         self.analysisMenu.addAction(self.funcloadAct)
         self.analysisMenu.addAction(self.neighDenAct)
+        self.analysisMenu.addAction(self.phonoProbAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         #self.analysisMenu.addAction(self.acousticSimAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)

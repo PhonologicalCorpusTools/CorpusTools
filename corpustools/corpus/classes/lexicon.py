@@ -901,6 +901,7 @@ class Corpus(object):
         self.has_spelling = False
         self.has_transcription = False
         self._tiers = []
+        self._freq_base = dict()
         self.transcription_freq_base = {'token':None, 'type':None}
         self.spelling_freq_base = {'token':None, 'type':None}
 
@@ -910,6 +911,67 @@ class Corpus(object):
         if self.wordlist != other.wordlist:
             return False
         return True
+
+    def get_frequency_base(self, sequence_type, count_what, gramsize = 1,
+                        probability = False):
+        if (sequence_type, count_what, gramsize) not in self._freq_base:
+            freq_base = collections.defaultdict(float)
+            for word in self:
+                if count_what == 'token':
+                    freq = word.frequency
+                else:
+                    freq = 1
+                grams = zip(*[getattr(word, sequence_type)[i:] for i in range(gramsize)])
+                for x in grams:
+                    if len(x) == 1:
+                        x = x[0]
+                    freq_base[x] += freq
+            freq_base['total'] = sum(value for value in freq_base.values())
+            self._freq_base[(sequence_type, count_what, gramsize)] = freq_base
+        freq_base = self._freq_base[(sequence_type, count_what, gramsize)]
+        return_dict = { k:v for k,v in freq_base.items()}
+        if probability:
+            return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
+        return return_dict
+
+    def get_phone_probs(self, sequence_type, count_what, gramsize = 1,
+                        probability = True, preserve_position = True,
+                        log_count = True):
+        if (sequence_type, count_what, gramsize, probability,
+                    preserve_position, log_count) not in self._freq_base:
+            freq_base = collections.defaultdict(float)
+            totals = collections.defaultdict(float)
+            for word in self:
+                if count_what == 'token':
+                    freq = word.frequency
+                    if log_count:
+                        freq = math.log(freq)
+                else:
+                    freq = 1
+                grams = zip(*[getattr(word, sequence_type)[i:] for i in range(gramsize)])
+                for i, x in enumerate(grams):
+                    #if len(x) == 1:
+                    #    x = x[0]
+                    if preserve_position:
+                        x = (x,i)
+                        totals[i] += freq
+
+                    freq_base[x] += freq
+
+            if not preserve_position:
+                freq_base['total'] = sum(value for value in freq_base.values())
+            else:
+                freq_base['total'] = totals
+            self._freq_base[(sequence_type, count_what, gramsize, probability,
+                    preserve_position, log_count)] = freq_base
+        freq_base = self._freq_base[(sequence_type, count_what, gramsize,
+                    probability,preserve_position, log_count)]
+        return_dict = { k:v for k,v in freq_base.items()}
+        if probability and not preserve_position:
+            return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
+        elif probability:
+            return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
+        return return_dict
 
     @property
     def tiers(self):
@@ -970,10 +1032,8 @@ class Corpus(object):
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' not in state:
                 state['has_transcription'] = state['has_transcription_value']
-            if 'transcription_freq_base' not in state:
-                state['transcription_freq_base'] = {'token':None, 'type':None}
-            if 'spelling_freq_base' not in state:
-                state['spelling_freq_base'] = {'token':None, 'type':None}
+            if '_freq_base' not in state:
+                state['_freq_base'] = dict()
             self.__dict__.update(state)
             self._specify_features()
 

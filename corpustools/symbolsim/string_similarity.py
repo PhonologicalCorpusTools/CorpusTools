@@ -53,20 +53,12 @@ def string_similarity(corpus, query, algorithm, **kwargs):
     max_rel = kwargs.get('max_rel', None)
 
     if algorithm == 'khorsi':
-        if sequence_type == 'spelling':
-            if corpus.spelling_freq_base[count_what] is None:
-                corpus.spelling_freq_base[count_what] = make_freq_base(corpus,sequence_type,count_what)
-            freq_base = corpus.spelling_freq_base[count_what]
-        else:
-            if corpus.transcription_freq_base[count_what] is None:
-                corpus.transcription_freq_base[count_what] = make_freq_base(corpus,sequence_type,count_what)
-            freq_base = corpus.transcription_freq_base[count_what]
+        freq_base = corpus.get_frequency_base(sequence_type, count_what)
         relate_func = partial(khorsi,freq_base=freq_base,
                                 sequence_type = sequence_type)
     elif algorithm == 'edit_distance':
         relate_func =  partial(edit_distance, sequence_type = sequence_type)
     elif algorithm == 'phono_edit_distance':
-        tier_name = kwargs.get('tier_name','transcription')
         relate_func = partial(phono_edit_distance,sequence_type = sequence_type, features = corpus.specifier)
     else:
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
