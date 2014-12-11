@@ -613,18 +613,18 @@ class EnvironmentDialog(QDialog):
         self.features = inventory[-1].features.keys()
 
         layout = QVBoxLayout()
+        if parent.name == 'environment':
+            self.envType = QComboBox()
+            self.envType.addItem('Segments')
+            if len(self.features) > 0:
+                self.envType.addItem('Features')
+            else:
+                layout.addWidget(QLabel('Features for {} selection are not available without a feature system.'.format(parent.name)))
 
-        self.envType = QComboBox()
-        self.envType.addItem('Segments')
-        if len(self.features) > 0:
-            self.envType.addItem('Features')
-        else:
-            layout.addWidget(QLabel('Features for environment selection are not available without a feature system.'))
+            self.envType.currentIndexChanged.connect(self.generateFrames)
 
-        self.envType.currentIndexChanged.connect(self.generateFrames)
-
-        layout.addWidget(QLabel('Basis for building environment:'))
-        layout.addWidget(self.envType, alignment = Qt.AlignLeft)
+            layout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
+            layout.addWidget(self.envType, alignment = Qt.AlignLeft)
 
         self.lhs = InventoryBox('Left hand side',self.inventory)
         self.lhs.setExclusive(True)
@@ -661,7 +661,7 @@ class EnvironmentDialog(QDialog):
 
         self.setLayout(layout)
         self.setFixedSize(self.sizeHint())
-        self.setWindowTitle('Create environment')
+        self.setWindowTitle('Create {}'.format(parent.name))
 
 
     def createFeatureFrame(self):
@@ -700,8 +700,10 @@ class EnvironmentDialog(QDialog):
         self.accept()
 
     def accept(self):
-
-        self.env = '{}_{}'.format(self.lhs.value(),self.rhs.value())
+        if self.parent().name == 'environment':
+            self.env = '{}_{}'.format(self.lhs.value(),self.rhs.value())
+        else:
+            self.env = '{}{}'.format(self.lhs.value(),self.rhs.value())
         QDialog.accept(self)
 
     def reject(self):
@@ -709,16 +711,17 @@ class EnvironmentDialog(QDialog):
         QDialog.reject(self)
 
 class EnvironmentSelectWidget(QGroupBox):
+    name = 'environment'
     def __init__(self,inventory,parent=None):
-        QGroupBox.__init__(self,'Environments',parent)
+        QGroupBox.__init__(self,'{}s'.format(self.name.title()),parent)
 
         self.inventory = inventory
 
         vbox = QVBoxLayout()
 
-        self.addButton = QPushButton('Add environment')
+        self.addButton = QPushButton('Add {}'.format(self.name))
         self.addButton.clicked.connect(self.envPopup)
-        self.removeButton = QPushButton('Remove selected environments')
+        self.removeButton = QPushButton('Remove selected {}s'.format(self.name))
         self.removeButton.clicked.connect(self.removeEnv)
         self.addButton.setAutoDefault(False)
         self.addButton.setDefault(False)
@@ -736,7 +739,7 @@ class EnvironmentSelectWidget(QGroupBox):
         self.setLayout(vbox)
 
     def envPopup(self):
-        dialog = EnvironmentDialog(self.inventory)
+        dialog = EnvironmentDialog(self.inventory,self)
         addOneMore = True
         while addOneMore:
             result = dialog.exec_()
@@ -753,6 +756,9 @@ class EnvironmentSelectWidget(QGroupBox):
 
     def value(self):
         return [x[0] for x in self.table.model().environments]
+
+class BigramWidget(EnvironmentSelectWidget):
+    name = 'bigram'
 
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options, actions=None, enabled=None,parent=None):

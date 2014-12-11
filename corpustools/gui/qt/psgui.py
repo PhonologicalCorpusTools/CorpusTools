@@ -85,6 +85,7 @@ class PhonoSearchDialog(FunctionDialog):
         psFrame.setLayout(pslayout)
         self.layout().insertWidget(0,psFrame)
         self.setWindowTitle('Phonological search')
+        self.progressDialog.setWindowTitle('Searching')
 
     def createFeatureFrame(self):
         self.targetWidget.deleteLater()

@@ -774,6 +774,10 @@ class Environment(object):
 
 
 class EnvironmentFilter(object):
+    """
+    Environments are strings of the form "[+feature,-feature]_[+feature]"
+    or "[+feature]_" or "a_b" or "_b"
+    """
     def __init__(self, corpus, env):
 
         #there's a problem where some feature names have underscores in them
@@ -893,7 +897,6 @@ class Corpus(object):
         self.specifier = None
         self._inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
         self.orthography = {'#'} #set of orthographic characters
-        self.custom = False
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False

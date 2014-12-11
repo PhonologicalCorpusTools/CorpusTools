@@ -4,13 +4,23 @@ import sys
 import math
 from collections import defaultdict
 
-def pointwise_mi(corpus, query, sequence_type):
+def pointwise_mi(corpus, query, sequence_type, stop_check = None, call_back = None):
     """query should be a tuple of two strings, each a segment/letter"""
     unigram_dict = defaultdict(float)
     unigram_total = 0.0
     bigram_dict = defaultdict(float)
     bigram_total = 0.0
+    if call_back is not None:
+        call_back("Generating probabilities...")
+        call_back(0,len(corpus))
+        cur = 0
     for word in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 20 == 0:
+                call_back(cur)
         for symbol in getattr(word, sequence_type):
             unigram_dict[symbol] += 1.0
             unigram_total += 1.0
@@ -31,8 +41,8 @@ def pointwise_mi(corpus, query, sequence_type):
 
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
-        
-    
+
+
 def get_bigrams(input_list):
     return zip(*[input_list[i:] for i in range(2)])
 

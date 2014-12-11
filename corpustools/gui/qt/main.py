@@ -21,6 +21,7 @@ from .fagui import FADialog
 from .pdgui import PDDialog
 from .ndgui import NDDialog
 from .psgui import PhonoSearchDialog
+from .migui import MIDialog
 
 
 class MainWindow(QMainWindow):
@@ -73,6 +74,7 @@ class MainWindow(QMainWindow):
         self.SSWindow = None
         self.ASWindow = None
         self.NDWindow = None
+        self.MIWindow = None
         self.PhonoSearchWindow = None
         self.setMinimumSize(self.menuBar().sizeHint().width(), 400)
 
@@ -223,6 +225,19 @@ class MainWindow(QMainWindow):
                 self.FLWindow = ResultsWindow('Functional load results',dataModel,self)
                 self.FLWindow.show()
 
+    @check_for_empty_corpus
+    @check_for_transcription
+    def mutualInfo(self):
+        dialog = MIDialog(self, self.corpusModel.corpus,self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
+                self.MIWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.MIWindow = ResultsWindow('Mutual information results',dataModel,self)
+                self.MIWindow.show()
+
     def acousticSim(self):
         dialog = ASDialog(self,self.showToolTips)
         result = dialog.exec_()
@@ -336,6 +351,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate functional load", triggered=self.funcLoad)
 
+        self.mutualInfoAct = QAction( "Calculate mutual information...",
+                self,
+                statusTip="Calculate mutual information", triggered=self.mutualInfo)
+
         self.acousticSimFileAct = QAction( "Calculate acoustic similarity (for files)...",
                 self,
                 statusTip="Calculate acoustic similarity for files", triggered=self.acousticSim)
@@ -420,6 +439,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.prodAct)
         self.analysisMenu.addAction(self.funcloadAct)
         self.analysisMenu.addAction(self.neighDenAct)
+        self.analysisMenu.addAction(self.mutualInfoAct)
         #self.analysisMenu.addAction(self.acousticSimAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
 
