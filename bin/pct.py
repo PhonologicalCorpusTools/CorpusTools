@@ -2,8 +2,7 @@ from multiprocessing import freeze_support
 import sys
 from corpustools.gui.qt.main import MainWindow,QApplication
 
-
-if __name__ == '__main__':
+def main():
     freeze_support()
     app = QApplication(sys.argv)
 
@@ -11,4 +10,8 @@ if __name__ == '__main__':
     main.show()
 
     sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()
 
