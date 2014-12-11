@@ -16,7 +16,7 @@ from .windows import FunctionWorker, DownloadWorker
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
-                    DigraphWidget, InventoryBox)
+                    DigraphWidget, InventoryBox, AttributeFilterWidget)
 
 from corpustools.gui.qt.featuregui import FeatureSystemSelect
 
@@ -77,6 +77,68 @@ class TranscriptionLoadWorker(FunctionWorker):
 
         corpus = load_transcription_corpus(**self.kwargs)
         self.dataReady.emit(corpus)
+
+class SubsetCorpusDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self, parent)
+
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        mainlayout = QFormLayout()
+
+        self.nameEdit = QLineEdit()
+        self.nameEdit.setText(corpus.name + '_subset')
+
+        mainlayout.addRow(QLabel('Name for new corpus'),self.nameEdit)
+
+        self.filterWidget = AttributeFilterWidget(corpus)
+
+        mainlayout.addRow(self.filterWidget)
+
+        layout.addLayout(mainlayout)
+
+        self.acceptButton = QPushButton('Create subset corpus')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Load corpora')
+
+    def accept(self):
+        filters = self.filterWidget.value()
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the new corpus.")
+            return None
+        if len(filters) == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one filter.")
+            return None
+
+        if name in get_corpora_list():
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        new_corpus = self.corpus.subset(filters)
+        new_corpus.name = name
+        save_binary(new_corpus,corpus_name_to_path(new_corpus.name))
+        QDialog.accept(self)
 
 class CorpusLoadDialog(QDialog):
     def __init__(self, parent):
@@ -650,7 +712,7 @@ class AddAbstractTierDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please enter a name for the tier.")
             return
-        if self.tierName in ['spelling','frequency','transcription']:
+        if self.tierName in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
                     "Invalid information", "The name '{}' overlaps with a protected column.".format(self.tierName))
             return
@@ -766,7 +828,7 @@ class AddTierDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please enter a name for the tier.")
             return
-        elif self.tierName in ['spelling','frequency','transcription']:
+        elif self.tierName in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
                     "Invalid information", "The name '{}' overlaps with a protected column.".format(self.tierName))
             return
@@ -792,19 +854,21 @@ class AddTierDialog(QDialog):
             self.segList = createList
         QDialog.accept(self)
 
-class RemoveTierDialog(QDialog):
+class RemoveAttributeDialog(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
         layout = QVBoxLayout()
 
         self.tierSelect = QListWidget()
-        for t in corpus.tiers:
-            self.tierSelect.addItem(t)
+        for t in corpus.attributes:
+            if t in corpus.basic_attributes:
+                continue
+            self.tierSelect.addItem(t.display_name)
 
         layout.addWidget(self.tierSelect)
 
-        self.removeSelectedButton = QPushButton('Remove selected tiers')
-        self.removeAllButton = QPushButton('Remove all tiers')
+        self.removeSelectedButton = QPushButton('Remove selected columns')
+        self.removeAllButton = QPushButton('Remove all non-essential columns')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.removeSelectedButton)
@@ -827,11 +891,11 @@ class RemoveTierDialog(QDialog):
         selected = self.tierSelect.selectedItems()
         if not selected:
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a tier to remove.")
+                    "Missing information", "Please specify a column to remove.")
             return
         self.tiers = [x.text() for x in selected]
-        msgBox = QMessageBox(QMessageBox.Warning, "Remove tiers",
-                "This will permanently remove the tiers: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove columns",
+                "This will permanently remove the columns: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -842,11 +906,11 @@ class RemoveTierDialog(QDialog):
     def removeAll(self):
         if self.tierSelect.count() == 0:
             reply = QMessageBox.critical(self,
-                    "Missing information", "There are no tiers to remove.")
+                    "Missing information", "There are no columns to remove.")
             return
         self.tiers = [self.tierSelect.item(i).text() for i in range(self.tierSelect.count())]
-        msgBox = QMessageBox(QMessageBox.Warning, "Remove tiers",
-                "This will permanently remove the tiers: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove columns",
+                "This will permanently remove the columns: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
