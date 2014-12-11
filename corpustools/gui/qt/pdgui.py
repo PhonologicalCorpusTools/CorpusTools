@@ -18,7 +18,7 @@ class PDWorker(FunctionWorker):
                     try:
                         res = calc_prod(kwargs['corpus'], pair[0],pair[1],
                             kwargs['envs'],
-                            kwargs['tier'],
+                            kwargs['sequence_type'],
                             kwargs['type_token'],
                             kwargs['strict'],
                             True,
@@ -39,7 +39,7 @@ class PDWorker(FunctionWorker):
                 for pair in kwargs['segment_pairs']:
                     try:
                         res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
-                            kwargs['tier'],
+                            kwargs['sequence_type'],
                             kwargs['type_token'],
                             True,
                             stop_check = kwargs['stop_check'],
@@ -80,6 +80,8 @@ class PDDialog(FunctionDialog):
                 ('Hall, K.C. 2009. A probabilistic model of phonological'
                 ' relationships from contrast to allophony. PhD dissertation,'
                 ' The Ohio State University.')]
+
+    name = 'predictability of distribution'
     def __init__(self, parent, corpus, showToolTips):
         FunctionDialog.__init__(self, parent, PDWorker())
 
@@ -182,14 +184,6 @@ class PDDialog(FunctionDialog):
                                     ' both. Each of these can be specified using either features or segments.'
             "</FONT>"))
 
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
-
     def generateKwargs(self):
         kwargs = {}
         segPairs = self.segPairWidget.value()
@@ -203,7 +197,7 @@ class PDDialog(FunctionDialog):
             kwargs['envs'] = envs
 
         kwargs['corpus'] = self.corpus
-        kwargs['tier'] = self.tierWidget.currentText()
+        kwargs['sequence_type'] = self.tierWidget.currentText()
         kwargs['strict'] = self.enforceCheck.isChecked()
         kwargs['pair_behavior'] = 'individual'
         kwargs['type_token'] = self.typeTokenWidget.value()
@@ -211,32 +205,6 @@ class PDDialog(FunctionDialog):
 
     def calc(self):
         kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
-    def calcSelectedPD(self):
-        kwargs = self.generateKwargs(allEnv=False)
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
-    def calcAllPD(self):
-        kwargs = self.generateKwargs(allEnv=True)
         if kwargs is None:
             return
         self.thread.setParams(kwargs)
@@ -276,14 +244,6 @@ class PDDialog(FunctionDialog):
                                             r[1], #total_tokens
                                             r[0], #H
                                             self.typeTokenWidget.value()])
-
-    def selectedEnv(self):
-        self.update = True
-        self.calcSelectedPD()
-
-    def allEnv(self):
-        self.update = True
-        self.calcAllPD()
 
     def about(self):
         reply = QMessageBox.information(self,
