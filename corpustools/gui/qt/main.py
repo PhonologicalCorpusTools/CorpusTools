@@ -8,7 +8,7 @@ from .config import Settings, PreferencesDialog
 from .views import TableWidget, TreeWidget, DiscourseView, ResultsWindow, LexiconView
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
-from .corpusgui import (CorpusLoadDialog, AddTierDialog, RemoveTierDialog,
+from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog, RemoveTierDialog,
                         ExportCorpusDialog)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
@@ -163,6 +163,22 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def createTier(self):
+        dialog = AddTierDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.addTier(dialog.tierName, dialog.segList)
+            self.corpusTable.table.horizontalHeader().resizeSections()
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def createAbstractTier(self):
+        dialog = AddAbstractTierDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.addAbstractTier(dialog.tierName, dialog.segList)
+            self.corpusTable.table.horizontalHeader().resizeSections()
+
+    @check_for_empty_corpus
+    def createColumn(self):
+        return
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.tierName, dialog.segList)
@@ -334,9 +350,17 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Add tier", triggered=self.createTier)
 
-        self.removeTierAct = QAction( "Remove tier...",
+        self.addAbstractTierAct = QAction( "Add abstract tier...",
                 self,
-                statusTip="Remove tier", triggered=self.destroyTier)
+                statusTip="Add abstract tier", triggered=self.createAbstractTier)
+
+        self.addColumnAct = QAction( "Add column...",
+                self,
+                statusTip="Add column", triggered=self.createColumn)
+
+        self.removeTierAct = QAction( "Remove tier or column...",
+                self,
+                statusTip="Remove tier or column", triggered=self.destroyTier)
 
         self.phonoSearchAct = QAction( "Phonological search...",
                 self,
@@ -443,7 +467,11 @@ class MainWindow(QMainWindow):
 
         self.corpusMenu = self.menuBar().addMenu("&Corpus")
         self.corpusMenu.addAction(self.addTierAct)
+        self.corpusMenu.addAction(self.addAbstractTierAct)
+        self.corpusMenu.addAction(self.addColumnAct)
+        self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.removeTierAct)
+        self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.phonoSearchAct)
         #self.enhanceMenu.addAction(self.batchNeighDenAct)
         #self.enhanceMenu.addAction(self.batchPhonProbAct)

@@ -584,6 +584,87 @@ class CorpusFromTranscriptionTextDialog(QDialog):
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
 
+class AddAbstractTierDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        main = QFormLayout()
+
+        self.cvradio = QRadioButton('CV skeleton')
+        main.addWidget(self.cvradio)
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.createButton = QPushButton('Create tier')
+        self.previewButton = QPushButton('Preview tier')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.previewButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.previewButton.clicked.connect(self.preview)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+    def preview(self):
+        if self.cvradio.isChecked():
+            segList = {'C' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] == 'Consonant'],
+                        'V' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] != 'Consonant'],
+                                    }
+        preview = "The following abstract symbols will replace the following segments:\n"
+        for k,v in segList.items():
+            preview += '{}: {}\n'.format(k,', '.join(v))
+        reply = QMessageBox.information(self,
+                "Tier preview", preview)
+
+
+    def accept(self):
+        if self.cvradio.isChecked():
+            self.tierName = 'cvskeleton'
+            self.segList = {'C' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] == 'Consonant'],
+                        'V' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] != 'Consonant'],
+                                    }
+
+        if self.tierName == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        if self.tierName in ['spelling','frequency','transcription']:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(self.tierName))
+            return
+        elif self.tierName in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "{} is already the name of a tier.  Overwrite?", QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+
+        QDialog.accept(self)
+
 class AddTierDialog(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
@@ -685,7 +766,11 @@ class AddTierDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please enter a name for the tier.")
             return
-        if self.tierName in self.corpus.tiers:
+        elif self.tierName in ['spelling','frequency','transcription']:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(self.tierName))
+            return
+        elif self.tierName in self.corpus.attributes:
 
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
                     "{} is already the name of a tier.  Overwrite?", QMessageBox.NoButton, self)

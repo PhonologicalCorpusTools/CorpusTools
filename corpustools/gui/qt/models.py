@@ -113,6 +113,12 @@ class CorpusModel(QAbstractTableModel):
         self.columns = self.corpus.attributes
         self.layoutChanged.emit()
 
+    def addAbstractTier(self,tierName, segList):
+        self.layoutAboutToBeChanged.emit()
+        self.corpus.add_abstract_tier(tierName, segList)
+        self.columns = self.corpus.attributes
+        self.layoutChanged.emit()
+
     def removeTiers(self,tiers):
         self.layoutAboutToBeChanged.emit()
         for t in tiers:
