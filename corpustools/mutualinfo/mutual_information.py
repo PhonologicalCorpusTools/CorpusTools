@@ -28,8 +28,3 @@ def pointwise_mi(corpus, query, sequence_type, stop_check = None, call_back = No
 
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
-
-
-def get_bigrams(input_list):
-    return zip(*[input_list[i:] for i in range(2)])
-
