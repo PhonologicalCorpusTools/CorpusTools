@@ -37,6 +37,7 @@ setup(name='corpustools',
                 'corpustools.symbolsim',
                 'corpustools.neighdens',
                 'corpustools.mutualinfo',
+                'corpustools.phonoprob',
                 'command_line'],
       #install_requires=[
       #    'pillow'
