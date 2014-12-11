@@ -611,7 +611,7 @@ class AddTierDialog(QDialog):
 
         self.createType.currentIndexChanged.connect(self.generateFrames)
 
-        layout.addWidget(QLabel('Basis for building environment:'))
+        layout.addWidget(QLabel('Basis for creating tier:'))
         layout.addWidget(self.createType, alignment = Qt.AlignLeft)
         self.createFrame = QFrame()
         createLayout = QVBoxLayout()

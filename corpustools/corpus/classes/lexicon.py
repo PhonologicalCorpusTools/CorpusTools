@@ -1000,6 +1000,38 @@ class Corpus(object):
             return []
         return [x for x in self._inventory.keys() if x not in self.specifier]
 
+    def phonological_search(self,seg_list,envs=None, sequence_type = 'transcription',
+                            call_back = None, stop_check = None):
+        if call_back is not None:
+            call_back('Searching...')
+            call_back(0,len(self))
+            cur = 0
+        if envs is not None:
+            envs = [EnvironmentFilter(self, env) for env in envs]
+        results = list()
+        for word in self:
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 20 == 0:
+                    call_back(cur)
+            founds = list()
+            for pos,seg in enumerate(getattr(word, sequence_type)):
+                if not seg in seg_list:
+                    continue
+                if envs is None:
+                    founds.append((seg,))
+                    continue
+                word_env = word.get_env(pos, sequence_type)
+                for env in envs:
+                    if word_env in env:
+                        founds.append((seg,env))
+                        break
+            if founds:
+                results.append((word, founds))
+        return results
+
     def iter_sort(self):
         """Sorts the keys in the corpus dictionary, then yields the values in that order
 
