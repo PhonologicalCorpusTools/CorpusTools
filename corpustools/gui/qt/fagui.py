@@ -3,7 +3,7 @@ from .imports import *
 
 from collections import OrderedDict
 
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, SaveFileWidget
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -36,6 +36,7 @@ class FAWorker(FunctionWorker):
 class FADialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
+                'Transcription tier',
                 'Total words in corpus',
                 'Total words with alternations',
                 'Frequency of alternation',
@@ -87,18 +88,9 @@ class FADialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = QComboBox()
-        self.tierWidget.addItem('transcription')
-        for t in corpus.tiers:
-            self.tierWidget.addItem(t)
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        tierFrame = QGroupBox('Tier')
-
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
@@ -179,7 +171,7 @@ class FADialog(FunctionDialog):
             'Select the two sounds you wish to check for alternations.'
             "</FONT>"))
 
-            tierFrame.setToolTip(("<FONT COLOR=black>"
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
                                     'Choose which tier frequency of alternation should'
                                     ' be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
@@ -259,7 +251,7 @@ class FADialog(FunctionDialog):
             out_file = self.fileWidget.value()
         else:
             out_file = None
-        kwargs['sequence_type'] = self.tierWidget.currentText()
+        kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['relator_type'] = rel_type
         kwargs['corpus'] = corpus
         kwargs['min_rel'] = min_rel
@@ -289,11 +281,12 @@ class FADialog(FunctionDialog):
         if pair_behaviour == 'individual':
             for i, r in enumerate(results):
                 self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                    self.tierWidget.displayValue(),
                                     r[0],
                                     r[1],
                                     r[2],
                                     self.typeTokenWidget.value(),
-                                    self.algorithmWidget.value(),
+                                    self.algorithmWidget.displayValue(),
                                     self.alignCheck.isChecked()])
 
         else:

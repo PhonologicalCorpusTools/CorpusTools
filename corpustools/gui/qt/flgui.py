@@ -5,7 +5,7 @@ from collections import OrderedDict
 import corpustools.funcload.functional_load as FL
 
 from .imports import *
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
 
 class FLWorker(FunctionWorker):
@@ -61,6 +61,7 @@ class FLWorker(FunctionWorker):
 class FLDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
+                'Transcription tier',
                 'Type of funcational load',
                 'Result',
                 'Ignored homophones?',
@@ -115,19 +116,9 @@ class FLDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        self.tierWidget = QComboBox()
-        self.tierWidget.addItem('transcription')
-        for t in corpus.tiers:
-            self.tierWidget.addItem(t)
-
-        tierFrame = QGroupBox('Tier')
-
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
                                                 OrderedDict([('All segment pairs together','together'),
@@ -191,7 +182,7 @@ class FLDialog(FunctionDialog):
                             ' be divided by the number of words that include any of the target segments'
                             ' present in the list at the left.'
             "</FONT>"))
-            tierFrame.setToolTip(("<FONT COLOR=black>"
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
                                     'Choose which tier functional load should'
                                     ' be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
@@ -238,7 +229,7 @@ class FLDialog(FunctionDialog):
             frequency_cutoff = 0.0
         return {'corpus':self.corpus,
                 'segment_pairs':segPairs,
-                'sequence_type': self.tierWidget.currentText(),
+                'sequence_type': self.tierWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
                 'relative_count':self.relativeCountWidget.isChecked(),
                 'distinguish_homophones':self.homophoneWidget.isChecked(),
@@ -270,7 +261,8 @@ class FLDialog(FunctionDialog):
         if self.segPairOptionsWidget.value() == 'individual':
             for i, r in enumerate(results):
                 self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                    self.algorithmWidget.value(),
+                                    self.tierWidget.displayValue(),
+                                    self.algorithmWidget.displayValue(),
                                     r,
                                     self.homophoneWidget.isChecked(),
                                     self.relativeCountWidget.isChecked(),
@@ -279,7 +271,8 @@ class FLDialog(FunctionDialog):
         else:
             self.results.append([', '.join(x[0] for x in seg_pairs),
                                 ', '.join(x[1] for x in seg_pairs),
-                                    self.algorithmWidget.value(),
+                                    self.tierWidget.displayValue(),
+                                    self.algorithmWidget.displayValue(),
                                     results[0],
                                     self.homophoneWidget.isChecked(),
                                     self.relativeCountWidget.isChecked(),

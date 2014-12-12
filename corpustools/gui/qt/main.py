@@ -8,7 +8,8 @@ from .config import Settings, PreferencesDialog
 from .views import TableWidget, TreeWidget, DiscourseView, ResultsWindow, LexiconView
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
-from .corpusgui import (CorpusLoadDialog, AddTierDialog, RemoveTierDialog,
+from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
+                        RemoveAttributeDialog,SubsetCorpusDialog,
                         ExportCorpusDialog)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
@@ -135,6 +136,12 @@ class MainWindow(QMainWindow):
         dialog = FeatureMatrixManager(self)
         result = dialog.exec_()
 
+    def subsetCorpus(self):
+        dialog = SubsetCorpusDialog(self,self.corpusModel.corpus)
+        result = dialog.exec_()
+        if result:
+            pass
+
     def saveCorpus(self):
         pass
 
@@ -170,10 +177,26 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     @check_for_transcription
-    def destroyTier(self):
-        dialog = RemoveTierDialog(self, self.corpusModel.corpus)
+    def createAbstractTier(self):
+        dialog = AddAbstractTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
-            self.corpusModel.removeTiers(dialog.tiers)
+            self.corpusModel.addAbstractTier(dialog.tierName, dialog.segList)
+            self.corpusTable.table.horizontalHeader().resizeSections()
+
+    @check_for_empty_corpus
+    def createColumn(self):
+        return
+        dialog = AddTierDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.addTier(dialog.tierName, dialog.segList)
+            self.corpusTable.table.horizontalHeader().resizeSections()
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def removeAttribute(self):
+        dialog = RemoveAttributeDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.removeAttributes(dialog.tiers)
             self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
@@ -310,6 +333,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Manage feature systems", triggered=self.loadFeatureMatrices)
 
+        self.createSubsetAct = QAction( "Generate a corpus subset",
+                self,
+                statusTip="Create and save a subset of the current corpus", triggered=self.subsetCorpus)
+
         self.saveCorpusAct = QAction( "Save corpus",
                 self,
                 statusTip="Save corpus", triggered=self.saveCorpus)
@@ -334,9 +361,17 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Add tier", triggered=self.createTier)
 
-        self.removeTierAct = QAction( "Remove tier...",
+        self.addAbstractTierAct = QAction( "Add abstract tier...",
                 self,
-                statusTip="Remove tier", triggered=self.destroyTier)
+                statusTip="Add abstract tier", triggered=self.createAbstractTier)
+
+        self.addColumnAct = QAction( "Add column...",
+                self,
+                statusTip="Add column", triggered=self.createColumn)
+
+        self.removeAttributeAct = QAction( "Remove tier or column...",
+                self,
+                statusTip="Remove tier or column", triggered=self.removeAttribute)
 
         self.phonoSearchAct = QAction( "Phonological search...",
                 self,
@@ -430,6 +465,7 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction(self.loadCorpusAct)
         self.fileMenu.addAction(self.manageFeatureSystemsAct)
         self.fileMenu.addSeparator()
+        self.fileMenu.addAction(self.createSubsetAct)
         self.fileMenu.addAction(self.saveCorpusAct)
         self.fileMenu.addAction(self.exportCorpusAct)
         self.fileMenu.addAction(self.exportFeatureSystemAct)
@@ -443,7 +479,11 @@ class MainWindow(QMainWindow):
 
         self.corpusMenu = self.menuBar().addMenu("&Corpus")
         self.corpusMenu.addAction(self.addTierAct)
-        self.corpusMenu.addAction(self.removeTierAct)
+        self.corpusMenu.addAction(self.addAbstractTierAct)
+        self.corpusMenu.addAction(self.addColumnAct)
+        self.corpusMenu.addSeparator()
+        self.corpusMenu.addAction(self.removeAttributeAct)
+        self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.phonoSearchAct)
         #self.enhanceMenu.addAction(self.batchNeighDenAct)
         #self.enhanceMenu.addAction(self.batchPhonProbAct)

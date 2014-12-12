@@ -6,7 +6,7 @@ from collections import OrderedDict
 from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
 
-from .widgets import RadioSelectWidget, FileWidget
+from .widgets import RadioSelectWidget, FileWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
 
 class SSWorker(FunctionWorker):
@@ -25,8 +25,8 @@ class SSWorker(FunctionWorker):
 class SSDialog(FunctionDialog):
     header = ['Word 1',
                 'Word 2',
-                'String similarity',
                 'String type',
+                'String similarity',
                 'Type or token',
                 'Algorithm type']
 
@@ -106,24 +106,13 @@ class SSDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = QComboBox()
-        self.tierWidget.addItem('spelling')
-        if self.corpus.has_transcription:
-            self.tierWidget.addItem('transcription')
-        for t in self.corpus.tiers:
-            self.tierWidget.addItem(t)
+        self.tierWidget = TierWidget(corpus,include_spelling=True)
 
-        tierFrame = QGroupBox('Tier')
-
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
-                                            {'Count types':'type',
-                                            'Count tokens':'token'})
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -173,7 +162,7 @@ class SSDialog(FunctionDialog):
                                     'frequency means each letter is counted as many times as its '
                                     'word\'s frequency in the corpus.'
             "</FONT>"))
-            tierFrame.setToolTip(("<FONT COLOR=black>"
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate similarity'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
                                 ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
@@ -213,7 +202,7 @@ class SSDialog(FunctionDialog):
                 pass
         kwargs = {'corpus':self.corpus,
                 'algorithm': self.algorithmWidget.value(),
-                'sequence_type':self.tierWidget.currentText(),
+                'sequence_type':self.tierWidget.value(),
                 'count_what': self.typeTokenWidget.value(),
                 'min_rel':min_rel,
                 'max_rel':max_rel}
@@ -304,9 +293,10 @@ class SSDialog(FunctionDialog):
                 typetoken = 'N/A'
             else:
                 typetoken = self.typeTokenWidget.value()
-            self.results.append([w1, w2, similarity,
-                        self.tierWidget.currentText(), typetoken,
-                        self.algorithmWidget.value()])
+            self.results.append([w1, w2,
+                        self.tierWidget.displayValue(),
+                         similarity, typetoken,
+                        self.algorithmWidget.displayValue()])
 
     def khorsiSelected(self):
         self.stringTypeWidget.enable()

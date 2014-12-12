@@ -1,7 +1,7 @@
 
 from .imports import *
 
-from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSelectWidget
+from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSelectWidget,TierWidget
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -56,10 +56,9 @@ class PDWorker(FunctionWorker):
         self.dataReady.emit(self.results)
 
 class PDDialog(FunctionDialog):
-    header = ['Corpus',
-                'Tier',
-                'Sound1',
+    header = ['Sound1',
                 'Sound2',
+                'Tier',
                 'Environment',
                 'Freq. of Sound1',
                 'Freq. of Sound2',
@@ -100,22 +99,14 @@ class PDDialog(FunctionDialog):
 
 
         optionLayout = QVBoxLayout()
-        self.tierWidget = QComboBox()
-        self.tierWidget.addItem('transcription')
-        for t in corpus.tiers:
-            self.tierWidget.addItem(t)
 
-        tierFrame = QGroupBox('Tier')
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
-                                                {'Count types': 'type',
-                                                'Count tokens': 'token'})
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -151,7 +142,7 @@ class PDDialog(FunctionDialog):
                             ' two sounds is irrelevant. The symbols you see here should automatically'
                             ' match the symbols used anywhere in your corpus.'
                             "</FONT>"))
-            tierFrame.setToolTip(("<FONT COLOR=black>"
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
                                     'Choose which tier predictability should'
                                     ' be calculated over (e.g., the whole transcription'
                                     ' vs. a tier containing only [+voc] segments).'
@@ -197,7 +188,7 @@ class PDDialog(FunctionDialog):
             kwargs['envs'] = envs
 
         kwargs['corpus'] = self.corpus
-        kwargs['sequence_type'] = self.tierWidget.currentText()
+        kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
         kwargs['pair_behavior'] = 'individual'
         kwargs['type_token'] = self.typeTokenWidget.value()
@@ -225,9 +216,8 @@ class PDDialog(FunctionDialog):
             for i, r in enumerate(results):
                 if isinstance(r,dict):
                     for env,v in r.items():
-                        self.results.append([self.corpus.name,
-                                            self.tierWidget.currentText(),
-                                            seg_pairs[i][0],seg_pairs[i][1],
+                        self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                            self.tierWidget.displayValue(),
                                             env,
                                             v[2], # freq of seg1
                                             v[3], #freq of seg2
@@ -235,9 +225,8 @@ class PDDialog(FunctionDialog):
                                             v[0], #H
                                             self.typeTokenWidget.value()])
                 else:
-                    self.results.append([self.corpus.name,
-                                            self.tierWidget.currentText(),
-                                            seg_pairs[i][0],seg_pairs[i][1],
+                    self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                            self.tierWidget.displayValue(),
                                             'FREQ-ONLY',
                                             r[2], # freq of seg1
                                             r[3], #freq of seg2
