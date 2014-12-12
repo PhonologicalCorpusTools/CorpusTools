@@ -592,7 +592,7 @@ class Word(object):
         self.spelling = None
         self.frequency = 0
         self.wordtokens = list()
-
+        self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
             key = key.lower()
             if key in self._freq_names:
@@ -607,6 +607,8 @@ class Word(object):
                         value = f
                 except (ValueError, TypeError):
                     pass
+            if key not in self.descriptors:
+                self.descriptors.append(key)
             setattr(self,key, value)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
@@ -627,6 +629,16 @@ class Word(object):
         self.frequency = 0
         if 'wordtokens' not in state:
             state['wordtokens'] = list()
+        if 'descriptors' not in state:
+            state['descriptors'] = ['spelling','transcription', 'frequency']
+        if 'frequency' not in state['descriptors']:
+            state['descriptors'].append('frequency')
+        try:
+            tiers = state.pop('tiers')
+            for t in tiers:
+                state['descriptors'].append(t)
+        except KeyError:
+            pass
         self.__dict__.update(state)
 
     def add_abstract_tier(self, tier_name, tier_segments):
@@ -882,12 +894,22 @@ class Attribute(object):
 
     def update_range(self,value):
         if self.att_type == 'numeric':
+            if isinstance(value, str):
+                try:
+                    value = float(value)
+                except ValueError:
+                    self.att_type = 'spelling'
+                    self._range = None
+                    return
             if value < self._range[0]:
                 self._range[0] = value
             elif value > self._range[1]:
                 self._range[1] = value
         elif self.att_type == 'factor':
             self._range.add(value)
+            if len(self._range) > 100:
+                self.att_type = 'spelling'
+                self._range = None
 
 class Corpus(object):
     """
@@ -1252,6 +1274,8 @@ class Corpus(object):
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
                         break
+            else:
+                return
         except KeyError:
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
@@ -1265,6 +1289,16 @@ class Corpus(object):
                     self._inventory[s] = Segment(s)
             if not self.has_transcription:
                 self.has_transcription = True
+        for d in word.descriptors:
+            if d not in self.attributes:
+                if isinstance(getattr(word,d),str):
+                    self._attributes.append(Attribute(d,'factor'))
+                elif isinstance(getattr(word,d),Transcription):
+                    self._attributes.append(Attribute(d,'tier'))
+                elif isinstance(getattr(word,d),(int, long, float)):
+                    self._attributes.append(Attribute(d,'numeric'))
+        for a in self.attributes:
+            a.update_range(getattr(word,a.name))
 
     def get_or_create_word(self, spelling, transcription):
         words = self.find_all(spelling)

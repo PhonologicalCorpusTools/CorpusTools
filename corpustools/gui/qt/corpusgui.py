@@ -935,8 +935,8 @@ class CorpusFromCsvDialog(QDialog):
         formLayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
 
         self.columnDelimiterEdit = QLineEdit()
-        self.columnDelimiterEdit.setText(',')
-        formLayout.addRow(QLabel('Column delimiter (enter \'t\' for tab)'),self.columnDelimiterEdit)
+        self.columnDelimiterEdit.setText('\t')
+        formLayout.addRow(QLabel('Column delimiter'),self.columnDelimiterEdit)
 
         self.transDelimiterEdit = QLineEdit()
         self.transDelimiterEdit.setText('.')
