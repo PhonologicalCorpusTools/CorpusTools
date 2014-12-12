@@ -8,7 +8,7 @@ from corpustools.neighdens.neighborhood_density import neighborhood_density
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget
+from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
 
 
 class NDWorker(FunctionWorker):
@@ -106,24 +106,13 @@ class NDDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = QComboBox()
-        self.tierWidget.addItem('spelling')
-        if self.corpus.has_transcription:
-            self.tierWidget.addItem('transcription')
-        for t in self.corpus.tiers:
-            self.tierWidget.addItem(t)
+        self.tierWidget = TierWidget(corpus,include_spelling=True)
 
-        tierFrame = QGroupBox('Tier')
-
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
-                                            {'Count types':'type',
-                                            'Count tokens':'token'})
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -161,7 +150,7 @@ class NDDialog(FunctionDialog):
 
         if self.showToolTips:
 
-            tierFrame.setToolTip(("<FONT COLOR=black>"
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate neighborhood density'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
                                 ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
@@ -185,7 +174,7 @@ class NDDialog(FunctionDialog):
 
         kwargs = {'corpus':self.corpus,
                 'algorithm': alg,
-                'sequence_type':self.tierWidget.currentText(),
+                'sequence_type':self.tierWidget.value(),
                 'count_what':typeToken,
                 'max_distance':max_distance}
         out_file = self.saveFileWidget.value()
@@ -241,8 +230,8 @@ class NDDialog(FunctionDialog):
             else:
                 typetoken = self.typeTokenWidget.value()
             self.results.append([w, nd,
-                        self.tierWidget.currentText(), typetoken,
-                        self.algorithmWidget.value()])
+                        self.tierWidget.displayValue(), typetoken,
+                        self.algorithmWidget.displayValue()])
 
     def khorsiSelected(self):
         self.stringTypeWidget.enable()

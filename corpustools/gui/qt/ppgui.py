@@ -8,7 +8,7 @@ from corpustools.phonoprob.phonotactic_probability import phonotactic_probabilit
 from corpustools.neighdens.io import load_words_neighden
 
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget
+from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
 
 
 class PPWorker(FunctionWorker):
@@ -31,10 +31,10 @@ class PPWorker(FunctionWorker):
 
 class PPDialog(FunctionDialog):
     header = ['Word',
+                'Tier',
                 'Phonotactic probability',
                 'Algorithm',
                 'Probability type',
-                'Tier',
                 'Type or token']
 
     _about = [('This function calculates the phonotactic probability '
@@ -96,29 +96,19 @@ class PPDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = QComboBox()
-        if self.corpus.has_transcription:
-            self.tierWidget.addItem('transcription')
-        for t in self.corpus.tiers:
-            self.tierWidget.addItem(t)
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        tierFrame = QGroupBox('Tier')
-
-        box = QVBoxLayout()
-        box.addWidget(self.tierWidget)
-        tierFrame.setLayout(box)
-
-        optionLayout.addWidget(tierFrame)
+        optionLayout.addWidget(self.tierWidget)
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
-                                            {'Count types':'type',
-                                            'Count tokens':'token'})
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
 
         optionLayout.addWidget(self.typeTokenWidget)
 
         self.probabilityTypeWidget = RadioSelectWidget('Probability type',
-                                            {'Single-phone':'unigram',
-                                            'Biphone':'bigram'})
+                                            OrderedDict([('Single-phone','unigram'),
+                                            ('Biphone','bigram')]))
 
         optionLayout.addWidget(self.probabilityTypeWidget)
 
@@ -133,7 +123,7 @@ class PPDialog(FunctionDialog):
 
         if self.showToolTips:
 
-            tierFrame.setToolTip(("<FONT COLOR=black>"
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate neighborhood density'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
                                 ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
@@ -149,7 +139,7 @@ class PPDialog(FunctionDialog):
     def generateKwargs(self):
         kwargs = {'corpus':self.corpus,
                 'algorithm': self.algorithmWidget.value(),
-                'sequence_type':self.tierWidget.currentText(),
+                'sequence_type':self.tierWidget.value(),
                 'count_what':self.typeTokenWidget.value(),
                 'probability_type':self.probabilityTypeWidget.value()}
 
@@ -194,10 +184,10 @@ class PPDialog(FunctionDialog):
         self.results = list()
         for result in results:
             w, pp = result
-            self.results.append([str(w), pp,
-                        self.algorithmWidget.value(),
-                        self.probabilityTypeWidget.value(),
-                        self.tierWidget.currentText(),
+            self.results.append([str(w),
+                        self.tierWidget.displayValue(), pp,
+                        self.algorithmWidget.displayValue(),
+                        self.probabilityTypeWidget.displayValue(),
                         self.typeTokenWidget.value()])
 
     def vitevitchSelected(self):

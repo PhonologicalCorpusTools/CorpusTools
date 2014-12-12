@@ -23,13 +23,13 @@ def phonotactic_probability_vitevitch(corpus, query, sequence_type,
         call_back(0,0)
         cur = 0
     if probability_type == 'unigram':
-        prob_dict = corpus.get_phone_probs(sequence_type, count_what,
-                                        gramsize = 1)
-        sequence = getattr(query_word,sequence_type)
+        gramsize = 1
     elif probability_type == 'bigram':
-        prob_dict = corpus.get_phone_probs(sequence_type, count_what,
-                                        gramsize = 2)
-        sequence = zip(*[getattr(query_word,sequence_type)[i:] for i in range(2)])
+        gramsize = 2
+
+    prob_dict = corpus.get_phone_probs(sequence_type, count_what,
+                                        gramsize = gramsize)
+    sequence = zip(*[getattr(query_word,sequence_type)[i:] for i in range(gramsize)])
 
     totprob = 0
     tot = 0

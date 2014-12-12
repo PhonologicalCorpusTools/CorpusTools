@@ -5,7 +5,309 @@ from .imports import *
 
 from .views import TableWidget
 
-from .models import SegmentPairModel, EnvironmentModel
+from .models import SegmentPairModel, EnvironmentModel, FilterModel
+
+class ThumbListWidget(QListWidget):
+    def __init__(self, ordering, parent=None):
+        super(ThumbListWidget, self).__init__(parent)
+        self.ordering = ordering
+        #self.setIconSize(QSize(124, 124))
+        self.setDragDropMode(QAbstractItemView.DragDrop)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setAcceptDrops(True)
+
+
+    def dropEvent(self, event):
+        event.setDropAction(Qt.MoveAction)
+        super(ThumbListWidget, self).dropEvent(event)
+
+class FactorFilter(QWidget):
+    def __init__(self, attribute,parent=None):
+
+        QWidget.__init__(self,parent)
+
+        layout = QHBoxLayout()
+        levels = attribute.range
+        self.sourceWidget = ThumbListWidget(levels)
+        for l in levels:
+            self.sourceWidget.addItem(l)
+
+        sourceFrame = QGroupBox('Available levels')
+        l = QVBoxLayout()
+        l.addWidget(self.sourceWidget)
+        sourceFrame.setLayout(l)
+
+        layout.addWidget(sourceFrame)
+
+        buttonLayout = QVBoxLayout()
+        self.addOneButton = QPushButton('>')
+        self.addOneButton.clicked.connect(self.addOne)
+        self.addAllButton = QPushButton('>>')
+        self.addAllButton.clicked.connect(self.addAll)
+
+        self.clearOneButton = QPushButton('<')
+        self.clearOneButton.clicked.connect(self.clearOne)
+        self.clearAllButton = QPushButton('<<')
+        self.clearAllButton.clicked.connect(self.clearAll)
+
+        buttonLayout.addWidget(self.addOneButton, alignment = Qt.AlignCenter)
+        buttonLayout.addWidget(self.addAllButton, alignment = Qt.AlignCenter)
+        buttonLayout.addWidget(self.clearOneButton, alignment = Qt.AlignCenter)
+        buttonLayout.addWidget(self.clearAllButton, alignment = Qt.AlignCenter)
+
+        buttonFrame = QFrame()
+        buttonFrame.setLayout(buttonLayout)
+        layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
+
+        self.targetWidget = ThumbListWidget(levels)
+
+        targetFrame = QGroupBox('Included levels')
+        l = QVBoxLayout()
+        l.addWidget(self.targetWidget)
+        targetFrame.setLayout(l)
+
+        layout.addWidget(targetFrame)
+
+        self.setLayout(layout)
+
+    def addOne(self):
+        items = self.sourceWidget.selectedItems()
+        for i in items:
+            item = self.sourceWidget.takeItem(self.sourceWidget.row(i))
+            self.targetWidget.addItem(item)
+
+    def addAll(self):
+        items = [self.sourceWidget.item(i) for i in range(self.sourceWidget.count())]
+        for i in items:
+            item = self.sourceWidget.takeItem(self.sourceWidget.row(i))
+            self.targetWidget.addItem(item)
+
+    def clearOne(self):
+        items = self.targetWidget.selectedItems()
+        for i in items:
+            item = self.targetWidget.takeItem(self.targetWidget.row(i))
+            self.sourceWidget.addItem(item)
+
+    def clearAll(self):
+        items = [self.targetWidget.item(i) for i in range(self.targetWidget.count())]
+        for i in items:
+            item = self.targetWidget.takeItem(self.targetWidget.row(i))
+            self.sourceWidget.addItem(item)
+
+    def value(self):
+        items = [self.targetWidget.item(i).text() for i in range(self.targetWidget.count())]
+        return items
+
+class NumericFilter(QWidget):
+    conditionalDisplay = ('equals','does not equal','greater than',
+                    'greater than or equal to', 'less than',
+                    'less than or equal to')
+    conditionals = ('__eq__', '__neq__', '__gt__', '__gte__', '__lt__', '__lte__')
+    def __init__(self,parent=None):
+
+        QWidget.__init__(self,parent)
+
+        layout = QHBoxLayout()
+
+        self.conditionalSelect = QComboBox()
+        for c in self.conditionalDisplay:
+            self.conditionalSelect.addItem(c)
+
+        layout.addWidget(self.conditionalSelect)
+
+        self.valueEdit = QLineEdit()
+
+        layout.addWidget(self.valueEdit)
+
+        self.setLayout(layout)
+
+    def value(self):
+        ind = self.conditionalSelect.currentIndex()
+
+        return self.conditionals[ind], self.valueEdit.text()
+
+class AttributeFilterDialog(QDialog):
+    def __init__(self, attributes,parent=None):
+        QDialog.__init__(self,parent)
+
+        self.attributes = list()
+
+        layout = QVBoxLayout()
+
+        mainlayout = QHBoxLayout()
+
+        self.selectWidget = QComboBox()
+        for a in attributes:
+            if a.att_type in ['factor','numeric']:
+                self.attributes.append(a)
+                self.selectWidget.addItem(a.display_name)
+
+        self.selectWidget.currentIndexChanged.connect(self.updateFrame)
+
+        selectFrame = QGroupBox('Attribute to filter')
+
+        selectlayout = QVBoxLayout()
+        selectlayout.addWidget(self.selectWidget)
+        selectFrame.setLayout(selectlayout)
+
+        mainlayout.addWidget(selectFrame)
+
+
+        self.filterWidget = NumericFilter()
+        filterLayout = QVBoxLayout()
+        filterLayout.addWidget(self.filterWidget)
+
+        self.filterFrame = QGroupBox('Filter')
+        self.filterFrame.setLayout(filterLayout)
+
+        mainlayout.addWidget(self.filterFrame)
+
+        mainframe = QFrame()
+
+        mainframe.setLayout(mainlayout)
+
+        layout.addWidget(mainframe)
+
+        self.oneButton = QPushButton('Add')
+        self.anotherButton = QPushButton('Add and create another')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.oneButton.clicked.connect(self.one)
+        self.anotherButton.clicked.connect(self.another)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
+
+        self.setLayout(layout)
+        #self.setFixedSize(self.sizeHint())
+        self.setWindowTitle('Create {}'.format(parent.name))
+
+    def updateFrame(self):
+        index = self.selectWidget.currentIndex()
+        a = self.attributes[index]
+        self.filterWidget.deleteLater()
+        if a.att_type == 'numeric':
+            self.filterWidget = NumericFilter()
+            self.filterFrame.layout().addWidget(self.filterWidget)
+        elif a.att_type == 'factor':
+            self.filterWidget = FactorFilter(a)
+            self.filterFrame.layout().addWidget(self.filterWidget)
+        self.resize(self.sizeHint())
+
+    def one(self):
+        self.addOneMore = False
+        self.accept()
+
+    def another(self):
+        self.addOneMore = True
+        self.accept()
+
+    def accept(self):
+        index = self.selectWidget.currentIndex()
+        a = self.attributes[index]
+        val = self.filterWidget.value()
+        if a.att_type == 'numeric':
+            comp = val[0]
+            try:
+                value = float(val[1])
+            except ValueError:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "Please specify a number.")
+                return
+            if (comp in ['__gt__', '__gte__'] and value > a.range[1]) or \
+                (comp in ['__lt__','__lte__'] and value < a.range[0]) or \
+                (comp in ['__eq__','__neq__'] and (value < a.range[0] or value > a.range[1])):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The value specified ({}) for column '{}' is outside its range of {}-{}.".format(value,str(a),a.range[0],a.range[1]))
+                return
+            self.filter = (a, comp, value)
+        elif a.att_type == 'factor':
+            self.filter = (a, val)
+
+        QDialog.accept(self)
+
+    def reject(self):
+        self.addOneMore = False
+        QDialog.reject(self)
+
+class AttributeFilterWidget(QGroupBox):
+    name = 'filter'
+    def __init__(self, corpus, parent = None):
+        QGroupBox.__init__(self,'Filter corpus',parent)
+        self.attributes = corpus.attributes
+
+        vbox = QVBoxLayout()
+
+        self.addButton = QPushButton('Add {}'.format(self.name))
+        self.addButton.clicked.connect(self.filtPopup)
+        self.removeButton = QPushButton('Remove selected {}s'.format(self.name))
+        self.removeButton.clicked.connect(self.removeFilt)
+        self.addButton.setAutoDefault(False)
+        self.addButton.setDefault(False)
+        self.removeButton.setAutoDefault(False)
+        self.removeButton.setDefault(False)
+
+        self.table = TableWidget()
+        self.table.setModel(FilterModel())
+        self.table.resizeColumnsToContents()
+
+        vbox.addWidget(self.addButton)
+        vbox.addWidget(self.removeButton)
+        vbox.addWidget(self.table)
+
+        self.setLayout(vbox)
+
+    def filtPopup(self):
+        dialog = AttributeFilterDialog(self.attributes,self)
+        addOneMore = True
+        while addOneMore:
+            result = dialog.exec_()
+            if result:
+                self.table.model().addRow([dialog.filter])
+            addOneMore = dialog.addOneMore
+
+    def removeFilt(self):
+        select = self.table.selectionModel()
+        if select.hasSelection():
+            selected = select.selectedRows()
+            for s in selected:
+                self.table.model().removeRow(s.row())
+
+    def value(self):
+        return [x[0] for x in self.table.model().filters]
+
+
+class TierWidget(QGroupBox):
+    def __init__(self, corpus, parent = None, include_spelling = False):
+        QGroupBox.__init__(self,'Tier',parent)
+
+        layout = QVBoxLayout()
+
+        self.tierSelect = QComboBox()
+        self.atts = list()
+        if include_spelling:
+            self.atts.append(corpus.attributes[0])
+            self.tierSelect.addItem(corpus.attributes[0].display_name)
+        for a in corpus.attributes:
+            if corpus.has_transcription and a.att_type == 'tier':
+                self.atts.append(a)
+                self.tierSelect.addItem(a.display_name)
+        layout.addWidget(self.tierSelect)
+        self.setLayout(layout)
+
+    def value(self):
+        index = self.tierSelect.currentIndex()
+        return self.atts[index].name
+
+    def displayValue(self):
+        index = self.tierSelect.currentIndex()
+        return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
     def __init__(self,parent = None):
@@ -787,7 +1089,7 @@ class RadioSelectWidget(QGroupBox):
                 return self.options[w.text()]
         return None
 
-    def name(self):
+    def displayValue(self):
         for w in self.widgets:
             if w.isChecked():
                 return w.text()

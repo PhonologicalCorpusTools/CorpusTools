@@ -575,13 +575,8 @@ class Word(object):
     transcription : list of Segments
         A representation of a word that includes phonological information.
 
-    tiers : list
-        A list of tiers, which are created with the self.add_tier method. This
-        is an empty list if not tiers have been created.
-
-    descriptors : list of str
-        A list of the names of the attributes of a Word instance. This is
-        automatically generated based on the contents of the original corpus
+    frequency : float
+        Token frequency in a corpus
 
 
     """
@@ -593,21 +588,17 @@ class Word(object):
 
     def __init__(self, **kwargs):
 
-        self.tiers = list()
         self.transcription = None
         self.spelling = None
         self.frequency = 0
-        self.descriptors = ['spelling','transcription']
         self.wordtokens = list()
-
+        self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
             key = key.lower()
             if key in self._freq_names:
                 key = 'frequency'
             if isinstance(value,list):
-                #transcription type stuff
-                if key != 'transcription':
-                    self.tiers.append(key)
+                #assume transcription type stuff
                 value = Transcription(value)
             elif key != 'spelling':
                 try:
@@ -616,9 +607,9 @@ class Word(object):
                         value = f
                 except (ValueError, TypeError):
                     pass
-            setattr(self,key, value)
             if key not in self.descriptors:
                 self.descriptors.append(key)
+            setattr(self,key, value)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
@@ -638,8 +629,26 @@ class Word(object):
         self.frequency = 0
         if 'wordtokens' not in state:
             state['wordtokens'] = list()
+        if 'descriptors' not in state:
+            state['descriptors'] = ['spelling','transcription', 'frequency']
+        if 'frequency' not in state['descriptors']:
+            state['descriptors'].append('frequency')
+        try:
+            tiers = state.pop('tiers')
+            for t in tiers:
+                state['descriptors'].append(t)
+        except KeyError:
+            pass
         self.__dict__.update(state)
 
+    def add_abstract_tier(self, tier_name, tier_segments):
+        tier = list()
+        for s in self.transcription:
+            for k,v in tier_segments.items():
+                if s in v:
+                    tier.append(k)
+                    break
+        setattr(self,tier_name,''.join(tier))
 
 
     def add_tier(self, tier_name, tier_segments):
@@ -658,40 +667,27 @@ class Word(object):
         matching_segs = self.transcription.match_segments(tier_segments)
         new_tier = Transcription(matching_segs)
         setattr(self,tier_name,new_tier)
-        if tier_name not in self.tiers:
-            self.tiers.append(tier_name)
 
-    def remove_tier(self, tier_name):
+    def remove_attribute(self, attribute_name):
         """Deletes a tier attribute from a Word
 
         Parameters
         ----------
-        tier_name : str
+        attribute_name : str
             Name of tier attribute to be deleted.
 
         Notes
         ----------
-        If tier_name is not a valid attribute, this function does nothing. It
+        If attribute_name is not a valid attribute, this function does nothing. It
         does not raise an error.
 
         """
+        if attribute_name.startswith('_'):
+            return
         try:
-            self.tiers.remove(tier_name)
-            delattr(self, tier_name)
+            delattr(self, attribute_name)
         except ValueError:
-            pass #tier_name does not exist
-
-    def details(self):
-        """Formatted printout of a Word's attributes and their values.
-
-        Notes
-        ----------
-        This is intended for debugging and interactive mode.
-        """
-        print('-'*25)
-        for description in self.descriptors:
-            print('{}: {}'.format(description, getattr(self,description)))
-        print('-'*25+'\n')
+            pass #attribute_name does not exist
 
     def get_env(self,pos,tier_name):
         """Get details of a particular environment in a Word
@@ -858,6 +854,62 @@ class EnvironmentFilter(object):
                 return False
         return True
 
+class Attribute(object):
+    ATT_TYPES = ['spelling', 'tier', 'numeric', 'factor']
+    def __init__(self, name, att_type, display_name = None):
+        self.name = name
+        self.att_type = att_type
+        self._display_name = display_name
+
+        if self.att_type == 'numeric':
+            self._range = [0,0]
+        elif self.att_type == 'factor':
+            self._range = set()
+        elif self.att_type == 'spelling':
+            self._range = None
+        elif self.att_type == 'tier':
+            self._range = None
+
+    def __str__(self):
+        return self.display_name
+
+    def __eq__(self,other):
+        if isinstance(other,Attribute):
+            if self.name == other.name:
+                return True
+        if isinstance(other,str):
+            if self.name == other:
+                return True
+        return False
+
+    @property
+    def display_name(self):
+        if self._display_name is not None:
+            return self._display_name
+        return self.name.title()
+
+    @property
+    def range(self):
+        return self._range
+
+    def update_range(self,value):
+        if self.att_type == 'numeric':
+            if isinstance(value, str):
+                try:
+                    value = float(value)
+                except ValueError:
+                    self.att_type = 'spelling'
+                    self._range = None
+                    return
+            if value < self._range[0]:
+                self._range[0] = value
+            elif value > self._range[1]:
+                self._range[1] = value
+        elif self.att_type == 'factor':
+            self._range.add(value)
+            if len(self._range) > 100:
+                self.att_type = 'spelling'
+                self._range = None
 
 class Corpus(object):
     """
@@ -890,7 +942,7 @@ class Corpus(object):
     #__slots__ = ['name', 'wordlist', 'specifier',
     #            'inventory', 'orthography', 'custom', 'feature_system',
     #            'has_frequency_value','has_spelling_value','has_transcription_value']
-
+    basic_attributes = ['spelling','transcription','frequency']
     def __init__(self, name):
         self.name = name
         self.wordlist = dict()
@@ -900,10 +952,12 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
-        self._tiers = []
+        self._tiers = list()
+        self._additional = list()
         self._freq_base = dict()
-        self.transcription_freq_base = {'token':None, 'type':None}
-        self.spelling_freq_base = {'token':None, 'type':None}
+        self._attributes = [Attribute('spelling','spelling'),
+                            Attribute('transcription','tier'),
+                            Attribute('frequency','numeric')]
 
     def __eq__(self, other):
         if not isinstance(other,Corpus):
@@ -973,20 +1027,28 @@ class Corpus(object):
             return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
         return return_dict
 
+    def subset(self,filters):
+        new_corpus = Corpus('')
+        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name) for x in self.attributes]
+        for word in self:
+            for f in filters:
+                if f[0].att_type == 'numeric':
+                    if not getattr(getattr(word,f[0].name),f[1])(f[2]):
+                        break
+                elif f[0].att_type == 'factor':
+                    if getattr(word,f[0].name) not in f[1]:
+                        break
+            else:
+                new_corpus.add_word(word)
+        return new_corpus
+
     @property
     def tiers(self):
         return self._tiers
 
     @property
     def attributes(self):
-        att = list()
-        if self.has_spelling:
-            att.append('spelling')
-        if self.has_transcription:
-            att.append('transcription')
-        att.append('frequency')
-        att += self.tiers
-        return att
+        return self._attributes
 
     @property
     def words(self):
@@ -1006,9 +1068,26 @@ class Corpus(object):
             features = self.specifier.matrix[seg.symbol]
         return features
 
-    def add_tier(self, tier_name, spec):
-        if tier_name not in self._tiers:
-            self._tiers.append(tier_name)
+    def add_abstract_tier(self, tier_name, spec, display_name=None):
+        newattr = Attribute(tier_name,'factor', display_name = display_name)
+        for i,a in enumerate(self._attributes):
+            if tier_name == a:
+                self._attributes[i] = newattr
+                break
+        else:
+            self._attributes.append(newattr)
+        for word in self:
+            word.add_abstract_tier(tier_name,spec)
+            newattr.update_range(getattr(word,tier_name))
+
+    def add_tier(self, tier_name, spec, display_name=None):
+        newattr = Attribute(tier_name,'tier', display_name = display_name)
+        for i,a in enumerate(self._attributes):
+            if tier_name == a:
+                self._attributes[i] = newattr
+                break
+        else:
+            self._attributes.append(newattr)
         if isinstance(spec, str):
             tier_segs = self.features_to_segments(spec)
         else:
@@ -1016,13 +1095,15 @@ class Corpus(object):
         for word in self:
             word.add_tier(tier_name,tier_segs)
 
-    def remove_tier(self, tier_name):
-        for i in range(len(self._tiers)):
-            if self._tiers[i] == tier_name:
-                del self._tiers[i]
+    def remove_attribute(self, attribute_name):
+        if attribute_name in self.basic_attributes:
+            return
+        for i in range(len(self._attributes)):
+            if self._attributes[i] == attribute_name:
+                del self._attributes[i]
                 break
         for word in self:
-            word.remove_tier(tier_name)
+            word.remove_attribute(attribute_name)
 
     def __setstate__(self,state):
         try:
@@ -1034,18 +1115,27 @@ class Corpus(object):
                 state['has_transcription'] = state['has_transcription_value']
             if '_freq_base' not in state:
                 state['_freq_base'] = dict()
+            if '_attributes' not in state:
+                state['_attributes'] = [Attribute('spelling','spelling'),
+                                        Attribute('transcription','tier'),
+                                        Attribute('frequency','numeric')]
+                try:
+                    tiers = state.pop('_tiers')
+                    for t in tiers:
+                        state['_attributes'].append(Attribute(t,'tier'))
+                except KeyError:
+                    pass
             self.__dict__.update(state)
             self._specify_features()
 
             #Backwards compatability
-            word = self.random_word()
-            if '_tiers' not in state:
-                self._tiers = word.tiers
-            if not isinstance(word.transcription, Transcription):
-                for w in self:
-                    w.transcription = Transcription(w.transcription)
-                    for t in w.tiers:
-                        setattr(w,t,Transcription(getattr(w,t)))
+            for w in self:
+                for a in self.attributes:
+                    if a.att_type == 'tier':
+                        if not isinstance(getattr(w,a.name), Transcription):
+                            setattr(w,a.name,Transcription(getattr(w,a.name)))
+                    else:
+                        a.update_range(getattr(w,a.name))
         except Exception as e:
             raise(CorpusIntegrityError("An error occurred while loading the corpus: {}.\nPlease redownload or recreate the corpus.".format(str(e))))
 
@@ -1184,6 +1274,8 @@ class Corpus(object):
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
                         break
+            else:
+                return
         except KeyError:
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
@@ -1197,6 +1289,16 @@ class Corpus(object):
                     self._inventory[s] = Segment(s)
             if not self.has_transcription:
                 self.has_transcription = True
+        for d in word.descriptors:
+            if d not in self.attributes:
+                if isinstance(getattr(word,d),str):
+                    self._attributes.append(Attribute(d,'factor'))
+                elif isinstance(getattr(word,d),Transcription):
+                    self._attributes.append(Attribute(d,'tier'))
+                elif isinstance(getattr(word,d),(int, long, float)):
+                    self._attributes.append(Attribute(d,'numeric'))
+        for a in self.attributes:
+            a.update_range(getattr(word,a.name))
 
     def get_or_create_word(self, spelling, transcription):
         words = self.find_all(spelling)
