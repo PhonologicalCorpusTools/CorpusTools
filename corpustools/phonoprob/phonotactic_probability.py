@@ -5,6 +5,7 @@ from corpustools.corpus.classes import Word
 def phonotactic_probability_vitevitch(corpus, query, sequence_type,
                                     count_what = 'token',
                                     probability_type = 'unigram',
+                                    segment_delimiter = '.',
                                     stop_check = None, call_back = None):
 
     if isinstance(query, Word):
@@ -34,7 +35,18 @@ def phonotactic_probability_vitevitch(corpus, query, sequence_type,
     totprob = 0
     tot = 0
     for i,s in enumerate(sequence):
-        totprob += prob_dict[s,i]
+        try:
+            totprob += prob_dict[s,i]
+        except KeyError:
+            notfound = []
+
+            for seg in s:
+                if seg not in corpus.inventory:
+                    notfound.append(seg)
+            if len(notfound):
+                raise(Exception("Segments not found in the corpus: {}".format(', '.join(notfound))))
+            else:
+                raise(Exception("Segments not found in the corpus: {} at position: {}".format(', '.join(s),i)))
         tot += 1
 
     totprob = totprob / tot
