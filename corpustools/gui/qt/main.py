@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.tierName, dialog.segList)
-            self.corpusTable.table.horizontalHeader().resizeSections()
+            #self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -181,7 +181,7 @@ class MainWindow(QMainWindow):
         dialog = AddAbstractTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addAbstractTier(dialog.tierName, dialog.segList)
-            self.corpusTable.table.horizontalHeader().resizeSections()
+            #self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
     def createColumn(self):
@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.tierName, dialog.segList)
-            self.corpusTable.table.horizontalHeader().resizeSections()
+            #self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
         dialog = RemoveAttributeDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.removeAttributes(dialog.tiers)
-            self.corpusTable.table.horizontalHeader().resizeSections()
+            #self.corpusTable.table.horizontalHeader().resizeSections()
 
     @check_for_empty_corpus
     def stringSim(self):

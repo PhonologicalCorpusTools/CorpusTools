@@ -17,12 +17,16 @@ class PPWorker(FunctionWorker):
         self.results = list()
         for q in kwargs['query']:
             if kwargs['algorithm'] == 'vitevitch':
-                res = phonotactic_probability_vitevitch(kwargs['corpus'], q,
+                try:
+                    res = phonotactic_probability_vitevitch(kwargs['corpus'], q,
                                         sequence_type = kwargs['sequence_type'],
                                         count_what = kwargs['count_what'],
                                         probability_type = kwargs['probability_type'],
                                         stop_check = kwargs['stop_check'],
                                         call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
             self.results.append([q,res])
         if self.stopped:
             return
