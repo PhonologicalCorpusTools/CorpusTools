@@ -93,9 +93,9 @@ class PhonoSearchDialog(FunctionDialog):
         self.targetFrame.layout().addWidget(self.targetWidget)
 
     def generateFrames(self,ind=0):
-        if self.createType.currentText() == 'Segments':
+        if self.targetType.currentText() == 'Segments':
             self.createSegmentFrame()
-        elif self.createType.currentText() == 'Features':
+        elif self.targetType.currentText() == 'Features':
             self.createFeatureFrame()
 
     def generateKwargs(self):
@@ -139,5 +139,5 @@ class PhonoSearchDialog(FunctionDialog):
                 envs = [str(x[1]) for x in f]
             except IndexError:
                 envs = []
-            self.results.append([str(w), str(getattr(w,self.tierWidget.displayValue())),', '.join(segs),
+            self.results.append([str(w), str(getattr(w,self.tierWidget.value())),', '.join(segs),
                                 ', '.join(envs)])
