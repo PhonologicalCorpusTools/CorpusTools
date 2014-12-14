@@ -72,7 +72,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
     minpairs = list()
     if call_back is not None:
         call_back('Counting minimal pairs...')
-        call_back(0,factorial(len(neutralized))/(factorial(len(neutralized)-2))*2)
+        call_back(0,factorial(len(neutralized))/(factorial(len(neutralized)-2)*2))
         cur = 0
     for first,second in itertools.combinations(neutralized, 2):
         if stop_check is not None and stop_check():

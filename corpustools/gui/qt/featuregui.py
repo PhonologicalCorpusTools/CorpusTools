@@ -14,7 +14,7 @@ from corpustools.corpus.io import (load_binary, download_binary,
 
 from .views import TableWidget
 
-from .models import FeatureSystemModel
+from .models import FeatureSystemTableModel#, FeatureSystemItemModel
 
 from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
 
@@ -325,12 +325,8 @@ class EditFeatureMatrixDialog(QDialog):
         layout = QVBoxLayout()
 
         self.table = TableWidget()
-        self.table.setModel(FeatureSystemModel(self.specifier))
-        try:
-            self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-        except AttributeError:
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        layout.addWidget(self.table)
+        #self.table.setModel(FeatureSystemTableModel(self.specifier))
+        #layout.addWidget(self.table)
 
         optionLayout = QHBoxLayout()
 
@@ -373,9 +369,15 @@ class EditFeatureMatrixDialog(QDialog):
         self.showAllButton.clicked.connect(self.showAll)
         self.coverageButton.clicked.connect(self.checkCoverage)
 
+        self.displayWidget = QComboBox()
+        self.displayWidget.addItem('Matrix')
+        self.displayWidget.addItem('Tree')
+        self.displayWidget.currentIndexChanged.connect(self.changeDisplay)
+
         box.addRow(self.hideButton)
         box.addRow(self.showAllButton)
         box.addRow(self.coverageButton)
+        #box.addRow('Diplay mode:',self.displayWidget)
 
         coverageFrame.setLayout(box)
 
@@ -404,13 +406,35 @@ class EditFeatureMatrixDialog(QDialog):
 
         self.setWindowTitle('Edit feature system')
 
+        self.changeDisplay()
+
+    def changeDisplay(self):
+        mode = self.displayWidget.currentText()
+        self.table.deleteLater()
+        if mode == 'Tree':
+            self.table = QTreeView()
+            self.table.setHeaderHidden(True)
+            self.table.setModel(FeatureSystemItemModel(self.specifier))
+            self.layout().insertWidget(0,self.table)
+        elif mode == 'Matrix':
+            self.table = TableWidget()
+            self.table.setModel(FeatureSystemTableModel(self.specifier))
+            try:
+                self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+            except AttributeError:
+                self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            self.layout().insertWidget(0,self.table)
+
     def changeFeatureSystem(self):
         path = self.changeWidget.path()
         if path is None:
             self.specifier = None
         else:
             self.specifier = load_binary(path)
-        self.table.setModel(FeatureSystemModel(self.specifier))
+        if self.displayWidget.currentText() == 'Tree':
+            self.table.setModel(FeatureSystemItemModel(self.specifier))
+        else:
+            self.table.setModel(FeatureSystemTableModel(self.specifier))
 
     def addSegment(self):
         dialog = EditSegmentDialog(self,self.table.model().specifier)
@@ -418,10 +442,19 @@ class EditFeatureMatrixDialog(QDialog):
             self.table.model().addSegment(dialog.seg,dialog.featspec)
 
     def editSegment(self):
-        selected = self.table.selectionModel().selectedRows()[0]
-        if not selected:
-            return
-        seg = self.table.model().data[selected.row()][0]
+        if self.displayWidget.currentText() == 'Tree':
+            selected = self.table.selectionModel().selectedIndexes()
+            if not selected:
+                return
+            seg = self.table.model().item(selected[0].row()).text()
+
+        else:
+            selected = self.table.selectionModel().selectedRows()
+            if not selected:
+                return
+            selected = selected[0]
+            seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
+
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
@@ -477,11 +510,12 @@ class EditSegmentDialog(QDialog):
             lay = QVBoxLayout()
 
             featSel = QComboBox()
+            featSel.addItem(specifier.default_value)
             for i,v in enumerate(specifier.possible_values):
+                if v == specifier.default_value:
+                    continue
                 featSel.addItem(v)
                 if segment is not None and v == specifier[segment][f]:
-                    featSel.setCurrentIndex(i)
-                elif v == specifier.default_value:
                     featSel.setCurrentIndex(i)
             lay.addWidget(featSel)
             box.setLayout(lay)

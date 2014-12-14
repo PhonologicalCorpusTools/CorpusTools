@@ -128,7 +128,7 @@ class NDDialog(FunctionDialog):
 
         optionLayout.addWidget(threshFrame)
 
-        fileFrame = QGroupBox('Output file')
+        fileFrame = QGroupBox('Output list of neighbors to a file')
 
         self.saveFileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
 
@@ -234,14 +234,11 @@ class NDDialog(FunctionDialog):
                         self.algorithmWidget.displayValue()])
 
     def khorsiSelected(self):
-        self.stringTypeWidget.enable()
         self.typeTokenWidget.enable()
 
     def editDistSelected(self):
-        self.stringTypeWidget.enable()
         self.typeTokenWidget.disable()
         self.maxDistanceEdit.setText('1')
 
     def phonoEditDistSelected(self):
-        self.stringTypeWidget.disable()
         self.typeTokenWidget.disable()

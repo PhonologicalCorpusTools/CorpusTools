@@ -716,6 +716,7 @@ class InventoryBox(QGroupBox):
                     else:
                         colTwo = 1
                     cell = consTable.cellWidget(row,col)
+
                     cell.layout().addWidget(btn,0,colTwo)
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
@@ -842,12 +843,16 @@ class SegmentPairDialog(QDialog):
 
         layout.addWidget(segFrame)
 
-        self.acceptButton = QPushButton('Ok')
+
+        self.oneButton = QPushButton('Add')
+        self.anotherButton = QPushButton('Add and create another')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.cancelButton)
-        self.acceptButton.clicked.connect(self.accept)
+        acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.oneButton.clicked.connect(self.one)
+        self.anotherButton.clicked.connect(self.another)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
@@ -858,6 +863,18 @@ class SegmentPairDialog(QDialog):
         self.setLayout(layout)
         self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Select segment pair')
+
+    def one(self):
+        self.addOneMore = False
+        self.accept()
+
+    def another(self):
+        self.addOneMore = True
+        self.accept()
+
+    def reject(self):
+        self.addOneMore = False
+        QDialog.reject(self)
 
     def accept(self):
         selected = self.segFrame.value()
@@ -893,10 +910,13 @@ class SegmentPairSelectWidget(QGroupBox):
 
     def segPairPopup(self):
         dialog = SegmentPairDialog(self.inventory)
-        result = dialog.exec_()
-        if result:
-            for p in dialog.pairs:
-                self.table.model().addRow(p)
+        addOneMore = True
+        while addOneMore:
+            result = dialog.exec_()
+            if result:
+                for p in dialog.pairs:
+                    self.table.model().addRow(p)
+            addOneMore = dialog.addOneMore
 
     def removePair(self):
         select = self.table.selectionModel()

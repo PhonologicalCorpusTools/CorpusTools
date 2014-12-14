@@ -256,6 +256,15 @@ class Segment(object):
                     return False
         return True
 
+    def __contains__(self,item):
+        return item in self.features
+
+    def __getitem__(self, key):
+        return self.features[key]
+
+    def __setitem__(self, key, value):
+        self.features[key] = value
+
     def __repr__(self):
         return self.__str__()
 
@@ -420,7 +429,8 @@ class FeatureMatrix(object):
         for s in feature_entries:
             if self._features is None:
                 self._features = {k for k in s.keys() if k != 'symbol'}
-            self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
+            self.matrix[s['symbol']] = Segment(s['symbol'])
+            self.matrix[s['symbol']].specify({k:v for k,v in s.items() if k != 'symbol'})
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
 
         #What are these?
@@ -437,11 +447,20 @@ class FeatureMatrix(object):
     def __setstate__(self,state):
         if '_features' not in state:
             state['_features'] = state['features']
+        for k,v in state['matrix'].items():
+            if not isinstance(v,Segment):
+                s = Segment(k)
+                s.specify(v)
+                state['matrix'][k] = s
         self.__dict__.update(state)
 
         #Backwards compatability
         if '_default_value' not in state:
             self._default_value = 'n'
+
+    def __iter__(self):
+        for k in sorted(self.matrix.keys()):
+            yield self.matrix[k]
 
     def validate(self):
         """
@@ -492,8 +511,9 @@ class FeatureMatrix(object):
         for f in feat_spec.keys():
             if f not in self._features:
                 raise(AttributeError('The segment \'%s\' has a feature \'%s\' that is not defined for this feature matrix' %(seg,f)))
-
-        self.matrix[seg] = feat_spec
+        s = Segment(seg)
+        s.specify(feat_spec)
+        self.matrix[seg] = s
 
     def add_feature(self,feature):
         """
@@ -1079,6 +1099,15 @@ class Corpus(object):
         for word in self:
             word.add_abstract_tier(tier_name,spec)
             newattr.update_range(getattr(word,tier_name))
+
+    def add_attribute(self, name, att_type, display_name = None):
+        newattr = Attribute(name, att_type, display_name)
+        for i,a in enumerate(self._attributes):
+            if name == a:
+                self._attributes[i] = newattr
+                break
+        else:
+            self._attributes.append(newattr)
 
     def add_tier(self, tier_name, spec, display_name=None):
         newattr = Attribute(tier_name,'tier', display_name = display_name)

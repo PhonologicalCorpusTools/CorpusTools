@@ -15,15 +15,34 @@ class PPWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
-        for q in kwargs['query']:
-            if kwargs['algorithm'] == 'vitevitch':
-                res = phonotactic_probability_vitevitch(kwargs['corpus'], q,
-                                        sequence_type = kwargs['sequence_type'],
-                                        count_what = kwargs['count_what'],
-                                        probability_type = kwargs['probability_type'],
-                                        stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])
-            self.results.append([q,res])
+        if 'query' in kwargs:
+            for q in kwargs['query']:
+                if kwargs['algorithm'] == 'vitevitch':
+                    res = phonotactic_probability_vitevitch(kwargs['corpus'], q,
+                                            sequence_type = kwargs['sequence_type'],
+                                            count_what = kwargs['count_what'],
+                                            probability_type = kwargs['probability_type'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
+                self.results.append([q,res])
+        else:
+            call_back = kwargs['call_back']
+            call_back('Calculating phonotactic probabilities...')
+            call_back(0,len(kwargs['corpus']))
+            cur = 0
+            colName = kwargs['column'].lower().replace(' ','_')
+            kwargs['corpus'].add_attribute(colName,'numeric',kwargs['column'])
+            for w in kwargs['corpus']:
+                if self.stopped:
+                    break
+                cur += 1
+                if cur % 20 == 0:
+                    call_back(cur)
+                res = phonotactic_probability_vitevitch(kwargs['corpus'], w,
+                                            sequence_type = kwargs['sequence_type'],
+                                            count_what = kwargs['count_what'],
+                                            probability_type = kwargs['probability_type'])
+                setattr(w,colName,res)
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -59,12 +78,12 @@ class PPDialog(FunctionDialog):
 
         pplayout = QHBoxLayout()
 
-        algEnabled = {'Vitevitch & Luce':True}
+        algEnabled = {'Vitevitch && Luce':True}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([
-                                            ('Vitevitch & Luce','vitevitch'),
+                                            ('Vitevitch && Luce','vitevitch'),
                                             ]),
-                                            {'Vitevitch & Luce':self.vitevitchSelected,
+                                            {'Vitevitch && Luce':self.vitevitchSelected,
                                             },
                                             algEnabled)
 
@@ -84,10 +103,19 @@ class PPDialog(FunctionDialog):
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
 
+        self.allwordsRadio = QRadioButton('Calculate for all words in the corpus')
+        self.allwordsRadio.clicked.connect(self.allwordsSelected)
+        self.columnEdit = QLineEdit()
+        self.columnEdit.setText('Phonotactic probability')
+        self.columnEdit.textChanged.connect(self.allwordsRadio.click)
+
+
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
+        vbox.addRow(self.allwordsRadio)
+        vbox.addRow(QLabel('Column name:'),self.columnEdit)
 
         queryFrame.setLayout(vbox)
 
@@ -136,6 +164,9 @@ class PPDialog(FunctionDialog):
     def fileSelected(self):
         self.compType = 'file'
 
+    def allwordsSelected(self):
+        self.compType = 'all'
+
     def generateKwargs(self):
         kwargs = {'corpus':self.corpus,
                 'algorithm': self.algorithmWidget.value(),
@@ -165,6 +196,22 @@ class PPDialog(FunctionDialog):
                         "Invalid information", "The file path entered was not found.")
                 return
             kwargs['query'] = load_words_neighden(path)
+        elif self.compType == 'all':
+            column = self.columnEdit.text()
+            if column == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please enter a column name.")
+                return
+            if column in self.corpus.attributes:
+
+                msgBox = QMessageBox(QMessageBox.Warning, "Duplicate columns",
+                        "{} is already the name of a column.  Overwrite?", QMessageBox.NoButton, self)
+                msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+                msgBox.addButton("Cancel", QMessageBox.RejectRole)
+                if msgBox.exec_() != QMessageBox.AcceptRole:
+                    return
+            kwargs['column'] = column
+
         return kwargs
 
     def calc(self):
