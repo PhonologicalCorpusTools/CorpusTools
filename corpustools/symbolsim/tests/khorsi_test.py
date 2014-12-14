@@ -172,7 +172,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),-17.53815687),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'atema','khorsi',string_type='spelling',count_what = 'type')
+        calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='spelling',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -193,7 +193,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-7.54617756),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'sasi','khorsi',string_type='spelling',count_what = 'type')
+        calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='spelling',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -215,7 +215,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),-22.4838445)]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'atema','khorsi',string_type='spelling',count_what = 'token')
+        calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='spelling',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -236,7 +236,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-10.12650306)]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'sasi','khorsi',string_type='spelling',count_what = 'token')
+        calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='spelling',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -258,7 +258,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),-14.60340869),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'atema','khorsi',string_type='transcription',count_what = 'type')
+        calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='transcription',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -279,7 +279,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-6.943894326),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'sasi','khorsi',string_type='transcription',count_what = 'type')
+        calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='transcription',count_what = 'type')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -301,7 +301,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('atema'),-15.68503325,self.corpus.find('ʃi')),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'atema','khorsi',string_type='transcription',count_what = 'token')
+        calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='transcription',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 
@@ -322,7 +322,7 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-5.994066536),]
         expected.sort(key=lambda t:t[0])
         expected.reverse()
-        calced = string_similarity(self.corpus,'sasi','khorsi',string_type='transcription',count_what = 'token')
+        calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='transcription',count_what = 'token')
         for i, v in enumerate(expected):
             self.assertAlmostEqual(calced[i][0],v[0])
 

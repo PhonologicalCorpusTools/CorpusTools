@@ -1173,7 +1173,7 @@ class Corpus(object):
         if self.specifier is not None:
             for k in self._inventory.keys():
                 try:
-                    self._inventory[k].specify(self.specifier[k])
+                    self._inventory[k].specify(self.specifier[k].features)
                 except KeyError:
                     pass
 
