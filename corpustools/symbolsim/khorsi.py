@@ -27,7 +27,6 @@ def lcs(x1, x2):
     else:
         longer = x2
         shorter = x1
-
     stringMatches = []
     largestMatch = None
     for i in range(len(shorter),0,-1):
@@ -114,12 +113,17 @@ def khorsi(word1, word2, freq_base, sequence_type):
     """
     w1 = getattr(word1, sequence_type)
     w2 = getattr(word2, sequence_type)
+    if sequence_type == 'spelling':
+        w1 = list(w1)
+        w2 = list(w2)
     longest, left_over = lcs(w1, w2)
+    #print(w1,w2)
+    #print(longest,left_over)
 
     #Khorsi's algorithm
+    #print([(freq_base[x]/freq_base['total']) for x in longest])
     lcs_sum = sum(log(1/(freq_base[x]/freq_base['total'])) for x in longest)
     leftover_sum = sum(log(1/(freq_base[x]/freq_base['total'])) for x in left_over)
-
     return lcs_sum - leftover_sum
 
 def make_freq_base(corpus, sequence_type, count_what = 'type'):

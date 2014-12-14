@@ -31,6 +31,9 @@ class KhorsiTest(unittest.TestCase):
         freq_base = make_freq_base(self.corpus,'spelling','type')
         self.assertEqual(freq_base,expected)
 
+        freq_base = self.corpus.get_frequency_base('spelling','type')
+        self.assertEqual(freq_base,expected)
+
     def test_freq_base_spelling_token(self):
         expected = {'a':466,
                     'e':118,
@@ -45,6 +48,9 @@ class KhorsiTest(unittest.TestCase):
                     'u':265,
                     'total':3414}
         freq_base = make_freq_base(self.corpus,'spelling','token')
+        self.assertEqual(freq_base,expected)
+
+        freq_base = self.corpus.get_frequency_base('spelling','token')
         self.assertEqual(freq_base,expected)
 
     def test_freq_base_transcription_type(self):
@@ -62,6 +68,9 @@ class KhorsiTest(unittest.TestCase):
         freq_base = make_freq_base(self.corpus,'transcription','type')
         self.assertEqual(freq_base,expected)
 
+        freq_base = self.corpus.get_frequency_base('transcription','type')
+        self.assertEqual(freq_base,expected)
+
     def test_freq_base_transcription_token(self):
         expected = {'ɑ':466,
                     'e':118,
@@ -75,6 +84,9 @@ class KhorsiTest(unittest.TestCase):
                     'u':265,
                     'total':2876}
         freq_base = make_freq_base(self.corpus,'transcription','token')
+        self.assertEqual(freq_base,expected)
+
+        freq_base = self.corpus.get_frequency_base('transcription','token')
         self.assertEqual(freq_base,expected)
 
     def test_lcs_spelling(self):
@@ -170,11 +182,11 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('toni'),-15.17933206),
                     (self.corpus.find('atema'),self.corpus.find('tusa'),-13.53067344),
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),-17.53815687),]
-        expected.sort(key=lambda t:t[0])
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='spelling',count_what = 'type')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
         expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-13.57140897),
                     (self.corpus.find('sasi'),self.corpus.find('enuta'),-15.36316844),
@@ -191,11 +203,11 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('toni'),-11.13974683),
                     (self.corpus.find('sasi'),self.corpus.find('tusa'),-5.449867265),
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-7.54617756),]
-        expected.sort(key=lambda t:t[0])
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='spelling',count_what = 'type')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
     def test_mass_relate_spelling_token(self):
         expected = [(self.corpus.find('atema'),self.corpus.find('atema'),12.9671688),
@@ -213,11 +225,11 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('toni'),-16.14809881),
                     (self.corpus.find('atema'),self.corpus.find('tusa'),-13.8308605),
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),-22.4838445)]
-        expected.sort(key=lambda t:t[0])
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='spelling',count_what = 'token')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
         expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-13.8251823),
                     (self.corpus.find('sasi'),self.corpus.find('enuta'),-14.48366705),
@@ -234,11 +246,11 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('toni'),-11.39132061),
                     (self.corpus.find('sasi'),self.corpus.find('tusa'),-5.172159875),
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-10.12650306)]
-        expected.sort(key=lambda t:t[0])
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='spelling',count_what = 'token')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
     def test_mass_relate_transcription_type(self):
         expected = [(self.corpus.find('atema'),self.corpus.find('atema'),10.54988612),
@@ -256,11 +268,11 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('atema'),self.corpus.find('toni'),-14.54716897),
                     (self.corpus.find('atema'),self.corpus.find('tusa'),-13.85402179),
                     (self.corpus.find('atema'),self.corpus.find('ʃi'),-14.60340869),]
-        expected.sort(key=lambda t:t[0])
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='transcription',count_what = 'type')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
         expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-14.85026877),
                     (self.corpus.find('sasi'),self.corpus.find('enuta'),-16.64202823),
@@ -277,33 +289,33 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('toni'),-12.52396715),
                     (self.corpus.find('sasi'),self.corpus.find('tusa'),-5.239146233),
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-6.943894326),]
-        expected.sort(key=lambda t:t[0])
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='transcription',count_what = 'type')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
     def test_mass_relate_transcription_token(self):
-        expected = [(self.corpus.find('atema'),12.10974787,self.corpus.find('atema')),
-                    (self.corpus.find('atema'),-15.29756722,self.corpus.find('enuta')),
-                    (self.corpus.find('atema'),-16.05808867,self.corpus.find('mashomisi')),
-                    (self.corpus.find('atema'),-8.574032654,self.corpus.find('mata')),
-                    (self.corpus.find('atema'),-6.823215263,self.corpus.find('nata')),
-                    (self.corpus.find('atema'),-14.77671518,self.corpus.find('sasi')),
-                    (self.corpus.find('atema'),-13.71767966,self.corpus.find('shashi')),
-                    (self.corpus.find('atema'),-11.34309371,self.corpus.find('shisata')),
-                    (self.corpus.find('atema'),-11.19329949,self.corpus.find('shushoma')),
-                    (self.corpus.find('atema'),-9.205644162,self.corpus.find('ta')),
-                    (self.corpus.find('atema'),-13.74726148,self.corpus.find('tatomi')),
-                    (self.corpus.find('atema'),-23.12247048,self.corpus.find('tishenishu')),
-                    (self.corpus.find('atema'),-15.1191937,self.corpus.find('toni')),
-                    (self.corpus.find('atema'),-13.79217439,self.corpus.find('tusa')),
-                    (self.corpus.find('atema'),-15.68503325,self.corpus.find('ʃi')),]
-        expected.sort(key=lambda t:t[0])
+        expected = [(self.corpus.find('atema'),self.corpus.find('atema'),12.10974787),
+                    (self.corpus.find('atema'),self.corpus.find('enuta'),-15.29756722),
+                    (self.corpus.find('atema'),self.corpus.find('mashomisi'),-16.05808867),
+                    (self.corpus.find('atema'),self.corpus.find('mata'),-8.574032654),
+                    (self.corpus.find('atema'),self.corpus.find('nata'),-6.823215263),
+                    (self.corpus.find('atema'),self.corpus.find('sasi'),-14.77671518),
+                    (self.corpus.find('atema'),self.corpus.find('shashi'),-13.71767966),
+                    (self.corpus.find('atema'),self.corpus.find('shisata'),-11.34309371),
+                    (self.corpus.find('atema'),self.corpus.find('shushoma'),-11.19329949),
+                    (self.corpus.find('atema'),self.corpus.find('ta'),-9.205644162),
+                    (self.corpus.find('atema'),self.corpus.find('tatomi'),-13.74726148),
+                    (self.corpus.find('atema'),self.corpus.find('tishenishu'),-23.12247048),
+                    (self.corpus.find('atema'),self.corpus.find('toni'),-15.1191937),
+                    (self.corpus.find('atema'),self.corpus.find('tusa'),-13.79217439),
+                    (self.corpus.find('atema'),self.corpus.find('ʃi'),-15.68503325),]
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'atema','khorsi',sequence_type='transcription',count_what = 'token')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
         expected = [(self.corpus.find('sasi'),self.corpus.find('atema'),-14.77671518),
                     (self.corpus.find('sasi'),self.corpus.find('enuta'),-15.43519993),
@@ -320,11 +332,11 @@ class KhorsiTest(unittest.TestCase):
                     (self.corpus.find('sasi'),self.corpus.find('toni'),-12.51433768),
                     (self.corpus.find('sasi'),self.corpus.find('tusa'),-4.829191506),
                     (self.corpus.find('sasi'),self.corpus.find('ʃi'),-5.994066536),]
-        expected.sort(key=lambda t:t[0])
+        expected.sort(key=lambda t:t[2])
         expected.reverse()
         calced = string_similarity(self.corpus,'sasi','khorsi',sequence_type='transcription',count_what = 'token')
         for i, v in enumerate(expected):
-            self.assertAlmostEqual(calced[i][0],v[0])
+            self.assertAlmostEqual(calced[i][2],v[2])
 
 if __name__ == '__main__':
     unittest.main()
