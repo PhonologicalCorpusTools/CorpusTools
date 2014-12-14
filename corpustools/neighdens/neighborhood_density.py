@@ -38,9 +38,7 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
         elif algorithm == 'phonological_edit_distance' and sequence_type == 'transcription':
             return phono_edit_distance(w, query, tiername, corpus.specifier) <= max_distance
         elif algorithm == 'khorsi':
-            if corpus.transcription_freq_base[count_what] is None:
-                corpus.transcription_freq_base[count_what] = make_freq_base(corpus, sequence_type, count_what)
-            freq_base = corpus.transcription_freq_base[count_what]
+            freq_base = freq_base = corpus.get_frequency_base(sequence_type, count_what)
             return khorsi(w, query, freq_base, sequence_type) >= max_distance
         else:
             return False

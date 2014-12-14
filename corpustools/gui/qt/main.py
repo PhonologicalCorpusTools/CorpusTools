@@ -290,14 +290,17 @@ class MainWindow(QMainWindow):
     @check_for_transcription
     def phonoProb(self):
         dialog = PPDialog(self, self.corpusModel.corpus,self.showToolTips)
+        #self.corpusModel.layoutAboutToBeChanged.emit()
         result = dialog.exec_()
-        if result:
+        if result and dialog.results:
             if self.PPWindow is not None and dialog.update and self.NDWindow.isVisible():
                 self.PPWindow.table.model().addData(dialog.results)
             else:
                 dataModel = ResultsModel(dialog.header,dialog.results)
                 self.PPWindow = ResultsWindow('Phonotactic probability results',dataModel,self)
                 self.PPWindow.show()
+        self.corpusModel.columnAdded()
+
 
     def phonoSearch(self):
         dialog = PhonoSearchDialog(self,self.corpusModel.corpus,self.showToolTips)

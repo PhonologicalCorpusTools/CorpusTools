@@ -656,6 +656,7 @@ class AddAbstractTierDialog(QDialog):
         main = QFormLayout()
 
         self.cvradio = QRadioButton('CV skeleton')
+        self.cvradio.click()
         main.addWidget(self.cvradio)
 
         mainFrame = QFrame()
@@ -690,7 +691,7 @@ class AddAbstractTierDialog(QDialog):
                                     if x.category is not None
                                     and x.category[0] != 'Consonant'],
                                     }
-        preview = "The following abstract symbols will replace the following segments:\n"
+        preview = "The following abstract symbols correspond to the following segments:\n"
         for k,v in segList.items():
             preview += '{}: {}\n'.format(k,', '.join(v))
         reply = QMessageBox.information(self,
