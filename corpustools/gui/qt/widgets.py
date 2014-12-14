@@ -747,6 +747,15 @@ class InventoryBox(QGroupBox):
 
         self.setLayout(box)
 
+    def clearAll(self):
+        reexc = self.btnGroup.exclusive()
+        if reexc:
+            self.setExclusive(False)
+        for btn in self.btnGroup.buttons():
+            btn.setChecked(False)
+        if reexc:
+            self.setExclusive(True)
+
     def setExclusive(self, b):
         self.btnGroup.setExclusive(b)
         for btn in self.btnGroup.buttons():
@@ -883,6 +892,9 @@ class SegmentPairDialog(QDialog):
         self.addOneMore = True
         self.accept()
 
+    def reset(self):
+        self.segFrame.clearAll()
+
     def reject(self):
         self.addOneMore = False
         QDialog.reject(self)
@@ -923,11 +935,13 @@ class SegmentPairSelectWidget(QGroupBox):
         dialog = SegmentPairDialog(self.inventory)
         addOneMore = True
         while addOneMore:
+            dialog.reset()
             result = dialog.exec_()
             if result:
                 for p in dialog.pairs:
                     self.table.model().addRow(p)
             addOneMore = dialog.addOneMore
+
 
     def removePair(self):
         select = self.table.selectionModel()
@@ -1032,6 +1046,10 @@ class EnvironmentDialog(QDialog):
         self.addOneMore = True
         self.accept()
 
+    def reset(self):
+        self.lhs.clearAll()
+        self.rhs.clearAll()
+
     def accept(self):
         if self.parent().name == 'environment':
             self.env = '{}_{}'.format(self.lhs.value(),self.rhs.value())
@@ -1075,6 +1093,7 @@ class EnvironmentSelectWidget(QGroupBox):
         dialog = EnvironmentDialog(self.inventory,self)
         addOneMore = True
         while addOneMore:
+            dialog.reset()
             result = dialog.exec_()
             if result:
                 self.table.model().addRow([dialog.env])
