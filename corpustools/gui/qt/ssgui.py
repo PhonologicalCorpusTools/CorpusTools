@@ -12,12 +12,11 @@ from .windows import FunctionWorker, FunctionDialog
 class SSWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
-        #try:
-        #    self.results = string_similarity(**kwargs)
-        #except Exception as e:
-        #    self.errorEncountered.emit(e)
-        #    return
-        self.results = string_similarity(**kwargs)
+        try:
+            self.results = string_similarity(**kwargs)
+        except Exception as e:
+            self.errorEncountered.emit(e)
+            return
         if self.stopped:
             return
         self.dataReady.emit(self.results)

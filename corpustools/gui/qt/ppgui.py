@@ -42,10 +42,14 @@ class PPWorker(FunctionWorker):
                 cur += 1
                 if cur % 20 == 0:
                     call_back(cur)
-                res = phonotactic_probability_vitevitch(kwargs['corpus'], w,
+                try:
+                    res = phonotactic_probability_vitevitch(kwargs['corpus'], w,
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             probability_type = kwargs['probability_type'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
                 setattr(w,colName,res)
         if self.stopped:
             return

@@ -14,7 +14,12 @@ class PSWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         corpus = kwargs.pop('corpus')
-        self.results = corpus.phonological_search(**kwargs)
+        try:
+            self.results = corpus.phonological_search(**kwargs)
+
+        except Exception as e:
+            self.errorEncountered.emit(e)
+            return
 
         self.dataReady.emit(self.results)
 

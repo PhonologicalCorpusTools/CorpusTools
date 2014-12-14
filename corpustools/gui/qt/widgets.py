@@ -1054,7 +1054,18 @@ class EnvironmentDialog(QDialog):
         if self.parent().name == 'environment':
             self.env = '{}_{}'.format(self.lhs.value(),self.rhs.value())
         else:
-            self.env = '{}{}'.format(self.lhs.value(),self.rhs.value())
+            lhs = self.lhs.value()
+            if lhs == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify a left hand of the bigram.")
+                return
+            rhs = self.rhs.value()
+            if rhs == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify a right hand of the bigram.")
+                return
+
+            self.env = '{}{}'.format(lhs,rhs)
         QDialog.accept(self)
 
     def reject(self):

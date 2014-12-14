@@ -16,13 +16,17 @@ class NDWorker(FunctionWorker):
         kwargs = self.kwargs
         self.results = list()
         for q in kwargs['query']:
-            res = neighborhood_density(kwargs['corpus'], q,
+            try:
+                res = neighborhood_density(kwargs['corpus'], q,
                                         algorithm = kwargs['algorithm'],
                                         sequence_type = kwargs['sequence_type'],
                                         count_what = kwargs['count_what'],
                                         max_distance = kwargs['max_distance'],
                                         stop_check = kwargs['stop_check'],
                                         call_back = kwargs['call_back'])
+            except Exception as e:
+                self.errorEncountered.emit(e)
+                return
             if kwargs['output_filename'] is not None:
                 print_neighden_results(kwargs['output_filename'],res[1])
             self.results.append([q,res[0]])
