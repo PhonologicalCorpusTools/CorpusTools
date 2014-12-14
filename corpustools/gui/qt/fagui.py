@@ -16,7 +16,8 @@ class FAWorker(FunctionWorker):
         if kwargs['pair_behavior'] == 'individual':
 
             for pair in kwargs['segment_pairs']:
-                res = calc_freq_of_alt(kwargs['corpus'], pair[0], pair[1],
+                try:
+                    res = calc_freq_of_alt(kwargs['corpus'], pair[0], pair[1],
                                 kwargs['relator_type'], kwargs['count_what'],
                                 sequence_type = kwargs['sequence_type'],
                                 min_rel=kwargs['min_rel'], max_rel=kwargs['max_rel'],
@@ -25,6 +26,9 @@ class FAWorker(FunctionWorker):
                                 output_filename=kwargs['output_filename'],
                                 stop_check = kwargs['stop_check'],
                                 call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
                 if self.stopped:
                     return
                 self.results.append(res)

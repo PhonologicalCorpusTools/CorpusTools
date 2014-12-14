@@ -16,26 +16,35 @@ class FLWorker(FunctionWorker):
 
             for pair in kwargs['segment_pairs']:
                 if kwargs['func_type'] == 'min_pairs':
-                    res = FL.minpair_fl(kwargs['corpus'], [pair],
+                    try:
+                        res = FL.minpair_fl(kwargs['corpus'], [pair],
                             frequency_cutoff = kwargs['frequency_cutoff'],
                             relative_count = kwargs['relative_count'],
                             distinguish_homophones= kwargs['distinguish_homophones'],
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except Exception as e:
+                        self.errorEncountered.emit(e)
+                        return
                 elif kwargs['func_type'] == 'entropy':
-                    res = FL.deltah_fl(kwargs['corpus'], [pair],
+                    try:
+                        res = FL.deltah_fl(kwargs['corpus'], [pair],
                             frequency_cutoff=kwargs['frequency_cutoff'],
                             type_or_token=kwargs['type_or_token'],
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except Exception as e:
+                        self.errorEncountered.emit(e)
+                        return
                 if self.stopped:
                     return
                 self.results.append(res)
         else:
             if kwargs['func_type'] == 'min_pairs':
-                res = FL.minpair_fl(kwargs['corpus'],
+                try:
+                    res = FL.minpair_fl(kwargs['corpus'],
                             kwargs['segment_pairs'],
                             frequency_cutoff=kwargs['frequency_cutoff'],
                             relative_count = kwargs['relative_count'],
@@ -43,14 +52,21 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
             elif kwargs['func_type'] == 'entropy':
-                res = FL.deltah_fl(kwargs['corpus'],
+                try:
+                    res = FL.deltah_fl(kwargs['corpus'],
                             kwargs['segment_pairs'],
                             frequency_cutoff=kwargs['frequency_cutoff'],
                             type_or_token=kwargs['type_or_token'],
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
             if self.stopped:
                 return
             self.results.append(res)
