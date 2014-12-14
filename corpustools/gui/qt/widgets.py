@@ -616,7 +616,7 @@ class InventoryBox(QGroupBox):
         self.btnGroup.setExclusive(False)
         if len(consColumns) and len(vowColumns):
             box = QVBoxLayout()
-            smallbox = QHBoxLayout()
+            smallbox = QVBoxLayout()
             cons = QGroupBox('Consonants')
             consBox = QVBoxLayout()
             consTable = InventoryTable()
@@ -789,7 +789,11 @@ class FeatureBox(QGroupBox):
             buttonLayout.addWidget(b, alignment = Qt.AlignCenter)
             self.buttons.append(b)
 
-        self.clearButton = QPushButton('Clear all')
+        self.clearOneButton = QPushButton('Remove selected')
+        self.clearOneButton.clicked.connect(self.clearOne)
+        buttonLayout.addWidget(self.clearOneButton, alignment = Qt.AlignCenter)
+
+        self.clearButton = QPushButton('Remove all')
         self.clearButton.clicked.connect(self.clearAll)
         buttonLayout.addWidget(self.clearButton, alignment = Qt.AlignCenter)
 
@@ -798,6 +802,7 @@ class FeatureBox(QGroupBox):
         layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
 
         self.envList = QListWidget()
+        self.envList.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         layout.addWidget(self.envList)
 
@@ -814,6 +819,12 @@ class FeatureBox(QGroupBox):
         curFeature = self.featureList.currentItem()
         if curFeature:
             self.envList.addItem(self.sender().value+curFeature.text())
+
+    def clearOne(self):
+        items = self.envList.selectedItems()
+        for i in items:
+            item = self.envList.takeItem(self.envList.row(i))
+            #self.sourceWidget.addItem(item)
 
     def clearAll(self):
         self.envList.clear()
@@ -858,7 +869,7 @@ class SegmentPairDialog(QDialog):
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
-        layout.addWidget(acFrame)
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
         self.setFixedSize(self.sizeHint())
@@ -982,7 +993,7 @@ class EnvironmentDialog(QDialog):
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
-        self.setFixedSize(self.sizeHint())
+        #self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Create {}'.format(parent.name))
 
 
