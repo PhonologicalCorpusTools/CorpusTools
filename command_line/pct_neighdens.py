@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description = \
              'Phonological CorpusTools: neighborhood density CL interface')
     parser.add_argument('corpus_file_name', help='Name of corpus file')
-    parser.add_argument('query', help='Name of word to query')
+    parser.add_argument('query', help='Name of word to query, or name of file including a list of words')
     parser.add_argument('-a', '--algorithm', default= 'edit_distance', help="The algorithm used to determine distance")
     parser.add_argument('-d', '--max_distance', type=int, default = 1, help="Maximum edit distance from the queried word to consider a word a neighbor.")
     parser.add_argument('-s', '--sequence_type', default = 'transcription', help="The name of the tier on which to calculate distance")
@@ -22,21 +22,31 @@ def main():
 
     args = parser.parse_args()
 
-
     ####
 
     corpus = load_binary(args.corpus_file_name)[0]
-    for c in corpus:
-        print(c)
 
-    result = neighborhood_density(corpus, args.query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter)
+    try: # read query as a file name
+        with open(args.query) as queryfile:
+            queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
+        results = [neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter) for query in queries]
+        if args.outfile:
+            with open(args.outfile, 'w') as outfile:
+                for q, r in zip(queries, results):
+                    outfile.write('{}\t{}'.format(q, str(r[0])) + ''.join(['\t{}'.format(str(n)) for n in r[1]]) + '\n')
+        else:
+            raise Exception('In order to use a file of queries as input, you must provide an output file name using the option -o.')
 
-    if args.outfile:
-        with open(args.outfile, 'w') as outfile:
-            outfile.write(str(result)) # TODO: develop output file structure
-    else:
-        print('No output file name provided.')
-        print('The neighborhood density of the given form is {}.'.format(str(result)))
+
+    except FileNotFoundError: # read query as a single word
+        result = neighborhood_density(corpus, args.query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter)
+
+        if args.outfile:
+            with open(args.outfile, 'w') as outfile:
+                outfile.write('{}\t{}'.format(q, str(result[0])) + ''.join(['\t{}'.format(str(n)) for n in result[1]]))
+        else:
+            print('No output file name provided.')
+            print('The neighborhood density of the given form is {}. For a list of neighbors, please provide an output file name.'.format(str(result[0])))
 
 
 if __name__ == '__main__':

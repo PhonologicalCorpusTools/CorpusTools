@@ -13,10 +13,6 @@ def check_bool(string):
     else:
         return True
 
-def read_segment_or_pairs(spfile):
-    return spfile.read().strip()
-
-
 def main():
 
     #### Parse command-line arguments
@@ -63,7 +59,7 @@ def main():
 
     if args.outfile:
         with open(args.outfile, 'w') as outfile:
-            outfile.write(str(result)) # TODO: develop output file structure
+            outfile.write(str(result))
     else:
         print('No output file name provided.')
         print('The functional load of the given inputs is {}.'.format(str(result)))
