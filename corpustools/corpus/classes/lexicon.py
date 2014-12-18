@@ -995,7 +995,7 @@ class Corpus(object):
                     freq = word.frequency
                 else:
                     freq = 1
-                #seq = ['#'] + [x for x in getattr(word, sequence_type)] +['#']
+                # seq = ['#'] + [x for x in getattr(word, sequence_type)] +['#']
                 seq = getattr(word, sequence_type)
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:

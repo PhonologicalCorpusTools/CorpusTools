@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 
 from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
                     Frame, StringVar, BooleanVar, END, DISABLED, TclError,
