@@ -1,5 +1,5 @@
 from corpustools.corpus.classes import Word
-from corpustools.symbolsim.phono_align_ex import Aligner
+from corpustools.symbolsim.phono_align import Aligner
 
 al = Aligner(features_tf=False)
 

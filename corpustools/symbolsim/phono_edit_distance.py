@@ -1,6 +1,6 @@
 
 
-from corpustools.symbolsim.phono_align_ex import Aligner
+from corpustools.symbolsim.phono_align import Aligner
 
 def phono_edit_distance(word1, word2, sequence_type, features):
     """Returns an analogue to Levenshtein edit distance but uses
