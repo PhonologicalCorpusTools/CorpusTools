@@ -1,9 +1,10 @@
 import argparse
 import os
 import csv
-
+    
 from corpustools.corpus.io.binary import load_binary
 from corpustools.neighdens.neighborhood_density import neighborhood_density
+from corpustools.neighdens.neighborhood_density import find_mutation_minpairs
 
 
 def main():
@@ -18,6 +19,7 @@ def main():
     parser.add_argument('-s', '--sequence_type', default = 'transcription', help="The name of the tier on which to calculate distance")
     parser.add_argument('-w', '--count_what', default ='type', help="If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency.")
     parser.add_argument('-e', '--segment_delimiter', default=None, help="If not None, splits the query by this str to make a transcription/spelling list for the query's Word object.")
+    parser.add_argument('-m', '--find_mutation_minpairs', action='store_true', help='This flag causes the script not to calculate neighborhood density, but rather to find minimal pairs---see documentation.')
     parser.add_argument('-o', '--outfile', help='Name of output file')
 
     args = parser.parse_args()
@@ -26,27 +28,33 @@ def main():
 
     corpus = load_binary(args.corpus_file_name)[0]
 
-    try: # read query as a file name
-        with open(args.query) as queryfile:
-            queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
-        results = [neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter) for query in queries]
-        if args.outfile:
-            with open(args.outfile, 'w') as outfile:
-                for q, r in zip(queries, results):
-                    outfile.write('{}\t{}'.format(q, str(r[0])) + ''.join(['\t{}'.format(str(n)) for n in r[1]]) + '\n')
-        else:
-            raise Exception('In order to use a file of queries as input, you must provide an output file name using the option -o.')
+    if args.find_mutation_minpairs:
+        matches = find_mutation_minpairs(corpus, args.query, sequence_type=args.sequence_type, segment_delimiter=args.segment_delimiter)
+        for match in matches:
+            print(match)
+        print('Total number of matches: {}'.format(str(len(matches))))
+    else:
+        try: # read query as a file name
+            with open(args.query) as queryfile:
+                queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
+            results = [neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter) for query in queries]
+            if args.outfile:
+                with open(args.outfile, 'w') as outfile:
+                    for q, r in zip(queries, results):
+                        outfile.write('{}\t{}'.format(q, str(r[0])) + ''.join(['\t{}'.format(str(n)) for n in r[1]]) + '\n')
+            else:
+                raise Exception('In order to use a file of queries as input, you must provide an output file name using the option -o.')
 
 
-    except FileNotFoundError: # read query as a single word
-        result = neighborhood_density(corpus, args.query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter)
+        except FileNotFoundError: # read query as a single word
+            result = neighborhood_density(corpus, args.query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter)
 
-        if args.outfile:
-            with open(args.outfile, 'w') as outfile:
-                outfile.write('{}\t{}'.format(q, str(result[0])) + ''.join(['\t{}'.format(str(n)) for n in result[1]]))
-        else:
-            print('No output file name provided.')
-            print('The neighborhood density of the given form is {}. For a list of neighbors, please provide an output file name.'.format(str(result[0])))
+            if args.outfile:
+                with open(args.outfile, 'w') as outfile:
+                    outfile.write('{}\t{}'.format(q, str(result[0])) + ''.join(['\t{}'.format(str(n)) for n in result[1]]))
+            else:
+                print('No output file name provided.')
+                print('The neighborhood density of the given form is {}. For a list of neighbors, please provide an output file name.'.format(str(result[0])))
 
 
 if __name__ == '__main__':

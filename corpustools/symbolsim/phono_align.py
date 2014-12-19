@@ -121,11 +121,11 @@ class Aligner(object):
                 return (sum(check_feature_difference(fs1[k], fs2[k]) for k in fs1.keys()) * self.sub_penalty)
         else:
             if segment1 == 'empty':
-                return 1
+                return self.ins_penalty
             elif segment2 == 'empty':
-                return 1
+                return self.del_penalty
             else:
-                return int(segment1!=segment2)
+                return int(segment1!=segment2) * self.sub_penalty
 
 
     def generate_alignment(self, seq1, seq2, d):
@@ -186,11 +186,6 @@ class Aligner(object):
 
 
 
-
-
-
-
-
 def make_feature_dict(feature_file):
     instring = feature_file.read().split('\n')
     colnames = instring[0].split('\t')
@@ -203,13 +198,3 @@ def make_feature_dict(feature_file):
         feature_dict[segment[0]] = values_dict
 
     return feature_dict
-
-
-if __name__ == '__main__':
-
-    import corpustools
-    factory = corpustools.CorpusFactory()
-    corpus = factory.make_corpus('IPhOD', features='hayes', size=20)
-    alr = Aligner(features=corpus.specifier.matrix)
-    amt = alr.align('kənfɛs', 'kənfɛʃən')
-    alr.morpho_related(amt, 's', 'ʃ')

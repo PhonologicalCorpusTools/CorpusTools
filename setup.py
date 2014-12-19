@@ -47,7 +47,8 @@ setup(name='corpustools',
                             'pct_corpus=command_line.pct_corpus:main',
                             'pct_funcload=command_line.pct_funcload:main',
                             'pct_neighdens=command_line.pct_neighdens:main',
-                            'pct_mutualinfo=command_line.pct_mutualinfo:main'],
+                            'pct_mutualinfo=command_line.pct_mutualinfo:main',
+                            'pct_search=command_line.pct_search:main'],
     },
     scripts=['bin/pct.py']
       )

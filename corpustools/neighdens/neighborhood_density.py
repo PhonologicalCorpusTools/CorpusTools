@@ -2,6 +2,7 @@ from corpustools.corpus.classes import Word
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi, make_freq_base
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
+from corpustools.symbolsim.phono_align import Aligner
 
 def neighborhood_density(corpus, query, sequence_type = 'transcription',
             algorithm = 'edit_distance', max_distance = 1,
@@ -11,7 +12,7 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
     Parameters
     ----------
     corpus : Corpus
-        The domain over which functional load is calculated.
+        The domain over which neighborhood density is calculated.
     query : Word (or, dispreferred: str or list of str)
         The word whose neighborhood density to calculate. Can be coerced into a Word from a string or list of strings, e.g. if the query is not in the corpus or if called from command line.
     sequence_type : str
@@ -43,18 +44,10 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
         else:
             return False
 
-    if isinstance(query, Word):
-        query_word = query
-    else:
-        try:
-            query_word = corpus.find(query)
-        except KeyError:
-            if segment_delimiter == None:
-                query_word = Word(**{sequence_type: list(query)})
-            else:
-                query_word = Word(**{sequence_type: query.split(segment_delimiter)})
+    # for the command line interface: convert str to Word
+    query_word = ensure_query_is_word(query, corpus, sequence_type, segment_delimiter)
 
-    matches = list()
+    matches = []
     if call_back is not None:
         call_back('Finding neighbors...')
         call_back(0,len(corpus))
@@ -80,23 +73,51 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
 
 
 
-def neighborhood_density_2(corpus, query, max_distance=1, use_token_frequency=False):
-    """Calculate the neighborhood density of a particular word in the corpus. Generates all possible neighbors of query and checks whether each is in the corpus.
+def find_mutation_minpairs(corpus, query, sequence_type='transcription', segment_delimiter=None):
+    """Find all minimal pairs of the query word based only on segment mutations (not deletions/insertions)
 
     Parameters
     ----------
     corpus : Corpus
-        The domain over which functional load is calculated.
+        The domain over which the search for minimal pairs is carried out
     query : Word
-        The word whose neighborhood density to calculate.
-    max_distance : number, optional
-        Maximum edit distance from the queried word to consider a word a neighbor.
-    use_token_frequency : bool, optional
-        If True, count neighbors in terms of their token frequency.
+        The word whose minimal pairs to find
+    sequence_type : str
+        Tier (or spelling or transcription) on which to search for minimal pairs
+    segment_delimiter : str
+        If not None, splits the query by this str to make a transcription/spelling list for the query's Word object. If None, split everywhere.
 
     Returns
     -------
-    float
-        The number of neighbors for the queried word.
+    list
+        The found minimal pairs for the queried word
     """
-    pass
+    # for the command line interface: convert str to Word
+    query_word = ensure_query_is_word(query, corpus, sequence_type, segment_delimiter)
+
+    matches = []
+    al = Aligner(features_tf=False, ins_penalty=float('inf'), del_penalty=float('inf'), sub_penalty=1)
+    for w in corpus:
+        if (len(getattr(w, sequence_type)) > len(getattr(query_word, sequence_type))+1 or 
+            len(getattr(w, sequence_type)) < len(getattr(query_word, sequence_type))-1):
+            continue
+        m = al.make_similarity_matrix(getattr(query_word, sequence_type), getattr(w, sequence_type))
+        if m[-1][-1]['f'] != 1:
+            continue
+        matches.append(str(getattr(w, sequence_type)))
+    
+    return set(matches)-set([str(getattr(query_word, sequence_type))])
+
+
+def ensure_query_is_word(query, corpus, sequence_type, segment_delimiter):
+    if isinstance(query, Word):
+        query_word = query
+    else:
+        try:
+            query_word = corpus.find(query)
+        except KeyError:
+            if segment_delimiter == None:
+                query_word = Word(**{sequence_type: list(query)})
+            else:
+                query_word = Word(**{sequence_type: query.split(segment_delimiter)})
+    return query_word
