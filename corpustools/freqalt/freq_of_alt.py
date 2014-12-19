@@ -3,7 +3,7 @@ import time
 import os
 from codecs import open
 
-import corpustools.symbolsim.phono_align_ex as phono_align_ex
+import corpustools.symbolsim.pam as pam
 from corpustools.symbolsim.string_similarity import (string_similarity,
                                                     )
 
@@ -73,7 +73,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
         cur = 0
     related_list = list()
     if phono_align:
-        al = phono_align_ex.Aligner(features=corpus.specifier)
+        al = pam.Aligner(features=corpus.specifier)
     for w1 in list_s1:
         for w2 in list_s2:
             if stop_check is not None and stop_check():
