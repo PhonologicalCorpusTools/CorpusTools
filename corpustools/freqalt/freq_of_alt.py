@@ -3,7 +3,7 @@ import time
 import os
 from codecs import open
 
-import corpustools.symbolsim.pam as pam
+import corpustools.symbolsim.phono_align as pam
 from corpustools.symbolsim.string_similarity import (string_similarity,
                                                     )
 
