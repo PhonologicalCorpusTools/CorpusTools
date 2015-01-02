@@ -818,7 +818,7 @@ class FeatureBox(QGroupBox):
         self.setLayout(layout)
 
     def inspectInventory(self):
-        self.features = self.inventory[-1].features.keys()
+        self.features = sorted(self.inventory[-1].features.keys())
         self.values = set()
         for v in self.inventory:
             self.values.update(v.features.values())

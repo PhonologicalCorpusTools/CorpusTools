@@ -14,7 +14,7 @@ from corpustools.corpus.io import (load_binary, download_binary,
 
 from .views import TableWidget
 
-from .models import FeatureSystemTableModel#, FeatureSystemItemModel
+from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
 from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
 
@@ -332,7 +332,10 @@ class EditFeatureMatrixDialog(QDialog):
 
         changeFrame = QGroupBox('Change feature systems')
         box = QFormLayout()
-        self.changeWidget = FeatureSystemSelect(default=self.specifier.name)
+        default = None
+        if self.specifier is not None:
+            default = self.specifier.name
+        self.changeWidget = FeatureSystemSelect(default=default)
         self.changeWidget.changed.connect(self.changeFeatureSystem)
         box.addRow(self.changeWidget)
 
@@ -369,19 +372,27 @@ class EditFeatureMatrixDialog(QDialog):
         self.showAllButton.clicked.connect(self.showAll)
         self.coverageButton.clicked.connect(self.checkCoverage)
 
+        box.addRow(self.hideButton)
+        box.addRow(self.showAllButton)
+        box.addRow(self.coverageButton)
+
+        coverageFrame.setLayout(box)
+
+        optionLayout.addWidget(coverageFrame)
+
+        viewFrame = QGroupBox('Display options')
+        box = QFormLayout()
+
         self.displayWidget = QComboBox()
         self.displayWidget.addItem('Matrix')
         self.displayWidget.addItem('Tree')
         self.displayWidget.currentIndexChanged.connect(self.changeDisplay)
 
-        box.addRow(self.hideButton)
-        box.addRow(self.showAllButton)
-        box.addRow(self.coverageButton)
-        #box.addRow('Diplay mode:',self.displayWidget)
+        box.addRow('Display mode:',self.displayWidget)
 
-        coverageFrame.setLayout(box)
+        viewFrame.setLayout(box)
 
-        optionLayout.addWidget(coverageFrame)
+        optionLayout.addWidget(viewFrame)
 
         optionFrame = QFrame()
 
@@ -414,7 +425,7 @@ class EditFeatureMatrixDialog(QDialog):
         if mode == 'Tree':
             self.table = QTreeView()
             self.table.setHeaderHidden(True)
-            self.table.setModel(FeatureSystemItemModel(self.specifier))
+            self.table.setModel(FeatureSystemTreeModel(self.specifier))
             self.layout().insertWidget(0,self.table)
         elif mode == 'Matrix':
             self.table = TableWidget()
@@ -430,7 +441,10 @@ class EditFeatureMatrixDialog(QDialog):
         if path is None:
             self.specifier = None
         else:
-            self.specifier = load_binary(path)
+            try:
+                self.specifier = load_binary(path)
+            except OSError:
+                return
         if self.displayWidget.currentText() == 'Tree':
             self.table.setModel(FeatureSystemItemModel(self.specifier))
         else:
@@ -443,18 +457,18 @@ class EditFeatureMatrixDialog(QDialog):
 
     def editSegment(self):
         if self.displayWidget.currentText() == 'Tree':
-            selected = self.table.selectionModel().selectedIndexes()
-            if not selected:
+            index = self.table.selectionModel().currentIndex()
+            seg = self.table.model().data(index,Qt.DisplayRole)
+            if seg is None:
                 return
-            seg = self.table.model().item(selected[0].row()).text()
-
+            if seg not in self.specifier:
+                return
         else:
             selected = self.table.selectionModel().selectedRows()
             if not selected:
                 return
             selected = selected[0]
             seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
-
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)

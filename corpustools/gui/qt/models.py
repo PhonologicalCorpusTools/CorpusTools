@@ -349,267 +349,277 @@ class ResultsModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
 
-#class TreeItem(object):
-    #def __init__(self, data, parent=None):
-        #self.parentItem = parent
-        #self.itemData = data
-        #self.childItems = []
 
-    #def appendChild(self, item):
-        #self.childItems.append(item)
+class TreeItem(object):
 
-    #def child(self, row):
-        #return self.childItems[row]
+    def __init__(self, name, parent=None):
 
-    #def childCount(self):
-        #return len(self.childItems)
+        self._name = name
+        self._children = []
+        self._parent = parent
 
-    #def columnCount(self):
-        #return len(self.itemData)
+        if parent is not None:
+            parent.addChild(self)
 
-    #def data(self, column):
-        #try:
-            #return self.itemData[column]
-        #except IndexError:
-            #return None
+    def addChild(self, child):
+        self._children.append(child)
 
-    #def parent(self):
-        #return self.parentItem
+    def insertChild(self, position, child):
 
-    #def row(self):
-        #if self.parentItem:
-            #return self.parentItem.childItems.index(self)
+        if position < 0 or position > len(self._children):
+            return False
 
-        #return 0
+        self._children.insert(position, child)
+        child._parent = self
+        return True
 
-#class FeatureSystemTreeModel(QAbstractItemModel):
-    #def __init__(self, specifier, parent=None):
-        #QAbstractItemModel.__init__(self,parent)
-        #self.specifier = specifier
+    def removeChild(self, position):
 
-        #self.rootItem = TreeItem(("Segment"))
-        #self.rows = [s for s in self.specifier]
-        #self.generateData()
+        if position < 0 or position > len(self._children):
+            return False
 
-    #def columnCount(self, parent):
-        #if parent.isValid():
-            #return parent.internalPointer().columnCount()
-        #else:
-            #return self.rootItem.columnCount()
+        child = self._children.pop(position)
+        child._parent = None
 
-    #def data(self, index, role):
-        #if not index.isValid():
-            #return None
+        return True
 
-        #if role != QtCore.Qt.DisplayRole:
-            #return None
 
-        #item = index.internalPointer()
+    def name(self):
+        return self._name
 
-        #return item.data(index.column())
+    def setName(self, name):
+        self._name = name
 
-    #def flags(self, index):
-        #if not index.isValid():
-            #return QtCore.Qt.NoItemFlags
+    def child(self, row):
+        return self._children[row]
 
-        #return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+    def childCount(self):
+        return len(self._children)
 
-    #def headerData(self, section, orientation, role):
-        #if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            #return self.rootItem.data(section)
+    def parent(self):
+        return self._parent
 
-        #return None
+    def row(self):
+        if self._parent is not None:
+            return self._parent._children.index(self)
 
-    #def index(self, row, column, parent):
-        #if not self.hasIndex(row, column, parent):
-            #return QtCore.QModelIndex()
 
-        #if not parent.isValid():
-            #parentItem = self.rootItem
-        #else:
-            #parentItem = parent.internalPointer()
+class FeatureSystemTreeModel(QAbstractItemModel):
+    def __init__(self, specifier, parent=None):
+        super(FeatureSystemTreeModel, self).__init__(parent)
+        self.specifier = specifier
+        self.segments = [s for s in self.specifier]
+        self.generateData()
 
-        #childItem = parentItem.child(row)
-        #if childItem:
-            #return self.createIndex(row, column, childItem)
-        #else:
-            #return QtCore.QModelIndex()
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int"""
+    def rowCount(self, parent):
+        if not parent.isValid():
+            parentNode = self._rootNode
+        else:
+            parentNode = parent.internalPointer()
 
-    #def setupModelData(self, lines, parent):
-        #parents = [parent]
-        #indentations = [0]
+        return parentNode.childCount()
 
-        #number = 0
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int"""
+    def columnCount(self, parent):
+        return 1
 
-        #while number < len(lines):
-            #position = 0
-            #while position < len(lines[number]):
-                #if lines[number][position] != ' ':
-                    #break
-                #position += 1
+    """INPUTS: QModelIndex, int"""
+    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
+    def data(self, index, role):
 
-            #lineData = lines[number][position:].trimmed()
+        if not index.isValid():
+            return None
+        node = index.internalPointer()
+        if node is None:
+            print(index)
 
-            #if lineData:
-                ## Read the column data from the rest of the line.
-                #columnData = [s for s in lineData.split('\t') if s]
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                return node.name()
 
-                #if position > indentations[-1]:
-                    ## The last child of the current parent is now the new
-                    ## parent unless the current parent has no children.
 
-                    #if parents[-1].childCount() > 0:
-                        #parents.append(parents[-1].child(parents[-1].childCount() - 1))
-                        #indentations.append(position)
+    """INPUTS: int, Qt::Orientation, int"""
+    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if section == 0:
+                return "Scenegraph"
+            else:
+                return "Typeinfo"
 
-                #else:
-                    #while position < indentations[-1] and len(parents) > 0:
-                        #parents.pop()
-                        #indentations.pop()
 
-                ## Append a new item to the current parent's list of children.
-                #parents[-1].appendChild(TreeItem(columnData, parents[-1]))
 
-            #number += 1
-    #def generateData(self):
-        #self.clear()
-        #consItem = QStandardItem('Consonants')
-        #placeItem = QStandardItem('Place')
-        #placeValues = list()
-        #mannerItem = QStandardItem('Manner')
-        #mannerValues = list()
-        #voiceItem = QStandardItem('Voicing')
-        #voiceValues = list()
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int (flag)"""
+    def flags(self, index):
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
-        #self.appendRow(consItem)
-        #consItem.appendRow(placeItem)
-        #consItem.appendRow(mannerItem)
-        #consItem.appendRow(voiceItem)
 
-        #vowItem = QStandardItem('Vowels')
-        #heightItem = QStandardItem('Height')
-        #heightValues = list()
-        #backItem = QStandardItem('Backness')
-        #backValues = list()
-        #roundItem = QStandardItem('Rounding')
-        #roundValues = list()
-        #diphItem = QStandardItem('Diphthongs')
 
-        #self.appendRow(vowItem)
-        #vowItem.appendRow(heightItem)
-        #vowItem.appendRow(backItem)
-        #vowItem.appendRow(roundItem)
-        #vowItem.appendRow(diphItem)
+    """INPUTS: QModelIndex"""
+    """OUTPUT: QModelIndex"""
+    """Should return the parent of the node with the given QModelIndex"""
+    def parent(self, index):
 
-        #for s in self.rows:
-            #cat = s.category
-            #if cat is None:
-                #continue
-            #if cat[0] == 'Consonant':
-                #place = cat[1]
-                #manner = cat[2]
-                #voicing = cat[3]
-                #if place is None:
-                    #place = 'Unknown'
-                #if manner is None:
-                    #manner = 'Unknown'
-                #if voicing is None:
-                    #voicing = 'Unknown'
-                #for p in placeValues:
-                    #if p.text() == place:
-                        #item = p
-                        #break
-                #else:
-                    #item = QStandardItem(place)
-                    #placeValues.append(item)
-                    #placeItem.appendRow(item)
-                #item.appendRow(QStandardItem(s.symbol))
+        node = self.getNode(index)
+        parentNode = node.parent()
 
-                #for m in mannerValues:
-                    #if m.text() == manner:
-                        #item = m
-                        #break
-                #else:
-                    #item = QStandardItem(manner)
-                    #mannerValues.append(item)
-                    #mannerItem.appendRow(item)
-                #item.appendRow(QStandardItem(s.symbol))
+        if parentNode == self._rootNode:
+            return QModelIndex()
 
-                #for v in voiceValues:
-                    #if v.text() == voicing:
-                        #item = v
-                        #break
-                #else:
-                    #item = QStandardItem(voicing)
-                    #voiceValues.append(item)
-                    #voiceItem.appendRow(item)
-                #item.appendRow(QStandardItem(s.symbol))
-            #elif cat[0] == 'Vowel':
-                #height = cat[1]
-                #back = cat[2]
-                #rounded = cat[3]
-                #if height is None:
-                    #height = 'Unknown'
-                #if back is None:
-                    #back = 'Unknown'
-                #if rounded is None:
-                    #rounded = 'Unknown'
+        return self.createIndex(parentNode.row(), 0, parentNode)
 
-                #for v in heightValues:
-                    #if v.text() == height:
-                        #item = v
-                        #break
-                #else:
-                    #item = QStandardItem(height)
-                    #heightValues.append(item)
-                    #heightItem.appendRow(item)
-                #item.appendRow(QStandardItem(s.symbol))
+    """INPUTS: int, int, QModelIndex"""
+    """OUTPUT: QModelIndex"""
+    """Should return a QModelIndex that corresponds to the given row, column and parent node"""
+    def index(self, row, column, parent):
 
-                #for v in backValues:
-                    #if v.text() == back:
-                        #item = v
-                        #break
-                #else:
-                    #item = QStandardItem(back)
-                    #backValues.append(item)
-                    #backItem.appendRow(item)
-                #item.appendRow(QStandardItem(s.symbol))
+        parentNode = self.getNode(parent)
 
-                #for v in roundValues:
-                    #if v.text() == rounded:
-                        #item = v
-                        #break
-                #else:
-                    #item = QStandardItem(rounded)
-                    #roundValues.append(item)
-                    #roundItem.appendRow(item)
-                #item.appendRow(QStandardItem(s.symbol))
+        childItem = parentNode.child(row)
 
-            #elif cat[0] == 'Diphthong':
-                #diphItem.appendRow(QStandardItem(s.symbol))
 
-    #def filter(self,segments):
+        if childItem:
+            return self.createIndex(row, column, childItem)
+        else:
+            return QModelIndex()
+
+    """CUSTOM"""
+    """INPUTS: QModelIndex"""
+    def getNode(self, index):
+        if index.isValid():
+            node = index.internalPointer()
+            if node:
+                return node
+
+        return self._rootNode
+
+    def generateData(self):
+
+        self._rootNode = TreeItem("Segment")
+        consItem = TreeItem('Consonants', self._rootNode)
+        placeItem = TreeItem('Place',consItem)
+        placeValues = list()
+        mannerItem = TreeItem('Manner',consItem)
+        mannerValues = list()
+        voiceItem = TreeItem('Voicing',consItem)
+        voiceValues = list()
+
+        vowItem = TreeItem('Vowels', self._rootNode)
+        heightItem = TreeItem('Height',vowItem)
+        heightValues = list()
+        backItem = TreeItem('Backness',vowItem)
+        backValues = list()
+        roundItem = TreeItem('Rounding',vowItem)
+        roundValues = list()
+        diphItem = TreeItem('Diphthongs',vowItem)
+
+        for s in self.segments:
+            cat = s.category
+            if cat is None:
+                continue
+            if cat[0] == 'Consonant':
+                place = cat[1]
+                manner = cat[2]
+                voicing = cat[3]
+                if place is None:
+                    place = 'Unknown'
+                if manner is None:
+                    manner = 'Unknown'
+                if voicing is None:
+                    voicing = 'Unknown'
+                for p in placeValues:
+                    if p.name() == place:
+                        item = p
+                        break
+                else:
+                    item = TreeItem(place,placeItem)
+                    placeValues.append(item)
+                i = TreeItem(s.symbol,item)
+
+                for m in mannerValues:
+                    if m.name() == manner:
+                        item = m
+                        break
+                else:
+                    item = TreeItem(manner,mannerItem)
+                    mannerValues.append(item)
+                i = TreeItem(s.symbol,item)
+
+                for v in voiceValues:
+                    if v.name() == voicing:
+                        item = v
+                        break
+                else:
+                    item = TreeItem(voicing,voiceItem)
+                    voiceValues.append(item)
+                i = TreeItem(s.symbol,item)
+            elif cat[0] == 'Vowel':
+                height = cat[1]
+                back = cat[2]
+                rounded = cat[3]
+                if height is None:
+                    height = 'Unknown'
+                if back is None:
+                    back = 'Unknown'
+                if rounded is None:
+                    rounded = 'Unknown'
+
+                for v in heightValues:
+                    if v.name() == height:
+                        item = v
+                        break
+                else:
+                    item = TreeItem(height,heightItem)
+                    heightValues.append(item)
+                i = TreeItem(s.symbol,item)
+
+                for v in backValues:
+                    if v.name() == back:
+                        item = v
+                        break
+                else:
+                    item = TreeItem(back, backItem)
+                    backValues.append(item)
+                i = TreeItem(s.symbol,item)
+
+                for v in roundValues:
+                    if v.name() == rounded:
+                        item = v
+                        break
+                else:
+                    item = TreeItem(rounded, roundItem)
+                    roundValues.append(item)
+                i = TreeItem(s.symbol,item)
+
+            elif cat[0] == 'Diphthong':
+                i = TreeItem(s.symbol,diphItem)
+
+    def filter(self,segments):
+        self.layoutAboutToBeChanged.emit()
+        self.segments = [x for x in self.specifier if x in segments]
+        self.generateData()
+        self.layoutChanged.emit()
+
+    def showAll(self):
+        self.layoutAboutToBeChanged.emit()
+        self.segments = [s for s in self.specifier]
+        self.generateData()
+        self.layoutChanged.emit()
+
+    def addSegment(self,seg,feat):
+        self.layoutAboutToBeChanged.emit()
+        self.specifier.add_segment(seg,feat)
+        self.rows.append(self.specifier[seg])
+        self.generateData()
+        self.layoutChanged.emit()
+
+    def addFeature(self,feat):
         #self.layoutAboutToBeChanged.emit()
-        #self.rows = [x for x in self.specifier if x in segments]
-        #self.generateData()
-        #self.layoutChanged.emit()
-
-    #def showAll(self):
-        #self.layoutAboutToBeChanged.emit()
-        #self.rows = [s for s in self.specifier]
-        #self.generateData()
-        #self.layoutChanged.emit()
-
-    #def addSegment(self,seg,feat):
-        #self.layoutAboutToBeChanged.emit()
-        #self.specifier.add_segment(seg,feat)
-        #self.rows.append(self.specifier[seg])
-        #self.generateData()
-        #self.layoutChanged.emit()
-
-    #def addFeature(self,feat):
-        #self.layoutAboutToBeChanged.emit()
-        #self.specifier.add_feature(feat)
+        self.specifier.add_feature(feat)
         #self.generateData()
         #self.layoutChanged.emit()
 

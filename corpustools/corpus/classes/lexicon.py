@@ -1078,6 +1078,8 @@ class Corpus(object):
 
     def features_to_segments(self, feature_description):
         segments = list()
+        if isinstance(feature_description,str):
+            feature_description = feature_description.split(',')
         for k,v in self._inventory.items():
             if v.feature_match(feature_description):
                 segments.append(k)
