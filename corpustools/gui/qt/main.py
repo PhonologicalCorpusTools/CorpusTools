@@ -123,12 +123,15 @@ class MainWindow(QMainWindow):
                     self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
                 else:
                     self.textWidget.setModel(DiscourseModel(self.corpus))
+                    self.discourseTree.hide()
                 #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
                 #self.discourseTree.resizeColumnToContents(0)
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
                 self.textWidget.show()
             else:
+                self.setMinimumSize(400, 400)
                 c = self.corpus
+                self.textWidget.hide()
             self.corpusModel = CorpusModel(c)
             self.corpusTable.setModel(self.corpusModel)
 
@@ -306,9 +309,12 @@ class MainWindow(QMainWindow):
         dialog = PhonoSearchDialog(self,self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
-            dataModel = ResultsModel(dialog.header,dialog.results)
-            self.PhonoSearchWindow = ResultsWindow('Phonological search results',dataModel,self)
-            self.PhonoSearchWindow.show()
+            if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
+                self.PhonoSearchWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header,dialog.results)
+                self.PhonoSearchWindow = ResultsWindow('Phonological search results',dataModel,self)
+                self.PhonoSearchWindow.show()
 
 
     def toggleWarnings(self):

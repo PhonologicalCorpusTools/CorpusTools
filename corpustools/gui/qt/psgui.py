@@ -28,7 +28,7 @@ class PhonoSearchDialog(FunctionDialog):
                 'Transcription',
                 'Segment',
                 'Environment']
-    ABOUT = ['']
+    _about = ['']
 
     name = 'phonological search'
     def __init__(self, parent, corpus, showToolTips):

@@ -14,7 +14,7 @@ from corpustools.corpus.io import (load_binary, download_binary,
 
 from .views import TableWidget
 
-from .models import FeatureSystemTableModel#, FeatureSystemItemModel
+from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
 from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
 
@@ -332,7 +332,10 @@ class EditFeatureMatrixDialog(QDialog):
 
         changeFrame = QGroupBox('Change feature systems')
         box = QFormLayout()
-        self.changeWidget = FeatureSystemSelect(default=self.specifier.name)
+        default = None
+        if self.specifier is not None:
+            default = self.specifier.name
+        self.changeWidget = FeatureSystemSelect(default=default)
         self.changeWidget.changed.connect(self.changeFeatureSystem)
         box.addRow(self.changeWidget)
 
@@ -377,7 +380,7 @@ class EditFeatureMatrixDialog(QDialog):
         box.addRow(self.hideButton)
         box.addRow(self.showAllButton)
         box.addRow(self.coverageButton)
-        #box.addRow('Diplay mode:',self.displayWidget)
+        box.addRow('Diplay mode:',self.displayWidget)
 
         coverageFrame.setLayout(box)
 
@@ -414,7 +417,7 @@ class EditFeatureMatrixDialog(QDialog):
         if mode == 'Tree':
             self.table = QTreeView()
             self.table.setHeaderHidden(True)
-            self.table.setModel(FeatureSystemItemModel(self.specifier))
+            self.table.setModel(FeatureSystemTreeModel(self.specifier))
             self.layout().insertWidget(0,self.table)
         elif mode == 'Matrix':
             self.table = TableWidget()
@@ -430,7 +433,10 @@ class EditFeatureMatrixDialog(QDialog):
         if path is None:
             self.specifier = None
         else:
-            self.specifier = load_binary(path)
+            try:
+                self.specifier = load_binary(path)
+            except OSError:
+                return
         if self.displayWidget.currentText() == 'Tree':
             self.table.setModel(FeatureSystemItemModel(self.specifier))
         else:
@@ -446,15 +452,17 @@ class EditFeatureMatrixDialog(QDialog):
             selected = self.table.selectionModel().selectedIndexes()
             if not selected:
                 return
-            seg = self.table.model().item(selected[0].row()).text()
-
+            selected = selected[0]
+            index = self.table.selectionModel().currentIndex()
+            seg = self.table.model().data(index,Qt.DisplayRole)
+            if seg not in self.specifier:
+                return
         else:
             selected = self.table.selectionModel().selectedRows()
             if not selected:
                 return
             selected = selected[0]
             seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
-
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
