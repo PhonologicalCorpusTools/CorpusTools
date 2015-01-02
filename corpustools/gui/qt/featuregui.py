@@ -372,19 +372,27 @@ class EditFeatureMatrixDialog(QDialog):
         self.showAllButton.clicked.connect(self.showAll)
         self.coverageButton.clicked.connect(self.checkCoverage)
 
+        box.addRow(self.hideButton)
+        box.addRow(self.showAllButton)
+        box.addRow(self.coverageButton)
+
+        coverageFrame.setLayout(box)
+
+        optionLayout.addWidget(coverageFrame)
+
+        viewFrame = QGroupBox('Display options')
+        box = QFormLayout()
+
         self.displayWidget = QComboBox()
         self.displayWidget.addItem('Matrix')
         self.displayWidget.addItem('Tree')
         self.displayWidget.currentIndexChanged.connect(self.changeDisplay)
 
-        box.addRow(self.hideButton)
-        box.addRow(self.showAllButton)
-        box.addRow(self.coverageButton)
-        box.addRow('Diplay mode:',self.displayWidget)
+        box.addRow('Display mode:',self.displayWidget)
 
-        coverageFrame.setLayout(box)
+        viewFrame.setLayout(box)
 
-        optionLayout.addWidget(coverageFrame)
+        optionLayout.addWidget(viewFrame)
 
         optionFrame = QFrame()
 
@@ -449,12 +457,10 @@ class EditFeatureMatrixDialog(QDialog):
 
     def editSegment(self):
         if self.displayWidget.currentText() == 'Tree':
-            selected = self.table.selectionModel().selectedIndexes()
-            if not selected:
-                return
-            selected = selected[0]
             index = self.table.selectionModel().currentIndex()
             seg = self.table.model().data(index,Qt.DisplayRole)
+            if seg is None:
+                return
             if seg not in self.specifier:
                 return
         else:
