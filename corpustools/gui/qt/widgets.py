@@ -632,14 +632,27 @@ class InventoryBox(QGroupBox):
             consTable.setRowCount(len(consRows))
             consTable.setHorizontalHeaderLabels(consColumns)
             consTable.setVerticalHeaderLabels(consRows)
-            consTable.resize()
 
             for i in range(len(consColumns)):
                 for j in range(len(consRows)):
                     wid = QWidget()
                     b = QGridLayout()
-                    b.setAlignment(Qt.AlignCenter);
-                    b.setContentsMargins(0, 0, 0, 0);
+                    b.setAlignment(Qt.AlignCenter)
+                    b.setContentsMargins(0, 0, 0, 0)
+                    l = QWidget()
+                    lb = QVBoxLayout()
+                    lb.setAlignment(Qt.AlignCenter)
+                    lb.setContentsMargins(0, 0, 0, 0)
+                    lb.setSpacing(0)
+                    l.setLayout(lb)
+                    b.addWidget(l,0,0, alignment = Qt.AlignCenter)
+                    r = QWidget()
+                    rb = QVBoxLayout()
+                    rb.setAlignment(Qt.AlignCenter)
+                    rb.setContentsMargins(0, 0, 0, 0)
+                    rb.setSpacing(0)
+                    r.setLayout(rb)
+                    b.addWidget(r,0,1, alignment = Qt.AlignCenter)
                     wid.setLayout(b)
                     consTable.setCellWidget(j,i,wid)
 
@@ -658,7 +671,6 @@ class InventoryBox(QGroupBox):
             vowTable.setRowCount(len(vowRows) + 1)
             vowTable.setHorizontalHeaderLabels(vowColumns)
             vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
-            vowTable.resize()
 
             for i in range(len(vowColumns)):
                 for j in range(len(vowRows)):
@@ -666,6 +678,21 @@ class InventoryBox(QGroupBox):
                     b = QGridLayout()
                     b.setAlignment(Qt.AlignCenter)
                     b.setContentsMargins(0, 0, 0, 0)
+                    l = QWidget()
+                    lb = QVBoxLayout()
+                    lb.setAlignment(Qt.AlignCenter)
+                    lb.setContentsMargins(0, 0, 0, 0)
+                    lb.setSpacing(0)
+                    l.setLayout(lb)
+                    b.addWidget(l,0,0, alignment = Qt.AlignCenter)
+                    r = QWidget()
+                    rb = QVBoxLayout()
+                    rb.setAlignment(Qt.AlignCenter)
+                    rb.setContentsMargins(0, 0, 0, 0)
+                    rb.setSpacing(0)
+                    r.setLayout(rb)
+                    b.addWidget(r,0,1, alignment = Qt.AlignCenter)
+
                     wid.setLayout(b)
                     vowTable.setCellWidget(j,i,wid)
 
@@ -689,7 +716,10 @@ class InventoryBox(QGroupBox):
                 btn.setCheckable(True)
                 btn.setAutoExclusive(False)
                 btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
-                #btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+                btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+                btn.setMaximumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
+                btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+                btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
                 self.btnGroup.addButton(btn)
                 if cat is None:
                     unkCol += 1
@@ -715,11 +745,14 @@ class InventoryBox(QGroupBox):
                         colTwo = 0
                     else:
                         colTwo = 1
-                    cell = consTable.cellWidget(row,col)
+                    cell = consTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
 
-                    cell.layout().addWidget(btn,0,colTwo)
+                    cell.layout().addWidget(btn, alignment = Qt.AlignCenter)
+                    cell.setFixedSize(cell.sizeHint())
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
+            consTable.resize()
+            vowTable.resize()
             smallbox.addWidget(cons)
 
             smallbox.addWidget(vow)
