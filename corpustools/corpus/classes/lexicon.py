@@ -1328,7 +1328,7 @@ class Corpus(object):
                     self._attributes.append(Attribute(d,'factor'))
                 elif isinstance(getattr(word,d),Transcription):
                     self._attributes.append(Attribute(d,'tier'))
-                elif isinstance(getattr(word,d),(int, long, float)):
+                elif isinstance(getattr(word,d),(int, float)):
                     self._attributes.append(Attribute(d,'numeric'))
         for a in self.attributes:
             a.update_range(getattr(word,a.name))
