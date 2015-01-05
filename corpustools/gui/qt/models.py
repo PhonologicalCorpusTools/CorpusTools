@@ -156,29 +156,46 @@ class CorpusModel(QAbstractTableModel):
             return self.columns[col].display_name
         return None
 
-    def addTier(self,tierName, segList):
-        self.layoutAboutToBeChanged.emit()
-        self.corpus.add_tier(tierName, segList)
+    def addTier(self,attribute, segList):
+        if attribute not in self.columns:
+            end = True
+            self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
+        else:
+            end = False
+        self.corpus.add_tier(attribute, segList)
         self.columns = self.corpus.attributes
-        self.layoutChanged.emit()
+        if end:
+            self.endInsertColumns()
 
     def columnAdded(self):
-        self.layoutAboutToBeChanged.emit()
+        self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
         self.columns = self.corpus.attributes
-        self.layoutChanged.emit()
+        self.endInsertColumns()
 
-    def addAbstractTier(self,tierName, segList):
-        self.layoutAboutToBeChanged.emit()
-        self.corpus.add_abstract_tier(tierName, segList)
+    def addAbstractTier(self,attribute, segList):
+        if attribute not in self.columns:
+            end = True
+            self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
+        else:
+            end = False
+        self.corpus.add_abstract_tier(attribute, segList)
         self.columns = self.corpus.attributes
-        self.layoutChanged.emit()
+        if end:
+            self.endInsertColumns()
 
     def removeAttributes(self,attributes):
-        self.layoutAboutToBeChanged.emit()
         for a in attributes:
-            self.corpus.remove_attribute(a)
-        self.columns = self.corpus.attributes
-        self.layoutChanged.emit()
+            for i,x in enumerate(self.columns):
+                if x.display_name == a:
+                    ind = i
+                    att = x
+                    break
+            else:
+                return
+            self.beginRemoveColumns(QModelIndex(),ind,ind)
+            self.corpus.remove_attribute(att)
+            self.columns = self.corpus.attributes
+            self.endRemoveColumns()
 
 class SegmentPairModel(QAbstractTableModel):
     def __init__(self,parent = None):

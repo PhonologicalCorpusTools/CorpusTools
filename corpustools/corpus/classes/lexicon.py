@@ -670,6 +670,8 @@ class Word(object):
                     break
         setattr(self,tier_name,''.join(tier))
 
+    def add_attribute(self, tier_name, default_value):
+        setattr(self,tier_name, default_value)
 
     def add_tier(self, tier_name, tier_segments):
         """Adds a new tier attribute to a Word instance
@@ -876,19 +878,36 @@ class EnvironmentFilter(object):
 
 class Attribute(object):
     ATT_TYPES = ['spelling', 'tier', 'numeric', 'factor']
-    def __init__(self, name, att_type, display_name = None):
+    def __init__(self, name, att_type, display_name = None, default_value = None):
         self.name = name
         self.att_type = att_type
         self._display_name = display_name
 
         if self.att_type == 'numeric':
             self._range = [0,0]
+            if default_value is not None and isinstance(default_value,(int,float)):
+                self.default_value = default_value
+            else:
+                self.default_value = 0
         elif self.att_type == 'factor':
             self._range = set()
+            if default_value is not None and isinstance(default_value,str):
+                self.default_value = default_value
+            else:
+                self.default_value = ''
         elif self.att_type == 'spelling':
             self._range = None
+            if default_value is not None and isinstance(default_value,str):
+                self.default_value = default_value
+            else:
+                self.default_value = ''
         elif self.att_type == 'tier':
             self._range = None
+            if default_value is not None and isinstance(default_value,Transcription):
+                self.default_value = default_value
+            else:
+                self.default_value = Transcription(None)
+
 
     def __str__(self):
         return self.display_name
@@ -1092,51 +1111,55 @@ class Corpus(object):
             features = self.specifier.matrix[seg.symbol]
         return features
 
-    def add_abstract_tier(self, tier_name, spec, display_name=None):
-        newattr = Attribute(tier_name,'factor', display_name = display_name)
+    def add_abstract_tier(self, attribute, spec):
         for i,a in enumerate(self._attributes):
-            if tier_name == a:
-                self._attributes[i] = newattr
+            if attribute.name == a.name:
+                self._attributes[i] = attribute
                 break
         else:
-            self._attributes.append(newattr)
+            self._attributes.append(attribute)
         for word in self:
-            word.add_abstract_tier(tier_name,spec)
-            newattr.update_range(getattr(word,tier_name))
+            word.add_abstract_tier(attribute.name,spec)
+            attribute.update_range(getattr(word,attribute.name))
 
-    def add_attribute(self, name, att_type, display_name = None):
-        newattr = Attribute(name, att_type, display_name)
+    def add_attribute(self, attribute):
         for i,a in enumerate(self._attributes):
-            if name == a:
-                self._attributes[i] = newattr
+            if attribute.name == a.name:
+                self._attributes[i] = attribute
                 break
         else:
-            self._attributes.append(newattr)
+            self._attributes.append(attribute)
+        for word in self:
+            word.add_attribute(attribute.name,attribute.default_value)
 
-    def add_tier(self, tier_name, spec, display_name=None):
-        newattr = Attribute(tier_name,'tier', display_name = display_name)
+
+    def add_tier(self, attribute, spec):
+        if isinstance(attribute,str):
+            attribute = Attribute(attribute,'tier')
         for i,a in enumerate(self._attributes):
-            if tier_name == a:
-                self._attributes[i] = newattr
+            if attribute.name == a.name:
+                self._attributes[i] = attribute
                 break
         else:
-            self._attributes.append(newattr)
+            self._attributes.append(attribute)
         if isinstance(spec, str):
             tier_segs = self.features_to_segments(spec)
         else:
             tier_segs = spec
         for word in self:
-            word.add_tier(tier_name,tier_segs)
+            word.add_tier(attribute.name,tier_segs)
 
-    def remove_attribute(self, attribute_name):
-        if attribute_name in self.basic_attributes:
+    def remove_attribute(self, attribute):
+        if attribute.name in self.basic_attributes:
             return
         for i in range(len(self._attributes)):
-            if self._attributes[i] == attribute_name:
+            if self._attributes[i].name == attribute.name:
                 del self._attributes[i]
                 break
+        else:
+            return
         for word in self:
-            word.remove_attribute(attribute_name)
+            word.remove_attribute(attribute.name)
 
     def __setstate__(self,state):
         try:
