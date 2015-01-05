@@ -40,8 +40,9 @@ class TableWidget(QTableView):
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
         #self.horizontalHeader().setMinimumSectionSize(100)
-        #self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.setSortingEnabled(True)
+        self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 
     def setModel(self,model):
         super(TableWidget, self).setModel(model)
@@ -50,6 +51,7 @@ class TableWidget(QTableView):
             self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         except AttributeError:
             self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
 
     def calcWidth(self):
         header = self.horizontalHeader()
@@ -90,6 +92,7 @@ class LexiconView(QWidget):
         self.table.customContextMenuRequested.connect(self.showMenu)
 
         self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding))
 
     def search(self):
         text = self.searchField.text()

@@ -7,6 +7,8 @@ from collections import OrderedDict
 
 from corpustools.config import config
 
+from corpustools.corpus.classes import Attribute
+
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
                                     load_spelling_corpus, load_transcription_corpus,
                                     inspect_transcription_corpus,
@@ -700,7 +702,8 @@ class AddAbstractTierDialog(QDialog):
 
     def accept(self):
         if self.cvradio.isChecked():
-            self.tierName = 'cvskeleton'
+            tierName = 'CV skeleton'
+            self.attribute = Attribute('cvskeleton','factor','CV skeleton')
             self.segList = {'C' : [x.symbol for x in self.corpus.inventory
                                     if x.category is not None
                                     and x.category[0] == 'Consonant'],
@@ -709,18 +712,18 @@ class AddAbstractTierDialog(QDialog):
                                     and x.category[0] != 'Consonant'],
                                     }
 
-        if self.tierName == '':
+        if tierName == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please enter a name for the tier.")
             return
-        if self.tierName in self.corpus.basic_attributes:
+        if self.attribute.name in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The name '{}' overlaps with a protected column.".format(self.tierName))
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
             return
-        elif self.tierName in self.corpus.attributes:
+        elif self.attribute in self.corpus.attributes:
 
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
-                    "{} is already the name of a tier.  Overwrite?", QMessageBox.NoButton, self)
+                    "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -824,24 +827,24 @@ class AddTierDialog(QDialog):
 
 
     def accept(self):
-        self.tierName = self.nameEdit.text()
-        if self.tierName == '':
+        tierName = self.nameEdit.text()
+        self.attribute = Attribute(tierName.lower().replace(' ',''),'tier',tierName)
+        if tierName == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please enter a name for the tier.")
             return
-        elif self.tierName in self.corpus.basic_attributes:
+        elif self.attribute.name in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The name '{}' overlaps with a protected column.".format(self.tierName))
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
             return
-        elif self.tierName in self.corpus.attributes:
+        elif self.attribute in self.corpus.attributes:
 
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
-                    "{} is already the name of a tier.  Overwrite?", QMessageBox.NoButton, self)
+                    "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-
         createType = self.createType.currentText()
         createList = self.createWidget.value()
         if not createList:
@@ -861,6 +864,7 @@ class RemoveAttributeDialog(QDialog):
         layout = QVBoxLayout()
 
         self.tierSelect = QListWidget()
+        self.tierSelect.setSelectionMode(QAbstractItemView.ExtendedSelection)
         for t in corpus.attributes:
             if t in corpus.basic_attributes:
                 continue
