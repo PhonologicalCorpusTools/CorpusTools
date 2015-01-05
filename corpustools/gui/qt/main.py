@@ -176,6 +176,7 @@ class MainWindow(QMainWindow):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.attribute, dialog.segList)
+            self.adjustSize()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -183,6 +184,7 @@ class MainWindow(QMainWindow):
         dialog = AddAbstractTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addAbstractTier(dialog.attribute, dialog.segList)
+            self.adjustSize()
 
     @check_for_empty_corpus
     def createColumn(self):
@@ -197,6 +199,7 @@ class MainWindow(QMainWindow):
         dialog = RemoveAttributeDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.removeAttributes(dialog.tiers)
+            self.adjustSize()
 
     @check_for_empty_corpus
     def stringSim(self):
@@ -288,7 +291,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def phonoProb(self):
-        dialog = PPDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = PPDialog(self, self.corpusModel,self.showToolTips)
         #self.corpusModel.layoutAboutToBeChanged.emit()
         result = dialog.exec_()
         if result and dialog.results:
@@ -298,7 +301,7 @@ class MainWindow(QMainWindow):
                 dataModel = ResultsModel(dialog.header,dialog.results)
                 self.PPWindow = ResultsWindow('Phonotactic probability results',dataModel,self)
                 self.PPWindow.show()
-        self.corpusModel.columnAdded()
+        #self.corpusModel.columnAdded()
 
 
     def phonoSearch(self):

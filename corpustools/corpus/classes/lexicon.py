@@ -1122,15 +1122,16 @@ class Corpus(object):
             word.add_abstract_tier(attribute.name,spec)
             attribute.update_range(getattr(word,attribute.name))
 
-    def add_attribute(self, attribute):
+    def add_attribute(self, attribute, initialize_defaults = False):
         for i,a in enumerate(self._attributes):
             if attribute.name == a.name:
                 self._attributes[i] = attribute
                 break
         else:
             self._attributes.append(attribute)
-        for word in self:
-            word.add_attribute(attribute.name,attribute.default_value)
+        if initialize_defaults:
+            for word in self:
+                word.add_attribute(attribute.name,attribute.default_value)
 
 
     def add_tier(self, attribute, spec):

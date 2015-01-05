@@ -167,10 +167,14 @@ class CorpusModel(QAbstractTableModel):
         if end:
             self.endInsertColumns()
 
-    def columnAdded(self):
-        self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
+    def addColumn(self, attribute):
+        if attribute not in self.columns:
+            end = True
+            self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
+        self.corpus.add_attribute(attribute,initialize_defaults=True)
         self.columns = self.corpus.attributes
-        self.endInsertColumns()
+        if end:
+            self.endInsertColumns()
 
     def addAbstractTier(self,attribute, segList):
         if attribute not in self.columns:

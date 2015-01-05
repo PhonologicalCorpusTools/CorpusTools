@@ -39,18 +39,18 @@ class TableWidget(QTableView):
         #header = self.horizontalHeader()
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
-        #self.horizontalHeader().setMinimumSectionSize(100)
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.horizontalHeader().setMinimumSectionSize(70)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.setSortingEnabled(True)
         self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 
     def setModel(self,model):
         super(TableWidget, self).setModel(model)
         #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
-        try:
-            self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        except AttributeError:
-            self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        #try:
+        #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        #except AttributeError:
+        #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
 
     def calcWidth(self):
@@ -124,6 +124,11 @@ class LexiconView(QWidget):
 
     def setModel(self, model):
         self.table.setModel(model)
+        try:
+            self.table.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+
 
     def showMenu(self, pos):
         menu = QMenu()
