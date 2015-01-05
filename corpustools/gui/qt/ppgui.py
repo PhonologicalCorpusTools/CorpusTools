@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from corpustools.phonoprob.phonotactic_probability import phonotactic_probability_vitevitch
 from corpustools.neighdens.io import load_words_neighden
+from corpustools.corpus.classes import Attribute
 
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
@@ -15,11 +16,12 @@ class PPWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
+        corpus = kwargs['corpusModel'].corpus
         if 'query' in kwargs:
             for q in kwargs['query']:
                 if kwargs['algorithm'] == 'vitevitch':
                     try:
-                        res = phonotactic_probability_vitevitch(kwargs['corpus'], q,
+                        res = phonotactic_probability_vitevitch(corpus, q,
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             probability_type = kwargs['probability_type'],
@@ -32,25 +34,24 @@ class PPWorker(FunctionWorker):
         else:
             call_back = kwargs['call_back']
             call_back('Calculating phonotactic probabilities...')
-            call_back(0,len(kwargs['corpus']))
+            call_back(0,len(corpus))
             cur = 0
-            colName = kwargs['column'].lower().replace(' ','_')
-            kwargs['corpus'].add_attribute(colName,'numeric',kwargs['column'])
-            for w in kwargs['corpus']:
+            kwargs['corpusModel'].addColumn(kwargs['attribute'])
+            for w in corpus:
                 if self.stopped:
                     break
                 cur += 1
                 if cur % 20 == 0:
                     call_back(cur)
                 try:
-                    res = phonotactic_probability_vitevitch(kwargs['corpus'], w,
+                    res = phonotactic_probability_vitevitch(corpus, w,
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             probability_type = kwargs['probability_type'])
                 except Exception as e:
                     self.errorEncountered.emit(e)
                     return
-                setattr(w,colName,res)
+                setattr(w,kwargs['attribute'].name,res)
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -78,10 +79,10 @@ class PPDialog(FunctionDialog):
 
     name = 'phonotactic probability'
 
-    def __init__(self, parent, corpus, showToolTips):
+    def __init__(self, parent, corpusModel, showToolTips):
         FunctionDialog.__init__(self, parent, PPWorker())
 
-        self.corpus = corpus
+        self.corpusModel = corpusModel
         self.showToolTips = showToolTips
 
         pplayout = QHBoxLayout()
@@ -132,7 +133,7 @@ class PPDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = TierWidget(corpus,include_spelling=False)
+        self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=False)
 
         optionLayout.addWidget(self.tierWidget)
 
@@ -176,7 +177,7 @@ class PPDialog(FunctionDialog):
         self.compType = 'all'
 
     def generateKwargs(self):
-        kwargs = {'corpus':self.corpus,
+        kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': self.algorithmWidget.value(),
                 'sequence_type':self.tierWidget.value(),
                 'count_what':self.typeTokenWidget.value(),
@@ -210,15 +211,17 @@ class PPDialog(FunctionDialog):
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please enter a column name.")
                 return
-            if column in self.corpus.attributes:
+            colName = column.lower().replace(' ','_')
+            attribute = Attribute(colName,'numeric',column)
+            if column in self.corpusModel.columns:
 
                 msgBox = QMessageBox(QMessageBox.Warning, "Duplicate columns",
-                        "{} is already the name of a column.  Overwrite?", QMessageBox.NoButton, self)
+                        "'{}' is already the name of a column.  Overwrite?".format(column), QMessageBox.NoButton, self)
                 msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
                 msgBox.addButton("Cancel", QMessageBox.RejectRole)
                 if msgBox.exec_() != QMessageBox.AcceptRole:
                     return
-            kwargs['column'] = column
+            kwargs['attribute'] = attribute
 
         return kwargs
 
