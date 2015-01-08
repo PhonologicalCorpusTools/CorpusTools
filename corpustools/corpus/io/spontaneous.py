@@ -1,7 +1,7 @@
 import os
 import re
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker
 
 phone_file_extensions = ['phones','phn']
 word_file_extensions = ['words','wrd']
@@ -80,7 +80,8 @@ def import_spontaneous_speech_corpus(directory, stop_check = None, call_back = N
         if 'phones' not in v:
             continue
         data = files_to_data(v['words'], v['phones'])
-        discourse_info = {'name':d
+        discourse_info = {'name':d,
+                            'speaker': Speaker(d[:3]), #Hack!!!
                             }
         if 'wav' in v:
             discourse_info['wav_path'] = v['wav']

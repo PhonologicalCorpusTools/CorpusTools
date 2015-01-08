@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
 
         self.corpusTable = LexiconView(self)
         self.discourseTree = TreeWidget(self)
-        self.discourseTree.newLexicon.connect(lambda x: self.corpusTable.setModel(CorpusModel(x)))
+        self.discourseTree.newLexicon.connect(self.changeLexicon)
         self.discourseTree.hide()
         self.textWidget = DiscourseView(self)
         self.textWidget.hide()
@@ -62,7 +62,13 @@ class MainWindow(QMainWindow):
 
         self.status = QLabel()
         self.status.setText("Ready")
-        self.statusBar().addWidget(self.status)
+        self.statusBar().addWidget(self.status, stretch=1)
+        self.corpusStatus = QLabel()
+        self.corpusStatus.setText("No corpus selected")
+        self.statusBar().addWidget(self.corpusStatus)
+        self.featureSystemStatus = QLabel()
+        self.featureSystemStatus.setText("No feature system selected")
+        self.statusBar().addWidget(self.featureSystemStatus)
 
         self.setWindowTitle("Phonological CorpusTools")
         self.createActions()
@@ -105,9 +111,22 @@ class MainWindow(QMainWindow):
         return do_check
 
     def changeText(self):
-        name = self.discourseTree.model().itemFromIndex(self.discourseTree.selectedIndexes()[0]).text()
+        name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(),Qt.DisplayRole)
         if hasattr(self.corpus, 'lexicon'):
-            self.textWidget.setModel(DiscourseModel(self.corpus.discourses[name]))
+            try:
+                discourse = self.corpus.discourses[name]
+            except KeyError:
+                return
+            self.textWidget.setModel(DiscourseModel(discourse))
+
+    def changeLexicon(self, c):
+        self.corpusTable.setModel(CorpusModel(c))
+        self.corpusStatus.setText('Corpus: {}'.format(c.name))
+        if c.specifier is not None:
+            self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
+        else:
+            self.featureSystemStatus.setText('No feature system selected')
+
 
     def loadCorpus(self):
         dialog = CorpusLoadDialog(self)
@@ -127,13 +146,23 @@ class MainWindow(QMainWindow):
                 #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
                 #self.discourseTree.resizeColumnToContents(0)
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
+                self.textWidget.selectType.connect(self.corpusTable.highlightType)
                 self.textWidget.show()
+                self.adjustSize()
             else:
                 self.setMinimumSize(400, 400)
                 c = self.corpus
                 self.textWidget.hide()
+                self.discourseTree.hide()
+                self.adjustSize()
             self.corpusModel = CorpusModel(c)
             self.corpusTable.setModel(self.corpusModel)
+            self.corpusStatus.setText('Corpus: {}'.format(c.name))
+            if c.specifier is not None:
+                self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
+            else:
+                self.featureSystemStatus.setText('No feature system selected')
+
 
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self)

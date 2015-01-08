@@ -424,7 +424,6 @@ class EditFeatureMatrixDialog(QDialog):
         self.table.deleteLater()
         if mode == 'Tree':
             self.table = QTreeView()
-            self.table.setHeaderHidden(True)
             self.table.setModel(FeatureSystemTreeModel(self.specifier))
             self.layout().insertWidget(0,self.table)
         elif mode == 'Matrix':
