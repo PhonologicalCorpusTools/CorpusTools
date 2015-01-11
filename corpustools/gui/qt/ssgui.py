@@ -219,7 +219,7 @@ class SSDialog(FunctionDialog):
             try:
                 word = self.corpus.find(text)
             except KeyError:
-                if strType == 'spelling':
+                if kwargs['sequence_type'] == 'spelling':
                     word = Word(spelling = text)
                 else:
                     reply = QMessageBox.critical(self,
@@ -237,7 +237,7 @@ class SSDialog(FunctionDialog):
                 wordOne = self.corpus.find(textOne)
             except KeyError:
                 from corpustools.corpus.classes import Word
-                if strType == 'spelling':
+                if kwargs['sequence_type'] == 'spelling':
                     wordOne = Word(spelling = textOne)
                 else:
                     reply = QMessageBox.critical(self,
@@ -246,7 +246,7 @@ class SSDialog(FunctionDialog):
             try:
                 wordTwo = self.corpus.find(textTwo)
             except KeyError:
-                if strType == 'spelling':
+                if kwargs['sequence_type'] == 'spelling':
                     wordTwo = Word(spelling = textTwo)
                 else:
                     reply = QMessageBox.critical(self,

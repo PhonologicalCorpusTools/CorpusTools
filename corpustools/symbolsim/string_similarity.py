@@ -4,7 +4,7 @@ Created on May 12, 2014
 @author: Michael
 '''
 from functools import partial
-
+from corpustools.corpus.classes import Word
 from corpustools.symbolsim.khorsi import make_freq_base, khorsi
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
@@ -72,7 +72,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             cur = 0
             call_back('Calculating string similarity...')
             call_back(cur,total)
-        targ_word = corpus.find(query)
+        targ_word = ensure_query_is_word(query, corpus, sequence_type, None)
         relate = list()
         for word in corpus:
             if stop_check is not None and stop_check():
@@ -123,4 +123,15 @@ def string_similarity(corpus, query, algorithm, **kwargs):
     return related_data
 
 
-
+def ensure_query_is_word(query, corpus, sequence_type, segment_delimiter):
+    if isinstance(query, Word):
+        query_word = query
+    else:
+        try:
+            query_word = corpus.find(query)
+        except KeyError:
+            if segment_delimiter == None:
+                query_word = Word(**{sequence_type: list(query)})
+            else:
+                query_word = Word(**{sequence_type: query.split(segment_delimiter)})
+    return query_word
