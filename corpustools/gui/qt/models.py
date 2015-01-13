@@ -277,6 +277,8 @@ class CorpusModel(QAbstractTableModel):
         if attribute not in self.columns:
             end = True
             self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
+        else:
+            end = False
         self.corpus.add_attribute(attribute,initialize_defaults=True)
         self.columns = self.corpus.attributes
         if end:

@@ -47,7 +47,8 @@ class PPWorker(FunctionWorker):
                     res = phonotactic_probability_vitevitch(corpus, w,
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
-                                            probability_type = kwargs['probability_type'])
+                                            probability_type = kwargs['probability_type'],
+                                            stop_check = kwargs['stop_check'])
                 except Exception as e:
                     self.errorEncountered.emit(e)
                     return

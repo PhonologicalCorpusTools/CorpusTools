@@ -307,9 +307,9 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def neighDen(self):
-        dialog = NDDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = NDDialog(self, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
-        if result:
+        if result and dialog.results:
             if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
                 self.NDWindow.table.model().addData(dialog.results)
             else:
