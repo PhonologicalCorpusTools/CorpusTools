@@ -7,12 +7,32 @@ import os
 import wave
 
 class Speaker(object):
-    def __init__(self,identifier, **kwargs):
+    def __init__(self,name, **kwargs):
 
-        self.identifier = identifier
+        self.name = name
 
         for k,v in kwargs.items():
             setattr(self,k,v)
+
+    def __eq__(self, other):
+        if not isinstance(other,Speaker):
+            return False
+        return self.name == other.name
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self.name < other.name
+
+    def __gt__(self, other):
+        return self.name > other.name
+
+    def __le__(self, other):
+        return self.name <= other.name
+
+    def __ge__(self, other):
+        return self.name >= other.name
 
 class SpontaneousSpeechCorpus(object):
     def __init__(self,name,directory):
@@ -56,11 +76,36 @@ class SpontaneousSpeechCorpus(object):
 class Discourse(object):
     def __init__(self, **kwargs):
         self.name = ''
+        self.speaker = None
 
         for k,v in kwargs.items():
             setattr(self,k,v)
 
         self.words = dict()
+
+    def __eq__(self, other):
+        if not isinstance(other,Discourse):
+            return False
+        if self.name != other.name:
+            return False
+        if self.speaker != other.speaker:
+            return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self.name < other.name
+
+    def __gt__(self, other):
+        return self.name > other.name
+
+    def __le__(self, other):
+        return self.name <= other.name
+
+    def __ge__(self, other):
+        return self.name >= other.name
 
     def __str__(self):
         return self.name
@@ -100,7 +145,7 @@ class Discourse(object):
             bitdepth = w_in.getsampwidth()
             for t in tokens:
                 wt = self[t]
-                name = '{}_{}.wav'.format(self.identifier,wt.begin)
+                name = '{}_{}.wav'.format(self.name,wt.begin)
                 wt.wav_path = os.path.join(output_dir,name)
                 filenames.append(wt.wav_path)
                 if os.path.exists(wt.wav_path):
@@ -120,11 +165,12 @@ class Discourse(object):
 
 
     def create_lexicon(self):
-        corpus = Corpus(self.identifier + ' lexicon')
+        corpus = Corpus(self.name + ' lexicon')
         for token in self:
             word = corpus.get_or_create_word(token.wordtype.spelling,token.wordtype.transcription)
             word.frequency += 1
             token.wordtype = word
+            word.wordtokens.append(token)
         return corpus
 
     def find_wordtype(self,wordtype):

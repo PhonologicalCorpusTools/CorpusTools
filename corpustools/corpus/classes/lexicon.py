@@ -1186,13 +1186,19 @@ class Corpus(object):
             self._specify_features()
 
             #Backwards compatability
-            for w in self:
+            for k,w in self.wordlist.items():
+                #print(w)
                 for a in self.attributes:
                     if a.att_type == 'tier':
                         if not isinstance(getattr(w,a.name), Transcription):
                             setattr(w,a.name,Transcription(getattr(w,a.name)))
                     else:
-                        a.update_range(getattr(w,a.name))
+                        try:
+                            a.update_range(getattr(w,a.name))
+                        except AttributeError as e:
+                            print(k)
+                            print(w.__dict__)
+                            raise(e)
         except Exception as e:
             raise(CorpusIntegrityError("An error occurred while loading the corpus: {}.\nPlease redownload or recreate the corpus.".format(str(e))))
 

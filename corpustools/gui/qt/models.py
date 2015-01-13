@@ -52,23 +52,129 @@ class FilterModel(QAbstractTableModel):
         del self.filters[ind]
         self.layoutChanged.emit()
 
-class SpontaneousSpeechCorpusModel(QStandardItemModel):
-    def __init__(self,corpus, parent = None):
-        QStandardItemModel.__init__(self, parent)
+#class SpontaneousSpeechCorpusModel(QStandardItemModel):
+    #def __init__(self,corpus, parent = None):
+        #QStandardItemModel.__init__(self, parent)
 
+        #self.corpus = corpus
+        #self.setHorizontalHeaderItem (0,QStandardItem('Discourses'))
+
+        #corpusItem = QStandardItem(self.corpus.name)
+        #self.appendRow(corpusItem)
+        #speakerItem = QStandardItem('s01')
+        #corpusItem.appendRow(speakerItem)
+        #for d in self.corpus.discourses.values():
+            #speakerItem.appendRow(QStandardItem(str(d)))
+
+    #def createLexicon(self,row):
+        #d = self.item(row).text()
+        #return self.corpus.discourses[d].create_lexicon()
+
+class SpontaneousSpeechCorpusModel(QAbstractItemModel):
+    def __init__(self, corpus, parent=None):
+        super(SpontaneousSpeechCorpusModel, self).__init__(parent)
         self.corpus = corpus
-        self.setHorizontalHeaderItem (0,QStandardItem('Discourses'))
+        self.generateData()
 
-        corpusItem = QStandardItem(self.corpus.name)
-        self.appendRow(corpusItem)
-        speakerItem = QStandardItem('s01')
-        corpusItem.appendRow(speakerItem)
-        for d in self.corpus.discourses.values():
-            speakerItem.appendRow(QStandardItem(str(d)))
+    def generateData(self):
 
-    def createLexicon(self,row):
-        d = self.item(row).text()
+        self._rootNode = TreeItem("Speakers")
+
+        for d in sorted(self.corpus.discourses.values()):
+            for i in range(self._rootNode.childCount()):
+                if self._rootNode.child(i)._dataItem == d.speaker:
+                    node = self._rootNode.child(i)
+                    break
+            else:
+                node = SpontaneousTreeItem(d.speaker, self._rootNode)
+            dnode = SpontaneousTreeItem(d,node)
+
+    def createLexicon(self,index):
+        d = self.data(index,Qt.DisplayRole)
         return self.corpus.discourses[d].create_lexicon()
+
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int"""
+    def rowCount(self, parent):
+        if not parent.isValid():
+            parentNode = self._rootNode
+        else:
+            parentNode = parent.internalPointer()
+
+        return parentNode.childCount()
+
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int"""
+    def columnCount(self, parent):
+        return 1
+
+    """INPUTS: QModelIndex, int"""
+    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
+    def data(self, index, role):
+
+        if not index.isValid():
+            return None
+        node = index.internalPointer()
+        if node is None:
+            print(index)
+
+        if role == Qt.DisplayRole:
+            if index.column() == 0:
+                return node.name()
+
+
+    """INPUTS: int, Qt::Orientation, int"""
+    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            return "Speakers"
+
+
+
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int (flag)"""
+    def flags(self, index):
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+
+
+
+    """INPUTS: QModelIndex"""
+    """OUTPUT: QModelIndex"""
+    """Should return the parent of the node with the given QModelIndex"""
+    def parent(self, index):
+
+        node = self.getNode(index)
+        parentNode = node.parent()
+
+        if parentNode == self._rootNode:
+            return QModelIndex()
+
+        return self.createIndex(parentNode.row(), 0, parentNode)
+
+    """INPUTS: int, int, QModelIndex"""
+    """OUTPUT: QModelIndex"""
+    """Should return a QModelIndex that corresponds to the given row, column and parent node"""
+    def index(self, row, column, parent):
+
+        parentNode = self.getNode(parent)
+
+        childItem = parentNode.child(row)
+
+
+        if childItem:
+            return self.createIndex(row, column, childItem)
+        else:
+            return QModelIndex()
+
+    """CUSTOM"""
+    """INPUTS: QModelIndex"""
+    def getNode(self, index):
+        if index.isValid():
+            node = index.internalPointer()
+            if node:
+                return node
+
+        return self._rootNode
 
 class DiscourseModel(QStandardItemModel):
     def __init__(self,discourse, parent = None):
@@ -171,6 +277,8 @@ class CorpusModel(QAbstractTableModel):
         if attribute not in self.columns:
             end = True
             self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
+        else:
+            end = False
         self.corpus.add_attribute(attribute,initialize_defaults=True)
         self.columns = self.corpus.attributes
         if end:
@@ -424,12 +532,33 @@ class TreeItem(object):
         if self._parent is not None:
             return self._parent._children.index(self)
 
+class SpontaneousTreeItem(TreeItem):
+    def __init__(self, dataItem, parent=None):
+        self._dataItem = dataItem
+        if self._dataItem is not None:
+            self._name = dataItem.name
+        else:
+            self._name = 'Unknown'
+        self._children = []
+        self._parent = parent
+
+        if parent is not None:
+            parent.addChild(self)
+
+    def __eq__(self,other):
+        if not isinstance(other,SpontaneousTreeItem):
+            return False
+        return self._dataItem == other._dataItem
+
 
 class FeatureSystemTreeModel(QAbstractItemModel):
     def __init__(self, specifier, parent=None):
         super(FeatureSystemTreeModel, self).__init__(parent)
         self.specifier = specifier
-        self.segments = [s for s in self.specifier]
+        if specifier is not None:
+            self.segments = [s for s in self.specifier]
+        else:
+            self.segments = list()
         self.generateData()
 
     """INPUTS: QModelIndex"""
@@ -466,10 +595,7 @@ class FeatureSystemTreeModel(QAbstractItemModel):
     """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
-            if section == 0:
-                return "Scenegraph"
-            else:
-                return "Typeinfo"
+            return "Segments"
 
 
 

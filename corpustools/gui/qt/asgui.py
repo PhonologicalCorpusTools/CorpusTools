@@ -329,8 +329,8 @@ class ASDialog(FunctionDialog):
         for r in results:
             self.results.append([r[0],
                             r[1],
-                            self.representationWidget.name(),
-                            self.distAlgWidget.name(),
+                            self.representationWidget.displayValue(),
+                            self.distAlgWidget.displayValue(),
                             float(self.minFreqEdit.text()),
                             float(self.maxFreqEdit.text()),
                             int(self.filterEdit.text()),

@@ -122,6 +122,21 @@ class LexiconView(QWidget):
             else:
                 self.table.selectionModel().clear()
 
+    def highlightType(self,wordtype):
+        if self.table.model() is None:
+            return
+        model = self.table.model()
+        self.table.selectionModel().clear()
+        for i,r in enumerate(model.rows):
+            if model.corpus[r] == wordtype:
+                index = model.index(i,0)
+                break
+        else:
+            return
+        self.table.selectionModel().select(index,
+                    QItemSelectionModel.SelectCurrent|QItemSelectionModel.Rows)
+        self.table.scrollTo(index,QAbstractItemView.PositionAtCenter)
+
     def setModel(self, model):
         self.table.setModel(model)
         try:
@@ -409,6 +424,7 @@ class TextView(QAbstractItemView):
         #self.setCurrentIndex(self.indexAt(event.pos()))
 
 class DiscourseView(QWidget):
+    selectType = Signal(object)
     def __init__(self,parent=None):
         super(DiscourseView, self).__init__(parent=parent)
         self.audioThread = AudioWorker()
@@ -483,6 +499,10 @@ class DiscourseView(QWidget):
             else:
                 self.text.selectionModel().clear()
 
+    def findType(self, index):
+        wordtype = self.text.model().wordTokenObject(index.row()).wordtype
+        self.selectType.emit(wordtype)
+
     def showMenu(self, pos):
         menu = QMenu()
         index = self.text.indexAt(pos)
@@ -490,6 +510,7 @@ class DiscourseView(QWidget):
             return
         lookupAction = QAction(self)
         lookupAction.setText('Look up word')
+        lookupAction.triggered.connect(lambda: self.findType(self.text.indexAt(pos)))
         menu.addAction(lookupAction)
         action = menu.exec_(self.text.viewport().mapToGlobal(pos))
 
@@ -549,7 +570,6 @@ class TreeWidget(QTreeView):
     def setModel(self, model):
         QTreeView.setModel(self, model)
         self._selection_model = QTreeView.selectionModel(self)
-        self.expandToDepth(0)
 
     def selectionModel(self):
         return self._selection_model
@@ -567,7 +587,7 @@ class TreeWidget(QTreeView):
         action = menu.exec_(self.viewport().mapToGlobal(pos))
 
     def buildNewLexicon(self, index):
-        lexicon = self.model().createLexicon(index.row())
+        lexicon = self.model().createLexicon(index)
         self.newLexicon.emit(lexicon)
 
 class ResultsWindow(QWidget):

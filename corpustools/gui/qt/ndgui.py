@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from corpustools.neighdens.neighborhood_density import neighborhood_density
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
+from corpustools.corpus.classes import Attribute
 
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
@@ -15,21 +16,47 @@ class NDWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
-        for q in kwargs['query']:
-            try:
-                res = neighborhood_density(kwargs['corpus'], q,
-                                        algorithm = kwargs['algorithm'],
-                                        sequence_type = kwargs['sequence_type'],
-                                        count_what = kwargs['count_what'],
-                                        max_distance = kwargs['max_distance'],
-                                        stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])
-            except Exception as e:
-                self.errorEncountered.emit(e)
-                return
-            if kwargs['output_filename'] is not None:
-                print_neighden_results(kwargs['output_filename'],res[1])
-            self.results.append([q,res[0]])
+        corpus = kwargs['corpusModel'].corpus
+        if 'query' in kwargs:
+            for q in kwargs['query']:
+                try:
+                    res = neighborhood_density(corpus, q,
+                                            algorithm = kwargs['algorithm'],
+                                            sequence_type = kwargs['sequence_type'],
+                                            count_what = kwargs['count_what'],
+                                            max_distance = kwargs['max_distance'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
+                if kwargs['output_filename'] is not None:
+                    print_neighden_results(kwargs['output_filename'],res[1])
+                self.results.append([q,res[0]])
+        else:
+            call_back = kwargs['call_back']
+            call_back('Calculating neighborhood densities...')
+            call_back(0,len(corpus))
+            cur = 0
+            kwargs['corpusModel'].addColumn(kwargs['attribute'])
+            for w in corpus:
+                if self.stopped:
+                    break
+                cur += 1
+                call_back(cur)
+                try:
+                    res = neighborhood_density(corpus, w,
+                                            algorithm = kwargs['algorithm'],
+                                            sequence_type = kwargs['sequence_type'],
+                                            count_what = kwargs['count_what'],
+                                            max_distance = kwargs['max_distance'],
+                                            stop_check = kwargs['stop_check'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
+                if self.stopped:
+                    break
+                setattr(w,kwargs['attribute'].name,res[0])
         if self.stopped:
             return
         self.dataReady.emit(self.results)
@@ -58,20 +85,20 @@ class NDDialog(FunctionDialog):
 
     name = 'neighborhood density'
 
-    def __init__(self, parent, corpus, showToolTips):
+    def __init__(self, parent, corpusModel, showToolTips):
         FunctionDialog.__init__(self, parent, NDWorker())
 
-        self.corpus = corpus
+        self.corpusModel = corpusModel
         self.showToolTips = showToolTips
 
-        if not self.corpus.has_transcription:
+        if not self.corpusModel.corpus.has_transcription:
             layout.addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
 
         ndlayout = QHBoxLayout()
 
         algEnabled = {'Khorsi':True,
                     'Edit distance':True,
-                    'Phonological edit distance':self.corpus.has_transcription}
+                    'Phonological edit distance':self.corpusModel.corpus.has_transcription}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([
                                             ('Edit distance','edit_distance'),
@@ -98,10 +125,18 @@ class NDDialog(FunctionDialog):
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
 
+        self.allwordsRadio = QRadioButton('Calculate for all words in the corpus')
+        self.allwordsRadio.clicked.connect(self.allwordsSelected)
+        self.columnEdit = QLineEdit()
+        self.columnEdit.setText('Neighborhood density')
+        self.columnEdit.textChanged.connect(self.allwordsRadio.click)
+
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
+        vbox.addRow(self.allwordsRadio)
+        vbox.addRow(QLabel('Column name:'),self.columnEdit)
 
         queryFrame.setLayout(vbox)
 
@@ -110,7 +145,7 @@ class NDDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = TierWidget(corpus,include_spelling=True)
+        self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
 
         optionLayout.addWidget(self.tierWidget)
 
@@ -167,6 +202,9 @@ class NDDialog(FunctionDialog):
     def fileSelected(self):
         self.compType = 'file'
 
+    def allwordsSelected(self):
+        self.compType = 'all'
+
     def generateKwargs(self):
         if self.maxDistanceEdit.text() == '':
             max_distance = None
@@ -176,7 +214,7 @@ class NDDialog(FunctionDialog):
         alg = self.algorithmWidget.value()
         typeToken = self.typeTokenWidget.value()
 
-        kwargs = {'corpus':self.corpus,
+        kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': alg,
                 'sequence_type':self.tierWidget.value(),
                 'count_what':typeToken,
@@ -208,6 +246,23 @@ class NDDialog(FunctionDialog):
                         "Invalid information", "The file path entered was not found.")
                 return
             kwargs['query'] = load_words_neighden(pairs_path)
+        elif self.compType == 'all':
+            column = self.columnEdit.text()
+            if column == '':
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please enter a column name.")
+                return
+            colName = column.lower().replace(' ','_')
+            attribute = Attribute(colName,'numeric',column)
+            if column in self.corpusModel.columns:
+
+                msgBox = QMessageBox(QMessageBox.Warning, "Duplicate columns",
+                        "'{}' is already the name of a column.  Overwrite?".format(column), QMessageBox.NoButton, self)
+                msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+                msgBox.addButton("Cancel", QMessageBox.RejectRole)
+                if msgBox.exec_() != QMessageBox.AcceptRole:
+                    return
+            kwargs['attribute'] = attribute
         return kwargs
 
     def calc(self):

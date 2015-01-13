@@ -298,13 +298,10 @@ class SSDialog(FunctionDialog):
                         self.algorithmWidget.displayValue()])
 
     def khorsiSelected(self):
-        self.stringTypeWidget.enable()
         self.typeTokenWidget.enable()
 
     def editDistSelected(self):
-        self.stringTypeWidget.enable()
         self.typeTokenWidget.disable()
 
     def phonoEditDistSelected(self):
-        self.stringTypeWidget.disable()
         self.typeTokenWidget.disable()
