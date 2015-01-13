@@ -711,6 +711,10 @@ class Word(object):
         except ValueError:
             pass #attribute_name does not exist
 
+    def enumerate_symbols(self,tier_name):
+        for pos,seg in enumerate(getattr(self, tier_name)):
+            yield pos,seg
+
     def get_env(self,pos,tier_name):
         """Get details of a particular environment in a Word
 
@@ -771,19 +775,23 @@ class Environment(object):
     def __str__(self):
         return '_'.join([self.lhs, self.rhs])
 
+    def __repr__(self):
+        return self.__str__()
+
     def __hash__(self):
-        return hash((lhs,rhs))
+        return hash((self.lhs,self.rhs))
 
     def __eq__(self,other):
-        """Two Environments are equal if they share a left AND right hand side
-
+        """
+        Two Environments are equal if they share a left AND right hand side
+        An empty lhs or rhs is an automatic match
         """
         if not isinstance(other,Environment):
             return False
 
-        if other.lhs != self.lhs:
+        if other.lhs and other.lhs != self.lhs:
             return False
-        if other.rhs != self.rhs:
+        if other.rhs and other.rhs != self.rhs:
             return False
         return True
 
@@ -1242,7 +1250,7 @@ class Corpus(object):
                 results.append((word, founds))
         return results
 
-    def iter_sort(self):
+    def iter_words(self):
         """Sorts the keys in the corpus dictionary, then yields the values in that order
 
         """
