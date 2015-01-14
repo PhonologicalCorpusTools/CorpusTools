@@ -78,9 +78,9 @@ class FADialog(FunctionDialog):
 
 
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
-                                            OrderedDict([('Khorsi','khorsi'),
-                                            ('Edit distance','edit_distance'),
-                                            ('Phonological edit distance','phono_edit_distance')]),
+                                            OrderedDict([('Edit distance','edit_distance'),
+                                            ('Phonological edit distance','phono_edit_distance'),
+                                            ('Khorsi','khorsi'),]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
                                             'Phonological edit distance':self.phonoEditDistSelected})

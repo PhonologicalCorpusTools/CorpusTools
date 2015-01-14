@@ -1176,7 +1176,7 @@ class RadioSelectWidget(QGroupBox):
         QGroupBox.__init__(self,title,parent)
 
         self.options = options
-        vbox = QVBoxLayout()
+        vbox = QFormLayout()
         self.widgets = []
         for key in options.keys():
             w = QRadioButton(key)
@@ -1185,7 +1185,7 @@ class RadioSelectWidget(QGroupBox):
             if enabled is not None:
                 w.setEnabled(enabled[key])
             self.widgets.append(w)
-            vbox.addWidget(w)
+            vbox.addRow(w)
         self.widgets[0].setChecked(True)
         self.setLayout(vbox)
 
