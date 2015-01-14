@@ -434,8 +434,8 @@ class FeatureMatrix(object):
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
 
         #What are these?
-        self.matrix['#'] = {'#':''}
-        self.matrix[''] = {'*':''}
+        self.matrix['#'] = Segment('#')
+        #self.matrix[''] = {'*':''}
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
