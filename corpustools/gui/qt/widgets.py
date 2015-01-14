@@ -973,6 +973,8 @@ class SegmentPairSelectWidget(QGroupBox):
         vbox.addWidget(self.table)
         self.setLayout(vbox)
 
+        self.setFixedWidth(self.minimumSizeHint().width())
+
     def segPairPopup(self):
         dialog = SegmentPairDialog(self.inventory)
         addOneMore = True
