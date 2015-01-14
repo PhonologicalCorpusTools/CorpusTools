@@ -959,8 +959,14 @@ class SegmentPairSelectWidget(QGroupBox):
         self.removeButton.setDefault(False)
 
         self.table = TableWidget()
+        self.table.setSortingEnabled(False)
+        try:
+            self.table.horizontalHeader().setClickable(False)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionsClickable(False)
         self.table.setModel(SegmentPairModel())
-        self.table.resizeColumnsToContents()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)
@@ -1127,8 +1133,14 @@ class EnvironmentSelectWidget(QGroupBox):
         self.removeButton.setDefault(False)
 
         self.table = TableWidget()
+        self.table.setSortingEnabled(False)
+        try:
+            self.table.horizontalHeader().setClickable(False)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionsClickable(False)
         self.table.setModel(EnvironmentModel())
-        self.table.resizeColumnsToContents()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        #self.table.resizeColumnsToContents()
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)

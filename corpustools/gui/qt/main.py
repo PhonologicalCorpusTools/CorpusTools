@@ -154,14 +154,20 @@ class MainWindow(QMainWindow):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
                     self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                    self.showDiscoursesAct.setEnabled(True)
+                    self.showDiscoursesAct.setChecked(True)
                 else:
                     self.textWidget.setModel(DiscourseModel(self.corpus))
                     self.discourseTree.hide()
+                    self.showDiscoursesAct.setEnabled(False)
+                    self.showDiscoursesAct.setChecked(False)
                 #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
                 #self.discourseTree.resizeColumnToContents(0)
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
                 self.textWidget.selectType.connect(self.corpusTable.highlightType)
                 self.textWidget.show()
+                self.showTextAct.setEnabled(True)
+                self.showTextAct.setChecked(True)
                 self.adjustSize()
             else:
                 self.setMinimumSize(400, 400)
@@ -169,6 +175,10 @@ class MainWindow(QMainWindow):
                 self.textWidget.hide()
                 self.discourseTree.hide()
                 self.adjustSize()
+                self.showTextAct.setEnabled(False)
+                self.showTextAct.setChecked(False)
+                self.showDiscoursesAct.setEnabled(False)
+                self.showDiscoursesAct.setChecked(False)
             self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(c.name))
@@ -192,10 +202,11 @@ class MainWindow(QMainWindow):
             pass
 
     def saveCorpus(self):
-        save_binary(self.corpusModel.corpus,os.path.join(
+        save_binary(self.corpus,os.path.join(
                         self.settings['storage'],'CORPUS',
                         self.corpus.name+'.corpus'))
         self.saveCorpusAct.setEnabled(False)
+        self.unsavedChanges = False
 
     def exportCorpus(self):
         dialog = ExportCorpusDialog(self,self.corpusModel.corpus)
@@ -409,6 +420,8 @@ class MainWindow(QMainWindow):
                 self.PhonoSearchWindow = ResultsWindow('Phonological search results',dataModel,self)
                 self.PhonoSearchWindow.show()
 
+    def createWord(self):
+        pass
 
     def toggleWarnings(self):
         self.showWarnings = not self.showWarnings
@@ -420,9 +433,21 @@ class MainWindow(QMainWindow):
         pass
 
     def toggleText(self):
-        pass
+        if self.showTextAct.isChecked():
+            self.textWidget.show()
+        else:
+            self.textWidget.hide()
+
+    def toggleDiscourses(self):
+        if self.showDiscoursesAct.isChecked():
+            self.discourseTree.show()
+        else:
+            self.discourseTree.hide()
 
     def about(self):
+        pass
+
+    def corpusSummary(self):
         pass
 
     def createActions(self):
@@ -459,6 +484,14 @@ class MainWindow(QMainWindow):
         self.viewFeatureSystemAct = QAction( "View/change feature system...",
                 self,
                 statusTip="View feature system", triggered=self.showFeatureSystem)
+
+        self.summaryAct = QAction( "Summary",
+                self,
+                statusTip="Summary of corpus", triggered=self.corpusSummary)
+
+        self.addWordAct = QAction( "Add new word...",
+                self,
+                statusTip="Add new word", triggered=self.createWord)
 
         self.addTierAct = QAction( "Add tier...",
                 self,
@@ -544,6 +577,11 @@ class MainWindow(QMainWindow):
                 statusTip="Show text", triggered=self.toggleText)
         self.showTextAct.setCheckable(True)
 
+        self.showDiscoursesAct = QAction( "Show corpus discourses",
+                self,
+                statusTip="Show discourses", triggered=self.toggleDiscourses)
+        self.showDiscoursesAct.setCheckable(True)
+
         self.quitAct = QAction("&Quit", self, shortcut="Ctrl+Q",
                 statusTip="Quit the application", triggered=self.close)
 
@@ -581,6 +619,10 @@ class MainWindow(QMainWindow):
         self.editMenu.addAction(self.toggleToolTipsAct)
 
         self.corpusMenu = self.menuBar().addMenu("&Corpus")
+        self.corpusMenu.addAction(self.summaryAct)
+        self.corpusMenu.addSeparator()
+        self.corpusMenu.addAction(self.addWordAct)
+        self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.addTierAct)
         self.corpusMenu.addAction(self.addAbstractTierAct)
         self.corpusMenu.addAction(self.addColumnAct)
@@ -608,10 +650,11 @@ class MainWindow(QMainWindow):
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 
-        #self.viewMenu = self.menuBar().addMenu("&Windows")
+        self.viewMenu = self.menuBar().addMenu("&Windows")
         #self.viewMenu.addAction(self.showInventoryAct)
-        #self.viewMenu.addAction(self.showTextAct)
-        #self.menuBar().addSeparator()
+        self.viewMenu.addAction(self.showDiscoursesAct)
+        self.viewMenu.addAction(self.showTextAct)
+        self.menuBar().addSeparator()
 
         self.helpMenu = self.menuBar().addMenu("&Help")
         self.helpMenu.addAction(self.helpAct)
@@ -625,7 +668,7 @@ class MainWindow(QMainWindow):
 
         if self.unsavedChanges:
             msgBox = QMessageBox(QMessageBox.Warning, "Unsaved changes",
-                    "The currently loaded corpus ('{}') has unsaved changes. Continue?".format(self.corpusModel.corpus.name), QMessageBox.NoButton, self)
+                    "The currently loaded corpus ('{}') has unsaved changes. Continue?".format(self.corpus.name), QMessageBox.NoButton, self)
             msgBox.addButton("Continue", QMessageBox.AcceptRole)
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:

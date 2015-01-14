@@ -51,6 +51,11 @@ class StoragePane(BasePane):
 
         self.prev_state = setting_dict
 
+    def validate(self):
+        root = os.path.dirname(self.storageDirectoryWidget.value())
+        if not os.path.exists(root):
+            raise(Exception('The specified directory\'s parent directory ({}) does not exist.'.format(root)))
+
     def get_current_state(self):
         setting_dict = {}
 
@@ -80,6 +85,12 @@ class DisplayPane(BasePane):
         self.sigfigWidget.setText(str(sigfigs))
 
         self.prev_state = setting_dict
+
+    def validate(self):
+        try:
+            t = int(self.sigfigWidget.text())
+        except ValueError:
+            raise(Exception('Number of significant figures requires an integer'))
 
     def get_current_state(self):
         setting_dict = {}
@@ -146,6 +157,29 @@ class Settings(object):
     def __init__(self):
         self.qs = QSettings("PCT","Phonological CorpusTools")
         #self.qs.setFallbacksEnabled(False)
+        self.check_storage()
+
+
+    def check_storage(self):
+        if not os.path.exists(self['storage']):
+            os.mkdir(self['storage'])
+        LOG_DIR = os.path.join(self['storage'],'LOG')
+        ERROR_DIR = os.path.join(self['storage'],'ERRORS')
+        TMP_DIR = os.path.join(self['storage'],'TMP')
+        CORPUS_DIR = os.path.join(self['storage'],'CORPUS')
+        FEATURE_DIR = os.path.join(self['storage'],'FEATURE')
+        if not os.path.exists(LOG_DIR):
+            os.mkdir(LOG_DIR)
+        if not os.path.exists(ERROR_DIR):
+            os.mkdir(ERROR_DIR)
+        if not os.path.exists(TMP_DIR):
+            os.mkdir(TMP_DIR)
+
+        if not os.path.exists(CORPUS_DIR):
+            os.mkdir(CORPUS_DIR)
+
+        if not os.path.exists(FEATURE_DIR):
+            os.mkdir(FEATURE_DIR)
 
     def __getitem__(self, key):
 
@@ -233,7 +267,17 @@ class PreferencesDialog(QDialog):
         self.setWindowTitle('Edit preferences')
 
     def accept(self):
+        try:
+            self.storeWidget.validate()
+            self.displayWidget.validate()
+            self.processingWidget.validate()
+        except Exception as e:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", str(e))
+            return
+
         self.settings.update(self.storeWidget.get_current_state())
         self.settings.update(self.displayWidget.get_current_state())
         self.settings.update(self.processingWidget.get_current_state())
+        self.settings.check_storage()
         QDialog.accept(self)

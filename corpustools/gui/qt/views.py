@@ -170,7 +170,15 @@ class LexiconView(QWidget):
         findTokensAction.setText('Find all tokens')
         findTokensAction.triggered.connect(lambda: self.findTokens(self.table.indexAt(pos)))
         menu.addAction(findTokensAction)
+
+        removeWordAction = QAction(self)
+        removeWordAction.setText('Remove word')
+        removeWordAction.triggered.connect(lambda: self.removeWord(self.table.indexAt(pos)))
+        menu.addAction(removeWordAction)
         action = menu.exec_(self.table.viewport().mapToGlobal(pos))
+
+    def removeWord(self,index):
+        pass
 
     def hideNonLexical(self,b):
         self.table.model().hideNonLexical(b)
@@ -553,7 +561,18 @@ class DiscourseView(QWidget):
         self.playStopAction.setDisabled(False)
         self.playStopAction.triggered.connect(self.playStopAudio)
 
-class TreeWidget(QTreeView):
+class SubTreeView(QTreeView):
+    def __init__(self,parent=None):
+        super(SubTreeView, self).__init__(parent=parent)
+        self.setExpandsOnDoubleClick(True)
+
+    def edit(self, index, trigger, event):
+        if trigger == QAbstractItemView.DoubleClicked:
+            return False
+        return QTreeView.edit(self, index, trigger, event)
+
+
+class TreeWidget(SubTreeView):
     newLexicon = Signal(object)
     def __init__(self,parent=None):
         super(TreeWidget, self).__init__(parent=parent)
@@ -561,11 +580,6 @@ class TreeWidget(QTreeView):
         self.customContextMenuRequested.connect(self.showMenu)
         self.setColumnWidth(0,40)
         self._selection_model = None
-
-    def edit(self, index, trigger, event):
-        if trigger == QAbstractItemView.DoubleClicked:
-            return False
-        return QTreeView.edit(self, index, trigger, event)
 
     def setModel(self, model):
         QTreeView.setModel(self, model)
