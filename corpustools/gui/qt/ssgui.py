@@ -25,7 +25,7 @@ class SSDialog(FunctionDialog):
     header = ['Word 1',
                 'Word 2',
                 'String type',
-                'String similarity',
+                'Result',
                 'Type or token',
                 'Algorithm type']
 
@@ -137,7 +137,7 @@ class SSDialog(FunctionDialog):
 
         self.layout().insertWidget(0,ssFrame)
 
-
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Select which algorithm'

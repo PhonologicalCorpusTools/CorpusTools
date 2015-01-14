@@ -159,6 +159,7 @@ class PPDialog(FunctionDialog):
 
         self.layout().insertWidget(0,ppFrame)
 
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
 
             self.tierWidget.setToolTip(("<FONT COLOR=black>"

@@ -185,6 +185,7 @@ class FLDialog(FunctionDialog):
 
         self.layout().insertWidget(0,flFrame)
 
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
             self.homophoneWidget.setToolTip(("<FONT COLOR=black>"
             'This setting will overcount alternative'

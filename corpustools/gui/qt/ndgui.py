@@ -187,6 +187,7 @@ class NDDialog(FunctionDialog):
 
         self.layout().insertWidget(0,ndFrame)
 
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
 
             self.tierWidget.setToolTip(("<FONT COLOR=black>"

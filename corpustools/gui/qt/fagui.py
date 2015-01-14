@@ -163,6 +163,7 @@ class FADialog(FunctionDialog):
 
         self.layout().insertWidget(0, faframe)
 
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Select which algorithm to'
