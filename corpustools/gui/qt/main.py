@@ -10,7 +10,7 @@ from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,Disc
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
                         RemoveAttributeDialog,SubsetCorpusDialog,
-                        ExportCorpusDialog)
+                        ExportCorpusDialog, save_binary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
                         ExportFeatureSystemDialog)
@@ -75,6 +75,7 @@ class MainWindow(QMainWindow):
         self.createMenus()
         self.corpusModel = None
 
+        self.unsavedChanges = False
 
         self.FLWindow = None
         self.PDWindow = None
@@ -89,6 +90,19 @@ class MainWindow(QMainWindow):
 
         if not os.path.exists(TMP_DIR):
             os.mkdir(TMP_DIR)
+
+    def check_for_unsaved_changes(function):
+        def do_check(self):
+            if self.unsavedChanges:
+                msgBox = QMessageBox(QMessageBox.Warning, "Unsaved changes",
+                        "The currently loaded corpus ('{}') has unsaved changes. Continue?".format(self.corpusModel.corpus.name), QMessageBox.NoButton, self)
+                msgBox.addButton("Continue", QMessageBox.AcceptRole)
+                msgBox.addButton("Abort", QMessageBox.RejectRole)
+                if msgBox.exec_() != QMessageBox.AcceptRole:
+                    return
+            function(self)
+
+        return do_check
 
     def check_for_empty_corpus(function):
         def do_check(self):
@@ -127,7 +141,7 @@ class MainWindow(QMainWindow):
         else:
             self.featureSystemStatus.setText('No feature system selected')
 
-
+    @check_for_unsaved_changes
     def loadCorpus(self):
         dialog = CorpusLoadDialog(self)
         result = dialog.exec_()
@@ -155,13 +169,16 @@ class MainWindow(QMainWindow):
                 self.textWidget.hide()
                 self.discourseTree.hide()
                 self.adjustSize()
-            self.corpusModel = CorpusModel(c)
+            self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(c.name))
             if c.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
+
+            self.unsavedChanges = False
+            self.saveCorpusAct.setEnabled(False)
 
 
     def loadFeatureMatrices(self):
@@ -175,7 +192,10 @@ class MainWindow(QMainWindow):
             pass
 
     def saveCorpus(self):
-        pass
+        save_binary(self.corpusModel.corpus,os.path.join(
+                        self.settings['storage'],'CORPUS',
+                        self.corpus.name+'.corpus'))
+        self.saveCorpusAct.setEnabled(False)
 
     def exportCorpus(self):
         dialog = ExportCorpusDialog(self,self.corpusModel.corpus)
@@ -200,6 +220,12 @@ class MainWindow(QMainWindow):
         dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.unsavedChanges = True
+                self.saveCorpusAct.setEnabled(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -207,6 +233,12 @@ class MainWindow(QMainWindow):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.attribute, dialog.segList)
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.unsavedChanges = True
+                self.saveCorpusAct.setEnabled(True)
             self.adjustSize()
 
     @check_for_empty_corpus
@@ -215,6 +247,12 @@ class MainWindow(QMainWindow):
         dialog = AddAbstractTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addAbstractTier(dialog.attribute, dialog.segList)
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.unsavedChanges = True
+                self.saveCorpusAct.setEnabled(True)
             self.adjustSize()
 
     @check_for_empty_corpus
@@ -223,6 +261,12 @@ class MainWindow(QMainWindow):
         dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.attribute, dialog.segList)
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.unsavedChanges = True
+                self.saveCorpusAct.setEnabled(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -232,6 +276,13 @@ class MainWindow(QMainWindow):
             self.corpusModel.removeAttributes(dialog.tiers)
             self.adjustSize()
 
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.unsavedChanges = True
+                self.saveCorpusAct.setEnabled(True)
+
     @check_for_empty_corpus
     def stringSim(self):
         dialog = SSDialog(self, self.corpusModel.corpus,self.showToolTips)
@@ -240,7 +291,7 @@ class MainWindow(QMainWindow):
             if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
                 self.SSWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.SSWindow = ResultsWindow('String similarity results',dataModel,self)
                 self.SSWindow.show()
 
@@ -253,7 +304,7 @@ class MainWindow(QMainWindow):
             if self.FAWindow is not None and dialog.update and self.FAWindow.isVisible():
                 self.FAWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.FAWindow = ResultsWindow('Frequency of alternation results',dataModel,self)
                 self.FAWindow.show()
 
@@ -266,7 +317,7 @@ class MainWindow(QMainWindow):
             if self.PDWindow is not None and self.PDWindow.isVisible():
                 self.PDWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.PDWindow = ResultsWindow('Predictability of distribution results',dataModel,self)
                 self.PDWindow.show()
 
@@ -279,7 +330,7 @@ class MainWindow(QMainWindow):
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
                 self.FLWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.FLWindow = ResultsWindow('Functional load results',dataModel,self)
                 self.FLWindow.show()
 
@@ -292,7 +343,7 @@ class MainWindow(QMainWindow):
             if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
                 self.MIWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.MIWindow = ResultsWindow('Mutual information results',dataModel,self)
                 self.MIWindow.show()
 
@@ -303,7 +354,7 @@ class MainWindow(QMainWindow):
             if self.ASWindow is not None and dialog.update and self.ASWindow.isVisible():
                 self.ASWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.ASWindow = ResultsWindow('Acoustic similarity results',dataModel,self)
                 self.ASWindow.show()
 
@@ -315,24 +366,36 @@ class MainWindow(QMainWindow):
             if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
                 self.NDWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.NDWindow = ResultsWindow('Neighborhood density results',dataModel,self)
                 self.NDWindow.show()
+        elif result:
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.unsavedChanges = True
+                self.saveCorpusAct.setEnabled(True)
 
     @check_for_empty_corpus
     @check_for_transcription
     def phonoProb(self):
         dialog = PPDialog(self, self.corpusModel,self.showToolTips)
-        #self.corpusModel.layoutAboutToBeChanged.emit()
         result = dialog.exec_()
         if result and dialog.results:
             if self.PPWindow is not None and dialog.update and self.NDWindow.isVisible():
                 self.PPWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.PPWindow = ResultsWindow('Phonotactic probability results',dataModel,self)
                 self.PPWindow.show()
-        #self.corpusModel.columnAdded()
+        elif result:
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.unsavedChanges = True
+                self.saveCorpusAct.setEnabled(True)
 
 
     def phonoSearch(self):
@@ -379,6 +442,7 @@ class MainWindow(QMainWindow):
         self.saveCorpusAct = QAction( "Save corpus",
                 self,
                 statusTip="Save corpus", triggered=self.saveCorpus)
+        self.saveCorpusAct.setEnabled(False)
 
         self.exportCorpusAct = QAction( "Export corpus as text file (use with spreadsheets etc.)...",
                 self,
@@ -553,8 +617,24 @@ class MainWindow(QMainWindow):
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.aboutAct)
 
+    #@check_for_unsaved_changes
+    #def close(self):
+    #    QMainWindow.close(self)
+
     def closeEvent(self, event):
+
+        if self.unsavedChanges:
+            msgBox = QMessageBox(QMessageBox.Warning, "Unsaved changes",
+                    "The currently loaded corpus ('{}') has unsaved changes. Continue?".format(self.corpusModel.corpus.name), QMessageBox.NoButton, self)
+            msgBox.addButton("Continue", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                event.ignore()
+                return
+
+        self.settings['size'] = self.size()
+        self.settings['pos'] = self.pos()
         tmpfiles = os.listdir(TMP_DIR)
         for f in tmpfiles:
             os.remove(os.path.join(TMP_DIR,f))
-        super(MainWindow, self).closeEvent(event)
+        event.accept()

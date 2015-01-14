@@ -1,4 +1,4 @@
-
+import os
 import codecs
 
 from .imports import *
@@ -41,8 +41,8 @@ class StoragePane(BasePane):
         #set up defaults
 
         #storageDirectory = codecs.getdecoder("unicode_escape")(setting_dict['storage'])[0]
-        storageDirectory = repr(setting_dict['storage'])
-        print(storageDirectory)
+        storageDirectory = setting_dict['storage']
+
         autosave = setting_dict['autosave']
 
         self.storageDirectoryWidget.setPath(storageDirectory)
@@ -55,7 +55,7 @@ class StoragePane(BasePane):
         setting_dict = {}
 
         setting_dict['storage'] = self.storageDirectoryWidget.value()
-        setting_dict['autosave'] = self.autosaveCheck.isChecked()
+        setting_dict['autosave'] = int(self.autosaveCheck.isChecked())
 
         return setting_dict
 
@@ -84,7 +84,7 @@ class DisplayPane(BasePane):
     def get_current_state(self):
         setting_dict = {}
 
-        setting_dict['sigfigs'] = int(self.sigfigWidget.value())
+        setting_dict['sigfigs'] = int(self.sigfigWidget.text())
 
         return setting_dict
 
@@ -118,22 +118,23 @@ class ProcessingPane(BasePane):
     def get_current_state(self):
         setting_dict = {}
 
-        setting_dict['use_multi'] = self.usemultiCheck.isChecked()
-        setting_dict['num_cores'] = int(self.sigfigWidget.value())
+        setting_dict['use_multi'] = int(self.usemultiCheck.isChecked())
+        setting_dict['num_cores'] = int(self.numcoresWidget.text())
 
         return setting_dict
 
 class Settings(object):
 
-    key_to_ini = {'storage': ('storage/directory',''),
-                    'autosave': ('storage/autosave',True),
+    key_to_ini = {'storage': ('storage/directory',os.path.normpath(os.path.join(
+                                            os.path.expanduser('~/Documents'),'PCT','CorpusTools'))),
+                    'autosave': ('storage/autosave',1),
                     'praatpath': ('storage/praat',''),
                     'size':('display/size', QSize(270, 225)),
                     'pos': ('display/pos', QPoint(50, 50)),
                     'sigfigs': ('display/sigfigs',3),
-                    'warnings': ('display/warnings',True),
-                    'tooltips': ('display/tooltips',True),
-                    'use_multi': ('multiprocessing/enabled',False),
+                    'warnings': ('display/warnings',1),
+                    'tooltips': ('display/tooltips',1),
+                    'use_multi': ('multiprocessing/enabled',0),
                     'num_cores': ('multiprocessing/numcores',1)}
 
     storage_setting_keys = ['storage','autosave']
@@ -143,8 +144,8 @@ class Settings(object):
     processing_setting_keys = ['use_multi','num_cores']
 
     def __init__(self):
-        self.qs = QSettings(CONFIG_PATH,QSettings.IniFormat)
-        self.qs.setFallbacksEnabled(False)
+        self.qs = QSettings("PCT","Phonological CorpusTools")
+        #self.qs.setFallbacksEnabled(False)
 
     def __getitem__(self, key):
 
@@ -167,6 +168,13 @@ class Settings(object):
         else:
             inikey, default = mapped_key
             self.qs.setValue(inikey,value)
+
+    def sync(self):
+        self.qs.sync()
+
+    def update(self,setting_dict):
+        for k,v in setting_dict.items():
+            self[k] = v
 
     def get_storage_settings(self):
         out = {x: self[x] for x in self.storage_setting_keys}
@@ -222,10 +230,10 @@ class PreferencesDialog(QDialog):
 
         self.setLayout(layout)
 
+        self.setWindowTitle('Edit preferences')
+
     def accept(self):
-
-        self.settings.update(self.networkWidget.get_current_state())
-        self.settings.update(self.repWidget.get_current_state())
-        self.settings.update(self.specWidget.get_current_state())
-
+        self.settings.update(self.storeWidget.get_current_state())
+        self.settings.update(self.displayWidget.get_current_state())
+        self.settings.update(self.processingWidget.get_current_state())
         QDialog.accept(self)
