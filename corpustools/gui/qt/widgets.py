@@ -542,6 +542,9 @@ class DirectoryWidget(QFrame):
 
         self.textChanged = self.pathEdit.textChanged
 
+    def setPath(self,path):
+        self.pathEdit.setText(path)
+
     def pathSet(self):
         filename = QFileDialog.getExistingDirectory(self,"Choose a directory")
         if filename:

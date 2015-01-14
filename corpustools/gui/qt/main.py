@@ -190,7 +190,9 @@ class MainWindow(QMainWindow):
             pass
 
     def showPreferences(self):
-        pass
+        dialog = PreferencesDialog(self, self.settings)
+        if dialog.exec_():
+            self.settings = dialog.settings
 
     @check_for_empty_corpus
     @check_for_transcription
