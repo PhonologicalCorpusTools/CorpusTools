@@ -143,7 +143,7 @@ class FADialog(FunctionDialog):
 
         optionLayout.addWidget(corpusSizeFrame)
 
-        fileFrame = QGroupBox('Output file')
+        fileFrame = QGroupBox('Output file (if desired)')
 
         self.fileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
 
