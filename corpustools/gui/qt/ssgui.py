@@ -39,8 +39,16 @@ class SSDialog(FunctionDialog):
                 '',
                 'Coded by Michael Fry',
                 '',
-                'References'
-                'Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.']
+                'References',
+                ('Khorsi, A. 2012. On Morphological Relatedness. '
+                'Natural Language Engineering, 1-19.'),
+                ('Luce, Paul A. & David B. Pisoni. 1998. '
+                'Recognizing spoken words: The neighborhood activation model. '
+                'Ear Hear 19.1-36.'),
+                ('Allen, Blake & Michael Becker. 2014. '
+                'Learning alternations from surface forms with sublexical phonology. '
+                'Ms. University of British Columbia and Stony Brook University. '
+                'See also http://sublexical.phonologist.org/')]
 
     name = 'string similarity'
 

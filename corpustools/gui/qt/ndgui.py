@@ -70,17 +70,14 @@ class NDDialog(FunctionDialog):
                 'Algorithm type']
 
     _about = [('This function calculates the neighborhood density '
-                    'of a word'),
+                    'of a word.'),
                     '',
                     'Coded by Blake Allen and Michael Fry',
-                    #'',
-                    #'References',
-                    #('Surendran, Dinoj & Partha Niyogi. 2003. Measuring'
-                    #' the functional load of phonological contrasts.'
-                    #' In Tech. Rep. No. TR-2003-12.'),
-                    #('Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013.'
-                    #' High functional load inhibits phonological contrast'
-                    #' loss: A corpus study. Cognition 128.179-86')
+                    '',
+                    'References',
+                    ('Luce, Paul A. & David B. Pisoni. 1998. '
+                    'Recognizing spoken words: The neighborhood activation model. '
+                    'Ear Hear 19.1-36.')
                     ]
 
     name = 'neighborhood density'
