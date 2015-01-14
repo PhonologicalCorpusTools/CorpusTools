@@ -434,8 +434,8 @@ class FeatureMatrix(object):
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
 
         #What are these?
-        self.matrix['#'] = {'#':''}
-        self.matrix[''] = {'*':''}
+        self.matrix['#'] = Segment('#')
+        #self.matrix[''] = {'*':''}
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
@@ -1151,16 +1151,20 @@ class Corpus(object):
             word.add_tier(attribute.name,tier_segs)
 
     def remove_attribute(self, attribute):
-        if attribute.name in self.basic_attributes:
+        if isinstance(attribute,str):
+            name = attribute
+        else:
+            name = attribute.name
+        if name in self.basic_attributes:
             return
         for i in range(len(self._attributes)):
-            if self._attributes[i].name == attribute.name:
+            if self._attributes[i].name == name:
                 del self._attributes[i]
                 break
         else:
             return
         for word in self:
-            word.remove_attribute(attribute.name)
+            word.remove_attribute(name)
 
     def __setstate__(self,state):
         try:
