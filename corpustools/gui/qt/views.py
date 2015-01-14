@@ -626,7 +626,7 @@ class ResultsWindow(QWidget):
         self.table.resizeColumnsToContents()
         self.setWindowTitle(title)
         self.table.adjustSize()
-        self.setFixedWidth(self.table.calcWidth()+41)
+        self.setMaximumWidth(self.table.calcWidth()+41)
         self.resize(self.maximumWidth(),400)
 
     def save(self):
