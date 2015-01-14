@@ -156,6 +156,7 @@ class FLDialog(FunctionDialog):
         box = QVBoxLayout()
 
         self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
+        self.relativeCountWidget.setChecked(True)
         self.homophoneWidget = QCheckBox('Include homophones')
 
         box.addWidget(self.relativeCountWidget)
