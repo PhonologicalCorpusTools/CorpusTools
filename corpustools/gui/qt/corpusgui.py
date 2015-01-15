@@ -1,5 +1,6 @@
 import os
 import codecs
+import string
 
 from .imports import *
 
@@ -363,10 +364,10 @@ class CorpusFromSpellingTextDialog(QDialog):
         self.nameEdit = QLineEdit()
         iolayout.addRow(QLabel('Name for corpus'),self.nameEdit)
 
-        self.wordDelimiter = QLineEdit()
-        iolayout.addRow(QLabel('Word delimiter'),self.wordDelimiter)
+        #self.wordDelimiter = QLineEdit()
+        iolayout.addRow(QLabel('Word delimiter'),QLabel('All whitespace'))#self.wordDelimiter)
 
-        self.punctuation = PunctuationWidget()
+        self.punctuation = PunctuationWidget(string.punctuation, 'Punctuation to ignore')
         iolayout.addRow(self.punctuation)
 
         ioframe = QGroupBox('Corpus details')
@@ -452,10 +453,10 @@ class CorpusFromSpellingTextDialog(QDialog):
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
-                return
-        wordDelim = self.wordDelimiter.text()
-        if wordDelim == '':
-            wordDelim = ' '
+                return None
+        wordDelim = None#self.wordDelimiter.text()
+        #if wordDelim == '':
+        #    wordDelim = ' '
 
         supportCorpus = self.supportCorpus.path()
         ignore_list = self.punctuation.value()
@@ -470,6 +471,8 @@ class CorpusFromSpellingTextDialog(QDialog):
 
     def accept(self):
         kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
         self.thread.setParams(kwargs)
 
         self.thread.start()
@@ -479,7 +482,14 @@ class CorpusFromSpellingTextDialog(QDialog):
         self.progressDialog.reset()
         if result:
             if self.corpus is not None:
+                for k,v in self.corpus.lexicon.wordlist.items():
+                    if k == 'lukʷuxsxʷs':
+                        print(v.__dict__)
                 save_binary(self.corpus,corpus_name_to_path(self.corpus.name))
+                t = load_binary(corpus_name_to_path(self.corpus.name))
+                for k,v in t.lexicon.wordlist.items():
+                    if k == 'lukʷuxsxʷs':
+                        print(v.__dict__)
             QDialog.accept(self)
 
     def updateName(self):
@@ -504,10 +514,10 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         self.nameEdit = QLineEdit()
         iolayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
 
-        self.wordDelimiter = QLineEdit()
-        iolayout.addRow(QLabel('Word delimiter'),self.wordDelimiter)
+        #self.wordDelimiter = PunctuationWidget(['space','tab'],'Word delimiters')
+        iolayout.addRow(QLabel('Word delimiters'), QLabel('All whitespace'))
 
-        self.punctuation = PunctuationWidget()
+        self.punctuation = PunctuationWidget(string.punctuation,'Punctuation to ignore')
         iolayout.addRow(self.punctuation)
 
         ioframe = QGroupBox('Corpus details')
@@ -520,8 +530,9 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         self.featureSystem = FeatureSystemSelect()
         translayout.addRow(self.featureSystem)
 
-        self.transDelimiter = QLineEdit()
-        translayout.addRow(QLabel('Transcription delimiter'),self.transDelimiter)
+        self.transDelimiter = PunctuationWidget(['.','-','='],'Transcription delimiters')
+        self.transDelimiter.check()
+        translayout.addRow(self.transDelimiter)
 
         self.digraphs = DigraphWidget(self)
         translayout.addRow(self.digraphs)
@@ -568,11 +579,11 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         return self.punctuation.value()
 
     def delimiters(self):
-        wordDelim = self.wordDelimiter.text()
-        if wordDelim == '' or wordDelim == ' ':
-            wordDelim = None
-        transDelim = self.transDelimiter.text()
-        if transDelim == '':
+        #wordDelim = self.wordDelimiter.text()
+        #if wordDelim == '' or wordDelim == ' ':
+        wordDelim = None
+        transDelim = self.transDelimiter.value()
+        if transDelim == []:
             transDelim = None
         return wordDelim, transDelim
 

@@ -59,7 +59,7 @@ class SSDialog(FunctionDialog):
         self.showToolTips = showToolTips
 
         if not self.corpus.has_transcription:
-            layout.addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
+            self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
 
         sslayout = QHBoxLayout()
 

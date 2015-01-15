@@ -416,7 +416,7 @@ class MainWindow(QMainWindow):
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
                 self.PhonoSearchWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results)
+                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
                 self.PhonoSearchWindow = ResultsWindow('Phonological search results',dataModel,self)
                 self.PhonoSearchWindow.show()
 

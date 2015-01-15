@@ -1,4 +1,3 @@
-import string
 from itertools import combinations
 
 from .imports import *
@@ -310,8 +309,8 @@ class TierWidget(QGroupBox):
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
-    def __init__(self,parent = None):
-        QGroupBox.__init__(self,'Punctuation to ignore',parent)
+    def __init__(self, punctuation, title,parent = None):
+        QGroupBox.__init__(self,title,parent)
 
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
@@ -320,12 +319,13 @@ class PunctuationWidget(QGroupBox):
 
         row = 0
         col = 0
-        for s in string.punctuation:
+        for s in punctuation:
             btn = QPushButton(s)
             btn.setCheckable(True)
             btn.setAutoExclusive(False)
             btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
             btn.setMaximumWidth(btn.fontMetrics().boundingRect(s).width() + 14)
+            btn.setFocusPolicy(Qt.NoFocus)
 
             box.addWidget(btn,row,col)
             self.btnGroup.addButton(btn)
@@ -362,7 +362,8 @@ class PunctuationWidget(QGroupBox):
         value = []
         for b in self.btnGroup.buttons():
             if b.isChecked():
-                value.append(b.text())
+                t = b.text()
+                value.append(t)
         return value
 
 class DigraphDialog(QDialog):
