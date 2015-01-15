@@ -184,8 +184,8 @@ def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
         return
     env_matches, miss_envs, overlap_envs = returned
     if miss_envs:
-        error_string = 'The environments {} for {} were not applicable to the following environments: {}'.format(
-                    ' ,'.join(str(env) for env in envs),
+        error_string = 'Exhaustivity was not met. The environments for the pair {} for were not applicable to the following environments:\n\n{}'.format(
+
                     ' and '.join([seg1, seg2]),
                     ' ,'.join(str(w) for w in miss_envs))
         if strict:
@@ -194,7 +194,7 @@ def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
         #    warn(error_string, ExhaustivityWarning)
 
     if overlap_envs:
-        error_string = 'The following environments for {} overlapped:\n'.format(' and '.join([seg1, seg2]))
+        error_string = 'Uniqueness was not met.  The following environments for {} overlapped:\n'.format(' and '.join([seg1, seg2]))
         for k,v in overlap_envs.items():
             error_string +='{}: {}\n'.format(
                     ' ,'.join(str(env) for env in k),
