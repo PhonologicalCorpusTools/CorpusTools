@@ -78,9 +78,9 @@ class FADialog(FunctionDialog):
 
 
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
-                                            OrderedDict([('Khorsi','khorsi'),
-                                            ('Edit distance','edit_distance'),
-                                            ('Phonological edit distance','phono_edit_distance')]),
+                                            OrderedDict([('Edit distance','edit_distance'),
+                                            ('Phonological edit distance','phono_edit_distance'),
+                                            ('Khorsi','khorsi'),]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
                                             'Phonological edit distance':self.phonoEditDistSelected})
@@ -143,7 +143,7 @@ class FADialog(FunctionDialog):
 
         optionLayout.addWidget(corpusSizeFrame)
 
-        fileFrame = QGroupBox('Output file')
+        fileFrame = QGroupBox('Output file (if desired)')
 
         self.fileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
 
@@ -163,6 +163,7 @@ class FADialog(FunctionDialog):
 
         self.layout().insertWidget(0, faframe)
 
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Select which algorithm to'

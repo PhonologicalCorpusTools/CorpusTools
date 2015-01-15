@@ -204,9 +204,9 @@ class DiscourseModel(QStandardItemModel):
         return token
 
 class CorpusModel(QAbstractTableModel):
-    def __init__(self, corpus, parent=None):
+    def __init__(self, corpus, settings, parent=None):
         super(CorpusModel, self).__init__(parent)
-
+        self.settings = settings
         self.corpus = corpus
         self.nonLexHidden = False
 
@@ -252,7 +252,7 @@ class CorpusModel(QAbstractTableModel):
         data = getattr(self.corpus[self.rows[row]],self.columns[col].name)
 
         if isinstance(data,float):
-            data = str(round(data,3))
+            data = str(round(data,self.settings['sigfigs']))
         elif not isinstance(data,str):
             data = str(data)
         return data
@@ -425,9 +425,9 @@ class EnvironmentModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
 class ResultsModel(QAbstractTableModel):
-    def __init__(self, header, results, parent=None):
+    def __init__(self, header, results, settings, parent=None):
         QAbstractTableModel.__init__(self,parent)
-
+        self.settings = settings
         self.columns = header
 
         self.results = results
@@ -445,7 +445,7 @@ class ResultsModel(QAbstractTableModel):
             return None
         data = self.results[index.row()][index.column()]
         if isinstance(data,float):
-            data = str(round(data,3))
+            data = str(round(data,self.settings['sigfigs']))
         elif isinstance(data,bool):
             if data:
                 data = 'Yes'

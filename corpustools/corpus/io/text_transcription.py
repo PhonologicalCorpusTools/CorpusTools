@@ -72,9 +72,11 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
         corpus.set_feature_matrix(feature_matrix)
 
     trans_check = False
+    if trans_delimiter is None:
+        trans_delimiter = []
     with open(path, encoding='utf-8-sig', mode='r') as f:
         text = f.read()
-        if delimiter is not None and delimiter not in text:
+        if delimiter and delimiter not in text:
             e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
             raise(e)
         lines = text.splitlines()
@@ -94,14 +96,17 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
             if not line or line == '\n':
                 continue
             line = line.split(delimiter)
-
+            trans_patt = ''.join([re.escape(x) for x in trans_delimiter])
+            trans_patt = '['+patt+']+'
             for word in line:
                 word = word.strip()
-                if trans_delimiter is not None and trans_delimiter in word:
-                    trans = word.strip(trans_delimiter).split(trans_delimiter)
+                if trans_delimiter:
+                    word = re.sub('^'+trans_patt,'',word)
+                    word = re.sub(trans_patt+'$','',word)
+                    trans = re.split(trans_patt,word)
                     if not trans_check and len(trans) > 1:
                         trans_check = True
-                elif digraph_list is not None and len(word) > 1:
+                elif digraph_list and len(word) > 1:
                     trans = digraph_re.findall(word)
                 else:
                     trans = list(word)
@@ -125,7 +130,7 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
 
                 previous_time = wordtoken.begin
                 begin += 1
-    if trans_delimiter is not None and not trans_check:
+    if trans_delimiter and not trans_check:
         raise(DelimiterError('The transcription delimiter specified does not create multiple segments. Please specify another delimiter.'))
 
     discourse.lexicon = corpus

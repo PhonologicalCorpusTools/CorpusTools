@@ -25,7 +25,7 @@ class SSDialog(FunctionDialog):
     header = ['Word 1',
                 'Word 2',
                 'String type',
-                'String similarity',
+                'Result',
                 'Type or token',
                 'Algorithm type']
 
@@ -39,8 +39,16 @@ class SSDialog(FunctionDialog):
                 '',
                 'Coded by Michael Fry',
                 '',
-                'References'
-                'Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.']
+                'References',
+                ('Khorsi, A. 2012. On Morphological Relatedness. '
+                'Natural Language Engineering, 1-19.'),
+                ('Luce, Paul A. & David B. Pisoni. 1998. '
+                'Recognizing spoken words: The neighborhood activation model. '
+                'Ear Hear 19.1-36.'),
+                ('Allen, Blake & Michael Becker. 2014. '
+                'Learning alternations from surface forms with sublexical phonology. '
+                'Ms. University of British Columbia and Stony Brook University. '
+                'See also http://sublexical.phonologist.org/')]
 
     name = 'string similarity'
 
@@ -51,7 +59,7 @@ class SSDialog(FunctionDialog):
         self.showToolTips = showToolTips
 
         if not self.corpus.has_transcription:
-            layout.addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
+            self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
 
         sslayout = QHBoxLayout()
 
@@ -59,9 +67,9 @@ class SSDialog(FunctionDialog):
                     'Edit distance':True,
                     'Phonological edit distance':self.corpus.has_transcription}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
-                                            OrderedDict([('Khorsi','khorsi'),
-                                            ('Edit distance','edit_distance'),
-                                            ('Phonological edit distance','phono_edit_distance')]),
+                                            OrderedDict([('Edit distance','edit_distance'),
+                                            ('Phonological edit distance','phono_edit_distance'),
+                                            ('Khorsi','khorsi')]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
                                             'Phonological edit distance':self.phonoEditDistSelected},
@@ -137,7 +145,7 @@ class SSDialog(FunctionDialog):
 
         self.layout().insertWidget(0,ssFrame)
 
-
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Select which algorithm'

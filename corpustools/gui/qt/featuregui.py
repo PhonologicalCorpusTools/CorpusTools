@@ -12,7 +12,7 @@ from corpustools.corpus.io import (load_binary, download_binary,
                     load_feature_matrix_csv, save_binary, DelimiterError,
                     export_feature_matrix_csv)
 
-from .views import TableWidget
+from .views import TableWidget, SubTreeView
 
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
@@ -423,7 +423,7 @@ class EditFeatureMatrixDialog(QDialog):
         mode = self.displayWidget.currentText()
         self.table.deleteLater()
         if mode == 'Tree':
-            self.table = QTreeView()
+            self.table = SubTreeView()
             self.table.setModel(FeatureSystemTreeModel(self.specifier))
             self.layout().insertWidget(0,self.table)
         elif mode == 'Matrix':

@@ -139,7 +139,9 @@ class ASDialog(FunctionDialog):
         box = QFormLayout()
 
         self.minFreqEdit = QLineEdit()
+        self.minFreqEdit.setText('80')
         self.maxFreqEdit = QLineEdit()
+        self.maxFreqEdit.setText('7800')
 
         box.addRow('Minimum frequency (Hz):',self.minFreqEdit)
         box.addRow('Maximum frequency (Hz):',self.maxFreqEdit)
@@ -179,7 +181,7 @@ class ASDialog(FunctionDialog):
         asframe.setLayout(aslayout)
 
         self.layout().insertWidget(0,asframe)
-
+        self.representationWidget.initialClick()
         if self.showToolTips:
             compFrame.setToolTip(("<FONT COLOR=black>"
             'Choose two directories to compare sound files between.'
@@ -220,39 +222,49 @@ class ASDialog(FunctionDialog):
 
     def mfccSelected(self):
         self.coeffEdit.setEnabled(True)
+        self.filterEdit.setText('26')
+        self.coeffEdit.setText('12')
+
 
     def envelopesSelected(self):
+        self.coeffEdit.setText('')
         self.coeffEdit.setEnabled(False)
+        self.filterEdit.setText('8')
 
     def generateKwargs(self):
         rep = self.representationWidget.value()
         alg = self.distAlgWidget.value()
-        if self.filterEdit.text() in ['','0']:
-            if rep == 'mfcc':
-                self.filterEdit.setText('26')
-            elif rep == 'envelopes':
-                self.filterEdit.setText('8')
-        if rep == 'mfcc' and self.coeffEdit.text() in ['','0']:
-            self.coeffEdit.setText('12')
-            if int(self.coeffEdit.text()) > int(self.filterEdit.text())-1:
-                self.coeffEdit.setText(str(int(self.filterEdit.text())-1))
-        if self.minFreqEdit.text() in ['']:
-            self.minFreqEdit.setText('80')
-        if self.maxFreqEdit.text() in ['']:
-            self.maxFreqEdit.setText('7800')
+
         try:
             filters = int(self.filterEdit.text())
+            if filters < 0:
+                raise(ValueError)
         except ValueError:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The number of filters must be a number greater than 0.")
             return
         try:
             coeffs = int(self.coeffEdit.text())
+            if coeffs < 0:
+                raise(ValueError)
+            if int(self.coeffEdit.text()) > int(self.filterEdit.text())-1:
+                raise(ValueError)
+
         except ValueError:
             if rep == 'mfcc':
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The number of coefficients must be a number greater than 0 and less than the number of filters.")
                 return
         try:
             freq_lims = (float(self.minFreqEdit.text()),float(self.maxFreqEdit.text()))
-        except ValueError:
-            return
+            if freq_lims[0] < 0 or freq_lims[1] < 0:
+                raise(ValueError("The minimum and maximum frequenies must be greater than 0."))
+            if freq_lims[0] >= freq_lims[1]:
+                raise(ValueError("The maximum frequeny must be greater than the minimum frequency."))
+        except ValueError as e:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", str(e))
+                return
         kwargs = {
                 'type': self.compType,
                 'rep':rep,

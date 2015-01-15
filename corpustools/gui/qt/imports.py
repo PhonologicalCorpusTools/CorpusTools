@@ -16,7 +16,8 @@ try:
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,
                                 QTableWidget,QSound,QItemSelection, QItemSelectionModel,
-                                QToolBar, QStyledItemDelegate, QDataWidgetMapper)
+                                QToolBar, QStyledItemDelegate, QDataWidgetMapper,
+                                QTabWidget)
 
     print('PySide version')
 except ImportError:
@@ -34,7 +35,7 @@ except ImportError:
                                 QFormLayout, QLineEdit, QFileDialog, QComboBox,
                                 QProgressDialog, QCheckBox, QMessageBox,QTableView,
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
-                                QStyle, QMenu, QSizePolicy, QButtonGroup,
+                                QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper)
     try:
         from PyQt5.QtMultimedia import QSound

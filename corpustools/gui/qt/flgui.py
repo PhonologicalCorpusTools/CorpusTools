@@ -156,6 +156,7 @@ class FLDialog(FunctionDialog):
         box = QVBoxLayout()
 
         self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
+        self.relativeCountWidget.setChecked(True)
         self.homophoneWidget = QCheckBox('Include homophones')
 
         box.addWidget(self.relativeCountWidget)
@@ -185,6 +186,7 @@ class FLDialog(FunctionDialog):
 
         self.layout().insertWidget(0,flFrame)
 
+        self.algorithmWidget.initialClick()
         if self.showToolTips:
             self.homophoneWidget.setToolTip(("<FONT COLOR=black>"
             'This setting will overcount alternative'

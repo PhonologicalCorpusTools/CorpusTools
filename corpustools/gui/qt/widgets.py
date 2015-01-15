@@ -1,4 +1,3 @@
-import string
 from itertools import combinations
 
 from .imports import *
@@ -310,8 +309,8 @@ class TierWidget(QGroupBox):
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
-    def __init__(self,parent = None):
-        QGroupBox.__init__(self,'Punctuation to ignore',parent)
+    def __init__(self, punctuation, title,parent = None):
+        QGroupBox.__init__(self,title,parent)
 
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
@@ -320,12 +319,13 @@ class PunctuationWidget(QGroupBox):
 
         row = 0
         col = 0
-        for s in string.punctuation:
+        for s in punctuation:
             btn = QPushButton(s)
             btn.setCheckable(True)
             btn.setAutoExclusive(False)
             btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
             btn.setMaximumWidth(btn.fontMetrics().boundingRect(s).width() + 14)
+            btn.setFocusPolicy(Qt.NoFocus)
 
             box.addWidget(btn,row,col)
             self.btnGroup.addButton(btn)
@@ -362,7 +362,8 @@ class PunctuationWidget(QGroupBox):
         value = []
         for b in self.btnGroup.buttons():
             if b.isChecked():
-                value.append(b.text())
+                t = b.text()
+                value.append(t)
         return value
 
 class DigraphDialog(QDialog):
@@ -542,6 +543,9 @@ class DirectoryWidget(QFrame):
 
         self.textChanged = self.pathEdit.textChanged
 
+    def setPath(self,path):
+        self.pathEdit.setText(path)
+
     def pathSet(self):
         filename = QFileDialog.getExistingDirectory(self,"Choose a directory")
         if filename:
@@ -582,7 +586,7 @@ class InventoryTable(QTableWidget):
         self.setFixedSize(width, height)
 
 
-class InventoryBox(QGroupBox):
+class InventoryBox(QWidget):
     consonantColumns = ['Labial','Labiodental','Dental','Alveolar','Alveopalatal','Retroflex',
                     'Palatal','Velar','Uvular','Pharyngeal','Epiglottal','Glottal']
 
@@ -594,7 +598,7 @@ class InventoryBox(QGroupBox):
     vowelRows = ['Close','Near close','Close mid','Mid','Open mid','Near open','Open']
 
     def __init__(self, title,inventory,parent=None):
-        QGroupBox.__init__(self,title,parent)
+        QWidget.__init__(self,parent)
 
         self.inventory = inventory
         #find cats
@@ -616,6 +620,7 @@ class InventoryBox(QGroupBox):
         self.btnGroup.setExclusive(False)
         if len(consColumns) and len(vowColumns):
             box = QVBoxLayout()
+            box.setSpacing(0)
             smallbox = QVBoxLayout()
             cons = QGroupBox('Consonants')
             consBox = QVBoxLayout()
@@ -807,9 +812,9 @@ class InventoryBox(QGroupBox):
                     value.append(b.text())
             return value
 
-class FeatureBox(QGroupBox):
+class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
-        QGroupBox.__init__(self,title,parent)
+        QWidget.__init__(self,parent)
 
         self.inventory = inventory
         self.inspectInventory()
@@ -956,13 +961,21 @@ class SegmentPairSelectWidget(QGroupBox):
         self.removeButton.setDefault(False)
 
         self.table = TableWidget()
+        self.table.setSortingEnabled(False)
+        try:
+            self.table.horizontalHeader().setClickable(False)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionsClickable(False)
         self.table.setModel(SegmentPairModel())
-        self.table.resizeColumnsToContents()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)
         vbox.addWidget(self.table)
         self.setLayout(vbox)
+
+        self.setFixedWidth(self.minimumSizeHint().width())
 
     def segPairPopup(self):
         dialog = SegmentPairDialog(self.inventory)
@@ -993,35 +1006,57 @@ class EnvironmentDialog(QDialog):
         self.features = inventory[-1].features.keys()
 
         layout = QVBoxLayout()
+
+        self.lhsEnvFrame = QGroupBox('Left hand side')
+
+        self.rhsEnvFrame = QGroupBox('Right hand side')
+
+        self.lhsEnvLayout = QVBoxLayout()
+
+        self.rhsEnvLayout = QVBoxLayout()
+
         if parent.name == 'environment':
-            self.envType = QComboBox()
-            self.envType.addItem('Segments')
+            self.lhsEnvType = QComboBox()
+            self.rhsEnvType = QComboBox()
+            self.lhsEnvType.addItem('Segments')
+            self.rhsEnvType.addItem('Segments')
             if len(self.features) > 0:
-                self.envType.addItem('Features')
+                self.lhsEnvType.addItem('Features')
+                self.rhsEnvType.addItem('Features')
             else:
                 layout.addWidget(QLabel('Features for {} selection are not available without a feature system.'.format(parent.name)))
 
-            self.envType.currentIndexChanged.connect(self.generateFrames)
+            self.lhsEnvType.currentIndexChanged.connect(self.generateLhsFrame)
+            self.rhsEnvType.currentIndexChanged.connect(self.generateRhsFrame)
 
-            layout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
-            layout.addWidget(self.envType, alignment = Qt.AlignLeft)
+            self.lhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
+            self.lhsEnvLayout.addWidget(self.lhsEnvType, alignment = Qt.AlignLeft)
 
-        self.lhs = InventoryBox('Left hand side',self.inventory)
+            self.rhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
+            self.rhsEnvLayout.addWidget(self.rhsEnvType, alignment = Qt.AlignLeft)
+
+        self.lhs = InventoryBox('',self.inventory)
         self.lhs.setExclusive(True)
 
-        self.rhs = InventoryBox('Right hand side',self.inventory)
+        self.rhs = InventoryBox('',self.inventory)
         self.rhs.setExclusive(True)
 
-        self.envFrame = QFrame()
+        self.lhsEnvLayout.addWidget(self.lhs)
+        self.rhsEnvLayout.addWidget(self.rhs)
 
-        self.envLayout = QHBoxLayout()
+        self.lhsEnvFrame.setLayout(self.lhsEnvLayout)
 
-        self.envLayout.addWidget(self.lhs)
-        self.envLayout.addWidget(self.rhs)
+        self.rhsEnvFrame.setLayout(self.rhsEnvLayout)
+        envFrame = QFrame()
 
-        self.envFrame.setLayout(self.envLayout)
+        envLayout = QHBoxLayout()
 
-        layout.addWidget(self.envFrame)
+        envLayout.addWidget(self.lhsEnvFrame)
+        envLayout.addWidget(self.rhsEnvFrame)
+
+        envFrame.setLayout(envLayout)
+
+        layout.addWidget(envFrame)
 
         self.oneButton = QPushButton('Add')
         self.anotherButton = QPushButton('Add and create another')
@@ -1043,33 +1078,23 @@ class EnvironmentDialog(QDialog):
         #self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Create {}'.format(parent.name))
 
-
-    def createFeatureFrame(self):
+    def generateLhsFrame(self,ind=0):
         self.lhs.deleteLater()
+        if self.lhsEnvType.currentText() == 'Segments':
+            self.lhs = InventoryBox('',self.inventory)
+            self.lhs.setExclusive(True)
+        elif self.lhsEnvType.currentText() == 'Features':
+            self.lhs = FeatureBox('',self.inventory)
+        self.lhsEnvLayout.addWidget(self.lhs)
+
+    def generateRhsFrame(self,ind=0):
         self.rhs.deleteLater()
-
-        self.lhs = FeatureBox('Left hand side',self.inventory)
-        self.envLayout.addWidget(self.lhs)
-
-        self.rhs = FeatureBox('Right hand side',self.inventory)
-        self.envLayout.addWidget(self.rhs)
-
-    def createSegmentFrame(self):
-        self.lhs.deleteLater()
-        self.rhs.deleteLater()
-        self.lhs = InventoryBox('Left hand side',self.inventory)
-        self.lhs.setExclusive(True)
-        self.envLayout.addWidget(self.lhs)
-
-        self.rhs = InventoryBox('Right hand side',self.inventory)
-        self.lhs.setExclusive(True)
-        self.envLayout.addWidget(self.rhs)
-
-    def generateFrames(self,ind=0):
-        if self.envType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.envType.currentText() == 'Features':
-            self.createFeatureFrame()
+        if self.rhsEnvType.currentText() == 'Segments':
+            self.rhs = InventoryBox('',self.inventory)
+            self.rhs.setExclusive(True)
+        elif self.rhsEnvType.currentText() == 'Features':
+            self.rhs = FeatureBox('',self.inventory)
+        self.rhsEnvLayout.addWidget(self.rhs)
 
     def one(self):
         self.addOneMore = False
@@ -1124,8 +1149,14 @@ class EnvironmentSelectWidget(QGroupBox):
         self.removeButton.setDefault(False)
 
         self.table = TableWidget()
+        self.table.setSortingEnabled(False)
+        try:
+            self.table.horizontalHeader().setClickable(False)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionsClickable(False)
         self.table.setModel(EnvironmentModel())
-        self.table.resizeColumnsToContents()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        #self.table.resizeColumnsToContents()
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)
@@ -1161,7 +1192,7 @@ class RadioSelectWidget(QGroupBox):
         QGroupBox.__init__(self,title,parent)
 
         self.options = options
-        vbox = QVBoxLayout()
+        vbox = QFormLayout()
         self.widgets = []
         for key in options.keys():
             w = QRadioButton(key)
@@ -1170,7 +1201,7 @@ class RadioSelectWidget(QGroupBox):
             if enabled is not None:
                 w.setEnabled(enabled[key])
             self.widgets.append(w)
-            vbox.addWidget(w)
+            vbox.addRow(w)
         self.widgets[0].setChecked(True)
         self.setLayout(vbox)
 
