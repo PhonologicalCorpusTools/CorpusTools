@@ -174,6 +174,8 @@ class PDDialog(FunctionDialog):
                                     ' of distribution. For each environment, you can specify'
                                     ' either the left-hand side or the right-hand side, or'
                                     ' both. Each of these can be specified using either features or segments.'
+                                    ' Not specifying any environments will calculate the predictability of'
+                                    ' distribution across all environments based on frequency alone.'
             "</FONT>"))
 
     def generateKwargs(self):
