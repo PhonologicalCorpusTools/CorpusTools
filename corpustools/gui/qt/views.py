@@ -632,7 +632,8 @@ class ResultsWindow(QWidget):
     def save(self):
         filename = QFileDialog.getSaveFileName(self,'Choose save file',
                         filter = 'Text files (*.txt *.csv)')
-        if filename:
+
+        if filename and filename[0]:
 
             with open(filename[0], mode='w', encoding='utf-8') as f:
                 writer = csv.writer(f, delimiter='\t')

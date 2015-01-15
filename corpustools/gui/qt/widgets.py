@@ -1089,11 +1089,10 @@ class EnvironmentDialog(QDialog):
 
     def generateRhsFrame(self,ind=0):
         self.rhs.deleteLater()
-        if self.envType.currentText() == 'Segments':
+        if self.rhsEnvType.currentText() == 'Segments':
             self.rhs = InventoryBox('',self.inventory)
             self.rhs.setExclusive(True)
         elif self.rhsEnvType.currentText() == 'Features':
-
             self.rhs = FeatureBox('',self.inventory)
         self.rhsEnvLayout.addWidget(self.rhs)
 
