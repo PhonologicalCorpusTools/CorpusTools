@@ -74,7 +74,7 @@ class DisplayPane(BasePane):
 
         self.sigfigWidget = QLineEdit()
 
-        layout.addRow(QLabel('Number of significant figures:'),self.sigfigWidget)
+        layout.addRow(QLabel('Number of displayed decimal places:'),self.sigfigWidget)
 
         self.setLayout(layout)
 
