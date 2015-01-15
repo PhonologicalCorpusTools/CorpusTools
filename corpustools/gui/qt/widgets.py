@@ -557,6 +557,8 @@ class DirectoryWidget(QFrame):
 class InventoryTable(QTableWidget):
     def __init__(self):
         QTableWidget.__init__(self)
+        self.horizontalHeader().setMinimumSectionSize(70)
+
         try:
             self.horizontalHeader().setSectionsClickable(False)
             self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -574,7 +576,7 @@ class InventoryTable(QTableWidget):
 
     def resize(self):
         self.resizeRowsToContents()
-        self.resizeColumnsToContents()
+        #self.resizeColumnsToContents()
         hor = self.horizontalHeader()
         ver = self.verticalHeader()
         width = ver.sizeHint().width()
@@ -584,6 +586,15 @@ class InventoryTable(QTableWidget):
         for i in range(ver.count()):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
+
+class SegmentButton(QPushButton):
+    def sizeHint(self):
+        sh = QPushButton.sizeHint(self)
+
+        #sh.setHeight(self.fontMetrics().boundingRect(self.text()).height()+14)
+        sh.setHeight(35)
+        sh.setWidth(self.fontMetrics().boundingRect(self.text()).width()+14)
+        return sh
 
 
 class InventoryBox(QWidget):
@@ -636,28 +647,36 @@ class InventoryBox(QWidget):
             consTable.setColumnCount(len(consColumns))
             consTable.setRowCount(len(consRows))
             consTable.setHorizontalHeaderLabels(consColumns)
+            consTable.resizeColumnsToContents()
             consTable.setVerticalHeaderLabels(consRows)
 
             for i in range(len(consColumns)):
                 for j in range(len(consRows)):
                     wid = QWidget()
+                    wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+                    
                     b = QGridLayout()
                     b.setAlignment(Qt.AlignCenter)
                     b.setContentsMargins(0, 0, 0, 0)
+                    b.setSpacing(0)
                     l = QWidget()
+                    l.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
                     lb = QVBoxLayout()
                     lb.setAlignment(Qt.AlignCenter)
                     lb.setContentsMargins(0, 0, 0, 0)
                     lb.setSpacing(0)
                     l.setLayout(lb)
-                    b.addWidget(l,0,0, alignment = Qt.AlignCenter)
+                    #l.hide()
+                    b.addWidget(l,0,0)#, alignment = Qt.AlignCenter)
                     r = QWidget()
+                    r.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
                     rb = QVBoxLayout()
                     rb.setAlignment(Qt.AlignCenter)
                     rb.setContentsMargins(0, 0, 0, 0)
                     rb.setSpacing(0)
                     r.setLayout(rb)
-                    b.addWidget(r,0,1, alignment = Qt.AlignCenter)
+                    #r.hide()
+                    b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
                     wid.setLayout(b)
                     consTable.setCellWidget(j,i,wid)
 
@@ -675,37 +694,46 @@ class InventoryBox(QWidget):
             vowTable.setColumnCount(len(vowColumns))
             vowTable.setRowCount(len(vowRows) + 1)
             vowTable.setHorizontalHeaderLabels(vowColumns)
+            vowTable.resizeColumnsToContents()
             vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
 
             for i in range(len(vowColumns)):
                 for j in range(len(vowRows)):
                     wid = QWidget()
+                    wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
                     b = QGridLayout()
                     b.setAlignment(Qt.AlignCenter)
                     b.setContentsMargins(0, 0, 0, 0)
+                    b.setSpacing(0)
                     l = QWidget()
+                    l.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
                     lb = QVBoxLayout()
                     lb.setAlignment(Qt.AlignCenter)
                     lb.setContentsMargins(0, 0, 0, 0)
                     lb.setSpacing(0)
                     l.setLayout(lb)
-                    b.addWidget(l,0,0, alignment = Qt.AlignCenter)
+                    #l.hide()
+                    b.addWidget(l,0,0)#, alignment = Qt.AlignCenter)
                     r = QWidget()
+                    r.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
                     rb = QVBoxLayout()
                     rb.setAlignment(Qt.AlignCenter)
                     rb.setContentsMargins(0, 0, 0, 0)
                     rb.setSpacing(0)
                     r.setLayout(rb)
-                    b.addWidget(r,0,1, alignment = Qt.AlignCenter)
+                    #r.hide()
+                    b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
 
                     wid.setLayout(b)
                     vowTable.setCellWidget(j,i,wid)
 
             vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
             wid = QWidget()
+            wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
             diphBox = QHBoxLayout()
             diphBox.setAlignment(Qt.AlignCenter)
             diphBox.setContentsMargins(0, 0, 0, 0)
+            diphBox.setSpacing(0)
             wid.setLayout(diphBox)
             vowTable.setCellWidget(len(vowRows),0,wid)
 
@@ -717,14 +745,14 @@ class InventoryBox(QWidget):
             unkCol = -1
             for s in inventory:
                 cat = s.category
-                btn = QPushButton(s.symbol)
+                btn = SegmentButton(s.symbol)
                 btn.setCheckable(True)
                 btn.setAutoExclusive(False)
-                btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
-                btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
-                btn.setMaximumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
-                btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
-                btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
+                btn.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+                #btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+                #btn.setMaximumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
+                #btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() +7)
+                #btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
                 self.btnGroup.addButton(btn)
                 if cat is None:
                     unkCol += 1
@@ -740,9 +768,14 @@ class InventoryBox(QWidget):
                         colTwo = 0
                     else:
                         colTwo = 1
-                    cell = vowTable.cellWidget(row,col)
+                    cell = vowTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
 
-                    cell.layout().addWidget(btn,0,colTwo)
+                    cell.show()
+                    cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
+                    cell.setMinimumHeight(cell.sizeHint().height())
+                    #vowTable.cellWidget(row,col).setMinimumSize(cell.sizeHint())
+  
+                    
                 elif cat[0] == 'Consonant':
                     col = consColMapping[cat[1]]
                     row = consRowMapping[cat[2]]
@@ -752,8 +785,10 @@ class InventoryBox(QWidget):
                         colTwo = 1
                     cell = consTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
 
-                    cell.layout().addWidget(btn, alignment = Qt.AlignCenter)
-                    cell.setFixedSize(cell.sizeHint())
+                    cell.show()
+                    cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
+                    #cell.setMinimumHeight(cell.sizeHint().height())
+                    
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
             consTable.resize()
