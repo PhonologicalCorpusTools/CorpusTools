@@ -592,7 +592,7 @@ class SegmentButton(QPushButton):
         sh = QPushButton.sizeHint(self)
 
         #sh.setHeight(self.fontMetrics().boundingRect(self.text()).height()+14)
-        sh.setHeight(30)
+        sh.setHeight(35)
         sh.setWidth(self.fontMetrics().boundingRect(self.text()).width()+14)
         return sh
 
@@ -638,6 +638,7 @@ class InventoryBox(QWidget):
             smallbox.setSizeConstraint(QLayout.SetFixedSize)
             smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
             cons = QGroupBox('Consonants')
+            cons.setFlat(True)
             cons.setCheckable(True)
             cons.setChecked(False)
             cons.toggled.connect(self.showHideCons)
@@ -689,6 +690,7 @@ class InventoryBox(QWidget):
                     self.consTable.setCellWidget(j,i,wid)
 
             vow = QGroupBox('Vowels')
+            vow.setFlat(True)
             vow.setCheckable(True)
             vow.setChecked(False)
             vow.toggled.connect(self.showHideVow)
@@ -750,6 +752,10 @@ class InventoryBox(QWidget):
             self.vowTable.setCellWidget(len(vowRows),0,diphWid)
 
             unk = QGroupBox('Other')
+            unk.setFlat(True)
+            #unk.setCheckable(True)
+            #unk.setChecked(False)
+            #unk.toggled.connect(self.showHideUnk)
             unkBox = QGridLayout()
             unk.setLayout(unkBox)
 
@@ -806,9 +812,9 @@ class InventoryBox(QWidget):
                     
             self.consTable.resize()
             self.vowTable.resize()
-            smallbox.addWidget(cons)
+            smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
 
-            smallbox.addWidget(vow)
+            smallbox.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
             b = QFrame()
             b.setLayout(smallbox)
             box.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
@@ -819,7 +825,7 @@ class InventoryBox(QWidget):
             row = 0
             col = 0
             for s in inventory:
-                btn = QPushButton(s.symbol)
+                btn = SegmentButton(s.symbol)
                 btn.setCheckable(True)
                 btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
                 btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
@@ -924,10 +930,13 @@ class FeatureBox(QWidget):
         self.inspectInventory()
         layout = QHBoxLayout()
 
+        layout.setSizeConstraint(QLayout.SetFixedSize)
+
         self.featureList = QListWidget()
 
         for f in self.features:
             self.featureList.addItem(f)
+        self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+10)
         layout.addWidget(self.featureList)
 
         buttonLayout = QVBoxLayout()
@@ -953,6 +962,7 @@ class FeatureBox(QWidget):
         layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
 
         self.envList = QListWidget()
+        self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
         self.envList.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         layout.addWidget(self.envList)
@@ -992,6 +1002,8 @@ class SegmentPairDialog(QDialog):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
+
+        layout.setSizeConstraint(QLayout.SetFixedSize)
 
         segFrame = QFrame()
 

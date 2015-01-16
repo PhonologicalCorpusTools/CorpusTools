@@ -780,7 +780,7 @@ class CorpusSummary(QDialog):
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
-        #layout.setSizeConstraint(QLayout.SetFixedSize)
+        layout.setSizeConstraint(QLayout.SetFixedSize)
 
         main = QFormLayout()
 
@@ -825,6 +825,7 @@ class CorpusSummary(QDialog):
         self.setWindowTitle('Corpus summary')
 
     def hideWidgets(self,index):
+        return
         if index == 0:
             self.inventorySummary.hide()
             self.attributeSummary.hide()
