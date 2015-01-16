@@ -654,7 +654,7 @@ class InventoryBox(QWidget):
                 for j in range(len(consRows)):
                     wid = QWidget()
                     wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    
+
                     b = QGridLayout()
                     b.setAlignment(Qt.AlignCenter)
                     b.setContentsMargins(0, 0, 0, 0)
@@ -774,8 +774,8 @@ class InventoryBox(QWidget):
                     cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
                     cell.setMinimumHeight(cell.sizeHint().height())
                     #vowTable.cellWidget(row,col).setMinimumSize(cell.sizeHint())
-  
-                    
+
+
                 elif cat[0] == 'Consonant':
                     col = consColMapping[cat[1]]
                     row = consRowMapping[cat[2]]
@@ -788,7 +788,7 @@ class InventoryBox(QWidget):
                     cell.show()
                     cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
                     #cell.setMinimumHeight(cell.sizeHint().height())
-                    
+
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
             consTable.resize()
@@ -846,6 +846,47 @@ class InventoryBox(QWidget):
                 if b.isChecked():
                     value.append(b.text())
             return value
+
+class TranscriptionWidget(QGroupBox):
+    def __init__(self, title,inventory,parent=None):
+        QGroupBox.__init__(self,title,parent)
+        self.inventory = inventory
+
+        layout = QFormLayout()
+
+        self.transEdit = QLineEdit()
+        self.showInv = QPushButton('Show inventory')
+        self.showInv.clicked.connect(self.showHide)
+        layout.addRow(self.transEdit,self.showInv)
+
+        self.segments = InventoryBox('Inventory',self.inventory)
+        for btn in self.segments.btnGroup.buttons():
+            btn.setCheckable(False)
+            btn.clicked.connect(self.addCharacter)
+        self.segments.hide()
+        layout.addRow(self.segments)
+
+        self.setLayout(layout)
+
+    def text(self):
+        return self.transEdit.text()
+
+    def addCharacter(self):
+        t = self.transEdit.text()
+        if t != '':
+            t += '.'
+        self.transEdit.setText(t+self.sender().text())
+
+    def showHide(self):
+        if self.segments.isHidden():
+            self.segments.show()
+            self.showInv.setText('Hide inventory')
+        else:
+            self.segments.hide()
+            self.showInv.setText('Show inventory')
+        self.updateGeometry()
+
+
 
 class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):

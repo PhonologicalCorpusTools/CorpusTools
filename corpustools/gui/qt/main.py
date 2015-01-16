@@ -10,7 +10,7 @@ from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,Disc
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
                         RemoveAttributeDialog,SubsetCorpusDialog,
-                        ExportCorpusDialog, save_binary)
+                        ExportCorpusDialog, AddWordDialog, save_binary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
                         ExportFeatureSystemDialog)
@@ -421,7 +421,9 @@ class MainWindow(QMainWindow):
                 self.PhonoSearchWindow.show()
 
     def createWord(self):
-        pass
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.addWord(dialog.word)
 
     def toggleWarnings(self):
         self.showWarnings = not self.showWarnings

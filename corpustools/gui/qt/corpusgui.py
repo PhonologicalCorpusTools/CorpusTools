@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from corpustools.config import config
 
-from corpustools.corpus.classes import Attribute
+from corpustools.corpus.classes import Attribute, Word
 
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
                                     load_spelling_corpus, load_transcription_corpus,
@@ -19,7 +19,8 @@ from .windows import FunctionWorker, DownloadWorker
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
-                    DigraphWidget, InventoryBox, AttributeFilterWidget)
+                    DigraphWidget, InventoryBox, AttributeFilterWidget,
+                    TranscriptionWidget)
 
 from corpustools.gui.qt.featuregui import FeatureSystemSelect
 
@@ -658,6 +659,92 @@ class CorpusFromTranscriptionTextDialog(QDialog):
 
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+
+class AddWordDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+        layout.setSizeConstraint(QLayout.SetFixedSize)
+
+        main = QFormLayout()
+
+        self.edits = {}
+
+        for a in self.corpus.attributes:
+            if a.att_type == 'tier':
+                self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus.inventory)
+                main.addRow(self.edits[a.name])
+            elif a.att_type == 'spelling':
+                self.edits[a.name] = QLineEdit()
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'numeric':
+                self.edits[a.name] = QLineEdit()
+                self.edits[a.name].setText('0')
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'factor':
+                self.edits[a.name] = QLineEdit()
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.createButton = QPushButton('Create word')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create word')
+
+    def accept(self):
+
+        kwargs = {}
+
+        for a in self.corpus.attributes:
+            if a.att_type == 'tier':
+                kwargs[a.name] = [x for x in self.edits[a.name].text().split('.') if x != '']
+                #if not kwargs[a.name]:
+                #    reply = QMessageBox.critical(self,
+                #            "Missing information", "Words must have a Transcription.".format(str(a)))
+                #    return
+
+                for i in kwargs[a.name]:
+                    if i not in self.corpus.inventory:
+                        reply = QMessageBox.critical(self,
+                            "Invalid information", "The column '{}' must contain only symbols in the corpus' inventory.".format(str(a)))
+                        return
+            elif a.att_type == 'spelling':
+                kwargs[a.name] = self.edits[a.name].text()
+                if not kwargs[a.name] and a.name == 'spelling':
+                    reply = QMessageBox.critical(self,
+                            "Missing information", "Words must have a spelling.".format(str(a)))
+                    return
+            elif a.att_type == 'numeric':
+                try:
+                    kwargs[a.name] = float(self.edits[a.name].text())
+                except ValueError:
+                    reply = QMessageBox.critical(self,
+                            "Invalid information", "The column '{}' must be a number.".format(str(a)))
+                    return
+
+            elif a.att_type == 'factor':
+                kwargs[a.name] = self.edits[a.name].text()
+        self.word = Word(**kwargs)
+        QDialog.accept(self)
+
 
 class AddAbstractTierDialog(QDialog):
     def __init__(self, parent, corpus):

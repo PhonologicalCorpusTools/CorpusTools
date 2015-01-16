@@ -262,6 +262,12 @@ class CorpusModel(QAbstractTableModel):
             return self.columns[col].display_name
         return None
 
+    def addWord(self, word):
+        self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
+        self.corpus.add_word(word)
+        self.rows = self.corpus.words
+        self.endInsertRows()
+
     def addTier(self,attribute, segList):
         if attribute not in self.columns:
             end = True
