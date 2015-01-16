@@ -660,6 +660,181 @@ class CorpusFromTranscriptionTextDialog(QDialog):
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
 
+class InventorySummary(QWidget):
+    def __init__(self, corpus, parent=None):
+        QWidget.__init__(self,parent)
+
+        self.corpus = corpus
+
+        layout = QHBoxLayout()
+
+        layout.setAlignment(Qt.AlignTop)
+
+        self.segments = InventoryBox('Segments',self.corpus.inventory)
+        self.segments.setExclusive(True)
+        for b in self.segments.btnGroup.buttons():
+            b.clicked.connect(self.summarizeSegment)
+
+        layout.addWidget(self.segments)
+
+        self.detailFrame = QFrame()
+
+        layout.addWidget(self.detailFrame)
+
+        self.setLayout(layout)
+
+    def summarizeSegment(self):
+        self.detailFrame.deleteLater()
+        seg = self.sender().text()
+
+        self.detailFrame = QGroupBox('Segment details')
+
+        layout = QFormLayout()
+        layout.setAlignment(Qt.AlignTop)
+
+        freq_base = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
+                        probability = False)
+
+        probs = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
+                        probability = True)
+
+        layout.addRow(QLabel('Type frequency:'),
+                            QLabel('{:,.1f} ({:.2%})'.format(
+                                                freq_base[seg], probs[seg]
+                                                )
+                            ))
+
+        freq_base = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
+                        probability = False)
+
+        probs = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
+                        probability = True)
+
+        layout.addRow(QLabel('Token frequency:'),
+                            QLabel('{:,.1f} ({:.2%})'.format(
+                                                    freq_base[seg], probs[seg]
+                                                    )
+                            ))
+
+        self.detailFrame.setLayout(layout)
+
+        self.layout().addWidget(self.detailFrame, alignment = Qt.AlignTop)
+
+
+class AttributeSummary(QWidget):
+    def __init__(self, corpus, parent=None):
+        QWidget.__init__(self,parent)
+
+        self.corpus = corpus
+
+        layout = QFormLayout()
+
+        self.columnSelect = QComboBox()
+        for a in self.corpus.attributes:
+            self.columnSelect.addItem(str(a))
+        self.columnSelect.currentIndexChanged.connect(self.summarizeColumn)
+
+        layout.addRow(QLabel('Column'),self.columnSelect)
+
+        self.detailFrame = QFrame()
+
+        layout.addRow(self.detailFrame)
+
+        self.setLayout(layout)
+
+        self.summarizeColumn()
+
+    def summarizeColumn(self):
+        for a in self.corpus.attributes:
+            if str(a) == self.columnSelect.currentText():
+                self.detailFrame.deleteLater()
+                self.detailFrame = QFrame()
+                layout = QFormLayout()
+                layout.addRow(QLabel('Type:'), QLabel(a.att_type.title()))
+                if a.att_type == 'numeric':
+                    l = QLabel('{0[0]:,}-{0[1]:,}'.format(a.range))
+                    layout.addRow(QLabel('Range:'), l)
+
+                elif a.att_type == 'factor':
+                    if len(a.range) > 300:
+                        l = QLabel('Too many levels to display')
+                    else:
+                        l = QLabel(', '.join(sorted(a.range)))
+                    l.setWordWrap(True)
+                    layout.addRow(QLabel('Factor levels:'), l)
+
+                elif a.att_type == 'tier':
+                    if a.name == 'transcription':
+                        layout.addRow(QLabel('Included segments:'), QLabel('All'))
+                    else:
+                        l = QLabel(', '.join(a.range))
+                        l.setWordWrap(True)
+                        layout.addRow(QLabel('Included segments:'), l)
+                self.detailFrame.setLayout(layout)
+                self.layout().addRow(self.detailFrame)
+
+
+class CorpusSummary(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        #layout.setSizeConstraint(QLayout.SetFixedSize)
+
+        main = QFormLayout()
+
+        main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
+
+        if corpus.specifier is None:
+            main.addRow(QLabel('Feature system:'),QLabel(corpus.specifier.name))
+        else:
+            main.addRow(QLabel('Feature system:'),QLabel('None'))
+
+        main.addRow(QLabel('Number of words:'),QLabel(str(len(corpus))))
+
+        detailTabs = QTabWidget()
+
+        self.inventorySummary = InventorySummary(corpus)
+
+        detailTabs.addTab(self.inventorySummary,'Inventory')
+
+        self.attributeSummary = AttributeSummary(corpus)
+
+        detailTabs.addTab(self.attributeSummary,'Columns')
+        detailTabs.currentChanged.connect(self.hideWidgets)
+
+        main.addRow(detailTabs)
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame, alignment = Qt.AlignCenter)
+
+        self.doneButton = QPushButton('Done')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.doneButton)
+        self.doneButton.clicked.connect(self.accept)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Corpus summary')
+
+    def hideWidgets(self,index):
+        if index == 0:
+            self.inventorySummary.hide()
+            self.attributeSummary.hide()
+        elif index == 1:
+            self.inventorySummary.hide()
+            self.attributeSummary.show()
+        self.adjustSize()
+
+
+
 class AddWordDialog(QDialog):
     def __init__(self, parent, corpus, word = None):
         QDialog.__init__(self,parent)

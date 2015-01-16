@@ -10,7 +10,7 @@ from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,Disc
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
                         RemoveAttributeDialog,SubsetCorpusDialog,
-                        ExportCorpusDialog, AddWordDialog, save_binary)
+                        ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
                         ExportFeatureSystemDialog)
@@ -455,7 +455,8 @@ class MainWindow(QMainWindow):
         pass
 
     def corpusSummary(self):
-        pass
+        dialog = CorpusSummary(self,self.corpus)
+        result = dialog.exec_()
 
     def createActions(self):
 

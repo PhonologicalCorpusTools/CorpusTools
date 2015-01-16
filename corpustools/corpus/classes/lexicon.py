@@ -947,9 +947,9 @@ class Attribute(object):
                 self._range[1] = value
         elif self.att_type == 'factor':
             self._range.add(value)
-            if len(self._range) > 100:
-                self.att_type = 'spelling'
-                self._range = None
+            #if len(self._range) > 1000:
+            #    self.att_type = 'spelling'
+            #    self._range = None
 
 class Corpus(object):
     """
@@ -1015,8 +1015,8 @@ class Corpus(object):
                     freq = word.frequency
                 else:
                     freq = 1
-                # seq = ['#'] + [x for x in getattr(word, sequence_type)] +['#']
-                seq = getattr(word, sequence_type)
+                seq = ['#'] + [x for x in getattr(word, sequence_type)] +['#']
+                #seq = getattr(word, sequence_type)
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:
                     if len(x) == 1:
@@ -1148,6 +1148,7 @@ class Corpus(object):
             tier_segs = self.features_to_segments(spec)
         else:
             tier_segs = spec
+        attribute._range = tier_segs
         for word in self:
             word.add_tier(attribute.name,tier_segs)
 

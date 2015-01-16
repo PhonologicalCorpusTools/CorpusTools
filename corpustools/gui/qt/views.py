@@ -93,6 +93,10 @@ class LexiconView(QWidget):
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.showMenu)
 
+        header = self.table.horizontalHeader()
+        header.setContextMenuPolicy(Qt.CustomContextMenu)
+        header.customContextMenuRequested.connect( self.showHeaderMenu )
+
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding))
 
@@ -146,6 +150,34 @@ class LexiconView(QWidget):
         except AttributeError:
             self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
 
+    def showHeaderMenu(self, pos):
+        header = self.table.horizontalHeader()
+        column = header.logicalIndexAt(pos.x())
+
+        if column < 3:
+            return
+
+        editAction = QAction(self)
+        editAction.setText('Edit column details')
+        editAction.triggered.connect(lambda: self.editColumn(self.table.indexAt(pos)))
+
+        removeAction = QAction(self)
+        removeAction.setText('Remove column')
+        removeAction.triggered.connect(lambda: self.removeColumn(self.table.indexAt(pos)))
+
+        menu = QMenu(self)
+        menu.addAction(editAction)
+        menu.addAction(removeAction)
+
+        menu.popup(header.mapToGlobal(pos))
+
+    def editColumn(self, index):
+        print(index.column())
+        pass
+
+    def removeColumn(self, index):
+        print(index)
+        pass
 
     def showMenu(self, pos):
         menu = QMenu()
