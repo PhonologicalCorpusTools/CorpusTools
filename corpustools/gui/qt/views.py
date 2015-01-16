@@ -62,9 +62,11 @@ class TableWidget(QTableView):
 
 class LexiconView(QWidget):
     selectTokens = Signal(object)
+    wordsChanged = Signal()
+    wordToBeEdited = Signal(object, object)
     def __init__(self,parent=None):
         super(LexiconView, self).__init__(parent=parent)
-
+        self._parent = parent
         self.setStyleSheet( """ TableWidget::item:selected:active {
                                      background: lightblue;
                                 }
@@ -150,7 +152,12 @@ class LexiconView(QWidget):
 
         neighbourAction = QAction(self)
         neighbourAction.setText('List neighbours')
-        menu.addAction(neighbourAction)
+        #menu.addAction(neighbourAction)
+
+        editWordAction = QAction(self)
+        editWordAction.setText('Edit word details')
+        editWordAction.triggered.connect(lambda: self.editWord(self.table.indexAt(pos)))
+        menu.addAction(editWordAction)
 
         hideAction = QAction(self)
         nonlexhidden = self.table.model().nonLexHidden
@@ -171,14 +178,29 @@ class LexiconView(QWidget):
         findTokensAction.triggered.connect(lambda: self.findTokens(self.table.indexAt(pos)))
         menu.addAction(findTokensAction)
 
+        menu.addSeparator()
+
         removeWordAction = QAction(self)
         removeWordAction.setText('Remove word')
         removeWordAction.triggered.connect(lambda: self.removeWord(self.table.indexAt(pos)))
         menu.addAction(removeWordAction)
         action = menu.exec_(self.table.viewport().mapToGlobal(pos))
 
+    def editWord(self, index):
+        word = self.table.model().wordObject(index.row())
+        self.wordToBeEdited.emit(index.row(), word)
+
     def removeWord(self,index):
-        pass
+        word_key = self.table.model().rows[index.row()]
+
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove word",
+                "Are you sure you want to remove '{}'?".format(str(self.table.model().corpus[word_key])), QMessageBox.NoButton, self)
+        msgBox.addButton("Continue", QMessageBox.AcceptRole)
+        msgBox.addButton("Abort", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
+            return
+        self.table.model().removeWord(word_key)
+        self.wordsChanged.emit()
 
     def hideNonLexical(self,b):
         self.table.model().hideNonLexical(b)

@@ -661,7 +661,7 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
 
 class AddWordDialog(QDialog):
-    def __init__(self, parent, corpus):
+    def __init__(self, parent, corpus, word = None):
         QDialog.__init__(self,parent)
         self.corpus = corpus
 
@@ -675,6 +675,7 @@ class AddWordDialog(QDialog):
         for a in self.corpus.attributes:
             if a.att_type == 'tier':
                 self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus.inventory)
+
                 main.addRow(self.edits[a.name])
             elif a.att_type == 'spelling':
                 self.edits[a.name] = QLineEdit()
@@ -686,13 +687,19 @@ class AddWordDialog(QDialog):
             elif a.att_type == 'factor':
                 self.edits[a.name] = QLineEdit()
                 main.addRow(QLabel(str(a)),self.edits[a.name])
+            if word is not None:
+                self.edits[a.name].setText(str(getattr(word,a.name)))
 
         mainFrame = QFrame()
         mainFrame.setLayout(main)
 
         layout.addWidget(mainFrame)
-
-        self.createButton = QPushButton('Create word')
+        if word is None:
+            self.createButton = QPushButton('Create word')
+            self.setWindowTitle('Create word')
+        else:
+            self.createButton = QPushButton('Save word changes')
+            self.setWindowTitle('Edit word')
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.createButton)
@@ -706,8 +713,6 @@ class AddWordDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
-
-        self.setWindowTitle('Create word')
 
     def accept(self):
 

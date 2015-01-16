@@ -871,6 +871,9 @@ class TranscriptionWidget(QGroupBox):
     def text(self):
         return self.transEdit.text()
 
+    def setText(self, text):
+        self.transEdit.setText(text)
+
     def addCharacter(self):
         t = self.transEdit.text()
         if t != '':

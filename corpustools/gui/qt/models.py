@@ -268,6 +268,16 @@ class CorpusModel(QAbstractTableModel):
         self.rows = self.corpus.words
         self.endInsertRows()
 
+    def replaceWord(self, row, word):
+        self.corpus[self.rows[row]] = word
+        self.dataChanged.emit(self.index(row,0),self.index(row,self.columnCount()))
+
+    def removeWord(self, word_key):
+        self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
+        self.corpus.remove_word(word_key)
+        self.rows = self.corpus.words
+        self.endInsertRows()
+
     def addTier(self,attribute, segList):
         if attribute not in self.columns:
             end = True

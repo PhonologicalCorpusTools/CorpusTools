@@ -1151,6 +1151,12 @@ class Corpus(object):
         for word in self:
             word.add_tier(attribute.name,tier_segs)
 
+    def remove_word(self, word_key):
+        try:
+            del self.wordlist[word_key]
+        except KeyError:
+            pass
+
     def remove_attribute(self, attribute):
         if isinstance(attribute,str):
             name = attribute

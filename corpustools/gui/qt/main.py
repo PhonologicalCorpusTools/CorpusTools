@@ -31,6 +31,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
+        self.unsavedChanges = False
+
         self.settings = Settings()
 
         self.showWarnings = True
@@ -40,6 +42,8 @@ class MainWindow(QMainWindow):
         self.move(self.settings['pos'])
 
         self.corpusTable = LexiconView(self)
+        self.corpusTable.wordsChanged.connect(self.enableSave)
+        self.corpusTable.wordToBeEdited.connect(self.editWord)
         self.discourseTree = TreeWidget(self)
         self.discourseTree.newLexicon.connect(self.changeLexicon)
         self.discourseTree.hide()
@@ -74,8 +78,6 @@ class MainWindow(QMainWindow):
         self.createActions()
         self.createMenus()
         self.corpusModel = None
-
-        self.unsavedChanges = False
 
         self.FLWindow = None
         self.PDWindow = None
@@ -123,6 +125,16 @@ class MainWindow(QMainWindow):
             else:
                 function(self)
         return do_check
+
+    def enableSave(self):
+        self.unsavedChanges = True
+        self.saveCorpusAct.setEnabled(True)
+
+    def editWord(self, row, word):
+        dialog = AddWordDialog(self, self.corpusModel.corpus, word)
+        if dialog.exec_():
+            self.corpusModel.replaceWord(row, dialog.word)
+            self.enableSave()
 
     def changeText(self):
         name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(),Qt.DisplayRole)
@@ -235,8 +247,7 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
             else:
-                self.unsavedChanges = True
-                self.saveCorpusAct.setEnabled(True)
+                self.enableSave()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -248,8 +259,7 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
             else:
-                self.unsavedChanges = True
-                self.saveCorpusAct.setEnabled(True)
+                self.enableSave()
             self.adjustSize()
 
     @check_for_empty_corpus
@@ -262,8 +272,7 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
             else:
-                self.unsavedChanges = True
-                self.saveCorpusAct.setEnabled(True)
+                self.enableSave()
             self.adjustSize()
 
     @check_for_empty_corpus
@@ -276,8 +285,7 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
             else:
-                self.unsavedChanges = True
-                self.saveCorpusAct.setEnabled(True)
+                self.enableSave()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -291,8 +299,7 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
             else:
-                self.unsavedChanges = True
-                self.saveCorpusAct.setEnabled(True)
+                self.enableSave()
 
     @check_for_empty_corpus
     def stringSim(self):
@@ -385,8 +392,7 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
             else:
-                self.unsavedChanges = True
-                self.saveCorpusAct.setEnabled(True)
+                self.enableSave()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -405,8 +411,7 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
             else:
-                self.unsavedChanges = True
-                self.saveCorpusAct.setEnabled(True)
+                self.enableSave()
 
 
     def phonoSearch(self):
