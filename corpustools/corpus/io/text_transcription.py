@@ -97,7 +97,7 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
                 continue
             line = line.split(delimiter)
             trans_patt = ''.join([re.escape(x) for x in trans_delimiter])
-            trans_patt = '['+patt+']+'
+            trans_patt = '['+trans_patt+']+'
             for word in line:
                 word = word.strip()
                 if trans_delimiter:
