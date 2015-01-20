@@ -10,7 +10,7 @@ from corpustools.corpus.classes import Attribute
 
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
-
+from .corpusgui import AddWordDialog
 
 class NDWorker(FunctionWorker):
     def run(self):
@@ -113,10 +113,17 @@ class NDDialog(FunctionDialog):
 
         vbox = QFormLayout()
         self.compType = None
-        self.oneWordRadio = QRadioButton('Calculate for one word')
+        self.oneWordRadio = QRadioButton('Calculate for one word in the corpus')
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
+        self.oneNonwordLabel = QLabel('None created')
+        self.oneNonword = None
+        self.oneNonwordButton = QPushButton('Create word/nonword')
+        self.oneNonwordButton.clicked.connect(self.createNonword)
+
         self.fileRadio = QRadioButton('Calculate for list of words')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
@@ -130,6 +137,8 @@ class NDDialog(FunctionDialog):
 
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
+        vbox.addRow(self.oneNonwordRadio)
+        vbox.addRow(self.oneNonwordLabel,self.oneNonwordButton)
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
         vbox.addRow(self.allwordsRadio)
@@ -194,8 +203,19 @@ class NDDialog(FunctionDialog):
                                 ' in the corpus.'
             "</FONT>"))
 
+    def createNonword(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.oneNonword = dialog.word
+            self.oneNonwordLabel.setText('{} ({})'.format(str(self.oneNonword),
+                                                          str(self.oneNonword.transcription)))
+            self.oneNonwordRadio.click()
+
     def oneWordSelected(self):
         self.compType = 'one'
+
+    def oneNonwordSelected(self):
+        self.compType = 'nonword'
 
     def fileSelected(self):
         self.compType = 'file'
@@ -233,6 +253,16 @@ class NDDialog(FunctionDialog):
                         "Missing information", "Please specify a word.")
                 return
             kwargs['query'] = [text]
+        elif self.compType == 'nonword':
+            if self.oneNonword is None:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please create a word/nonword.")
+                return
+            if not getattr(self.oneNonword,kwargs['sequence_type']):
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
+                return
+            kwargs['query'] = [self.oneNonword]
         elif self.compType == 'file':
             pairs_path = self.fileWidget.value()
             if not pairs_path:
