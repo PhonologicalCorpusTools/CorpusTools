@@ -200,7 +200,7 @@ class LexiconView(QWidget):
 
 class TextView(QAbstractItemView):
     ExtraHeight = 3
-    ExtraWidth = 10
+    ExtraWidth = 15
     def __init__(self, parent=None):
         self.idealHeight = 0
         self.idealWidth = 0
