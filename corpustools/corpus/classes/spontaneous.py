@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 
-from .lexicon import Transcription, Corpus
+from .lexicon import Transcription, Corpus, Attribute
 
 import os
 import wave
@@ -81,7 +81,18 @@ class Discourse(object):
         for k,v in kwargs.items():
             setattr(self,k,v)
 
+        self._attributes = [Attribute('spelling','spelling'),
+                            Attribute('transcription','tier'),
+                            Attribute('begin','numeric')]
+
         self.words = dict()
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    def keys(self):
+        return sorted(self.words.keys())
 
     def __eq__(self, other):
         if not isinstance(other,Discourse):

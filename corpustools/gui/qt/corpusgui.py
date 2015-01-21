@@ -849,10 +849,13 @@ class AddWordDialog(QDialog):
         self.edits = {}
 
         for a in self.corpus.attributes:
-            if a.att_type == 'tier':
+            if a.att_type == 'tier' and a.name == 'transcription':
                 self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus.inventory)
-
+                self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
                 main.addRow(self.edits[a.name])
+            elif a.att_type == 'tier':
+                self.edits[a.name] = QLabel('Empty')
+                main.addRow(QLabel(str(a)),self.edits[a.name])
             elif a.att_type == 'spelling':
                 self.edits[a.name] = QLineEdit()
                 main.addRow(QLabel(str(a)),self.edits[a.name])
@@ -889,6 +892,18 @@ class AddWordDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
+
+    def updateTiers(self, new_transcription):
+        transcription = new_transcription.split('.')
+        for a in self.corpus.attributes:
+            if a.att_type != 'tier':
+                continue
+            if a.name == 'transcription':
+                continue
+            text = '.'.join([x for x in transcription if x in a.range])
+            if text == '':
+                text = 'Empty'
+            self.edits[a.name].setText(text)
 
     def accept(self):
 

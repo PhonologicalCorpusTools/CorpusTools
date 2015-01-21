@@ -289,7 +289,7 @@ class TextView(QAbstractItemView):
         y = 0
         for row in range(self.model().rowCount(self.rootIndex())):
             index = self.model().index(row, 0, self.rootIndex())
-            text = self.model().data(index)
+            text = self.model().data(index,Qt.DisplayRole)
             textWidth = fm.width(text)
             if not (x == 0 or x+textWidth+self.ExtraWidth < maxWidth):
                 y += rowHeight
@@ -494,6 +494,12 @@ class DiscourseView(QWidget):
         self.audioThread.finished.connect(self.audioFinished)
 
         self.text = TextView(self)
+        self.text.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.text.customContextMenuRequested.connect(self.showMenu)
+        self.table = TableWidget(self)
+        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self.showMenu)
+        self.table.hide()
         self.setStyleSheet( """ TextView::item:selected:active {
                                      background: lightblue;
                                 }
@@ -506,10 +512,20 @@ class DiscourseView(QWidget):
                                 TextView::item:selected:!disabled {
                                      background: lightblue;
                                 }
+                                TableWidget::item:selected:active {
+                                     background: lightblue;
+                                }
+                                TableWidget::item:selected:!active {
+                                     background: lightblue;
+                                }
+                                TableWidget::item:selected:disabled {
+                                     background: lightblue;
+                                }
+                                TableWidget::item:selected:!disabled {
+                                     background: lightblue;
+                                }
                                 """
                                 )
-        self.text.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.text.customContextMenuRequested.connect(self.showMenu)
 
         layout = QVBoxLayout()
         self.searchField = QLineEdit()
@@ -517,6 +533,7 @@ class DiscourseView(QWidget):
         self.searchField.returnPressed.connect(self.search)
         layout.addWidget(self.searchField, alignment = Qt.AlignRight)
         layout.addWidget(self.text)
+        layout.addWidget(self.table)
 
         self.playbar = QToolBar()
 
@@ -528,10 +545,16 @@ class DiscourseView(QWidget):
 
     def setModel(self,model):
         self.text.setModel(model)
-        if AUDIO_ENABLED and model.hasAudio():
+        self.table.setModel(model)
+        self.table.setSelectionModel(self.text.selectionModel())
+        if False and AUDIO_ENABLED and model.hasAudio():
             self.playbar.show()
         else:
             self.playbar.hide()
+        try:
+            self.table.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
 
     def search(self):
         text = self.searchField.text()
@@ -565,15 +588,29 @@ class DiscourseView(QWidget):
         wordtype = self.text.model().wordTokenObject(index.row()).wordtype
         self.selectType.emit(wordtype)
 
+    def changeView(self):
+        if self.text.isHidden():
+            self.text.show()
+            self.table.hide()
+        else:
+            self.text.hide()
+            self.table.show()
+
     def showMenu(self, pos):
         menu = QMenu()
         index = self.text.indexAt(pos)
-        if not index.isValid():
-            return
-        lookupAction = QAction(self)
-        lookupAction.setText('Look up word')
-        lookupAction.triggered.connect(lambda: self.findType(self.text.indexAt(pos)))
-        menu.addAction(lookupAction)
+        changeViewAction = QAction(self)
+        if self.text.isHidden():
+            changeViewAction.setText('Show as text')
+        else:
+            changeViewAction.setText('Show as table')
+        changeViewAction.triggered.connect(self.changeView)
+        menu.addAction(changeViewAction)
+        if index.isValid():
+            lookupAction = QAction(self)
+            lookupAction.setText('Look up word')
+            lookupAction.triggered.connect(lambda: self.findType(self.text.indexAt(pos)))
+            menu.addAction(lookupAction)
         action = menu.exec_(self.text.viewport().mapToGlobal(pos))
 
     def playStopAudio(self):
@@ -603,11 +640,11 @@ class DiscourseView(QWidget):
         if self.text.model() is None:
             return
         self.text.selectionModel().clear()
-        times = [x.begin for x in tokens if x.discourse == self.text.model().discourse]
+        times = [x.begin for x in tokens if x.discourse == self.text.model().corpus]
         rows = self.text.model().timesToRows(times)
         for r in rows:
             index = self.text.model().index(r,0)
-            self.text.selectionModel().select(index, QItemSelectionModel.Select)
+            self.text.selectionModel().select(index, QItemSelectionModel.Select |QItemSelectionModel.Rows)
 
     def setupActions(self):
         self.playStopAction = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), self.tr("Play"), self)

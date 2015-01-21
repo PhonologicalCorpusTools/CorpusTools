@@ -809,7 +809,7 @@ class InventoryBox(QWidget):
 
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
-                    
+
             self.consTable.resize()
             self.vowTable.resize()
             smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
@@ -879,6 +879,7 @@ class InventoryBox(QWidget):
             return value
 
 class TranscriptionWidget(QGroupBox):
+    transcriptionChanged = Signal(object)
     def __init__(self, title,inventory,parent=None):
         QGroupBox.__init__(self,title,parent)
         self.inventory = inventory
@@ -886,6 +887,7 @@ class TranscriptionWidget(QGroupBox):
         layout = QFormLayout()
 
         self.transEdit = QLineEdit()
+        self.transEdit.textChanged.connect(self.transcriptionChanged.emit)
         self.showInv = QPushButton('Show inventory')
         self.showInv.clicked.connect(self.showHide)
         layout.addRow(self.transEdit,self.showInv)
