@@ -2,9 +2,24 @@ import argparse
 import os
 import csv
     
+from corpustools.corpus.classes import Word
 from corpustools.corpus.io.binary import load_binary
 from corpustools.neighdens.neighborhood_density import neighborhood_density
 from corpustools.neighdens.neighborhood_density import find_mutation_minpairs
+
+
+def ensure_query_is_word(query, corpus, sequence_type, trans_delimiter):
+    if isinstance(query, Word):
+        query_word = query
+    else:
+        try:
+            query_word = corpus.find(query)
+        except KeyError:
+            if trans_delimiter == '':
+                query_word = Word(**{sequence_type: list(query)})
+            else:
+                query_word = Word(**{sequence_type: query.split(trans_delimiter)})
+    return query_word
 
 
 def main():
@@ -13,12 +28,12 @@ def main():
     parser = argparse.ArgumentParser(description = \
              'Phonological CorpusTools: neighborhood density CL interface')
     parser.add_argument('corpus_file_name', help='Name of corpus file')
-    parser.add_argument('query', help='Name of word to query, or name of file including a list of words')
+    parser.add_argument('query', help='Word to query, or name of file including a list of words')
     parser.add_argument('-a', '--algorithm', default= 'edit_distance', help="The algorithm used to determine distance")
     parser.add_argument('-d', '--max_distance', type=int, default = 1, help="Maximum edit distance from the queried word to consider a word a neighbor.")
     parser.add_argument('-s', '--sequence_type', default = 'transcription', help="The name of the tier on which to calculate distance")
     parser.add_argument('-w', '--count_what', default ='type', help="If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency.")
-    parser.add_argument('-e', '--segment_delimiter', default=None, help="If not None, splits the query by this str to make a transcription/spelling list for the query's Word object.")
+    parser.add_argument('-e', '--trans_delimiter', default='', help="If not empty string, splits the query by this str to make a transcription/spelling list for the query's Word object.")
     parser.add_argument('-m', '--find_mutation_minpairs', action='store_true', help='This flag causes the script not to calculate neighborhood density, but rather to find minimal pairs---see documentation.')
     parser.add_argument('-o', '--outfile', help='Name of output file')
 
@@ -29,7 +44,8 @@ def main():
     corpus = load_binary(args.corpus_file_name)[0]
 
     if args.find_mutation_minpairs:
-        matches = find_mutation_minpairs(corpus, args.query, sequence_type=args.sequence_type, segment_delimiter=args.segment_delimiter)
+        query = ensure_query_is_word(args.query, corpus, args.sequence_type, args.trans_delimiter)
+        matches = find_mutation_minpairs(corpus, query, sequence_type=args.sequence_type, trans_delimiter=args.trans_delimiter)
         for match in matches:
             print(match)
         print('Total number of matches: {}'.format(str(len(matches))))
@@ -37,7 +53,7 @@ def main():
         try: # read query as a file name
             with open(args.query) as queryfile:
                 queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
-            results = [neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter) for query in queries]
+            results = [neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, trans_delimiter=args.trans_delimiter) for query in queries]
             if args.outfile:
                 with open(args.outfile, 'w') as outfile:
                     for q, r in zip(queries, results):
@@ -47,7 +63,8 @@ def main():
 
 
         except FileNotFoundError: # read query as a single word
-            result = neighborhood_density(corpus, args.query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, segment_delimiter=args.segment_delimiter)
+            query = ensure_query_is_word(args.query, corpus, args.sequence_type, args.trans_delimiter)
+            result = neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, trans_delimiter=args.trans_delimiter)
 
             if args.outfile:
                 with open(args.outfile, 'w') as outfile:
