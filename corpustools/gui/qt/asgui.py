@@ -54,8 +54,8 @@ class ASWorker(FunctionWorker):
 
 class ASDialog(FunctionDialog):
 
-    header = ['Directory 1',
-            'Directory 2',
+    header = ['File 1',
+            'File 2',
             'Representation',
             'Match function',
             'Minimum frequency',
