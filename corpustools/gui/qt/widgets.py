@@ -285,7 +285,7 @@ class AttributeFilterWidget(QGroupBox):
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
         QGroupBox.__init__(self,'Tier',parent)
-
+        self.spellingEnabled = include_spelling
         layout = QVBoxLayout()
 
         self.tierSelect = QComboBox()
@@ -300,12 +300,25 @@ class TierWidget(QGroupBox):
         layout.addWidget(self.tierSelect)
         self.setLayout(layout)
 
+    def setSpellingEnabled(self, b):
+        self.spellingEnabled = b
+        if b:
+            if self.tierSelect.itemText(0) != 'Spelling':
+                self.tierSelect.insertItem(0,'Spelling')
+        else:
+            if self.tierSelect.itemText(0) == 'Spelling':
+                self.tierSelect.removeItem(0)
+
     def value(self):
         index = self.tierSelect.currentIndex()
+        if not self.spellingEnabled:
+            index += 1
         return self.atts[index].name
 
     def displayValue(self):
         index = self.tierSelect.currentIndex()
+        if not self.spellingEnabled:
+            index += 1
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
@@ -321,6 +334,7 @@ class PunctuationWidget(QGroupBox):
         col = 0
         for s in punctuation:
             btn = QPushButton(s)
+            btn.setAutoDefault(False)
             btn.setCheckable(True)
             btn.setAutoExclusive(False)
             btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
@@ -339,8 +353,10 @@ class PunctuationWidget(QGroupBox):
 
         buttonlayout = QHBoxLayout()
         self.checkAll = QPushButton('Check all')
+        self.checkAll.setAutoDefault(False)
         self.checkAll.clicked.connect(self.check)
         self.uncheckAll = QPushButton('Uncheck all')
+        self.uncheckAll.setAutoDefault(False)
         self.uncheckAll.clicked.connect(self.uncheck)
         buttonlayout.addWidget(self.checkAll, alignment = Qt.AlignLeft)
         buttonlayout.addWidget(self.uncheckAll, alignment = Qt.AlignLeft)
@@ -438,6 +454,7 @@ class DigraphWidget(QGroupBox):
         self.editField = QLineEdit()
         layout.addWidget(self.editField)
         self.button = QPushButton('Construct a digraph')
+        self.button.setAutoDefault(False)
         self.button.clicked.connect(self.construct)
         layout.addWidget(self.button)
         self.setLayout(layout)

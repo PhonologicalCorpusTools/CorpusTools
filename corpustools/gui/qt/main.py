@@ -169,7 +169,7 @@ class MainWindow(QMainWindow):
                     self.showDiscoursesAct.setEnabled(True)
                     self.showDiscoursesAct.setChecked(True)
                 else:
-                    self.textWidget.setModel(DiscourseModel(self.corpus))
+                    self.textWidget.setModel(DiscourseModel(self.corpus, self.settings))
                     self.discourseTree.hide()
                     self.showDiscoursesAct.setEnabled(False)
                     self.showDiscoursesAct.setChecked(False)
@@ -180,13 +180,11 @@ class MainWindow(QMainWindow):
                 self.textWidget.show()
                 self.showTextAct.setEnabled(True)
                 self.showTextAct.setChecked(True)
-                self.adjustSize()
             else:
                 self.setMinimumSize(400, 400)
                 c = self.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
-                self.adjustSize()
                 self.showTextAct.setEnabled(False)
                 self.showTextAct.setChecked(False)
                 self.showDiscoursesAct.setEnabled(False)

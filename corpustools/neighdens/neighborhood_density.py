@@ -73,7 +73,10 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
 
 
 
-def find_mutation_minpairs(corpus, query, sequence_type='transcription', segment_delimiter=None):
+def find_mutation_minpairs(corpus, query,
+                    sequence_type='transcription',
+                    segment_delimiter=None,
+                    stop_check = None, call_back = None):
     """Find all minimal pairs of the query word based only on segment mutations (not deletions/insertions)
 
     Parameters
@@ -96,17 +99,27 @@ def find_mutation_minpairs(corpus, query, sequence_type='transcription', segment
     query_word = ensure_query_is_word(query, corpus, sequence_type, segment_delimiter)
 
     matches = []
+    if call_back is not None:
+        call_back('Finding neighbors...')
+        call_back(0,len(corpus))
+        cur = 0
     al = Aligner(features_tf=False, ins_penalty=float('inf'), del_penalty=float('inf'), sub_penalty=1)
     for w in corpus:
-        if (len(getattr(w, sequence_type)) > len(getattr(query_word, sequence_type))+1 or 
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 10 == 0:
+                call_back(cur)
+        if (len(getattr(w, sequence_type)) > len(getattr(query_word, sequence_type))+1 or
             len(getattr(w, sequence_type)) < len(getattr(query_word, sequence_type))-1):
             continue
         m = al.make_similarity_matrix(getattr(query_word, sequence_type), getattr(w, sequence_type))
         if m[-1][-1]['f'] != 1:
             continue
         matches.append(str(getattr(w, sequence_type)))
-    
-    return set(matches)-set([str(getattr(query_word, sequence_type))])
+    neighbors = list(set(matches)-set([str(getattr(query_word, sequence_type))]))
+    return (len(neighbors), neighbors)
 
 
 def ensure_query_is_word(query, corpus, sequence_type, segment_delimiter):

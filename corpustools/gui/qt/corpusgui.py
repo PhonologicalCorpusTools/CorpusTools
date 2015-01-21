@@ -645,6 +645,8 @@ class CorpusFromTranscriptionTextDialog(QDialog):
 
     def accept(self):
         kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
         self.thread.setParams(kwargs)
 
         self.thread.start()

@@ -3,8 +3,6 @@ from collections import Counter
 
 from .imports import *
 
-
-
 class BaseTableModel(QAbstractTableModel):
     columns = []
     rows = []
@@ -62,7 +60,6 @@ class BaseTableModel(QAbstractTableModel):
         for i in inds:
             del self.rows[i]
         self.layoutChanged.emit()
-
 
 class BaseCorpusTableModel(BaseTableModel):
     columns = []
@@ -336,14 +333,15 @@ class CorpusModel(BaseCorpusTableModel):
         self.endInsertRows()
 
     def replaceWord(self, row, word):
-        self.corpus[self.rows[row]] = word
-        self.dataChanged.emit(self.index(row,0),self.index(row,self.columnCount()))
+        self.removeWord(self.rows[row])
+        self.addWord(word)
 
     def removeWord(self, word_key):
-        self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
+        row = self.rows.index(word_key)
+        self.beginRemoveRows(QModelIndex(),row,row)
         self.corpus.remove_word(word_key)
         self.rows = self.corpus.words
-        self.endInsertRows()
+        self.endRemoveRows()
 
     def addTier(self,attribute, segList):
         if attribute not in self.columns:

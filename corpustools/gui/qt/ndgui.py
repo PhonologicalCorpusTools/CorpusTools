@@ -4,7 +4,7 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.neighdens.neighborhood_density import neighborhood_density
+from corpustools.neighdens.neighborhood_density import neighborhood_density,find_mutation_minpairs
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
 
@@ -20,13 +20,20 @@ class NDWorker(FunctionWorker):
         if 'query' in kwargs:
             for q in kwargs['query']:
                 try:
-                    res = neighborhood_density(corpus, q,
+                    if kwargs['algorithm'] != 'substitution':
+                        res = neighborhood_density(corpus, q,
                                             algorithm = kwargs['algorithm'],
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             max_distance = kwargs['max_distance'],
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
+                    else:
+                        res = find_mutation_minpairs(corpus, q,
+                                            sequence_type = kwargs['sequence_type'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
+
                 except Exception as e:
                     self.errorEncountered.emit(e)
                     return
@@ -45,12 +52,18 @@ class NDWorker(FunctionWorker):
                 cur += 1
                 call_back(cur)
                 try:
-                    res = neighborhood_density(corpus, w,
+                    if kwargs['algorithm'] != 'substitution':
+                        res = neighborhood_density(corpus, w,
                                             algorithm = kwargs['algorithm'],
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             max_distance = kwargs['max_distance'],
                                             stop_check = kwargs['stop_check'])
+                    else:
+                        res = find_mutation_minpairs(corpus, q,
+                                            sequence_type = kwargs['sequence_type'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
                 except Exception as e:
                     self.errorEncountered.emit(e)
                     return
@@ -67,7 +80,8 @@ class NDDialog(FunctionDialog):
                 'Neighborhood density',
                 'String type',
                 'Type or token',
-                'Algorithm type']
+                'Algorithm type',
+                'Threshold']
 
     _about = [('This function calculates the neighborhood density '
                     'of a word.'),
@@ -95,14 +109,17 @@ class NDDialog(FunctionDialog):
 
         algEnabled = {'Khorsi':True,
                     'Edit distance':True,
+                    'Substitution neighbors only':True,
                     'Phonological edit distance':self.corpusModel.corpus.has_transcription}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([
                                             ('Edit distance','edit_distance'),
                                             ('Phonological edit distance','phono_edit_distance'),
+                                            ('Substitution neighbors only','substitution'),
                                             ('Khorsi','khorsi'),]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
+                                            'Substitution neighbors only':self.substitutionSelected,
                                             'Phonological edit distance':self.phonoEditDistSelected},
                                             algEnabled)
 
@@ -117,6 +134,7 @@ class NDDialog(FunctionDialog):
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
+
         self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
         self.oneNonwordLabel = QLabel('None created')
@@ -213,15 +231,19 @@ class NDDialog(FunctionDialog):
 
     def oneWordSelected(self):
         self.compType = 'one'
+        self.saveFileWidget.setEnabled(True)
 
     def oneNonwordSelected(self):
         self.compType = 'nonword'
+        self.saveFileWidget.setEnabled(True)
 
     def fileSelected(self):
         self.compType = 'file'
+        self.saveFileWidget.setEnabled(False)
 
     def allwordsSelected(self):
         self.compType = 'all'
+        self.saveFileWidget.setEnabled(False)
 
     def generateKwargs(self):
         if self.maxDistanceEdit.text() == '':
@@ -240,7 +262,7 @@ class NDDialog(FunctionDialog):
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
-        kwargs['output_filename'] = out_file
+
 
         if self.compType is None:
             reply = QMessageBox.critical(self,
@@ -252,7 +274,14 @@ class NDDialog(FunctionDialog):
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please specify a word.")
                 return
-            kwargs['query'] = [text]
+            try:
+                w = self.corpusModel.corpus.find(text)
+            except KeyError:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The spelling specified does match any words in the corpus.")
+                return
+            kwargs['query'] = [w]
+            kwargs['output_filename'] = out_file
         elif self.compType == 'nonword':
             if self.oneNonword is None:
                 reply = QMessageBox.critical(self,
@@ -263,17 +292,31 @@ class NDDialog(FunctionDialog):
                         "Missing information", "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
                 return
             kwargs['query'] = [self.oneNonword]
+            kwargs['output_filename'] = out_file
         elif self.compType == 'file':
-            pairs_path = self.fileWidget.value()
-            if not pairs_path:
+            path = self.fileWidget.value()
+            if not path:
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please enter a file path.")
                 return
-            if not os.path.exists(pairs_path):
+            if not os.path.exists(path):
                 reply = QMessageBox.critical(self,
                         "Invalid information", "The file path entered was not found.")
                 return
-            kwargs['query'] = load_words_neighden(pairs_path)
+            kwargs['query'] = list()
+            text = load_words_neighden(path)
+            for t in text:
+                if isinstance(t,str):
+                    try:
+                        w = self.corpusModel.corpus.find(t)
+                    except KeyError:
+                        reply = QMessageBox.critical(self,
+                                "Invalid information", "The spelling '{}' was not found in the corpus.".format(t))
+                        return
+                else:
+                    w = t
+                kwargs['query'].append(w)
+
         elif self.compType == 'all':
             column = self.columnEdit.text()
             if column == '':
@@ -315,17 +358,31 @@ class NDDialog(FunctionDialog):
             if self.algorithmWidget.value() != 'khorsi':
                 typetoken = 'N/A'
             else:
-                typetoken = self.typeTokenWidget.value()
+                typetoken = self.typeTokenWidget.displayValue()
+            if self.algorithmWidget.value() == 'substitution':
+                thresh = 'N/A'
+            else:
+                thresh = self.maxDistanceEdit.text()
             self.results.append([w, nd,
                         self.tierWidget.displayValue(), typetoken,
-                        self.algorithmWidget.displayValue()])
+                        self.algorithmWidget.displayValue(),thresh])
+
+    def substitutionSelected(self):
+        self.typeTokenWidget.disable()
+        self.maxDistanceEdit.setEnabled(False)
 
     def khorsiSelected(self):
+        self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.enable()
+        self.tierWidget.setSpellingEnabled(True)
 
     def editDistSelected(self):
+        self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.disable()
         self.maxDistanceEdit.setText('1')
+        self.tierWidget.setSpellingEnabled(True)
 
     def phonoEditDistSelected(self):
+        self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.disable()
+        self.tierWidget.setSpellingEnabled(False)
