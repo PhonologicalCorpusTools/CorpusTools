@@ -136,7 +136,7 @@ class Segment(object):
             else:
                 return None
         elif feat_type == 'hayes':
-            if self.features['diphthong'] == '+':
+            if 'diphthong' in self.features and self.features['diphthong'] == '+':
                 category.append('Diphthong')
                 if self.features['front_diphthong'] == '+':
                     category.append('Front')
