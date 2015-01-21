@@ -24,6 +24,7 @@ from .ndgui import NDDialog
 from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
+from .klgui import KLDialog
 
 
 class MainWindow(QMainWindow):
@@ -78,6 +79,7 @@ class MainWindow(QMainWindow):
         self.NDWindow = None
         self.PPWindow = None
         self.MIWindow = None
+        self.KLWindow = None
         self.PhonoSearchWindow = None
         self.setMinimumSize(self.menuBar().sizeHint().width(), 400)
 
@@ -252,6 +254,17 @@ class MainWindow(QMainWindow):
                 self.FLWindow = ResultsWindow('Functional load results',dataModel,self)
                 self.FLWindow.show()
 
+    def kullbackLeibler(self):
+        dialog = KLDialog(self, self.corpusModel.corpus, self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            if self.KLWindow is not None and dialog.update and self.KLWindow.isVisible():
+                self.KLWindow.table.model().addData(dialog.results)
+            else:
+                dataModel = ResultsModel(dialog.header, dialog.results)
+                self.KLWindow = ResultsWindow('Kullback Leibler results', dataModel, self)
+                self.KLWindow.show()
+
     @check_for_empty_corpus
     @check_for_transcription
     def mutualInfo(self):
@@ -413,6 +426,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate functional load", triggered=self.funcLoad)
 
+        self.klAct = QAction( "Calculate Kullback-Leibler...",
+                self,
+                statusTip="Compare distributions", triggered=self.kullbackLeibler)
+
         self.mutualInfoAct = QAction( "Calculate mutual information...",
                 self,
                 statusTip="Calculate mutual information", triggered=self.mutualInfo)
@@ -510,6 +527,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.mutualInfoAct)
         #self.analysisMenu.addAction(self.acousticSimAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
+        self.analysisMenu.addAction(self.klAct)
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 

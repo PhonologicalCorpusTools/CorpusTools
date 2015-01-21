@@ -17,6 +17,30 @@ from collections import defaultdict
 import os
 from codecs import open
 
+class KLDialog(FunctionDialog):
+        header = ['Segment 1',
+                'Segment 2',
+                'Output file?'
+                ]
+
+    _about = [('This function calculates a difference in distribution of two segments'
+                    ' based on the Kullback-Leibler measurement of the difference between'
+                    ' probability distributions.'),
+                    '',
+                    'Coded by Scott Mackie',
+                    '',
+                    'References',
+                    ('')]
+
+    name = 'kullback leibler'
+
+
+    def __init__(self, parent, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, FLWorker())
+
+        self.corpus = corpus
+        self.showToolTips = showToolTips
+
 class Context(object):
 
     def __init__(self):
@@ -30,7 +54,7 @@ class Context(object):
     def __repr__(self):
         return str((self.seg1, self.seg2, self.other))
 
-def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=False):
+def KullbackLeibler(corpus, seg1, seg2, outfile):
     """
     Calculates KL distances between two Phoneme objects in some context,
     either the left or right-hand side.
@@ -40,7 +64,6 @@ def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=Fal
     """
     if not seg1 in corpus.inventory or not seg2 in corpus.inventory:
         raise ValueError('One segment does not exist in this corpus')
-
     allC = defaultdict(Context)
     seg_counts = {'seg1':0, 'seg2':0}
     for word in corpus.iter_words():
@@ -59,6 +82,7 @@ def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=Fal
 
             if not flag:
                 allC[thisc].other += 1
+
 
     totalC = len(allC)
     freq_c = defaultdict(int)
@@ -82,9 +106,9 @@ def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=Fal
 
     ur,sr = (seg1,seg2) if seg1_entropy < seg2_entropy else (seg2,seg1)
 
-    # seg1_features = corpus.segment_to_features(seg1)
-    # seg2_features = corpus.segment_to_features(seg2)
-    # feature_difference = sum([1 for feature in seg1_features.keys() if not seg1_features[f] == seg2_features[f]])
+    seg1_features = corpus.segment_to_features(seg1)
+    seg2_features = corpus.segment_to_features(seg2)
+    feature_difference = sum([1 for feature in seg1_features if not seg1_features[f] == seg2_features[f]])
 
     if outfile is not None:
         if not os.path.isfile(outfile):
@@ -106,7 +130,20 @@ def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=Fal
     else:
         print(KL, seg1_entropy, seg2_entropy, ur, sr)
 
-    return seg1, seg2, seg1_entropy, seg2_entropy, KL, ur
+    return KL, seg1_entropy, seg2_entropy, ur, sr#, feature_difference
+
 
 if __name__ == '__main__':
-    pass
+    parser = argparse.ArgumentParser(description = 'Phonological CorpusTools: functional load CL interface')
+    parser.add_argument('corpus_file_name', help='Path to corpus file. This can just be the file name if it\'s in the same directory as CorpusTools')
+    parser.add_argument('seg1', help='First segment')
+    parser.add_argument('seg2', help='Second segment')
+    parser.add_argument('-o', '--outfile', help='Name of output file (optional)')
+    args = parser.parse_args()
+    corpus_path = args.corpus_file_name
+    if not os.path.isfile(corpus_path):
+        corpus_path = os.path.join(os.getcwd(), corpus_path)
+    corpus = load_binary(corpus_path)
+    outfile = args.outfile
+    #corpus = load_binary(r'C:\Users\Scott\Documents\GitHub\CorpusTools\corpustools\kl\example.corpus')
+    results = KullbackLeibler(corpus, args.seg1, args.seg2, outfile)
