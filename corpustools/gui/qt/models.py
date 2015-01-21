@@ -3,6 +3,98 @@ from collections import Counter
 
 from .imports import *
 
+class BaseTableModel(QAbstractTableModel):
+    columns = []
+    rows = []
+    allData = []
+
+    def rowCount(self,parent=None):
+        return len(self.rows)
+
+    def columnCount(self,parent=None):
+        return len(self.columns)
+
+    def sort(self, col, order):
+        """sort table by given column number col"""
+        self.layoutAboutToBeChanged.emit()
+        self.rows = sorted(self.rows,
+                key=lambda x: x[col])
+        if order == Qt.DescendingOrder:
+            self.rows.reverse()
+        self.layoutChanged.emit()
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return None
+        elif role != Qt.DisplayRole:
+            return None
+        row = index.row()
+        col = index.column()
+        data = self.rows[row][col]
+
+        return data
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.columns[col]
+        return None
+
+    def addRow(self,row):
+        self.layoutAboutToBeChanged.emit()
+        self.rows.append(row)
+        self.layoutChanged.emit()
+
+    def addRows(self,rows):
+        self.layoutAboutToBeChanged.emit()
+        self.rows += rows
+        self.layoutChanged.emit()
+
+    def removeRow(self,ind):
+        self.layoutAboutToBeChanged.emit()
+        del self.rows[ind]
+        self.layoutChanged.emit()
+
+    def removeRows(self,inds):
+        inds = sorted(inds, reverse=True)
+        self.layoutAboutToBeChanged.emit()
+        for i in inds:
+            del self.rows[i]
+        self.layoutChanged.emit()
+
+class BaseCorpusTableModel(BaseTableModel):
+    columns = []
+    rows = []
+    allData = []
+
+    def sort(self, col, order):
+        """sort table by given column number col"""
+        self.layoutAboutToBeChanged.emit()
+        self.rows = sorted(self.rows,
+                key=lambda x: getattr(self.corpus[x],self.columns[col].name))
+        if order == Qt.DescendingOrder:
+            self.rows.reverse()
+        self.layoutChanged.emit()
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return None
+        elif role != Qt.DisplayRole:
+            return None
+        row = index.row()
+        col = index.column()
+        data = getattr(self.corpus[self.rows[row]],self.columns[col].name)
+
+        if isinstance(data,float):
+            data = str(round(data,self.settings['sigfigs']))
+        elif not isinstance(data,str):
+            data = str(data)
+        return data
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.columns[col].display_name
+        return None
+
 class FilterModel(QAbstractTableModel):
     conditionalMapping = {'__eq__':'==',
                     '__neq__':'!=',
@@ -176,36 +268,38 @@ class SpontaneousSpeechCorpusModel(QAbstractItemModel):
 
         return self._rootNode
 
-class DiscourseModel(QStandardItemModel):
-    def __init__(self,discourse, parent = None):
-        QStandardItemModel.__init__(self, parent)
-
-        self.discourse = discourse
-        self.posToTime = []
-        self.timeToPos = {}
-        for w in self.discourse:
-            self.timeToPos[w.begin] = len(self.posToTime)
-            self.posToTime.append(w.begin)
-            i = QStandardItem(str(w))
-            i.setFlags(i.flags() | (not Qt.ItemIsEditable))
-            self.appendRow(i)
+class DiscourseModel(BaseCorpusTableModel):
+    def __init__(self,discourse, settings, parent = None):
+        QAbstractTableModel.__init__(self, parent)
+        self.settings = settings
+        self.corpus = discourse
+        self.columns = self.corpus.attributes
+        self.rows = self.corpus.keys()
+        #self.posToTime = []
+        #self.timeToPos = {}
+        #for w in self.discourse:
+        #    self.timeToPos[w.begin] = len(self.posToTime)
+        #    self.posToTime.append(w.begin)
+        #    i = QStandardItem(str(w))
+        #    i.setFlags(i.flags() | (not Qt.ItemIsEditable))
+        #    self.appendRow(i)
 
     def rowsToTimes(self,rows):
-        return [self.posToTime[x] for x in rows]
+        return [self.rows[x] for x in rows]
 
     def timesToRows(self, times):
-        return [self.timeToPos[x] for x in times]
+        return [i for i,x in enumerate(self.rows) if x in times]
 
     def hasAudio(self):
-        return self.discourse.has_audio()
+        return self.corpus.has_audio()
 
     def wordTokenObject(self,row):
-        token = self.discourse[self.posToTime[row]]
+        token = self.corpus[self.rows[row]]
         return token
 
-class CorpusModel(QAbstractTableModel):
+class CorpusModel(BaseCorpusTableModel):
     def __init__(self, corpus, settings, parent=None):
-        super(CorpusModel, self).__init__(parent)
+        QAbstractTableModel.__init__(self, parent)
         self.settings = settings
         self.corpus = corpus
         self.nonLexHidden = False
@@ -215,21 +309,6 @@ class CorpusModel(QAbstractTableModel):
         self.rows = self.corpus.words
 
         self.allData = self.rows
-
-    def rowCount(self,parent=None):
-        return len(self.rows)
-
-    def columnCount(self,parent=None):
-        return len(self.columns)
-
-    def sort(self, col, order):
-        """sort table by given column number col"""
-        self.layoutAboutToBeChanged.emit()
-        self.rows = sorted(self.rows,
-                key=lambda x: getattr(self.corpus[x],self.columns[col].name))
-        if order == Qt.DescendingOrder:
-            self.rows.reverse()
-        self.layoutChanged.emit()
 
     def hideNonLexical(self, b):
         self.nonLexHidden = b
@@ -242,25 +321,27 @@ class CorpusModel(QAbstractTableModel):
     def wordObject(self,row):
         return self.corpus[self.rows[row]]
 
-    def data(self, index, role=None):
-        if not index.isValid():
-            return None
-        elif role != Qt.DisplayRole:
-            return None
-        row = index.row()
-        col = index.column()
-        data = getattr(self.corpus[self.rows[row]],self.columns[col].name)
-
-        if isinstance(data,float):
-            data = str(round(data,self.settings['sigfigs']))
-        elif not isinstance(data,str):
-            data = str(data)
-        return data
-
     def headerData(self, col, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return self.columns[col].display_name
         return None
+
+    def addWord(self, word):
+        self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
+        self.corpus.add_word(word)
+        self.rows = self.corpus.words
+        self.endInsertRows()
+
+    def replaceWord(self, row, word):
+        self.removeWord(self.rows[row])
+        self.addWord(word)
+
+    def removeWord(self, word_key):
+        row = self.rows.index(word_key)
+        self.beginRemoveRows(QModelIndex(),row,row)
+        self.corpus.remove_word(word_key)
+        self.rows = self.corpus.words
+        self.endRemoveRows()
 
     def addTier(self,attribute, segList):
         if attribute not in self.columns:
@@ -309,44 +390,14 @@ class CorpusModel(QAbstractTableModel):
             self.columns = self.corpus.attributes
             self.endRemoveColumns()
 
-class SegmentPairModel(QAbstractTableModel):
+class SegmentPairModel(BaseTableModel):
     def __init__(self,parent = None):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = ['Segment 1', 'Segment 2']
-        self.pairs = list()
+        self.rows = list()
 
-    def rowCount(self,parent=None):
-        return len(self.pairs)
-
-    def columnCount(self,parent=None):
-        return len(self.columns)
-
-    def data(self, index, role=None):
-        if not index.isValid():
-            return None
-        elif role != Qt.DisplayRole:
-            return None
-        return self.pairs[index.row()][index.column()]
-
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.columns[col]
-        return None
-
-    def addRow(self,pair):
-        self.layoutAboutToBeChanged.emit()
-        self.pairs.append(pair)
-        self.layoutChanged.emit()
-
-    def removeRows(self,inds):
-        inds = sorted(inds, reverse=True)
-        self.layoutAboutToBeChanged.emit()
-        for i in inds:
-            del self.pairs[i]
-        self.layoutChanged.emit()
-
-class VariantModel(QAbstractTableModel):
+class VariantModel(BaseTableModel):
     def __init__(self, wordtokens, parent=None):
         super(VariantModel, self).__init__(parent)
 
@@ -358,92 +409,27 @@ class VariantModel(QAbstractTableModel):
 
         self.sort(1,Qt.DescendingOrder)
 
-    def rowCount(self,parent=None):
-        return len(self.rows)
-
-    def columnCount(self,parent=None):
-        return len(self.columns)
-
-    def sort(self, col, order):
-        """sort table by given column number col"""
-        self.layoutAboutToBeChanged.emit()
-        self.rows = sorted(self.rows,
-                key=lambda x: x[col])
-        if order == Qt.DescendingOrder:
-            self.rows.reverse()
-        self.layoutChanged.emit()
-
-    def data(self, index, role=None):
-        if not index.isValid():
-            return None
-        elif role != Qt.DisplayRole:
-            return None
-        row = index.row()
-        col = index.column()
-        data = self.rows[row][col]
-
-        return data
-
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.columns[col]
-        return None
-
-class EnvironmentModel(QAbstractTableModel):
+class EnvironmentModel(BaseTableModel):
     def __init__(self,parent = None):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = ['']
-        self.environments = list()
+        self.rows = list()
 
-    def rowCount(self,parent=None):
-        return len(self.environments)
-
-    def columnCount(self,parent=None):
-        return len(self.columns)
-
-    def data(self, index, role=None):
-        if not index.isValid():
-            return None
-        elif role != Qt.DisplayRole:
-            return None
-        return self.environments[index.row()][index.column()]
-
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.columns[col]
-        return None
-
-    def addRow(self,env):
-        self.layoutAboutToBeChanged.emit()
-        self.environments.append(env)
-        self.layoutChanged.emit()
-
-    def removeRow(self,ind):
-        self.layoutAboutToBeChanged.emit()
-        del self.environments[ind]
-        self.layoutChanged.emit()
-
-class ResultsModel(QAbstractTableModel):
+class ResultsModel(BaseTableModel):
     def __init__(self, header, results, settings, parent=None):
         QAbstractTableModel.__init__(self,parent)
         self.settings = settings
         self.columns = header
 
-        self.results = results
-
-    def rowCount(self,parent=None):
-        return len(self.results)
-
-    def columnCount(self,parent=None):
-        return len(self.columns)
+        self.rows = results
 
     def data(self, index, role=None):
         if not index.isValid():
             return None
         elif role != Qt.DisplayRole:
             return None
-        data = self.results[index.row()][index.column()]
+        data = self.rows[index.row()][index.column()]
         if isinstance(data,float):
             data = str(round(data,self.settings['sigfigs']))
         elif isinstance(data,bool):
@@ -454,28 +440,6 @@ class ResultsModel(QAbstractTableModel):
         else:
             data = str(data)
         return data
-
-    def sort(self, col, order):
-        """Sort table by given column number.
-        """
-        self.layoutAboutToBeChanged.emit()
-        self.results = sorted(self.results, key=lambda x: x[col])
-        if order == Qt.DescendingOrder:
-            self.results.reverse()
-        self.layoutChanged.emit()
-
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.columns[col]
-        #elif role == Qt.SizeHintRole:
-        #    return QSize(100,23)
-        return QAbstractTableModel.headerData(self, col, orientation, role)
-
-
-    def addData(self,extra):
-        self.layoutAboutToBeChanged.emit()
-        self.results += extra
-        self.layoutChanged.emit()
 
 
 
@@ -561,8 +525,6 @@ class FeatureSystemTreeModel(QAbstractItemModel):
             self.segments = list()
         self.generateData()
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int"""
     def rowCount(self, parent):
         if not parent.isValid():
             parentNode = self._rootNode
@@ -571,13 +533,9 @@ class FeatureSystemTreeModel(QAbstractItemModel):
 
         return parentNode.childCount()
 
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int"""
     def columnCount(self, parent):
         return 1
 
-    """INPUTS: QModelIndex, int"""
-    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
     def data(self, index, role):
 
         if not index.isValid():
@@ -590,27 +548,14 @@ class FeatureSystemTreeModel(QAbstractItemModel):
             if index.column() == 0:
                 return node.name()
 
-
-    """INPUTS: int, Qt::Orientation, int"""
-    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             return "Segments"
 
-
-
-    """INPUTS: QModelIndex"""
-    """OUTPUT: int (flag)"""
     def flags(self, index):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
-
-
-    """INPUTS: QModelIndex"""
-    """OUTPUT: QModelIndex"""
-    """Should return the parent of the node with the given QModelIndex"""
     def parent(self, index):
-
         node = self.getNode(index)
         parentNode = node.parent()
 
@@ -619,23 +564,15 @@ class FeatureSystemTreeModel(QAbstractItemModel):
 
         return self.createIndex(parentNode.row(), 0, parentNode)
 
-    """INPUTS: int, int, QModelIndex"""
-    """OUTPUT: QModelIndex"""
-    """Should return a QModelIndex that corresponds to the given row, column and parent node"""
     def index(self, row, column, parent):
-
         parentNode = self.getNode(parent)
-
         childItem = parentNode.child(row)
-
 
         if childItem:
             return self.createIndex(row, column, childItem)
         else:
             return QModelIndex()
 
-    """CUSTOM"""
-    """INPUTS: QModelIndex"""
     def getNode(self, index):
         if index.isValid():
             node = index.internalPointer()
@@ -645,7 +582,6 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         return self._rootNode
 
     def generateData(self):
-
         self._rootNode = TreeItem("Segment")
         consItem = TreeItem('Consonants', self._rootNode)
         placeItem = TreeItem('Place',consItem)
@@ -772,50 +708,12 @@ class FeatureSystemTreeModel(QAbstractItemModel):
 
 
 
-class FeatureSystemTableModel(QAbstractTableModel):
+class FeatureSystemTableModel(BaseTableModel):
     def __init__(self, specifier, parent=None):
         QAbstractTableModel.__init__(self,parent)
         self.specifier = specifier
         self.generateData()
         self.sort(0,Qt.AscendingOrder)
-
-
-    def rowCount(self,parent=None):
-        return len(self.rows)
-
-    def columnCount(self,parent=None):
-        return len(self.columns)
-
-    def data(self, index, role=None):
-        if not index.isValid():
-            return None
-        elif role != Qt.DisplayRole:
-            return None
-        return self.rows[index.row()][index.column()]
-
-    def sort(self, col, order):
-        """Sort table by given column number.
-        """
-        self.layoutAboutToBeChanged.emit()
-        self.rows = sorted(self.rows, key=lambda x: x[col])
-        if order == Qt.DescendingOrder:
-            self.rows.reverse()
-        self.layoutChanged.emit()
-
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.columns[col]
-        return QAbstractTableModel.headerData(self, col, orientation, role)
-
-    def filter(self,segments):
-        self.layoutAboutToBeChanged.emit()
-        self.rows = [x for x in self.allrows if x[0] in segments]
-        self.layoutChanged.emit()
-
-    def showAll(self):
-        self.layoutAboutToBeChanged.emit()
-        self.rows = self.allrows
-        self.layoutChanged.emit()
 
     def generateData(self):
         self.rows = list()
@@ -828,6 +726,16 @@ class FeatureSystemTableModel(QAbstractTableModel):
                 continue
             self.rows.append([x]+[self.specifier[x,y] for y in self.specifier.features])
         self.allrows = self.rows
+
+    def filter(self,segments):
+        self.layoutAboutToBeChanged.emit()
+        self.rows = [x for x in self.allrows if x[0] in segments]
+        self.layoutChanged.emit()
+
+    def showAll(self):
+        self.layoutAboutToBeChanged.emit()
+        self.rows = self.allrows
+        self.layoutChanged.emit()
 
     def addSegment(self,seg,feat):
         self.layoutAboutToBeChanged.emit()

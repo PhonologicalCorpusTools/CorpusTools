@@ -10,6 +10,7 @@ from corpustools.corpus.classes import Attribute
 
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
+from .corpusgui import AddWordDialog
 
 
 class PPWorker(FunctionWorker):
@@ -108,6 +109,14 @@ class PPDialog(FunctionDialog):
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
+
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
+        self.oneNonwordLabel = QLabel('None created')
+        self.oneNonword = None
+        self.oneNonwordButton = QPushButton('Create word/nonword')
+        self.oneNonwordButton.clicked.connect(self.createNonword)
+
         self.fileRadio = QRadioButton('Calculate for list of words')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
@@ -122,6 +131,8 @@ class PPDialog(FunctionDialog):
 
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
+        vbox.addRow(self.oneNonwordRadio)
+        vbox.addRow(self.oneNonwordLabel,self.oneNonwordButton)
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
         vbox.addRow(self.allwordsRadio)
@@ -169,8 +180,19 @@ class PPDialog(FunctionDialog):
                                 ' in the corpus.'
             "</FONT>"))
 
+    def createNonword(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.oneNonword = dialog.word
+            self.oneNonwordLabel.setText('{} ({})'.format(str(self.oneNonword),
+                                                          str(self.oneNonword.transcription)))
+            self.oneNonwordRadio.click()
+
     def oneWordSelected(self):
         self.compType = 'one'
+
+    def oneNonwordSelected(self):
+        self.compType = 'nonword'
 
     def fileSelected(self):
         self.compType = 'file'
@@ -195,7 +217,23 @@ class PPDialog(FunctionDialog):
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please specify a word.")
                 return
-            kwargs['query'] = [text]
+            try:
+                w = self.corpusModel.corpus.find(text)
+            except KeyError:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The spelling specified does match any words in the corpus.")
+                return
+            kwargs['query'] = [w]
+        elif self.compType == 'nonword':
+            if self.oneNonword is None:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please create a word/nonword.")
+                return
+            if not getattr(self.oneNonword,kwargs['sequence_type']):
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
+                return
+            kwargs['query'] = [self.oneNonword]
         elif self.compType == 'file':
             path = self.fileWidget.value()
             if not path:
@@ -206,7 +244,19 @@ class PPDialog(FunctionDialog):
                 reply = QMessageBox.critical(self,
                         "Invalid information", "The file path entered was not found.")
                 return
-            kwargs['query'] = load_words_neighden(path)
+            kwargs['query'] = list()
+            text = load_words_neighden(path)
+            for t in text:
+                if isinstance(t,str):
+                    try:
+                        w = self.corpusModel.corpus.find(t)
+                    except KeyError:
+                        reply = QMessageBox.critical(self,
+                                "Invalid information", "The spelling '{}' was not found in the corpus.".format(t))
+                        return
+                else:
+                    w = t
+                kwargs['query'].append(w)
         elif self.compType == 'all':
             column = self.columnEdit.text()
             if column == '':

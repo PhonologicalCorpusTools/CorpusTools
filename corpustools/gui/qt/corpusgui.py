@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from corpustools.config import config
 
-from corpustools.corpus.classes import Attribute
+from corpustools.corpus.classes import Attribute, Word
 
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
                                     load_spelling_corpus, load_transcription_corpus,
@@ -19,7 +19,8 @@ from .windows import FunctionWorker, DownloadWorker
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
-                    DigraphWidget, InventoryBox, AttributeFilterWidget)
+                    DigraphWidget, InventoryBox, AttributeFilterWidget,
+                    TranscriptionWidget)
 
 from corpustools.gui.qt.featuregui import FeatureSystemSelect
 
@@ -644,6 +645,8 @@ class CorpusFromTranscriptionTextDialog(QDialog):
 
     def accept(self):
         kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
         self.thread.setParams(kwargs)
 
         self.thread.start()
@@ -658,6 +661,288 @@ class CorpusFromTranscriptionTextDialog(QDialog):
 
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+
+class InventorySummary(QWidget):
+    def __init__(self, corpus, parent=None):
+        QWidget.__init__(self,parent)
+
+        self.corpus = corpus
+
+        layout = QHBoxLayout()
+
+        layout.setAlignment(Qt.AlignTop)
+
+        self.segments = InventoryBox('Segments',self.corpus.inventory)
+        self.segments.setExclusive(True)
+        for b in self.segments.btnGroup.buttons():
+            b.clicked.connect(self.summarizeSegment)
+
+        layout.addWidget(self.segments)
+
+        self.detailFrame = QFrame()
+
+        layout.addWidget(self.detailFrame)
+
+        self.setLayout(layout)
+
+    def summarizeSegment(self):
+        self.detailFrame.deleteLater()
+        seg = self.sender().text()
+
+        self.detailFrame = QGroupBox('Segment details')
+
+        layout = QFormLayout()
+        layout.setAlignment(Qt.AlignTop)
+
+        freq_base = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
+                        probability = False)
+
+        probs = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
+                        probability = True)
+
+        layout.addRow(QLabel('Type frequency:'),
+                            QLabel('{:,.1f} ({:.2%})'.format(
+                                                freq_base[seg], probs[seg]
+                                                )
+                            ))
+
+        freq_base = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
+                        probability = False)
+
+        probs = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
+                        probability = True)
+
+        layout.addRow(QLabel('Token frequency:'),
+                            QLabel('{:,.1f} ({:.2%})'.format(
+                                                    freq_base[seg], probs[seg]
+                                                    )
+                            ))
+
+        self.detailFrame.setLayout(layout)
+
+        self.layout().addWidget(self.detailFrame, alignment = Qt.AlignTop)
+
+
+class AttributeSummary(QWidget):
+    def __init__(self, corpus, parent=None):
+        QWidget.__init__(self,parent)
+
+        self.corpus = corpus
+
+        layout = QFormLayout()
+
+        self.columnSelect = QComboBox()
+        for a in self.corpus.attributes:
+            self.columnSelect.addItem(str(a))
+        self.columnSelect.currentIndexChanged.connect(self.summarizeColumn)
+
+        layout.addRow(QLabel('Column'),self.columnSelect)
+
+        self.detailFrame = QFrame()
+
+        layout.addRow(self.detailFrame)
+
+        self.setLayout(layout)
+
+        self.summarizeColumn()
+
+    def summarizeColumn(self):
+        for a in self.corpus.attributes:
+            if str(a) == self.columnSelect.currentText():
+                self.detailFrame.deleteLater()
+                self.detailFrame = QFrame()
+                layout = QFormLayout()
+                layout.addRow(QLabel('Type:'), QLabel(a.att_type.title()))
+                if a.att_type == 'numeric':
+                    l = QLabel('{0[0]:,}-{0[1]:,}'.format(a.range))
+                    layout.addRow(QLabel('Range:'), l)
+
+                elif a.att_type == 'factor':
+                    if len(a.range) > 300:
+                        l = QLabel('Too many levels to display')
+                    else:
+                        l = QLabel(', '.join(sorted(a.range)))
+                    l.setWordWrap(True)
+                    layout.addRow(QLabel('Factor levels:'), l)
+
+                elif a.att_type == 'tier':
+                    if a.name == 'transcription':
+                        layout.addRow(QLabel('Included segments:'), QLabel('All'))
+                    else:
+                        l = QLabel(', '.join(a.range))
+                        l.setWordWrap(True)
+                        layout.addRow(QLabel('Included segments:'), l)
+                self.detailFrame.setLayout(layout)
+                self.layout().addRow(self.detailFrame)
+
+
+class CorpusSummary(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setSizeConstraint(QLayout.SetFixedSize)
+
+        main = QFormLayout()
+
+        main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
+
+        if corpus.specifier is None:
+            main.addRow(QLabel('Feature system:'),QLabel(corpus.specifier.name))
+        else:
+            main.addRow(QLabel('Feature system:'),QLabel('None'))
+
+        main.addRow(QLabel('Number of words:'),QLabel(str(len(corpus))))
+
+        detailTabs = QTabWidget()
+
+        self.inventorySummary = InventorySummary(corpus)
+
+        detailTabs.addTab(self.inventorySummary,'Inventory')
+
+        self.attributeSummary = AttributeSummary(corpus)
+
+        detailTabs.addTab(self.attributeSummary,'Columns')
+        detailTabs.currentChanged.connect(self.hideWidgets)
+
+        main.addRow(detailTabs)
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame, alignment = Qt.AlignCenter)
+
+        self.doneButton = QPushButton('Done')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.doneButton)
+        self.doneButton.clicked.connect(self.accept)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Corpus summary')
+
+    def hideWidgets(self,index):
+        return
+        if index == 0:
+            self.inventorySummary.hide()
+            self.attributeSummary.hide()
+        elif index == 1:
+            self.inventorySummary.hide()
+            self.attributeSummary.show()
+        self.adjustSize()
+
+
+
+class AddWordDialog(QDialog):
+    def __init__(self, parent, corpus, word = None):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+        layout.setSizeConstraint(QLayout.SetFixedSize)
+
+        main = QFormLayout()
+
+        self.edits = {}
+
+        for a in self.corpus.attributes:
+            if a.att_type == 'tier' and a.name == 'transcription':
+                self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus.inventory)
+                self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
+                main.addRow(self.edits[a.name])
+            elif a.att_type == 'tier':
+                self.edits[a.name] = QLabel('Empty')
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'spelling':
+                self.edits[a.name] = QLineEdit()
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'numeric':
+                self.edits[a.name] = QLineEdit()
+                self.edits[a.name].setText('0')
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'factor':
+                self.edits[a.name] = QLineEdit()
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            if word is not None:
+                self.edits[a.name].setText(str(getattr(word,a.name)))
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+        if word is None:
+            self.createButton = QPushButton('Create word')
+            self.setWindowTitle('Create word')
+        else:
+            self.createButton = QPushButton('Save word changes')
+            self.setWindowTitle('Edit word')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+    def updateTiers(self, new_transcription):
+        transcription = new_transcription.split('.')
+        for a in self.corpus.attributes:
+            if a.att_type != 'tier':
+                continue
+            if a.name == 'transcription':
+                continue
+            text = '.'.join([x for x in transcription if x in a.range])
+            if text == '':
+                text = 'Empty'
+            self.edits[a.name].setText(text)
+
+    def accept(self):
+
+        kwargs = {}
+
+        for a in self.corpus.attributes:
+            if a.att_type == 'tier':
+                kwargs[a.name] = [x for x in self.edits[a.name].text().split('.') if x != '']
+                #if not kwargs[a.name]:
+                #    reply = QMessageBox.critical(self,
+                #            "Missing information", "Words must have a Transcription.".format(str(a)))
+                #    return
+
+                for i in kwargs[a.name]:
+                    if i not in self.corpus.inventory:
+                        reply = QMessageBox.critical(self,
+                            "Invalid information", "The column '{}' must contain only symbols in the corpus' inventory.".format(str(a)))
+                        return
+            elif a.att_type == 'spelling':
+                kwargs[a.name] = self.edits[a.name].text()
+                if not kwargs[a.name] and a.name == 'spelling':
+                    reply = QMessageBox.critical(self,
+                            "Missing information", "Words must have a spelling.".format(str(a)))
+                    return
+            elif a.att_type == 'numeric':
+                try:
+                    kwargs[a.name] = float(self.edits[a.name].text())
+                except ValueError:
+                    reply = QMessageBox.critical(self,
+                            "Invalid information", "The column '{}' must be a number.".format(str(a)))
+                    return
+
+            elif a.att_type == 'factor':
+                kwargs[a.name] = self.edits[a.name].text()
+        self.word = Word(**kwargs)
+        QDialog.accept(self)
+
 
 class AddAbstractTierDialog(QDialog):
     def __init__(self, parent, corpus):

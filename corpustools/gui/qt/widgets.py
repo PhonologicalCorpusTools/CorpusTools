@@ -285,7 +285,7 @@ class AttributeFilterWidget(QGroupBox):
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
         QGroupBox.__init__(self,'Tier',parent)
-
+        self.spellingEnabled = include_spelling
         layout = QVBoxLayout()
 
         self.tierSelect = QComboBox()
@@ -300,12 +300,25 @@ class TierWidget(QGroupBox):
         layout.addWidget(self.tierSelect)
         self.setLayout(layout)
 
+    def setSpellingEnabled(self, b):
+        self.spellingEnabled = b
+        if b:
+            if self.tierSelect.itemText(0) != 'Spelling':
+                self.tierSelect.insertItem(0,'Spelling')
+        else:
+            if self.tierSelect.itemText(0) == 'Spelling':
+                self.tierSelect.removeItem(0)
+
     def value(self):
         index = self.tierSelect.currentIndex()
+        if not self.spellingEnabled:
+            index += 1
         return self.atts[index].name
 
     def displayValue(self):
         index = self.tierSelect.currentIndex()
+        if not self.spellingEnabled:
+            index += 1
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
@@ -321,6 +334,7 @@ class PunctuationWidget(QGroupBox):
         col = 0
         for s in punctuation:
             btn = QPushButton(s)
+            btn.setAutoDefault(False)
             btn.setCheckable(True)
             btn.setAutoExclusive(False)
             btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
@@ -339,8 +353,10 @@ class PunctuationWidget(QGroupBox):
 
         buttonlayout = QHBoxLayout()
         self.checkAll = QPushButton('Check all')
+        self.checkAll.setAutoDefault(False)
         self.checkAll.clicked.connect(self.check)
         self.uncheckAll = QPushButton('Uncheck all')
+        self.uncheckAll.setAutoDefault(False)
         self.uncheckAll.clicked.connect(self.uncheck)
         buttonlayout.addWidget(self.checkAll, alignment = Qt.AlignLeft)
         buttonlayout.addWidget(self.uncheckAll, alignment = Qt.AlignLeft)
@@ -438,6 +454,7 @@ class DigraphWidget(QGroupBox):
         self.editField = QLineEdit()
         layout.addWidget(self.editField)
         self.button = QPushButton('Construct a digraph')
+        self.button.setAutoDefault(False)
         self.button.clicked.connect(self.construct)
         layout.addWidget(self.button)
         self.setLayout(layout)
@@ -631,12 +648,21 @@ class InventoryBox(QWidget):
         self.btnGroup.setExclusive(False)
         if len(consColumns) and len(vowColumns):
             box = QVBoxLayout()
+
+            box.setAlignment(Qt.AlignTop | Qt.AlignLeft)
             box.setSpacing(0)
             smallbox = QVBoxLayout()
+            smallbox.setSizeConstraint(QLayout.SetFixedSize)
+            smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
             cons = QGroupBox('Consonants')
+            cons.setFlat(True)
+            cons.setCheckable(True)
+            cons.setChecked(False)
+            cons.toggled.connect(self.showHideCons)
             consBox = QVBoxLayout()
-            consTable = InventoryTable()
-            consBox.addWidget(consTable)
+            self.consTable = InventoryTable()
+            self.consTable.hide()
+            consBox.addWidget(self.consTable)
             cons.setLayout(consBox)
 
             consColumns = [ x for x in self.consonantColumns if x in consColumns]
@@ -644,17 +670,17 @@ class InventoryBox(QWidget):
             consRows = [ x for x in self.consonantRows if x in consRows]
             consRowMapping = {x:i for i,x in enumerate(consRows)}
 
-            consTable.setColumnCount(len(consColumns))
-            consTable.setRowCount(len(consRows))
-            consTable.setHorizontalHeaderLabels(consColumns)
-            consTable.resizeColumnsToContents()
-            consTable.setVerticalHeaderLabels(consRows)
+            self.consTable.setColumnCount(len(consColumns))
+            self.consTable.setRowCount(len(consRows))
+            self.consTable.setHorizontalHeaderLabels(consColumns)
+            self.consTable.resizeColumnsToContents()
+            self.consTable.setVerticalHeaderLabels(consRows)
 
             for i in range(len(consColumns)):
                 for j in range(len(consRows)):
                     wid = QWidget()
                     wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    
+
                     b = QGridLayout()
                     b.setAlignment(Qt.AlignCenter)
                     b.setContentsMargins(0, 0, 0, 0)
@@ -678,24 +704,29 @@ class InventoryBox(QWidget):
                     #r.hide()
                     b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
                     wid.setLayout(b)
-                    consTable.setCellWidget(j,i,wid)
+                    self.consTable.setCellWidget(j,i,wid)
 
             vow = QGroupBox('Vowels')
+            vow.setFlat(True)
+            vow.setCheckable(True)
+            vow.setChecked(False)
+            vow.toggled.connect(self.showHideVow)
             vowBox = QGridLayout()
             vowBox.setAlignment(Qt.AlignTop)
-            vowTable = InventoryTable()
-            vowBox.addWidget(vowTable,0, Qt.AlignLeft|Qt.AlignTop)
+            self.vowTable = InventoryTable()
+            self.vowTable.hide()
+            vowBox.addWidget(self.vowTable,0, Qt.AlignLeft|Qt.AlignTop)
             vow.setLayout(vowBox)
             vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
             vowColMapping = {x:i for i,x in enumerate(vowColumns)}
             vowRows = [ x for x in self.vowelRows if x in vowRows]
             vowRowMapping = {x:i for i,x in enumerate(vowRows)}
 
-            vowTable.setColumnCount(len(vowColumns))
-            vowTable.setRowCount(len(vowRows) + 1)
-            vowTable.setHorizontalHeaderLabels(vowColumns)
-            vowTable.resizeColumnsToContents()
-            vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
+            self.vowTable.setColumnCount(len(vowColumns))
+            self.vowTable.setRowCount(len(vowRows) + 1)
+            self.vowTable.setHorizontalHeaderLabels(vowColumns)
+            self.vowTable.resizeColumnsToContents()
+            self.vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
 
             for i in range(len(vowColumns)):
                 for j in range(len(vowRows)):
@@ -725,19 +756,23 @@ class InventoryBox(QWidget):
                     b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
 
                     wid.setLayout(b)
-                    vowTable.setCellWidget(j,i,wid)
+                    self.vowTable.setCellWidget(j,i,wid)
 
-            vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
-            wid = QWidget()
-            wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+            self.vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
+            diphWid = QWidget()
+            diphWid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
             diphBox = QHBoxLayout()
-            diphBox.setAlignment(Qt.AlignCenter)
+            #diphBox.setAlignment(Qt.AlignCenter)
             diphBox.setContentsMargins(0, 0, 0, 0)
             diphBox.setSpacing(0)
-            wid.setLayout(diphBox)
-            vowTable.setCellWidget(len(vowRows),0,wid)
+            diphWid.setLayout(diphBox)
+            self.vowTable.setCellWidget(len(vowRows),0,diphWid)
 
             unk = QGroupBox('Other')
+            unk.setFlat(True)
+            #unk.setCheckable(True)
+            #unk.setChecked(False)
+            #unk.toggled.connect(self.showHideUnk)
             unkBox = QGridLayout()
             unk.setLayout(unkBox)
 
@@ -768,14 +803,14 @@ class InventoryBox(QWidget):
                         colTwo = 0
                     else:
                         colTwo = 1
-                    cell = vowTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
+                    cell = self.vowTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
 
                     cell.show()
                     cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
                     cell.setMinimumHeight(cell.sizeHint().height())
                     #vowTable.cellWidget(row,col).setMinimumSize(cell.sizeHint())
-  
-                    
+
+
                 elif cat[0] == 'Consonant':
                     col = consColMapping[cat[1]]
                     row = consRowMapping[cat[2]]
@@ -783,19 +818,20 @@ class InventoryBox(QWidget):
                         colTwo = 0
                     else:
                         colTwo = 1
-                    cell = consTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
+                    cell = self.consTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
 
                     cell.show()
                     cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
                     #cell.setMinimumHeight(cell.sizeHint().height())
-                    
+
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
-            consTable.resize()
-            vowTable.resize()
-            smallbox.addWidget(cons)
 
-            smallbox.addWidget(vow)
+            self.consTable.resize()
+            self.vowTable.resize()
+            smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
+
+            smallbox.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
             b = QFrame()
             b.setLayout(smallbox)
             box.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
@@ -806,7 +842,7 @@ class InventoryBox(QWidget):
             row = 0
             col = 0
             for s in inventory:
-                btn = QPushButton(s.symbol)
+                btn = SegmentButton(s.symbol)
                 btn.setCheckable(True)
                 btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
                 btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
@@ -819,6 +855,18 @@ class InventoryBox(QWidget):
                     row += 1
 
         self.setLayout(box)
+
+    def showHideCons(self, checked):
+        if checked:
+            self.consTable.show()
+        else:
+            self.consTable.hide()
+
+    def showHideVow(self, checked):
+        if checked:
+            self.vowTable.show()
+        else:
+            self.vowTable.hide()
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
@@ -847,6 +895,52 @@ class InventoryBox(QWidget):
                     value.append(b.text())
             return value
 
+class TranscriptionWidget(QGroupBox):
+    transcriptionChanged = Signal(object)
+    def __init__(self, title,inventory,parent=None):
+        QGroupBox.__init__(self,title,parent)
+        self.inventory = inventory
+
+        layout = QFormLayout()
+
+        self.transEdit = QLineEdit()
+        self.transEdit.textChanged.connect(self.transcriptionChanged.emit)
+        self.showInv = QPushButton('Show inventory')
+        self.showInv.clicked.connect(self.showHide)
+        layout.addRow(self.transEdit,self.showInv)
+
+        self.segments = InventoryBox('Inventory',self.inventory)
+        for btn in self.segments.btnGroup.buttons():
+            btn.setCheckable(False)
+            btn.clicked.connect(self.addCharacter)
+        self.segments.hide()
+        layout.addRow(self.segments)
+
+        self.setLayout(layout)
+
+    def text(self):
+        return self.transEdit.text()
+
+    def setText(self, text):
+        self.transEdit.setText(text)
+
+    def addCharacter(self):
+        t = self.transEdit.text()
+        if t != '':
+            t += '.'
+        self.transEdit.setText(t+self.sender().text())
+
+    def showHide(self):
+        if self.segments.isHidden():
+            self.segments.show()
+            self.showInv.setText('Hide inventory')
+        else:
+            self.segments.hide()
+            self.showInv.setText('Show inventory')
+        self.updateGeometry()
+
+
+
 class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
         QWidget.__init__(self,parent)
@@ -855,10 +949,13 @@ class FeatureBox(QWidget):
         self.inspectInventory()
         layout = QHBoxLayout()
 
+        layout.setSizeConstraint(QLayout.SetFixedSize)
+
         self.featureList = QListWidget()
 
         for f in self.features:
             self.featureList.addItem(f)
+        self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+10)
         layout.addWidget(self.featureList)
 
         buttonLayout = QVBoxLayout()
@@ -884,6 +981,7 @@ class FeatureBox(QWidget):
         layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
 
         self.envList = QListWidget()
+        self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
         self.envList.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         layout.addWidget(self.envList)
@@ -923,6 +1021,8 @@ class SegmentPairDialog(QDialog):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
+
+        layout.setSizeConstraint(QLayout.SetFixedSize)
 
         segFrame = QFrame()
 
@@ -1042,13 +1142,21 @@ class EnvironmentDialog(QDialog):
 
         layout = QVBoxLayout()
 
+        layout.setSizeConstraint(QLayout.SetFixedSize)
+
+        layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
         self.lhsEnvFrame = QGroupBox('Left hand side')
 
         self.rhsEnvFrame = QGroupBox('Right hand side')
 
         self.lhsEnvLayout = QVBoxLayout()
 
+        self.lhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
         self.rhsEnvLayout = QVBoxLayout()
+
+        self.rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
         if parent.name == 'environment':
             self.lhsEnvType = QComboBox()
