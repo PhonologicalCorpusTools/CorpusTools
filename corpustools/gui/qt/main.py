@@ -427,6 +427,7 @@ class MainWindow(QMainWindow):
         dialog = AddWordDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addWord(dialog.word)
+            self.enableSave()
 
     def toggleWarnings(self):
         self.showWarnings = not self.showWarnings

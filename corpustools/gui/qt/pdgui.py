@@ -97,6 +97,7 @@ class PDDialog(FunctionDialog):
         pdlayout.addWidget(self.segPairWidget)
 
         self.envWidget = EnvironmentSelectWidget(corpus.inventory)
+        self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
 
 
