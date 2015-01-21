@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):
         dialog = PPDialog(self, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
-            if self.PPWindow is not None and dialog.update and self.NDWindow.isVisible():
+            if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
                 self.PPWindow.table.model().addRows(dialog.results)
             else:
                 dataModel = ResultsModel(dialog.header,dialog.results, self.settings)

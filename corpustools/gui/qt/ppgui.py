@@ -68,7 +68,8 @@ class PPDialog(FunctionDialog):
                 'Type or token']
 
     _about = [('This function calculates the phonotactic probability '
-                    'of a word'),
+                    'of a word based on positional probabilities of single '
+                    'segments and biphones derived from a corpus.'),
                     '',
                     'Coded by Michael McAuliffe',
                     '',
@@ -90,14 +91,13 @@ class PPDialog(FunctionDialog):
         pplayout = QHBoxLayout()
 
         algEnabled = {'Vitevitch && Luce':True}
-        self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
+        self.algorithmWidget = RadioSelectWidget('Phonotactic probability algorithm',
                                             OrderedDict([
                                             ('Vitevitch && Luce','vitevitch'),
                                             ]),
                                             {'Vitevitch && Luce':self.vitevitchSelected,
                                             },
                                             algEnabled)
-
 
         pplayout.addWidget(self.algorithmWidget)
 
@@ -156,8 +156,9 @@ class PPDialog(FunctionDialog):
         optionLayout.addWidget(self.typeTokenWidget)
 
         self.probabilityTypeWidget = RadioSelectWidget('Probability type',
-                                            OrderedDict([('Single-phone','unigram'),
-                                            ('Biphone','bigram')]))
+                                            OrderedDict([
+                                            ('Biphone','bigram'),
+                                            ('Single-phone','unigram')]))
 
         optionLayout.addWidget(self.probabilityTypeWidget)
 
@@ -170,6 +171,7 @@ class PPDialog(FunctionDialog):
 
         self.layout().insertWidget(0,ppFrame)
 
+        self.algorithmWidget.initialClick()
         self.algorithmWidget.initialClick()
         if self.showToolTips:
 
@@ -296,7 +298,7 @@ class PPDialog(FunctionDialog):
             w, pp = result
             self.results.append([str(w),
                         self.tierWidget.displayValue(), pp,
-                        self.algorithmWidget.displayValue(),
+                        self.algorithmWidget.displayValue().replace('&&','&'),
                         self.probabilityTypeWidget.displayValue(),
                         self.typeTokenWidget.value()])
 

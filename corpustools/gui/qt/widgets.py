@@ -285,6 +285,7 @@ class AttributeFilterWidget(QGroupBox):
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
         QGroupBox.__init__(self,'Tier',parent)
+        self.spellingIncluded = include_spelling
         self.spellingEnabled = include_spelling
         layout = QVBoxLayout()
 
@@ -311,13 +312,13 @@ class TierWidget(QGroupBox):
 
     def value(self):
         index = self.tierSelect.currentIndex()
-        if not self.spellingEnabled:
+        if not self.spellingEnabled and self.spellingIncluded:
             index += 1
         return self.atts[index].name
 
     def displayValue(self):
         index = self.tierSelect.currentIndex()
-        if not self.spellingEnabled:
+        if not self.spellingEnabled and self.spellingIncluded:
             index += 1
         return self.atts[index].display_name
 
