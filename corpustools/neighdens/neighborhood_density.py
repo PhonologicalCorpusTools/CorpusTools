@@ -6,7 +6,7 @@ from corpustools.symbolsim.phono_align import Aligner
 
 def neighborhood_density(corpus, query, sequence_type = 'transcription',
             algorithm = 'edit_distance', max_distance = 1,
-            tiername = 'transcription', count_what='type', trans_delimiter=None,
+            tiername = 'transcription', count_what='type',
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of a particular word in the corpus.
     Parameters
@@ -110,6 +110,6 @@ def find_mutation_minpairs(corpus, query,
             continue
         matches.append(str(getattr(w, sequence_type)))
 
-    neighbors = list(set(matches)-set([str(getattr(query_word, sequence_type))]))
+    neighbors = list(set(matches)-set([str(getattr(query, sequence_type))]))
     return (len(neighbors), neighbors)
 
