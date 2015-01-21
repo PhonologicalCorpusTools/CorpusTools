@@ -284,6 +284,8 @@ class DiscourseModel(BaseCorpusTableModel):
         #    i.setFlags(i.flags() | (not Qt.ItemIsEditable))
         #    self.appendRow(i)
 
+        self.sort(2,Qt.AscendingOrder)
+
     def rowsToTimes(self,rows):
         return [self.rows[x] for x in rows]
 

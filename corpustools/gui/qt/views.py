@@ -497,6 +497,11 @@ class DiscourseView(QWidget):
         self.text.setContextMenuPolicy(Qt.CustomContextMenu)
         self.text.customContextMenuRequested.connect(self.showMenu)
         self.table = TableWidget(self)
+        self.table.setSortingEnabled(False)
+        try:
+            self.table.horizontalHeader().setSectionsClickable(False)
+        except AttributeError:
+            self.table.horizontalHeader().setClickable(False)
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.showMenu)
         self.table.hide()
