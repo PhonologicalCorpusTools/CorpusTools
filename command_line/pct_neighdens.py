@@ -45,15 +45,16 @@ def main():
 
     if args.find_mutation_minpairs:
         query = ensure_query_is_word(args.query, corpus, args.sequence_type, args.trans_delimiter)
-        matches = find_mutation_minpairs(corpus, query, sequence_type=args.sequence_type, trans_delimiter=args.trans_delimiter)
-        for match in matches:
+        matches = find_mutation_minpairs(corpus, query, sequence_type=args.sequence_type)
+        for match in matches[1]:
             print(match)
-        print('Total number of matches: {}'.format(str(len(matches))))
+        print('Total number of matches: {}'.format(str(matches[0])))
     else:
         try: # read query as a file name
             with open(args.query) as queryfile:
                 queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
-            results = [neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, trans_delimiter=args.trans_delimiter) for query in queries]
+                queries = [ensure_query_is_word(q, corpus, args.sequence_type, args.trans_delimiter) for q in queries]
+            results = [neighborhood_density(corpus, q, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what) for q in queries]
             if args.outfile:
                 with open(args.outfile, 'w') as outfile:
                     for q, r in zip(queries, results):
@@ -64,11 +65,11 @@ def main():
 
         except FileNotFoundError: # read query as a single word
             query = ensure_query_is_word(args.query, corpus, args.sequence_type, args.trans_delimiter)
-            result = neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what, trans_delimiter=args.trans_delimiter)
+            result = neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what)
 
             if args.outfile:
                 with open(args.outfile, 'w') as outfile:
-                    outfile.write('{}\t{}'.format(q, str(result[0])) + ''.join(['\t{}'.format(str(n)) for n in result[1]]))
+                    outfile.write('{}\t{}'.format(query, str(result[0])) + ''.join(['\t{}'.format(str(n)) for n in result[1]]))
             else:
                 print('No output file name provided.')
                 print('The neighborhood density of the given form is {}. For a list of neighbors, please provide an output file name.'.format(str(result[0])))

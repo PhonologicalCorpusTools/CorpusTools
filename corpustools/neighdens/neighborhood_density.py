@@ -25,9 +25,7 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
         The tiername to calculate distance on
     count_what : str
         If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency
-    trans_delimiter : str
-        If not None, splits the query by this str to make a transcription/spelling list for the query's Word object. If None, split everywhere.
-
+    
     Returns
     -------
     float
@@ -81,8 +79,6 @@ def find_mutation_minpairs(corpus, query,
         The word whose minimal pairs to find
     sequence_type : str
         Tier (or spelling or transcription) on which to search for minimal pairs
-    trans_delimiter : str
-        If not None, splits the query by this str to make a transcription/spelling list for the query's Word object. If None, split everywhere.
 
     Returns
     -------
