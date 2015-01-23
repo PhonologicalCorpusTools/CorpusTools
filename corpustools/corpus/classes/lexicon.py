@@ -467,10 +467,6 @@ class FeatureMatrix(object):
         Make sure that all segments in the matrix have all the features.
         If not, add an unspecified value for that feature to them.
         """
-        for v in self.possible_values:
-            if v not in ['+','-','.']:
-                default_value = v
-                break
         #dictionary
         for k,v in self.matrix.items():
             for f in self._features:
@@ -515,7 +511,7 @@ class FeatureMatrix(object):
         s.specify(feat_spec)
         self.matrix[seg] = s
 
-    def add_feature(self,feature):
+    def add_feature(self,feature, default = None):
         """
         Add a feature to the feature system
 
@@ -527,7 +523,13 @@ class FeatureMatrix(object):
         """
 
         self._features.update({feature})
-        self.validate()
+        if default is None:
+            self.validate()
+        else:
+            for k,v in self.matrix.items():
+                for f in self._features:
+                    if f not in v:
+                        self.matrix[k][f] = default
 
     @property
     def segments(self):

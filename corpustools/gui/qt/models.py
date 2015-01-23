@@ -739,8 +739,8 @@ class FeatureSystemTableModel(BaseTableModel):
         self.generateData()
         self.layoutChanged.emit()
 
-    def addFeature(self,feat):
+    def addFeature(self,feat, default):
         self.layoutAboutToBeChanged.emit()
-        self.specifier.add_feature(feat)
+        self.specifier.add_feature(feat,default=default)
         self.generateData()
         self.layoutChanged.emit()

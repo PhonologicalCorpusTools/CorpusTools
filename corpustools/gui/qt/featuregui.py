@@ -197,6 +197,13 @@ class AddFeatureDialog(QDialog):
         featureLayout = QFormLayout()
         self.featureEdit = QLineEdit()
         featureLayout.addRow('Feature name',self.featureEdit)
+        self.defaultSelect = QComboBox()
+        self.defaultSelect.addItem(specifier.default_value)
+        for i,v in enumerate(specifier.possible_values):
+            if v == specifier.default_value:
+                continue
+            self.defaultSelect.addItem(v)
+        featureLayout.addRow('Default value for this feature:',self.defaultSelect)
 
         featureFrame = QFrame()
         featureFrame.setLayout(featureLayout)
@@ -222,6 +229,7 @@ class AddFeatureDialog(QDialog):
 
     def accept(self):
         self.featureName = self.featureEdit.text()
+        self.defaultValue = self.defaultSelect.currentText()
         if self.featureName == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a feature name.")
@@ -475,7 +483,7 @@ class EditFeatureMatrixDialog(QDialog):
     def addFeature(self):
         dialog = AddFeatureDialog(self,self.table.model().specifier)
         if dialog.exec_():
-            self.table.model().addFeature(dialog.featureName)
+            self.table.model().addFeature(dialog.featureName, dialog.defaultValue)
 
     def hide(self):
         self.table.model().filter(self.corpus.inventory)
