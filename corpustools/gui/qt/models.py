@@ -31,6 +31,17 @@ class BaseTableModel(QAbstractTableModel):
         row = index.row()
         col = index.column()
         data = self.rows[row][col]
+        if isinstance(data,float):
+            data = str(round(data,self.settings['sigfigs']))
+        elif isinstance(data,bool):
+            if data:
+                data = 'Yes'
+            else:
+                data = 'No'
+        elif isinstance(data,list):
+            data = ', '.join(data)
+        else:
+            data = str(data)
 
         return data
 
@@ -425,23 +436,6 @@ class ResultsModel(BaseTableModel):
         self.columns = header
 
         self.rows = results
-
-    def data(self, index, role=None):
-        if not index.isValid():
-            return None
-        elif role != Qt.DisplayRole:
-            return None
-        data = self.rows[index.row()][index.column()]
-        if isinstance(data,float):
-            data = str(round(data,self.settings['sigfigs']))
-        elif isinstance(data,bool):
-            if data:
-                data = 'Yes'
-            else:
-                data = 'No'
-        else:
-            data = str(data)
-        return data
 
 
 

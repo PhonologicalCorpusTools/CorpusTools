@@ -913,7 +913,10 @@ class AddWordDialog(QDialog):
 
         for a in self.corpus.attributes:
             if a.att_type == 'tier':
-                kwargs[a.name] = [x for x in self.edits[a.name].text().split('.') if x != '']
+                text = self.edits[a.name].text()
+                if text == 'Empty':
+                    text = ''
+                kwargs[a.name] = [x for x in text.split('.') if x != '']
                 #if not kwargs[a.name]:
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a Transcription.".format(str(a)))
@@ -926,10 +929,12 @@ class AddWordDialog(QDialog):
                         return
             elif a.att_type == 'spelling':
                 kwargs[a.name] = self.edits[a.name].text()
-                if not kwargs[a.name] and a.name == 'spelling':
-                    reply = QMessageBox.critical(self,
-                            "Missing information", "Words must have a spelling.".format(str(a)))
-                    return
+                if kwargs[a.name] == '' and a.name == 'spelling':
+                    kwargs[a.name] = None
+                #if not kwargs[a.name] and a.name == 'spelling':
+                #    reply = QMessageBox.critical(self,
+                #            "Missing information", "Words must have a spelling.".format(str(a)))
+                #    return
             elif a.att_type == 'numeric':
                 try:
                     kwargs[a.name] = float(self.edits[a.name].text())

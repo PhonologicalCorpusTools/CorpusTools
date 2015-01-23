@@ -301,14 +301,13 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def stringSim(self):
-        dialog = SSDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = SSDialog(self, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
                 self.SSWindow.table.model().addData(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.SSWindow = ResultsWindow('String similarity results',dataModel,self)
+                self.SSWindow = ResultsWindow('String similarity results',dialog,self)
                 self.SSWindow.show()
 
     @check_for_empty_corpus
@@ -320,8 +319,7 @@ class MainWindow(QMainWindow):
             if self.FAWindow is not None and dialog.update and self.FAWindow.isVisible():
                 self.FAWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.FAWindow = ResultsWindow('Frequency of alternation results',dataModel,self)
+                self.FAWindow = ResultsWindow('Frequency of alternation results',dialog,self)
                 self.FAWindow.show()
 
     @check_for_empty_corpus
@@ -333,8 +331,7 @@ class MainWindow(QMainWindow):
             if self.PDWindow is not None and self.PDWindow.isVisible():
                 self.PDWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.PDWindow = ResultsWindow('Predictability of distribution results',dataModel,self)
+                self.PDWindow = ResultsWindow('Predictability of distribution results',dialog,self)
                 self.PDWindow.show()
 
     @check_for_empty_corpus
@@ -346,8 +343,7 @@ class MainWindow(QMainWindow):
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
                 self.FLWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.FLWindow = ResultsWindow('Functional load results',dataModel,self)
+                self.FLWindow = ResultsWindow('Functional load results',dialog,self)
                 self.FLWindow.show()
 
     @check_for_empty_corpus
@@ -359,8 +355,7 @@ class MainWindow(QMainWindow):
             if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
                 self.MIWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.MIWindow = ResultsWindow('Mutual information results',dataModel,self)
+                self.MIWindow = ResultsWindow('Mutual information results',dialog,self)
                 self.MIWindow.show()
 
     def acousticSim(self):
@@ -370,8 +365,7 @@ class MainWindow(QMainWindow):
             if self.ASWindow is not None and dialog.update and self.ASWindow.isVisible():
                 self.ASWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.ASWindow = ResultsWindow('Acoustic similarity results',dataModel,self)
+                self.ASWindow = ResultsWindow('Acoustic similarity results',dialog,self)
                 self.ASWindow.show()
 
     @check_for_empty_corpus
@@ -382,8 +376,7 @@ class MainWindow(QMainWindow):
             if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
                 self.NDWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.NDWindow = ResultsWindow('Neighborhood density results',dataModel,self)
+                self.NDWindow = ResultsWindow('Neighborhood density results',dialog,self)
                 self.NDWindow.show()
         elif result:
             if self.settings['autosave']:
@@ -401,8 +394,7 @@ class MainWindow(QMainWindow):
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
                 self.PPWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.PPWindow = ResultsWindow('Phonotactic probability results',dataModel,self)
+                self.PPWindow = ResultsWindow('Phonotactic probability results',dialog,self)
                 self.PPWindow.show()
         elif result:
             if self.settings['autosave']:
@@ -419,8 +411,7 @@ class MainWindow(QMainWindow):
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
                 self.PhonoSearchWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header,dialog.results, self.settings)
-                self.PhonoSearchWindow = ResultsWindow('Phonological search results',dataModel,self)
+                self.PhonoSearchWindow = ResultsWindow('Phonological search results',dialog,self)
                 self.PhonoSearchWindow.show()
 
     def createWord(self):

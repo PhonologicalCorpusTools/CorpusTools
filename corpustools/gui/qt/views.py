@@ -4,7 +4,7 @@ from corpustools.config import TMP_DIR
 
 from .imports import *
 
-from .models import VariantModel
+from .models import VariantModel, ResultsModel
 from .windows import FunctionWorker
 
 class AudioWorker(FunctionWorker):
@@ -700,10 +700,11 @@ class TreeWidget(SubTreeView):
         lexicon = self.model().createLexicon(index)
         self.newLexicon.emit(lexicon)
 
-class ResultsWindow(QWidget):
-    def __init__(self, title, dataModel, parent=None):
-        QWidget.__init__(self)#, parent)
-
+class ResultsWindow(QDialog):
+    def __init__(self, title, dialog, parent):
+        QDialog.__init__(self,parent = parent)
+        self.dialog = dialog
+        dataModel = ResultsModel(self.dialog.header,self.dialog.results, self.parent().settings)
         layout = QVBoxLayout()
         self.table = TableWidget()
         self.table.setModel(dataModel)
@@ -712,11 +713,16 @@ class ResultsWindow(QWidget):
         except AttributeError:
             self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
         layout.addWidget(self.table)
-
+        self.aclayout = QHBoxLayout()
+        self.redoButton = QPushButton('Reopen function dialog')
+        self.redoButton.clicked.connect(self.redo)
         self.saveButton = QPushButton('Save to file')
         self.saveButton.clicked.connect(self.save)
-        layout.addWidget(self.saveButton)
-        #frame = QFrame()
+        self.aclayout.addWidget(self.redoButton)
+        self.aclayout.addWidget(self.saveButton)
+        acframe = QFrame()
+        acframe.setLayout(self.aclayout)
+        layout.addWidget(acframe)
         self.setLayout(layout)
         #self.setWidget(frame)
         self.table.resizeColumnsToContents()
@@ -724,6 +730,16 @@ class ResultsWindow(QWidget):
         self.table.adjustSize()
         self.setMaximumWidth(self.table.calcWidth()+41)
         self.resize(self.maximumWidth(),400)
+
+    def redo(self):
+        if self.dialog.exec_():
+            if self.dialog.update:
+                self.table.model().addRows(self.dialog.results)
+            else:
+                dataModel = ResultsModel(self.dialog.header,self.dialog.results, self.parent().settings)
+                self.table.setModel(dataModel)
+        self.raise_()
+        self.activateWindow()
 
     def save(self):
         filename = QFileDialog.getSaveFileName(self,'Choose save file',
@@ -734,5 +750,22 @@ class ResultsWindow(QWidget):
             with open(filename[0], mode='w', encoding='utf-8') as f:
                 writer = csv.writer(f, delimiter='\t')
                 writer.writerow(self.table.model().columns)
-                for row in self.table.model().results:
+                for row in self.table.model().rows:
                     writer.writerow(row)
+
+class PhonoSearchResults(ResultsWindow):
+    def __init__(self, title, dataModel, parent=None):
+        ResultsWindow.__init__(self, title, dataModel, parent)
+        self.summarized = True
+        self.summaryButton = QPushButton('Show individual results')
+        self.summaryButton.clicked.connect(self.summaryDetail)
+        self.aclayout.addWidget(self.summaryButton)
+
+    def summaryDetail(self):
+        if self.summarized:
+            self.table.model().setSummarized(True)
+            self.summaryButton.setText('Show individual results')
+        else:
+            self.table.model().setSummarized(False)
+            self.summaryButton.setText('Show summary results')
+        self.summarized = not self.summarized

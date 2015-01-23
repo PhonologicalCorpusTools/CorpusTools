@@ -8,13 +8,19 @@ from corpustools.symbolsim.io import read_pairs_file
 
 from .widgets import RadioSelectWidget, FileWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
+from .corpusgui import AddWordDialog
 
 class SSWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         try:
-            self.results = string_similarity(**kwargs)
+            corpus = kwargs.pop('corpusModel').corpus
+            query = kwargs.pop('query')
+            alg = kwargs.pop('algorithm')
+            self.results = string_similarity(corpus,
+                                        query,alg,**kwargs)
         except Exception as e:
+            print(e)
             self.errorEncountered.emit(e)
             return
         if self.stopped:
@@ -52,20 +58,20 @@ class SSDialog(FunctionDialog):
 
     name = 'string similarity'
 
-    def __init__(self, parent, corpus, showToolTips):
+    def __init__(self, parent, corpusModel, showToolTips):
         FunctionDialog.__init__(self, parent, SSWorker())
 
-        self.corpus = corpus
+        self.corpusModel = corpusModel
         self.showToolTips = showToolTips
 
-        if not self.corpus.has_transcription:
+        if not self.corpusModel.corpus.has_transcription:
             self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
 
         sslayout = QHBoxLayout()
 
         algEnabled = {'Khorsi':True,
                     'Edit distance':True,
-                    'Phonological edit distance':self.corpus.has_transcription}
+                    'Phonological edit distance':self.corpusModel.corpus.has_transcription}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([('Edit distance','edit_distance'),
                                             ('Phonological edit distance','phono_edit_distance'),
@@ -86,24 +92,50 @@ class SSDialog(FunctionDialog):
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
+
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
+        self.oneNonwordLabel = QLabel('None created')
+        self.oneNonword = None
+        self.oneNonwordButton = QPushButton('Create word/nonword')
+        self.oneNonwordButton.clicked.connect(self.createOneNonword)
+
         self.twoWordRadio = QRadioButton('Compare a single pair of words to each other')
         self.twoWordRadio.clicked.connect(self.twoWordsSelected)
         self.wordOneEdit = QLineEdit()
         self.wordOneEdit.textChanged.connect(self.twoWordRadio.click)
+        self.nonwordOneLabel = QLabel('None created')
+        self.nonwordOne = None
+        self.nonwordOneButton = QPushButton('Create word/nonword')
+        self.nonwordOneButton.clicked.connect(self.createNonwordOne)
         self.wordTwoEdit = QLineEdit()
         self.wordTwoEdit.textChanged.connect(self.twoWordRadio.click)
+        self.nonwordTwoLabel = QLabel('None created')
+        self.nonwordTwo = None
+        self.nonwordTwoButton = QPushButton('Create word/nonword')
+        self.nonwordTwoButton.clicked.connect(self.createNonwordTwo)
+
         self.fileRadio = QRadioButton('Compare a list of pairs of words')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileWidget = FileWidget('Select a word pairs file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
 
+        self.clearButton = QPushButton('Clear all created words/nonwords')
+        self.clearButton.clicked.connect(self.clearCreated)
+
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
+        vbox.addRow(self.oneNonwordRadio)
+        vbox.addRow(self.oneNonwordLabel,self.oneNonwordButton)
+
         vbox.addRow(self.twoWordRadio)
-        vbox.addRow('Word 1:',self.wordOneEdit)
-        vbox.addRow('Word 2:',self.wordTwoEdit)
+        vbox.addRow('Word 1 spelling (if in corpus):',self.wordOneEdit)
+        vbox.addRow(self.nonwordOneLabel,self.nonwordOneButton)
+        vbox.addRow('Word 2 spelling (if in corpus):',self.wordTwoEdit)
+        vbox.addRow(self.nonwordTwoLabel,self.nonwordTwoButton)
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
+        vbox.addRow(self.clearButton)
 
         compFrame.setLayout(vbox)
 
@@ -113,7 +145,7 @@ class SSDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = TierWidget(corpus,include_spelling=True)
+        self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
 
         optionLayout.addWidget(self.tierWidget)
 
@@ -182,9 +214,49 @@ class SSDialog(FunctionDialog):
                                 ' filter out words that are highly different from each other.'
             "</FONT>"))
 
+    def clearCreated(self):
+        self.oneNonWord = None
+        self.nonwordOne = None
+        self.nonwordTwo = None
+        self.oneNonwordLabel.setText('None created')
+        self.nonwordOneLabel.setText('None created')
+        self.nonwordTwoLabel.setText('None created')
+        self.wordOneEdit.setEnabled(True)
+        self.wordTwoEdit.setEnabled(True)
+
+
+    def createOneNonword(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.oneNonword = dialog.word
+            self.oneNonwordLabel.setText('{} ({})'.format(str(self.oneNonword),
+                                                          str(self.oneNonword.transcription)))
+            self.oneNonwordRadio.click()
+
+    def createNonwordOne(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.nonwordOne = dialog.word
+            self.nonwordOneLabel.setText('{} ({})'.format(str(self.nonwordOne),
+                                                          str(self.nonwordOne.transcription)))
+            self.twoWordRadio.click()
+            self.wordOneEdit.setEnabled(False)
+
+    def createNonwordTwo(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.nonwordTwo = dialog.word
+            self.nonwordTwoLabel.setText('{} ({})'.format(str(self.nonwordTwo),
+                                                          str(self.nonwordTwo.transcription)))
+            self.twoWordRadio.click()
+            self.wordTwoEdit.setEnabled(False)
+
 
     def oneWordSelected(self):
         self.compType = 'one'
+
+    def oneNonwordSelected(self):
+        self.compType = 'nonword'
 
     def twoWordsSelected(self):
         self.compType = 'two'
@@ -207,7 +279,7 @@ class SSDialog(FunctionDialog):
                 max_rel = float(self.maxEdit.text())
             except ValueError:
                 pass
-        kwargs = {'corpus':self.corpus,
+        kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': self.algorithmWidget.value(),
                 'sequence_type':self.tierWidget.value(),
                 'count_what': self.typeTokenWidget.value(),
@@ -225,43 +297,63 @@ class SSDialog(FunctionDialog):
                         "Missing information", "Please specify a word.")
                 return
             try:
-                word = self.corpus.find(text)
+                word = self.corpusModel.corpus.find(text)
             except KeyError:
-                if kwargs['sequence_type'] == 'spelling':
-                    word = Word(spelling = text)
-                else:
-                    reply = QMessageBox.critical(self,
-                        "Invalid information", "'{}' was not found in corpus.".format(text))
-                    return
-            kwargs['query'] = word.spelling
+                reply = QMessageBox.critical(self,
+                    "Invalid information", "'{}' was not found in corpus.".format(text))
+                return
+            kwargs['query'] = word
+        elif self.compType == 'nonword':
+
+            if self.oneNonword is None:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please create a word/nonword.")
+                return
+            if not getattr(self.oneNonword,kwargs['sequence_type']):
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
+                return
+            kwargs['query'] = self.oneNonword
         elif self.compType == 'two':
             textOne = self.wordOneEdit.text()
             textTwo = self.wordTwoEdit.text()
-            if not textOne or not textTwo:
-                reply = QMessageBox.critical(self,
-                        "Missing information", "Please specify both words.")
-                return
-            try:
-                wordOne = self.corpus.find(textOne)
-            except KeyError:
-                from corpustools.corpus.classes import Word
-                if kwargs['sequence_type'] == 'spelling':
-                    wordOne = Word(spelling = textOne)
-                else:
+            if self.nonwordOne is not None:
+                if not getattr(self.nonwordOne,kwargs['sequence_type']):
+                    reply = QMessageBox.critical(self,
+                            "Missing information", "Please recreate word/nonword 1 with '{}' specified.".format(self.tierWidget.displayValue()))
+                    return
+                wordone = self.nonwordOne
+            elif textOne:
+                try:
+                    wordOne = self.corpusModel.corpus.find(textOne)
+                except KeyError:
                     reply = QMessageBox.critical(self,
                         "Invalid information", "'{}' was not found in corpus.".format(textOne))
                     return
-            try:
-                wordTwo = self.corpus.find(textTwo)
-            except KeyError:
-                if kwargs['sequence_type'] == 'spelling':
-                    wordTwo = Word(spelling = textTwo)
-                else:
+            elif not textOne:
+                reply = QMessageBox.critical(self,
+                            "Missing information", "Please specify either a spelling for word one or create a new word.")
+                return
+
+            if self.nonwordTwo is not None:
+                if not getattr(self.nonwordTwo,kwargs['sequence_type']):
+                    reply = QMessageBox.critical(self,
+                            "Missing information", "Please recreate word/nonword 2 with '{}' specified.".format(self.tierWidget.displayValue()))
+                    return
+                wordTwo = self.nonwordTwo
+            elif textTwo:
+                try:
+                    wordTwo = self.corpusModel.corpus.find(textTwo)
+                except KeyError:
                     reply = QMessageBox.critical(self,
                         "Invalid information", "'{}' was not found in corpus.".format(textTwo))
                     return
+            elif not textTwo:
+                reply = QMessageBox.critical(self,
+                            "Missing information", "Please specify either a spelling for word two or create a new word.")
+                return
 
-            kwargs['query'] = (wordOne.spelling,wordTwo.spelling)
+            kwargs['query'] = (wordOne,wordTwo)
         elif self.compType == 'file':
             pairs_path = self.fileWidget.value()
             if not pairs_path:
@@ -307,9 +399,12 @@ class SSDialog(FunctionDialog):
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()
+        self.tierWidget.setSpellingEnabled(True)
 
     def editDistSelected(self):
         self.typeTokenWidget.disable()
+        self.tierWidget.setSpellingEnabled(True)
 
     def phonoEditDistSelected(self):
         self.typeTokenWidget.disable()
+        self.tierWidget.setSpellingEnabled(False)

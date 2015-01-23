@@ -1132,7 +1132,7 @@ class SegmentPairSelectWidget(QGroupBox):
             self.table.model().removeRows(selected)
 
     def value(self):
-        return self.table.model().pairs
+        return self.table.model().rows
 
 class EnvironmentDialog(QDialog):
     def __init__(self, inventory,parent=None):
@@ -1326,7 +1326,7 @@ class EnvironmentSelectWidget(QGroupBox):
                 self.table.model().removeRow(s.row())
 
     def value(self):
-        return [x[0] for x in self.table.model().environments]
+        return [x[0] for x in self.table.model().rows]
 
 class BigramWidget(EnvironmentSelectWidget):
     name = 'bigram'
