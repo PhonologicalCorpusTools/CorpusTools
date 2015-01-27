@@ -40,7 +40,7 @@ class TableWidget(QTableView):
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
         self.horizontalHeader().setMinimumSectionSize(70)
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
         self.setSortingEnabled(True)
         self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 
@@ -255,6 +255,7 @@ class LexiconView(QWidget):
 class TextView(QAbstractItemView):
     ExtraHeight = 3
     ExtraWidth = 15
+    resizeCompleted = Signal()
     def __init__(self, parent=None):
         self.idealHeight = 0
         self.idealWidth = 0
@@ -265,6 +266,29 @@ class TextView(QAbstractItemView):
 
         self.horizontalScrollBar().setRange(0,0)
         self.verticalScrollBar().setRange(0,0)
+        self._resize_timer = None
+        self.resizeCompleted.connect(self.handleResizeCompleted)
+
+    def updateResizeTimer(self, interval=None):
+        if self._resize_timer is not None:
+            self.killTimer(self._resize_timer)
+        if interval is not None:
+            self._resize_timer = self.startTimer(interval)
+        else:
+            self._resize_timer = None
+
+    def resizeEvent(self, event):
+        self.updateResizeTimer(300)
+
+    def timerEvent(self, event):
+        if event.timerId() == self._resize_timer:
+            self.updateResizeTimer()
+            self.resizeCompleted.emit()
+
+    def handleResizeCompleted(self):
+        self.hashIsDirty = True
+        self.calculateRectsIfNecessary()
+        self.updateGeometries()
 
     def setModel(self,model):
         QAbstractItemView.setModel(self, model)
@@ -464,11 +488,6 @@ class TextView(QAbstractItemView):
         painter.drawLine(rect.bottomLeft(), rect.bottomRight())
         painter.drawLine(rect.bottomRight(), rect.topRight())
         painter.restore()
-
-    def resizeEvent(self, event):
-        self.hashIsDirty = True
-        self.calculateRectsIfNecessary()
-        self.updateGeometries()
 
     def updateGeometries(self):
         fm = QFontMetrics(self.font())
