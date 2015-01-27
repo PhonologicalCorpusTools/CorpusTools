@@ -49,18 +49,22 @@ class FADialog(FunctionDialog):
                 'Phonological alignment?']
 
     _about = [('This function calculates the frequency of alternation '
-                    'of two segments'),
+                    'of two segments. In general, an alternation is seen when'
+                    ' different segments occur in corresponding positions of'
+                    ' two related words. For example, [s]/[ʃ] in the words'
+                    ' [dəpɹɛs] and [dəpɹɛʃәn]. Predictable alternations are'
+                    ' often used for analyzing segments as either contrastive'
+                    ' or allophonic.'),
                     '',
                     'Coded by Michael Fry',
-                    #'',
-                    #'References',
-                    #('Surendran, Dinoj & Partha Niyogi. 2003. Measuring'
-                    #' the functional load of phonological contrasts.'
-                    #' In Tech. Rep. No. TR-2003-12.'),
-                    #('Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013.'
-                    #' High functional load inhibits phonological contrast'
-                    #' loss: A corpus study. Cognition 128.179-86')
-                    ]
+                    '',
+                    'References',
+                    ('Johnson, Keith & Babel, Molly. 2010. On the perceptual'
+                    ' basis of distinctive features: Evidence from the perception'
+                    ' fricatives by Dutch and English Speakers. Journal of'
+                    ' Phonetics. 38:127-136'),
+                    ('Lu, Yu-an. 2012. The role of alternation in phonological'
+                    ' relationships. Stony Brook Univeristy. Doctoral Dissteration')]
 
     name = 'frequency of alternation'
 
@@ -167,24 +171,24 @@ class FADialog(FunctionDialog):
         if self.showToolTips:
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Select which algorithm to'
-                                        ' use for calculating the similarity of words. This '
-                                        'is used to determine if two words could be considered'
+                                        ' use for calculating the distance between words. This '
+                                        'is used to determine if two words should be considered'
                                         ' an example of an alternation. For more information, '
-                                        'refer to "About this function" on the string similarity analysis option.'
+                                        'refer to "About this function" from the string similarity analysis.'
             "</FONT>"))
             self.segPairWidget.setToolTip(("<FONT COLOR=black>"
-            'Select the two sounds you wish to check for alternations.'
+            'Select two sounds which may be in alternation.'
             "</FONT>"))
 
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
                                     'Choose which tier frequency of alternation should'
-                                    ' be calculated over (e.g., the whole transcription'
-                                    ' vs. a tier containing only [+voc] segments).'
+                                    ' be calculated over (e.g. the whole transcription'
+                                    ' or a tier containing only [+voc] segments).'
                                     ' New tiers can be created from the Corpus menu.'
                                     "</FONT>"))
             self.typeTokenWidget.setToolTip(("<FONT COLOR=black>"
             'Select which type of frequency to use'
-                                    ' for calculating similarity (only relevant for Khorsi). Type'
+                                    ' for calculating distance (only relevant for Khorsi). Type'
                                     ' frequency means each letter is counted once per word. Token '
                                     'frequency means each letter is counted as many times as its '
                                     'words frequency in the corpus.'
@@ -197,8 +201,8 @@ class FADialog(FunctionDialog):
             "</FONT>"))
             threshFrame.setToolTip(("<FONT COLOR=black>"
             'These values set the minimum similarity'
-                            ' or maximum distance needed in order to consider two words to be'
-                            ' considered a potential example of an alternation.'
+                            ' or maximum distance needed in order for two words to be'
+                            ' considered a potential alternation.'
             "</FONT>"))
             corpusSizeFrame.setToolTip(("<FONT COLOR=black>"
             'Select this option to only '
@@ -206,14 +210,14 @@ class FADialog(FunctionDialog):
                                         'selected subset of your corpus. This may be useful '
                                         'for large corpora where calculating frequency of alternation '
                                         'takes a very long time, or for doing Monte Carlo techniques. '
-                                        'Leave blank to use the entire corpus. Enter an integer to '
+                                        'Leave this blank to use the entire corpus. Enter an integer to '
                                         'get a subset of that exact size. Enter a decimal number to '
                                         'get a proportionally sized subset, e.g. 0.25 will '
                                         'get a subset that is a quarter the size of your original corpus.'
             "</FONT>"))
             self.fileWidget.setToolTip(("<FONT COLOR=black>"
             'Enter a filename for the list '
-                                'of words with an alternation of the target two sounds to be outputted'
+                                'of words with a potential alternation of the target two sounds to be outputted'
                                 ' to.  This is recommended as a means of double checking the quality '
                                 'of alternations as determined by the algorithm.'
             "</FONT>"))
