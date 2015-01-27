@@ -66,6 +66,7 @@ class SpontaneousLoadWorker(FunctionWorker):
     def run(self):
 
         corpus = import_spontaneous_speech_corpus(self.kwargs['directory'],
+                                                dialect = self.kwargs['dialect'],
                                                 stop_check=self.kwargs['stop_check'],
                                                 call_back = self.kwargs['call_back'])
         self.dataReady.emit(corpus)
@@ -1397,6 +1398,11 @@ class SpontaneousSpeechDialog(QDialog):
 
         self.directoryWidget = DirectoryWidget()
         inlayout.addRow('Corpus directory:',self.directoryWidget)
+        self.dialectWidget = QComboBox()
+        self.dialectWidget.addItem('TextGrid')
+        self.dialectWidget.addItem('TIMIT')
+        self.dialectWidget.addItem('Buckeye')
+        inlayout.addRow('Corpus file set up:',self.dialectWidget)
 
         inframe = QFrame()
         inframe.setLayout(inlayout)
@@ -1444,7 +1450,8 @@ class SpontaneousSpeechDialog(QDialog):
         self.corpus = results
 
     def accept(self):
-        self.thread.setParams({'directory':self.directoryWidget.value()})
+        self.thread.setParams({'directory':self.directoryWidget.value(),
+                            'dialect':self.dialectWidget.currentText().lower()})
 
         self.thread.start()
 

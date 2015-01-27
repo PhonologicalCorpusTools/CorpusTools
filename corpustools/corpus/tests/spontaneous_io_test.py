@@ -7,10 +7,12 @@ test_dir = os.path.dirname(os.path.abspath(__file__))
 corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
 sys.path.insert(0,corpustools_path)
 
-from corpustools.corpus.io.spontaneous import (load_phones, load_words,
-                            files_to_data, import_spontaneous_speech_corpus)
+from corpustools.corpus.io.spontaneous import (read_phones, read_words,
+                            files_to_data, import_spontaneous_speech_corpus,
+                            textgrids_to_data)
 
 buckeye_path = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading\spontaneous\buckeye'
+textgrid_path = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading\spontaneous\textgrids_basic'
 
 class PhoneFileLoadTest(unittest.TestCase):
     def setUp(self):
@@ -43,7 +45,8 @@ class PhoneFileLoadTest(unittest.TestCase):
                                 ]
 
     def test_load_phones(self):
-        phones = load_phones(self.path)
+        return
+        phones = read_phones(self.path,dialect='buckeye')
         for i,p in enumerate(self.expected_phones):
             self.assertEqual(p,phones[i])
 
@@ -63,7 +66,8 @@ class WordFileLoadTest(unittest.TestCase):
             {'word':'it','begin':4.369000,'end':4.501000,'ur':['ih','t'],'sr':['ah','t'],'category':'PRP'}]
 
     def test_load_words(self):
-        words = load_words(self.path)
+        return
+        words = read_words(self.path,dialect='buckeye')
         for i,w in enumerate(self.expected_words):
             self.assertEqual(w,words[i])
 
@@ -72,9 +76,32 @@ class WordPhoneLoadTest(unittest.TestCase):
         pass
         #words = files_to_data(buckeye_path,'s0201a')
 
+class TextGridTest(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_basic(self):
+        return
+        path = os.path.join(textgrid_path,'phone_word.TextGrid')
+        print(textgrids_to_data(path))
+
+class CSJTextGridTest(unittest.TestCase):
+    def setUp(self):
+        self.path = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading\spontaneous\textgrids\A01F0055.TextGrid'
+
+    def test_load(self):
+        return
+        data = textgrids_to_data(self.path)
+        print(data[0])
+
 class ImportTest(unittest.TestCase):
-    def test_import(self):
-        corpus = import_spontaneous_speech_corpus('Buckeye',buckeye_path)
+    def test_import_buckeye(self):
+        corpus = import_spontaneous_speech_corpus(buckeye_path,dialect = 'buckeye')
+        print(list(corpus.discourses.keys()))
+
+    def test_import_textgrids(self):
+        corpus = import_spontaneous_speech_corpus(textgrid_path, dialect = 'textgrid')
+        print(list(corpus.discourses.keys()))
 
 if __name__ == '__main__':
 
