@@ -648,17 +648,16 @@ class MainWindow(QMainWindow):
         self.featureMenu.addAction(self.viewFeatureSystemAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
-        self.analysisMenu.addAction(self.stringSimAct)
-        #self.analysisMenu.addAction(self.stringSimFileAct)
-        self.analysisMenu.addAction(self.freqaltAct)
-        self.analysisMenu.addAction(self.prodAct)
-        self.analysisMenu.addAction(self.funcloadAct)
-        self.analysisMenu.addAction(self.neighDenAct)
         self.analysisMenu.addAction(self.phonoProbAct)
+        self.analysisMenu.addAction(self.funcloadAct)
+        self.analysisMenu.addAction(self.prodAct)
+        self.analysisMenu.addAction(self.klAct)
+        self.analysisMenu.addAction(self.stringSimAct)
+        self.analysisMenu.addAction(self.neighDenAct)
+        self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         #self.analysisMenu.addAction(self.acousticSimAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
-        self.analysisMenu.addAction(self.klAct)
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 
