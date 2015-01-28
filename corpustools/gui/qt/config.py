@@ -162,7 +162,7 @@ class Settings(object):
 
     def check_storage(self):
         if not os.path.exists(self['storage']):
-            os.mkdir(self['storage'])
+            os.makedirs(self['storage'])
         LOG_DIR = os.path.join(self['storage'],'LOG')
         ERROR_DIR = os.path.join(self['storage'],'ERRORS')
         TMP_DIR = os.path.join(self['storage'],'TMP')
