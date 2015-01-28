@@ -1,5 +1,9 @@
 *.py[cod]
 *.txt
+*.corpus
+*.feature
+.idea/
+*.iml
 
 # C extensions
 *.so

@@ -142,6 +142,7 @@ def align_textgrid_info(textgrids, wavs, stop_check, call_back):
     return dialogs
 
 def import_spontaneous_speech_corpus(directory, dialect = 'textgrid', stop_check = None, call_back = None):
+
     name = os.path.split(directory)[1]
     corpus = SpontaneousSpeechCorpus(name,directory)
 

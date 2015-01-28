@@ -45,7 +45,6 @@ class PhoneFileLoadTest(unittest.TestCase):
                                 ]
 
     def test_load_phones(self):
-        return
         phones = read_phones(self.path,dialect='buckeye')
         for i,p in enumerate(self.expected_phones):
             self.assertEqual(p,phones[i])
@@ -66,7 +65,6 @@ class WordFileLoadTest(unittest.TestCase):
             {'word':'it','begin':4.369000,'end':4.501000,'ur':['ih','t'],'sr':['ah','t'],'category':'PRP'}]
 
     def test_load_words(self):
-        return
         words = read_words(self.path,dialect='buckeye')
         for i,w in enumerate(self.expected_words):
             self.assertEqual(w,words[i])

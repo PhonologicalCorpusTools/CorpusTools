@@ -6,7 +6,7 @@ from corpustools.symbolsim.phono_align import Aligner
 
 def neighborhood_density(corpus, query, sequence_type = 'transcription',
             algorithm = 'edit_distance', max_distance = 1,
-            tiername = 'transcription', count_what='type',
+            count_what='type',
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of a particular word in the corpus.
     Parameters
@@ -21,11 +21,9 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
         The algorithm used to determine distance
     max_distance : number, optional
         Maximum edit distance from the queried word to consider a word a neighbor.
-    tiername : str
-        The tiername to calculate distance on
     count_what : str
         If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency
-    
+
     Returns
     -------
     float

@@ -1,7 +1,7 @@
 import argparse
 import os
 import csv
-    
+
 from corpustools.corpus.classes import Word
 from corpustools.corpus.io.binary import load_binary
 from corpustools.neighdens.neighborhood_density import neighborhood_density
@@ -53,6 +53,7 @@ def main():
         try: # read query as a file name
             with open(args.query) as queryfile:
                 queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
+
                 queries = [ensure_query_is_word(q, corpus, args.sequence_type, args.trans_delimiter) for q in queries]
             results = [neighborhood_density(corpus, q, algorithm = args.algorithm, max_distance = args.max_distance, sequence_type = args.sequence_type, count_what=args.count_what) for q in queries]
             if args.outfile:

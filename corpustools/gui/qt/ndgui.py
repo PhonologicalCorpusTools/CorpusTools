@@ -263,7 +263,6 @@ class NDDialog(FunctionDialog):
         if out_file == '':
             out_file = None
 
-
         if self.compType is None:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a comparison type.")

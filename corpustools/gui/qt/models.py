@@ -155,23 +155,6 @@ class FilterModel(QAbstractTableModel):
         del self.filters[ind]
         self.layoutChanged.emit()
 
-#class SpontaneousSpeechCorpusModel(QStandardItemModel):
-    #def __init__(self,corpus, parent = None):
-        #QStandardItemModel.__init__(self, parent)
-
-        #self.corpus = corpus
-        #self.setHorizontalHeaderItem (0,QStandardItem('Discourses'))
-
-        #corpusItem = QStandardItem(self.corpus.name)
-        #self.appendRow(corpusItem)
-        #speakerItem = QStandardItem('s01')
-        #corpusItem.appendRow(speakerItem)
-        #for d in self.corpus.discourses.values():
-            #speakerItem.appendRow(QStandardItem(str(d)))
-
-    #def createLexicon(self,row):
-        #d = self.item(row).text()
-        #return self.corpus.discourses[d].create_lexicon()
 
 class SpontaneousSpeechCorpusModel(QAbstractItemModel):
     def __init__(self, corpus, parent=None):
@@ -437,8 +420,6 @@ class ResultsModel(BaseTableModel):
 
         self.rows = results
 
-
-
 class TreeItem(object):
 
     def __init__(self, name, parent=None):
@@ -509,7 +490,6 @@ class SpontaneousTreeItem(TreeItem):
         if not isinstance(other,SpontaneousTreeItem):
             return False
         return self._dataItem == other._dataItem
-
 
 class FeatureSystemTreeModel(QAbstractItemModel):
     def __init__(self, specifier, parent=None):

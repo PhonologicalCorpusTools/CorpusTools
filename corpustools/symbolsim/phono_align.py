@@ -109,6 +109,7 @@ class Aligner(object):
                 fs2 = self.features[segment2symbol]
                 return (sum(check_feature_difference('0',
                             sign) for sign in fs2.features.values()) * self.ins_penalty)
+
             elif segment2 == 'empty':
 
                 fs1 = self.features[segment1symbol]

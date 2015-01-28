@@ -484,14 +484,7 @@ class CorpusFromSpellingTextDialog(QDialog):
         self.progressDialog.reset()
         if result:
             if self.corpus is not None:
-                for k,v in self.corpus.lexicon.wordlist.items():
-                    if k == 'lukʷuxsxʷs':
-                        print(v.__dict__)
                 save_binary(self.corpus,corpus_name_to_path(self.corpus.name))
-                t = load_binary(corpus_name_to_path(self.corpus.name))
-                for k,v in t.lexicon.wordlist.items():
-                    if k == 'lukʷuxsxʷs':
-                        print(v.__dict__)
             QDialog.accept(self)
 
     def updateName(self):
@@ -520,6 +513,7 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         iolayout.addRow(QLabel('Word delimiters'), QLabel('All whitespace'))
 
         self.punctuation = PunctuationWidget(string.punctuation,'Punctuation to ignore')
+
         iolayout.addRow(self.punctuation)
 
         ioframe = QGroupBox('Corpus details')

@@ -256,8 +256,6 @@ class PPDialog(FunctionDialog):
                         reply = QMessageBox.critical(self,
                                 "Invalid information", "The spelling '{}' was not found in the corpus.".format(t))
                         return
-                else:
-                    w = t
                 kwargs['query'].append(w)
         elif self.compType == 'all':
             column = self.columnEdit.text()

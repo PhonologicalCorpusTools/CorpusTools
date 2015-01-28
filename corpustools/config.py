@@ -39,5 +39,5 @@ TMP_DIR = os.path.join(DEFAULT_DATA_DIR,'TMP')
 
 CORPUS_DIR = os.path.join(DEFAULT_DATA_DIR,'CORPUS')
 if not os.path.exists(CORPUS_DIR):
-    os.mkdir(CORPUS_DIR)
+    os.makedirs(CORPUS_DIR)
 

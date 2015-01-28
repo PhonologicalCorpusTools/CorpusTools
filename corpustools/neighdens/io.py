@@ -1,5 +1,4 @@
 import csv
-
 from corpustools.corpus.classes import Word
 
 def load_words_neighden(path):
