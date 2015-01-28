@@ -1,6 +1,7 @@
 *.py[cod]
 *.txt
 *.corpus
+*.feature
 .idea/
 *.iml
 
