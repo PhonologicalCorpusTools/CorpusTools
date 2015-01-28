@@ -912,12 +912,11 @@ class Attribute(object):
             else:
                 self.default_value = ''
         elif self.att_type == 'tier':
-            self._range = None
+            self._range = set()
             if default_value is not None and isinstance(default_value,Transcription):
                 self.default_value = default_value
             else:
                 self.default_value = Transcription(None)
-
 
     def __str__(self):
         return self.display_name
@@ -959,6 +958,8 @@ class Attribute(object):
             #if len(self._range) > 1000:
             #    self.att_type = 'spelling'
             #    self._range = None
+        elif self.att_type == 'tier':
+            self._range.update([x for x in value])
 
 class Corpus(object):
     """

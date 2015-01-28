@@ -142,6 +142,7 @@ class SubsetCorpusDialog(QDialog):
                 return
         new_corpus = self.corpus.subset(filters)
         new_corpus.name = name
+        new_corpus.set_feature_matrix(self.corpus.specifier)
         save_binary(new_corpus,corpus_name_to_path(new_corpus.name))
         QDialog.accept(self)
 

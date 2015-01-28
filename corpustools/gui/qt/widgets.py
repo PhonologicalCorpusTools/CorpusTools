@@ -254,6 +254,13 @@ class AttributeFilterWidget(QGroupBox):
         self.removeButton.setDefault(False)
 
         self.table = TableWidget()
+        self.table.setSortingEnabled(False)
+        try:
+            self.table.horizontalHeader().setClickable(False)
+            self.table.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        except AttributeError:
+            self.table.horizontalHeader().setSectionsClickable(False)
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setModel(FilterModel())
         self.table.resizeColumnsToContents()
 
@@ -1297,10 +1304,11 @@ class EnvironmentSelectWidget(QGroupBox):
         self.table.setSortingEnabled(False)
         try:
             self.table.horizontalHeader().setClickable(False)
+            self.table.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         except AttributeError:
             self.table.horizontalHeader().setSectionsClickable(False)
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setModel(EnvironmentModel())
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         #self.table.resizeColumnsToContents()
 
         vbox.addWidget(self.addButton)
