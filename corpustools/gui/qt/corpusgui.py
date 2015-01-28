@@ -776,6 +776,17 @@ class CorpusSummary(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self,parent)
 
+
+        if hasattr(corpus,'lexicon'):
+            c = corpus.lexicon
+
+            if hasattr(corpus,'discourses'):
+                speech_corpus = True
+            else:
+                speech_corpus = False
+        else:
+            c = corpus
+
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
         layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -784,20 +795,20 @@ class CorpusSummary(QDialog):
 
         main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
 
-        if corpus.specifier is None:
-            main.addRow(QLabel('Feature system:'),QLabel(corpus.specifier.name))
+        if c.specifier is not None:
+            main.addRow(QLabel('Feature system:'),QLabel(c.specifier.name))
         else:
             main.addRow(QLabel('Feature system:'),QLabel('None'))
 
-        main.addRow(QLabel('Number of words:'),QLabel(str(len(corpus))))
+        main.addRow(QLabel('Number of words types:'),QLabel(str(len(c))))
 
         detailTabs = QTabWidget()
 
-        self.inventorySummary = InventorySummary(corpus)
+        self.inventorySummary = InventorySummary(c)
 
         detailTabs.addTab(self.inventorySummary,'Inventory')
 
-        self.attributeSummary = AttributeSummary(corpus)
+        self.attributeSummary = AttributeSummary(c)
 
         detailTabs.addTab(self.attributeSummary,'Columns')
         detailTabs.currentChanged.connect(self.hideWidgets)
