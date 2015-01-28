@@ -9,6 +9,10 @@ def load_words_neighden(path):
             if len(fields) > 1:
                 fields[1] = fields[1].split('.')
                 fields = Word(spelling=fields[0], transcription = fields[1])
+            elif len(fields) == 1:
+                fields = fields[0]
+            else:
+                continue
             output.append(fields)
     return output
 

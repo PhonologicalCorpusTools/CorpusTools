@@ -688,7 +688,7 @@ class MainWindow(QMainWindow):
 
         self.settings['size'] = self.size()
         self.settings['pos'] = self.pos()
-        tmpfiles = os.listdir(TMP_DIR)
-        for f in tmpfiles:
-            os.remove(os.path.join(TMP_DIR,f))
+        #tmpfiles = os.listdir(TMP_DIR)
+        #for f in tmpfiles:
+        #    os.remove(os.path.join(TMP_DIR,f))
         event.accept()

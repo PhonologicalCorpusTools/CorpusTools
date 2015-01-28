@@ -315,7 +315,6 @@ class NDDialog(FunctionDialog):
                 else:
                     w = t
                 kwargs['query'].append(w)
-
         elif self.compType == 'all':
             column = self.columnEdit.text()
             if column == '':
