@@ -97,6 +97,7 @@ class PDDialog(FunctionDialog):
         pdlayout.addWidget(self.segPairWidget)
 
         self.envWidget = EnvironmentSelectWidget(corpus.inventory)
+        self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
 
 
@@ -117,7 +118,8 @@ class PDDialog(FunctionDialog):
 
         checkLayout = QVBoxLayout()
 
-        self.enforceCheck = QCheckBox('Enforce enviroment exhaustivity and uniqueness')
+        self.enforceCheck = QCheckBox('Enforce environment\nexhaustivity and uniqueness')
+        self.enforceCheck.setChecked(True)
 
         checkLayout.addWidget(self.enforceCheck)
 
@@ -159,15 +161,13 @@ class PDDialog(FunctionDialog):
             "</FONT>"))
             self.enforceCheck.setToolTip(("<FONT COLOR=black>"
             'Indicate whether you want the program'
-                                    ' to check for exhausitivity and/or uniqueness.'
-                                    ' Checking for exhaustivity means the program'
-                                    ' will make sure that you have selected environments'
+                                    ' to check for exhausitivity and uniqueness.'
+                                    ' Checking for exhaustivity'
+                                    ' will ensure that you have selected environments'
                                     ' that cover all instances of the two sounds in the'
-                                    ' corpus. Checking for uniqueness means the program'
-                                    ' will check to make sure that the environments you'
-                                    ' have selected don\'t overlap with one another. It'
-                                    ' is recommended that both options are used unless'
-                                    ' there is a specific reason to do otherwise.'
+                                    ' corpus. Checking for uniqueness'
+                                    ' will ensure that the environments you'
+                                    ' have selected don\'t overlap with one another.'
             "</FONT>"))
             self.envWidget.setToolTip(("<FONT COLOR=black>"
             'This screen allows you to construct multiple'
@@ -175,6 +175,8 @@ class PDDialog(FunctionDialog):
                                     ' of distribution. For each environment, you can specify'
                                     ' either the left-hand side or the right-hand side, or'
                                     ' both. Each of these can be specified using either features or segments.'
+                                    ' Not specifying any environments will calculate the predictability of'
+                                    ' distribution across all environments based on frequency alone.'
             "</FONT>"))
 
     def generateKwargs(self):

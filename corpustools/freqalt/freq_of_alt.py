@@ -57,11 +57,11 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        word = getattr(w, sequence_type)
-        if s1 in word:
+        tier = getattr(w, sequence_type)
+        if s1 in tier:
             list_s1.append(w)
             all_words.add(w.spelling)
-        if s2 in word:
+        if s2 in tier:
             list_s2.append(w)
             all_words.add(w.spelling)
 
@@ -85,7 +85,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
                     call_back(cur)
             if w1 == w2:
                 continue
-            ss = string_similarity(corpus, (w1.spelling,w2.spelling), relator_type,
+            ss = string_similarity(corpus, (w1,w2), relator_type,
                                                 sequence_type = sequence_type,
                                                 count_what = count_what)
             if min_rel is not None and ss[0][-1] < min_rel:

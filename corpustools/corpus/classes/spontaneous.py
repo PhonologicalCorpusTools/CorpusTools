@@ -1,18 +1,38 @@
 
 from collections import OrderedDict
 
-from .lexicon import Transcription, Corpus
+from .lexicon import Transcription, Corpus, Attribute
 
 import os
 import wave
 
 class Speaker(object):
-    def __init__(self,identifier, **kwargs):
+    def __init__(self,name, **kwargs):
 
-        self.identifier = identifier
+        self.name = name
 
         for k,v in kwargs.items():
             setattr(self,k,v)
+
+    def __eq__(self, other):
+        if not isinstance(other,Speaker):
+            return False
+        return self.name == other.name
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self.name < other.name
+
+    def __gt__(self, other):
+        return self.name > other.name
+
+    def __le__(self, other):
+        return self.name <= other.name
+
+    def __ge__(self, other):
+        return self.name >= other.name
 
 class SpontaneousSpeechCorpus(object):
     def __init__(self,name,directory):
@@ -35,15 +55,22 @@ class SpontaneousSpeechCorpus(object):
         previous_time = None
         for line in data:
             spelling = line['word']
-            transcription = line['ur']
+            if 'ur' in line:
+                transcription = line['ur']
+            else:
+                transcription = list()
+            if 'sr' in line:
+                t = line['sr']
+            else:
+                t = [x['label'] for x in line['phones']]
             word = self.lexicon.get_or_create_word(spelling, transcription)
             word.frequency += 1
             if previous_time is not None:
-                wordtoken = WordToken(word=word, transcription=line['sr'],
+                wordtoken = WordToken(word=word, transcription=t,
                                 begin = line['begin'], end = line['end'],
                                 previous_token = d[previous_time])
             else:
-                wordtoken = WordToken(word=word, transcription=line['sr'],
+                wordtoken = WordToken(word=word, transcription=t,
                                 begin = line['begin'], end = line['end'])
             word.wordtokens.append(wordtoken)
             d.add_word(wordtoken)
@@ -56,11 +83,47 @@ class SpontaneousSpeechCorpus(object):
 class Discourse(object):
     def __init__(self, **kwargs):
         self.name = ''
+        self.speaker = None
 
         for k,v in kwargs.items():
             setattr(self,k,v)
 
+        self._attributes = [Attribute('spelling','spelling'),
+                            Attribute('transcription','tier'),
+                            Attribute('begin','numeric')]
+
         self.words = dict()
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    def keys(self):
+        return sorted(self.words.keys())
+
+    def __eq__(self, other):
+        if not isinstance(other,Discourse):
+            return False
+        if self.name != other.name:
+            return False
+        if self.speaker != other.speaker:
+            return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self.name < other.name
+
+    def __gt__(self, other):
+        return self.name > other.name
+
+    def __le__(self, other):
+        return self.name <= other.name
+
+    def __ge__(self, other):
+        return self.name >= other.name
 
     def __str__(self):
         return self.name
@@ -100,7 +163,7 @@ class Discourse(object):
             bitdepth = w_in.getsampwidth()
             for t in tokens:
                 wt = self[t]
-                name = '{}_{}.wav'.format(self.identifier,wt.begin)
+                name = '{}_{}.wav'.format(self.name,wt.begin)
                 wt.wav_path = os.path.join(output_dir,name)
                 filenames.append(wt.wav_path)
                 if os.path.exists(wt.wav_path):
@@ -120,11 +183,12 @@ class Discourse(object):
 
 
     def create_lexicon(self):
-        corpus = Corpus(self.identifier + ' lexicon')
+        corpus = Corpus(self.name + ' lexicon')
         for token in self:
             word = corpus.get_or_create_word(token.wordtype.spelling,token.wordtype.transcription)
             word.frequency += 1
             token.wordtype = word
+            word.wordtokens.append(token)
         return corpus
 
     def find_wordtype(self,wordtype):

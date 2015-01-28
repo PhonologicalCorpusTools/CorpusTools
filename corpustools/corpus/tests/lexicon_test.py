@@ -270,7 +270,7 @@ class FeatureMatrixTest(unittest.TestCase):
         self.assertEqual(fm.possible_values,{'+','-'})
 
         #fails, should be sorted list?
-        self.assertEqual(sorted(fm.segments),sorted(['','#','a','b','c','d']))
+        self.assertEqual(sorted(fm.segments),sorted(['#','a','b','c','d']))
 
     def test_dots(self):
         fm = FeatureMatrix('test',self.dots_info)
@@ -381,7 +381,7 @@ class CorpusFeatureMatrixTest(unittest.TestCase):
         corpus.add_tier('t','+feature1')
         self.assertEqual(corpus['d'].t, [corpus['d'].transcription[0]])
 
-        corpus.remove_tier('t')
+        corpus.remove_attribute('t')
 
         self.assertRaises(AttributeError,getattr,corpus['d'],'t')
 

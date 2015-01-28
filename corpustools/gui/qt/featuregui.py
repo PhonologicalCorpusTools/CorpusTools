@@ -12,7 +12,7 @@ from corpustools.corpus.io import (load_binary, download_binary,
                     load_feature_matrix_csv, save_binary, DelimiterError,
                     export_feature_matrix_csv)
 
-from .views import TableWidget
+from .views import TableWidget, SubTreeView
 
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
@@ -197,6 +197,13 @@ class AddFeatureDialog(QDialog):
         featureLayout = QFormLayout()
         self.featureEdit = QLineEdit()
         featureLayout.addRow('Feature name',self.featureEdit)
+        self.defaultSelect = QComboBox()
+        self.defaultSelect.addItem(specifier.default_value)
+        for i,v in enumerate(specifier.possible_values):
+            if v == specifier.default_value:
+                continue
+            self.defaultSelect.addItem(v)
+        featureLayout.addRow('Default value for this feature:',self.defaultSelect)
 
         featureFrame = QFrame()
         featureFrame.setLayout(featureLayout)
@@ -222,6 +229,7 @@ class AddFeatureDialog(QDialog):
 
     def accept(self):
         self.featureName = self.featureEdit.text()
+        self.defaultValue = self.defaultSelect.currentText()
         if self.featureName == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a feature name.")
@@ -423,8 +431,7 @@ class EditFeatureMatrixDialog(QDialog):
         mode = self.displayWidget.currentText()
         self.table.deleteLater()
         if mode == 'Tree':
-            self.table = QTreeView()
-            self.table.setHeaderHidden(True)
+            self.table = SubTreeView()
             self.table.setModel(FeatureSystemTreeModel(self.specifier))
             self.layout().insertWidget(0,self.table)
         elif mode == 'Matrix':
@@ -476,7 +483,7 @@ class EditFeatureMatrixDialog(QDialog):
     def addFeature(self):
         dialog = AddFeatureDialog(self,self.table.model().specifier)
         if dialog.exec_():
-            self.table.model().addFeature(dialog.featureName)
+            self.table.model().addFeature(dialog.featureName, dialog.defaultValue)
 
     def hide(self):
         self.table.model().filter(self.corpus.inventory)
@@ -504,6 +511,7 @@ class EditSegmentDialog(QDialog):
 
         self.specifier = specifier
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
         featLayout = QGridLayout()
         self.symbolEdit = QLineEdit()
@@ -511,16 +519,26 @@ class EditSegmentDialog(QDialog):
         if segment is not None:
             self.add = False
             self.symbolEdit.setText(segment)
-        box = QGroupBox('Symbol')
-        lay = QVBoxLayout()
-        lay.addWidget(self.symbolEdit)
+        box = QFrame()
+        lay = QFormLayout()
+        lay.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        lay.addRow('Symbol',self.symbolEdit)
+        self.setAllSelect = QComboBox()
+        self.setAllSelect.addItem(specifier.default_value)
+        for i,v in enumerate(specifier.possible_values):
+            if v == specifier.default_value:
+                continue
+            self.setAllSelect.addItem(v)
+        self.setAllSelect.currentIndexChanged.connect(self.setAll)
+        lay.addRow('Set all feature values to:',self.setAllSelect)
         box.setLayout(lay)
-        featLayout.addWidget(box,0,0)
+        layout.addWidget(box, alignment = Qt.AlignLeft)
         row = 0
-        col = 1
+        col = 0
         self.featureSelects = dict()
         for f in specifier.features:
             box = QGroupBox(f)
+            box.setFlat(True)
             lay = QVBoxLayout()
 
             featSel = QComboBox()
@@ -537,7 +555,7 @@ class EditSegmentDialog(QDialog):
             featLayout.addWidget(box,row,col)
 
             col += 1
-            if col > 11:
+            if col > 6:
                 col = 0
                 row += 1
 
@@ -546,21 +564,30 @@ class EditSegmentDialog(QDialog):
         layout.addWidget(featBox)
 
         self.acceptButton = QPushButton('Ok')
+        self.acceptButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.cancelButton = QPushButton('Cancel')
+        self.cancelButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.acceptButton, alignment = Qt.AlignCenter)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignCenter)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
-        layout.addWidget(acFrame)
+        layout.addWidget(acFrame, alignment = Qt.AlignCenter)
 
         self.setLayout(layout)
+        if segment is not None:
+            self.setWindowTitle('Edit segment')
+        else:
+            self.setWindowTitle('Add segment')
 
-        self.setWindowTitle('Edit segment')
+    def setAll(self):
+        all_val = self.setAllSelect.currentIndex()
+        for v in self.featureSelects.values():
+            v.setCurrentIndex(all_val)
 
     def accept(self):
         self.seg = self.symbolEdit.text()

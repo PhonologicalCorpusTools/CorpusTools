@@ -11,11 +11,11 @@ config = configparser.ConfigParser()
 appname = 'CorpusTools'
 appauthor = 'PCT'
 if sys.platform == 'win32':
-    local_data = os.path.expanduser('~\\Documents')
+    local_data = os.path.normpath(os.path.expanduser('~/Documents'))
 elif sys.platform == 'darwin':
-    local_data = os.path.expanduser('~/Documents')
+    local_data = os.path.normpath(os.path.expanduser('~/Documents'))
 else:
-    local_data = os.path.expanduser("~/.pct")
+    local_data = os.path.normpath(os.path.expanduser("~/.pct"))
 
 DEFAULT_DATA_DIR = os.path.join(local_data, appauthor, appname)
 if not os.path.exists(DEFAULT_DATA_DIR):
@@ -36,3 +36,8 @@ else:
         config.write(configfile)
 
 TMP_DIR = os.path.join(DEFAULT_DATA_DIR,'TMP')
+
+CORPUS_DIR = os.path.join(DEFAULT_DATA_DIR,'CORPUS')
+if not os.path.exists(CORPUS_DIR):
+    os.makedirs(CORPUS_DIR)
+

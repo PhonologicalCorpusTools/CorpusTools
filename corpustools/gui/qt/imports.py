@@ -5,7 +5,7 @@ try:
     raise(ImportError)
     from PySide.QtCore import (QRectF, Qt, QSettings,QAbstractTableModel,
                 QSize,QPoint, Signal, QThread,QModelIndex, QAbstractItemModel)
-    from PySide.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
+    from PySide.QtGui import (QFont, QLayout, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem,
                             QMainWindow, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,
@@ -16,7 +16,8 @@ try:
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,
                                 QTableWidget,QSound,QItemSelection, QItemSelectionModel,
-                                QToolBar, QStyledItemDelegate, QDataWidgetMapper)
+                                QToolBar, QStyledItemDelegate, QDataWidgetMapper,
+                                QTabWidget)
 
     print('PySide version')
 except ImportError:
@@ -27,14 +28,14 @@ except ImportError:
                                 QSortFilterProxyModel, QAbstractItemModel)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem)
-    from PyQt5.QtWidgets import (QMainWindow, QHBoxLayout, QLabel, QAction,
+    from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,
                                 QDialog, QListWidget, QGroupBox,QVBoxLayout,
                                 QPushButton, QFrame, QGridLayout,QRadioButton,
                                 QFormLayout, QLineEdit, QFileDialog, QComboBox,
                                 QProgressDialog, QCheckBox, QMessageBox,QTableView,
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
-                                QStyle, QMenu, QSizePolicy, QButtonGroup,
+                                QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper)
     try:
         from PyQt5.QtMultimedia import QSound

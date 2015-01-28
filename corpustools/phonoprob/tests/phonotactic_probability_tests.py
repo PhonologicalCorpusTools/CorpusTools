@@ -11,24 +11,78 @@ from corpustools.phonoprob.phonotactic_probability import phonotactic_probabilit
 
 TEST_DIR = r'C:\Users\michael\Documents\Data\Iphod'
 
-class NeighDenTest(unittest.TestCase):
+class PhonoProbTest(unittest.TestCase):
     def setUp(self):
         self.corpus = create_unspecified_test_corpus()
 
-    def test_basic_corpus(self):
+    def test_basic_corpus_probs(self):
         prob_dict = self.corpus.get_phone_probs('transcription','type',1,log_count = False,probability=False)
-        print(prob_dict)
-        print(prob_dict['total'])
-        #calls = [({'corpus': self.corpus,
-                        #'query':'mata',
-                        #'max_distance':1},1.0),
-                #({'corpus': self.corpus,
-                        #'query':'nata',
-                        #'max_distance':2},3.0)]
-        #for c,v in calls:
-            #result = neighborhood_density(**c)
-            #msgcall = 'Call: {}\nExpected: {}\nActually got:{}'.format(c,v,result)
-            #self.assertTrue(abs(result[0]-v) < 0.0001,msg=msgcall)
+        expected = {(('i',), 1):3, (('s',), 2):3, (('ʃ',), 6):1, (('t',), 3):1,
+                    (('m',), 3):1, (('s',), 0):1, (('o',), 1):1, (('u',), 1):2,
+                    (('u',), 2):1, (('n',), 4):1, (('o',), 3):3, (('ʃ',), 2):4,
+                    (('m',), 4):3, (('n',), 0):1, (('t',), 0):5, (('ʃ',), 0):4,
+                    (('e',), 3):1, (('ɑ',), 5):2, (('m',), 0):2, (('t',), 1):1,
+                    (('u',), 7):1, (('t',), 4):1, (('ɑ',), 1):7, (('i',), 7):1,
+                    (('t',), 2):3, (('s',), 6):1, (('ɑ',), 3):4, (('i',), 5):3,
+                    (('e',), 0):1, (('i',), 3):3, (('n',), 1):1, (('n',), 2):1,
+                    (('ɑ',), 0):1, (('ɑ',), 4):2, (('e',), 2):1,
+                    'total':{0: 15, 1: 15, 2: 13, 3: 13, 4: 7, 5: 5, 6: 2, 7: 2}}
+        for k,v in expected.items():
+            if k == 'total':
+                for k2, v2 in v.items():
+                    self.assertEqual(prob_dict[k][k2], v2)
+                continue
+            self.assertEqual(prob_dict[k], v)
+        prob_dict = self.corpus.get_phone_probs('transcription','type',1,log_count = False,probability=True)
+        for k,v in expected.items():
+            if k == 'total':
+                continue
+            self.assertEqual(prob_dict[k], v / expected['total'][k[1]])
+
+        prob_dict = self.corpus.get_phone_probs('transcription','token',1,log_count = True,probability=True)
+        expected = {(('ɑ',), 0):0.0587828456,(('t',), 1):0.0587828456, #atema
+                    (('e',), 2):0.0668038019,(('m',), 3):0.0668038019,
+                    (('ɑ',), 4):0.2544134544,
+                    (('e',), 0):0.0587828456,(('n',), 1):0.0587828456, #enuta
+                    (('u',), 2):0.0668038019,(('t',), 3):0.0668038019,
+                    (('t',), 0):0.4333449434, (('ɑ',), 1):0.4373852679,#ta
+                    (('m',), 0):0.0564463785,(('t',), 2):0.0928330493,  #mata
+                    (('ɑ',), 3):0.1657810293,
+                    (('n',), 0):0.0169920531 #nata
+                    }
+        for k,v in expected.items():
+            self.assertAlmostEqual(prob_dict[k], v)
+
+        prob_dict = self.corpus.get_phone_probs('transcription','token',2,log_count = True,probability=True)
+        expected = {(('ɑ','t'), 0):0.0587828456,(('t','e'), 1):0.0668038019, #atema
+                    (('e','m'), 2):0.0668038019,(('m','ɑ'), 3):0.1272067272,
+                    (('e','n'), 0):0.0587828456,(('n','u'), 1):0.0668038019, #enuta
+                    (('u','t'), 2):0.0668038019,(('t','ɑ'), 3):0.1272067272,
+                    (('t','ɑ'), 0):0.1507780332,#ta
+                    (('m','ɑ'), 0):0.0564463785,(('ɑ','t'), 1):0.0928330493,  #mata
+                    (('t','ɑ'), 2):0.0386212588,
+                    (('n','ɑ'), 0):0.0169920531 #nata
+                    }
+        #print(list(prob_dict.keys()))
+        for k,v in expected.items():
+            self.assertAlmostEqual(prob_dict[k], v)
+
+    def test_basic_phonoprob(self):
+        expected = {'atema':0.1011173499,
+                    'enuta':0.1011173499,
+                    'ta':0.4353651056,
+                    'mata':0.1881114313,
+                    'nata':0.1782478499}
+        for k,v in expected.items():
+            self.assertAlmostEqual(v,phonotactic_probability_vitevitch(self.corpus,k,'transcription','token','unigram'))
+
+        expected = {'atema':0.0798992942,
+                    'enuta':0.0798992942,
+                    'ta':0.1507780332,
+                    'mata':0.0626335622,
+                    'nata':0.0494821204}
+        for k,v in expected.items():
+            self.assertAlmostEqual(v,phonotactic_probability_vitevitch(self.corpus,k,'transcription','token','bigram'))
 
     def test_iphod(self):
         if not os.path.exists(TEST_DIR):

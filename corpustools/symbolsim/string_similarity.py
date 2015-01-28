@@ -64,7 +64,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
 
     related_data = list()
-    if isinstance(query,str):
+    if isinstance(query,Word):
         if call_back is not None:
             total = len(corpus)
             if min_rel is not None or max_rel is not None:
@@ -72,7 +72,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             cur = 0
             call_back('Calculating string similarity...')
             call_back(cur,total)
-        targ_word = ensure_query_is_word(query, corpus, sequence_type, None)
+        targ_word = query
         relate = list()
         for word in corpus:
             if stop_check is not None and stop_check():
@@ -93,8 +93,8 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         if related_data[0][1] != targ_word:
             related_data.reverse()
     elif isinstance(query, tuple):
-        w1 = corpus.find(query[0])
-        w2 = corpus.find(query[1])
+        w1 = query[0]
+        w2 = query[1]
         relatedness = relate_func(w1,w2)
         related_data.append((w1,w2,relatedness))
     elif hasattr(query,'__iter__'):
@@ -111,8 +111,8 @@ def string_similarity(corpus, query, algorithm, **kwargs):
                 cur += 1
                 if cur % 50 == 0:
                     call_back(cur)
-            w1 = corpus.find(q1)
-            w2 = corpus.find(q2)
+            w1 = q1
+            w2 = q2
             relatedness = relate_func(w1,w2)
             if min_rel is not None and relatedness < min_rel:
                 continue

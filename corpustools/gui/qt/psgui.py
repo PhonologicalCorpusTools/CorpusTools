@@ -144,5 +144,5 @@ class PhonoSearchDialog(FunctionDialog):
                 envs = [str(x[1]) for x in f]
             except IndexError:
                 envs = []
-            self.results.append([str(w), str(getattr(w,self.tierWidget.value())),', '.join(segs),
-                                ', '.join(envs)])
+            self.results.append([str(w), str(getattr(w,self.tierWidget.value())),segs,
+                                envs])
