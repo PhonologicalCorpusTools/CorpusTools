@@ -60,7 +60,7 @@ class MIDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = TierWidget(corpus,include_spelling=False)
+        self.tierWidget = TierWidget(corpus,include_spelling=True)
 
         optionLayout.addWidget(self.tierWidget)
 
