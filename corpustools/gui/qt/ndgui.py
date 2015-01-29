@@ -223,7 +223,7 @@ class NDDialog(FunctionDialog):
                                         ' are more similar (with 0 being identical). For more'
                                         ' information, click on \'About this function\'.'
             "</FONT>"))
-      
+
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate neighborhood density'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
@@ -243,6 +243,7 @@ class NDDialog(FunctionDialog):
                                     ' frequency means each letter is counted once per word. Token '
                                     'frequency means each letter is counted as many times as its '
                                     'words frequency in the corpus.'
+            "</FONT>"))
 
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate neighborhood density'
