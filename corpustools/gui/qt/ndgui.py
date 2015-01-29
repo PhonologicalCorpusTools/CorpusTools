@@ -94,9 +94,7 @@ class NDDialog(FunctionDialog):
                     'References',
                     ('Luce, Paul A. & David B. Pisoni. 1998. '
                     'Recognizing spoken words: The neighborhood activation model. '
-                    'Ear Hear 19.1-36.'),
-                    ()]
-
+                    'Ear Hear 19.1-36.')]
 
     name = 'neighborhood density'
 
@@ -232,7 +230,20 @@ class NDDialog(FunctionDialog):
                                 ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
                                 ' in the corpus.'
             "</FONT>"))
-            
+
+            threshFrame.setToolTip(("<FONT COLOR=black>"
+            'These values set the minimum similarity'
+                            ' or maximum distance needed in order for two words to be'
+                            ' considered a neighbor.'
+            "</FONT>"))
+
+            self.typeTokenWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which type of frequency to use'
+                                    ' for calculating distance (only relevant for Khorsi). Type'
+                                    ' frequency means each letter is counted once per word. Token '
+                                    'frequency means each letter is counted as many times as its '
+                                    'words frequency in the corpus.'
+
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate neighborhood density'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
