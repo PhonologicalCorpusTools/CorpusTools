@@ -117,8 +117,8 @@ class NDDialog(FunctionDialog):
                                             OrderedDict([
                                             ('Edit distance','edit_distance'),
                                             ('Phonological edit distance','phono_edit_distance'),
-                                            ('Substitution neighbors only','substitution'),
-                                            ('Khorsi','khorsi'),]),
+                                            ('Khorsi','khorsi'),
+                                            ('Substitution neighbors only','substitution'),]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
                                             'Substitution neighbors only':self.substitutionSelected,
@@ -222,6 +222,9 @@ class NDDialog(FunctionDialog):
                                         ' For edit distance, a smaller number means strings'
                                         ' are more similar (with 0 being identical). For more'
                                         ' information, click on \'About this function\'.'
+                                        ' \'Substitution neighbors\' will consider similar '
+                                        ' only forms distinguished from the query by segment '
+                                        ' substitution (not addition/deletion).'
             "</FONT>"))
 
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
