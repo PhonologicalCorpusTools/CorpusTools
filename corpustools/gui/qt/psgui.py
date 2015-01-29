@@ -28,6 +28,7 @@ class PhonoSearchDialog(FunctionDialog):
                 'Transcription',
                 'Segment',
                 'Environment']
+    summary_header = ['Segment', ' Environment', 'Count']
     _about = ['']
 
     name = 'phonological search'

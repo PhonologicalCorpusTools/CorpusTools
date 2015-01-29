@@ -1,5 +1,5 @@
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 
 from .imports import *
 
@@ -419,6 +419,51 @@ class ResultsModel(BaseTableModel):
         self.columns = header
 
         self.rows = results
+
+class PhonoSearchResultsModel(BaseTableModel):
+    def __init__(self, header, summary_header, results, settings, parent=None):
+        QAbstractTableModel.__init__(self,parent)
+        self.settings = settings
+        self.header = header
+        self.summary_header = summary_header
+        self.columns = self.header
+
+        self.rows = results
+        self.allData = self.rows
+        self.summarized = False
+
+    def _summarize(self):
+        data = defaultdict(int)
+        for line in self.allData:
+            segs = line[2]
+            envs = line[3]
+            for i,seg in enumerate(segs):
+                segenv = seg,envs[i]
+                data[segenv] += 1
+
+        self.rows = list()
+        for k,v in sorted(data.items()):
+            self.rows.append([k[0],k[1],v])
+        self.columns = self.summary_header
+
+    def setSummarized(self, b):
+        if self.summarized == b:
+            return
+        self.summarized = b
+        self.layoutAboutToBeChanged.emit()
+        if self.summarized:
+            self._summarize()
+        else:
+            self.rows = self.allData
+            self.columns = self.header
+        self.layoutChanged.emit()
+
+    def addRows(self,rows):
+        self.layoutAboutToBeChanged.emit()
+        self.allData += rows
+        if self.summarized:
+            self._summarize()
+        self.layoutChanged.emit()
 
 class TreeItem(object):
 

@@ -5,7 +5,8 @@ from .imports import *
 from corpustools.config import TMP_DIR
 
 from .config import Settings, PreferencesDialog
-from .views import TableWidget, TreeWidget, DiscourseView, ResultsWindow, LexiconView
+from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
+                    LexiconView,PhonoSearchResults)
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
@@ -405,7 +406,8 @@ class MainWindow(QMainWindow):
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
                 self.PPWindow.table.model().addRows(dialog.results)
             else:
-                self.PPWindow = ResultsWindow('Phonotactic probability results',dialog,self)
+                self.PPWindow = ResultsWindow('Phonotactic probability results',
+                        dialog,self)
                 self.PPWindow.show()
         elif result:
             if self.settings['autosave']:
@@ -422,7 +424,8 @@ class MainWindow(QMainWindow):
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
                 self.PhonoSearchWindow.table.model().addRows(dialog.results)
             else:
-                self.PhonoSearchWindow = ResultsWindow('Phonological search results',dialog,self)
+                self.PhonoSearchWindow = PhonoSearchResults(
+                                'Phonological search results',dialog,self)
                 self.PhonoSearchWindow.show()
 
     def createWord(self):
@@ -686,6 +689,26 @@ class MainWindow(QMainWindow):
                 event.ignore()
                 return
 
+        if self.FLWindow is not None:
+            self.FLWindow.deleteLater()
+        if self.PDWindow is not None:
+            self.PDWindow.deleteLater()
+        if self.FAWindow is not None:
+            self.FAWindow.deleteLater()
+        if self.SSWindow is not None:
+            self.SSWindow.deleteLater()
+        if self.ASWindow is not None:
+            self.ASWindow.deleteLater()
+        if self.NDWindow is not None:
+            self.NDWindow.deleteLater()
+        if self.PPWindow is not None:
+            self.PPWindow.deleteLater()
+        if self.MIWindow is not None:
+            self.MIWindow.deleteLater()
+        if self.KLWindow is not None:
+            self.KLWindow.deleteLater()
+        if self.PhonoSearchWindow is not None:
+            self.PhonoSearchWindow.deleteLater()
         self.settings['size'] = self.size()
         self.settings['pos'] = self.pos()
         #tmpfiles = os.listdir(TMP_DIR)

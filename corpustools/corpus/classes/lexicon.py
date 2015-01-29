@@ -1260,7 +1260,7 @@ class Corpus(object):
                 if not seg in seg_list:
                     continue
                 if envs is None:
-                    founds.append((seg,))
+                    founds.append((seg,''))
                     continue
                 word_env = word.get_env(pos, sequence_type)
                 for env in envs:

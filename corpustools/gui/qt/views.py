@@ -4,7 +4,7 @@ from corpustools.config import TMP_DIR
 
 from .imports import *
 
-from .models import VariantModel, ResultsModel
+from .models import VariantModel, ResultsModel, PhonoSearchResultsModel
 from .windows import FunctionWorker
 
 class AudioWorker(FunctionWorker):
@@ -729,16 +729,24 @@ class ResultsWindow(QDialog):
         self.table.setModel(dataModel)
         try:
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            self.table.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
         except AttributeError:
             self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+            self.table.horizontalHeader().setResizeMode(0,QHeaderView.Stretch)
         layout.addWidget(self.table)
         self.aclayout = QHBoxLayout()
         self.redoButton = QPushButton('Reopen function dialog')
+        #self.redoButton.setFixedSize(self.redoButton.minimumSizeHint())
         self.redoButton.clicked.connect(self.redo)
         self.saveButton = QPushButton('Save to file')
+        #self.saveButton.setFixedSize(self.saveButton.minimumSizeHint())
         self.saveButton.clicked.connect(self.save)
+        self.closeButton = QPushButton('Close window')
+        #self.closeButton.setFixedSize(self.closeButton.minimumSizeHint())
+        self.closeButton.clicked.connect(self.reject)
         self.aclayout.addWidget(self.redoButton)
         self.aclayout.addWidget(self.saveButton)
+        self.aclayout.addWidget(self.closeButton)
         acframe = QFrame()
         acframe.setLayout(self.aclayout)
         layout.addWidget(acframe)
@@ -747,8 +755,16 @@ class ResultsWindow(QDialog):
         self.table.resizeColumnsToContents()
         self.setWindowTitle(title)
         self.table.adjustSize()
-        self.setMaximumWidth(self.table.calcWidth()+41)
-        self.resize(self.maximumWidth(),400)
+
+    def sizeHint(self):
+        sz = QDialog.sizeHint(self)
+        minWidth = self.table.calcWidth()+41
+        if sz.width() < minWidth:
+
+            sz.setWidth(minWidth)
+        if sz.height() < 400:
+            sz.setHeight(400)
+        return sz
 
     def redo(self):
         if self.dialog.exec_():
@@ -772,18 +788,34 @@ class ResultsWindow(QDialog):
                     writer.writerow(row)
 
 class PhonoSearchResults(ResultsWindow):
-    def __init__(self, title, dataModel, parent=None):
-        ResultsWindow.__init__(self, title, dataModel, parent)
+    def __init__(self, title, dialog, parent):
+        ResultsWindow.__init__(self, title, dialog, parent)
+        dataModel = PhonoSearchResultsModel(self.dialog.header,
+                        self.dialog.summary_header,
+                        self.dialog.results, self.parent().settings)
+        dataModel.setSummarized(True)
+        self.table.setModel(dataModel)
+
         self.summarized = True
         self.summaryButton = QPushButton('Show individual results')
         self.summaryButton.clicked.connect(self.summaryDetail)
-        self.aclayout.addWidget(self.summaryButton)
+        self.aclayout.insertWidget(0, self.summaryButton)
 
     def summaryDetail(self):
         if self.summarized:
-            self.table.model().setSummarized(True)
-            self.summaryButton.setText('Show individual results')
-        else:
             self.table.model().setSummarized(False)
             self.summaryButton.setText('Show summary results')
+        else:
+            self.table.model().setSummarized(True)
+            self.summaryButton.setText('Show individual results')
         self.summarized = not self.summarized
+
+    def redo(self):
+        if self.dialog.exec_():
+            if self.dialog.update:
+                self.table.model().addRows(self.dialog.results)
+            else:
+                dataModel = PhonoSearchResultsModel(self.dialog.header,self.dialog.results, self.parent().settings)
+                self.table.setModel(dataModel)
+        self.raise_()
+        self.activateWindow()
