@@ -243,6 +243,10 @@ class MainWindow(QMainWindow):
         dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+            if self.corpusModel.corpus.specifier is not None:
+                self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))
+            else:
+                self.featureSystemStatus.setText('No feature system selected')
             if self.settings['autosave']:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
@@ -353,10 +357,9 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             if self.KLWindow is not None and dialog.update and self.KLWindow.isVisible():
-                self.KLWindow.table.model().addData(dialog.results)
+                self.KLWindow.table.model().addRows(dialog.results)
             else:
-                dataModel = ResultsModel(dialog.header, dialog.results)
-                self.KLWindow = ResultsWindow('Kullback Leibler results', dataModel, self)
+                self.KLWindow = ResultsWindow('Kullback Leibler results', dialog, self)
                 self.KLWindow.show()
     @check_for_empty_corpus
     @check_for_transcription
