@@ -83,16 +83,20 @@ class NDDialog(FunctionDialog):
                 'Algorithm type',
                 'Threshold']
 
-    _about = [('This function calculates the neighborhood density '
-                    'of a word.'),
+    _about = [('This function calculates the neighborhood density (size)'
+                    ' of a word. A neighborhood is the set of words sufficiently'
+                    ' similar to the target word as defined using a distance metric.'
+                    ' For information about the distance metrics, see "About this Function"'
+                    ' in the string similarity analysis'),
                     '',
                     'Coded by Blake Allen and Michael Fry',
                     '',
                     'References',
                     ('Luce, Paul A. & David B. Pisoni. 1998. '
                     'Recognizing spoken words: The neighborhood activation model. '
-                    'Ear Hear 19.1-36.')
-                    ]
+                    'Ear Hear 19.1-36.'),
+                    ()]
+
 
     name = 'neighborhood density'
 
@@ -213,7 +217,22 @@ class NDDialog(FunctionDialog):
 
         self.algorithmWidget.initialClick()
         if self.showToolTips:
-
+            self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which algorithm'
+                                        ' to use for calculating similarity. For Khorsi,'
+                                        ' a larger number means strings are more similar.'
+                                        ' For edit distance, a smaller number means strings'
+                                        ' are more similar (with 0 being identical). For more'
+                                        ' information, click on \'About this function\'.'
+            "</FONT>"))
+      
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
+            'Select whether to calculate neighborhood density'
+                                ' on the spelling of a word (perhaps more useful for morphological purposes)'
+                                ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
+                                ' in the corpus.'
+            "</FONT>"))
+            
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
             'Select whether to calculate neighborhood density'
                                 ' on the spelling of a word (perhaps more useful for morphological purposes)'
