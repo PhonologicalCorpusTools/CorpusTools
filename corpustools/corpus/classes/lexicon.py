@@ -138,10 +138,19 @@ class Segment(object):
         elif feat_type == 'hayes':
             if 'diphthong' in self.features and self.features['diphthong'] == '+':
                 category.append('Diphthong')
-                if self.features['front_diphthong'] == '+':
-                    category.append('Front')
+                if 'front_diphthong' in self.features:
+                    if self.features['front_diphthong'] == '+':
+                        category.append('Front')
+                    else:
+                        category.append('Back')
+                elif 'front-diphthong' in self.features:
+                    if self.features['front-diphthong'] == '+':
+                        category.append('Front')
+                    else:
+                        category.append('Back')
                 else:
                     category.append('Back')
+
             elif self.features['syllabic'] == '+':
                 category.append('Vowel')
                 #Height, backness, roundness
@@ -941,6 +950,8 @@ class Attribute(object):
         return self._range
 
     def update_range(self,value):
+        if value is None:
+            return
         if self.att_type == 'numeric':
             if isinstance(value, str):
                 try:

@@ -310,6 +310,7 @@ class PointTier(object):
             raise ValueError(self.maxTime) # too late
         i = bisect_left(self.points, point)
         if i < len(self.points) and self.points[i].time == point.time:
+            return
             raise ValueError(point)# we already got one right there
         self.points.insert(i, point)
 

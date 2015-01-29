@@ -1314,11 +1314,11 @@ class CorpusFromCsvDialog(QDialog):
         transDelim = self.transDelimiterEdit.text()
 
         featureSystem = self.featureSystemSelect.path()
-        corpus = load_corpus_csv(name, path, colDelim, transDelim,featureSystem)
+        corpus = load_corpus_csv(name, path, colDelim, transDelim, featureSystem)
         errors = corpus.check_coverage()
         if errors:
             msgBox = QMessageBox(QMessageBox.Warning, "Missing symbols",
-                    "{} were all missing from the feature system.  Would you like to initialize them as unspecified?".format(', '.join(errors.keys())), QMessageBox.NoButton, self)
+                    "{} were all missing from the feature system.  Would you like to initialize them as unspecified?".format(', '.join(errors)), QMessageBox.NoButton, self)
             msgBox.addButton("Yes", QMessageBox.AcceptRole)
             msgBox.addButton("No", QMessageBox.RejectRole)
             if msgBox.exec_() == QMessageBox.AcceptRole:
