@@ -4,7 +4,9 @@ import sys
 import math
 from collections import defaultdict
 
-def pointwise_mi(corpus, query, sequence_type, halve_edges = False, in_word = False, stop_check = None, call_back = None):
+def pointwise_mi(corpus, query, sequence_type,
+                halve_edges = False, in_word = False,
+                stop_check = None, call_back = None):
     """query should be a tuple of two strings, each a segment/letter"""
 
     if call_back is not None:
@@ -19,9 +21,8 @@ def pointwise_mi(corpus, query, sequence_type, halve_edges = False, in_word = Fa
         unigram_dict = corpus.get_frequency_base(sequence_type, count_what, halve_edges, gramsize = 1, probability=True)
         bigram_dict = corpus.get_frequency_base(sequence_type, count_what, halve_edges, gramsize = 2, probability=True)
 
-    if '#' in query:
-        raise(Exception("Word boundaries are currently unsupported."))
-
+    #if '#' in query:
+    #    raise(Exception("Word boundaries are currently unsupported."))
     try:
         prob_s1 = unigram_dict[query[0]]
     except KeyError:

@@ -16,6 +16,8 @@ class MIWorker(FunctionWorker):
             try:
                 res = pointwise_mi(kwargs['corpus'], pair,
                         sequence_type = kwargs['sequence_type'],
+                        halve_edges = kwargs['halve_edges'],
+                        in_word = kwargs['in_word'],
                         stop_check = kwargs['stop_check'],
                         call_back = kwargs['call_back'])
             except Exception as e:
@@ -32,6 +34,8 @@ class MIDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
                 'Transcription tier',
+                'Domain',
+                'Halved edges',
                 'Mutual information']
 
     _about = [('This function calculates the mutual information for a bigram'
@@ -58,11 +62,21 @@ class MIDialog(FunctionDialog):
 
         milayout.addWidget(self.segPairWidget)
 
-        optionLayout = QVBoxLayout()
+        optionLayout = QFormLayout()
 
-        self.tierWidget = TierWidget(corpus,include_spelling=True)
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        optionLayout.addWidget(self.tierWidget)
+        optionLayout.addRow(self.tierWidget)
+
+        self.inWordCheck = QCheckBox()
+        inWordLabel = QLabel('Set domain to word')
+
+        optionLayout.addRow(inWordLabel,self.inWordCheck)
+
+        self.halveEdgesCheck = QCheckBox()
+        self.halveEdgesCheck.setChecked(True)
+        halveEdgesLabel = QLabel('Halve word boundary count')
+        optionLayout.addRow(halveEdgesLabel,self.halveEdgesCheck)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -83,6 +97,23 @@ class MIDialog(FunctionDialog):
             'Choose bigrams for which to calculate the'
                                 ' mutual information of their bigram and unigram probabilities.'
             "</FONT>"))
+            inwordToolTip = ("<FONT COLOR=black>"
+            'Set the domain for counting unigrams/bigrams set to the '
+                        'word rather than the unigram/bigram; ignores adjacency '
+                        'and word edges (#).'
+            "</FONT>")
+            self.inWordCheck.setToolTip(inwordToolTip)
+            inWordLabel.setToolTip(inwordToolTip)
+
+            halveEdgesToolTip = ("<FONT COLOR=black>"
+            'make the number of edge characters (#) equal to '
+                        'the size of the corpus + 1, rather than double the '
+                        'size of the corpus - 1.'
+            "</FONT>")
+            halveEdgesLabel.setToolTip(halveEdgesToolTip)
+            self.segPairWidget.setToolTip(halveEdgesToolTip)
+
+
 
     def generateKwargs(self):
         segPairs = self.segPairWidget.value()
@@ -92,6 +123,8 @@ class MIDialog(FunctionDialog):
             return None
         return {'corpus':self.corpus,
                 'segment_pairs':[tuple(y for y in x) for x in segPairs],
+                'in_word': self.inWordCheck.isChecked(),
+                'halve_edges': self.halveEdgesCheck.isChecked(),
                 'sequence_type': self.tierWidget.value()}
 
     def calc(self):
@@ -111,7 +144,12 @@ class MIDialog(FunctionDialog):
     def setResults(self,results):
         self.results = list()
         seg_pairs = [tuple(y for y in x) for x in self.segPairWidget.value()]
+        if self.inWordCheck.isChecked():
+            dom = 'Word'
+        else:
+            dom = 'Unigram/Bigram'
         for i, r in enumerate(results):
             self.results.append([seg_pairs[i][0],seg_pairs[i][1],
                                 self.tierWidget.displayValue(),
+                                dom, self.halveEdgesCheck.isChecked(),
                                 r])
