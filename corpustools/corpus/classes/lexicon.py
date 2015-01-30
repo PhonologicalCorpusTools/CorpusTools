@@ -1027,8 +1027,8 @@ class Corpus(object):
             return False
         return True
 
-    def get_frequency_base(self, sequence_type, count_what, gramsize = 1,
-                        probability = False):
+    def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
+                        gramsize = 1, probability = False):
         if (sequence_type, count_what, gramsize) not in self._freq_base:
             freq_base = collections.defaultdict(float)
             for word in self:
@@ -1036,7 +1036,7 @@ class Corpus(object):
                     freq = word.frequency
                 else:
                     freq = 1
-                seq = ['#'] + [x for x in getattr(word, sequence_type)] +['#']
+                seq = ['#'] + [x for x in getattr(word, sequence_type)] + ['#']
                 #seq = getattr(word, sequence_type)
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:
@@ -1047,6 +1047,8 @@ class Corpus(object):
             self._freq_base[(sequence_type, count_what, gramsize)] = freq_base
         freq_base = self._freq_base[(sequence_type, count_what, gramsize)]
         return_dict = { k:v for k,v in freq_base.items()}
+        if halve_edges and '#' in return_dict:
+            return_dict['#'] = (return_dict['#'] / 2) + 1
         if probability:
             return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
         return return_dict
