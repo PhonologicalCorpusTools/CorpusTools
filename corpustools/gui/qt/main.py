@@ -27,10 +27,56 @@ from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
 
+class QApplicationMessaging(QApplication):
+    messageFromOtherInstance = Signal(bytes)
+
+    def __init__(self, argv):
+        QApplication.__init__(self, argv)
+        self._key = 'PCT'
+        self._timeout = 1000
+        self._locked = False
+        socket = QLocalSocket(self)
+        socket.connectToServer(self._key, QIODevice.WriteOnly)
+        if not socket.waitForConnected(self._timeout):
+            self._server = QLocalServer(self)
+            # noinspection PyUnresolvedReferences
+            self._server.newConnection.connect(self.handleMessage)
+            self._server.listen(self._key)
+        else:
+            self._locked = True
+        socket.disconnectFromServer()
+
+    def __del__(self):
+        if not self._locked:
+            self._server.close()
+
+    def event(self, e):
+        if e.type() == QEvent.FileOpen:
+            self.messageFromOtherInstance.emit(bytes(e.file(), 'UTF-8'))
+            return True
+        else:
+            return QApplication.event(self, e)
+
+    def isRunning(self):
+        return self._locked
+
+    def handleMessage(self):
+        socket = self._server.nextPendingConnection()
+        if socket.waitForReadyRead(self._timeout):
+            self.messageFromOtherInstance.emit(socket.readAll().data())
+
+    def sendMessage(self, message):
+        socket = QLocalSocket(self)
+        socket.connectToServer(self._key, QIODevice.WriteOnly)
+        socket.waitForConnected(self._timeout)
+        socket.write(bytes(message, 'UTF-8'))
+        socket.waitForBytesWritten(self._timeout)
+        socket.disconnectFromServer()
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self,app):
+        app.messageFromOtherInstance.connect(self.handleMessage)
         super(MainWindow, self).__init__()
 
         self.unsavedChanges = False
@@ -91,10 +137,22 @@ class MainWindow(QMainWindow):
         self.MIWindow = None
         self.KLWindow = None
         self.PhonoSearchWindow = None
-        self.setMinimumSize(self.menuBar().sizeHint().width(), 400)
+        self.setMinimumWidth(self.menuBar().sizeHint().width())
 
-        if not os.path.exists(TMP_DIR):
-            os.mkdir(TMP_DIR)
+    def sizeHint(self):
+        sz = QMainWindow.sizeHint(self)
+        minWidth = self.menuBar().sizeHint().width()
+        if sz.width() < minWidth:
+            sz.setWidth(minWidth)
+        if sz.height() < 400:
+            sz.setHeight(400)
+        return sz
+
+    def handleMessage(self):
+        self.setWindowState(self.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        #self.raise_()
+        #self.show()
+        self.activateWindow()
 
     def check_for_unsaved_changes(function):
         def do_check(self):
@@ -163,7 +221,6 @@ class MainWindow(QMainWindow):
         if result:
             self.corpus = dialog.corpus
             if hasattr(self.corpus,'lexicon'):
-                self.setMinimumSize(800, 400)
                 c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
@@ -184,7 +241,6 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setEnabled(True)
                 self.showTextAct.setChecked(True)
             else:
-                self.setMinimumSize(400, 400)
                 c = self.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
@@ -199,7 +255,7 @@ class MainWindow(QMainWindow):
                 self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
-
+            self.adjustSize()
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
 
