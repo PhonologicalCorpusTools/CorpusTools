@@ -1,3 +1,6 @@
+import sys
+import subprocess
+
 
 from .imports import *
 
@@ -84,8 +87,30 @@ class FunctionDialog(QDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
 
     def handleError(self,error):
-        reply = QMessageBox.critical(self,
-                "Error encountered", str(error))
+        error.print_to_file(self.parent().settings.error_directory())
+        if hasattr(error, 'main'):
+            reply = QMessageBox()
+            reply.setWindowTitle('Error encountered')
+            reply.setIcon(QMessageBox.Critical)
+            reply.setText(error.main)
+            reply.setInformativeText(error.information)
+            reply.setDetailedText(error.details)
+            reply.addButton(QPushButton('Open errors directory'),QMessageBox.AcceptRole)
+            reply.setStandardButtons(QMessageBox.Close)
+            ret = reply.exec_()
+            if ret == QMessageBox.AcceptRole:
+                if sys.platform == 'win32':
+                    program = 'explorer'
+                    proc = QProcess(self.parent())
+                    proc.start(program,['"{0}"'.format(self.parent().settings.error_directory())])
+                    #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
+                elif sys.platform == 'darwin':
+                    pass
+                else:
+                    pass
+        else:
+            reply = QMessageBox.critical(self,
+                    "Error encountered", str(error))
         self.progressDialog.cancel()
         return None
 

@@ -5,7 +5,7 @@ try:
     raise(ImportError)
     from PySide.QtCore import (QRectF, Qt, QSettings,QAbstractTableModel,
                 QSize,QPoint, Signal, QThread,QModelIndex, QAbstractItemModel,
-                QSharedMemory, QEvent, QIODevice)
+                QSharedMemory, QEvent, QIODevice, QProcess)
     from PySide.QtGui import (QFont, QLayout, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem,
                             QMainWindow, QHBoxLayout, QLabel, QAction,
@@ -27,7 +27,7 @@ except ImportError:
                                 pyqtSignal as Signal,QThread,QAbstractTableModel,
                                 QSize, QSettings,QPoint, QItemSelectionModel,
                                 QSortFilterProxyModel, QAbstractItemModel,
-                            QSharedMemory, QEvent, QIODevice)
+                            QSharedMemory, QEvent, QIODevice, QProcess)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
