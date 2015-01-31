@@ -1,40 +1,133 @@
 from collections import defaultdict, OrderedDict
 from math import log2
-
-from warnings import warn
+import os
 
 from corpustools.corpus.classes import EnvironmentFilter
 
 class ProdError(Exception):
-    def __init__(self, seg1, seg2, missing, overlapping):
+    def __init__(self, seg1, seg2, envs, missing, overlapping):
         self.segs = (seg1, seg2)
+        self.envs = envs
         self.missing = missing
         self.overlapping = overlapping
         self.filename = 'pred_of_dist_{}_{}_error.txt'.format(seg1,seg2)
+        self.information = ('Please refer to file \'{}\' in the errors directory '
+                'for details or click on Show Details.').format(self.filename)
         if missing and overlapping:
-            self.value = ('Exhaustivity and uniqueness were both not met. ',
-                            'Please refer to file {} in the errors directory.')
+            self.main = 'Exhaustivity and uniqueness were both not met for the segments {}.'.format(
+                        ' and '.join([seg1, seg2]))
+
+            self.value = ('Exhaustivity and uniqueness were both not met for the segments {}. '
+                            '\n\nPlease refer to file {} in the errors directory '
+                            'to view them.').format(
+                        ' and '.join([seg1, seg2]),self.filename)
         elif missing:
+            self.main = 'The environments specified were not exhaustive.'
             if len(missing.keys()) > 20:
-                self.value = ('Exhaustivity was not met. ',
-                            'Please refer to file {} in the errors directory.')
+                self.value = ('The environments specified were not exhaustive. '
+                        'The segments {} were found in environments not specified. '
+                        'The number of missing environments exceeded 20. '
+                        '\n\nPlease refer to file {} in the errors directory '
+                        'to view them.').format(
+                        ' and '.join([seg1, seg2]),self.filename)
             else:
-                self.value = ('Exhaustivity was not met. The environments for '
-                        'the pair {} for were not applicable to the '
-                        'following environments in which it was found:\n\n{}').format(
-                        ' and '.join([seg1, seg2]),
-                        ' ,'.join(str(w) for w in missing.keys()))
+                self.value = ('The environments specified were not exhaustive. '
+                    'The segments {} were found in environments not specified. '
+                    'The following environments did not match any environments specified:\n\n{}'
+                    '\n\nPlease refer to file {} in the errors directory '
+                        'for details.').format(
+                    ' and '.join([seg1, seg2]),
+                    ' ,'.join(str(w) for w in missing.keys()),self.filename)
 
         elif overlapping:
+            self.main = 'The environments specified were not unique.'
+            if len(overlapping.keys()) > 10:
+                self.value = ('The environments specified for the segments {} '
+                            'were not unique. '
+                            '\n\nPlease refer to file {} in the errors directory '
+                            'to view them.').format(
+                        ' and '.join([seg1, seg2]),self.filename)
+            else:
+                self.value = ('The environments specified were not unique. '
+                            'The following environments for {} overlapped:\n\n'
+                            ).format(' and '.join([seg1, seg2]))
+                for k,v in overlap_envs.items():
+                    self.value +='{}: {}\n'.format(
+                            ' ,'.join(str(env) for env in k),
+                            ' ,'.join(str(env) for env in v))
+                self.value += ('\nPlease refer to file {} in the errors directory '
+                        'for details.').format(self.filename)
 
-        error_string = 'Uniqueness was not met.  The following environments for {} overlapped:\n'.format(' and '.join([seg1, seg2]))
-        for k,v in overlap_envs.items():
-            error_string +='{}: {}\n'.format(
-                    ' ,'.join(str(env) for env in k),
-                    ' ,'.join(str(env) for env in v))
+        self.details = ''
+        if self.missing:
+            self.details += ('The following words have at least one of the '
+                            'segments you are searching for, but it occurs in '
+                            'an environment not included in the list you selected.\n\n')
+            self.details += 'Segments you selected: {}, {}\n'.format(self.segs[0], self.segs[1])
+            self.details += 'Environments you selected: {}\n\n'.format(' ,'.join(str(env) for env in self.envs))
+            self.details += 'Word\tRelevant environments (segmental level only)\n'
+            for wenv,words in self.missing.items():
+                for w in words:
+                    self.details += '{}\t{}\n'.format(w, wenv)
+            if self.overlapping:
+                self.details += '\n\n\n'
+        if self.overlapping:
+            self.details += ('The environments you selected are not unique, '
+                    'which means that some of them pick out the same environment '
+                    'in the same words.\n')
+            self.details += ('For example, the environments of \'_[-voice]\' '
+                    'and \'_k\', are not unique. They overlap with each '
+                    'other, since /k/ is [-voice].\n')
+            self.details += ('When your environments are not unique, the entropy '
+                    'calculation will be inaccurate, since some environments '
+                    'will be counted more than once.\n\n')
+            self.details += 'Segments you selected: {}, {}\n'.format(self.segs[0], self.segs[1])
+            self.details += 'Environments you selected: {}\n'.format(' ,'.join(str(env) for env in self.envs))
+            self.details += 'Word\tWord environment\tOverlapping environments\n'
+            for envs,v in self.overlapping.items():
+                for wenv,w in v.items():
+                    for word in w:
+                        self.details += '{}\t{}\t{}\n'.format(
+                                word,wenv,', '.join(envs))
+    def __str__(self):
+        return self.value
 
     def print_to_file(self,error_directory):
-        pass
+        with open(os.path.join(error_directory,self.filename),'w',encoding='utf-8') as f:
+            if self.missing:
+                print(('The following words have at least one of the '
+                            'segments you are searching for, but it occurs in '
+                            'an environment not included in the list you selected.'),file=f)
+                print('Segments you selected: {}, {}'.format(self.segs[0], self.segs[1]),file=f)
+                print('Environments you selected: {}'.format(' ,'.join(str(env) for env in self.envs)),file=f)
+                print('Word\tRelevant environments (segmental level only)',file=f)
+                for wenv,words in self.missing.items():
+                    lines = list()
+                    for w in words:
+                        print('{}\t{}'.format(w, wenv),file=f)
+
+            if self.overlapping:
+                print(('The environments you selected are not unique, '
+                    'which means that some of them pick out the same environment '
+                    'in the same words.'),file=f)
+                print(('For example, the environments of \'_[-voice]\' '
+                    'and \'_k\', are not unique. They overlap with each '
+                    'other, since /k/ is [-voice].'),file=f)
+                print(('When your environments are not unique, the entropy '
+                    'calculation will be inaccurate, since some environments '
+                    'will be counted more than once.'),file=f)
+                print(('This file contains all the words where this problem '
+                    'could arise.'),file=f)
+                print('',file=f)
+                print('Segments you selected: {}, {}'.format(self.segs[0], self.segs[1]),file=f)
+                print('Environments you selected: {}'.format(' ,'.join(str(env) for env in self.envs)),file=f)
+                print('Word\tWord environment\tOverlapping environments',file=f)
+                for envs,v in self.overlapping.items():
+                    lines = list()
+                    for wenv,w in v.items():
+                        print('{}\t{}\t{}'.format(
+                                w,wenv,', '.join(envs)),file=f)
+
 
 
 def count_segs(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, call_back):
@@ -103,7 +196,7 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
                 k = str(word_env)
 
 
-                missing_envs[str(word_env)].update(str(word))
+                missing_envs[str(word_env)].update([str(word)])
 
             elif len(found_env_match) > 1:
                 #the user supplied environmnets that overlap, e.g. they want
@@ -113,7 +206,7 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
                 k2 = str(word_env)
                 if k2 not in overlapping_envs[k]:
                     overlapping_envs[k][k2] = set()
-                overlapping_envs[k][k2].update(str(word))
+                overlapping_envs[k][k2].update([str(word)])
 
     return env_matches, missing_envs, overlapping_envs
 
@@ -211,7 +304,7 @@ def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
     env_matches, miss_envs, overlap_envs = returned
     if miss_envs or overlap_envs:
         if strict:
-            raise(ProdError(seg1, seg2, miss_envs, overlap_envs))
+            raise(ProdError(seg1, seg2, envs, miss_envs, overlap_envs))
 
     H_dict = OrderedDict()
 

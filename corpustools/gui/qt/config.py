@@ -159,6 +159,8 @@ class Settings(object):
         #self.qs.setFallbacksEnabled(False)
         self.check_storage()
 
+    def error_directory(self):
+        return os.path.join(self['storage'],'ERRORS')
 
     def check_storage(self):
         if not os.path.exists(self['storage']):

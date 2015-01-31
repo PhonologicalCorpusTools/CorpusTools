@@ -7,7 +7,7 @@ from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSele
 
 from .windows import FunctionWorker, FunctionDialog
 
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ExhaustivityError, UniquenessError
+from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ProdError
 
 class PDWorker(FunctionWorker):
     def run(self):
