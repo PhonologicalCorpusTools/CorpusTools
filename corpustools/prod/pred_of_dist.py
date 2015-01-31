@@ -10,21 +10,28 @@ class ProdError(Exception):
         self.segs = (seg1, seg2)
         self.missing = missing
         self.overlapping = overlapping
-        self.filename = 'predictability of dis'
+        self.filename = 'pred_of_dist_{}_{}_error.txt'.format(seg1,seg2)
         if missing and overlapping:
             self.value = ('Exhaustivity and uniqueness were both not met. ',
                             'Please refer to file {} in the errors directory.')
+        elif missing:
+            if len(missing.keys()) > 20:
+                self.value = ('Exhaustivity was not met. ',
+                            'Please refer to file {} in the errors directory.')
+            else:
+                self.value = ('Exhaustivity was not met. The environments for '
+                        'the pair {} for were not applicable to the '
+                        'following environments in which it was found:\n\n{}').format(
+                        ' and '.join([seg1, seg2]),
+                        ' ,'.join(str(w) for w in missing.keys()))
+
+        elif overlapping:
 
         error_string = 'Uniqueness was not met.  The following environments for {} overlapped:\n'.format(' and '.join([seg1, seg2]))
         for k,v in overlap_envs.items():
             error_string +='{}: {}\n'.format(
                     ' ,'.join(str(env) for env in k),
                     ' ,'.join(str(env) for env in v))
-        self.value = ('Exhaustivity was not met. The environments for '
-                    'the pair {} for were not applicable to the '
-                    'following environments in which it was found:\n\n{}').format(
-                    ' and '.join([seg1, seg2]),
-                    ' ,'.join(str(w) for w in missing.keys()))
 
     def print_to_file(self,error_directory):
         pass
