@@ -14,7 +14,8 @@ class DelimiterError(Exception):
     pass
 
 
-def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_system_path = '',pqueue=None,oqueue=None):
+def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.',
+                    feature_system_path = ''):
     """
     Load a corpus from a column-delimited text file
 
@@ -56,11 +57,10 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
         headers = f.readline()
         headers = headers.split(delimiter)
         if len(headers)==1:
-            e = DelimiterError('Could not parse the corpus.\n\Check that the delimiter you typed in matches the one used in the file.')
-            if pqueue is not None:
-                pqueue.put(e)
-            else:
-                raise(e)
+            e = DelimiterError(('Could not parse the corpus.\n\Check '
+                                'that the delimiter you typed in matches '
+                                'the one used in the file.'))
+            raise(e)
 
         headers = [h.strip() for h in headers]
         headers[0] = headers[0].strip('\ufeff')
@@ -93,21 +93,13 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.', feature_syst
             if pqueue is not None:
                 pqueue.put(1)
     if corpus.has_transcription and not trans_check:
-        e = DelimiterError('Could not parse transcriptions with that delimiter.\n\Check that the transcription delimiter you typed in matches the one used in the file.')
-        if pqueue is not None:
-            pqueue.put(e)
-        else:
-            raise(e)
+        e = DelimiterError(('Could not parse transcriptions with that delimiter. '
+                            '\n\Check that the transcription delimiter you typed '
+                            'in matches the one used in the file.'))
+        raise(e)
 
     transcription_errors = corpus.check_coverage()
-    #print("Loading time: ",time.time()-begin)
-    if pqueue is not None:
-        pqueue.put(-99)
-    if oqueue is not None:
-        oqueue.put(corpus)
-        oqueue.put(transcription_errors)
-    else:
-        return corpus
+    return corpus
 
 def load_feature_matrix_csv(name,path,delimiter):
     """
