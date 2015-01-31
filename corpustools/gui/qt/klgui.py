@@ -13,12 +13,12 @@ from corpustools.corpus.classes import Corpus
 from corpustools.corpus.io import load_binary
 import argparse
 from math import log
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import os
 from codecs import open
 
 from .imports import *
-from .widgets import SegmentPairSelectWidget
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.kl.kl import KullbackLeibler
 
@@ -30,6 +30,7 @@ class KLWorker(FunctionWorker):
             res = KullbackLeibler(kwargs['corpus'],
                             pair[0], pair[1],
                             outfile = None,
+                            side = kwargs['side'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
             self.results.append(res)
@@ -38,10 +39,12 @@ class KLWorker(FunctionWorker):
 class KLDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
+                'Context',
                 'Segment 1 entropy',
                 'Segment 2 entropy',
                 'KL',
-                'Probable UR'
+                'Possible UR',
+                'Spurious allophones?'
                 ]
 
     _about = [('This function calculates a difference in distribution of two segments'
@@ -69,11 +72,19 @@ class KLDialog(FunctionDialog):
         kllayout = QHBoxLayout()
 
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
-
         kllayout.addWidget(self.segPairWidget)
 
-        klframe.setLayout(kllayout)
+        self.side = str()
+        self.contextRadioWidget = RadioSelectWidget('Contexts to examine',
+                                                    OrderedDict([('Left-hand side only','lhs'),
+                                                        ('Right-hand side only', 'rhs'),
+                                                        ('Both sides', 'both')]),
+                                                        #('All', 'all')]),
+                                                        )
+        kllayout.addWidget(self.contextRadioWidget)
 
+
+        klframe.setLayout(kllayout)
         self.layout().insertWidget(0, klframe)
 
 
@@ -99,10 +110,6 @@ class KLDialog(FunctionDialog):
             return None
         kwargs['segment_pairs'] = segPairs
         kwargs['corpus'] = self.corpus
+        kwargs['side'] = self.contextRadioWidget.value()[0]
 
         return kwargs
-
-
-
-if __name__ == '__main__':
-    pass

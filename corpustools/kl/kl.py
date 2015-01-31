@@ -30,7 +30,7 @@ class Context(object):
     def __repr__(self):
         return str((self.seg1, self.seg2, self.other))
 
-def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=False):
+def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, call_back=False):
     """
     Calculates KL distances between two Phoneme objects in some context,
     either the left or right-hand side.
@@ -46,6 +46,11 @@ def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=Fal
     for word in corpus.iter_words():
         for pos,seg in word.enumerate_symbols('transcription'):
             thisc = word.get_env(pos,'transcription')
+            if side.startswith('r'):
+                thisc = thisc.rhs
+            elif side.startswith('l'):
+                thisc = thisc.lhs
+
             flag = False
             if seg1 == seg:
                 allC[thisc].seg1 += 1
@@ -101,12 +106,36 @@ def KullbackLeibler(corpus, seg1, seg2, outfile, stop_check=False, call_back=Fal
                                 result.seg1/result.sum(),
                                 result.seg2/result.sum()),
                         file=f)
-        print('Done!')
+        #print('Done!')
 
-    else:
-        print(KL, seg1_entropy, seg2_entropy, ur, sr)
+    #else:
+    #    print(KL, seg1_entropy, seg2_entropy, ur, sr)
 
-    return seg1, seg2, seg1_entropy, seg2_entropy, KL, ur
+    is_spurious = check_spurious(ur, sr, corpus)
 
-if __name__ == '__main__':
-    pass
+    if side.startswith('r'):
+        retside = 'right'
+    elif side.startswith('l'):
+        retside = 'left'
+    elif side.startswith('b'):
+        retside = 'both'
+    return seg1, seg2, retside, seg1_entropy, seg2_entropy, KL, ur, is_spurious
+
+
+def check_spurious(ur, sr, corpus):
+    #returns a string, not a bool, for printing to a results table
+    ur = corpus.segment_to_features(ur).features
+    sr = corpus.segment_to_features(sr).features
+    diff = lambda flist1,flist2: len([f1 for f1,f2 in zip(sorted(flist1.values()),
+                                                          sorted(flist2.values()))
+                                      if not f1==f2])
+
+    seg_diff = diff(ur, sr)
+    if seg_diff == 1:
+        return 'No' #minimally different, could be allophones
+
+    for seg in corpus.inventory:
+        if diff(seg.features, ur) < seg_diff:
+            return 'Yes' #something else is more similar
+
+    return 'Maybe' #nothing else is more similar
