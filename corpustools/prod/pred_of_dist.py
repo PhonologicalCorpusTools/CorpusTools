@@ -5,17 +5,29 @@ from warnings import warn
 
 from corpustools.corpus.classes import EnvironmentFilter
 
-class ExhaustivityError(Exception):
-    pass
+class ProdError(Exception):
+    def __init__(self, seg1, seg2, missing, overlapping):
+        self.segs = (seg1, seg2)
+        self.missing = missing
+        self.overlapping = overlapping
+        self.filename = 'predictability of dis'
+        if missing and overlapping:
+            self.value = ('Exhaustivity and uniqueness were both not met. ',
+                            'Please refer to file {} in the errors directory.')
 
-class UniquenessError(Exception):
-    pass
+        error_string = 'Uniqueness was not met.  The following environments for {} overlapped:\n'.format(' and '.join([seg1, seg2]))
+        for k,v in overlap_envs.items():
+            error_string +='{}: {}\n'.format(
+                    ' ,'.join(str(env) for env in k),
+                    ' ,'.join(str(env) for env in v))
+        self.value = ('Exhaustivity was not met. The environments for '
+                    'the pair {} for were not applicable to the '
+                    'following environments in which it was found:\n\n{}').format(
+                    ' and '.join([seg1, seg2]),
+                    ' ,'.join(str(w) for w in missing.keys()))
 
-class ExhaustivityWarning(Warning):
-    pass
-
-class UniquenessWarning(Warning):
-    pass
+    def print_to_file(self,error_directory):
+        pass
 
 
 def count_segs(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, call_back):
@@ -48,8 +60,8 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
     envs = [EnvironmentFilter(corpus, env) for env in envs]
     env_matches = {env:{seg1:[0], seg2:[0]} for env in envs}
 
-    missing_envs = set()
-    overlapping_envs = defaultdict(set)
+    missing_envs = defaultdict(set)
+    overlapping_envs = defaultdict(dict)
 
     if call_back is not None:
         call_back('Finding instances of environments...')
@@ -81,13 +93,20 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
                 #found and environemnts with segs the user wants, but in
                 #an environement that was not supplied. Alert the user
                 #about this later
-                missing_envs.update([str(word_env)])
+                k = str(word_env)
+
+
+                missing_envs[str(word_env)].update(str(word))
 
             elif len(found_env_match) > 1:
                 #the user supplied environmnets that overlap, e.g. they want
                 #_[-voice] and also _k, but we shouldn't count this twice
                 #alert the user about this later
-                overlapping_envs[tuple(str(env) for env in found_env_match)].update([str(word_env)])
+                k = tuple(str(env) for env in found_env_match)
+                k2 = str(word_env)
+                if k2 not in overlapping_envs[k]:
+                    overlapping_envs[k][k2] = set()
+                overlapping_envs[k][k2].update(str(word))
 
     return env_matches, missing_envs, overlapping_envs
 
@@ -183,26 +202,9 @@ def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
     if stop_check is not None and stop_check():
         return
     env_matches, miss_envs, overlap_envs = returned
-    if miss_envs:
-        error_string = 'Exhaustivity was not met. The environments for the pair {} for were not applicable to the following environments:\n\n{}'.format(
-
-                    ' and '.join([seg1, seg2]),
-                    ' ,'.join(str(w) for w in miss_envs))
+    if miss_envs or overlap_envs:
         if strict:
-            raise(ExhaustivityError(error_string))
-        #else:
-        #    warn(error_string, ExhaustivityWarning)
-
-    if overlap_envs:
-        error_string = 'Uniqueness was not met.  The following environments for {} overlapped:\n'.format(' and '.join([seg1, seg2]))
-        for k,v in overlap_envs.items():
-            error_string +='{}: {}\n'.format(
-                    ' ,'.join(str(env) for env in k),
-                    ' ,'.join(str(env) for env in v))
-        if strict:
-            raise(UniquenessError(error_string))
-        #else:
-        #    warn(error_string, UniquenessWarning)
+            raise(ProdError(seg1, seg2, miss_envs, overlap_envs))
 
     H_dict = OrderedDict()
 
