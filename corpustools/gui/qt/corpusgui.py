@@ -20,7 +20,7 @@ from .windows import FunctionWorker, DownloadWorker
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
                     DigraphWidget, InventoryBox, AttributeFilterWidget,
-                    TranscriptionWidget)
+                    TranscriptionWidget, SegFeatSelect, TierWidget)
 
 from corpustools.gui.qt.featuregui import FeatureSystemSelect
 
@@ -955,6 +955,163 @@ class AddWordDialog(QDialog):
         self.word = Word(**kwargs)
         QDialog.accept(self)
 
+class AddCountColumnDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        self.tierWidget = TierWidget(self.corpus)
+
+        main.addRow('Tier to count on',self.tierWidget)
+
+        self.segmentSelect = SegFeatSelect(self.corpus,'Segment selection')
+
+        main.addRow(self.segmentSelect)
+
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.createButton = QPushButton('Add count column')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Add count column')
+
+    def accept(self):
+        name = self.nameWidget.text()
+        self.attribute = Attribute(name.lower().replace(' ',''),'numeric',name)
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        elif self.attribute.name in self.corpus.basic_attributes:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(name))
+            return
+        elif self.attribute in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+
+        self.sequenceType = self.tierWidget.value()
+
+        self.segList = self.segmentSelect.segments()
+
+        QDialog.accept(self)
+
+
+class AddColumnDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        self.typeWidget = QComboBox()
+        for at in Attribute.ATT_TYPES:
+            if at == 'tier':
+                continue
+            self.typeWidget.addItem(at.title())
+        self.typeWidget.currentIndexChanged.connect(self.updateDefault)
+
+        main.addRow('Type of column',self.typeWidget)
+
+        self.defaultWidget = QLineEdit()
+
+        main.addRow('Default value',self.defaultWidget)
+
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.createButton = QPushButton('Add column')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Add column')
+
+    def updateDefault(self):
+        if self.typeWidget.currentText().lower() == 'numeric':
+            self.defaultWidget.setText('0')
+        else:
+            self.defaultWidget.setText('')
+
+    def accept(self):
+        name = self.nameWidget.text()
+        at = self.typeWidget.currentText().lower()
+        dv = self.defaultWidget.text()
+        self.attribute = Attribute(name.lower().replace(' ',''),at,name)
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        elif self.attribute.name in self.corpus.basic_attributes:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(name))
+            return
+        elif self.attribute in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        if at == 'numeric':
+            try:
+                dv = float(dv)
+            except ValueError:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The default value for numeric columns must be a number")
+                return
+        self.attribute.default_value = dv
+        QDialog.accept(self)
+
 
 class AddAbstractTierDialog(QDialog):
     def __init__(self, parent, corpus):
@@ -991,6 +1148,8 @@ class AddAbstractTierDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
+
+        self.setWindowTitle('Create abstract tier')
 
     def preview(self):
         if self.cvradio.isChecked():

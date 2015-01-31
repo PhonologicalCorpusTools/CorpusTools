@@ -361,6 +361,18 @@ class CorpusModel(BaseCorpusTableModel):
         if end:
             self.endInsertColumns()
 
+    def addCountColumn(self, attribute, sequenceType, segList):
+        if attribute not in self.columns:
+            end = True
+            self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
+        else:
+            end = False
+        self.corpus.add_count_attribute(attribute, sequenceType, segList)
+        self.columns = self.corpus.attributes
+        if end:
+            self.endInsertColumns()
+
+
     def addAbstractTier(self,attribute, segList):
         if attribute not in self.columns:
             end = True

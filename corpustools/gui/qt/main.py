@@ -10,7 +10,8 @@ from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
-                        RemoveAttributeDialog,SubsetCorpusDialog,
+                        RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
+                        AddCountColumnDialog,
                         ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
@@ -337,10 +338,20 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def createColumn(self):
-        return
-        dialog = AddTierDialog(self, self.corpusModel.corpus)
+        dialog = AddColumnDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
-            self.corpusModel.addTier(dialog.attribute, dialog.segList)
+            self.corpusModel.addColumn(dialog.attribute)
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.enableSave()
+
+    @check_for_empty_corpus
+    def createCountColumn(self):
+        dialog = AddCountColumnDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.corpusModel.addCountColumn(dialog.attribute, dialog.sequenceType, dialog.segList)
             if self.settings['autosave']:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
@@ -572,6 +583,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Add abstract tier", triggered=self.createAbstractTier)
 
+        self.addCountColumnAct = QAction( "Add count column...",
+                self,
+                statusTip="Add count column", triggered=self.createCountColumn)
+
         self.addColumnAct = QAction( "Add column...",
                 self,
                 statusTip="Add column", triggered=self.createColumn)
@@ -700,6 +715,7 @@ class MainWindow(QMainWindow):
         self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.addTierAct)
         self.corpusMenu.addAction(self.addAbstractTierAct)
+        self.corpusMenu.addAction(self.addCountColumnAct)
         self.corpusMenu.addAction(self.addColumnAct)
         self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.removeAttributeAct)

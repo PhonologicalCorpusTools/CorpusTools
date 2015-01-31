@@ -1157,6 +1157,25 @@ class Corpus(object):
             for word in self:
                 word.add_attribute(attribute.name,attribute.default_value)
 
+    def add_count_attribute(self, attribute, sequence_type, spec):
+        if isinstance(attribute,str):
+            attribute = Attribute(attribute,'numeric')
+        for i,a in enumerate(self._attributes):
+            if attribute.name == a.name:
+                self._attributes[i] = attribute
+                break
+        else:
+            self._attributes.append(attribute)
+        if isinstance(spec, str):
+            tier_segs = self.features_to_segments(spec)
+        else:
+            tier_segs = spec
+        for word in self:
+            v = sum([1 for x in getattr(word, sequence_type) if x in tier_segs])
+            setattr(word, attribute.name, v)
+            attribute.update_range(v)
+
+
 
     def add_tier(self, attribute, spec):
         if isinstance(attribute,str):

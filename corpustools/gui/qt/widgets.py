@@ -1142,6 +1142,52 @@ class SegmentPairSelectWidget(QGroupBox):
     def value(self):
         return self.table.model().rows
 
+class SegFeatSelect(QGroupBox):
+    def __init__(self,corpus, title, parent = None, exclusive = False):
+        QGroupBox.__init__(self,title,parent)
+        self.segExclusive = exclusive
+        self.corpus = corpus
+        self.inventory = self.corpus.inventory
+        self.features = self.inventory[-1].features.keys()
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        self.typeSelect = QComboBox()
+        self.typeSelect.addItem('Segments')
+        if len(self.features) > 0:
+            self.typeSelect.addItem('Features')
+        else:
+            layout.addWidget(QLabel('Features are not available for selection without a feature system.'))
+        self.typeSelect.currentIndexChanged.connect(self.generateFrame)
+
+        layout.addWidget(QLabel('Basis segment selection:'))
+        layout.addWidget(self.typeSelect, alignment = Qt.AlignLeft)
+
+        self.sel = InventoryBox('',self.inventory)
+        self.sel.setExclusive(self.segExclusive)
+
+        layout.addWidget(self.sel)
+
+        self.setLayout(layout)
+
+    def generateFrame(self):
+        self.sel.deleteLater()
+        if self.typeSelect.currentText() == 'Segments':
+            self.sel = InventoryBox('',self.inventory)
+            self.sel.setExclusive(self.segExclusive)
+        elif self.typeSelect.currentText() == 'Features':
+            self.sel = FeatureBox('',self.inventory)
+        self.layout().addWidget(self.sel)
+
+    def value(self):
+        return self.sel.value()
+
+    def segments(self):
+        if self.typeSelect.currentText() == 'Segments':
+            return self.sel.value()
+        elif self.typeSelect.currentText() == 'Features':
+            return self.corpus.features_to_segments(self.sel.value()[1:-1])
+
 class EnvironmentDialog(QDialog):
     def __init__(self, inventory,parent=None):
         QDialog.__init__(self,parent)
