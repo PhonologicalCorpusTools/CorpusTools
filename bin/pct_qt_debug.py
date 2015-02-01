@@ -15,5 +15,7 @@ if __name__ == '__main__':
             app.sendMessage('ARISE')
     else:
         main = MainWindow(app)
+
+        app.setActiveWindow(main)
         main.show()
         sys.exit(app.exec_())

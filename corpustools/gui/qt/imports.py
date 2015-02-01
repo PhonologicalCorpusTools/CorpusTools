@@ -20,7 +20,7 @@ try:
                                 QToolBar, QStyledItemDelegate, QDataWidgetMapper,
                                 QTabWidget)
     from PySide.QtNetwork import QLocalSocket, QLocalServer
-    print('PySide version')
+    #print('PySide version')
 except ImportError:
 
     from PyQt5.QtCore import (QRectF, Qt, QModelIndex, QItemSelection,
@@ -44,4 +44,4 @@ except ImportError:
         from PyQt5.QtMultimedia import QSound
     except MultimediaError:
         AUDIO_ENABLED = False
-    print('PyQt5 version')
+    #print('PyQt5 version')

@@ -3,9 +3,14 @@ import os
 from collections import OrderedDict
 
 from corpustools.acousticsim.io import load_path_mapping
-
-from corpustools.acousticsim.main import(acoustic_similarity_mapping,
-#from acousticsim.main import (acoustic_similarity_mapping,
+try:
+    real_acousticsim = True
+    from acousticsim.main import(acoustic_similarity_mapping,
+                            acoustic_similarity_directories,
+                            analyze_directory)
+except ImportError:
+    real_acousticsim = False
+    from corpustools.acousticsim.main import(acoustic_similarity_mapping,
                             acoustic_similarity_directories,
                             analyze_directory)
 
@@ -166,9 +171,15 @@ class ASDialog(FunctionDialog):
 
         optionLayout.addWidget(self.outputSimWidget)
 
-        self.multiprocessingWidget = QCheckBox('Use multiprocessing')
+        #self.multiprocessingWidget = QCheckBox('Use multiprocessing')
 
-        optionLayout.addWidget(self.multiprocessingWidget)
+        #optionLayout.addWidget(self.multiprocessingWidget)
+        if real_acousticsim:
+            optionLayout.addWidget(QLabel('Acoustic similarity benefits from multiprocessing.'))
+            optionLayout.addWidget(QLabel('Multiprocessing can be enabled in Preferences.'))
+        else:
+            optionLayout.addWidget(QLabel('The acoustic similarity module loaded does not support multiprocessing.'))
+            optionLayout.addWidget(QLabel('Install python-acoustic-similarity to access multiprocessing and additional features.'))
 
         optionFrame = QFrame()
 
@@ -206,10 +217,10 @@ class ASDialog(FunctionDialog):
                                             ' or distance. Similarity is inverse distance,'
                                             ' and distance is inverse similarity'
             "</FONT>"))
-            self.multiprocessingWidget.setToolTip(("<FONT COLOR=black>"
-            'Choose whether to use multiple processes.'
-                                            ' Multiprocessing is currently not supported'
-            "</FONT>"))
+            #self.multiprocessingWidget.setToolTip(("<FONT COLOR=black>"
+            #'Choose whether to use multiple processes.'
+            #                                ' Multiprocessing is currently not supported'
+            #"</FONT>"))
 
     def oneDirectorySelected(self):
         self.compType = 'one'
@@ -273,7 +284,8 @@ class ASDialog(FunctionDialog):
                 'num_coeffs':coeffs,
                 'freq_lims':freq_lims,
                 'output_sim':self.outputSimWidget.isChecked(),
-                'use_multi':self.multiprocessingWidget.isChecked(),
+                'use_multi':self.parent().settings['use_multi'],
+                'num_cores':self.parent().settings['num_cores'],
                 'return_all':True}
         if self.compType is None:
             reply = QMessageBox.critical(self,

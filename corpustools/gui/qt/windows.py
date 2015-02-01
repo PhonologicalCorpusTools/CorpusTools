@@ -76,7 +76,8 @@ class FunctionDialog(QDialog):
         self.thread = worker
         self.thread.errorEncountered.connect(self.handleError)
 
-        self.progressDialog = QProgressDialog('Calculating {}...'.format(self.name),'Cancel',0,100, self)
+        self.progressDialog = QProgressDialog('Calculating {}...'.format(self.name),
+                                                'Cancel',0,100, self)
         self.progressDialog.setWindowTitle('Calculating {}'.format(self.name))
         self.progressDialog.setAutoClose(False)
         self.progressDialog.setAutoReset(False)

@@ -107,11 +107,11 @@ class ProcessingPane(BasePane):
 
         self.usemultiCheck = QCheckBox()
 
-        layout.addRow(QLabel('Use multiprocessing (where available):'),self.usemultiCheck)
+        layout.addRow(QLabel('Use multiprocessing (where available)'),self.usemultiCheck)
 
         self.numcoresWidget = QLineEdit()
 
-        layout.addRow(QLabel('Number of cores to use:'),self.numcoresWidget)
+        layout.addRow(QLabel('Number of cores to use\n(Set to 0 to use 3/4 of the available cores):'),self.numcoresWidget)
 
         self.setLayout(layout)
 

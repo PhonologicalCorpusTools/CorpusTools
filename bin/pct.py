@@ -1,19 +1,22 @@
-from multiprocessing import freeze_support
 import sys
 import os
-from corpustools.gui.qt.main import MainWindow,QApplication
 
 if sys.platform.startswith('win'):
     if getattr(sys, 'frozen', False):
-        os.chdir(os.path.dirname(os.path.abspath(sys.executable)))
+        os.chdir(os.path.expanduser('~/Documents'))
         # Implementing dummy stdout and stderr for frozen Windows release
         class FakeSTD(object):
             def write(self, string):
                 pass
             def flush(self):
                 pass
+        #This should fix stdout flush errors, but doesn't always
+        #Also needs a small tweak to multiprocessing.process._bootstrap
         sys.stdout = FakeSTD()
         sys.stderr = FakeSTD()
+
+from multiprocessing import freeze_support
+from corpustools.gui.qt.main import MainWindow,QApplicationMessaging
 
 def main():
     freeze_support()
@@ -26,6 +29,8 @@ def main():
             app.sendMessage('ARISE')
     else:
         main = MainWindow(app)
+
+        app.setActiveWindow(main)
         main.show()
         sys.exit(app.exec_())
 
