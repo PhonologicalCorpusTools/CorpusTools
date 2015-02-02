@@ -71,6 +71,11 @@ class TableWidget(QTableView):
         #except AttributeError:
         #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
+        self.resizeColumnsToContents()
+        try:
+            self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
+        except AttributeError:
+            self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
 
     def calcWidth(self):
         header = self.horizontalHeader()
@@ -166,10 +171,6 @@ class LexiconView(QWidget):
 
     def setModel(self, model):
         self.table.setModel(model)
-        try:
-            self.table.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
-        except AttributeError:
-            self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
 
     def showHeaderMenu(self, pos):
         header = self.table.horizontalHeader()
@@ -274,14 +275,14 @@ class LexiconView(QWidget):
         self.selectTokens.emit(tokens)
 
     def showVariants(self, index):
-        variantDialog = QDialog()
+        variantDialog = QDialog(self)
         variantDialog.setWindowTitle('Pronunciation variants')
         layout = QVBoxLayout()
         table = TableWidget()
         layout.addWidget(table)
         table.setModel(VariantModel(self.table.model().wordObject(index.row()).wordtokens))
         variantDialog.setLayout(layout)
-        variantDialog.exec_()
+        variantDialog.show()
 
 
 class TextView(QAbstractItemView):
