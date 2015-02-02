@@ -8,7 +8,7 @@ def readme():
         return f.read()
 
 setup(name='corpustools',
-      version='0.15.1',
+      version='1.0.0',
       description='',
       long_description='',
       classifiers=[
@@ -24,7 +24,6 @@ setup(name='corpustools',
       author='Phonological Corpus Tools',
       author_email='kathleen.hall@ubc.ca',
       packages=['corpustools',
-                'bin',
                 'corpustools.acousticsim',
                 'corpustools.corpus',
                 'corpustools.corpus.classes',
@@ -34,22 +33,20 @@ setup(name='corpustools',
                 'corpustools.kl',
                 'corpustools.prod',
                 'corpustools.gui',
-                'corpustools.gui.qt',
                 'corpustools.symbolsim',
                 'corpustools.neighdens',
                 'corpustools.mutualinfo',
                 'corpustools.phonoprob',
-                'command_line'],
+                'corpustools.command_line'],
       #install_requires=[
       #    'pillow'
       #],
       entry_points = {
-        'console_scripts': ['pct=bin.pct:main',
-                            'pct_corpus=command_line.pct_corpus:main',
-                            'pct_funcload=command_line.pct_funcload:main',
-                            'pct_neighdens=command_line.pct_neighdens:main',
-                            'pct_mutualinfo=command_line.pct_mutualinfo:main',
-                            'pct_search=command_line.pct_search:main'],
+        'console_scripts': ['pct=corpustools.command_line.pct:main',
+                            'pct_corpus=corpustools.command_line.pct_corpus:main',
+                            'pct_funcload=corpustools.command_line.pct_funcload:main',
+                            'pct_neighdens=corpustools.command_line.pct_neighdens:main',
+                            'pct_mutualinfo=corpustools.command_line.pct_mutualinfo:main',
+                            'pct_search=corpustools.command_line.pct_search:main'],
     },
-    scripts=['bin/pct.py']
       )
