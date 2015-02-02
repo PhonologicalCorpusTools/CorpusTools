@@ -20,36 +20,37 @@ from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
 
 from .windows import DownloadWorker
 
-def get_systems_list():
-    system_dir = os.path.join(config['storage']['directory'],'FEATURE')
+def get_systems_list(storage_directory):
+    system_dir = os.path.join(storage_directory,'FEATURE')
     systems = [x.split('.')[0] for x in os.listdir(system_dir)]
     return systems
 
-def get_feature_system_styles():
+def get_feature_system_styles(storage_directory):
     systems = list()
-    for s in get_systems_list():
+    for s in get_systems_list(storage_directory):
         deets = s.split('2')
         if len(deets) == 1:
             continue
         systems.append(deets[1])
     return list(set(systems))
 
-def get_transcription_system_styles():
+def get_transcription_system_styles(storage_directory):
     systems = list()
-    for s in get_systems_list():
+    for s in get_systems_list(storage_directory):
         deets = s.split('2')
         if len(deets) == 1:
             continue
         systems.append(deets[0])
     return list(set(systems))
 
-def system_name_to_path(name):
-    return os.path.join(config['storage']['directory'],'FEATURE',name+'.feature')
+def system_name_to_path(storage_directory,name):
+    return os.path.join(storage_directory,'FEATURE',name+'.feature')
 
 class FeatureSystemSelect(QGroupBox):
     changed  = Signal()
-    def __init__(self,parent=None,default = None, add = False):
+    def __init__(self,settings,parent=None,default = None, add = False):
         QGroupBox.__init__(self,'Transcription and features',parent)
+        self.settings = settings
         layout = QFormLayout()
 
         self.transSystem = QComboBox()
@@ -65,7 +66,7 @@ class FeatureSystemSelect(QGroupBox):
             else:
                 default_trans,default_feat = default_deets
 
-        for i,s in enumerate(get_transcription_system_styles()):
+        for i,s in enumerate(get_transcription_system_styles(self.settings['storage'])):
             self.transSystem.addItem(s)
             if default is not None and s == default_trans:
                 self.transSystem.setCurrentIndex(i+1)
@@ -81,7 +82,7 @@ class FeatureSystemSelect(QGroupBox):
             self.featureSystem.addItem('Custom')
         else:
             self.featureSystem.addItem('None')
-        for i,s in enumerate(get_feature_system_styles()):
+        for i,s in enumerate(get_feature_system_styles(self.settings['storage'])):
             self.featureSystem.addItem(s)
             if default is not None and s == default_feat:
                 self.featureSystem.setCurrentIndex(i+1)
@@ -127,7 +128,7 @@ class FeatureSystemSelect(QGroupBox):
 
     def path(self):
         if self.value() != '':
-            return system_name_to_path(self.value())
+            return system_name_to_path(self.settings['storage'], self.value())
         return None
 
 class ExportFeatureSystemDialog(QDialog):
@@ -241,8 +242,9 @@ class AddFeatureDialog(QDialog):
         QDialog.accept(self)
 
 class DownloadFeatureMatrixDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+        self.settings = settings
         layout = QVBoxLayout()
         inlayout = QHBoxLayout()
 
@@ -304,7 +306,7 @@ class DownloadFeatureMatrixDialog(QDialog):
 
     def accept(self):
         name = self.transWidget.value() + '2' + self.featureWidget.value()
-        if name in get_systems_list():
+        if name in get_systems_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Overwrite system",
                     "The system '{}' is already available.  Would you like to overwrite it?".format(name), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
@@ -312,7 +314,8 @@ class DownloadFeatureMatrixDialog(QDialog):
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
 
-        self.thread.setParams({'name':name,'path':system_name_to_path(name)})
+        self.thread.setParams({'name':name,
+                'path':system_name_to_path(self.settings['storage'],name)})
 
         self.thread.start()
 
@@ -343,7 +346,7 @@ class EditFeatureMatrixDialog(QDialog):
         default = None
         if self.specifier is not None:
             default = self.specifier.name
-        self.changeWidget = FeatureSystemSelect(default=default)
+        self.changeWidget = FeatureSystemSelect(self.parent().settings,default=default)
         self.changeWidget.changed.connect(self.changeFeatureSystem)
         box.addRow(self.changeWidget)
 
@@ -658,13 +661,13 @@ class FeatureMatrixManager(QDialog):
         self.setWindowTitle('Manage feature systems')
 
     def openCsvWindow(self):
-        dialog = SystemFromCsvDialog(self)
+        dialog = SystemFromCsvDialog(self,self.parent().settings)
         result = dialog.exec_()
         if result:
             self.getAvailableSystems()
 
     def openDownloadWindow(self):
-        dialog = DownloadFeatureMatrixDialog(self)
+        dialog = DownloadFeatureMatrixDialog(self,self.parent().settings)
         result = dialog.exec_()
         if result:
             self.getAvailableSystems()
@@ -677,19 +680,20 @@ class FeatureMatrixManager(QDialog):
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
-        os.remove(system_name_to_path(featureSystem))
+        os.remove(system_name_to_path(self.parent().settings['storage'],featureSystem))
         self.getAvailableSystems()
 
 
     def getAvailableSystems(self):
         self.systemsList.clear()
-        systems = get_systems_list()
+        systems = get_systems_list(self.parent().settings['storage'])
         for s in systems:
             self.systemsList.addItem(s)
 
 class SystemFromCsvDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+        self.settings = settings
         layout = QVBoxLayout()
 
         formLayout = QFormLayout()
@@ -699,7 +703,7 @@ class SystemFromCsvDialog(QDialog):
 
         formLayout.addRow(QLabel('Path to feature system'),self.pathWidget)
 
-        self.featureSystemSelect = FeatureSystemSelect(add=True)
+        self.featureSystemSelect = FeatureSystemSelect(self.settings, add=True)
 
         formLayout.addRow(self.featureSystemSelect)
 
@@ -740,6 +744,18 @@ class SystemFromCsvDialog(QDialog):
             return
 
         name = self.featureSystemSelect.value()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify the transcription and feature system.")
+            return
+        
+        if name in get_systems_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A feature system named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return None
         colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
         if not colDelim:
             reply = QMessageBox.critical(self,
@@ -759,6 +775,6 @@ class SystemFromCsvDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Could not find a 'symbol' column.  Please make sure that the segment symbols are in a column named 'symbol'.")
             return
-        save_binary(system,system_name_to_path(name))
+        save_binary(system,system_name_to_path(self.settings['storage'],name))
 
         QDialog.accept(self)

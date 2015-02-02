@@ -1108,13 +1108,13 @@ class SegmentPairSelectWidget(QGroupBox):
 
         self.table = TableWidget()
         self.table.setSortingEnabled(False)
-        try:
-            self.table.horizontalHeader().setClickable(False)
-        except AttributeError:
-            self.table.horizontalHeader().setSectionsClickable(False)
         self.table.setModel(SegmentPairModel())
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
+        try:
+            self.table.horizontalHeader().setSectionsClickable(False)
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        except AttributeError:
+            self.table.horizontalHeader().setClickable(False)
+            self.table.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)

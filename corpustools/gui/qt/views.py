@@ -40,7 +40,11 @@ class TableWidget(QTableView):
         #header.setContextMenuPolicy(Qt.CustomContextMenu)
         #header.customContextMenuRequested.connect( self.showHeaderMenu )
         self.horizontalHeader().setMinimumSectionSize(70)
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        try:
+            self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        except AttributeError:
+            self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+            
         self.setSortingEnabled(True)
         self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 
@@ -124,7 +128,7 @@ class LexiconView(QWidget):
         header.customContextMenuRequested.connect( self.showHeaderMenu )
 
         self.setLayout(layout)
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding))
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def search(self):
         text = self.searchField.text()

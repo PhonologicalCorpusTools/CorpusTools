@@ -24,22 +24,22 @@ from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
 
 from corpustools.gui.qt.featuregui import FeatureSystemSelect
 
-def get_corpora_list():
-    corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
+def get_corpora_list(storage_directory):
+    corpus_dir = os.path.join(storage_directory,'CORPUS')
     corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
     return corpora
 
-def corpus_name_to_path(name):
-    return os.path.join(config['storage']['directory'],'CORPUS',name+'.corpus')
+def corpus_name_to_path(storage_directory,name):
+    return os.path.join(storage_directory,'CORPUS',name+'.corpus')
 
 
 class CorpusSelect(QComboBox):
-    def __init__(self, parent=None):
+    def __init__(self, parent, settings):
         QComboBox.__init__(self,parent)
-
+        self.settings = settings
         self.addItem('None')
 
-        for i,s in enumerate(get_corpora_list()):
+        for i,s in enumerate(get_corpora_list(self.settings['storage'])):
             self.addItem(s)
 
     def value(self):
@@ -50,7 +50,7 @@ class CorpusSelect(QComboBox):
 
     def path(self):
         if self.value() != '':
-            return corpus_name_to_path(self.value())
+            return corpus_name_to_path(self.settings['storage'],self.value())
         return None
 
 class LoadWorker(FunctionWorker):
@@ -133,7 +133,7 @@ class SubsetCorpusDialog(QDialog):
                     "Missing information", "Please specify at least one filter.")
             return None
 
-        if name in get_corpora_list():
+        if name in get_corpora_list(self.parent().settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
@@ -143,7 +143,8 @@ class SubsetCorpusDialog(QDialog):
         new_corpus = self.corpus.subset(filters)
         new_corpus.name = name
         new_corpus.set_feature_matrix(self.corpus.specifier)
-        save_binary(new_corpus,corpus_name_to_path(new_corpus.name))
+        save_binary(new_corpus,
+            corpus_name_to_path(self.settings['storage'],new_corpus.name))
         QDialog.accept(self)
 
 class CorpusLoadDialog(QDialog):
@@ -227,7 +228,9 @@ class CorpusLoadDialog(QDialog):
     def accept(self):
         selected = [x.text() for x in self.corporaList.selectedItems()]
         if selected:
-            self.thread.setParams({'path':corpus_name_to_path(selected[0])})
+            self.thread.setParams({
+                'path':corpus_name_to_path(
+                            self.parent().settings['storage'],selected[0])})
 
             self.thread.start()
 
@@ -238,29 +241,29 @@ class CorpusLoadDialog(QDialog):
                 QDialog.accept(self)
 
     def openDownloadWindow(self):
-        dialog = DownloadCorpusDialog(self)
+        dialog = DownloadCorpusDialog(self, self.parent().settings)
         result = dialog.exec_()
         if result:
             self.getAvailableCorpora()
 
     def openCsvWindow(self):
-        dialog = CorpusFromCsvDialog(self)
+        dialog = CorpusFromCsvDialog(self, self.parent().settings)
         result = dialog.exec_()
         if result:
             self.getAvailableCorpora()
 
     def importSpontaneousWindow(self):
-        dialog = SpontaneousSpeechDialog(self)
+        dialog = SpontaneousSpeechDialog(self, self.parent().settings)
         if dialog.exec_():
             self.getAvailableCorpora()
 
     def openSpellingTextWindow(self):
-        dialog = CorpusFromSpellingTextDialog(self)
+        dialog = CorpusFromSpellingTextDialog(self, self.parent().settings)
         if dialog.exec_():
             self.getAvailableCorpora()
 
     def openTranscriptionTextWindow(self):
-        dialog = CorpusFromTranscriptionTextDialog(self)
+        dialog = CorpusFromTranscriptionTextDialog(self, self.parent().settings)
         if dialog.exec_():
             self.getAvailableCorpora()
 
@@ -272,20 +275,20 @@ class CorpusLoadDialog(QDialog):
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
-        os.remove(corpus_name_to_path(corpus))
+        os.remove(corpus_name_to_path(self.parent().settings['storage'],corpus))
         self.getAvailableCorpora()
 
     def getAvailableCorpora(self):
         self.corporaList.clear()
-        corpora = get_corpora_list()
+        corpora = get_corpora_list(self.parent().settings['storage'])
         for c in corpora:
             self.corporaList.addItem(c)
 
 
 class DownloadCorpusDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
-
+        self.settings = settings
         layout = QVBoxLayout()
         self.corporaWidget = RadioSelectWidget('Select a corpus',
                                         OrderedDict([('Example toy corpus','example'),
@@ -333,14 +336,15 @@ class DownloadCorpusDialog(QDialog):
 
     def accept(self):
         name = self.corporaWidget.value()
-        if name in get_corpora_list():
+        if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Overwrite corpus",
                     "The corpus '{}' is already available.  Would you like to overwrite it?".format(name), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-        self.thread.setParams({'name':name,'path':corpus_name_to_path(name)})
+        self.thread.setParams({'name':name,
+                'path':corpus_name_to_path(self.settings['storage'],name)})
 
         self.thread.start()
 
@@ -351,8 +355,9 @@ class DownloadCorpusDialog(QDialog):
             QDialog.accept(self)
 
 class CorpusFromSpellingTextDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+        self.settings = settings
         layout = QVBoxLayout()
 
         mainlayout = QHBoxLayout()
@@ -380,7 +385,7 @@ class CorpusFromSpellingTextDialog(QDialog):
 
         translayout = QFormLayout()
 
-        self.supportCorpus = CorpusSelect()
+        self.supportCorpus = CorpusSelect(self,self.settings)
         translayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
 
         self.ignoreCase = QCheckBox()
@@ -439,7 +444,7 @@ class CorpusFromSpellingTextDialog(QDialog):
         path = self.pathWidget.value()
         if path == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a path to the csv file.")
+                    "Missing information", "Please specify a path to the text file.")
             return
         if not os.path.exists(path):
             reply = QMessageBox.critical(self,
@@ -448,9 +453,9 @@ class CorpusFromSpellingTextDialog(QDialog):
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a name to the csv file.")
+                    "Missing information", "Please specify a name for the corpus.")
             return
-        if name in get_corpora_list():
+        if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
@@ -485,15 +490,17 @@ class CorpusFromSpellingTextDialog(QDialog):
         self.progressDialog.reset()
         if result:
             if self.corpus is not None:
-                save_binary(self.corpus,corpus_name_to_path(self.corpus.name))
+                save_binary(self.corpus,
+                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
             QDialog.accept(self)
 
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
 
 class CorpusFromTranscriptionTextDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+        self.settings = settings
         self.characters = set()
         layout = QVBoxLayout()
 
@@ -524,7 +531,7 @@ class CorpusFromTranscriptionTextDialog(QDialog):
 
         translayout = QFormLayout()
 
-        self.featureSystem = FeatureSystemSelect()
+        self.featureSystem = FeatureSystemSelect(self.settings)
         translayout.addRow(self.featureSystem)
 
         self.transDelimiter = PunctuationWidget(['.','-','='],'Transcription delimiters')
@@ -607,7 +614,7 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         path = self.pathWidget.value()
         if path == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a path to the csv file.")
+                    "Missing information", "Please specify a path to the text file.")
             return
         if not os.path.exists(path):
             reply = QMessageBox.critical(self,
@@ -616,13 +623,13 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a name to the csv file.")
+                    "Missing information", "Please specify a name for the corpus.")
             return
         wordDelim, transDelim = self.delimiters()
         feature_system_path = self.featureSystem.path()
         ignore_list = self.punctuation.value()
 
-        if name in get_corpora_list():
+        if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
@@ -652,7 +659,8 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         self.progressDialog.reset()
         if result:
             if self.corpus is not None:
-                save_binary(self.corpus,corpus_name_to_path(self.corpus.name))
+                save_binary(self.corpus,
+                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
             QDialog.accept(self)
 
     def updateName(self):
@@ -1397,8 +1405,9 @@ class RemoveAttributeDialog(QDialog):
         QDialog.accept(self)
 
 class CorpusFromCsvDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+        self.settings = settings
         layout = QVBoxLayout()
 
         formLayout = QFormLayout()
@@ -1420,7 +1429,7 @@ class CorpusFromCsvDialog(QDialog):
         self.transDelimiterEdit.setText('.')
         formLayout.addRow(QLabel('Transcription delimiter'),self.transDelimiterEdit)
 
-        self.featureSystemSelect = FeatureSystemSelect()
+        self.featureSystemSelect = FeatureSystemSelect(self.settings)
 
         formLayout.addRow(QLabel('Feature system (if applicable)'),self.featureSystemSelect)
 
@@ -1462,9 +1471,9 @@ class CorpusFromCsvDialog(QDialog):
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a name to the csv file.")
+                    "Missing information", "Please specify a name for the corpus.")
             return
-        if name in get_corpora_list():
+        if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
@@ -1490,7 +1499,7 @@ class CorpusFromCsvDialog(QDialog):
                 for s in errors:
                     corpus.specifier.add_segment(s.strip('\''),{})
                 corpus.specifier.validate()
-        save_binary(corpus,corpus_name_to_path(name))
+        save_binary(corpus,corpus_name_to_path(self.settings['storage'],name))
 
         QDialog.accept(self)
 
@@ -1560,15 +1569,22 @@ class ExportCorpusDialog(QDialog):
         QDialog.accept(self)
 
 class SpontaneousSpeechDialog(QDialog):
-    def __init__(self,parent):
-        QDialog.__init__(self,parent)
+    def __init__(self, parent, settings):
+        QDialog.__init__(self, parent)
+        self.settings = settings
         self.corpus = None
         layout = QVBoxLayout()
 
         inlayout = QFormLayout()
 
         self.directoryWidget = DirectoryWidget()
+        self.directoryWidget.pathEdit.textChanged.connect(self.updateName)
         inlayout.addRow('Corpus directory:',self.directoryWidget)
+        
+
+        self.nameEdit = QLineEdit()
+        inlayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
+        
         self.dialectWidget = QComboBox()
         self.dialectWidget.addItem('TextGrid')
         self.dialectWidget.addItem('TIMIT')
@@ -1609,6 +1625,9 @@ class SpontaneousSpeechDialog(QDialog):
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
 
+    def updateName(self):
+        self.nameEdit.setText(os.path.split(self.directoryWidget.value())[1].split('.')[0])
+
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
         self.progressDialog.reset()
@@ -1621,7 +1640,20 @@ class SpontaneousSpeechDialog(QDialog):
         self.corpus = results
 
     def accept(self):
-        self.thread.setParams({'directory':self.directoryWidget.value(),
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the corpus.")
+            return
+        if name in get_corpora_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        self.thread.setParams({'name': name,
+                            'directory':self.directoryWidget.value(),
                             'dialect':self.dialectWidget.currentText().lower()})
 
         self.thread.start()
@@ -1631,6 +1663,7 @@ class SpontaneousSpeechDialog(QDialog):
         self.progressDialog.reset()
         if result:
             if self.corpus is not None:
-                save_binary(self.corpus,corpus_name_to_path(self.corpus.name))
+                save_binary(self.corpus,
+                corpus_name_to_path(self.settings['storage'],self.corpus.name))
             QDialog.accept(self)
 

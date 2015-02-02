@@ -99,7 +99,7 @@ class FunctionDialog(QDialog):
 
             if hasattr(error,'print_to_file'):
                 error.print_to_file(self.parent().settings.error_directory())
-                reply.addButton(QPushButton('Open errors directory'),QMessageBox.AcceptRole)
+                reply.addButton('Open errors directory',QMessageBox.AcceptRole)
             reply.setStandardButtons(QMessageBox.Close)
             ret = reply.exec_()
             if ret == QMessageBox.AcceptRole:
@@ -113,9 +113,10 @@ class FunctionDialog(QDialog):
                     args = ['-R','"{}"'.format(error_dir)]
                 else:
                     program = 'xdg-open'
-                    args = ['"{}"'.format(error_dir)]
+                    args = ['{}'.format(error_dir)]
+                #subprocess.call([program]+args,shell=True)
                 proc = QProcess(self.parent())
-                proc.start(program,args)
+                t = proc.startDetached(program,args)
         else:
             reply = QMessageBox.critical(self,
                     "Error encountered", str(error))
