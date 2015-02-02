@@ -112,10 +112,13 @@ class ASDialog(FunctionDialog):
         self.fileWidget.textChanged.connect(self.fileRadio.click)
 
         vbox.addRow(self.oneDirectoryRadio)
-        vbox.addRow('Directory:',self.oneDirectoryWidget)
+        vbox.addRow(QLabel('Directory:'))
+        vbox.addRow(self.oneDirectoryWidget)
         vbox.addRow(self.twoDirectoryRadio)
-        vbox.addRow('First directory:',self.directoryOneWidget)
-        vbox.addRow('Second directory:',self.directoryTwoWidget)
+        vbox.addRow(QLabel('First directory:'))
+        vbox.addRow(self.directoryOneWidget)
+        vbox.addRow(QLabel('Second directory:'))
+        vbox.addRow(self.directoryTwoWidget)
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
 
