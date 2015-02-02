@@ -28,7 +28,7 @@ class PhonoSearchDialog(FunctionDialog):
                 'Transcription',
                 'Segment',
                 'Environment']
-    summary_header = ['Segment', ' Environment', 'Count']
+    summary_header = ['Segment', ' Environment', 'Type frequency', 'Token frequency']
     _about = ['']
 
     name = 'phonological search'
@@ -145,5 +145,5 @@ class PhonoSearchDialog(FunctionDialog):
                 envs = [str(x[1]) for x in f]
             except IndexError:
                 envs = []
-            self.results.append([str(w), str(getattr(w,self.tierWidget.value())),segs,
+            self.results.append([w, str(getattr(w,self.tierWidget.value())),segs,
                                 envs])

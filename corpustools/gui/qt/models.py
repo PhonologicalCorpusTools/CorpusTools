@@ -445,17 +445,19 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.summarized = False
 
     def _summarize(self):
-        data = defaultdict(int)
+        typefreq = defaultdict(float)
+        tokenfreq = defaultdict(float)
         for line in self.allData:
             segs = line[2]
             envs = line[3]
             for i,seg in enumerate(segs):
                 segenv = seg,envs[i]
-                data[segenv] += 1
+                typefreq[segenv] += 1
+                tokenfreq[segenv] += line[0].frequency
 
         self.rows = list()
-        for k,v in sorted(data.items()):
-            self.rows.append([k[0],k[1],v])
+        for k,v in sorted(typefreq.items()):
+            self.rows.append([k[0],k[1],v, tokenfreq[k]])
         self.columns = self.summary_header
 
     def setSummarized(self, b):
