@@ -512,9 +512,9 @@ class DiscourseView(QWidget):
         self.setupActions()
         self.audioThread.finished.connect(self.audioFinished)
 
-        self.text = TextView(self)
-        self.text.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.text.customContextMenuRequested.connect(self.showMenu)
+        #self.text = TextView(self)
+        #self.text.setContextMenuPolicy(Qt.CustomContextMenu)
+        #self.text.customContextMenuRequested.connect(self.showMenu)
         self.table = TableWidget(self)
         self.table.setSortingEnabled(False)
         try:
@@ -523,7 +523,7 @@ class DiscourseView(QWidget):
             self.table.horizontalHeader().setClickable(False)
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.showMenu)
-        self.table.hide()
+        #self.table.hide()
         self.setStyleSheet( """ TextView::item:selected:active {
                                      background: lightblue;
                                 }
@@ -556,7 +556,7 @@ class DiscourseView(QWidget):
         self.searchField.setPlaceholderText('Search...')
         self.searchField.returnPressed.connect(self.search)
         layout.addWidget(self.searchField, alignment = Qt.AlignRight)
-        layout.addWidget(self.text)
+        #layout.addWidget(self.text)
         layout.addWidget(self.table)
 
         self.playbar = QToolBar()
@@ -568,9 +568,9 @@ class DiscourseView(QWidget):
         self.setLayout(layout)
 
     def setModel(self,model):
-        self.text.setModel(model)
+        #self.text.setModel(model)
         self.table.setModel(model)
-        self.table.setSelectionModel(self.text.selectionModel())
+        #self.table.setSelectionModel(self.text.selectionModel())
         if False and AUDIO_ENABLED and model.hasAudio():
             self.playbar.show()
         else:
@@ -584,8 +584,9 @@ class DiscourseView(QWidget):
         text = self.searchField.text()
         if not text:
             return
-        model = self.text.model()
-        curSelection = self.text.selectionModel().selectedRows()
+        curview = self.table
+        model = curview.model()
+        curSelection = curview.selectionModel().selectedRows()
         if curSelection:
             row = curSelection[-1].row() + 1
         else:
@@ -594,22 +595,23 @@ class DiscourseView(QWidget):
         matches = model.match(start, Qt.DisplayRole, text, 1, Qt.MatchContains)
         if matches:
             index = matches[0]
-            self.text.selectionModel().select(index,
-                    QItemSelectionModel.SelectCurrent)
-            self.text.scrollTo(index,QAbstractItemView.PositionAtCenter)
+            curview.selectionModel().select(index,
+                    QItemSelectionModel.SelectCurrent|QItemSelectionModel.Rows)
+            curview.scrollTo(index,QAbstractItemView.PositionAtCenter)
         else:
             start = model.index(0,0)
             matches = model.match(start, Qt.DisplayRole, text, 1, Qt.MatchContains)
             if matches:
                 index = matches[0]
-                self.text.selectionModel().select(index,
-                    QItemSelectionModel.SelectCurrent)
-                self.text.scrollTo(index,QAbstractItemView.PositionAtCenter)
+                curview.selectionModel().select(index,
+                    QItemSelectionModel.SelectCurrent|QItemSelectionModel.Rows)
+                curview.scrollTo(index,QAbstractItemView.PositionAtCenter)
             else:
-                self.text.selectionModel().clear()
+                curview.selectionModel().clear()
 
     def findType(self, index):
-        wordtype = self.text.model().wordTokenObject(index.row()).wordtype
+        curview = self.table
+        wordtype = curview.model().wordTokenObject(index.row()).wordtype
         self.selectType.emit(wordtype)
 
     def changeView(self):
@@ -622,31 +624,33 @@ class DiscourseView(QWidget):
 
     def showMenu(self, pos):
         menu = QMenu()
-        index = self.text.indexAt(pos)
-        changeViewAction = QAction(self)
-        if self.text.isHidden():
-            changeViewAction.setText('Show as text')
-        else:
-            changeViewAction.setText('Show as table')
-        changeViewAction.triggered.connect(self.changeView)
-        menu.addAction(changeViewAction)
+        curview = self.table
+        index = curview.indexAt(pos)
+        #changeViewAction = QAction(self)
+        #if self.text.isHidden():
+        #    changeViewAction.setText('Show as text')
+        #else:
+        #    changeViewAction.setText('Show as table')
+        #changeViewAction.triggered.connect(self.changeView)
+        #menu.addAction(changeViewAction)
         if index.isValid():
             lookupAction = QAction(self)
             lookupAction.setText('Look up word')
-            lookupAction.triggered.connect(lambda: self.findType(self.text.indexAt(pos)))
+            lookupAction.triggered.connect(lambda: self.findType(curview.indexAt(pos)))
             menu.addAction(lookupAction)
-        action = menu.exec_(self.text.viewport().mapToGlobal(pos))
+        action = menu.exec_(curview.viewport().mapToGlobal(pos))
 
     def playStopAudio(self):
         print('triggered')
+        curview = self.table
         if self.audioThread.isRunning():
             self.audioThread.stop()
             self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
         else:
             self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaStop))
-            rows = [x.row() for x in self.text.selectionModel().selectedRows()]
-            times = self.text.model().rowsToTimes(rows)
-            filenames = self.text.model().discourse.extract_tokens(times,TMP_DIR)
+            rows = [x.row() for x in curview.selectionModel().selectedRows()]
+            times = curview.model().rowsToTimes(rows)
+            filenames = curview.model().discourse.extract_tokens(times,TMP_DIR)
             #QSound.play(filenames[0])
             print('params')
             self.audioThread.setParams({'files':filenames})
@@ -661,14 +665,15 @@ class DiscourseView(QWidget):
         self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
 
     def highlightTokens(self, tokens):
-        if self.text.model() is None:
+        curview = self.table
+        if curview.model() is None:
             return
-        self.text.selectionModel().clear()
-        times = [x.begin for x in tokens if x.discourse == self.text.model().corpus]
-        rows = self.text.model().timesToRows(times)
+        curview.selectionModel().clear()
+        times = [x.begin for x in tokens if x.discourse == curview.model().corpus]
+        rows = curview.model().timesToRows(times)
         for r in rows:
-            index = self.text.model().index(r,0)
-            self.text.selectionModel().select(index, QItemSelectionModel.Select |QItemSelectionModel.Rows)
+            index = curview.model().index(r,0)
+            curview.selectionModel().select(index, QItemSelectionModel.Select |QItemSelectionModel.Rows)
 
     def setupActions(self):
         self.playStopAction = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), self.tr("Play"), self)
@@ -679,13 +684,8 @@ class DiscourseView(QWidget):
 class SubTreeView(QTreeView):
     def __init__(self,parent=None):
         super(SubTreeView, self).__init__(parent=parent)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setExpandsOnDoubleClick(True)
-
-    def edit(self, index, trigger, event):
-        if trigger == QAbstractItemView.DoubleClicked:
-            return False
-        return QTreeView.edit(self, index, trigger, event)
-
 
 class TreeWidget(SubTreeView):
     newLexicon = Signal(object)
@@ -693,12 +693,22 @@ class TreeWidget(SubTreeView):
         super(TreeWidget, self).__init__(parent=parent)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.showMenu)
-        self.setColumnWidth(0,40)
         self._selection_model = None
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        self._width = 40
+
+    def sizeHint(self):
+        sz = super(TreeWidget, self).sizeHint()
+        sz.setWidth(self._width)
+        return sz
 
     def setModel(self, model):
         QTreeView.setModel(self, model)
         self._selection_model = QTreeView.selectionModel(self)
+        self.expandToDepth(1)
+        self.resizeColumnToContents(0)
+        self._width = self.sizeHintForColumn(0)+ 20
+        self.collapseAll()
 
     def selectionModel(self):
         return self._selection_model
@@ -710,9 +720,9 @@ class TreeWidget(SubTreeView):
         buildAction.setText('Build lexicon')
         buildAction.triggered.connect(lambda: self.buildNewLexicon(self.indexAt(pos)))
         menu.addAction(buildAction)
-        combineAction = QAction(self)
-        combineAction.setText('Combine sub dialogs')
-        menu.addAction(combineAction)
+        #combineAction = QAction(self)
+        #combineAction.setText('Combine sub dialogs')
+        #menu.addAction(combineAction)
         action = menu.exec_(self.viewport().mapToGlobal(pos))
 
     def buildNewLexicon(self, index):

@@ -256,7 +256,6 @@ class MainWindow(QMainWindow):
                 self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
-            self.adjustSize()
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
 
