@@ -44,6 +44,25 @@ class TableWidget(QTableView):
         self.setSortingEnabled(True)
         self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 
+        self.clip = QApplication.clipboard()
+
+    def keyPressEvent(self, e):
+        if (e.modifiers() & Qt.ControlModifier):
+            selected = self.selectionModel().selectedRows()
+            if e.key() == Qt.Key_C: #copy
+                #s = '\t'+"\t".join([str(self.table.horizontalHeaderItem(i).text()) for i in xrange(selected[0].leftColumn(), selected[0].rightColumn()+1)])
+                #s = s + '\n'
+                s = ''
+
+                for r in selected:
+                    #s += self.table.verticalHeaderItem(r).text() + '\t'
+                    for c in range(self.model().columnCount()):
+                        ind = self.model().index(r.row(),c)
+                        s += self.model().data(ind,Qt.DisplayRole) + "\t"
+                    s = s[:-1] + "\n" #eliminate last '\t'
+                self.clip.setText(s)
+
+
     def setModel(self,model):
         super(TableWidget, self).setModel(model)
         #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
