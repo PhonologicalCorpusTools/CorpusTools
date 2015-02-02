@@ -828,14 +828,21 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
 
         if self.unsavedChanges:
-            msgBox = QMessageBox(QMessageBox.Warning, "Unsaved changes",
-                    "The currently loaded corpus ('{}') has unsaved changes. Continue?".format(self.corpus.name), QMessageBox.NoButton, self)
-            msgBox.addButton("Continue", QMessageBox.AcceptRole)
-            msgBox.addButton("Abort", QMessageBox.RejectRole)
-            if msgBox.exec_() != QMessageBox.AcceptRole:
+            reply = QMessageBox()
+            reply.setWindowTitle("Unsaved changes")
+            reply.setIcon(QMessageBox.Warning)
+            reply.setText("The currently loaded corpus ('{}') has unsaved changes.".format(self.corpus.name))
+            reply.setInformativeText("Do you want to save your changes?")
+
+            reply.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            reply.setDefaultButton(QMessageBox.Save)
+            ret = reply.exec_()
+            if ret == QMessageBox.Save:
+                self.saveCorpus()
+            elif ret == QMessageBox.Cancel:
                 event.ignore()
                 return
-
+        self.corpusModel = None
         if self.FLWindow is not None:
             self.FLWindow.reject()
             #self.FLWindow.deleteLater()
@@ -871,4 +878,4 @@ class MainWindow(QMainWindow):
         #tmpfiles = os.listdir(TMP_DIR)
         #for f in tmpfiles:
         #    os.remove(os.path.join(TMP_DIR,f))
-        event.accept()
+        super(MainWindow, self).closeEvent(event)
