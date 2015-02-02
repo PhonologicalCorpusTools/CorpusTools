@@ -922,6 +922,7 @@ class TranscriptionWidget(QGroupBox):
         self.segments = InventoryBox('Inventory',self.inventory)
         for btn in self.segments.btnGroup.buttons():
             btn.setCheckable(False)
+            btn.setAutoDefault(False)
             btn.clicked.connect(self.addCharacter)
         self.segments.hide()
         layout.addRow(self.segments)

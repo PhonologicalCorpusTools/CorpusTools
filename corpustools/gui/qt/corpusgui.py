@@ -891,6 +891,7 @@ class AddWordDialog(QDialog):
         else:
             self.createButton = QPushButton('Save word changes')
             self.setWindowTitle('Edit word')
+        self.createButton.setAutoDefault(True)
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.createButton)
@@ -1032,7 +1033,7 @@ class AddCountColumnDialog(QDialog):
 
 
 class AddColumnDialog(QDialog):
-    def __init__(self, parent, corpus):
+    def __init__(self, parent, corpus, attribute = None):
         QDialog.__init__(self,parent)
         self.corpus = corpus
 

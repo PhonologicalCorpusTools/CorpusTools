@@ -103,15 +103,18 @@ class FunctionDialog(QDialog):
             reply.setStandardButtons(QMessageBox.Close)
             ret = reply.exec_()
             if ret == QMessageBox.AcceptRole:
+                error_dir = self.parent().settings.error_directory()
                 if sys.platform == 'win32':
+                    args = ['"{}"'.format(errordir)]
                     program = 'explorer'
-                    proc = QProcess(self.parent())
-                    proc.start(program,['"{0}"'.format(self.parent().settings.error_directory())])
                     #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
                 elif sys.platform == 'darwin':
-                    pass
+                    program = 'open'
+                    args = ['{}'.format(errordir)]
                 else:
                     pass
+                proc = QProcess(self.parent())
+                proc.start(program,args)
         else:
             reply = QMessageBox.critical(self,
                     "Error encountered", str(error))

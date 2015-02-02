@@ -83,6 +83,7 @@ class LexiconView(QWidget):
                                 )
 
         self.table = TableWidget(self)
+        self.table.doubleClicked.connect(self.editWord)
         layout = QVBoxLayout()
         self.searchField = QLineEdit()
         self.searchField.setPlaceholderText('Search...')
@@ -156,14 +157,17 @@ class LexiconView(QWidget):
 
         if column < 3:
             return
+        attribute = self.table.model().headerData(column,
+                                        Qt.Horizontal, Qt.DisplayRole)
 
         editAction = QAction(self)
+        if attribute
         editAction.setText('Edit column details')
-        editAction.triggered.connect(lambda: self.editColumn(self.table.indexAt(pos)))
+        editAction.triggered.connect(lambda: self.editColumn(column))
 
         removeAction = QAction(self)
         removeAction.setText('Remove column')
-        removeAction.triggered.connect(lambda: self.removeColumn(self.table.indexAt(pos)))
+        removeAction.triggered.connect(lambda: self.removeColumn(column))
 
         menu = QMenu(self)
         menu.addAction(editAction)
@@ -171,13 +175,21 @@ class LexiconView(QWidget):
 
         menu.popup(header.mapToGlobal(pos))
 
-    def editColumn(self, index):
+    def editColumn(self, column):
         print(index.column())
         pass
 
-    def removeColumn(self, index):
-        print(index)
-        pass
+    def removeColumn(self, column):
+        attribute = self.table.model().headerData(column,
+                                        Qt.Horizontal, Qt.DisplayRole)
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove columns",
+                "This will permanently remove the column \'{}\'.  Are you sure?".format(str(attribute)),
+                QMessageBox.NoButton, self)
+        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
+            return
+        self.table.model().removeAttributes([attribute])
 
     def showMenu(self, pos):
         menu = QMenu()

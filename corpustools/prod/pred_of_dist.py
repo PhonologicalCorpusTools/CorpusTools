@@ -51,7 +51,7 @@ class ProdError(Exception):
                 self.value = ('The environments specified were not unique. '
                             'The following environments for {} overlapped:\n\n'
                             ).format(' and '.join([seg1, seg2]))
-                for k,v in overlap_envs.items():
+                for k,v in overlapping.items():
                     self.value +='{}: {}\n'.format(
                             ' ,'.join(str(env) for env in k),
                             ' ,'.join(str(env) for env in v))
