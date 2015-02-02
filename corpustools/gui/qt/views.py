@@ -763,9 +763,10 @@ class TreeWidget(SubTreeView):
 
 class ResultsWindow(QDialog):
     def __init__(self, title, dialog, parent):
-        QDialog.__init__(self,parent = parent)
+        self._parent = parent
+        QDialog.__init__(self)
         self.dialog = dialog
-        dataModel = ResultsModel(self.dialog.header,self.dialog.results, self.parent().settings)
+        dataModel = ResultsModel(self.dialog.header,self.dialog.results, self._parent.settings)
         layout = QVBoxLayout()
         self.table = TableWidget()
         self.table.setModel(dataModel)
@@ -813,7 +814,7 @@ class ResultsWindow(QDialog):
             if self.dialog.update:
                 self.table.model().addRows(self.dialog.results)
             else:
-                dataModel = ResultsModel(self.dialog.header,self.dialog.results, self.parent().settings)
+                dataModel = ResultsModel(self.dialog.header,self.dialog.results, self._parent.settings)
                 self.table.setModel(dataModel)
         self.raise_()
         self.activateWindow()
@@ -834,7 +835,7 @@ class PhonoSearchResults(ResultsWindow):
         ResultsWindow.__init__(self, title, dialog, parent)
         dataModel = PhonoSearchResultsModel(self.dialog.header,
                         self.dialog.summary_header,
-                        self.dialog.results, self.parent().settings)
+                        self.dialog.results, self._parent.settings)
         dataModel.setSummarized(True)
         self.table.setModel(dataModel)
 
@@ -857,7 +858,8 @@ class PhonoSearchResults(ResultsWindow):
             if self.dialog.update:
                 self.table.model().addRows(self.dialog.results)
             else:
-                dataModel = PhonoSearchResultsModel(self.dialog.header,self.dialog.results, self.parent().settings)
+                dataModel = PhonoSearchResultsModel(self.dialog.header,
+                                self.dialog.results, self._parent.settings)
                 self.table.setModel(dataModel)
         self.raise_()
         self.activateWindow()

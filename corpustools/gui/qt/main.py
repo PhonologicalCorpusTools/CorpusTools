@@ -382,6 +382,10 @@ class MainWindow(QMainWindow):
             else:
                 self.SSWindow = ResultsWindow('String similarity results',dialog,self)
                 self.SSWindow.show()
+                self.showSSResults.triggered.connect(self.SSWindow.raise_)
+                self.showSSResults.triggered.connect(self.SSWindow.activateWindow)
+                self.SSWindow.rejected.connect(lambda: self.showSSResults.setVisible(False))
+                self.showSSResults.setVisible(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -394,6 +398,10 @@ class MainWindow(QMainWindow):
             else:
                 self.FAWindow = ResultsWindow('Frequency of alternation results',dialog,self)
                 self.FAWindow.show()
+                self.showFAResults.triggered.connect(self.FAWindow.raise_)
+                self.showFAResults.triggered.connect(self.FAWindow.activateWindow)
+                self.FAWindow.rejected.connect(lambda: self.showFAResults.setVisible(False))
+                self.showFAResults.setVisible(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -406,6 +414,10 @@ class MainWindow(QMainWindow):
             else:
                 self.PDWindow = ResultsWindow('Predictability of distribution results',dialog,self)
                 self.PDWindow.show()
+                self.showPDResults.triggered.connect(self.PDWindow.raise_)
+                self.showPDResults.triggered.connect(self.PDWindow.activateWindow)
+                self.PDWindow.rejected.connect(lambda: self.showPDResults.setVisible(False))
+                self.showPDResults.setVisible(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -418,6 +430,10 @@ class MainWindow(QMainWindow):
             else:
                 self.FLWindow = ResultsWindow('Functional load results',dialog,self)
                 self.FLWindow.show()
+                self.showFLResults.triggered.connect(self.FLWindow.raise_)
+                self.showFLResults.triggered.connect(self.FLWindow.activateWindow)
+                self.FLWindow.rejected.connect(lambda: self.showFLResults.setVisible(False))
+                self.showFLResults.setVisible(True)
 
     def kullbackLeibler(self):
         dialog = KLDialog(self, self.corpusModel.corpus, self.showToolTips)
@@ -428,6 +444,11 @@ class MainWindow(QMainWindow):
             else:
                 self.KLWindow = ResultsWindow('Kullback Leibler results', dialog, self)
                 self.KLWindow.show()
+                self.showKLResults.triggered.connect(self.KLWindow.raise_)
+                self.showKLResults.triggered.connect(self.KLWindow.activateWindow)
+                self.KLWindow.rejected.connect(lambda: self.showKLResults.setVisible(False))
+                self.showKLResults.setVisible(True)
+
     @check_for_empty_corpus
     @check_for_transcription
     def mutualInfo(self):
@@ -439,6 +460,10 @@ class MainWindow(QMainWindow):
             else:
                 self.MIWindow = ResultsWindow('Mutual information results',dialog,self)
                 self.MIWindow.show()
+                self.showMIResults.triggered.connect(self.MIWindow.raise_)
+                self.showMIResults.triggered.connect(self.MIWindow.activateWindow)
+                self.MIWindow.rejected.connect(lambda: self.showMIResults.setVisible(False))
+                self.showMIResults.setVisible(True)
 
     def acousticSim(self):
         dialog = ASDialog(self,self.showToolTips)
@@ -449,6 +474,10 @@ class MainWindow(QMainWindow):
             else:
                 self.ASWindow = ResultsWindow('Acoustic similarity results',dialog,self)
                 self.ASWindow.show()
+                self.showASResults.triggered.connect(self.ASWindow.raise_)
+                self.showASResults.triggered.connect(self.ASWindow.activateWindow)
+                self.ASWindow.rejected.connect(lambda: self.showASResults.setVisible(False))
+                self.showASResults.setVisible(True)
 
     @check_for_empty_corpus
     def neighDen(self):
@@ -460,6 +489,10 @@ class MainWindow(QMainWindow):
             else:
                 self.NDWindow = ResultsWindow('Neighborhood density results',dialog,self)
                 self.NDWindow.show()
+                self.showNDResults.triggered.connect(self.NDWindow.raise_)
+                self.showNDResults.triggered.connect(self.NDWindow.activateWindow)
+                self.NDWindow.rejected.connect(lambda: self.showNDResults.setVisible(False))
+                self.showNDResults.setVisible(True)
         elif result:
             if self.settings['autosave']:
                 self.saveCorpus()
@@ -479,6 +512,10 @@ class MainWindow(QMainWindow):
                 self.PPWindow = ResultsWindow('Phonotactic probability results',
                         dialog,self)
                 self.PPWindow.show()
+                self.showPPResults.triggered.connect(self.PPWindow.raise_)
+                self.showPPResults.triggered.connect(self.PPWindow.activateWindow)
+                self.PPWindow.rejected.connect(lambda: self.showPPResults.setVisible(False))
+                self.showPPResults.setVisible(True)
         elif result:
             if self.settings['autosave']:
                 self.saveCorpus()
@@ -497,6 +534,10 @@ class MainWindow(QMainWindow):
                 self.PhonoSearchWindow = PhonoSearchResults(
                                 'Phonological search results',dialog,self)
                 self.PhonoSearchWindow.show()
+                self.showSearchResults.triggered.connect(self.PhonoSearchWindow.raise_)
+                self.showSearchResults.triggered.connect(self.PhonoSearchWindow.activateWindow)
+                self.PhonoSearchWindow.rejected.connect(lambda: self.showSearchResults.setVisible(False))
+                self.showSearchResults.setVisible(True)
 
     def createWord(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus)
@@ -683,13 +724,35 @@ class MainWindow(QMainWindow):
                 statusTip="Help information",
                 triggered=self.about)
 
-        self.batchNeighDenAct = QAction("Add neighborhood density...", self,
-                statusTip="Calculate all words' neighborhood density and add as a column",
-                triggered=self.about)
+        self.showSearchResults = QAction("Phonological search results", self)
+        self.showSearchResults.setVisible(False)
 
-        self.batchPhonProbAct = QAction("Add phonotactic probability...", self,
-                statusTip="Calculate all words' phonotactic probability and add as a column",
-                triggered=self.about)
+        self.showSSResults = QAction("String similarity results", self)
+        self.showSSResults.setVisible(False)
+
+        self.showMIResults = QAction("Mutual information results", self)
+        self.showMIResults.setVisible(False)
+
+        self.showASResults = QAction("Acoustic similarity results", self)
+        self.showASResults.setVisible(False)
+
+        self.showFLResults = QAction("Functional load results", self)
+        self.showFLResults.setVisible(False)
+
+        self.showKLResults = QAction("Kullback-Leibler results", self)
+        self.showKLResults.setVisible(False)
+
+        self.showFAResults = QAction("Frequency of alternation results", self)
+        self.showFAResults.setVisible(False)
+
+        self.showPDResults = QAction("Predictability of distribution results", self)
+        self.showPDResults.setVisible(False)
+
+        self.showNDResults = QAction("Neighborhood density results", self)
+        self.showNDResults.setVisible(False)
+
+        self.showPPResults = QAction("Phonotactic probability results", self)
+        self.showPPResults.setVisible(False)
 
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
@@ -734,7 +797,6 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.neighDenAct)
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
-        #self.analysisMenu.addAction(self.acousticSimAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
@@ -743,7 +805,17 @@ class MainWindow(QMainWindow):
         #self.viewMenu.addAction(self.showInventoryAct)
         self.viewMenu.addAction(self.showDiscoursesAct)
         self.viewMenu.addAction(self.showTextAct)
-        self.menuBar().addSeparator()
+        self.viewMenu.addSeparator()
+        self.viewMenu.addAction(self.showPPResults)
+        self.viewMenu.addAction(self.showFLResults)
+        self.viewMenu.addAction(self.showPDResults)
+        self.viewMenu.addAction(self.showKLResults)
+        self.viewMenu.addAction(self.showSSResults)
+        self.viewMenu.addAction(self.showNDResults)
+        self.viewMenu.addAction(self.showFAResults)
+        self.viewMenu.addAction(self.showMIResults)
+        self.viewMenu.addAction(self.showASResults)
+        self.viewMenu.addAction(self.showSearchResults)
 
         self.helpMenu = self.menuBar().addMenu("&Help")
         self.helpMenu.addAction(self.helpAct)
@@ -765,25 +837,35 @@ class MainWindow(QMainWindow):
                 return
 
         if self.FLWindow is not None:
-            self.FLWindow.deleteLater()
+            self.FLWindow.reject()
+            #self.FLWindow.deleteLater()
         if self.PDWindow is not None:
-            self.PDWindow.deleteLater()
+            self.PDWindow.reject()
+            #self.PDWindow.deleteLater()
         if self.FAWindow is not None:
-            self.FAWindow.deleteLater()
+            self.FAWindow.reject()
+            #self.FAWindow.deleteLater()
         if self.SSWindow is not None:
-            self.SSWindow.deleteLater()
+            self.SSWindow.reject()
+            #self.SSWindow.deleteLater()
         if self.ASWindow is not None:
-            self.ASWindow.deleteLater()
+            self.ASWindow.reject()
+            #self.ASWindow.deleteLater()
         if self.NDWindow is not None:
-            self.NDWindow.deleteLater()
+            self.NDWindow.reject()
+            #self.NDWindow.deleteLater()
         if self.PPWindow is not None:
-            self.PPWindow.deleteLater()
+            self.PPWindow.reject()
+            #self.PPWindow.deleteLater()
         if self.MIWindow is not None:
-            self.MIWindow.deleteLater()
+            self.MIWindow.reject()
+            #self.MIWindow.deleteLater()
         if self.KLWindow is not None:
-            self.KLWindow.deleteLater()
+            self.KLWindow.reject()
+            #self.KLWindow.deleteLater()
         if self.PhonoSearchWindow is not None:
-            self.PhonoSearchWindow.deleteLater()
+            self.PhonoSearchWindow.reject()
+            #self.PhonoSearchWindow.deleteLater()
         self.settings['size'] = self.size()
         self.settings['pos'] = self.pos()
         #tmpfiles = os.listdir(TMP_DIR)
