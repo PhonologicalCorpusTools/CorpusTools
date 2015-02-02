@@ -110,7 +110,7 @@ class FunctionDialog(QDialog):
                     #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
                 elif sys.platform == 'darwin':
                     program = 'open'
-                    args = ['-R','"{}"'.format(error_dir)]
+                    args = ['{}'.format(error_dir)]
                 else:
                     program = 'xdg-open'
                     args = ['{}'.format(error_dir)]
