@@ -93,6 +93,7 @@ class MainWindow(QMainWindow):
         self.corpusTable = LexiconView(self)
         self.corpusTable.wordsChanged.connect(self.enableSave)
         self.corpusTable.wordToBeEdited.connect(self.editWord)
+        self.corpusTable.columnRemoved.connect(self.enableSave)
         self.discourseTree = TreeWidget(self)
         self.discourseTree.newLexicon.connect(self.changeLexicon)
         self.discourseTree.hide()

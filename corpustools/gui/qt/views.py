@@ -83,6 +83,7 @@ class LexiconView(QWidget):
     selectTokens = Signal(object)
     wordsChanged = Signal()
     wordToBeEdited = Signal(object, object)
+    columnRemoved = Signal()
     def __init__(self,parent=None):
         super(LexiconView, self).__init__(parent=parent)
         self._parent = parent
@@ -208,6 +209,7 @@ class LexiconView(QWidget):
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
         self.table.model().removeAttributes([attribute])
+        self.columnRemoved.emit()
 
     def showMenu(self, pos):
         menu = QMenu()
