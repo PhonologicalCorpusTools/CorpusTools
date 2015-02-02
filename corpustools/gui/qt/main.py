@@ -159,11 +159,18 @@ class MainWindow(QMainWindow):
     def check_for_unsaved_changes(function):
         def do_check(self):
             if self.unsavedChanges:
-                msgBox = QMessageBox(QMessageBox.Warning, "Unsaved changes",
-                        "The currently loaded corpus ('{}') has unsaved changes. Continue?".format(self.corpusModel.corpus.name), QMessageBox.NoButton, self)
-                msgBox.addButton("Continue", QMessageBox.AcceptRole)
-                msgBox.addButton("Abort", QMessageBox.RejectRole)
-                if msgBox.exec_() != QMessageBox.AcceptRole:
+                reply = QMessageBox()
+                reply.setWindowTitle("Unsaved changes")
+                reply.setIcon(QMessageBox.Warning)
+                reply.setText("The currently loaded corpus ('{}') has unsaved changes.".format(self.corpus.name))
+                reply.setInformativeText("Do you want to save your changes?")
+
+                reply.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+                reply.setDefaultButton(QMessageBox.Save)
+                ret = reply.exec_()
+                if ret == QMessageBox.Save:
+                    self.saveCorpus()
+                elif ret == QMessageBox.Cancel:
                     return
             function(self)
 
@@ -221,6 +228,7 @@ class MainWindow(QMainWindow):
         dialog = CorpusLoadDialog(self)
         result = dialog.exec_()
         if result:
+
             self.corpus = dialog.corpus
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
