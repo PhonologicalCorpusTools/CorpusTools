@@ -275,15 +275,22 @@ class LexiconView(QWidget):
         self.selectTokens.emit(tokens)
 
     def showVariants(self, index):
-        variantDialog = QDialog(self)
-        variantDialog.setWindowTitle('Pronunciation variants')
-        layout = QVBoxLayout()
-        table = TableWidget()
-        layout.addWidget(table)
-        table.setModel(VariantModel(self.table.model().wordObject(index.row()).wordtokens))
-        variantDialog.setLayout(layout)
+        variantDialog = VariantView(self,
+                self.table.model().wordObject(index.row()).wordtokens)
         variantDialog.show()
 
+class VariantView(QDialog):
+    def __init__(self, parent, wordtokens):
+        QDialog.__init__(self, parent)
+        self.setWindowTitle('Pronunciation variants')
+        layout = QVBoxLayout()
+        self.table = TableWidget()
+        layout.addWidget(self.table)
+        self.table.setModel(VariantModel(wordtokens))
+        closeButton = QPushButton('Close')
+        closeButton.clicked.connect(self.reject)
+        layout.addWidget(closeButton)
+        self.setLayout(layout)
 
 class TextView(QAbstractItemView):
     ExtraHeight = 3
