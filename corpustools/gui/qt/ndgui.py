@@ -37,7 +37,7 @@ class NDWorker(FunctionWorker):
                 except Exception as e:
                     self.errorEncountered.emit(e)
                     return
-                if kwargs['output_filename'] is not None:
+                if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
                     print_neighden_results(kwargs['output_filename'],res[1])
                 self.results.append([q,res[0]])
         else:

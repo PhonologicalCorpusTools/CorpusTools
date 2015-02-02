@@ -59,8 +59,8 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
                 continue
         if not is_neighbor(w, query, algorithm, max_distance):
             continue
-        matches.append(str(getattr(w, sequence_type)))
-    neighbors = set(matches)-set([str(getattr(query, sequence_type))])
+        matches.append(w)
+    neighbors = set(matches)-set([query])
 
     return (len(neighbors), neighbors)
 
