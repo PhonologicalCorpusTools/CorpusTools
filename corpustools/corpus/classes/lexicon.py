@@ -970,6 +970,8 @@ class Attribute(object):
             #    self.att_type = 'spelling'
             #    self._range = None
         elif self.att_type == 'tier':
+            if isinstance(self._range, list):
+                self._range = set(self._range)
             self._range.update([x for x in value])
 
 class Corpus(object):
