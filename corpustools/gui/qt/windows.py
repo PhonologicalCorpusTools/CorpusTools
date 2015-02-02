@@ -112,7 +112,8 @@ class FunctionDialog(QDialog):
                     program = 'open'
                     args = ['-R','"{}"'.format(error_dir)]
                 else:
-                    pass
+                    program = 'xdg-open'
+                    args = ['"{}"'.format(error_dir)]
                 proc = QProcess(self.parent())
                 proc.start(program,args)
         else:
