@@ -915,6 +915,7 @@ class TranscriptionWidget(QGroupBox):
         self.transEdit = QLineEdit()
         self.transEdit.textChanged.connect(self.transcriptionChanged.emit)
         self.showInv = QPushButton('Show inventory')
+        self.showInv.setAutoDefault(False)
         self.showInv.clicked.connect(self.showHide)
         layout.addRow(self.transEdit,self.showInv)
 

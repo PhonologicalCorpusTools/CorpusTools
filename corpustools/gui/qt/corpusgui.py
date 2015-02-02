@@ -875,6 +875,9 @@ class AddWordDialog(QDialog):
             elif a.att_type == 'factor':
                 self.edits[a.name] = QLineEdit()
                 main.addRow(QLabel(str(a)),self.edits[a.name])
+            else:
+                print(a.name)
+                print(str(a))
             if word is not None:
                 self.edits[a.name].setText(str(getattr(word,a.name)))
 
@@ -908,6 +911,8 @@ class AddWordDialog(QDialog):
             if a.att_type != 'tier':
                 continue
             if a.name == 'transcription':
+                continue
+            if a.name not in self.edits:
                 continue
             text = '.'.join([x for x in transcription if x in a.range])
             if text == '':

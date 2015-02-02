@@ -905,27 +905,27 @@ class Attribute(object):
         if self.att_type == 'numeric':
             self._range = [0,0]
             if default_value is not None and isinstance(default_value,(int,float)):
-                self.default_value = default_value
+                self._default_value = default_value
             else:
-                self.default_value = 0
+                self._default_value = 0
         elif self.att_type == 'factor':
-            self._range = set()
             if default_value is not None and isinstance(default_value,str):
-                self.default_value = default_value
+                self._default_value = default_value
             else:
-                self.default_value = ''
+                self._default_value = ''
+            self._range = set([default_value])
         elif self.att_type == 'spelling':
             self._range = None
             if default_value is not None and isinstance(default_value,str):
-                self.default_value = default_value
+                self._default_value = default_value
             else:
-                self.default_value = ''
+                self._default_value = ''
         elif self.att_type == 'tier':
             self._range = set()
             if default_value is not None and isinstance(default_value,Transcription):
-                self.default_value = default_value
+                self._default_value = default_value
             else:
-                self.default_value = Transcription(None)
+                self._default_value = Transcription(None)
 
     def __str__(self):
         return self.display_name
@@ -944,6 +944,15 @@ class Attribute(object):
         if self._display_name is not None:
             return self._display_name
         return self.name.title()
+
+    @property
+    def default_value(self):
+        return self._default_value
+
+    @default_value.setter
+    def default_value(self, value):
+        self._default_value = value
+        self._range = set([value])
 
     @property
     def range(self):
