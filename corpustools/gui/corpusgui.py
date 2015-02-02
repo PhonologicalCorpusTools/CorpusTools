@@ -1,1169 +1,1667 @@
 import os
-import collections
-
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton, Message,
-                    Frame, StringVar, BooleanVar, END, DISABLED, TclError, ANCHOR,
-                    ACTIVE, Toplevel, Listbox, OptionMenu, IntVar, Checkbutton, E, N, S )
-from tkinter.ttk import Progressbar
-import tkinter.filedialog as FileDialog
-import tkinter.messagebox as MessageBox
-
-import queue
+import codecs
 import string
 
-from corpustools.corpus.classes.lexicon import CorpusIntegrityError
+from .imports import *
 
-from corpustools.corpus.io import (download_binary, save_binary, load_binary,
-                                    load_corpus_csv,load_corpus_text,
-                                    export_corpus_csv, export_feature_matrix_csv,
-                                    load_feature_matrix_csv,DelimiterError)
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow, ToolTip,
-                    ResultsWindow, TableView, ThreadedTask, config, ERROR_DIR)
+from collections import OrderedDict
 
-def get_corpora_list():
-    corpus_dir = os.path.join(config['storage']['directory'],'CORPUS')
+from corpustools.corpus.classes import Attribute, Word
+
+from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
+                                    load_spelling_corpus, load_transcription_corpus,
+                                    inspect_transcription_corpus,
+                                    save_binary,export_corpus_csv, import_spontaneous_speech_corpus)
+
+from .windows import FunctionWorker, DownloadWorker
+
+from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
+                    SaveFileWidget, DirectoryWidget, PunctuationWidget,
+                    DigraphWidget, InventoryBox, AttributeFilterWidget,
+                    TranscriptionWidget, SegFeatSelect, TierWidget)
+
+from .featuregui import FeatureSystemSelect
+
+def get_corpora_list(storage_directory):
+    corpus_dir = os.path.join(storage_directory,'CORPUS')
     corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
     return corpora
 
-def get_systems_list():
-    system_dir = os.path.join(config['storage']['directory'],'FEATURE')
-    systems = [x.split('.')[0] for x in os.listdir(system_dir)]
-    return systems
-
-def corpus_name_to_path(name):
-    return os.path.join(config['storage']['directory'],'CORPUS',name+'.corpus')
-
-def system_name_to_path(name):
-    return os.path.join(config['storage']['directory'],'FEATURE',name+'.feature')
-
-class DownloadCorpusWindow(Toplevel):
-    """
-    Window for downloading corpora
-    """
-    def __init__(self,master=None, **options):
-        super(DownloadCorpusWindow, self).__init__(master=master, **options)
-        self.corpus_button_var = StringVar()
-        self.queue = queue.LifoQueue()
-        self.pbar_value = IntVar()
-        self.corpus_download_thread = None
-        self.title('Download corpora')
-        corpus_frame = Frame(self)
-        corpus_area = LabelFrame(corpus_frame, text='Select a corpus')
-        corpus_area.grid(sticky=W, column=0, row=0)
-        subtlex_button = Radiobutton(corpus_area, text='Example', variable=self.corpus_button_var, value='example')
-        subtlex_button.grid(sticky=W,row=0)
-        subtlex_button.invoke()#.select() doesn't work on ttk.Button
-        iphod_button = Radiobutton(corpus_area, text='IPHOD', variable=self.corpus_button_var, value='iphod')
-        iphod_button.grid(sticky=W,row=1)
-        corpus_frame.grid()
-
-        button_frame = Frame(self)
-        ok_button = Button(button_frame,text='OK', command=self.confirm_download)
-        ok_button.grid(row=3, column=0)#, sticky=W, padx=3)
-        cancel_button = Button(button_frame,text='Cancel', command=self.cancel_download)
-        cancel_button.grid(row = 3, column=1)#, sticky=W, padx=3)
-        button_frame.grid()
-
-        warning_label = Label(self, text='Please be patient. It can take up to 30 seconds to download a corpus.\nThis window will close when finished.')
-        warning_label.grid()
-        self.focus()
-
-    def cancel_download(self):
-        self.destroy()
-
-    def confirm_download(self):
-        corpus_name = self.corpus_button_var.get()
-        path = corpus_name_to_path(corpus_name)
-        if corpus_name in get_corpora_list():
-            carry_on = MessageBox.askyesno(message=(
-                'This corpus is already available locally. Would you like to redownload it?'))
-            if not carry_on:
-                return
-            os.remove(path)
-        self.prog_bar = Progressbar(self, mode='determinate', variable=self.pbar_value,maximum=100)
-        self.prog_bar.grid()
-        self.pbar_value.set(0.0)
-        if not os.path.exists(path):
-            #self.download_corpus(corpus_name,path)
-            self.corpus_download_thread = ThreadedTask(self.queue,
-                                target=download_binary,
-                                args=(corpus_name,path),
-                                kwargs={'queue':self.queue})
-            self.corpus_download_thread.start()
-            self.process_queue()
-
-    def process_queue(self):
-        try:
-            msg = self.queue.get()
-            if msg == -99:
-                self.prog_bar.stop()
-                self.destroy()
-            else:
-                self.pbar_value.set(msg)
-                self.master.after(1, self.process_queue)
-        except queue.Empty:
-            self.master.after(1, self.process_queue)
-
-    def download_corpus(self,corpus_name,path):
-        download_binary(corpus_name,path)
-        #self.corpus_load_prog_bar.stop()
-        self.destroy()
-
-class CorpusFromTextWindow(Toplevel):
-    """
-    Window for generating a corpus from a file of running text
-    """
-    def __init__(self,master=None, **options):
-        super(CorpusFromTextWindow, self).__init__(master=master, **options)
-
-        self.queue = queue.LifoQueue()
-        self.corpusq = queue.Queue()
-
-        #Corpus from text variables
-        self.punc_vars = [StringVar() for mark in string.punctuation]
-        self.new_corpus_string_type = StringVar()
-        self.new_corpus_feature_system_var = StringVar()
-        self.corpus_from_text_source_file = StringVar()
-
-        self.title('Create corpus')
-        self.main_frame = Frame(self)
-        self.main_frame.grid()
-
-        self.start()
-
-    def start(self):
-        from_text_frame = LabelFrame(self.main_frame, text='Create corpus from text')
-        load_file_frame = Frame(from_text_frame)
-        find_file = Button(load_file_frame, text='Select a source text file to create the corpus from', command=self.navigate_to_text)
-        find_file.grid(sticky=W)
-        from_text_label = Label(load_file_frame, textvariable=self.corpus_from_text_source_file)
-        from_text_label.grid(sticky=W)
-        load_file_frame.grid(sticky=W)
-
-        from_text_frame.grid()
+def corpus_name_to_path(storage_directory,name):
+    return os.path.join(storage_directory,'CORPUS',name+'.corpus')
 
 
-        punc_frame = LabelFrame(from_text_frame, text='Select punctuation to ignore')
-        punc_frame_tooltip = ToolTip(punc_frame, text=('Punctuation that is ignored will not '
-                'appear in your corpus. This is mainly useful if you are loading in text '
-                'using a practical orthography, or a transcription with morpheme breaks'))
-        row = 0
-        col = 0
-        colmax = 10
-        for mark,var in zip(string.punctuation, self.punc_vars):
-            check_button = Checkbutton(punc_frame, text=mark,
-                            variable=var, onvalue=mark, offvalue='')
-            check_button.grid(row=row, column=col)
-            col += 1
-            if col > colmax:
-                col = 0
-                row += 1
-        row += 1
-        select_frame = Frame(punc_frame)
-        select_all = Button(select_frame, text='Select all',
-                command=lambda x=1: [cb.invoke() for cb in punc_frame.winfo_children() if hasattr(cb, 'invoke')])
-        select_all.grid(row=0,column=0)
-        deselect_all = Button(select_frame, text='Deselect all',
-                    command=lambda x='': [var.set(x) for var in self.punc_vars])
-        deselect_all.grid(row=0, column=1)
-        select_frame.grid(row=row,column=0)
-        punc_frame.grid(sticky=W)
+class CorpusSelect(QComboBox):
+    def __init__(self, parent, settings):
+        QComboBox.__init__(self,parent)
+        self.settings = settings
+        self.addItem('None')
 
+        for i,s in enumerate(get_corpora_list(self.settings['storage'])):
+            self.addItem(s)
 
-        string_type_frame = LabelFrame(from_text_frame, text='Does your corpus use spelling or transcription?')
-        spelling_only = Radiobutton(string_type_frame, text='Corpus uses spelling',
-                            value='spelling', variable=self.new_corpus_string_type)
-        spelling_only.grid(sticky=W)
-        spelling_only.invoke()
-        trans_only = Radiobutton(string_type_frame, text='Corpus uses transcription',
-                            value='transcription', variable=self.new_corpus_string_type)
-        trans_only.grid(sticky=W)
-        new_corpus_feature_frame = LabelFrame(string_type_frame, text='Feature system to use (if transcription exists)')
+    def value(self):
+        val = self.currentText()
+        if val == 'None':
+            return ''
+        return val
 
-        available_systems = ['']+get_systems_list()
-        new_corpus_feature_system = OptionMenu(
-            new_corpus_feature_frame,#parent
-            self.new_corpus_feature_system_var,#variable
-            *available_systems)#options in drop-down
-        new_corpus_feature_system.grid()
-        new_corpus_feature_frame.grid(sticky=W)
-        string_type_frame.grid(sticky=W)
+    def path(self):
+        if self.value() != '':
+            return corpus_name_to_path(self.settings['storage'],self.value())
+        return None
 
-        button_frame = Frame(self.main_frame)
-        next_step = Button(button_frame, text='Next step', command=self.parse_text)
-        next_step.grid(row=0, column=0)
-        cancel = Button(button_frame, text='Cancel', command=self.destroy)
-        cancel.grid(row=0, column=1)
-        button_frame.grid()
-
-
-    def navigate_to_text(self):
-        text_file = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
-        if text_file:
-            self.corpus_from_text_source_file.set(text_file)
-
-    def parse_text(self, delimiter=' '):
-        source_path = self.corpus_from_text_source_file.get()
-        if not os.path.isfile(source_path):
-            MessageBox.showerror(message='Cannot find the source file. Double check the path is correct.')
+class LoadWorker(FunctionWorker):
+    def run(self):
+        if self.stopCheck():
             return
-
-        with open(source_path, encoding='utf-8') as f:
-            symbols = set()
-            for line in f.readlines():
-                line = line.strip()
-                line = line.split(delimiter)
-                for word in line:
-                    symbols.update(word)
-            symbols = list(symbols)
-
-            symbols = [s for s in symbols
-                        if not s in [v.get() for v in self.punc_vars]]
-
-
-        if not symbols:
-            MessageBox.showerror(message='The source file seems to be empty! Double check the path is correct')
+        self.results = load_binary(self.kwargs['path'])
+        if self.stopCheck():
             return
+        self.dataReady.emit(self.results)
 
-        for child in self.main_frame.winfo_children():
-            child.destroy()
+class SpontaneousLoadWorker(FunctionWorker):
+    def run(self):
 
-        digraph_frame = LabelFrame(self.main_frame, text='Dealing with digraphs')
-        message = ('The box below shows all of the symbols that were found in your corpus.'
-                    'By default, CorpusTools assumes your corpus has a one-sound-one-symbol writing system. If there are '
-                    'any sequences of symbols that should be treated as a single unit, you can tell CorpusTools about '
-                    'them now.')
-        explain_label = Message(digraph_frame, text=message)
-        explain_label.grid(row=0,column=0)
+        corpus = import_spontaneous_speech_corpus(self.kwargs['directory'],
+                                                dialect = self.kwargs['dialect'],
+                                                stop_check=self.kwargs['stop_check'],
+                                                call_back = self.kwargs['call_back'])
+        self.dataReady.emit(corpus)
 
-        inventory_frame = LabelFrame(digraph_frame)
-        row = 0
-        col = 0
-        colmax = 10
-        for symbol in sorted(symbols):
-            button = Button(inventory_frame, text=symbol, command= lambda x=symbol:self.add_to_digraph(x))
-            button.grid(row=row, column=col, sticky=W)
-            col += 1
-            if col > colmax:
-                col = 0
-                row += 1
-        inventory_frame.grid(row=1,column=0)
+class SpellingLoadWorker(FunctionWorker):
+    def run(self):
 
-        self.current_frame = LabelFrame(digraph_frame, text='Current digraph')
-        self.current_digraph = Entry(self.current_frame)
-        self.current_digraph.grid()
-        ok = Button(self.current_frame, text='Add current digraph to list', command=self.add_digraph_to_list)
-        ok.grid()
-        self.current_frame.grid(row=2,column=0)
+        corpus = load_spelling_corpus(**self.kwargs)
+        self.dataReady.emit(corpus)
 
-        list_frame = LabelFrame(digraph_frame)
-        self.digraph_list = Listbox(list_frame)
-        self.digraph_list.grid()
-        remove_one = Button(list_frame, text='Remove selected',
-                        command=lambda x=self.digraph_list: x.delete(ANCHOR))
-        clear = Button(list_frame, text='Clear all',
-                        command=lambda x=self.digraph_list: x.delete(0,END))
-        remove_one.grid(row=1,column=0)
-        clear.grid(row=1,column=1)
-        list_frame.grid(row=1,column=1)
+class TranscriptionLoadWorker(FunctionWorker):
+    def run(self):
 
-        next_step = Button(digraph_frame, text='Create corpus', command=self.create_corpus)
-        next_step.grid()#row=2,column=0)
-        cancel = Button(digraph_frame, text='Cancel', command=self.destroy)
-        cancel.grid()#row=2,column=1)
+        corpus = load_transcription_corpus(**self.kwargs)
+        self.dataReady.emit(corpus)
 
-        digraph_frame.grid()
+class SubsetCorpusDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self, parent)
 
-    def add_to_digraph(self, symbol):
-        self.current_digraph.insert(END, symbol)
-
-    def add_digraph_to_list(self):
-        self.digraph_list.insert(END,self.current_digraph.get())
-        self.current_digraph.delete(0,END)
-
-    def create_corpus(self, delimiter=' '):
-        #string_type = self.new_corpus_string_type.get()
-        string_type = 'transcription'
-        ignore_list = [v.get() for v in self.punc_vars if v.get()]
-        digraph_list = self.digraph_list.get(0,END)
-
-        #delimiter = self.delimiter_entry.get()
-        #trans_delimiter = self.trans_delimiter_entry.get()
-        source_path = self.corpus_from_text_source_file.get()
-        corpus_name = os.path.split(source_path)[-1].split('.')[0]
-
-        self.prog_bar = Progressbar(self.main_frame, mode='indeterminate')
-        #this progbar is indeterminate because we can't know how big the custom corpus will be
-        self.prog_bar.grid()
-        self.prog_bar.start()
-
-        feature_system = self.new_corpus_feature_system_var.get()
-        if feature_system:
-            feature_system = system_name_to_path(feature_system)
-        else:
-            feature_system = False
-
-        self.custom_corpus_load_thread = ThreadedTask(self.queue,
-                                target=load_corpus_text,
-                                args=(corpus_name,source_path, delimiter,ignore_list, digraph_list),
-                                kwargs={'pqueue':self.queue,'oqueue':self.corpusq,
-                                'feature_system_path':feature_system})
-        self.custom_corpus_load_thread.start()
-        self.process_queue()
-
-    def process_queue(self):
-        try:
-            msg = self.queue.get()
-            if msg == -99:
-                self.prog_bar.stop()
-                source_path = self.corpus_from_text_source_file.get()
-                corpus_name = os.path.split(source_path)[-1].split('.')[0]
-                corpus = self.corpusq.get()
-                errors = self.corpusq.get()
-                self.finalize_corpus(corpus, errors)
-                save_binary(corpus,corpus_name_to_path(corpus_name))
-                self.destroy()
-            elif isinstance(msg,DelimiterError):
-                MessageBox.showerror(message=str(msg))
-                return
-            else:
-                self.master.after(10, self.process_queue)
-
-        except queue.Empty:
-            self.master.after(10, self.process_queue)
-
-
-    def finalize_corpus(self, corpus, transcription_errors=None):
         self.corpus = corpus
-        if transcription_errors:
-            not_found = sorted(transcription_errors)
-            msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'The symbols that were missing were {}.\n'.format(', '.join(not_found))
-            msg3 = 'Would you like to create all of them as unspecified? You can edit them later by going to Options-> View/change feature system...\nYou can also manually create the segments in there.'
-            msg = '\n'.join([msg1, msg2, msg3])
-            carry_on = MessageBox.askyesno(message=msg)
-            if not carry_on:
+
+        layout = QVBoxLayout()
+
+        mainlayout = QFormLayout()
+
+        self.nameEdit = QLineEdit()
+        self.nameEdit.setText(corpus.name + '_subset')
+
+        mainlayout.addRow(QLabel('Name for new corpus'),self.nameEdit)
+
+        self.filterWidget = AttributeFilterWidget(corpus)
+
+        mainlayout.addRow(self.filterWidget)
+
+        layout.addLayout(mainlayout)
+
+        self.acceptButton = QPushButton('Create subset corpus')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Load corpora')
+
+    def accept(self):
+        filters = self.filterWidget.value()
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the new corpus.")
+            return None
+        if len(filters) == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one filter.")
+            return None
+
+        if name in get_corpora_list(self.parent().settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-            for s in not_found:
-                self.corpus.specifier.add_segment(s,{})
-            self.corpus.sepecifier.validate()
+        new_corpus = self.corpus.subset(filters)
+        new_corpus.name = name
+        new_corpus.set_feature_matrix(self.corpus.specifier)
+        save_binary(new_corpus,
+            corpus_name_to_path(self.settings['storage'],new_corpus.name))
+        QDialog.accept(self)
 
-class CustomCorpusWindow(Toplevel):
-    """
-    Window for parsing a column-delimited text file into a Corpus
-    """
-    def __init__(self,master=None, **options):
-        super(CustomCorpusWindow, self).__init__(master=master, **options)
-        self.new_corpus_feature_system_var = StringVar()
-        self.title('Load new corpus')
-
-        self.queue = queue.LifoQueue()
-        self.corpusq = queue.Queue()
-
-        custom_corpus_load_frame = LabelFrame(self, text='Corpus information')
-        custom_corpus_load_frame.grid()
-        corpus_path_label = Label(custom_corpus_load_frame, text='Path to corpus')
-        corpus_path_label.grid()
-        self.custom_corpus_path = Entry(custom_corpus_load_frame)
-        self.custom_corpus_path.grid()
-        select_corpus_button = Button(custom_corpus_load_frame, text='Choose file...', command=self.navigate_to_corpus_file)
-        select_corpus_button.grid()
-        corpus_name_label = Label(custom_corpus_load_frame, text='Name for corpus (auto-suggested)')
-        corpus_name_label.grid()
-        self.custom_corpus_name = Entry(custom_corpus_load_frame)
-        self.custom_corpus_name.grid()
-        delimiter_label = Label(custom_corpus_load_frame, text='Column delimiter (enter \'t\' for tab)')
-        delimiter_label.grid()
-        self.delimiter_entry = Entry(custom_corpus_load_frame)
-        self.delimiter_entry.delete(0,END)
-        self.delimiter_entry.insert(0,',')
-        self.delimiter_entry.grid()
-        trans_delimiter_label = Label(custom_corpus_load_frame, text='Transcription delimiter (No character means every symbol\n will be interpreted as a segment)')
-        trans_delimiter_label.grid()
-        self.trans_delimiter_entry = Entry(custom_corpus_load_frame)
-        self.trans_delimiter_entry.delete(0,END)
-        self.trans_delimiter_entry.insert(0,'.')
-        self.trans_delimiter_entry.grid()
-        available_systems = ['']+get_systems_list()
-        new_corpus_feature_frame = LabelFrame(custom_corpus_load_frame, text='Feature system to use (if transcription exists)')
-        new_corpus_feature_system = OptionMenu(new_corpus_feature_frame,#parent
-            self.new_corpus_feature_system_var,#variable
-            *available_systems)#options in drop-down
-        new_corpus_feature_system.grid()
-        new_corpus_feature_frame.grid(sticky=W)
-        ok_button = Button(self, text='OK', command=self.confirm_custom_corpus_selection)
-        cancel_button = Button(self, text='Cancel', command=self.destroy)
-        ok_button.grid()
-        cancel_button.grid()
-        self.focus()
-
-    def navigate_to_corpus_file(self):
-        custom_corpus_filename = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('CSV files', '*.csv')))
-        if custom_corpus_filename:
-            self.custom_corpus_path.delete(0,END)
-            self.custom_corpus_path.insert(0, custom_corpus_filename)
-            self.custom_corpus_name.delete(0,END)
-            suggestion = os.path.basename(custom_corpus_filename).split('.')[0]
-            self.custom_corpus_name.insert(0,suggestion)
-
-    def confirm_custom_corpus_selection(self):
-        filename = self.custom_corpus_path.get()
-        if not os.path.exists(filename):
-            MessageBox.showerror(message='Corpus file could not be located. Please verify the path and file name.')
-
-        delimiter = self.delimiter_entry.get()
-        trans_delimiter = self.trans_delimiter_entry.get()
-        corpus_name = self.custom_corpus_name.get()
-        if corpus_name in get_corpora_list():
-            carry_on = MessageBox.askyesno(message=(
-                'A corpus already exists with this name. Would you like to overwrite it?'))
-            if not carry_on:
-                return
-        if (not filename) or (not delimiter) or (not corpus_name):
-            MessageBox.showerror(message='Information is missing. Please verify that you entered something in all the text boxes')
-            return
-
-        if delimiter == 't':
-            delimiter = '\t'
-        if delimiter == trans_delimiter:
-            MessageBox.showerror(message='Delimiter for columns matches delimiter for transcriptions. Please ensure that these are different.')
-            return
-        self.create_custom_corpus(corpus_name, filename, delimiter, trans_delimiter)
-
-    def create_custom_corpus(self, corpus_name, filename, delimiter, trans_delimiter):
-
-        self.prog_bar = Progressbar(self, mode='indeterminate')
-        #this progbar is indeterminate because we can't know how big the custom corpus will be
-        self.prog_bar.grid()
-        self.prog_bar.start()
-
-        feature_system = self.new_corpus_feature_system_var.get()
-        if feature_system:
-            feature_system = system_name_to_path(feature_system)
-
-        self.custom_corpus_load_thread = ThreadedTask(self.queue,
-                                target=load_corpus_csv,
-                                args=(corpus_name, filename, delimiter, trans_delimiter,feature_system),
-                                kwargs={'pqueue':self.queue,'oqueue':self.corpusq})
-        self.custom_corpus_load_thread.start()
-        #self.custom_corpus_thread(corpus_name, filename, delimiter, trans_delimiter)
-        self.process_queue()
-
-    def process_queue(self):
-        try:
-            msg = self.queue.get()
-            if msg == -99:
-                self.prog_bar.stop()
-                corpus_name = self.custom_corpus_name.get()
-                corpus = self.corpusq.get()
-                errors = self.corpusq.get()
-                self.finalize_corpus(corpus,errors)
-                save_binary(corpus,corpus_name_to_path(corpus_name))
-                self.destroy()
-            elif isinstance(msg,DelimiterError):
-                MessageBox.showerror(message=str(msg))
-                return
-            else:
-                self.master.after(1, self.process_queue)
-        except queue.Empty:
-            self.master.after(1, self.process_queue)
-
-
-    def finalize_corpus(self, corpus, transcription_errors=None):
-        self.corpus = corpus
-        if transcription_errors:
-            not_found = sorted(list(transcription_errors.keys()))
-            msg1 = 'Not every symbol in your corpus can be interpreted with this feature system.'
-            msg2 = 'The symbols that were missing were {}.\n'.format(', '.join(not_found))
-            msg3 = 'Would you like to create all of them as unspecified? You can edit them later by going to Options-> View/change feature system...\nYou can also manually create the segments in there.'
-            msg = '\n'.join([msg1, msg2, msg3])
-            carry_on = MessageBox.askyesno(message=msg)
-            if not carry_on:
-                return
-            for s in not_found:
-                self.corpus.specifier.add_segment(s.strip('\''),{})
-            self.corpus.specifier.validate()
-
-
-class CorpusManager(object):
-    """
-    Main window for dealing with corpora
-    """
-    def __init__(self,master=None, **options):
-        self.top = Toplevel()
-        self.top.title('Load corpus')
+class CorpusLoadDialog(QDialog):
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
         self.corpus = None
-        corpus_frame = LabelFrame(self.top,text='Available corpora')
-        self.available_corpora = Listbox(corpus_frame)
-        self.get_available_corpora()
-        self.available_corpora.grid(row=0,column=0)
-        corpus_frame.grid(row=0,column=0)
-        button_frame = Frame(self.top)
-        load_button = Button(button_frame,
-                                        text='Load selected corpus',
-                                        command=self.load_corpus)
-        load_button.grid(sticky=W)
-        download_button = Button(button_frame,
-                                        text='Download example corpora',
-                                        command=self.download_corpus)
-        download_button.grid(sticky=W)
-        load_from_txt_button = Button(button_frame,
-                                        text='Load corpus from pre-formatted text file',
-                                        command=self.load_corpus_from_txt)
-        load_from_txt_button.grid(sticky=W)
-        create_from_text_button = Button(button_frame,
-                                    text='Create corpus from running text',
-                                    command=self.create_corpus_from_text)
-        create_from_text_button.grid(sticky=W)
-        remove_button = Button(button_frame,
-                                    text='Remove selected corpus',
-                                    command=self.remove_corpus)
-        remove_button.grid(sticky=W)
-        button_frame.grid(row=0,column=1)
 
-    def remove_corpus(self):
-        try:
-            corpus_name = self.available_corpora.get(self.available_corpora.curselection())
-            carry_on = MessageBox.askyesno(message=(
-                'This will irreversibly delete the {} corpus.  Are you sure?'.format(corpus_name)))
-            if not carry_on:
-                return
-            os.remove(corpus_name_to_path(corpus_name))
-            self.get_available_corpora()
-        except TclError:
-            pass
+        layout = QVBoxLayout()
+        formLayout = QHBoxLayout()
+        listFrame = QGroupBox('Available corpora')
+        listLayout = QGridLayout()
 
-    def load_corpus(self):
-        try:
-            corpus_name = self.available_corpora.get(self.available_corpora.curselection())
-        except TclError:
+
+        self.corporaList = QListWidget(self)
+        listLayout.addWidget(self.corporaList)
+        listFrame.setLayout(listLayout)
+        self.getAvailableCorpora()
+
+        self.corporaList.doubleClicked.connect(self.accept)
+
+        formLayout.addWidget(listFrame)
+
+        buttonLayout = QVBoxLayout()
+        self.downloadButton = QPushButton('Download example corpora')
+        self.loadFromCsvButton = QPushButton('Load corpus from pre-formatted text file')
+        self.loadFromSpellingTextButton = QPushButton('Create corpus from running text (orthography)')
+        self.loadFromTranscriptionTextButton = QPushButton('Create corpus from running text (transcribed)')
+        self.importSpontaneousButton = QPushButton('Import spontaneous speech corpus')
+        self.removeButton = QPushButton('Remove selected corpus')
+        buttonLayout.addWidget(self.downloadButton)
+        buttonLayout.addWidget(self.loadFromCsvButton)
+        buttonLayout.addWidget(self.loadFromSpellingTextButton)
+        buttonLayout.addWidget(self.loadFromTranscriptionTextButton)
+        buttonLayout.addWidget(self.importSpontaneousButton)
+        buttonLayout.addWidget(self.removeButton)
+
+        self.downloadButton.clicked.connect(self.openDownloadWindow)
+        self.loadFromCsvButton.clicked.connect(self.openCsvWindow)
+        self.loadFromSpellingTextButton.clicked.connect(self.openSpellingTextWindow)
+        self.loadFromTranscriptionTextButton.clicked.connect(self.openTranscriptionTextWindow)
+        self.importSpontaneousButton.clicked.connect(self.importSpontaneousWindow)
+        self.removeButton.clicked.connect(self.removeCorpus)
+
+        buttonFrame = QFrame()
+        buttonFrame.setLayout(buttonLayout)
+
+        formLayout.addWidget(buttonFrame)
+
+        formFrame = QFrame()
+        formFrame.setLayout(formLayout)
+        layout.addWidget(formFrame)
+
+        self.acceptButton = QPushButton('Load selected corpus')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Load corpora')
+
+        self.thread = LoadWorker()
+
+        self.progressDialog = QProgressDialog('Loading...','Cancel',0,0,self)
+        self.progressDialog.setWindowTitle('Loading corpus')
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def setResults(self, results):
+        self.corpus = results
+
+    def accept(self):
+        selected = [x.text() for x in self.corporaList.selectedItems()]
+        if selected:
+            self.thread.setParams({
+                'path':corpus_name_to_path(
+                            self.parent().settings['storage'],selected[0])})
+
+            self.thread.start()
+
+            result = self.progressDialog.exec_()
+
+            self.progressDialog.reset()
+            if result:
+                QDialog.accept(self)
+
+    def openDownloadWindow(self):
+        dialog = DownloadCorpusDialog(self, self.parent().settings)
+        result = dialog.exec_()
+        if result:
+            self.getAvailableCorpora()
+
+    def openCsvWindow(self):
+        dialog = CorpusFromCsvDialog(self, self.parent().settings)
+        result = dialog.exec_()
+        if result:
+            self.getAvailableCorpora()
+
+    def importSpontaneousWindow(self):
+        dialog = SpontaneousSpeechDialog(self, self.parent().settings)
+        if dialog.exec_():
+            self.getAvailableCorpora()
+
+    def openSpellingTextWindow(self):
+        dialog = CorpusFromSpellingTextDialog(self, self.parent().settings)
+        if dialog.exec_():
+            self.getAvailableCorpora()
+
+    def openTranscriptionTextWindow(self):
+        dialog = CorpusFromTranscriptionTextDialog(self, self.parent().settings)
+        if dialog.exec_():
+            self.getAvailableCorpora()
+
+    def removeCorpus(self):
+        corpus = self.corporaList.currentItem().text()
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove corpus",
+                "This will permanently remove '{}'.  Are you sure?".format(corpus), QMessageBox.NoButton, self)
+        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
             return
+        os.remove(corpus_name_to_path(self.parent().settings['storage'],corpus))
+        self.getAvailableCorpora()
 
-        try:
-            self.corpus = load_binary(corpus_name_to_path(corpus_name))
-        except CorpusIntegrityError as e:
-            MessageBox.showerror(message=str(e))
-
-            return
-        if self.corpus.specifier is not None and self.corpus.specifier.name not in get_systems_list():
-            save_binary(self.corpus.specifier,system_name_to_path(self.corpus.specifier.name))
-        self.top.destroy()
-
-    def get_corpus(self):
-        return self.corpus
-
-    def get_available_corpora(self):
-        corpora = get_corpora_list()
-        self.available_corpora.delete(0,END)
+    def getAvailableCorpora(self):
+        self.corporaList.clear()
+        corpora = get_corpora_list(self.parent().settings['storage'])
         for c in corpora:
-            self.available_corpora.insert(END,c)
+            self.corporaList.addItem(c)
 
 
-    def download_corpus(self):
-        download = DownloadCorpusWindow()
-        download.wait_window()
-        self.get_available_corpora()
+class DownloadCorpusDialog(QDialog):
+    def __init__(self, parent, settings):
+        QDialog.__init__(self, parent)
+        self.settings = settings
+        layout = QVBoxLayout()
+        self.corporaWidget = RadioSelectWidget('Select a corpus',
+                                        OrderedDict([('Example toy corpus','example'),
+                                        ('IPHOD','iphod')]))
 
-    def load_corpus_from_txt(self):
-        custom = CustomCorpusWindow()
-        custom.wait_window()
-        self.get_available_corpora()
+        layout.addWidget(self.corporaWidget)
 
-    def create_corpus_from_text(self):
-        from_text_window = CorpusFromTextWindow()
-        from_text_window.wait_window()
-        self.get_available_corpora()
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
 
-class DownloadFeatureMatrixWindow(Toplevel):
-    """
-    Window for downloading FeatureMatrix binaries
-    """
-    def __init__(self,master=None, **options):
-        super(DownloadFeatureMatrixWindow, self).__init__(master=master, **options)
-        self.system_button_var = StringVar()
-        self.pbar_value = IntVar()
-        self.queue = queue.Queue()
-        self.title('Download feature systems')
-        system_frame = Frame(self)
-        system_area = LabelFrame(system_frame, text='Select a feature system')
-        system_area.grid(sticky=W, column=0, row=0)
-        spe_button = Radiobutton(system_area, text='Sound Pattern of English (SPE)', variable=self.system_button_var, value='spe')
-        spe_button.grid(sticky=W,row=0)
-        spe_button.invoke()#.select() doesn't work on ttk.Button
-        hayes_button = Radiobutton(system_area, text='Hayes', variable=self.system_button_var, value='hayes')
-        hayes_button.grid(sticky=W,row=1)
-        system_frame.grid()
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
 
-        button_frame = Frame(self)
-        ok_button = Button(button_frame,text='OK', command=self.confirm_download)
-        ok_button.grid(row=3, column=0)#, sticky=W, padx=3)
-        cancel_button = Button(button_frame,text='Cancel', command=self.destroy)
-        cancel_button.grid(row = 3, column=1)#, sticky=W, padx=3)
-        button_frame.grid()
+        layout.addWidget(acFrame)
 
-        warning_label = Label(self, text='Please be patient. It can take up to 30 seconds to download a feature system.')
-        warning_label.grid()
-        self.focus()
+        layout.addWidget(QLabel("Please be patient. It can take up to 30 seconds to download a corpus.\nThis window will close when finished."))
 
-    def confirm_download(self):
-        system_name = self.system_button_var.get()
-        path = system_name_to_path(system_name)
-        if system_name in get_systems_list():
-            carry_on = MessageBox.askyesno(message=(
-                'This system is already available locally. Would you like to redownload it?'))
-            if not carry_on:
+        self.setLayout(layout)
+
+        self.setWindowTitle('Download corpora')
+
+        self.thread = DownloadWorker()
+
+        self.progressDialog = QProgressDialog('Downloading...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Download corpus')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.finished.connect(self.progressDialog.accept)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
+    def accept(self):
+        name = self.corporaWidget.value()
+        if name in get_corpora_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Overwrite corpus",
+                    "The corpus '{}' is already available.  Would you like to overwrite it?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-            os.remove(path)
-        self.prog_bar = Progressbar(self, mode='determinate', variable=self.pbar_value,maximum=100)
-        self.prog_bar.grid()
-        self.pbar_value.set(0.0)
+        self.thread.setParams({'name':name,
+                'path':corpus_name_to_path(self.settings['storage'],name)})
+
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            QDialog.accept(self)
+
+class CorpusFromSpellingTextDialog(QDialog):
+    def __init__(self, parent, settings):
+        QDialog.__init__(self, parent)
+        self.settings = settings
+        layout = QVBoxLayout()
+
+        mainlayout = QHBoxLayout()
+
+        iolayout = QFormLayout()
+
+        self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
+        self.pathWidget.pathEdit.textChanged.connect(self.updateName)
+
+        iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
+
+        self.nameEdit = QLineEdit()
+        iolayout.addRow(QLabel('Name for corpus'),self.nameEdit)
+
+        #self.wordDelimiter = QLineEdit()
+        iolayout.addRow(QLabel('Word delimiter'),QLabel('All whitespace'))#self.wordDelimiter)
+
+        self.punctuation = PunctuationWidget(string.punctuation, 'Punctuation to ignore')
+        iolayout.addRow(self.punctuation)
+
+        ioframe = QGroupBox('Corpus details')
+        ioframe.setLayout(iolayout)
+
+        mainlayout.addWidget(ioframe)
+
+        translayout = QFormLayout()
+
+        self.supportCorpus = CorpusSelect(self,self.settings)
+        translayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
+
+        self.ignoreCase = QCheckBox()
+        translayout.addRow(QLabel('Ignore case'),self.ignoreCase)
+
+        transframe = QGroupBox('Transcription details')
+        transframe.setLayout(translayout)
+
+        mainlayout.addWidget(transframe)
+
+        mainframe = QFrame()
+        mainframe.setLayout(mainlayout)
+        layout.addWidget(mainframe)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create corpus from orthographic text')
+
+        self.thread = SpellingLoadWorker()
+
+        self.progressDialog = QProgressDialog('Importing...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Importing orthographic text')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
+    def setResults(self, results):
+        self.corpus = results
+
+    def generateKwargs(self):
+        path = self.pathWidget.value()
+        if path == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to the text file.")
+            return
         if not os.path.exists(path):
-            self.system_download_thread = ThreadedTask(None,
-                                target=download_binary,
-                                args=(system_name,path),
-                                kwargs={'queue':self.queue})
-            self.system_download_thread.start()
-            self.process_queue()
-            #self.download(system_name,path)
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The specified file does not exist.")
+            return
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the corpus.")
+            return
+        if name in get_corpora_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return None
+        wordDelim = None#self.wordDelimiter.text()
+        #if wordDelim == '':
+        #    wordDelim = ' '
 
-    def process_queue(self):
-        try:
-            msg = self.queue.get()
-            if msg == -99:
-                self.prog_bar.stop()
-                self.destroy()
+        supportCorpus = self.supportCorpus.path()
+        ignore_list = self.punctuation.value()
+
+        kwargs = {'corpus_name':name,
+                    'path':path,
+                    'delimiter': wordDelim,
+                    'ignore_list': ignore_list,
+                    'ignore_case': self.ignoreCase.isChecked(),
+                    'support_corpus_path': supportCorpus}
+        return kwargs
+
+    def accept(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            if self.corpus is not None:
+                save_binary(self.corpus,
+                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
+            QDialog.accept(self)
+
+    def updateName(self):
+        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+
+class CorpusFromTranscriptionTextDialog(QDialog):
+    def __init__(self, parent, settings):
+        QDialog.__init__(self, parent)
+        self.settings = settings
+        self.characters = set()
+        layout = QVBoxLayout()
+
+        mainlayout = QHBoxLayout()
+
+        iolayout = QFormLayout()
+
+        self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
+        self.pathWidget.pathEdit.textChanged.connect(self.updateName)
+        self.pathWidget.pathEdit.textChanged.connect(self.getCharacters)
+
+        iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
+
+        self.nameEdit = QLineEdit()
+        iolayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
+
+        #self.wordDelimiter = PunctuationWidget(['space','tab'],'Word delimiters')
+        iolayout.addRow(QLabel('Word delimiters'), QLabel('All whitespace'))
+
+        self.punctuation = PunctuationWidget(string.punctuation,'Punctuation to ignore')
+
+        iolayout.addRow(self.punctuation)
+
+        ioframe = QGroupBox('Corpus details')
+        ioframe.setLayout(iolayout)
+
+        mainlayout.addWidget(ioframe)
+
+        translayout = QFormLayout()
+
+        self.featureSystem = FeatureSystemSelect(self.settings)
+        translayout.addRow(self.featureSystem)
+
+        self.transDelimiter = PunctuationWidget(['.','-','='],'Transcription delimiters')
+        self.transDelimiter.check()
+        translayout.addRow(self.transDelimiter)
+
+        self.digraphs = DigraphWidget(self)
+        translayout.addRow(self.digraphs)
+
+        transframe = QGroupBox('Transcription details')
+        transframe.setLayout(translayout)
+
+        mainlayout.addWidget(transframe)
+
+        mainframe = QFrame()
+        mainframe.setLayout(mainlayout)
+        layout.addWidget(mainframe)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create corpus from transcribed text')
+
+        self.thread = TranscriptionLoadWorker()
+
+        self.progressDialog = QProgressDialog('Loading...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Loading transcribed text')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def ignoreList(self):
+        return self.punctuation.value()
+
+    def delimiters(self):
+        #wordDelim = self.wordDelimiter.text()
+        #if wordDelim == '' or wordDelim == ' ':
+        wordDelim = None
+        transDelim = self.transDelimiter.value()
+        if transDelim == []:
+            transDelim = None
+        return wordDelim, transDelim
+
+
+    def getCharacters(self):
+        path = self.pathWidget.value()
+        if path != '' and os.path.exists(path):
+            self.characters = inspect_transcription_corpus(path)
+        else:
+            self.characters = set()
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
+    def setResults(self, results):
+        self.corpus = results
+
+    def generateKwargs(self):
+        path = self.pathWidget.value()
+        if path == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to the text file.")
+            return
+        if not os.path.exists(path):
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The specified file does not exist.")
+            return
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the corpus.")
+            return
+        wordDelim, transDelim = self.delimiters()
+        feature_system_path = self.featureSystem.path()
+        ignore_list = self.punctuation.value()
+
+        if name in get_corpora_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+
+        kwargs = {'corpus_name':name,
+                    'path':path,
+                    'delimiter': wordDelim,
+                    'ignore_list': ignore_list,
+                    'digraph_list': self.digraphs.value(),
+                    'trans_delimiter': transDelim,
+                    'feature_system_path': feature_system_path}
+        return kwargs
+
+    def accept(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            if self.corpus is not None:
+                save_binary(self.corpus,
+                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
+            QDialog.accept(self)
+
+    def updateName(self):
+        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+
+class InventorySummary(QWidget):
+    def __init__(self, corpus, parent=None):
+        QWidget.__init__(self,parent)
+
+        self.corpus = corpus
+
+        layout = QHBoxLayout()
+
+        layout.setAlignment(Qt.AlignTop)
+
+        self.segments = InventoryBox('Segments',self.corpus.inventory)
+        self.segments.setExclusive(True)
+        for b in self.segments.btnGroup.buttons():
+            b.clicked.connect(self.summarizeSegment)
+
+        layout.addWidget(self.segments)
+
+        self.detailFrame = QFrame()
+
+        layout.addWidget(self.detailFrame)
+
+        self.setLayout(layout)
+
+    def summarizeSegment(self):
+        self.detailFrame.deleteLater()
+        seg = self.sender().text()
+
+        self.detailFrame = QGroupBox('Segment details')
+
+        layout = QFormLayout()
+        layout.setAlignment(Qt.AlignTop)
+
+        freq_base = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
+                        probability = False)
+
+        probs = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
+                        probability = True)
+
+        layout.addRow(QLabel('Type frequency:'),
+                            QLabel('{:,.1f} ({:.2%})'.format(
+                                                freq_base[seg], probs[seg]
+                                                )
+                            ))
+
+        freq_base = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
+                        probability = False)
+
+        probs = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
+                        probability = True)
+
+        layout.addRow(QLabel('Token frequency:'),
+                            QLabel('{:,.1f} ({:.2%})'.format(
+                                                    freq_base[seg], probs[seg]
+                                                    )
+                            ))
+
+        self.detailFrame.setLayout(layout)
+
+        self.layout().addWidget(self.detailFrame, alignment = Qt.AlignTop)
+
+
+class AttributeSummary(QWidget):
+    def __init__(self, corpus, parent=None):
+        QWidget.__init__(self,parent)
+
+        self.corpus = corpus
+
+        layout = QFormLayout()
+
+        self.columnSelect = QComboBox()
+        for a in self.corpus.attributes:
+            self.columnSelect.addItem(str(a))
+        self.columnSelect.currentIndexChanged.connect(self.summarizeColumn)
+
+        layout.addRow(QLabel('Column'),self.columnSelect)
+
+        self.detailFrame = QFrame()
+
+        layout.addRow(self.detailFrame)
+
+        self.setLayout(layout)
+
+        self.summarizeColumn()
+
+    def summarizeColumn(self):
+        for a in self.corpus.attributes:
+            if str(a) == self.columnSelect.currentText():
+                self.detailFrame.deleteLater()
+                self.detailFrame = QFrame()
+                layout = QFormLayout()
+                layout.addRow(QLabel('Type:'), QLabel(a.att_type.title()))
+                if a.att_type == 'numeric':
+                    l = QLabel('{0[0]:,}-{0[1]:,}'.format(a.range))
+                    layout.addRow(QLabel('Range:'), l)
+
+                elif a.att_type == 'factor':
+                    if len(a.range) > 300:
+                        l = QLabel('Too many levels to display')
+                    else:
+                        l = QLabel(', '.join(sorted(a.range)))
+                    l.setWordWrap(True)
+                    layout.addRow(QLabel('Factor levels:'), l)
+
+                elif a.att_type == 'tier':
+                    if a.name == 'transcription':
+                        layout.addRow(QLabel('Included segments:'), QLabel('All'))
+                    else:
+                        l = QLabel(', '.join(a.range))
+                        l.setWordWrap(True)
+                        layout.addRow(QLabel('Included segments:'), l)
+                self.detailFrame.setLayout(layout)
+                self.layout().addRow(self.detailFrame)
+
+
+class CorpusSummary(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+
+
+        if hasattr(corpus,'lexicon'):
+            c = corpus.lexicon
+
+            if hasattr(corpus,'discourses'):
+                speech_corpus = True
             else:
-                self.pbar_value.set(msg)
-                self.master.after(1, self.process_queue)
-        except queue.Empty:
-            self.master.after(1, self.process_queue)
-
-    def download(self,system_name,path):
-        download_binary(system_name,path)
-
-        self.prog_bar.stop()
-
-class FeatureSystemManager(object):
-    """
-    Main window for dealing with feature systems
-    """
-    def __init__(self):
-        self.top = Toplevel()
-        self.top.title('Manage feature systems')
-        self.feature_matrix = None
-        systems_frame = LabelFrame(self.top,text='Available feature systems')
-        self.available_systems = Listbox(systems_frame)
-        self.get_available_systems()
-        self.available_systems.grid(row=0,column=1)
-        systems_frame.grid(row=0,column=0)
-        button_frame = Frame(self.top)
-        download_button = Button(button_frame,
-                                        text='Download feature systems',
-                                        command=self.download)
-        download_button.grid()
-        create_from_text_button = Button(button_frame,
-                                    text='Create feature system from text file',
-                                    command=self.create_from_text)
-        create_from_text_button.grid()
-        remove_button = Button(button_frame,
-                                    text='Remove selected feature system',
-                                    command=self.remove_system)
-        remove_button.grid()
-        done_button = Button(button_frame,
-                                    text='Done',
-                                    command=self.top.destroy)
-        done_button.grid()
-        button_frame.grid(row=0,column=1)
-
-    def get_available_systems(self):
-        systems = get_systems_list()
-        self.available_systems.delete(0,END)
-        for t in systems:
-            self.available_systems.insert(END,t)
-
-    def remove_system(self):
-        try:
-            name = self.available_systems.get(self.available_systems.curselection())
-            carry_on = MessageBox.askyesno(message=(
-                'This will irreversibly delete the {} feature system.  Are you sure?'.format(name)))
-            if not carry_on:
-                return
-            os.remove(system_name_to_path(name))
-            self.get_available_systems()
-        except TclError:
-            pass
-
-    def download(self):
-        download = DownloadFeatureMatrixWindow()
-        download.wait_window()
-        self.get_available_systems()
-
-    def create_from_text(self):
-        custom = CustomFeatureMatrixWindow()
-        custom.wait_window()
-        self.get_available_systems()
-
-class CustomFeatureMatrixWindow(Toplevel):
-    """
-    Window for parsing column-delimited feature matrix
-    """
-    def __init__(self,master=None, **options):
-        super(CustomFeatureMatrixWindow, self).__init__(master=master, **options)
-        self.title('Import feature system')
-        load_frame = LabelFrame(self, text='Feature system information')
-        load_frame.grid()
-        path_label = Label(load_frame, text='Path to feature matrix')
-        path_label.grid()
-        self.path_entry = Entry(load_frame)
-        self.path_entry.grid()
-        select_button = Button(load_frame, text='Choose file...', command=self.navigate_to_file)
-        select_button.grid()
-        name_label = Label(load_frame, text='Name for feature system (auto-suggested)')
-        name_label.grid()
-        self.name_entry = Entry(load_frame)
-        self.name_entry.grid()
-        delimiter_label = Label(load_frame, text='Column delimiter (enter \'t\' for tab)')
-        delimiter_label.grid()
-        self.delimiter_entry = Entry(load_frame)
-        self.delimiter_entry.delete(0,END)
-        self.delimiter_entry.insert(0,',')
-        self.delimiter_entry.grid()
-        ok_button = Button(self, text='OK', command=self.confirm_selection)
-        cancel_button = Button(self, text='Cancel', command=self.destroy)
-        ok_button.grid()
-        cancel_button.grid()
-        self.focus()
-
-    def navigate_to_file(self):
-        filename = FileDialog.askopenfilename(filetypes=(('Text files', '*.txt'),('Corpus files', '*.corpus')))
-        if filename:
-            self.path_entry.delete(0,END)
-            self.path_entry.insert(0, filename)
-            self.name_entry.delete(0,END)
-            suggestion = os.path.basename(filename).split('.')[0]
-            self.name_entry.insert(0,suggestion)
-
-    def confirm_selection(self):
-        filename = self.path_entry.get()
-        if not os.path.exists(filename):
-            MessageBox.showerror(message='Feature matrix file could not be located. Please verify the path and file name.')
-
-        delimiter = self.delimiter_entry.get()
-        system_name = self.name_entry.get()
-        if system_name in get_systems_list():
-            carry_on = MessageBox.askyesno(message=(
-                'A feature system already exists with this name. Would you like to overwrite it?'))
-            if not carry_on:
-                return
-        if (not filename) or (not delimiter) or (not system_name):
-            MessageBox.showerror(message='Information is missing. Please verify that you entered something in all the text boxes')
-            return
-
-        if delimiter == 't':
-            delimiter = '\t'
-        self.create(system_name, filename, delimiter)
-
-
-    def create(self, name, filename, delimiter):
-        try:
-            system = load_feature_matrix_csv(name, filename, delimiter)
-        except DelimiterError:
-
-            #delimiter is incorrect
-            MessageBox.showerror(message='Could not parse the file.\nCheck that the delimiter you typed in matches the one used in the file.')
-            return
-        except KeyError:
-            MessageBox.showerror(message='Could not find a \'symbol\' column.  Please make sure that the segment symbols are in a column named \'symbol\'.')
-            return
-        save_binary(system,system_name_to_path(name))
-        self.destroy()
-
-class EditSegmentWindow(object):
-    """
-    Window for editing or adding a segment to a feature system
-    """
-    def __init__(self,feature_list,possible_values, initial_data = None):
-        self.top = Toplevel()
-        self.top.title('Add a segment')
-        self.commit = False
-        self.seg_var = StringVar()
-        self.feature_vars = {f: StringVar() for f in feature_list}
-        add_frame = Frame(self.top)
-        seg_label = Label(add_frame, text='Symbol')
-        seg_label.grid(row=0,column=0)
-        seg_entry = Entry(add_frame,textvariable=self.seg_var,width=5)
-        seg_entry.grid(row=1,column=0)
-        #HACK - Should have dynamic scaling of widgets based on size of window
-        colmax = 12
-        col = 1
-        row = 0
-        for f, v in self.feature_vars.items():
-            label = Label(add_frame, text=f)
-            label.grid(row=row,column = col)
-            entry = OptionMenu(add_frame,#parent
-                                v,#variable
-                                *possible_values)
-            entry.grid(row=row+1,column = col)
-            col+=1
-            if col > colmax:
-                col = 0
-                row += 2
-        add_frame.grid()
-
-        if initial_data:
-            init_seg, init_feats = initial_data
-            self.seg_var.set(init_seg)
-            for k,v in self.feature_vars.items():
-                v.set(init_feats[k])
+                speech_corpus = False
         else:
-            default = ''
-            for v in possible_values:
-                if v not in ['+','-']:
-                    default = v
-                    break
-            for k,v in self.feature_vars.items():
-                v.set(default)
+            c = corpus
 
-        button_frame = Frame(self.top)
-        ok_button = Button(button_frame, text='Ok', command=self.confirm_add)
-        ok_button.grid(row=1,column=0)
-        cancel_button = Button(button_frame, text='Cancel', command=self.top.destroy)
-        cancel_button.grid(row=1,column=1)
-        button_frame.grid()
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setSizeConstraint(QLayout.SetFixedSize)
 
-    def confirm_add(self):
-        self.featspec = {f:v.get() for f,v in self.feature_vars.items()}
-        self.seg = self.seg_var.get()
-        self.commit = True
-        self.top.destroy()
+        main = QFormLayout()
 
-class AddFeatureWindow(object):
-    """
-    Window for adding a new feature to a feature system
-    """
-    def __init__(self,feature_list):
-        self.top = Toplevel()
-        self.top.title('Add a feature')
-        self.commit = False
-        self.feature_var = StringVar()
-        self.feature_list = feature_list
-        add_frame = Frame(self.top)
-        seg_label = Label(add_frame, text='Feature name')
-        seg_label.grid(row=0,column=0)
-        seg_entry = Entry(add_frame,textvariable=self.feature_var)
-        seg_entry.grid(row=1,column=0)
-        add_frame.grid()
+        main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
 
-        button_frame = Frame(self.top)
-        ok_button = Button(button_frame, text='Ok', command=self.confirm_add)
-        ok_button.grid(row=1,column=0)
-        cancel_button = Button(button_frame, text='Cancel', command=self.top.destroy)
-        cancel_button.grid(row=1,column=1)
-        button_frame.grid()
+        if c.specifier is not None:
+            main.addRow(QLabel('Feature system:'),QLabel(c.specifier.name))
+        else:
+            main.addRow(QLabel('Feature system:'),QLabel('None'))
 
-    def confirm_add(self):
-        self.feature = self.feature_var.get()
-        if self.feature in self.feature_list:
-            MessageBox.showerror(message='A feature already exists with that name.')
-            return
-        self.commit = True
-        self.top.destroy()
+        main.addRow(QLabel('Number of words types:'),QLabel(str(len(c))))
+
+        detailTabs = QTabWidget()
+
+        self.inventorySummary = InventorySummary(c)
+
+        detailTabs.addTab(self.inventorySummary,'Inventory')
+
+        self.attributeSummary = AttributeSummary(c)
+
+        detailTabs.addTab(self.attributeSummary,'Columns')
+        detailTabs.currentChanged.connect(self.hideWidgets)
+
+        main.addRow(detailTabs)
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame, alignment = Qt.AlignCenter)
+
+        self.doneButton = QPushButton('Done')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.doneButton)
+        self.doneButton.clicked.connect(self.accept)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Corpus summary')
+
+    def hideWidgets(self,index):
+        return
+        if index == 0:
+            self.inventorySummary.hide()
+            self.attributeSummary.hide()
+        elif index == 1:
+            self.inventorySummary.hide()
+            self.attributeSummary.show()
+        self.adjustSize()
 
 
 
-class EditFeatureSystemWindow(object):
-    """
-    Window for editing and changing the feature system used by a corpus
-    """
-    def __init__(self,corpus):
-        self.change = False
-        self.feature_system_option_menu_var = StringVar()
+class AddWordDialog(QDialog):
+    def __init__(self, parent, corpus, word = None):
+        QDialog.__init__(self,parent)
         self.corpus = corpus
-        self.feature_matrix = self.corpus.specifier
-        self.top = Toplevel()
-        self.top.geometry("%dx%d%+d%+d" % (860,600,250,250))
-        self.top.title('Edit feature system')
 
-        self.feature_frame = Frame(self.top)
-        self.feature_frame.pack(side='top',expand=True,fill='both')
+        layout = QVBoxLayout()
+        layout.setSizeConstraint(QLayout.SetFixedSize)
 
-        option_frame = Frame(self.top)
-        option_frame.pack()
-        change_frame = LabelFrame(option_frame,text='Change feature systems')
-        feature_menu = OptionMenu(change_frame,#parent
-                                self.feature_system_option_menu_var,#variable
-                                *get_systems_list(), #options in drop-down
-                                command=self.change_feature_system)
-        #this is grided much later, but needs to be here
+        main = QFormLayout()
+
+        self.edits = {}
+
+        for a in self.corpus.attributes:
+            if a.att_type == 'tier' and a.name == 'transcription':
+                self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus.inventory)
+                self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
+                main.addRow(self.edits[a.name])
+            elif a.att_type == 'tier':
+                self.edits[a.name] = QLabel('Empty')
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'spelling':
+                self.edits[a.name] = QLineEdit()
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'numeric':
+                self.edits[a.name] = QLineEdit()
+                self.edits[a.name].setText('0')
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            elif a.att_type == 'factor':
+                self.edits[a.name] = QLineEdit()
+                main.addRow(QLabel(str(a)),self.edits[a.name])
+            else:
+                print(a.name)
+                print(str(a))
+            if word is not None:
+                self.edits[a.name].setText(str(getattr(word,a.name)))
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+        if word is None:
+            self.createButton = QPushButton('Create word')
+            self.setWindowTitle('Create word')
+        else:
+            self.createButton = QPushButton('Save word changes')
+            self.setWindowTitle('Edit word')
+        self.createButton.setAutoDefault(True)
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+    def updateTiers(self, new_transcription):
+        transcription = new_transcription.split('.')
+        for a in self.corpus.attributes:
+            if a.att_type != 'tier':
+                continue
+            if a.name == 'transcription':
+                continue
+            if a.name not in self.edits:
+                continue
+            text = '.'.join([x for x in transcription if x in a.range])
+            if text == '':
+                text = 'Empty'
+            self.edits[a.name].setText(text)
+
+    def accept(self):
+
+        kwargs = {}
+
+        for a in self.corpus.attributes:
+            if a.att_type == 'tier':
+                text = self.edits[a.name].text()
+                if text == 'Empty':
+                    text = ''
+                kwargs[a.name] = [x for x in text.split('.') if x != '']
+                #if not kwargs[a.name]:
+                #    reply = QMessageBox.critical(self,
+                #            "Missing information", "Words must have a Transcription.".format(str(a)))
+                #    return
+
+                for i in kwargs[a.name]:
+                    if i not in self.corpus.inventory:
+                        reply = QMessageBox.critical(self,
+                            "Invalid information", "The column '{}' must contain only symbols in the corpus' inventory.".format(str(a)))
+                        return
+            elif a.att_type == 'spelling':
+                kwargs[a.name] = self.edits[a.name].text()
+                if kwargs[a.name] == '' and a.name == 'spelling':
+                    kwargs[a.name] = None
+                #if not kwargs[a.name] and a.name == 'spelling':
+                #    reply = QMessageBox.critical(self,
+                #            "Missing information", "Words must have a spelling.".format(str(a)))
+                #    return
+            elif a.att_type == 'numeric':
+                try:
+                    kwargs[a.name] = float(self.edits[a.name].text())
+                except ValueError:
+                    reply = QMessageBox.critical(self,
+                            "Invalid information", "The column '{}' must be a number.".format(str(a)))
+                    return
+
+            elif a.att_type == 'factor':
+                kwargs[a.name] = self.edits[a.name].text()
+        self.word = Word(**kwargs)
+        QDialog.accept(self)
+
+class AddCountColumnDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        self.tierWidget = TierWidget(self.corpus)
+
+        main.addRow('Tier to count on',self.tierWidget)
+
+        self.segmentSelect = SegFeatSelect(self.corpus,'Segment selection')
+
+        main.addRow(self.segmentSelect)
+
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.createButton = QPushButton('Add count column')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Add count column')
+
+    def accept(self):
+        name = self.nameWidget.text()
+        self.attribute = Attribute(name.lower().replace(' ',''),'numeric',name)
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        elif self.attribute.name in self.corpus.basic_attributes:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(name))
+            return
+        elif self.attribute in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+
+        self.sequenceType = self.tierWidget.value()
+
+        self.segList = self.segmentSelect.segments()
+
+        QDialog.accept(self)
+
+
+class AddColumnDialog(QDialog):
+    def __init__(self, parent, corpus, attribute = None):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        self.typeWidget = QComboBox()
+        for at in Attribute.ATT_TYPES:
+            if at == 'tier':
+                continue
+            self.typeWidget.addItem(at.title())
+        self.typeWidget.currentIndexChanged.connect(self.updateDefault)
+
+        main.addRow('Type of column',self.typeWidget)
+
+        self.defaultWidget = QLineEdit()
+
+        main.addRow('Default value',self.defaultWidget)
+
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.createButton = QPushButton('Add column')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Add column')
+
+    def updateDefault(self):
+        if self.typeWidget.currentText().lower() == 'numeric':
+            self.defaultWidget.setText('0')
+        else:
+            self.defaultWidget.setText('')
+
+    def accept(self):
+        name = self.nameWidget.text()
+        at = self.typeWidget.currentText().lower()
+        dv = self.defaultWidget.text()
+        self.attribute = Attribute(name.lower().replace(' ',''),at,name)
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        elif self.attribute.name in self.corpus.basic_attributes:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(name))
+            return
+        elif self.attribute in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        if at == 'numeric':
+            try:
+                dv = float(dv)
+            except ValueError:
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The default value for numeric columns must be a number")
+                return
+        self.attribute.default_value = dv
+        QDialog.accept(self)
+
+
+class AddAbstractTierDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self,parent)
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        main = QFormLayout()
+
+        self.cvradio = QRadioButton('CV skeleton')
+        self.cvradio.click()
+        main.addWidget(self.cvradio)
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.createButton = QPushButton('Create tier')
+        self.previewButton = QPushButton('Preview tier')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.previewButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.previewButton.clicked.connect(self.preview)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create abstract tier')
+
+    def preview(self):
+        if self.cvradio.isChecked():
+            segList = {'C' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] == 'Consonant'],
+                        'V' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] != 'Consonant'],
+                                    }
+        preview = "The following abstract symbols correspond to the following segments:\n"
+        for k,v in segList.items():
+            preview += '{}: {}\n'.format(k,', '.join(v))
+        reply = QMessageBox.information(self,
+                "Tier preview", preview)
+
+
+    def accept(self):
+        if self.cvradio.isChecked():
+            tierName = 'CV skeleton'
+            self.attribute = Attribute('cvskeleton','factor','CV skeleton')
+            self.segList = {'C' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] == 'Consonant'],
+                        'V' : [x.symbol for x in self.corpus.inventory
+                                    if x.category is not None
+                                    and x.category[0] != 'Consonant'],
+                                    }
+
+        if tierName == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        if self.attribute.name in self.corpus.basic_attributes:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
+            return
+        elif self.attribute in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+
+        QDialog.accept(self)
+
+class AddTierDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self, parent)
+
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        nameFrame = QGroupBox('Name of tier')
+        self.nameEdit = QLineEdit()
+
+        box = QFormLayout()
+        box.addRow(self.nameEdit)
+
+        nameFrame.setLayout(box)
+
+        layout.addWidget(nameFrame)
+
+        self.createType = QComboBox()
+        self.createType.addItem('Segments')
         if self.corpus.specifier is not None:
-            self.feature_system_option_menu_var.set(self.feature_matrix.name)
-            self.change_feature_system()
-
-        feature_menu.grid()
-        change_frame.grid(row=0,column=0,sticky=N)
-
-        modify_frame = LabelFrame(option_frame,text='Modify the feature system')
-        add_segment_button = Button(modify_frame, text='Add segment', command=self.add_segment)
-        add_segment_button.grid()
-        add_segment_button = Button(modify_frame, text='Edit segment', command=self.edit_segment)
-        add_segment_button.grid()
-        add_feature_button = Button(modify_frame, text='Add feature', command=self.add_feature)
-        add_feature_button.grid()
-        modify_frame.grid(row=0,column=1,sticky=N)
-
-        coverage_frame = LabelFrame(option_frame,text='Corpus inventory coverage')
-        hide_button = Button(coverage_frame, text='Hide all segments not used by the corpus', command=self.tailor_to_corpus)
-        hide_button.grid()
-        show_button = Button(coverage_frame, text='Show all segments', command=self.show_all)
-        show_button.grid()
-        check_coverage_button = Button(coverage_frame, text='Check corpus inventory coverage', command=self.check_coverage)
-        check_coverage_button.grid()
-        coverage_frame.grid(row=0,column=2,sticky=N)
-
-        button_frame = Frame(option_frame)
-        ok_button = Button(button_frame, text='Save changes to this corpus\'s feature system', command=self.confirm_change_feature_system)
-        ok_button.grid(sticky=W)
-        cancel_button = Button(button_frame, text='Cancel', command=self.top.destroy)
-        cancel_button.grid()
-        button_frame.grid(row=1,column=1)
-
-    def edit_segment(self):
-        try:
-            seg = self.feature_chart[self.feature_chart.selected_row(),0]
-        except TypeError:
-            return
-
-        #Compatability hack
-        #initial_data = (seg,self.feature_matrix[seg])
-        initial_data = (seg,{x.name:x.sign for x in self.feature_matrix[seg]})
-        addwindow = EditSegmentWindow(self.feature_matrix.features,
-                                        self.feature_matrix.possible_values,
-                                        initial_data)
-        addwindow.top.wait_window()
-        if addwindow.commit:
-            self.feature_matrix.add_segment(addwindow.seg,addwindow.featspec)
-        self.change_feature_system()
-
-    def add_segment(self):
-        addwindow = EditSegmentWindow(self.feature_matrix.features,self.feature_matrix.possible_values)
-        addwindow.top.wait_window()
-        if addwindow.commit:
-            self.feature_matrix.add_segment(addwindow.seg,addwindow.featspec)
-        self.change_feature_system()
-
-    def add_feature(self):
-        addwindow = AddFeatureWindow(self.feature_matrix.features)
-        addwindow.top.wait_window()
-        if addwindow.commit:
-            self.feature_matrix.add_feature(addwindow.feature)
-        self.change_feature_system()
-
-    def tailor_to_corpus(self):
-        inventory = self.corpus.inventory
-        self.feature_chart.filter_by_in(symbol=inventory)
-
-    def show_all(self):
-        self.feature_chart.filter_by_in(symbol=[])
-
-    def check_coverage(self):
-        corpus_inventory = self.corpus.inventory
-        feature_inventory = self.feature_matrix.segments
-        missing = []
-        for seg in corpus_inventory:
-            if seg not in feature_inventory:
-                missing.append(str(seg))
-        if missing:
-            seg_var = StringVar()
-            m = Toplevel()
-            m.title('Missing symbols')
-            l = Label(m,text='Missing symbols:')
-            l.grid(row=0,column=0)
-            e = Entry(m,textvariable = seg_var)
-            e.grid(row=0,column=1)
-            seg_var.set(', '.join(missing))
-            cancel_button = Button(m, text='Ok', command=m.destroy)
-            cancel_button.grid()
-            m.wait_window()
-            return
-        MessageBox.showinfo(message='All segments are specified for features!')
-
-
-    def change_feature_system(self, event = None):
-        feature_system = self.feature_system_option_menu_var.get()
-        if self.feature_matrix is None or feature_system != self.feature_matrix.name:
-            self.feature_matrix = load_binary(system_name_to_path(feature_system))
-        for child in self.feature_frame.winfo_children():
-            child.destroy()
-        headers = ['symbol'] + self.feature_matrix.features
-        self.feature_chart = TableView(self.feature_frame, headers, main_cols=['symbol'])
-        for seg in self.feature_matrix.segments:
-            #Workaround, grr
-            if seg in ['#','']: #wtf are these segments?
-                continue
-            self.feature_chart.append(self.feature_matrix.seg_to_feat_line(seg))
-
-
-        self.feature_chart.pack(expand=True,fill='both')
-
-
-
-    def confirm_change_feature_system(self):
-        self.change = True
-        self.top.destroy()
-
-    def get_feature_matrix(self):
-        return self.feature_matrix
-
-class AddTierWindow(object):
-    def __init__(self,corpus):
-        self.change = False
-        self.corpus = corpus
-
-        self.top = Toplevel()
-        self.top.title('Create tier')
-        tier_name_frame = LabelFrame(self.top, text='What do you want to call this tier?')
-        self.tier_name_entry = Entry(tier_name_frame)
-        self.tier_name_entry.grid()
-        tier_name_frame.grid(row=0,column=0)
-        tier_frame = LabelFrame(self.top, text='What features define this tier?')
-        self.tier_feature_list = Listbox(tier_frame)
-        for feature_name in self.corpus.specifier.features:
-            self.tier_feature_list.insert(END,feature_name)
-        self.tier_feature_list.grid(row=0,column=0)
-        tier_frame.grid(row=1, column=0,sticky=N)
-        add_plus_feature = Button(tier_frame, text='Add [+feature]', command=self.add_plus_tier_feature)
-        add_plus_feature.grid(row=1,column=0)
-        add_minus_feature = Button(tier_frame, text='Add [-feature]', command=self.add_minus_tier_feature)
-        add_minus_feature.grid(row=2,column=0)
-        selected_frame = LabelFrame(self.top, text='Selected features')
-        self.selected_tier_features = Listbox(selected_frame)
-        self.selected_tier_features.grid()
-        selected_frame.grid(row=1,column=1,sticky=N)
-        remove_feature = Button(selected_frame, text='Remove feature', command=self.remove_tier_feature)
-        remove_feature.grid()
-        button_frame = Frame(self.top)
-        ok_button = Button(button_frame, text='Create tier', command=self.add_tier_to_corpus)
-        preview_button = Button(button_frame, text='Preview tier', command=self.preview_tier)
-        cancel_button = Button(button_frame, text='Cancel', command=self.top.destroy)
-        ok_button.grid(row=0,column=0)
-        preview_button.grid(row=0,column=1)
-        cancel_button.grid(row=0,column=2)
-        button_frame.grid()
-
-    def preview_tier(self):
-
-        features = [feature for feature in self.selected_tier_features.get(0,END)]
-        matches = list()
-        for seg in self.corpus.inventory:
-            if seg in ['#','']: #wtf?
-                continue
-            if seg.feature_match(features):
-                matches.append(seg)
-
-        if not matches:
-            matches = 'No segments in this corpus have this combination of feature values'
+            self.createType.addItem('Features')
         else:
-            matches.sort()
-            m = list()
-            x=0
-            while matches:
-                m.append(matches.pop(0))
-                x+=1
-                if x > 10:
-                    x = 0
-                    m.append('\n')
-            matches = ' '.join(map(str,m))
+            layout.addWidget(QLabel('Features for tier creation are not available without a feature system.'))
 
-        preview_window = Toplevel()
-        preview_window.title('Preview tier')
-        preview_frame = LabelFrame(preview_window, text='This tier will contain these segments:')
-        segs = Label(preview_frame, text=matches, anchor=W)
-        segs.grid()
-        preview_frame.grid()
+        self.createType.currentIndexChanged.connect(self.generateFrames)
 
-    def add_tier_to_corpus(self):
-        tier_name = self.tier_name_entry.get()
-        selected_features = list(self.selected_tier_features.get(0,END))
+        layout.addWidget(QLabel('Basis for creating tier:'))
+        layout.addWidget(self.createType, alignment = Qt.AlignLeft)
+        self.createFrame = QFrame()
+        createLayout = QVBoxLayout()
+        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
 
-        if not tier_name:
-            MessageBox.showerror(message='Please enter a name for this tier')
+        createLayout.addWidget(self.createWidget)
+
+        self.createFrame.setLayout(createLayout)
+
+        layout.addWidget(self.createFrame)
+
+        self.createButton = QPushButton('Create tier')
+        self.previewButton = QPushButton('Preview tier')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.previewButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.previewButton.clicked.connect(self.preview)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create tier')
+
+    def createFeatureFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = FeatureBox('Features to define the tier',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def createSegmentFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def generateFrames(self,ind=0):
+        if self.createType.currentText() == 'Segments':
+            self.createSegmentFrame()
+        elif self.createType.currentText() == 'Features':
+            self.createFeatureFrame()
+
+    def preview(self):
+        createType = self.createType.currentText()
+        createList = self.createWidget.value()
+        if not createList:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
             return
-        if not selected_features:
-            MessageBox.showerror(message='No features define this tier. Please select at least one feature')
+        if createType == 'Features':
+            createList = createList[1:-1]
+            segList = self.corpus.features_to_segments(createList)
+        else:
+            segList = createList
+        notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
+
+        reply = QMessageBox.information(self,
+                "Tier preview", "Segments included: {}\nSegments excluded: {}".format(', '.join(segList),', '.join(notInSegList)))
+
+
+    def accept(self):
+        tierName = self.nameEdit.text()
+        self.attribute = Attribute(tierName.lower().replace(' ',''),'tier',tierName)
+        if tierName == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please enter a name for the tier.")
+            return
+        elif self.attribute.name in self.corpus.basic_attributes:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
+            return
+        elif self.attribute in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                    "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        createType = self.createType.currentText()
+        createList = self.createWidget.value()
+        if not createList:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
+            return
+        if createType == 'Features':
+            createList = createList[1:-1]
+            self.segList = self.corpus.features_to_segments(createList)
+        else:
+            self.segList = createList
+        QDialog.accept(self)
+
+class RemoveAttributeDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self, parent)
+        layout = QVBoxLayout()
+
+        self.tierSelect = QListWidget()
+        self.tierSelect.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        for t in corpus.attributes:
+            if t in corpus.basic_attributes:
+                continue
+            self.tierSelect.addItem(t.display_name)
+
+        layout.addWidget(self.tierSelect)
+
+        self.removeSelectedButton = QPushButton('Remove selected columns')
+        self.removeAllButton = QPushButton('Remove all non-essential columns')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.removeSelectedButton)
+        acLayout.addWidget(self.removeAllButton)
+        acLayout.addWidget(self.cancelButton)
+        self.removeSelectedButton.clicked.connect(self.removeSelected)
+        self.removeAllButton.clicked.connect(self.removeAll)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Remove tier')
+
+    def removeSelected(self):
+        selected = self.tierSelect.selectedItems()
+        if not selected:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a column to remove.")
+            return
+        self.tiers = [x.text() for x in selected]
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove columns",
+                "This will permanently remove the columns: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
             return
 
-        self.corpus.add_tier(tier_name, selected_features)
+        QDialog.accept(self)
 
-        self.top.destroy()
-        self.change = True
+    def removeAll(self):
+        if self.tierSelect.count() == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "There are no columns to remove.")
+            return
+        self.tiers = [self.tierSelect.item(i).text() for i in range(self.tierSelect.count())]
+        msgBox = QMessageBox(QMessageBox.Warning, "Remove columns",
+                "This will permanently remove the columns: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+        if msgBox.exec_() != QMessageBox.AcceptRole:
+            return
 
-    def add_plus_tier_feature(self):
-        try:
-            feature_name = self.tier_feature_list.get(self.tier_feature_list.curselection())
-            feature_name = '+'+feature_name
-            self.selected_tier_features.insert(END,feature_name)
-        except TclError:
-            pass
+        QDialog.accept(self)
 
-    def add_minus_tier_feature(self):
-        try:
-            feature_name = self.tier_feature_list.get(self.tier_feature_list.curselection())
-            feature_name = '-'+feature_name
-            self.selected_tier_features.insert(END,feature_name)
-        except TclError:
-            pass
+class CorpusFromCsvDialog(QDialog):
+    def __init__(self, parent, settings):
+        QDialog.__init__(self, parent)
+        self.settings = settings
+        layout = QVBoxLayout()
 
-    def remove_tier_feature(self):
-        feature = self.selected_tier_features.curselection()
-        if feature:
-            self.selected_tier_features.delete(feature)
+        formLayout = QFormLayout()
 
-class RemoveTierWindow(object):
-    def __init__(self,corpus,show_warnings=True):
-        self.show_warnings = show_warnings
-        self.change = False
+
+        self.pathWidget = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
+        self.pathWidget.pathEdit.textChanged.connect(self.updateName)
+
+        formLayout.addRow(QLabel('Path to corpus'),self.pathWidget)
+
+        self.nameEdit = QLineEdit()
+        formLayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
+
+        self.columnDelimiterEdit = QLineEdit()
+        self.columnDelimiterEdit.setText('\t')
+        formLayout.addRow(QLabel('Column delimiter'),self.columnDelimiterEdit)
+
+        self.transDelimiterEdit = QLineEdit()
+        self.transDelimiterEdit.setText('.')
+        formLayout.addRow(QLabel('Transcription delimiter'),self.transDelimiterEdit)
+
+        self.featureSystemSelect = FeatureSystemSelect(self.settings)
+
+        formLayout.addRow(QLabel('Feature system (if applicable)'),self.featureSystemSelect)
+
+        formFrame = QFrame()
+        formFrame.setLayout(formLayout)
+        layout.addWidget(formFrame)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create corpus from csv')
+
+    def updateName(self):
+        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+
+    def accept(self):
+        path = self.pathWidget.value()
+        if path == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to the csv file.")
+            return
+        if not os.path.exists(path):
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The specified file does not exist.")
+            return
+
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the corpus.")
+            return
+        if name in get_corpora_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+        if len(colDelim) != 1:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The column delimiter must be a single character.")
+            return
+        transDelim = self.transDelimiterEdit.text()
+
+        featureSystem = self.featureSystemSelect.path()
+        corpus = load_corpus_csv(name, path, colDelim, transDelim, featureSystem)
+        errors = corpus.check_coverage()
+        if errors:
+            msgBox = QMessageBox(QMessageBox.Warning, "Missing symbols",
+                    "{} were all missing from the feature system.  Would you like to initialize them as unspecified?".format(', '.join(errors)), QMessageBox.NoButton, self)
+            msgBox.addButton("Yes", QMessageBox.AcceptRole)
+            msgBox.addButton("No", QMessageBox.RejectRole)
+            if msgBox.exec_() == QMessageBox.AcceptRole:
+                for s in errors:
+                    corpus.specifier.add_segment(s.strip('\''),{})
+                corpus.specifier.validate()
+        save_binary(corpus,corpus_name_to_path(self.settings['storage'],name))
+
+        QDialog.accept(self)
+
+class ExportCorpusDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self, parent)
+
         self.corpus = corpus
 
-        self.top = Toplevel()
+        layout = QVBoxLayout()
 
-        self.top.title('Tiers')
-        choose_tier = LabelFrame(self.top, text='Select tier to remove')
-        self.kill_tiers_list = Listbox(choose_tier)
-        word = self.corpus.random_word()
-        for tier_name in sorted(word.tiers):
-            self.kill_tiers_list.insert(END,tier_name)
-        self.kill_tiers_list.grid()
-        kill_switch = Button(choose_tier, text='Remove', command=self.kill_tier)
-        kill_all = Button(choose_tier, text='Remove all', command=self.kill_all_tiers)
-        kill_switch.grid()
-        kill_all.grid()
-        choose_tier.grid()
-        ok_button = Button(self.top, text='Done', command=self.top.destroy)
-        ok_button.grid()
+        inlayout = QFormLayout()
 
-    def kill_tier(self):
-        target = self.kill_tiers_list.get(self.kill_tiers_list.curselection())
-        if target and self.show_warnings:
-            msg = 'Are you sure you want to remove the {} tier?\nYou cannot undo this action.'.format(target)
-            confirmed = MessageBox.askyesno(message=msg)
-            if not confirmed:
+        self.pathWidget = SaveFileWidget('Select file location','Text files (*.txt *.csv)')
+
+        inlayout.addRow('File name:',self.pathWidget)
+
+        self.columnDelimiterEdit = QLineEdit()
+        self.columnDelimiterEdit.setText(',')
+
+        inlayout.addRow('Column delimiter:',self.columnDelimiterEdit)
+
+        self.transDelimiterEdit = QLineEdit()
+        self.transDelimiterEdit.setText('.')
+
+        inlayout.addRow('Transcription delimiter:',self.transDelimiterEdit)
+
+        inframe = QFrame()
+        inframe.setLayout(inlayout)
+
+        layout.addWidget(inframe)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Export corpus')
+
+    def accept(self):
+        filename = self.pathWidget.value()
+
+        if filename == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to save the corpus.")
+            return
+
+        colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+        if len(colDelim) != 1:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The column delimiter must be a single character.")
+            return
+        transDelim = self.transDelimiterEdit.text()
+
+        export_corpus_csv(self.corpus,filename,colDelim,transDelim)
+
+        QDialog.accept(self)
+
+class SpontaneousSpeechDialog(QDialog):
+    def __init__(self, parent, settings):
+        QDialog.__init__(self, parent)
+        self.settings = settings
+        self.corpus = None
+        layout = QVBoxLayout()
+
+        inlayout = QFormLayout()
+
+        self.directoryWidget = DirectoryWidget()
+        self.directoryWidget.pathEdit.textChanged.connect(self.updateName)
+        inlayout.addRow('Corpus directory:',self.directoryWidget)
+
+
+        self.nameEdit = QLineEdit()
+        inlayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
+
+        self.dialectWidget = QComboBox()
+        self.dialectWidget.addItem('TextGrid')
+        self.dialectWidget.addItem('TIMIT')
+        self.dialectWidget.addItem('Buckeye')
+        inlayout.addRow('Corpus file set up:',self.dialectWidget)
+
+        inframe = QFrame()
+        inframe.setLayout(inlayout)
+
+        layout.addWidget(inframe)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Import spontaneous speech corpus')
+
+        self.thread = SpontaneousLoadWorker()
+
+        self.progressDialog = QProgressDialog('Importing...','Cancel',0,100,self)
+        self.progressDialog.setWindowTitle('Importing spontaneous speech corpus')
+        self.progressDialog.setAutoClose(False)
+        self.progressDialog.setAutoReset(False)
+        self.progressDialog.canceled.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.updateProgress)
+        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateName(self):
+        self.nameEdit.setText(os.path.split(self.directoryWidget.value())[1].split('.')[0])
+
+    def updateProgressText(self, text):
+        self.progressDialog.setLabelText(text)
+        self.progressDialog.reset()
+
+    def updateProgress(self,progress):
+        self.progressDialog.setValue(progress)
+        self.progressDialog.repaint()
+
+    def setResults(self, results):
+        self.corpus = results
+
+    def accept(self):
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the corpus.")
+            return
+        if name in get_corpora_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
+        self.thread.setParams({'name': name,
+                            'directory':self.directoryWidget.value(),
+                            'dialect':self.dialectWidget.currentText().lower()})
 
-        self.corpus.remove_tier(target)
+        self.thread.start()
 
-        self.change = True
-        self.top.destroy()
+        result = self.progressDialog.exec_()
 
-    def kill_all_tiers(self):
-        if self.show_warnings:
-            msg = 'Are you sure you want to remove all the tiers?\nYou cannot undo this action'
-            confirmed = MessageBox.askyesno(message=msg)
-            if not confirmed:
-                return
+        self.progressDialog.reset()
+        if result:
+            if self.corpus is not None:
+                save_binary(self.corpus,
+                corpus_name_to_path(self.settings['storage'],self.corpus.name))
+            QDialog.accept(self)
 
-        kill_tiers = self.kill_tiers_list.get(0,END)
-        for tier in kill_tiers:
-            self.corpus.remove_tier(tier)
-
-        self.change = True
-        self.top.destroy()

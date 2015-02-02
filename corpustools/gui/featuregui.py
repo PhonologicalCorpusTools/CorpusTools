@@ -6,8 +6,6 @@ from .imports import *
 from collections import OrderedDict
 import codecs
 
-from corpustools.config import config
-
 from corpustools.corpus.io import (load_binary, download_binary,
                     load_feature_matrix_csv, save_binary, DelimiterError,
                     export_feature_matrix_csv)
@@ -748,7 +746,7 @@ class SystemFromCsvDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify the transcription and feature system.")
             return
-        
+
         if name in get_systems_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A feature system named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)

@@ -16,7 +16,7 @@ if sys.platform.startswith('win'):
         sys.stderr = FakeSTD()
 
 from multiprocessing import freeze_support
-from corpustools.gui.qt.main import MainWindow,QApplicationMessaging
+from corpustools.gui.main import MainWindow,QApplicationMessaging
 
 def main():
     freeze_support()

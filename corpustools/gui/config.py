@@ -3,8 +3,6 @@ import os
 import codecs
 
 from .imports import *
-
-from corpustools.config import CONFIG_PATH
 from .widgets import DirectoryWidget
 
 class BasePane(QWidget):

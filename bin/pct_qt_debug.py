@@ -3,7 +3,7 @@ import os
 import sys
 base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0,base)
-from corpustools.gui.qt.main import MainWindow,QApplicationMessaging
+from corpustools.gui.main import MainWindow,QApplicationMessaging
 
 if __name__ == '__main__':
 

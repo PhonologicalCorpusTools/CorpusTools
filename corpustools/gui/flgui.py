@@ -1,379 +1,298 @@
-import os
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
-                    Frame, StringVar, BooleanVar, END, DISABLED, TclError,
-                    ACTIVE, N)
-from tkinter import Radiobutton as OldRadiobutton
-import tkinter.filedialog as FileDialog
-import tkinter.messagebox as MessageBox
 
-import queue
-import time
+from collections import OrderedDict
+
 import corpustools.funcload.functional_load as FL
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow, InventoryFrame,
-                    ResultsWindow, MultiListbox, ThreadedTask, ToolTip, Toplevel)
+from .imports import *
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget
+from .windows import FunctionWorker, FunctionDialog
+
+class FLWorker(FunctionWorker):
+    def run(self):
+        kwargs = self.kwargs
+        self.results = list()
+        if kwargs['pair_behavior'] == 'individual':
+
+            for pair in kwargs['segment_pairs']:
+                if kwargs['func_type'] == 'min_pairs':
+                    try:
+                        res = FL.minpair_fl(kwargs['corpus'], [pair],
+                            frequency_cutoff = kwargs['frequency_cutoff'],
+                            relative_count = kwargs['relative_count'],
+                            distinguish_homophones= kwargs['distinguish_homophones'],
+                            sequence_type = kwargs['sequence_type'],
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
+                    except Exception as e:
+                        self.errorEncountered.emit(e)
+                        return
+                elif kwargs['func_type'] == 'entropy':
+                    try:
+                        res = FL.deltah_fl(kwargs['corpus'], [pair],
+                            frequency_cutoff=kwargs['frequency_cutoff'],
+                            type_or_token=kwargs['type_or_token'],
+                            sequence_type = kwargs['sequence_type'],
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
+                    except Exception as e:
+                        self.errorEncountered.emit(e)
+                        return
+                if self.stopped:
+                    return
+                self.results.append(res)
+        else:
+            if kwargs['func_type'] == 'min_pairs':
+                try:
+                    res = FL.minpair_fl(kwargs['corpus'],
+                            kwargs['segment_pairs'],
+                            frequency_cutoff=kwargs['frequency_cutoff'],
+                            relative_count = kwargs['relative_count'],
+                            distinguish_homophones= kwargs['distinguish_homophones'],
+                            sequence_type = kwargs['sequence_type'],
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
+            elif kwargs['func_type'] == 'entropy':
+                try:
+                    res = FL.deltah_fl(kwargs['corpus'],
+                            kwargs['segment_pairs'],
+                            frequency_cutoff=kwargs['frequency_cutoff'],
+                            type_or_token=kwargs['type_or_token'],
+                            sequence_type = kwargs['sequence_type'],
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
+            if self.stopped:
+                return
+            self.results.append(res)
+        self.dataReady.emit(self.results)
 
 
-class FLFunction(FunctionWindow):
-    def __init__(self,corpus,master=None, **options):
-        super(FLFunction, self).__init__(master=master, **options)
+
+class FLDialog(FunctionDialog):
+    header = ['Segment 1',
+                'Segment 2',
+                'Transcription tier',
+                'Type of funcational load',
+                'Result',
+                'Ignored homophones?',
+                'Relative count?',
+                'Minimum word frequency',
+                'Type or token']
+
+    _about = [('This function calculates the functional load of the contrast'
+                    ' between any two segments, based on either the number of minimal'
+                    ' pairs or the change in entropy resulting from merging that contrast.'),
+                    '',
+                    'Coded by Blake Allen',
+                    '',
+                    'References',
+                    ('Surendran, Dinoj & Partha Niyogi. 2003. Measuring'
+                    ' the functional load of phonological contrasts.'
+                    ' In Tech. Rep. No. TR-2003-12.'),
+                    ('Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013.'
+                    ' High functional load inhibits phonological contrast'
+                    ' loss: A corpus study. Cognition 128.179-86')]
+
+    name = 'functional load'
+
+    def __init__(self, parent, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, FLWorker())
+
         self.corpus = corpus
-        #Functional load variables
-        self.fl_frequency_cutoff_var = StringVar()
-        self.fl_homophones_var = StringVar()
-        self.fl_relative_count_var = StringVar()
-        self.fl_type_or_token_var = StringVar()
-        self.fl_seg1_var = StringVar()
-        self.fl_seg2_var = StringVar()
-        self.entropy_pairs_var = StringVar()
-        self.fl_q = queue.Queue()
-        self.fl_results = None
-        self.fl_type_var = StringVar()
+        self.showToolTips = showToolTips
 
-        self.title('Functional load')
-        ipa_frame = LabelFrame(self, text='Sounds')
-        if self.show_tooltips:
-            ipa_frame_tip = ToolTip(ipa_frame, text=('Add (a) pair(s) of sounds whose contrast to collapse.'
+        flFrame = QFrame()
+        fllayout = QHBoxLayout()
+
+        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+
+        fllayout.addWidget(self.segPairWidget)
+
+        secondPane = QFrame()
+
+        l = QVBoxLayout()
+
+        self.algorithmWidget = RadioSelectWidget('Functional load algorithm',
+                                            OrderedDict([('Minimal pairs','min_pairs'),
+                                            ('Change in entropy','entropy')]),
+                                            {'Minimal pairs': self.minPairsSelected,
+                                            'Change in entropy': self.entropySelected})
+
+        l.addWidget(self.algorithmWidget)
+
+        secondPane.setLayout(l)
+
+        fllayout.addWidget(secondPane)
+
+        optionLayout = QVBoxLayout()
+
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
+
+        optionLayout.addWidget(self.tierWidget)
+
+        self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
+                                                OrderedDict([('All segment pairs together','together'),
+                                                ('Each segment pair individually','individual')]))
+
+        optionLayout.addWidget(self.segPairOptionsWidget)
+
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
+
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+
+        minPairOptionFrame = QGroupBox('Minimal pair options')
+
+        box = QVBoxLayout()
+
+        self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
+        self.relativeCountWidget.setChecked(True)
+        self.homophoneWidget = QCheckBox('Include homophones')
+
+        box.addWidget(self.relativeCountWidget)
+        box.addWidget(self.homophoneWidget)
+
+        minPairOptionFrame.setLayout(box)
+
+        optionLayout.addWidget(minPairOptionFrame)
+
+        entropyOptionFrame = QGroupBox('Change in entropy options')
+
+        box = QVBoxLayout()
+
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
+                                                    OrderedDict([('Type','type'),
+                                                    ('Token','token')]))
+
+        box.addWidget(self.typeTokenWidget)
+        entropyOptionFrame.setLayout(box)
+        optionLayout.addWidget(entropyOptionFrame)
+
+        optionFrame = QGroupBox('Options')
+        optionFrame.setLayout(optionLayout)
+
+        fllayout.addWidget(optionFrame)
+        flFrame.setLayout(fllayout)
+
+        self.layout().insertWidget(0,flFrame)
+
+        self.algorithmWidget.initialClick()
+        if self.showToolTips:
+            self.homophoneWidget.setToolTip(("<FONT COLOR=black>"
+            'This setting will overcount alternative'
+                            ' spellings of the same word, e.g. axel~actual and axle~actual,'
+                            ' but will allow you to count e.g. sock~shock twice, once for each'
+                            ' meaning of \'sock\' (footwear vs. punch)'
+            "</FONT>"))
+
+            self.relativeCountWidget.setToolTip(("<FONT COLOR=black>"
+            'The raw count of minimal pairs will'
+                            ' be divided by the number of words that include any of the target segments'
+                            ' present in the list at the left.'
+            "</FONT>"))
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
+                                    'Choose which tier functional load should'
+                                    ' be calculated over (e.g., the whole transcription'
+                                    ' vs. a tier containing only [+voc] segments).'
+                                    ' New tiers can be created from the Corpus menu.'
+                                    "</FONT>"))
+            self.segPairOptionsWidget.setToolTip(("<FONT COLOR=black>"
+            'Choose either to calculate the'
+                                ' functional load of a particular contrast among a group of segments'
+                                ' to calculate the functional loads of a series of segment pairs separately.'
+                                "</FONT>"))
+            self.segPairWidget.setToolTip(("<FONT COLOR=black>"
+            'Add pairs of sounds whose contrast to collapse.'
                                     ' For example, if you\'re interested in the functional load of the [s]'
                                     ' / [z] contrast, you only need to add that pair. If, though, you\'re'
                                     ' interested in the functional load of the voicing contrast among obstruents,'
-                                    ' you may need to add (p, b), (t, d), and (k, g).'))
-        select_sounds = Button(ipa_frame, text='Add pairs of sounds', command=self.select_sound_pairs)
-        select_sounds.grid()
-        remove_button = Button(ipa_frame, text='Remove selected sound pair', command=self.remove_sounds)
-        remove_button.grid()
-        self.sound_list = MultiListbox(ipa_frame, [('Sound 1', 10),('Sound 2', 10)])
-        self.sound_list.grid()
+                                    ' you may need to add (p, b), (t, d), and (k, g).'
+            "</FONT>"))
+            self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
+            'Calculate the functional load either using'
+                            ' the contrast between two sets of segments as a count of minimal pairs'
+                            ' or using the decrease in corpus'
+                            ' entropy caused by a merger of paired segments in the set.'
+            "</FONT>"))
 
-        type_frame = LabelFrame(self, text='Type of functional load to calculate')
-        min_pairs_type = Radiobutton(type_frame, text='Minimal pairs',
-                                variable=self.fl_type_var, value='min_pairs',
-                                command= lambda x=True:self.show_min_pairs_options(x))
-        if self.show_tooltips:
-            min_pairs_tip = ToolTip(min_pairs_type, text=('Calculate the functional load of the'
-                        ' contrast between two sets of segments as a count of minimal pairs'
-                        ' distinguished by paired segments in the set (e.g. +/-voice obstruent pairs).'
-                        ' This is the method used by Wedel et al. (2013).'))
-        min_pairs_type.grid(sticky=W)
-        h_type = Radiobutton(type_frame, text='Change in Entropy',
-                            variable=self.fl_type_var, value='h',
-                            command= lambda x=False:self.show_min_pairs_options(x))
-        if self.show_tooltips:
-            h_type_tip = ToolTip(h_type, text=('Calculate the functional load of the contrast '
-                            'between between two sets of segments as the decrease in corpus '
-                            'entropy caused by a merger of paired segments in the set '
-                            '(e.g. +/-voice obstruent pairs). This is the method used by '
-                            'Surendran & Niyogi (2003).'))
-        h_type.grid(sticky=W)
+    def minPairsSelected(self):
+        self.typeTokenWidget.disable()
+        self.relativeCountWidget.setEnabled(True)
+        self.homophoneWidget.setEnabled(True)
 
+    def entropySelected(self):
+        self.typeTokenWidget.enable()
+        self.relativeCountWidget.setEnabled(False)
+        self.homophoneWidget.setEnabled(False)
 
-        min_freq_frame = LabelFrame(self, text='Minimum frequency?')
-        fl_frequency_cutoff_label = Label(min_freq_frame, text='Only consider words with frequency of at least...')
-        fl_frequency_cutoff_label.grid(row=0, column=0)
-        fl_frequency_cutoff_entry = Entry(min_freq_frame, textvariable=self.fl_frequency_cutoff_var)
-        fl_frequency_cutoff_entry.delete(0,END)
-        fl_frequency_cutoff_entry.insert(0,'0')
-        fl_frequency_cutoff_entry.grid(row=0, column=1)
-        min_freq_frame.grid(sticky=W)
-
-        self.fl_option_frame = LabelFrame(self, text='Options')
-        seg_pairing_frame = LabelFrame(self.fl_option_frame, text='How to handle multiple segment pairs')
-        pairs_together = Radiobutton(seg_pairing_frame, text='Calculate functional load of all segment pairs together',
-                                    variable=self.entropy_pairs_var, value='together')
-        if self.show_tooltips:
-            pairs_together_tip = ToolTip(pairs_together, text=('Choose this option if you\'re interested in the'
-                                ' functional load of a particular contrast among a group of segments.'
-                                ' E.g., if you want to know the functional load of the voicing contrast'
-                                ' among obstruents, you can calculate that by adding the relevant pairs'
-                                ' (p/b, t/d, k/g...) and selecting this option before calculating functional load'))
-        pairs_together.grid(sticky=W)
-        pairs_individually = Radiobutton(seg_pairing_frame, text='Calculate functional load of each segment pair individually',
-                                    variable=self.entropy_pairs_var, value='individual')
-        if self.show_tooltips:
-            pairs_individually_tip = ToolTip(pairs_individually, text=('Choose this option if you want to calculate the '
-                                    'functional loads of a series of segment pairs separately. E.g., if you want to know'
-                                    ' the functional load of the m/n contrast, that of the l/r contrast, and that of the'
-                                    ' s/z contrast, you can add all three of those pairs and select this option before '
-                                    'calculating functional load. This would be equivalent to adding (and then calculating'
-                                    ' functional load and removing) each pair one at a time.'))
-        pairs_individually.grid(sticky=W)
-        pairs_together.select()
-        seg_pairing_frame.grid()
-
-        self.fl_min_pairs_option_frame = LabelFrame(self, text='Minimal pair options')
-        relative_count_frame = LabelFrame(self.fl_min_pairs_option_frame, text='Relative count?')
-        if self.show_tooltips:
-            options_tip = ToolTip(relative_count_frame, text=('The raw count of minimal pairs will'
-                            ' be divided by the number of words that include any of the target segments '
-                            'present in the list at the left.'))
-        relative_count = Radiobutton(relative_count_frame, text='Calculate minimal pairs relative to number of possible minimal pairs',
-                                    value='relative', variable=self.fl_relative_count_var)
-        relative_count.grid(sticky=W)
-        relative_count.invoke()
-        raw_count = Radiobutton(relative_count_frame, text='Calculate just the raw number of minimal pairs',
-                                    value='raw', variable=self.fl_relative_count_var)
-        raw_count.grid(sticky=W)
-        relative_count_frame.grid(sticky=W)
-
-        homophones_frame = LabelFrame(self.fl_min_pairs_option_frame, text='What to do with homophones?')
-        count_homophones_button = Radiobutton(homophones_frame, text='Include homophones',
-                                    value='include', variable=self.fl_homophones_var)
-        if self.show_tooltips:
-            count_homophone_tip = ToolTip(count_homophones_button, text=('This setting will overcount alternative'
-                            ' spellings of the same word, e.g. axel~actual and axle~actual, '
-                            'but will allow you to count e.g. sock~shock twice, once for each'
-                            ' meaning of \'sock\' (footwear vs. punch)'))
-        count_homophones_button.grid(sticky=W)
-        ignore_homophones_button = Radiobutton(homophones_frame,
-                                text='Ignore homophones (i.e. count each phonological form once)',
-                                value = 'ignore', variable=self.fl_homophones_var)
-        if self.show_tooltips:
-            ignore_homphones_tip = ToolTip(ignore_homophones_button, text=('This setting will count sock~shock (sock=clothing)'
-                            ' and sock~shock (sock=punch) as just one minimal pair, but will avoid overcounting words'
-                            ' with spelling variations. This is the version used by Wedel et al. (2013).'))
-        ignore_homophones_button.grid(sticky=W)
-        ignore_homophones_button.invoke()
-        homophones_frame.grid(sticky=W)
-
-
-        self.fl_deltah_option_frame = LabelFrame(self, text='Change in entropy options')
-        type_or_token_frame = LabelFrame(self.fl_deltah_option_frame, text='Use type or token frequencies?')
-        use_type = Radiobutton(type_or_token_frame, text='Type',
-                                    value='type', variable=self.fl_type_or_token_var)
-        use_type.grid(sticky=W)
-        use_type.invoke()
-        use_token = Radiobutton(type_or_token_frame, text='Token',
-                                    value='token', variable=self.fl_type_or_token_var)
-        use_token.grid(sticky=W)
-        type_or_token_frame.grid(sticky=W)
-        use_type.invoke()
-
-
-        type_frame.grid(row=0, column=0, sticky=(N,W))
-        ipa_frame.grid(row=0,column=1, sticky=N)
-        self.fl_option_frame.grid(row=0,column=2,sticky=N)
-        self.fl_min_pairs_option_frame.grid(row=1,column=2,sticky=N)
-        self.fl_deltah_option_frame.grid(row=2,column=2,sticky=N)
-        min_pairs_type.invoke()
-        #this has to be invoked much later than it is created because this
-        #calls a function that refers to widgets that have not yet been created
-
-        button_frame = Frame(self)
-        ok_button = Button(button_frame, text='Calculate functional load\n(start new results table)', command=lambda x=False:self.calculate_functional_load(update=x))
-        ok_button.grid(row=0, column=0)
-        self.update_fl_button = Button(button_frame, text='Calculate functional load\n(add to current results table)', command=lambda x=True:self.calculate_functional_load(update=x))
-        self.update_fl_button.grid()
-        self.update_fl_button.config(state=DISABLED)
-        cancel_button = Button(button_frame, text='Cancel', command=self.cancel_functional_load)
-        cancel_button.grid(row=0, column=1)
-        about = Button(button_frame, text='About this function...', command=self.about_functional_load)
-        about.grid(row=0, column=2)
-        button_frame.grid()
-        self.focus()
-
-    def select_sound_pairs(self):
-
-        self.select_sounds = Toplevel()
-        self.select_sounds.title('Select sounds')
-
-        sound1_frame = LabelFrame(self.select_sounds, text='First sound')
-        self.seg1_frame = InventoryFrame(self.corpus, self.fl_seg1_var, 'Choose first symbol', master=sound1_frame)
-        self.seg1_frame.show()
-        self.seg1_frame.grid()
-        sound1_frame.grid()
-
-        sound2_frame = LabelFrame(self.select_sounds, text='Second sound')
-        self.seg2_frame = InventoryFrame(self.corpus, self.fl_seg2_var, 'Choose second symbol', master=sound2_frame)
-        self.seg2_frame.show()
-        self.seg2_frame.grid()
-        sound2_frame.grid()
-
-        button_frame = Frame(self.select_sounds)
-        ok_button = Button(button_frame, text='Add sounds to list', command=self.add_sounds)
-        ok_button.grid(sticky=W)
-        cancel_button = Button(button_frame, text='Done', command=self.select_sounds.destroy)
-        cancel_button.grid(sticky=W)
-        button_frame.grid(row=0,column=2)
-
-    def add_sounds(self):
-        sound1 = self.fl_seg1_var.get()
-        sound2 = self.fl_seg2_var.get()
-        if not sound1 or not sound2:
-            MessageBox.showwarning('Predictability of distribution', message='Please select 2 sounds')
-            return
-
-        self.sound_list.insert(END,[sound1, sound2])
-        for widget in self.seg1_frame.winfo_children():
-            try:
-                widget.deselect()
-            except AttributeError:
-                pass
-        for widget in self.seg2_frame.winfo_children():
-            try:
-                widget.deselect()
-            except AttributeError:
-                pass
-
-    def remove_sounds(self):
-        selection = self.sound_list.curselection()
-        if selection:
-            self.sound_list.delete(self.sound_list.curselection())
-
-    def about_functional_load(self):
-        about = AboutWindow('Functional load',
-                    ('This function calculates the functional load of the contrast'
-                    ' between any two segments, based on either the number of minimal'
-                    ' pairs or the change in entropy resulting from merging that contrast.'),
-                    ['Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12.',
-                    'Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013. High functional load inhibits phonological contrast loss: A corpus study. Cognition 128.179-86'],
-                    ['Blake Allen'])
-
-    def calculate_functional_load(self,update=False):
-        if self.sound_list.size() == 0:
-            MessageBox.showerror(message='Please select at least one pair of segments')
-            return
-
-        if not update and self.fl_results is not None:
-            carryon = MessageBox.askyesno(message='You have functional load results open in a table already.\nWould you like to start a new table?')
-            if not carryon:
-                return
-            else:
-                self.fl_results.destroy()
-
-        seg_list = self.sound_list.get(0,END)
-        seg_pairs = list(zip(seg_list[0], seg_list[1]))
-        frequency_cutoff = int(self.fl_frequency_cutoff_var.get())
-        relative_count = True if self.fl_relative_count_var.get() == 'relative' else False
-        distinguish_homophones = True if self.fl_homophones_var.get() == 'include' else False
-
-        if self.entropy_pairs_var.get() == 'individual':
-            target = FL.individual_segpairs_fl
-        else:
-            target = FL.collapse_segpairs_fl
-
-        if self.fl_type_var.get() == 'min_pairs':
-            functional_load_thread = ThreadedTask(self.fl_q,
-                                    target=target,
-                                    args={},
-                                    kwargs={
-                                    'corpus':self.corpus,
-                                    'segment_pairs':seg_pairs,
-                                    'func_type':'min_pairs',
-                                    'frequency_cutoff':frequency_cutoff,
-                                    'relative_count':relative_count,
-                                    'distinguish_homophones':distinguish_homophones,
-                                    'threaded_q':self.fl_q})
-        else:
-            functional_load_thread = ThreadedTask(self.fl_q,
-                                    target=target,
-                                    args={},
-                                    kwargs={
-                                    'corpus':self.corpus,
-                                    'segment_pairs':seg_pairs,
-                                    'func_type':'entropy',
-                                    'frequency_cutoff':frequency_cutoff,
-                                    'type_or_token':self.fl_type_or_token_var.get(),
-                                    'threaded_q':self.fl_q})
-
-        functional_load_thread.start()
-        self.process_fl_queue(update)
-
-    def process_fl_queue(self,update):
+    def generateKwargs(self):
+        segPairs = self.segPairWidget.value()
+        if len(segPairs) == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one segment pair.")
+            return None
         try:
-            result = self.fl_q.get(0)
-            if update:
-                self.update_fl_results(result) #results window exists, just return a new value
-            else:
-                self.show_fl_result(result) #construct a new window to display results
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        return {'corpus':self.corpus,
+                'segment_pairs':segPairs,
+                'sequence_type': self.tierWidget.value(),
+                'frequency_cutoff':frequency_cutoff,
+                'relative_count':self.relativeCountWidget.isChecked(),
+                'distinguish_homophones':self.homophoneWidget.isChecked(),
+                'pair_behavior':self.segPairOptionsWidget.value(),
+                'type_or_token':self.typeTokenWidget.value(),
+                'func_type':self.algorithmWidget.value()}
 
-        except queue.Empty:
-            self.after(100, lambda x=update:self.process_fl_queue(update))
+    def calc(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
 
-    def delete_fl_results(self):
-        #clean-up function
-        if self.fl_results is not None:
-            self.fl_results.destroy()
-            self.fl_results = None
+        self.thread.start()
 
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            self.accept()
+
+    def setResults(self,results):
+        self.results = list()
+        seg_pairs = self.segPairWidget.value()
         try:
-            self.update_fl_button.config(state=DISABLED)
-        except TclError:
-            pass #the button doesn't exist, ignore the error
-
-    def show_fl_result(self, result):
-
-        header = [('Segment 1',10),
-                ('Segment 2',10),
-                ('Type of funcational load', 10),
-                ('Result',20),
-                ('Ignored homophones?',5),
-                ('Relative count?',5),
-                ('Minimum word frequency', 10),
-                ('Type or token', 10)]
-        title = 'Functional load results'
-        self.fl_results = ResultsWindow(title,header,delete_method=self.delete_fl_results)
-        self.update_fl_button.config(state=ACTIVE)
-        self.update_fl_results(result)
-
-
-    def show_min_pairs_options(self,visible):
-        if visible:
-            state = ACTIVE
-            otherstate = DISABLED
-        if not visible:
-            state = DISABLED
-            otherstate = ACTIVE
-
-        for frame in self.fl_min_pairs_option_frame.winfo_children():
-            for widget in frame.winfo_children():
-                try:
-                    widget.configure(state=state)
-                except TclError:
-                    pass
-
-        for frame in self.fl_deltah_option_frame.winfo_children():
-            for widget in frame.winfo_children():
-                try:
-                    widget.configure(state=otherstate)
-                except TclError:
-                    pass
-
-    def update_fl_results(self, result):
-        if self.fl_type_var.get() == 'min_pairs':
-            fl_type = 'Minimal pairs'
-            ignored_homophones = 'Yes' if self.fl_homophones_var.get() == 'ignore' else 'No'
-            relative_count = 'Yes' if self.fl_relative_count_var.get() == 'relative' else 'No'
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        if self.segPairOptionsWidget.value() == 'individual':
+            for i, r in enumerate(results):
+                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                    self.tierWidget.displayValue(),
+                                    self.algorithmWidget.displayValue(),
+                                    r,
+                                    self.homophoneWidget.isChecked(),
+                                    self.relativeCountWidget.isChecked(),
+                                    frequency_cutoff,
+                                    self.typeTokenWidget.value()])
         else:
-            fl_type = 'Entropy'
-            ignored_homophones = 'N/A'
-            relative_count = 'N/A'
-        seg_list = self.sound_list.get(0,END)
-        type_or_token = self.fl_type_or_token_var.get()
-
-        if self.entropy_pairs_var.get() == 'individual':
-            for result,seg1,seg2 in zip(result, *seg_list):
-                self.fl_results.update([seg1,
-                                        seg2,
-                                        fl_type,
-                                        result,
-                                        ignored_homophones,
-                                        relative_count,
-                                        self.fl_frequency_cutoff_var.get(),
-                                        type_or_token])
-        else:
-            seg1 = ','.join(seg_list[0])
-            seg2 = ','.join(seg_list[1])
-            self.fl_results.update([seg1,
-                                        seg2,
-                                        fl_type,
-                                        result,
-                                        ignored_homophones,
-                                        relative_count,
-                                        self.fl_frequency_cutoff_var.get(),
-                                        type_or_token])
-
-    def cancel_functional_load(self):
-        self.delete_fl_results()
-        self.destroy()
-
+            self.results.append([', '.join(x[0] for x in seg_pairs),
+                                ', '.join(x[1] for x in seg_pairs),
+                                    self.tierWidget.displayValue(),
+                                    self.algorithmWidget.displayValue(),
+                                    results[0],
+                                    self.homophoneWidget.isChecked(),
+                                    self.relativeCountWidget.isChecked(),
+                                    frequency_cutoff,
+                                    self.typeTokenWidget.value()])

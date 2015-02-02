@@ -1,286 +1,327 @@
-import os
 
-from tkinter import (LabelFrame, Label, W, N, Entry, Button, Radiobutton, Listbox,
-                    Checkbutton, Frame, StringVar, BooleanVar, END, DISABLED, TclError,
-                    ACTIVE, NORMAL)
-import tkinter.filedialog as FileDialog
-import tkinter.messagebox as MessageBox
+from .imports import *
 
-import queue
+from collections import OrderedDict
+
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
+
+from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
-                    ResultsWindow, InventoryFrame, ThreadedTask, ToolTip)
+class FAWorker(FunctionWorker):
+    def run(self):
+        kwargs = self.kwargs
+        self.results = list()
+        if kwargs['pair_behavior'] == 'individual':
 
-class FAFunction(FunctionWindow):
+            for pair in kwargs['segment_pairs']:
+                try:
+                    res = calc_freq_of_alt(kwargs['corpus'], pair[0], pair[1],
+                                kwargs['relator_type'], kwargs['count_what'],
+                                sequence_type = kwargs['sequence_type'],
+                                min_rel=kwargs['min_rel'], max_rel=kwargs['max_rel'],
+                                min_pairs_okay=kwargs['include_minimal_pairs'],
+                                from_gui=True, phono_align=kwargs['phono_align'],
+                                output_filename=kwargs['output_filename'],
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
+                if self.stopped:
+                    return
+                self.results.append(res)
+        else:
+            raise(NotImplementedError)
+            self.results.append(res)
+        self.dataReady.emit(self.results)
 
-    def __init__(self,corpus,master=None,**options):
+class FADialog(FunctionDialog):
+    header = ['Segment 1',
+                'Segment 2',
+                'Transcription tier',
+                'Total words in corpus',
+                'Total words with alternations',
+                'Frequency of alternation',
+                'Type or token',
+                'Distance metric',
+                'Phonological alignment?']
 
-        super(FAFunction, self).__init__(master=master, **options)
+    _about = [('This function calculates the frequency of alternation '
+                    'of two segments. In general, an alternation is seen when'
+                    ' different segments occur in corresponding positions of'
+                    ' two related words. For example, [s]/[ʃ] in the words'
+                    ' [dəpɹɛs] and [dəpɹɛʃәn]. Predictable alternations are'
+                    ' often used for analyzing segments as either contrastive'
+                    ' or allophonic.'),
+                    '',
+                    'Coded by Michael Fry',
+                    '',
+                    'References',
+                    ('Johnson, Keith & Babel, Molly. 2010. On the perceptual'
+                    ' basis of distinctive features: Evidence from the perception'
+                    ' fricatives by Dutch and English Speakers. Journal of'
+                    ' Phonetics. 38:127-136'),
+                    ('Lu, Yu-an. 2012. The role of alternation in phonological'
+                    ' relationships. Stony Brook Univeristy. Doctoral Dissteration')]
 
-        self.seg1_var = StringVar()
-        self.seg2_var = StringVar()
-        self.freq_alt_typetoken_var = StringVar()
-        self.freq_alt_stringtype_var = StringVar()
-        self.freq_alt_min_rel_var = StringVar()
-        self.freq_alt_max_rel_var = StringVar()
-        self.freq_alt_min_pairs_var = StringVar()
-        self.relator_type_var = StringVar()
-        self.align_var = BooleanVar()
-        self.use_subset_var = StringVar()
+    name = 'frequency of alternation'
+
+    def __init__(self, parent, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, FAWorker())
+
         self.corpus = corpus
-        self.results_table = None
-        self.title('Frequency of alternation')
-        self.focus()
+        self.showToolTips = showToolTips
 
-        top_frame = Frame(self)
-        inv_frame = LabelFrame(top_frame, text='Select two sounds')
-        inv_frame_tooltip = ToolTip(inv_frame, text='Select the two sounds you wish to check for alternations.')
-        seg1_frame = InventoryFrame(self.corpus, self.seg1_var, 'Sound 1', master=inv_frame)
-        seg1_frame.show()
-        seg1_frame.grid()
-        seg2_frame = InventoryFrame(self.corpus, self.seg2_var, 'Sound 2', master=inv_frame)
-        seg2_frame.show()
-        seg2_frame.grid()
-        inv_frame.grid(row=0,column=0,sticky=N,padx=10)
-        top_frame.grid()
+        falayout = QHBoxLayout()
 
-        relator_type_frame = LabelFrame(top_frame, text='Distance metric')
-        relator_type_tooltip = ToolTip(relator_type_frame, text=('Select which algorithm to'
-                                        ' use for calculating the similarity of words. This '
-                                        'is used to determine if two words could be considered'
+        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+
+        falayout.addWidget(self.segPairWidget)
+
+
+        self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
+                                            OrderedDict([('Edit distance','edit_distance'),
+                                            ('Phonological edit distance','phono_edit_distance'),
+                                            ('Khorsi','khorsi'),]),
+                                            {'Khorsi':self.khorsiSelected,
+                                            'Edit distance':self.editDistSelected,
+                                            'Phonological edit distance':self.phonoEditDistSelected})
+
+
+        falayout.addWidget(self.algorithmWidget)
+
+        optionFrame = QGroupBox('Options')
+
+        optionLayout = QVBoxLayout()
+
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
+
+        optionLayout.addWidget(self.tierWidget)
+
+        self.typeTokenWidget = RadioSelectWidget('Type or token',
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+        optionLayout.addWidget(self.typeTokenWidget)
+
+        self.minPairsWidget = QCheckBox('Include minimal pairs')
+
+        optionLayout.addWidget(self.minPairsWidget)
+
+        threshFrame = QGroupBox('Threshold values')
+
+        self.minEdit = QLineEdit()
+        self.minEdit.setText('-15')
+        self.maxEdit = QLineEdit()
+        self.maxEdit.setText('6')
+
+        vbox = QFormLayout()
+        vbox.addRow('Minimum similarity (Khorsi):',self.minEdit)
+        vbox.addRow('Maximum distance (edit distance):',self.maxEdit)
+
+        threshFrame.setLayout(vbox)
+
+        optionLayout.addWidget(threshFrame)
+
+        alignFrame = QGroupBox('Alignment')
+
+        self.alignCheck = QCheckBox('Do phonological alignment')
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.alignCheck)
+
+        alignFrame.setLayout(vbox)
+
+        optionLayout.addWidget(alignFrame)
+
+        corpusSizeFrame = QGroupBox('Corpus size')
+
+        self.corpusSizeEdit = QLineEdit()
+
+        vbox = QFormLayout()
+        vbox.addRow('Subset corpus:',self.corpusSizeEdit)
+
+        corpusSizeFrame.setLayout(vbox)
+
+        optionLayout.addWidget(corpusSizeFrame)
+
+        fileFrame = QGroupBox('Output file (if desired)')
+
+        self.fileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
+
+        vbox = QHBoxLayout()
+        vbox.addWidget(self.fileWidget)
+
+        fileFrame.setLayout(vbox)
+
+        optionLayout.addWidget(fileFrame)
+
+        optionFrame.setLayout(optionLayout)
+
+        falayout.addWidget(optionFrame)
+
+        faframe = QFrame()
+        faframe.setLayout(falayout)
+
+        self.layout().insertWidget(0, faframe)
+
+        self.algorithmWidget.initialClick()
+        if self.showToolTips:
+            self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which algorithm to'
+                                        ' use for calculating the distance between words. This '
+                                        'is used to determine if two words should be considered'
                                         ' an example of an alternation. For more information, '
-                                        'refer to "About this function" on the string similarity analysis option.'))
-        for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
-            rb = Radiobutton(relator_type_frame, text=rtype,variable=self.relator_type_var,
-                            value=rtype, command=self.check_relator_type)
-            rb.grid(sticky=W)
-        rb.select()
-        relator_type_frame.grid(row=0,column=1,sticky=N,padx=10)
+                                        'refer to "About this function" from the string similarity analysis.'
+            "</FONT>"))
+            self.segPairWidget.setToolTip(("<FONT COLOR=black>"
+            'Select two sounds which may be in alternation.'
+            "</FONT>"))
 
-        options_frame = LabelFrame(top_frame, text='Options')
-
-        self.typetoken_frame = LabelFrame(options_frame, text='Type or Token')
-        typetoken_tooltip = ToolTip(self.typetoken_frame, text=('Select which type of frequency to use'
-                                    ' for calculating similarity (only relevant for Khorsi). Type'
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
+                                    'Choose which tier frequency of alternation should'
+                                    ' be calculated over (e.g. the whole transcription'
+                                    ' or a tier containing only [+voc] segments).'
+                                    ' New tiers can be created from the Corpus menu.'
+                                    "</FONT>"))
+            self.typeTokenWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which type of frequency to use'
+                                    ' for calculating distance (only relevant for Khorsi). Type'
                                     ' frequency means each letter is counted once per word. Token '
                                     'frequency means each letter is counted as many times as its '
-                                    'words frequency in the corpus. '))
-        type_button = Radiobutton(self.typetoken_frame, text='Count types', variable=self.freq_alt_typetoken_var, value='type')
-        type_button.grid(sticky=W)
-        type_button.invoke()
-        token_button = Radiobutton(self.typetoken_frame, text='Count tokens', variable=self.freq_alt_typetoken_var, value='token')
-        token_button.grid(sticky=W)
-        self.typetoken_frame.grid(column=0, row=0, sticky=W)
-
-        min_pairs_frame = LabelFrame(options_frame, text='What to do with minimal pairs')
-        min_pairs_tooltip = ToolTip(min_pairs_frame, text=('Select whether to include minimal'
+                                    'words frequency in the corpus.'
+            "</FONT>"))
+            self.minPairsWidget.setToolTip(("<FONT COLOR=black>"
+            'Select whether to include minimal'
                                     ' pairs as possible alternations. For example, if you possess'
                                     ' knowledge that minimal pairs should never be counted as an'
-                                    ' alternation in the corpus, select "ignore minimal pairs".'))
-        ignore_min_pairs = Radiobutton(min_pairs_frame, text='Ignore minimal pairs', variable=self.freq_alt_min_pairs_var, value='ignore')
-        ignore_min_pairs.grid()
-        include_min_pairs = Radiobutton(min_pairs_frame, text='Include minimal pairs', variable=self.freq_alt_min_pairs_var, value='include')
-        include_min_pairs.grid()
-        ignore_min_pairs.select()
-        min_pairs_frame.grid(column=0,row=2,sticky=W)
-
-        threshold_frame = LabelFrame(options_frame, text='Threshold values')
-        threshold_tooltip = ToolTip(threshold_frame, text=('These values set the minimum similarity'
-                            ' or maximum distance needed in order to consider two words to be'
-                            ' considered a potential example of an alternation. '))
-        min_label = Label(threshold_frame, text='Minimum similarity (Khorsi only)')
-        min_label.grid(row=0, column=0, sticky=W)
-        self.min_rel_entry = Entry(threshold_frame, textvariable=self.freq_alt_min_rel_var)
-        self.min_rel_entry.insert(0,'-15')
-        self.min_rel_entry.grid(row=0, column=1, sticky=W)
-        max_label = Label(threshold_frame, text='Maximum distance (edit distance only)')
-        max_label.grid(row=1, column=0, sticky=W)
-        self.max_rel_entry = Entry(threshold_frame, textvariable=self.freq_alt_max_rel_var)
-        self.max_rel_entry.insert(0,'8')
-        self.max_rel_entry.grid(row=1, column=1, sticky=W)
-        threshold_frame.grid(column=0, row=3, sticky=W)
-
-
-        phono_align_frame = LabelFrame(options_frame, text='Aligment')
-        align_button = Checkbutton(phono_align_frame, text='Do phonological alignment?', variable=self.align_var)
-        align_button.grid()
-        phono_align_frame.grid(column=0, row=4, sticky=W)
-
-
-        subset_frame = LabelFrame(options_frame, text='Corpus size')
-        subset_frame_tooltip = ToolTip(master=subset_frame, text=('Select this option to only '
+                                    ' alternation in the corpus, select "ignore minimal pairs".'
+            "</FONT>"))
+            threshFrame.setToolTip(("<FONT COLOR=black>"
+            'These values set the minimum similarity'
+                            ' or maximum distance needed in order for two words to be'
+                            ' considered a potential alternation.'
+            "</FONT>"))
+            
+            corpusSizeFrame.setToolTip(("<FONT COLOR=black>"
+            'Select this option to only '
                                         'calculate frequency of alternation over a randomly-'
                                         'selected subset of your corpus. This may be useful '
                                         'for large corpora where calculating frequency of alternation '
                                         'takes a very long time, or for doing Monte Carlo techniques. '
-                                        'Leave blank to use the entire corpus. Enter an integer to '
+                                        'Leave this blank to use the entire corpus. Enter an integer to '
                                         'get a subset of that exact size. Enter a decimal number to '
                                         'get a proportionally sized subset, e.g. 0.25 will '
-                                        'get a subset that is a quarter the size of your original corpus.'))
-        use_subset_label = Label(subset_frame, text='Use only a subset of your corpus?')
-        use_subset_label.grid(column=0,row=0)
-        use_subset_entry = Entry(subset_frame, textvariable=self.use_subset_var)
-        use_subset_entry.grid(column=1,row=0)
-        subset_frame.grid(column=0, row=5, sticky=W)
-
-        output_frame = LabelFrame(options_frame, text='Output all alternations to file?')
-        output_frame_tooltip = ToolTip(master=output_frame, text=('Enter a filename for the list '
-                                'of words with an alternation of the target two sounds to be outputted'
+                                        'get a subset that is a quarter the size of your original corpus.'
+            "</FONT>"))
+            
+            alignFrame.setToolTip(("<FONT COLOR=black>"
+            'Select this option to use '
+                                        'PCTs phonological aligner. This is an automated check '
+                                        'which attempts to ensure that the two target phonemes are aligned '
+                                        '(occur in corresponding positions) in the word pair currently being '
+                                        'evaluated as an alternation.'
+            "</FONT>"))
+            
+            self.fileWidget.setToolTip(("<FONT COLOR=black>"
+            'Enter a filename for the list '
+                                'of words with a potential alternation of the target two sounds to be outputted'
                                 ' to.  This is recommended as a means of double checking the quality '
-                                'of alternations as determined by the algorithm.'))
-        label = Label(output_frame, text='Enter a file name (leave blank for no output file)')
-        self.output_entry = Entry(output_frame)
-        navigate = Button(output_frame, text='Select file location', command=self.choose_output_location)
+                                'of alternations as determined by the algorithm.'
+            "</FONT>"))
 
-        label.grid(row=0, column=0, sticky=W)
-        navigate.grid(row=1, column=0, sticky=W)
-        self.output_entry.grid(row=1, column=1, sticky=W)
-        output_frame.grid(column=0,row=6,sticky=W)
+        self.algorithmWidget.initialClick()
 
-        options_frame.grid(row=0, column=2, sticky=N, padx=10)
-        top_frame.grid(row=0,column=0)
-
-        bottom_frame = Frame(self)
-        ok_button = Button(bottom_frame, text='Calculate frequency of alternation\n(start new results table)', command=self.calculate_freq_of_alt)
-        ok_button.grid(row=0,column=0)
-        self.update_fa_button = Button(bottom_frame, text='Calculate frequency of alternation\n(add to current results table)', command=lambda x=True:self.calculate_freq_of_alt(update=x))
-        self.update_fa_button.grid(row=0,column=1)
-        self.update_fa_button.config(state=DISABLED)
-        cancel_button = Button(bottom_frame, text='Cancel', command=self.cancel_freq_of_alt)
-        cancel_button.grid(row=0,column=2)
-        bottom_frame.grid(row=1,column=0)
-        rb.invoke()
-
-    def cancel_freq_of_alt(self):
-        self.close_results_table()
-        self.destroy()
-
-    def choose_output_location(self):
-        filename = FileDialog.asksaveasfilename()
-        if filename:
-            if not filename.endswith('.txt'):
-                filename = filename+'.txt'
-            self.output_entry.delete(0,END)
-            self.output_entry.insert(0,filename)
-
-    def check_relator_type(self):
-        relator_type = self.relator_type_var.get()
-        if not relator_type == 'Khorsi':
-            for child in self.typetoken_frame.winfo_children():
-                child.config(state=DISABLED)
-            self.min_rel_entry.config(state=DISABLED)
-            self.max_rel_entry.config(state=NORMAL)
-        else:
-           for child in self.typetoken_frame.winfo_children():
-                child.config(state=ACTIVE)
-           self.min_rel_entry.config(state=NORMAL)
-           self.max_rel_entry.config(state=DISABLED)
-
-
-    def calculate_freq_of_alt(self, update=False):
-        s1 = self.seg1_var.get()
-        s2 = self.seg2_var.get()
-
-        use_subset = self.use_subset_var.get()
-        use_corpus = None
-
-        if not use_subset:
-            n = None
-
-        elif use_subset.isnumeric():
-            #use_corpus = self.corpus.random_subset(int(use_subset))
-            n = int(use_subset)
-
-        else:
+    def generateKwargs(self):
+        pairBehaviour = 'individual'
+        kwargs = {'include_minimal_pairs':self.minPairsWidget.isChecked(),
+                    'phono_align':self.alignCheck.isChecked(),
+                    'count_what':self.typeTokenWidget.value()}
+        segPairs = self.segPairWidget.value()
+        if len(segPairs) == 0:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one segment pair.")
+            return None
+        kwargs['segment_pairs'] = segPairs
+        rel_type = self.algorithmWidget.value()
+        if rel_type == 'khorsi':
+            max_rel = None
             try:
-                use_subset = float(use_subset)
-                n = round(len(self.corpus)*use_subset)
-                #use_corpus = self.corpus.get_random_subset(use_subset)
+                min_rel = float(self.minEdit.text())
             except ValueError:
-                MessageBox.showwarning(message='You select to use a random subset of your corpus, but entered '
-                                        'a value that was not a number.\nPlease enter a new value, or '
-                                        'else leave the box blank to use the entire corpus')
-                return
-
-        if n is None:
-            use_corpus = self.corpus
-        elif n > len(self.corpus) or n <= 0:
-            MessageBox.showwarning(message='You either entered \'0\', or else your number is larger than the size of your corpus.'
-                                    '\nPlease enter a new number, or else leave the box blank to use the entire corpus.')
-            return
-
+                min_rel = None
         else:
-            use_corpus = self.corpus.get_random_subset(n)
-
-
-        if not s1 and s2:
-            MessageBox.showerror(message='Please select 2 sounds')
-            return
-
-        if not update and self.results_table is not None:
-            kill_results = MessageBox.askyesno(message=('You already have a results window open.\n'
-                                            'Do you want to destroy it and start a new calculation?'))
-            if not kill_results:
-                return
-            else:
-                self.close_results_table()
-
-        relator_type = self.relator_type_var.get()
-        if relator_type == 'Khorsi':
-            relator_type = 'khorsi'
-        elif relator_type == 'Edit distance':
-            relator_type = 'edit_distance'
-        elif relator_type == 'Phonological edit distance':
-            relator_type = 'phono_edit_distance'
-
-        self.update_fa_button.config(state=ACTIVE)
-
-        #string_type = self.freq_alt_stringtype_var.get()
-        count_what = self.freq_alt_typetoken_var.get()
-        min_ = self.freq_alt_min_rel_var.get()
-        min_rel = int(min_) if min_ else None
-        max_ = self.freq_alt_max_rel_var.get()
-        max_rel = int(max_) if max_ else None
-        min_pairs_ok = True if self.freq_alt_min_pairs_var.get() == 'include' else False
-        alignment = self.align_var.get()
-        if alignment:
-            align_text = 'yes'
-        else:
-            align_text = 'no'
-        output_file = self.output_entry.get()
-        if not output_file:
-            outputfile = None
-
-        if not update:
-            header = [('Sound 1',20),
-                        ('Sound 2', 20),
-                        ('Total words in corpus', 10),
-                        ('Total words with alternations', 10),
-                        ('Frequency of alternation', 10),
-                        ('Type or token', 10),
-                        ('Distance metric', 10),
-                        ('Phonological alignment?', 10)]
-            title = 'Frequency of alternation results'
-
-            results = calc_freq_of_alt(use_corpus, s1, s2, relator_type, count_what,
-                                            min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
-                                            from_gui=True, phono_align=alignment, output_filename=output_file)
-
-            self.results_table = ResultsWindow(title, header, delete_method=self.close_results_table)
-            self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
-
-        else:
-            results = calc_freq_of_alt(self.corpus, s1, s2, relator_type, count_what, phono_align=alignment,
-                                            min_rel=min_rel, max_rel=max_rel, min_pairs_okay=min_pairs_ok,
-                                            from_gui=True, output_filename=output_file)
-            self.results_table.update([s1, s2, results[0], results[1], results[2], count_what, relator_type, align_text])
-
-    def close_results_table(self):
+            min_rel = None
+            try:
+                max_rel = float(self.maxEdit.text())
+            except ValueError:
+                max_rel = None
         try:
-            self.results_table.destroy()
-            self.results_table = None
-        except (TclError, AttributeError):
-            pass#doesn't exist to be destroyed
-        self.update_fa_button.config(state=DISABLED)
+            n = int(self.corpusSizeEdit.text())
+            if n <= 0 or n >= len(self.corpus):
+                raise(ValueError)
+            else:
+                corpus = self.corpus.get_random_subset(n)
+        except ValueError:
+            corpus = self.corpus
+        if self.fileWidget.value() != '':
+            out_file = self.fileWidget.value()
+        else:
+            out_file = None
+        kwargs['sequence_type'] = self.tierWidget.value()
+        kwargs['relator_type'] = rel_type
+        kwargs['corpus'] = corpus
+        kwargs['min_rel'] = min_rel
+        kwargs['max_rel'] = max_rel
+        kwargs['pair_behavior'] = pairBehaviour
+        kwargs['output_filename'] = out_file
+        return kwargs
+
+    def calc(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            self.accept()
+
+    def setResults(self, results):
+        self.results = list()
+        seg_pairs = self.segPairWidget.value()
+        pair_behaviour = 'individual'
+        if pair_behaviour == 'individual':
+            for i, r in enumerate(results):
+                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                    self.tierWidget.displayValue(),
+                                    r[0],
+                                    r[1],
+                                    r[2],
+                                    self.typeTokenWidget.value(),
+                                    self.algorithmWidget.displayValue(),
+                                    self.alignCheck.isChecked()])
+
+        else:
+            pass
+
+    def khorsiSelected(self):
+        self.typeTokenWidget.enable()
+        self.minEdit.setEnabled(True)
+        self.maxEdit.setEnabled(False)
+
+    def editDistSelected(self):
+        self.typeTokenWidget.disable()
+        self.minEdit.setEnabled(False)
+        self.maxEdit.setEnabled(True)
+
+    def phonoEditDistSelected(self):
+        self.typeTokenWidget.disable()
+        self.minEdit.setEnabled(False)
+        self.maxEdit.setEnabled(True)

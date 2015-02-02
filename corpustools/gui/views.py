@@ -1,6 +1,5 @@
 
 import csv
-from corpustools.config import TMP_DIR
 
 from .imports import *
 
@@ -44,7 +43,7 @@ class TableWidget(QTableView):
             self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
         except AttributeError:
             self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
-            
+
         self.setSortingEnabled(True)
         self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 

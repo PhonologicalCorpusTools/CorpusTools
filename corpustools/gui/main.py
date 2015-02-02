@@ -2,8 +2,6 @@ import os
 
 from .imports import *
 
-from corpustools.config import TMP_DIR
-
 from .config import Settings, PreferencesDialog
 from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
                     LexiconView,PhonoSearchResults)

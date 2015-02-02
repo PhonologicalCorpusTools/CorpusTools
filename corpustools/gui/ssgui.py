@@ -1,311 +1,410 @@
-import os
 
-from tkinter import (LabelFrame, Label, W, Entry, Button, Radiobutton,
-                    Frame, StringVar, BooleanVar, END, DISABLED, TclError,
-                    ACTIVE, NORMAL, Listbox, N)
+from .imports import *
 
-import tkinter.filedialog as FileDialog
-import tkinter.messagebox as MessageBox
+from collections import OrderedDict
 
-import queue
 from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
 
-from corpustools.gui.basegui import (AboutWindow, FunctionWindow,
-                                    ResultsWindow, ThreadedTask, ToolTip)
+from .widgets import RadioSelectWidget, FileWidget, TierWidget
+from .windows import FunctionWorker, FunctionDialog
+from .corpusgui import AddWordDialog
 
-class SSFunction(FunctionWindow):
-    def __init__(self,corpus,master=None, **options):
-        super(SSFunction, self).__init__(master=master, **options)
-        self.corpus = corpus
-        #string similarity variables
-        self.string_similarity_query_var = StringVar()
-        self.string_similarity_filename_var = StringVar()
-        self.string_similarity_typetoken_var = StringVar()
-        self.string_similarity_stringtype_var = StringVar()
-        self.string_similarity_pairs_var = StringVar()
-        self.string_similarity_comparison_type_var = StringVar()
-        self.string_similarity_one_pair1_var = StringVar()
-        self.string_similarity_one_pair2_var = StringVar()
-        self.string_similarity_min_rel_var = StringVar()
-        self.string_similarity_max_rel_var = StringVar()
-        self.relator_type_var = StringVar()
-        self.title('String similarity')
+class SSWorker(FunctionWorker):
+    def run(self):
+        kwargs = self.kwargs
+        try:
+            corpus = kwargs.pop('corpusModel').corpus
+            query = kwargs.pop('query')
+            alg = kwargs.pop('algorithm')
+            self.results = string_similarity(corpus,
+                                        query,alg,**kwargs)
+        except Exception as e:
+            print(e)
+            self.errorEncountered.emit(e)
+            return
+        if self.stopped:
+            return
+        self.dataReady.emit(self.results)
 
-        relator_type_frame = LabelFrame(self, text='String similarity algorithm')
-        relator_type_tooltip = ToolTip(relator_type_frame, text=('Select which algorithm'
-                                        ' to use for calculating similarity. For Khorsi, '
-                                        'a larger number means strings are more similar. '
-                                        'For edit distance, a smaller number means strings '
-                                        'are more similar (with 0 being identical). For more'
-                                        ' information, click on \'About this function\'.'))
-        for rtype in ['Khorsi', 'Edit distance', 'Phonological edit distance']:
-            rb = Radiobutton(relator_type_frame, text=rtype,variable=self.relator_type_var,
-                            value=rtype, command=self.check_relator_type)
-            rb.grid(sticky=W)
-        relator_type_frame.grid(row=0,column=0,sticky=N)
+class SSDialog(FunctionDialog):
+    header = ['Word 1',
+                'Word 2',
+                'String type',
+                'Result',
+                'Type or token',
+                'Algorithm type']
 
-        comparison_type_frame = LabelFrame(self, text='Comparison type')
-        comparison_type_tooltip = ToolTip(comparison_type_frame, text=('Select how you would'
-                                ' like to use string similarity. You can 1) calculate the'
-                                ' similarity of one word to all other words in the corpus,'
-                                ' 2) calculate the similarity of 2 words to each other, 3)'
-                                ' calculate the similarity of a list of pairs of words in a text file.'))
-        word1_frame = Frame(comparison_type_frame)
-        one_word_radiobutton = Radiobutton(word1_frame, text='Compare one word to entire corpus',
-                                    variable=self.string_similarity_comparison_type_var, value='one',
-                                    command=self.check_comparison_type)
-        one_word_radiobutton.grid(sticky=W)
-        word1_frame.grid(sticky=W)
-        word1_entry = Entry(word1_frame, textvariable=self.string_similarity_query_var)
-        #word1_entry.delete(0,END)
-        #word1_entry.insert(0,selection)
-        word1_entry.grid(sticky=W)
-
-        one_pair_frame = Frame(comparison_type_frame)
-        one_pair_radiobutton = Radiobutton(one_pair_frame, text='Compare a single pair of words to each other',
-                                    variable=self.string_similarity_comparison_type_var, value='one_pair',
-                                    command=self.check_comparison_type)
-        one_pair_radiobutton.grid(row=0, column=0, sticky=W)
-        two_words_frame = Frame(one_pair_frame)
-        first_word_label = Label(two_words_frame, text='Word 1: ')
-        first_word_label.grid(row=1, column=0, sticky=W)
-        first_word_entry = Entry(two_words_frame, textvariable=self.string_similarity_one_pair1_var)
-        first_word_entry.grid(row=1, column=1, sticky=W)
-        second_word_label = Label(two_words_frame, text='Word 2: ')
-        second_word_label.grid(row=2, column=0, sticky=W)
-        second_word_entry = Entry(two_words_frame, textvariable=self.string_similarity_one_pair2_var)
-        second_word_entry.grid(row=2, column=1, sticky=W)
-        two_words_frame.grid(sticky=W)
-        one_pair_frame.grid(sticky=W)
-
-        word_pairs_frame = Frame(comparison_type_frame)
-
-        pairs_radiobutton = Radiobutton(word_pairs_frame, text='Compare a list of pairs of words',
-                                        variable=self.string_similarity_comparison_type_var, value='pairs',
-                                        command=self.check_comparison_type)
-        pairs_radiobutton.grid(sticky=W)
-
-        def get_word_pairs_file():
-            filename = FileDialog.askopenfilename()
-
-            if not filename:
-                return
-            if not filename.endswith('.txt'):
-                filename += '.txt'
-            self.string_similarity_pairs_var.set(filename)
-
-        get_word_pairs_button = Button(word_pairs_frame, text='Choose word pairs file', command=get_word_pairs_file)
-        get_word_pairs_button.grid(sticky=W)
-        get_word_pairs_label = Label(word_pairs_frame, textvariable=self.string_similarity_pairs_var)
-        get_word_pairs_label.grid(sticky=W)
-        word_pairs_frame.grid(sticky=W)
-
-
-        comparison_type_frame.grid(row=0,column=1,sticky=N)
-
-        options_frame = LabelFrame(self, text='Options')
-        self.typetoken_frame = LabelFrame(options_frame, text='Type or Token')
-        typetoken_tooltip = ToolTip(self.typetoken_frame, text=('Select which type of frequency to use'
-                                    ' for calculating similarity (only relevant for Khorsi). Type '
-                                    'frequency means each letter is counted once per word. Token '
-                                    'frequency means each letter is counted as many times as its '
-                                    'word\'s frequency in the corpus.'))
-        type_button = Radiobutton(self.typetoken_frame, text='Count types', variable=self.string_similarity_typetoken_var, value='type')
-        type_button.grid(sticky=W)
-        type_button.invoke()
-        token_button = Radiobutton(self.typetoken_frame, text='Count tokens', variable=self.string_similarity_typetoken_var, value='token')
-        token_button.grid(sticky=W)
-        self.typetoken_frame.grid(column=0, row=0, sticky=W)
-        self.stringtype_frame = LabelFrame(options_frame, text='String type')
-        stringtype_tooltip = ToolTip(self.stringtype_frame, text=('Select whether to calculate similarity'
-                                ' on the spelling of a word (perhaps more useful for morphological purposes)'
-                                ' or transcription of a word (perhaps more useful for phonological purposes).'))
-        self.spelling_button = Radiobutton(self.stringtype_frame, text='Compare spelling', variable=self.string_similarity_stringtype_var, value='spelling')
-        self.spelling_button.grid(sticky=W)
-        self.spelling_button.select()
-        if not self.corpus.has_spelling:
-            self.spelling_button.configure(state=('disabled'))
-        self.transcription_button = Radiobutton(self.stringtype_frame, text='Compare transcription', variable=self.string_similarity_stringtype_var, value='transcription')
-        self.transcription_button.grid(sticky=W)
-        if not self.corpus.has_transcription:
-            self.transcription_button.configure(state=('disabled'))
-        self.stringtype_frame.grid(column=0, row=1, sticky=W)
-        self.threshold_frame = LabelFrame(options_frame, text='Return only results between...')
-        theshold_tooltip = ToolTip(self.threshold_frame, text=('Select the range of similarity'
-                                ' scores for the algorithm to filter out.  For example, a minimum'
-                                ' of -10 for Khorsi or a maximum of 8 for edit distance will likely'
-                                ' filter out words that are highly different from each other.'))
-        min_label = Label(self.threshold_frame, text='Minimum: ')
-        min_label.grid(row=0, column=0)
-        min_rel_entry = Entry(self.threshold_frame, textvariable=self.string_similarity_min_rel_var)
-        min_rel_entry.grid(row=0, column=1, sticky=W)
-        max_label = Label(self.threshold_frame, text='Maximum: ')
-        max_label.grid(row=1, column=0)
-        max_rel_entry = Entry(self.threshold_frame, textvariable=self.string_similarity_max_rel_var)
-        max_rel_entry.grid(row=1, column=1, sticky=W)
-        self.threshold_frame.grid(column=0, row=2, sticky=W)
-        options_frame.grid(row=0, column=2, sticky=N)
-
-        button_frame = Frame(self)
-        ok_button = Button(button_frame, text='OK', command=self.calculate_string_similarity)
-        ok_button.grid(row=0,column=0)
-        if not self.corpus.has_spelling and self.corpus.has_transcription:
-            ok_button.state = DISABLED
-        cancel_button = Button(button_frame, text='Cancel', command=self.cancel_string_similarity)
-        cancel_button.grid(row=0, column=1)
-        info_button = Button(button_frame, text='About this function...', command=self.about_string_similarity)
-        info_button.grid(row=0,column=2)
-        button_frame.grid(row=1)
-
-        self.focus()
-        one_word_radiobutton.invoke()
-        rb.invoke()
-
-    def check_comparison_type(self):
-        if not self.string_similarity_comparison_type_var.get() == 'one':
-            for child in self.threshold_frame.winfo_children():
-                child.config(state=DISABLED)
-        else:
-            for child in self.threshold_frame.winfo_children():
-                try:
-                    child.config(state=ACTIVE)#Label widget
-                except TclError:
-                    child.config(state=NORMAL)#Entry widget
-
-
-    def check_relator_type(self):
-        relator_type = self.relator_type_var.get()
-        if not relator_type == 'Khorsi':
-            for child in self.typetoken_frame.winfo_children():
-                child.config(state=DISABLED)
-        else:
-           for child in self.typetoken_frame.winfo_children():
-                child.config(state=NORMAL)
-
-        if relator_type == 'Phonological edit distance':
-            self.spelling_button.config(state=DISABLED)
-            self.transcription_button.select()
-        else:
-            self.spelling_button.config(state=ACTIVE)
-
-
-
-
-    def about_string_similarity(self):
-        about = AboutWindow('About the string similarity function',
-                ('This function calculates the similarity between words in the corpus,'
+    _about = [('This function calculates the similarity between words in the corpus,'
                 ' based on either their spelling or their transcription. Similarity '
                 'is a function of the longest common shared sequences of graphemes '
                 'or phonemes (weighted by their frequency of occurrence in the corpus), '
                 'subtracting out the non-shared graphemes or phonemes. The spelling '
                 'version was originally proposed as a measure of morphological relatedness,'
                 ' but is more accurately described as simply a measure of string similarity.'),
-                ['Khorsi, A. 2012. On Morphological Relatedness. Natural Language Engineering, 1-19.'],
-                ['Micheal Fry'])
+                '',
+                'Coded by Michael Fry',
+                '',
+                'References',
+                ('Khorsi, A. 2012. On Morphological Relatedness. '
+                'Natural Language Engineering, 1-19.'),
+                ('Luce, Paul A. & David B. Pisoni. 1998. '
+                'Recognizing spoken words: The neighborhood activation model. '
+                'Ear Hear 19.1-36.'),
+                ('Allen, Blake & Michael Becker. 2014. '
+                'Learning alternations from surface forms with sublexical phonology. '
+                'Ms. University of British Columbia and Stony Brook University. '
+                'See also http://sublexical.phonologist.org/')]
 
-    def calculate_string_similarity(self):
+    name = 'string similarity'
 
-        #First check if the word is in the corpus
+    def __init__(self, parent, corpusModel, showToolTips):
+        FunctionDialog.__init__(self, parent, SSWorker())
 
-        string_type = self.string_similarity_stringtype_var.get()
-        relator_type = self.relator_type_var.get()
-        if relator_type == 'Khorsi':
-            relator_type = 'khorsi'
-        elif relator_type == 'Edit distance':
-            relator_type = 'edit_distance'
-        elif relator_type == 'Phonological edit distance':
-            relator_type = 'phono_edit_distance'
-            string_type = 'transcription'
+        self.corpusModel = corpusModel
+        self.showToolTips = showToolTips
 
-        comp_type = self.string_similarity_comparison_type_var.get()
-        if comp_type == 'one':
-            query = self.string_similarity_query_var.get()
-            if not query:
-                MessageBox.showerror(message='Please enter a word')
+        if not self.corpusModel.corpus.has_transcription:
+            self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
+
+        sslayout = QHBoxLayout()
+
+        algEnabled = {'Khorsi':True,
+                    'Edit distance':True,
+                    'Phonological edit distance':self.corpusModel.corpus.has_transcription}
+        self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
+                                            OrderedDict([('Edit distance','edit_distance'),
+                                            ('Phonological edit distance','phono_edit_distance'),
+                                            ('Khorsi','khorsi')]),
+                                            {'Khorsi':self.khorsiSelected,
+                                            'Edit distance':self.editDistSelected,
+                                            'Phonological edit distance':self.phonoEditDistSelected},
+                                            algEnabled)
+
+
+        sslayout.addWidget(self.algorithmWidget)
+
+        compFrame = QGroupBox('Comparison type')
+
+        vbox = QFormLayout()
+        self.compType = None
+        self.oneWordRadio = QRadioButton('Compare one word to entire corpus')
+        self.oneWordRadio.clicked.connect(self.oneWordSelected)
+        self.oneWordEdit = QLineEdit()
+        self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
+
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
+        self.oneNonwordLabel = QLabel('None created')
+        self.oneNonword = None
+        self.oneNonwordButton = QPushButton('Create word/nonword')
+        self.oneNonwordButton.clicked.connect(self.createOneNonword)
+
+        self.twoWordRadio = QRadioButton('Compare a single pair of words to each other')
+        self.twoWordRadio.clicked.connect(self.twoWordsSelected)
+        self.wordOneEdit = QLineEdit()
+        self.wordOneEdit.textChanged.connect(self.twoWordRadio.click)
+        self.nonwordOneLabel = QLabel('None created')
+        self.nonwordOne = None
+        self.nonwordOneButton = QPushButton('Create word/nonword')
+        self.nonwordOneButton.clicked.connect(self.createNonwordOne)
+        self.wordTwoEdit = QLineEdit()
+        self.wordTwoEdit.textChanged.connect(self.twoWordRadio.click)
+        self.nonwordTwoLabel = QLabel('None created')
+        self.nonwordTwo = None
+        self.nonwordTwoButton = QPushButton('Create word/nonword')
+        self.nonwordTwoButton.clicked.connect(self.createNonwordTwo)
+
+        self.fileRadio = QRadioButton('Compare a list of pairs of words')
+        self.fileRadio.clicked.connect(self.fileSelected)
+        self.fileWidget = FileWidget('Select a word pairs file', 'Text file (*.txt *.csv)')
+        self.fileWidget.textChanged.connect(self.fileRadio.click)
+
+        self.clearButton = QPushButton('Clear all created words/nonwords')
+        self.clearButton.clicked.connect(self.clearCreated)
+
+        vbox.addRow(self.oneWordRadio)
+        vbox.addRow(self.oneWordEdit)
+        vbox.addRow(self.oneNonwordRadio)
+        vbox.addRow(self.oneNonwordLabel,self.oneNonwordButton)
+
+        vbox.addRow(self.twoWordRadio)
+        vbox.addRow('Word 1 spelling (if in corpus):',self.wordOneEdit)
+        vbox.addRow(self.nonwordOneLabel,self.nonwordOneButton)
+        vbox.addRow('Word 2 spelling (if in corpus):',self.wordTwoEdit)
+        vbox.addRow(self.nonwordTwoLabel,self.nonwordTwoButton)
+        vbox.addRow(self.fileRadio)
+        vbox.addRow(self.fileWidget)
+        vbox.addRow(self.clearButton)
+
+        compFrame.setLayout(vbox)
+
+        sslayout.addWidget(compFrame)
+
+        optionFrame = QGroupBox('Options')
+
+        optionLayout = QVBoxLayout()
+
+        self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
+
+        optionLayout.addWidget(self.tierWidget)
+
+        self.typeTokenWidget = RadioSelectWidget('Type or token',
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+        optionLayout.addWidget(self.typeTokenWidget)
+
+        threshFrame = QGroupBox('Return only results between...')
+
+        self.minEdit = QLineEdit()
+        self.maxEdit = QLineEdit()
+
+        vbox = QFormLayout()
+        vbox.addRow('Minimum:',self.minEdit)
+        vbox.addRow('Maximum:',self.maxEdit)
+
+        threshFrame.setLayout(vbox)
+
+        optionLayout.addWidget(threshFrame)
+
+        optionFrame.setLayout(optionLayout)
+
+        sslayout.addWidget(optionFrame)
+
+        ssFrame = QFrame()
+        ssFrame.setLayout(sslayout)
+
+        self.layout().insertWidget(0,ssFrame)
+
+        self.algorithmWidget.initialClick()
+        if self.showToolTips:
+            self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which algorithm'
+                                        ' to use for calculating similarity. For Khorsi,'
+                                        ' a larger number means strings are more similar.'
+                                        ' For edit distance, a smaller number means strings'
+                                        ' are more similar (with 0 being identical). For more'
+                                        ' information, click on \'About this function\'.'
+            "</FONT>"))
+            compFrame.setToolTip(("<FONT COLOR=black>"
+            'Select how you would'
+                                ' like to use string similarity. You can 1) calculate the'
+                                ' similarity of one word to all other words in the corpus,'
+                                ' 2) calculate the similarity of 2 words to each other, 3)'
+                                ' calculate the similarity of a list of pairs of words in a text file.'
+            "</FONT>"))
+            self.typeTokenWidget.setToolTip(("<FONT COLOR=black>"
+            'Select which type of frequency to use'
+                                    ' for calculating similarity (only relevant for Khorsi). Type '
+                                    'frequency means each letter is counted once per word. Token '
+                                    'frequency means each letter is counted as many times as its '
+                                    'word\'s frequency in the corpus.'
+            "</FONT>"))
+            self.tierWidget.setToolTip(("<FONT COLOR=black>"
+            'Select whether to calculate similarity'
+                                ' on the spelling of a word (perhaps more useful for morphological purposes)'
+                                ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
+                                ' in the corpus.'
+            "</FONT>"))
+            threshFrame.setToolTip(("<FONT COLOR=black>"
+            'Select the range of similarity'
+                                ' scores for the algorithm to filter out.  For example, a minimum'
+                                ' of -10 for Khorsi or a maximum of 8 for edit distance will likely'
+                                ' filter out words that are highly different from each other.'
+            "</FONT>"))
+
+    def clearCreated(self):
+        self.oneNonWord = None
+        self.nonwordOne = None
+        self.nonwordTwo = None
+        self.oneNonwordLabel.setText('None created')
+        self.nonwordOneLabel.setText('None created')
+        self.nonwordTwoLabel.setText('None created')
+        self.wordOneEdit.setEnabled(True)
+        self.wordTwoEdit.setEnabled(True)
+
+
+    def createOneNonword(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.oneNonword = dialog.word
+            self.oneNonwordLabel.setText('{} ({})'.format(str(self.oneNonword),
+                                                          str(self.oneNonword.transcription)))
+            self.oneNonwordRadio.click()
+
+    def createNonwordOne(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.nonwordOne = dialog.word
+            self.nonwordOneLabel.setText('{} ({})'.format(str(self.nonwordOne),
+                                                          str(self.nonwordOne.transcription)))
+            self.twoWordRadio.click()
+            self.wordOneEdit.setEnabled(False)
+
+    def createNonwordTwo(self):
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        if dialog.exec_():
+            self.nonwordTwo = dialog.word
+            self.nonwordTwoLabel.setText('{} ({})'.format(str(self.nonwordTwo),
+                                                          str(self.nonwordTwo.transcription)))
+            self.twoWordRadio.click()
+            self.wordTwoEdit.setEnabled(False)
+
+
+    def oneWordSelected(self):
+        self.compType = 'one'
+
+    def oneNonwordSelected(self):
+        self.compType = 'nonword'
+
+    def twoWordsSelected(self):
+        self.compType = 'two'
+
+    def fileSelected(self):
+        self.compType = 'file'
+
+    def generateKwargs(self):
+        from corpustools.corpus.classes import Word
+        min_rel = None
+        if self.minEdit.text() != '':
+            try:
+                min_rel = float(self.minEdit.text())
+            except ValueError:
+                pass
+
+        max_rel = None
+        if self.maxEdit.text() != '':
+            try:
+                max_rel = float(self.maxEdit.text())
+            except ValueError:
+                pass
+        kwargs = {'corpusModel':self.corpusModel,
+                'algorithm': self.algorithmWidget.value(),
+                'sequence_type':self.tierWidget.value(),
+                'count_what': self.typeTokenWidget.value(),
+                'min_rel':min_rel,
+                'max_rel':max_rel}
+        #Error checking
+        if self.compType is None:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a comparison type.")
+            return
+        elif self.compType == 'one':
+            text = self.oneWordEdit.text()
+            if not text:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please specify a word.")
                 return
             try:
-                self.corpus.find(query,keyerror=True)
+                word = self.corpusModel.corpus.find(text)
             except KeyError:
-                message = 'The word \"{}\" is not in the corpus'.format(query)
-                MessageBox.showerror(message=message)
+                reply = QMessageBox.critical(self,
+                    "Invalid information", "'{}' was not found in corpus.".format(text))
                 return
-        elif comp_type == 'pairs':
-            if not self.string_similarity_pairs_var.get():
-                MessageBox.showerror(message='Please select a file of word pairs')
+            kwargs['query'] = word
+        elif self.compType == 'nonword':
+
+            if self.oneNonword is None:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please create a word/nonword.")
+                return
+            if not getattr(self.oneNonword,kwargs['sequence_type']):
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
+                return
+            kwargs['query'] = self.oneNonword
+        elif self.compType == 'two':
+            textOne = self.wordOneEdit.text()
+            textTwo = self.wordTwoEdit.text()
+            if self.nonwordOne is not None:
+                if not getattr(self.nonwordOne,kwargs['sequence_type']):
+                    reply = QMessageBox.critical(self,
+                            "Missing information", "Please recreate word/nonword 1 with '{}' specified.".format(self.tierWidget.displayValue()))
+                    return
+                wordone = self.nonwordOne
+            elif textOne:
+                try:
+                    wordOne = self.corpusModel.corpus.find(textOne)
+                except KeyError:
+                    reply = QMessageBox.critical(self,
+                        "Invalid information", "'{}' was not found in corpus.".format(textOne))
+                    return
+            elif not textOne:
+                reply = QMessageBox.critical(self,
+                            "Missing information", "Please specify either a spelling for word one or create a new word.")
                 return
 
-        elif comp_type == 'one_pair':
-            #check if results are already open
-            query1 = self.string_similarity_one_pair1_var.get()
-            query2 = self.string_similarity_one_pair2_var.get()
-            if not (query1 and query2):
-                MessageBox.showerror(message=('You selected to compare a pair,'
-                            'but only entered one word.\Please enter another word'))
-                return
-            try:
-                self.corpus.find(query1,keyerror=True)
-            except KeyError:
-                message = 'The word \"{}\" is not in the corpus'.format(query1)
-                MessageBox.showerror(message=message)
-                return
-
-            try:
-                self.corpus.find(query2,keyerror=True)
-            except KeyError:
-                message = 'The word \"{}\" is not in the corpus'.format(query2)
-                MessageBox.showerror(message=message)
+            if self.nonwordTwo is not None:
+                if not getattr(self.nonwordTwo,kwargs['sequence_type']):
+                    reply = QMessageBox.critical(self,
+                            "Missing information", "Please recreate word/nonword 2 with '{}' specified.".format(self.tierWidget.displayValue()))
+                    return
+                wordTwo = self.nonwordTwo
+            elif textTwo:
+                try:
+                    wordTwo = self.corpusModel.corpus.find(textTwo)
+                except KeyError:
+                    reply = QMessageBox.critical(self,
+                        "Invalid information", "'{}' was not found in corpus.".format(textTwo))
+                    return
+            elif not textTwo:
+                reply = QMessageBox.critical(self,
+                            "Missing information", "Please specify either a spelling for word two or create a new word.")
                 return
 
-        #If it's all good, then calculate relatedness
-        typetoken = self.string_similarity_typetoken_var.get()
-        output_filename = self.string_similarity_filename_var.get()
-        min_rel = self.string_similarity_min_rel_var.get()
-        max_rel = self.string_similarity_max_rel_var.get()
-        if min_rel:
-            min_rel = float(min_rel)
-        else:
-            min_rel = None
+            kwargs['query'] = (wordOne,wordTwo)
+        elif self.compType == 'file':
+            pairs_path = self.fileWidget.value()
+            if not pairs_path:
+                reply = QMessageBox.critical(self,
+                        "Missing information", "Please enter a file path.")
+                return
+            if not os.path.exists(pairs_path):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The file path entered was not found.")
+                return
+            kwargs['query'] = read_pairs_file(pairs_path)
+        return kwargs
 
-        if max_rel:
-            max_rel = float(max_rel)
-        else:
-            max_rel = None
+    def calc(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+        self.thread.start()
 
+        result = self.progressDialog.exec_()
 
+        self.progressDialog.reset()
+        if result:
+            self.accept()
 
-        header = [('Word 1',20),
-                    ('Word 2', 20),
-                    ('Result', 10),
-                    ('String type', 10),
-                    ('Type or token', 10),
-                    ('Algorithm type', 10)]
-        title = 'String similarity results'
-        if self.string_similarity_comparison_type_var.get() == 'one':
-            query = self.string_similarity_query_var.get()
-        elif self.string_similarity_comparison_type_var.get() == 'pairs':
-            pairs_path = self.string_similarity_pairs_var.get()
-            query = read_pairs_file(pairs_path)
-
-        elif self.string_similarity_comparison_type_var.get() == 'one_pair':
-            word1 = self.string_similarity_one_pair1_var.get()
-            word2 = self.string_similarity_one_pair2_var.get()
-            query = (word1,word2)
-        results = string_similarity(self.corpus, query, relator_type,
-                                                string_type = string_type,
-                                                tier_name = string_type,
-                                                count_what = typetoken,
-                                                min_rel = min_rel,
-                                                max_rel = max_rel)
-        self.ss_results = ResultsWindow(title,header)
-
+    def setResults(self, results):
+        self.results = list()
         for result in results:
             w1, w2, similarity = result
-            if relator_type != 'khorsi':
+            if not isinstance(w1,str):
+                w1 = w1.spelling
+            if not isinstance(w2,str):
+                w2 = w2.spelling
+            if self.algorithmWidget.value() != 'khorsi':
                 typetoken = 'N/A'
-            self.ss_results.update([w1.spelling, w2.spelling, similarity, string_type, typetoken, relator_type])
+            else:
+                typetoken = self.typeTokenWidget.value()
+            self.results.append([w1, w2,
+                        self.tierWidget.displayValue(),
+                         similarity, typetoken,
+                        self.algorithmWidget.displayValue()])
 
+    def khorsiSelected(self):
+        self.typeTokenWidget.enable()
+        self.tierWidget.setSpellingEnabled(True)
 
-    def cancel_string_similarity(self):
-        self.destroy()
+    def editDistSelected(self):
+        self.typeTokenWidget.disable()
+        self.tierWidget.setSpellingEnabled(True)
 
+    def phonoEditDistSelected(self):
+        self.typeTokenWidget.disable()
+        self.tierWidget.setSpellingEnabled(False)
