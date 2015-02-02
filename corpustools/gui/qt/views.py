@@ -161,7 +161,6 @@ class LexiconView(QWidget):
                                         Qt.Horizontal, Qt.DisplayRole)
 
         editAction = QAction(self)
-        if attribute
         editAction.setText('Edit column details')
         editAction.triggered.connect(lambda: self.editColumn(column))
 
@@ -170,7 +169,7 @@ class LexiconView(QWidget):
         removeAction.triggered.connect(lambda: self.removeColumn(column))
 
         menu = QMenu(self)
-        menu.addAction(editAction)
+        #menu.addAction(editAction)
         menu.addAction(removeAction)
 
         menu.popup(header.mapToGlobal(pos))
