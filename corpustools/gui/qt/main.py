@@ -707,11 +707,13 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Show text", triggered=self.toggleText)
         self.showTextAct.setCheckable(True)
+        self.showTextAct.setEnabled(False)
 
         self.showDiscoursesAct = QAction( "Show corpus discourses",
                 self,
                 statusTip="Show discourses", triggered=self.toggleDiscourses)
         self.showDiscoursesAct.setCheckable(True)
+        self.showDiscoursesAct.setEnabled(False)
 
         self.quitAct = QAction("&Quit", self, shortcut="Ctrl+Q",
                 statusTip="Quit the application", triggered=self.close)
@@ -879,3 +881,27 @@ class MainWindow(QMainWindow):
         #for f in tmpfiles:
         #    os.remove(os.path.join(TMP_DIR,f))
         super(MainWindow, self).closeEvent(event)
+
+    def cleanUp(self):
+        # Clean up everything
+        for i in self.__dict__:
+            item = self.__dict__[i]
+            clean(item)
+     # end cleanUp
+# end class CustomWindow
+
+def clean(item):
+    """Clean up the memory by closing and deleting the item if possible."""
+    if isinstance(item, list) or isinstance(item, dict):
+        for _ in range(len(item)):
+            clean(item.pop())
+    else:
+        try:
+            item.close()
+        except (RuntimeError, AttributeError): # deleted or no close method
+            pass
+        try:
+            item.deleteLater()
+        except (RuntimeError, AttributeError): # deleted or no deleteLater method
+            pass
+# end cleanUp

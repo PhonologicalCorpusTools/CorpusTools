@@ -29,6 +29,7 @@ def main():
             app.sendMessage('ARISE')
     else:
         main = MainWindow(app)
+        app.aboutToQuit.connect(main.cleanUp)
 
         app.setActiveWindow(main)
         main.show()

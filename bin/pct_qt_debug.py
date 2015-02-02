@@ -16,6 +16,7 @@ if __name__ == '__main__':
     else:
         main = MainWindow(app)
 
+        app.aboutToQuit.connect(main.cleanUp)
         app.setActiveWindow(main)
         main.show()
         sys.exit(app.exec_())

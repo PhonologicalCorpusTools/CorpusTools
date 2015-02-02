@@ -178,8 +178,8 @@ class ASDialog(FunctionDialog):
             optionLayout.addWidget(QLabel('Acoustic similarity benefits from multiprocessing.'))
             optionLayout.addWidget(QLabel('Multiprocessing can be enabled in Preferences.'))
         else:
-            optionLayout.addWidget(QLabel('The acoustic similarity module loaded does not support multiprocessing.'))
-            optionLayout.addWidget(QLabel('Install python-acoustic-similarity to access multiprocessing and additional features.'))
+            optionLayout.addWidget(QLabel('The acoustic similarity module loaded\ndoes not support multiprocessing.'))
+            optionLayout.addWidget(QLabel('Install python-acoustic-similarity\nto access multiprocessing and additional features.'))
 
         optionFrame = QFrame()
 
