@@ -88,7 +88,7 @@ class FunctionDialog(QDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
 
     def handleError(self,error):
-        error.print_to_file(self.parent().settings.error_directory())
+
         if hasattr(error, 'main'):
             reply = QMessageBox()
             reply.setWindowTitle('Error encountered')
@@ -96,7 +96,10 @@ class FunctionDialog(QDialog):
             reply.setText(error.main)
             reply.setInformativeText(error.information)
             reply.setDetailedText(error.details)
-            reply.addButton(QPushButton('Open errors directory'),QMessageBox.AcceptRole)
+
+            if hasattr(error,'print_to_file'):
+                error.print_to_file(self.parent().settings.error_directory())
+                reply.addButton(QPushButton('Open errors directory'),QMessageBox.AcceptRole)
             reply.setStandardButtons(QMessageBox.Close)
             ret = reply.exec_()
             if ret == QMessageBox.AcceptRole:

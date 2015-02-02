@@ -114,7 +114,10 @@ def align_dialog_info(words, phones, wavs, stop_check, call_back):
             cur += 1
             call_back(cur)
         name = os.path.splitext(os.path.split(p3)[1])[0]
-        dialogs[name]['wav'] = p3
+        try:
+            dialogs[name]['wav'] = p3
+        except KeyError:
+            pass
     return dialogs
 
 def align_textgrid_info(textgrids, wavs, stop_check, call_back):
@@ -138,7 +141,10 @@ def align_textgrid_info(textgrids, wavs, stop_check, call_back):
             cur += 1
             call_back(cur)
         name = os.path.splitext(os.path.split(p3)[1])[0]
-        dialogs[name]['wav'] = p3
+        try:
+            dialogs[name]['wav'] = p3
+        except KeyError:
+            pass
     return dialogs
 
 def import_spontaneous_speech_corpus(directory, dialect = 'textgrid', stop_check = None, call_back = None):
@@ -174,7 +180,6 @@ def import_spontaneous_speech_corpus(directory, dialect = 'textgrid', stop_check
         dialogs = align_textgrid_info(textgrids, wavs, stop_check, call_back)
     else:
         dialogs = align_dialog_info(words, phones, wavs, stop_check, call_back)
-    print(len(dialogs))
     if call_back is not None:
         call_back('Processing discourses...')
         call_back(0,len(dialogs))
@@ -191,7 +196,6 @@ def import_spontaneous_speech_corpus(directory, dialect = 'textgrid', stop_check
             if 'textgrid' not in v:
                 continue
             data = textgrids_to_data(v['textgrid'])
-            print(len(data))
             discourse_info['speaker'] = Speaker('')
         else:
             if 'words' not in v:
@@ -322,39 +326,3 @@ def read_words(path, dialect, sr = None):
         else:
             raise(NotImplementedError)
     return output
-
-def validate_data(words,name):
-    for i, w in enumerate(words):
-        if i > 0:
-            prev = words[i-1]
-            if prev['End'] > w['Begin']:
-                if w['UR'] != 'NULL':
-                    if prev['UR'] != 'NULL':
-                        print(name)
-                        print(prev)
-                        print(w)
-                        raise(Exception)
-                else:
-                    words[i]['Begin'] = prev['End']
-
-
-        if i < len(words)-1:
-            foll = words[i+1]
-            if foll['Begin'] < w['End']:
-                if w['UR'] != 'NULL':
-                    if foll['UR'] != 'NULL':
-                        print(name)
-                        print(foll)
-                        print(w)
-                        raise(Exception)
-                else:
-                    words[i]['End'] = foll['Begin']
-        try:
-            cat = Category.objects.get(Label=w['Category'])
-        except Exception:
-            print(name)
-            print(foll)
-            print(w)
-
-            raise(Exception)
-    return words
