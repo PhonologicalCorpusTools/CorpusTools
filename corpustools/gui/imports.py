@@ -6,7 +6,7 @@ try:
                                 pyqtSignal as Signal,QThread,QAbstractTableModel,
                                 QSize, QSettings,QPoint, QItemSelectionModel,
                                 QSortFilterProxyModel, QAbstractItemModel,
-                            QSharedMemory, QEvent, QIODevice, QProcess)
+                            QSharedMemory, QEvent, QIODevice, QProcess, QUrl)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
@@ -19,6 +19,7 @@ try:
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
+    from PyQt5.QtWebKitWidgets import QWebView
     try:
         from PyQt5.QtMultimedia import QSound
     except MultimediaError:
@@ -27,7 +28,7 @@ try:
 except ImportError:
     from PySide.QtCore import (QRectF, Qt, QSettings,QAbstractTableModel,
                 QSize,QPoint, Signal, QThread,QModelIndex, QAbstractItemModel,
-                 QEvent, QIODevice, QProcess)
+                 QEvent, QIODevice, QProcess, QUrl)
     from PySide.QtGui import (QFont, QLayout, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem,
                             QMainWindow, QHBoxLayout, QLabel, QAction,
@@ -42,4 +43,5 @@ except ImportError:
                                 QToolBar, QStyledItemDelegate, QDataWidgetMapper,
                                 QTabWidget)
     from PySide.QtNetwork import QLocalSocket, QLocalServer
+    from PySide.QtWebKit import QWebView
     #print('PySide version')

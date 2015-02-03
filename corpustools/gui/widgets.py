@@ -476,7 +476,7 @@ class DigraphWidget(QGroupBox):
             delims.extend([' ','\t','\n'])
         elif isinstance(wd,list):
             delims.extend(wd)
-		else:
+        else:
             delims.append(wd)
         if td is not None:
             if isinstance(td,list):
@@ -811,6 +811,10 @@ class InventoryBox(QWidget):
                     unkBox.addWidget(btn,unkRow,unkCol)
 
                 elif cat[0] == 'Vowel':
+                    print(s.symbol)
+                    print(cat)
+                    if cat[1] is None or cat[2] is None:
+                        continue
                     col = vowColMapping[cat[2]]
                     row = vowRowMapping[cat[1]]
                     if cat[3] == 'Unrounded':
