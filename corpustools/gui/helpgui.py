@@ -16,7 +16,7 @@ class AboutDialog(QDialog):
         else:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
-        self.help_url = 'http://kchall.github.io/CorpusTools/documenation/'
+        self.help_url = 'http://kchall.github.io/CorpusTools/documentation/'
         use_local = os.path.exists(self.help_dir)
 
         layout = QVBoxLayout()
@@ -48,7 +48,7 @@ class HelpDialog(QDialog):
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
-        self.help_url = 'http://kchall.github.io/CorpusTools/documenation/'
+        self.help_url = 'http://kchall.github.io/CorpusTools/documentation/'
         use_local = os.path.exists(self.help_dir)
 
         layout = QVBoxLayout()
