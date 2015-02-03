@@ -474,10 +474,15 @@ class DigraphWidget(QGroupBox):
         delims = []
         if wd is None:
             delims.extend([' ','\t','\n'])
-        else:
+        elif isinstance(wd,list):
+            delims.extend(wd)
+		else:
             delims.append(wd)
         if td is not None:
-            delims.append(td)
+            if isinstance(td,list):
+                delims.extend(td)
+            else:
+                delims.append(td)
         minus.update(delims)
         possible = sorted(self._parent.characters - minus, key = lambda x: x.lower())
         dialog = DigraphDialog(possible,self)
