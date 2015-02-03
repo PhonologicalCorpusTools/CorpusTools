@@ -29,7 +29,7 @@ def main():
     corpus_path = args.corpus_file_name
     if not os.path.isfile(corpus_path):
         corpus_path = os.path.join(os.getcwd(), corpus_path)
-    corpus = load_binary(corpus_path)[0]
+    corpus = load_binary(corpus_path)
     outfile = args.outfile
     results = KullbackLeibler(corpus[0], args.seg1, args.seg2, outfile=None)
     if outfile is not None:
