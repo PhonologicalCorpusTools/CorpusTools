@@ -811,8 +811,6 @@ class InventoryBox(QWidget):
                     unkBox.addWidget(btn,unkRow,unkCol)
 
                 elif cat[0] == 'Vowel':
-                    print(s.symbol)
-                    print(cat)
                     if cat[1] is None or cat[2] is None:
                         continue
                     col = vowColMapping[cat[2]]
