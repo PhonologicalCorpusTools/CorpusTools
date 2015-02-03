@@ -12,7 +12,10 @@ class AboutDialog(QDialog):
 
         if hasattr(sys, 'frozen'):
             base_dir = os.path.dirname(sys.executable)
-            self.help_dir = os.path.join(base_dir, 'html')
+            if sys.platform == 'win32':
+                self.help_dir = os.path.join(base_dir, 'html')
+            elif sys.platform == 'darwin':
+                self.help_dir = os.path.join(base_dir, 'docs','build','html')
         else:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
@@ -43,7 +46,10 @@ class HelpDialog(QDialog):
 
         if hasattr(sys, 'frozen'):
             base_dir = os.path.dirname(sys.executable)
-            self.help_dir = os.path.join(base_dir, 'html')
+            if sys.platform == 'win32':
+                self.help_dir = os.path.join(base_dir, 'html')
+            elif sys.platform == 'darwin':
+                self.help_dir = os.path.join(base_dir, 'docs','build','html')
         else:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

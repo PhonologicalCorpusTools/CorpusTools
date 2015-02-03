@@ -50,6 +50,10 @@ build_exe_options = {"excludes": [
                         "tkinter",],
                     "include_files":incl_files,
                     "includes": [
+                            "PyQt5",
+                            "PyQt5.QtWebKitWidgets",
+                            "PyQt5.QtWebKit",
+                            "PyQt5.QtPrintSupport",
                             "numpy",
                             "scipy",
                             "numpy.lib.format",
@@ -77,7 +81,7 @@ bdist_msi_options = {
         'data':msi_data}
 
 bdist_mac_options = {'iconfile':'docs/images/icon.icns',
-                    'qt_menu_nib':'/usr/local/Cellar/qt5/5.3.2/plugins/platforms',
+                    'qt_menu_nib':'/opt/local/share/qt5/plugins/platforms',
                     'bundle_name':'Phonological CorpusTools',
                     #'include_frameworks':["/Library/Frameworks/Tcl.framework",
                     #                    "/Library/Frameworks/Tk.framework"]
