@@ -22,7 +22,7 @@ def main():
 
     ####
 
-    corpus = load_binary(args.corpus_file_name)[0]
+    corpus = load_binary(args.corpus_file_name)
 
     query = tuple(args.query.split(','))
     if len(query) < 2:

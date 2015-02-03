@@ -1,9 +1,15 @@
 import argparse
 import os
 import codecs
+import ntpath
 
 from corpustools.corpus.io.csv import load_corpus_csv
 from corpustools.corpus.io.binary import save_binary
+
+
+def path_leaf(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
 
 
 def main():
@@ -22,16 +28,23 @@ def main():
 
     delimiter = codecs.getdecoder("unicode_escape")(args.delimiter)[0]
 
-    try: # Unix filepaths
-        filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name)
-        corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name, 
-                delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'/'+args.feature_file_name)
+    try: # Full path specified
+        filename, extension = os.path.splitext(args.csv_file_name)
+        filename = path_leaf(filename)
+        corpus = load_corpus_csv(args.csv_file_name, args.csv_file_name, 
+                delimiter, args.trans_delimiter, args.feature_file_name)
         save_binary(corpus, filename+'.corpus')
-    except FileNotFoundError: # Windows filepaths
-        filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name)
-        corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name, 
-                delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'\\'+args.feature_file_name)
-        save_binary(corpus, filename+'.corpus')
+    except FileNotFoundError:
+        try: # Unix filepaths
+            filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name)
+            corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name, 
+                    delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'/'+args.feature_file_name)
+            save_binary(corpus, filename+'.corpus')
+        except FileNotFoundError: # Windows filepaths
+            filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name)
+            corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name, 
+                    delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'\\'+args.feature_file_name)
+            save_binary(corpus, filename+'.corpus')
 
 
 if __name__ == '__main__':
