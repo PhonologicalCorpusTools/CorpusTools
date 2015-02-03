@@ -476,7 +476,7 @@ class DigraphWidget(QGroupBox):
             delims.extend([' ','\t','\n'])
         elif isinstance(wd,list):
             delims.extend(wd)
-		else:
+        else:
             delims.append(wd)
         if td is not None:
             if isinstance(td,list):
