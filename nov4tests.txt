@@ -1,0 +1,2 @@
+FirstWord	SecondWord	RelatednessScore
+sasi	shashi	2

@@ -1,0 +1,356 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Mutual Information &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Acoustic Similarity" href="acoustic_similarity.html" />
+    <link rel="prev" title="Frequency of alternation" href="frequency_of_alternation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="acoustic_similarity.html" title="Acoustic Similarity"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="frequency_of_alternation.html" title="Frequency of alternation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="mutual-information">
+<span id="id1"></span><h1>Mutual Information<a class="headerlink" href="#mutual-information" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-the-function">
+<span id="about-mi"></span><h2>About the function<a class="headerlink" href="#about-the-function" title="Permalink to this headline">¶</a></h2>
+<p>Mutual information <a class="footnote-reference" href="#id9" id="id2">[1]</a> is a measure of how much dependency there is between
+two random variables, X and Y. That is, there is a certain amount of
+information gained by learning that X is present and <em>also</em> a certain amount
+of information gained by learning that Y is present. But knowing that X
+is present might also tell you something about the likelihood of Y being
+present, and vice versa. If X and Y always co-occur, then knowing that
+one is present already tells you that the other must also be present. On
+the other hand, if X and Y are entirely independent, then knowing that
+one is present tells you nothing about the likelihood that the other is
+present.</p>
+<p>In phonology, there are two primary ways in which one could interpret X
+and Y as random variables. In one version, X and Y are equivalent random
+variables, each varying over “possible speech sounds in some unit” (where
+the unit could be any level of representation, e.g. a word or even a
+non-meaningful unit such as a bigram). In this case, one is measuring
+how much the presence of X anywhere in the defined unit affects the
+presence of Y in that same unit, regardless of the order in which X and
+Y occur, such that the mutual information of (X; Y) is the same as the
+mutual information of (Y; X), and furthermore, the pointwise mutual
+information of any individual value of each variable (X = <em>a</em>; Y = <em>b</em>) is
+the same as the pointwise mutual information of (X = <em>b</em>; Y = <em>a</em>). Although
+his is perhaps the most intuitive version of mutual information, given
+that it does give a symmetric measure for “how much information does the
+presence of a provide about the presence of <em>b</em>,” we are not currently
+aware of any work that has attempted to use this interpretation of MI
+for phonological purposes.</p>
+<p>The other interpretation of MI assumes that X and Y are different random
+variables, with X being “possible speech sounds occurring as the first
+member of a bigram” and Y being “possible speech sounds occurring as the
+second member of a bigram.” This gives a directional interpretation to
+mutual information, such that, while the mutual information of (X; Y) is
+the same as the mutual information of (Y; X), the pointwise mutual
+information of (X = <em>a</em>; Y = <em>b</em>) is NOT the same as the pointwise mutual
+information of (X = <em>b</em>; Y = <em>a</em>), because the possible values for X and Y
+are different. (It is still, trivially, the case that the pointwise mutual
+information of (X = <em>a</em>; Y = <em>b</em>) and (Y = <em>b</em>; X = <em>a</em>) are equal.)</p>
+<p>This latter version of mutual information has primarily been used as a
+measure of co-occurrence restrictions (harmony, phonotactics, etc.). For
+example, <a class="reference internal" href="references.html#goldsmith2012" id="id3">[Goldsmith2012]</a> use pointwise mutual information as a
+way of examining Finnish vowel harmony; see also discussion in
+<a class="reference internal" href="references.html#goldsmith2002" id="id4">[Goldsmith2002]</a>. Mutual information has also been used instead of
+transitional probability as a way of finding boundaries between words
+in running speech, with the idea that bigrams that cross word boundaries
+will have, on average, lower values of mutual information than bigrams
+that are within words (see <a class="reference internal" href="references.html#brent1999" id="id5">[Brent1999]</a>, <a class="reference internal" href="references.html#rytting2004" id="id6">[Rytting2004]</a>). Note, however, that
+in order for this latter use of mutual information to be useful, one must
+be using a corpus based on running text rather than a corpus that is
+simply a list of individual words and their token frequencies.</p>
+</div>
+<div class="section" id="method-of-calculation">
+<span id="mi-method"></span><h2>Method of calculation<a class="headerlink" href="#method-of-calculation" title="Permalink to this headline">¶</a></h2>
+<p>Both of the interpretations of mutual information described above are
+implemented in PCT. We refer to the first one, in which X and Y are
+interpreted as equal random variables, varying over “possible speech
+sounds in a unit,” as word-internal co-occurrence pointwise mutual
+information (pMI), because we specifically use the word as the unit in
+which to measure pMI. We refer to the second one, in which X and Y are
+different random variables, over either the first or second members of
+bigrams, as ordered pair pMI.</p>
+<p>The general formula for pointwise mutual information is given below;
+it is the binary logarithm of the joint probability of X = <em>a</em> and Y = <em>b</em>,
+divided by the product of the individual probabilities that X = <em>a</em> and Y = <em>b</em>.</p>
+<p><span class="math">\(pMI = log_2 (\frac{p(X=a \&amp; Y = b)}{p(X=a)*p(Y=b)})\)</span></p>
+<p><strong>Word-internal co-occurrence pMI</strong>: In this version, the joint probability
+that X = <em>a</em> and Y = <em>b</em> is equal to the probability that some unit
+(here, a word) contains both a and b (in any order). Therefore, the
+pointwise mutual information of the sounds <em>a</em> and <em>b</em> is equal to the binary
+logarithm of the probability of some word containing both <em>a</em> and <em>b</em>, divided
+by the product of the individual probabilities of a word containing <em>a</em> and
+a word containing <em>b</em>.</p>
+<p>Pointwise mutual information for individual segments:</p>
+<p><span class="math">\(pMI_{word-internal} = log_2 (\frac{p(a \in W \&amp; b \in W)}
+{p(a \in W)*p(b \in W)})\)</span></p>
+<p>Ordered pair pMI: In this version, the joint probability that X = <em>a</em> and
+Y = <em>b</em> is equal to the probability of occurrence of the sequence ab.
+Therefore, the pointwise mutual information of a bigram (e.g., <em>ab</em>) is
+equal to the binary logarithm of the probability of the bigram divided
+by the product of the individual segment probabilities, as shown in the
+formula below.</p>
+<p>Pointwise mutual information for bigrams:</p>
+<p><span class="math">\(pMI_{ordered-pair} = log_2 (\frac{p(ab)}
+{p(a)*p(b)})\)</span></p>
+<p>For example, given the bigram [a, b], its pointwise mutual information
+is the binary logarithm of the probability of the sequence [ab] in the
+corpus divided by a quantity equal to the probability of [a] times the
+probability of [b]. Bigram probabilities are calculated by dividing counts
+by the total number of bigrams, and unigram probabilities are calculated
+equivalently.</p>
+<p>Note that pMI can also be expressed in terms of the information content
+of each of the members of the bigram. Information is measured as the
+negative log of the probability of a unit <span class="math">\((I(a) = -log_2*p(a))\)</span>, so the
+pMI of a bigram <em>ab</em> is also equal to <span class="math">\(I(a) + I(b) – I(ab)\)</span>.</p>
+<p>Note that in PCT, calculations are not rounded until the final stage,
+whereas in <a class="reference internal" href="references.html#goldsmith2012" id="id7">[Goldsmith2012]</a>, rounding was done at some
+intermediate stages as well, which may result in slightly different
+final pMI values being calculated.</p>
+</div>
+<div class="section" id="implementing-the-mutual-information-function-in-the-gui">
+<span id="mi-gui"></span><h2>Implementing the mutual information function in the GUI<a class="headerlink" href="#implementing-the-mutual-information-function-in-the-gui" title="Permalink to this headline">¶</a></h2>
+<p>To start the analysis, click on “Analysis” / “Calculate mutual information...”
+in the main menu, and then follow these steps:</p>
+<ol class="arabic simple">
+<li><strong>Bigram</strong>: Click on the “Add bigram” button in the “Mutual Information”
+dialogue box. A new window will open with a phonetic inventory of all
+the segments that occur in your corpus. Select the bigram by clicking
+on one segment from the “left-hand side” and one segment from the
+“right-hand side.” To add more than one bigram, click “Add and create
+another” to be automatically returned to the selection window. Once
+the last bigram has been selected, simply click “Add” to return to
+the Mutual Information dialogue box. All the selected bigrams will
+appear in a list. To remove one, click on it and select “Remove
+selected bigram.”</li>
+<li><strong>Tier</strong>: Mutual information can be calculated on any available tier.
+The default is transcription. If a vowel tier has been created,
+for example, one could calculate the mutual information between
+vowels on that tier, ignoring intervening consonants, to examine
+harmony effects.</li>
+<li><strong>Domain</strong>: Choosing “set domain to word” will change the calculation so
+that the calculation is for word-internal co-occurrence pMI. In this
+case, the order and adjacency  of the bigram does not matter; it is
+simply treated as a pair of segments that could occur anywhere in a word.</li>
+<li><strong>Word boundary count</strong>: A standard word object in PCT contains word
+boundaries on both sides of it (e.g., [#kæt#] ‘cat’). If words were
+concatenated in real running speech, however, one would expect to see
+only one word boundary between each pair of words (e.g., [#mai#kæt#]
+‘my cat’ instead of [#mai##kæt#]). To reproduce this effect and assume
+that word boundaries occur only once between words (as is assumed in
+<a class="reference internal" href="references.html#goldsmith2012" id="id8">[Goldsmith2012]</a>, choose “halve word boundary count.” Note that this
+technically divides the number of boundaries in half and then adds one,
+to compensate for the extra “final” boundary at the end of an utterance.
+(It will make a difference only for calculations that include a boundary
+as one member of the pair.)</li>
+<li><strong>Results</strong>: Once all options have been selected, click “Calculate mutual
+information.” If this is not the first calculation, and you want to add
+the results to a pre-existing results table, select the choice that
+says “add to current results table.” Otherwise, select “start new
+results table.” A dialogue box will open, showing a table of the
+results, including sound 1, sound 2, the tier used, and the mutual
+information value. To save these results to a .txt file, click on
+“Save to file” at the bottom of the table.</li>
+</ol>
+<p>The following image shows the inventory window used for selecting bigrams
+in the sample corpus:</p>
+<a class="reference internal image-reference" href="_images/bigram.png"><img alt="_images/bigram.png" class="align-center" src="_images/bigram.png" style="width: 90%;" /></a>
+<p>The selected bigrams appear in the list in the “Mutual Information” dialogue box:</p>
+<a class="reference internal image-reference" href="_images/midialog.png"><img alt="_images/midialog.png" class="align-center" src="_images/midialog.png" style="width: 90%;" /></a>
+<p>The resulting mutual information results table:</p>
+<a class="reference internal image-reference" href="_images/miresults.png"><img alt="_images/miresults.png" class="align-center" src="_images/miresults.png" style="width: 90%;" /></a>
+<p>To return to the function dialogue box with your most recently used selections,
+click on “Reopen function dialog.” Otherwise, the results table can be
+closed and you will be returned to your corpus view.</p>
+</div>
+<div class="section" id="implementing-the-mutual-information-function-on-the-command-line">
+<span id="mi-cli"></span><h2>Implementing the mutual information function on the command line<a class="headerlink" href="#implementing-the-mutual-information-function-on-the-command-line" title="Permalink to this headline">¶</a></h2>
+<p>In order to perform this analysis on the command line, you must enter a
+command in the following format into your Terminal:</p>
+<div class="highlight-python"><div class="highlight"><pre>pct_mutualinfo CORPUSFILE ARG2
+</pre></div>
+</div>
+<p>...where CORPUSFILE is the name of your *.corpus file and ARG2 is the
+bigram whose mutual information you wish to calculate. The bigram must
+be in the format &#8216;s1,s2&#8217; where s1 and s2 are the first and second
+segments in the bigram. You may also use command line options to
+change the sequency type to use for your calculations, or to specify
+an output file name. Descriptions of these arguments can be viewed by
+running <tt class="docutils literal"><span class="pre">pct_mutualinfo</span> <span class="pre">-h</span></tt> or <tt class="docutils literal"><span class="pre">pct_mutualinfo</span> <span class="pre">--help</span></tt>. The help text
+from this command is copied below, augmented with specifications of
+default values:</p>
+<p>Positional arguments:</p>
+<dl class="cmdoption">
+<dt id="cmdoption-arg-corpus_file_name">
+<tt class="descname">corpus_file_name</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-arg-corpus_file_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of corpus file</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-arg-query">
+<tt class="descname">query</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-arg-query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bigram, as str separated by comma</p>
+</dd></dl>
+
+<p>Optional arguments:</p>
+<dl class="cmdoption">
+<dt id="cmdoption-h">
+<tt class="descname">-h</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-h" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--help">
+<tt class="descname">--help</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption--help" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show help message and exit</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-s">
+<tt class="descname">-s</tt><tt class="descclassname"> SEQUENCE_TYPE</tt><a class="headerlink" href="#cmdoption-s" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--sequence_type">
+<tt class="descname">--sequence_type</tt><tt class="descclassname"> SEQUENCE_TYPE</tt><a class="headerlink" href="#cmdoption--sequence_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The attribute of Words to calculate FL over. Normally, this will be
+the transcription, but it can also be the spelling or a user-specified tier.</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-o">
+<tt class="descname">-o</tt><tt class="descclassname"> OUTFILE</tt><a class="headerlink" href="#cmdoption-o" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--outfile">
+<tt class="descname">--outfile</tt><tt class="descclassname"> OUTFILE</tt><a class="headerlink" href="#cmdoption--outfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of output file</p>
+</dd></dl>
+
+<p>EXAMPLE 1: If your corpus file is example.corpus and you want to calculate
+the mutual information of the bigram &#8216;si&#8217; using defaults for all optional
+arguments, you would run the following command in your terminal window:</p>
+<div class="highlight-python"><div class="highlight"><pre>pct_mutualinfo example.corpus s,i
+</pre></div>
+</div>
+<p>EXAMPLE 2: Suppose you want to calculate the mutual information of the
+bigram &#8216;si&#8217; on the spelling tier. In addition, you want the script to
+produce an output file called output.txt. You would need to run the
+following command:</p>
+<div class="highlight-python"><div class="highlight"><pre>pct_mutualinfo example.corpus s,i -s spelling -o output.txt
+</pre></div>
+</div>
+<table class="docutils footnote" frame="void" id="id9" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>The algorithm in PCT calculates what is sometimes referred to
+as the “pointwise” mutual information of a pair of units X and Y,
+in contrast to “mutual information,” which would be the expected
+average value of the pointwise mutual information of all possible
+values of X and Y. We simplify to use “mutual information” throughout.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Mutual Information</a><ul>
+<li><a class="reference internal" href="#about-the-function">About the function</a></li>
+<li><a class="reference internal" href="#method-of-calculation">Method of calculation</a></li>
+<li><a class="reference internal" href="#implementing-the-mutual-information-function-in-the-gui">Implementing the mutual information function in the GUI</a></li>
+<li><a class="reference internal" href="#implementing-the-mutual-information-function-on-the-command-line">Implementing the mutual information function on the command line</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="frequency_of_alternation.html"
+                        title="previous chapter">Frequency of alternation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="acoustic_similarity.html"
+                        title="next chapter">Acoustic Similarity</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mutual_information.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="acoustic_similarity.html" title="Acoustic Similarity"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="frequency_of_alternation.html" title="Frequency of alternation"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

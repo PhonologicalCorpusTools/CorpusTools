@@ -1,0 +1,267 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Frequency of alternation &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Mutual Information" href="mutual_information.html" />
+    <link rel="prev" title="String similarity and neighbourhood density" href="neighborhood_density.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="mutual_information.html" title="Mutual Information"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="neighborhood_density.html" title="String similarity and neighbourhood density"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="frequency-of-alternation">
+<span id="id1"></span><h1>Frequency of alternation<a class="headerlink" href="#frequency-of-alternation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-the-function">
+<span id="about-frequency-of-alternation"></span><h2>About the function<a class="headerlink" href="#about-the-function" title="Permalink to this headline">¶</a></h2>
+<p>The occurrence of alternations can be used in assessing whether two
+phonemes in a language are contrastive or allophonic, with alternations
+promoting the analysis of allophony (e.g., <a class="reference internal" href="references.html#silverman2006" id="id2">[Silverman2006]</a>, <a class="reference internal" href="references.html#johnson2010" id="id3">[Johnson2010]</a>,
+<a class="reference internal" href="references.html#lu2012" id="id4">[Lu2012]</a>), though it’s clear that not all alternating sounds are
+allophonic (e.g., the [k]~[s] alternation in electric~electricity).</p>
+<p>In general, two phonemes are considered to alternate if they occur in
+corresponding positions in two related words. For example, [s]/[ʃ]
+would be considered an alternation in the words [dəpɹɛs] and [dəpɹɛʃən]
+as they occur in corresponding positions and the words are morphologically
+related. <a class="reference internal" href="references.html#johnson2010" id="id5">[Johnson2010]</a> make the point that alternations may be
+more or less frequent in a language, and imply that this frequency may
+affect the influence of the alternations on phonological relations. As far
+as we know, however, there is no literature that directly tests this claim
+or establishes how frequency of alternation could actually be quantified
+(though see discussion in <a class="reference internal" href="references.html#hall2014b" id="id6">[Hall2014b]</a>).</p>
+</div>
+<div class="section" id="method-of-calculation">
+<span id="method-frequency-alternation"></span><h2>Method of calculation<a class="headerlink" href="#method-of-calculation" title="Permalink to this headline">¶</a></h2>
+<p>In PCT, frequency of alternation [1] is the ratio of the number of words
+that have an alternation of two phonemes to the total number of words
+that contain either phoneme, as in:</p>
+<p><span class="math">\(Frequency\ of\ alternation = \frac{Words\ with\ an\ alternation\ of\ s_1\ and\ s_2}
+{Words\ with\ s_1\ +\ words\ with\ s_2}\)</span></p>
+<p>To determine whether two words have an alternation of the targeted phonemes,
+one word must contain phoneme 1, the other must contain phoneme 2, and some
+threshold of “relatedness” must be met. In an ideal world, this would be
+determined by a combination of orthographic, phonological, and semantic
+similarity; see discussion in Hall et al. (in submission). Within PCT,
+however, a much more basic relatedness criterion is used: string similarity.
+This is indeed what <a class="reference internal" href="references.html#khorsi2012" id="id7">[Khorsi2012]</a> proposes as a measure of morphological
+relatedness, and though we caution that this is not in particularly close
+alignment with the standard linguistic interpretation of morphological
+relatedness, it is a useful stand-in for establishing an objective
+criterion. If both conditions are met, the two words are considered to
+have an alternation and are added to the pool of “<em>words with an
+alternation of s1 and s2</em>.”</p>
+<p>It is also possible to require a third condition, namely, that the
+location of phoneme 1 and phoneme 2 be roughly phonologically aligned
+across the two words (e.g., preceded by the same material). Requiring
+phonological alignment will make PCT more conservative in terms of what
+it considers to “count” as alternations. However, the phonological
+alignment algorithm is based on <a class="reference internal" href="references.html#allen2014" id="id8">[Allen2014]</a> and currently
+only works with English-type morphology, i.e., a heavy reliance on
+prefixes and suffixes rather than any other kinds of morphological
+alternations. Thus, it should not be used with non-affixing languages.</p>
+<p>Again, we emphasize that we do <em>not</em> believe this to currently be a
+particularly accurate reflection of morphological relatedness, so the
+resulting calculation of frequency of alternation should be treated with
+<strong>extreme</strong> caution. We include it primarily because it is a straightforward
+function of string similarity that has been claimed to be relevant, not
+because the current instantiation is thought to be particularly valid.</p>
+</div>
+<div class="section" id="implementing-the-frequency-of-alternation-function-in-the-gui">
+<span id="frequency-of-alternation-gui"></span><h2>Implementing the frequency of alternation function in the GUI<a class="headerlink" href="#implementing-the-frequency-of-alternation-function-in-the-gui" title="Permalink to this headline">¶</a></h2>
+<p>To start the analysis, click on “Analysis” / “Calculate frequency of
+alternation...” in the main menu, and then follow these steps:</p>
+<ol class="arabic simple">
+<li><strong>Segments</strong>: The first step is to choose which two sounds you wish to
+check alternations for. Click on “Add pair of sounds”; PCT will
+automatically populate a menu of all sounds in the corpus, so all
+that needs to be done is the selection of the targeted two sounds.
+Multiple pairs of sounds can be added by selecting “Add and create
+another” instead “Add” in the selection window.</li>
+<li><strong>String similarity algorithm</strong>: Next, choose which distance / similarity
+metric to use. Refer to <a class="reference internal" href="string_similarity.html#method-string-similarity"><em>Method of calculation: String similarity</em></a> for more details.</li>
+<li><strong>Tier</strong>: The tier from which string similarity is to be calculated can
+be selected. Generally, one is likely to care most about full
+transcriptions, but other tiers (e.g., a vowel tier) can also be
+selected; in this case, all information removed from the tier is
+ignored.</li>
+<li><strong>Frequency Type</strong>: Next, select which frequency type to use for your
+similarity metric, either type or token frequency. This parameter is
+only available if using the Khorsi similarity metric, which relies on
+counting the frequency of occurrence of the sounds in the currently
+selected corpus; neither edit distance metric involves frequency.</li>
+<li><strong>Minimal pairs</strong>: Then, select whether you wish to include alternations
+that occur in minimal pairs. If, for example, the goal is to populate
+a list containing all instances where two segments potentially
+alternate, select “include minimal pairs.” Alternatively, if one
+wishes to discard known alternations that are contrastive, select
+“ignore minimal pairs.” (E.g., “bat” and “pat” look like a potential
+“alternation” of [b] and [p] to PCT, because they are extremely similar
+except for the sounds in question, which are also phonologically aligned.)</li>
+<li><strong>Threshold values</strong>: If the Khorsi algorithm is selected, enter the minimum
+similarity value required for two words to count as being related.
+Currently the default is -15; this is an arbitrary (and relatively
+low / non-conservative) value. We recommend reading <a class="reference internal" href="references.html#khorsi2012" id="id9">[Khorsi2012]</a> and
+examining the range of values obtained using the string similarity
+algorithm before selecting an actual value here. Alternatively, if
+one of the edit distance algorithms is selected, you should instead
+enter a maximum distance value that is allowed for two words to count
+as being related. Again, there is a default (6) that is relatively
+high and non-conservative; an understanding of edit distances is crucial
+for applying this threshold in a meaningful way.</li>
+<li><strong>Phonological alignment</strong>: Choose whether you want to require the phones
+to be phonologically aligned or not, as per the above explanation.</li>
+<li><strong>Corpus size</strong>: Calculating the full set of possible alternations for a
+pair of sounds may be extremely time-consuming, as all words in the
+corpus must be compared pairwise. To avoid this problem, a subset of
+the corpus can be selected (in which case, we recommend running the
+calculation several times so as to achieve different random subsets
+for comparison). To do so, enter either (1) the number of words you’d
+like PCT to extract from the corpus as a subset (e.g., 5000) or (2) a
+decimal, which will result in that percentage of the corpus being used
+as a subset (e.g., 0.05 for 5% of the corpus).</li>
+<li><strong>Output alternations</strong>: You can choose whether you want PCT to output a
+list of all the words it considers to be “alternations.” This is useful
+for determining how accurate the calculation is. If you do want the
+list to be created, enter a file path or select it using the system
+dialogue box that opens when you click on “Select file location.” If
+you do not want such a list, leave this option blank.</li>
+</ol>
+<p>An example of selecting the parameters for frequency of alternation,
+using the sample corpus:</p>
+<a class="reference internal image-reference" href="_images/freqaltdialog.png"><img alt="_images/freqaltdialog.png" class="align-center" src="_images/freqaltdialog.png" style="width: 90%;" /></a>
+<ol class="arabic simple" start="10">
+<li><strong>Results</strong>: Once all options have been selected, click “Calculate
+frequency of alternation.” If this is not the first calculation,
+and you want to add the results to a pre-existing results table,
+select the choice that says “add to current results table.” Otherwise,
+select “start new results table.” A dialogue box will open, showing
+a table of the results, including sound 1, sound 2, the total number
+of words with either sound, and total number of words with an
+alternation, the frequency of alternation and information about
+the specified similarity / distance metric and selected threshold
+values. To save these results to a .txt file, click on “Save to file”
+at the bottom of the table.</li>
+</ol>
+<p>An example of the results table:</p>
+<a class="reference internal image-reference" href="_images/freqaltresults.png"><img alt="_images/freqaltresults.png" class="align-center" src="_images/freqaltresults.png" style="width: 90%;" /></a>
+<p>To return to the function dialogue box with your most recently used
+selections, click on “Reopen function dialog.” Otherwise, the results
+table can be closed and you will be returned to your corpus view.</p>
+<table class="docutils footnote" frame="void" id="id10" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td>As emphasized throughout this section, the algorithm implemented
+in PCT is an extremely inaccurate way of calculating frequency of
+alternation, and should be used only with a full understanding of
+its severe limitations.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Frequency of alternation</a><ul>
+<li><a class="reference internal" href="#about-the-function">About the function</a></li>
+<li><a class="reference internal" href="#method-of-calculation">Method of calculation</a></li>
+<li><a class="reference internal" href="#implementing-the-frequency-of-alternation-function-in-the-gui">Implementing the frequency of alternation function in the GUI</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="neighborhood_density.html"
+                        title="previous chapter">String similarity and neighbourhood density</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mutual_information.html"
+                        title="next chapter">Mutual Information</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/frequency_of_alternation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="mutual_information.html" title="Mutual Information"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="neighborhood_density.html" title="String similarity and neighbourhood density"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

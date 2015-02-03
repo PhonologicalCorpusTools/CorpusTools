@@ -1,0 +1,242 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Downloading and installing" href="downloading_and_installing.html" />
+    <link rel="prev" title="Welcome to Phonological CorpusTools’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="downloading_and_installing.html" title="Downloading and installing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Phonological CorpusTools’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="introduction">
+<span id="id1"></span><h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="general-background">
+<span id="id2"></span><h2>General Background<a class="headerlink" href="#general-background" title="Permalink to this headline">¶</a></h2>
+<p><em>Phonological CorpusTools</em> (PCT) is a freely available open-source tool
+for doing phonological analysis on transcribed corpora.
+For the latest information, please refer to the <a class="reference external" href="http://kchall.github.io/CorpusTools/">PCT website</a>. PCT is intended to be an
+analysis aid for researchers who are specifically interested in
+investigating the relationships that may hold between individual
+sounds in a language. There is an ever-increasing interest in
+exploring the roles of frequency and usage in understanding
+phonological phenomena (e.g., <a class="reference internal" href="references.html#bybee2001" id="id3">[Bybee2001]</a>, <a class="reference internal" href="references.html#ernestus2011" id="id4">[Ernestus2011]</a>, <a class="reference internal" href="references.html#frisch2011" id="id5">[Frisch2011]</a>),
+but many corpora and existing corpus-analysis software tools are focused
+on dialogue- and sentence-level analysis, and/or the computational skills
+needed to efficiently handle large corpora can be daunting to learn.</p>
+<p>PCT is designed with the phonologist in mind and has an easy-to-use
+graphical user interface that requires no programming knowledge, though
+it can also be used with a command-line interface,1 and all of the original
+code is freely available for those who would like access to the source.
+It specifically includes the following capabilities:</p>
+<ul class="simple">
+<li>Summary descriptions of a corpus, including type and token frequency of
+individual segments in user-defined environments;</li>
+<li>Calculation of the <strong>phonotactic probability</strong> of a word, given the other
+words that exist in the corpus (cf. <a class="reference internal" href="references.html#vitevitch2004" id="id6">[Vitevitch2004]</a>);</li>
+<li>Calculation of <strong>functional load</strong> of individual pairs of sounds,
+defined at either the segment or feature level (cf. <a class="reference internal" href="references.html#hockett1966" id="id7">[Hockett1966]</a>;
+<a class="reference internal" href="references.html#surendran2003" id="id8">[Surendran2003]</a>; <a class="reference internal" href="references.html#wedel2013" id="id9">[Wedel2013]</a>);</li>
+<li>Calculation of the extent to which any pair of sounds is <strong>predictably
+distributed</strong> given a set of environments that they can occur in, as a
+measure of phonological contrastiveness (cf. <a class="reference internal" href="references.html#hall2009" id="id10">[Hall2009]</a>, <a class="reference internal" href="references.html#hall2012" id="id11">[Hall2012]</a>; <a class="reference internal" href="references.html#hall2013a" id="id12">[Hall2013a]</a>);</li>
+<li>Calculation of the <strong>Kullback-Leibler divergence</strong> between the distributions
+of two sounds, again as a measure of phonological contrastiveness
+(cf. <a class="reference internal" href="references.html#peperkamp2006" id="id13">[Peperkamp2006]</a>);</li>
+<li>Calculation of the extent to which pairs of words are <strong>similar</strong> to each
+other using either orthographic or phonetic transcription,
+and calculation of <strong>neighbourhood density</strong> (cf. <a class="reference internal" href="references.html#frisch2004" id="id14">[Frisch2004]</a>, <a class="reference internal" href="references.html#khorsi2012" id="id15">[Khorsi2012]</a>;
+<a class="reference internal" href="references.html#greenberg1964" id="id16">[Greenberg1964]</a>; <a class="reference internal" href="references.html#luce1998" id="id17">[Luce1998]</a>; <a class="reference internal" href="references.html#yao2011" id="id18">[Yao2011]</a>);</li>
+<li>Calculation of the <strong>frequency with which two sounds alternate</strong> with each other,
+given a measure of morphological relatedness (cf. [Silverman 2006]_,
+<a class="reference internal" href="references.html#johnson2010" id="id19">[Johnson2010]</a>, <a class="reference internal" href="references.html#lu2012" id="id20">[Lu2012]</a>);</li>
+<li>Calculation of the <strong>mutual information</strong> between pairs of segments in the corpus
+(cf. <a class="reference internal" href="references.html#brent1999" id="id21">[Brent1999]</a>; <a class="reference internal" href="references.html#goldsmith2012" id="id22">[Goldsmith2012]</a>); and</li>
+<li>Calculation of the <strong>acoustic similarity</strong> between sounds or words,
+derived from sound files, based on alignment of MFCCs (e.g., <a class="reference internal" href="references.html#mielke2012" id="id23">[Mielke2012]</a>)
+or of logarithmically spaced amplitude envelopes (cf. <a class="reference internal" href="references.html#lewandowski2012" id="id24">[Lewandowski2012]</a>).</li>
+</ul>
+<p>The software can make use of pre-existing freely available corpora
+(e.g., the IPHOD corpus; <a class="reference internal" href="references.html#iphod" id="id25">[IPHOD]</a>), which are included with the
+system, or a user may upload his or her own corpus in either of two formats.
+First, lexical lists with transcription and token frequency information can be
+directly uploaded; such a list is what is deemed a “corpus” by PCT. Second,
+raw running text (orthographically and/or phonetically transcribed) can be
+uploaded and turned into lexical lists in columnar format (corpora) for
+subsequent analysis. Raw sound files accompanied by Praat TextGrids
+<a class="reference internal" href="references.html#praat" id="id26">[PRAAT]</a> may also be uploaded for analyses of acoustic
+similarity. Orthographic corpora can have their transcriptions “looked up”
+in a pre-existing transcribed corpus of the same language. Limited support
+is currently also available for spontaneous speech corpora, where, for example,
+a user can create a corpus from TextGrids and include information about ngram
+word combinations.</p>
+<p>Phonological analysis can be done using built-in feature charts based on
+Chomsky &amp; Halle <a class="reference internal" href="references.html#spe" id="id27">[SPE]</a> or Hayes <a class="reference internal" href="references.html#hayes2009" id="id28">[Hayes2009]</a>, or a user may create his or her
+own specifications by either modifying these charts or uploading a new chart.
+Feature specifications can be used to pull out separate “tiers” of segments for
+analysis (e.g., consonants vs. vowels, all nasal elements, tonal contours, etc.).
+PCT comes with IPA transcription installed, with characters mapped to the two feature
+systems mentioned above. Again, users may create their own transcription-to-feature
+mappings by modifying the existing ones or uploading a new transcription-to-feature
+mapping file, and several alternative transcription-to-feature mapping files are
+available for download.</p>
+<p>Analysis can be done using type or token frequency, if token frequency is
+available in the corpus. All analyses are presented both on screen and
+saved to plain .txt files in user-specfied locations.</p>
+<p>The following sections walk through the specifics of downloading, installing,
+and using the various components of Phonological CorpusTools.
+We will do our best to keep the software up to date and to answer any questions
+you might have about it; questions, comments, and suggestions should be sent to
+<a class="reference external" href="mailto:kathleen&#46;hall&#37;&#52;&#48;ubc&#46;ca">Kathleen Currie Hall</a>.</p>
+<p>Version 1.0 differs from the original release version (0.15, July 2014)
+primarily in its user interface; we switched the GUI from TK to QT and
+tried to reorganize the utility menus to be somewhat more intuitive.
+For example, the original release version had all segment inventory views
+in alphabetical order; segments are now arranged as closely as possible to
+standard IPA chart layouts (based on their featural interpretations).
+Additionally, we have added greater search and edit functions as well as
+some additional analysis tools (phonotactic probability, mutual information,
+neighbourhood density), and a greater ability to work with running text /
+spontaneous speech corpora.</p>
+</div>
+<div class="section" id="code-and-interfaces">
+<span id="id29"></span><h2>Code and interfaces<a class="headerlink" href="#code-and-interfaces" title="Permalink to this headline">¶</a></h2>
+<p>PCT is written in Python 3.4, and users are welcome to add on other
+functionality as needed. The software works on any platform that supports
+Python (Windows, Mac, Linux). All code is available on its <a class="reference external" href="http://sourceforge.net/projects/phonologicalcorpustools">SourceForge page</a>; the details for
+getting access are given in <a class="reference internal" href="downloading_and_installing.html#downloading-and-installing"><em>Downloading and installing</em></a>. The <a class="reference external" href="https://github.com/kchall/CorpusTools/">GitHub repository</a> for PCT is also
+public and open source.</p>
+<p>There is both a graphical user interface (GUI) and a command-line interface
+for PCT. In the following sections, we generally discuss interface-independent
+aspects of some functionality first, and then detail how to implement it in
+both the GUI and the command line. All functions are available in the GUI;
+many, but not all, are currently available in the command line due to
+complications in entering in phonological transcriptions that match a
+given corpus in a command-line interface.</p>
+<p>The command-line interface is accessed using command line scripts that are
+installed on your machine along with the core PCT GUI.</p>
+<p><strong>NOTE</strong>: If you did not install PCT on your computer but are instead running
+the GUI through a binary file (executable), then the command line scripts
+are not installed on your computer either. In order to run them, you will
+need to download the PCT source code and then find the scripts within the
+command_line subdirectory. These can then be run as scripts in Python 3.</p>
+<p>The procedure for running command-line analysis scripts is essentially the
+same for any analysis. First, open a Terminal window (on Mac OS X or Linux)
+or a CygWin window (on Windows, can be downloaded <a class="reference external" href="https://www.cygwin.com/">here</a>).
+Using the &#8220;cd&#8221; command, navigate to the directory containing your corpus file.
+If the analysis you want to perform requires any additional input files, then
+they must also be in this directory. (Instead of running the script from the
+relevant file directory, you may also run scripts from any working directory as
+long as you specify the full path to any files.) You then type the analysis
+command into the Terminal and press enter/return to run the analysis. The first
+(positional) argument after the name of the analysis script is always the name
+of the corpus file.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#general-background">General Background</a></li>
+<li><a class="reference internal" href="#code-and-interfaces">Code and interfaces</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Phonological CorpusTools&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="downloading_and_installing.html"
+                        title="next chapter">Downloading and installing</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/introduction.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="downloading_and_installing.html" title="Downloading and installing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Phonological CorpusTools’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

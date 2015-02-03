@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Acoustic Similarity &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Citing PCT and the algorithms used therein" href="citing_pct.html" />
+    <link rel="prev" title="Mutual Information" href="mutual_information.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="citing_pct.html" title="Citing PCT and the algorithms used therein"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mutual_information.html" title="Mutual Information"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="acoustic-similarity">
+<span id="id1"></span><h1>Acoustic Similarity<a class="headerlink" href="#acoustic-similarity" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-the-function">
+<span id="about-acoustic-similarity"></span><h2>About the function<a class="headerlink" href="#about-the-function" title="Permalink to this headline">¶</a></h2>
+<p>Acoustic similarity analyses quantify the degree to which waveforms of
+linguistic objects (such as sounds or words) are similar to each other.
+The acoustic similarity measures provided here have primarily been used
+in the study of phonetic convergence between interacting speakers;
+convergence is measured as a function of increasing similarity. These
+measures are also commonly used in automatic speech and voice recognition
+systems, where incoming speech is compared to stored representations.
+Phonologically, acoustic similarity also has a number of applications.
+For example, it has been claimed that sounds that are acoustically distant
+from each other cannot be allophonically related, even if they are in
+complementary distribution (e.g. <a class="reference internal" href="references.html#pike1947" id="id2">[Pike1947]</a>; <a class="reference internal" href="references.html#janda1999" id="id3">[Janda1999]</a>).</p>
+<p>Acoustic similarity alogorithms work on an aggregate scale, quantifying,
+on average, how similar one group of waveforms is to another.
+Representations have traditionally been in terms of mel-frequency cepstrum
+coefficents (MFCCs; <a class="reference internal" href="references.html#delvaux2007" id="id4">[Delvaux2007]</a>; <a class="reference internal" href="references.html#mielke2012" id="id5">[Mielke2012]</a>), which is
+used widely for automatic speech recognition, but one recent introduction
+is multiple band amplitude envelopes <a class="reference internal" href="references.html#lewandowski2012" id="id6">[Lewandowski2012]</a>. Both MFCCs and
+amplitude envelopes will be described in more detail in the following
+sections, and both are available as part of PCT.</p>
+<p>The second dimension to consider is the algorithm used to match
+representations. The most common one is dynamic time warping (DTW),
+which uses dynamic programming to calculate the optimal path through a
+distance matrix <a class="reference internal" href="references.html#sakoe1971" id="id7">[Sakoe1971]</a>, and gives the best alignment of
+two time series. Because one frame in one series can align to multiple
+frames in another series without a significant cost, DTW provides a
+distance independent of time. The other algorithm that is used is
+cross-correlation (see discussion in <a class="reference internal" href="references.html#lewandowski2012" id="id8">[Lewandowski2012]</a>, which aligns
+two time series at variable lags. Taking the max value of the alignment
+gives a similarity value for the two time series, with higher values
+corresponding to higher similarity.</p>
+</div>
+<div class="section" id="method-of-calculation">
+<span id="method-acoustic-similarity"></span><h2>Method of calculation<a class="headerlink" href="#method-of-calculation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="preprocessing">
+<h3>Preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this headline">¶</a></h3>
+<p>Prior to conversion to MFCCs or amplitude envelopes, the waveform is
+pre-emphasized to give a flatter spectrum and correct for the higher
+drop off in amplitude of higher frequencies due to distance from the mouth.</p>
+</div>
+<div class="section" id="mfccs">
+<h3>MFCCs<a class="headerlink" href="#mfccs" title="Permalink to this headline">¶</a></h3>
+<p>The calculation of MFCCs in PCT’s function follows the Rastamat
+<a class="reference internal" href="references.html#ellis2005" id="id9">[Ellis2005]</a>&#8216;s implementation of HTK-style MFCCs <a class="reference internal" href="references.html#htk" id="id10">[HTK]</a> in [Matlab].
+Generating MFCCs involves windowing the acoustic waveform and transforming
+the windowed signal to the linear frequency domain through a Fourier
+transform. Following that, a filterbank of triangular filters is
+constructed in the mel domain, which gives greater resolution to
+lower frequencies than higher frequencies. Once the filterbank is
+applied to the spectrum from the Fourier transform, the spectrum is
+represented as the log of the power in each of the mel filters. Using
+this mel spectrum, the mel frequency cepstrum is computed by performing
+a discrete cosine transform. This transform returns orthogonal
+coefficients describing the shape of the spectrum, with the first
+coefficent as the average value, the second as the slope of the spectrum,
+the third as the curvature, and so on, with each coefficient representing
+higher order deviations. The first coefficent is discarded, and the next
+X coefficents are taken, where X is the number of coefficents specified
+when calling the function. The number of coefficents must be one less
+than the number of filters, as the number of coefficents returned by the
+discrete cosine transform is equal to the number of filters in the mel
+filterbank.</p>
+</div>
+<div class="section" id="amplitude-envelopes">
+<h3>Amplitude envelopes<a class="headerlink" href="#amplitude-envelopes" title="Permalink to this headline">¶</a></h3>
+<p>The calculation of amplitude envelopes follows the Matlab implementation
+found in <a class="reference internal" href="references.html#lewandowski2012" id="id12">[Lewandowski2012]</a>. First, the signal is filtered into X number
+of logarithmically spaced bands, where X is specified in the function call,
+using 4th order Butterworth filters. For each band, the amplitude envelope
+is calculated by converting the signal to its analytic signal through a
+Hilbert transform. Each envelope is downsampled to 120 Hz.</p>
+</div>
+<div class="section" id="dynamic-time-warping-dtw">
+<h3>Dynamic time warping (DTW)<a class="headerlink" href="#dynamic-time-warping-dtw" title="Permalink to this headline">¶</a></h3>
+<p>PCT implements a standard DTW algorithm [SakoeChiba, 1971]_
+and gives similar results as the dtw package [Giorgino2009)]_ in [R].
+Given two representations, a 2D matrix is constructed where the dimensions
+are equal to the number of frames in each representation. The initial
+values for each cell of the matrix is the Euclidean distance between the
+two feature vectors of those frames. The cells are updated so that they
+equal the local distance plus the minimum distance of the possible previous
+cells. At the end, the final cell contains the summed distance of the
+best path through the matrix, and this is the minimum distance between
+two representations.</p>
+</div>
+<div class="section" id="cross-correlation">
+<h3>Cross-correlation<a class="headerlink" href="#cross-correlation" title="Permalink to this headline">¶</a></h3>
+<p>Cross-correlation seeks to align two time series based on corresponding
+peaks and valleys. From each representation a time series is extracted
+for each frame&#8217;s feature and this time series is cross-correlated with
+the respective time series in the other representation. For instance,
+the time series for an amplitude envelope’s representation corresponds
+to each frequency band, and each frequency band of the first representation
+is cross-correlated with each respective frequency band of the second
+representation. The time series are normalized so that they sum to 1,
+and so matching signals receive a cross-correlation value of 1 and
+completely opposite signals receive a cross-correlation value of 0.
+The overall distance between two representations is the inverse of the
+average cross-correlation values for each band.</p>
+</div>
+<div class="section" id="similarity-across-directories">
+<h3>Similarity across directories<a class="headerlink" href="#similarity-across-directories" title="Permalink to this headline">¶</a></h3>
+<p>The algorithm for assessing the similarity of two directories
+(corresponding to segments) averages the similarity of each .wav
+file in the first directory to each .wav file in the second directory.</p>
+</div>
+</div>
+<div class="section" id="implementing-the-acoustic-similarity-function-in-the-gui">
+<span id="acoustic-similarity-gui"></span><h2>Implementing the acoustic similarity function in the GUI<a class="headerlink" href="#implementing-the-acoustic-similarity-function-in-the-gui" title="Permalink to this headline">¶</a></h2>
+<p>To start the analysis, click on the “Calculate acoustic similarity...” in
+the Analysis menu and provide the following parameters. Note that unlike
+the other functions, acoustic similarity is not tied directly to any corpus
+that is loaded into PCT; sound files are accessed directly through
+directories on your computer.</p>
+<ol class="arabic simple">
+<li><strong>Comparison type</strong>: There are three kinds of comparisons that can be done
+in PCT: single-directory, two-directory, or pairwise.<ol class="loweralpha">
+<li><strong>Single directory</strong>: If a single directory is selected (using the
+“Choose directory...” dialogue box), two types of results will be
+returned: (1) each of the pairwise comparisons and (2) an average
+of all these comparisons (i.e., a single value).</li>
+<li><strong>Two directories</strong>: Choose two directories, each corresponding to a
+set of sounds to be compared. For example, if one were interested
+in the similarity of [s] and [ʃ] in Hungarian, one directory would
+contain .wav files of individual [s] tokens, and the other directory
+would contain .wav files of individual [ʃ] tokens. Every sound file
+in the first directory will be compared to every sound file in the
+second directory, and the acoustic similarity measures that are
+returned will again be (1) all the pairwise comparisons and (2)
+an average of all these comparisons (i.e., a single value).</li>
+<li><strong>Pairwise</strong>: One can also use a tab-delimied.txt file that lists all
+of the pairwise comparisons of individual sound files by listing
+their full path names. As with a single directory, each pairwise
+comparison will be returned separately.</li>
+</ol>
+</li>
+<li><strong>Representation</strong>: Select whether the sound files should be represented
+as MFCCs or amplitude envelopes (described in more detail above).</li>
+<li><strong>Distance algorithm</strong>: Select whether comparison of sound files should
+be done using dynamic time warping or cross-correlation (described in
+more detail above).</li>
+<li><strong>Frequency limits</strong>: Select a minimum frequency and a maximum frequency
+to use when generating representations. The human voice typically
+doesn&#8217;t go below 80 Hz, so that is the default cut off to avoid
+low-frequency noise. The maximum frequency has a hard bound of the
+Nyquist frequency of the sound files, that is, half their sampling rate.
+The lowest sampling rate that is typically used for speech is 16,000 Hz,
+so a cutoff near the Nyquist (8,000 Hz) is used as the default. The
+range of human hearing is 20 Hz to 20 kHz, but most energy in speech
+tends to fall off after 10 kHz.</li>
+<li><strong>Frequency resolution</strong>: Select the number of filters to be used to divide
+up the frequency range specified above. The default for MFCCs is for 26
+filters to be constructed, and for amplitude envelopes, 8 filters.</li>
+<li><strong>Number of coefficients (MFCC only)</strong>: Select the number of coefficients
+to be used in MFCC representations. The default is 12 coefficients,
+as that is standard in the field. If the number of coefficients is
+more than the number of filters minus one, the number of coefficients
+will be set to the number of filters minus one.</li>
+<li><strong>Output</strong>: Select whether to return results as similarity (inverse
+distance) or to us ethe default, distance (inverse similarity).
+Dynamic time warping natively returns a distance measure which gets
+inverted to similarity and cross-correlation natively returns a
+similarity value which gets inverted to distance.</li>
+<li><strong>Multiprocessing</strong>: As the generation and comparison of representations
+can be time-intensive, using multiprocessing on parts that can be
+run in parallel can speed the process up overall. In order to make
+this option available, the python-acoustic-similarity module must be
+installed; multiprocessing itself can be enabled by going to
+“Options” / “Preferences” / “Processing” (see also §3.9.1).</li>
+</ol>
+<p>Here’s an example of the parameter-selection box:</p>
+<a class="reference internal image-reference" href="_images/acousticsimdialog.png"><img alt="_images/acousticsimdialog.png" class="align-center" src="_images/acousticsimdialog.png" style="width: 90%;" /></a>
+<ol class="arabic simple" start="9">
+<li><strong>Calculating and saving results</strong>: The first time an analysis is run,
+the option to “Calculate acoustic similarity (start new results
+table)” should be selected. This will output the results to a
+pop-up window that lists the directories, the representation choice,
+the matching function, the minimum and maximum frequencies, the
+number of filters, the number of coefficients, the raw result, and
+whether the result is similarity (1) or distance (0). Subsequent
+analyses can either be added to the current table (as long as it
+hasn’t been closed between analyses) or put into a new table. Once
+a table has been created, click on “Save to file” at the bottom of
+the table window in order to open a system dialogue box and choose
+a directory; the table will be saved as a tab-delimited .txt file.</li>
+</ol>
+<p>Here’s an example of the results file:</p>
+<a class="reference internal image-reference" href="_images/asresults.png"><img alt="_images/asresults.png" class="align-center" src="_images/asresults.png" style="width: 90%;" /></a>
+<p>To return to the function dialogue box with your most recently used
+selections, click on “Reopen function dialog.” Otherwise, the results
+table can be closed and you will be returned to your corpus view.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Acoustic Similarity</a><ul>
+<li><a class="reference internal" href="#about-the-function">About the function</a></li>
+<li><a class="reference internal" href="#method-of-calculation">Method of calculation</a><ul>
+<li><a class="reference internal" href="#preprocessing">Preprocessing</a></li>
+<li><a class="reference internal" href="#mfccs">MFCCs</a></li>
+<li><a class="reference internal" href="#amplitude-envelopes">Amplitude envelopes</a></li>
+<li><a class="reference internal" href="#dynamic-time-warping-dtw">Dynamic time warping (DTW)</a></li>
+<li><a class="reference internal" href="#cross-correlation">Cross-correlation</a></li>
+<li><a class="reference internal" href="#similarity-across-directories">Similarity across directories</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#implementing-the-acoustic-similarity-function-in-the-gui">Implementing the acoustic similarity function in the GUI</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mutual_information.html"
+                        title="previous chapter">Mutual Information</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="citing_pct.html"
+                        title="next chapter">Citing PCT and the algorithms used therein</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/acoustic_similarity.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="citing_pct.html" title="Citing PCT and the algorithms used therein"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mutual_information.html" title="Mutual Information"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

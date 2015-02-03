@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Downloading and installing &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Loading in corpora" href="loading_corpora.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="loading_corpora.html" title="Loading in corpora"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="downloading-and-installing">
+<span id="id1"></span><h1>Downloading and installing<a class="headerlink" href="#downloading-and-installing" title="Permalink to this headline">¶</a></h1>
+<p>PCT is currently available in beta form for Mac, PC, and Linux machines.
+It can be downloaded from <a class="reference external" href="http://sourceforge.net/projects/phonologicalcorpustools/">SourceForge</a>
+using the following steps. Note that there are several dependencies that are
+pre-requisites before PCT can function properly. For Mac and Windows machines,
+we have created executable files that bundle most of the dependencies and the
+PCT software itself into a single package. Using these is the easiest /
+fastest way to get PCT up and running on your machine.</p>
+<ol class="arabic simple">
+<li>Go to the <a class="reference external" href="http://sourceforge.net/projects/phonologicalcorpustools/">PCT SourceForge page</a>.</li>
+<li>Click on the “Files” tab.</li>
+<li>Click on the link with the highest number (= most recent version).
+As of February 2015, that is 1.0.</li>
+</ol>
+<div class="section" id="windows-executable">
+<h2>Windows Executable<a class="headerlink" href="#windows-executable" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>NOTE: This method requires that you are running a 64-bit version of windows.
+You can check this in Control Panel -&gt; System and Security -&gt; System.</li>
+<li>Click on “win64.”</li>
+<li>Download the file called “corpustools-1.0.0-amd64.msi” (or similar,
+for a more recent version), by clicking or right-clicking on the link.
+This is an installer program.</li>
+<li>Run the downloaded installer program by double-clicking on it, wherever
+it has been saved locally.</li>
+<li>PCT should now be available from your “Start” menu under “Programs.”</li>
+<li>If you run into trouble, try the “Fallback” instructions in below.</li>
+</ol>
+</div>
+<div class="section" id="mac-executable">
+<h2>Mac Executable<a class="headerlink" href="#mac-executable" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Click on “macosx.”</li>
+<li>Download the file called “pct.zip” by clicking or ctrl-clicking on
+the link. This is a zipped file containing the PCT application.</li>
+<li>Unzip the downloaded file from its local location (double-clicking
+it should automatically open your local software for unzipping files,
+e.g., StuffIt Expander or Archive Utility).</li>
+<li>Unzipping the file will give you access to the file “pct.app.” Double
+click on this file to start PCT. You can drag the application to
+your toolbar like any other application.</li>
+<li>If you run into trouble, try the “Fallback” instructions in below.</li>
+</ol>
+</div>
+<div class="section" id="linux-fallback-instructions">
+<h2>Linux / Fallback instructions<a class="headerlink" href="#linux-fallback-instructions" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Dependencies: You’ll first need to make sure all of the following
+are installed. The third and fourth ones (NumPy and SciPy) are
+needed only for the Acoustic Similarity functionality to work.</li>
+</ol>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><a class="reference external" href="https://www.python.org/downloads/release/python-341/">Python 3.3 or higher</a></li>
+<li><a class="reference external" href="http://www.numpy.org/">NumPy</a></li>
+<li><a class="reference external" href="http://www.scipy.org/">SciPy</a></li>
+<li>(NB: If you are on Windows and can&#8217;t successfully use the acoustic
+similarity module after installing NumPy and SciPy from the above sources,
+you may want to try installing them from <a class="reference external" href="http://www.lfd.uci.edu/~gohlke/pythonlibs/">precompiled binaries</a>.)</li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li>Get the source code for PCT. Click on either the .zip or the .gz file
+on the <a class="reference external" href="http://sourceforge.net/projects/phonologicalcorpustools/">PCT SourceForge page</a>,
+to download the zipped or tarball version of the code, depending
+on your preference.</li>
+<li>After expanding the file, you will find a file called <tt class="docutils literal"><span class="pre">setup.py</span></tt>
+in the top level directory. Run it in one of the following ways:</li>
+</ol>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li>Double-click it. If this doesn&#8217;t work, access the file properties
+and ensure that you have permission to run the file; if not,
+give them to yourself. In Windows, this may require that you
+open the file in Administrator mode (also accessible through
+file properties). If your computer opens the .py file in a text
+editor rather than running it, you can access the file properties
+to set Python 3.x as the default program to use with run .py files.
+If the file is opened in IDLE (a Python editor), you can use the
+&#8220;Run&#8221; button in the IDLE interface to run the script instead.</li>
+<li>Open a terminal window and run the file. In Linux or Mac OS X,
+there should be a Terminal application pre-installed. In Windows,
+you may need to install <a class="reference external" href="https://www.cygwin.com/">Cygwin</a>. Once
+the terminal window is open, nagivate to the top level CorpusTools
+folder&#8212;the one that has setup.py in it. (Use the command &#8216;cd&#8217;
+to navigate your filesystem; Google &#8220;terminal change directory&#8221; for
+further instructions.) Once in the correct directory, run this
+command: <tt class="docutils literal"><span class="pre">python3</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt>. You may lack proper
+permissions to run this file, in which case on Linux or Mac OS X
+you can instead run <tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">python3</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt>. If Python 3.x
+is the only version of Python on your system, it may be possible or
+necessary to use the command <tt class="docutils literal"><span class="pre">python</span></tt> rather than <tt class="docutils literal"><span class="pre">python3</span></tt>.</li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li>Phonological CorpusTools should now be installed! Run it from a
+terminal window using the command <tt class="docutils literal"><span class="pre">pct</span></tt>. You can also open a
+&#8220;Run&#8221; dialogue and use the command <tt class="docutils literal"><span class="pre">pct</span></tt> there. In Windows, the
+Run tool is usually found in All Programs -&gt; Accessories.</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Downloading and installing</a><ul>
+<li><a class="reference internal" href="#windows-executable">Windows Executable</a></li>
+<li><a class="reference internal" href="#mac-executable">Mac Executable</a></li>
+<li><a class="reference internal" href="#linux-fallback-instructions">Linux / Fallback instructions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="introduction.html"
+                        title="previous chapter">Introduction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="loading_corpora.html"
+                        title="next chapter">Loading in corpora</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/downloading_and_installing.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="loading_corpora.html" title="Loading in corpora"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

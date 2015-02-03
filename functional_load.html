@@ -1,0 +1,741 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Functional Load &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Predictability of Distribution" href="predictability_of_distribution.html" />
+    <link rel="prev" title="Phonotactic Probability" href="phonotactic_probability.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="predictability_of_distribution.html" title="Predictability of Distribution"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="phonotactic_probability.html" title="Phonotactic Probability"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="functional-load">
+<span id="id1"></span><h1>Functional Load<a class="headerlink" href="#functional-load" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-the-function">
+<span id="about-functional-load"></span><h2>About the function<a class="headerlink" href="#about-the-function" title="Permalink to this headline">¶</a></h2>
+<p>Functional load is a measure of the “work” that any particular contrast
+does in a language, as compared to other contrasts (e.g., <a class="reference internal" href="references.html#hockett1955" id="id2">[Hockett1955]</a>,
+<a class="reference internal" href="references.html#hockett1966" id="id3">[Hockett1966]</a>; <a class="reference internal" href="references.html#kucera1963" id="id4">[Kucera1963]</a>; <a class="reference internal" href="references.html#king1967" id="id5">[King1967]</a>; <a class="reference internal" href="references.html#surendran2003" id="id6">[Surendran2003]</a>). Two contrasts
+in a language, such as [d] / [t] vs. [ð] / [θ] in English, may have very
+different functional loads. The difference between [d] and [t] is used to
+distinguish between many different lexical items, so it has a high
+functional load; there are, on the other hand, very few lexical items
+that hinge on the distinction between [ð] and [θ], so its functional
+load is much lower. One of the primary claims about functional load is
+that it is related to sounds’ propensity to merge over time, with pairs
+of sounds that have higher functional loads being less likely to merge
+than pairs of sounds with lower functional loads (e.g., <a class="reference internal" href="references.html#wedel2013" id="id7">[Wedel2013]</a>, <a class="reference internal" href="references.html#todd2012" id="id8">[Todd2012]</a>).
+The average functional load of a particular sound has also been claimed to
+affect its likelihood of being used as an epenthetic vowel <a class="reference internal" href="references.html#hume2013" id="id9">[Hume2013]</a>.
+Functional load has also been illustrated to affect the perceived
+similarity of sounds <a class="reference internal" href="references.html#hall2014a" id="id10">[Hall2014a]</a>.</p>
+</div>
+<div class="section" id="method-of-calculation">
+<span id="method-functional-load"></span><h2>Method of calculation<a class="headerlink" href="#method-of-calculation" title="Permalink to this headline">¶</a></h2>
+<p>There are two primary ways of calculating functional load that are
+provided as part of the PCT package. One is based on the change of
+entropy in a system upon merger of a segment pair or set of segment
+pairs (cf. <a class="reference internal" href="references.html#surendran2003" id="id11">[Surendran2003]</a>); the other is based on simply
+counting up the number of minimal pairs (differing in only the target
+segment pair or pairs) that occur in the corpus.</p>
+<div class="section" id="change-in-entropy">
+<span id="method-change-entropy"></span><h3>Change in entropy<a class="headerlink" href="#change-in-entropy" title="Permalink to this headline">¶</a></h3>
+<p>The calculation based on change in entropy is described in detail in
+<a class="reference internal" href="references.html#surendran2003" id="id12">[Surendran2003]</a>. Entropy is an Information-Theoretic measure of the
+amount of uncertainty in a system <a class="reference internal" href="references.html#shannon1949" id="id13">[Shannon1949]</a>, and is
+calculated using the formula in (1); it will also be used for the
+calculation of predictability of distribution (see <a class="reference internal" href="predictability_of_distribution.html#method-pred-dist"><em>Method of calculation</em></a>). For every
+symbol <em>i</em> in some inventory (e.g., every phoneme in the phoneme inventory,
+or every word in the lexicon), one multiplies the probability of <em>i</em> by
+the <span class="math">\(log_{2}\)</span> of the probability of <em>i</em>; the entropy is the sum of the products
+for all symbols in the inventory.</p>
+<p>Entropy:</p>
+<p><span class="math">\(H = -\sum_{i \in N} p_{i} * log_{2}(p_{i})\)</span></p>
+<p>The functional load of any pair of sounds in the system, then, can be
+calculated by first calculating the entropy of the system at some level
+of structure (e.g., words, syllables) with all sounds included, then
+merging the pair of sounds in question and re-calculating the entropy
+of the new system. That is, the functional load is the amount of
+uncertainty (entropy) that is lost by the merger. If the pair has a
+functional load of 0, then nothing has changed when the two are merged,
+and <span class="math">\(H_{1}\)</span> will equal <span class="math">\(H_{2}\)</span>. If the pair has a non-zero functional load, then
+the total inventory has become smaller through the conflating of pairs
+of symbols that were distinguished only through the given pair of sounds.</p>
+<p>Functional load as change in entropy:</p>
+<p><span class="math">\(\Delta H = H_{1} - H_{2}\)</span></p>
+<p>Consider a toy example, in which the following corpus is assumed (note
+that, generally speaking, there is no “type frequency” column in a PCT
+corpus, as it is assumed that each row in the corpus represents 1 type;
+it is included here for clarity):</p>
+<p>Consider a toy example, in which the following corpus is assumed
+(note that, generally speaking, there is no “type frequency” column
+in a PCT corpus, as it is assumed that each row in the corpus represents
+1 type; it is included here for clarity):</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="10%" />
+<col width="11%" />
+<col width="8%" />
+<col width="10%" />
+<col width="11%" />
+<col width="8%" />
+<col width="10%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" rowspan="2">Word</th>
+<th class="head" colspan="3">Original</th>
+<th class="head" colspan="3">Under [h] / [ŋ] merger</th>
+<th class="head" colspan="3">Under [t] / [d] merger</th>
+</tr>
+<tr class="row-even"><th class="head">Trans.</th>
+<th class="head">Type
+Freq.</th>
+<th class="head">Token
+Freq.</th>
+<th class="head">Trans.</th>
+<th class="head">Type
+Freq.</th>
+<th class="head">Token
+Freq.</th>
+<th class="head">Trans.</th>
+<th class="head">Type
+Freq.</th>
+<th class="head">Token
+Freq.</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>hot</td>
+<td>[hɑt]</td>
+<td>1</td>
+<td>2</td>
+<td>[Xɑt]</td>
+<td>1</td>
+<td>2</td>
+<td>[hɑX]</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>song</td>
+<td>[sɑŋ]</td>
+<td>1</td>
+<td>4</td>
+<td>[sɑX]</td>
+<td>1</td>
+<td>4</td>
+<td>[sɑŋ]</td>
+<td>1</td>
+<td>4</td>
+</tr>
+<tr class="row-odd"><td>hat</td>
+<td>[hæt]</td>
+<td>1</td>
+<td>1</td>
+<td>[Xæt]</td>
+<td>1</td>
+<td>1</td>
+<td>[hæX]</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="row-even"><td>sing</td>
+<td>[sɪŋ]</td>
+<td>1</td>
+<td>6</td>
+<td>[sɪX]</td>
+<td>1</td>
+<td>6</td>
+<td>[sɪŋ]</td>
+<td>1</td>
+<td>6</td>
+</tr>
+<tr class="row-odd"><td>tot</td>
+<td>[tɑt]</td>
+<td>1</td>
+<td>3</td>
+<td>[tɑt]</td>
+<td>1</td>
+<td>3</td>
+<td>[XɑX]</td>
+<td rowspan="2">1</td>
+<td rowspan="2">8</td>
+</tr>
+<tr class="row-even"><td>dot</td>
+<td>[dɑt]</td>
+<td>1</td>
+<td>5</td>
+<td>[dɑt]</td>
+<td>1</td>
+<td>5</td>
+<td>[XɑX]</td>
+</tr>
+<tr class="row-odd"><td>hip</td>
+<td>[hɪp]</td>
+<td>1</td>
+<td>2</td>
+<td>[Xɪp]</td>
+<td>1</td>
+<td>2</td>
+<td>[hɪp]</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr class="row-even"><td>hid</td>
+<td>[hɪd]</td>
+<td>1</td>
+<td>7</td>
+<td>[Xɪd]</td>
+<td>1</td>
+<td>7</td>
+<td>[hɪX]</td>
+<td>1</td>
+<td>7</td>
+</tr>
+<tr class="row-odd"><td>team</td>
+<td>[tim]</td>
+<td>1</td>
+<td>5</td>
+<td>[tim]</td>
+<td>1</td>
+<td>5</td>
+<td>[Xim]</td>
+<td rowspan="2">1</td>
+<td rowspan="2">10</td>
+</tr>
+<tr class="row-even"><td>deem</td>
+<td>[dim]</td>
+<td>1</td>
+<td>5</td>
+<td>[dim]</td>
+<td>1</td>
+<td>5</td>
+<td>[Xim]</td>
+</tr>
+<tr class="row-odd"><td>toot</td>
+<td>[tut]</td>
+<td>1</td>
+<td>9</td>
+<td>[tut]</td>
+<td>1</td>
+<td>9</td>
+<td>[XuX]</td>
+<td rowspan="2">1</td>
+<td rowspan="2">11</td>
+</tr>
+<tr class="row-even"><td>dude</td>
+<td>[dud]</td>
+<td>1</td>
+<td>2</td>
+<td>[dud]</td>
+<td>1</td>
+<td>2</td>
+<td>[XuX]</td>
+</tr>
+<tr class="row-odd"><td>hiss</td>
+<td>[hɪs]</td>
+<td>1</td>
+<td>3</td>
+<td>[Xɪs]</td>
+<td>1</td>
+<td>3</td>
+<td>[hɪs]</td>
+<td>1</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td>his</td>
+<td>[hɪz]</td>
+<td>1</td>
+<td>5</td>
+<td>[Xɪz]</td>
+<td>1</td>
+<td>5</td>
+<td>[hɪz]</td>
+<td>1</td>
+<td>5</td>
+</tr>
+<tr class="row-odd"><td>sizzle</td>
+<td>[sɪzəl]</td>
+<td>1</td>
+<td>4</td>
+<td>[sɪzəl]</td>
+<td>1</td>
+<td>4</td>
+<td>[sɪzəl]</td>
+<td>1</td>
+<td>4</td>
+</tr>
+<tr class="row-even"><td>dizzy</td>
+<td>[dɪzi]</td>
+<td>1</td>
+<td>3</td>
+<td>[dɪzi]</td>
+<td>1</td>
+<td>3</td>
+<td>[Xɪzi]</td>
+<td rowspan="2">1</td>
+<td rowspan="2">7</td>
+</tr>
+<tr class="row-odd"><td>tizzy</td>
+<td>[tɪzi]</td>
+<td>1</td>
+<td>4</td>
+<td>[tɪzi]</td>
+<td>1</td>
+<td>4</td>
+<td>[Xɪzi]</td>
+</tr>
+<tr class="row-even"><td colspan="2">Total</td>
+<td>17</td>
+<td>70</td>
+<td>&nbsp;</td>
+<td>17</td>
+<td>70</td>
+<td>&nbsp;</td>
+<td>13</td>
+<td>70</td>
+</tr>
+</tbody>
+</table>
+<p>The starting entropy, assuming word types as the relative unit of
+structure and counting, is:</p>
+<p><span class="math">\(H_{1 - types} = -[(\frac{1}{17} log_{2}(\frac{1}{17}))
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))\\
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))\\
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))
++ (\frac{1}{17} log_{2}(\frac{1}{17})) + (\frac{1}{17} log_{2}(\frac{1}{17}))]
+=4.087\)</span></p>
+<p>The starting entropy, assuming word tokens, is:</p>
+<p><span class="math">\(H_{1 - tokens} = -[(\frac{2}{70} log_{2}(\frac{2}{70}))
++ (\frac{4}{70} log_{2}(\frac{4}{70})) + (\frac{1}{70} log_{2}(\frac{1}{70}))
++ (\frac{6}{70} log_{2}(\frac{6}{70})) + (\frac{3}{70} log_{2}(\frac{3}{70}))\\
++ (\frac{5}{70} log_{2}(\frac{5}{70})) + (\frac{2}{70} log_{2}(\frac{2}{70}))
++ (\frac{7}{70} log_{2}(\frac{7}{70})) + (\frac{5}{70} log_{2}(\frac{5}{70}))
++ (\frac{5}{70} log_{2}(\frac{5}{70})) + (\frac{9}{70} log_{2}(\frac{9}{70}))\\
++ (\frac{2}{70} log_{2}(\frac{2}{70})) + (\frac{3}{70} log_{2}(\frac{3}{70}))
++ (\frac{5}{70} log_{2}(\frac{5}{70})) + (\frac{4}{70} log_{2}(\frac{4}{70}))
++ (\frac{3}{70} log_{2}(\frac{3}{70})) + (\frac{4}{70} log_{2}(\frac{4}{70}))]
+= 3.924\)</span></p>
+<p>Upon merger of [h] and [ŋ], there is no change in the number of unique words;
+there are still 17 unique words with all their same token frequencies.
+Thus, the entropy after an [h] / [ŋ] merger will be the same as it was
+before the merger. The functional load, then would be 0, as the pre-merger
+and post-merger entropies are identical.</p>
+<p>Upon merger of [t] and [d], on the other hand, four pairs of words have
+been collapsed. E.g., the difference between <em>team</em> and <em>deem</em> no longer
+exists; there is now just one word, [Xim], where [X] represents the
+result of the merger. Thus, there are only 13 unique words, and while
+the total token frequency count remains the same, at 70, those 70 occurrences
+are divided among only 13 unique words instead of 17.</p>
+<p>Thus, the entropy after a [t] / [d] merger, assuming word types, is:</p>
+<p><span class="math">\(H_{1 - types} = -[(\frac{1}{13} log_{2}(\frac{1}{13}))
++ (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))
++ (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))\\
++ (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))
++ (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))
++ (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))\\
++ (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))]
+= 3.700\)</span></p>
+<p>And the entropy after a [t] / [d] merger, assuming word tokens, is:</p>
+<p><span class="math">\(H_{1 - tokens} = -[(\frac{2}{70} log_{2}(\frac{2}{70}))
++ (\frac{4}{70} log_{2}(\frac{4}{70})) + (\frac{1}{70} log_{2}(\frac{1}{70}))
++ (\frac{6}{70} log_{2}(\frac{6}{70})) + (\frac{8}{70} log_{2}(\frac{8}{70}))\\
++ (\frac{2}{70} log_{2}(\frac{2}{70})) + (\frac{7}{70} log_{2}(\frac{7}{70}))
++ (\frac{10}{70} log_{2}(\frac{10}{70})) + (\frac{11}{70} log_{2}(\frac{11}{70}))
++ (\frac{3}{70} log_{2}(\frac{3}{70})) + (\frac{5}{70} log_{2}(\frac{5}{70}))\\
++ (\frac{4}{70} log_{2}(\frac{4}{70})) + (\frac{7}{70} log_{2}(\frac{7}{70}))]
+= 3.466\)</span></p>
+<p><span class="math">\(\Delta H = H_{1-types} - H_{2-types} = 4.087– 3.700 = 0.387\)</span></p>
+<p>And the functional load of [t] / [d] based on word tokens is:</p>
+<p><span class="math">\(\Delta H = H_{1-tokens} - H_{2-tokens} = 3.924– 3.466 = 0.458\)</span></p>
+</div>
+<div class="section" id="relative-minimal-pair-counts">
+<span id="method-change-minimal-pairs"></span><h3>(Relative) Minimal Pair Counts<a class="headerlink" href="#relative-minimal-pair-counts" title="Permalink to this headline">¶</a></h3>
+<p>The second means of calculating functional load that is included in PCT
+is a straight count of minimal pairs, which can be relativized to the
+number of words in the corpus that are potential minimal pairs—i.e. the
+number of words in the corpus with at least one of the target segments.</p>
+<p>In the above example, the number of minimal pairs that hinge on [h] vs.
+[ŋ] is of course 0, so the functional load of [h] / [ŋ] is 0. The number
+of minimal pairs that hinge on [t] / [d] is 3, and the number of words
+with either [t] or [d] is 11; the functional load as a relativized minimal
+pair count would therefore be 3/11 = 0.273. Note that here, a relatively
+loose definition of minimal pair is used; specifically, two words are
+considered to be a minimal pair hinging on sounds A and B if, upon merger
+of A and B into a single symbol X, the words are identical. Thus, <em>toot</em> and
+<em>dude</em> are considered a minimal pair on this definition, because they both
+become [XuX] upon merger of [t] and [d].</p>
+<p>The resulting calculations of functional load are thus quite similar
+between the two measures, but the units are entirely different.
+Functional load based on change in entropy is measured in <em>bits</em>,
+while functional load based on relativized minimal pair counts is
+simply a percentage. Also note that functional load based on minimal
+pairs is only based on type frequency; the frequency of the usage of
+the words is not used as a weighting factor, the way it can be under
+the calculation of functional load as change in entropy.</p>
+</div>
+</div>
+<div class="section" id="implementing-the-functional-load-function-in-the-gui">
+<span id="functional-load-gui"></span><h2>Implementing the functional load function in the GUI<a class="headerlink" href="#implementing-the-functional-load-function-in-the-gui" title="Permalink to this headline">¶</a></h2>
+<p>As with most analysis functions, a corpus must first be loaded (see <a class="reference internal" href="loading_corpora.html#loading-corpora"><em>Loading in corpora</em></a>).
+Once a corpus is loaded, use the following steps.</p>
+<ol class="arabic simple">
+<li><strong>Getting started</strong>: Choose “Analysis” / “Calculate functional load...”
+from the top menu bar.</li>
+<li><strong>Sound selection</strong>: First, select which two sounds you want the functional
+load to be calculated for. Do this by clicking on “Add pair of sounds”;
+the “Select segment pair” dialogue box will open. The segment choices that
+are available will automatically correspond to all of the unique
+transcribed characters in your corpus. The order of the sounds is
+irrelevant; picking [i] first and [u] second will yield the same
+results as picking [u] first and [i] second. Once a pair of sounds
+has been selected, click “Add.” They will appear in the “Functional
+load” dialogue box. Multiple pairs of sounds can be selected and
+added to the list for calculation simultaneously. To do this without
+going back to the “Functional Load” dialogue box first, click “Add
+and create another.” When multiple pairs are selected, they can be
+treated in two different ways, listed under “Options” on the right-hand
+side of the “Functional Load” dialogue box under “Multiple segment
+pair behaviour”:<ol class="loweralpha">
+<li><strong>All segment pairs together</strong>: This option allows for the calculation
+of the functional load of featural contrasts. E.g., if the pairs [e]/[i]
+and [o]/[u] are chosen, PCT will  calculate the functional load from
+both pairs at the same time. This option is useful for investigating
+the functional load of featural contrasts: e.g., if the above pairs
+are the ONLY pairs of sounds in the corpus that differ by exactly the
+single feature [high], then this option will allow you to calculate
+the functional load of the [high] contrast. Note that the results
+table will list “[e], [o]” as “sound 1” and “[i], [u]” as “sound 2”
+in this scenario, to remind you that you are getting a single functional
+load value. Note too that this does not collapse all four sounds to a
+single sound (which would erroneously also neutralize [e]/[o], [e]/[u],
+[i]/[o], [i]/[u]), but rather collapses each pair of segments and only
+then checks for any minimal pairs or drop in entropy.</li>
+<li><strong>Each segment pair individually</strong>: This option cycles through the list
+of pairs and gives the functional load of each pair individually
+from the corpus. E.g., if the pairs [e]/[i] and [o]/[u] are chosen,
+you will get results showing first the functional load of [e]/[i]
+in the corpus and then the functional load of [o]/[u] in the corpus,
+independently.</li>
+</ol>
+</li>
+<li><strong>Functional load algorithm</strong>: Select which of the two methods of calculation
+you want to use—i.e., minimal pairs or change in entropy.
+(See discussion above for details of each.)</li>
+<li><strong>Tier</strong>: Select which tier the functional load should be calculated from.
+The default is the “transcription” tier, i.e., looking at the entire
+word transcriptions. If another tier has been created (see <a class="reference internal" href="transcriptions_and_feature_systems.html#create-tiers"><em>Creating new tiers in the corpus</em></a>),
+functional load can be calculated on the basis of that tier. For example,
+if a vowel tier has been created, then “minimal pairs” will be entries
+that are identical except for one entry in the vowels only, entirely
+independently of consonants. Thus, the words [mapotik] and [ʃɹaɡefli]
+would be treated as a minimal pair, given that their vowel-tier
+representations are [aoi] and [aei].</li>
+<li><strong>Minimum frequency</strong>: It is possible to set a minimum token frequency
+for words in the corpus in order to be included in the calculation.
+This allows easy exclusion of rare words; for example, if one were
+calculating the functional load of [s] vs. [ʃ] in English and didn’t
+set a minimum frequency, words such as <em>santy</em> (vs. <em>shanty</em>) might be
+included, which might not be a particularly accurate reflection of
+the phonological knowledge of speakers. To include all words in the
+corpus, regardless of their token frequency, set the the minimum frequency to 0.</li>
+<li><strong>Additional parameters for minimal pairs</strong>: If minimal pairs serve as the
+means of calculation, there are two additional parameters can be set.<ol class="loweralpha">
+<li><strong>Raw vs. relative count</strong>: First, PCT can report only the raw count of
+minimal pairs that hinge on the contrast in the corpus, if you just
+want to know the scope of the contrast. On the other hand, the
+default is to relativize the raw count to the corpus size, by
+dividing the raw number by the number of lexical entries that
+include at least one instance of any of the target segments.</li>
+<li><strong>Include vs. ignore homophones</strong>: Second, PCT can either include
+homophones or ignore them. For example, if the corpus includes
+separate entries for the words <em>sock</em> (n.), <em>sock</em> (v.), <em>shock</em> (n.),
+and <em>shock</em> (v.), this would count as four minimal pairs if homophones
+are included, but only one if homophones are ignored. The default is
+to ignore homophones.</li>
+</ol>
+</li>
+<li><strong>Additional parameters for change in entropy</strong>: If you are calculating
+functional load using change in entropy, one additional parameter can be set.<ol class="loweralpha">
+<li><strong>Type or token frequency</strong>: As described in <a class="reference internal" href="#method-change-entropy"><em>Change in entropy</em></a>, entropy can be
+calculated using either type or token frequencies. This option
+determines which to use.</li>
+</ol>
+</li>
+</ol>
+<p>Here is an example of selecting [m] and [n], with functional load to be
+calculated on the basis of minimal pairs, only including words with a
+token frequency of at least 1, from the built-in example corpus:</p>
+<a class="reference internal image-reference" href="_images/funtionalloaddialog.png"><img alt="_images/funtionalloaddialog.png" class="align-center" src="_images/funtionalloaddialog.png" style="width: 90%;" /></a>
+<ol class="arabic simple" start="8">
+<li>Results table: Once all parameters have been set, click one of the two
+“Calculate functional load” buttons. If this is the first calculation,
+the option to “start new results table” should be selected. For subsequent
+calculations, the calculation can be added to the already started table,
+for direct comparison, or a new table can be started. [Note that if a
+table is closed, new calculations will not be added to the previously
+open table; a new table must be started.] Either way, the results table
+will have the following columns, with one row per calculation: segment 1,
+segment 2, which tier was used, which measurement method was selected,
+the resulting functional load, what the minimum frequency was, and for
+calculations using minimal pairs, whether the count is absolute or
+relative and whether homophones were ignored or not. (For calculations
+using change in entropy, “N/A” values are entered into the latter two columns.)</li>
+<li>Saving results: Once a results table has been generated for at least
+one pair, the table can be saved by clicking on “Save to file” at the
+bottom of the table to open a system dialogue box and save the results
+at a user-designated location.</li>
+</ol>
+<a class="reference internal image-reference" href="_images/funtionalloadresults.png"><img alt="_images/funtionalloadresults.png" class="align-center" src="_images/funtionalloadresults.png" style="width: 90%;" /></a>
+<p>(Note that in the above screen shot, not all columns are visible;
+they are visible only by scrolling over to the right, due to constraints
+on the window size. All columns would be saved to the results file.)</p>
+<p>To return to the function dialogue box with your most recently used
+selections, click on “Reopen function dialog.” Otherwise, the results
+table can be closed and you will be returned to your corpus view.</p>
+</div>
+<div class="section" id="implementing-the-functional-load-function-on-the-command-line">
+<span id="functional-load-cli"></span><h2>Implementing the functional load function on the command line<a class="headerlink" href="#implementing-the-functional-load-function-on-the-command-line" title="Permalink to this headline">¶</a></h2>
+<p>In order to perform this analysis on the command line, you must enter
+a command in the following format into your Terminal:</p>
+<div class="highlight-python"><div class="highlight"><pre>pct_funcload CORPUSFILE ARG2
+</pre></div>
+</div>
+<p>...where CORPUSFILE is the name of your <a href="#id14"><span class="problematic" id="id15">*</span></a>.corpus file and ARG2 is either
+the transcription character(s) of a single segment (if calculating relative
+functional load) or the name of your segment pair(s) file (if calculating a
+single functional load value). The segment pairs file must list the pairs
+of segments whose functional load you wish to calculate, with each pair
+separated by a tab (t) and one pair on each line. You may also use
+command line options to change various parameters of your functional
+load calculations. Descriptions of these arguments can be viewed by
+running <tt class="docutils literal"><span class="pre">pct_funcload</span> <span class="pre">–h</span></tt> or <tt class="docutils literal"><span class="pre">pct_funcload</span> <span class="pre">--help</span></tt>. The help text from
+this command is copied below, augmented with specifications of default values:</p>
+<p>Positional arguments:</p>
+<dl class="cmdoption">
+<dt id="cmdoption-arg-corpus_file_name">
+<tt class="descname">corpus_file_name</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-arg-corpus_file_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of corpus file</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-arg-pairs_file_name_or_segment">
+<tt class="descname">pairs_file_name_or_segment</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-arg-pairs_file_name_or_segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of file with segment pairs (or target segment if relative fl is True)</p>
+</dd></dl>
+
+<p>Optional arguments:</p>
+<dl class="cmdoption">
+<dt id="cmdoption-h">
+<tt class="descname">-h</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption-h" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--help">
+<tt class="descname">--help</tt><tt class="descclassname"></tt><a class="headerlink" href="#cmdoption--help" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show help message and exit</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-a">
+<tt class="descname">-a</tt><tt class="descclassname"> ALGORITHM</tt><a class="headerlink" href="#cmdoption-a" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--algorithm">
+<tt class="descname">--algorithm</tt><tt class="descclassname"> ALGORITHM</tt><a class="headerlink" href="#cmdoption--algorithm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Algorithm to use for calculating functional load:
+&#8220;minpair&#8221; for minimal pair count or &#8220;deltah&#8221; for change in entropy.
+Defaults to minpair.</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-f">
+<tt class="descname">-f</tt><tt class="descclassname"> FREQUENCY_CUTOFF</tt><a class="headerlink" href="#cmdoption-f" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--frequency_cutoff">
+<tt class="descname">--frequency_cutoff</tt><tt class="descclassname"> FREQUENCY_CUTOFF</tt><a class="headerlink" href="#cmdoption--frequency_cutoff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimum frequency of words to consider as possible minimal pairs or
+contributing to lexicon entropy.</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-d">
+<tt class="descname">-d</tt><tt class="descclassname"> DISTINGUISH_HOMOPHONES</tt><a class="headerlink" href="#cmdoption-d" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--distinguish_homophones">
+<tt class="descname">--distinguish_homophones</tt><tt class="descclassname"> DISTINGUISH_HOMOPHONES</tt><a class="headerlink" href="#cmdoption--distinguish_homophones" title="Permalink to this definition">¶</a></dt>
+<dd><p>For minimal pair FL: if False, then you&#8217;ll count sock~shock
+(sock=clothing) and sock~shock (sock=punch) as just one minimal
+pair; but if True, you&#8217;ll overcount alternative spellings of the
+same word, e.g. axel~actual and axle~actual. False is the value
+used by Wedel et al.</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-t">
+<tt class="descname">-t</tt><tt class="descclassname"> TYPE_OR_TOKEN</tt><a class="headerlink" href="#cmdoption-t" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--type_or_token">
+<tt class="descname">--type_or_token</tt><tt class="descclassname"> TYPE_OR_TOKEN</tt><a class="headerlink" href="#cmdoption--type_or_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>For change in entropy FL: specifies whether entropy is based on type
+or token frequency.</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-e">
+<tt class="descname">-e</tt><tt class="descclassname"> RELATIVE_FL</tt><a class="headerlink" href="#cmdoption-e" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--relative_fl">
+<tt class="descname">--relative_fl</tt><tt class="descclassname"> RELATIVE_FL</tt><a class="headerlink" href="#cmdoption--relative_fl" title="Permalink to this definition">¶</a></dt>
+<dd><p>If True, calculate the relative FL of a single segment by averaging
+across the functional loads of it and all other segments.</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-s">
+<tt class="descname">-s</tt><tt class="descclassname"> SEQUENCE_TYPE</tt><a class="headerlink" href="#cmdoption-s" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--sequence_type">
+<tt class="descname">--sequence_type</tt><tt class="descclassname"> SEQUENCE_TYPE</tt><a class="headerlink" href="#cmdoption--sequence_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The attribute of Words to calculate FL over. Normally this will be
+the transcription, but it can also be the spelling or a user-specified tier.</p>
+</dd></dl>
+
+<dl class="cmdoption">
+<dt id="cmdoption-o">
+<tt class="descname">-o</tt><tt class="descclassname"> OUTFILE</tt><a class="headerlink" href="#cmdoption-o" title="Permalink to this definition">¶</a></dt>
+<dt id="cmdoption--outfile">
+<tt class="descname">--outfile</tt><tt class="descclassname"> OUTFILE</tt><a class="headerlink" href="#cmdoption--outfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of output file</p>
+</dd></dl>
+
+<p>EXAMPLE 1: If your corpus file is example.corpus and you want to
+calculate the minimal pair functional load of the segments [m] and [n]
+using defaults for all optional arguments, you first need to create a
+text file that contains the text “mtn” (where t is a tab; no quotes
+in the file). Let us call this file pairs.txt. You would then run the
+following command in your terminal window:</p>
+<div class="highlight-python"><div class="highlight"><pre>pct_funcload example.corpus pairs.txt
+</pre></div>
+</div>
+<p>EXAMPLE 2: Suppose you want to calculate the relative (average) functional
+load of the segment [m]. Your corpus file is again example.corpus. You
+want to use the change in entropy measure of functional load rather than
+the minimal pairs measure, and you also want to use type frequency
+instead of (the default value of) token frequency. In addition, you want
+the script to produce an output file called output.txt.  You would need
+to run the following command:</p>
+<div class="highlight-python"><div class="highlight"><pre>pct_funcload example.corpus m -a deltah -t type -o output.txt
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Functional Load</a><ul>
+<li><a class="reference internal" href="#about-the-function">About the function</a></li>
+<li><a class="reference internal" href="#method-of-calculation">Method of calculation</a><ul>
+<li><a class="reference internal" href="#change-in-entropy">Change in entropy</a></li>
+<li><a class="reference internal" href="#relative-minimal-pair-counts">(Relative) Minimal Pair Counts</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#implementing-the-functional-load-function-in-the-gui">Implementing the functional load function in the GUI</a></li>
+<li><a class="reference internal" href="#implementing-the-functional-load-function-on-the-command-line">Implementing the functional load function on the command line</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="phonotactic_probability.html"
+                        title="previous chapter">Phonotactic Probability</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="predictability_of_distribution.html"
+                        title="next chapter">Predictability of Distribution</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/functional_load.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="predictability_of_distribution.html" title="Predictability of Distribution"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="phonotactic_probability.html" title="Phonotactic Probability"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

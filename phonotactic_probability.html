@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Phonotactic Probability &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="Functional Load" href="functional_load.html" />
+    <link rel="prev" title="Working with transcriptions and feature systems" href="transcriptions_and_feature_systems.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="functional_load.html" title="Functional Load"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="transcriptions_and_feature_systems.html" title="Working with transcriptions and feature systems"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="phonotactic-probability">
+<span id="id1"></span><h1>Phonotactic Probability<a class="headerlink" href="#phonotactic-probability" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-the-function">
+<span id="about-phonotactic-probability"></span><h2>About the function<a class="headerlink" href="#about-the-function" title="Permalink to this headline">¶</a></h2>
+<p>Phonotactic probability refers to the likelihood of a given set of segments
+occurring in a given order for a given corpus of transcriptions.  For instance,
+<em>blick</em> is a phonotactically probable nonword in English, but <em>bnick</em> is
+phonotactically improbable.  Words as well as nonwords can be assessed for
+their phonotactic probability, and this measure has been used in behavioural
+research (<a class="reference internal" href="references.html#vitevitch1999" id="id2">[Vitevitch1999]</a> and others). In particular, the phonotactic
+probability of words has been correlated with their ability to be segmented,
+acquired, processed, and produced; see especially the discussion in <a class="reference internal" href="references.html#vitevitch2004" id="id3">[Vitevitch2004]</a>
+for extensive references.</p>
+</div>
+<div class="section" id="method-of-calculation">
+<span id="method-phonotactic-probability"></span><h2>Method of calculation<a class="headerlink" href="#method-of-calculation" title="Permalink to this headline">¶</a></h2>
+<p>One method for computing the phonotactic probability uses average unigram
+or bigram positional probabilities across a word (<a class="reference internal" href="references.html#vitevitch2004" id="id4">[Vitevitch2004]</a>;
+their online calculator for this function is available <a class="reference external" href="http://www.people.ku.edu/~mvitevit/PhonoProbHome.html">here</a>).
+For a word like <em>blick</em> in English, the unigram average would include the
+probability of /b/ occurring in the first position of a word, the
+probability of /l/ in the second position, the probability of /ɪ/
+occuring in the third position, and the probability of /k/ occurring
+in the fourth position of a word.  Each positional probability is
+calculated by summing the log token frequency of words containing that
+segment in that position divided by the sum of the log token frequency
+of all words that have that position in their transcription.  The bigram
+average is calculated in an equivalent way, except that sequences of two
+segments and their positions are used instead of single segments.  So for
+<em>blick</em> that would be /bl/, /lɪ/, /ɪk/ as the included poisitional probabilities.
+As with all n-gram based approaches, bigrams are preferable to unigrams.
+In the example of <em>blick</em> versus <em>bnick</em>, unigrams wouldn&#8217;t likely capture
+the intuitive difference in phonotactic probability, since the probability
+of /n/ and /l/ in the second position isn&#8217;t necessarily radically different.
+Using bigrams, however, would capture that the probability of /bl/ versus /bn/
+in the first position is radically different.</p>
+<p>There are other ways of calculating phonotactic probability that don&#8217;t
+have the strict left-to-right positional assumptions that the Vitevitch
+&amp; Luce algorithm has, such as the constraint-based method in BLICK by
+Bruce Hayes (Windows executable available <a class="reference external" href="http://www.linguistics.ucla.edu/people/hayes/BLICK/">here</a>, Python package
+available <a class="reference external" href="https://pypi.python.org/pypi/python-BLICK/0.2.12">here</a>
+with source code available at &lt;<a class="reference external" href="https://github.com/mmcauliffe/python-BLICK/">https://github.com/mmcauliffe/python-BLICK/</a>&gt;_).
+However, such algorithms require training on a specific language, and
+the constraints are not computed from transcribed corpora in as
+straightforward a manner as the probabilities used in the Vitevitch &amp;
+Luce algorithm. Therefore, PCT currently supports only the Vitevitch &amp;
+Luce style algorithm.</p>
+</div>
+<div class="section" id="implementing-the-phonotactic-probability-function-in-the-gui">
+<span id="phonotactic-probability-gui"></span><h2>Implementing the phonotactic probability function in the GUI<a class="headerlink" href="#implementing-the-phonotactic-probability-function-in-the-gui" title="Permalink to this headline">¶</a></h2>
+<p>To start the analysis, click on “Analysis” / “Calculate phonotactic probability...”
+in the main menu, and then follow these steps:</p>
+<ol class="arabic simple">
+<li><strong>Phonotactic probability algorithm</strong>: Currently the only offered algorithm
+is the Vitevitch &amp; Luce algorithm, described above.</li>
+<li><strong>Query type</strong>: Phonotactic probability can be calculated for one of three
+types of inputs:<ol class="loweralpha">
+<li><strong>One word</strong>: The phonotactic probability of a single word can be calculated
+by entering that word’s orthographic representation in the query box.</li>
+<li><strong>One word/nonword not in the corpus</strong>: The phonotactic probability can
+be calculated on a word that is not itself in the corpus, but using
+the probabilities derived from the corpus. These words are distinct
+from the corpus and won&#8217;t be added to it, nor will their creation
+affect any future calculations. See <a class="reference internal" href="transcriptions_and_feature_systems.html#add-word"><em>Adding a word</em></a> for information on how
+to more permanently add a new word to the corpus. Words can be
+created through the dialogue opened by pressing the button:<ol class="lowerroman">
+<li><strong>Spelling</strong>: Enter the spelling for your new word / nonword using
+the regular input keyboard on your computer. The spelling is
+how the word will be referenced in the results table, but won’t
+affect the calculation of phonotactic probability.</li>
+<li><strong>Transcription</strong>: To add in the phonetic transcription of the new
+word, it is best to use the provided inventory. While it is
+possible to type directly in to the transcription box, using
+the provided inventory will ensure that all characters are
+understood by PCT to correspond to existing characters in the
+corpus (with their concomitant featural interpretation). Click
+on “Show inventory” and then choose to show “Consonants,” “Vowels,”
+and/or other. (If there is no featural interpretation of your
+inventory, you will simply see a list of all the available
+segments, but they will not be classifed by major category.)
+Clicking on the individual segments will add them to the
+transcription. The selections will remain even when the
+sub-inventories are hidden; we allow for showing / hiding
+the inventories to ensure that all relevant buttons on the
+dialogue box are available, even on small computer screens.
+Note that you do NOT need to include word boundaries at the
+beginning and end of the word, even when the boundary symbol
+is included as a member of the inventory; these will be assumed
+automatically by PCT.</li>
+<li><strong>Frequency</strong>: This can be left at the default. Note that entering
+a value will NOT affect the calculation; there is no particular
+need to enter anything here (it is an artifact of using the same
+dialogue box here as in the “Add Word” function described in <a class="reference internal" href="transcriptions_and_feature_systems.html#add-word"><em>Adding a word</em></a>).</li>
+<li><strong>Create word</strong>: To finish and return to the “Phonotactic probability”
+dialogue box, click on “Create word.”</li>
+</ol>
+</li>
+<li><strong>List of words</strong>: If there is a specific list of words for which
+phonotactic probability is to be calculated (e.g., the stimuli list
+for an experiment), that list can be saved as a .txt file with one
+word per line and uploaded into PCT for analysis.  If words in the
+list are not in the corpus, you can still calculate their phonotactic
+probability by entering in the spelling of the word and the transcription
+of the word in a single line delimited by a tab. The transcription
+should be delimited by periods.</li>
+<li><strong>Whole corpus</strong>: Alternatively, the phonotactic probability for every
+current word in the corpus can be calculated. The phonotactic
+probability of each word will be added to the corpus itself, as
+a separate column; in the “query” box, simply enter the name of
+that column (the default is “Phonotactic probability”).</li>
+</ol>
+</li>
+<li><strong>Tier</strong>: Phonotactic probability can be calculated from transcription
+tiers in a corpus (e.g., transcription or tiers that represent subsets
+of entries, such as a vowel or consonant tier).</li>
+<li><strong>Type vs. token frequency</strong>: Specify whether phonotactic probabilities
+should be based on word type frequency or token frequency.  The
+original Vitevitch &amp; Luce algorithm uses token frequency. Token frequency
+will use the log frequency when calculating probabilities.</li>
+<li><strong>Probability type</strong>: Specify whether to use biphone positional
+probabilities or single segment positional probabilities.  Defaults to biphone.</li>
+<li><strong>Results</strong>: Once all options have been selected, click “Calculate
+phonotactic probability.” If this is not the first calculation, and
+you want to add the results to a pre-existing results table, select
+the choice that says “add to current results table.” Otherwise, select
+“start new results table.” A dialogue box will open, showing a table of
+the results, including the word, its phonotactic probability, the
+transcription tier from which phonotactic probability was calculated,
+whether type or token frequency was used, whether the algorithm used
+unigram or bigram probabilities, and the phonotactic probability algorithm
+that was used. If the phonotactic probability for all words in the corpus
+is being calculated, simply click on the “start new results table” option,
+and you will be returned to your corpus, where a new column has been added
+automatically.</li>
+<li><strong>Saving results</strong>: The results tables can each be saved to tab-delimited .txt
+files by selecting “Save to file” at the bottom of the window. If all
+phonotactic probabilities are calculated for a corpus, the corpus
+itself can be saved by going to “File” / “Export corpus as text file,”
+from where it can be reloaded into PCT for use in future sessions with
+the phonotactic probabilities included.</li>
+</ol>
+<p>An example of the “Phonotactic Probability” dialogue box for calculating
+the probability of the non-word “pidger” [pɪdʒɚ] using unigram position
+probabilities (using the IPHOD corpus):</p>
+<a class="reference internal image-reference" href="_images/phonoprobdialog.png"><img alt="_images/phonoprobdialog.png" class="align-center" src="_images/phonoprobdialog.png" style="width: 90%;" /></a>
+<a class="reference internal image-reference" href="_images/phonoprobresults.png"><img alt="_images/phonoprobresults.png" class="align-center" src="_images/phonoprobresults.png" style="width: 90%;" /></a>
+<p>To return to the function dialogue box with your most recently used
+selections, click on “Reopen function dialog.” Otherwise, the results
+table can be closed and you will be returned to your corpus view.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Phonotactic Probability</a><ul>
+<li><a class="reference internal" href="#about-the-function">About the function</a></li>
+<li><a class="reference internal" href="#method-of-calculation">Method of calculation</a></li>
+<li><a class="reference internal" href="#implementing-the-phonotactic-probability-function-in-the-gui">Implementing the phonotactic probability function in the GUI</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="transcriptions_and_feature_systems.html"
+                        title="previous chapter">Working with transcriptions and feature systems</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="functional_load.html"
+                        title="next chapter">Functional Load</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/phonotactic_probability.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="functional_load.html" title="Functional Load"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="transcriptions_and_feature_systems.html" title="Working with transcriptions and feature systems"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

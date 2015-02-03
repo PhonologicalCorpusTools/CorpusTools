@@ -1,0 +1,350 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>String similarity and neighbourhood density &mdash; Phonological CorpusTools 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="Phonological CorpusTools 1.0.0 documentation" href="index.html" />
+    <link rel="next" title="String similarity and neighbourhood density" href="neighborhood_density.html" />
+    <link rel="prev" title="Kullback-Leibler Divergence" href="kullback-leibler.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="neighborhood_density.html" title="String similarity and neighbourhood density"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kullback-leibler.html" title="Kullback-Leibler Divergence"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="string-similarity-and-neighbourhood-density">
+<span id="string-similarity"></span><h1>String similarity and neighbourhood density<a class="headerlink" href="#string-similarity-and-neighbourhood-density" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="about-the-functions">
+<span id="about-string-similarity"></span><h2>About the functions<a class="headerlink" href="#about-the-functions" title="Permalink to this headline">¶</a></h2>
+<p>String similarity is any measure of how similar any two sequences of
+characters are. These character strings can be strings of letters or
+phonemes; both of the methods of calculation included in PCT allow for
+calculations using either type of character. It is, therefore, a basic
+measure of overall form-based similarity.</p>
+<p>String similarity finds more widespread use in areas of linguistics other
+than phonology; it is, for example, used in Natural Language Processing
+applications to determine, for example, possible alternative spellings
+when a word has been mistyped. It is, however, also useful for determining
+how phonologically close any two words might be.</p>
+<p>String similarity could be part of a calculation of morphological
+relatedness, if used in conjunction with a measure of semantic similarity
+(see, e.g., <a class="reference internal" href="references.html#hall2014b" id="id1">[Hall2014b]</a>). In particular, it can be used in conjunction
+with the Frequency of Alternation function of PCT (see <a class="reference internal" href="frequency_of_alternation.html#frequency-of-alternation"><em>Frequency of alternation</em></a>) as a means
+of calculating the frequency with which two sounds alternate with each
+other in a language.</p>
+<p>Some measure of string similarity is also used to calculate neighbourhood
+density (e.g. <a class="reference internal" href="references.html#greenberg1964" id="id2">[Greenberg1964]</a>; <a class="reference internal" href="references.html#luce1998" id="id3">[Luce1998]</a>; <a class="reference internal" href="references.html#yao2011" id="id4">[Yao2011]</a>),
+which has been shown to affect phonological processing. A phonological
+“neighbour” of some word X is a word that is similar in some close way
+to X. For example, it might differ by maximally one phone (through deletion,
+addition, or subsitution) from X. X’s neighbourhood density, then, is the
+number of words that fit the criterion for being a neighbour.</p>
+</div>
+<div class="section" id="method-of-calculation-string-similarity">
+<span id="method-string-similarity"></span><h2>Method of calculation: String similarity<a class="headerlink" href="#method-of-calculation-string-similarity" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="levenshtein-edit-distance">
+<span id="edit-distance"></span><h3>Levenshtein Edit Distance<a class="headerlink" href="#levenshtein-edit-distance" title="Permalink to this headline">¶</a></h3>
+<p>Edit distance is defined as the minimum number of one-symbol deletions,
+additions, and substitutions necessary to turn one string into another.
+For example, <em>turn</em> and <em>burn</em> would have an edit distance of 1, as the only
+change necessary is to turn the &lt;t&gt; into a &lt;b&gt;, while the edit distance
+between <em>turn</em> and <em>surfs</em> would be 3, with &lt;t&gt; becoming &lt;s&gt;, &lt;n&gt; becoming
+&lt;f&gt;, and ∅ becoming &lt;s&gt; at the end of the word. All such one-symbol
+changes are treated as equal in Levenshtein edit distance, unlike
+phonological edit distance, described in the following section. Generally
+speaking, the neighbourhood density of a particular lexical item is
+measured by summing the number of lexical items that have an edit distance
+of 1 from that item <a class="reference internal" href="references.html#luce1998" id="id5">[Luce1998]</a>.</p>
+</div>
+<div class="section" id="phonological-edit-distance">
+<span id="phono-edit-distance"></span><h3>Phonological Edit Distance<a class="headerlink" href="#phonological-edit-distance" title="Permalink to this headline">¶</a></h3>
+<p>Phonological edit distance is quite similar to Levenshtein edit distance,
+in that it calculates the number of one-symbol changes between strings,
+but it differs in that changes are weighted based on featural similarity.
+For example, depending on the feature system used, changing &lt;t&gt; to &lt;s&gt;
+might involve a single feature change (from [-cont] to [+cont]), while
+changing &lt;t&gt; to &lt;b&gt; might involve two (from [-voice, +cor] to [+voice,
+-cor]). By default, the formula for calculating the phonological distance
+between two segments—or between a segment and “silence”, i.e. insertion
+or deletion—is the one used in the Sublexical Learner <a class="reference internal" href="references.html#allen2014" id="id6">[Allen2014]</a>.
+When comparing two segments, the distance between them is equal to the
+sum of the distances between each of their feature values: the distance
+between two feature values that are identical is 0, while the distance
+between two opposing values (+/- or -/+) is 1, and the distance between
+two feature values in the case that just one of them is 0 (unspecified)
+is set to by default to 0.25. When comparing a segment to “silence”
+(insertion/deletion), the silence is given feature values of 0 for
+all features and then compared to the segment as normal.</p>
+</div>
+<div class="section" id="khorsi-2012-similarity-metric">
+<span id="khorsi"></span><h3>Khorsi (2012) Similarity Metric<a class="headerlink" href="#khorsi-2012-similarity-metric" title="Permalink to this headline">¶</a></h3>
+<p>Khorsi (2012) proposes a particular measure of string similarity based
+on orthography, which he suggests can be used as a direct measure of
+morphological relatedness. PCT allows one to calculate this measure,
+which could be used, as Khorsi describes, on its own, or could be used
+in conjunction with other measures (e.g., semantic similarity) to create
+a more nuanced view.</p>
+<p>This measure starts with the sum of the log of the inverse of the
+frequency of occurrence of each of the letters in the longest common
+shared sequence between two words, and then subtracts the sum of the
+log of the inverse of the frequency of the letters that are not shared,
+as shown below.</p>
+<p>Formula for string similarity from <a class="reference internal" href="references.html#khorsi2012" id="id7">[Khorsi2012]</a>:</p>
+<p><span class="math">\(\sum_{i=1}^{\lVert LCS(w_1,w_2) \rVert} log (\frac{1}{freq(LCS(w_1,w_2)[i])})
+- \sum_{i=1}^{\lVert \overline{LCS(w_1,w_2)} \rVert} log (\frac{1}{freq(\overline{LCS(w_1,w_2)}[i])})\)</span></p>
+<p>Note:
+* <em>w1, w2</em> are two words whose string similarity is to be measured
+* <em>LCS(w1, w2)</em> represents the Longest Common Shared Sequence of symbols</p>
+<blockquote>
+<div>between the two words</div></blockquote>
+<p>As with other functions, the frequency measure used for each character
+will be taken from the current corpus. This means that the score will
+be different for a given pair of words (e.g., <em>pressed</em> vs. <em>pressure</em>)
+depending on the frequency of the individual characters in the loaded corpus.</p>
+</div>
+</div>
+<div class="section" id="implementing-the-string-similarity-function-in-the-gui">
+<span id="string-similarity-gui"></span><h2>Implementing the string similarity function in the GUI<a class="headerlink" href="#implementing-the-string-similarity-function-in-the-gui" title="Permalink to this headline">¶</a></h2>
+<p>To start the analysis, click on “Analysis” / “Calculate string similarity...”
+in the main menu, and then follow these steps:</p>
+<ol class="arabic simple">
+<li><strong>String similarity algorithm</strong>: The first step is to choose which of the
+three methods described above is to be used to calculate string similarity.
+The options are phonological edit distance, standard (Levenshtein) edit
+distance, and the algorithm described above and in <a class="reference internal" href="references.html#khorsi2012" id="id8">[Khorsi2012]</a>.</li>
+<li><strong>Comparison type</strong>: Next, choose what kind of comparison is to be done.
+One can either take a single word and get its string similarity score
+to every other word in the corpus (useful, for example, when trying
+to figure out which words are most / least similar to a given word,
+as one might for stimuli creation), or can compare individual pairs
+of words (useful if a limited set of pre-determined words is of
+interest). For each of these, you can use words that already exist
+in the corpus or calculate the similarity for words (or non-words)
+that are not in the corpus. Note that these words will NOT be added
+to the corpus itself; if you want to globally add the word (and
+therefore have its own properties affect calculations), please use
+the instructions in <a class="reference internal" href="transcriptions_and_feature_systems.html#add-word"><em>Adding a word</em></a>.<ol class="loweralpha">
+<li><strong>One word in the corpus</strong>: To compare the similarity of one word that
+already exists in the corpus to every other word in the corpus,
+simply select “Compare one word to entire corpus” and enter the
+single word into the dialogue box, using its standard orthographic
+representation. Note that you can choose later which tier string
+similarity will be calculated on (spelling, transcription, etc.);
+this simply identifies the word for PCT.</li>
+<li><strong>One word not in the corpus</strong>: Click on “Calculate for a word/nonword
+not in the corpus” and then select “Create word/nonword” to enter
+the new word.<ol class="lowerroman">
+<li><strong>Spelling</strong>: Enter the spelling for your new word / nonword using
+the regular input keyboard on your computer.</li>
+<li><strong>Transcription</strong>: To add in the phonetic transcription of the new
+word, it is best to use the provided inventory. While it is
+possible to type directly in to the transcription box, using
+the provided inventory will ensure that all characters are
+understood by PCT to correspond to existing characters in the
+corpus (with their concomitant featural interpretation). Click
+on “Show inventory” and then choose to show “Consonants,”
+“Vowels,” and/or other. (If there is no featural interpretation
+of your inventory, you will simply see a list of all the
+available segments, but they will not be classified by major
+category.) Clicking on the individual segments will add them to
+the transcription. The selections will remain even when the
+sub-inventories are hidden; we allow for showing / hiding the
+inventories to ensure that all relevant buttons on the dialogue
+box are available, even on small computer screens. Note that
+you do NOT need to include word boundaries at the beginning
+and end of the word, even when the boundary symbol is included
+as a member of the inventory; these will be assumed
+automatically by PCT.</li>
+<li><strong>Frequency and other columns</strong>: These can be left at the default.
+Note that entering values will NOT affect the calculation;
+there is no particular need to enter anything here (it is an
+artifact of using the same dialogue box here as in the “Add Word”
+function described in <a class="reference internal" href="transcriptions_and_feature_systems.html#add-word"><em>Adding a word</em></a>).</li>
+<li><strong>Create word</strong>: To finish and return to the “String similarity”
+dialogue box, click on “Create word.”</li>
+</ol>
+</li>
+<li><strong>Single word pair (in or not in) the corpus</strong>: If the similarity of an
+individual word pair is to be calculated, one can enter the pair
+directly into the dialogue box. For each word that <strong>is</strong> in the corpus,
+simply enter its standard orthographic form. For each word that is
+<strong>not</strong> in the corpus, you can add it by selecting “Create word/nonword”
+and following the steps described immediately above in (2b).</li>
+<li><strong>List of word pairs (in the corpus)</strong>: If there is a long list of pairs
+of words, one can simply create a tab-delimited plain .txt file
+with one <em>word pair</em> per line. In this case, click on “Choose word
+pairs file” and select the .txt file in the resulting system
+dialogue box. Note that this option is currently available only
+for words that already exist in the corpus, and that these pairs
+should be listed using their standard orthographic representations.</li>
+</ol>
+</li>
+</ol>
+<ol class="arabic simple" start="2">
+<li><strong>Tier</strong>: The tier from which string similarity is to be calculated can
+be selected. Generally, one is likely to care most about either
+spelling or transcription, but other tiers (e.g., a vowel tier)
+can also be selected; in this case, all information removed from
+the tier is ignored. Words should always be entered orthographically
+(e.g., when telling PCT what word pairs to compare). If similarity is
+to be calculated on the basis of spelling, words that are <em>entered</em> are
+broken into their letter components. If similarity is to be calculated
+on the basis of transcription, the transcriptions are looked up in the
+corpus. If a word does not occur in the corpus, its similarity to other
+words can still be calculated on the basis of spelling, but not
+transcription (as PCT has no way of inferring the transcription from
+the spelling).</li>
+<li><strong>Frequency type</strong>: If Khorsi similarity is to be calculated, the frequencies
+of the symbols is relevant, and so will be looked up in the currently
+loaded corpus. Either type frequency or token frequency can be used for
+the calculation. This option will not be available for either edit
+distance algorithm, because frequency isn’t taken into account in
+either one.</li>
+<li><strong>Minimum / Maximum similarity</strong>: If one is calculating the similarity of
+one word to all others in the corpus, an arbitrary minimum and maximum
+can be set to filter out words that are particularly close or distant.
+For example, one could require that only words with an edit distance
+of both at least and at most 1 are returned, to get the members of
+the standard neighbourhood of a particular lexical item. (Recall
+that the Khorsi calculation is a measure of similarity, while edit
+distance and phonological edit distance are measures of difference.
+Thus, a minimum similarity value is analogous to a maximum distance
+value. PCT will automatically interpret “minimum” and “maximum”
+relative to the string-similarity algorithm chosen.</li>
+</ol>
+<p>Here’s an example for calculating the Khorsi similarity of the pair
+<em>mata</em> (which occurs in the corpus) and <em>mitoo</em> [mitu] (which does not),
+in the sample corpus, using token frequencies and comparing transcriptions:</p>
+<a class="reference internal image-reference" href="_images/stringsimilaritydialog.png"><img alt="_images/stringsimilaritydialog.png" class="align-center" src="_images/stringsimilaritydialog.png" style="width: 90%;" /></a>
+<ol class="arabic simple" start="5">
+<li>Results: Once all options have been selected, click “Calculate string
+similarity.” If this is not the first calculation, and you want to
+add the results to a pre-existing results table, select the choice
+that says “add to current results table.” Otherwise, select “start
+new results table.” A dialogue box will open, showing a table of the
+results, including word 1, word 2, the result (i.e., the similarity
+score for Khorsi or distance score for either of the edit algorithms),
+whether type or token frequency was used (if the Khorsi method is
+selected; otherwise, N/A), and which algorithm was used. Note that
+the entries in the table will be written in spelling regardless of
+whether spelling or transcriptions were used. This file can be saved
+to a desired location by selecting “Save to file” at the bottom of
+the table.</li>
+</ol>
+<p>Here’s an example result file for the above selection:</p>
+<a class="reference internal image-reference" href="_images/stringsimilarityresults.png"><img alt="_images/stringsimilarityresults.png" class="align-center" src="_images/stringsimilarityresults.png" style="width: 90%;" /></a>
+<p>To return to the function dialogue box with your most recently used
+selections, click on “Reopen function dialog.” Otherwise, the results
+table can be closed and you will be returned to your corpus view.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">String similarity and neighbourhood density</a><ul>
+<li><a class="reference internal" href="#about-the-functions">About the functions</a></li>
+<li><a class="reference internal" href="#method-of-calculation-string-similarity">Method of calculation: String similarity</a><ul>
+<li><a class="reference internal" href="#levenshtein-edit-distance">Levenshtein Edit Distance</a></li>
+<li><a class="reference internal" href="#phonological-edit-distance">Phonological Edit Distance</a></li>
+<li><a class="reference internal" href="#khorsi-2012-similarity-metric">Khorsi (2012) Similarity Metric</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#implementing-the-string-similarity-function-in-the-gui">Implementing the string similarity function in the GUI</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="kullback-leibler.html"
+                        title="previous chapter">Kullback-Leibler Divergence</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="neighborhood_density.html"
+                        title="next chapter">String similarity and neighbourhood density</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/string_similarity.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="neighborhood_density.html" title="String similarity and neighbourhood density"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kullback-leibler.html" title="Kullback-Leibler Divergence"
+             >previous</a> |</li>
+        <li><a href="index.html">Phonological CorpusTools 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, PCT.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
