@@ -1,9 +1,7 @@
 Phonological CorpusTools
 ========================
 
-This document contains installation instructions for Phonological CorpusTools (PCT). For a description of available functionality, please refer to the manual included alongside this file.
-
-NOTE: The acoustic similarity module in Phonological CorpusTools currently only works if you have intalled PCT using the fallback installation (setup.py) instructions below.
+This document contains installation instructions for Phonological CorpusTools (PCT). For a description of available functionality, please refer to the manual available on SourceForge (https://sourceforge.net/projects/phonologicalcorpustools/files/?source=navbar).
 
 
 ## Standard installation (executable)
