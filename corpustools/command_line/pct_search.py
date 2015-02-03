@@ -28,7 +28,7 @@ def main():
 
     ####
 
-    corpus = load_binary(args.corpus_file_name)
+    corpus = load_binary(args.corpus_file_name)[0]
 
     segments = args.seg_list.split(',')
     if args.environments:
