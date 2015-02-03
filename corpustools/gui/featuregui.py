@@ -17,6 +17,7 @@ from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
 
 from .windows import DownloadWorker
+from .helpgui import HelpDialog
 
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
@@ -242,6 +243,7 @@ class AddFeatureDialog(QDialog):
 class DownloadFeatureMatrixDialog(QDialog):
     def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+
         self.settings = settings
         layout = QVBoxLayout()
         inlayout = QHBoxLayout()
@@ -268,11 +270,14 @@ class DownloadFeatureMatrixDialog(QDialog):
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -293,6 +298,11 @@ class DownloadFeatureMatrixDialog(QDialog):
         self.thread.updateProgress.connect(self.updateProgress)
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.finished.connect(self.progressDialog.accept)
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
+                                    section = 'downloadable-transcription-and-feature-choices')
+        self.helpDialog.exec_()
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
@@ -411,11 +421,14 @@ class EditFeatureMatrixDialog(QDialog):
 
         self.acceptButton = QPushButton('Save changes to this corpus\'s feature system')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -427,6 +440,12 @@ class EditFeatureMatrixDialog(QDialog):
         self.setWindowTitle('Edit feature system')
 
         self.changeDisplay()
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
+                                    section = 'applying-editing-feature-systems')
+
+        self.helpDialog.exec_()
 
     def changeDisplay(self):
         mode = self.displayWidget.currentText()
@@ -691,6 +710,7 @@ class FeatureMatrixManager(QDialog):
 class SystemFromCsvDialog(QDialog):
     def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+
         self.settings = settings
         layout = QVBoxLayout()
 
@@ -715,11 +735,14 @@ class SystemFromCsvDialog(QDialog):
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -729,6 +752,11 @@ class SystemFromCsvDialog(QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle('Create feature system from csv')
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
+                                    section = 'loading-a-custom-feature-system')
+        self.helpDialog.exec_()
 
     def accept(self):
         path = self.pathWidget.value()

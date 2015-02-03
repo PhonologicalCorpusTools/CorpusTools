@@ -4,6 +4,8 @@ import subprocess
 
 from .imports import *
 
+from .helpgui import HelpDialog
+
 from corpustools.corpus.io import download_binary
 
 class FunctionWorker(QThread):
@@ -47,7 +49,6 @@ class FunctionDialog(QDialog):
     name = ''
     def __init__(self,parent, worker):
         QDialog.__init__(self, parent)
-
         layout = QVBoxLayout()
 
         self.newTableButton = QPushButton('Calculate {}\n(start new results table)'.format(self.name))
@@ -146,8 +147,13 @@ class FunctionDialog(QDialog):
         self.calc()
 
     def about(self):
-        reply = QMessageBox.information(self,
-                "About {}".format(self.name), '\n'.join(self._about))
+
+        self.aboutWindow = HelpDialog(self, self.name)
+        self.aboutWindow.exec_()
+        #self.aboutWindow.raise_()
+        #self.aboutWindow.activateWindow()
+        #reply = QMessageBox.information(self,
+        #        "About {}".format(self.name), '\n'.join(self._about))
 
 class DownloadWorker(FunctionWorker):
     def run(self):

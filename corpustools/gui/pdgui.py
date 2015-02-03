@@ -237,7 +237,3 @@ class PDDialog(FunctionDialog):
                                             r[1], #total_tokens
                                             r[0], #H
                                             self.typeTokenWidget.value()])
-
-    def about(self):
-        reply = QMessageBox.information(self,
-                "About predictability of distribution", '\n'.join(self.ABOUT))

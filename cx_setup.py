@@ -12,7 +12,7 @@ def readme():
 
 
 ufuncs_path = scipy.special._ufuncs.__file__
-incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1])]
+incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1]),'docs/build/html']
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
@@ -112,7 +112,7 @@ setup(name='Phonological CorpusTools',
                 #'corpustools.acousticsim',
                 'corpustools.symbolsim',
                 'corpustools.neighdens'],
-      executables = [Executable('corpustools.command_line.pct.py',
+      executables = [Executable('corpustools/command_line/pct.py',
                             #targetName = 'pct',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,

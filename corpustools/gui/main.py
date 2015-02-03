@@ -25,6 +25,7 @@ from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
+from .helpgui import AboutDialog, HelpDialog
 
 class QApplicationMessaging(QApplication):
     messageFromOtherInstance = Signal(bytes)
@@ -573,7 +574,13 @@ class MainWindow(QMainWindow):
             self.discourseTree.hide()
 
     def about(self):
-        pass
+        dialog = AboutDialog(self)
+        dialog.exec_()
+        #dialog.show()
+
+    def help(self):
+        dialog = HelpDialog(self)
+        dialog.exec_()
 
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpus)
@@ -730,7 +737,7 @@ class MainWindow(QMainWindow):
 
         self.helpAct = QAction("&Help", self,
                 statusTip="Help information",
-                triggered=self.about)
+                triggered=self.help)
 
         self.showSearchResults = QAction("Phonological search results", self)
         self.showSearchResults.setVisible(False)

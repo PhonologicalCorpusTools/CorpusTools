@@ -21,6 +21,7 @@ from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     TranscriptionWidget, SegFeatSelect, TierWidget)
 
 from .featuregui import FeatureSystemSelect
+from .helpgui import HelpDialog
 
 def get_corpora_list(storage_directory):
     corpus_dir = os.path.join(storage_directory,'CORPUS')
@@ -104,11 +105,14 @@ class SubsetCorpusDialog(QDialog):
 
         self.acceptButton = QPushButton('Create subset corpus')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -117,7 +121,12 @@ class SubsetCorpusDialog(QDialog):
 
         self.setLayout(layout)
 
-        self.setWindowTitle('Load corpora')
+        self.setWindowTitle('Subset corporus')
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'loading corpora',
+                                    section = 'subsetting-a-corpus')
+        self.helpDialog.exec_()
 
     def accept(self):
         filters = self.filterWidget.value()
@@ -296,11 +305,14 @@ class DownloadCorpusDialog(QDialog):
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -323,6 +335,11 @@ class DownloadCorpusDialog(QDialog):
         self.thread.updateProgress.connect(self.updateProgress)
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.finished.connect(self.progressDialog.accept)
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'loading corpora',
+                                    section = 'using-a-built-in-corpus')
+        self.helpDialog.exec_()
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
@@ -400,11 +417,14 @@ class CorpusFromSpellingTextDialog(QDialog):
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -426,6 +446,11 @@ class CorpusFromSpellingTextDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'loading corpora',
+                                    section = 'creating-a-corpus-from-running-text')
+        self.helpDialog.exec_()
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
@@ -550,11 +575,14 @@ class CorpusFromTranscriptionTextDialog(QDialog):
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -576,6 +604,11 @@ class CorpusFromTranscriptionTextDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'loading corpora',
+                                    section = 'creating-a-corpus-from-running-text')
+        self.helpDialog.exec_()
 
     def ignoreList(self):
         return self.punctuation.value()
@@ -1437,11 +1470,14 @@ class CorpusFromCsvDialog(QDialog):
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -1451,6 +1487,11 @@ class CorpusFromCsvDialog(QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle('Create corpus from csv')
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'loading corpora',
+                                    section = 'using-a-custom-corpus')
+        self.helpDialog.exec_()
 
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
@@ -1569,6 +1610,7 @@ class ExportCorpusDialog(QDialog):
 class SpontaneousSpeechDialog(QDialog):
     def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
+
         self.settings = settings
         self.corpus = None
         layout = QVBoxLayout()
@@ -1596,11 +1638,14 @@ class SpontaneousSpeechDialog(QDialog):
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -1622,6 +1667,11 @@ class SpontaneousSpeechDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'loading corpora',
+                                    section = 'creating-a-spontaneous-speech-corpus')
+        self.helpDialog.exec_()
 
     def updateName(self):
         self.nameEdit.setText(os.path.split(self.directoryWidget.value())[1].split('.')[0])
