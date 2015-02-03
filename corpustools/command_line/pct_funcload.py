@@ -33,7 +33,7 @@ def main():
 
     ####
 
-    corpus = load_binary(args.corpus_file_name)
+    corpus = load_binary(args.corpus_file_name)[0]
 
     if args.relative_fl != True:
         try:

@@ -41,7 +41,7 @@ def main():
 
     ####
 
-    corpus = load_binary(args.corpus_file_name)
+    corpus = load_binary(args.corpus_file_name)[0]
 
     if args.find_mutation_minpairs:
         query = ensure_query_is_word(args.query, corpus, args.sequence_type, args.trans_delimiter)
