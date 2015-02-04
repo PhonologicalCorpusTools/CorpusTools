@@ -28,7 +28,7 @@ There is currently no executable option available for Linux operating systems. P
 Dependencies:
 - Python 3.3 or higher: https://www.python.org/downloads/release/python-341/
 - Setuptools: https://pypi.python.org/pypi/setuptools
-- Tk: http://www.tcl.tk/software/tcltk/
+- PyQt5: http://www.riverbankcomputing.com/software/pyqt/download5
 
 If you expect to use the acoustic similarity module, there are additional dependencies:
 - NumPy: http://www.numpy.org/
