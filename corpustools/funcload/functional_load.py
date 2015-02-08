@@ -36,8 +36,8 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         q = threaded_q
 
     if frequency_cutoff > 0.0:
-
         corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
+
     if stop_check is not None and stop_check():
         return
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
@@ -89,6 +89,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
         minpairs = set(minpairs)
 
     result = len(minpairs)
+
     if relative_count and len(neutralized) > 0:
         result /= len(neutralized)
 

@@ -203,11 +203,8 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def doRandomAnalysis(self):
-        #action = random.choice([action for action in self.analysisMenu.actions()
-        #                        if not 'acoustic similarity' in action.text()])
-        #text = action.text()
-        analysis = random.choice(['string_similarity', 'functional_load', 'phonotactic_probability'])
-        #analysis = 'phonotactic_probability'
+        analysis = random.choice(['string_similarity', 'functional_load', 'phonotactic_probability', 'kullback_leibler'])
+        #analysis = 'kullback_leibler'
         kwargs = {'corpus': self.corpus}
 
         if 'string_similarity' == analysis:
@@ -220,6 +217,11 @@ class MainWindow(QMainWindow):
             kwargs['query'] = self.corpus.random_word()
             kwargs['sequence_type'] = 'transcription'
             kwargs['probability_type'] = random.choice(['unigram', 'bigram'])
+        elif 'kullback_leibler' == analysis:
+            segpair = random.sample(self.corpus.inventory,2)
+            kwargs['seg1'] = segpair[0]
+            kwargs['seg2'] = segpair[1]
+            kwargs['side'] = random.choice(['lhs', 'rhs', 'both'])
 
         self.luckyresults = LuckyDialog(self,analysis,kwargs)
         self.luckyresults.calc()

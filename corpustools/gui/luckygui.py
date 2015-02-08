@@ -4,6 +4,7 @@ from .windows import FunctionWorker, FunctionDialog
 from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.funcload.functional_load import minpair_fl
 from corpustools.phonoprob.phonotactic_probability import phonotactic_probability_vitevitch
+from corpustools.kl.kl import KullbackLeibler
 
 class UnLuckyError(Exception):
     pass
@@ -20,14 +21,17 @@ class LuckyWorker(FunctionWorker):
                 results = minpair_fl(self.kwargs['corpus'], self.kwargs['segment_pair'])
                 self.dataReady.emit(results)
             except Exception as e:
-                self.errorEncountered.emit(e)
+                message = '{}:{}'.format(self.name,e)
+                self.errorEncountered.emit(message)
                 return
+
         elif self.name == 'string_similarity':
             try:
                 results = string_similarity(self.kwargs['corpus'], self.kwargs['query'], self.kwargs['algorithm'])
                 self.dataReady.emit(results)
             except Exception as e:
-                self.errorEncountered.emit(e)
+                message = '{}:{}'.format(self.name,e)
+                self.errorEncountered.emit(message)
                 return
 
         elif self.name == 'phonotactic_probability':
@@ -37,8 +41,19 @@ class LuckyWorker(FunctionWorker):
                                                             probability_type=self.kwargs['probability_type'])
                 self.dataReady.emit(results)
             except Exception as e:
-                self.errorEncountered.emit(e)
+                message = '{}:{}'.format(self.name,e)
+                self.errorEncountered.emit(message)
                 return
+
+        elif self.name == 'kullback_leibler':
+            try:
+                results = KullbackLeibler(self.kwargs['corpus'], self.kwargs['seg1'], self.kwargs['seg2'], self.kwargs['side'])
+                self.dataReady.emit(results)
+            except Exception as e:
+                message = '{}:{}'.format(self.name,e)
+                self.errorEncountered.emit(message)
+                return
+
         else:
             raise UnLuckyException('No analysis function called {} could be found'.format(self.name))
 
@@ -52,6 +67,7 @@ class LuckyDialog(QDialog):
         self.kwargs = kwargs
         self.thread = LuckyWorker(func_name)
         self.thread.errorEncountered.connect(self.handleError)
+        self.setWindowTitle('Found something!')
 
         self.progressDialog = QProgressDialog('Looking for something interesting...',
                                                 'Cancel',0,100, self)
@@ -136,24 +152,48 @@ class LuckyDialog(QDialog):
             self.resultsList.append(QLabel('Doesn\'t look like there are too many minimal pairs between these sounds.'))
         else:
             self.resultsList.append(QLabel('Hey, there might be a few minimal pairs in there. Be a real shame if these sounds merged.'))
-        self.resultsList.append(QLabel('Find out more about the functional load of sounds in your corpus by going to Analysis > Functional load...'))
+        self.resultsList.append(QLabel('Find out more about the functional load of sounds in your corpus by going to Analysis > Calculate functional load...'))
 
     def string_similarity(self):
-        word = self.kwargs['query']
+        word = getattr(self.kwargs['query'], 'transcription')
         most = self.results[1]#results[0]==word, so not interesting
         least = self.results[-1]
         algorithm = 'Khorsi' if self.kwargs['algorithm'] == 'khorsi' else 'edit distance'
 
         self.resultsList.append(QLabel('I thought the word [{}] was interesting.'.format(word)))
         self.resultsList.append(QLabel('So I calculated its string similarity to other words in your corpus'))
-        self.resultsList.append(QLabel('Using the {} algorithm, the word most related to [{}] is [{}], scoring {}.'.format(algorithm,word,most[1],most[2])))
-        self.resultsList.append(QLabel('And the word least related to [{}] is [{}], scoring {}.'.format(word,least[1],least[2])))
-        self.resultsList.append(QLabel('Find out the string similarity of other words by clicking on Analysis > String simliarity...'))
+        self.resultsList.append(QLabel('Using the {} algorithm, the word most related to it is [{}], scoring {}.'.format(algorithm,getattr(most[1],'transcription'),most[2])))
+        self.resultsList.append(QLabel('And the word least related to it is [{}], scoring {}.'.format(getattr(least[1],'transcription'),least[2])))
+        self.resultsList.append(QLabel('Find out the string similarity of other words by clicking on Analysis > Calculate string simliarity...'))
 
-    def phonotactic_probability(self):S
+    def kullback_leibler(self):
+        seg1 = self.kwargs['seg1']
+        seg2 = self.kwargs['seg2']
+        side = self.results[2]
+        kl = self.results[5]
+        is_spurious = self.results[7]
+
+        if kl <= 0:
+            kl_description = 'A value of 0 means the two sounds have identical distributions.'
+        if kl <= 2.:
+            kl_description = 'This is a low value, which means the sounds have very similiar distributions. They are probably phonemes.'
+        else:
+            if is_spurious == 'Yes':
+                add = 'However, they are phonetically quite different, so they probably are not allophones'
+            else:
+                add = 'They are also phonetically similar, so they could be allophones'
+            kl_description = 'These two sounds have very different distributions. {}'.format(add)
+
+
+        self.resultsList.append(QLabel('Your corpus has the sounds [{}] and [{}]'.format(seg1,seg2)))
+        self.resultsList.append(QLabel('I looked at how these sounds are distributed, using the Kullback-Leibler measure of dissimilarity of distributions'))
+        self.resultsList.append(QLabel('The KL distance is {}'.format(kl)))
+        self.resultsList.append(QLabel(kl_description))
+        self.resultsList.append(QLabel('To see how other sounds are distributed, go to Analysis > Calculate Kullback-Leibler...'))
+
+    def phonotactic_probability(self):
         word = self.kwargs['query']
         self.resultsList.append(QLabel('I decided to look at the phonotactics of the word [{}], using a {} model'.format(
-
                                                                            word, self.kwargs['probability_type'])))
         word = getattr(word, self.kwargs['sequence_type'])
         if self.kwargs['probability_type'] == 'unigram':
@@ -165,15 +205,15 @@ class LuckyDialog(QDialog):
 
         self.resultsList.append(QLabel('In this case, the overall score is {}'.format(self.results)))
 
-        if self.results<.25:
-            self.resultsList.append(QLabel('It turns out this is a rather unusual word. It matches less than 25% of your corpus'))
-        elif self.results <.75:
-            self.resultsList.append(QLabel(('This looks like a pretty normal word. Sorry. I thought it might be more '
-                                                'interesting. But don\'t give up hope. Close this window and try again')))
-        else:
-            self.resultsList.append(QLabel('This word has phonotactic probabilities that are extremely common.'))
+        # if self.results<.25:
+        #     self.resultsList.append(QLabel('It turns out this is a rather unusual word. It matches less than 25% of your corpus'))
+        # elif self.results <.75:
+        #     self.resultsList.append(QLabel(('This looks like a pretty normal word. Sorry. I thought it might be more '
+        #                                         'interesting. But don\'t give up hope. Close this window and try again')))
+        # else:
+        #     self.resultsList.append(QLabel('This word has phonotactic probabilities that are extremely common.'))
 
-        self.resultsList.append(QLabel('Find out more about your corpus by going to Analysis > Phonotactic probability...'))
+        self.resultsList.append(QLabel('Find out more about your corpus by going to Analysis > Calculate phonotactic probability...'))
 
     def printResults(self):
         layout = QVBoxLayout()
