@@ -92,6 +92,7 @@ class LexiconView(QWidget):
     wordsChanged = Signal()
     wordToBeEdited = Signal(object, object)
     columnRemoved = Signal()
+
     def __init__(self,parent=None):
         super(LexiconView, self).__init__(parent=parent)
         self._parent = parent
@@ -771,6 +772,40 @@ class TreeWidget(SubTreeView):
     def buildNewLexicon(self, index):
         lexicon = self.model().createLexicon(index)
         self.newLexicon.emit(lexicon)
+
+class RandomResultsWindow(QDialog):
+    def __init__(self, target, func_name, results, *extras):
+        QWidget.__init__(self)
+        self.target = target
+        self.results = results
+        self.extras = extras
+        getattr(self,func_name)()
+
+    def functional_load(self):
+        seg1, seg2 = target
+
+
+    def string_similarity(self):
+        word = self.target
+        most = self.results[1]#results[0]==word, so not interesting
+        least = self.results[-1]
+        algorithm = self.extras[0]
+        algorithm = 'Khorsi' if algorithm == 'khorsi' else 'edit distance'
+
+        layout = QVBoxLayout()
+        self.text1 = QLabel('I thought the word [{}] was interesting.'.format(word))
+        layout.addWidget(self.text1)
+        self.text2 = QLabel('So I calculated its string similarity to other words in your corpus')
+        layout.addWidget(self.text2)
+        self.text3 = QLabel('Using the {} algorithm, the word most related to [{}] is [{}], scoring {}.'.format(algorithm,word,most[1],most[2]))
+        layout.addWidget(self.text3)
+        self.text4 = QLabel('And the word least related to [{}] is [{}], scoring {}.'.format(word,least[1],least[2]))
+        layout.addWidget(self.text4)
+        self.text5 = QLabel('Find out the string similarity of other words by clicking on Analysis > String simliarity...')
+        layout.addWidget(self.text5)
+
+        self.setLayout(layout)
+
 
 class ResultsWindow(QDialog):
     def __init__(self, title, dialog, parent):

@@ -1,11 +1,13 @@
 import os
+import random
 
 from .imports import *
 
 from .config import Settings, PreferencesDialog
 from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
-                    LexiconView,PhonoSearchResults)
-from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
+                    LexiconView,PhonoSearchResults, RandomResultsWindow)
+
+from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel, DiscourseModel
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
                         RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
@@ -25,6 +27,7 @@ from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
+from .luckygui import LuckyDialog
 from .helpgui import AboutDialog, HelpDialog
 
 class QApplicationMessaging(QApplication):
@@ -115,6 +118,8 @@ class MainWindow(QMainWindow):
 
         self.status = QLabel()
         self.status.setText("Ready")
+        self.lucky = QPushButton('Tell me something interesting', self)
+        self.lucky.clicked.connect(self.doRandomAnalysis)
         self.statusBar().addWidget(self.status, stretch=1)
         self.corpusStatus = QLabel()
         self.corpusStatus.setText("No corpus selected")
@@ -122,7 +127,7 @@ class MainWindow(QMainWindow):
         self.featureSystemStatus = QLabel()
         self.featureSystemStatus.setText("No feature system selected")
         self.statusBar().addWidget(self.featureSystemStatus)
-
+        self.statusBar().addWidget(self.lucky)
         self.setWindowTitle("Phonological CorpusTools")
         self.createActions()
         self.createMenus()
@@ -139,6 +144,7 @@ class MainWindow(QMainWindow):
         self.KLWindow = None
         self.PhonoSearchWindow = None
         self.setMinimumWidth(self.menuBar().sizeHint().width())
+
 
     def sizeHint(self):
         sz = QMainWindow.sizeHint(self)
@@ -194,6 +200,30 @@ class MainWindow(QMainWindow):
             else:
                 function(self)
         return do_check
+
+    @check_for_empty_corpus
+    def doRandomAnalysis(self):
+        #action = random.choice([action for action in self.analysisMenu.actions()
+        #                        if not 'acoustic similarity' in action.text()])
+        #text = action.text()
+        analysis = random.choice(['string_similarity', 'functional_load', 'phonotactic_probability'])
+        #analysis = 'phonotactic_probability'
+        kwargs = {'corpus': self.corpus}
+
+        if 'string_similarity' == analysis:
+            kwargs['algorithm'] = random.choice(['khorsi', 'edit_distance'])
+            kwargs['query'] = self.corpus.random_word()
+        elif 'functional_load' == analysis:
+            segpair = random.sample(self.corpus.inventory,2)
+            kwargs['segment_pair'] = [segpair[0].symbol, segpair[1].symbol]
+        elif 'phonotactic_probability' == analysis:
+            kwargs['query'] = self.corpus.random_word()
+            kwargs['sequence_type'] = 'transcription'
+            kwargs['probability_type'] = random.choice(['unigram', 'bigram'])
+
+        self.luckyresults = LuckyDialog(self,analysis,kwargs)
+        self.luckyresults.calc()
+        self.luckyresults.show()
 
     def enableSave(self):
         self.unsavedChanges = True
