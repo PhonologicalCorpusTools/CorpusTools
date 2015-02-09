@@ -9,7 +9,7 @@ sys.path.insert(0,corpustools_path)
 
 from corpustools.corpus.io.spontaneous import (read_phones, read_words,
                             files_to_data, import_spontaneous_speech_corpus,
-                            textgrids_to_data)
+                            textgrids_to_data, process_tier_name)
 
 buckeye_path = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading\spontaneous\buckeye'
 textgrid_path = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading\spontaneous\textgrids_basic'
@@ -76,7 +76,17 @@ class WordPhoneLoadTest(unittest.TestCase):
 
 class TextGridTest(unittest.TestCase):
     def setUp(self):
-        pass
+        self.tier_names = [('Speaker 1 - Word', ('Speaker 1','Word')),
+                            ('Word = Speaker 1',('Word','Speaker 1')),
+                            ('Orthography (Speaker1)',('Orthography','Speaker1')),
+                            ('Orthography (Speaker 1)',('Orthography','Speaker 1')),
+                            ('Orthography (Speaker_1)',('Orthography','Speaker_1')),
+                            ('Orthography',('Orthography',''))
+                            ]
+
+    def test_process_name(self):
+        for t in self.tier_names:
+            self.assertEqual(process_tier_name(t[0]), t[1])
 
     def test_basic(self):
         return

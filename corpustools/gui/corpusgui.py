@@ -1,4 +1,5 @@
 import os
+import sys
 import codecs
 import string
 
@@ -12,7 +13,7 @@ from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv
                                     load_spelling_corpus, load_transcription_corpus,
                                     inspect_transcription_corpus,
                                     save_binary,export_corpus_csv, import_spontaneous_speech_corpus)
-
+from corpustools.corpus.io.spontaneous import SpontaneousIOError
 from .windows import FunctionWorker, DownloadWorker
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
@@ -63,11 +64,17 @@ class LoadWorker(FunctionWorker):
 
 class SpontaneousLoadWorker(FunctionWorker):
     def run(self):
-
-        corpus = import_spontaneous_speech_corpus(self.kwargs['directory'],
-                                                dialect = self.kwargs['dialect'],
-                                                stop_check=self.kwargs['stop_check'],
-                                                call_back = self.kwargs['call_back'])
+        kwargs = self.kwargs
+        directory = kwargs.pop('directory')
+        name = kwargs.pop('name')
+        try:
+            corpus = import_spontaneous_speech_corpus(
+                                                name,
+                                                directory,
+                                                **kwargs)
+        except SpontaneousIOError as e:
+            self.errorEncountered.emit(e)
+            return
         self.dataReady.emit(corpus)
 
 class SpellingLoadWorker(FunctionWorker):
@@ -1615,6 +1622,8 @@ class SpontaneousSpeechDialog(QDialog):
         self.corpus = None
         layout = QVBoxLayout()
 
+        self.mainlayout = QHBoxLayout()
+
         inlayout = QFormLayout()
 
         self.directoryWidget = DirectoryWidget()
@@ -1630,11 +1639,34 @@ class SpontaneousSpeechDialog(QDialog):
         self.dialectWidget.addItem('TIMIT')
         self.dialectWidget.addItem('Buckeye')
         inlayout.addRow('Corpus file set up:',self.dialectWidget)
-
+        self.dialectWidget.currentIndexChanged.connect(self.updateOptions)
         inframe = QFrame()
         inframe.setLayout(inlayout)
 
-        layout.addWidget(inframe)
+        self.mainlayout.addWidget(inframe)
+
+        self.optionlayout = QFormLayout()
+
+        self.wordTierName = QLineEdit()
+        self.wordTierName.setText('Word')
+        self.phoneTierName = QLineEdit()
+        self.phoneTierName.setText('Phone')
+        self.multiplePhoneCheck = QCheckBox()
+        self.multiplePhoneCheck.clicked.connect(self.updateDelimiters)
+        self.phoneDelimiter = QLineEdit()
+        self.phoneDelimiter.setText(',')
+        self.phoneDelimiter.setEnabled(False)
+
+
+        self.speakerSource = RadioSelectWidget('Where to get speaker names from',
+                                            OrderedDict([('From directory names','directory'),
+                                            ('From file names','filename'),
+                                            ('From within the file (or to be added later)', None)]))
+
+        mainframe = QFrame()
+        mainframe.setLayout(self.mainlayout)
+
+        layout.addWidget(mainframe)
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
@@ -1653,10 +1685,11 @@ class SpontaneousSpeechDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
-
+        self.updateOptions()
         self.setWindowTitle('Import spontaneous speech corpus')
 
         self.thread = SpontaneousLoadWorker()
+        self.thread.errorEncountered.connect(self.handleError)
 
         self.progressDialog = QProgressDialog('Importing...','Cancel',0,100,self)
         self.progressDialog.setWindowTitle('Importing spontaneous speech corpus')
@@ -1667,6 +1700,29 @@ class SpontaneousSpeechDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateDelimiters(self):
+        self.phoneDelimiter.setEnabled(self.multiplePhoneCheck.isChecked())
+
+    def updateOptions(self):
+        try:
+            self.optionframe.deleteLater()
+        except AttributeError:
+            pass
+
+        optionlayout = QFormLayout()
+
+        if self.dialectWidget.currentText() == 'TextGrid':
+            optionlayout.addRow('Name of word tiers',self.wordTierName)
+            optionlayout.addRow('Name of phone tiers',self.phoneTierName)
+            optionlayout.addRow('Multiple phones per interval?',self.multiplePhoneCheck)
+            optionlayout.addRow('Delimiter of multiple phones',self.phoneDelimiter)
+            optionlayout.addRow(self.speakerSource)
+        #else:
+        #   self.optionslayout.
+        self.optionframe = QGroupBox('Options')
+        self.optionframe.setLayout(optionlayout)
+        self.mainlayout.addWidget(self.optionframe)
 
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'loading corpora',
@@ -1687,6 +1743,37 @@ class SpontaneousSpeechDialog(QDialog):
     def setResults(self, results):
         self.corpus = results
 
+    def handleError(self,error):
+        if hasattr(error, 'main'):
+            reply = QMessageBox()
+            reply.setWindowTitle('Error encountered')
+            reply.setIcon(QMessageBox.Critical)
+            reply.setText(error.main)
+            reply.setInformativeText(error.information)
+            reply.setDetailedText(error.details)
+
+            reply.addButton('Open corpus directory',QMessageBox.AcceptRole)
+            reply.setStandardButtons(QMessageBox.Close)
+            ret = reply.exec_()
+            if ret == QMessageBox.AcceptRole:
+                error_dir = os.path.normpath(self.directoryWidget.value())
+                if sys.platform == 'win32':
+                    args = ['{}'.format(error_dir)]
+                    program = 'explorer'
+                elif sys.platform == 'darwin':
+                    program = 'open'
+                    args = ['{}'.format(error_dir)]
+                else:
+                    program = 'xdg-open'
+                    args = ['{}'.format(error_dir)]
+                proc = QProcess(self.parent())
+                t = proc.startDetached(program,args)
+        else:
+            reply = QMessageBox.critical(self,
+                    "Error encountered", str(error))
+        self.progressDialog.cancel()
+        return None
+
     def accept(self):
         name = self.nameEdit.text()
         if name == '':
@@ -1700,10 +1787,21 @@ class SpontaneousSpeechDialog(QDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-        self.thread.setParams({'name': name,
-                            'directory':self.directoryWidget.value(),
-                            'dialect':self.dialectWidget.currentText().lower()})
+        dialect = self.dialectWidget.currentText().lower()
+        kwargs = {'name': name,
+                'directory':self.directoryWidget.value(),
+                'dialect': dialect,
+                'speaker_source': self.speakerSource.value()}
+        if dialect == 'textgrid':
+            if self.multiplePhoneCheck.isChecked():
+                delim = self.phoneDelimiter.text()
+            else:
+                delim = None
+            kwargs['word_tier_name'] = self.wordTierName.text()
+            kwargs['phone_tier_name'] = self.phoneTierName.text()
+            kwargs['delimiter'] = delim
 
+        self.thread.setParams(kwargs)
         self.thread.start()
 
         result = self.progressDialog.exec_()
