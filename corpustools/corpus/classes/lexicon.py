@@ -1,4 +1,5 @@
 
+import re
 import random
 import collections
 import math
@@ -318,9 +319,23 @@ class Transcription(object):
     Transcription object, sequence of symbols
     """
     def __init__(self,seg_list):
-        if seg_list is None:
-            seg_list = []
-        self._list = seg_list
+        self._list = list()
+        self._times = list()
+        if seg_list is not None:
+            for i,s in enumerate(seg_list):
+                if isinstance(s,str):
+                    self._list.append(s)
+                elif isinstance(s,dict):
+                    self._list.append(s['symbol'])
+                    self._times.append((s['begin'],s['end']))
+                elif isinstance(s,list):
+                    if len(s) == 3:
+                        self._list.append(s[0])
+                        self._times.append((s[1],s[2]))
+                    else:
+                        raise(NotImplementedError('That format for seg_list is not supported.'))
+                else:
+                    raise(NotImplementedError('That format for seg_list is not supported.'))
 
     def __getitem__(self, key):
         if isinstance(key,int) or isinstance(key,slice):
@@ -930,6 +945,13 @@ class Attribute(object):
             else:
                 self._default_value = Transcription(None)
 
+    @staticmethod
+    def sanitize_name(name):
+        return re.sub('\W','',name.lower())
+
+    def __hash__(self):
+        return hash(self.name)
+
     def __str__(self):
         return self.display_name
 
@@ -1424,9 +1446,7 @@ class Corpus(object):
                     self.has_spelling = True
 
         if word.transcription is not None:
-            for s in word.transcription:
-                if s not in self._inventory:
-                    self._inventory[s] = Segment(s)
+            self.update_inventory(word.transcription)
             if not self.has_transcription:
                 self.has_transcription = True
         for d in word.descriptors:
@@ -1439,6 +1459,12 @@ class Corpus(object):
                     self._attributes.append(Attribute(d,'numeric'))
         for a in self.attributes:
             a.update_range(getattr(word,a.name))
+
+    def update_inventory(self, transcription):
+        for s in transcription:
+            if isinstance(s, str):
+                if s not in self._inventory:
+                    self._inventory[s] = Segment(s)
 
     def get_or_create_word(self, spelling, transcription):
         words = self.find_all(spelling)

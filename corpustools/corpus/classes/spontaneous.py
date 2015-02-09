@@ -14,10 +14,14 @@ class Speaker(object):
         for k,v in kwargs.items():
             setattr(self,k,v)
 
+    def __hash__(self):
+        return hash(self.name)
+
     def __eq__(self, other):
-        if not isinstance(other,Speaker):
-            return False
-        return self.name == other.name
+        if isinstance(other,Speaker):
+            return self.name == other.name
+        else:
+            return self.name == other
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -50,30 +54,44 @@ class SpontaneousSpeechCorpus(object):
     def __setstate__(self,state):
         self.__dict__.update(state)
 
-    def add_discourse(self, data, discourse_info):
+    def add_discourse(self, data, discourse_info, delimiter=None):
         d = Discourse(**discourse_info)
+        d_atts = d.attributes
         previous_time = None
         for line in data:
-            spelling = line['word']
-            if 'ur' in line:
-                transcription = line['ur']
+            spelling = line['Spelling']
+            if 'word_transcription' in line:
+                transcription = line['word_transcription']
             else:
                 transcription = list()
-            if 'sr' in line:
-                t = line['sr']
-            else:
-                t = [x['label'] for x in line['phones']]
+            if 'Transcription' in line:
+                t = line['Transcription']
             word = self.lexicon.get_or_create_word(spelling, transcription)
             word.frequency += 1
             if previous_time is not None:
                 wordtoken = WordToken(word=word, transcription=t,
-                                begin = line['begin'], end = line['end'],
+                                begin = line['Begin'], end = line['End'],
                                 previous_token = d[previous_time])
             else:
                 wordtoken = WordToken(word=word, transcription=t,
-                                begin = line['begin'], end = line['end'])
+                                begin = line['Begin'], end = line['End'])
             word.wordtokens.append(wordtoken)
             d.add_word(wordtoken)
+            att_names = [Attribute(Attribute.sanitize_name(x),
+                                    'spelling',
+                                    x) for x in line.keys()
+                if Attribute.sanitize_name(x) not in d_atts and not x.islower()]
+            d.update_attributes(att_names)
+            if delimiter is not None:
+                segs = list()
+                for s in t:
+                    if delimiter in s['symbol']:
+                        segs.extend(s['symbol'].split(delimiter))
+                    else:
+                        segs.append(s['symbol'])
+            else:
+                segs = [x['symbol'] for x in t]
+            self.lexicon.update_inventory(segs)
             if previous_time is not None:
                 d[previous_time].following_token_time = wordtoken.begin
 
@@ -88,15 +106,21 @@ class Discourse(object):
         for k,v in kwargs.items():
             setattr(self,k,v)
 
-        self._attributes = [Attribute('spelling','spelling'),
-                            Attribute('transcription','tier'),
-                            Attribute('begin','numeric')]
+        self._attributes = [Attribute('spelling','spelling','Spelling'),
+                            Attribute('transcription','tier','Transcription'),
+                            Attribute('begin','numeric','Begin'),
+                            Attribute('end','numeric', 'End')]
 
         self.words = dict()
 
     @property
     def attributes(self):
         return self._attributes
+
+    def update_attributes(self, attributes):
+        for a in attributes:
+            if a not in self._attributes:
+                self._attributes.append(a)
 
     def keys(self):
         return sorted(self.words.keys())

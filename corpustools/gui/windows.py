@@ -106,7 +106,7 @@ class FunctionDialog(QDialog):
             if ret == QMessageBox.AcceptRole:
                 error_dir = self.parent().settings.error_directory()
                 if sys.platform == 'win32':
-                    args = ['"{}"'.format(error_dir)]
+                    args = ['{}'.format(error_dir)]
                     program = 'explorer'
                     #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
                 elif sys.platform == 'darwin':
