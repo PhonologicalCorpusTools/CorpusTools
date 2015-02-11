@@ -1094,17 +1094,20 @@ class Corpus(object):
         Name of the corpus, used only for easy of reference
 
     attributes : list of Attributes
-        List of att
+        List of Attributes that Words in the Corpus have
 
     wordlist : dict
         Dictionary where every key is a unique string representing a word in a
         corpus, and each entry is a Word object
 
+    words : list of strings
+        All the keys for the wordlist of the Corpus
+
     specifier : FeatureSpecifier
         See the FeatureSpecifier object
 
     inventory : list
-        list of all Segments that appear at least once in self.wordlist.values()
+        list of all Segments that appear at least once in the Words of the Corpus
     """
 
     #__slots__ = ['name', 'wordlist', 'specifier',
@@ -1116,7 +1119,6 @@ class Corpus(object):
         self.wordlist = dict()
         self.specifier = None
         self._inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
-        self.orthography = {'#'} #set of orthographic characters
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
@@ -1134,6 +1136,35 @@ class Corpus(object):
 
     def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
                         gramsize = 1, probability = False):
+        """
+        Generate (and cache) frequencies for each segment in the Corpus.
+
+        Parameters
+        ----------
+        sequence_type : string
+            Specifies whether to use 'spelling', 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+        count_what: string
+            The type of frequency to use, either 'type' or 'token'
+
+        halve_edges : boolean
+            If True, word boundary symbols ('#') will only be counted once
+            per word, rather than twice.  Defaults to False.
+
+        gramsize : integer
+            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
+
+        probability : boolean
+            If True, frequency counts will be normalized by total frequency,
+            defaults to False
+
+        Returns
+        -------
+        dict
+            Keys are segments (or sequences of segments) and values are
+            their frequency in the Corpus
+        """
         if (sequence_type, count_what, gramsize) not in self._freq_base:
             freq_base = collections.defaultdict(float)
             for word in self:
@@ -1161,6 +1192,40 @@ class Corpus(object):
     def get_phone_probs(self, sequence_type, count_what, gramsize = 1,
                         probability = True, preserve_position = True,
                         log_count = True):
+        """
+        Generate (and cache) phonotactic probabilities for segments in
+        the Corpus.
+
+        Parameters
+        ----------
+        sequence_type : string
+            Specifies whether to use 'spelling', 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+        count_what: string
+            The type of frequency to use, either 'type' or 'token'
+
+        gramsize : integer
+            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
+
+        probability : boolean
+            If True, frequency counts will be normalized by total frequency,
+            defaults to False
+
+        preserve_position : boolean
+            If True, segments will in different positions in the transcription
+            will not be collapsed, defaults to True
+
+        log_count : boolean
+            If True, token frequencies will be logrithmically-transformed
+            prior to being summed
+
+        Returns
+        -------
+        dict
+            Keys are segments (or sequences of segments) and values are
+            their phonotactic probability in the Corpus
+        """
         if (sequence_type, count_what, gramsize, probability,
                     preserve_position, log_count) not in self._freq_base:
             freq_base = collections.defaultdict(float)
@@ -1198,8 +1263,32 @@ class Corpus(object):
         return return_dict
 
     def subset(self,filters):
+        """
+        Generate a subset of the corpus based on filters.
+
+        Filters for Numeric Attributes should be tuples of an Attribute
+        (of the Corpus), a comparison callable (``__eq__``, ``__neq__``,
+        ``__gt__``, ``__gte__``, ``__lt__``, or ``__lte__``) and a value
+        to compare all such attributes in the Corpus to.
+
+        Filters for Factor Attributes should be tuples of an Attribute,
+        and a set of levels for inclusion in the subset.
+
+        Other attribute types cannot currently be the basis for filters.
+
+        Parameters
+        ----------
+        filters : list of tuples
+            See above for format
+
+        Returns
+        -------
+        Corpus
+            Subset of the corpus that matches the filter conditions
+        """
         new_corpus = Corpus('')
-        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name) for x in self.attributes]
+        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
+                    for x in self.attributes]
         for word in self:
             for f in filters:
                 if f[0].att_type == 'numeric':
@@ -1221,6 +1310,25 @@ class Corpus(object):
         return sorted(list(self.wordlist.keys()))
 
     def features_to_segments(self, feature_description):
+        """
+        Given a feature description, return the segments in the inventory
+        that match that feature description
+
+        Feature descriptions should be either lists, such as
+        ['+feature1', '-feature2'] or strings that can be separated into
+        lists by ',', such as '+feature1,-feature2'.
+
+        Parameters
+        ----------
+        feature_description : string or list
+            Feature values that specify the segments, see above for format
+
+        Returns
+        -------
+        list of Segments
+            Segments that match the feature description
+
+        """
         segments = list()
         if isinstance(feature_description,str):
             feature_description = feature_description.split(',')
@@ -1230,6 +1338,19 @@ class Corpus(object):
         return segments
 
     def segment_to_features(self, seg):
+        """
+        Given a segment, return the features for that segment.
+
+        Parameters
+        ----------
+        seg : string or Segment
+            Segment or Segment symbol to look up
+
+        Returns
+        -------
+        dict
+            Dictionary with keys as features and values as featue values
+        """
         try:
             features = self.specifier.matrix[seg]
         except TypeError:
@@ -1237,6 +1358,25 @@ class Corpus(object):
         return features
 
     def add_abstract_tier(self, attribute, spec):
+        """
+        Add a abstract tier (currently primarily for generating CV skeletons
+        from tiers).
+
+        Specifiers for abstract tiers should be dictionaries with keys that
+        are the abstract symbol (such as 'C' or 'V') and the values are
+        iterables of segments that should count as that abstract symbols
+        (such as all consonants or all vowels).
+
+        Currently only operates on the ``transcription`` of words.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add/replace
+
+        spec : dict
+            Mapping for creating abstract tier
+        """
         for i,a in enumerate(self._attributes):
             if attribute.name == a.name:
                 self._attributes[i] = attribute
@@ -1248,6 +1388,18 @@ class Corpus(object):
             attribute.update_range(getattr(word,attribute.name))
 
     def add_attribute(self, attribute, initialize_defaults = False):
+        """
+        Add an Attribute of any type to the Corpus or replace an existing Attribute.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add or replace
+
+        initialize_defaults : boolean
+            If True, words will have this attribute set to the ``default_value``
+            of the attribute, defaults to False
+        """
         for i,a in enumerate(self._attributes):
             if attribute.name == a.name:
                 self._attributes[i] = attribute
@@ -1259,6 +1411,25 @@ class Corpus(object):
                 word.add_attribute(attribute.name,attribute.default_value)
 
     def add_count_attribute(self, attribute, sequence_type, spec):
+        """
+        Add an Numeric Attribute that is a count of a segments in a tier that
+        match a given specification.
+
+        The specification should be either a list of segments or a string of
+        the format '+feature1,-feature2' that specifies the set of segments.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add or replace
+
+        sequence_type : string
+            Specifies whether to use 'spelling', 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+        spec : list or str
+            Specification of what segments should be counted
+        """
         if isinstance(attribute,str):
             attribute = Attribute(attribute,'numeric')
         for i,a in enumerate(self._attributes):
@@ -1276,9 +1447,22 @@ class Corpus(object):
             setattr(word, attribute.name, v)
             attribute.update_range(v)
 
-
-
     def add_tier(self, attribute, spec):
+        """
+        Add a Tier Attribute based on the transcription of words as a new Attribute
+        that includes all segments that match the specification.
+
+        The specification should be either a list of segments or a string of
+        the format '+feature1,-feature2' that specifies the set of segments.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add or replace
+
+        spec : list or str
+            Specification of what segments should be counted
+        """
         if isinstance(attribute,str):
             attribute = Attribute(attribute,'tier')
         for i,a in enumerate(self._attributes):
@@ -1296,12 +1480,30 @@ class Corpus(object):
             word.add_tier(attribute.name,tier_segs)
 
     def remove_word(self, word_key):
+        """
+        Remove a Word from the Corpus using its identifier in the Corpus.
+
+        If the identifier is not found, nothing happens.
+
+        Parameters
+        ----------
+        word_key : string
+            Identifier to use to remove the Word
+        """
         try:
             del self.wordlist[word_key]
         except KeyError:
             pass
 
     def remove_attribute(self, attribute):
+        """
+        Remove an Attribute from the Corpus and from all its Word objects.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to remove
+        """
         if isinstance(attribute,str):
             name = attribute
         else:
@@ -1368,6 +1570,15 @@ class Corpus(object):
                     pass
 
     def check_coverage(self):
+        """
+        Checks the coverage of the specifier (FeatureMatrix) of the Corpus over the
+        inventory of the Corpus
+
+        Returns
+        -------
+        list
+            List of segments in the inventory that are not in the specifier
+        """
         if not self.specifier is not None:
             return []
         return [x for x in self._inventory.keys() if x not in self.specifier]
