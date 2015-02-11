@@ -914,6 +914,48 @@ class EnvironmentFilter(object):
         return True
 
 class Attribute(object):
+    """
+    Attributes are for collecting summary information about attributes of
+    Words or WordTokens, with different types of attributes allowing for
+    different behaviour
+
+    Parameters
+    ----------
+    name : string
+        Python-safe name for using `getattr` and `setattr` on Words and
+        WordTokens
+
+    att_type : string
+        Either 'spelling', 'tier', 'numeric' or 'factor'
+
+    display_name : string
+        Human-readable name of the Attribute, defaults to None
+
+    default_value : object
+        Default value for initializing the attribute
+
+    Attributes
+    ----------
+    name : string
+        Python-readable name for the Attribute on Word and WordToken objects
+
+    display_name : string
+        Human-readable name for the Attribute
+
+    default_value : object
+        Default value for the Attribute.  The type of `default_value` is
+        dependent on the attribute type.  Numeric Attributes have a float
+        default value.  Factor and Spelling Attributes have a string
+        default value.  Tier Attributes have a Transcription default value.
+
+    range : object
+        Range of the Attribute, type depends on the attribute type.  Numeric
+        Attributes have a tuple of floats for the range for the minimum
+        and maximum.  The range for Factor Attributes is a set of all
+        factor levels.  The range for Tier Attributes is the set of segments
+        in that tier across the corpus.  The range for Spelling Attributes
+        is None.
+    """
     ATT_TYPES = ['spelling', 'tier', 'numeric', 'factor']
     def __init__(self, name, att_type, display_name = None, default_value = None):
         self.name = name
@@ -947,6 +989,19 @@ class Attribute(object):
 
     @staticmethod
     def sanitize_name(name):
+        """
+        Sanitize a display name into a Python-readable attribute name
+
+        Parameters
+        ----------
+        name : string
+            Display name to sanitize
+
+        Returns
+        -------
+        string
+            Sanitized name
+        """
         return re.sub('\W','',name.lower())
 
     def __hash__(self):
@@ -984,6 +1039,20 @@ class Attribute(object):
         return self._range
 
     def update_range(self,value):
+        """
+        Update the range of the Attribute with the value specified.
+        If the attribute is a Factor, the value is added to the set of levels.
+        If the attribute is Numeric, the value expands the minimum and
+        maximum values, if applicable.  If the attribute is a Tier, the
+        value (a segment) is added to the set of segments allowed. If
+        the attribute is Spelling, nothing is done.
+
+        Parameters
+        ----------
+        value : object
+            Value to update range with, the type depends on the attribute
+            type
+        """
         if value is None:
             return
         if self.att_type == 'numeric':
@@ -1010,11 +1079,22 @@ class Attribute(object):
 
 class Corpus(object):
     """
+    Lexicon to store information about Words, such as transcriptions,
+    spellings and frequencies
+
+    Parameters
+    ----------
+    name : string
+        Name to identify Corpus
+
     Attributes
     ----------
 
     name : str
         Name of the corpus, used only for easy of reference
+
+    attributes : list of Attributes
+        List of att
 
     wordlist : dict
         Dictionary where every key is a unique string representing a word in a
@@ -1025,15 +1105,6 @@ class Corpus(object):
 
     inventory : list
         list of all Segments that appear at least once in self.wordlist.values()
-
-    orthography : list
-        list of one-character strings that appear in self.wordlist.keys()
-
-    custom : bool
-        True if this is a user-supplied corpus, False if it is a built-in corpus
-
-    feature_system : str
-        Name of the feature system used for the corpus
     """
 
     #__slots__ = ['name', 'wordlist', 'specifier',
@@ -1049,8 +1120,6 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
-        self._tiers = list()
-        self._additional = list()
         self._freq_base = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
@@ -1142,10 +1211,6 @@ class Corpus(object):
             else:
                 new_corpus.add_word(word)
         return new_corpus
-
-    @property
-    def tiers(self):
-        return self._tiers
 
     @property
     def attributes(self):

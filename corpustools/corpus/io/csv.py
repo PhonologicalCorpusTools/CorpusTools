@@ -14,12 +14,12 @@ class DelimiterError(Exception):
     pass
 
 
-def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.',
+def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
                     feature_system_path = ''):
     """
     Load a corpus from a column-delimited text file
 
-    Attributes
+    Parameters
     ----------
     corpus_name : str
         Informative identifier to refer to corpus
@@ -42,10 +42,6 @@ def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.',
     -------
     Corpus
         Corpus object generated from the text file
-
-    dictionary
-        Dictionary with segments not in the FeatureMatrix (if specified)
-        as keys and a list of words containing those segments as values
 
     """
     #begin = time.time()
@@ -103,7 +99,7 @@ def load_feature_matrix_csv(name,path,delimiter):
     """
     Load a FeatureMatrix from a column-delimited text file
 
-    Attributes
+    Parameters
     ----------
     name : str
         Informative identifier to refer to feature system
@@ -146,7 +142,7 @@ def make_safe(value, delimiter):
     """
     Recursively parse transcription lists into strings for saving
 
-    Attributes
+    Parameters
     ----------
     value : object
         Object to make into string
@@ -168,7 +164,7 @@ def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.'):
     """
     Save a corpus as a column-delimited text file
 
-    Attributes
+    Parameters
     ----------
     corpus : Corpus
         Corpus to save to text file
@@ -194,7 +190,7 @@ def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
     """
     Save a FeatureMatrix as a column-delimited text file
 
-    Attributes
+    Parameters
     ----------
     feature_matrix : FeatureMatrix
         FeatureMatrix to save to text file
