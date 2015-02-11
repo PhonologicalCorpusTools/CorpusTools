@@ -18,7 +18,9 @@ class LuckyWorker(FunctionWorker):
     def run(self):
         if self.name == 'functional_load':
             try:
-                results = minpair_fl(self.kwargs['corpus'], self.kwargs['segment_pair'])
+                results = minpair_fl(self.kwargs['corpus'], self.kwargs['segment_pair'],
+                                     stop_check = self.kwargs['stop_check'],
+                                     call_back = self.kwargs['call_back'])
                 self.dataReady.emit(results)
             except Exception as e:
                 message = '{}:{}'.format(self.name,e)
@@ -27,7 +29,9 @@ class LuckyWorker(FunctionWorker):
 
         elif self.name == 'string_similarity':
             try:
-                results = string_similarity(self.kwargs['corpus'], self.kwargs['query'], self.kwargs['algorithm'])
+                results = string_similarity(self.kwargs['corpus'], self.kwargs['query'], self.kwargs['algorithm'],
+                                                        stop_check = self.kwargs['stop_check'],
+                                                            call_back = self.kwargs['call_back'])
                 self.dataReady.emit(results)
             except Exception as e:
                 message = '{}:{}'.format(self.name,e)
@@ -38,7 +42,9 @@ class LuckyWorker(FunctionWorker):
             try:
                 results = phonotactic_probability_vitevitch(self.kwargs['corpus'],self.kwargs['query'],
                                                             self.kwargs['sequence_type'],
-                                                            probability_type=self.kwargs['probability_type'])
+                                                            probability_type=self.kwargs['probability_type'],
+                                                            stop_check = self.kwargs['stop_check'],
+                                                            call_back = self.kwargs['call_back'])
                 self.dataReady.emit(results)
             except Exception as e:
                 message = '{}:{}'.format(self.name,e)
@@ -47,7 +53,9 @@ class LuckyWorker(FunctionWorker):
 
         elif self.name == 'kullback_leibler':
             try:
-                results = KullbackLeibler(self.kwargs['corpus'], self.kwargs['seg1'], self.kwargs['seg2'], self.kwargs['side'])
+                results = KullbackLeibler(self.kwargs['corpus'], self.kwargs['seg1'], self.kwargs['seg2'], self.kwargs['side'],
+                                          stop_check = self.kwargs['stop_check'],
+                                            call_back = self.kwargs['call_back'])
                 self.dataReady.emit(results)
             except Exception as e:
                 message = '{}:{}'.format(self.name,e)
