@@ -1,6 +1,6 @@
 .. _about:
 
-.. image:: _static/logo.png
+.. image:: static/logo.png
    :height: 200px
    :align: center
    :target: #

@@ -19,7 +19,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
     Parameters
     ----------
     s1: char
-        A sound segment, e.g. 's', 'ÃƒÆ’Ã…Â Ãƒâ€ Ã¢â‚¬â„¢',
+        A sound segment, e.g. 's', 't',
     s2: char
         A sound segment
     relator_type: string

@@ -173,19 +173,19 @@ in the main menu, and then follow these steps:
 The following image shows the inventory window used for selecting bigrams
 in the sample corpus:
 
-.. image:: _static/bigram.png
+.. image:: static/bigram.png
    :width: 90%
    :align: center
 
 The selected bigrams appear in the list in the “Mutual Information” dialogue box:
 
-.. image:: _static/midialog.png
+.. image:: static/midialog.png
    :width: 90%
    :align: center
 
 The resulting mutual information results table:
 
-.. image:: _static/miresults.png
+.. image:: static/miresults.png
    :width: 90%
    :align: center
 

@@ -40,7 +40,7 @@ symbols contains the symbol [p], which is designated as [-syllabic],
 [+consonantal], [-sonorant], [-continuant], etc., although the column
 names aren’t aligned with the feature values visually.
 
-.. image:: _static/featurefile.png
+.. image:: static/featurefile.png
    :width: 90%
    :align: center
 
@@ -78,7 +78,7 @@ The example below shows the selection of the CELEX transcription system,
 interpreted using Hayes features.
 
 
-.. image:: _static/downloadfeature.png
+.. image:: static/downloadfeature.png
    :width: 90%
    :align: center
 
@@ -135,7 +135,7 @@ applying the feature system to corpora. The image below shows the dialogue
 box used to load in the custom, tab-delimited feature file for interpreting
 the custom “gitksan” transcription system using Hayes features.
 
-.. image:: _static/loadfeature.png
+.. image:: static/loadfeature.png
    :width: 90%
    :align: center
 
@@ -283,13 +283,13 @@ a CV skeleton tier. Before creating the tier, you can “preview” the tier
 as in the following example; this shows what segments PCT thinks are
 consonants and vowels in the current corpus.
 
-.. image:: _static/cvtier.png
+.. image:: static/cvtier.png
    :width: 90%
    :align: center
 
 The example corpus after an abstract CV tier has been added:
 
-.. image:: _static/examplecvtier.png
+.. image:: static/examplecvtier.png
    :width: 90%
    :align: center
 
@@ -308,7 +308,7 @@ value, use the following instructions after choosing “Corpus” / “Add tier.
    shows an example of creating a tier to contain all the non-mid vowels in
    the example corpus:
 
-.. image:: _static/createtier.png
+.. image:: static/createtier.png
    :width: 90%
    :align: center
 
@@ -327,7 +327,7 @@ value, use the following instructions after choosing “Corpus” / “Add tier.
    corpus; see :ref:`download_features` for information on selecting or defining different
    features for the segments in the corpus.
 
-.. image:: _static/createtierfeatures.png
+.. image:: static/createtierfeatures.png
    :width: 90%
    :align: center
 
@@ -338,7 +338,7 @@ value, use the following instructions after choosing “Corpus” / “Add tier.
    expected). A vowel tier based on [+voc] in the example corpus is
    previewed below:
 
-.. image:: _static/tierpreview.png
+.. image:: static/tierpreview.png
    :width: 90%
    :align: center
 
@@ -370,7 +370,7 @@ value, use the following instructions after choosing “Corpus” / “Add tier.
 The following shows an example of the a vowel tier added to the example
 corpus using the SPE feature system:
 
-.. image:: _static/examplevoweltier.png
+.. image:: static/examplevoweltier.png
    :width: 90%
    :align: center
 
@@ -591,7 +591,7 @@ and do the following:
 An example of adding environments (in this case, the environment “word-initial,
 before a vowel”):
 
-.. image:: _static/phonosearchenvironment.png
+.. image:: static/phonosearchenvironment.png
    :width: 90%
    :align: center
 
@@ -605,7 +605,7 @@ An example of the phonological search window, set up to search for
 voiceless stops word-initially before vowels and between [a] vowels,
 on the transcription tier:
 
-.. image:: _static/phonosearchenvironment2.png
+.. image:: static/phonosearchenvironment2.png
    :width: 90%
    :align: center
 
@@ -639,14 +639,14 @@ Otherwise, when finished, click on “Close window” to return to the corpus.
 
 An example of the summary results window for the above phonological search:
 
-.. image:: _static/phonosearchsummary.png
+.. image:: static/phonosearchsummary.png
    :width: 90%
    :align: center
 
 And the individual results from the same search, sorted by environment:
 
 
-.. image:: _static/phonosearchindividual.png
+.. image:: static/phonosearchindividual.png
    :width: 90%
    :align: center
 

@@ -6,15 +6,19 @@ def phono_edit_distance(word1, word2, sequence_type, features):
     """Returns an analogue to Levenshtein edit distance but uses
     phonological features instead of characters
 
-    Parameters:
+    Parameters
+    ----------
     word1: Word
         Word object containing transcription tiers which will be compared
         to another word containing transcription tiers
+
     word2: Word
         The other word containing transcription tiers to which word1 will
         be compared
+
     sequence_type: string
         Name of the sequence type (transcription or a tier) to use for comparisons
+
     features: FeatureMatrix
         FeatureMatrix that contains all the segments in both transcriptions
         to be compared

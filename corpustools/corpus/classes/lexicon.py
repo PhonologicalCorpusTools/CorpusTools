@@ -437,7 +437,7 @@ class FeatureMatrix(object):
     name : str
         An informative identifier for the feature matrix
 
-    feature_entries : list of Dictionary
+    feature : list of Dictionary
         Dictionaries in the list should contain feature names as keys
         and feature values as values, as well as a special key-value pair
         for the symbol
@@ -921,14 +921,14 @@ class Attribute(object):
 
     Parameters
     ----------
-    name : string
+    name : str
         Python-safe name for using `getattr` and `setattr` on Words and
         WordTokens
 
-    att_type : string
+    att_type : str
         Either 'spelling', 'tier', 'numeric' or 'factor'
 
-    display_name : string
+    display_name : str
         Human-readable name of the Attribute, defaults to None
 
     default_value : object
@@ -1262,7 +1262,7 @@ class Corpus(object):
             return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
         return return_dict
 
-    def subset(self,filters):
+    def subset(self, filters):
         """
         Generate a subset of the corpus based on filters.
 
@@ -1585,6 +1585,40 @@ class Corpus(object):
 
     def phonological_search(self,seg_list,envs=None, sequence_type = 'transcription',
                             call_back = None, stop_check = None):
+        """
+        Perform a search of a corpus for segments, with the option of only
+        searching in certain phonological environments.
+
+        Parameters
+        ----------
+        seg_list : list of strings or Segments
+            Segments to search for
+
+        envs : list
+            Environments to search in
+
+        sequence_type : string
+            Specifies whether to use 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+
+        stop_check : callable
+            Callable that returns a boolean for whether to exit before
+            finishing full calculation
+
+        call_back : callable
+            Function that can handle strings (text updates of progress),
+            tuples of two integers (0, total number of steps) and an integer
+            for updating progress out of the total set by a tuple
+
+        Returns
+        -------
+        list
+            A list of tuples with the first element a word and the second
+            a tuple of the segment and the environment that matched
+        """
+        if sequence_type == 'spelling':
+            return None
         if call_back is not None:
             call_back('Searching...')
             call_back(0,len(self))
@@ -1616,15 +1650,28 @@ class Corpus(object):
         return results
 
     def iter_words(self):
-        """Sorts the keys in the corpus dictionary, then yields the values in that order
+        """
+        Sorts the keys in the corpus dictionary,
+        then yields the values in that order
 
+        Returns
+        -------
+        generator
+            Sorted Words in the corpus
         """
         sorted_list = sorted(self.wordlist.keys())
         for word in sorted_list:
             yield self.wordlist[word]
 
     def iter_sort(self):
-        """Sorts the keys in the corpus dictionary, then yields the values in that order
+        """
+        Sorts the keys in the corpus dictionary, then yields the
+        values in that order
+
+        Returns
+        -------
+        generator
+            Sorted Words in the corpus
 
         """
         sorted_list = sorted(self.wordlist.keys())
@@ -1636,7 +1683,7 @@ class Corpus(object):
         Set the feature system to be used by the corpus and make sure
         every word is using it too.
 
-        Attributes
+        Parameters
         ----------
         matrix : FeatureMatrix
             New feature system to use in the corpus
@@ -1667,7 +1714,7 @@ class Corpus(object):
         new_corpus_name : str
 
         Returns
-        ----------
+        -------
         new_corpus : Corpus
             New corpus object with len(new_corpus) == size
         """
@@ -1691,6 +1738,8 @@ class Corpus(object):
             Word object to be added
 
         allow_duplicates : bool
+            If False, duplicate Words with the same spelling as an existing
+            word in the corpus will not be added
 
         """
         word._corpus = self
@@ -1737,12 +1786,39 @@ class Corpus(object):
             a.update_range(getattr(word,a.name))
 
     def update_inventory(self, transcription):
+        """
+        Update the inventory of the Corpus to ensure it contains all
+        the segments in the given transcription
+
+        Parameters
+        ----------
+        transcription : list
+            Segment symbols to add to the inventory if needed
+        """
         for s in transcription:
             if isinstance(s, str):
                 if s not in self._inventory:
                     self._inventory[s] = Segment(s)
 
     def get_or_create_word(self, spelling, transcription):
+        """
+        Get a Word object that has the spelling and transcription
+        specified or create that Word, add it to the Corpus and return it.
+
+        Parameters
+        ----------
+        spelling : string
+            Spelling to search for
+
+        transcription : list
+            Transcription to search for
+
+        Returns
+        -------
+        Word
+            Existing or newly created Word with the spelling and transcription
+            specified
+        """
         words = self.find_all(spelling)
         if transcription is None:
             transcription = list()
@@ -1758,12 +1834,17 @@ class Corpus(object):
     def random_word(self):
         """Return a randomly selected Word
 
+        Returns
+        -------
+        Word
+            Random Word
         """
         word = random.choice(list(self.wordlist.keys()))
         return self.wordlist[word]
 
     def get_features(self):
-        """Get a list of the features used to describe Segments
+        """
+        Get a list of the features used to describe Segments
 
         Returns
         ----------
@@ -1786,12 +1867,12 @@ class Corpus(object):
             Set whether a KeyError should be raised if a word is not found
 
         Returns
-        ----------
+        -------
         result : Word or EmptyWord
 
 
         Raises
-        ----------
+        ------
         KeyError if keyerror == True and word is not found
 
         """
@@ -1814,7 +1895,20 @@ class Corpus(object):
 
         raise KeyError('The word \"{}\" is not in the corpus'.format(word))
 
-    def find_all(self,spelling):
+    def find_all(self, spelling):
+        """
+        Find all Word objects with the specified spelling
+
+        Parameters
+        ----------
+        spelling : string
+            Spelling to look up
+
+        Returns
+        -------
+        list of Words
+            Words that have the specified spelling
+        """
         words = list()
         try:
             words.append(self.wordlist[spelling])

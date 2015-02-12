@@ -135,7 +135,7 @@ alternation...” in the main menu, and then follow these steps:
 An example of selecting the parameters for frequency of alternation,
 using the sample corpus:
 
-.. image:: _static/freqaltdialog.png
+.. image:: static/freqaltdialog.png
    :width: 90%
    :align: center
 
@@ -153,7 +153,7 @@ using the sample corpus:
 
 An example of the results table:
 
-.. image:: _static/freqaltresults.png
+.. image:: static/freqaltresults.png
    :width: 90%
    :align: center
 
