@@ -1,4 +1,3 @@
-print('hello')
 import os
 import sys
 base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
