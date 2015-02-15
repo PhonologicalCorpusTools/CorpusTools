@@ -9,12 +9,23 @@ sys.path.insert(0,corpustools_path)
 from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                 load_corpus_csv,load_spelling_corpus, load_transcription_corpus,
                                 export_corpus_csv, export_feature_matrix_csv,
-                                load_feature_matrix_csv,DelimiterError)
+                                load_feature_matrix_csv,DelimiterError,
+                                load_corpus_ilg)
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix)
 from corpustools.corpus.tests.lexicon_test import create_unspecified_test_corpus
 
-TEST_DIR = r'C:\Users\SpeechInContext\Downloads\CorpusTools_test_files\CorpusTools_test_files\corpus_loading'
+TEST_DIR = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computational\CorpusTools_test_files\Corpus_loading'
+
+class ILGTest(unittest.TestCase):
+    def setUp(self):
+        self.basic_path = os.path.join(TEST_DIR,'ilg','test_basic.txt')
+
+    def test_ilg_basic(self):
+        corpus = load_corpus_ilg('test', self.basic_path,delimiter=None,ignore_list=[], trans_delimiter = '.')
+        print(corpus.words)
+        self.assertEqual(corpus.lexicon.find('a').frequency,2)
+
 
 class CustomCorpusTest(unittest.TestCase):
     def setUp(self):
@@ -52,7 +63,7 @@ class CustomCorpusTextTest(unittest.TestCase):
 
         c = load_spelling_corpus('test',self.spelling_path,' ',[])
 
-        self.assertEqual(c['ab'].frequency, 2)
+        self.assertEqual(c.lexicon['ab'].frequency, 2)
 
 
     def test_load_spelling_ignore(self):
@@ -60,8 +71,8 @@ class CustomCorpusTextTest(unittest.TestCase):
             return
         c = load_spelling_corpus('test',self.spelling_path,' ',["'",'.'])
 
-        self.assertEqual(c['ab'].frequency, 3)
-        self.assertEqual(c['cabd'].frequency, 1)
+        self.assertEqual(c.lexicon['ab'].frequency, 3)
+        self.assertEqual(c.lexicon['cabd'].frequency, 1)
 
     def test_load_transcription(self):
         if not os.path.exists(TEST_DIR):
@@ -72,14 +83,14 @@ class CustomCorpusTextTest(unittest.TestCase):
 
         c = load_transcription_corpus('test',self.transcription_path,' ',[],trans_delimiter='.')
 
-        self.assertEqual(sorted(c.inventory), sorted(['#','a','b','c','d']))
+        self.assertEqual(sorted(c.lexicon.inventory), sorted(['#','a','b','c','d']))
 
     def test_load_transcription_morpheme(self):
         if not os.path.exists(TEST_DIR):
             return
         c = load_transcription_corpus('test',self.transcription_morphemes_path,' ',['-','=','.'],trans_delimiter='.')
 
-        self.assertEqual(c['cab'].frequency, 2)
+        self.assertEqual(c.lexicon['cab'].frequency, 2)
 
     def test_load_with_fm(self):
         if not os.path.exists(TEST_DIR):
@@ -88,19 +99,19 @@ class CustomCorpusTextTest(unittest.TestCase):
                     ['-','=','.'],trans_delimiter='.',
                     feature_system_path = self.full_feature_matrix_path)
 
-        self.assertEqual(c.specifier,load_binary(self.full_feature_matrix_path))
+        self.assertEqual(c.lexicon.specifier,load_binary(self.full_feature_matrix_path))
 
-        self.assertEqual(c['cab'].frequency, 1)
+        self.assertEqual(c.lexicon['cab'].frequency, 1)
 
-        self.assertEqual(c.check_coverage(),[])
+        self.assertEqual(c.lexicon.check_coverage(),[])
 
         c = load_transcription_corpus('test',self.transcription_path,' ',
                     ['-','=','.'],trans_delimiter='.',
                     feature_system_path = self.missing_feature_matrix_path)
 
-        self.assertEqual(c.specifier,load_binary(self.missing_feature_matrix_path))
+        self.assertEqual(c.lexicon.specifier,load_binary(self.missing_feature_matrix_path))
 
-        self.assertEqual(sorted(c.check_coverage()),sorted(['b','c','d']))
+        self.assertEqual(sorted(c.lexicon.check_coverage()),sorted(['b','c','d']))
 
 
 class BinaryCorpusLoadTest(unittest.TestCase):

@@ -74,6 +74,8 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
     trans_check = False
     if trans_delimiter is None:
         trans_delimiter = []
+    trans_patt = ''.join([re.escape(x) for x in trans_delimiter])
+    trans_patt = '['+trans_patt+']+'
     with open(path, encoding='utf-8-sig', mode='r') as f:
         text = f.read()
         if delimiter and delimiter not in text:
@@ -96,8 +98,6 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
             if not line or line == '\n':
                 continue
             line = line.split(delimiter)
-            trans_patt = ''.join([re.escape(x) for x in trans_delimiter])
-            trans_patt = '['+trans_patt+']+'
             for word in line:
                 word = word.strip()
                 if trans_delimiter:
