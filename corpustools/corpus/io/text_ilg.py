@@ -4,14 +4,14 @@ import re
 
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 
-
+from corpustools.exceptions import DelimiterError, ILGError, ILGLinesMismatchError
 
 def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = None,
                     trans_delimiter = None, feature_system_path = None,
                     stop_check = None, call_back = None):
     discourse = Discourse(name = corpus_name)
     corpus = Corpus(corpus_name)
-
+    print('begin load')
 
     if digraph_list is not None:
         pattern = '|'.join(d for d in digraph_list)
@@ -30,9 +30,10 @@ def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = No
             raise(e)
 
         lines = text.splitlines()
-        lines = [x for x in lines if not x.startswith("\'") and x.strip() != '']
+        lines = [x for x in lines if not x.startswith('"') and x.strip() != '']
+        print(len(lines))
         if len(lines) % 2 != 0:
-            raise(Exception("There doesn't appear to be equal numbers of orthography and transcription lines"))
+            raise(ILGLinesMismatchError(lines))
         if call_back is not None:
             call_back('Processing file...')
             call_back(0,len(lines))
@@ -51,13 +52,13 @@ def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = No
             transcription_line = lines[i+1].strip().split(delimiter)
 
             if len(spelling_line) != len(transcription_line):
-                raise(Exception("Orthography line and transcription line were not the same length."))
+                raise(ILGError("Orthography line and transcription line were not the same length."))
 
             for j in range(len(spelling_line)):
                 spelling = spelling_line[j].strip()
                 spelling = ''.join(x for x in spelling if not x in ignore_list)
                 if spelling == '':
-                    raise(Exception('Spellings must have at least one character not in the ignore_list.'))
+                    raise(ILGError('Spellings must have at least one character not in the ignore_list.'))
 
                 transcription = transcription_line[j].strip()
                 if trans_delimiter:

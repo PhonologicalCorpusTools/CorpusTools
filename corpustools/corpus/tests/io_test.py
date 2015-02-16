@@ -9,8 +9,10 @@ sys.path.insert(0,corpustools_path)
 from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                 load_corpus_csv,load_spelling_corpus, load_transcription_corpus,
                                 export_corpus_csv, export_feature_matrix_csv,
-                                load_feature_matrix_csv,DelimiterError,
+                                load_feature_matrix_csv,
                                 load_corpus_ilg)
+
+from corpustools.exceptions import DelimiterError, ILGError
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix)
 from corpustools.corpus.tests.lexicon_test import create_unspecified_test_corpus
@@ -20,11 +22,15 @@ TEST_DIR = r'C:\Users\michael\Dropbox\Measuring_Phonological_Relations\Computati
 class ILGTest(unittest.TestCase):
     def setUp(self):
         self.basic_path = os.path.join(TEST_DIR,'ilg','test_basic.txt')
+        self.mismatched_path = os.path.join(TEST_DIR,'ilg','test_mismatched.txt')
 
     def test_ilg_basic(self):
         corpus = load_corpus_ilg('test', self.basic_path,delimiter=None,ignore_list=[], trans_delimiter = '.')
-        print(corpus.words)
+        #print(corpus.words)
         self.assertEqual(corpus.lexicon.find('a').frequency,2)
+
+    def test_ilg_mismatched(self):
+        self.assertRaises(ILGError,load_corpus_ilg, 'test', self.mismatched_path, delimiter=None,ignore_list=[], trans_delimiter = '.')
 
 
 class CustomCorpusTest(unittest.TestCase):

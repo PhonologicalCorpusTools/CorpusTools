@@ -3,7 +3,7 @@ import re
 
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 
-from .csv import DelimiterError
+from corpustools.exceptions import DelimiterError
 
 from .binary import load_binary
 
