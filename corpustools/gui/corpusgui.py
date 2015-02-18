@@ -397,8 +397,10 @@ class CorpusFromTextDialog(QDialog):
 
         iolayout.addRow('Type of running text', self.typeWidget)
 
+        self.characters = set()
         self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
+        self.pathWidget.pathEdit.textChanged.connect(self.getCharacters)
 
         iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
 
