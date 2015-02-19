@@ -132,6 +132,17 @@ class ProdError(PCTError):
 class ILGError(PCTError):
     pass
 
+class ILGWordMismatchError(PCTError):
+    def __init__(self, spelling_line, transcription_line):
+        self.main = "There doesn't appear to be equal numbers of words in the orthography and transcription lines."
+
+        self.information = ''
+        self.details = 'The following is the contents of the two lines:\n\n'
+        self.details += '(line {}, {} words) '.format(spelling_line[0],len(spelling_line[1]))
+        self.details += ' '.join(spelling_line[1]) + '\n'
+        self.details += '(line {}, {} words) '.format(transcription_line[0],len(transcription_line[1]))
+        self.details += ' '.join(transcription_line[1])
+
 class ILGLinesMismatchError(PCTError):
     def __init__(self, lines):
         self.main = "There doesn't appear to be equal numbers of orthography and transcription lines"

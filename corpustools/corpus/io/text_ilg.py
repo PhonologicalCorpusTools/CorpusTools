@@ -4,7 +4,8 @@ import re
 
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 
-from corpustools.exceptions import DelimiterError, ILGError, ILGLinesMismatchError
+from corpustools.exceptions import (DelimiterError, ILGError, ILGLinesMismatchError,
+                                ILGWordMismatchError)
 
 def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = None,
                     trans_delimiter = None, feature_system_path = None,
@@ -29,8 +30,8 @@ def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = No
             e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
             raise(e)
 
-        lines = text.splitlines()
-        lines = [x for x in lines if not x.startswith('"') and x.strip() != '']
+        lines = enumerate(text.splitlines())
+        lines = [x for x in lines if not x[1].startswith('"') and x[1].strip() != '']
         print(len(lines))
         if len(lines) % 2 != 0:
             raise(ILGLinesMismatchError(lines))
@@ -48,11 +49,12 @@ def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = No
                 cur += 2
                 if cur % 20 == 0:
                     call_back(cur)
-            spelling_line = lines[i].strip().split(delimiter)
-            transcription_line = lines[i+1].strip().split(delimiter)
+            spelling_line = lines[i][1].strip().split(delimiter)
+            transcription_line = lines[i+1][1].strip().split(delimiter)
 
             if len(spelling_line) != len(transcription_line):
-                raise(ILGError("Orthography line and transcription line were not the same length."))
+                raise(ILGWordMismatchError((lines[i][0], spelling_line),
+                                            (lines[i+1][0], transcription_line)))
 
             for j in range(len(spelling_line)):
                 spelling = spelling_line[j].strip()
