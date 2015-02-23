@@ -3,6 +3,10 @@
 import sys
 import math
 from collections import defaultdict
+from corpustools.corpus.classes.lexicon import CorpusIntegrityError
+
+class MutualInformationError(Exception):
+    pass
 
 def pointwise_mi(corpus, query, sequence_type,
                 halve_edges = False, in_word = False,
@@ -26,22 +30,22 @@ def pointwise_mi(corpus, query, sequence_type,
     try:
         prob_s1 = unigram_dict[query[0]]
     except KeyError:
-        raise(Exception('The segment {} was not found in the corpus'.format(query[0])))
+        raise CorpusIntegrityError('The segment {} was not found in the corpus'.format(query[0]))
     try:
         prob_s2 = unigram_dict[query[1]]
     except KeyError:
-        raise(Exception('The segment {} was not found in the corpus'.format(query[1])))
+        raise CorpusIntegrityError('The segment {} was not found in the corpus'.format(query[1]))
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
-        raise(Exception('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type)))
+        raise MutualInformationError('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type))
 
     if unigram_dict[query[0]] == 0.0:
-        raise Exception('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
+        raise MutualInformationError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
     if unigram_dict[query[1]] == 0.0:
-        raise Exception('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
+        raise MutualInformationError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
     if bigram_dict[query] == 0.0:
-        raise Exception('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
+        raise MutualInformationError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 

@@ -1133,6 +1133,14 @@ class Corpus(object):
     def words(self):
         return sorted(list(self.wordlist.keys()))
 
+    def symbol_to_segment(self, symbol):
+        for seg in self.inventory:
+            if seg.symbol == symbol:
+                return seg
+        else:
+            raise CorpusIntegrityError('Could not find {} in the inventory'.format(symbol))
+
+
     def features_to_segments(self, feature_description):
         segments = list()
         if isinstance(feature_description,str):

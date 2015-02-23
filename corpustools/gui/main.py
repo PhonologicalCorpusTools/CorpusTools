@@ -28,6 +28,7 @@ from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
 from .luckygui import LuckyDialog
+from .autogui import AutoDialog
 from .helpgui import AboutDialog, HelpDialog
 
 class QApplicationMessaging(QApplication):
@@ -474,6 +475,8 @@ class MainWindow(QMainWindow):
                 self.FLWindow.rejected.connect(lambda: self.showFLResults.setVisible(False))
                 self.showFLResults.setVisible(True)
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def kullbackLeibler(self):
         dialog = KLDialog(self, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
@@ -487,6 +490,14 @@ class MainWindow(QMainWindow):
                 self.showKLResults.triggered.connect(self.KLWindow.activateWindow)
                 self.KLWindow.rejected.connect(lambda: self.showKLResults.setVisible(False))
                 self.showKLResults.setVisible(True)
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def autoAnalysis(self):
+        dialog = AutoDialog(self, self.corpusModel.corpus, self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            pass
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -729,6 +740,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate acoustic similarity for corpus")#, triggered=self.acousticSim)
 
+        self.autoAnalysisAct = QAction( "Look for phonological patterns...",
+                self,
+                statusTip = "Look for phonological patterns", triggered = self.autoAnalysis)
+
         self.toggleWarningsAct = QAction( "Show warnings",
                 self,
                 statusTip="Show warnings", triggered=self.toggleWarnings)
@@ -845,6 +860,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
+        self.analysisMenu.addAction(self.autoAnalysisAct)
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 
