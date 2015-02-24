@@ -1663,6 +1663,17 @@ class SpontaneousSpeechDialog(QDialog):
                                             ('From file names','filename'),
                                             ('From within the file (or to be added later)', None)]))
 
+
+        optionlayout = QFormLayout()
+        optionlayout.addRow(self.speakerSource)
+        optionlayout.addRow('Name of word tiers',self.wordTierName)
+        optionlayout.addRow('Name of phone tiers',self.phoneTierName)
+        optionlayout.addRow('Multiple phones per interval?',self.multiplePhoneCheck)
+        optionlayout.addRow('Delimiter of multiple phones',self.phoneDelimiter)
+        optionframe = QGroupBox('Options')
+        optionframe.setLayout(optionlayout)
+        self.mainlayout.addWidget(optionframe)
+
         mainframe = QFrame()
         mainframe.setLayout(self.mainlayout)
 
@@ -1705,24 +1716,17 @@ class SpontaneousSpeechDialog(QDialog):
         self.phoneDelimiter.setEnabled(self.multiplePhoneCheck.isChecked())
 
     def updateOptions(self):
-        try:
-            self.optionframe.deleteLater()
-        except AttributeError:
-            pass
-
-        optionlayout = QFormLayout()
 
         if self.dialectWidget.currentText() == 'TextGrid':
-            optionlayout.addRow('Name of word tiers',self.wordTierName)
-            optionlayout.addRow('Name of phone tiers',self.phoneTierName)
-            optionlayout.addRow('Multiple phones per interval?',self.multiplePhoneCheck)
-            optionlayout.addRow('Delimiter of multiple phones',self.phoneDelimiter)
-            optionlayout.addRow(self.speakerSource)
-        #else:
-        #   self.optionslayout.
-        self.optionframe = QGroupBox('Options')
-        self.optionframe.setLayout(optionlayout)
-        self.mainlayout.addWidget(self.optionframe)
+            self.wordTierName.setEnabled(True)
+            self.phoneTierName.setEnabled(True)
+            self.multiplePhoneCheck.setEnabled(True)
+            self.phoneDelimiter.setEnabled(True)
+        else:
+            self.wordTierName.setEnabled(False)
+            self.phoneTierName.setEnabled(False)
+            self.multiplePhoneCheck.setEnabled(False)
+            self.phoneDelimiter.setEnabled(False)
 
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'loading corpora',
