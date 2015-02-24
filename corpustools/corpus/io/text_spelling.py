@@ -2,7 +2,7 @@ import os
 
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 
-from .csv import DelimiterError
+from corpustools.exceptions import DelimiterError
 from .binary import load_binary
 
 def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,

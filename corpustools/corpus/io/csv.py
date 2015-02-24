@@ -5,13 +5,9 @@ import re
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
 from corpustools.corpus.io.binary import save_binary, load_binary
 
-import time
+from corpustools.exceptions import DelimiterError
 
-class DelimiterError(Exception):
-    """
-    Exception for having wrong delimiter for text file
-    """
-    pass
+import time
 
 
 def load_corpus_csv(corpus_name,path,delimiter,trans_delimiter='.',
