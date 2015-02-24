@@ -284,7 +284,6 @@ def import_spontaneous_speech_corpus(name, directory, **kwargs):
 
         if 'wav' in v:
             discourse_info['wav_path'] = v['wav']
-        print(delimiter)
         corpus.add_discourse(data, discourse_info,delimiter=delimiter)
     return corpus
 
@@ -310,9 +309,9 @@ def files_to_data(word_path,phone_path, dialect):
                 found.append(p)
                 if p['end'] == w['End']:
                     found_all = True
-            words[i]['transcription'] = found
+            words[i]['Transcription'] = found
         elif dialect == 'buckeye':
-            if w['word_transcription'] is None:
+            if w['lookup_transcription'] is None:
                 continue
             expected = w['sr']
             found = []
@@ -376,7 +375,7 @@ def read_words(path, dialect, sr = None):
                 if sr is not None:
                     start /= sr
                     end /= sr
-                output.append({'Spelling':word, 'Begin':start, 'End':end})
+                output.append({'lookup_spelling':word, 'Begin':start, 'End':end})
         elif dialect == 'buckeye':
             f = re.split(r"#\r{0,1}\n",file_handle.read())[1]
             begin = 0.0
@@ -395,8 +394,8 @@ def read_words(path, dialect, sr = None):
                     category = None
                 if word in FILLERS:
                     category = 'UH'
-                line = {'Spelling':word,'Begin':begin,'End':end,
-                        'word_transcription':citation,'sr':phonetic,
+                line = {'lookup_spelling':word,'Begin':begin,'End':end,
+                        'lookup_transcription':citation,'sr':phonetic,
                         'Category':category}
                 output.append(line)
                 begin = end
