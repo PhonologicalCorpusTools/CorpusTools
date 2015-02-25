@@ -16,6 +16,7 @@ class AudioPlayer(QWidget):
 
 
         self.slider = QSlider(Qt.Horizontal)
+        self.slider.setEnabled(False)
 
         self.labelDuration = QLabel()
         self.slider.sliderMoved.connect(self.seek)
@@ -26,26 +27,34 @@ class AudioPlayer(QWidget):
         self.playbar = QToolBar()
 
         self.playbar.addAction(self.playStopAction)
+        self.playbar.addAction(self.stopAction)
         layout.addWidget(self.playbar, alignment=Qt.AlignHCenter)
         self.setLayout(layout)
 
 
     def seek(self, milliseconds):
-        self.player.setPosition(milliseconds)
+        return
+        self.player.setPosition(self.begin+milliseconds)
 
     def playStopAudio(self):
         if self.player.mediaStatus() == QMediaPlayer.NoMedia:
             return
         if self.player.state() == QMediaPlayer.StoppedState:
             self.play()
+        elif self.player.state() == QMediaPlayer.PausedState:
+            self.play()
         elif self.player.state() == QMediaPlayer.PlayingState:
-            self.stop()
+            self.pause()
 
     def setupActions(self):
         self.playStopAction = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), self.tr("Play"), self)
         self.playStopAction.setShortcut(Qt.NoModifier + Qt.Key_Space)
         self.playStopAction.setDisabled(False)
         self.playStopAction.triggered.connect(self.playStopAudio)
+
+        self.stopAction = QAction(self.style().standardIcon(QStyle.SP_MediaStop), self.tr("Play"), self)
+        self.stopAction.setDisabled(False)
+        self.stopAction.triggered.connect(self.stop)
 
     def setLimits(self,begin = -1, end = -1):
         self.begin = begin * 1000
@@ -88,10 +97,15 @@ class AudioPlayer(QWidget):
 
     def play(self):
         self.playStopAction.setIcon(
-                self.style().standardIcon(QStyle.SP_MediaStop))
+                self.style().standardIcon(QStyle.SP_MediaPause))
         if self.player.position() >= self.end or self.player.position() < self.begin:
             self.player.setPosition(self.begin)
         self.player.play()
+
+    def pause(self):
+        self.playStopAction.setIcon(
+                self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.player.pause()
 
     def stop(self):
         self.playStopAction.setIcon(
