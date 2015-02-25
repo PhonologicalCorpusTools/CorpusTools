@@ -1,5 +1,6 @@
 *.py[cod]
 *.txt
+!requirements.txt
 *.corpus
 *.feature
 .idea/

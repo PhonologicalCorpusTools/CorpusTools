@@ -40,7 +40,8 @@ setup(name='corpustools',
                 'corpustools.command_line'],
       install_requires=[
           'numpy',
-          'scipy'
+          'scipy',
+          #'python-acoustic-similarity'
       ],
       entry_points = {
         'console_scripts': ['pct=corpustools.command_line.pct:main',
