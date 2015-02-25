@@ -14,7 +14,8 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
                     min_rel = None, max_rel = None, phono_align = False,
                     min_pairs_okay = False, from_gui=False, stop_check = None,
                     call_back = None):
-    """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
+    """Returns a double that is a measure of the frequency of
+    alternation of two sounds in a given corpus
 
     Parameters
     ----------

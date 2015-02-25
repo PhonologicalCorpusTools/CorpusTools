@@ -261,12 +261,16 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff = 0,
         Specify whether entropy is based on type or token frequency.
 
     sequence_type : string
-        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
+        The attribute of Words to calculate FL over. Normally this
+        will be the transcription, but it can also be the spelling or a
+        user-specified tier.
 
     Returns
     -------
     float
-        The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
+        The difference between a) the entropy of the choice among
+        non-homophonous words in the corpus before a merger of `s1`
+        and `s2` and b) the entropy of that choice after the merger.
     """
     all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(w, sequence_type)])))
     segment = segment[:]
