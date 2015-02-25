@@ -38,9 +38,10 @@ setup(name='corpustools',
                 'corpustools.mutualinfo',
                 'corpustools.phonoprob',
                 'corpustools.command_line'],
-      #install_requires=[
-      #    'pillow'
-      #],
+      install_requires=[
+          'numpy',
+          'scipy'
+      ],
       entry_points = {
         'console_scripts': ['pct=corpustools.command_line.pct:main',
                             'pct_corpus=corpustools.command_line.pct_corpus:main',
