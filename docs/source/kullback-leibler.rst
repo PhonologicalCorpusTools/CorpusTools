@@ -70,7 +70,7 @@ KL Divergence:
 :math:`m_{KL}(s_1,s_2) = \sum_{c \in C} P(c|s_1) log (\frac{P(c|s_1)}{P(c|s_2)})
 + P(c|s_2) log(\frac{P(c|s_2)}{P(c|s_1)})`
 
-The notation *P(c|s) means the probability of context c given segment s,
+The notation *P(c|s)* means the probability of context c given segment s,
 and it is calculated as follows:
 
 :math:`P(c|s) = \frac{n(c,s) + 1}{n(s) + N}`
@@ -172,19 +172,19 @@ contexts:
 The “Select segment pair” dialogue box, within the “Kullback-Leibler”
 dialogue box:
 
-.. image:: _static/segmentpair.png
+.. image:: static/segmentpair.png
    :width: 90%
    :align: center
 
 The “Kullback-Leibler” dialogue box, with pairs of sounds and contexts
 selected:
 
-.. image:: _static/kldialog.png
+.. image:: static/kldialog.png
    :width: 90%
    :align: center
 
 The resulting table of results:
 
-.. image:: _static/klresults.png
+.. image:: static/klresults.png
    :width: 90%
    :align: center

@@ -1,6 +1,6 @@
 from corpustools.corpus.classes import Word
 from corpustools.symbolsim.edit_distance import edit_distance
-from corpustools.symbolsim.khorsi import khorsi, make_freq_base
+from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 from corpustools.symbolsim.phono_align import Aligner
 
@@ -9,18 +9,26 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
             count_what='type',
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of a particular word in the corpus.
+
     Parameters
     ----------
     corpus : Corpus
         The domain over which neighborhood density is calculated.
+
     query : Word
         The word whose neighborhood density to calculate.
+
     sequence_type : str
-        If 'spelling', will calculate neighborhood density on spelling. If 'transcription' will calculate neighborhood density on transcriptions. Otherwise, calculate on specified tier.
+        If 'spelling', will calculate neighborhood density on spelling.
+        If 'transcription' will calculate neighborhood density on transcriptions.
+        Otherwise, calculate on specified tier.
+
     algorithm : str
         The algorithm used to determine distance
+
     max_distance : number, optional
         Maximum edit distance from the queried word to consider a word a neighbor.
+
     count_what : str
         If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency
 
@@ -67,14 +75,17 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
 def find_mutation_minpairs(corpus, query,
                     sequence_type='transcription',
                     stop_check = None, call_back = None):
-    """Find all minimal pairs of the query word based only on segment mutations (not deletions/insertions)
+    """Find all minimal pairs of the query word based only on segment
+    mutations (not deletions/insertions)
 
     Parameters
     ----------
     corpus : Corpus
         The domain over which the search for minimal pairs is carried out
+
     query : Word
         The word whose minimal pairs to find
+
     sequence_type : str
         Tier (or spelling or transcription) on which to search for minimal pairs
 

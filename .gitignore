@@ -8,6 +8,10 @@
 # C extensions
 *.so
 
+# Documentation
+docs/build/
+docs/source/generate/
+
 # Packages
 *.egg
 *.egg-info

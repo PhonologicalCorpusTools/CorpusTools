@@ -7,10 +7,12 @@ import copy
 from math import factorial
 
 
-def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
-        relative_count=True, distinguish_homophones=False, sequence_type='transcription',
-        threaded_q=False, stop_check = None, call_back = None):
-    """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
+def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
+        relative_count = True, distinguish_homophones = False,
+        sequence_type = 'transcription',
+        stop_check = None, call_back = None):
+    """Calculate the functional load of the contrast between two segments
+    as a count of minimal pairs.
 
     Parameters
     ----------
@@ -21,19 +23,26 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
     frequency_cutoff : number, optional
         Minimum frequency of words to consider, if desired.
     relative_count : bool, optional
-        If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
+        If True, divide the number of minimal pairs by the total count
+        by the total number of words that contain either of the two segments.
     distinguish_homophones : bool, optional
-        If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.
+        If False, then you'll count sock~shock (sock=clothing) and
+        sock~shock (sock=punch) as just one minimal pair; but if True,
+        you'll overcount alternative spellings of the same word, e.g.
+        axel~actual and axle~actual. False is the value used by Wedel et al.
     sequence_type : string
-        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
+        The attribute of Words to calculate FL over. Normally this will
+        be the transcription, but it can also be the spelling or a
+        user-specified tier.
 
     Returns
     -------
     int or float
-        If `relative_count`==False, returns an int of the raw number of minimal pairs. If `relative_count`==True, returns a float of that count divided by the total number of words in the corpus that include either `s1` or `s2`.
+        If `relative_count`==False, returns an int of the raw number of
+        minimal pairs. If `relative_count`==True, returns a float of that
+        count divided by the total number of words in the corpus that
+        include either `s1` or `s2`.
      """
-    if threaded_q:
-        q = threaded_q
 
     if frequency_cutoff > 0.0:
 
@@ -92,17 +101,14 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
     if relative_count and len(neutralized) > 0:
         result /= len(neutralized)
 
-    if not threaded_q:
-        return result
-    else:
-        threaded_q.put(result)
-        return None
+    return result
 
 
-def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
-            type_or_token='token', sequence_type='transcription',
-            threaded_q=False, stop_check = None, call_back = None):
-    """Calculate the functional load of the contrast between between two segments as the decrease in corpus entropy caused by a merger.
+def deltah_fl(corpus, segment_pairs, frequency_cutoff = 0,
+            type_or_token = 'token', sequence_type = 'transcription',
+            stop_check = None, call_back = None):
+    """Calculate the functional load of the contrast between between two
+    segments as the decrease in corpus entropy caused by a merger.
 
     Parameters
     ----------
@@ -115,12 +121,15 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
     type_or_token : str {'type', 'token'}
         Specify whether entropy is based on type or token frequency.
     sequence_type : string
-        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
+        The attribute of Words to calculate FL over. Normally this will be the
+        transcription, but it can also be the spelling or a user-specified tier.
 
     Returns
     -------
     float
-        The difference between a) the entropy of the choice among non-homophonous words in the corpus before a merger of `s1` and `s2` and b) the entropy of that choice after the merger.
+        The difference between a) the entropy of the choice among
+        non-homophonous words in the corpus before a merger of `s1`
+        and `s2` and b) the entropy of that choice after the merger.
     """
     if call_back is not None:
         call_back('Finding instances of segments...')
@@ -173,64 +182,84 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff=0,
     if result < 1e-10:
         result = 0.0
 
-    if not threaded_q:
-        return result
-    else:
-        threaded_q.put(result)
-        return None
+    return result
 
 
-def relative_minpair_fl(corpus, segment, frequency_cutoff=0,
-            relative_count=True, distinguish_homophones=False, sequence_type='transcription',
-            threaded_q=False, stop_check = None, call_back = None):
-    """Calculate the average functional load of the contrasts between a segment and all other segments, as a count of minimal pairs.
+def relative_minpair_fl(corpus, segment, frequency_cutoff = 0,
+            relative_count = True, distinguish_homophones = False,
+            sequence_type = 'transcription',
+            stop_check = None, call_back = None):
+    """Calculate the average functional load of the contrasts between a
+    segment and all other segments, as a count of minimal pairs.
 
     Parameters
     ----------
     corpus : Corpus
         The domain over which functional load is calculated.
+
     segment : str
         The target segment.
+
     frequency_cutoff : number, optional
         Minimum frequency of words to consider, if desired.
+
     relative_count : bool, optional
-        If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
+        If True, divide the number of minimal pairs by the total count
+        by the total number of words that contain either of the two segments.
+
     distinguish_homophones : bool, optional
-        If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.
+        If False, then you'll count sock~shock (sock=clothing) and
+        sock~shock (sock=punch) as just one minimal pair; but if True,
+        you'll overcount alternative spellings of the same word, e.g.
+        axel~actual and axle~actual. False is the value used by Wedel et al.
+
     sequence_type : string
-        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
+        The attribute of Words to calculate FL over. Normally this will
+        be the transcription, but it can also be the spelling or a
+        user-specified tier.
 
     Returns
     -------
     int or float
-        If `relative_count`==False, returns an int of the raw number of minimal pairs. If `relative_count`==True, returns a float of that count divided by the total number of words in the corpus that include either `s1` or `s2`.
+        If `relative_count`==False, returns an int of the raw number of
+        minimal pairs. If `relative_count`==True, returns a float of
+        that count divided by the total number of words in the corpus
+        that include either `s1` or `s2`.
     """
     all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(word, sequence_type)])))
     segment = segment[:]
     segment_pairs = [(segment,other) for other in all_segments if other != segment]
     results = []
     for sp in segment_pairs:
-        results.append(minpair_fl(corpus, [sp], frequency_cutoff=frequency_cutoff,
-            relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type,
-            threaded_q=threaded_q, stop_check=stop_check, call_back=call_back))
+        results.append(minpair_fl(corpus, [sp], frequency_cutoff = frequency_cutoff,
+            relative_count = relative_count,
+            distinguish_homophones = distinguish_homophones,
+            sequence_type=sequence_type,
+            stop_check = stop_check, call_back = call_back))
     return sum(results)/len(segment_pairs)
 
 
-def relative_deltah_fl(corpus, segment, frequency_cutoff=0,
-                type_or_token='token', sequence_type='transcription',
-                threaded_q=False, stop_check = None, call_back = None):
-    """Calculate the average functional load of the contrasts between a segment and all other segments, as the decrease in corpus entropy caused by a merger.
+def relative_deltah_fl(corpus, segment, frequency_cutoff = 0,
+                type_or_token = 'token', sequence_type = 'transcription',
+                stop_check = None, call_back = None):
+    """Calculate the average functional load of the contrasts between a
+    segment and all other segments, as the decrease in corpus entropy
+    caused by a merger.
 
     Parameters
     ----------
     corpus : Corpus
         The domain over which functional load is calculated.
+
     segment : str
         The target segment.
+
     frequency_cutoff : number, optional
         Minimum frequency of words to consider, if desired.
+
     type_or_token : str {'type', 'token'}
         Specify whether entropy is based on type or token frequency.
+
     sequence_type : string
         The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
 
@@ -244,9 +273,9 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff=0,
     segment_pairs = [(segment,other) for other in all_segments if other != segment]
     results = []
     for sp in segment_pairs:
-        results.append(deltah_fl(corpus, [sp], frequency_cutoff=frequency_cutoff,
-                type_or_token=type_or_token, sequence_type=sequence_type,
-                threaded_q=threaded_q, stop_check=stop_check, call_back=call_back))
+        results.append(deltah_fl(corpus, [sp], frequency_cutoff = frequency_cutoff,
+                type_or_token = type_or_token, sequence_type = sequence_type,
+                stop_check = stop_check, call_back = call_back))
     return sum(results)/len(segment_pairs)
 
 

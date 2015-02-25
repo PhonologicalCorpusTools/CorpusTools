@@ -9,7 +9,7 @@ String similarity and neighbourhood density
 About the functions
 -------------------
 
-Some measures of :ref:`string similarity` are used to calculate neighbourhood
+Some measures of :ref:`string_similarity` are used to calculate neighbourhood
 density (e.g. [Greenberg1964]_; [Luce1998]_; [Yao2011]_),
 which has been shown to affect phonological processing. A phonological
 “neighbor” of some word X is a word that is similar in some close way
@@ -170,46 +170,46 @@ Here’s an example of neighbourhood density being calculated on
 transcriptions for the entire example corpus, using edit distance
 with a threshold of 1:
 
-.. image:: _static/neighdendialog.png
+.. image:: static/neighdendialog.png
    :width: 90%
    :align: center
 
 The corpus with all words’ densities added:
 
-.. image:: _static/neighdencolumn.png
+.. image:: static/neighdencolumn.png
    :width: 90%
    :align: center
 
 An example of calculating all the neighbours for a given word in the
 IPHOD corpus, and saving the resulting list of neighbours to an output file:
 
-.. image:: _static/neighdendialogoutput.png
+.. image:: static/neighdendialogoutput.png
    :width: 90%
    :align: center
 
 The on-screen results table, which can be saved to a file itself:
 
-.. image:: _static/neighdenresults.png
+.. image:: static/neighdenresults.png
    :width: 90%
    :align: center
 
 And the saved output file listing all 45 of the neighbours of *cat* in the IPHOD corpus:
 
-.. image:: _static/neighdenoutput.png
+.. image:: static/neighdenoutput.png
    :width: 90%
    :align: center
 
 An example .txt file containing one word per line, that can be uploaded
 into PCT so that the neighbourhood density of each word is calculated:
 
-.. image:: _static/neighdeninput.png
+.. image:: static/neighdeninput.png
    :width: 90%
    :align: center
 
 The resulting table of neighbourhood densities for each word on the list
 (in the IPHOD corpus, with standard edit distance and a threshold of 1):
 
-.. image:: _static/neighdeninputresults.png
+.. image:: static/neighdeninputresults.png
    :width: 90%
    :align: center
 
@@ -228,7 +228,7 @@ command in the following format into your Terminal::
 
    pct_neighdens CORPUSFILE ARG2
 
-...where CORPUSFILE is the name of your *.corpus file and ARG2 is either
+...where CORPUSFILE is the name of your \*.corpus file and ARG2 is either
 the word whose neighborhood density you wish to calculate or the name
 of your word list file (if calculating the neighborhood density of each
 word). The word list file must contain one word (specified using either

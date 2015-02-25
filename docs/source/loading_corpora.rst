@@ -55,7 +55,7 @@ see these corpora listed in the lefthand side of the “Load Corpus” dialogue
 box, as in the following diagram:
 
 
-.. image:: _static/loadcorpus.png
+.. image:: static/loadcorpus.png
    :width: 90%
    :align: center
 
@@ -79,7 +79,7 @@ predictability of distribution).
 The corpus may take several seconds to load, but will eventually appear;
 the following is the example corpus:
 
-.. image:: _static/loadexample.png
+.. image:: static/loadexample.png
    :width: 90%
    :align: center
 
@@ -247,7 +247,7 @@ then select either “Create corpus from running text (orthography)” or
       affricate in *grey chip*), this method will be unable to make that
       distinction; all instances will be treated as digraphs.
 
-.. image:: _static/digraph.png
+.. image:: static/digraph.png
    :height: 200px
    :align: center
 
@@ -273,13 +273,13 @@ Henry Davis, for granting permission to use this text):
 
 1. The original transcribed story:
 
-.. image:: _static/gitksanoriginal.png
+.. image:: static/gitksanoriginal.png
    :width: 90%
    :align: center
 
 2. The transcription delimited with periods to show unitary characters:
 
-.. image:: _static/gitksandelimited.png
+.. image:: static/gitksandelimited.png
    :width: 90%
    :align: center
 
@@ -291,20 +291,20 @@ delimiter. A feature system called gitksan2hayes_delimited, which maps the
 delimited transcription system used in this example to the features given
 in [Hayes2009]_, has already been loaded into PCT (see :ref:`custom_feature`), and so is selected here.
 
-.. image:: _static/corpustranscribed.png
+.. image:: static/corpustranscribed.png
    :width: 90%
    :align: center
 
 Alternatively, the same corpus could be read in without being hand-delimited,
 by constructing digraphs within the load corpus dialogue box, as follows:
 
-.. image:: _static/corpustranscribed_digraphs.png
+.. image:: static/corpustranscribed_digraphs.png
    :width: 90%
    :align: center
 
 4. The resulting corpus, ready for subsequent analysis:
 
-.. image:: _static/gitksanloaded.png
+.. image:: static/gitksanloaded.png
    :width: 90%
    :align: center
 
@@ -353,7 +353,7 @@ and choose “TextGrid” as the Corpus file set up option.
 Here is an example of creating a corpus based on three .TextGrid files
 from the Corpus of Spontaneous Japanese [CSJ]_.
 
-.. image:: _static/importspontaneous.png
+.. image:: static/importspontaneous.png
    :width: 90%
    :align: center
 
@@ -368,7 +368,7 @@ pronunciation variants.” A new dialogue box will pop up that shows the
 individual pronunciation variants that occur in the corpus for that word,
 along with their token frequencies.
 
-.. image:: _static/pronunciationvariant.png
+.. image:: static/pronunciationvariant.png
    :width: 90%
    :align: center
 
@@ -383,7 +383,7 @@ look up the word’s summary entry in the corpus. Right-clicking a word
 in the overall corpus will give you the option to “Find all tokens” of
 that word in the transcriptions, where they will simply be highlighted.
 
-.. image:: _static/spontaneouscorpus.png
+.. image:: static/spontaneouscorpus.png
    :width: 90%
    :align: center
 

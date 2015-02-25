@@ -4,9 +4,32 @@ from corpustools.symbolsim.phono_align import Aligner
 al = Aligner(features_tf=False)
 
 def edit_distance(word1, word2, sequence_type):
+    """Returns the Levenshtein edit distance between a string from
+     two words word1 and word2.
+
+     The edit distance is the number of operations needed to transform word1 into word2,
+     three operations are possible: insert, delete, substitute
+
+     Parameters
+     ----------
+     word1: Word
+         the first word object to be compared
+
+     word2: Word
+         the second word object to be compared
+
+     sequence_type : string
+         String specifying what attribute of the Word objects to compare,
+         can be "spelling", "transcription" or a tier name
+
+     Returns
+     -------
+     int:
+         the edit distance between two words
+     """
     m = al.make_similarity_matrix(getattr(word1, sequence_type), getattr(word2, sequence_type))
     return m[-1][-1]['f']
-    
+
 # def edit_distance(word1, word2, string_type):
 #     """Returns the Levenshtein edit distance between a string from
 #     two words word1 and word2, code drawn from
@@ -33,7 +56,7 @@ def edit_distance(word1, word2, sequence_type):
 #         s1 = getattr(word1, string_type)
 #     else:
 #         s1 = word1
-    
+
 #     if isinstance(word2, Word):
 #         s2 = getattr(word2, string_type)
 #     else:

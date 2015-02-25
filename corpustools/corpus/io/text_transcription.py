@@ -14,14 +14,14 @@ def inspect_transcription_corpus(path):
             characters.update(line)
     return characters
 
-def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph_list = None,
-                    trans_delimiter = None,feature_system_path = None,
+def load_transcription_corpus(corpus_name, path, delimiter, ignore_list,
+                    digraph_list = None,trans_delimiter = None,
+                    feature_system_path = None,
                     stop_check = None, call_back = None):
     """
-    Load a corpus from a text file containing running text either in
-    orthography or transcription
+    Load a corpus from a text file containing running transcribed text
 
-    Attributes
+    Parameters
     ----------
     corpus_name : str
         Informative identifier to refer to corpus
@@ -35,6 +35,10 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
     ignore_list : list of strings
         List of characters to ignore when parsing the text
 
+    digraph_list : list of strings
+        List of digraphs (sequences of two characters that should be
+        treated as a single segment) to use when reading transcriptions
+
     trans_delimiter : str
         Character to use for splitting transcriptions into a list
         of segments. If it equals '', each character in the transcription
@@ -47,15 +51,20 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, digraph
         Specifies whether text files contains spellings or transcriptions.
         Defaults to 'spelling'
 
+    stop_check : callable
+        Callable that returns a boolean for whether to exit before
+        finishing full calculation
+
+    call_back : callable
+        Function that can handle strings (text updates of progress),
+        tuples of two integers (0, total number of steps) and an integer
+        for updating progress out of the total set by a tuple
+
 
     Returns
     -------
-    Corpus
-        Corpus object generated from the text file
-
-    dictionary
-        Dictionary with segments not in the FeatureMatrix (if specified)
-        as keys and a list of words containing those segments as values
+    Discourse
+        Discourse  object generated from the text file
 
     """
     corpus = Corpus(corpus_name)
