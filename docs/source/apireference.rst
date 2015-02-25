@@ -9,7 +9,7 @@ Lexicon classes
 .. currentmodule:: corpustools.corpus.classes
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: class.rst
 
    lexicon.Attribute
@@ -26,7 +26,7 @@ Speech corpus classes
 .. currentmodule:: corpustools.corpus.classes
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: class.rst
 
    spontaneous.Discourse
@@ -46,7 +46,7 @@ Corpus binaries
 .. currentmodule:: corpustools.corpus.io
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    binary.download_binary
@@ -60,7 +60,7 @@ Loading from CSV
 .. currentmodule:: corpustools.corpus.io
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    csv.load_corpus_csv
@@ -72,7 +72,7 @@ Export to CSV
 .. currentmodule:: corpustools.corpus.io
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    csv.export_corpus_csv
@@ -84,7 +84,7 @@ Loading speech corpora
 .. currentmodule:: corpustools.corpus.io
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    spontaneous.import_spontaneous_speech_corpus
@@ -95,7 +95,7 @@ Running text
 .. currentmodule:: corpustools.corpus.io
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    text_spelling.load_spelling_corpus
@@ -110,7 +110,7 @@ Frequency of alternation
 .. currentmodule:: corpustools.freqalt
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    freq_of_alt.calc_freq_of_alt
@@ -121,7 +121,7 @@ Functional load
 .. currentmodule:: corpustools.funcload
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    functional_load.minpair_fl
@@ -135,7 +135,7 @@ Kullback-Leibler divergence
 .. currentmodule:: corpustools.kl
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    kl.KullbackLeibler
@@ -146,7 +146,7 @@ Mutual information
 .. currentmodule:: corpustools.mutualinfo
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    mutual_information.pointwise_mi
@@ -157,7 +157,7 @@ Neighborhood density
 .. currentmodule:: corpustools.neighdens
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    neighborhood_density.neighborhood_density
@@ -169,7 +169,7 @@ Phonotactic probability
 .. currentmodule:: corpustools.phonoprob
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    phonotactic_probability.phonotactic_probability_vitevitch
@@ -180,7 +180,7 @@ Predictability of distribution
 .. currentmodule:: corpustools.prod
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    pred_of_dist.calc_prod_all_envs
@@ -192,7 +192,7 @@ Symbol similarity
 .. currentmodule:: corpustools.symbolsim
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    string_similarity.string_similarity
@@ -200,7 +200,7 @@ Symbol similarity
 .. currentmodule:: corpustools.symbolsim
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    edit_distance.edit_distance
@@ -208,7 +208,7 @@ Symbol similarity
 .. currentmodule:: corpustools.symbolsim
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    khorsi.khorsi
@@ -216,7 +216,7 @@ Symbol similarity
 .. currentmodule:: corpustools.symbolsim
 
 .. autosummary::
-   :toctree: generated/
+   :toctree: generate/
    :template: function.rst
 
    phono_edit_distance.phono_edit_distance
