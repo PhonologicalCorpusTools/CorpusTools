@@ -283,8 +283,7 @@ class AttributeFilterWidget(QGroupBox):
         select = self.table.selectionModel()
         if select.hasSelection():
             selected = select.selectedRows()
-            for s in selected:
-                self.table.model().removeRow(s.row())
+            self.table.model().removeRows([s.row() for s in selected])
 
     def value(self):
         return [x[0] for x in self.table.model().filters]
@@ -1386,8 +1385,7 @@ class EnvironmentSelectWidget(QGroupBox):
         select = self.table.selectionModel()
         if select.hasSelection():
             selected = select.selectedRows()
-            for s in selected:
-                self.table.model().removeRow(s.row())
+            self.table.model().removeRows([s.row() for s in selected])
 
     def value(self):
         return [x[0] for x in self.table.model().rows]
