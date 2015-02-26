@@ -19,7 +19,9 @@ def main():
     parser = argparse.ArgumentParser(description = \
              'Phonological CorpusTools: functional load CL interface')
     parser.add_argument('corpus_file_name', help='Name of corpus file')
-    parser.add_argument('pairs_file_name_or_segment', help='Name of file with segment pairs (or target segment if relative_fl is True)')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-p', '--pairs_file_name_or_segment', help='Name of file with segment pairs (or target segment if relative_fl is True)')
+    group.add_argument('-l', '--all_pairwise_fls', action='store_true', help="Calculate FL for all pairs of segments")
     parser.add_argument('-a', '--algorithm', default='minpair', help='Algorithm to use for calculating functional load: "minpair" for minimal pair count or "deltah" for change in entropy. Defaults to minpair.')
     parser.add_argument('-f', '--frequency_cutoff', type=float, default=0, help='Minimum frequency of words to consider as possible minimal pairs or contributing to lexicon entropy.')
     parser.add_argument('-r', '--relative_count', type=check_bool, default=True, help='For minimal pair FL: whether or not to divide the number of minimal pairs by the number of possible minimal pairs (words with either segment).')
@@ -35,27 +37,32 @@ def main():
 
     corpus = load_binary(args.corpus_file_name)
 
-    if args.relative_fl != True:
-        try:
-            with open(args.pairs_file_name_or_segment) as segpairs_or_segment_file:
-                segpairs_or_segment = [line for line in csv.reader(segpairs_or_segment_file, delimiter='\t') if len(line) > 0]
-        except FileNotFoundError:
-            raise FileNotFoundError("Did not find the segment pairs file even though 'relative_fl' is set to false. If calculating the relative FL of a single segement, please set 'relative_fl' to True. Otherwise, specify correct filename.")
-    else:
-        segpairs_or_segment = args.pairs_file_name_or_segment
+    if args.all_pairwise_fls:
+        result = all_pairwise_fls(corpus, algorithm=args.algorithm, frequency_cutoff=args.frequency_cutoff, relative_count=args.relative_count,
+                     distinguish_homophones=args.distinguish_homophones, sequence_type=args.sequence_type, type_or_token=args.type_or_token)
 
-    if args.algorithm == 'minpair':
-        if args.relative_fl:
-            result = relative_minpair_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, sequence_type=args.sequence_type)
-        else:
-            result = minpair_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, sequence_type=args.sequence_type)
-    elif args.algorithm == 'deltah':
-        if args.relative_fl:
-            result = relative_deltah_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, type_or_token=args.type_or_token, sequence_type=args.sequence_type)
-        else:
-            result = deltah_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, type_or_token=args.type_or_token, sequence_type=args.sequence_type)
     else:
-        raise Exception('-a / --algorithm must be set to either \'minpair\' or \'deltah\'.')
+        if args.relative_fl != True:
+            try:
+                with open(args.pairs_file_name_or_segment) as segpairs_or_segment_file:
+                    segpairs_or_segment = [line for line in csv.reader(segpairs_or_segment_file, delimiter='\t') if len(line) > 0]
+            except FileNotFoundError:
+                raise FileNotFoundError("Did not find the segment pairs file even though 'relative_fl' is set to false. If calculating the relative FL of a single segement, please set 'relative_fl' to True. Otherwise, specify correct filename.")
+        else:
+            segpairs_or_segment = args.pairs_file_name_or_segment
+
+        if args.algorithm == 'minpair':
+            if args.relative_fl:
+                result = relative_minpair_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, sequence_type=args.sequence_type)
+            else:
+                result = minpair_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, sequence_type=args.sequence_type)
+        elif args.algorithm == 'deltah':
+            if args.relative_fl:
+                result = relative_deltah_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, type_or_token=args.type_or_token, sequence_type=args.sequence_type)
+            else:
+                result = deltah_fl(corpus, segpairs_or_segment, frequency_cutoff=args.frequency_cutoff, type_or_token=args.type_or_token, sequence_type=args.sequence_type)
+        else:
+            raise Exception('-a / --algorithm must be set to either \'minpair\' or \'deltah\'.')
 
     if args.outfile:
         with open(args.outfile, 'w') as outfile:

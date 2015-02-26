@@ -318,3 +318,44 @@ def neutralize_segment(segment, segment_pairs):
             if segment in sp:
                 return 'NEUTR:'+''.join(sp)
         return segment
+
+
+def all_pairwise_fls(corpus, algorithm='minpair', frequency_cutoff=0, relative_count=True,
+                     distinguish_homophones=False, sequence_type='transcription', type_or_token='token'):
+    """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        The domain over which functional load is calculated.
+    algorithm : str {'minpair', 'deltah'}
+        Algorithm to use for calculating functional load: "minpair" for minimal pair count or "deltah" for change in entropy.
+    frequency_cutoff : number, optional
+        Minimum frequency of words to consider, if desired.
+    relative_count : bool, optional
+        If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
+    distinguish_homophones : bool, optional
+        If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.
+    sequence_type : string
+        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
+    type_or_token : str {'type', 'token'}
+        Specify whether entropy is based on type or token frequency. Only used by the deltah algorithm.
+
+    Returns
+    -------
+    list of tuple(tuple(Segment, Segment), float)
+        Returns a list of all Segment pairs and their respective functional load values, as length-2 tuples.
+    """
+    fls = []
+    for i, s1 in enumerate(corpus.inventory[:-1]):
+        for s2 in corpus.inventory[i+1:]:
+            if type(s1) != str:
+                s1 = s1.symbol
+            if type(s2) != str:
+                s2 = s2.symbol
+            if algorithm == 'minpair':
+                fl = minpair_fl(corpus, (s1, s2), frequency_cutoff=frequency_cutoff, relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type)
+            elif algorithm == 'deltah':
+                fl = deltah_fl(corpus, (s1, s2), frequency_cutoff=frequency_cutoff, type_or_token=type_or_token, sequence_type=sequence_type)
+            fls.append(((s1, s2), fl))
+    return fls
