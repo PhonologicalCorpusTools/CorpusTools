@@ -318,7 +318,7 @@ Here is an example of selecting [m] and [n], with functional load to be
 calculated on the basis of minimal pairs, only including words with a
 token frequency of at least 1, from the built-in example corpus:
 
-.. image:: _static/funtionalloaddialog.png
+.. image:: static/funtionalloaddialog.png
    :width: 90%
    :align: center
 
@@ -340,7 +340,7 @@ token frequency of at least 1, from the built-in example corpus:
    bottom of the table to open a system dialogue box and save the results
    at a user-designated location.
 
-.. image:: _static/funtionalloadresults.png
+.. image:: static/funtionalloadresults.png
    :width: 90%
    :align: center
 
@@ -362,7 +362,7 @@ a command in the following format into your Terminal::
 
    pct_funcload CORPUSFILE ARG2
 
-...where CORPUSFILE is the name of your *.corpus file and ARG2 is either
+...where CORPUSFILE is the name of your \*.corpus file and ARG2 is either
 the transcription character(s) of a single segment (if calculating relative
 functional load) or the name of your segment pair(s) file (if calculating a
 single functional load value). The segment pairs file must list the pairs

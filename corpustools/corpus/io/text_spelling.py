@@ -2,18 +2,17 @@ import os
 
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 
-from .csv import DelimiterError
+from corpustools.exceptions import DelimiterError
 from .binary import load_binary
 
 def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
-                            ignore_case = False,
-                            support_corpus_path = None, stop_check = None,
-                            call_back = None):
+                            support_corpus_path = None, ignore_case = False,
+                            stop_check = None, call_back = None):
     """
-    Load a corpus from a text file containing running text either in
-    orthography or transcription
+    Load a corpus from a text file containing running text of
+    orthography
 
-    Attributes
+    Parameters
     ----------
     corpus_name : str
         Informative identifier to refer to corpus
@@ -27,15 +26,27 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
     ignore_list : list of strings
         List of characters to ignore when parsing the text
 
+    support_corpus_path : string
+        Full path to a corpus to look up transcriptions from spellings
+        in the text
+
+    ignore_case : bool
+        Specify whether to ignore case when using spellings in the text
+        to look up transcriptions
+
+    stop_check : callable
+        Callable that returns a boolean for whether to exit before
+        finishing full calculation
+
+    call_back : callable
+        Function that can handle strings (text updates of progress),
+        tuples of two integers (0, total number of steps) and an integer
+        for updating progress out of the total set by a tuple
 
     Returns
     -------
-    Corpus
-        Corpus object generated from the text file
-
-    dictionary
-        Dictionary with segments not in the FeatureMatrix (if specified)
-        as keys and a list of words containing those segments as values
+    Discourse
+        Discourse object generated from the text file
 
     """
 

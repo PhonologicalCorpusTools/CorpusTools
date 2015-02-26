@@ -26,7 +26,7 @@ Method of calculation
 
 One method for computing the phonotactic probability uses average unigram
 or bigram positional probabilities across a word ([Vitevitch2004]_;
-their online calculator for this function is available `here
+their online calculator for this function is available `online
 <http://www.people.ku.edu/~mvitevit/PhonoProbHome.html>`_).
 For a word like *blick* in English, the unigram average would include the
 probability of /b/ occurring in the first position of a word, the
@@ -49,10 +49,10 @@ in the first position is radically different.
 There are other ways of calculating phonotactic probability that don't
 have the strict left-to-right positional assumptions that the Vitevitch
 & Luce algorithm has, such as the constraint-based method in BLICK by
-Bruce Hayes (Windows executable available `here
-<http://www.linguistics.ucla.edu/people/hayes/BLICK/>`_, Python package
-available `here <https://pypi.python.org/pypi/python-BLICK/0.2.12>`_
-with source code available at <https://github.com/mmcauliffe/python-BLICK/>_).
+Bruce Hayes (BLICK is available as a `Windows executable
+<http://www.linguistics.ucla.edu/people/hayes/BLICK/>`_,
+`Python package <https://pypi.python.org/pypi/python-BLICK/0.2.12>`_
+and Python source code available at <https://github.com/mmcauliffe/python-BLICK/>_).
 However, such algorithms require training on a specific language, and
 the constraints are not computed from transcribed corpora in as
 straightforward a manner as the probabilities used in the Vitevitch &
@@ -159,11 +159,11 @@ An example of the “Phonotactic Probability” dialogue box for calculating
 the probability of the non-word “pidger” [pɪdʒɚ] using unigram position
 probabilities (using the IPHOD corpus):
 
-.. image:: _static/phonoprobdialog.png
+.. image:: static/phonoprobdialog.png
    :width: 90%
    :align: center
 
-.. image:: _static/phonoprobresults.png
+.. image:: static/phonoprobresults.png
    :width: 90%
    :align: center
 

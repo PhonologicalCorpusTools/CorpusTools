@@ -193,7 +193,7 @@ directories on your computer.
 
 Here’s an example of the parameter-selection box:
 
-.. image:: _static/acousticsimdialog.png
+.. image:: static/acousticsimdialog.png
    :width: 90%
    :align: center
 
@@ -212,7 +212,7 @@ Here’s an example of the parameter-selection box:
 
 Here’s an example of the results file:
 
-.. image:: _static/asresults.png
+.. image:: static/asresults.png
    :width: 90%
    :align: center
 

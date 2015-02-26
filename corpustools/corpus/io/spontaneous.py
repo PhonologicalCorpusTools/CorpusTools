@@ -213,7 +213,64 @@ def align_textgrid_info(textgrids, wavs, speaker_source, stop_check, call_back):
             pass
     return dialogs
 
-def import_spontaneous_speech_corpus(name, directory, **kwargs):
+def import_spontaneous_speech_corpus(corpus_name, directory, **kwargs):
+    """
+    Create a SpontaneousSpeechCorpus from a directory of Praat TextGrid
+    files or paired word-phone files.
+
+    When using TextGrids, speakers will be recognized automatically
+    (though each speaker must have a tier for spelling, specified by
+    `word_tier_name` and a tier for transcription, specified by
+    `phone_tier_name`).  Any interval tiers that are not identified as
+    word or phone tiers will be added as attributes of the resulting
+    WordTokens.
+
+    Parameters
+    ----------
+
+    corpus_name : str
+        Informative identifier to refer to corpus
+
+    directory : str
+        Full path to the corpus directory
+
+    dialect : str
+        One of 'textgrid', 'buckeye' or 'timit'
+
+    speaker_source : string
+        Either 'filename', 'directory' or unspecified.  The option 'filename'
+        means that the first three characters of a filename will be used
+        as the name of the speaker for that dialog. The option 'directory'
+        will use the directory name for the Speaker names.  Unspecified will
+        create a base Speaker to be edited later.
+
+    word_tier_name : string
+        Only used for TextGrids, the name to identify tiers to use for
+        spelling
+
+    phone_tier_name : string
+        Only used for TextGrids, the name to identify tiers to use for
+        transcription
+
+    delimiter : string
+        Single character to use if the phone labels contain multiple
+        segments
+
+    stop_check : callable
+        Callable that returns a boolean for whether to exit before
+        finishing full calculation
+
+    call_back : callable
+        Function that can handle strings (text updates of progress),
+        tuples of two integers (0, total number of steps) and an integer
+        for updating progress out of the total set by a tuple
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        SpontaneousSpeechCorpus object generated from the directory
+
+    """
 
     dialect = kwargs.pop('dialect', 'textgrid')
     stop_check = kwargs.pop('stop_check', None)
@@ -221,7 +278,7 @@ def import_spontaneous_speech_corpus(name, directory, **kwargs):
     speaker_source = kwargs.pop('speaker_source', None)
     delimiter = kwargs.pop('delimiter', None)
 
-    corpus = SpontaneousSpeechCorpus(name,directory)
+    corpus = SpontaneousSpeechCorpus(corpus_name,directory)
 
     words = []
     phones = []
@@ -277,14 +334,10 @@ def import_spontaneous_speech_corpus(name, directory, **kwargs):
             if 'phones' not in v:
                 continue
             data = files_to_data(v['words'], v['phones'], dialect)
-            if dialect == 'buckeye':
-                discourse_info['speaker'] = Speaker(d[:3])
-            elif dialect == 'timit':
-                disourse_info['speaker'] = Speaker(os.path.split(v['words'])[-2])
+            discourse_info['speaker'] = Speaker(v['speaker'])
 
         if 'wav' in v:
             discourse_info['wav_path'] = v['wav']
-        print(delimiter)
         corpus.add_discourse(data, discourse_info,delimiter=delimiter)
     return corpus
 
@@ -310,9 +363,9 @@ def files_to_data(word_path,phone_path, dialect):
                 found.append(p)
                 if p['end'] == w['End']:
                     found_all = True
-            words[i]['transcription'] = found
+            words[i]['Transcription'] = found
         elif dialect == 'buckeye':
-            if w['word_transcription'] is None:
+            if w['lookup_transcription'] is None:
                 continue
             expected = w['sr']
             found = []
@@ -376,7 +429,7 @@ def read_words(path, dialect, sr = None):
                 if sr is not None:
                     start /= sr
                     end /= sr
-                output.append({'Spelling':word, 'Begin':start, 'End':end})
+                output.append({'lookup_spelling':word, 'Begin':start, 'End':end})
         elif dialect == 'buckeye':
             f = re.split(r"#\r{0,1}\n",file_handle.read())[1]
             begin = 0.0
@@ -395,8 +448,8 @@ def read_words(path, dialect, sr = None):
                     category = None
                 if word in FILLERS:
                     category = 'UH'
-                line = {'Spelling':word,'Begin':begin,'End':end,
-                        'word_transcription':citation,'sr':phonetic,
+                line = {'lookup_spelling':word,'Begin':begin,'End':end,
+                        'lookup_transcription':citation,'sr':phonetic,
                         'Category':category}
                 output.append(line)
                 begin = end

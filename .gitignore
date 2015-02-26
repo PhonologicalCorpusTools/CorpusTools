@@ -1,5 +1,6 @@
 *.py[cod]
 *.txt
+!requirements.txt
 *.corpus
 *.feature
 .idea/
@@ -7,6 +8,10 @@
 
 # C extensions
 *.so
+
+# Documentation
+docs/build/
+docs/source/generate/
 
 # Packages
 *.egg

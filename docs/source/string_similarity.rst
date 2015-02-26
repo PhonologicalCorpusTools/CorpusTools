@@ -105,6 +105,7 @@ Formula for string similarity from [Khorsi2012]_:
 - \sum_{i=1}^{\lVert \overline{LCS(w_1,w_2)} \rVert} log (\frac{1}{freq(\overline{LCS(w_1,w_2)}[i])})`
 
 Note:
+
 * *w1, w2* are two words whose string similarity is to be measured
 * *LCS(w1, w2)* represents the Longest Common Shared Sequence of symbols
   between the two words
@@ -228,7 +229,7 @@ Here’s an example for calculating the Khorsi similarity of the pair
 *mata* (which occurs in the corpus) and *mitoo* [mitu] (which does not),
 in the sample corpus, using token frequencies and comparing transcriptions:
 
-.. image:: _static/stringsimilaritydialog.png
+.. image:: static/stringsimilaritydialog.png
    :width: 90%
    :align: center
 
@@ -248,7 +249,7 @@ in the sample corpus, using token frequencies and comparing transcriptions:
 
 Here’s an example result file for the above selection:
 
-.. image:: _static/stringsimilarityresults.png
+.. image:: static/stringsimilarityresults.png
    :width: 90%
    :align: center
 

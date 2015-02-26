@@ -1,6 +1,8 @@
 Phonological CorpusTools
 ========================
 
+[![Documentation Status](https://readthedocs.org/projects/corpustools/badge/?version=latest)](https://readthedocs.org/projects/corpustools/?badge=latest)
+
 This document contains installation instructions for Phonological CorpusTools (PCT). For a description of available functionality, please refer to the manual available on SourceForge (https://sourceforge.net/projects/phonologicalcorpustools/files/?source=navbar).
 
 

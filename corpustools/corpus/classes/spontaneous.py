@@ -7,9 +7,34 @@ import os
 import wave
 
 class Speaker(object):
+    """
+    Speaker objects contain information about the producers of WordTokens
+    or Discourses
+
+    Parameters
+    ----------
+    name : string
+        Name to identify the Speaker
+
+    Attributes
+    ----------
+    name : string
+        Name of Speaker
+
+    gender : string
+        Gender of Speaker
+
+    age : int or string
+        Age of Speaker
+
+
+    """
     def __init__(self,name, **kwargs):
 
         self.name = name
+
+        self.gender = None
+        self.age = None
 
         for k,v in kwargs.items():
             setattr(self,k,v)
@@ -39,6 +64,28 @@ class Speaker(object):
         return self.name >= other.name
 
 class SpontaneousSpeechCorpus(object):
+    """
+    SpontaneousSpeechCorpus objects a collection of Discourse objects and
+    Corpus objects for frequency information.
+
+    Parameters
+    ----------
+    name : string
+        Name to identify the SpontaneousSpeechCorpus
+
+    directory : string
+        Directory associated with the SpontaneousSpeechCorpus
+
+    Attributes
+    ----------
+    lexicon : Corpus
+        Corpus object with token frequencies from its Discourses
+
+    discourses : dictionary
+        Discourses of the SpontaneousSpeechCorpus indexed by the names of
+        the Discourses
+
+    """
     def __init__(self,name,directory):
         self.name = name
         self.directory = directory
@@ -55,26 +102,49 @@ class SpontaneousSpeechCorpus(object):
         self.__dict__.update(state)
 
     def add_discourse(self, data, discourse_info, delimiter=None):
+        """
+        Add a discourse to the SpontaneousSpeechCorpus
+
+        Parameters
+        ----------
+        data : list of dictionaries
+            Dictionaries should minimally have `Spelling`, `Begin` and
+            `End` as keys, and `Transcription` if the production has
+            a transcription
+
+        discourse_info : dictionary
+            Dictionary of information for building the discourse
+
+        delimiter : string
+            String to split segments into multiple segments, if needed.
+            Defaults to None
+        """
         d = Discourse(**discourse_info)
         d_atts = d.attributes
         previous_time = None
         for line in data:
-            spelling = line['Spelling']
-            if 'word_transcription' in line:
-                transcription = line['word_transcription']
+            spelling = line['lookup_spelling']
+            if 'lookup_transcription' in line:
+                transcription = line['lookup_transcription']
             else:
                 transcription = list()
             if 'Transcription' in line:
                 t = line['Transcription']
+            else:
+                t = list()
             word = self.lexicon.get_or_create_word(spelling, transcription)
             word.frequency += 1
+            token_kwargs = {'word':word, 'transcription':t,
+                            'begin': line['Begin'], 'end': line['End']}
             if previous_time is not None:
-                wordtoken = WordToken(word=word, transcription=t,
-                                begin = line['Begin'], end = line['End'],
-                                previous_token = d[previous_time])
-            else:
-                wordtoken = WordToken(word=word, transcription=t,
-                                begin = line['Begin'], end = line['End'])
+                token_kwargs['previous_token'] = d[previous_time]
+            additional_keys = [(Attribute.sanitize_name(x),x)
+                            for x in line.keys()
+                            if Attribute.sanitize_name(x) not in token_kwargs.keys()
+                            and not x.startswith('lookup_')]
+            for sank, unsank in additional_keys:
+                token_kwargs[sank] = line[unsank]
+            wordtoken = WordToken(**token_kwargs)
             word.wordtokens.append(wordtoken)
             d.add_word(wordtoken)
             att_names = [Attribute(Attribute.sanitize_name(x),
@@ -99,9 +169,32 @@ class SpontaneousSpeechCorpus(object):
         self.discourses[str(d)] = d
 
 class Discourse(object):
+    """
+    Discourse objects are collections of linear text with word tokens
+
+    Parameters
+    ----------
+    name : string
+        Identifier for the Discourse
+
+    speaker : Speaker
+        Speaker producing the tokens/text (defaults to an empty Speaker)
+
+    Attributes
+    ----------
+    attributes : list of Attributes
+        The Discourse object tracks all of the attributes used by its
+        WordToken objects
+
+    words : dictionary of WordTokens
+        The keys are the beginning times of the WordTokens (or their
+        place in a text if it's not a speech discourse) and the values
+        are the WordTokens
+
+    """
     def __init__(self, **kwargs):
         self.name = ''
-        self.speaker = None
+        self.speaker = Speaker(None)
 
         for k,v in kwargs.items():
             setattr(self,k,v)
@@ -118,11 +211,30 @@ class Discourse(object):
         return self._attributes
 
     def update_attributes(self, attributes):
+        """
+        Add additional WordToken attributes to track.  If any of the
+        attributes to be added overlaps in `name` with the current attributes, it is
+        not added.
+
+        Parameters
+        ----------
+        attributes : list of Attributes
+            Attributes of WordTokens to be tracked by the Discourse
+
+        """
         for a in attributes:
             if a not in self._attributes:
                 self._attributes.append(a)
 
     def keys(self):
+        """
+        Returns a sorted list of keys for looking up WordTokens
+
+        Returns
+        -------
+        list
+            List of begin times or indices of WordTokens in the Discourse
+        """
         return sorted(self.words.keys())
 
     def __eq__(self, other):
@@ -153,6 +265,14 @@ class Discourse(object):
         return self.name
 
     def add_word(self,wordtoken):
+        """
+        Adds a WordToken to the Discourse
+
+        Parameters
+        ----------
+        wordtoken : WordToken
+            WordToken to be added
+        """
         wordtoken.discourse = self
         self.words[wordtoken.begin] = wordtoken
 
@@ -164,7 +284,17 @@ class Discourse(object):
             return self.words[t]
         raise(TypeError)
 
+    @property
     def has_audio(self):
+        """
+        Checks whether the Discourse is associated with a .wav file
+
+        Returns
+        -------
+        bool
+            True if a .wav file is associated and if that file exists,
+            False otherwise
+        """
         if hasattr(self,'wav_path') and os.path.exists(self.wav_path):
             return True
         return False
@@ -178,7 +308,7 @@ class Discourse(object):
         for k in sorted(self.words.keys()):
             yield self.words[k]
 
-    def extract_tokens(self, tokens, output_dir):
+    def _extract_tokens(self, tokens, output_dir):
         if not self.has_audio():
             return
         filenames = []
@@ -207,6 +337,16 @@ class Discourse(object):
 
 
     def create_lexicon(self):
+        """
+        Create a Corpus object from the Discourse
+
+        Returns
+        -------
+        Corpus
+            Corpus with spelling and transcription from previous Corpus
+            and token frequency from the Discourse
+
+        """
         corpus = Corpus(self.name + ' lexicon')
         for token in self:
             word = corpus.get_or_create_word(token.wordtype.spelling,token.wordtype.transcription)
@@ -216,9 +356,22 @@ class Discourse(object):
         return corpus
 
     def find_wordtype(self,wordtype):
+        """
+        Look up all WordTokens that are instances of a Word
+
+        Parameters
+        ----------
+        wordtype : Word
+            Word to look up
+
+        Returns
+        -------
+        list of WordTokens
+            List of the given Word's WordTokens in this Discourse
+        """
         return list(x for x in self if x.wordtype == wordtype)
 
-    def calc_frequency(self,query):
+    def _calc_frequency(self,query):
         if isinstance(query, tuple):
             count = 0
             base = query[0]
@@ -235,6 +388,67 @@ class Discourse(object):
             return len(self.find_wordtype(query))
 
 class WordToken(object):
+    """
+    WordToken objects are individual productions of Words
+
+    Parameters
+    ----------
+    word : Word
+        Word that the WordToken is associated with
+
+    transcription : iterable of strings
+        Transcription for the WordToken (can be different than the
+        transcription of the Word type).  Defaults to None if not
+        specified
+
+    spelling : string
+        Spelling for the WordToken (can be different than the
+        spelling of the Word type).  Defaults to None if not
+        specified
+
+    begin : float or int
+        Beginning of the WordToken (can be specified as either in seconds
+        of time or in position from the beginning of the Discourse)
+
+    end : float or int
+        End of the WordToken (can be specified as either in seconds
+        of time or in position from the beginning of the Discourse)
+
+    previous_token : WordToken
+        The preceding WordToken in the Discourse, defaults to None if
+        not specified
+
+    following_token : WordToken
+        The following WordToken in the Discourse, defaults to None if
+        not specified
+
+    discourse : Discourse
+        Parent Discourse object that the WordToken belongs to
+
+    speaker : Speaker
+        The Speaker that produced the token
+
+    Attributes
+    ----------
+    transcription : Transcription
+        The WordToken's transcription, or the word type's
+        transcription if the WordToken's transcription is None
+
+    spelling : string
+        The WordToken's spelling, or the word type's
+        spelling if the WordToken's spelling is None
+
+    previous_token : WordToken
+        The previous WordToken in the Discourse
+
+    following_token : WordToken
+        The following WordToken in the Discourse
+
+    duration : float
+        The duration of the WordToken
+
+
+    """
     def __init__(self,**kwargs):
         self.wordtype = kwargs.pop('word',None)
         self._transcription = kwargs.pop('transcription',None)

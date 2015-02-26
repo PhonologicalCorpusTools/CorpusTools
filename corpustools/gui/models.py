@@ -289,6 +289,9 @@ class DiscourseModel(BaseCorpusTableModel):
     def hasAudio(self):
         return self.corpus.has_audio()
 
+    def audioPath(self):
+        return self.corpus.wav_path
+
     def wordTokenObject(self,row):
         token = self.corpus[self.rows[row]]
         return token

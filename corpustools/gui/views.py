@@ -6,22 +6,7 @@ from .imports import *
 from .models import VariantModel, ResultsModel, PhonoSearchResultsModel
 from .windows import FunctionWorker
 
-class AudioWorker(FunctionWorker):
-    def run(self):
-        #if not QSound.isAvailable():
-        #    print('uh oh')
-        for p in self.kwargs['files']:
-            print(p)
-            s = QSound(p)
-            print(s.loops())
-            s.play()
-            while s.loopsRemaining():
-                print(s.loopsRemaining())
-                if self.stopped:
-                    break
-            if self.stopped:
-                s.stop()
-                break
+from .multimedia import AudioPlayer
 
 
 class TableWidget(QTableView):
@@ -551,9 +536,6 @@ class DiscourseView(QWidget):
     selectType = Signal(object)
     def __init__(self,parent=None):
         super(DiscourseView, self).__init__(parent=parent)
-        self.audioThread = AudioWorker()
-        self.setupActions()
-        self.audioThread.finished.connect(self.audioFinished)
 
         #self.text = TextView(self)
         #self.text.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -602,11 +584,9 @@ class DiscourseView(QWidget):
         #layout.addWidget(self.text)
         layout.addWidget(self.table)
 
-        self.playbar = QToolBar()
-
-        self.playbar.addAction(self.playStopAction)
-        self.playbar.hide()
-        layout.addWidget(self.playbar, alignment=Qt.AlignHCenter)
+        self.player = AudioPlayer()
+        self.player.hide()
+        layout.addWidget(self.player, alignment=Qt.AlignHCenter)
 
         self.setLayout(layout)
 
@@ -614,10 +594,12 @@ class DiscourseView(QWidget):
         #self.text.setModel(model)
         self.table.setModel(model)
         #self.table.setSelectionModel(self.text.selectionModel())
-        if False and AUDIO_ENABLED and model.hasAudio():
-            self.playbar.show()
+        self.table.selectionModel().selectionChanged.connect(self.updatePlayerTimes)
+        if AUDIO_ENABLED and model.hasAudio():
+            self.player.setAudioFile(model.audioPath())
+            self.player.show()
         else:
-            self.playbar.hide()
+            self.player.hide()
         try:
             self.table.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         except AttributeError:
@@ -683,29 +665,15 @@ class DiscourseView(QWidget):
             menu.addAction(lookupAction)
         action = menu.exec_(curview.viewport().mapToGlobal(pos))
 
-    def playStopAudio(self):
-        print('triggered')
+    def updatePlayerTimes(self):
         curview = self.table
-        if self.audioThread.isRunning():
-            self.audioThread.stop()
-            self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        rows = [x.row() for x in curview.selectionModel().selectedRows()]
+        if not rows:
+            self.player.setLimits()
         else:
-            self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaStop))
-            rows = [x.row() for x in curview.selectionModel().selectedRows()]
-            times = curview.model().rowsToTimes(rows)
-            filenames = curview.model().discourse.extract_tokens(times,TMP_DIR)
-            #QSound.play(filenames[0])
-            print('params')
-            self.audioThread.setParams({'files':filenames})
-
-            print('start thread')
-            self.audioThread.start()
-            #for f in filenames:
-            #    s = QSound(f)
-            #    s.loopsRemaining()
-
-    def audioFinished(self):
-        self.playStopAction.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+            mintime = curview.model().wordTokenObject(rows[0]).begin
+            maxtime = curview.model().wordTokenObject(rows[-1]).end
+            self.player.setLimits(begin = mintime, end = maxtime)
 
     def highlightTokens(self, tokens):
         curview = self.table
@@ -717,12 +685,6 @@ class DiscourseView(QWidget):
         for r in rows:
             index = curview.model().index(r,0)
             curview.selectionModel().select(index, QItemSelectionModel.Select |QItemSelectionModel.Rows)
-
-    def setupActions(self):
-        self.playStopAction = QAction(self.style().standardIcon(QStyle.SP_MediaPlay), self.tr("Play"), self)
-        self.playStopAction.setShortcut(Qt.NoModifier + Qt.Key_Space)
-        self.playStopAction.setDisabled(False)
-        self.playStopAction.triggered.connect(self.playStopAudio)
 
 class SubTreeView(QTreeView):
     def __init__(self,parent=None):
