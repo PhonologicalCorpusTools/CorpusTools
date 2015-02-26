@@ -59,6 +59,7 @@ class CorpusSelect(QComboBox):
 
 class LoadWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         if self.stopCheck():
             return
         self.results = load_binary(self.kwargs['path'])
@@ -68,6 +69,7 @@ class LoadWorker(FunctionWorker):
 
 class SpontaneousLoadWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         directory = kwargs.pop('directory')
         name = kwargs.pop('name')
@@ -83,6 +85,7 @@ class SpontaneousLoadWorker(FunctionWorker):
 
 class TextLoadWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         textType = self.kwargs.pop('text_type')
         try:
             if textType == 'spelling':
@@ -237,6 +240,7 @@ class CorpusLoadDialog(QDialog):
 
         self.progressDialog = QProgressDialog('Loading...','Cancel',0,0,self)
         self.progressDialog.setWindowTitle('Loading corpus')
+        self.progressDialog.setMinimumDuration(0)
         self.progressDialog.canceled.connect(self.thread.stop)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)

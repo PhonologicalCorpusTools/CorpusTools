@@ -10,6 +10,7 @@ from .windows import FunctionWorker, FunctionDialog
 
 class FLWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         if kwargs['pair_behavior'] == 'individual':

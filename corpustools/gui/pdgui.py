@@ -11,6 +11,7 @@ from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ProdErro
 
 class PDWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         if 'envs' in kwargs:

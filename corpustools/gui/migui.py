@@ -10,6 +10,7 @@ from .windows import FunctionWorker, FunctionDialog
 
 class MIWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         for pair in kwargs['segment_pairs']:

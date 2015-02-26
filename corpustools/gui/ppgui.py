@@ -15,6 +15,7 @@ from .corpusgui import AddWordDialog
 
 class PPWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         corpus = kwargs['corpusModel'].corpus

@@ -24,6 +24,7 @@ from corpustools.kl.kl import KullbackLeibler
 
 class KLWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         for pair in kwargs['segment_pairs']:

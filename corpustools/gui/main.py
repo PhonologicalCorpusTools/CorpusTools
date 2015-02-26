@@ -266,6 +266,7 @@ class MainWindow(QMainWindow):
                 self.featureSystemStatus.setText('No feature system selected')
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
+        #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self)

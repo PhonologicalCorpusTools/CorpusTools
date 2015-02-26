@@ -12,6 +12,7 @@ from .corpusgui import AddWordDialog
 
 class SSWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         try:
             corpus = kwargs.pop('corpusModel').corpus

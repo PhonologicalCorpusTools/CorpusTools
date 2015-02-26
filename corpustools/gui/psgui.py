@@ -12,6 +12,7 @@ from corpustools.corpus.classes.lexicon import EnvironmentFilter
 
 class PSWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         corpus = kwargs.pop('corpus')
         try:

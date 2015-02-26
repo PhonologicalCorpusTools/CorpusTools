@@ -30,18 +30,21 @@ class BaseTableModel(QAbstractTableModel):
             return None
         row = index.row()
         col = index.column()
-        data = self.rows[row][col]
-        if isinstance(data,float):
-            data = str(round(data,self.settings['sigfigs']))
-        elif isinstance(data,bool):
-            if data:
-                data = 'Yes'
+        try:
+            data = self.rows[row][col]
+            if isinstance(data,float):
+                data = str(round(data,self.settings['sigfigs']))
+            elif isinstance(data,bool):
+                if data:
+                    data = 'Yes'
+                else:
+                    data = 'No'
+            elif isinstance(data,list):
+                data = ', '.join(data)
             else:
-                data = 'No'
-        elif isinstance(data,list):
-            data = ', '.join(data)
-        else:
-            data = str(data)
+                data = str(data)
+        except IndexError:
+            data = ''
 
         return data
 
@@ -51,26 +54,26 @@ class BaseTableModel(QAbstractTableModel):
         return None
 
     def addRow(self,row):
-        self.layoutAboutToBeChanged.emit()
+        self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
         self.rows.append(row)
-        self.layoutChanged.emit()
+        self.endInsertRows()
 
     def addRows(self,rows):
-        self.layoutAboutToBeChanged.emit()
+        self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount() + len(rows)-1)
         self.rows += rows
-        self.layoutChanged.emit()
+        self.endInsertRows()
 
     def removeRow(self,ind):
-        self.layoutAboutToBeChanged.emit()
+        self.beginRemoveRows(QModelIndex(),ind,ind)
         del self.rows[ind]
-        self.layoutChanged.emit()
+        self.endRemoveRows()
 
     def removeRows(self,inds):
         inds = sorted(inds, reverse=True)
-        self.layoutAboutToBeChanged.emit()
         for i in inds:
+            self.beginRemoveRows(QModelIndex(),i,i)
             del self.rows[i]
-        self.layoutChanged.emit()
+            self.endRemoveRows()
 
 class BaseCorpusTableModel(BaseTableModel):
     columns = []
@@ -405,8 +408,15 @@ class SegmentPairModel(BaseTableModel):
     def __init__(self,parent = None):
         QAbstractTableModel.__init__(self,parent)
 
-        self.columns = ['Segment 1', 'Segment 2']
+        self.columns = ['Segment 1', 'Segment 2', '']
         self.rows = list()
+
+    def switchRow(self,row):
+        seg1,seg2 = self.rows[row]
+
+        self.rows[row] = [seg2, seg1]
+        self.dataChanged.emit(self.createIndex(row,0), self.createIndex(row,1))
+
 
 class VariantModel(BaseTableModel):
     def __init__(self, wordtokens, parent=None):

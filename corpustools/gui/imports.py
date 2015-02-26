@@ -1,4 +1,5 @@
 
+import time
 
 AUDIO_ENABLED = True
 HELP_ENABLED = True
@@ -9,7 +10,7 @@ try:
                                 QSortFilterProxyModel, QAbstractItemModel,
                             QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
-                            QRegion,QStandardItemModel,QStandardItem)
+                            QRegion,QStandardItemModel,QStandardItem, QIcon)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,
                                 QDialog, QListWidget, QGroupBox,QVBoxLayout,
@@ -19,7 +20,7 @@ try:
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper,
-                                QSlider)
+                                QSlider, QItemDelegate)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
     try:
         from PyQt5.QtWebKitWidgets import QWebView

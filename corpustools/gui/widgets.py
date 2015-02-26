@@ -7,6 +7,8 @@ from .views import TableWidget
 
 from .models import SegmentPairModel, EnvironmentModel, FilterModel
 
+from .delegates import SwitchDelegate
+
 class ThumbListWidget(QListWidget):
     def __init__(self, ordering, parent=None):
         super(ThumbListWidget, self).__init__(parent)
@@ -1094,6 +1096,24 @@ class SegmentPairDialog(QDialog):
         self.pairs = combinations(selected,2)
         QDialog.accept(self)
 
+class SegPairTableWidget(TableWidget):
+    def __init__(self, parent = None):
+        TableWidget.__init__(self, parent)
+        self.setModel(SegmentPairModel())
+        self.setItemDelegateForColumn(2, SwitchDelegate(self))
+        self.model().rowsInserted.connect(self.addSwitch)
+        self.setSortingEnabled(False)
+        self.horizontalHeader().setSectionsClickable(False)
+
+        switch = QPushButton()
+        switch.setIcon(QIcon.fromTheme('object-flip-horizontal'))
+        self.horizontalHeader().setDefaultSectionSize(switch.iconSize().width()+16)
+        self.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(1,QHeaderView.Stretch)
+
+    def addSwitch(self, index, begin, end):
+        self.openPersistentEditor(self.model().index(begin, 2))
+
 
 class SegmentPairSelectWidget(QGroupBox):
     def __init__(self,inventory,parent=None):
@@ -1102,7 +1122,6 @@ class SegmentPairSelectWidget(QGroupBox):
         self.inventory = inventory
 
         vbox = QVBoxLayout()
-
         self.addButton = QPushButton('Add pair of sounds')
         self.addButton.clicked.connect(self.segPairPopup)
         self.removeButton = QPushButton('Remove selected sound pair')
@@ -1112,15 +1131,7 @@ class SegmentPairSelectWidget(QGroupBox):
         self.removeButton.setAutoDefault(False)
         self.removeButton.setDefault(False)
 
-        self.table = TableWidget()
-        self.table.setSortingEnabled(False)
-        self.table.setModel(SegmentPairModel())
-        try:
-            self.table.horizontalHeader().setSectionsClickable(False)
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        except AttributeError:
-            self.table.horizontalHeader().setClickable(False)
-            self.table.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        self.table = SegPairTableWidget()
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)
