@@ -290,7 +290,7 @@ class DiscourseModel(BaseCorpusTableModel):
         return [i for i,x in enumerate(self.rows) if x in times]
 
     def hasAudio(self):
-        return self.corpus.has_audio()
+        return self.corpus.has_audio
 
     def audioPath(self):
         return self.corpus.wav_path
