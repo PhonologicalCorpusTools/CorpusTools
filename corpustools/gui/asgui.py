@@ -3,16 +3,17 @@ import os
 from collections import OrderedDict
 
 from corpustools.acousticsim.io import load_path_mapping
+from corpustools.exceptions import PCTError, PCTPythonError
 try:
     real_acousticsim = True
     from acousticsim.main import(acoustic_similarity_mapping,
                             acoustic_similarity_directories,
-                            analyze_directory)
+                            analyze_directory, AcousticSimError)
 except ImportError:
     real_acousticsim = False
     from corpustools.acousticsim.main import(acoustic_similarity_mapping,
                             acoustic_similarity_directories,
-                            analyze_directory)
+                            analyze_directory, AcousticSimError)
 
 from .imports import *
 from .widgets import DirectoryWidget, RadioSelectWidget, FileWidget
@@ -25,13 +26,21 @@ class ASWorker(FunctionWorker):
         if kwargs['type'] == 'one':
             try:
                 asim = analyze_directory(kwargs['query'], **kwargs)
+            except AcousticSimError as e:
+                self.errorEncountered.emit(e)
+                return
             except Exception as e:
+                e = PCTPythonError(e)
                 self.errorEncountered.emit(e)
                 return
         elif kwargs['type'] == 'two':
             try:
                 asim, output_val = acoustic_similarity_directories(*kwargs['query'],**kwargs)
+            except AcousticSimError as e:
+                self.errorEncountered.emit(e)
+                return
             except Exception as e:
+                e = PCTPythonError(e)
                 self.errorEncountered.emit(e)
                 return
 
@@ -39,7 +48,11 @@ class ASWorker(FunctionWorker):
         elif kwargs['type'] == 'file':
             try:
                 asim = acoustic_similarity_mapping(kwargs['query'], **kwargs)
+            except AcousticSimError as e:
+                self.errorEncountered.emit(e)
+                return
             except Exception as e:
+                e = PCTPythonError(e)
                 self.errorEncountered.emit(e)
                 return
         if self.stopped:

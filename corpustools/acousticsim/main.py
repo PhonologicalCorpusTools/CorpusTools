@@ -2,11 +2,12 @@ import os
 from numpy import zeros
 
 from functools import partial
-
-from corpustools.acousticsim import AcousticSimError
 from corpustools.acousticsim.representations import to_envelopes, to_mfcc
 from corpustools.acousticsim.distance_functions import dtw_distance, xcorr_distance
 
+
+class AcousticSimError(Exception):
+    pass
 
 def _build_to_rep(**kwargs):
     rep = kwargs.get('rep', 'mfcc')

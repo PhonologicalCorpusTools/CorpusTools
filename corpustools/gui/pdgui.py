@@ -7,7 +7,9 @@ from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSele
 
 from .windows import FunctionWorker, FunctionDialog
 
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ProdError
+from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
+
+from corpustools.exceptions import PCTError, PCTPythonError
 
 class PDWorker(FunctionWorker):
     def run(self):
@@ -27,7 +29,11 @@ class PDWorker(FunctionWorker):
                             True,
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
                     except Exception as e:
+                        e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
                     if self.stopped:
@@ -47,7 +53,11 @@ class PDWorker(FunctionWorker):
                             True,
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
                     except Exception as e:
+                        e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
                     if self.stopped:

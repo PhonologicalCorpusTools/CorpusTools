@@ -8,6 +8,8 @@ from .helpgui import HelpDialog
 
 from corpustools.corpus.io import download_binary
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class FunctionWorker(QThread):
     updateProgress = Signal(int)
     updateProgressText = Signal(str)
@@ -89,35 +91,38 @@ class FunctionDialog(QDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
 
     def handleError(self,error):
+        if isinstance(error, PCTError):
+            if hasattr(error, 'main'):
+                reply = QMessageBox()
+                reply.setWindowTitle('Error encountered')
+                reply.setIcon(QMessageBox.Critical)
+                reply.setText(error.main)
+                reply.setInformativeText(error.information)
+                reply.setDetailedText(error.details)
 
-        if hasattr(error, 'main'):
-            reply = QMessageBox()
-            reply.setWindowTitle('Error encountered')
-            reply.setIcon(QMessageBox.Critical)
-            reply.setText(error.main)
-            reply.setInformativeText(error.information)
-            reply.setDetailedText(error.details)
-
-            if hasattr(error,'print_to_file'):
-                error.print_to_file(self.parent().settings.error_directory())
-                reply.addButton('Open errors directory',QMessageBox.AcceptRole)
-            reply.setStandardButtons(QMessageBox.Close)
-            ret = reply.exec_()
-            if ret == QMessageBox.AcceptRole:
-                error_dir = self.parent().settings.error_directory()
-                if sys.platform == 'win32':
-                    args = ['{}'.format(error_dir)]
-                    program = 'explorer'
-                    #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
-                elif sys.platform == 'darwin':
-                    program = 'open'
-                    args = ['{}'.format(error_dir)]
-                else:
-                    program = 'xdg-open'
-                    args = ['{}'.format(error_dir)]
-                #subprocess.call([program]+args,shell=True)
-                proc = QProcess(self.parent())
-                t = proc.startDetached(program,args)
+                if hasattr(error,'print_to_file'):
+                    error.print_to_file(self.parent().settings.error_directory())
+                    reply.addButton('Open errors directory',QMessageBox.AcceptRole)
+                reply.setStandardButtons(QMessageBox.Close)
+                ret = reply.exec_()
+                if ret == QMessageBox.AcceptRole:
+                    error_dir = self.parent().settings.error_directory()
+                    if sys.platform == 'win32':
+                        args = ['{}'.format(error_dir)]
+                        program = 'explorer'
+                        #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
+                    elif sys.platform == 'darwin':
+                        program = 'open'
+                        args = ['{}'.format(error_dir)]
+                    else:
+                        program = 'xdg-open'
+                        args = ['{}'.format(error_dir)]
+                    #subprocess.call([program]+args,shell=True)
+                    proc = QProcess(self.parent())
+                    t = proc.startDetached(program,args)
+            else:
+                reply = QMessageBox.critical(self,
+                        "Error encountered", str(error))
         else:
             reply = QMessageBox.critical(self,
                     "Error encountered", str(error))

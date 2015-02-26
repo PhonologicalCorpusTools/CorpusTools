@@ -8,6 +8,8 @@ from .imports import *
 from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class FLWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
@@ -25,7 +27,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
                     except Exception as e:
+                        e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
                 elif kwargs['func_type'] == 'entropy':
@@ -36,7 +42,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
                     except Exception as e:
+                        e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
                 if self.stopped:
@@ -53,7 +63,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
             elif kwargs['func_type'] == 'entropy':
@@ -65,7 +79,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
             if self.stopped:

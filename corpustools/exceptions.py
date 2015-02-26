@@ -1,8 +1,18 @@
 import os
-
+import sys
+import traceback
 
 class PCTError(Exception):
     pass
+
+class PCTPythonError(PCTError):
+    def __init__(self, exc):
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        self.main = 'Something went wrong that wasn\'t handled by PCT.'
+
+        self.information = 'Please forward to the details below to the developers.'
+        self.details = ''.join(traceback.format_exception(exc_type, exc_value,
+                                          exc_traceback))
 
 class DelimiterError(PCTError):
     pass

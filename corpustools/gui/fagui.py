@@ -9,6 +9,8 @@ from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class FAWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
@@ -27,7 +29,11 @@ class FAWorker(FunctionWorker):
                                 output_filename=kwargs['output_filename'],
                                 stop_check = kwargs['stop_check'],
                                 call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
                 if self.stopped:

@@ -22,18 +22,28 @@ from .widgets import SegmentPairSelectWidget, RadioSelectWidget
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.kl.kl import KullbackLeibler
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class KLWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         for pair in kwargs['segment_pairs']:
-            res = KullbackLeibler(kwargs['corpus'],
-                            pair[0], pair[1],
-                            outfile = None,
-                            side = kwargs['side'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
+            try:
+                res = KullbackLeibler(kwargs['corpus'],
+                                pair[0], pair[1],
+                                outfile = None,
+                                side = kwargs['side'],
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
             self.results.append(res)
         self.dataReady.emit(self.results)
 

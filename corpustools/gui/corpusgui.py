@@ -7,7 +7,7 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.exceptions import PCTError
+from corpustools.exceptions import PCTError, PCTPythonError
 
 from corpustools.corpus.classes import Attribute, Word
 
@@ -62,7 +62,15 @@ class LoadWorker(FunctionWorker):
         time.sleep(0.1)
         if self.stopCheck():
             return
-        self.results = load_binary(self.kwargs['path'])
+        try:
+            self.results = load_binary(self.kwargs['path'])
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
+            self.errorEncountered.emit(e)
+            return
         if self.stopCheck():
             return
         self.dataReady.emit(self.results)
@@ -78,7 +86,11 @@ class SpontaneousLoadWorker(FunctionWorker):
                                                 name,
                                                 directory,
                                                 **kwargs)
-        except SpontaneousIOError as e:
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
             self.errorEncountered.emit(e)
             return
         self.dataReady.emit(corpus)
@@ -96,6 +108,10 @@ class TextLoadWorker(FunctionWorker):
                 print('begin ilg')
                 corpus = load_corpus_ilg(**self.kwargs)
         except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
             self.errorEncountered.emit(e)
             return
         self.dataReady.emit(corpus)

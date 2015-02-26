@@ -8,6 +8,8 @@ from corpustools.phonoprob.phonotactic_probability import phonotactic_probabilit
 from corpustools.neighdens.io import load_words_neighden
 from corpustools.corpus.classes import Attribute
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
 from .corpusgui import AddWordDialog
@@ -29,7 +31,11 @@ class PPWorker(FunctionWorker):
                                             probability_type = kwargs['probability_type'],
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
                     except Exception as e:
+                        e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
                 self.results.append([q,res])
@@ -51,7 +57,11 @@ class PPWorker(FunctionWorker):
                                             count_what = kwargs['count_what'],
                                             probability_type = kwargs['probability_type'],
                                             stop_check = kwargs['stop_check'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
                 setattr(w,kwargs['attribute'].name,res)
