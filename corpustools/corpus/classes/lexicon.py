@@ -1766,7 +1766,7 @@ class Corpus(object):
         except KeyError:
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
-                self.orthography.update(word.spelling)
+                #self.orthography.update(word.spelling)
                 if not self.has_spelling:
                     self.has_spelling = True
 
