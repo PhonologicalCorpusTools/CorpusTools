@@ -42,7 +42,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
         minimal pairs. If `relative_count`==True, returns a float of that
         count divided by the total number of words in the corpus that
         include either `s1` or `s2`.
-     """
+    """
 
     if frequency_cutoff > 0.0:
 
@@ -383,13 +383,14 @@ def all_pairwise_fls(corpus, algorithm='minpair', frequency_cutoff=0, relative_c
     fls = []
     for i, s1 in enumerate(corpus.inventory[:-1]):
         for s2 in corpus.inventory[i+1:]:
-            if type(s1) != str:
-                s1 = s1.symbol
-            if type(s2) != str:
-                s2 = s2.symbol
-            if algorithm == 'minpair':
-                fl = minpair_fl(corpus, (s1, s2), frequency_cutoff=frequency_cutoff, relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type)
-            elif algorithm == 'deltah':
-                fl = deltah_fl(corpus, (s1, s2), frequency_cutoff=frequency_cutoff, type_or_token=type_or_token, sequence_type=sequence_type)
-            fls.append(((s1, s2), fl))
+            if s1 != '#' and s2 != '#':
+                if type(s1) != str:
+                    s1 = s1.symbol
+                if type(s2) != str:
+                    s2 = s2.symbol
+                if algorithm == 'minpair':
+                    fl = minpair_fl(corpus, [(s1, s2)], frequency_cutoff=frequency_cutoff, relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type)
+                elif algorithm == 'deltah':
+                    fl = deltah_fl(corpus, [(s1, s2)], frequency_cutoff=frequency_cutoff, type_or_token=type_or_token, sequence_type=sequence_type)
+                fls.append(((s1, s2), fl))
     return fls
