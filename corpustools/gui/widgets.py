@@ -1,4 +1,4 @@
-
+import sys
 from itertools import combinations
 
 from .imports import *
@@ -1106,10 +1106,25 @@ class SegPairTableWidget(TableWidget):
         self.horizontalHeader().setSectionsClickable(False)
 
         switch = QPushButton()
-        switch.setIcon(QIcon.fromTheme('object-flip-horizontal'))
+        if sys.platform == 'darwin' or sys.platform.startswith('win'):
+            icon = QIcon()
+            icon.addPixmap(QPixmap(":/Icon/resources/object-flip-horizontal.png"),
+                        QIcon.Normal, QIcon.Off)
+        else:
+            icon = QIcon.fromTheme('object-flip-horizontal')
+        switch.setIcon(icon)
         self.horizontalHeader().setDefaultSectionSize(switch.iconSize().width()+16)
-        self.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
-        self.horizontalHeader().setSectionResizeMode(1,QHeaderView.Stretch)
+        self.horizontalHeader().setSectionResizeMode(0,QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeToContents)
+
+    def minimumSizeHint(self):
+        sh = TableWidget.minimumSizeHint(self)
+        width = self.horizontalOffset()
+        header = self.horizontalHeader()
+        for i in range(3):
+            width += header.sectionSize(i)
+        sh.setWidth(width)
+        return sh
 
     def addSwitch(self, index, begin, end):
         self.openPersistentEditor(self.model().index(begin, 2))

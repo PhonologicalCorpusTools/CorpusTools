@@ -1,3 +1,5 @@
+import sys
+
 from .imports import *
 
 
@@ -9,7 +11,12 @@ class SwitchDelegate(QItemDelegate):
         switch = QPushButton(parent)
         switch.setCheckable(False)
         switch.setAutoExclusive(False)
-        icon = QIcon.fromTheme('object-flip-horizontal')
+        if sys.platform == 'darwin' or sys.platform.startswith('win'):
+            icon = QIcon()
+            icon.addPixmap(QPixmap(":/Icon/resources/object-flip-horizontal.png"),
+                        QIcon.Normal, QIcon.Off)
+        else:
+            icon = QIcon.fromTheme('object-flip-horizontal')
         switch.setIcon(icon)
         switch.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
         switch.setMaximumSize(switch.iconSize().width()+14,switch.iconSize().height()+14)

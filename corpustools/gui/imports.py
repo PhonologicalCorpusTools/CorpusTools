@@ -10,7 +10,7 @@ try:
                                 QSortFilterProxyModel, QAbstractItemModel,
                             QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
-                            QRegion,QStandardItemModel,QStandardItem, QIcon)
+                            QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,
                                 QDialog, QListWidget, QGroupBox,QVBoxLayout,

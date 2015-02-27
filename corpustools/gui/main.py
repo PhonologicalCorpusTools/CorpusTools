@@ -27,6 +27,8 @@ from .migui import MIDialog
 from .klgui import KLDialog
 from .helpgui import AboutDialog, HelpDialog
 
+from . import pct_rc
+
 class QApplicationMessaging(QApplication):
     messageFromOtherInstance = Signal(bytes)
 
