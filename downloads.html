@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Phonological CorpusTools : Take the stress out of corpus analysis!">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Phonological CorpusTools</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/kchall/CorpusTools">View on GitHub</a>
+
+          <h1 id="project_title">Phonological CorpusTools</h1>
+          <h2 id="project_tagline">Take the stress out of corpus analysis!</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/kchall/CorpusTools/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/kchall/CorpusTools/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>
+<a id="about-phonological-corpustools" class="anchor" href="#about-phonological-corpustools" aria-hidden="true"><span class="octicon octicon-link"></span></a>About Phonological CorpusTools</h2>
+
+<p>There is an ever-increasing interest in exploring the roles of frequency and usage in understanding phonological phenomena (e.g., Bybee 2001, Ernestus 2011, Frisch 2011, Archangeli &amp; Pulleyblank 2013, Hume et al. to appear). Corpora of language give us a way of making generalizations across wide swaths of such usage, exploring patterns in under-documented languages, and creating balanced stimuli in experiments, but:</p>
+
+<ul>
+<li>many corpora and analysis tools are focused on dialogue- and sentence-level analysis, rather than phonological analysis;</li>
+<li>the skills needed to efficiently handle large corpora can be daunting to learn; and</li>
+<li>researchers may be using different instantiations of the “same” formulae, making direct comparisons of phenomena difficult.</li>
+</ul>
+
+<p>Phonological CorpusTools (PCT) is our answer to these problems -- a free, downloadable program with both a graphical and command-line interface, designed to be a search and analysis aid for dealing with questions of phonological interest in large corpora. </p>
+
+<p>An overview of the beta version of PCT (0.15, July 2014) and its utility is available in <a href="http://faculty.arts.ubc.ca/kchall/kchall/Downloads_files/Mackie_et_al_2014_LabPhon_poster.pdf">poster format</a>.</p>
+
+<p>Version 1.0 is being released as of 3 February 2015. Version 1.0 has an improved GUI, more search and edit functions, additional capacities for phonological analysis, and a greater ability to work with running text / spontaneous speech corpora. We are always interested in feedback and suggestions for improvement. You can contact us at kathleen (dot) hall (at) ubc (dot) ca.</p>
+
+<h3>
+<a id="about-us" class="anchor" href="#about-us" aria-hidden="true"><span class="octicon octicon-link"></span></a>About us</h3>
+
+<p>We are a group of researchers in the <a href="http://linguistics.ubc.ca">Linguistics Department</a> at the <a href="http://www.ubc.ca">University of British Columbia</a>. The PI on this project is <a href="http://linguistics.ubc.ca/persons/kathleen-hall/">Dr. Kathleen Currie Hall</a>, and the project is supported in part by a SSHRC Insight Development grant to Dr. Hall.</p>
+
+<h3>
+<a id="what-do-we-mean-by-a-corpus" class="anchor" href="#what-do-we-mean-by-a-corpus" aria-hidden="true"><span class="octicon octicon-link"></span></a>What do we mean by a "corpus"?</h3>
+
+<p>Within PCT, a corpus generally refers to a structured list of words, each phonologically transcribed, and accompanied by their token frequency of occurrence within some body of usage. It can contain other information as well – e.g., lexical class of the word, number of syllables, morphological parse, etc. – but it doesn’t have to. PCT can also be used to convert running text into a frequency-tagged corpus of this sort. </p>
+
+<h3>
+<a id="functionality" class="anchor" href="#functionality" aria-hidden="true"><span class="octicon octicon-link"></span></a>Functionality</h3>
+
+<ul>
+<li>
+<strong>Summary information</strong>: Summary descriptions of a corpus, including type and token frequency of individual segments in user-defined environments.</li>
+<li>
+<strong>Featural interpretation</strong>: Ability to analyse a transcribed corpus with any set of phonological features; both the transcription system and the feature set may be one of the ones built-in (Hayes 2008; Mielke 2008) or may be user-defined. Phonological tiers may be extracted based on features.</li>
+<li>
+<strong>Phonotactic probability</strong>: Calculation of the phonotactic probability of a word, given the other words that exist in the corpus (cf. Vitevitch &amp; Luce 2004).</li>
+<li>
+<strong>Functional load</strong>: Calculation of the functional load of individual pairs of sounds within the corpus, defined at either the segment or feature level (cf. Hockett 1966; Surendran &amp; Niyogi 2003; Wedel, Kaplan, &amp; Jackson 2013).</li>
+<li>
+<strong>Predictability of distribution</strong>: Calculation of the extent to which any pair of sounds is predictably distributed, given a set of environments that they can occur in (cf. Hall 2009, 2012; Hall &amp; Hall 2013).</li>
+<li>
+<strong>Kullback-Leibler divergence</strong>: Calculation of the Kullback-Leibler divergence between the distributions of two sounds, again as a measure of the predictability of phonological distribution (cf. Kullback &amp; Leibler 1951; Peperkamp et al. 2006).</li>
+<li>
+<strong>String similarity</strong> and <strong>Neighbourhood density</strong>: Calculation of the extent to which pairs of words are similar to each other using either orthographic or phonetic transcription, and calculation of neighbourhood density (cf. Frisch et al. 2004, Khorsi 2012; Greenberg &amp; Jenkins 1964; Luce &amp; Pisoni 1998; Yao 2011).</li>
+<li>
+<strong>Frequency of alternation</strong>: Estimation of the frequency with which two sounds alternate with each other, given a measure of similarity (cf. Silverman 2006, Johnson &amp; Babel 2010, Lu 2012).</li>
+<li>
+<strong>Mutual Information</strong>: Calculation of the mutual information between pairs of segments in the corpus (cf. Brent 1999; Goldsmith &amp; Riggle 2012).</li>
+<li>
+<strong>Acoustic similarity</strong>: Calculation of the acoustic similarity between sounds / words, based on alignment of MFCCs (cf. Mielke 2012) or amplitude envelopes (cf. Lewandowski 2012), derived from .wav files.</li>
+</ul>
+
+<h2>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<p>Please see the user's manual of the latest version for complete documentation; currently available at <a href="http://sourceforge.net/projects/phonologicalcorpustools/files/">http://sourceforge.net/projects/phonologicalcorpustools/files/</a>.</p>
+
+<p>PCT itself should be cited as:</p>
+
+<p>Hall, Kathleen Currie, Blake Allen, Michael Fry, Scott Mackie, and Michael McAuliffe. (2015). Phonological CorpusTools, Version 1.0. [Computer program]. Available from <a href="https://sourceforge.net/projects/phonologicalcorpustools/">https://sourceforge.net/projects/phonologicalcorpustools/</a>.</p>
+
+<h2>
+<a id="standard-installation-executable" class="anchor" href="#standard-installation-executable" aria-hidden="true"><span class="octicon octicon-link"></span></a>Standard installation (executable)</h2>
+
+<h3>
+<a id="windows" class="anchor" href="#windows" aria-hidden="true"><span class="octicon octicon-link"></span></a>Windows</h3>
+
+<p>(NOTE: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -&gt; System and Security -&gt; System.)</p>
+
+<p>Download the latest version's installer from the Phonological CorpusTools page on SourceForge (<a href="http://sourceforge.net/projects/phonologicalcorpustools">http://sourceforge.net/projects/phonologicalcorpustools</a>). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -&gt; Programs.</p>
+
+<h3>
+<a id="mac-os-x-requires-108-or-higher" class="anchor" href="#mac-os-x-requires-108-or-higher" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mac OS X (requires 10.8 or higher)</h3>
+
+<p>Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge (<a href="http://sourceforge.net/projects/phonologicalcorpustools">http://sourceforge.net/projects/phonologicalcorpustools</a>). Unzip this file to access 'pct.app' (most likely by double-clicking it). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application.</p>
+
+<h3>
+<a id="linux" class="anchor" href="#linux" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linux</h3>
+
+<p>There is currently no executable option available for Linux operating systems. Please use the fallback installation method below to install from source.</p>
+
+<h2>
+<a id="fallback-installation-setuppy" class="anchor" href="#fallback-installation-setuppy" aria-hidden="true"><span class="octicon octicon-link"></span></a>Fallback installation (setup.py)</h2>
+
+<h3>
+<a id="windows-mac-os-x-or-linux" class="anchor" href="#windows-mac-os-x-or-linux" aria-hidden="true"><span class="octicon octicon-link"></span></a>Windows, Mac OS X, or Linux</h3>
+
+<p>Dependencies:</p>
+
+<ul>
+<li>Python 3.3 or higher: <a href="https://www.python.org/downloads/release/python-341/">https://www.python.org/downloads/release/python-341/</a>
+</li>
+<li>Setuptools: <a href="https://pypi.python.org/pypi/setuptools">https://pypi.python.org/pypi/setuptools</a>
+</li>
+<li>PyQt5: <a href="http://www.riverbankcomputing.com/software/pyqt/download5">http://www.riverbankcomputing.com/software/pyqt/download5</a>
+</li>
+</ul>
+
+<p>If you expect to use the acoustic similarity module, there are additional dependencies:</p>
+
+<ul>
+<li>NumPy: <a href="http://www.numpy.org/">http://www.numpy.org/</a>
+</li>
+<li>SciPy: <a href="http://www.scipy.org/">http://www.scipy.org/</a>
+(If you are on Windows and can't successfully use the acoustic similarity module after installing from the above sources, you may want to try installing from the precompiled binaries here: <a href="http://www.lfd.uci.edu/%7Egohlke/pythonlibs/">http://www.lfd.uci.edu/~gohlke/pythonlibs/</a> .)</li>
+</ul>
+
+<p>Download the latest version of the source code for Phonological CorpusTools from the SourceForge page (<a href="http://sourceforge.net/projects/phonologicalcorpustools">http://sourceforge.net/projects/phonologicalcorpustools</a>). After expanding the file, you will find a file called 'setup.py' in the top level directory. Run it in <em>one</em> of the following ways:</p>
+
+<ol>
+<li><p>Double-click it. If this doesn't work, access the file properties and ensure that you have permission to run the file; if not, give them to yourself. In Windows, this may require that you open the file in Administrator mode (also accessible through file properties). If your computer opens the .py file in a text editor rather than running it, you can access the file properties to set Python 3.x as the default program to use with run .py files. If the file is opened in IDLE (a Python editor), you can use the "Run" button in the IDLE interface to run the script instead.</p></li>
+<li><p>Open a terminal window and run the file. In Linux or Mac OS X, there should be a Terminal application pre-installed. In Windows, you may need to install Cygwin ( <a href="https://www.cygwin.com/">https://www.cygwin.com/</a> ). Once the terminal window is open, nagivate to the top level CorpusTools folder---the one that has setup.py in it. (Use the command 'cd' to navigate your filesystem; Google "terminal change directory" for further instructions.) Once in the correct directory, run this command: "python3 setup.py install" (no quotes). You may lack proper permissions to run this file, in which case on Linux or Mac OS X you can instead run "sudo python3 setup.py install". If Python 3.x is the only version of Python on your system, it may be possible or necessary to use the command "python" rather than "python3".</p></li>
+</ol>
+
+<p>Phonological CorpusTools should now be installed! Run it from a terminal window using the command "pct". You can also open a "Run" dialogue and use the command "pct" there. In Windows, the Run tool is usuall found in All Programs -&gt; Accessories.</p>
+
+<h2>
+<a id="references" class="anchor" href="#references" aria-hidden="true"><span class="octicon octicon-link"></span></a>References</h2>
+
+<ul>
+<li>Archangeli, Diana &amp; Douglas Pulleyblank. 2013. The role of UG in phonology. Proceedings of the West Coast Conference on Formal Linguistics 31. Somerville, MA: Cascadilla Press.</li>
+<li>Brent, Michael R. 1999. An efficient, probabilistically sound algorithm for segmentation and word discovery. Machine Learning 34.71-105.</li>
+<li>Brysbaert, Marc, &amp; Boris New. 2009. Moving beyond Kučera and Francis: A critical evaluation of current word frequency norms and the introduction of a new and improved word frequency measure for American English. Behavior Research Methods 41(4): 977-990.</li>
+<li>Bybee, Joan L. 2001. Phonology and language use. Cambridge: Cambridge UP.</li>
+<li>Ernestus, Mirjam. 2011. Gradience and categoricality in phonological theory. In The Blackwell Companion to Phonology, ed. by M. van Oostendorp, C.J. Ewen, E. Hume &amp; K. Rice, 2115-36. Oxford: Wiley-Blackwell.</li>
+<li>Chomsky, Noam &amp; Morris Halle. 1968. The sound pattern of English. New York: Harper &amp; Row.</li>
+<li>Frisch, Stefan A. 2011. Frequency effects. In The Blackwell Companion to Phonology, ed. by M. van Oostendorp, C.J. Ewen, E. Hume &amp; K. Rice, 2137-63. Oxford: Wiley-Blackwell.</li>
+<li>Frisch, Stefan, Janet B. Pierrehumbert &amp; Michael B. Broe. 2004. Similarity avoidance and the OCP. Natural Language and Linguistic Theory 22.179-228.</li>
+<li>Goldsmith, John &amp; Jason Riggle. 2012. Information theoretic approaches to phonological structure: the case of Finnish vowel harmony. Natural Language and Linguistic Theory 30.859-96.</li>
+<li>Greenberg, J.H. &amp; J. Jenkins. 1964. Studies in the psychological correlated of the sound system of American English. Word 20.157-77.</li>
+<li>Hall, Kathleen Currie. 2009. A probabilistic model of phonological relationships from contrast to allophony. Columbus, OH: The Ohio State University Doctoral dissertation.</li>
+<li>Hall, Kathleen Currie. 2012. Phonological relationships: A probabilistic model. McGill Working Papers in Linguistics 22.</li>
+<li>Hall, Daniel Currie &amp; Kathleen Currie Hall. 2013. Marginal contrasts and the Contrastivist Hypothesis. Paper presented to the Linguistics Association of Great Britain, London, 2013.</li>
+<li>Hayes, Bruce. 2009. Introductory Phonology. Malden, MA: Blackwell - Wiley.</li>
+<li>Hockett, Charles F. 1966. The quantification of functional load: A linguistic problem. U.S. Air Force Memorandum RM-5168-PR.</li>
+<li>Hume, Elizabeth, Kathleen Currie Hall &amp; Andrew Wedel. to appear. Strategic responses to uncertainty: Strong and weak sound patterns. Proceedings of the 5th International Conference on Phonology and Morphology. Korea.</li>
+<li>Johnson, Keith, &amp; Molly Babel. 2010. On the perceptual basis of distinctive features: Evidence from the perception of fricatives by Dutch and English speakers. Journal of Phonetics 38: 127-136.</li>
+<li>Khorsi, Ahmed. 2012. On morphological relatedness. Natural Language Engineering.1-19.</li>
+<li>Kullback, Solomon &amp; Richard A. Leibler. 1951. On information and sufficiency. Annals of Mathematical Statistics 22.79-86.</li>
+<li>Lewandoski, Natalie. 2012. Talent in nonnative phonetic convergence: Universität Stuttgart Doctoral dissertation.</li>
+<li>Lu, Yu-an. 2012. The role of alternation in phonological relationships: Stony Brook University Doctoral dissertation.</li>
+<li>Luce, Paul A. &amp; David B. Pisoni. 1998. Recognizing spoken words: The neighborhood activation model. Ear Hear 19.1-36.</li>
+<li>Mielke, Jeff. 2008. The emergence of distinctive features. Oxford: Oxford UP.</li>
+<li>Mielke, J. 2012. A phonetically based metric of sound similarity. Lingua, 122(2), 145-163. </li>
+<li>Peperkamp, Sharon, Le Calvez, Rozenn, Nadal, Jean-Pierre, &amp; Dupoux, Emmanuel. (2006). The acquisition of allophonic rules: Statistical learning with linguistic constraints. Cognition, 101, B31-B41.</li>
+<li>Silverman, Daniel. 2006. A critical introduction to phonology: Of sound, mind, and body. London/New York: Continuum.</li>
+<li>Surendran, Dinoj &amp; Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12. Chicago.</li>
+<li>Vaden, K. I., H. R. Halpin &amp; G. S. Hickok. 2009. Irvine Phonotactic Online Dictionary, Version 2.0. [Data file.] Available from: <a href="http://www.iphod.com">http://www.iphod.com</a>.</li>
+<li>Wedel, Andrew, Abby Kaplan &amp; Scott Jackson. 2013. High functional load inhibits phonological contrast loss: A corpus study. Cognition 128.179-86.</li>
+<li>Weide, Robert L. 1994. CMU Pronouncing Dictionary. <a href="http://www.speech.cs.cmu.edu/cgi-bin/cmudict">http://www.speech.cs.cmu.edu/cgi-bin/cmudict</a>.</li>
+<li>Yao, Yao. 2011. The effects of phonological neighborhoods on pronunciation variation in conversational speech. Berkeley: University of California, Berkeley Doctoral dissertation. </li>
+</ul>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Phonological CorpusTools maintained by <a href="https://github.com/kchall">kchall</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-55004424-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
