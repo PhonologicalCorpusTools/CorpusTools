@@ -15,8 +15,8 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 AppCopyright=Copyright (C) 2015 PCT
-DefaultDirName={pf}\{#MyAppName}
-DefaultGroupName={#MyAppName}
+DefaultDirName={pf}\{#MyAppPublisher}
+DefaultGroupName={#MyAppPublisher}
 AllowNoIcons=yes
 OutputBaseFilename={#MyDistName}_win64_{#MyAppVersion}
 SolidCompression=yes
@@ -36,7 +36,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; x64 files
-Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\*"; DestDir: "{app}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\"; Flags: ignoreversion; Check: Is64BitInstallMode     
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\esky-files\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\esky-files\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 
