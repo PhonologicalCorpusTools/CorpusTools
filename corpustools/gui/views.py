@@ -610,6 +610,9 @@ class DiscourseView(QWidget):
 
         self.setLayout(layout)
 
+    def model(self):
+        return self.table.model()
+
     def setModel(self,model):
         #self.text.setModel(model)
         self.table.setModel(model)

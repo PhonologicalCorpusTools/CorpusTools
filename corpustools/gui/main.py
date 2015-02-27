@@ -237,6 +237,8 @@ class MainWindow(QMainWindow):
                     self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
                     self.showDiscoursesAct.setEnabled(True)
                     self.showDiscoursesAct.setChecked(True)
+                    if self.textWidget.model() is not None:
+                        self.textWidget.model().deleteLater()
                 else:
                     self.textWidget.setModel(DiscourseModel(self.corpus, self.settings))
                     self.discourseTree.hide()
@@ -257,6 +259,8 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setChecked(False)
                 self.showDiscoursesAct.setEnabled(False)
                 self.showDiscoursesAct.setChecked(False)
+                if self.textWidget.model() is not None:
+                    self.textWidget.model().deleteLater()
             self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(c.name))
