@@ -1,0 +1,6 @@
+
+<RCC>
+  <qresource prefix="Icon">
+    <file>resources/object-flip-horizontal.png</file>
+  </qresource>
+</RCC>
