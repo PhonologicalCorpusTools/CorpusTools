@@ -80,7 +80,7 @@ bdist_mac_options = {'iconfile':'docs/images/icon.icns',
                                         }
 bdist_dmg_options = {'applications_shortcut':True}
 
-setup(name="Phonological CorpusTools",
+setup(name="PhonologicalCorpusTools",
         version="1.0.1",
         scripts=[exe],
         packages=['corpustools',
@@ -105,6 +105,7 @@ setup(name="Phonological CorpusTools",
                             "PyQt5.QtWebKit",
                             "PyQt5.QtPrintSupport",
                             "PyQt5.QtMultimedia",
+                            "esky",
                             "numpy",
                             "scipy",
                             "numpy.lib.format",

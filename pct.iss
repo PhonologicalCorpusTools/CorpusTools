@@ -1,7 +1,8 @@
 #define MyAppName "Phonological CorpusTools"
+#define MyDistName "PhonologicalCorpusTools"
 #define MyAppVersion "1.0.1"
 #define MyPlatform "win-amd64"
-#define MyAppPublisher "Phonological CorpusTools"
+#define MyAppPublisher "PCT"
 #define MyAppURL "http://kchall.github.io/CorpusTools/"
 #define MyAppExeName "pct.exe"
 
@@ -13,11 +14,11 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-AppCopyright=Copyright (C) 2015 Phonological CorpusTools
+AppCopyright=Copyright (C) 2015 PCT
 DefaultDirName={pf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-OutputBaseFilename=PhonologicalCorpusTools_win64_{#MyAppVersion}
+OutputBaseFilename={#MyDistName}_win64_{#MyAppVersion}
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 ShowLanguageDialog=no
@@ -35,7 +36,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; x64 files
-Source: "dist\{#MyAppName}-{#MyAppVersion}.{#MyPlatform}\*"; DestDir: "{app}\{#MyAppName}-{#MyAppVersion}.{#MyPlatform}\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\*"; DestDir: "{app}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 
