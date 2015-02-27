@@ -15,7 +15,7 @@ class AboutDialog(QDialog):
             if sys.platform == 'win32':
                 self.help_dir = os.path.join(base_dir, 'html')
             elif sys.platform == 'darwin':
-                self.help_dir = os.path.join(base_dir, 'docs','build','html')
+                self.help_dir = os.path.join(base_dir, 'html')
         else:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
