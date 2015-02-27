@@ -12,7 +12,7 @@ def readme():
 
 
 ufuncs_path = scipy.special._ufuncs.__file__
-incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1]),'docs/build/html']
+incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1]),'html']
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
@@ -54,6 +54,7 @@ build_exe_options = {"excludes": [
                             "PyQt5.QtWebKitWidgets",
                             "PyQt5.QtWebKit",
                             "PyQt5.QtPrintSupport",
+                            "PyQt5.QtMultimedia",
                             "numpy",
                             "scipy",
                             "numpy.lib.format",
