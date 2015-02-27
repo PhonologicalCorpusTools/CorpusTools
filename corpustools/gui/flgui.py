@@ -80,7 +80,7 @@ class FLDialog(FunctionDialog):
                 'Transcription tier',
                 'Type of funcational load',
                 'Result',
-                'Ignored homophones?',
+                'Distinguished homophones?',
                 'Relative count?',
                 'Minimum word frequency',
                 'Type or token']
@@ -157,7 +157,7 @@ class FLDialog(FunctionDialog):
 
         self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
         self.relativeCountWidget.setChecked(True)
-        self.homophoneWidget = QCheckBox('Include homophones')
+        self.homophoneWidget = QCheckBox('Distinguish homophones')
 
         box.addWidget(self.relativeCountWidget)
         box.addWidget(self.homophoneWidget)
