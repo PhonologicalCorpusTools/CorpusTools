@@ -38,7 +38,7 @@ def main():
     corpus = load_binary(args.corpus_file_name)
 
     if args.all_pairwise_fls:
-        result = all_pairwise_fls(corpus, algorithm=args.algorithm, frequency_cutoff=args.frequency_cutoff, relative_count=args.relative_count,
+        result = all_pairwise_fls(corpus, relative_fl=args.relative_fl, algorithm=args.algorithm, frequency_cutoff=args.frequency_cutoff, relative_count=args.relative_count,
                      distinguish_homophones=args.distinguish_homophones, sequence_type=args.sequence_type, type_or_token=args.type_or_token)
 
     else:

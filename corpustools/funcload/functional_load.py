@@ -354,7 +354,7 @@ def neutralize_segment(segment, segment_pairs):
         return segment
 
 
-def all_pairwise_fls(corpus, algorithm='minpair', frequency_cutoff=0, relative_count=True,
+def all_pairwise_fls(corpus, relative_fl=False, algorithm='minpair', frequency_cutoff=0, relative_count=True,
                      distinguish_homophones=False, sequence_type='transcription', type_or_token='token'):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
 
@@ -362,6 +362,8 @@ def all_pairwise_fls(corpus, algorithm='minpair', frequency_cutoff=0, relative_c
     ----------
     corpus : Corpus
         The domain over which functional load is calculated.
+    relative_fl : bool
+        If False, return the FL for all segment pairs. If True, return the relative (average) FL for each segment.
     algorithm : str {'minpair', 'deltah'}
         Algorithm to use for calculating functional load: "minpair" for minimal pair count or "deltah" for change in entropy.
     frequency_cutoff : number, optional
@@ -377,10 +379,13 @@ def all_pairwise_fls(corpus, algorithm='minpair', frequency_cutoff=0, relative_c
 
     Returns
     -------
-    list of tuple(tuple(Segment, Segment), float)
-        Returns a list of all Segment pairs and their respective functional load values, as length-2 tuples.
+    list of tuple(tuple(str, st), float)
+    OR
+    list of (str, float)
+        Normally returns a list of all Segment pairs and their respective functional load values, as length-2 tuples ordered by FL.
+        If calculating relative FL, returns a dictionary of each segment and its relative (average) FL, with entries ordered by FL.
     """
-    fls = []
+    fls = {}
     for i, s1 in enumerate(corpus.inventory[:-1]):
         for s2 in corpus.inventory[i+1:]:
             if s1 != '#' and s2 != '#':
@@ -392,5 +397,20 @@ def all_pairwise_fls(corpus, algorithm='minpair', frequency_cutoff=0, relative_c
                     fl = minpair_fl(corpus, [(s1, s2)], frequency_cutoff=frequency_cutoff, relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type)
                 elif algorithm == 'deltah':
                     fl = deltah_fl(corpus, [(s1, s2)], frequency_cutoff=frequency_cutoff, type_or_token=type_or_token, sequence_type=sequence_type)
-                fls.append(((s1, s2), fl))
-    return fls
+                fls[(s1, s2)] = fl
+    if not relative_fl:
+        ordered_fls = sorted([(pair, fls[pair]) for pair in fls], key=lambda p: p[1], reverse=True)
+        return ordered_fls
+    elif relative_fl:
+        rel_fls = {}
+        for s in corpus.inventory:
+            if type(s) != str:
+                s = s.symbol
+            if s != '#':
+                total = 0.0
+                for pair in fls:
+                    if s == pair[0] or s == pair[1]:
+                        total += fls[pair]
+                rel_fls[s] = total / (len(corpus.inventory) - 1)
+        ordered_rel_fls = sorted([(s, rel_fls[s]) for s in rel_fls], key=lambda p: p[1], reverse=True)
+        return ordered_rel_fls
