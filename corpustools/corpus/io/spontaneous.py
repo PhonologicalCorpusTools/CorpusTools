@@ -108,7 +108,7 @@ def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter)
     words = list()
     for s, v in speaker_delimited.items():
         for wi in v['word_tier']:
-            w = {'Spelling':wi.mark, 'Begin':wi.minTime, 'End': wi.maxTime, 'Speaker':s}
+            w = {'lookup_spelling':wi.mark, 'Begin':wi.minTime, 'End': wi.maxTime, 'Speaker':s}
             w['Transcription'] = list()
             for pi in v['phone_tier']:
                 if pi.maxTime <= w['Begin']:
