@@ -6,15 +6,16 @@ import os
 import sys
 from glob import glob
 
+freezer_module = "cxfreeze"
 
 ufuncs_path = scipy.special._ufuncs.__file__
 doc_files = dict()
-for root, dirnames, filenames in os.walk('docs\build'):
+for root, dirnames, filenames in os.walk('docs/build'):
     if os.path.basename(root).startswith('.'):
         continue
     if os.path.basename(root) in ['_images', '_sources']:
         continue
-    hr = root.replace('docs\build', 'html')
+    hr = root.replace('docs/build', 'html')
     if hr not in doc_files:
         doc_files[hr] = list()
     for f in filenames:
@@ -22,11 +23,29 @@ for root, dirnames, filenames in os.walk('docs\build'):
             doc_files[hr].append(os.path.join(root,f))
 
 incl_files = list(doc_files.items())
+scripts = ['corpustools/command_line/pct.py']
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
     libegl = os.path.join(os.path.dirname(PyQt5.__file__),'libEGL.dll')
-    #incl_files.append((libegl,os.path.split(libegl)[1]))
+    #incl_files.append((libegl,os.path.split(libegl)[1])
+elif sys.platform == 'darwin':
+    from setuptools import setup
+    freezer_module = 'py2app'
+    extra_opts  = {
+        'plist':{
+            'LSUIElement':True,
+            'CFBundleName':'pct',
+            'CFBundleDisplayName':'Phonological CorpusTools',
+            'NSUserNotificationAlertStyle': 'alert'
+            },
+        'app': scripts,
+        'argv_emulation': False,
+        'data_files':incl_files,
+        'scripts': scripts,
+        'iconfile':'docs/images/icon.icns'
+        }
+    
 
 group_name = 'PCT'
 
@@ -96,8 +115,10 @@ setup(name="PhonologicalCorpusTools",
                 'corpustools.symbolsim',
                 'corpustools.neighdens'],
         data_files = incl_files,
-        options={"bdist_esky":{
-                "freezer_module":"cxfreeze",
+        options={
+                #"bdist_mac_options":bdist_mac_options,
+                "bdist_esky":{
+                "freezer_module":freezer_module,
                 "freezer_options":{
                 "includes":[
                             "PyQt5",
