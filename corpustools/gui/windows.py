@@ -38,6 +38,9 @@ class FunctionWorker(QThread):
         if isinstance(args[0],str):
             self.updateProgressText.emit(args[0])
             return
+        elif isinstance(args[0],dict):
+            self.updateProgressText.emit(args[0]['status'])
+            return
         else:
             progress = args[0]
             if len(args) > 1:
@@ -168,3 +171,13 @@ class DownloadWorker(FunctionWorker):
         if self.stopCheck():
             return
         self.dataReady.emit(self.results)
+
+class SelfUpdateWorker(FunctionWorker):
+    def run(self):
+        if self.stopCheck():
+            return
+        app = self.kwargs['app']
+        app.auto_update(callback = self.kwargs['call_back'])
+        if self.stopCheck():
+            return
+        self.dataReady.emit('')

@@ -5,6 +5,9 @@
 *.feature
 .idea/
 *.iml
+*.exe
+*.msi
+*.app
 
 # C extensions
 *.so

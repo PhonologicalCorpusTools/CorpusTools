@@ -1,4 +1,5 @@
 import os
+import sys
 
 from .imports import *
 
@@ -14,6 +15,8 @@ from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
                         ExportFeatureSystemDialog)
+
+from .windows import SelfUpdateWorker
 
 from .ssgui import SSDialog
 from .asgui import ASDialog
@@ -589,6 +592,50 @@ class MainWindow(QMainWindow):
         dialog = HelpDialog(self)
         dialog.exec_()
 
+    def checkForUpdates(self):
+        if getattr(sys, "frozen", False):
+            import esky
+            app = esky.Esky(sys.executable,"https://github.com/kchall/CorpusTools/releases")
+            try:
+                new_version = app.find_update()
+                if(new_version != None):
+                    reply = QMessageBox.question(self,
+                            "Update available", ("Would you like to upgrade "
+                                    "from v{} (current) to v{} (latest)?").format(app.active_version,new_version))
+                    if reply != QMessageBox.AcceptRole:
+                        return None
+
+                    thread = SelfUpdateWorker()
+                    thread.setParams({'app':app})
+
+                    progressDialog = QProgressDialog(self)
+
+                    progressDialog.setLabelText('Updating PCT...')
+                    progressDialog.setRange(0,0)
+                    progressDialog.setWindowTitle('Updating PCT...')
+                    thread.updateProgressText.connect(lambda x: progressDialog.setLabelText(x))
+                    thread.dataReady.connect(progressDialog.accept)
+                    thread.start()
+                    result = progressDialog.exec_()
+                    if result:
+                        appexe = esky.util.appexe_from_executable(sys.executable)
+                        os.execv(appexe,[appexe] + sys.argv[1:])
+                        app.cleanup()
+                        reply = QMessageBox.information(self,
+                "Finished updating", "PCT successfully updated to v{}".format(new_version))
+
+                else:
+
+                    reply = QMessageBox.information(self,
+                            "Up to date", "The current version ({}) is the latest released.".format(app.active_version))
+            except Exception as e:
+
+                reply = QMessageBox.critical(self,
+                        "Error encountered", "Something went wrong during the update process.")
+            app.cleanup()
+
+
+
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpus)
         result = dialog.exec_()
@@ -746,6 +793,10 @@ class MainWindow(QMainWindow):
                 statusTip="Help information",
                 triggered=self.help)
 
+        self.updateAct = QAction("Check for updates...", self,
+                statusTip="Check for updates",
+                triggered=self.checkForUpdates)
+
         self.showSearchResults = QAction("Phonological search results", self)
         self.showSearchResults.setVisible(False)
 
@@ -840,6 +891,8 @@ class MainWindow(QMainWindow):
         self.viewMenu.addAction(self.showSearchResults)
 
         self.helpMenu = self.menuBar().addMenu("&Help")
+        self.helpMenu.addAction(self.updateAct)
+        self.helpMenu.addSeparator()
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.aboutAct)
 
