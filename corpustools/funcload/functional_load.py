@@ -66,7 +66,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
 
     def matches(first, second):
         return (first[0] == second[0] and first[1] != second[1]
-            and first[0].startswith('NEUTR:') and second[0].startswith('NEUTR:')
+            and 'NEUTR:' in first[0] and 'NEUTR:' in second[0]
             and first[2] != second[2])
 
     minpairs = list()
@@ -83,7 +83,8 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff=0,
                 call_back(cur)
         if not matches(first,second):
             continue
-        minpairs.append((str(first[2]),str(second[2])))
+        ordered_pair = sorted([str(first[2]), str(second[2])])
+        minpairs.append(tuple(ordered_pair))
 
     if not distinguish_homophones:
         minpairs = set(minpairs)
