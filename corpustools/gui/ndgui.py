@@ -60,7 +60,7 @@ class NDWorker(FunctionWorker):
                                             max_distance = kwargs['max_distance'],
                                             stop_check = kwargs['stop_check'])
                     else:
-                        res = find_mutation_minpairs(corpus, q,
+                        res = find_mutation_minpairs(corpus, w,
                                             sequence_type = kwargs['sequence_type'],
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
