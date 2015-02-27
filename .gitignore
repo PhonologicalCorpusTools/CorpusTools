@@ -11,6 +11,7 @@
 # Packages
 *.egg
 *.egg-info
+docs/source/generate
 dist
 build
 eggs
