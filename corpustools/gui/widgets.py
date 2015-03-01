@@ -650,7 +650,10 @@ class InventoryBox(QWidget):
         vowColumns = set()
         vowRows = set()
         for s in self.inventory:
-            c = s.category
+            try:
+                c = s.category
+            except KeyError:
+                c = None
             if c is not None:
                 if c[0] == 'Vowel':
                     vowColumns.add(c[2])
@@ -794,7 +797,10 @@ class InventoryBox(QWidget):
             unkRow = 0
             unkCol = -1
             for s in inventory:
-                cat = s.category
+                try:
+                    cat = s.category
+                except KeyError:
+                    cat = None
                 btn = SegmentButton(s.symbol)
                 btn.setCheckable(True)
                 btn.setAutoExclusive(False)
