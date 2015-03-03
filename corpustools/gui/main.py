@@ -591,45 +591,64 @@ class MainWindow(QMainWindow):
 
     def checkForUpdates(self):
         if getattr(sys, "frozen", False):
-            import esky
-            app = esky.Esky(sys.executable,"https://github.com/kchall/CorpusTools/releases")
-            try:
-                new_version = app.find_update()
-                if(new_version != None):
-                    reply = QMessageBox.question(self,
-                            "Update available", ("Would you like to upgrade "
-                                    "from v{} (current) to v{} (latest)?").format(app.active_version,new_version))
-                    if reply != QMessageBox.AcceptRole:
-                        return None
-
-                    thread = SelfUpdateWorker()
-                    thread.setParams({'app':app})
-
-                    progressDialog = QProgressDialog(self)
-
-                    progressDialog.setLabelText('Updating PCT...')
-                    progressDialog.setRange(0,0)
-                    progressDialog.setWindowTitle('Updating PCT...')
-                    thread.updateProgressText.connect(lambda x: progressDialog.setLabelText(x))
-                    thread.dataReady.connect(progressDialog.accept)
-                    thread.start()
-                    result = progressDialog.exec_()
-                    if result:
-                        appexe = esky.util.appexe_from_executable(sys.executable)
-                        os.execv(appexe,[appexe] + sys.argv[1:])
-                        app.cleanup()
-                        reply = QMessageBox.information(self,
-                "Finished updating", "PCT successfully updated to v{}".format(new_version))
-
-                else:
-
+            release_url = "https://github.com/kchall/CorpusTools/releases"
+            if sys.platform == 'darwin':
+                from .versioning import VERSION, parse_version, find_versions
+                best_version = VERSION
+                best_version_p = parse_version(VERSION)
+                for version in find_versions(release_url):
+                    version_p = parse_version(version)
+                    if version_p > best_version_p:
+                        best_version_p = version_p
+                        best_version = version
+                if best_version == VERSION:
                     reply = QMessageBox.information(self,
-                            "Up to date", "The current version ({}) is the latest released.".format(app.active_version))
-            except Exception as e:
+                                "Up to date", "The current version ({}) is the latest released.".format(VERSION)
+                else:
+                    reply = QMessageBox.information(self,
+                                "Update available", ("A new release (v{}) is available (current is v{}). "
+                                        "Please download the new version's dmg file from our SourceForge "
+                                        "page if you would like to upgrade.").format(best_version,VERSION))
+            elif sys.platform.startswith('win'):
+                import esky
+                app = esky.Esky(sys.executable,release_url)
+                try:
+                    new_version = app.find_update()
+                    if(new_version != None):
+                        reply = QMessageBox.question(self,
+                                "Update available", ("Would you like to upgrade "
+                                        "from v{} (current) to v{} (latest)?").format(app.active_version,new_version))
+                        if reply != QMessageBox.AcceptRole:
+                            return None
 
-                reply = QMessageBox.critical(self,
-                        "Error encountered", "Something went wrong during the update process.")
-            app.cleanup()
+                        thread = SelfUpdateWorker()
+                        thread.setParams({'app':app})
+
+                        progressDialog = QProgressDialog(self)
+
+                        progressDialog.setLabelText('Updating PCT...')
+                        progressDialog.setRange(0,0)
+                        progressDialog.setWindowTitle('Updating PCT...')
+                        thread.updateProgressText.connect(lambda x: progressDialog.setLabelText(x))
+                        thread.dataReady.connect(progressDialog.accept)
+                        thread.start()
+                        result = progressDialog.exec_()
+                        if result:
+                            appexe = esky.util.appexe_from_executable(sys.executable)
+                            os.execv(appexe,[appexe] + sys.argv[1:])
+                            app.cleanup()
+                            reply = QMessageBox.information(self,
+                    "Finished updating", "PCT successfully updated to v{}".format(new_version))
+
+                    else:
+
+                        reply = QMessageBox.information(self,
+                                "Up to date", "The current version ({}) is the latest released.".format(app.active_version))
+                except Exception as e:
+
+                    reply = QMessageBox.critical(self,
+                            "Error encountered", "Something went wrong during the update process.")
+                app.cleanup()
 
 
 
