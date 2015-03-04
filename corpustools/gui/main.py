@@ -603,7 +603,7 @@ class MainWindow(QMainWindow):
                         best_version = version
                 if best_version == VERSION:
                     reply = QMessageBox.information(self,
-                                "Up to date", "The current version ({}) is the latest released.".format(VERSION)
+                                "Up to date", "The current version ({}) is the latest released.".format(VERSION))
                 else:
                     reply = QMessageBox.information(self,
                                 "Update available", ("A new release (v{}) is available (current is v{}). "
