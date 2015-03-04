@@ -496,6 +496,7 @@ class EditFeatureMatrixDialog(QDialog):
                 return
             selected = selected[0]
             seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
+        print(seg)
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
@@ -567,7 +568,8 @@ class EditSegmentDialog(QDialog):
                 if v == specifier.default_value:
                     continue
                 featSel.addItem(v)
-                if segment is not None and v == specifier[segment][f]:
+            for i in range(featSel.count()):
+                if segment is not None and featSel.itemText(i) == specifier[segment][f]:
                     featSel.setCurrentIndex(i)
             lay.addWidget(featSel)
             box.setLayout(lay)
