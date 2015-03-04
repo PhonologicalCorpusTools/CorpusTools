@@ -2,6 +2,7 @@
 import re
 import random
 import collections
+import operator
 import math
 
 class CorpusIntegrityError(Exception):
@@ -1286,13 +1287,16 @@ class Corpus(object):
         Corpus
             Subset of the corpus that matches the filter conditions
         """
+        
         new_corpus = Corpus('')
         new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
                     for x in self.attributes]
+        print(filters)
         for word in self:
             for f in filters:
                 if f[0].att_type == 'numeric':
-                    if not getattr(getattr(word,f[0].name),f[1])(f[2]):
+                    op = getattr(operator,f[1])
+                    if not op(getattr(word,f[0].name), f[2]):
                         break
                 elif f[0].att_type == 'factor':
                     if getattr(word,f[0].name) not in f[1]:
