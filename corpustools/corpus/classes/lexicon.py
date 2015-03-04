@@ -2,6 +2,7 @@
 import re
 import random
 import collections
+import operator
 import math
 
 class CorpusIntegrityError(Exception):
@@ -1128,13 +1129,39 @@ class Corpus(object):
             return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
         return return_dict
 
-    def subset(self,filters):
+    def subset(self, filters):
+        """
+        Generate a subset of the corpus based on filters.
+
+        Filters for Numeric Attributes should be tuples of an Attribute
+        (of the Corpus), a comparison callable (``__eq__``, ``__neq__``,
+        ``__gt__``, ``__gte__``, ``__lt__``, or ``__lte__``) and a value
+        to compare all such attributes in the Corpus to.
+
+        Filters for Factor Attributes should be tuples of an Attribute,
+        and a set of levels for inclusion in the subset.
+
+        Other attribute types cannot currently be the basis for filters.
+
+        Parameters
+        ----------
+        filters : list of tuples
+            See above for format
+
+        Returns
+        -------
+        Corpus
+            Subset of the corpus that matches the filter conditions
+        """
+        
         new_corpus = Corpus('')
-        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name) for x in self.attributes]
+        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
+                    for x in self.attributes]
         for word in self:
             for f in filters:
                 if f[0].att_type == 'numeric':
-                    if not getattr(getattr(word,f[0].name),f[1])(f[2]):
+                    op = getattr(operator,f[1])
+                    if not op(getattr(word,f[0].name), f[2]):
                         break
                 elif f[0].att_type == 'factor':
                     if getattr(word,f[0].name) not in f[1]:
