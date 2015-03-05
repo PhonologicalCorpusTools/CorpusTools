@@ -23,6 +23,43 @@ for root, dirnames, filenames in os.walk('docs\build'):
 
 incl_files = list(doc_files.items())
 base = None
+
+freezer_options = {
+                "includes":[
+                            "sip",
+                            "PyQt5",
+                            "PyQt5.QtWebKitWidgets",
+                            "PyQt5.QtWebKit",
+                            "PyQt5.QtPrintSupport",
+                            "PyQt5.QtMultimedia",
+                            "esky",
+                            "numpy",
+                            "scipy",
+                            "numpy.lib.format",
+                            "numpy.linalg",
+                            "numpy.linalg._umath_linalg",
+                            "numpy.linalg.lapack_lite",
+                            "scipy.io.matlab.streams",
+                            "scipy.integrate",
+                            "scipy.integrate.vode",
+                            #"scipy.sparse.linalg.dsolve.umfpack",
+                            "scipy.integrate.lsoda",
+                            "scipy.special",
+                            "scipy.special._ufuncs_cxx",
+                            "scipy.sparse.csgraph._validation",
+                            "acousticsim",
+                            "sys"],
+                "excludes":[
+                        'corpustools.acousticsim.tests',
+                        'corpustools.corpus.tests',
+                        'corpustools.funcload.tests',
+                        'corpustools.prod.tests',
+                        'matplotlib',
+                        "tcl",
+                        'ttk',
+                        "tkinter"]
+                }
+
 if sys.platform == "win32":
     base = "Win32GUI"
     libegl = os.path.join(os.path.dirname(PyQt5.__file__),'libEGL.dll')
@@ -37,7 +74,7 @@ exe = bdist_esky.Executable('corpustools/command_line/pct.py',
                             gui_only=True,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            icon='docs/images/icon.icns'
+                            #icon='docs/images/icon.ico'
                             )
 
 build_exe_options = {"excludes": [
@@ -84,6 +121,7 @@ setup(name="PhonologicalCorpusTools",
         version="1.0.1",
         scripts=[exe],
         packages=['corpustools',
+                #'corpustools.acousticsim',
                 'corpustools.corpus',
                 'corpustools.corpus.io',
                 'corpustools.corpus.classes',
@@ -96,41 +134,13 @@ setup(name="PhonologicalCorpusTools",
                 'corpustools.symbolsim',
                 'corpustools.neighdens'],
         data_files = incl_files,
-        options={"bdist_esky":{
-                "freezer_module":"cxfreeze",
-                "freezer_options":{
-                "includes":[
-                            "PyQt5",
-                            "PyQt5.QtWebKitWidgets",
-                            "PyQt5.QtWebKit",
-                            "PyQt5.QtPrintSupport",
-                            "PyQt5.QtMultimedia",
-                            "esky",
-                            "numpy",
-                            "scipy",
-                            "numpy.lib.format",
-                            "numpy.linalg",
-                            "numpy.linalg._umath_linalg",
-                            "numpy.linalg.lapack_lite",
-                            "scipy.io.matlab.streams",
-                            "scipy.integrate",
-                            "scipy.integrate.vode",
-                            #"scipy.sparse.linalg.dsolve.umfpack",
-                            "scipy.integrate.lsoda",
-                            "scipy.special",
-                            "scipy.special._ufuncs_cxx",
-                            "scipy.sparse.csgraph._validation",
-                            "acousticsim",
-                            "sys"],
-                "excludes":[
-                        'corpustools.acousticsim.tests',
-                        'corpustools.corpus.tests',
-                        'corpustools.funcload.tests',
-                        'corpustools.prod.tests',
-                        'matplotlib',
-                        "tcl",
-                        'ttk',
-                        "tkinter"]
+        options={
+                #"bdist_mac_options":bdist_mac_options,
+                "bdist_esky":{
+                #"pre_zip_callback":fix_freeze,
+                "freezer_module":freezer_module,
+                "freezer_options":freezer_options
+                            },
                 }
                 }
                             },
