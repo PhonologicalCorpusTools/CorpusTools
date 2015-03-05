@@ -1,7 +1,7 @@
 Phonological CorpusTools
 ========================
 
-[![Documentation Status](https://readthedocs.org/projects/corpustools/badge/?version=latest)](https://readthedocs.org/projects/corpustools/?badge=latest)
+[![Build Status](https://travis-ci.org/kchall/CorpusTools.svg)](https://travis-ci.orgkchall/CorpusTools) [![Coverage Status](https://coveralls.io/repos/kchall/CorpusTools/badge.svg)](https://coveralls.io/r/kchall/CorpusTools) [![Documentation Status](https://readthedocs.org/projects/corpustools/badge/?version=latest)](https://readthedocs.org/projects/corpustools/?badge=latest)
 
 This document contains installation instructions for Phonological CorpusTools (PCT). For a description of available functionality, please refer to the manual available on SourceForge (https://sourceforge.net/projects/phonologicalcorpustools/files/?source=navbar).
 
