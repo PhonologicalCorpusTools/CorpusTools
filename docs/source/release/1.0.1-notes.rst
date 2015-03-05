@@ -1,0 +1,39 @@
+CorpusTools 1.0.1 Release Notes
+*******************************
+
+This is primarily a bugfix release in the 1.0.x series
+
+New features
+============
+
+* Implemented the ability to check for updates to PCT from the executable
+  versions through the help menu of the main window
+
+Functional load
+===============
+
+* Fixed a bug in functional load calculations that undercounted the number
+  of minimal pairs found if homophones were present
+
+Corpora
+=======
+* Numeric filters for subsetting corpora should be working as intended now
+
+TextGrid support
+================
+
+* Improved importing of TextGrids by allowing users to specify what the
+  labels for orthography and transcription tiers are
+* Fixed a bug in TextGrid loading where the last segment from the previous
+  word's transcription was duplicated in the following word's transcription
+* Fixed a bug where loading TextGrids resulted in an empty segment inventory
+
+GUI
+===
+
+* Improved error messages
+* Fixed a bug that blocked subsetting a corpus
+* Fix for running text window not getting cleared when switching corpora
+* Segments should now correctly default to a grid layout when the inventory
+  is displayed and the feature system is missing some Hayes- or SPE-like
+  features
