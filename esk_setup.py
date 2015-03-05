@@ -61,7 +61,7 @@ freezer_options = {
                         'ttk',
                         "tkinter"]
                 }
-                
+
 if sys.platform == "win32":
     base = "Win32GUI"
     libegl = os.path.join(os.path.dirname(PyQt5.__file__),'libEGL.dll')
@@ -93,7 +93,7 @@ exe = bdist_esky.Executable('corpustools/command_line/pct.py',
                             gui_only=True,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            #icon='docs/images/icon.icns'
+                            #icon='docs/images/icon.ico'
                             )
 
 build_exe_options = {"excludes": [
@@ -171,7 +171,7 @@ setup(name="PhonologicalCorpusTools",
         version="1.0.1",
         scripts=[exe],
         packages=['corpustools',
-                'corpustools.acousticsim',
+                #'corpustools.acousticsim',
                 'corpustools.corpus',
                 'corpustools.corpus.classes',
                 'corpustools.corpus.io',
@@ -189,7 +189,7 @@ setup(name="PhonologicalCorpusTools",
         options={
                 #"bdist_mac_options":bdist_mac_options,
                 "bdist_esky":{
-                "pre_zip_callback":fix_freeze,
+                #"pre_zip_callback":fix_freeze,
                 "freezer_module":freezer_module,
                 "freezer_options":freezer_options
                             },

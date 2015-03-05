@@ -7,6 +7,8 @@
 *.exe
 *.msi
 *.app
+*.xls
+*.xlsx
 
 # C extensions
 *.so
