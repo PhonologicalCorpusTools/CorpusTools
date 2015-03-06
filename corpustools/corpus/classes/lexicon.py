@@ -328,7 +328,8 @@ class Transcription(object):
                     self._list.append(s)
                 elif isinstance(s,dict):
                     self._list.append(s['symbol'])
-                    self._times.append((s['begin'],s['end']))
+                    if 'begin' in s and 'end' in s:
+                        self._times.append((s['begin'],s['end']))
                 elif isinstance(s,list):
                     if len(s) == 3:
                         self._list.append(s[0])
@@ -1287,7 +1288,7 @@ class Corpus(object):
         Corpus
             Subset of the corpus that matches the filter conditions
         """
-        
+
         new_corpus = Corpus('')
         new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
                     for x in self.attributes]

@@ -54,10 +54,10 @@ class DiscourseTest(unittest.TestCase):
 
 class SpontaneousSpeechCorpusTest(unittest.TestCase):
     def setUp(self):
-        self.word_tokens = [{'begin':0,'end':1,'word':'a','ur':['a','b'],'sr':['a','b']},
-                        {'begin':1,'end':2,'word':'c','ur':['c','a','b'],'sr':['a']},
-                        {'begin':2,'end':3,'word':'a','ur':['a','b'], 'sr':['a']},
-                        {'begin':3,'end':4,'word':'d','ur':['a','d'],'sr':['a','d']}]
+        self.word_tokens = [{'Begin':0,'End':1,'lookup_spelling':'a','lookup_transcription':['a','b'],'Transcription':[{'symbol':'a'},{'symbol':'b'}]},
+                        {'Begin':1,'End':2,'lookup_spelling':'c','lookup_transcription':['c','a','b'],'Transcription':[{'symbol':'a'}]},
+                        {'Begin':2,'End':3,'lookup_spelling':'a','lookup_transcription':['a','b'], 'Transcription':[{'symbol':'a'}]},
+                        {'Begin':3,'End':4,'lookup_spelling':'d','lookup_transcription':['a','d'],'Transcription':[{'symbol':'a'},{'symbol':'d'}]}]
     def test_init(self):
         corpus = SpontaneousSpeechCorpus('','')
 

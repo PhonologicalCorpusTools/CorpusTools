@@ -1,11 +1,6 @@
-import unittest
 
 import sys
 import os
-test_dir = os.path.dirname(os.path.abspath(__file__))
-corpustools_path = os.path.split(os.path.split(os.path.split(test_dir)[0])[0])[0]
-sys.path.insert(0, corpustools_path)
-from corpustools.corpus.tests.lexicon_test import create_unspecified_test_corpus
 
 # from corpustools.neighdens.neighborhood_density import neighborhood_density
 
@@ -27,5 +22,3 @@ from corpustools.corpus.tests.lexicon_test import create_unspecified_test_corpus
 #             self.assertTrue(abs(result[0]-v) < 0.0001,msg=msgcall)
 
 
-if __name__ == '__main__':
-    unittest.main()
