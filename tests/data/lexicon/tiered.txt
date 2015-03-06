@@ -1,0 +1,4 @@
+spelling,transcription,frequency,vowel_tier
+tusi,t.u.s.i,13.0,u.i
+tuni,t.u.n.i,33.0,o.i
+shashi,ʃ.ɑ.ʃ.i,43.0,ɑ.i
