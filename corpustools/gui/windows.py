@@ -1,6 +1,7 @@
 import sys
 import subprocess
-
+import time
+import datetime
 
 from .imports import *
 
@@ -10,10 +11,71 @@ from corpustools.corpus.io import download_binary
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
+class ProgressDialog(QProgressDialog):
+    def __init__(self, name, parent):
+        QProgressDialog.__init__(self, parent)
+        self.setWindowTitle('Calculating {}'.format(name))
+        self.cancelButton = QPushButton('Cancel')
+
+        self.setCancelButton(self.cancelButton)
+
+        self.cancelButton.clicked.connect(lambda : print('boo!'))
+
+        self.information = ''
+        self.startTime = None
+
+        self.rates = list()
+        self.eta = None
+
+        self.canceled.connect(self.updateForCancel)
+
+    def updateForCancel(self):
+        self.reset()
+        self.setMaximum(0)
+        self.cancelButton.setEnabled(False)
+        self.cancelButton.setText('Canceling...')
+        self.setLabelText('Cancelling...')
+
+
+    def updateText(self,text):
+        if self.wasCanceled():
+            return
+        self.information = text
+        eta = 'Unknown'
+
+        self.setLabelText('{}\nTime left: {}'.format(self.information,eta))
+
+    def updateProgress(self, progress):
+        if self.wasCanceled():
+            return
+        if progress == 0:
+            self.startTime = time.time()
+
+            self.eta = None
+        else:
+            elapsed = time.time() - self.startTime
+            self.rates.append(elapsed / progress)
+            self.rates = self.rates[-20:]
+            if len(self.rates) > 18:
+
+                rate = sum(self.rates)/len(self.rates)
+                eta = int((100 - progress) * rate)
+                if self.eta is None:
+                    self.eta = eta
+                if eta < self.eta or eta > self.eta + 10:
+                    self.eta = eta
+        self.setValue(progress)
+        if self.eta is None:
+            eta = 'Unknown'
+        else:
+            eta = str(datetime.timedelta(seconds = self.eta))
+        self.setLabelText('{}\nEstimated time left: {}'.format(self.information,eta))
+
 class FunctionWorker(QThread):
     updateProgress = Signal(int)
     updateProgressText = Signal(str)
     errorEncountered = Signal(object)
+    finishedCancelling = Signal()
 
     dataReady = Signal(object)
 
@@ -82,16 +144,13 @@ class FunctionDialog(QDialog):
         self.thread = worker
         self.thread.errorEncountered.connect(self.handleError)
 
-        self.progressDialog = QProgressDialog('Calculating {}...'.format(self.name),
-                                                'Cancel',0,100, self)
-        self.progressDialog.setWindowTitle('Calculating {}'.format(self.name))
-        self.progressDialog.setAutoClose(False)
-        self.progressDialog.setAutoReset(False)
+        self.progressDialog = ProgressDialog(self.name, self)
         self.progressDialog.canceled.connect(self.thread.stop)
-        self.thread.updateProgress.connect(self.updateProgress)
-        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.thread.updateProgress.connect(self.progressDialog.updateProgress)
+        self.thread.updateProgressText.connect(self.progressDialog.updateText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+        self.thread.finishedCancelling.connect(self.progressDialog.close)
 
     def handleError(self,error):
         if isinstance(error, PCTError):
@@ -134,14 +193,6 @@ class FunctionDialog(QDialog):
 
     def setResults(self, results):
         self.results = results
-
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
 
     def calc(self):
         raise(NotImplementedError)

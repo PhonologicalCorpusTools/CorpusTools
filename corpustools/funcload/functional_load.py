@@ -7,6 +7,13 @@ import copy
 from math import factorial
 
 
+
+def wordtoken_minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
+        sequence_type = 'transcription', strategy = 'most_frequent'):
+    strategies = ['most_frequent', 'token', 'weight_type_by_token_freq',]
+    pass
+
+
 def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
         relative_count = True, distinguish_homophones = False,
         sequence_type = 'transcription',

@@ -4,7 +4,7 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.neighdens.neighborhood_density import neighborhood_density,find_mutation_minpairs
+from corpustools.neighdens.neighborhood_density import neighborhood_density,neighborhood_density_graph,find_mutation_minpairs
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
 
@@ -60,11 +60,13 @@ class NDWorker(FunctionWorker):
                 call_back(cur)
                 try:
                     if kwargs['algorithm'] != 'substitution':
-                        res = neighborhood_density(corpus, w,
+                        res = neighborhood_density_graph(corpus, w,
                                             algorithm = kwargs['algorithm'],
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             max_distance = kwargs['max_distance'],
+                                            num_cores = kwargs['num_cores'],
+                                            call_back = kwargs['call_back'],
                                             stop_check = kwargs['stop_check'])
                     else:
                         res = find_mutation_minpairs(corpus, w,
@@ -80,8 +82,10 @@ class NDWorker(FunctionWorker):
                     return
                 if self.stopped:
                     break
+                print(cur, res[0])
                 setattr(w,kwargs['attribute'].name,res[0])
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 
@@ -303,7 +307,8 @@ class NDDialog(FunctionDialog):
                 'algorithm': alg,
                 'sequence_type':self.tierWidget.value(),
                 'count_what':typeToken,
-                'max_distance':max_distance}
+                'max_distance':max_distance,
+                'num_cores':self.parent().settings['num_cores'],}
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
