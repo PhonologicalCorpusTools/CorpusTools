@@ -19,8 +19,6 @@ class ProgressDialog(QProgressDialog):
 
         self.setCancelButton(self.cancelButton)
 
-        self.cancelButton.clicked.connect(lambda : print('boo!'))
-
         self.information = ''
         self.startTime = None
 
@@ -49,6 +47,9 @@ class ProgressDialog(QProgressDialog):
         if self.wasCanceled():
             return
         if progress == 0:
+            self.setMaximum(100)
+            self.cancelButton.setText('Cancel')
+            self.cancelButton.setEnabled(True)
             self.startTime = time.time()
 
             self.eta = None
@@ -67,7 +68,10 @@ class ProgressDialog(QProgressDialog):
         self.setValue(progress)
         if self.eta is None:
             eta = 'Unknown'
+
         else:
+            if self.eta < 0:
+                self.eta = 0
             eta = str(datetime.timedelta(seconds = self.eta))
         self.setLabelText('{}\nEstimated time left: {}'.format(self.information,eta))
 

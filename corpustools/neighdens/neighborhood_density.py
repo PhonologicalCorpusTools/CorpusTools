@@ -3,13 +3,20 @@ from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 from corpustools.symbolsim.phono_align import Aligner
+from corpustools.symbolsim.string_similarity import string_sim_key
 
-from corpustools.multiprocessing import filter_mp, pool_filter
+from corpustools.multiprocessing import filter_mp, score_mp
 
 from functools import partial
 from math import factorial
+import operator
 
-def is_neighbor(w, query, algorithm, sequence_type, max_distance):
+from corpustools.exceptions import PCTError
+
+def args_to_key(*args):
+    return '_'.join(['neighbor']+[str(x) for x in args])
+
+def is_neighbor(w, query, algorithm, sequence_type, max_distance, count_what):
     if algorithm == 'edit_distance':
         if len(getattr(w, sequence_type)) > len(getattr(query, sequence_type))+max_distance:
             return False
@@ -46,51 +53,75 @@ def generate_neighborhood_density_graph(corpus, sequence_type = 'transcription',
             algorithm = 'edit_distance', max_distance = 1,
             count_what='type', num_cores = 1,
             stop_check = None, call_back = None):
+    if call_back is not None:
+        call_back('Generating neighborhood density graph...')
+        num_comps = factorial(len(corpus))/(factorial(len(corpus)-2)*2)
+        call_back(0,num_comps/500)
     keys = list(corpus.keys())
-    detail_key = '{}_{}_{}_{}'.format(sequence_type, algorithm, count_what, max_distance)
+    detail_key = args_to_key(sequence_type, algorithm, max_distance, count_what)
 
     iterable = ((corpus.wordlist[keys[i]],corpus.wordlist[keys[j]])
                     for i in range(len(keys)) for j in range(i+1,len(keys)))
 
     function = partial(is_neighbor,algorithm=algorithm, sequence_type=sequence_type,
-                    max_distance=max_distance)
+                    max_distance=max_distance, count_what = count_what)
     edges = filter_mp(iterable, function, num_cores, call_back, stop_check)
     if stop_check is not None and stop_check():
         return
-    #iterable = ((corpus.wordlist[keys[i]],corpus.wordlist[keys[j]],algorithm, sequence_type, max_distance)
-    #                for i in range(len(keys)) for j in range(i+1,len(keys)))
-    #print(list(iterable))
-    #edges = pool_filter(is_neighbor, list(iterable), num_cores)
     for e in edges:
-        corpus._graph.add_edge(corpus.key(e[0]), corpus.key(e[1]),type='neighbor',
-                                    details = detail_key)
+        corpus._graph.add_edge(corpus.key(e[0]), corpus.key(e[1]),key = detail_key)
     corpus._graph.graph['neighborhoods'].append(detail_key)
 
 
 def neighborhood_density_graph(corpus, query, sequence_type = 'transcription',
             algorithm = 'edit_distance', max_distance = 1,
-            count_what='type',num_cores = 1,
+            count_what='type',
             stop_check = None, call_back = None):
-    detail_key = '{}_{}_{}_{}'.format(sequence_type, algorithm, count_what, max_distance)
-    if detail_key not in corpus._graph.graph['neighborhoods']:
-        if call_back is not None:
-            call_back('Generating neighborhood density graph...')
-            num_comps = factorial(len(corpus))/(factorial(len(corpus)-2)*2)
-            call_back(0,num_comps/500)
-        generate_neighborhood_density_graph(corpus, sequence_type,
-            algorithm, max_distance, count_what, num_cores, stop_check, call_back)
+    detail_key = string_sim_key(algorithm, sequence_type, count_what)
+    if detail_key not in corpus._graph.graph['symbolsim']:
+        raise(PCTError("Optimized graph not found!"))
     if stop_check is not None and stop_check():
         return
     key = corpus.key(query)
-    lookup_dict = {'type': 'neighbor','details': detail_key}
     neighbors = list()
-
+    if algorithm == 'khorsi':
+        op = operator.ge
+    else:
+        op = operator.le
     for k,v in corpus._graph[key].items():
-        for k2 in v.keys():
-            if v[k2] == lookup_dict:
-                neighbors.append(corpus[k])
-                break
+        if op(v[detail_key]['weight'], max_distance):
+            neighbors.append(corpus[k])
     return (len(neighbors), neighbors)
+
+def neighborhood_density_all_words(corpus, attribute, sequence_type = 'transcription',
+            algorithm = 'edit_distance', max_distance = 1,
+            count_what='type', num_cores = -1,
+            stop_check = None, call_back = None):
+    function = partial(neighborhood_density, corpus, algorithm=algorithm, sequence_type=sequence_type,
+                        max_distance=max_distance, count_what = count_what, )
+    if call_back is not None:
+        call_back('Calculating neighborhood densities...')
+        call_back(0,len(corpus))
+        cur = 0
+    if num_cores == -1:
+
+        for w in corpus:
+            if self.stopped:
+                break
+            cur += 1
+            call_back(cur)
+            res = function(w)
+
+            setattr(w, attribute.name, res[0])
+    else:
+        iterable = ((w,) for w in corpus)
+
+
+        neighbors = score_mp(iterable, function, num_cores, call_back, stop_check, chunk_size= 1)
+        for n in neighbors:
+            #Have to look up the key, then look up the object due to how
+            #multiprocessing pickles objects
+            setattr(corpus.find(corpus.key(n[0])), attribute.name, n[1][0])
 
 
 
@@ -127,7 +158,12 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
     float
         The number of neighbors for the queried word.
     """
-
+    detail_key = string_sim_key(algorithm, sequence_type, count_what)
+    if detail_key in corpus._graph.graph['symbolsim']:
+        return neighborhood_density_graph(corpus, query, sequence_type,
+            algorithm, max_distance,
+            count_what,
+            stop_check, call_back)
     matches = []
     if call_back is not None:
         call_back('Finding neighbors...')
@@ -140,7 +176,7 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
             cur += 1
             if cur % 10 == 0:
                 call_back(cur)
-        if not is_neighbor(w, query, algorithm, sequence_type, max_distance):
+        if not is_neighbor(w, query, algorithm, sequence_type, max_distance, count_what ):
             continue
         matches.append(w)
     neighbors = set(matches)-set([query])

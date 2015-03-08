@@ -50,7 +50,7 @@ class FLWorker(FunctionWorker):
                         self.errorEncountered.emit(e)
                         return
                 if self.stopped:
-                    return
+                    break
                 self.results.append(res)
         else:
             if kwargs['func_type'] == 'min_pairs':
@@ -86,9 +86,10 @@ class FLWorker(FunctionWorker):
                     e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
-            if self.stopped:
-                return
             self.results.append(res)
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 

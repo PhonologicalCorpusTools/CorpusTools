@@ -38,6 +38,8 @@ class PPWorker(FunctionWorker):
                         e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
+                if self.stopped:
+                    break
                 self.results.append([q,res])
         else:
             call_back = kwargs['call_back']
@@ -66,6 +68,7 @@ class PPWorker(FunctionWorker):
                     return
                 setattr(w,kwargs['attribute'].name,res)
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 

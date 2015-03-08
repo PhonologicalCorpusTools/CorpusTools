@@ -31,8 +31,11 @@ class MIWorker(FunctionWorker):
                 self.errorEncountered.emit(e)
                 return
             if self.stopped:
-                return
+                break
             self.results.append(res)
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 

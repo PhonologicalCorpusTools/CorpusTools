@@ -30,6 +30,8 @@ from .migui import MIDialog
 from .klgui import KLDialog
 from .helpgui import AboutDialog, HelpDialog
 
+from .optimizegui import OptimizeStringSimDialog
+
 from . import pct_rc
 
 class QApplicationMessaging(QApplication):
@@ -634,6 +636,15 @@ class MainWindow(QMainWindow):
                         "Error encountered", "Something went wrong during the update process.")
             app.cleanup()
 
+    def optimizeStringSim(self):
+        dialog = OptimizeStringSimDialog(self,self.corpus)
+        result = dialog.exec_()
+        if result:
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.enableSave()
 
 
     def corpusSummary(self):
@@ -750,6 +761,13 @@ class MainWindow(QMainWindow):
         self.acousticSimAct = QAction( "Calculate acoustic similarity (from corpus)...",
                 self,
                 statusTip="Calculate acoustic similarity for corpus")#, triggered=self.acousticSim)
+
+        self.optimizeStringSimAct = QAction( "Precalculate string similarities...",
+                self,
+                statusTip=("Precalculate string similarities across the "
+                            "corpus to speed up neighborhood density, "
+                            "frequency of alternation and string similarity"),
+                triggered = self.optimizeStringSim)
 
         self.toggleWarningsAct = QAction( "Show warnings",
                 self,
@@ -871,6 +889,9 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
+
+        self.optimizeMenu = self.menuBar().addMenu("Optimize")
+        self.optimizeMenu.addAction(self.optimizeStringSimAct)
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 

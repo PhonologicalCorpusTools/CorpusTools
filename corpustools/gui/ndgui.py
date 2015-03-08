@@ -4,7 +4,11 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.neighdens.neighborhood_density import neighborhood_density,neighborhood_density_graph,find_mutation_minpairs
+from corpustools.neighdens.neighborhood_density import (neighborhood_density,
+                            neighborhood_density_all_words,
+                            neighborhood_density_graph,
+                            generate_neighborhood_density_graph,
+                            find_mutation_minpairs)
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
 
@@ -48,42 +52,42 @@ class NDWorker(FunctionWorker):
                     print_neighden_results(kwargs['output_filename'],res[1])
                 self.results.append([q,res[0]])
         else:
-            call_back = kwargs['call_back']
-            call_back('Calculating neighborhood densities...')
-            call_back(0,len(corpus))
-            cur = 0
+            #res = generate_neighborhood_density_graph(corpus,
+                                            #algorithm = kwargs['algorithm'],
+                                            #sequence_type = kwargs['sequence_type'],
+                                            #count_what = kwargs['count_what'],
+                                            #max_distance = kwargs['max_distance'],
+                                            #num_cores = kwargs['num_cores'],
+                                            #call_back = kwargs['call_back'],
+                                            #stop_check = kwargs['stop_check']
+                                            #)
             kwargs['corpusModel'].addColumn(kwargs['attribute'])
-            for w in corpus:
-                if self.stopped:
-                    break
-                cur += 1
-                call_back(cur)
-                try:
-                    if kwargs['algorithm'] != 'substitution':
-                        res = neighborhood_density_graph(corpus, w,
+            try:
+                if kwargs['algorithm'] != 'substitution':
+                    neighborhood_density_all_words(corpus,
+                                            kwargs['attribute'],
                                             algorithm = kwargs['algorithm'],
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             max_distance = kwargs['max_distance'],
                                             num_cores = kwargs['num_cores'],
                                             call_back = kwargs['call_back'],
-                                            stop_check = kwargs['stop_check'])
-                    else:
-                        res = find_mutation_minpairs(corpus, w,
-                                            sequence_type = kwargs['sequence_type'],
-                                            stop_check = kwargs['stop_check'],
-                                            call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if self.stopped:
-                    break
-                print(cur, res[0])
-                setattr(w,kwargs['attribute'].name,res[0])
+                                            stop_check = kwargs['stop_check']
+                                            )
+                else:
+                    res = find_mutation_minpairs(corpus, w,
+                                        sequence_type = kwargs['sequence_type'],
+                                        stop_check = kwargs['stop_check'],
+                                        call_back = kwargs['call_back'])
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
+            if self.stopped:
+                kwargs['corpusModel'].removeAttributes([kwargs['attribute'].display_name])
         if self.stopped:
             self.finishedCancelling.emit()
             return
@@ -392,8 +396,7 @@ class NDDialog(FunctionDialog):
         self.thread.start()
 
         result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
+        print(result)
         if result:
             self.accept()
 

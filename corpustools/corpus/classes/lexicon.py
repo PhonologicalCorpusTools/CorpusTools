@@ -1158,7 +1158,7 @@ class Corpus(object):
 
     def generate_graph(self):
         self._graph.clear()
-        self._graph.graph['neighborhoods'] = list()
+        self._graph.graph['symbolsim'] = list()
         self._graph.add_nodes_from(self.wordlist.keys())
 
     def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
@@ -1558,6 +1558,9 @@ class Corpus(object):
                 state['_freq_base'] = dict()
             if '_graph' not in state:
                 state['_graph'] = nx.MultiGraph()
+                gen_graph = True
+            else:
+                gen_graph = False
             if '_attributes' not in state:
                 state['_attributes'] = [Attribute('spelling','spelling'),
                                         Attribute('transcription','tier'),
@@ -1570,7 +1573,8 @@ class Corpus(object):
                     pass
             self.__dict__.update(state)
             self._specify_features()
-            self.generate_graph()
+            if gen_graph:
+                self.generate_graph()
             #Backwards compatability
             for k,w in self.wordlist.items():
                 #print(w)

@@ -42,6 +42,9 @@ class FAWorker(FunctionWorker):
         else:
             raise(NotImplementedError)
             self.results.append(res)
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 class FADialog(FunctionDialog):
