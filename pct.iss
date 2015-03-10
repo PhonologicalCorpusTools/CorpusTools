@@ -42,7 +42,7 @@ Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\*"; DestD
 Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "dist\platforms\*.dll"; DestDir: "{app}\platforms"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\platforms\*.dll"; DestDir: "{app}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 
 [Icons]
