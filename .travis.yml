@@ -2,6 +2,10 @@ language: python
 python:
   - 3.3
   - 3.4
+branches:
+  only:
+    - master
+    - develop
 notifications:
   email: false
 
