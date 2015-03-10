@@ -22,7 +22,7 @@ def test_spelling(unspecified_test_corpus):
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('tusa'),3),
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('ʃi'),5)]
     expected.sort(key=lambda t:t[1])
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'edit_distance',string_type='spelling')
+    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'edit_distance',sequence_type='spelling')
     calced.sort(key=lambda t:t[1])
     for i, v in enumerate(expected):
         assert(calced[i] == v)
@@ -43,7 +43,7 @@ def test_spelling(unspecified_test_corpus):
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('tusa'),3),
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('ʃi'),3)]
     expected.sort(key=lambda t:t[1])
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'edit_distance',string_type='spelling')
+    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'edit_distance',sequence_type='spelling')
     calced.sort(key=lambda t:t[1])
     for i, v in enumerate(expected):
         assert(calced[i] == v)
@@ -65,7 +65,7 @@ def test_transcription(unspecified_test_corpus):
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('tusa'),3),
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('ʃi'),5)]
     expected.sort(key=lambda t:t[1])
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'edit_distance',string_type='transcription')
+    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'edit_distance',sequence_type='transcription')
     calced.sort(key=lambda t:t[1])
     for i, v in enumerate(expected):
         assert(calced[i] == v)
@@ -86,7 +86,7 @@ def test_transcription(unspecified_test_corpus):
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('tusa'),3),
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('ʃi'),3)]
     expected.sort(key=lambda t:t[1])
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'edit_distance',string_type='transcription')
+    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'edit_distance',sequence_type='transcription')
     calced.sort(key=lambda t:t[1])
     for i, v in enumerate(expected):
         assert(calced[i] == v)
