@@ -264,7 +264,7 @@ class LexiconView(QWidget):
 
     def showVariants(self, index):
         variantDialog = VariantView(self,
-                self.table.model().wordObject(index.row()).wordtokens)
+                self.table.model().wordObject(index.row()))
         variantDialog.show()
 
 class VariantView(QDialog):

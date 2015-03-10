@@ -94,7 +94,7 @@ def substring_set(w, l):
         substrings.update(['.'.join(sub)])
     return substrings
 
-def khorsi(word1, word2, freq_base, sequence_type):
+def khorsi(word1, word2, freq_base, sequence_type, max_distance = None):
     """Calculate the string similarity of two words given a set of
     characters and their frequencies in a corpus based on Khorsi (2012)
 
@@ -130,7 +130,12 @@ def khorsi(word1, word2, freq_base, sequence_type):
 
     #Khorsi's algorithm
     #print([(freq_base[x]/freq_base['total']) for x in longest])
-    lcs_sum = sum(log(1/(freq_base[x]/freq_base['total'])) for x in longest)
-    leftover_sum = sum(log(1/(freq_base[x]/freq_base['total'])) for x in left_over)
-    return lcs_sum - leftover_sum
+    khorsi_sum = 0
+    for x in longest:
+        khorsi_sum += log(1/(freq_base[x]/freq_base['total']))
+    for x in left_over:
+        khorsi_sum -= log(1/(freq_base[x]/freq_base['total']))
+        if max_distance is not None and khorsi_sum < max_distance:
+            break
+    return khorsi_sum
 

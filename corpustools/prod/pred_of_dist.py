@@ -6,6 +6,46 @@ from corpustools.corpus.classes import EnvironmentFilter
 
 from corpustools.exceptions import ProdError
 
+def count_segs_wordtokens(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, call_back):
+
+    #type_or_token is one of: ['count_token', 'relative_type', 'most_frequent_type', 'most_frequent_token']
+
+    seg1_counts = 0
+    seg2_counts = 0
+
+    if call_back is not None:
+        call_back('Finding instances of segments...')
+        call_back(0,len(corpus))
+        cur = 0
+    for word in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 20 == 0:
+                call_back(cur)
+        variants = word.variants(sequence_type)
+        if type_or_token == 'count_token' or type_or_token == 'relative_type':
+            if type_or_token == 'relative_type':
+                f_total = sum(variants.values())
+            for v, f in variants.items():
+                if type_or_token == 'relative_type':
+                    f /= f_total
+                for s in v:
+                    if s == seg1:
+                        seg1_counts += f
+                    elif s == seg2:
+                        seg2_counts += f
+        elif type_or_token.startswith('most_frequent'):
+            tier = max(variants.keys(), key=(lambda key: variants[key]))
+            for seg in tier:
+                if seg == seg1:
+                    seg1_counts = seg1_counts+1 if type_or_token.endswith('type') else seg1_counts+word.frequency
+                elif seg == seg2:
+                    seg2_counts = seg2_counts+1 if type_or_token.endswith('type') else seg2_counts+word.frequency
+
+    return seg1_counts, seg2_counts
+
 def count_segs(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, call_back):
     seg1_counts = 0
     seg2_counts = 0
@@ -48,7 +88,7 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
             return
         if call_back is not None:
             cur += 1
-            if cur % 100 == 0:
+            if cur % 20 == 0:
                 call_back(cur)
         for pos,seg in enumerate(getattr(word, sequence_type)):
             if not (seg == seg1 or seg == seg2):
@@ -85,6 +125,22 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
                 overlapping_envs[k][k2].update([str(word)])
 
     return env_matches, missing_envs, overlapping_envs
+
+def calc_prod_wordtokens_all_envs(corpus, seg1, seg2, sequence_type = 'transcription',
+                type_or_token = 'type', all_info = False, stop_check = None,
+                call_back = None):
+    returned  = count_segs(corpus, seg1, seg2, sequence_type, type_or_token,stop_check,call_back)
+    if stop_check is not None and stop_check():
+        return
+    seg1_count, seg2_count = returned
+    total_count = seg1_count + seg2_count
+    if total_count:
+        H = -1 * ((seg1_count/total_count) * log2(seg1_count/total_count) + (seg2_count/total_count) * log2(seg2_count/total_count))
+    else:
+        H = 0.0
+    if all_info:
+        H = [H, total_count, seg1_count, seg2_count]
+    return H
 
 def calc_prod_all_envs(corpus, seg1, seg2, sequence_type = 'transcription',
                 type_or_token = 'type', all_info = False, stop_check = None,

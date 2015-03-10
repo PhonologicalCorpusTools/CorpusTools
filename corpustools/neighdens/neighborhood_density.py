@@ -16,20 +16,19 @@ from corpustools.exceptions import PCTError
 def args_to_key(*args):
     return '_'.join(['neighbor']+[str(x) for x in args])
 
-def is_neighbor(w, query, algorithm, sequence_type, max_distance, count_what):
-    if algorithm == 'edit_distance':
-        if len(getattr(w, sequence_type)) > len(getattr(query, sequence_type))+max_distance:
-            return False
-        if len(getattr(w, sequence_type)) < len(getattr(query, sequence_type))-max_distance:
-            return False
-        return edit_distance(w, query, sequence_type) <= max_distance
-    elif algorithm == 'phonological_edit_distance' and sequence_type == 'transcription':
-        return phono_edit_distance(w, query, tiername, corpus.specifier) <= max_distance
-    elif algorithm == 'khorsi':
-        freq_base = freq_base = corpus.get_frequency_base(sequence_type, count_what)
-        return khorsi(w, query, freq_base, sequence_type) >= max_distance
-    else:
+def is_edit_distance_neighbor(w, query, sequence_type, max_distance):
+    if len(getattr(w, sequence_type)) > len(getattr(query, sequence_type))+max_distance:
         return False
+    if len(getattr(w, sequence_type)) < len(getattr(query, sequence_type))-max_distance:
+        return False
+    return edit_distance(w, query, sequence_type, max_distance) <= max_distance
+
+def is_phono_edit_distance_neighbor(w, query, sequence_type, specifier, max_distance):
+    return phono_edit_distance(w, query, sequence_type, specifier) <= max_distance
+
+def is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
+    return khorsi(w, query, freq_base, sequence_type, max_distance) >= max_distance
+
 
 def pair_if_neighbor(w, query, algorithm, sequence_type, max_distance):
     result = False
@@ -106,8 +105,8 @@ def neighborhood_density_all_words(corpus, attribute, sequence_type = 'transcrip
     if num_cores == -1:
 
         for w in corpus:
-            if self.stopped:
-                break
+            if stop_check is not None and stop_check():
+                return
             cur += 1
             call_back(cur)
             res = function(w)
@@ -169,6 +168,21 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
         call_back('Finding neighbors...')
         call_back(0,len(corpus))
         cur = 0
+    if algorithm == 'edit_distance':
+        is_neighbor = partial(is_edit_distance_neighbor,
+                                sequence_type = sequence_type,
+                                max_distance = max_distance)
+    elif algorithm == 'phono_edit_distance':
+        is_neighbor = partial(is_phono_edit_distance_neighbor,
+                                specifier = corpus.specifier,
+                                sequence_type = sequence_type,
+                                max_distance = max_distance)
+    elif algorithm == 'khorsi':
+        freq_base = freq_base = corpus.get_frequency_base(sequence_type, count_what)
+        is_neighbor = partial(is_khorsi_neighbor,
+                                freq_base = freq_base,
+                                sequence_type = sequence_type,
+                                max_distance = max_distance)
     for w in corpus:
         if stop_check is not None and stop_check():
             return
@@ -176,7 +190,7 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
             cur += 1
             if cur % 10 == 0:
                 call_back(cur)
-        if not is_neighbor(w, query, algorithm, sequence_type, max_distance, count_what ):
+        if not is_neighbor(w, query):
             continue
         matches.append(w)
     neighbors = set(matches)-set([query])

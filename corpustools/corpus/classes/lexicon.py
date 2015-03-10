@@ -338,6 +338,9 @@ class Transcription(object):
                 else:
                     raise(NotImplementedError('That format for seg_list is not supported.'))
 
+    def __hash__(self):
+        return hash(str(self))
+
     def __getitem__(self, key):
         if isinstance(key,int) or isinstance(key,slice):
             return self._list[key]
@@ -627,12 +630,12 @@ class Word(object):
 
     """
 
-    _corpus = None
-
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
         'lowercase_freq', 'log10_freq']
 
     def __init__(self, **kwargs):
+
+        _corpus = None
 
         self.transcription = None
         self.spelling = None
@@ -740,6 +743,9 @@ class Word(object):
             delattr(self, attribute_name)
         except ValueError:
             pass #attribute_name does not exist
+
+    def variants(self, sequence_type = 'transcription'):
+        return collections.Counter(getattr(x,sequence_type) for x in self.wordtokens)
 
     def enumerate_symbols(self,tier_name):
         for pos,seg in enumerate(getattr(self, tier_name)):
@@ -1545,6 +1551,12 @@ class Corpus(object):
             return
         for word in self:
             word.remove_attribute(name)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_freq_base'] = None # don't save caches
+        state['_graph'] = None # don't save caches
+        return state
 
     def __setstate__(self,state):
         try:

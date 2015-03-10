@@ -28,7 +28,7 @@ class ProgressDialog(QProgressDialog):
         self.canceled.connect(self.updateForCancel)
 
     def updateForCancel(self):
-        self.reset()
+        self.show()
         self.setMaximum(0)
         self.cancelButton.setEnabled(False)
         self.cancelButton.setText('Canceling...')
