@@ -34,7 +34,7 @@ def edit_distance_wordtokens(word1, word2, sequence_type, max_distance = None):
 
     pass
 
-def edit_distance(word1, word2, string_type, max_distance = None):
+def edit_distance(word1, word2, sequence_type, max_distance = None):
     """Returns the Levenshtein edit distance between a string from
     two words word1 and word2, code drawn from
     http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python.
@@ -57,12 +57,12 @@ def edit_distance(word1, word2, string_type, max_distance = None):
         the edit distance between two words
     """
     if isinstance(word1, Word):
-        s1 = getattr(word1, string_type)
+        s1 = getattr(word1, sequence_type)
     else:
         s1 = word1
 
     if isinstance(word2, Word):
-        s2 = getattr(word2, string_type)
+        s2 = getattr(word2, sequence_type)
     else:
         s2 = word2
 
