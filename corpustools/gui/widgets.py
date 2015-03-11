@@ -1428,6 +1428,9 @@ class BigramWidget(EnvironmentSelectWidget):
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options, actions=None, enabled=None,parent=None):
         QGroupBox.__init__(self,title,parent)
+        self.is_enabled = True
+        self.actions = None
+        self.enabled = None
         self.setLayout(QFormLayout())
         self.setOptions(options, actions, enabled)
 
@@ -1439,6 +1442,8 @@ class RadioSelectWidget(QGroupBox):
                 w.clicked.connect(self.actions[key])
             if self.enabled is not None:
                 w.setEnabled(self.enabled[key])
+            if not self.is_enabled:
+                w.setEnabled(False)
             self.widgets.append(w)
             self.layout().addRow(w)
         self.widgets[0].setChecked(True)
@@ -1450,8 +1455,10 @@ class RadioSelectWidget(QGroupBox):
             w.setParent(None)
             w.deleteLater()
         self.options = options
-        self.actions = actions
-        self.enabled = enabled
+        if actions is not None:
+            self.actions = actions
+        if enabled is not None:
+            self.enabled = enabled
         self.initOptions()
 
 
@@ -1471,9 +1478,14 @@ class RadioSelectWidget(QGroupBox):
         return ''
 
     def disable(self):
+        self.is_enabled = False
         for w in self.widgets:
             w.setEnabled(False)
 
     def enable(self):
+        self.is_enabled = True
         for w in self.widgets:
-            w.setEnabled(True)
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            else:
+                w.setEnabled(True)

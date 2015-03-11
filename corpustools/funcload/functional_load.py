@@ -8,11 +8,89 @@ from math import factorial
 
 
 
-def wordtoken_minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
-        sequence_type = 'transcription', strategy = 'most_frequent'):
-    strategies = ['most_frequent', 'token', 'weight_type_by_token_freq',]
-    pass
+def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
+        relative_count = True, distinguish_homophones = False,
+        sequence_type = 'transcription',
+        stop_check = None, call_back = None):
+    all_segments = list(itertools.chain.from_iterable(segment_pairs))
 
+    neutralized = list()
+    if call_back is not None:
+        call_back('Finding and neutralizing instances of segments...')
+        call_back(0,len(corpus))
+        cur = 0
+    for w in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        #if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
+        #    continue
+        variants = w.variants(sequence_type)
+        if len(variants.keys()) == 0:
+            continue
+        w_neutr = list()
+        for v in variants.keys():
+            if any([s in v for s in all_segments]):
+                n = [neutralize_segment(seg, segment_pairs)
+                        for seg in v]
+                w_neutr.append('.'.join(n))
+        if len(w_neutr) == 0:
+            continue
+        neutralized.append((w_neutr, w.spelling.lower(), getattr(w, sequence_type)))
+    if stop_check is not None and stop_check():
+        return
+
+    minpairs = list()
+    if call_back is not None:
+        call_back('Counting minimal pairs...')
+        call_back(0,factorial(len(neutralized))/(factorial(len(neutralized)-2)*2))
+        cur = 0
+    for first,second in itertools.combinations(neutralized, 2):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        degree = matches_wordtokens(first,second)
+        if degree == 0:
+            continue
+        ordered_pair = sorted([str(first[2]), str(second[2])])
+        minpairs.append((tuple(ordered_pair), degree))
+
+    if not distinguish_homophones:
+        minpairs = dict(minpairs)
+        result = sum(minpairs.values())
+    else:
+        result = sum(x[1] for x in minpairs)
+
+    if relative_count and len(neutralized) > 0:
+        result /= len(neutralized)
+
+    return result
+
+def matches_wordtokens(first, second):
+    if first[2] == second[2] and first[1] == second[1]:
+        return 0
+    possible_overlap = len(first[0]) * len(second[0])
+    actual_overlap = 0
+    for f in first[0]:
+        if 'NEUTR:' not in f:
+            continue
+        for s in second[0]:
+            if 'NEUTR:' not in s:
+                continue
+            if f == s:
+                actual_overlap += 1
+    return actual_overlap / possible_overlap
+
+def matches(first, second):
+    return (first[0] == second[0] and first[1] != second[1]
+        and 'NEUTR:' in first[0] and 'NEUTR:' in second[0]
+        and first[2] != second[2])
 
 def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
         relative_count = True, distinguish_homophones = False,
@@ -70,20 +148,14 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
-            continue
+        #if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
+        #    continue
         if any([s in getattr(w, sequence_type) for s in all_segments]):
             n = [neutralize_segment(seg, segment_pairs)
                     for seg in getattr(w, sequence_type)]
             neutralized.append(('.'.join(n), w.spelling.lower(), getattr(w, sequence_type)))
     if stop_check is not None and stop_check():
         return
-
-
-    def matches(first, second):
-        return (first[0] == second[0] and first[1] != second[1]
-            and 'NEUTR:' in first[0] and 'NEUTR:' in second[0]
-            and first[2] != second[2])
 
     minpairs = list()
     if call_back is not None:
@@ -108,6 +180,103 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
     result = len(minpairs)
     if relative_count and len(neutralized) > 0:
         result /= len(neutralized)
+
+    return result
+
+
+def deltah_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
+            type_or_token = 'most_frequent_type', sequence_type = 'transcription',
+            stop_check = None, call_back = None):
+    """Calculate the functional load of the contrast between between two
+    segments as the decrease in corpus entropy caused by a merger.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        The domain over which functional load is calculated.
+    segment_pairs : list of length-2 tuples of str
+        The pairs of segments to be conflated.
+    frequency_cutoff : number, optional
+        Minimum frequency of words to consider, if desired.
+    type_or_token : str {'type', 'token'}
+        Specify whether entropy is based on type or token frequency.
+    sequence_type : string
+        The attribute of Words to calculate FL over. Normally this will be the
+        transcription, but it can also be the spelling or a user-specified tier.
+
+    Returns
+    -------
+    float
+        The difference between a) the entropy of the choice among
+        non-homophonous words in the corpus before a merger of `s1`
+        and `s2` and b) the entropy of that choice after the merger.
+    """
+    if call_back is not None:
+        call_back('Finding instances of segments...')
+        call_back(0,len(corpus))
+        cur = 0
+    freq_sum = 0
+    original_probs = defaultdict(float)
+    for w in corpus:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 20 == 0:
+                call_back(cur)
+        if frequency_cutoff > 0.0 and w.frequency < frequency_cutoff:
+            continue
+
+        variants = w.variants(sequence_type)
+        if len(variants.keys()) == 0:
+            continue
+        if type_or_token == 'count_token' or type_or_token == 'relative_type':
+            if type_or_token == 'relative_type':
+                f_total = sum(variants.values())
+
+            for v, f in variants.items():
+                if type_or_token == 'relative_type':
+                    f /= f_total
+                original_probs[v] += f
+                freq_sum += f
+
+        elif type_or_token.startswith('most_frequent'):
+            tier = max(variants.keys(), key=(lambda key: variants[key]))
+            if type_or_token.endswith('type'):
+                f = 1
+            else:
+                f = w.frequency
+            original_probs[tier] += f
+            freq_sum += f
+
+
+
+    original_probs = {k:v/freq_sum for k,v in original_probs.items()}
+
+    if stop_check is not None and stop_check():
+        return
+    preneutr_h = entropy(original_probs.values())
+
+    neutralized_probs = defaultdict(float)
+    if call_back is not None:
+        call_back('Neutralizing instances of segments...')
+        call_back(0,len(list(original_probs.keys())))
+        cur = 0
+    for k,v in original_probs.items():
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        neutralized_probs['.'.join([neutralize_segment(s, segment_pairs) for s in k])] += v
+    postneutr_h = entropy(neutralized_probs.values())
+
+    if stop_check is not None and stop_check():
+        return
+    result = preneutr_h - postneutr_h
+    if result < 1e-10:
+        result = 0.0
 
     return result
 
@@ -150,7 +319,7 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff = 0,
             return
         if call_back is not None:
             cur += 1
-            if cur % 100 == 0:
+            if cur % 20 == 0:
                 call_back(cur)
         if frequency_cutoff > 0.0 and w.frequency < frequency_cutoff:
             continue
@@ -160,14 +329,14 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff = 0,
         else:
             f = w.frequency
 
-        original_probs[str(getattr(w, sequence_type))] += f
+        original_probs[getattr(w, sequence_type)] += f
         freq_sum += f
 
     original_probs = {k:v/freq_sum for k,v in original_probs.items()}
 
     if stop_check is not None and stop_check():
         return
-    preneutr_h = entropy([original_probs[item] for item in original_probs])
+    preneutr_h = entropy(original_probs.values())
 
     neutralized_probs = defaultdict(float)
     if call_back is not None:
@@ -181,8 +350,8 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff = 0,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        neutralized_probs['.'.join([neutralize_segment(s, segment_pairs) for s in k.split('.')])] += v
-    postneutr_h = entropy([neutralized_probs[item] for item in neutralized_probs])
+        neutralized_probs['.'.join([neutralize_segment(s, segment_pairs) for s in k])] += v
+    postneutr_h = entropy(neutralized_probs.values())
 
     if stop_check is not None and stop_check():
         return
