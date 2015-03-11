@@ -722,6 +722,11 @@ class Word(object):
         matching_segs = self.transcription.match_segments(tier_segments)
         new_tier = Transcription(matching_segs)
         setattr(self,tier_name,new_tier)
+        for wt in self.wordtokens:
+            matching_segs = wt.transcription.match_segments(tier_segments)
+            new_tier = Transcription(matching_segs)
+            setattr(wt,tier_name,new_tier)
+
 
     def remove_attribute(self, attribute_name):
         """Deletes a tier attribute from a Word
