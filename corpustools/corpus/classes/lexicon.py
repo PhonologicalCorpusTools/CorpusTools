@@ -423,7 +423,8 @@ class Transcription(object):
         else:
             lhs = self[pos-1]
             rhs = self[pos+1]
-        return lhs,rhs
+        return Environment(lhs, rhs)
+        #return lhs,rhs
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -1134,6 +1135,7 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
+        self.has_wordtokens = False
         self._freq_base = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
@@ -1571,6 +1573,8 @@ class Corpus(object):
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' not in state:
                 state['has_transcription'] = state['has_transcription_value']
+            if 'has_wordtokens' not in state:
+                state['has_wordtokens'] = False
             if '_freq_base' not in state:
                 state['_freq_base'] = dict()
             if '_graph' not in state:
