@@ -5,6 +5,7 @@ import itertools
 import queue
 import copy
 from math import factorial
+import time
 
 
 def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
@@ -386,9 +387,16 @@ def all_pairwise_fls(corpus, relative_fl=False, algorithm='minpair', frequency_c
         If calculating relative FL, returns a dictionary of each segment and its relative (average) FL, with entries ordered by FL.
     """
     fls = {}
+    total_calculations = (len(corpus.inventory)-1)**2
+    ct = 1
+    t = time.time()
     for i, s1 in enumerate(corpus.inventory[:-1]):
         for s2 in corpus.inventory[i+1:]:
             if s1 != '#' and s2 != '#':
+                print('Performing FL calculation {} out of {} possible'.format(str(ct), str(total_calculations)))
+                ct += 1
+                print('Duration of last calculation: {}'.format(str(time.time() - t)))
+                t = time.time()
                 if type(s1) != str:
                     s1 = s1.symbol
                 if type(s2) != str:

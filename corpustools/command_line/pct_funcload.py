@@ -25,9 +25,9 @@ def main():
     parser.add_argument('-a', '--algorithm', default='minpair', help='Algorithm to use for calculating functional load: "minpair" for minimal pair count or "deltah" for change in entropy. Defaults to minpair.')
     parser.add_argument('-f', '--frequency_cutoff', type=float, default=0, help='Minimum frequency of words to consider as possible minimal pairs or contributing to lexicon entropy.')
     parser.add_argument('-r', '--relative_count', type=check_bool, default=True, help='For minimal pair FL: whether or not to divide the number of minimal pairs by the number of possible minimal pairs (words with either segment).')
-    parser.add_argument('-d', '--distinguish_homophones', type=check_bool, default=False, help="For minimal pair FL: if False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.")
+    parser.add_argument('-d', '--distinguish_homophones', action='store_true', help="For minimal pair FL: if False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.")
     parser.add_argument('-t', '--type_or_token', default='token', help='For change in entropy FL: specifies whether entropy is based on type or token frequency.')
-    parser.add_argument('-e', '--relative_fl', type=check_bool, default=False, help="If True, calculate the relative FL of a single segment by averaging across the functional loads of it and all other segments.")
+    parser.add_argument('-e', '--relative_fl', action='store_true', help="If True, calculate the relative FL of a single segment by averaging across the functional loads of it and all other segments.")
     parser.add_argument('-s', '--sequence_type', default='transcription', help="The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.")
     parser.add_argument('-o', '--outfile', help='Name of output file')
 
@@ -66,7 +66,15 @@ def main():
 
     if args.outfile:
         with open(args.outfile, 'w') as outfile:
-            outfile.write(str(result))
+            if type(result) != list:
+                outstr = 'result\t' + '\t'.join([a for a in vars(args)]) + '\n' + str(result) + '\t' + '\t'.join([str(getattr(args, a)) for a in vars(args)])
+                outfile.write(outstr)
+            else:
+                outstr = 'result\tsegment(s)\t' + '\t'.join([a for a in vars(args)]) + '\n'
+                for element in result:
+                    outstr += str(element[1]) + '\t' + str(element[0]) + '\t' + '\t'.join([str(getattr(args,a)) for a in vars(args)]) + '\n'
+                outfile.write(outstr)
+
     else:
         print('No output file name provided.')
         print('The functional load of the given inputs is {}.'.format(str(result)))
