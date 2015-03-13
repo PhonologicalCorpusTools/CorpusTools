@@ -22,6 +22,7 @@ before_install:
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy scikit-learn networkx pytest
+  - conda uninstall --yes python=$TRAVIS_PYTHON_VERSION pyqt
   - conda install -c https://conda.binstar.org/dsdale24 pyqt5
   # Coverage packages are on my binstar channel
   - pip install -q coveralls coverage
