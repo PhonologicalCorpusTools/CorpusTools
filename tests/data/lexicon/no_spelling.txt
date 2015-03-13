@@ -1,0 +1,4 @@
+transcription,frequency
+t.u.s.i,13.0
+t.u.n.i,33.0
+ʃ.ɑ.ʃ.i,43.0

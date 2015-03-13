@@ -277,6 +277,7 @@ class MainWindow(QMainWindow):
                 self.featureSystemStatus.setText('No feature system selected')
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
+            self.createSubsetAct.setEnabled(True)
         #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
@@ -664,6 +665,7 @@ class MainWindow(QMainWindow):
         self.createSubsetAct = QAction( "Generate a corpus subset",
                 self,
                 statusTip="Create and save a subset of the current corpus", triggered=self.subsetCorpus)
+        self.createSubsetAct.setEnabled(False)
 
         self.saveCorpusAct = QAction( "Save corpus",
                 self,

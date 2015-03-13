@@ -1,5 +1,4 @@
 *.py[cod]
-*.txt
 !requirements.txt
 *.corpus
 *.feature
@@ -8,6 +7,8 @@
 *.exe
 *.msi
 *.app
+*.xls
+*.xlsx
 
 # C extensions
 *.so

@@ -27,6 +27,7 @@ Contents:
    citing_pct.rst
    references.rst
    apireference
+   release
 
 
 

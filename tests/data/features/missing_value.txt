@@ -1,0 +1,4 @@
+symbol,feat1,feat2
+p,+,-
+b,+,0
+d,0

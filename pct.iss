@@ -42,10 +42,12 @@ Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\*"; DestD
 Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\platforms\*.dll"; DestDir: "{app}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "dist\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\Uninstall Phonological CorpusTools"; Filename: "{uninstallexe}"
 Name: "{group}\Readme"; Filename: "https://github.com/kchall/CorpusTools#phonological-corpustools"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 

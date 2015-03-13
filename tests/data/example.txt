@@ -1,0 +1,16 @@
+frequency,spelling,transcription
+11.0,atema,ɑ.t.e.m.ɑ
+11.0,enuta,e.n.u.t.ɑ
+5.0,mashomisi,m.ɑ.ʃ.o.m.i.s.i
+2.0,mata,m.ɑ.t.ɑ
+2.0,nata,n.ɑ.t.ɑ
+139.0,sasi,s.ɑ.s.i
+43.0,shashi,ʃ.ɑ.ʃ.i
+3.0,shisata,ʃ.i.s.ɑ.t.ɑ
+126.0,shushoma,ʃ.u.ʃ.o.m.ɑ
+67.0,ta,t.ɑ
+7.0,tatomi,t.ɑ.t.o.m.i
+96.0,tishenishu,t.i.ʃ.e.n.i.ʃ.u
+33.0,toni,t.o.n.i
+32.0,tusa,t.u.s.ɑ
+2.0,ʃi,ʃ.i

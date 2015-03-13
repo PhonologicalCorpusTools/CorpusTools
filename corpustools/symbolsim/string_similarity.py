@@ -127,6 +127,12 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     if algorithm == 'khorsi':
         freq_base = corpus.get_frequency_base(sequence_type, count_what)
+        try:
+            bound_count = freq_base['#']
+            freq_base = {k:v for k,v in freq_base.items() if k != '#'}
+            freq_base['total'] -= bound_count
+        except KeyError:
+            pass
         relate_func = partial(khorsi,freq_base=freq_base,
                                 sequence_type = sequence_type)
     elif algorithm == 'edit_distance':

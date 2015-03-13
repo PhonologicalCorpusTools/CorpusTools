@@ -1,0 +1,20 @@
+signal s0201.sd
+type 0
+comment created using xlabel Thu Jan 19 17:52:50 2006
+comment F O
+color 122
+font -misc-*-bold-*-*-*-15-*-*-*-*-*-*-*
+separator ;
+nfields 3
+#
+   2.609000 122 {B_TRANS}; B; B; null
+   2.714347 122 <IVER>; S; S; null
+   2.892096 122 that's; dh ae t s; eh s; DT_VBZ
+   3.206317 122 <IVER>; S; S; null
+   3.377192 122 that's; dh ae t s; dh ae s; DT_VBZ
+   3.614398 122 that; dh ae t; s ae tq; IN
+   3.673454 122 <VOCNOISE>; U; U; null
+   4.036022 122 whatever; w ah t eh v er; ah w ah dx eh v er; WDT
+   4.111000 122 they; dh ey; ey; PRP
+   4.369000 122 call; k aa l; k ao l; VBP
+   4.501000 122 it; ih t; ah t; PRP
