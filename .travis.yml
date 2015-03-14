@@ -52,7 +52,7 @@ install:
   - source /opt/qt54/bin/qt54-env.sh # switch to Qt5
   - tar xzf /downloads/pyqt5.tar.gz --keep-newer-files
   - pushd PyQt-gpl-5.4.1
-  - python configure.py -c --confirm-license --no-designer-plugin -e QtCore -e QtGui -e QtWidgets
+  - python configure.py -c --confirm-license --no-designer-plugin
   - make
   - sudo make install
   - popd
