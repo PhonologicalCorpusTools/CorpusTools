@@ -59,12 +59,12 @@ install:
   # Builds Complete
   - popd
   # Coverage packages are on my binstar channel
-  - pip install -q coveralls coverage
+  - pip install coveralls coverage
   - python setup.py install
 
 # Run test
 script:
-  - "coverage run --source=corpustools setup.py test"
+  - "coverage run --debug --source=corpustools setup.py test"
 
 # Calculate coverage
 after_success:
