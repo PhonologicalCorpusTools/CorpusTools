@@ -19,42 +19,9 @@ before_install:
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
-  - sh -e /etc/init.d/xvfb start
-  # Cached Downloads
-  - sudo mkdir -p /downloads
-  - sudo chmod a+rw /downloads
-  - if [ ! -f /downloads/sip.tar.gz ]; then curl -L -o /downloads/sip.tar.gz http://sourceforge.net/projects/pyqt/files/sip/sip-4.16.6/sip-4.16.6.tar.gz; fi
-  - if [ ! -f /downloads/pyqt5.tar.gz ]; then curl -L -o /downloads/pyqt5.tar.gz http://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.4.1/PyQt-gpl-5.4.1.tar.gz; fi
-  #- echo '44e87c4c98206f465d3f07f4caa0c903 /downloads/sip.tar.gz' | md5sum -c -
-  #- echo 'a07bd7c426c7cda39f9a5072ee724aba /downloads/pyqt5.tar.gz' | md5sum -c -
-  # Builds
-  - sudo mkdir -p /builds
-  - sudo chmod a+rw /builds
 # Install packages
 install:
-  # Qt5
-  #- sudo add-apt-repository -y ppa:beineri/opt-qt541
-  #- sudo apt-get update
-  #- sudo apt-get install -y qt54base
-  - pushd /builds
-  # SIP
-  - tar xzf /downloads/sip.tar.gz --keep-newer-files
-  - pushd sip-4.16.6
-  - python configure.py
-  - make
-  - sudo make install
-  - popd
-  # PyQt5
-  #- source /opt/qt54/bin/qt54-env.sh # switch to Qt5
-  - tar xzf /downloads/pyqt5.tar.gz --keep-newer-files
-  - pushd PyQt-gpl-5.4.1
-  - python configure.py -c --confirm-license --no-designer-plugin
-  - make
-  - sudo make install
-  - popd
-  # Builds Complete
-  - popd
-  #- conda install --yes -c https://conda.binstar.org/dsdale24 pyqt5
+  - conda install --yes -c https://conda.binstar.org/dsdale24 python=$TRAVIS_PYTHON_VERSION pyqt5
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy scikit-learn networkx pytest
   # Coverage packages are on my binstar channel
   - pip install -q coveralls coverage
