@@ -11,7 +11,7 @@ notifications:
 
 # Setup anaconda
 before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
@@ -21,7 +21,7 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install packages
 install:
-  - conda install --yes -c https://conda.binstar.org/dsdale24 python=$TRAVIS_PYTHON_VERSION pyqt5
+  - conda install --yes -c https://conda.binstar.org/dsdale24 pyqt5
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy scikit-learn networkx pytest
   # Coverage packages are on my binstar channel
   - pip install -q coveralls coverage
