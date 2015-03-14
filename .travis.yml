@@ -17,6 +17,7 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels dsdale24
   - conda update -q conda
   - conda info -a
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
@@ -24,7 +25,7 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install packages
 install:
-  - conda create -q -c https://conda.binstar.org/dsdale24 -n test-environment python=$TRAVIS_PYTHON_VERSION atlas numpy scipy scikit-learn networkx pytest pyqt5
+  - conda create -q -c https://conda.binstar.org/dsdale24 -n test-environment python=$TRAVIS_PYTHON_VERSION atlas numpy scipy pytest pyqt5
   - source activate test-environment
   # Coverage packages are on my binstar channel
   - pip install -q coveralls coverage
