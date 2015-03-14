@@ -212,6 +212,6 @@ def test_digraph_dialog():
 def test_segment_pair_widget(specified_test_corpus):
     widget = SegmentPairSelectWidget(specified_test_corpus.inventory)
 
-#def test_environment_select_widget(specified_test_corpus):
-#    widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
+def test_environment_select_widget(specified_test_corpus):
+    widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
 
