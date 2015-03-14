@@ -39,7 +39,7 @@ install:
   - sudo apt-get install -y qt54base
   - conda create -q -c https://conda.binstar.org/dsdale24 -n test-environment python=$TRAVIS_PYTHON_VERSION atlas numpy scipy scikit-learn networkx pytest
   - source activate test-environment
-  - readlink -f $(which python) | xargs -I % sh -c 'echo -n "%: "; % -V'
+  - which python
   - pushd /builds
   # SIP
   - tar xzf /downloads/sip.tar.gz --keep-newer-files
