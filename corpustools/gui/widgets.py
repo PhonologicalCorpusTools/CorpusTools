@@ -332,7 +332,7 @@ class TierWidget(QGroupBox):
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
-    def __init__(self, punctuation, title,parent = None):
+    def __init__(self, punctuation, title = 'Punctuation',parent = None):
         QGroupBox.__init__(self,title,parent)
 
         self.btnGroup = QButtonGroup()
@@ -403,12 +403,13 @@ class DigraphDialog(QDialog):
 
         row = 0
         col = 0
+        self.buttons = list()
         for s in characters:
             btn = QPushButton(s)
             btn.clicked.connect(self.addCharacter)
             btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
             btn.setMaximumWidth(btn.fontMetrics().boundingRect(s).width() + 14)
-
+            self.buttons.append(btn)
             box.addWidget(btn,row,col)
             col += 1
             if col > 11:
@@ -1023,7 +1024,11 @@ class FeatureBox(QWidget):
     def addFeature(self):
         curFeature = self.featureList.currentItem()
         if curFeature:
-            self.envList.addItem(self.sender().value+curFeature.text())
+            val = self.sender().value
+            feat = curFeature.text()
+            key = val+feat
+            if key not in self.currentSpecification():
+                self.envList.addItem(key)
 
     def clearOne(self):
         items = self.envList.selectedItems()
@@ -1034,8 +1039,11 @@ class FeatureBox(QWidget):
     def clearAll(self):
         self.envList.clear()
 
+    def currentSpecification(self):
+        return [self.envList.item(i).text() for i in range(self.envList.count())]
+
     def value(self):
-        val = [self.envList.item(i).text() for i in range(self.envList.count())]
+        val = self.currentSpecification()
         if not val:
             return ''
         return '[{}]'.format(','.join(val))
