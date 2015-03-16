@@ -6,14 +6,16 @@ from corpustools.gui.widgets import *
 from .conftest import specified_test_corpus
 from PyQt5.QtTest import QTest
 
-def test_directory_widget(application):
+app = QApplication(sys.argv)
+
+def test_directory_widget():
     widget = DirectoryWidget()
 
     widget.setPath('test')
 
     assert(widget.value() == 'test')
 
-def test_punctuation_widget(application):
+def test_punctuation_widget():
     widget = PunctuationWidget(['.',',','-'])
 
     # Test value
@@ -35,7 +37,7 @@ def test_punctuation_widget(application):
 
     assert(widget.value() == [])
 
-def test_tier_widget(application, specified_test_corpus):
+def test_tier_widget(specified_test_corpus):
     # Test with spelling
     widget = TierWidget(specified_test_corpus, include_spelling = True)
 
@@ -66,7 +68,7 @@ def test_tier_widget(application, specified_test_corpus):
     assert(widget.value() == 'transcription')
     assert(widget.displayValue() == 'Transcription')
 
-def test_radio_select_widget(application):
+def test_radio_select_widget():
     widget = RadioSelectWidget('', OrderedDict([('Option 1', 'option1'),('Option 2', 'option2')]))
     widget.initialClick()
 
@@ -80,7 +82,7 @@ def test_radio_select_widget(application):
     assert(widget.widgets[0].isEnabled())
 
 
-def test_inventory_box(application, specified_test_corpus):
+def test_inventory_box(specified_test_corpus):
     widget = InventoryBox('Inventory', specified_test_corpus.inventory)
 
     widget.setExclusive(True)
@@ -100,7 +102,7 @@ def test_inventory_box(application, specified_test_corpus):
 
     assert(set(widget.value()) == set([ x.symbol for x in specified_test_corpus.inventory]))
 
-def test_transcription_widget(application, specified_test_corpus):
+def test_transcription_widget(specified_test_corpus):
     widget = TranscriptionWidget('Transcription', specified_test_corpus.inventory)
 
     widget.setText('test')
@@ -116,7 +118,7 @@ def test_transcription_widget(application, specified_test_corpus):
 
     assert(widget.text() == '.'.join(expected))
 
-def test_feature_box(application, specified_test_corpus):
+def test_feature_box(specified_test_corpus):
     widget = FeatureBox('Transcription', specified_test_corpus.inventory)
 
     # Test basic init
@@ -186,7 +188,7 @@ def test_feature_box(application, specified_test_corpus):
 
     assert(widget.value() == '[{}{}]'.format(v2,f2))
 
-def test_digraph_dialog(application):
+def test_digraph_dialog():
     dialog = DigraphDialog(['a','b','c'])
 
     # Test init
@@ -207,9 +209,9 @@ def test_digraph_dialog(application):
 
     assert(dialog.value() == 'aa')
 
-def test_segment_pair_widget(application, specified_test_corpus):
+def test_segment_pair_widget(specified_test_corpus):
     widget = SegmentPairSelectWidget(specified_test_corpus.inventory)
 
-def test_environment_select_widget(application, specified_test_corpus):
+def test_environment_select_widget(specified_test_corpus):
     widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
 
