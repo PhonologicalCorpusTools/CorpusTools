@@ -20,7 +20,7 @@ try:
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper,
-                                QSlider, QItemDelegate)
+                                QSlider, QItemDelegate, QScrollArea)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
     try:
         from PyQt5.QtWebKitWidgets import QWebView

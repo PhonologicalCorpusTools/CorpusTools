@@ -128,6 +128,7 @@ class NumericFilter(QWidget):
 
         return self.conditionals[ind], self.valueEdit.text()
 
+
 class AttributeFilterDialog(QDialog):
     def __init__(self, attributes,parent=None):
         QDialog.__init__(self,parent)

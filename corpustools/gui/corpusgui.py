@@ -8,6 +8,7 @@ from .imports import *
 from collections import OrderedDict
 
 from corpustools.exceptions import PCTError, PCTPythonError
+from corpustools.decorators import check_for_errors
 
 from corpustools.corpus.classes import Attribute, Word
 
@@ -17,8 +18,9 @@ from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv
                                     save_binary,export_corpus_csv,
                                     import_spontaneous_speech_corpus,
                                     load_corpus_ilg)
+from corpustools.corpus.io.csv import inspect_csv
 from corpustools.corpus.io.spontaneous import SpontaneousIOError
-from .windows import FunctionWorker, DownloadWorker
+from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
@@ -36,6 +38,64 @@ def get_corpora_list(storage_directory):
 def corpus_name_to_path(storage_directory,name):
     return os.path.join(storage_directory,'CORPUS',name+'.corpus')
 
+class AttributeWidget(QGroupBox):
+    def __init__(self, attribute = None, exclude_tier = False,
+                disable_name = False, parent = None):
+        QGroupBox.__init__(self, 'Column details', parent)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        if attribute is not None:
+            self.attribute = attribute
+            self.nameWidget.setText(attribute.display_name)
+        else:
+            self.attribute = None
+
+        if disable_name:
+            self.nameWidget.setEnabled(False)
+
+        self.typeWidget = QComboBox()
+        for at in Attribute.ATT_TYPES:
+            if exclude_tier and at == 'tier':
+                continue
+            self.typeWidget.addItem(at.title())
+
+        for i in range(self.typeWidget.count()):
+            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
+                self.typeWidget.setCurrentIndex(i)
+
+
+        main.addRow('Type of column',self.typeWidget)
+
+        self.useAs = QComboBox()
+        self.useAs.addItem('Custom column')
+        self.useAs.addItem('Spelling')
+        self.useAs.addItem('Transcription')
+        self.useAs.addItem('Frequency')
+
+        for i in range(self.useAs.count()):
+            if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
+                self.useAs.setCurrentIndex(i)
+
+        main.addRow('Use column as', self.useAs)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def value(self):
+        display = self.nameWidget.text()
+        cat = self.typeWidget.currentText().lower()
+        use = self.useAs.currentText().lower()
+        if use.startswith('custom'):
+            name = Attribute.sanitize_name(display)
+        else:
+            name = use
+        return Attribute(name, cat, display)
 
 class CorpusSelect(QComboBox):
     def __init__(self, parent, settings):
@@ -1414,14 +1474,13 @@ class RemoveAttributeDialog(QDialog):
 
         QDialog.accept(self)
 
-class CorpusFromCsvDialog(QDialog):
+class CorpusFromCsvDialog(PCTDialog):
     def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
         self.settings = settings
         layout = QVBoxLayout()
 
         formLayout = QFormLayout()
-
 
         self.pathWidget = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
@@ -1432,16 +1491,33 @@ class CorpusFromCsvDialog(QDialog):
         formLayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
 
         self.columnDelimiterEdit = QLineEdit()
-        self.columnDelimiterEdit.setText('\t')
-        formLayout.addRow(QLabel('Column delimiter'),self.columnDelimiterEdit)
+        formLayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
 
         self.transDelimiterEdit = QLineEdit()
-        self.transDelimiterEdit.setText('.')
-        formLayout.addRow(QLabel('Transcription delimiter'),self.transDelimiterEdit)
+        formLayout.addRow(QLabel('Transcription delimiter (auto-detected)'),self.transDelimiterEdit)
+
+        self.recheckButton = QPushButton('Recheck file using current settings')
+
+        self.recheckButton.clicked.connect(self.forceInspect)
+
+        formLayout.addRow(self.recheckButton)
+
+        scroll = QScrollArea()
+        self.columnFrame = QWidget()
+        self.columns = list()
+        lay = QHBoxLayout()
+        lay.addStretch()
+        self.columnFrame.setLayout(lay)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.columnFrame)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(120)
+        #self.columnFrame.
+        formLayout.addRow(scroll)
 
         self.featureSystemSelect = FeatureSystemSelect(self.settings)
 
-        formLayout.addRow(QLabel('Feature system (if applicable)'),self.featureSystemSelect)
+        formLayout.addRow(self.featureSystemSelect)
 
         formFrame = QFrame()
         formFrame.setLayout(formLayout)
@@ -1472,10 +1548,37 @@ class CorpusFromCsvDialog(QDialog):
                                     section = 'using-a-custom-corpus')
         self.helpDialog.exec_()
 
-    def updateName(self):
-        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+    @check_for_errors
+    def forceInspect(self, b):
+        if os.path.exists(self.pathWidget.value()):
+            atts, coldelim = inspect_csv(self.pathWidget.value(),
+                    coldelim = self.columnDelimiterEdit.text(),
+                    transdelim = self.transDelimiterEdit.text())
+            self.updateColumnFrame(atts)
 
-    def accept(self):
+    def updateColumnFrame(self, atts):
+        for i in reversed(range(self.columnFrame.layout().count()-1)):
+            w = self.columnFrame.layout().itemAt(i).widget()
+            w.setParent(None)
+            w.deleteLater()
+        self.columns = list()
+        for a in atts:
+            if a.att_type == 'tier':
+                self.transDelimiterEdit.setText(a._delim)
+            c = AttributeWidget(attribute = a, disable_name = True)
+            self.columns.append(c)
+            self.columnFrame.layout().addWidget(c)
+
+    @check_for_errors
+    def updateName(self, b):
+        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+        if os.path.exists(self.pathWidget.value()):
+            atts, coldelim = inspect_csv(self.pathWidget.value())
+            self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
+            self.updateColumnFrame(atts)
+
+    @check_for_errors
+    def accept(self, b):
         path = self.pathWidget.value()
         if path == '':
             reply = QMessageBox.critical(self,
@@ -1506,7 +1609,35 @@ class CorpusFromCsvDialog(QDialog):
         transDelim = self.transDelimiterEdit.text()
 
         featureSystem = self.featureSystemSelect.path()
-        corpus = load_corpus_csv(name, path, colDelim, transDelim, featureSystem)
+
+        attributes = [x.value() for x in self.columns]
+        spellingfound = False
+        transfound = False
+        freqfound = False
+        for a in attributes:
+            if a.name == 'spelling':
+                if spellingfound:
+                    reply = QMessageBox.critical(self,
+                    "Invalid information", "Please specify only one column to use as Spelling.")
+                    return
+                else:
+                    spellingfound = True
+            elif a.name == 'transcription':
+                if transfound:
+                    reply = QMessageBox.critical(self,
+                    "Invalid information", "Please specify only one column to use as Transcription.")
+                    return
+                else:
+                    transfound = True
+            elif a.name == 'frequency':
+                if freqfound:
+                    reply = QMessageBox.critical(self,
+                    "Invalid information", "Please specify only one column to use as Frequency.")
+                    return
+                else:
+                    freqfound = True
+        corpus = load_corpus_csv(name, path, colDelim, transDelim, featureSystem,
+                                attributes = attributes)
         errors = corpus.check_coverage()
         if errors:
             msgBox = QMessageBox(QMessageBox.Warning, "Missing symbols",
