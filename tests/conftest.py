@@ -10,6 +10,11 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
                                         WordToken, Discourse)
 
+@pytest.fixture(scope='session')
+def application():
+    from corpustools.gui.imports import QApplication
+    return QApplication([])
+
 @pytest.fixture(scope='module')
 def unspecified_test_corpus():
     corpus_data = [{'spelling':'atema','transcription':['ɑ','t','e','m','ɑ'],'frequency':11.0},
