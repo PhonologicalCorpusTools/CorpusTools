@@ -2,13 +2,57 @@ from csv import DictReader, DictWriter
 import collections
 import re
 
-from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
+from corpustools.corpus.classes import Corpus, FeatureMatrix, Word, Attribute
 from corpustools.corpus.io.binary import save_binary, load_binary
 
 from corpustools.exceptions import DelimiterError
 
 import time
 
+def inspect_csv(path, num_lines = 10):
+    common_delimiters = [',','\t',':','|']
+    trans_delimiters = ['.',' ', ';', ',']
+
+    with open(path,'r') as f:
+        lines = []
+        head = f.readline().strip()
+        for i in range(num_lines):
+            line = f.readline()
+            if not line:
+                break
+            lines.append(line)
+
+    best = ''
+    num = 1
+    for d in common_delimiters:
+        trial = len(head.split(d))
+        if trial > num:
+            num = trial
+            best = d
+    if best == '':
+        raise(PCTError(''))
+
+    head = head.split(best)
+    vals = {h: list() for h in head}
+
+    for line in lines:
+        l = line.split(best)
+        if len(l) != len(head):
+            raise(PCTError(''))
+        for i in range(len(head)):
+            vals[head[i]].append(l[i])
+    atts = list()
+    for h in head:
+        cat = Attribute.guess_type(vals[h])
+        a = Attribute(Attribute.sanitize_name(h), cat, h)
+        if cat == 'tier':
+            for t in trans_delimiters:
+                if t in vals[h][0]:
+                    a._delim = t
+                    break
+        atts.append(a)
+
+    return atts, best
 
 def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
                     feature_system_path = ''):

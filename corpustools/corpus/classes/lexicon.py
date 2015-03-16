@@ -984,10 +984,32 @@ class Attribute(object):
                 self._default_value = ''
         elif self.att_type == 'tier':
             self._range = set()
+            self._delim = None
             if default_value is not None and isinstance(default_value,Transcription):
                 self._default_value = default_value
             else:
                 self._default_value = Transcription(None)
+
+    @staticmethod
+    def guess_type(values):
+        trans_delimiters = ['.',' ', ';', ',']
+        probable_values = {x: 0 for x in Attribute.ATT_TYPES}
+        for i,v in enumerate(values):
+            try:
+                t = float(v)
+                probable_values['numeric'] += 1
+                continue
+            except ValueError:
+                for d in trans_delimiters:
+                    if d in v:
+                        probable_values['tier'] += 1
+                        break
+                else:
+                    if v in [v2 for j,v2 in enumerate(values) if i != j]:
+                        probable_values['factor'] += 1
+                    else:
+                        probable_values['spelling'] += 1
+        return max(probable_values.items(), key=operator.itemgetter(1))[0]
 
     @staticmethod
     def sanitize_name(name):
