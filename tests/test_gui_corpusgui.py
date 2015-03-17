@@ -3,6 +3,9 @@
 from corpustools.gui.corpusgui import *
 from PyQt5.QtTest import QTest
 
+
+app = QApplication([])
+
 def test_add_abstract_tier(specified_test_corpus):
     dialog = AddAbstractTierDialog(None,specified_test_corpus)
 

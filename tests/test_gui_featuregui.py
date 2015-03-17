@@ -1,6 +1,9 @@
 
 from corpustools.gui.featuregui import *
 
+
+app = QApplication([])
+
 def test_feature_system_select(settings):
     widget = FeatureSystemSelect(settings, None)
 

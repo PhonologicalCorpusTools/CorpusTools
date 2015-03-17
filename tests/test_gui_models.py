@@ -1,6 +1,8 @@
 
 from corpustools.gui.models import *
 
+app = QApplication([])
+
 def test_base_corpus_model(specified_test_corpus):
     model = BaseCorpusTableModel()
 

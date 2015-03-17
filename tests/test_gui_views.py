@@ -1,6 +1,8 @@
 
 from corpustools.gui.views import *
 
+app = QApplication([])
+
 def test_discourse_view():
     widget = DiscourseView()
 

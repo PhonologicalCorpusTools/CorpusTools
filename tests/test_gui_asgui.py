@@ -1,7 +1,7 @@
 
 from corpustools.gui.asgui import *
 
-#app = QApplication([])
+app = QApplication([])
 
-#def test_asgui():
-#    dialog = ASDialog(None, True)
+def test_asgui():
+    dialog = ASDialog(None, True)
