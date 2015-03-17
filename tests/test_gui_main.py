@@ -1,6 +1,6 @@
 
 from corpustools.gui.main import *
 
-def test_main_window(qtbot):
-    window = MainWindow(app)
-    qtbot.addWidget(window)
+#def test_main_window(qtbot):
+#    window = MainWindow(app)
+#    qtbot.addWidget(window)
