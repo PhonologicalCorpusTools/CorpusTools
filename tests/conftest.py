@@ -10,10 +10,10 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
                                         WordToken, Discourse)
 
-@pytest.fixture(scope='session')
-def application():
-    from corpustools.gui.imports import QApplication
-    return QApplication([])
+#@pytest.fixture(scope='session')
+#def application():
+#    from corpustools.gui.imports import QApplication
+#    return QApplication([])
 
 @pytest.fixture(scope='module')
 def settings():

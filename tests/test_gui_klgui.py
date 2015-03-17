@@ -1,7 +1,6 @@
 
 from corpustools.gui.klgui import *
 
-app = QApplication([])
-
-def test_klgui(specified_test_corpus):
+def test_klgui(qtbot, specified_test_corpus):
     dialog = KLDialog(None,specified_test_corpus, True)
+    qtbot.addWidget(dialog)

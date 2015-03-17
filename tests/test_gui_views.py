@@ -1,25 +1,30 @@
 
 from corpustools.gui.views import *
 
-app = QApplication([])
-
-def test_discourse_view():
+def test_discourse_view(qtbot):
     widget = DiscourseView()
+    qtbot.addWidget(widget)
 
-def test_lexicon_view():
+def test_lexicon_view(qtbot):
     widget = LexiconView()
+    qtbot.addWidget(widget)
 
 #def test_phono_search_results():
 #   widget = PhonoSearchResults()
+    #qtbot.addWidget(widget)
 
-def test_tree_widget():
+def test_tree_widget(qtbot):
     widget = TreeWidget()
+    qtbot.addWidget(widget)
 
-def test_table_widget():
+def test_table_widget(qtbot):
     widget = TableWidget()
+    qtbot.addWidget(widget)
 
-def test_text_view():
+def test_text_view(qtbot):
     widget = TextView()
+    qtbot.addWidget(widget)
 
-def test_variant_view():
+def test_variant_view(qtbot):
     widget = VariantView(None, {})
+    qtbot.addWidget(widget)

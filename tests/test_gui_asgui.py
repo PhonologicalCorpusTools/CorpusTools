@@ -1,9 +1,7 @@
 
 from corpustools.gui.asgui import *
 
-from PyQt5.QtTest import QTest
-
-app = QApplication([])
-
-def test_asgui():
+def test_asgui(qtbot):
     dialog = ASDialog(None, True)
+    dialog.show()
+    qtbot.addWidget(dialog)

@@ -1,7 +1,6 @@
 
 from corpustools.gui.multimedia import *
 
-app = QApplication([])
-
-def test_audio_player():
+def test_audio_player(qtbot):
     widget = AudioPlayer()
+    qtbot.addWidget(widget)
