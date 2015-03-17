@@ -2,6 +2,8 @@
 
 from corpustools.gui.helpgui import *
 
+app = QApplication([])
+
 def test_about_dialog():
     dialog = AboutDialog(None)
 
