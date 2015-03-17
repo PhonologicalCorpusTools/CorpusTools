@@ -28,8 +28,8 @@ def test_corpus_from_csv_dialog(settings):
 def test_corpus_from_text_dialog(settings):
     dialog = CorpusFromTextDialog(None,settings)
 
-def test_corpus_load_dialog():
-    dialog = CorpusLoadDialog(None)
+def test_corpus_load_dialog(settings):
+    dialog = CorpusLoadDialog(None, settings)
 
 def test_corpus_select(settings):
     widget = CorpusSelect(None, settings)

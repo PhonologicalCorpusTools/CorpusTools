@@ -21,6 +21,11 @@ def settings():
     return Settings()
 
 @pytest.fixture(scope='module')
+def spe_specifier():
+    corpus = specified_test_corpus()
+    return corpus.specifier
+
+@pytest.fixture(scope='module')
 def unspecified_test_corpus():
     corpus_data = [{'spelling':'atema','transcription':['ɑ','t','e','m','ɑ'],'frequency':11.0},
                     {'spelling':'enuta','transcription':['e','n','u','t','ɑ'],'frequency':11.0},
