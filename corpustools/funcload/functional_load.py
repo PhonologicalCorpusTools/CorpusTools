@@ -387,7 +387,7 @@ def all_pairwise_fls(corpus, relative_fl=False, algorithm='minpair', frequency_c
         If calculating relative FL, returns a dictionary of each segment and its relative (average) FL, with entries ordered by FL.
     """
     fls = {}
-    total_calculations = (len(corpus.inventory)-1)**2
+    total_calculations = ((((len(corpus.inventory)-1)**2)-len(corpus.inventory)-1)/2)+1
     ct = 1
     t = time.time()
     for i, s1 in enumerate(corpus.inventory[:-1]):
