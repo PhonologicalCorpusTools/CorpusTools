@@ -1,5 +1,6 @@
 import sys
 from itertools import combinations
+import operator
 
 from .imports import *
 
@@ -29,7 +30,7 @@ class FactorFilter(QWidget):
         QWidget.__init__(self,parent)
 
         layout = QHBoxLayout()
-        levels = attribute.range
+        levels = sorted(attribute.range)
         self.sourceWidget = ThumbListWidget(levels)
         for l in levels:
             self.sourceWidget.addItem(l)
@@ -97,14 +98,15 @@ class FactorFilter(QWidget):
             self.sourceWidget.addItem(item)
 
     def value(self):
-        items = [self.targetWidget.item(i).text() for i in range(self.targetWidget.count())]
+        items = set([self.targetWidget.item(i).text() for i in range(self.targetWidget.count())])
         return items
 
 class NumericFilter(QWidget):
     conditionalDisplay = ('equals','does not equal','greater than',
                     'greater than or equal to', 'less than',
                     'less than or equal to')
-    conditionals = ('__eq__', '__neq__', '__gt__', '__gte__', '__lt__', '__lte__')
+    conditionals = (operator.eq, operator.ne, operator.gt, operator.ge,
+                    operator.lt, operator.le)
     def __init__(self,parent=None):
 
         QWidget.__init__(self,parent)
@@ -222,9 +224,9 @@ class AttributeFilterDialog(QDialog):
                 reply = QMessageBox.critical(self,
                         "Invalid information", "Please specify a number.")
                 return
-            if (comp in ['__gt__', '__gte__'] and value > a.range[1]) or \
-                (comp in ['__lt__','__lte__'] and value < a.range[0]) or \
-                (comp in ['__eq__','__neq__'] and (value < a.range[0] or value > a.range[1])):
+            if (comp in [operator.gt, operator.ge] and value > a.range[1]) or \
+                (comp in [operator.lt,operator.le] and value < a.range[0]) or \
+                (comp in [operator.eq,operator.ne] and (value < a.range[0] or value > a.range[1])):
                 reply = QMessageBox.critical(self,
                         "Invalid information", "The value specified ({}) for column '{}' is outside its range of {}-{}.".format(value,str(a),a.range[0],a.range[1]))
                 return
@@ -1176,10 +1178,12 @@ class SegmentPairSelectWidget(QGroupBox):
             dialog.reset()
             result = dialog.exec_()
             if result:
-                for p in dialog.pairs:
-                    self.table.model().addRow(p)
+                self.addPairs(dialog.pairs)
             addOneMore = dialog.addOneMore
 
+    def addPairs(self, pairs):
+        for p in pairs:
+            self.table.model().addRow(p)
 
     def removePair(self):
         select = self.table.selectionModel()
