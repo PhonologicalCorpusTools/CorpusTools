@@ -5,7 +5,6 @@ from corpustools.gui.widgets import *
 
 from corpustools.corpus.classes.lexicon import Attribute
 
-from .conftest import specified_test_corpus
 from PyQt5.QtTest import QTest
 
 app = QApplication(sys.argv)
