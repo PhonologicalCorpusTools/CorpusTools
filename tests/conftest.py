@@ -15,10 +15,6 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
 #    from corpustools.gui.imports import QApplication
 #    return QApplication([])
 
-from corpustools.gui.imports import QApplication
-
-app = QApplication([])
-
 @pytest.fixture(scope='module')
 def settings():
     from corpustools.gui.config import Settings
