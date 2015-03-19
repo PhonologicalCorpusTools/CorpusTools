@@ -15,10 +15,10 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
 #    return QApplication([])
 
 
-#@pytest.fixture(scope='session')
-#def settings():
-#    from corpustools.gui.config import Settings
-#    return Settings()
+@pytest.fixture(scope='session')
+def settings():
+    from corpustools.gui.config import Settings
+    return Settings()
 
 @pytest.fixture(scope='module')
 def spe_specifier():
