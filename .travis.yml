@@ -58,10 +58,10 @@ install:
   - make
   - sudo make install
   - popd
-  #- git clone https://github.com/mmcauliffe/pytest-qt.git
-  #- pushd pytest-qt
-  #- python setup.py install
-  #- popd
+  - git clone https://github.com/mmcauliffe/pytest-qt.git
+  - pushd pytest-qt
+  - python setup.py install
+  - popd
   # Builds Complete
   - popd
   # Coverage packages are on my binstar channel

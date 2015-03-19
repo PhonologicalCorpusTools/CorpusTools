@@ -1,390 +1,405 @@
 
-import unittest
-from collections import OrderedDict
+#import unittest
+#from collections import OrderedDict
 from corpustools.gui.widgets import *
 
-from corpustools.corpus.classes.lexicon import Attribute
+#from corpustools.corpus.classes.lexicon import Attribute
 
-app = QApplication([])
+#app = QApplication([])
 
-def test_directory_widget():
-    widget = DirectoryWidget()
 
-    widget.setPath('test')
+def test_basics(qtbot):
+    """
+    Basic test that works more like a sanity check to ensure we are setting up a QApplication
+    properly and are able to display a simple event_recorder.
+    """
+    assert isinstance(qtbot._app, QApplication)
+    widget = QWidget()
+    qtbot.addWidget(widget)
+    widget.setWindowTitle('W1')
+    widget.show()
 
-    assert(widget.value() == 'test')
+    assert widget.isVisible()
+    assert widget.windowTitle() == 'W1'
 
-def test_punctuation_widget():
-    widget = PunctuationWidget(['.',',','-'])
+#def test_directory_widget():
+    #widget = DirectoryWidget()
 
-    # Test value
+    #widget.setPath('test')
 
-    bs = widget.btnGroup.buttons()
-    bs[0].setChecked(True)
+    #assert(widget.value() == 'test')
 
-    assert(widget.value() == ['.'])
+#def test_punctuation_widget():
+    #widget = PunctuationWidget(['.',',','-'])
 
-    # Test check all
+    ## Test value
 
-    widget.checkAll.clicked.emit()
+    #bs = widget.btnGroup.buttons()
+    #bs[0].setChecked(True)
 
-    assert(widget.value() == ['.',',','-'])
+    #assert(widget.value() == ['.'])
 
-    # Test uncheck all
+    ## Test check all
 
-    widget.uncheckAll.clicked.emit()
+    #widget.checkAll.clicked.emit()
 
-    assert(widget.value() == [])
+    #assert(widget.value() == ['.',',','-'])
 
-def test_tier_widget(specified_test_corpus):
-    # Test with spelling
-    widget = TierWidget(specified_test_corpus, include_spelling = True)
+    ## Test uncheck all
 
+    #widget.uncheckAll.clicked.emit()
 
-    widget.tierSelect.setCurrentIndex(0)
+    #assert(widget.value() == [])
 
-    assert(widget.value() == 'spelling')
-    assert(widget.displayValue() == 'Spelling')
+#def test_tier_widget(specified_test_corpus):
+    ## Test with spelling
+    #widget = TierWidget(specified_test_corpus, include_spelling = True)
 
-    widget.tierSelect.setCurrentIndex(1)
 
-    assert(widget.value() == 'transcription')
-    assert(widget.displayValue() == 'Transcription')
+    #widget.tierSelect.setCurrentIndex(0)
 
-    #Test disable spelling
+    #assert(widget.value() == 'spelling')
+    #assert(widget.displayValue() == 'Spelling')
 
-    widget.setSpellingEnabled(False)
+    #widget.tierSelect.setCurrentIndex(1)
 
-    widget.tierSelect.setCurrentIndex(0)
+    #assert(widget.value() == 'transcription')
+    #assert(widget.displayValue() == 'Transcription')
 
-    assert(widget.value() == 'transcription')
-    assert(widget.displayValue() == 'Transcription')
+    ##Test disable spelling
 
-    # Test without spelling
-    widget = TierWidget(specified_test_corpus, include_spelling = False)
+    #widget.setSpellingEnabled(False)
 
+    #widget.tierSelect.setCurrentIndex(0)
 
-    widget.tierSelect.setCurrentIndex(0)
+    #assert(widget.value() == 'transcription')
+    #assert(widget.displayValue() == 'Transcription')
 
-    assert(widget.value() == 'transcription')
-    assert(widget.displayValue() == 'Transcription')
+    ## Test without spelling
+    #widget = TierWidget(specified_test_corpus, include_spelling = False)
 
-def test_radio_select_widget():
-    widget = RadioSelectWidget('', OrderedDict([('Option 1', 'option1'),('Option 2', 'option2')]))
-    widget.initialClick()
 
-    assert(widget.value() == 'option1')
-    assert(widget.displayValue() == 'Option 1')
+    #widget.tierSelect.setCurrentIndex(0)
 
-    widget.disable()
-    assert(not widget.widgets[0].isEnabled())
+    #assert(widget.value() == 'transcription')
+    #assert(widget.displayValue() == 'Transcription')
 
-    widget.enable()
-    assert(widget.widgets[0].isEnabled())
+#def test_radio_select_widget():
+    #widget = RadioSelectWidget('', OrderedDict([('Option 1', 'option1'),('Option 2', 'option2')]))
+    #widget.initialClick()
 
+    #assert(widget.value() == 'option1')
+    #assert(widget.displayValue() == 'Option 1')
 
-def test_inventory_box(specified_test_corpus):
-    widget = InventoryBox('Inventory', specified_test_corpus.inventory)
+    #widget.disable()
+    #assert(not widget.widgets[0].isEnabled())
 
-    widget.setExclusive(True)
-    bs = widget.btnGroup.buttons()
-    for b in bs:
-        b.setChecked(True)
-    assert(widget.value() == bs[-1].text())
+    #widget.enable()
+    #assert(widget.widgets[0].isEnabled())
 
-    widget.clearAll()
 
-    assert(widget.value() == '')
+#def test_inventory_box(specified_test_corpus):
+    #widget = InventoryBox('Inventory', specified_test_corpus.inventory)
 
-    widget.setExclusive(False)
-    assert(widget.value() == [])
-    for b in widget.btnGroup.buttons():
-        b.setChecked(True)
+    #widget.setExclusive(True)
+    #bs = widget.btnGroup.buttons()
+    #for b in bs:
+        #b.setChecked(True)
+    #assert(widget.value() == bs[-1].text())
 
-    assert(set(widget.value()) == set([ x.symbol for x in specified_test_corpus.inventory]))
+    #widget.clearAll()
 
-def test_transcription_widget(specified_test_corpus):
-    widget = TranscriptionWidget('Transcription', specified_test_corpus.inventory)
+    #assert(widget.value() == '')
 
-    widget.setText('test')
+    #widget.setExclusive(False)
+    #assert(widget.value() == [])
+    #for b in widget.btnGroup.buttons():
+        #b.setChecked(True)
 
-    assert(widget.text(), 'test')
+    #assert(set(widget.value()) == set([ x.symbol for x in specified_test_corpus.inventory]))
 
-    widget.setText('')
-    expected = []
-    for b in widget.segments.btnGroup.buttons():
-        b.clicked.emit()
-        expected.append(b.text())
+#def test_transcription_widget(specified_test_corpus):
+    #widget = TranscriptionWidget('Transcription', specified_test_corpus.inventory)
 
+    #widget.setText('test')
 
-    assert(widget.text() == '.'.join(expected))
+    #assert(widget.text(), 'test')
 
-def test_feature_box(specified_test_corpus):
-    widget = FeatureBox('Transcription', specified_test_corpus.inventory)
+    #widget.setText('')
+    #expected = []
+    #for b in widget.segments.btnGroup.buttons():
+        #b.clicked.emit()
+        #expected.append(b.text())
 
-    # Test basic init
 
-    assert(set(widget.features) == set(['EXTRA','LONG','ant','back','cont','cor',
-                'del_rel','distr','glot_cl','hi_subgl_pr','high',
-                'lat','low','mv_glot_cl','nasal','round','son',
-                'strid','tense','voc','voice']))
+    #assert(widget.text() == '.'.join(expected))
 
-    assert(set(widget.values) == set(['n','+','-','.']))
+#def test_feature_box(specified_test_corpus):
+    #widget = FeatureBox('Transcription', specified_test_corpus.inventory)
 
-    f, v = widget.features[0], widget.values[0]
-    f2, v2 = widget.features[1], widget.values[1]
+    ## Test basic init
 
-    # Test default return value
+    #assert(set(widget.features) == set(['EXTRA','LONG','ant','back','cont','cor',
+                #'del_rel','distr','glot_cl','hi_subgl_pr','high',
+                #'lat','low','mv_glot_cl','nasal','round','son',
+                #'strid','tense','voc','voice']))
 
-    assert(widget.value() == '')
+    #assert(set(widget.values) == set(['n','+','-','.']))
 
-    # Test no action when no features selected
+    #f, v = widget.features[0], widget.values[0]
+    #f2, v2 = widget.features[1], widget.values[1]
 
-    b = widget.buttons[0]
-    b.clicked.emit()
-    assert(widget.value() == '')
+    ## Test default return value
 
-    # Test single feature selected
+    #assert(widget.value() == '')
 
-    widget.featureList.setCurrentRow(0)
-    b.clicked.emit()
-    assert(widget.value() == '[{}{}]'.format(v,f))
+    ## Test no action when no features selected
 
-    # Test multiple features selected
+    #b = widget.buttons[0]
+    #b.clicked.emit()
+    #assert(widget.value() == '')
 
-    widget.featureList.setCurrentRow(1)
-    b2 = widget.buttons[1]
-    b2.clicked.emit()
-    assert(widget.value() == '[{}{},{}{}]'.format(v,f,v2,f2))
+    ## Test single feature selected
 
-    # Test to ensure values are unique
+    #widget.featureList.setCurrentRow(0)
+    #b.clicked.emit()
+    #assert(widget.value() == '[{}{}]'.format(v,f))
 
-    b2.clicked.emit()
-    assert(widget.value() == '[{}{},{}{}]'.format(v,f,v2,f2))
+    ## Test multiple features selected
 
-    # Test clear all
+    #widget.featureList.setCurrentRow(1)
+    #b2 = widget.buttons[1]
+    #b2.clicked.emit()
+    #assert(widget.value() == '[{}{},{}{}]'.format(v,f,v2,f2))
 
-    widget.clearButton.clicked.emit()
-    assert(widget.value() == '')
+    ## Test to ensure values are unique
 
-    widget.featureList.setCurrentRow(0)
-    b.clicked.emit()
+    #b2.clicked.emit()
+    #assert(widget.value() == '[{}{},{}{}]'.format(v,f,v2,f2))
 
-    widget.featureList.setCurrentRow(1)
-    b2.clicked.emit()
+    ## Test clear all
 
-    widget.envList.setCurrentRow(0)
-    widget.clearOneButton.clicked.emit()
-    assert(widget.value() == '[{}{}]'.format(v2,f2))
+    #widget.clearButton.clicked.emit()
+    #assert(widget.value() == '')
 
-def test_digraph_dialog():
-    dialog = DigraphDialog(['a','b','c'])
+    #widget.featureList.setCurrentRow(0)
+    #b.clicked.emit()
 
-    # Test init
+    #widget.featureList.setCurrentRow(1)
+    #b2.clicked.emit()
 
-    b = dialog.buttons[0]
-    assert(b.text() == 'a')
+    #widget.envList.setCurrentRow(0)
+    #widget.clearOneButton.clicked.emit()
+    #assert(widget.value() == '[{}{}]'.format(v2,f2))
 
-    # Test character adding
+#def test_digraph_dialog():
+    #dialog = DigraphDialog(['a','b','c'])
 
-    b.clicked.emit()
-    assert(dialog.value() == 'a')
+    ## Test init
 
-    # Test duplicates okay
+    #b = dialog.buttons[0]
+    #assert(b.text() == 'a')
 
-    b.clicked.emit()
-    assert(dialog.value() == 'aa')
+    ## Test character adding
 
-def test_segment_pair_widget(specified_test_corpus):
-    widget = SegmentPairSelectWidget(specified_test_corpus.inventory)
+    #b.clicked.emit()
+    #assert(dialog.value() == 'a')
 
-    assert(widget.value() == [])
+    ## Test duplicates okay
 
-    widget.addPairs([('a','b')])
-    assert(widget.value() == [('a','b')])
+    #b.clicked.emit()
+    #assert(dialog.value() == 'aa')
 
-    widget.removePair()
-    assert(widget.value() == [('a','b')])
+#def test_segment_pair_widget(specified_test_corpus):
+    #widget = SegmentPairSelectWidget(specified_test_corpus.inventory)
 
-    index = widget.table.model().createIndex(0,2)
-    widget.table.itemDelegate(index).click(index)
-    assert(widget.value() == [('b','a')])
+    #assert(widget.value() == [])
 
-    widget.table.selectionModel().select(
-                widget.table.model().createIndex(0,0),
-                QItemSelectionModel.Select|QItemSelectionModel.Rows)
+    #widget.addPairs([('a','b')])
+    #assert(widget.value() == [('a','b')])
 
-    widget.removePair()
-    assert(widget.value() == [])
+    #widget.removePair()
+    #assert(widget.value() == [('a','b')])
 
+    #index = widget.table.model().createIndex(0,2)
+    #widget.table.itemDelegate(index).click(index)
+    #assert(widget.value() == [('b','a')])
 
-def test_environment_select_widget(specified_test_corpus):
-    widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
+    #widget.table.selectionModel().select(
+                #widget.table.model().createIndex(0,0),
+                #QItemSelectionModel.Select|QItemSelectionModel.Rows)
 
-    assert(widget.value() == [])
+    #widget.removePair()
+    #assert(widget.value() == [])
 
-    widget.table.model().addRow(['_a'])
 
-    assert(widget.value() == ['_a'])
+#def test_environment_select_widget(specified_test_corpus):
+    #widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
 
-    widget.table.selectionModel().select(
-                widget.table.model().createIndex(0,0),
-                QItemSelectionModel.Select|QItemSelectionModel.Rows)
+    #assert(widget.value() == [])
 
-    widget.removeEnv()
+    #widget.table.model().addRow(['_a'])
 
-    assert(widget.value() == [])
+    #assert(widget.value() == ['_a'])
 
-def test_environment_dialog(specified_test_corpus, unspecified_test_corpus):
-    # Test with features
-    widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
-    dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
+    #widget.table.selectionModel().select(
+                #widget.table.model().createIndex(0,0),
+                #QItemSelectionModel.Select|QItemSelectionModel.Rows)
 
-    assert(dialog.lhsEnvType.count() == 2)
-    assert(dialog.rhsEnvType.count() == 2)
+    #widget.removeEnv()
 
-    assert(isinstance(dialog.lhs, InventoryBox))
-    dialog.lhsEnvType.setCurrentIndex(1)
-    assert(isinstance(dialog.lhs, FeatureBox))
+    #assert(widget.value() == [])
 
-    assert(isinstance(dialog.rhs, InventoryBox))
-    dialog.rhsEnvType.setCurrentIndex(1)
-    assert(isinstance(dialog.rhs, FeatureBox))
+#def test_environment_dialog(specified_test_corpus, unspecified_test_corpus):
+    ## Test with features
+    #widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
+    #dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
 
-    f, v = dialog.rhs.features[0], dialog.rhs.values[0]
-    dialog.rhs.featureList.setCurrentRow(0)
-    b = dialog.rhs.buttons[0]
-    b.clicked.emit()
+    #assert(dialog.lhsEnvType.count() == 2)
+    #assert(dialog.rhsEnvType.count() == 2)
 
-    dialog.accept()
-    assert(dialog.env == '_[{}{}]'.format(v,f))
+    #assert(isinstance(dialog.lhs, InventoryBox))
+    #dialog.lhsEnvType.setCurrentIndex(1)
+    #assert(isinstance(dialog.lhs, FeatureBox))
 
-    # Test without features
-    widget = EnvironmentSelectWidget(unspecified_test_corpus.inventory)
-    dialog = EnvironmentDialog(unspecified_test_corpus.inventory, widget)
+    #assert(isinstance(dialog.rhs, InventoryBox))
+    #dialog.rhsEnvType.setCurrentIndex(1)
+    #assert(isinstance(dialog.rhs, FeatureBox))
 
-    assert(dialog.lhsEnvType.count() == 1)
-    assert(dialog.rhsEnvType.count() == 1)
+    #f, v = dialog.rhs.features[0], dialog.rhs.values[0]
+    #dialog.rhs.featureList.setCurrentRow(0)
+    #b = dialog.rhs.buttons[0]
+    #b.clicked.emit()
 
-    b = dialog.lhs.btnGroup.buttons()[0]
-    b.setChecked(True)
+    #dialog.accept()
+    #assert(dialog.env == '_[{}{}]'.format(v,f))
 
-    dialog.accept()
-    assert(dialog.env == '{}_'.format(b.text()))
+    ## Test without features
+    #widget = EnvironmentSelectWidget(unspecified_test_corpus.inventory)
+    #dialog = EnvironmentDialog(unspecified_test_corpus.inventory, widget)
 
-def test_bigram_dialog(specified_test_corpus, unspecified_test_corpus):
+    #assert(dialog.lhsEnvType.count() == 1)
+    #assert(dialog.rhsEnvType.count() == 1)
 
-    # Test without features
-    widget = BigramWidget(specified_test_corpus.inventory)
-    dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
+    #b = dialog.lhs.btnGroup.buttons()[0]
+    #b.setChecked(True)
 
-    b1 = dialog.lhs.btnGroup.buttons()[0]
-    b1.setChecked(True)
-    b2 = dialog.rhs.btnGroup.buttons()[0]
-    b2.setChecked(True)
+    #dialog.accept()
+    #assert(dialog.env == '{}_'.format(b.text()))
 
-    dialog.accept()
-    assert(dialog.env == '{}{}'.format(b1.text(),b2.text()))
+#def test_bigram_dialog(specified_test_corpus, unspecified_test_corpus):
 
-def test_bigram_widget(specified_test_corpus):
-    widget = BigramWidget(specified_test_corpus.inventory)
+    ## Test without features
+    #widget = BigramWidget(specified_test_corpus.inventory)
+    #dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
 
-    assert(widget.value() == [])
+    #b1 = dialog.lhs.btnGroup.buttons()[0]
+    #b1.setChecked(True)
+    #b2 = dialog.rhs.btnGroup.buttons()[0]
+    #b2.setChecked(True)
 
-    widget.table.model().addRow(['_a'])
+    #dialog.accept()
+    #assert(dialog.env == '{}{}'.format(b1.text(),b2.text()))
 
-    assert(widget.value() == ['_a'])
+#def test_bigram_widget(specified_test_corpus):
+    #widget = BigramWidget(specified_test_corpus.inventory)
 
-    widget.table.selectionModel().select(
-                widget.table.model().createIndex(0,0),
-                QItemSelectionModel.Select|QItemSelectionModel.Rows)
+    #assert(widget.value() == [])
 
-    widget.removeEnv()
+    #widget.table.model().addRow(['_a'])
 
-    assert(widget.value() == [])
+    #assert(widget.value() == ['_a'])
 
-def test_segfeat_select(specified_test_corpus, unspecified_test_corpus):
-    widget = SegFeatSelect(specified_test_corpus,'')
+    #widget.table.selectionModel().select(
+                #widget.table.model().createIndex(0,0),
+                #QItemSelectionModel.Select|QItemSelectionModel.Rows)
 
-    assert(widget.typeSelect.count() == 2)
+    #widget.removeEnv()
 
-    assert(isinstance(widget.sel, InventoryBox))
-    widget.typeSelect.setCurrentIndex(1)
-    assert(isinstance(widget.sel, FeatureBox))
+    #assert(widget.value() == [])
 
-    widget.sel.envList.addItem('+voc')
+#def test_segfeat_select(specified_test_corpus, unspecified_test_corpus):
+    #widget = SegFeatSelect(specified_test_corpus,'')
 
-    assert(widget.value() == '[+voc]')
+    #assert(widget.typeSelect.count() == 2)
 
-    assert(set(widget.segments()) == set(['ɑ','e','i','u','o']))
+    #assert(isinstance(widget.sel, InventoryBox))
+    #widget.typeSelect.setCurrentIndex(1)
+    #assert(isinstance(widget.sel, FeatureBox))
 
-    widget = SegFeatSelect(unspecified_test_corpus,'')
+    #widget.sel.envList.addItem('+voc')
 
-    assert(widget.typeSelect.count() == 1)
+    #assert(widget.value() == '[+voc]')
 
-    b = widget.sel.btnGroup.buttons()[0]
-    b.setChecked(True)
+    #assert(set(widget.segments()) == set(['ɑ','e','i','u','o']))
 
-    assert(widget.value() == [b.text()])
+    #widget = SegFeatSelect(unspecified_test_corpus,'')
 
-    assert(widget.segments() == [b.text()])
+    #assert(widget.typeSelect.count() == 1)
 
-def test_factor_filter():
-    a = Attribute('name','factor','name')
-    a.update_range('a')
-    a.update_range('b')
+    #b = widget.sel.btnGroup.buttons()[0]
+    #b.setChecked(True)
 
-    widget = FactorFilter(a)
+    #assert(widget.value() == [b.text()])
 
-    assert(widget.value() == set())
+    #assert(widget.segments() == [b.text()])
 
-    assert(widget.sourceWidget.item(0).text() == 'a')
-    widget.sourceWidget.setCurrentRow(0)
-    widget.addOneButton.clicked.emit()
+#def test_factor_filter():
+    #a = Attribute('name','factor','name')
+    #a.update_range('a')
+    #a.update_range('b')
 
-    assert(widget.sourceWidget.item(0).text() == 'b')
-    assert(widget.targetWidget.item(0).text() == 'a')
-    assert(widget.value() == set(['a']))
+    #widget = FactorFilter(a)
 
-    widget.clearAllButton.clicked.emit()
-    assert(widget.sourceWidget.item(1).text() == 'a')
-    assert(widget.targetWidget.count() == 0)
-    assert(widget.sourceWidget.count() == 2)
-    assert(widget.value() == set())
+    #assert(widget.value() == set())
 
-    widget.addAllButton.clicked.emit()
-    assert(widget.sourceWidget.count() == 0)
-    assert(widget.targetWidget.count() == 2)
-    assert(widget.targetWidget.item(0).text() == 'b')
-    assert(widget.targetWidget.item(1).text() == 'a')
-    assert(widget.value() == set(['a','b']))
+    #assert(widget.sourceWidget.item(0).text() == 'a')
+    #widget.sourceWidget.setCurrentRow(0)
+    #widget.addOneButton.clicked.emit()
 
-    widget.targetWidget.setCurrentRow(0)
+    #assert(widget.sourceWidget.item(0).text() == 'b')
+    #assert(widget.targetWidget.item(0).text() == 'a')
+    #assert(widget.value() == set(['a']))
 
-    widget.clearOneButton.clicked.emit()
-    assert(widget.sourceWidget.count() == 1)
-    assert(widget.targetWidget.count() == 1)
-    assert(widget.sourceWidget.item(0).text() == 'b')
-    assert(widget.targetWidget.item(0).text() == 'a')
-    assert(widget.value() == set(['a']))
+    #widget.clearAllButton.clicked.emit()
+    #assert(widget.sourceWidget.item(1).text() == 'a')
+    #assert(widget.targetWidget.count() == 0)
+    #assert(widget.sourceWidget.count() == 2)
+    #assert(widget.value() == set())
 
-def test_numeric_filter():
-    a = Attribute('name','numeric','name')
-    a.update_range(0)
-    a.update_range(100)
-    widget = NumericFilter()
+    #widget.addAllButton.clicked.emit()
+    #assert(widget.sourceWidget.count() == 0)
+    #assert(widget.targetWidget.count() == 2)
+    #assert(widget.targetWidget.item(0).text() == 'b')
+    #assert(widget.targetWidget.item(1).text() == 'a')
+    #assert(widget.value() == set(['a','b']))
 
-    widget.valueEdit.setText('50')
-    assert(widget.value() == (widget.conditionals[0],'50'))
+    #widget.targetWidget.setCurrentRow(0)
 
-def test_attribute_filter_dialog(unspecified_test_corpus):
-    widget = AttributeFilterWidget(unspecified_test_corpus)
-    dialog = AttributeFilterDialog(unspecified_test_corpus.attributes,widget)
+    #widget.clearOneButton.clicked.emit()
+    #assert(widget.sourceWidget.count() == 1)
+    #assert(widget.targetWidget.count() == 1)
+    #assert(widget.sourceWidget.item(0).text() == 'b')
+    #assert(widget.targetWidget.item(0).text() == 'a')
+    #assert(widget.value() == set(['a']))
 
-    assert(isinstance(dialog.filterWidget, NumericFilter))
+#def test_numeric_filter():
+    #a = Attribute('name','numeric','name')
+    #a.update_range(0)
+    #a.update_range(100)
+    #widget = NumericFilter()
 
-    dialog.filterWidget.valueEdit.setText('50')
-    dialog.accept()
-    assert(dialog.filter == (unspecified_test_corpus.attributes[2],operator.eq,50))
+    #widget.valueEdit.setText('50')
+    #assert(widget.value() == (widget.conditionals[0],'50'))
+
+#def test_attribute_filter_dialog(unspecified_test_corpus):
+    #widget = AttributeFilterWidget(unspecified_test_corpus)
+    #dialog = AttributeFilterDialog(unspecified_test_corpus.attributes,widget)
+
+    #assert(isinstance(dialog.filterWidget, NumericFilter))
+
+    #dialog.filterWidget.valueEdit.setText('50')
+    #dialog.accept()
+    #assert(dialog.filter == (unspecified_test_corpus.attributes[2],operator.eq,50))
 
 
