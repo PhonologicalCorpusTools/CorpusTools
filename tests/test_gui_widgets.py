@@ -7,6 +7,7 @@ from corpustools.corpus.classes.lexicon import Attribute
 
 
 def test_directory_widget(qtbot):
+    assert(isinstance(qtbot._app, QApplication))
     widget = DirectoryWidget()
     qtbot.addWidget(widget)
 
