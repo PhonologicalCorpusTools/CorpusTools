@@ -1,0 +1,18 @@
+[run]
+source = corpustools
+omit =
+    *_rc.py
+    *_ui.py
+
+[report]
+exclude_lines =
+    if __name__ == .__main__.:
+
+    raise AssertionError
+    raise NotImplementedError
+    pass
+
+    if sys.platform
+    if hasattr\(sys, 'frozen'\):
+
+    except ImportError:
