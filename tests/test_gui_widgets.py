@@ -5,8 +5,9 @@ from corpustools.gui.widgets import *
 
 from corpustools.corpus.classes.lexicon import Attribute
 
+app = QApplication([])
 
-def test_directory_widget(app):
+def test_directory_widget():
     widget = DirectoryWidget()
 
     widget.setPath('test')
