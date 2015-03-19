@@ -641,21 +641,31 @@ class Word(object):
         self.wordtokens = list()
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
-            key = key.lower()
-            if key in self._freq_names:
-                key = 'frequency'
-            if isinstance(value,list):
-                #assume transcription type stuff
-                value = Transcription(value)
-            elif key != 'spelling':
-                try:
-                    f = float(value)
-                    if not math.isnan(f) and not math.isinf(f):
-                        value = f
-                except (ValueError, TypeError):
-                    pass
-            if key not in self.descriptors:
-                self.descriptors.append(key)
+            if isinstance(value, tuple):
+                att, value = value
+                if att.att_type == 'numeric':
+                    try:
+                        value = float(value)
+                    except (ValueError, TypeError):
+                        value = float('nan')
+                elif att.att_type == 'tier':
+                    value = Transcription(value)
+            else:
+                key = key.lower()
+                if key in self._freq_names:
+                    key = 'frequency'
+                if isinstance(value,list):
+                    #assume transcription type stuff
+                    value = Transcription(value)
+                elif key != 'spelling':
+                    try:
+                        f = float(value)
+                        if not math.isnan(f) and not math.isinf(f):
+                            value = f
+                    except (ValueError, TypeError):
+                        pass
+                if key not in self.descriptors:
+                    self.descriptors.append(key)
             setattr(self,key, value)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
@@ -987,10 +997,33 @@ class Attribute(object):
                 self._default_value = ''
         elif self.att_type == 'tier':
             self._range = set()
+            self._delim = None
             if default_value is not None and isinstance(default_value,Transcription):
                 self._default_value = default_value
             else:
                 self._default_value = Transcription(None)
+
+    @staticmethod
+    def guess_type(values, trans_delimiters = None):
+        if trans_delimiters is None:
+            trans_delimiters = ['.',' ', ';', ',']
+        probable_values = {x: 0 for x in Attribute.ATT_TYPES}
+        for i,v in enumerate(values):
+            try:
+                t = float(v)
+                probable_values['numeric'] += 1
+                continue
+            except ValueError:
+                for d in trans_delimiters:
+                    if d in v:
+                        probable_values['tier'] += 1
+                        break
+                else:
+                    if v in [v2 for j,v2 in enumerate(values) if i != j]:
+                        probable_values['factor'] += 1
+                    else:
+                        probable_values['spelling'] += 1
+        return max(probable_values.items(), key=operator.itemgetter(1))[0]
 
     @staticmethod
     def sanitize_name(name):
