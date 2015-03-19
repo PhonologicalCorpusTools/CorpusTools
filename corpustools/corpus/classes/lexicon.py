@@ -975,7 +975,10 @@ class Attribute(object):
                 self._default_value = default_value
             else:
                 self._default_value = ''
-            self._range = set([default_value])
+            if default_value:
+                self._range = set([default_value])
+            else:
+                self._range = set()
         elif self.att_type == 'spelling':
             self._range = None
             if default_value is not None and isinstance(default_value,str):
@@ -1296,7 +1299,7 @@ class Corpus(object):
         for word in self:
             for f in filters:
                 if f[0].att_type == 'numeric':
-                    op = getattr(operator,f[1])
+                    op = f[1]
                     if not op(getattr(word,f[0].name), f[2]):
                         break
                 elif f[0].att_type == 'factor':

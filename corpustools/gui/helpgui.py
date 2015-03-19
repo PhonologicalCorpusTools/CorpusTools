@@ -54,7 +54,7 @@ class HelpDialog(QDialog):
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
-        self.help_url = 'http://kchall.github.io/CorpusTools/documentation/'
+        self.help_url = 'http://corpustools.readthedocs.org/en/latest/'
         use_local = os.path.exists(self.help_dir)
 
         layout = QVBoxLayout()

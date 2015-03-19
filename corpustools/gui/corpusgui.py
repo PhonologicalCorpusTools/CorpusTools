@@ -189,10 +189,10 @@ class SubsetCorpusDialog(QDialog):
         QDialog.accept(self)
 
 class CorpusLoadDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent,settings):
         QDialog.__init__(self, parent)
         self.corpus = None
-
+        self.settings = settings
         layout = QVBoxLayout()
         formLayout = QHBoxLayout()
         listFrame = QGroupBox('Available corpora')
@@ -269,7 +269,7 @@ class CorpusLoadDialog(QDialog):
         if selected:
             self.thread.setParams({
                 'path':corpus_name_to_path(
-                            self.parent().settings['storage'],selected[0])})
+                            self.settings['storage'],selected[0])})
 
             self.thread.start()
 
@@ -280,24 +280,24 @@ class CorpusLoadDialog(QDialog):
                 QDialog.accept(self)
 
     def openDownloadWindow(self):
-        dialog = DownloadCorpusDialog(self, self.parent().settings)
+        dialog = DownloadCorpusDialog(self, self.settings)
         result = dialog.exec_()
         if result:
             self.getAvailableCorpora()
 
     def openCsvWindow(self):
-        dialog = CorpusFromCsvDialog(self, self.parent().settings)
+        dialog = CorpusFromCsvDialog(self, self.settings)
         result = dialog.exec_()
         if result:
             self.getAvailableCorpora()
 
     def importSpontaneousWindow(self):
-        dialog = SpontaneousSpeechDialog(self, self.parent().settings)
+        dialog = SpontaneousSpeechDialog(self, self.settings)
         if dialog.exec_():
             self.getAvailableCorpora()
 
     def openTextWindow(self):
-        dialog = CorpusFromTextDialog(self, self.parent().settings)
+        dialog = CorpusFromTextDialog(self, self.settings)
         if dialog.exec_():
             self.getAvailableCorpora()
 
@@ -309,12 +309,12 @@ class CorpusLoadDialog(QDialog):
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
-        os.remove(corpus_name_to_path(self.parent().settings['storage'],corpus))
+        os.remove(corpus_name_to_path(self.settings['storage'],corpus))
         self.getAvailableCorpora()
 
     def getAvailableCorpora(self):
         self.corporaList.clear()
-        corpora = get_corpora_list(self.parent().settings['storage'])
+        corpora = get_corpora_list(self.settings['storage'])
         for c in corpora:
             self.corporaList.addItem(c)
 

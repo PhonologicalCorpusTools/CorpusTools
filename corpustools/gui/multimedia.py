@@ -6,10 +6,11 @@ class AudioPlayer(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self,parent)
         layout = QHBoxLayout()
-        self.player = QMediaPlayer()
-        self.player.setNotifyInterval(10)
-        self.player.positionChanged.connect(self.checkEnd)
-        self.player.positionChanged.connect(self.positionChanged)
+        if AUDIO_ENABLED:
+            self.player = QMediaPlayer()
+            self.player.setNotifyInterval(10)
+            self.player.positionChanged.connect(self.checkEnd)
+            self.player.positionChanged.connect(self.positionChanged)
         self.begin = -1 #in seconds
         self.end = -1
         self.duration = 0
@@ -37,6 +38,8 @@ class AudioPlayer(QWidget):
         self.player.setPosition(self.begin+milliseconds)
 
     def playStopAudio(self):
+        if not AUDIO_ENABLED:
+            return
         if self.player.mediaStatus() == QMediaPlayer.NoMedia:
             return
         if self.player.state() == QMediaPlayer.StoppedState:
@@ -65,6 +68,8 @@ class AudioPlayer(QWidget):
             self.duration = self.player.duration()
         print(self.duration)
         self.slider.setRange(0, self.duration)
+        if not AUDIO_ENABLED:
+            return
         if self.begin < 0:
             self.player.setPosition(0)
         else:
@@ -96,6 +101,8 @@ class AudioPlayer(QWidget):
         self.labelDuration.setText(tStr)
 
     def play(self):
+        if not AUDIO_ENABLED:
+            return
         self.playStopAction.setIcon(
                 self.style().standardIcon(QStyle.SP_MediaPause))
         if self.player.position() >= self.end or self.player.position() < self.begin:
@@ -103,11 +110,16 @@ class AudioPlayer(QWidget):
         self.player.play()
 
     def pause(self):
+        if not AUDIO_ENABLED:
+            return
         self.playStopAction.setIcon(
                 self.style().standardIcon(QStyle.SP_MediaPlay))
         self.player.pause()
 
     def stop(self):
+
+        if not AUDIO_ENABLED:
+            return
         self.playStopAction.setIcon(
                 self.style().standardIcon(QStyle.SP_MediaPlay))
         self.player.stop()
@@ -117,6 +129,9 @@ class AudioPlayer(QWidget):
             self.stop()
 
     def setAudioFile(self, path):
+
+        if not AUDIO_ENABLED:
+            return
         self.path = path
         url = QUrl.fromLocalFile(path)
         self.player.setMedia(QMediaContent(url))
