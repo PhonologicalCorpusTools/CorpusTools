@@ -6,7 +6,7 @@ class AudioPlayer(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self,parent)
         layout = QHBoxLayout()
-        if not AUDIO_ENABLED:
+        if AUDIO_ENABLED:
             self.player = QMediaPlayer()
             self.player.setNotifyInterval(10)
             self.player.positionChanged.connect(self.checkEnd)
