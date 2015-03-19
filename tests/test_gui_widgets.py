@@ -6,18 +6,15 @@ from corpustools.gui.widgets import *
 from corpustools.corpus.classes.lexicon import Attribute
 
 
-def test_directory_widget(qtbot):
-    assert(isinstance(qtbot._app, QApplication))
+def test_directory_widget():
     widget = DirectoryWidget()
-    qtbot.addWidget(widget)
 
     widget.setPath('test')
 
     assert(widget.value() == 'test')
 
-def test_punctuation_widget(qtbot):
+def test_punctuation_widget():
     widget = PunctuationWidget(['.',',','-'])
-    qtbot.addWidget(widget)
 
     # Test value
 
@@ -38,10 +35,10 @@ def test_punctuation_widget(qtbot):
 
     assert(widget.value() == [])
 
-def test_tier_widget(qtbot, specified_test_corpus):
+def test_tier_widget(specified_test_corpus):
     # Test with spelling
     widget = TierWidget(specified_test_corpus, include_spelling = True)
-    qtbot.addWidget(widget)
+
 
     widget.tierSelect.setCurrentIndex(0)
 
@@ -64,16 +61,15 @@ def test_tier_widget(qtbot, specified_test_corpus):
 
     # Test without spelling
     widget = TierWidget(specified_test_corpus, include_spelling = False)
-    qtbot.addWidget(widget)
+
 
     widget.tierSelect.setCurrentIndex(0)
 
     assert(widget.value() == 'transcription')
     assert(widget.displayValue() == 'Transcription')
 
-def test_radio_select_widget(qtbot):
+def test_radio_select_widget():
     widget = RadioSelectWidget('', OrderedDict([('Option 1', 'option1'),('Option 2', 'option2')]))
-    qtbot.addWidget(widget)
     widget.initialClick()
 
     assert(widget.value() == 'option1')
@@ -86,9 +82,8 @@ def test_radio_select_widget(qtbot):
     assert(widget.widgets[0].isEnabled())
 
 
-def test_inventory_box(qtbot, specified_test_corpus):
+def test_inventory_box(specified_test_corpus):
     widget = InventoryBox('Inventory', specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
 
     widget.setExclusive(True)
     bs = widget.btnGroup.buttons()
@@ -107,9 +102,8 @@ def test_inventory_box(qtbot, specified_test_corpus):
 
     assert(set(widget.value()) == set([ x.symbol for x in specified_test_corpus.inventory]))
 
-def test_transcription_widget(qtbot, specified_test_corpus):
+def test_transcription_widget(specified_test_corpus):
     widget = TranscriptionWidget('Transcription', specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
 
     widget.setText('test')
 
@@ -124,9 +118,8 @@ def test_transcription_widget(qtbot, specified_test_corpus):
 
     assert(widget.text() == '.'.join(expected))
 
-def test_feature_box(qtbot, specified_test_corpus):
+def test_feature_box(specified_test_corpus):
     widget = FeatureBox('Transcription', specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
 
     # Test basic init
 
@@ -183,9 +176,8 @@ def test_feature_box(qtbot, specified_test_corpus):
     widget.clearOneButton.clicked.emit()
     assert(widget.value() == '[{}{}]'.format(v2,f2))
 
-def test_digraph_dialog(qtbot):
+def test_digraph_dialog():
     dialog = DigraphDialog(['a','b','c'])
-    qtbot.addWidget(dialog)
 
     # Test init
 
@@ -202,9 +194,8 @@ def test_digraph_dialog(qtbot):
     b.clicked.emit()
     assert(dialog.value() == 'aa')
 
-def test_segment_pair_widget(qtbot, specified_test_corpus):
+def test_segment_pair_widget(specified_test_corpus):
     widget = SegmentPairSelectWidget(specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
 
     assert(widget.value() == [])
 
@@ -226,9 +217,8 @@ def test_segment_pair_widget(qtbot, specified_test_corpus):
     assert(widget.value() == [])
 
 
-def test_environment_select_widget(qtbot, specified_test_corpus):
+def test_environment_select_widget(specified_test_corpus):
     widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
 
     assert(widget.value() == [])
 
@@ -244,12 +234,10 @@ def test_environment_select_widget(qtbot, specified_test_corpus):
 
     assert(widget.value() == [])
 
-def test_environment_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
+def test_environment_dialog(specified_test_corpus, unspecified_test_corpus):
     # Test with features
     widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
     dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
-    qtbot.addWidget(dialog)
 
     assert(dialog.lhsEnvType.count() == 2)
     assert(dialog.rhsEnvType.count() == 2)
@@ -283,13 +271,11 @@ def test_environment_dialog(qtbot, specified_test_corpus, unspecified_test_corpu
     dialog.accept()
     assert(dialog.env == '{}_'.format(b.text()))
 
-def test_bigram_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
+def test_bigram_dialog(specified_test_corpus, unspecified_test_corpus):
 
     # Test without features
     widget = BigramWidget(specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
     dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
-    qtbot.addWidget(dialog)
 
     b1 = dialog.lhs.btnGroup.buttons()[0]
     b1.setChecked(True)
@@ -299,9 +285,8 @@ def test_bigram_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
     dialog.accept()
     assert(dialog.env == '{}{}'.format(b1.text(),b2.text()))
 
-def test_bigram_widget(qtbot, specified_test_corpus):
+def test_bigram_widget(specified_test_corpus):
     widget = BigramWidget(specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
 
     assert(widget.value() == [])
 
@@ -317,9 +302,8 @@ def test_bigram_widget(qtbot, specified_test_corpus):
 
     assert(widget.value() == [])
 
-def test_segfeat_select(qtbot, specified_test_corpus, unspecified_test_corpus):
+def test_segfeat_select(specified_test_corpus, unspecified_test_corpus):
     widget = SegFeatSelect(specified_test_corpus,'')
-    qtbot.addWidget(widget)
 
     assert(widget.typeSelect.count() == 2)
 
@@ -334,7 +318,6 @@ def test_segfeat_select(qtbot, specified_test_corpus, unspecified_test_corpus):
     assert(set(widget.segments()) == set(['ɑ','e','i','u','o']))
 
     widget = SegFeatSelect(unspecified_test_corpus,'')
-    qtbot.addWidget(widget)
 
     assert(widget.typeSelect.count() == 1)
 
@@ -345,13 +328,12 @@ def test_segfeat_select(qtbot, specified_test_corpus, unspecified_test_corpus):
 
     assert(widget.segments() == [b.text()])
 
-def test_factor_filter(qtbot):
+def test_factor_filter():
     a = Attribute('name','factor','name')
     a.update_range('a')
     a.update_range('b')
 
     widget = FactorFilter(a)
-    qtbot.addWidget(widget)
 
     assert(widget.value() == set())
 
@@ -385,21 +367,18 @@ def test_factor_filter(qtbot):
     assert(widget.targetWidget.item(0).text() == 'a')
     assert(widget.value() == set(['a']))
 
-def test_numeric_filter(qtbot):
+def test_numeric_filter():
     a = Attribute('name','numeric','name')
     a.update_range(0)
     a.update_range(100)
     widget = NumericFilter()
-    qtbot.addWidget(widget)
 
     widget.valueEdit.setText('50')
     assert(widget.value() == (widget.conditionals[0],'50'))
 
-def test_attribute_filter_dialog(qtbot, unspecified_test_corpus):
+def test_attribute_filter_dialog(unspecified_test_corpus):
     widget = AttributeFilterWidget(unspecified_test_corpus)
-    qtbot.addWidget(widget)
     dialog = AttributeFilterDialog(unspecified_test_corpus.attributes,widget)
-    qtbot.addWidget(dialog)
 
     assert(isinstance(dialog.filterWidget, NumericFilter))
 
