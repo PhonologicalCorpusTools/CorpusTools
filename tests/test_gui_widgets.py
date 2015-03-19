@@ -6,7 +6,7 @@ from corpustools.gui.widgets import *
 from corpustools.corpus.classes.lexicon import Attribute
 
 
-def test_directory_widget():
+def test_directory_widget(app):
     widget = DirectoryWidget()
 
     widget.setPath('test')

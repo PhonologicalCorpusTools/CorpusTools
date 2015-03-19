@@ -17,7 +17,21 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
 
 from corpustools.gui.imports import QApplication
 
-app = QApplication([])
+_app = None
+
+@pytest.fixture(scope="session")
+def app(request):
+    global _app
+    # always starts with default settings
+    _app = QApplication([])
+    def fin():
+        global _app
+        _app.exit()
+        del _app
+
+    # _app.win.hide()
+    request.addfinalizer(fin)
+    return _app
 
 @pytest.fixture(scope='module')
 def settings():
