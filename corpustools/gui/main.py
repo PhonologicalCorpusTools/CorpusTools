@@ -229,7 +229,7 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
-        dialog = CorpusLoadDialog(self)
+        dialog = CorpusLoadDialog(self, self.settings)
         result = dialog.exec_()
         if result:
 
@@ -279,7 +279,7 @@ class MainWindow(QMainWindow):
         #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
-        dialog = FeatureMatrixManager(self)
+        dialog = FeatureMatrixManager(self, self.settings)
         result = dialog.exec_()
 
     def subsetCorpus(self):
