@@ -774,10 +774,7 @@ class Word(object):
 
         """
         tier = getattr(self,tier_name)
-        lhs, rhs = tier.get_env(pos)
-        e = Environment(lhs, rhs)
-
-        return e
+        return tier.get_env(pos)
 
     def __repr__(self):
         return '<Word: \'%s\'>' % self.spelling

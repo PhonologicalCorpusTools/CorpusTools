@@ -4,16 +4,32 @@ import os
 import sys
 
 from corpustools.corpus.io import (download_binary, save_binary, load_binary,
-                                load_corpus_csv,load_spelling_corpus, load_transcription_corpus,
-                                export_corpus_csv, export_feature_matrix_csv,
-                                load_feature_matrix_csv,
-                                load_corpus_ilg)
+                                load_corpus_csv, export_corpus_csv,
+                                load_spelling_corpus, export_corpus_spelling,
+                                load_transcription_corpus, export_corpus_transcription,
+                                load_feature_matrix_csv, export_feature_matrix_csv,
+                                load_corpus_ilg, export_corpus_ilg)
 
 from corpustools.exceptions import DelimiterError, ILGWordMismatchError
 
-from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix)
+from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Discourse)
+
+from corpustools.utils import generate_discourse
 
 TEST_DIR = 'tests/data'
+
+def test_discourse_generate(unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    assert(isinstance(d, Discourse))
+
+def test_export_spelling(unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    export_path = os.path.join(TEST_DIR,'lexicon','test_export_spelling.txt')
+    export_corpus_spelling(d, export_path, single_line = False)
+
+    d2 = load_spelling_corpus('test', export_path, ' ', [])
+
+    assert(d2.lexicon == unspecified_test_corpus)
 
 def test_ilg_basic():
     basic_path = os.path.join(TEST_DIR,'ilg','test_basic.txt')

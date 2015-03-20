@@ -350,9 +350,9 @@ class TranscriptionTest(unittest.TestCase):
     def test_environment(self):
         cab = Transcription(self.cab)
 
-        self.assertEqual(('c','b'), cab.get_env(1))
-        self.assertEqual(('#','a'), cab.get_env(0))
-        self.assertEqual(('a','#'), cab.get_env(2))
+        self.assertEqual('c_b', str(cab.get_env(1)))
+        self.assertEqual('#_a', str(cab.get_env(0)))
+        self.assertEqual('a_#', str(cab.get_env(2)))
 
 class EnvironmentTest(unittest.TestCase):
     def setUp(self):

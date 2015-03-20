@@ -111,3 +111,16 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
     discourse.lexicon = corpus
 
     return discourse
+
+def export_corpus_spelling(discourse, path, single_line = False):
+    with open(path, encoding='utf-8', mode='w') as f:
+        count = 0
+        for i, wt in enumerate(discourse):
+            count += 1
+            f.write(wt.spelling)
+            if i != len(discourse) -1:
+                if not single_line and count <= 10:
+                    f.write(' ')
+                else:
+                    count = 0
+                    f.write('\n')

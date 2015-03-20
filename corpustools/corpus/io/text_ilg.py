@@ -102,3 +102,15 @@ def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = No
 
     return discourse
 
+def export_corpus_ilg(discourse, path, trans_delim = '.'):
+    with open(path, encoding='utf-8', mode='w') as f:
+        spellings = list()
+        transcriptions = list()
+        for wt in discourse:
+            spellings.append(wt.spelling)
+            transcriptions.append(trans_delim.join(wt.transcription))
+            if len(spellings) > 10:
+                f.write(' '.join(spellings))
+                f.write('\n')
+                f.write(' '.join(transcriptions))
+                f.write('\n')

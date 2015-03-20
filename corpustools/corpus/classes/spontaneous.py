@@ -240,6 +240,9 @@ class Discourse(object):
         """
         return sorted(self.words.keys())
 
+    def __len__(self):
+        return len(self.words.keys())
+
     def __eq__(self, other):
         if not isinstance(other,Discourse):
             return False
