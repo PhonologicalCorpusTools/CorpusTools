@@ -308,7 +308,7 @@ class Discourse(object):
     def __setstate__(self,state):
         self.__dict__.update(state)
         if hasattr(self,'lexicon'):
-            self.leixcon.has_wordtokens = True
+            self.lexicon.has_wordtokens = True
         for wt in self:
             wt.wordtype.wordtokens.append(wt)
 
