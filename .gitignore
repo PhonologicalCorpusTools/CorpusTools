@@ -16,6 +16,10 @@
 # Documentation
 docs/build/
 docs/source/generate/
+docs/source/generated/
+
+# Generated test files
+tests/data/exported/
 
 # Packages
 *.egg

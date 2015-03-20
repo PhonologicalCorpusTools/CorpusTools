@@ -77,7 +77,7 @@ def load_corpus_ilg(corpus_name, path, delimiter, ignore_list, digraph_list = No
                     word = corpus.find(spelling)
                 except KeyError:
                     word = Word(spelling = spelling,
-                                #transcription = transcription,
+                                transcription = transcription,
                                 frequency = 0)
 
                     corpus.add_word(word)
@@ -114,3 +114,11 @@ def export_corpus_ilg(discourse, path, trans_delim = '.'):
                 f.write('\n')
                 f.write(' '.join(transcriptions))
                 f.write('\n')
+                spellings = list()
+                transcriptions = list()
+        if spellings:
+            f.write(' '.join(spellings))
+            f.write('\n')
+            f.write(' '.join(transcriptions))
+            f.write('\n')
+

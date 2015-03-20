@@ -8,6 +8,8 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
                                         WordToken, Discourse)
 
+from corpustools.utils import generate_discourse
+
 @pytest.fixture(scope='module')
 def unspecified_test_corpus():
     corpus_data = [{'spelling':'atema','transcription':['ɑ','t','e','m','ɑ'],'frequency':11.0},
@@ -32,7 +34,20 @@ def unspecified_test_corpus():
 
 @pytest.fixture(scope='module')
 def specified_test_corpus():
+    fm = spe_specifier()
     corpus = unspecified_test_corpus()
+
+    corpus.set_feature_matrix(fm)
+    return corpus
+
+@pytest.fixture(scope='module')
+def unspecified_discourse_corpus():
+    c = unspecified_test_corpus()
+    d = generate_discourse(c)
+    return d
+
+@pytest.fixture(scope='module')
+def spe_specifier():
     fm_input = [{'symbol':'ɑ','EXTRA':'-','LONG':'-','ant':'-','back':'+','cont':'+','cor':'-',
                 'del_rel':'n','distr':'n','glot_cl':'-','hi_subgl_pr':'-','high':'-',
                 'lat':'n','low':'+','mv_glot_cl':'n','nasal':'-','round':'-','son':'+',
@@ -74,5 +89,12 @@ def specified_test_corpus():
                 'lat':'-','low':'-','mv_glot_cl':'n','nasal':'-','round':'-','son':'-',
                 'strid':'-','tense':'.','voc':'-','voice':'-'}]
     fm = FeatureMatrix('spe',fm_input)
-    corpus.set_feature_matrix(fm)
-    return corpus
+    return fm
+
+@pytest.fixture(scope='module')
+def specified_discourse_corpus():
+    fm = spe_specifier()
+    c = unspecified_test_corpus()
+    d = generate_discourse(c)
+    d.lexicon.set_feature_matrix(fm)
+    return d

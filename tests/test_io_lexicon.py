@@ -24,11 +24,38 @@ def test_discourse_generate(unspecified_test_corpus):
 
 def test_export_spelling(unspecified_test_corpus):
     d = generate_discourse(unspecified_test_corpus)
-    export_path = os.path.join(TEST_DIR,'lexicon','test_export_spelling.txt')
+    export_path = os.path.join(TEST_DIR,'exported','test_export_spelling.txt')
     export_corpus_spelling(d, export_path, single_line = False)
 
     d2 = load_spelling_corpus('test', export_path, ' ', [])
+    for k in unspecified_test_corpus.keys():
+        assert(d2.lexicon[k].spelling == unspecified_test_corpus[k].spelling)
+        assert(d2.lexicon[k].frequency == unspecified_test_corpus[k].frequency)
 
+def test_export_transcription(unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    export_path = os.path.join(TEST_DIR,'exported','test_export_transcription.txt')
+    export_corpus_transcription(d, export_path, single_line = False)
+
+    d2 = load_transcription_corpus('test', export_path, ' ', [], trans_delimiter='.')
+    words = sorted([x for x in unspecified_test_corpus], key = lambda x: x.transcription)
+    words2 = sorted([x for x in d2.lexicon], key = lambda x: x.transcription)
+    for i,w in enumerate(words):
+        w2 = words2[i]
+        assert(w.transcription == w2.transcription)
+        assert(w.frequency == w2.frequency)
+
+def test_export_ilg(unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    export_path = os.path.join(TEST_DIR,'exported','test_export_ilg.txt')
+    export_corpus_ilg(d, export_path)
+
+    d2 = load_corpus_ilg('test', export_path, None, [], trans_delimiter='.')
+
+    for k in unspecified_test_corpus.keys():
+        assert(d2.lexicon[k].spelling == unspecified_test_corpus[k].spelling)
+        assert(d2.lexicon[k].transcription == unspecified_test_corpus[k].transcription)
+        assert(d2.lexicon[k].frequency == unspecified_test_corpus[k].frequency)
     assert(d2.lexicon == unspecified_test_corpus)
 
 def test_ilg_basic():

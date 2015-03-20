@@ -26,8 +26,8 @@ def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        #if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
-        #    continue
+        if frequency_cutoff > 0 and w.frequency < frequency_cutoff:
+            continue
         variants = w.variants(sequence_type)
         if len(variants.keys()) == 0:
             continue
@@ -42,7 +42,6 @@ def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
         neutralized.append((w_neutr, w.spelling.lower(), getattr(w, sequence_type)))
     if stop_check is not None and stop_check():
         return
-
     minpairs = list()
     if call_back is not None:
         call_back('Counting minimal pairs...')

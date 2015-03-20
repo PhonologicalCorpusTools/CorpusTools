@@ -149,9 +149,11 @@ def export_corpus_transcription(discourse, path, trans_delim = '.', single_line 
     with open(path, encoding='utf-8', mode='w') as f:
         count = 0
         for i, wt in enumerate(discourse):
+            count += 1
             f.write(trans_delim.join(wt.transcription))
             if i != len(discourse) -1:
-                if not single_line and count > 10:
+                if not single_line and count <= 10:
                     f.write(' ')
                 else:
+                    count = 0
                     f.write('\n')
