@@ -315,7 +315,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def showFeatureSystem(self):
-        dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus)
+        dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus, self.settings)
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
             if self.corpusModel.corpus.specifier is not None:
