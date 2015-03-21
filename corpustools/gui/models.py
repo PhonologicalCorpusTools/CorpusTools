@@ -461,7 +461,6 @@ class PhonoSearchResultsModel(BaseTableModel):
         typefreq = defaultdict(float)
         tokenfreq = defaultdict(float)
         for line in self.allData:
-            print(line)
             features, line = line
             segs = line[2]
             envs = line[3]
