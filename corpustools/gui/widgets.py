@@ -978,13 +978,13 @@ class FeatureBox(QWidget):
         self.inspectInventory()
         layout = QHBoxLayout()
 
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        #layout.setSizeConstraint(QLayout.SetFixedSize)
 
         self.featureList = QListWidget()
 
         for f in self.features:
             self.featureList.addItem(f)
-        self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+10)
+        self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
         layout.addWidget(self.featureList)
 
         buttonLayout = QVBoxLayout()
@@ -1010,7 +1010,7 @@ class FeatureBox(QWidget):
         layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
 
         self.envList = QListWidget()
-        self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
+        self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+25)
         self.envList.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         layout.addWidget(self.envList)
