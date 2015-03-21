@@ -16,3 +16,8 @@ exclude_lines =
     if hasattr\(sys, 'frozen'\):
 
     except ImportError:
+
+    if call_back
+    if stop_check
+
+    def run\(self\):
