@@ -109,9 +109,8 @@ def edit_distance(word1, word2, sequence_type, max_distance = None):
             deletions = current_row[j] + 1       # than s2
             substitutions = previous_row[j] + (c1 != c2)
             current_row.append(min(insertions, deletions, substitutions))
-        if max_distance is not None and previous_row[-1] > max_distance:
-            break
         previous_row = current_row
-
+        #if max_distance is not None and previous_row[-1] > max_distance:
+        #    break
     return previous_row[-1]
 
