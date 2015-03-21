@@ -76,11 +76,15 @@ class PhonoSearchDialog(FunctionDialog):
         pslayout.addWidget(self.envWidget)
 
 
-        optionLayout = QVBoxLayout()
+        optionLayout = QFormLayout()
 
         self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        optionLayout.addWidget(self.tierWidget)
+        optionLayout.addRow(self.tierWidget)
+
+        self.longDistanceCheck = QCheckBox()
+
+        optionLayout.addRow('Allow for intervening segments', self.longDistanceCheck)
 
         optionFrame = QGroupBox('Options')
 
@@ -126,6 +130,7 @@ class PhonoSearchDialog(FunctionDialog):
             kwargs['seg_list'] = targetList
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
+        kwargs['long_distance'] = self.longDistanceCheck.isChecked()
         envs = self.envWidget.value()
         if len(envs) > 0:
             kwargs['envs'] = envs

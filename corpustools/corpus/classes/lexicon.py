@@ -845,8 +845,9 @@ class EnvironmentFilter(object):
     Environments are strings of the form "[+feature,-feature]_[+feature]"
     or "[+feature]_" or "a_b" or "_b"
     """
-    def __init__(self, corpus, env):
-
+    def __init__(self, corpus, env, long_distance = False, segment_set = None):
+        self.segment_set = segment_set
+        self.long_distance = long_distance
         #there's a problem where some feature names have underscores in them
         #so doing lhs,rhs=env.split('_') causes unpacking problems
         #this in an awakward work-around that checks to see if either side of
@@ -897,8 +898,50 @@ class EnvironmentFilter(object):
             self.rhs_string = rhs
             self.rhs = [rhs]
 
+    def apply(self, sequence):
+        results = list()
+        for i, s in enumerate(sequence):
+            if not s in self.segment_set: #Doesn't match
+                continue
+            if not self.long_distance:
+                #FIXME! Transcription.get_env should just return an Environment
+                env = Environment(*sequence.get_env(i)) #Basic local environment check
+                if env not in self:
+                    continue
+            else:
+                if self.lhs and self.lhs != '#':
+                    if i == 0: #First elements
+                        continue
+                    for j in range(i-1, -1,-1):
+                        if sequence[j] in self.lhs:
+                            break
+                    else:
+                        continue
+                if self.rhs and self.rhs != '#':
+                    if i == len(sequence) - 1:
+                        continue
+                    for j in range(i+1, len(sequence)):
+                        if sequence[j] in self.rhs:
+                            break
+                    else:
+                        continue
+            results.append((s, self))
+        return results
+
     def __str__(self):
-        return '_'.join([self.lhs_string,self.rhs_string])
+        if not self.long_distance:
+            to_join = [self.lhs_string,self.rhs_string]
+        else:
+            to_join = list()
+            if self.lhs:
+                to_join.append(self.lhs_string+'*')
+            else:
+                to_join.append('')
+            if self.rhs:
+                to_join.append('*'+self.rhs_string)
+            else:
+                to_join.append('')
+        return '_'.join(to_join)
 
     def __eq__(self, other):
         if not hasattr(other,'lhs'):
@@ -915,14 +958,15 @@ class EnvironmentFilter(object):
         return hash((self.rhs_string, self.lhs_string))
 
     def __contains__(self, item):
-        if not isinstance(item, Environment):
+        if isinstance(item, Environment):
+            if self.rhs:
+                if item.rhs not in self.rhs:
+                    return False
+            if self.lhs:
+                if item.lhs not in self.lhs:
+                    return False
+        else:
             return False
-        if self.rhs:
-            if item.rhs not in self.rhs:
-                return False
-        if self.lhs:
-            if item.lhs not in self.lhs:
-                return False
         return True
 
 class Attribute(object):
@@ -1625,6 +1669,7 @@ class Corpus(object):
         return [x for x in self._inventory.keys() if x not in self.specifier]
 
     def phonological_search(self,seg_list,envs=None, sequence_type = 'transcription',
+                            long_distance = False,
                             call_back = None, stop_check = None):
         """
         Perform a search of a corpus for segments, with the option of only
@@ -1665,7 +1710,9 @@ class Corpus(object):
             call_back(0,len(self))
             cur = 0
         if envs is not None:
-            envs = [EnvironmentFilter(self, env) for env in envs]
+            envs = [EnvironmentFilter(self, env, long_distance, seg_list) for env in envs]
+        else:
+            envs = [EnvironmentFilter(self, '#_#', True, seg_list)]
         results = list()
         for word in self:
             if stop_check is not None and stop_check():
@@ -1675,17 +1722,9 @@ class Corpus(object):
                 if cur % 20 == 0:
                     call_back(cur)
             founds = list()
-            for pos,seg in enumerate(getattr(word, sequence_type)):
-                if not seg in seg_list:
-                    continue
-                if envs is None:
-                    founds.append((seg,''))
-                    continue
-                word_env = word.get_env(pos, sequence_type)
-                for env in envs:
-                    if word_env in env:
-                        founds.append((seg,env))
-                        break
+            tier = getattr(word, sequence_type)
+            for env in envs:
+                founds.extend(env.apply(tier))
             if founds:
                 results.append((word, founds))
         return results

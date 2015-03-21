@@ -408,9 +408,18 @@ class EnvironmentFilterTest(unittest.TestCase):
         self.assertFalse(env2 in envfilt)
 
         envfilt = EnvironmentFilter(self.corpus,'[+feature1]_[+feature1]')
-        self.assertTrue(env1 in envfilt)
-        self.assertFalse(env2 in envfilt)
-        self.assertFalse(env3 in envfilt)
+        assert(env1 in envfilt)
+        assert(env2 not in envfilt)
+        assert(env3 not in envfilt)
+
+    def test_apply(self):
+        envfilt = EnvironmentFilter(self.corpus,'[-feature1]_[+feature1]',False,['a'])
+        c = self.corpus['c']
+        assert(envfilt.apply(c.transcription) == [('a',envfilt)])
+
+        envfilt = EnvironmentFilter(self.corpus,'[-feature1]_[+feature1]',True,['a'])
+        c = self.corpus['c']
+        assert(envfilt.apply(c.transcription) == [('a',envfilt)])
 
 
 def test_categories_spe(specified_test_corpus):
