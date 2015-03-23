@@ -1,7 +1,9 @@
 Phonological CorpusTools
 ========================
 
-[![Build Status](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools.svg?branch=master)](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools) [![Coverage Status](https://coveralls.io/repos/PhonologicalCorpusTools/CorpusTools/badge.svg)](https://coveralls.io/r/PhonologicalCorpusTools/CorpusTools) [![Documentation Status](https://readthedocs.org/projects/corpustools/badge/?version=latest)](https://readthedocs.org/projects/corpustools/?badge=latest)
+[![Build Status](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools.svg?branch=master)](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools?branch=master)
+[![Coverage Status](https://coveralls.io/repos/PhonologicalCorpusTools/CorpusTools/badge.svg?branch=master)](https://coveralls.io/r/PhonologicalCorpusTools/CorpusTools?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/corpustools/badge/?version=latest)](https://readthedocs.org/projects/corpustools/?badge=latest)
 
 This document contains installation instructions for Phonological CorpusTools (PCT). For a description of available functionality, please refer to the manual available on SourceForge (https://sourceforge.net/projects/phonologicalcorpustools/files/?source=navbar).
 
@@ -16,7 +18,7 @@ Download the latest version's installer from the Phonological CorpusTools page o
 
 ### Mac OS X
 
-Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge (http://sourceforge.net/projects/phonologicalcorpustools). Unzip this file to access 'pct.app' (most likely by double-clicking it). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application. 
+Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge (http://sourceforge.net/projects/phonologicalcorpustools). Unzip this file to access 'pct.app' (most likely by double-clicking it). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application.
 
 ### Linux
 
