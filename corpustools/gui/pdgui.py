@@ -1,61 +1,68 @@
-
-from .imports import *
-
 from collections import OrderedDict
 
-from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSelectWidget,TierWidget
-
+from corpustools.gui.widgets import SegmentClassSelectWidget
+from .imports import *
+from .widgets import (EnvironmentSelectWidget, EnvironmentDialog, SegmentPairSelectWidget, RadioSelectWidget, TierWidget)
 from .windows import FunctionWorker, FunctionDialog
+from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
+import itertools
 
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs, ProdError
 
 class PDWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
         self.results = list()
         if 'envs' in kwargs:
-            if kwargs['pair_behavior'] == 'individual':
-
-                for pair in kwargs['segment_pairs']:
-                    try:
-                        res = calc_prod(kwargs['corpus'], pair[0],pair[1],
-                            kwargs['envs'],
-                            kwargs['sequence_type'],
-                            kwargs['type_token'],
-                            kwargs['strict'],
-                            True,
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                    except Exception as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    if self.stopped:
-                        return
-                    self.results.append(res)
-            else:
-                raise(NotImplementedError)
+            for pair in kwargs['segment_pairs']:
+                try:
+                    res = calc_prod(kwargs['corpus'], pair[0],pair[1],
+                                    kwargs['envs'],
+                                    kwargs['sequence_type'],
+                                    kwargs['type_token'],
+                                    kwargs['strict'],
+                                    True,
+                                    stop_check = kwargs['stop_check'],
+                                    call_back = kwargs['call_back'])
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
+                if self.stopped:
+                    return
                 self.results.append(res)
+
         else:
-            if kwargs['pair_behavior'] == 'individual':
+            for pair in kwargs['segment_pairs']:
+                try:
+                    res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
+                                             kwargs['sequence_type'],
+                                             kwargs['type_token'],
+                                             True,
+                                             stop_check = kwargs['stop_check'],
+                                             call_back = kwargs['call_back'])
 
-                for pair in kwargs['segment_pairs']:
-                    try:
-                        res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
-                            kwargs['sequence_type'],
-                            kwargs['type_token'],
-                            True,
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                    except Exception as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    if self.stopped:
-                        return
-                    self.results.append(res)
-            else:
-                raise(NotImplementedError)
+                except Exception as e:
+                    self.errorEncountered.emit(e)
+                    return
+                if self.stopped:
+                    return
                 self.results.append(res)
+
+        # if kwargs['pair_behavior'] == 'cols':
+        #                 print(self.results)
+        #                 h_avg = sum([r[0] for r in self.results])/len(self.results)
+        #                 seg1_freq_sum = sum([r[2] for r in self.results])
+        #                 seg2_freq_sum = sum([r[3] for r in self.results])
+        #                 self.results.append([self.SegmentClassSelector.class1features,
+        #                                       self.SegmentClassSelector.class2features,
+        #                                       self.tierWidget.displayValue(),
+        #                                       'COL-AVG',
+        #                                       seg1_freq_sum,
+        #                                       seg2_freq_sum,
+        #                                       sum(seg1_freq_sum, seg2_freq_sum),
+        #                                       h_avg,
+        #                                       self.typeTokenWidget.value()])
         self.dataReady.emit(self.results)
+
 
 class PDDialog(FunctionDialog):
     header = ['Sound1',
@@ -85,7 +92,7 @@ class PDDialog(FunctionDialog):
     name = 'predictability of distribution'
     def __init__(self, parent, corpus, showToolTips):
         FunctionDialog.__init__(self, parent, PDWorker())
-
+        self.parent = parent
         self.corpus = corpus
         self.showToolTips = showToolTips
 
@@ -95,6 +102,10 @@ class PDDialog(FunctionDialog):
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
 
         pdlayout.addWidget(self.segPairWidget)
+
+        addSegClassButton = QPushButton('Add a class of sounds')
+        addSegClassButton.clicked.connect(self.addSegClass)
+        pdlayout.addWidget(addSegClassButton)
 
         self.envWidget = EnvironmentSelectWidget(corpus.inventory)
         self.envWidget.setTitle('Environments (optional)')
@@ -113,6 +124,12 @@ class PDDialog(FunctionDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
+
+        self.groupSegments = RadioSelectWidget('Calculate pairs or columns',
+                                               OrderedDict([('Do pairs individually', 'pairs'),
+                                                   ('Average over each column', 'cols')]))
+
+        optionLayout.addWidget(self.groupSegments)
 
         checkFrame = QGroupBox('Exhaustivity and uniqueness')
 
@@ -179,6 +196,15 @@ class PDDialog(FunctionDialog):
                                     ' distribution across all environments based on frequency alone.'
             "</FONT>"))
 
+    def addSegClass(self):
+        self.addSegClassWindow = SegmentClassSelector(self, self.corpus)
+        results = self.addSegClassWindow.exec_()
+        if results:
+            for p in self.addSegClassWindow.pairs:
+                self.segPairWidget.table.model().addRow(p)
+            self.class1name = self.addSegClassWindow.class1features
+            self.class2name = self.addSegClassWindow.class2features
+
     def generateKwargs(self):
         kwargs = {}
         segPairs = self.segPairWidget.value()
@@ -194,7 +220,7 @@ class PDDialog(FunctionDialog):
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
-        kwargs['pair_behavior'] = 'individual'
+        kwargs['pair_behavior'] = self.groupSegments.value()
         kwargs['type_token'] = self.typeTokenWidget.value()
         return kwargs
 
@@ -237,3 +263,52 @@ class PDDialog(FunctionDialog):
                                             r[1], #total_tokens
                                             r[0], #H
                                             self.typeTokenWidget.value()])
+
+        if self.groupSegments.value() == 'cols':
+                        h_avg = sum([r[0] for r in results])/len(results)
+                        seg1_freq_sum = sum([r[2] for r in results])
+                        seg2_freq_sum = sum([r[3] for r in results])
+                        self.results.append([self.class1name,
+                                              self.class2name,
+                                              self.tierWidget.displayValue(),
+                                              'COL-AVG',
+                                              seg1_freq_sum,
+                                              seg2_freq_sum,
+                                              sum([seg1_freq_sum, seg2_freq_sum]),
+                                              h_avg,
+                                              self.typeTokenWidget.value()])
+
+
+class SegmentClassSelector(EnvironmentDialog):
+
+    def __init__(self, parent, corpus):
+        parent.name = 'class'
+        super().__init__(corpus.inventory, parent)
+        self.lhsEnvFrame.setTitle('First class')
+        self.rhsEnvFrame.setTitle('Second class')
+        self.anotherButton.hide()
+        self.corpus = corpus
+
+    def accept(self):
+
+        lhs = self.lhs.value()
+        rhs = self.rhs.value()
+        if not (lhs and rhs):
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please specify two segment classes")
+            return
+
+        self.class1features = lhs[1:-1].split(',')
+        self.class2features = rhs[1:-1].split(',')
+        class1segs = list()
+        class2segs = list()
+        for seg in self.corpus.inventory:
+            if all(seg.features[feature[1:]]==feature[0] for feature in self.class1features):
+               class1segs.append(seg.symbol)
+            if all(seg.features[feature[1:]]==feature[0] for feature in self.class2features):
+               class2segs.append(seg.symbol)
+
+        self.pairs = itertools.product(class1segs, class2segs)
+        self.pairs = [p for p in self.pairs if not p[0]==p[1]]
+
+        QDialog.accept(self)

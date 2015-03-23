@@ -5,7 +5,7 @@ from .imports import *
 
 from .config import Settings, PreferencesDialog
 from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
-                    LexiconView,PhonoSearchResults, RandomResultsWindow)
+                    LexiconView,PhonoSearchResults, MutualInfoVowelHarmonyWindow)
 
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel, DiscourseModel
 
@@ -119,8 +119,6 @@ class MainWindow(QMainWindow):
 
         self.status = QLabel()
         self.status.setText("Ready")
-        self.lucky = QPushButton('Tell me something interesting', self)
-        self.lucky.clicked.connect(self.doRandomAnalysis)
         self.statusBar().addWidget(self.status, stretch=1)
         self.corpusStatus = QLabel()
         self.corpusStatus.setText("No corpus selected")
@@ -128,7 +126,6 @@ class MainWindow(QMainWindow):
         self.featureSystemStatus = QLabel()
         self.featureSystemStatus.setText("No feature system selected")
         self.statusBar().addWidget(self.featureSystemStatus)
-        self.statusBar().addWidget(self.lucky)
         self.setWindowTitle("Phonological CorpusTools")
         self.createActions()
         self.createMenus()
@@ -144,6 +141,7 @@ class MainWindow(QMainWindow):
         self.MIWindow = None
         self.KLWindow = None
         self.PhonoSearchWindow = None
+        self.AutoWindow = None
         self.setMinimumWidth(self.menuBar().sizeHint().width())
 
 
@@ -201,32 +199,6 @@ class MainWindow(QMainWindow):
             else:
                 function(self)
         return do_check
-
-    @check_for_empty_corpus
-    def doRandomAnalysis(self):
-        analysis = random.choice(['string_similarity', 'functional_load', 'phonotactic_probability', 'kullback_leibler'])
-        #analysis = 'kullback_leibler'
-        kwargs = {'corpus': self.corpus}
-
-        if 'string_similarity' == analysis:
-            kwargs['algorithm'] = random.choice(['khorsi', 'edit_distance'])
-            kwargs['query'] = self.corpus.random_word()
-        elif 'functional_load' == analysis:
-            segpair = random.sample(self.corpus.inventory,2)
-            kwargs['segment_pair'] = [segpair[0].symbol, segpair[1].symbol]
-        elif 'phonotactic_probability' == analysis:
-            kwargs['query'] = self.corpus.random_word()
-            kwargs['sequence_type'] = 'transcription'
-            kwargs['probability_type'] = random.choice(['unigram', 'bigram'])
-        elif 'kullback_leibler' == analysis:
-            segpair = random.sample(self.corpus.inventory,2)
-            kwargs['seg1'] = segpair[0]
-            kwargs['seg2'] = segpair[1]
-            kwargs['side'] = random.choice(['lhs', 'rhs', 'both'])
-
-        self.luckyresults = LuckyDialog(self,analysis,kwargs)
-        self.luckyresults.calc()
-        self.luckyresults.show()
 
     def enableSave(self):
         self.unsavedChanges = True
@@ -494,10 +466,17 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def autoAnalysis(self):
-        dialog = AutoDialog(self, self.corpusModel.corpus, self.showToolTips)
+        dialog = AutoDialog(self, self.corpusModel, self.showToolTips)
         result = dialog.exec_()
-        if result:
-            pass
+        # if self.AutoWindow is not None and dialog.update and self.AutoWindow.isVisible():
+        #     self.AutoWindow.table.model().addRows(dialog.results)
+        # else:
+        #     self.AutoWindow = MutualInfoVowelHarmonyWindow('Vowel Harmony', dialog, self)
+        #     self.AutoWindow.show()
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.raise_)
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.activateWindow)
+        #     self.AutoWindow.rejected.connect(lambda: self.showAutoResults.setVisible(False))
+        #     self.showAutoResults.setVisible(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -815,6 +794,9 @@ class MainWindow(QMainWindow):
 
         self.showPPResults = QAction("Phonotactic probability results", self)
         self.showPPResults.setVisible(False)
+
+        self.showAutoResults = QAction("Automatic phonological analysis results", self)
+        self.showAutoResults.setVisible(False)
 
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")

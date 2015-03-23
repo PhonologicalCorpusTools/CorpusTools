@@ -773,39 +773,37 @@ class TreeWidget(SubTreeView):
         lexicon = self.model().createLexicon(index)
         self.newLexicon.emit(lexicon)
 
-class RandomResultsWindow(QDialog):
-    def __init__(self, target, func_name, results, *extras):
-        QWidget.__init__(self)
-        self.target = target
-        self.results = results
-        self.extras = extras
-        getattr(self,func_name)()
+class MutualInfoVowelHarmonyWindow(QDialog):
 
-    def functional_load(self):
-        seg1, seg2 = target
-
-
-    def string_similarity(self):
-        word = self.target
-        most = self.results[1]#results[0]==word, so not interesting
-        least = self.results[-1]
-        algorithm = self.extras[0]
-        algorithm = 'Khorsi' if algorithm == 'khorsi' else 'edit distance'
-
+    def __init__(self, title, dialog, parent):
+        self._parent = parent
+        QDialog.__init__(self)
+        self.dialog = dialog
+        dataModel = ResultsModel(self.dialog.header, self.dialog.results, self._parent.settings)
         layout = QVBoxLayout()
-        self.text1 = QLabel('I thought the word [{}] was interesting.'.format(word))
-        layout.addWidget(self.text1)
-        self.text2 = QLabel('So I calculated its string similarity to other words in your corpus')
-        layout.addWidget(self.text2)
-        self.text3 = QLabel('Using the {} algorithm, the word most related to [{}] is [{}], scoring {}.'.format(algorithm,word,most[1],most[2]))
-        layout.addWidget(self.text3)
-        self.text4 = QLabel('And the word least related to [{}] is [{}], scoring {}.'.format(word,least[1],least[2]))
-        layout.addWidget(self.text4)
-        self.text5 = QLabel('Find out the string similarity of other words by clicking on Analysis > String simliarity...')
-        layout.addWidget(self.text5)
-
+        self.table = TableWidget()
+        self.table.setModel(dataModel)
+        try:
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            self.table.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
+        except AttributeError:
+            self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+            self.table.horizontalHeader().setResizeMode(0,QHeaderView.Stretch)
+        layout.addWidget(self.table)
+        self.table.resizeColumnsToContents()
+        self.setWindowTitle(title)
+        self.table.adjustSize()
         self.setLayout(layout)
 
+    def sizeHint(self):
+        sz = QDialog.sizeHint(self)
+        minWidth = self.table.calcWidth()+41
+        if sz.width() < minWidth:
+
+            sz.setWidth(minWidth)
+        if sz.height() < 400:
+            sz.setHeight(400)
+        return sz
 
 class ResultsWindow(QDialog):
     def __init__(self, title, dialog, parent):

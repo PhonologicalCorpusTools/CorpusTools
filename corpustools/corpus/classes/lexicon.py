@@ -645,6 +645,9 @@ class Word(object):
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
+    def reverse(self):
+        pass
+
     def __hash__(self):
         return hash((self.spelling,str(self.transcription)))
 
