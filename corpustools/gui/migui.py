@@ -8,8 +8,11 @@ from .imports import *
 from .widgets import BigramWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class MIWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         for pair in kwargs['segment_pairs']:
@@ -20,7 +23,11 @@ class MIWorker(FunctionWorker):
                         in_word = kwargs['in_word'],
                         stop_check = kwargs['stop_check'],
                         call_back = kwargs['call_back'])
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
             except Exception as e:
+                e = PCTPythonError(e)
                 self.errorEncountered.emit(e)
                 return
             if self.stopped:

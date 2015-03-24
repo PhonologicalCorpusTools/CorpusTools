@@ -9,8 +9,11 @@ from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class FAWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         if kwargs['pair_behavior'] == 'individual':
@@ -26,7 +29,11 @@ class FAWorker(FunctionWorker):
                                 output_filename=kwargs['output_filename'],
                                 stop_check = kwargs['stop_check'],
                                 call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
                 if self.stopped:
@@ -204,7 +211,7 @@ class FADialog(FunctionDialog):
                             ' or maximum distance needed in order for two words to be'
                             ' considered a potential alternation.'
             "</FONT>"))
-            
+
             corpusSizeFrame.setToolTip(("<FONT COLOR=black>"
             'Select this option to only '
                                         'calculate frequency of alternation over a randomly-'
@@ -216,7 +223,7 @@ class FADialog(FunctionDialog):
                                         'get a proportionally sized subset, e.g. 0.25 will '
                                         'get a subset that is a quarter the size of your original corpus.'
             "</FONT>"))
-            
+
             alignFrame.setToolTip(("<FONT COLOR=black>"
             'Select this option to use '
                                         'PCTs phonological aligner. This is an automated check '
@@ -224,7 +231,7 @@ class FADialog(FunctionDialog):
                                         '(occur in corresponding positions) in the word pair currently being '
                                         'evaluated as an alternation.'
             "</FONT>"))
-            
+
             self.fileWidget.setToolTip(("<FONT COLOR=black>"
             'Enter a filename for the list '
                                 'of words with a potential alternation of the target two sounds to be outputted'

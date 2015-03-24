@@ -1,90 +1,144 @@
 import os
 import re
+import string
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 
 from .textgrid import TextGrid, IntervalTier, PointTier
 
 phone_file_extensions = ['phones','phn']
 word_file_extensions = ['words','wrd']
 
+class SpontaneousIOError(Exception):
+    def __init__(self, tiertype, tier_name, tiers):
+        self.main = 'The {} tier name was not found'.format(tiertype)
+        self.information = 'The tier name \'{}\' was not found in any tiers'.format(tier_name)
+        self.details = 'The tier name looked for (ignoring case) was \'{}\'.\n'.format(tier_name)
+        self.details += 'The following tiers were found:\n\n'
+        for t in tiers:
+            self.details += '{}\n'.format(t.name)
 
 FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
 
-def process_tier_names(name):
-    if '-' in name:
-        speaker,tier_name = name.split('-')
-    elif '_' in name:
-        speaker,tier_name = name.split('_')
+### HELPERS ###
+def process_tier_name(name):
+    t = '^({0}|\s)*(\w+\s*\w+)({0}|\s)*(\w*\s*\w*)({0}|\s)*$'.format('|'.join([re.escape(x) for x in string.punctuation]))
+    pattern = re.compile(t)
+    matches = pattern.match(name)
+    r1 = matches.group(2)
+    if r1 == '':
+        r1 = None
+    r2 = matches.group(4)
+    if r2 == '':
+        r2 = None
+    return r1,r2
+
+def is_word_tier(tier_name,word_tier_name):
+    if word_tier_name.lower() in tier_name.lower():
+        return True
+    return False
+
+def is_phone_tier(tier_name,phone_tier_name):
+    if phone_tier_name.lower() in tier_name.lower():
+        return True
+    return False
+
+### END HELPERS ###
+
+def get_speaker_names(tiers,word_name):
+    speakers = list()
+    for t in tiers:
+        if not is_word_tier(t.name,word_name):
+            continue
+        names = process_tier_name(t.name)
+        if word_name.lower() in names[0]:
+            speakers.append(names[1])
+        else:
+            speakers.append(names[0])
+    return sorted(set(speakers))
+
+def figure_out_tiers(tiers, word_tier_name, phone_tier_name, speaker):
+    if not word_tier_name:
+        word_tier_name = 'word'
+    if not phone_tier_name:
+        phone_tier_name = 'phone'
+    # tier checking
+    for t in tiers:
+        if is_word_tier(t.name, word_tier_name):
+            break
     else:
-        tier_name = name
-        speaker = ''
-    speaker = speaker.strip()
-    tier_name = tier_name.strip().lower()
-    return speaker, tier_name
+        raise(SpontaneousIOError('word',word_tier_name,tiers))
+    for t in tiers:
+        if is_phone_tier(t.name, phone_tier_name):
+            break
+    else:
+        raise(SpontaneousIOError('phone',phone_tier_name,tiers))
 
+    speakers_in_tiers = get_speaker_names(tiers,word_tier_name)
+    if speaker is None or speakers_in_tiers != ['Unknown']:
+        speakers = {Speaker(x): {'word_tier':'', 'phone_tier':'', 'other':list()}
+                    for x in speakers_in_tiers}
+    else:
+        speakers = {Speaker(speaker):{'word_tier':'','phone_tier':'','other':list()}}
+    for t in tiers:
+        if isinstance(t,PointTier):
+            continue
+        names = process_tier_name(t.name)
+        for s,v in speakers.items():
+            if s.name in names:
+                if names[0] == s.name:
+                    tier = names[1]
+                else:
+                    tier = names[0]
+                if is_word_tier(tier, word_tier_name):
+                    speakers[s]['word_tier'] = t
+                elif is_phone_tier(tier,phone_tier_name):
+                    speakers[s]['phone_tier'] = t
+                else:
+                    speakers[s]['other'].append(t)
+    return speakers
 
-def textgrids_to_data(path):
-    phone_names = ['phone','phones','segment','segments','transcription', 'seg']
-    word_names = ['word','words']
+def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):
     tg = TextGrid()
     tg.read(path)
+    speaker_delimited = figure_out_tiers(tg.tiers,
+                                        word_tier_name,
+                                        phone_tier_name,speaker)
     words = list()
-    phones = list()
-    for tier in tg:
-        speaker, tier_name = process_tier_names(tier.name)
-        if tier_name not in word_names:
-            continue
-
-        for i in tier:
-            name = i.mark
-            if name is None:
-                name = '<SIL>'
-            w = {'word':name, 'begin':i.minTime, 'end': i.maxTime, 'speaker':speaker}
-            words.append(w)
-
-    #figure out phones
-    for wi,w in enumerate(words):
-        beg = w['begin']
-        end = w['end']
-        for tier in tg:
-            speaker, tier_name = process_tier_names(tier.name)
-            if tier_name in word_names:
-                continue
-            if tier_name in phone_names:
-                phones = []
-                for i in tier:
-                    if i.maxTime < beg:
-                        continue
-                    if i.minTime >= end:
-                        break
-                    if not i.mark:
-                        continue
-                    phoneBegin = i.minTime
-                    phoneEnd = i.maxTime
-                    if phoneBegin < beg:
-                        phoneBegin = beg
-                    if phoneEnd > end:
-                        phoneEnd = end
-                    p = {'label':i.mark,'begin':phoneBegin,'end':phoneEnd}
-                    phones.append(p)
-                words[wi]['phones'] = phones
-            else:
-                if isinstance(tier,PointTier):
+    for s, v in speaker_delimited.items():
+        for wi in v['word_tier']:
+            w = {'lookup_spelling':wi.mark, 'Begin':wi.minTime, 'End': wi.maxTime, 'Speaker':s}
+            w['Transcription'] = list()
+            for pi in v['phone_tier']:
+                if pi.maxTime <= w['Begin']:
                     continue
-                for i in tier:
-                    if i.maxTime < beg:
+                if pi.minTime >= w['End']:
+                    break
+                if not pi.mark:
+                    continue
+
+                phoneBegin = pi.minTime
+                phoneEnd = pi.maxTime
+                if phoneBegin < w['Begin']:
+                    phoneBegin = w['Begin']
+                if phoneEnd > w['End']:
+                    phoneEnd = w['End']
+                w['Transcription'].append({'symbol':pi.mark,'begin':phoneBegin,'end':phoneEnd})
+            for o in v['other']:
+                for oi in o:
+                    if oi.maxTime < w['Begin']:
                         continue
-                    if not i.mark:
+                    if not oi.mark:
                         continue
-                    if i.minTime >= end:
+                    if oi.minTime >= w['End']:
                         break
-                    if i.minTime <= beg and i.maxTime >= end:
-                        words[wi][tier_name.replace(' ','_')] = i.mark
+                    if oi.minTime <= w['Begin'] and oi.maxTime >= w['End']:
+                        w[tier_name] = oi.mark
+            words.append(w)
     return words
 
-def align_dialog_info(words, phones, wavs, stop_check, call_back):
+def align_dialog_info(words, phones, wavs, speaker_source, stop_check, call_back):
 
     if call_back is not None:
         call_back('Matching files...')
@@ -99,6 +153,12 @@ def align_dialog_info(words, phones, wavs, stop_check, call_back):
             call_back(cur)
         name = os.path.splitext(os.path.split(p)[1])[0]
         dialogs[name] = {'words':p}
+        if speaker_source == 'filename':
+            dialogs[name]['speaker'] = name[:3] #Hack?
+        elif speaker_source == 'directory':
+            dialogs[name]['speaker'] =  os.path.basename(os.path.dirname(p))
+        else:
+            dialogs[name]['speaker'] = None
     for p2 in phones:
         if stop_check is not None and stop_check():
             return
@@ -120,7 +180,7 @@ def align_dialog_info(words, phones, wavs, stop_check, call_back):
             pass
     return dialogs
 
-def align_textgrid_info(textgrids, wavs, stop_check, call_back):
+def align_textgrid_info(textgrids, wavs, speaker_source, stop_check, call_back):
     if call_back is not None:
         call_back('Matching files...')
         call_back(0,len(textgrids))
@@ -134,6 +194,12 @@ def align_textgrid_info(textgrids, wavs, stop_check, call_back):
             call_back(cur)
         name = os.path.splitext(os.path.split(p)[1])[0]
         dialogs[name] = {'textgrid':p}
+        if speaker_source == 'filename':
+            dialogs[name]['speaker'] = name[:3] #Hack?
+        elif speaker_source == 'directory':
+            dialogs[name]['speaker'] = os.path.basename(os.path.dirname(p))
+        else:
+            dialogs[name]['speaker'] = None
     for p3 in wavs:
         if stop_check is not None and stop_check():
             return
@@ -147,10 +213,72 @@ def align_textgrid_info(textgrids, wavs, stop_check, call_back):
             pass
     return dialogs
 
-def import_spontaneous_speech_corpus(directory, dialect = 'textgrid', stop_check = None, call_back = None):
+def import_spontaneous_speech_corpus(corpus_name, directory, **kwargs):
+    """
+    Create a SpontaneousSpeechCorpus from a directory of Praat TextGrid
+    files or paired word-phone files.
 
-    name = os.path.split(directory)[1]
-    corpus = SpontaneousSpeechCorpus(name,directory)
+    When using TextGrids, speakers will be recognized automatically
+    (though each speaker must have a tier for spelling, specified by
+    `word_tier_name` and a tier for transcription, specified by
+    `phone_tier_name`).  Any interval tiers that are not identified as
+    word or phone tiers will be added as attributes of the resulting
+    WordTokens.
+
+    Parameters
+    ----------
+
+    corpus_name : str
+        Informative identifier to refer to corpus
+
+    directory : str
+        Full path to the corpus directory
+
+    dialect : str
+        One of 'textgrid', 'buckeye' or 'timit'
+
+    speaker_source : string
+        Either 'filename', 'directory' or unspecified.  The option 'filename'
+        means that the first three characters of a filename will be used
+        as the name of the speaker for that dialog. The option 'directory'
+        will use the directory name for the Speaker names.  Unspecified will
+        create a base Speaker to be edited later.
+
+    word_tier_name : string
+        Only used for TextGrids, the name to identify tiers to use for
+        spelling
+
+    phone_tier_name : string
+        Only used for TextGrids, the name to identify tiers to use for
+        transcription
+
+    delimiter : string
+        Single character to use if the phone labels contain multiple
+        segments
+
+    stop_check : callable
+        Callable that returns a boolean for whether to exit before
+        finishing full calculation
+
+    call_back : callable
+        Function that can handle strings (text updates of progress),
+        tuples of two integers (0, total number of steps) and an integer
+        for updating progress out of the total set by a tuple
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        SpontaneousSpeechCorpus object generated from the directory
+
+    """
+
+    dialect = kwargs.pop('dialect', 'textgrid')
+    stop_check = kwargs.pop('stop_check', None)
+    call_back = kwargs.pop('call_back', None)
+    speaker_source = kwargs.pop('speaker_source', None)
+    delimiter = kwargs.pop('delimiter', None)
+
+    corpus = SpontaneousSpeechCorpus(corpus_name,directory)
 
     words = []
     phones = []
@@ -177,9 +305,11 @@ def import_spontaneous_speech_corpus(directory, dialect = 'textgrid', stop_check
             elif f.endswith('.wav'):
                 wavs.append(os.path.join(root,f))
     if dialect == 'textgrid':
-        dialogs = align_textgrid_info(textgrids, wavs, stop_check, call_back)
+        word_tier_name = kwargs.pop('word_tier_name', None)
+        phone_tier_name = kwargs.pop('phone_tier_name', None)
+        dialogs = align_textgrid_info(textgrids, wavs, speaker_source, stop_check, call_back)
     else:
-        dialogs = align_dialog_info(words, phones, wavs, stop_check, call_back)
+        dialogs = align_dialog_info(words, phones, wavs, speaker_source, stop_check, call_back)
     if call_back is not None:
         call_back('Processing discourses...')
         call_back(0,len(dialogs))
@@ -195,22 +325,20 @@ def import_spontaneous_speech_corpus(directory, dialect = 'textgrid', stop_check
         if dialect == 'textgrid':
             if 'textgrid' not in v:
                 continue
-            data = textgrids_to_data(v['textgrid'])
-            discourse_info['speaker'] = Speaker('')
+            data = textgrids_to_data(v['textgrid'], word_tier_name,
+                                                    phone_tier_name,
+                                                    v['speaker'], delimiter)
         else:
             if 'words' not in v:
                 continue
             if 'phones' not in v:
                 continue
             data = files_to_data(v['words'], v['phones'], dialect)
-            if dialect == 'buckeye':
-                discourse_info['speaker'] = Speaker(d[:3])
-            elif dialect == 'timit':
-                disourse_info['speaker'] = Speaker(os.path.split(v['words'])[-2])
+            discourse_info['speaker'] = Speaker(v['speaker'])
 
         if 'wav' in v:
             discourse_info['wav_path'] = v['wav']
-        corpus.add_discourse(data, discourse_info)
+        corpus.add_discourse(data, discourse_info,delimiter=delimiter)
     return corpus
 
 def phone_match(one,two):
@@ -223,36 +351,36 @@ def files_to_data(word_path,phone_path, dialect):
     words = read_words(word_path, dialect)
     phones = read_phones(phone_path, dialect)
     for i, w in enumerate(words):
-        beg = w['begin']
-        end = w['end']
+        beg = w['Begin']
+        end = w['End']
         if dialect == 'timit':
             found_all = False
             found = []
             while not found_all:
                 p = phones.pop(0)
-                if p['begin'] < w['begin']:
+                if p['begin'] < w['Begin']:
                     continue
                 found.append(p)
-                if p['end'] == w['end']:
+                if p['end'] == w['End']:
                     found_all = True
-            words[i]['phones'] = found
+            words[i]['Transcription'] = found
         elif dialect == 'buckeye':
-            if w['ur'] is None:
+            if w['lookup_transcription'] is None:
                 continue
             expected = w['sr']
             found = []
             while len(found) < len(expected):
                 cur_phone = phones.pop(0)
-                if phone_match(cur_phone['label'],expected[len(found)]) \
+                if phone_match(cur_phone['symbol'],expected[len(found)]) \
                     and cur_phone['end'] >= beg and cur_phone['begin'] <= end:
                         found.append(cur_phone)
                 if not len(phones) and i < len(words)-1:
                     print(name)
                     print(w)
                     raise(Exception)
-            words[i]['phones'] = found
-            words[i]['begin'] = found[0]['begin']
-            words[i]['end'] = found[-1]['end']
+            found[0]['begin'] = words[i]['Begin']
+            found[-1]['end'] = words[i]['End']
+            words[i]['Transcription'] = found
         else:
             raise(NotImplementedError)
     return words
@@ -272,7 +400,7 @@ def read_phones(path, dialect, sr = None):
                 if sr is not None:
                     start /= sr
                     end /= sr
-                output.append({'label':phone,'begin':begin,'end':end})
+                output.append({'symbol':phone,'begin':begin,'end':end})
         elif dialect == 'buckeye':
             f = re.split("#\r{0,1}\n",file_handle.read())[1]
             flist = f.splitlines()
@@ -281,7 +409,7 @@ def read_phones(path, dialect, sr = None):
                 line = re.split("\s+\d{3}\s+",l.strip())
                 end = float(line[0])
                 label = re.split(" {0,1};| {0,1}\+",line[1])[0]
-                output.append({'label':label,'begin':begin,'end':end})
+                output.append({'symbol':label,'begin':begin,'end':end})
                 begin = end
 
         else:
@@ -301,7 +429,7 @@ def read_words(path, dialect, sr = None):
                 if sr is not None:
                     start /= sr
                     end /= sr
-                output.append({'word':word, 'begin':start, 'end':end})
+                output.append({'lookup_spelling':word, 'Begin':start, 'End':end})
         elif dialect == 'buckeye':
             f = re.split(r"#\r{0,1}\n",file_handle.read())[1]
             begin = 0.0
@@ -320,7 +448,9 @@ def read_words(path, dialect, sr = None):
                     category = None
                 if word in FILLERS:
                     category = 'UH'
-                line = {'word':word,'begin':begin,'end':end,'ur':citation,'sr':phonetic,'category':category}
+                line = {'lookup_spelling':word,'Begin':begin,'End':end,
+                        'lookup_transcription':citation,'sr':phonetic,
+                        'Category':category}
                 output.append(line)
                 begin = end
         else:

@@ -334,10 +334,11 @@ class DownloadFeatureMatrixDialog(QDialog):
             QDialog.accept(self)
 
 class EditFeatureMatrixDialog(QDialog):
-    def __init__(self, parent, corpus):
+    def __init__(self, parent, corpus, settings):
         QDialog.__init__(self, parent)
 
         self.corpus = corpus
+        self.settings = settings
 
         self.specifier = copy.deepcopy(self.corpus.specifier)
 
@@ -354,7 +355,7 @@ class EditFeatureMatrixDialog(QDialog):
         default = None
         if self.specifier is not None:
             default = self.specifier.name
-        self.changeWidget = FeatureSystemSelect(self.parent().settings,default=default)
+        self.changeWidget = FeatureSystemSelect(self.settings,default=default)
         self.changeWidget.changed.connect(self.changeFeatureSystem)
         box.addRow(self.changeWidget)
 
@@ -496,6 +497,7 @@ class EditFeatureMatrixDialog(QDialog):
                 return
             selected = selected[0]
             seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
+        print(seg)
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
@@ -567,7 +569,8 @@ class EditSegmentDialog(QDialog):
                 if v == specifier.default_value:
                     continue
                 featSel.addItem(v)
-                if segment is not None and v == specifier[segment][f]:
+            for i in range(featSel.count()):
+                if segment is not None and featSel.itemText(i) == specifier[segment][f]:
                     featSel.setCurrentIndex(i)
             lay.addWidget(featSel)
             box.setLayout(lay)
@@ -627,10 +630,10 @@ class EditSegmentDialog(QDialog):
 
 
 class FeatureMatrixManager(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
         layout = QVBoxLayout()
-
+        self.settings = settings
         formLayout = QHBoxLayout()
         listFrame = QGroupBox('Available feature systems')
         listLayout = QGridLayout()
@@ -678,13 +681,13 @@ class FeatureMatrixManager(QDialog):
         self.setWindowTitle('Manage feature systems')
 
     def openCsvWindow(self):
-        dialog = SystemFromCsvDialog(self,self.parent().settings)
+        dialog = SystemFromCsvDialog(self,self.settings)
         result = dialog.exec_()
         if result:
             self.getAvailableSystems()
 
     def openDownloadWindow(self):
-        dialog = DownloadFeatureMatrixDialog(self,self.parent().settings)
+        dialog = DownloadFeatureMatrixDialog(self,self.settings)
         result = dialog.exec_()
         if result:
             self.getAvailableSystems()
@@ -697,13 +700,13 @@ class FeatureMatrixManager(QDialog):
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
-        os.remove(system_name_to_path(self.parent().settings['storage'],featureSystem))
+        os.remove(system_name_to_path(self.settings['storage'],featureSystem))
         self.getAvailableSystems()
 
 
     def getAvailableSystems(self):
         self.systemsList.clear()
-        systems = get_systems_list(self.parent().settings['storage'])
+        systems = get_systems_list(self.settings['storage'])
         for s in systems:
             self.systemsList.addItem(s)
 

@@ -26,6 +26,8 @@ Contents:
    acoustic_similarity.rst
    citing_pct.rst
    references.rst
+   apireference
+   release
 
 
 

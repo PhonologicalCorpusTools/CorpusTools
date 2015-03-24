@@ -1,0 +1,4 @@
+spelling,frequency
+tusi,13.0
+tuni,33.0
+shashi,43.0

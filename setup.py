@@ -1,14 +1,26 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+import sys
+from setuptools import setup
+from setuptools.command.test import test as TestCommand
+
+import corpustools
 
 def readme():
     with open('README.md') as f:
         return f.read()
 
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = ['--strict', '--verbose', '--tb=long', 'tests']
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errcode = pytest.main(self.test_args)
+        sys.exit(errcode)
+
 setup(name='corpustools',
-      version='1.0.0',
+      version=corpustools.__version__,
       description='',
       long_description='',
       classifiers=[
@@ -38,9 +50,11 @@ setup(name='corpustools',
                 'corpustools.mutualinfo',
                 'corpustools.phonoprob',
                 'corpustools.command_line'],
-      #install_requires=[
-      #    'pillow'
-      #],
+      install_requires=[
+          'numpy',
+          'scipy',
+          #'python-acoustic-similarity'
+      ],
       entry_points = {
         'console_scripts': ['pct=corpustools.command_line.pct:main',
                             'pct_corpus=corpustools.command_line.pct_corpus:main',
@@ -49,4 +63,8 @@ setup(name='corpustools',
                             'pct_mutualinfo=corpustools.command_line.pct_mutualinfo:main',
                             'pct_search=corpustools.command_line.pct_search:main'],
     },
+    cmdclass={'test': PyTest},
+    extras_require={
+        'testing': ['pytest'],
+    }
       )

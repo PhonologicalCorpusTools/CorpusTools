@@ -5,7 +5,7 @@ Created on May 12, 2014
 '''
 from functools import partial
 from corpustools.corpus.classes import Word
-from corpustools.symbolsim.khorsi import make_freq_base, khorsi
+from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
@@ -21,20 +21,28 @@ def string_similarity(corpus, query, algorithm, **kwargs):
     ----------
     corpus: Corpus
         The corpus object to use
+
     query: string, tuple, or list of tuples
         If this is a string, every word in the corpus will be compared to it,
-        if this is a tuple with two strings, those words will be compared to each other,
-        if this is a list of tuples, each tuple's strings will be compared to each other.
+        if this is a tuple with two strings, those words will be compared to
+        each other,
+        if this is a list of tuples, each tuple's strings will be compared to
+        each other.
+
     algorithm: string
         The algorithm of string similarity to be used, currently supports
         'khorsi', 'edit_distance', and 'phono_edit_distance'
+
     sequence_type: string
         Specifies whether to use 'spelling', 'transcription' or the name of a
         transcription tier to use for comparisons
+
     count_what: string
         The type of frequency to use, either 'type' or 'token'
+
     max_rel: double
         Filters out all words that are higher than max_rel from a relatedness measure
+
     min_rel: double
         Filters out all words that are lower than min_rel from a relatedness measure
 
@@ -54,6 +62,12 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     if algorithm == 'khorsi':
         freq_base = corpus.get_frequency_base(sequence_type, count_what)
+        try:
+            bound_count = freq_base['#']
+            freq_base = {k:v for k,v in freq_base.items() if k != '#'}
+            freq_base['total'] -= bound_count
+        except KeyError:
+            pass
         relate_func = partial(khorsi,freq_base=freq_base,
                                 sequence_type = sequence_type)
     elif algorithm == 'edit_distance':

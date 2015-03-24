@@ -5,14 +5,13 @@ import math
 from collections import defaultdict
 from corpustools.corpus.classes.lexicon import CorpusIntegrityError
 
-class MutualInformationError(Exception):
-    pass
+from corpustools.exceptions import MutualInformationError
+import time
 
 def pointwise_mi(corpus, query, sequence_type,
                 halve_edges = False, in_word = False,
                 stop_check = None, call_back = None):
     """query should be a tuple of two strings, each a segment/letter"""
-
     if call_back is not None:
         call_back("Generating probabilities...")
         call_back(0,0)
@@ -64,3 +63,29 @@ def get_frequency(word, count_what):
         return 1.0
     elif count_what == 'token':
         return float(getattr(word, 'frequency'))
+
+
+def all_mis(corpus, sequence_type,
+            halve_edges = False, in_word = False,
+            stop_check = None, call_back = None):
+    mis = {}
+    total_calculations = ((len(corpus.inventory)**2)-len(corpus.inventory)/2)+1
+    ct = 1
+    t = time.time()
+    for s1 in corpus.inventory:
+        for s2 in corpus.inventory:
+                print('Performing MI calculation {} out of {} possible'.format(str(ct), str(total_calculations)))
+                ct += 1
+                print('Duration of last calculation: {}'.format(str(time.time() - t)))
+                t = time.time()
+                if type(s1) != str:
+                    s1 = s1.symbol
+                if type(s2) != str:
+                    s2 = s2.symbol
+                print(s1,s2)
+                mi = pointwise_mi(corpus, (s1, s2), sequence_type, halve_edges = halve_edges, in_word = in_word)
+                mis[(s1,s2)] = mi
+
+    ordered_mis = sorted([(pair, str(mis[pair])) for pair in mis], key=lambda p: p[1])
+
+    return ordered_mis

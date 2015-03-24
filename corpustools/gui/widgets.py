@@ -1,3 +1,6 @@
+
+import sys
+import operator
 from itertools import combinations
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
@@ -9,6 +12,7 @@ from .views import TableWidget
 from .models import SegmentPairModel, EnvironmentModel, FilterModel
 
 #from .corpusgui import AddTierDialog
+from .delegates import SwitchDelegate
 
 class ThumbListWidget(QListWidget):
     def __init__(self, ordering, parent=None):
@@ -30,7 +34,7 @@ class FactorFilter(QWidget):
         QWidget.__init__(self,parent)
 
         layout = QHBoxLayout()
-        levels = attribute.range
+        levels = sorted(attribute.range)
         self.sourceWidget = ThumbListWidget(levels)
         for l in levels:
             self.sourceWidget.addItem(l)
@@ -98,14 +102,15 @@ class FactorFilter(QWidget):
             self.sourceWidget.addItem(item)
 
     def value(self):
-        items = [self.targetWidget.item(i).text() for i in range(self.targetWidget.count())]
+        items = set([self.targetWidget.item(i).text() for i in range(self.targetWidget.count())])
         return items
 
 class NumericFilter(QWidget):
     conditionalDisplay = ('equals','does not equal','greater than',
                     'greater than or equal to', 'less than',
                     'less than or equal to')
-    conditionals = ('__eq__', '__neq__', '__gt__', '__gte__', '__lt__', '__lte__')
+    conditionals = (operator.eq, operator.ne, operator.gt, operator.ge,
+                    operator.lt, operator.le)
     def __init__(self,parent=None):
 
         QWidget.__init__(self,parent)
@@ -128,6 +133,7 @@ class NumericFilter(QWidget):
         ind = self.conditionalSelect.currentIndex()
 
         return self.conditionals[ind], self.valueEdit.text()
+
 
 class AttributeFilterDialog(QDialog):
     def __init__(self, attributes,parent=None):
@@ -223,9 +229,9 @@ class AttributeFilterDialog(QDialog):
                 reply = QMessageBox.critical(self,
                         "Invalid information", "Please specify a number.")
                 return
-            if (comp in ['__gt__', '__gte__'] and value > a.range[1]) or \
-                (comp in ['__lt__','__lte__'] and value < a.range[0]) or \
-                (comp in ['__eq__','__neq__'] and (value < a.range[0] or value > a.range[1])):
+            if (comp in [operator.gt, operator.ge] and value > a.range[1]) or \
+                (comp in [operator.lt,operator.le] and value < a.range[0]) or \
+                (comp in [operator.eq,operator.ne] and (value < a.range[0] or value > a.range[1])):
                 reply = QMessageBox.critical(self,
                         "Invalid information", "The value specified ({}) for column '{}' is outside its range of {}-{}.".format(value,str(a),a.range[0],a.range[1]))
                 return
@@ -286,8 +292,7 @@ class AttributeFilterWidget(QGroupBox):
         select = self.table.selectionModel()
         if select.hasSelection():
             selected = select.selectedRows()
-            for s in selected:
-                self.table.model().removeRow(s.row())
+            self.table.model().removeRows([s.row() for s in selected])
 
     def value(self):
         return [x[0] for x in self.table.model().filters]
@@ -334,7 +339,7 @@ class TierWidget(QGroupBox):
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
-    def __init__(self, punctuation, title,parent = None):
+    def __init__(self, punctuation, title = 'Punctuation',parent = None):
         QGroupBox.__init__(self,title,parent)
 
         self.btnGroup = QButtonGroup()
@@ -405,12 +410,13 @@ class DigraphDialog(QDialog):
 
         row = 0
         col = 0
+        self.buttons = list()
         for s in characters:
             btn = QPushButton(s)
             btn.clicked.connect(self.addCharacter)
             btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
             btn.setMaximumWidth(btn.fontMetrics().boundingRect(s).width() + 14)
-
+            self.buttons.append(btn)
             box.addWidget(btn,row,col)
             col += 1
             if col > 11:
@@ -652,7 +658,10 @@ class InventoryBox(QWidget):
         vowColumns = set()
         vowRows = set()
         for s in self.inventory:
-            c = s.category
+            try:
+                c = s.category
+            except KeyError:
+                c = None
             if c is not None:
                 if c[0] == 'Vowel':
                     vowColumns.add(c[2])
@@ -796,7 +805,10 @@ class InventoryBox(QWidget):
             unkRow = 0
             unkCol = -1
             for s in inventory:
-                cat = s.category
+                try:
+                    cat = s.category
+                except KeyError:
+                    cat = None
                 btn = SegmentButton(s.symbol)
                 btn.setCheckable(True)
                 btn.setAutoExclusive(False)
@@ -970,13 +982,13 @@ class FeatureBox(QWidget):
         self.inspectInventory()
         layout = QHBoxLayout()
 
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        #layout.setSizeConstraint(QLayout.SetFixedSize)
 
         self.featureList = QListWidget()
 
         for f in self.features:
             self.featureList.addItem(f)
-        self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+10)
+        self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
         layout.addWidget(self.featureList)
 
         buttonLayout = QVBoxLayout()
@@ -1002,7 +1014,7 @@ class FeatureBox(QWidget):
         layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
 
         self.envList = QListWidget()
-        self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
+        self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+25)
         self.envList.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         layout.addWidget(self.envList)
@@ -1019,7 +1031,11 @@ class FeatureBox(QWidget):
     def addFeature(self):
         curFeature = self.featureList.currentItem()
         if curFeature:
-            self.envList.addItem(self.sender().value+curFeature.text())
+            val = self.sender().value
+            feat = curFeature.text()
+            key = val+feat
+            if key not in self.currentSpecification():
+                self.envList.addItem(key)
 
     def clearOne(self):
         items = self.envList.selectedItems()
@@ -1030,8 +1046,11 @@ class FeatureBox(QWidget):
     def clearAll(self):
         self.envList.clear()
 
+    def currentSpecification(self):
+        return [self.envList.item(i).text() for i in range(self.envList.count())]
+
     def value(self):
-        val = [self.envList.item(i).text() for i in range(self.envList.count())]
+        val = self.currentSpecification()
         if not val:
             return ''
         return '[{}]'.format(','.join(val))
@@ -1098,6 +1117,39 @@ class SegmentPairDialog(QDialog):
         self.pairs = combinations(selected,2)
         QDialog.accept(self)
 
+class SegPairTableWidget(TableWidget):
+    def __init__(self, parent = None):
+        TableWidget.__init__(self, parent)
+        self.setModel(SegmentPairModel())
+        self.setItemDelegateForColumn(2, SwitchDelegate(self))
+        self.model().rowsInserted.connect(self.addSwitch)
+        self.setSortingEnabled(False)
+        self.horizontalHeader().setSectionsClickable(False)
+
+        switch = QPushButton()
+        if sys.platform == 'darwin' or sys.platform.startswith('win'):
+            icon = QIcon()
+            icon.addPixmap(QPixmap(":/Icon/resources/object-flip-horizontal.png"),
+                        QIcon.Normal, QIcon.Off)
+        else:
+            icon = QIcon.fromTheme('object-flip-horizontal')
+        switch.setIcon(icon)
+        self.horizontalHeader().setDefaultSectionSize(switch.iconSize().width()+16)
+        self.horizontalHeader().setSectionResizeMode(0,QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeToContents)
+
+    def minimumSizeHint(self):
+        sh = TableWidget.minimumSizeHint(self)
+        width = self.horizontalOffset()
+        header = self.horizontalHeader()
+        for i in range(3):
+            width += header.sectionSize(i)
+        sh.setWidth(width)
+        return sh
+
+    def addSwitch(self, index, begin, end):
+        self.openPersistentEditor(self.model().index(begin, 2))
+
 
 class SegmentPairSelectWidget(QGroupBox):
     def __init__(self,inventory,parent=None):
@@ -1106,7 +1158,6 @@ class SegmentPairSelectWidget(QGroupBox):
         self.inventory = inventory
 
         vbox = QVBoxLayout()
-
         self.addButton = QPushButton('Add pair of sounds')
         self.addButton.clicked.connect(self.segPairPopup)
         self.removeButton = QPushButton('Remove selected sound pair')
@@ -1116,15 +1167,7 @@ class SegmentPairSelectWidget(QGroupBox):
         self.removeButton.setAutoDefault(False)
         self.removeButton.setDefault(False)
 
-        self.table = TableWidget()
-        self.table.setSortingEnabled(False)
-        self.table.setModel(SegmentPairModel())
-        try:
-            self.table.horizontalHeader().setSectionsClickable(False)
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        except AttributeError:
-            self.table.horizontalHeader().setClickable(False)
-            self.table.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        self.table = SegPairTableWidget()
 
         vbox.addWidget(self.addButton)
         vbox.addWidget(self.removeButton)
@@ -1140,10 +1183,12 @@ class SegmentPairSelectWidget(QGroupBox):
             dialog.reset()
             result = dialog.exec_()
             if result:
-                for p in dialog.pairs:
-                    self.table.model().addRow(p)
+                self.addPairs(dialog.pairs)
             addOneMore = dialog.addOneMore
 
+    def addPairs(self, pairs):
+        for p in pairs:
+            self.table.model().addRow(p)
 
     def removePair(self):
         select = self.table.selectionModel()
@@ -1389,8 +1434,7 @@ class EnvironmentSelectWidget(QGroupBox):
         select = self.table.selectionModel()
         if select.hasSelection():
             selected = select.selectedRows()
-            for s in selected:
-                self.table.model().removeRow(s.row())
+            self.table.model().removeRows([s.row() for s in selected])
 
     def value(self):
         return [x[0] for x in self.table.model().rows]

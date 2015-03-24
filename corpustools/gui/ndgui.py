@@ -8,12 +8,15 @@ from corpustools.neighdens.neighborhood_density import neighborhood_density,find
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
 from .corpusgui import AddWordDialog
 
 class NDWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         corpus = kwargs['corpusModel'].corpus
@@ -34,7 +37,11 @@ class NDWorker(FunctionWorker):
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
 
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
                 if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
@@ -60,11 +67,15 @@ class NDWorker(FunctionWorker):
                                             max_distance = kwargs['max_distance'],
                                             stop_check = kwargs['stop_check'])
                     else:
-                        res = find_mutation_minpairs(corpus, q,
+                        res = find_mutation_minpairs(corpus, w,
                                             sequence_type = kwargs['sequence_type'],
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
                 if self.stopped:

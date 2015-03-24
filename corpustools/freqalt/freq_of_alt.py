@@ -14,18 +14,21 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
                     min_rel = None, max_rel = None, phono_align = False,
                     min_pairs_okay = False, from_gui=False, stop_check = None,
                     call_back = None):
-    """Returns a double that is a measure of the frequency of alternation of two sounds in a given corpus
+    """Returns a double that is a measure of the frequency of
+    alternation of two sounds in a given corpus
 
     Parameters
     ----------
     s1: char
-        A sound segment, e.g. 's', 'ÃƒÆ’Ã…Â Ãƒâ€ Ã¢â‚¬â„¢',
+        A sound segment, e.g. 's', 't'
     s2: char
         A sound segment
     relator_type: string
-        The type of relator to be used to measure relatedness, e.g. 'string_similarity'
+        The type of relator to be used to measure relatedness, e.g.
+        'string_similarity'
     sequence_type: string
-        The type of segments to be used ('spelling' = roman letters, 'transcription' = IPA symbols)
+        The type of segments to be used ('spelling' = roman letters,
+        'transcription' = IPA symbols)
     count_what: string
         The type of frequency, either 'type' or 'token'
     max_rel: double
@@ -33,9 +36,12 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
     min_rel: double
         Filters out all words that are lower than min_rel from a relatedness measure
     phono_align: boolean (1 or 0), optional
-        1 means 'only count alternations that are likely phonologically aligned,' defaults to not force phonological alignment
+        1 means 'only count alternations that are likely phonologically aligned,'
+        defaults to not force phonological alignment
     min_pairs_okay: boolean (1 or 0), optional
-        1 means allow minimal pairs (e.g. in English, 's' and 'ÃƒÆ’Ã…Â Ãƒâ€ Ã¢â‚¬â„¢' do not alternate in minimal pairs, i.e. diss/dish is not an alternation, so allowing minimal pairs may skew results)
+        1 means allow minimal pairs (e.g. in English, 's' and 't' do not
+        alternate in minimal pairs,
+        so allowing minimal pairs may skew results)
 
     Returns
     -------

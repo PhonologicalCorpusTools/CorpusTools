@@ -10,14 +10,21 @@ from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.corpus.classes.lexicon import EnvironmentFilter
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class PSWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         corpus = kwargs.pop('corpus')
         try:
             self.results = corpus.phonological_search(**kwargs)
 
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
         except Exception as e:
+            e = PCTPythonError(e)
             self.errorEncountered.emit(e)
             return
 

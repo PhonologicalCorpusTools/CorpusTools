@@ -3,17 +3,35 @@ from urllib.request import urlretrieve
 
 import pickle
 
-def download_binary(name,path, queue = None, call_back = None):
+def download_binary(name,path, call_back = None):
     """
-    Download a binary file
+    Download a binary file of example corpora and feature matrices.
 
-    Attributes
+    Names of available corpora: 'example' and 'iphod'
+
+    Names of available feature matrices: 'ipa2spe', 'ipa2hayes',
+    'celex2spe', 'celex2hayes', 'arpabet2spe', 'arpabet2hayes',
+    'cpa2spe', 'cpa2hayes', 'disc2spe', 'disc2hayes', 'klatt2spe',
+    'klatt2hayes', 'sampa2spe', and 'sampa2hayes'
+
+    Parameters
     ----------
     name : str
         Identifier of file to download
 
     path : str
         Full path for where to save downloaded file
+
+    call_back : callable
+        Function that can handle strings (text updates of progress),
+        tuples of two integers (0, total number of steps) and an integer
+        for updating progress out of the total set by a tuple
+
+    Returns
+    -------
+    bool
+        True if file was successfully saved to the path specified, False
+        otherwise
 
     """
     reported_size = False
@@ -26,8 +44,6 @@ def download_binary(name,path, queue = None, call_back = None):
                 reported_size = True
                 call_back(0,size)
             call_back(blocknum * bs)
-        if queue is not None:
-            queue.put((blocknum * bs * 100) / size)
     if name == 'example':
         download_link = 'https://www.dropbox.com/s/a0uar9h8wtem8cf/example.corpus?dl=1'
     elif name == 'iphod':
@@ -61,17 +77,15 @@ def download_binary(name,path, queue = None, call_back = None):
     elif name == 'sampa2hayes':
         download_link = 'https://www.dropbox.com/s/ch5yzlisoeaz58e/sampa2hayes.feature?dl=1'
     else:
-        return
+        return False
     filename,headers = urlretrieve(download_link,path, reporthook=report)
-    if queue is not None:
-        queue.put(-99)
     return True
 
 def load_binary(path):
     """
     Unpickle a binary file
 
-    Attributes
+    Parameters
     ----------
     path : str
         Full path of binary file to load
@@ -81,17 +95,15 @@ def load_binary(path):
     Object
         Object generated from the text file
     """
-    #begin = time.time()
     with open(path,'rb') as f:
         obj = pickle.load(f)
-    #print("Load binary time: ",time.time()-begin)
     return obj
 
 def save_binary(obj,path):
     """
     Pickle a Corpus or FeatureMatrix object for later loading
 
-    Attributes
+    Parameters
     ----------
     obj : Corpus or FeatureMatrix
         Object to save

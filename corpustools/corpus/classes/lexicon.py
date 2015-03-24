@@ -1,6 +1,8 @@
 
+import re
 import random
 import collections
+import operator
 import math
 
 class CorpusIntegrityError(Exception):
@@ -318,9 +320,24 @@ class Transcription(object):
     Transcription object, sequence of symbols
     """
     def __init__(self,seg_list):
-        if seg_list is None:
-            seg_list = []
-        self._list = seg_list
+        self._list = list()
+        self._times = list()
+        if seg_list is not None:
+            for i,s in enumerate(seg_list):
+                if isinstance(s,str):
+                    self._list.append(s)
+                elif isinstance(s,dict):
+                    self._list.append(s['symbol'])
+                    if 'begin' in s and 'end' in s:
+                        self._times.append((s['begin'],s['end']))
+                elif isinstance(s,list):
+                    if len(s) == 3:
+                        self._list.append(s[0])
+                        self._times.append((s[1],s[2]))
+                    else:
+                        raise(NotImplementedError('That format for seg_list is not supported.'))
+                else:
+                    raise(NotImplementedError('That format for seg_list is not supported.'))
 
     def __getitem__(self, key):
         if isinstance(key,int) or isinstance(key,slice):
@@ -422,7 +439,7 @@ class FeatureMatrix(object):
     name : str
         An informative identifier for the feature matrix
 
-    feature_entries : list of Dictionary
+    feature : list of Dictionary
         Dictionaries in the list should contain feature names as keys
         and feature values as values, as well as a special key-value pair
         for the symbol
@@ -624,21 +641,31 @@ class Word(object):
         self.wordtokens = list()
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
-            key = key.lower()
-            if key in self._freq_names:
-                key = 'frequency'
-            if isinstance(value,list):
-                #assume transcription type stuff
-                value = Transcription(value)
-            elif key != 'spelling':
-                try:
-                    f = float(value)
-                    if not math.isnan(f) and not math.isinf(f):
-                        value = f
-                except (ValueError, TypeError):
-                    pass
-            if key not in self.descriptors:
-                self.descriptors.append(key)
+            if isinstance(value, tuple):
+                att, value = value
+                if att.att_type == 'numeric':
+                    try:
+                        value = float(value)
+                    except (ValueError, TypeError):
+                        value = float('nan')
+                elif att.att_type == 'tier':
+                    value = Transcription(value)
+            else:
+                key = key.lower()
+                if key in self._freq_names:
+                    key = 'frequency'
+                if isinstance(value,list):
+                    #assume transcription type stuff
+                    value = Transcription(value)
+                elif key != 'spelling':
+                    try:
+                        f = float(value)
+                        if not math.isnan(f) and not math.isinf(f):
+                            value = f
+                    except (ValueError, TypeError):
+                        pass
+                if key not in self.descriptors:
+                    self.descriptors.append(key)
             setattr(self,key, value)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
@@ -902,6 +929,48 @@ class EnvironmentFilter(object):
         return True
 
 class Attribute(object):
+    """
+    Attributes are for collecting summary information about attributes of
+    Words or WordTokens, with different types of attributes allowing for
+    different behaviour
+
+    Parameters
+    ----------
+    name : str
+        Python-safe name for using `getattr` and `setattr` on Words and
+        WordTokens
+
+    att_type : str
+        Either 'spelling', 'tier', 'numeric' or 'factor'
+
+    display_name : str
+        Human-readable name of the Attribute, defaults to None
+
+    default_value : object
+        Default value for initializing the attribute
+
+    Attributes
+    ----------
+    name : string
+        Python-readable name for the Attribute on Word and WordToken objects
+
+    display_name : string
+        Human-readable name for the Attribute
+
+    default_value : object
+        Default value for the Attribute.  The type of `default_value` is
+        dependent on the attribute type.  Numeric Attributes have a float
+        default value.  Factor and Spelling Attributes have a string
+        default value.  Tier Attributes have a Transcription default value.
+
+    range : object
+        Range of the Attribute, type depends on the attribute type.  Numeric
+        Attributes have a tuple of floats for the range for the minimum
+        and maximum.  The range for Factor Attributes is a set of all
+        factor levels.  The range for Tier Attributes is the set of segments
+        in that tier across the corpus.  The range for Spelling Attributes
+        is None.
+    """
     ATT_TYPES = ['spelling', 'tier', 'numeric', 'factor']
     def __init__(self, name, att_type, display_name = None, default_value = None):
         self.name = name
@@ -919,7 +988,10 @@ class Attribute(object):
                 self._default_value = default_value
             else:
                 self._default_value = ''
-            self._range = set([default_value])
+            if default_value:
+                self._range = set([default_value])
+            else:
+                self._range = set()
         elif self.att_type == 'spelling':
             self._range = None
             if default_value is not None and isinstance(default_value,str):
@@ -928,10 +1000,53 @@ class Attribute(object):
                 self._default_value = ''
         elif self.att_type == 'tier':
             self._range = set()
+            self._delim = None
             if default_value is not None and isinstance(default_value,Transcription):
                 self._default_value = default_value
             else:
                 self._default_value = Transcription(None)
+
+    @staticmethod
+    def guess_type(values, trans_delimiters = None):
+        if trans_delimiters is None:
+            trans_delimiters = ['.',' ', ';', ',']
+        probable_values = {x: 0 for x in Attribute.ATT_TYPES}
+        for i,v in enumerate(values):
+            try:
+                t = float(v)
+                probable_values['numeric'] += 1
+                continue
+            except ValueError:
+                for d in trans_delimiters:
+                    if d in v:
+                        probable_values['tier'] += 1
+                        break
+                else:
+                    if v in [v2 for j,v2 in enumerate(values) if i != j]:
+                        probable_values['factor'] += 1
+                    else:
+                        probable_values['spelling'] += 1
+        return max(probable_values.items(), key=operator.itemgetter(1))[0]
+
+    @staticmethod
+    def sanitize_name(name):
+        """
+        Sanitize a display name into a Python-readable attribute name
+
+        Parameters
+        ----------
+        name : string
+            Display name to sanitize
+
+        Returns
+        -------
+        string
+            Sanitized name
+        """
+        return re.sub('\W','',name.lower())
+
+    def __hash__(self):
+        return hash(self.name)
 
     def __str__(self):
         return self.display_name
@@ -965,6 +1080,20 @@ class Attribute(object):
         return self._range
 
     def update_range(self,value):
+        """
+        Update the range of the Attribute with the value specified.
+        If the attribute is a Factor, the value is added to the set of levels.
+        If the attribute is Numeric, the value expands the minimum and
+        maximum values, if applicable.  If the attribute is a Tier, the
+        value (a segment) is added to the set of segments allowed. If
+        the attribute is Spelling, nothing is done.
+
+        Parameters
+        ----------
+        value : object
+            Value to update range with, the type depends on the attribute
+            type
+        """
         if value is None:
             return
         if self.att_type == 'numeric':
@@ -991,30 +1120,35 @@ class Attribute(object):
 
 class Corpus(object):
     """
+    Lexicon to store information about Words, such as transcriptions,
+    spellings and frequencies
+
+    Parameters
+    ----------
+    name : string
+        Name to identify Corpus
+
     Attributes
     ----------
 
     name : str
         Name of the corpus, used only for easy of reference
 
+    attributes : list of Attributes
+        List of Attributes that Words in the Corpus have
+
     wordlist : dict
         Dictionary where every key is a unique string representing a word in a
         corpus, and each entry is a Word object
+
+    words : list of strings
+        All the keys for the wordlist of the Corpus
 
     specifier : FeatureSpecifier
         See the FeatureSpecifier object
 
     inventory : list
-        list of all Segments that appear at least once in self.wordlist.values()
-
-    orthography : list
-        list of one-character strings that appear in self.wordlist.keys()
-
-    custom : bool
-        True if this is a user-supplied corpus, False if it is a built-in corpus
-
-    feature_system : str
-        Name of the feature system used for the corpus
+        list of all Segments that appear at least once in the Words of the Corpus
     """
 
     #__slots__ = ['name', 'wordlist', 'specifier',
@@ -1026,12 +1160,9 @@ class Corpus(object):
         self.wordlist = dict()
         self.specifier = None
         self._inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
-        self.orthography = {'#'} #set of orthographic characters
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
-        self._tiers = list()
-        self._additional = list()
         self._freq_base = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
@@ -1046,6 +1177,35 @@ class Corpus(object):
 
     def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
                         gramsize = 1, probability = False):
+        """
+        Generate (and cache) frequencies for each segment in the Corpus.
+
+        Parameters
+        ----------
+        sequence_type : string
+            Specifies whether to use 'spelling', 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+        count_what: string
+            The type of frequency to use, either 'type' or 'token'
+
+        halve_edges : boolean
+            If True, word boundary symbols ('#') will only be counted once
+            per word, rather than twice.  Defaults to False.
+
+        gramsize : integer
+            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
+
+        probability : boolean
+            If True, frequency counts will be normalized by total frequency,
+            defaults to False
+
+        Returns
+        -------
+        dict
+            Keys are segments (or sequences of segments) and values are
+            their frequency in the Corpus
+        """
         if (sequence_type, count_what, gramsize) not in self._freq_base:
             freq_base = collections.defaultdict(float)
             for word in self:
@@ -1073,6 +1233,40 @@ class Corpus(object):
     def get_phone_probs(self, sequence_type, count_what, gramsize = 1,
                         probability = True, preserve_position = True,
                         log_count = True):
+        """
+        Generate (and cache) phonotactic probabilities for segments in
+        the Corpus.
+
+        Parameters
+        ----------
+        sequence_type : string
+            Specifies whether to use 'spelling', 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+        count_what: string
+            The type of frequency to use, either 'type' or 'token'
+
+        gramsize : integer
+            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
+
+        probability : boolean
+            If True, frequency counts will be normalized by total frequency,
+            defaults to False
+
+        preserve_position : boolean
+            If True, segments will in different positions in the transcription
+            will not be collapsed, defaults to True
+
+        log_count : boolean
+            If True, token frequencies will be logrithmically-transformed
+            prior to being summed
+
+        Returns
+        -------
+        dict
+            Keys are segments (or sequences of segments) and values are
+            their phonotactic probability in the Corpus
+        """
         if (sequence_type, count_what, gramsize, probability,
                     preserve_position, log_count) not in self._freq_base:
             freq_base = collections.defaultdict(float)
@@ -1109,13 +1303,40 @@ class Corpus(object):
             return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
         return return_dict
 
-    def subset(self,filters):
+    def subset(self, filters):
+        """
+        Generate a subset of the corpus based on filters.
+
+        Filters for Numeric Attributes should be tuples of an Attribute
+        (of the Corpus), a comparison callable (``__eq__``, ``__neq__``,
+        ``__gt__``, ``__gte__``, ``__lt__``, or ``__lte__``) and a value
+        to compare all such attributes in the Corpus to.
+
+        Filters for Factor Attributes should be tuples of an Attribute,
+        and a set of levels for inclusion in the subset.
+
+        Other attribute types cannot currently be the basis for filters.
+
+        Parameters
+        ----------
+        filters : list of tuples
+            See above for format
+
+        Returns
+        -------
+        Corpus
+            Subset of the corpus that matches the filter conditions
+        """
+
         new_corpus = Corpus('')
-        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name) for x in self.attributes]
+        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
+                    for x in self.attributes]
+        print(filters)
         for word in self:
             for f in filters:
                 if f[0].att_type == 'numeric':
-                    if not getattr(getattr(word,f[0].name),f[1])(f[2]):
+                    op = f[1]
+                    if not op(getattr(word,f[0].name), f[2]):
                         break
                 elif f[0].att_type == 'factor':
                     if getattr(word,f[0].name) not in f[1]:
@@ -1123,10 +1344,6 @@ class Corpus(object):
             else:
                 new_corpus.add_word(word)
         return new_corpus
-
-    @property
-    def tiers(self):
-        return self._tiers
 
     @property
     def attributes(self):
@@ -1145,6 +1362,25 @@ class Corpus(object):
 
 
     def features_to_segments(self, feature_description):
+        """
+        Given a feature description, return the segments in the inventory
+        that match that feature description
+
+        Feature descriptions should be either lists, such as
+        ['+feature1', '-feature2'] or strings that can be separated into
+        lists by ',', such as '+feature1,-feature2'.
+
+        Parameters
+        ----------
+        feature_description : string or list
+            Feature values that specify the segments, see above for format
+
+        Returns
+        -------
+        list of Segments
+            Segments that match the feature description
+
+        """
         segments = list()
         if isinstance(feature_description,str):
             feature_description = feature_description.split(',')
@@ -1154,6 +1390,19 @@ class Corpus(object):
         return segments
 
     def segment_to_features(self, seg):
+        """
+        Given a segment, return the features for that segment.
+
+        Parameters
+        ----------
+        seg : string or Segment
+            Segment or Segment symbol to look up
+
+        Returns
+        -------
+        dict
+            Dictionary with keys as features and values as featue values
+        """
         try:
             features = self.specifier.matrix[seg]
         except TypeError:
@@ -1161,6 +1410,25 @@ class Corpus(object):
         return features
 
     def add_abstract_tier(self, attribute, spec):
+        """
+        Add a abstract tier (currently primarily for generating CV skeletons
+        from tiers).
+
+        Specifiers for abstract tiers should be dictionaries with keys that
+        are the abstract symbol (such as 'C' or 'V') and the values are
+        iterables of segments that should count as that abstract symbols
+        (such as all consonants or all vowels).
+
+        Currently only operates on the ``transcription`` of words.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add/replace
+
+        spec : dict
+            Mapping for creating abstract tier
+        """
         for i,a in enumerate(self._attributes):
             if attribute.name == a.name:
                 self._attributes[i] = attribute
@@ -1172,6 +1440,18 @@ class Corpus(object):
             attribute.update_range(getattr(word,attribute.name))
 
     def add_attribute(self, attribute, initialize_defaults = False):
+        """
+        Add an Attribute of any type to the Corpus or replace an existing Attribute.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add or replace
+
+        initialize_defaults : boolean
+            If True, words will have this attribute set to the ``default_value``
+            of the attribute, defaults to False
+        """
         for i,a in enumerate(self._attributes):
             if attribute.name == a.name:
                 self._attributes[i] = attribute
@@ -1183,6 +1463,25 @@ class Corpus(object):
                 word.add_attribute(attribute.name,attribute.default_value)
 
     def add_count_attribute(self, attribute, sequence_type, spec):
+        """
+        Add an Numeric Attribute that is a count of a segments in a tier that
+        match a given specification.
+
+        The specification should be either a list of segments or a string of
+        the format '+feature1,-feature2' that specifies the set of segments.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add or replace
+
+        sequence_type : string
+            Specifies whether to use 'spelling', 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+        spec : list or str
+            Specification of what segments should be counted
+        """
         if isinstance(attribute,str):
             attribute = Attribute(attribute,'numeric')
         for i,a in enumerate(self._attributes):
@@ -1200,9 +1499,22 @@ class Corpus(object):
             setattr(word, attribute.name, v)
             attribute.update_range(v)
 
-
-
     def add_tier(self, attribute, spec):
+        """
+        Add a Tier Attribute based on the transcription of words as a new Attribute
+        that includes all segments that match the specification.
+
+        The specification should be either a list of segments or a string of
+        the format '+feature1,-feature2' that specifies the set of segments.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add or replace
+
+        spec : list or str
+            Specification of what segments should be counted
+        """
         if isinstance(attribute,str):
             attribute = Attribute(attribute,'tier')
         for i,a in enumerate(self._attributes):
@@ -1220,12 +1532,30 @@ class Corpus(object):
             word.add_tier(attribute.name,tier_segs)
 
     def remove_word(self, word_key):
+        """
+        Remove a Word from the Corpus using its identifier in the Corpus.
+
+        If the identifier is not found, nothing happens.
+
+        Parameters
+        ----------
+        word_key : string
+            Identifier to use to remove the Word
+        """
         try:
             del self.wordlist[word_key]
         except KeyError:
             pass
 
     def remove_attribute(self, attribute):
+        """
+        Remove an Attribute from the Corpus and from all its Word objects.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to remove
+        """
         if isinstance(attribute,str):
             name = attribute
         else:
@@ -1292,12 +1622,55 @@ class Corpus(object):
                     pass
 
     def check_coverage(self):
+        """
+        Checks the coverage of the specifier (FeatureMatrix) of the Corpus over the
+        inventory of the Corpus
+
+        Returns
+        -------
+        list
+            List of segments in the inventory that are not in the specifier
+        """
         if not self.specifier is not None:
             return []
         return [x for x in self._inventory.keys() if x not in self.specifier]
 
     def phonological_search(self,seg_list,envs=None, sequence_type = 'transcription',
                             call_back = None, stop_check = None):
+        """
+        Perform a search of a corpus for segments, with the option of only
+        searching in certain phonological environments.
+
+        Parameters
+        ----------
+        seg_list : list of strings or Segments
+            Segments to search for
+
+        envs : list
+            Environments to search in
+
+        sequence_type : string
+            Specifies whether to use 'transcription' or the name of a
+            transcription tier to use for comparisons
+
+
+        stop_check : callable
+            Callable that returns a boolean for whether to exit before
+            finishing full calculation
+
+        call_back : callable
+            Function that can handle strings (text updates of progress),
+            tuples of two integers (0, total number of steps) and an integer
+            for updating progress out of the total set by a tuple
+
+        Returns
+        -------
+        list
+            A list of tuples with the first element a word and the second
+            a tuple of the segment and the environment that matched
+        """
+        if sequence_type == 'spelling':
+            return None
         if call_back is not None:
             call_back('Searching...')
             call_back(0,len(self))
@@ -1329,15 +1702,28 @@ class Corpus(object):
         return results
 
     def iter_words(self):
-        """Sorts the keys in the corpus dictionary, then yields the values in that order
+        """
+        Sorts the keys in the corpus dictionary,
+        then yields the values in that order
 
+        Returns
+        -------
+        generator
+            Sorted Words in the corpus
         """
         sorted_list = sorted(self.wordlist.keys())
         for word in sorted_list:
             yield self.wordlist[word]
 
     def iter_sort(self):
-        """Sorts the keys in the corpus dictionary, then yields the values in that order
+        """
+        Sorts the keys in the corpus dictionary, then yields the
+        values in that order
+
+        Returns
+        -------
+        generator
+            Sorted Words in the corpus
 
         """
         sorted_list = sorted(self.wordlist.keys())
@@ -1349,7 +1735,7 @@ class Corpus(object):
         Set the feature system to be used by the corpus and make sure
         every word is using it too.
 
-        Attributes
+        Parameters
         ----------
         matrix : FeatureMatrix
             New feature system to use in the corpus
@@ -1380,7 +1766,7 @@ class Corpus(object):
         new_corpus_name : str
 
         Returns
-        ----------
+        -------
         new_corpus : Corpus
             New corpus object with len(new_corpus) == size
         """
@@ -1404,6 +1790,8 @@ class Corpus(object):
             Word object to be added
 
         allow_duplicates : bool
+            If False, duplicate Words with the same spelling as an existing
+            word in the corpus will not be added
 
         """
         word._corpus = self
@@ -1430,14 +1818,12 @@ class Corpus(object):
         except KeyError:
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
-                self.orthography.update(word.spelling)
+                #self.orthography.update(word.spelling)
                 if not self.has_spelling:
                     self.has_spelling = True
 
         if word.transcription is not None:
-            for s in word.transcription:
-                if s not in self._inventory:
-                    self._inventory[s] = Segment(s)
+            self.update_inventory(word.transcription)
             if not self.has_transcription:
                 self.has_transcription = True
         for d in word.descriptors:
@@ -1451,7 +1837,40 @@ class Corpus(object):
         for a in self.attributes:
             a.update_range(getattr(word,a.name))
 
+    def update_inventory(self, transcription):
+        """
+        Update the inventory of the Corpus to ensure it contains all
+        the segments in the given transcription
+
+        Parameters
+        ----------
+        transcription : list
+            Segment symbols to add to the inventory if needed
+        """
+        for s in transcription:
+            if isinstance(s, str):
+                if s not in self._inventory:
+                    self._inventory[s] = Segment(s)
+
     def get_or_create_word(self, spelling, transcription):
+        """
+        Get a Word object that has the spelling and transcription
+        specified or create that Word, add it to the Corpus and return it.
+
+        Parameters
+        ----------
+        spelling : string
+            Spelling to search for
+
+        transcription : list
+            Transcription to search for
+
+        Returns
+        -------
+        Word
+            Existing or newly created Word with the spelling and transcription
+            specified
+        """
         words = self.find_all(spelling)
         if transcription is None:
             transcription = list()
@@ -1467,12 +1886,17 @@ class Corpus(object):
     def random_word(self):
         """Return a randomly selected Word
 
+        Returns
+        -------
+        Word
+            Random Word
         """
         word = random.choice(list(self.wordlist.keys()))
         return self.wordlist[word]
 
     def get_features(self):
-        """Get a list of the features used to describe Segments
+        """
+        Get a list of the features used to describe Segments
 
         Returns
         ----------
@@ -1495,12 +1919,12 @@ class Corpus(object):
             Set whether a KeyError should be raised if a word is not found
 
         Returns
-        ----------
+        -------
         result : Word or EmptyWord
 
 
         Raises
-        ----------
+        ------
         KeyError if keyerror == True and word is not found
 
         """
@@ -1523,7 +1947,20 @@ class Corpus(object):
 
         raise KeyError('The word \"{}\" is not in the corpus'.format(word))
 
-    def find_all(self,spelling):
+    def find_all(self, spelling):
+        """
+        Find all Word objects with the specified spelling
+
+        Parameters
+        ----------
+        spelling : string
+            Spelling to look up
+
+        Returns
+        -------
+        list of Words
+            Words that have the specified spelling
+        """
         words = list()
         try:
             words.append(self.wordlist[spelling])

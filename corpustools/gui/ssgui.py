@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
+from corpustools.exceptions import PCTError, PCTPythonError
 
 from .widgets import RadioSelectWidget, FileWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
@@ -12,6 +13,7 @@ from .corpusgui import AddWordDialog
 
 class SSWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         try:
             corpus = kwargs.pop('corpusModel').corpus
@@ -19,8 +21,11 @@ class SSWorker(FunctionWorker):
             alg = kwargs.pop('algorithm')
             self.results = string_similarity(corpus,
                                         query,alg,**kwargs)
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
         except Exception as e:
-            print(e)
+            e = PCTPythonError(e)
             self.errorEncountered.emit(e)
             return
         if self.stopped:

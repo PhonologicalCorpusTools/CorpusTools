@@ -408,7 +408,7 @@ distribution is calculated using the following steps.
       below for an example of calculating environment-free entropy for
       four different pairs in the sample corpus:
 
-.. image:: _static/prodfreq.png
+.. image:: static/prodfreq.png
    :width: 90%
    :align: center
 
@@ -469,11 +469,6 @@ distribution is calculated using the following steps.
       weighted average entropy across environments will NOT be accurate
       in this scenario, because not all words have been included.
 
-.. image:: _static/proderror.png
-   :width: 90%
-   :align: center
-
-
    b. If you ask PCT to check for uniqueness, and it is not met, an error
       message will appear that indicates that the environments
       are not unique, as shown below. Furthermore, a .txt file explaining
@@ -483,7 +478,11 @@ distribution is calculated using the following steps.
       PCT software. Clicking “Show details” in the error box also reveals
       this information.
 
-.. image:: _static/proderror2.png
+.. image:: static/proderror.png
+   :width: 90%
+   :align: center
+
+.. image:: static/proderror2.png
    :width: 90%
    :align: center
 
@@ -492,7 +491,7 @@ calculating the predictability of distribution based on token frequency
 for [s] and [ʃ] in the sample corpus:
 
 
-.. image:: _static/proddialog.png
+.. image:: static/proddialog.png
    :width: 90%
    :align: center
 
@@ -506,7 +505,7 @@ for [s] and [ʃ] in the sample corpus:
    the environments being weighted by their own frequency of occurrence.
    See the following example:
 
-.. image:: _static/prodresults.png
+.. image:: static/prodresults.png
    :width: 90%
    :align: center
 

@@ -1,4 +1,5 @@
 import os
+import sys
 import codecs
 import string
 
@@ -6,14 +7,20 @@ from .imports import *
 
 from collections import OrderedDict
 
+from corpustools.exceptions import PCTError, PCTPythonError
+from corpustools.decorators import check_for_errors
+
 from corpustools.corpus.classes import Attribute, Word
 
 from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
                                     load_spelling_corpus, load_transcription_corpus,
                                     inspect_transcription_corpus,
-                                    save_binary,export_corpus_csv, import_spontaneous_speech_corpus)
-
-from .windows import FunctionWorker, DownloadWorker
+                                    save_binary,export_corpus_csv,
+                                    import_spontaneous_speech_corpus,
+                                    load_corpus_ilg)
+from corpustools.corpus.io.csv import inspect_csv
+from corpustools.corpus.io.spontaneous import SpontaneousIOError
+from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
@@ -31,6 +38,64 @@ def get_corpora_list(storage_directory):
 def corpus_name_to_path(storage_directory,name):
     return os.path.join(storage_directory,'CORPUS',name+'.corpus')
 
+class AttributeWidget(QGroupBox):
+    def __init__(self, attribute = None, exclude_tier = False,
+                disable_name = False, parent = None):
+        QGroupBox.__init__(self, 'Column details', parent)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        if attribute is not None:
+            self.attribute = attribute
+            self.nameWidget.setText(attribute.display_name)
+        else:
+            self.attribute = None
+
+        if disable_name:
+            self.nameWidget.setEnabled(False)
+
+        self.typeWidget = QComboBox()
+        for at in Attribute.ATT_TYPES:
+            if exclude_tier and at == 'tier':
+                continue
+            self.typeWidget.addItem(at.title())
+
+        for i in range(self.typeWidget.count()):
+            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
+                self.typeWidget.setCurrentIndex(i)
+
+
+        main.addRow('Type of column',self.typeWidget)
+
+        self.useAs = QComboBox()
+        self.useAs.addItem('Custom column')
+        self.useAs.addItem('Spelling')
+        self.useAs.addItem('Transcription')
+        self.useAs.addItem('Frequency')
+
+        for i in range(self.useAs.count()):
+            if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
+                self.useAs.setCurrentIndex(i)
+
+        main.addRow('Use column as', self.useAs)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def value(self):
+        display = self.nameWidget.text()
+        cat = self.typeWidget.currentText().lower()
+        use = self.useAs.currentText().lower()
+        if use.startswith('custom'):
+            name = Attribute.sanitize_name(display)
+        else:
+            name = use
+        return Attribute(name, cat, display)
 
 class CorpusSelect(QComboBox):
     def __init__(self, parent, settings):
@@ -54,32 +119,61 @@ class CorpusSelect(QComboBox):
 
 class LoadWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         if self.stopCheck():
             return
-        self.results = load_binary(self.kwargs['path'])
+        try:
+            self.results = load_binary(self.kwargs['path'])
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
+            self.errorEncountered.emit(e)
+            return
         if self.stopCheck():
             return
         self.dataReady.emit(self.results)
 
 class SpontaneousLoadWorker(FunctionWorker):
     def run(self):
-
-        corpus = import_spontaneous_speech_corpus(self.kwargs['directory'],
-                                                dialect = self.kwargs['dialect'],
-                                                stop_check=self.kwargs['stop_check'],
-                                                call_back = self.kwargs['call_back'])
+        time.sleep(0.1)
+        kwargs = self.kwargs
+        directory = kwargs.pop('directory')
+        name = kwargs.pop('name')
+        try:
+            corpus = import_spontaneous_speech_corpus(
+                                                name,
+                                                directory,
+                                                **kwargs)
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
+            self.errorEncountered.emit(e)
+            return
         self.dataReady.emit(corpus)
 
-class SpellingLoadWorker(FunctionWorker):
+class TextLoadWorker(FunctionWorker):
     def run(self):
-
-        corpus = load_spelling_corpus(**self.kwargs)
-        self.dataReady.emit(corpus)
-
-class TranscriptionLoadWorker(FunctionWorker):
-    def run(self):
-
-        corpus = load_transcription_corpus(**self.kwargs)
+        time.sleep(0.1)
+        textType = self.kwargs.pop('text_type')
+        try:
+            if textType == 'spelling':
+                    corpus = load_spelling_corpus(**self.kwargs)
+            elif textType == 'transcription':
+                corpus = load_transcription_corpus(**self.kwargs)
+            elif textType == 'ilg':
+                print('begin ilg')
+                corpus = load_corpus_ilg(**self.kwargs)
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
+            self.errorEncountered.emit(e)
+            return
         self.dataReady.emit(corpus)
 
 class SubsetCorpusDialog(QDialog):
@@ -151,14 +245,14 @@ class SubsetCorpusDialog(QDialog):
         new_corpus.name = name
         new_corpus.set_feature_matrix(self.corpus.specifier)
         save_binary(new_corpus,
-            corpus_name_to_path(self.settings['storage'],new_corpus.name))
+            corpus_name_to_path(self.parent().settings['storage'],new_corpus.name))
         QDialog.accept(self)
 
 class CorpusLoadDialog(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent,settings):
         QDialog.__init__(self, parent)
         self.corpus = None
-
+        self.settings = settings
         layout = QVBoxLayout()
         formLayout = QHBoxLayout()
         listFrame = QGroupBox('Available corpora')
@@ -177,21 +271,18 @@ class CorpusLoadDialog(QDialog):
         buttonLayout = QVBoxLayout()
         self.downloadButton = QPushButton('Download example corpora')
         self.loadFromCsvButton = QPushButton('Load corpus from pre-formatted text file')
-        self.loadFromSpellingTextButton = QPushButton('Create corpus from running text (orthography)')
-        self.loadFromTranscriptionTextButton = QPushButton('Create corpus from running text (transcribed)')
+        self.loadFromTextButton = QPushButton('Create corpus from running text')
         self.importSpontaneousButton = QPushButton('Import spontaneous speech corpus')
         self.removeButton = QPushButton('Remove selected corpus')
         buttonLayout.addWidget(self.downloadButton)
         buttonLayout.addWidget(self.loadFromCsvButton)
-        buttonLayout.addWidget(self.loadFromSpellingTextButton)
-        buttonLayout.addWidget(self.loadFromTranscriptionTextButton)
+        buttonLayout.addWidget(self.loadFromTextButton)
         buttonLayout.addWidget(self.importSpontaneousButton)
         buttonLayout.addWidget(self.removeButton)
 
         self.downloadButton.clicked.connect(self.openDownloadWindow)
         self.loadFromCsvButton.clicked.connect(self.openCsvWindow)
-        self.loadFromSpellingTextButton.clicked.connect(self.openSpellingTextWindow)
-        self.loadFromTranscriptionTextButton.clicked.connect(self.openTranscriptionTextWindow)
+        self.loadFromTextButton.clicked.connect(self.openTextWindow)
         self.importSpontaneousButton.clicked.connect(self.importSpontaneousWindow)
         self.removeButton.clicked.connect(self.removeCorpus)
 
@@ -225,6 +316,7 @@ class CorpusLoadDialog(QDialog):
 
         self.progressDialog = QProgressDialog('Loading...','Cancel',0,0,self)
         self.progressDialog.setWindowTitle('Loading corpus')
+        self.progressDialog.setMinimumDuration(0)
         self.progressDialog.canceled.connect(self.thread.stop)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
@@ -237,7 +329,7 @@ class CorpusLoadDialog(QDialog):
         if selected:
             self.thread.setParams({
                 'path':corpus_name_to_path(
-                            self.parent().settings['storage'],selected[0])})
+                            self.settings['storage'],selected[0])})
 
             self.thread.start()
 
@@ -248,29 +340,24 @@ class CorpusLoadDialog(QDialog):
                 QDialog.accept(self)
 
     def openDownloadWindow(self):
-        dialog = DownloadCorpusDialog(self, self.parent().settings)
+        dialog = DownloadCorpusDialog(self, self.settings)
         result = dialog.exec_()
         if result:
             self.getAvailableCorpora()
 
     def openCsvWindow(self):
-        dialog = CorpusFromCsvDialog(self, self.parent().settings)
+        dialog = CorpusFromCsvDialog(self, self.settings)
         result = dialog.exec_()
         if result:
             self.getAvailableCorpora()
 
     def importSpontaneousWindow(self):
-        dialog = SpontaneousSpeechDialog(self, self.parent().settings)
+        dialog = SpontaneousSpeechDialog(self, self.settings)
         if dialog.exec_():
             self.getAvailableCorpora()
 
-    def openSpellingTextWindow(self):
-        dialog = CorpusFromSpellingTextDialog(self, self.parent().settings)
-        if dialog.exec_():
-            self.getAvailableCorpora()
-
-    def openTranscriptionTextWindow(self):
-        dialog = CorpusFromTranscriptionTextDialog(self, self.parent().settings)
+    def openTextWindow(self):
+        dialog = CorpusFromTextDialog(self, self.settings)
         if dialog.exec_():
             self.getAvailableCorpora()
 
@@ -282,12 +369,12 @@ class CorpusLoadDialog(QDialog):
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
-        os.remove(corpus_name_to_path(self.parent().settings['storage'],corpus))
+        os.remove(corpus_name_to_path(self.settings['storage'],corpus))
         self.getAvailableCorpora()
 
     def getAvailableCorpora(self):
         self.corporaList.clear()
-        corpora = get_corpora_list(self.parent().settings['storage'])
+        corpora = get_corpora_list(self.settings['storage'])
         for c in corpora:
             self.corporaList.addItem(c)
 
@@ -369,7 +456,7 @@ class DownloadCorpusDialog(QDialog):
         if result:
             QDialog.accept(self)
 
-class CorpusFromSpellingTextDialog(QDialog):
+class CorpusFromTextDialog(QDialog):
     def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
         self.settings = settings
@@ -379,8 +466,21 @@ class CorpusFromSpellingTextDialog(QDialog):
 
         iolayout = QFormLayout()
 
+        self.typeWidget = QComboBox()
+        self.typeWidget.addItem('Transcribed text')
+        self.typeWidget.addItem('Orthography text')
+        self.typeWidget.addItem('Interlinear text')
+
+        self.typeWidget.currentIndexChanged.connect(self.typeChanged)
+
+        self.textType = None
+
+        iolayout.addRow('Type of running text', self.typeWidget)
+
+        self.characters = set()
         self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
+        self.pathWidget.pathEdit.textChanged.connect(self.getCharacters)
 
         iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
 
@@ -398,18 +498,38 @@ class CorpusFromSpellingTextDialog(QDialog):
 
         mainlayout.addWidget(ioframe)
 
+        optionlayout = QFormLayout()
         translayout = QFormLayout()
 
-        self.supportCorpus = CorpusSelect(self,self.settings)
-        translayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
+        self.featureSystem = FeatureSystemSelect(self.settings)
+        translayout.addRow(self.featureSystem)
 
-        self.ignoreCase = QCheckBox()
-        translayout.addRow(QLabel('Ignore case'),self.ignoreCase)
+        self.transDelimiter = PunctuationWidget(['.','-','='],'Transcription delimiters')
+        self.transDelimiter.check()
+        translayout.addRow(self.transDelimiter)
 
-        transframe = QGroupBox('Transcription details')
+        self.digraphs = DigraphWidget(self)
+        translayout.addRow(self.digraphs)
+        transframe = QGroupBox('Transcription text options')
         transframe.setLayout(translayout)
 
-        mainlayout.addWidget(transframe)
+        optionlayout.addRow(transframe)
+
+        orthframe = QGroupBox('Orthography text options')
+        orthlayout = QFormLayout()
+
+        self.supportCorpus = CorpusSelect(self,self.settings)
+        orthlayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
+
+        self.ignoreCase = QCheckBox()
+        orthlayout.addRow(QLabel('Ignore case'),self.ignoreCase)
+        orthframe.setLayout(orthlayout)
+
+        optionlayout.addRow(orthframe)
+
+        optionframe = QGroupBox('Options')
+        optionframe.setLayout(optionlayout)
+        mainlayout.addWidget(optionframe)
 
         mainframe = QFrame()
         mainframe.setLayout(mainlayout)
@@ -435,7 +555,8 @@ class CorpusFromSpellingTextDialog(QDialog):
 
         self.setWindowTitle('Create corpus from orthographic text')
 
-        self.thread = SpellingLoadWorker()
+        self.thread = TextLoadWorker()
+        self.thread.errorEncountered.connect(self.handleError)
 
         self.progressDialog = QProgressDialog('Importing...','Cancel',0,100,self)
         self.progressDialog.setWindowTitle('Importing orthographic text')
@@ -446,6 +567,76 @@ class CorpusFromSpellingTextDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+        self.typeChanged()
+
+    def handleError(self,error):
+
+        if hasattr(error, 'main'):
+            reply = QMessageBox()
+            reply.setWindowTitle('Error encountered')
+            reply.setIcon(QMessageBox.Critical)
+            reply.setText(error.main)
+            reply.setInformativeText(error.information)
+            reply.setDetailedText(error.details)
+
+            if hasattr(error,'print_to_file'):
+                error.print_to_file(self.parent().settings.error_directory())
+                reply.addButton('Open errors directory',QMessageBox.AcceptRole)
+            reply.setStandardButtons(QMessageBox.Close)
+            ret = reply.exec_()
+            if ret == QMessageBox.AcceptRole:
+                error_dir = self.parent().settings.error_directory()
+                if sys.platform == 'win32':
+                    args = ['{}'.format(error_dir)]
+                    program = 'explorer'
+                    #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
+                elif sys.platform == 'darwin':
+                    program = 'open'
+                    args = ['{}'.format(error_dir)]
+                else:
+                    program = 'xdg-open'
+                    args = ['{}'.format(error_dir)]
+                #subprocess.call([program]+args,shell=True)
+                proc = QProcess(self.parent())
+                t = proc.startDetached(program,args)
+        else:
+            reply = QMessageBox.critical(self,
+                    "Error encountered", str(error))
+        self.progressDialog.cancel()
+        return None
+
+    def typeChanged(self):
+        if self.typeWidget.currentText() == 'Transcribed text':
+            self.transcriptionSelected()
+        elif self.typeWidget.currentText() == 'Orthography text':
+            self.spellingSelected()
+        elif self.typeWidget.currentText() == 'Interlinear text':
+            self.ilgSelected()
+
+    def spellingSelected(self):
+        self.textType = 'spelling'
+        self.transDelimiter.setEnabled(False)
+        self.digraphs.setEnabled(False)
+        self.supportCorpus.setEnabled(True)
+        self.ignoreCase.setEnabled(True)
+        self.featureSystem.setEnabled(False)
+
+    def transcriptionSelected(self):
+        self.textType = 'transcription'
+        self.transDelimiter.setEnabled(True)
+        self.digraphs.setEnabled(True)
+        self.supportCorpus.setEnabled(False)
+        self.ignoreCase.setEnabled(False)
+        self.featureSystem.setEnabled(True)
+
+    def ilgSelected(self):
+        self.textType = 'ilg'
+        self.transDelimiter.setEnabled(True)
+        self.digraphs.setEnabled(True)
+        self.supportCorpus.setEnabled(False)
+        self.ignoreCase.setEnabled(False)
+        self.featureSystem.setEnabled(True)
 
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'loading corpora',
@@ -462,6 +653,23 @@ class CorpusFromSpellingTextDialog(QDialog):
 
     def setResults(self, results):
         self.corpus = results
+
+    def ignoreList(self):
+        return self.punctuation.value()
+
+    def delimiters(self):
+        wordDelim = None
+        transDelim = self.transDelimiter.value()
+        if transDelim == []:
+            transDelim = None
+        return wordDelim, transDelim
+
+    def getCharacters(self):
+        path = self.pathWidget.value()
+        if path != '' and os.path.exists(path):
+            self.characters = inspect_transcription_corpus(path)
+        else:
+            self.characters = set()
 
     def generateKwargs(self):
         path = self.pathWidget.value()
@@ -485,196 +693,27 @@ class CorpusFromSpellingTextDialog(QDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
-        wordDelim = None#self.wordDelimiter.text()
-        #if wordDelim == '':
-        #    wordDelim = ' '
-
-        supportCorpus = self.supportCorpus.path()
-        ignore_list = self.punctuation.value()
-
-        kwargs = {'corpus_name':name,
-                    'path':path,
-                    'delimiter': wordDelim,
-                    'ignore_list': ignore_list,
-                    'ignore_case': self.ignoreCase.isChecked(),
-                    'support_corpus_path': supportCorpus}
-        return kwargs
-
-    def accept(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            if self.corpus is not None:
-                save_binary(self.corpus,
-                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
-            QDialog.accept(self)
-
-    def updateName(self):
-        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
-
-class CorpusFromTranscriptionTextDialog(QDialog):
-    def __init__(self, parent, settings):
-        QDialog.__init__(self, parent)
-        self.settings = settings
-        self.characters = set()
-        layout = QVBoxLayout()
-
-        mainlayout = QHBoxLayout()
-
-        iolayout = QFormLayout()
-
-        self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
-        self.pathWidget.pathEdit.textChanged.connect(self.updateName)
-        self.pathWidget.pathEdit.textChanged.connect(self.getCharacters)
-
-        iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
-
-        self.nameEdit = QLineEdit()
-        iolayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
-
-        #self.wordDelimiter = PunctuationWidget(['space','tab'],'Word delimiters')
-        iolayout.addRow(QLabel('Word delimiters'), QLabel('All whitespace'))
-
-        self.punctuation = PunctuationWidget(string.punctuation,'Punctuation to ignore')
-
-        iolayout.addRow(self.punctuation)
-
-        ioframe = QGroupBox('Corpus details')
-        ioframe.setLayout(iolayout)
-
-        mainlayout.addWidget(ioframe)
-
-        translayout = QFormLayout()
-
-        self.featureSystem = FeatureSystemSelect(self.settings)
-        translayout.addRow(self.featureSystem)
-
-        self.transDelimiter = PunctuationWidget(['.','-','='],'Transcription delimiters')
-        self.transDelimiter.check()
-        translayout.addRow(self.transDelimiter)
-
-        self.digraphs = DigraphWidget(self)
-        translayout.addRow(self.digraphs)
-
-        transframe = QGroupBox('Transcription details')
-        transframe.setLayout(translayout)
-
-        mainlayout.addWidget(transframe)
-
-        mainframe = QFrame()
-        mainframe.setLayout(mainlayout)
-        layout.addWidget(mainframe)
-
-        self.acceptButton = QPushButton('Ok')
-        self.cancelButton = QPushButton('Cancel')
-        self.helpButton = QPushButton('Help')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.cancelButton)
-        acLayout.addWidget(self.helpButton)
-        self.acceptButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-        self.helpButton.clicked.connect(self.help)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-        self.setLayout(layout)
-
-        self.setWindowTitle('Create corpus from transcribed text')
-
-        self.thread = TranscriptionLoadWorker()
-
-        self.progressDialog = QProgressDialog('Loading...','Cancel',0,100,self)
-        self.progressDialog.setWindowTitle('Loading transcribed text')
-        self.progressDialog.setAutoClose(False)
-        self.progressDialog.setAutoReset(False)
-        self.progressDialog.canceled.connect(self.thread.stop)
-        self.thread.updateProgress.connect(self.updateProgress)
-        self.thread.updateProgressText.connect(self.updateProgressText)
-        self.thread.dataReady.connect(self.setResults)
-        self.thread.dataReady.connect(self.progressDialog.accept)
-
-    def help(self):
-        self.helpDialog = HelpDialog(self,name = 'loading corpora',
-                                    section = 'creating-a-corpus-from-running-text')
-        self.helpDialog.exec_()
-
-    def ignoreList(self):
-        return self.punctuation.value()
-
-    def delimiters(self):
-        #wordDelim = self.wordDelimiter.text()
-        #if wordDelim == '' or wordDelim == ' ':
         wordDelim = None
-        transDelim = self.transDelimiter.value()
-        if transDelim == []:
-            transDelim = None
-        return wordDelim, transDelim
-
-
-    def getCharacters(self):
-        path = self.pathWidget.value()
-        if path != '' and os.path.exists(path):
-            self.characters = inspect_transcription_corpus(path)
-        else:
-            self.characters = set()
-
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
-
-    def setResults(self, results):
-        self.corpus = results
-
-    def generateKwargs(self):
-        path = self.pathWidget.value()
-        if path == '':
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a path to the text file.")
-            return
-        if not os.path.exists(path):
-            reply = QMessageBox.critical(self,
-                    "Invalid information", "The specified file does not exist.")
-            return
-        name = self.nameEdit.text()
-        if name == '':
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a name for the corpus.")
-            return
         wordDelim, transDelim = self.delimiters()
-        feature_system_path = self.featureSystem.path()
         ignore_list = self.punctuation.value()
 
-        if name in get_corpora_list(self.settings['storage']):
-            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
-                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
-            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
-            msgBox.addButton("Abort", QMessageBox.RejectRole)
-            if msgBox.exec_() != QMessageBox.AcceptRole:
-                return
-
         kwargs = {'corpus_name':name,
+                    'text_type':self.textType,
                     'path':path,
                     'delimiter': wordDelim,
-                    'ignore_list': ignore_list,
-                    'digraph_list': self.digraphs.value(),
-                    'trans_delimiter': transDelim,
-                    'feature_system_path': feature_system_path}
+                    'ignore_list': ignore_list}
+        if self.textType == 'spelling':
+
+            supportCorpus = self.supportCorpus.path()
+            ignore_list = self.punctuation.value()
+            kwargs['ignore_case'] = self.ignoreCase.isChecked()
+            kwargs['support_corpus_path'] = supportCorpus
+        else:
+            feature_system_path = self.featureSystem.path()
+            kwargs['digraph_list'] = self.digraphs.value()
+            kwargs['trans_delimiter'] = transDelim
+            kwargs['feature_system_path'] = feature_system_path
+
         return kwargs
 
     def accept(self):
@@ -1435,14 +1474,13 @@ class RemoveAttributeDialog(QDialog):
 
         QDialog.accept(self)
 
-class CorpusFromCsvDialog(QDialog):
+class CorpusFromCsvDialog(PCTDialog):
     def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
         self.settings = settings
         layout = QVBoxLayout()
 
         formLayout = QFormLayout()
-
 
         self.pathWidget = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
@@ -1453,16 +1491,33 @@ class CorpusFromCsvDialog(QDialog):
         formLayout.addRow(QLabel('Name for corpus (auto-suggested)'),self.nameEdit)
 
         self.columnDelimiterEdit = QLineEdit()
-        self.columnDelimiterEdit.setText('\t')
-        formLayout.addRow(QLabel('Column delimiter'),self.columnDelimiterEdit)
+        formLayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
 
         self.transDelimiterEdit = QLineEdit()
-        self.transDelimiterEdit.setText('.')
-        formLayout.addRow(QLabel('Transcription delimiter'),self.transDelimiterEdit)
+        formLayout.addRow(QLabel('Transcription delimiter (auto-detected)'),self.transDelimiterEdit)
+
+        self.recheckButton = QPushButton('Recheck file using current settings')
+
+        self.recheckButton.clicked.connect(self.forceInspect)
+
+        formLayout.addRow(self.recheckButton)
+
+        scroll = QScrollArea()
+        self.columnFrame = QWidget()
+        self.columns = list()
+        lay = QHBoxLayout()
+        lay.addStretch()
+        self.columnFrame.setLayout(lay)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.columnFrame)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(120)
+        #self.columnFrame.
+        formLayout.addRow(scroll)
 
         self.featureSystemSelect = FeatureSystemSelect(self.settings)
 
-        formLayout.addRow(QLabel('Feature system (if applicable)'),self.featureSystemSelect)
+        formLayout.addRow(self.featureSystemSelect)
 
         formFrame = QFrame()
         formFrame.setLayout(formLayout)
@@ -1493,10 +1548,37 @@ class CorpusFromCsvDialog(QDialog):
                                     section = 'using-a-custom-corpus')
         self.helpDialog.exec_()
 
-    def updateName(self):
-        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+    @check_for_errors
+    def forceInspect(self, b):
+        if os.path.exists(self.pathWidget.value()):
+            atts, coldelim = inspect_csv(self.pathWidget.value(),
+                    coldelim = self.columnDelimiterEdit.text(),
+                    transdelim = self.transDelimiterEdit.text())
+            self.updateColumnFrame(atts)
 
-    def accept(self):
+    def updateColumnFrame(self, atts):
+        for i in reversed(range(self.columnFrame.layout().count()-1)):
+            w = self.columnFrame.layout().itemAt(i).widget()
+            w.setParent(None)
+            w.deleteLater()
+        self.columns = list()
+        for a in atts:
+            if a.att_type == 'tier':
+                self.transDelimiterEdit.setText(a._delim)
+            c = AttributeWidget(attribute = a, disable_name = True)
+            self.columns.append(c)
+            self.columnFrame.layout().addWidget(c)
+
+    @check_for_errors
+    def updateName(self, b):
+        self.nameEdit.setText(os.path.split(self.pathWidget.value())[1].split('.')[0])
+        if os.path.exists(self.pathWidget.value()):
+            atts, coldelim = inspect_csv(self.pathWidget.value())
+            self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
+            self.updateColumnFrame(atts)
+
+    @check_for_errors
+    def accept(self, b):
         path = self.pathWidget.value()
         if path == '':
             reply = QMessageBox.critical(self,
@@ -1527,7 +1609,35 @@ class CorpusFromCsvDialog(QDialog):
         transDelim = self.transDelimiterEdit.text()
 
         featureSystem = self.featureSystemSelect.path()
-        corpus = load_corpus_csv(name, path, colDelim, transDelim, featureSystem)
+
+        attributes = [x.value() for x in self.columns]
+        spellingfound = False
+        transfound = False
+        freqfound = False
+        for a in attributes:
+            if a.name == 'spelling':
+                if spellingfound:
+                    reply = QMessageBox.critical(self,
+                    "Invalid information", "Please specify only one column to use as Spelling.")
+                    return
+                else:
+                    spellingfound = True
+            elif a.name == 'transcription':
+                if transfound:
+                    reply = QMessageBox.critical(self,
+                    "Invalid information", "Please specify only one column to use as Transcription.")
+                    return
+                else:
+                    transfound = True
+            elif a.name == 'frequency':
+                if freqfound:
+                    reply = QMessageBox.critical(self,
+                    "Invalid information", "Please specify only one column to use as Frequency.")
+                    return
+                else:
+                    freqfound = True
+        corpus = load_corpus_csv(name, path, colDelim, transDelim, featureSystem,
+                                attributes = attributes)
         errors = corpus.check_coverage()
         if errors:
             msgBox = QMessageBox(QMessageBox.Warning, "Missing symbols",
@@ -1615,6 +1725,8 @@ class SpontaneousSpeechDialog(QDialog):
         self.corpus = None
         layout = QVBoxLayout()
 
+        self.mainlayout = QHBoxLayout()
+
         inlayout = QFormLayout()
 
         self.directoryWidget = DirectoryWidget()
@@ -1630,11 +1742,45 @@ class SpontaneousSpeechDialog(QDialog):
         self.dialectWidget.addItem('TIMIT')
         self.dialectWidget.addItem('Buckeye')
         inlayout.addRow('Corpus file set up:',self.dialectWidget)
-
+        self.dialectWidget.currentIndexChanged.connect(self.updateOptions)
         inframe = QFrame()
         inframe.setLayout(inlayout)
 
-        layout.addWidget(inframe)
+        self.mainlayout.addWidget(inframe)
+
+        self.optionlayout = QFormLayout()
+
+        self.wordTierName = QLineEdit()
+        self.wordTierName.setText('Word')
+        self.phoneTierName = QLineEdit()
+        self.phoneTierName.setText('Phone')
+        self.multiplePhoneCheck = QCheckBox()
+        self.multiplePhoneCheck.clicked.connect(self.updateDelimiters)
+        self.phoneDelimiter = QLineEdit()
+        self.phoneDelimiter.setText(',')
+        self.phoneDelimiter.setEnabled(False)
+
+
+        self.speakerSource = RadioSelectWidget('Where to get speaker names from',
+                                            OrderedDict([('From directory names','directory'),
+                                            ('From file names','filename'),
+                                            ('From within the file (or to be added later)', None)]))
+
+
+        optionlayout = QFormLayout()
+        optionlayout.addRow(self.speakerSource)
+        optionlayout.addRow('Name of word tiers',self.wordTierName)
+        optionlayout.addRow('Name of phone tiers',self.phoneTierName)
+        optionlayout.addRow('Multiple phones per interval?',self.multiplePhoneCheck)
+        optionlayout.addRow('Delimiter of multiple phones',self.phoneDelimiter)
+        optionframe = QGroupBox('Options')
+        optionframe.setLayout(optionlayout)
+        self.mainlayout.addWidget(optionframe)
+
+        mainframe = QFrame()
+        mainframe.setLayout(self.mainlayout)
+
+        layout.addWidget(mainframe)
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
@@ -1653,10 +1799,11 @@ class SpontaneousSpeechDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
-
+        self.updateOptions()
         self.setWindowTitle('Import spontaneous speech corpus')
 
         self.thread = SpontaneousLoadWorker()
+        self.thread.errorEncountered.connect(self.handleError)
 
         self.progressDialog = QProgressDialog('Importing...','Cancel',0,100,self)
         self.progressDialog.setWindowTitle('Importing spontaneous speech corpus')
@@ -1667,6 +1814,22 @@ class SpontaneousSpeechDialog(QDialog):
         self.thread.updateProgressText.connect(self.updateProgressText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+
+    def updateDelimiters(self):
+        self.phoneDelimiter.setEnabled(self.multiplePhoneCheck.isChecked())
+
+    def updateOptions(self):
+
+        if self.dialectWidget.currentText() == 'TextGrid':
+            self.wordTierName.setEnabled(True)
+            self.phoneTierName.setEnabled(True)
+            self.multiplePhoneCheck.setEnabled(True)
+            self.phoneDelimiter.setEnabled(True)
+        else:
+            self.wordTierName.setEnabled(False)
+            self.phoneTierName.setEnabled(False)
+            self.multiplePhoneCheck.setEnabled(False)
+            self.phoneDelimiter.setEnabled(False)
 
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'loading corpora',
@@ -1687,6 +1850,37 @@ class SpontaneousSpeechDialog(QDialog):
     def setResults(self, results):
         self.corpus = results
 
+    def handleError(self,error):
+        if hasattr(error, 'main'):
+            reply = QMessageBox()
+            reply.setWindowTitle('Error encountered')
+            reply.setIcon(QMessageBox.Critical)
+            reply.setText(error.main)
+            reply.setInformativeText(error.information)
+            reply.setDetailedText(error.details)
+
+            reply.addButton('Open corpus directory',QMessageBox.AcceptRole)
+            reply.setStandardButtons(QMessageBox.Close)
+            ret = reply.exec_()
+            if ret == QMessageBox.AcceptRole:
+                error_dir = os.path.normpath(self.directoryWidget.value())
+                if sys.platform == 'win32':
+                    args = ['{}'.format(error_dir)]
+                    program = 'explorer'
+                elif sys.platform == 'darwin':
+                    program = 'open'
+                    args = ['{}'.format(error_dir)]
+                else:
+                    program = 'xdg-open'
+                    args = ['{}'.format(error_dir)]
+                proc = QProcess(self.parent())
+                t = proc.startDetached(program,args)
+        else:
+            reply = QMessageBox.critical(self,
+                    "Error encountered", str(error))
+        self.progressDialog.cancel()
+        return None
+
     def accept(self):
         name = self.nameEdit.text()
         if name == '':
@@ -1700,10 +1894,21 @@ class SpontaneousSpeechDialog(QDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-        self.thread.setParams({'name': name,
-                            'directory':self.directoryWidget.value(),
-                            'dialect':self.dialectWidget.currentText().lower()})
+        dialect = self.dialectWidget.currentText().lower()
+        kwargs = {'name': name,
+                'directory':self.directoryWidget.value(),
+                'dialect': dialect,
+                'speaker_source': self.speakerSource.value()}
+        if dialect == 'textgrid':
+            if self.multiplePhoneCheck.isChecked():
+                delim = self.phoneDelimiter.text()
+            else:
+                delim = None
+            kwargs['word_tier_name'] = self.wordTierName.text()
+            kwargs['phone_tier_name'] = self.phoneTierName.text()
+            kwargs['delimiter'] = delim
 
+        self.thread.setParams(kwargs)
         self.thread.start()
 
         result = self.progressDialog.exec_()

@@ -1,0 +1,2 @@
+symbol,feature1,feature2
+a,+,+

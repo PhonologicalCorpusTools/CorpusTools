@@ -8,8 +8,11 @@ from .imports import *
 from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget
 from .windows import FunctionWorker, FunctionDialog
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 class FLWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         if kwargs['pair_behavior'] == 'individual':
@@ -24,7 +27,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
                     except Exception as e:
+                        e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
                 elif kwargs['func_type'] == 'entropy':
@@ -35,7 +42,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
                     except Exception as e:
+                        e = PCTPythonError(e)
                         self.errorEncountered.emit(e)
                         return
                 if self.stopped:
@@ -52,7 +63,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
             elif kwargs['func_type'] == 'entropy':
@@ -64,7 +79,11 @@ class FLWorker(FunctionWorker):
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
             if self.stopped:
@@ -78,9 +97,9 @@ class FLDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
                 'Transcription tier',
-                'Type of funcational load',
+                'Type of functional load',
                 'Result',
-                'Ignored homophones?',
+                'Distinguished homophones?',
                 'Relative count?',
                 'Minimum word frequency',
                 'Type or token']
@@ -157,7 +176,7 @@ class FLDialog(FunctionDialog):
 
         self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
         self.relativeCountWidget.setChecked(True)
-        self.homophoneWidget = QCheckBox('Include homophones')
+        self.homophoneWidget = QCheckBox('Distinguish homophones')
 
         box.addWidget(self.relativeCountWidget)
         box.addWidget(self.homophoneWidget)

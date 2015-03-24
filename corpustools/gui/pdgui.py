@@ -4,12 +4,15 @@ from corpustools.gui.widgets import SegmentClassSelectWidget
 from .imports import *
 from .widgets import (EnvironmentSelectWidget, EnvironmentDialog, SegmentPairSelectWidget, RadioSelectWidget, TierWidget)
 from .windows import FunctionWorker, FunctionDialog
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
 import itertools
 
+from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
+
+from corpustools.exceptions import PCTError, PCTPythonError
 
 class PDWorker(FunctionWorker):
     def run(self):
+        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = list()
         if 'envs' in kwargs:
@@ -23,7 +26,11 @@ class PDWorker(FunctionWorker):
                                     True,
                                     stop_check = kwargs['stop_check'],
                                     call_back = kwargs['call_back'])
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
                 if self.stopped:
@@ -39,8 +46,11 @@ class PDWorker(FunctionWorker):
                                              True,
                                              stop_check = kwargs['stop_check'],
                                              call_back = kwargs['call_back'])
-
+                except PCTError as e:
+                    self.errorEncountered.emit(e)
+                    return
                 except Exception as e:
+                    e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
                 if self.stopped:

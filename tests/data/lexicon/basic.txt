@@ -1,0 +1,4 @@
+spelling,transcription,frequency
+tusi,t.u.s.i,13.0
+tuni,t.u.n.i,33.0
+shashi,ʃ.ɑ.ʃ.i,43.0
