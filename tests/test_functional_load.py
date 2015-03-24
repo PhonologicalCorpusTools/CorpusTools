@@ -10,7 +10,7 @@ from corpustools.corpus.classes import Segment
 #    pass
 
 
-def test_non_minimal_pair_corpus(unspecified_test_corpus):
+def test_non_minimal_pair_corpus_minpair(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
                     'segment_pairs':[('s','ʃ')],
                     'frequency_cutoff':0,
@@ -89,7 +89,7 @@ def test_non_minimal_pair_corpus(unspecified_test_corpus):
     for c,v in calls:
         assert(abs(minpair_fl(**c)-v) < 0.0001)
 
-def test_non_minimal_pair_corpus(unspecified_test_corpus):
+def test_non_minimal_pair_corpus_deltah(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
                 'segment_pairs':[('s','ʃ')],
                 'frequency_cutoff':0,
