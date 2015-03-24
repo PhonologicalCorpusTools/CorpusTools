@@ -2,7 +2,7 @@
 import sys
 import os
 
-from corpustools.funcload.functional_load import minpair_fl, deltah_fl
+from corpustools.funcload.functional_load import minpair_fl, deltah_fl, relative_minpair_fl, relative_deltah_fl, all_pairwise_fls
 from corpustools.corpus.classes import Segment
 
 
@@ -170,4 +170,139 @@ def test_non_minimal_pair_corpus(unspecified_test_corpus):
     for c,v in calls:
         assert(abs(deltah_fl(**c)-v) < 0.0001)
 
+
+def test_relative_minpair(unspecified_test_corpus):
+    calls = [({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':0,
+                    'relative_count':True},0.013888),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':0,
+                    'relative_count':False},0.11111),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':0,
+                    'relative_count':True},0.0123457),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':0,
+                    'relative_count':False},0.11111),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':0,
+                    'relative_count':True},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':0,
+                    'relative_count':False},0),
+
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':3,
+                    'relative_count':True},0.01587),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':3,
+                    'relative_count':False},0.11111),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':3,
+                    'relative_count':True},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':3,
+                    'relative_count':False},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':3,
+                    'relative_count':True},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':3,
+                    'relative_count':False},0)]
+
+
+    for c,v in calls:
+        assert(abs(relative_minpair_fl(**c)-v) < 0.0001)
+
+
+def test_relative_deltah(unspecified_test_corpus):
+    calls = [({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':0,
+                    'type_or_token':'type'},0.0275487),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':0,
+                    'type_or_token':'token'},0.0275487),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':0,
+                    'type_or_token':'type'},0.000767),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':0,
+                    'type_or_token':'token'},0.000767),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':0,
+                    'type_or_token':'type'},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':0,
+                    'type_or_token':'token'},0),
+
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':3,
+                    'type_or_token':'type'}, 0.027837),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'s',
+                    'frequency_cutoff':3,
+                    'type_or_token':'token'}, 0.027837),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':3,
+                    'type_or_token':'type'},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'n',
+                    'frequency_cutoff':3,
+                    'type_or_token':'token'},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':3,
+                    'type_or_token':'type'},0),
+            ({'corpus': unspecified_test_corpus,
+                    'segment':'o',
+                    'frequency_cutoff':3,
+                    'type_or_token':'token'},0)]
+
+
+    for c,v in calls:
+        assert(abs(relative_deltah_fl(**c)-v) < 0.0001)
+
+
+def test_mass_fl(unspecified_test_corpus):
+    ## parameter variation should be accounted for via the tests above; this function is just a wrapper for their functions' calls
+    calls = [({'corpus': unspecified_test_corpus,
+                    'algorithm':'minpair',
+                    'frequency_cutoff':0,
+                    'type_or_token':'type'},
+
+                        ([(('s', 'ʃ'), 0.125), (('m', 'n'), 0.1111111111111111), (('i', 't'), 0.0), (('t', 'u'), 0.0), 
+                         (('m', 't'), 0.0), (('i', 'u'), 0.0), (('e', 'o'), 0.0), (('n', 'o'), 0.0), (('i', 'ʃ'), 0.0), 
+                         (('u', 'ɑ'), 0.0), (('m', 'ʃ'), 0.0), (('m', 'ɑ'), 0.0), (('t', 'ʃ'), 0.0), (('e', 'n'), 0.0), 
+                         (('o', 't'), 0.0), (('e', 'ɑ'), 0.0), (('n', 'u'), 0.0), (('n', 't'), 0.0), (('o', 'ʃ'), 0.0), 
+                         (('e', 'u'), 0.0), (('s', 't'), 0.0), (('ɑ', 'ʃ'), 0.0), (('n', 's'), 0.0), (('e', 's'), 0.0), 
+                         (('i', 's'), 0.0), (('m', 'u'), 0.0), (('e', 'i'), 0.0), (('i', 'n'), 0.0), (('i', 'o'), 0.0), 
+                         (('i', 'm'), 0.0), (('n', 'ɑ'), 0.0), (('t', 'ɑ'), 0.0), (('s', 'ɑ'), 0.0), (('s', 'u'), 0.0), 
+                         (('i', 'ɑ'), 0.0), (('o', 's'), 0.0), (('e', 'ʃ'), 0.0), (('u', 'ʃ'), 0.0), (('m', 'o'), 0.0), 
+                         (('e', 'm'), 0.0), (('o', 'u'), 0.0), (('n', 'ʃ'), 0.0), (('e', 't'), 0.0), (('o', 'ɑ'), 0.0), 
+                         (('m', 's'), 0.0)]))]
+
+
+    for c,v in calls:
+        for result,prediction in zip(all_pairwise_fls(**c), v):
+            assert(abs(result[1]-prediction[1]) < 0.0001)
 

@@ -274,7 +274,7 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff = 0,
         non-homophonous words in the corpus before a merger of `s1`
         and `s2` and b) the entropy of that choice after the merger.
     """
-    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(w, sequence_type)])))
+    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(word, sequence_type)])))
     segment = segment[:]
     segment_pairs = [(segment,other) for other in all_segments if other != segment]
     results = []
