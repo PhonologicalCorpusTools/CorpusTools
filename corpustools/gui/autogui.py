@@ -30,8 +30,7 @@ class AutoDialog(QDialog):
         self.showToolTips = showToolTips
         self.results = list()
         self.setWindowTitle('Look for phonological patterns')
-        self.layout = QHBoxLayout()
-        #self.layout.addWidget(QLabel('Select a phonological pattern'))
+        self.layout = QVBoxLayout()
 
         algEnabled = {'Vowel harmony':self.corpusModel.corpus.has_transcription,
                     'Syllable shape':self.corpusModel.corpus.has_transcription,
@@ -41,28 +40,12 @@ class AutoDialog(QDialog):
                                             OrderedDict([('Vowel harmony','vowel_harmony'),
                                             ('Syllable shape','syllables'),
                                             ('Random analysis','random')]),
-                                            # {'Vowel harmony':self.vowelHarmonySelected,
-                                            # 'Syllable shape':self.syllableShapeSelected,
-                                            # 'Random analysis':self.randomAnalysisSelected},
                                             enabled=algEnabled)
 
 
         self.layout.addWidget(self.algorithmWidget)
 
 
-        # self.vowelHarmonyLayout = QVBoxLayout()
-        # self.vowelHarmonyButton = QRadioButton()
-        # self.vowelHarmonyButton.toggle()
-        # self.vowelHarmonyButton.setText(('Search for vowel harmony.'
-        #                             ' Enter the distinctive feature for vowels. This is usually something like '
-        #                             '+voc or +vocalic.\nYou can check your feature system under the Feature menu'))
-        # self.vowelFeatureEntry = QLineEdit()
-        #
-        # self.vowelHarmonyLayout.addWidget(self.vowelHarmonyButton)
-        # self.vowelHarmonyLayout.addWidget(self.vowelFeatureEntry)
-        # self.layout.addLayout(self.vowelHarmonyLayout)
-        #
-        #
         self.buttonBox = QHBoxLayout()
         self.okButton = QPushButton('OK')
         self.okButton.clicked.connect(self.calc)
@@ -72,9 +55,26 @@ class AutoDialog(QDialog):
         self.buttonBox.addWidget(self.okButton)
         self.buttonBox.addWidget(self.cancelButton)
         self.layout.addLayout(self.buttonBox)
+
+        self.resultsLayout = QVBoxLayout()
+        self.layout.addLayout(self.resultsLayout)
+
         self.setLayout(self.layout)
 
+    def clearResultsLayout(self):
+       while self.resultsLayout.count() > 0:
+           item = self.resultsLayout.takeAt(0)
+           if not item:
+               continue
+
+           w = item.widget()
+           if w:
+               w.deleteLater()
+
     def calc(self):
+
+        self.clearResultsLayout()
+
         if self.algorithmWidget.value() == 'vowel_harmony':
             self.doVowelHarmony()
         elif self.algorithmWidget.value() == 'syllables':
@@ -91,8 +91,8 @@ class AutoDialog(QDialog):
         onsets = list()
         medials = list()
         codas = list()
-        sign = nucleus[0]
-        name = nucleus[1:]
+        self.sign = nucleus[0]
+        self.name = nucleus[1:]
 
         for word in self.corpusModel.corpus:
             first_pos = 0
@@ -102,7 +102,7 @@ class AutoDialog(QDialog):
             cur_medial = list()
             for pos,seg in word.enumerate_symbols('transcription'):
                 seg = self.corpusModel.corpus.specifier[seg]
-                if not seg.features[name] == sign:
+                if not seg.features[self.name] == self.sign:
                     cur_onset.append(seg)
                 else:
                     if not cur_onset in onsets:
@@ -110,9 +110,9 @@ class AutoDialog(QDialog):
                     first_pos = pos
                     break
 
-            for pos in reversed(range(len(word.transcription))): #reversed(word.transcription)
+            for pos in reversed(range(len(word.transcription))):
                 seg = self.corpusModel.corpus.specifier[word.transcription[pos]]
-                if not seg.features[name] == sign:
+                if not seg.features[self.name] == self.sign:
                     cur_coda.append(seg)
                 else:
                     if not cur_coda in codas:
@@ -120,24 +120,135 @@ class AutoDialog(QDialog):
                     last_pos = pos
                     break
 
-            print(first_pos, last_pos)
             for pos in range(first_pos,last_pos):
                 seg = self.corpusModel.corpus.specifier[word.transcription[pos]]
-                print(seg)
-                if not seg.features[name] == sign:
+                if not seg.features[self.name] == self.sign:
                     cur_medial.append(seg)
                 else:
                     if not cur_medial in medials:
                         medials.append(cur_medial)
                     cur_medial = list()
 
+        # meds = [x for x in medials if x in onsets or x in codas]
+        # for m in meds:
+        #     if len(m) == 1:
+        #         if len(codas)==1 and codas[0]==[]: #no coda
+        #             onsets.append(codas[0])#this must be an onset
+        #
+        #     m = reversed(m)
+        #     cur_string = list()
+        #     for seg in m:
+        #         cur_string.append(seg)
+        #         if cur_string in onsets:
+        #             continue
 
-        print(onsets)
-        print(medials)
-        print(codas)
+        self.outputSyllableResults(onsets, medials, codas)
 
 
+    def outputSyllableResults(self,onsets,medials,codas):
+        onset_patterns = self.lookForPatterns(onsets)
+        onset_patterns = '\n'.join(onset_patterns)
+        onsets = [''.join(o.symbol for o in ons) if ons else '\u2205' for ons in onsets]
+        onsets.sort()
+        onsets_label = QLabel('These are possible onsets in your corpus:')
+        onsets_list = ','.join(onsets)
+        onsets_label2 = QLabel(onsets_list)
+        commentary = 'Comments:\n{}'.format(onset_patterns)
+        onset_commentary = QLabel(commentary)
 
+        coda_patterns = self.lookForPatterns(codas)
+        coda_patterns = ','.join(coda_patterns)
+        codas = [''.join(c.symbol for c in coda) if coda else '\u2205' for coda in codas]
+        codas.sort()
+        codas_label = QLabel('\n************\nThese are possible codas in your corpus:')
+        codas_list = ','.join(codas)
+        codas_label2 = QLabel(codas_list)
+        commentary = 'Comments:\n{}'.format(coda_patterns)
+        coda_commentary = QLabel(commentary)
+
+
+        self.resultsLayout.addWidget(onsets_label)
+        self.resultsLayout.addWidget(onsets_label2)
+        self.resultsLayout.addWidget(onset_commentary)
+        self.resultsLayout.addWidget(codas_label)
+        self.resultsLayout.addWidget(codas_label2)
+        self.resultsLayout.addWidget(coda_commentary)
+
+    def lookForPatterns(self, seg_list):
+
+        #look for a few common patterns
+        #this assumes certain features, but it won't necessarily work across all feature systems
+        text = list()
+
+        ########empty list?
+        if len(seg_list)==1 and seg_list[0] == []:
+            text.append('No segments are allowed in this position')
+            return text
+
+
+        ##########check for obstruents
+        for segs in seg_list:
+            if not all(seg.feature_match('-son') for seg in segs):
+                obstruents = False
+        else:
+                obstruents = True
+        if not obstruents:
+            text.append('no obstruents occur here')
+
+        #######check for nasals
+        for segs in seg_list:
+            if not all(seg.feature_match('-nasal') for seg in segs):
+                nasals = False
+        else:
+            nasals = True
+
+        if not nasals:
+            text.append('no nasals occur here')
+
+        ########check for exhaustivity
+        inventory = self.corpusModel.corpus.inventory
+        sign = '-' if self.sign == '+' else '+' #won't work for all feature systems
+        inventory = [seg for seg in inventory if seg.feature_match(sign+self.name)]
+        for segs in seg_list:
+            if not all([seg in inventory for seg in segs]):
+                break
+        else:
+            text.append('The entire inventory appears in this position')
+
+        ########look for things all the segs have in common
+
+        segs = self.flattenSegList(seg_list)
+        feature_list = self.corpusModel.corpus.get_features()
+        matches = list()
+        for name in feature_list:
+            sign = '+'
+            feature = sign+name
+            if all(seg.feature_match(feature) for seg in segs):
+                matches.append(feature)
+            else:
+                sign = '-'
+                feature = sign+name
+                if all(seg.feature_match(feature) for seg in segs):
+                    matches.append(feature)
+
+        if matches:
+            text.append('They have these features in common:\n{}'.format(','.join([m for m in matches])))
+
+        ########nothing found
+        if not text:
+            text.append('No patterns could be found')
+
+        text = list(set(text))
+
+        return text
+
+    def flattenSegList(self, seg_list):
+        master_list = list()
+        for segs in seg_list:
+            for seg in segs:
+                if seg not in master_list:
+                    master_list.append(seg)
+        return master_list
 
     def doRandomAnalysis(self):
         analysis = random.choice(['string_similarity', 'functional_load', 'phonotactic_probability', 'kullback_leibler'])
@@ -183,10 +294,11 @@ class AutoDialog(QDialog):
     def doVowelHarmony(self):
 
         text = QInputDialog.getText(self, 'Vowel harmony', 'Which feature is unique to vowels? In SPE this is [+voc]')
+
         text = text[0].lstrip('[').rstrip(']')
         if not self.corpusHasFeature(text):
             return
-
+        self.harmony_feature = text
         self.corpusModel.corpus.add_tier('AutoGeneratedVowels',text)
 
         inventory = [seg for seg in self.corpusModel.corpus.inventory if seg.features[text[1:]]==text[0]]
@@ -223,20 +335,35 @@ class AutoDialog(QDialog):
                             avg_mm_mi.append(mi)
                         else:
                             avg_mp_mi.append(mi)
-            avg_pp_mi = sum(avg_pp_mi)/len(avg_pp_mi) if len(avg_pp_mi) else 'N/A'
-            avg_pm_mi = sum(avg_pm_mi)/len(avg_pm_mi) if len(avg_pm_mi) else 'N/A'
-            avg_mm_mi = sum(avg_mm_mi)/len(avg_mm_mi) if len(avg_mm_mi) else 'N/A'
-            avg_mp_mi = sum(avg_mp_mi)/len(avg_mp_mi) if len(avg_mp_mi) else 'N/A'
-            self.results.append([avg_pp_mi, avg_pm_mi])
-            self.results.append([avg_mm_mi, avg_mp_mi])
-            #self.results.append(avg_pm_mi)
-            #self.results.append(avg_mm_mi)
-            #self.results.append(avg_mp_mi)
-            print('Average [+{0}][+{0}] MI = {1}'.format(feature, avg_pp_mi))
-            print('Average [+{0}][-{0}] MI = {1}'.format(feature, avg_pm_mi))
-            print('Average [-{0}][-{0}] MI = {1}'.format(feature, avg_mm_mi))
-            print('Average [-{0}][+{0}] MI = {1}'.format(feature, avg_mp_mi))
-
-
+        self.outputHarmonyResults(avg_pp_mi,avg_pm_mi,avg_mm_mi,avg_mp_mi)
         self.corpusModel.corpus.remove_attribute('AutoGeneratedVowels')
         return
+
+    def outputHarmonyResults(self,avg_pp_mi,avg_pm_mi,avg_mm_mi,avg_mp_mi):
+
+        commentary = list()
+        if avg_pp_mi > avg_pm_mi:
+            commentary.append('There might be +{} harmony'.format(self.harmony_feature[1:]))
+        if avg_mm_mi > avg_mp_mi:
+            commentary.append('There might be -{} harmony'.format(self.harmony_feature[1:]))
+
+        avg_pp_mi = sum(avg_pp_mi)/len(avg_pp_mi) if len(avg_pp_mi) else 'N/A'
+        avg_pm_mi = sum(avg_pm_mi)/len(avg_pm_mi) if len(avg_pm_mi) else 'N/A'
+        avg_mm_mi = sum(avg_mm_mi)/len(avg_mm_mi) if len(avg_mm_mi) else 'N/A'
+        avg_mp_mi = sum(avg_mp_mi)/len(avg_mp_mi) if len(avg_mp_mi) else 'N/A'
+        # self.results.append([avg_pp_mi, avg_pm_mi])
+        # self.results.append([avg_mm_mi, avg_mp_mi])
+        l1 = QLabel('Average [+{0}][+{0}] MI = {1}'.format(self.harmony_feature[1:], avg_pp_mi))
+        l2 = QLabel('Average [+{0}][-{0}] MI = {1}'.format(self.harmony_feature[1:], avg_pm_mi))
+        l3 = QLabel('Average [-{0}][-{0}] MI = {1}'.format(self.harmony_feature[1:], avg_mm_mi))
+        l4 = QLabel('Average [-{0}][+{0}] MI = {1}'.format(self.harmony_feature[1:], avg_mp_mi))
+        comment_label = QLabel('\n'.join([c for c in commentary]))
+        self.resultsLayout.addWidget(l1)
+        self.resultsLayout.addWidget(l2)
+        self.resultsLayout.addWidget(l3)
+        self.resultsLayout.addWidget(l4)
+        self.resultsLayout.addWidget(comment_label)
+
+
+
+
