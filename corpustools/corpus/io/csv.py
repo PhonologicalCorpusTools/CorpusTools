@@ -1,6 +1,7 @@
 from csv import DictReader, DictWriter
 import collections
 import re
+import os
 
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word, Attribute
 from corpustools.corpus.io.binary import save_binary, load_binary
