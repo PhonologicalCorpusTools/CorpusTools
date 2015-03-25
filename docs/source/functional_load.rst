@@ -379,9 +379,17 @@ Positional arguments:
 
    Name of corpus file
 
-.. cmdoption:: pairs_file_name_or_segment
+Mandatory argument group (call must have one of these two):
+
+.. cmdoption:: -p PAIRS_FILE_NAME_OR_SEGMENT
+               --pairs_file_name_or_segment PAIRS_FILE_NAME_OR_SEGMENT
 
    Name of file with segment pairs (or target segment if relative fl is True)
+
+.. cmdoption:: -l
+               --all_pairwise_fls
+
+   Flag: calculate FL for all pairs of segments
 
 Optional arguments:
 
@@ -442,7 +450,7 @@ text file that contains the text “m\tn” (where \t is a tab; no quotes
 in the file). Let us call this file pairs.txt. You would then run the
 following command in your terminal window::
 
-   pct_funcload example.corpus pairs.txt
+   pct_funcload example.corpus -p pairs.txt
 
 EXAMPLE 2: Suppose you want to calculate the relative (average) functional
 load of the segment [m]. Your corpus file is again example.corpus. You
@@ -452,4 +460,12 @@ instead of (the default value of) token frequency. In addition, you want
 the script to produce an output file called output.txt.  You would need
 to run the following command::
 
-   pct_funcload example.corpus m -a deltah -t type -o output.txt
+   pct_funcload example.corpus -p m -a deltah -t type -o output.txt
+
+EXAMPLE 3: Suppose you want to calculate the functional
+loads of all segment pairs. Your corpus file is again example.corpus. 
+All other parameters are set to defaults. In addition, you want
+the script to produce an output file called output.txt.  You would need
+to run the following command::
+
+   pct_funcload example.corpus -l -o output.txt
