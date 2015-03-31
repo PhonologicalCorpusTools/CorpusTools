@@ -64,10 +64,6 @@ class AttributeWidget(QGroupBox):
                 continue
             self.typeWidget.addItem(at.title())
 
-        for i in range(self.typeWidget.count()):
-            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
-                self.typeWidget.setCurrentIndex(i)
-
 
         main.addRow('Type of column',self.typeWidget)
 
@@ -80,6 +76,12 @@ class AttributeWidget(QGroupBox):
         for i in range(self.useAs.count()):
             if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
                 self.useAs.setCurrentIndex(i)
+                if attribute.name == 'transcription' and attribute.att_type != 'tier':
+                    attribute.att_type = 'tier'
+
+        for i in range(self.typeWidget.count()):
+            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
+                self.typeWidget.setCurrentIndex(i)
 
         main.addRow('Use column as', self.useAs)
 

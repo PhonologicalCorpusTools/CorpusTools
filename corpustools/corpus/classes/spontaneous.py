@@ -39,6 +39,9 @@ class Speaker(object):
         for k,v in kwargs.items():
             setattr(self,k,v)
 
+    def __str__(self):
+        return str(self.name)
+
     def __hash__(self):
         return hash(self.name)
 

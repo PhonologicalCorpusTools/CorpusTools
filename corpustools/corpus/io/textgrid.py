@@ -41,7 +41,12 @@ def readFile(f):
     This helper method returns an appropriate file handle given a path f.
     This handles UTF-8, which is itself an ASCII extension, so also ASCII.
     """
-    return open(f, 'r')#, encoding='utf-16')
+    try:
+        f = open(f, 'r', encoding='utf-16')
+    except Exception:
+        f = open(f, 'r')
+
+    return f
 
 
 class Point(object):
