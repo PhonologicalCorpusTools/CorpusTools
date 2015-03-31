@@ -72,6 +72,7 @@ class AttributeWidget(QGroupBox):
         self.useAs.addItem('Spelling')
         self.useAs.addItem('Transcription')
         self.useAs.addItem('Frequency')
+        self.useAs.currentIndexChanged.connect(self.updateUseAs)
 
         for i in range(self.useAs.count()):
             if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
@@ -88,6 +89,20 @@ class AttributeWidget(QGroupBox):
         self.setLayout(main)
 
         self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def updateUseAs(self):
+        t = self.useAs.currentText().lower()
+        if t == 'custom column':
+            self.typeWidget.setEnabled(True)
+        else:
+            for i in range(self.typeWidget.count()):
+                if t == 'spelling' and self.typeWidget.itemText(i) == 'Spelling':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'transcription' and self.typeWidget.itemText(i) == 'Tier':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'frequency' and self.typeWidget.itemText(i) == 'Numeric':
+                    self.typeWidget.setCurrentIndex(i)
+            self.typeWidget.setEnabled(False)
 
     def value(self):
         display = self.nameWidget.text()
@@ -1556,9 +1571,15 @@ class CorpusFromCsvDialog(PCTDialog):
     @check_for_errors
     def forceInspect(self, b):
         if os.path.exists(self.pathWidget.value()):
+            colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+            if not colDelim:
+                colDelim = None
+            transDelim = self.transDelimiterEdit.text()
+            if not transDelim:
+                transDelim = None
             atts, coldelim = inspect_csv(self.pathWidget.value(),
-                    coldelim = self.columnDelimiterEdit.text(),
-                    transdelim = self.transDelimiterEdit.text())
+                    coldelim = colDelim,
+                    transdelim = transDelim)
             self.updateColumnFrame(atts)
 
     def updateColumnFrame(self, atts):
