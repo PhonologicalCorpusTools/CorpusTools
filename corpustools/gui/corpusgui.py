@@ -1511,7 +1511,10 @@ class CorpusFromCsvDialog(PCTDialog):
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.columnFrame)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setMinimumHeight(120)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
         #self.columnFrame.
         formLayout.addRow(scroll)
 
@@ -1557,8 +1560,11 @@ class CorpusFromCsvDialog(PCTDialog):
             self.updateColumnFrame(atts)
 
     def updateColumnFrame(self, atts):
-        for i in reversed(range(self.columnFrame.layout().count()-1)):
+        for i in reversed(range(self.columnFrame.layout().count())):
             w = self.columnFrame.layout().itemAt(i).widget()
+            if w is None:
+                del w
+                continue
             w.setParent(None)
             w.deleteLater()
         self.columns = list()
@@ -1576,6 +1582,8 @@ class CorpusFromCsvDialog(PCTDialog):
             atts, coldelim = inspect_csv(self.pathWidget.value())
             self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
             self.updateColumnFrame(atts)
+        else:
+            self.updateColumnFrame([])
 
     @check_for_errors
     def accept(self, b):
