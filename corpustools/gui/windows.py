@@ -31,7 +31,6 @@ class ProgressDialog(QProgressDialog):
         b = self.findChildren(QPushButton)[0]
         b.clicked.disconnect()
         b.clicked.connect(self.cancel)
-        self.canceled.connect(lambda : print('cancelled!'))
 
     def cancel(self):
         self.beginCancel.emit()
@@ -166,7 +165,6 @@ class FunctionDialog(QDialog):
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
-        self.thread.finishedCancelling.connect(lambda : print('done canceling!'))
 
     def handleError(self,error):
         if isinstance(error, PCTError):

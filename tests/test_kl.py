@@ -18,6 +18,7 @@ def test_allophones(specified_test_corpus):
     assert(abs(seg1_entropy - 0.035000140096702444) < 0.001)
     assert(abs(seg2_entropy - 0.06074393445793598) < 0.001)
 
+@pytest.mark.xfail
 def test_pseudo_allophones(specified_test_corpus):
     #Test 3, things that are allophones by coincidence
     seg1, seg2, retside, seg1_entropy, seg2_entropy, distance, ur, is_spurious = KL(specified_test_corpus, 's', 'ɑ','b')
