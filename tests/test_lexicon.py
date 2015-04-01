@@ -413,7 +413,7 @@ class EnvironmentFilterTest(unittest.TestCase):
         self.assertFalse(env3 in envfilt)
 
 
-def test_categories(specified_test_corpus):
+def test_categories_spe(specified_test_corpus):
     cats = {'ɑ':['Vowel','Open','Near back','Unrounded'],
             'u':['Vowel','Close','Back','Rounded'],
             'o':['Vowel','Close mid','Back','Rounded'],
@@ -429,6 +429,18 @@ def test_categories(specified_test_corpus):
     for k,v in cats.items():
         assert(inv[k].category == v)
 
+def test_no_features():
+    seg = Segment('')
+
+    assert(seg.category is None)
+
+def test_no_syllabic_feature():
+    seg = Segment('')
+    seg.specify({'feature1':'+','feature2':'+'})
+
+    assert(seg.category is None)
+
+
 class SegmentTest(unittest.TestCase):
     def setUp(self):
         self.basic_info = {'a':{'feature1':'+','feature2':'+'},
@@ -436,6 +448,20 @@ class SegmentTest(unittest.TestCase):
                             'c':{'feature1':'-','feature2':'+'},
                             'd':{'feature1':'-','feature2':'-'}}
 
+    def test_basic_segment_properties(self):
+        seg = Segment('')
+        assert(str(seg) == '')
+        assert(len(seg) == 0)
+        assert(seg != 's')
+
+        seg1 = Segment('a')
+        seg2 = Segment('b')
+
+        assert(seg1 < seg2)
+        assert(seg1 <= seg2)
+
+        assert(seg2 > seg1)
+        assert(seg2 >= seg1)
 
     def test_match_feature(self):
         for s,v in self.basic_info.items():

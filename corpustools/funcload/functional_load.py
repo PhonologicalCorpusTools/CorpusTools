@@ -5,6 +5,7 @@ import itertools
 import queue
 import copy
 from math import factorial
+import time
 
 
 
@@ -448,7 +449,7 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff = 0,
         non-homophonous words in the corpus before a merger of `s1`
         and `s2` and b) the entropy of that choice after the merger.
     """
-    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(w, sequence_type)])))
+    all_segments = list(set(itertools.chain.from_iterable([segment for word in corpus for segment in getattr(word, sequence_type)])))
     segment = segment[:]
     segment_pairs = [(segment,other) for other in all_segments if other != segment]
     results = []
@@ -561,9 +562,16 @@ def all_pairwise_fls(corpus, relative_fl=False, algorithm='minpair', frequency_c
         If calculating relative FL, returns a dictionary of each segment and its relative (average) FL, with entries ordered by FL.
     """
     fls = {}
+    total_calculations = ((((len(corpus.inventory)-1)**2)-len(corpus.inventory)-1)/2)+1
+    ct = 1
+    t = time.time()
     for i, s1 in enumerate(corpus.inventory[:-1]):
         for s2 in corpus.inventory[i+1:]:
             if s1 != '#' and s2 != '#':
+                print('Performing FL calculation {} out of {} possible'.format(str(ct), str(total_calculations)))
+                ct += 1
+                print('Duration of last calculation: {}'.format(str(time.time() - t)))
+                t = time.time()
                 if type(s1) != str:
                     s1 = s1.symbol
                 if type(s2) != str:

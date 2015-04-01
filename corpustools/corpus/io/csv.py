@@ -1,17 +1,69 @@
 from csv import DictReader, DictWriter
 import collections
 import re
+import os
 
-from corpustools.corpus.classes import Corpus, FeatureMatrix, Word
+from corpustools.corpus.classes import Corpus, FeatureMatrix, Word, Attribute
 from corpustools.corpus.io.binary import save_binary, load_binary
 
-from corpustools.exceptions import DelimiterError
+from corpustools.exceptions import DelimiterError, PCTError
 
 import time
 
+def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
+    if coldelim is not None:
+        common_delimiters = [coldelim]
+    else:
+        common_delimiters = [',','\t',':','|']
+    if transdelim is not None:
+        trans_delimiters = [transdelim]
+    else:
+        trans_delimiters = ['.',' ', ';', ',']
+
+    with open(path,'r') as f:
+        lines = []
+        head = f.readline().strip()
+        for i in range(num_lines):
+            line = f.readline()
+            if not line:
+                break
+            lines.append(line)
+
+    best = ''
+    num = 1
+    for d in common_delimiters:
+        trial = len(head.split(d))
+        if trial > num:
+            num = trial
+            best = d
+    if best == '':
+        raise(DelimiterError('The column delimiter specified did not create multiple columns.'))
+
+    head = head.split(best)
+    vals = {h: list() for h in head}
+
+    for line in lines:
+        l = line.strip().split(best)
+        if len(l) != len(head):
+            raise(PCTError('{}, {}'.format(l,head)))
+        for i in range(len(head)):
+            vals[head[i]].append(l[i])
+    atts = list()
+    for h in head:
+        cat = Attribute.guess_type(vals[h], trans_delimiters)
+        a = Attribute(Attribute.sanitize_name(h), cat, h)
+        if cat == 'tier':
+            for t in trans_delimiters:
+                if t in vals[h][0]:
+                    a._delim = t
+                    break
+        atts.append(a)
+
+    return atts, best
 
 def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
-                    feature_system_path = ''):
+                    feature_system_path = None,
+                    attributes = None):
     """
     Load a corpus from a column-delimited text file
 
@@ -42,7 +94,7 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
     """
     #begin = time.time()
     corpus = Corpus(corpus_name)
-    if feature_system_path:
+    if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
     with open(path, encoding='utf-8') as f:
@@ -58,23 +110,43 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
         headers[0] = headers[0].strip('\ufeff')
         if 'feature_system' in headers[-1]:
             headers = headers[0:len(headers)-1]
-
+        use_att = False
+        if attributes is not None:
+            use_att = True
+            headers = attributes
+            for a in attributes:
+                corpus.add_attribute(a)
         trans_check = False
 
         for line in f.readlines():
             line = line.strip()
             if not line: #blank or just a newline
                 continue
-            d = {attribute:value.strip() for attribute,value in zip(headers,line.split(delimiter))}
-            for k,v in d.items():
-                if k == 'transcription' or 'tier' in k:
-                    if trans_delimiter:
-                        trans = v.split(trans_delimiter)
+            d = {}
+            for k,v in zip(headers,line.split(delimiter)):
+                v = v.strip()
+                if use_att:
+                    if k.att_type == 'tier':
+                        if trans_delimiter:
+                            trans = v.split(trans_delimiter)
+                        else:
+                            trans = [x for x in v]
+                        if not trans_check and len(trans) > 1:
+                            trans_check = True
+                        d[k.name] = (k, trans)
                     else:
-                        trans = [x for x in v]
-                    if not trans_check and len(trans) > 1:
-                        trans_check = True
-                    d[k] = trans
+                        d[k.name] = (k, v)
+                else:
+                    if k == 'transcription' or 'tier' in k:
+                        if trans_delimiter:
+                            trans = v.split(trans_delimiter)
+                        else:
+                            trans = [x for x in v]
+                        if not trans_check and len(trans) > 1:
+                            trans_check = True
+                        d[k] = trans
+                    else:
+                        d[k] = v
             word = Word(**d)
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters which is a period

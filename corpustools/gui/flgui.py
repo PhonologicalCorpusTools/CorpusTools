@@ -134,7 +134,7 @@ class FLDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
                 'Transcription tier',
-                'Type of funcational load',
+                'Type of functional load',
                 'Result',
                 'Distinguished homophones?',
                 'Relative count?',

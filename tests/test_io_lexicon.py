@@ -10,6 +10,8 @@ from corpustools.corpus.io import (download_binary, save_binary, load_binary,
                                 load_feature_matrix_csv, export_feature_matrix_csv,
                                 load_corpus_ilg, export_corpus_ilg)
 
+from corpustools.corpus.io.csv import inspect_csv
+
 from corpustools.exceptions import DelimiterError, ILGWordMismatchError
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Discourse)
@@ -57,6 +59,20 @@ def test_export_ilg(unspecified_test_corpus):
         assert(d2.lexicon[k].transcription == unspecified_test_corpus[k].transcription)
         assert(d2.lexicon[k].frequency == unspecified_test_corpus[k].frequency)
     assert(d2.lexicon == unspecified_test_corpus)
+
+def test_inspect_example():
+    example_path = os.path.join(TEST_DIR,'example.txt')
+    atts, coldelim = inspect_csv(example_path)
+    assert(coldelim == ',')
+    for a in atts:
+        if a.name == 'frequency':
+            assert(a.att_type == 'numeric')
+        elif a.name == 'transcription':
+            assert(a.att_type == 'tier')
+            assert(a._delim == '.')
+        elif a.name == 'spelling':
+            assert(a.att_type == 'spelling')
+
 
 def test_ilg_basic():
     basic_path = os.path.join(TEST_DIR,'ilg','test_basic.txt')

@@ -268,13 +268,13 @@ class LexiconView(QWidget):
         variantDialog.show()
 
 class VariantView(QDialog):
-    def __init__(self, parent, wordtokens):
+    def __init__(self, parent, word):
         QDialog.__init__(self, parent)
         self.setWindowTitle('Pronunciation variants')
         layout = QVBoxLayout()
         self.table = TableWidget()
         layout.addWidget(self.table)
-        self.table.setModel(VariantModel(wordtokens))
+        self.table.setModel(VariantModel(word))
         closeButton = QPushButton('Close')
         closeButton.clicked.connect(self.reject)
         layout.addWidget(closeButton)
