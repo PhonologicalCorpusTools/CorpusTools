@@ -5,11 +5,12 @@ import string
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 
 from .textgrid import TextGrid, IntervalTier, PointTier
+from corpustools.exceptions import PCTError
 
 phone_file_extensions = ['phones','phn']
 word_file_extensions = ['words','wrd']
 
-class SpontaneousIOError(Exception):
+class SpontaneousIOError(PCTError):
     def __init__(self, tiertype, tier_name, tiers):
         self.main = 'The {} tier name was not found'.format(tiertype)
         self.information = 'The tier name \'{}\' was not found in any tiers'.format(tier_name)
@@ -134,7 +135,7 @@ def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter)
                     if oi.minTime >= w['End']:
                         break
                     if oi.minTime <= w['Begin'] and oi.maxTime >= w['End']:
-                        w[tier_name] = oi.mark
+                        w[Attribute.sanitize_name(o.name)] = oi.mark
             words.append(w)
     return words
 

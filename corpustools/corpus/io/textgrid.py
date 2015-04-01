@@ -42,11 +42,19 @@ def readFile(f):
     This handles UTF-8, which is itself an ASCII extension, so also ASCII.
     """
     try:
-        f = open(f, 'r', encoding='utf-16')
-    except Exception:
-        f = open(f, 'r')
+        source = open(f, 'r', encoding='utf-16')
+        source.readline() # header junk
+    except UnicodeError:
+        try:
+            source = open(f, 'r', encoding='utf-8')
+            source.readline() # header junk
+        except UnicodeError:
+            source = open(f, 'r')
+            source.readline() # header junk
+    source.readline() # header junk
+    source.readline() # header junk
 
-    return f
+    return source
 
 
 class Point(object):
@@ -334,9 +342,6 @@ class PointTier(object):
         file indicated by string f
         """
         source = readFile(f)
-        source.readline() # header junk
-        source.readline()
-        source.readline()
         self.minTime = float(source.readline().split()[2])
         self.maxTime = float(source.readline().split()[2])
         for i in range(int(source.readline().rstrip().split()[3])):
@@ -491,9 +496,6 @@ class IntervalTier(object):
         file indicated by string f
         """
         source = readFile(f)
-        source.readline() # header junk
-        source.readline()
-        source.readline()
         self.minTime = float(source.readline().split()[2])
         self.maxTime = float(source.readline().split()[2])
         for i in range(int(source.readline().rstrip().split()[3])):
@@ -688,9 +690,6 @@ class TextGrid(object):
         indicated by string f
         """
         source = readFile(f)
-        source.readline() # header junk
-        source.readline() # header junk
-        source.readline() # header junk
         self.minTime = round(float(source.readline().split()[2]), 5)
         self.maxTime = round(float(source.readline().split()[2]), 5)
         source.readline() # more header junk
