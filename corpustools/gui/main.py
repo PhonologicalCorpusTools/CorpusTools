@@ -2,6 +2,7 @@ import os
 import random
 import sys
 
+
 from .imports import *
 
 from .config import Settings, PreferencesDialog
@@ -10,13 +11,13 @@ from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
 
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel, DiscourseModel
 
-from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
+from .corpusgui import (CorpusLoadDialog, AddAbstractTierDialog, AddTierDialog,
                         RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
                         AddCountColumnDialog,
                         ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
-                        ExportFeatureSystemDialog)
+                        ExportFeatureSystemDialog, FeatureClassManager)
 
 from .windows import SelfUpdateWorker
 
@@ -285,6 +286,12 @@ class MainWindow(QMainWindow):
 
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self, self.settings)
+        result = dialog.exec_()
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def loadFeatureClasses(self):
+        dialog = FeatureClassManager(self, self.settings, self.corpusModel)
         result = dialog.exec_()
 
     def subsetCorpus(self):
@@ -658,7 +665,7 @@ class MainWindow(QMainWindow):
             app.cleanup()
 
 
-
+    @check_for_empty_corpus
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpus)
         result = dialog.exec_()
@@ -672,6 +679,10 @@ class MainWindow(QMainWindow):
         self.manageFeatureSystemsAct = QAction( "Manage feature systems...",
                 self,
                 statusTip="Manage feature systems", triggered=self.loadFeatureMatrices)
+
+        self.manageFeatureClassesAct = QAction( "Manage feature classes...",
+                self,
+                statusTip = "Create/change feature classes", triggered=self.loadFeatureClasses)
 
         self.createSubsetAct = QAction( "Generate a corpus subset",
                 self,
@@ -891,6 +902,7 @@ class MainWindow(QMainWindow):
 
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
+        self.featureMenu.addAction(self.manageFeatureClassesAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.phonoProbAct)

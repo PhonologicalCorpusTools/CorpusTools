@@ -1159,7 +1159,7 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self._inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
+        self._inventory = Inventory()#{'#' : Segment('#')} #set of Segments, if transcription exists
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
@@ -1989,3 +1989,11 @@ class Corpus(object):
 
     def __iter__(self):
         return iter(self.wordlist.values())
+
+class Inventory(dict):
+
+    def __init__(self):
+        super().__init__()
+        self['#'] = Segment('#')
+        self.classes = dict()
+
