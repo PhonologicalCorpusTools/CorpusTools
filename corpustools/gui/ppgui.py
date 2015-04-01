@@ -4,7 +4,8 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.phonoprob.phonotactic_probability import phonotactic_probability_vitevitch
+from corpustools.phonoprob.phonotactic_probability import (phonotactic_probability,
+                                                    phonotactic_probability_all_words)
 from corpustools.neighdens.io import load_words_neighden
 from corpustools.corpus.classes import Attribute
 
@@ -23,42 +24,14 @@ class PPWorker(FunctionWorker):
         corpus = kwargs['corpusModel'].corpus
         if 'query' in kwargs:
             for q in kwargs['query']:
-                if kwargs['algorithm'] == 'vitevitch':
-                    try:
-                        res = phonotactic_probability_vitevitch(corpus, q,
-                                            sequence_type = kwargs['sequence_type'],
-                                            count_what = kwargs['count_what'],
-                                            probability_type = kwargs['probability_type'],
-                                            stop_check = kwargs['stop_check'],
-                                            call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                if self.stopped:
-                    break
-                self.results.append([q,res])
-        else:
-            call_back = kwargs['call_back']
-            call_back('Calculating phonotactic probabilities...')
-            call_back(0,len(corpus))
-            cur = 0
-            kwargs['corpusModel'].addColumn(kwargs['attribute'])
-            for w in corpus:
-                if self.stopped:
-                    break
-                cur += 1
-                if cur % 20 == 0:
-                    call_back(cur)
                 try:
-                    res = phonotactic_probability_vitevitch(corpus, w,
-                                            sequence_type = kwargs['sequence_type'],
-                                            count_what = kwargs['count_what'],
-                                            probability_type = kwargs['probability_type'],
-                                            stop_check = kwargs['stop_check'])
+                    res = phonotactic_probability_vitevitch(corpus, q,
+                                        algorithm = kwargs['algorithm'],
+                                        sequence_type = kwargs['sequence_type'],
+                                        count_what = kwargs['count_what'],
+                                        probability_type = kwargs['probability_type'],
+                                        stop_check = kwargs['stop_check'],
+                                        call_back = kwargs['call_back'])
                 except PCTError as e:
                     self.errorEncountered.emit(e)
                     return
@@ -66,7 +39,26 @@ class PPWorker(FunctionWorker):
                     e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
-                setattr(w,kwargs['attribute'].name,res)
+                if self.stopped:
+                    break
+                self.results.append([q,res])
+        else:
+            kwargs['corpusModel'].addColumn(kwargs['attribute'])
+            try:
+                phonotactic_probability_all_words(corpus,
+                                        kwargs['attribute'],
+                                        algorithm = kwargs['algorithm'],
+                                        sequence_type = kwargs['sequence_type'],
+                                        #num_cores = kwargs['num_cores'],
+                                        stop_check = kwargs['stop_check'],
+                                        call_back = kwargs['call_back'])
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
             self.finishedCancelling.emit()
             return

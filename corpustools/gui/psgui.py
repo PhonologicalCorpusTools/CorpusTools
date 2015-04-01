@@ -28,6 +28,9 @@ class PSWorker(FunctionWorker):
             self.errorEncountered.emit(e)
             return
 
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 class PhonoSearchDialog(FunctionDialog):

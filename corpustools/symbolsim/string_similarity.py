@@ -47,6 +47,7 @@ def phono_edit_distance_wrapper(w1, w2, sequence_type, features, max_distance):
 def optimize_string_similarity(corpus, algorithm, sequence_type, count_what, num_cores = -1,
                             max_distance = 10,
                             call_back = None, stop_check = None):
+    return
     if num_cores == -1:
         raise(PCTMultiprocessingError("This function requires multiprocessing."))
     if call_back is not None:

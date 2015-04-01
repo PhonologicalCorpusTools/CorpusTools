@@ -37,12 +37,13 @@ class FAWorker(FunctionWorker):
                     self.errorEncountered.emit(e)
                     return
                 if self.stopped:
-                    return
+                    break
                 self.results.append(res)
         else:
             raise(NotImplementedError)
             self.results.append(res)
         if self.stopped:
+            time.sleep(0.1)
             self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)

@@ -19,4 +19,3 @@ if __name__ == '__main__':
         app.setActiveWindow(main)
         main.show()
         sys.exit(app.exec_())
-# trolled!~

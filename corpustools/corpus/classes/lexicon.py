@@ -4,7 +4,6 @@ import random
 import collections
 import operator
 import math
-import networkx as nx
 
 class CorpusIntegrityError(Exception):
     pass
@@ -1139,8 +1138,6 @@ class Corpus(object):
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
-        self._graph = nx.MultiGraph()
-        self.generate_graph()
 
     def __eq__(self, other):
         if not isinstance(other,Corpus):
@@ -1167,11 +1164,6 @@ class Corpus(object):
     def keys(self):
         for k in sorted(self.wordlist.keys()):
             yield k
-
-    def generate_graph(self):
-        self._graph.clear()
-        self._graph.graph['symbolsim'] = list()
-        self._graph.add_nodes_from(self.wordlist.keys())
 
     def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
                         gramsize = 1, probability = False):
@@ -1564,7 +1556,6 @@ class Corpus(object):
     def __getstate__(self):
         state = self.__dict__.copy()
         state['_freq_base'] = None # don't save caches
-        state['_graph'] = None # don't save caches
         return state
 
     def __setstate__(self,state):
@@ -1577,13 +1568,8 @@ class Corpus(object):
                 state['has_transcription'] = state['has_transcription_value']
             if 'has_wordtokens' not in state:
                 state['has_wordtokens'] = False
-            if '_freq_base' not in state:
+            if '_freq_base' not in state or state['_freq_base'] is None:
                 state['_freq_base'] = dict()
-            if '_graph' not in state:
-                state['_graph'] = nx.MultiGraph()
-                gen_graph = True
-            else:
-                gen_graph = False
             if '_attributes' not in state:
                 state['_attributes'] = [Attribute('spelling','spelling'),
                                         Attribute('transcription','tier'),
@@ -1596,8 +1582,6 @@ class Corpus(object):
                     pass
             self.__dict__.update(state)
             self._specify_features()
-            if gen_graph:
-                self.generate_graph()
             #Backwards compatability
             for k,w in self.wordlist.items():
                 #print(w)
@@ -1822,7 +1806,6 @@ class Corpus(object):
                 return
         except KeyError:
             self.wordlist[word.spelling] = word
-            self._graph.add_node(word.spelling)
             if word.spelling is not None:
                 #self.orthography.update(word.spelling)
                 if not self.has_spelling:

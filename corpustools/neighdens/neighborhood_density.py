@@ -97,7 +97,7 @@ def neighborhood_density_all_words(corpus, attribute, sequence_type = 'transcrip
             count_what='type', num_cores = -1,
             stop_check = None, call_back = None):
     function = partial(neighborhood_density, corpus, algorithm=algorithm, sequence_type=sequence_type,
-                        max_distance=max_distance, count_what = count_what, )
+                        max_distance=max_distance, count_what = count_what)
     if call_back is not None:
         call_back('Calculating neighborhood densities...')
         call_back(0,len(corpus))
@@ -157,12 +157,12 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
     float
         The number of neighbors for the queried word.
     """
-    detail_key = string_sim_key(algorithm, sequence_type, count_what)
-    if detail_key in corpus._graph.graph['symbolsim']:
-        return neighborhood_density_graph(corpus, query, sequence_type,
-            algorithm, max_distance,
-            count_what,
-            stop_check, call_back)
+    #detail_key = string_sim_key(algorithm, sequence_type, count_what)
+    #if detail_key in corpus._graph.graph['symbolsim']:
+    #    return neighborhood_density_graph(corpus, query, sequence_type,
+    #        algorithm, max_distance,
+    #        count_what,
+    #        stop_check, call_back)
     matches = []
     if call_back is not None:
         call_back('Finding neighbors...')
@@ -196,6 +196,34 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
     neighbors = set(matches)-set([query])
 
     return (len(neighbors), neighbors)
+
+def find_mutation_minpairs_all_words(corpus, attribute,
+                    sequence_type='transcription', num_cores = -1,
+                    stop_check = None, call_back = None):
+    function = partial(find_mutation_minpairs, corpus, sequence_type=sequence_type)
+    if call_back is not None:
+        call_back('Calculating neighborhood densities...')
+        call_back(0,len(corpus))
+        cur = 0
+    if num_cores == -1:
+
+        for w in corpus:
+            if stop_check is not None and stop_check():
+                return
+            cur += 1
+            call_back(cur)
+            res = function(w)
+
+            setattr(w, attribute.name, res[0])
+    else:
+        iterable = ((w,) for w in corpus)
+
+
+        neighbors = score_mp(iterable, function, num_cores, call_back, stop_check, chunk_size= 1)
+        for n in neighbors:
+            #Have to look up the key, then look up the object due to how
+            #multiprocessing pickles objects
+            setattr(corpus.find(corpus.key(n[0])), attribute.name, n[1][0])
 
 def find_mutation_minpairs(corpus, query,
                     sequence_type='transcription',

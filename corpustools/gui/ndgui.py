@@ -6,8 +6,7 @@ from collections import OrderedDict
 
 from corpustools.neighdens.neighborhood_density import (neighborhood_density,
                             neighborhood_density_all_words,
-                            neighborhood_density_graph,
-                            generate_neighborhood_density_graph,
+                            find_mutation_minpairs_all_words,
                             find_mutation_minpairs)
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
@@ -52,15 +51,6 @@ class NDWorker(FunctionWorker):
                     print_neighden_results(kwargs['output_filename'],res[1])
                 self.results.append([q,res[0]])
         else:
-            #res = generate_neighborhood_density_graph(corpus,
-                                            #algorithm = kwargs['algorithm'],
-                                            #sequence_type = kwargs['sequence_type'],
-                                            #count_what = kwargs['count_what'],
-                                            #max_distance = kwargs['max_distance'],
-                                            #num_cores = kwargs['num_cores'],
-                                            #call_back = kwargs['call_back'],
-                                            #stop_check = kwargs['stop_check']
-                                            #)
             kwargs['corpusModel'].addColumn(kwargs['attribute'])
             try:
                 if kwargs['algorithm'] != 'substitution':
@@ -75,10 +65,12 @@ class NDWorker(FunctionWorker):
                                             stop_check = kwargs['stop_check']
                                             )
                 else:
-                    res = find_mutation_minpairs(corpus, w,
-                                        sequence_type = kwargs['sequence_type'],
-                                        stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])
+                    find_mutation_minpairs_all_words(corpus,
+                                            kwargs['attribute'],
+                                            sequence_type = kwargs['sequence_type'],
+                                            num_cores = kwargs['num_cores'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return

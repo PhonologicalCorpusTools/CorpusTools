@@ -58,7 +58,6 @@ from corpustools.corpus.classes import Word
     #return m[-1][-1]['f']
 
 def edit_distance_wordtokens(word1, word2, sequence_type, max_distance = None):
-
     pass
 
 def edit_distance(word1, word2, sequence_type, max_distance = None):
