@@ -39,6 +39,21 @@ def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, ca
     Segments with identical distributions (ie. seg1==seg2) have a KL of zero.
     Segments with similar distributions therefore have low numbers, so *high*
     numbers indicate possible allophones.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        Corpus to use
+    seg1 : str
+        First segment
+    seg2 : str
+        Second segment
+    outfile : str
+        Full path to save output
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
     """
     if not seg1 in corpus.inventory or not seg2 in corpus.inventory:
         raise ValueError('One segment does not exist in this corpus')

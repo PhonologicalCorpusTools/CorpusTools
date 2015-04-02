@@ -44,6 +44,10 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
         1 means allow minimal pairs (e.g. in English, 's' and 't' do not
         alternate in minimal pairs,
         so allowing minimal pairs may skew results)
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------

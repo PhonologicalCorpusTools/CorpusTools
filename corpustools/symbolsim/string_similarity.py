@@ -109,6 +109,10 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     min_rel: double
         Filters out all words that are lower than min_rel from a relatedness measure
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------
