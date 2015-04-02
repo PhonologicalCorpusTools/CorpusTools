@@ -11,7 +11,7 @@ from functools import partial
 from math import factorial
 import operator
 
-from corpustools.exceptions import PCTError
+from corpustools.exceptions import NeighDenError
 
 def args_to_key(*args):
     return '_'.join(['neighbor']+[str(x) for x in args])
@@ -78,7 +78,7 @@ def neighborhood_density_graph(corpus, query, sequence_type = 'transcription',
             stop_check = None, call_back = None):
     detail_key = string_sim_key(algorithm, sequence_type, count_what)
     if detail_key not in corpus._graph.graph['symbolsim']:
-        raise(PCTError("Optimized graph not found!"))
+        raise(NeighDenError("Optimized graph not found!"))
     if stop_check is not None and stop_check():
         return
     key = corpus.key(query)

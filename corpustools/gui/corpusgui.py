@@ -19,7 +19,6 @@ from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv
                                     import_spontaneous_speech_corpus,
                                     load_corpus_ilg)
 from corpustools.corpus.io.csv import inspect_csv
-from corpustools.corpus.io.spontaneous import SpontaneousIOError
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,

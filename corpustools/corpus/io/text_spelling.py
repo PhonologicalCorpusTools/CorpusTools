@@ -2,7 +2,7 @@ import os
 
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 
-from corpustools.exceptions import DelimiterError
+from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
 
 def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
@@ -53,7 +53,7 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
     discourse = Discourse(name = corpus_name)
     if support_corpus_path is not None:
         if not os.path.exists(support_corpus_path):
-            raise(OSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
+            raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
         support = load_binary(support_corpus_path)
     corpus = Corpus(corpus_name)
 

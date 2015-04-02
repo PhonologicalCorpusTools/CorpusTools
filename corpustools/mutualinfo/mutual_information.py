@@ -5,6 +5,8 @@ import math
 from collections import defaultdict
 import time
 
+from corpustools.exceptions import MutualInfoError
+
 def pointwise_mi(corpus, query, sequence_type,
                 halve_edges = False, in_word = False,
                 stop_check = None, call_back = None):
@@ -26,11 +28,11 @@ def pointwise_mi(corpus, query, sequence_type,
     try:
         prob_s1 = unigram_dict[query[0]]
     except KeyError:
-        raise(Exception('The segment {} was not found in the corpus'.format(query[0])))
+        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[0])))
     try:
         prob_s2 = unigram_dict[query[1]]
     except KeyError:
-        raise(Exception('The segment {} was not found in the corpus'.format(query[1])))
+        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[1])))
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
@@ -38,11 +40,11 @@ def pointwise_mi(corpus, query, sequence_type,
         # raise(Exception('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type)))
 
     if unigram_dict[query[0]] == 0.0:
-        raise Exception('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
     if unigram_dict[query[1]] == 0.0:
-        raise Exception('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
     if bigram_dict[query] == 0.0:
-        raise Exception('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 

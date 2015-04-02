@@ -5,19 +5,10 @@ import string
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 
 from .textgrid import TextGrid, IntervalTier, PointTier
-from corpustools.exceptions import PCTError
+from corpustools.exceptions import TextGridTierError
 
 phone_file_extensions = ['phones','phn']
 word_file_extensions = ['words','wrd']
-
-class SpontaneousIOError(PCTError):
-    def __init__(self, tiertype, tier_name, tiers):
-        self.main = 'The {} tier name was not found'.format(tiertype)
-        self.information = 'The tier name \'{}\' was not found in any tiers'.format(tier_name)
-        self.details = 'The tier name looked for (ignoring case) was \'{}\'.\n'.format(tier_name)
-        self.details += 'The following tiers were found:\n\n'
-        for t in tiers:
-            self.details += '{}\n'.format(t.name)
 
 FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
@@ -69,12 +60,12 @@ def figure_out_tiers(tiers, word_tier_name, phone_tier_name, speaker):
         if is_word_tier(t.name, word_tier_name):
             break
     else:
-        raise(SpontaneousIOError('word',word_tier_name,tiers))
+        raise(TextGridTierError('word',word_tier_name,tiers))
     for t in tiers:
         if is_phone_tier(t.name, phone_tier_name):
             break
     else:
-        raise(SpontaneousIOError('phone',phone_tier_name,tiers))
+        raise(TextGridTierError('phone',phone_tier_name,tiers))
 
     speakers_in_tiers = get_speaker_names(tiers,word_tier_name)
     if speaker is None or speakers_in_tiers != ['Unknown']:

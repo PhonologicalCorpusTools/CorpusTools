@@ -17,6 +17,8 @@ from collections import defaultdict
 import os
 from codecs import open
 
+from corpustools.exceptions import KLError
+
 class Context(object):
 
     def __init__(self):

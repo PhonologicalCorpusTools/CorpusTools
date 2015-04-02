@@ -2,6 +2,8 @@
 
 from corpustools.corpus.classes import Word
 
+from corpustools.exceptions import PhonoProbError
+
 def phonotactic_probability_all_words(corpus, attribute, algorithm, sequence_type,
                                     count_what = 'token',
                                     probability_type = 'unigram',
@@ -78,9 +80,9 @@ def phonotactic_probability_vitevitch(corpus, query, sequence_type,
                 if seg not in corpus.inventory:
                     notfound.append(seg)
             if len(notfound):
-                raise(Exception("Segments not found in the corpus: {}".format(', '.join(notfound))))
+                raise(PhonoProbError("Segments not found in the corpus: {}".format(', '.join(notfound))))
             else:
-                raise(Exception("Segments not found in the corpus: {} at position: {}".format(', '.join(s),i)))
+                raise(PhonoProbError("Segments not found in the corpus: {} at position: {}".format(', '.join(s),i)))
         tot += 1
     try:
         totprob = totprob / tot

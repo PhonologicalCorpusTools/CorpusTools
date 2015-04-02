@@ -5,8 +5,7 @@ import collections
 import operator
 import math
 
-class CorpusIntegrityError(Exception):
-    pass
+from corpustools.exceptions import CorpusIntegrityError
 
 class Segment(object):
     """

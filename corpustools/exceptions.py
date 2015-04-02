@@ -2,10 +2,24 @@ import os
 import sys
 import traceback
 
+## Base exception classes
+
 class PCTError(Exception):
+    """
+    Base class for all exceptions explicitly raised in corpustools.
+    """
     pass
 
 class PCTPythonError(PCTError):
+    """
+    Exception wrapper around unanticipated exceptions to better display
+    them to users.
+
+    Parameters
+    ----------
+    exc : Exception
+        Uncaught exception to be be output in a way that the GUI can interpret
+    """
     def __init__(self, exc):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         self.main = 'Something went wrong that wasn\'t handled by PCT.'
@@ -14,13 +28,166 @@ class PCTPythonError(PCTError):
         self.details = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
 
-class PCTMultiprocessingError(PCTError):
+## Corpus loading exceptions
+
+class PCTOSError(PCTError):
+    """
+    Exception class for when files or directories that are expected are missing.
+    Wrapper for OSError.
+    """
+    pass
+
+class CorpusIntegrityError(PCTError):
+    """
+    Exception for when a problem arises while loading in the corpus.
+    """
     pass
 
 class DelimiterError(PCTError):
+    """
+    Exception for mismatch between specified delimiter and the actual text
+    when loading in CSV files and transcriptions.
+    """
+    pass
+
+class ILGError(PCTError):
+    """
+    Exception for general issues when loading interlinear gloss files.
+    """
+    pass
+
+class ILGWordMismatchError(PCTError):
+    """
+    Exception for when interlinear gloss files have different numbers of
+    words across lines that should have a one-to-one mapping.
+
+    Parameters
+    ----------
+    spelling_line : list
+        List of words in the spelling line
+    transcription_line : list
+        List of words in the transcription line
+    """
+    def __init__(self, spelling_line, transcription_line):
+        self.main = "There doesn't appear to be equal numbers of words in the orthography and transcription lines."
+
+        self.information = ''
+        self.details = 'The following is the contents of the two lines:\n\n'
+        self.details += '(line {}, {} words) '.format(spelling_line[0],len(spelling_line[1]))
+        self.details += ' '.join(spelling_line[1]) + '\n'
+        self.details += '(line {}, {} words) '.format(transcription_line[0],len(transcription_line[1]))
+        self.details += ' '.join(transcription_line[1])
+
+class ILGLinesMismatchError(PCTError):
+    """
+    Exception for when the number of lines in a interlinear gloss file
+    is not a multiple of the number of types of lines.
+
+    Parameters
+    ----------
+    lines : list
+        List of the lines in the interlinear gloss file
+    """
+    def __init__(self, lines):
+        self.main = "There doesn't appear to be equal numbers of orthography and transcription lines"
+
+        self.information = ''
+        self.details = 'The following is the contents of the file after initial preprocessing:\n\n'
+        for line in lines:
+            self.details += line + '\n'
+
+class TextGridTierError(PCTError):
+    """
+    Exception for when a specified tier was not found in a TextGrid.
+
+    Parameters
+    ----------
+    tier_type : str
+        The type of tier looked for (such as spelling or transcription)
+    tier_name : str
+        The name of the tier specified
+    tiers : list
+        List of tiers in the TextGrid that were inspected
+    """
+    def __init__(self, tier_type, tier_name, tiers):
+        self.main = 'The {} tier name was not found'.format(tier_type)
+        self.information = 'The tier name \'{}\' was not found in any tiers'.format(tier_name)
+        self.details = 'The tier name looked for (ignoring case) was \'{}\'.\n'.format(tier_name)
+        self.details += 'The following tiers were found:\n\n'
+        for t in tiers:
+            self.details += '{}\n'.format(t.name)
+
+## Analysis function exceptions
+
+class FreqAltError(PCTError):
+    """
+    Base error class for exceptions in frequency of alternation function
+    calls.
+    """
+    pass
+
+class FuncLoadError(PCTError):
+    """
+    Base error class for exceptions in frequency of alternation function
+    calls.
+    """
+    pass
+
+class KLError(PCTError):
+    """
+    Base error class for exceptions in Kullback-Leibler function
+    calls.
+    """
+    pass
+
+class MutualInfoError(PCTError):
+    """
+    Base error class for exceptions in mutual information function
+    calls.
+    """
+    pass
+
+class NeighDenError(PCTError):
+    """
+    Base error class for exceptions in neighborhood density function
+    calls.
+    """
+    pass
+
+class PhonoProbError(PCTError):
+    """
+    Base error class for exceptions in phonotactic probability function
+    calls.
+    """
+    pass
+
+class StringSimilarityError(PCTError):
+    """
+    Base error class for exceptions in string similarity function
+    calls.
+    """
     pass
 
 class ProdError(PCTError):
+    """
+    Base error class for exceptions in predictability of distribution function
+    calls.
+
+    Parameters
+    ----------
+    seg1 : str
+        First segment used in predictability of distribution function call
+    seg2 : str
+        Second segment used in predictability of distribution function call
+    envs : list
+        Environments specified in predictability of distribution function call
+    missing : dict
+        Dictionary of environments not specified, but found in the
+        course of the function, with a list of the words of those environments as
+        values
+    overlapping : dict
+        Dictionary of the specified environments that are overlapping
+    """
     def __init__(self, seg1, seg2, envs, missing, overlapping):
         self.segs = (seg1, seg2)
         self.envs = envs
@@ -144,25 +311,10 @@ class ProdError(PCTError):
                         print('{}\t{}\t{}'.format(
                                 w,wenv,', '.join(envs)),file=f)
 
-class ILGError(PCTError):
+## Other modules' exceptions
+
+class PCTMultiprocessingError(PCTError):
+    """
+    Exception for multiprocessing errors.
+    """
     pass
-
-class ILGWordMismatchError(PCTError):
-    def __init__(self, spelling_line, transcription_line):
-        self.main = "There doesn't appear to be equal numbers of words in the orthography and transcription lines."
-
-        self.information = ''
-        self.details = 'The following is the contents of the two lines:\n\n'
-        self.details += '(line {}, {} words) '.format(spelling_line[0],len(spelling_line[1]))
-        self.details += ' '.join(spelling_line[1]) + '\n'
-        self.details += '(line {}, {} words) '.format(transcription_line[0],len(transcription_line[1]))
-        self.details += ' '.join(transcription_line[1])
-
-class ILGLinesMismatchError(PCTError):
-    def __init__(self, lines):
-        self.main = "There doesn't appear to be equal numbers of orthography and transcription lines"
-
-        self.information = ''
-        self.details = 'The following is the contents of the file after initial preprocessing:\n\n'
-        for line in lines:
-            self.details += line + '\n'

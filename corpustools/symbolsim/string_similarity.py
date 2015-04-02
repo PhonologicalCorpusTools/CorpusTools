@@ -12,9 +12,7 @@ from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
 from corpustools.multiprocessing import score_mp, PCTMultiprocessingError
 
-
-class StringSimilarityError(Exception):
-    pass
+from corpustools.exceptions import StringSimilarityError
 
 def string_sim_key(algorithm, sequence_type, count_what):
     if algorithm == 'khorsi':

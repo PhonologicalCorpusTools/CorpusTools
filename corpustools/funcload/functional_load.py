@@ -7,7 +7,7 @@ import copy
 from math import factorial
 import time
 
-
+from corpustools.exceptions import FuncLoadError
 
 def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
         relative_count = True, distinguish_homophones = False,
