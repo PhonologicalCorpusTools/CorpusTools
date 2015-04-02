@@ -2,6 +2,37 @@
 
 from corpustools.gui.corpusgui import *
 
+def test_attribute_widget(qtbot,specified_test_corpus):
+    new = AttributeWidget()
+    assert(new.nameWidget.isEnabled())
+    new.nameWidget.setText('test')
+
+    for i,v in enumerate(['Custom column', 'Spelling', 'Transcription', 'Frequency']):
+        new.useAs.setCurrentIndex(i)
+        att = new.value()
+        if i == 0:
+            assert(new.typeWidget.isEnabled())
+            assert(att.name == 'test')
+            assert(att.att_type == 'spelling')
+        elif i == 1:
+            assert(not new.typeWidget.isEnabled())
+            assert(new.typeWidget.currentText() == 'Spelling')
+            assert(att.name == 'spelling')
+            assert(att.display_name == 'test')
+            assert(att.att_type == 'spelling')
+        elif i == 2:
+            assert(not new.typeWidget.isEnabled())
+            assert(new.typeWidget.currentText() == 'Tier')
+            assert(att.name == 'transcription')
+            assert(att.display_name == 'test')
+            assert(att.att_type == 'tier')
+        elif i == 3:
+            assert(not new.typeWidget.isEnabled())
+            assert(new.typeWidget.currentText() == 'Numeric')
+            assert(att.name == 'frequency')
+            assert(att.display_name == 'test')
+            assert(att.att_type == 'numeric')
+
 def test_add_abstract_tier(qtbot, specified_test_corpus):
     dialog = AddAbstractTierDialog(None,specified_test_corpus)
     qtbot.addWidget(dialog)
