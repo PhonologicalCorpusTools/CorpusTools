@@ -7,7 +7,8 @@ from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSele
 
 from .windows import FunctionWorker, FunctionDialog
 
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
+from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs,
+                        calc_prod_wordtokens, calc_prod_wordtokens_all_envs)
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
@@ -21,14 +22,24 @@ class PDWorker(FunctionWorker):
 
                 for pair in kwargs['segment_pairs']:
                     try:
-                        res = calc_prod(kwargs['corpus'], pair[0],pair[1],
-                            kwargs['envs'],
-                            kwargs['sequence_type'],
-                            kwargs['type_token'],
-                            kwargs['strict'],
-                            True,
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
+                        if kwargs['wordtokens']:
+                            res = calc_prod_wordtokens(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['envs'],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                kwargs['strict'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                        else:
+                            res = calc_prod(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['envs'],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                kwargs['strict'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
                     except PCTError as e:
                         self.errorEncountered.emit(e)
                         return
@@ -37,7 +48,7 @@ class PDWorker(FunctionWorker):
                         self.errorEncountered.emit(e)
                         return
                     if self.stopped:
-                        return
+                        break
                     self.results.append(res)
             else:
                 raise(NotImplementedError)
@@ -47,12 +58,20 @@ class PDWorker(FunctionWorker):
 
                 for pair in kwargs['segment_pairs']:
                     try:
-                        res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
-                            kwargs['sequence_type'],
-                            kwargs['type_token'],
-                            True,
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
+                        if kwargs['wordtokens']:
+                            res = calc_prod_wordtokens_all_envs(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                        else:
+                            res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
                     except PCTError as e:
                         self.errorEncountered.emit(e)
                         return
@@ -61,11 +80,14 @@ class PDWorker(FunctionWorker):
                         self.errorEncountered.emit(e)
                         return
                     if self.stopped:
-                        return
+                        break
                     self.results.append(res)
             else:
                 raise(NotImplementedError)
                 self.results.append(res)
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 class PDDialog(FunctionDialog):
@@ -114,11 +136,23 @@ class PDDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        typetokenEnabled = {'Word types':self.corpus.has_transcription,
+                    'Word tokens':self.corpus.has_wordtokens}
+        self.wordtokensWidget = RadioSelectWidget('Analyze word types or tokens',
+                                            OrderedDict([('Word types','wordtypes'),
+                                            ('Word tokens','wordtokens')
+                                            ]),
+                                            {'Word types':self.typesSelected,
+                                            'Word tokens':self.tokensSelected},
+                                            typetokenEnabled)
+
+        optionLayout.addWidget(self.wordtokensWidget)
+
         self.tierWidget = TierWidget(corpus,include_spelling=False)
 
         optionLayout.addWidget(self.tierWidget)
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token',
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
 
@@ -190,6 +224,17 @@ class PDDialog(FunctionDialog):
                                     ' distribution across all environments based on frequency alone.'
             "</FONT>"))
 
+    def typesSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+    def tokensSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([
+                    ('Use most frequent pronunciation as the type','most_frequent_type'),
+                    ('Use most frequent pronunciation for all tokens','most_frequent_token'),
+                    ('Use raw counts of each pronunciation (token frequency)','count_token'),
+                    ('Use relative counts of each pronunciation (type frequency)','relative_type')]))
+
     def generateKwargs(self):
         kwargs = {}
         segPairs = self.segPairWidget.value()
@@ -203,6 +248,10 @@ class PDDialog(FunctionDialog):
             kwargs['envs'] = envs
 
         kwargs['corpus'] = self.corpus
+        if self.wordtokensWidget.value() == 'wordtokens':
+            kwargs['wordtokens'] = True
+        else:
+            kwargs['wordtokens'] = False
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
         kwargs['pair_behavior'] = 'individual'

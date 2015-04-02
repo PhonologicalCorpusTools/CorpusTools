@@ -94,6 +94,7 @@ class SpontaneousSpeechCorpus(object):
         self.directory = directory
 
         self.lexicon = Corpus(name+' lexicon')
+        self.lexicon.has_wordtokens = True
 
         self.discourses = OrderedDict()
 
@@ -103,6 +104,8 @@ class SpontaneousSpeechCorpus(object):
 
     def __setstate__(self,state):
         self.__dict__.update(state)
+        self.lexicon.has_wordtokens = True
+
 
     def add_discourse(self, data, discourse_info, delimiter=None):
         """
@@ -240,6 +243,9 @@ class Discourse(object):
         """
         return sorted(self.words.keys())
 
+    def __len__(self):
+        return len(self.words.keys())
+
     def __eq__(self, other):
         if not isinstance(other,Discourse):
             return False
@@ -304,6 +310,8 @@ class Discourse(object):
 
     def __setstate__(self,state):
         self.__dict__.update(state)
+        if hasattr(self,'lexicon'):
+            self.lexicon.has_wordtokens = True
         for wt in self:
             wt.wordtype.wordtokens.append(wt)
 
@@ -351,6 +359,7 @@ class Discourse(object):
 
         """
         corpus = Corpus(self.name + ' lexicon')
+        corpus.has_wordtokens = True
         for token in self:
             word = corpus.get_or_create_word(token.wordtype.spelling,token.wordtype.transcription)
             word.frequency += 1

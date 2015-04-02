@@ -14,6 +14,9 @@ class PCTPythonError(PCTError):
         self.details = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
 
+class PCTMultiprocessingError(PCTError):
+    pass
+
 class DelimiterError(PCTError):
     pass
 

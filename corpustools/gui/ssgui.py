@@ -29,6 +29,7 @@ class SSWorker(FunctionWorker):
             self.errorEncountered.emit(e)
             return
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 
@@ -381,7 +382,6 @@ class SSDialog(FunctionDialog):
 
         result = self.progressDialog.exec_()
 
-        self.progressDialog.reset()
         if result:
             self.accept()
 

@@ -188,7 +188,13 @@ class Settings(object):
             return tuple(type(d)(self.qs.value(k,d)) for k, d in mapped_key)
         else:
             inikey, default = mapped_key
-            return type(default)(self.qs.value(inikey,default))
+            if key == 'num_cores':
+                if self['use_multi']:
+                    return type(default)(self.qs.value(inikey,default))
+                else:
+                    return -1
+            else:
+                return type(default)(self.qs.value(inikey,default))
 
     def __setitem__(self, key, value):
         mapped_key = self.key_to_ini[key]

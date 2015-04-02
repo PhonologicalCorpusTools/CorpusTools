@@ -339,6 +339,9 @@ class Transcription(object):
                 else:
                     raise(NotImplementedError('That format for seg_list is not supported.'))
 
+    def __hash__(self):
+        return hash(str(self))
+
     def __getitem__(self, key):
         if isinstance(key,int) or isinstance(key,slice):
             return self._list[key]
@@ -421,7 +424,8 @@ class Transcription(object):
         else:
             lhs = self[pos-1]
             rhs = self[pos+1]
-        return lhs,rhs
+        return Environment(lhs, rhs)
+        #return lhs,rhs
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -628,12 +632,12 @@ class Word(object):
 
     """
 
-    _corpus = None
-
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
         'lowercase_freq', 'log10_freq']
 
     def __init__(self, **kwargs):
+
+        _corpus = None
 
         self.transcription = None
         self.spelling = None
@@ -730,6 +734,11 @@ class Word(object):
         matching_segs = self.transcription.match_segments(tier_segments)
         new_tier = Transcription(matching_segs)
         setattr(self,tier_name,new_tier)
+        for wt in self.wordtokens:
+            matching_segs = wt.transcription.match_segments(tier_segments)
+            new_tier = Transcription(matching_segs)
+            setattr(wt,tier_name,new_tier)
+
 
     def remove_attribute(self, attribute_name):
         """Deletes a tier attribute from a Word
@@ -752,6 +761,9 @@ class Word(object):
         except ValueError:
             pass #attribute_name does not exist
 
+    def variants(self, sequence_type = 'transcription'):
+        return collections.Counter(getattr(x,sequence_type) for x in self.wordtokens)
+
     def enumerate_symbols(self,tier_name):
         for pos,seg in enumerate(getattr(self, tier_name)):
             yield pos,seg
@@ -771,10 +783,7 @@ class Word(object):
 
         """
         tier = getattr(self,tier_name)
-        lhs, rhs = tier.get_env(pos)
-        e = Environment(lhs, rhs)
-
-        return e
+        return tier.get_env(pos)
 
     def __repr__(self):
         return '<Word: \'%s\'>' % self.spelling
@@ -1160,6 +1169,7 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
+        self.has_wordtokens = False
         self._freq_base = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
@@ -1171,6 +1181,25 @@ class Corpus(object):
         if self.wordlist != other.wordlist:
             return False
         return True
+
+    def key(self, word):
+        key = word.spelling
+        if self[key] == word:
+            return key
+        count = 0
+        while True:
+            count += 1
+            key = '{} ({})'.format(word.spelling,count)
+            try:
+                if self[key] == word:
+                    return key
+            except KeyError:
+                break
+
+
+    def keys(self):
+        for k in sorted(self.wordlist.keys()):
+            yield k
 
     def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
                         gramsize = 1, probability = False):
@@ -1560,6 +1589,11 @@ class Corpus(object):
         for word in self:
             word.remove_attribute(name)
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_freq_base'] = None # don't save caches
+        return state
+
     def __setstate__(self,state):
         try:
             if '_inventory' not in state:
@@ -1568,7 +1602,9 @@ class Corpus(object):
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' not in state:
                 state['has_transcription'] = state['has_transcription_value']
-            if '_freq_base' not in state:
+            if 'has_wordtokens' not in state:
+                state['has_wordtokens'] = False
+            if '_freq_base' not in state or state['_freq_base'] is None:
                 state['_freq_base'] = dict()
             if '_attributes' not in state:
                 state['_attributes'] = [Attribute('spelling','spelling'),
@@ -1582,7 +1618,6 @@ class Corpus(object):
                     pass
             self.__dict__.update(state)
             self._specify_features()
-
             #Backwards compatability
             for k,w in self.wordlist.items():
                 #print(w)
@@ -1801,6 +1836,7 @@ class Corpus(object):
                     except KeyError:
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
+                        self._graph.add_node(key)
                         break
             else:
                 return

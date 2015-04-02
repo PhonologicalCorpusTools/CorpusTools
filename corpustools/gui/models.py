@@ -419,10 +419,10 @@ class SegmentPairModel(BaseTableModel):
 
 
 class VariantModel(BaseTableModel):
-    def __init__(self, wordtokens, parent=None):
+    def __init__(self, word, parent=None):
         super(VariantModel, self).__init__(parent)
 
-        self.rows = [(k,v) for k,v in Counter(str(x.transcription) for x in wordtokens).items()]
+        self.rows = [(k,v) for k,v in word.variants().items()]
 
         self.columns = ['Variant', 'Count']
 

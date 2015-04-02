@@ -61,7 +61,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             return
         if call_back is not None:
             cur += 1
-            if cur % 100 == 0:
+            if cur % 1000 == 0:
                 call_back(cur)
         tier = getattr(w, sequence_type)
         if s1 in tier:
@@ -86,7 +86,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
                 return
             if call_back is not None:
                 cur += 1
-                if cur % 10000 == 0:
+                if cur % 1000 == 0:
                     #print(len(related_list))
                     call_back(cur)
             if w1 == w2:
