@@ -15,6 +15,12 @@ from corpustools.utils import generate_discourse
 #    from corpustools.gui.imports import QApplication
 #    return QApplication([])
 
+@pytest.fixture(scope='module')
+def test_dir():
+    test_dir = 'tests/data'
+    if not os.path.exists(os.path.join(test_dir,'exported')):
+        os.makedirs(os.path.join(test_dir,'exported'))
+    return test_dir
 
 @pytest.fixture(scope='session')
 def settings():
