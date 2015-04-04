@@ -88,8 +88,8 @@ class PPDialog(FunctionDialog):
 
     name = 'phonotactic probability'
 
-    def __init__(self, parent, corpusModel, showToolTips):
-        FunctionDialog.__init__(self, parent, PPWorker())
+    def __init__(self, parent, settings, corpusModel, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, PPWorker())
 
         self.corpusModel = corpusModel
         self.showToolTips = showToolTips

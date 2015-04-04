@@ -394,7 +394,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def stringSim(self):
-        dialog = SSDialog(self, self.corpusModel,self.showToolTips)
+        dialog = SSDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
@@ -410,7 +410,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def freqOfAlt(self):
-        dialog = FADialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = FADialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FAWindow is not None and dialog.update and self.FAWindow.isVisible():
@@ -426,7 +426,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def predOfDist(self):
-        dialog = PDDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = PDDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PDWindow is not None and self.PDWindow.isVisible():
@@ -442,7 +442,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def funcLoad(self):
-        dialog = FLDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = FLDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
@@ -456,7 +456,7 @@ class MainWindow(QMainWindow):
                 self.showFLResults.setVisible(True)
 
     def kullbackLeibler(self):
-        dialog = KLDialog(self, self.corpusModel.corpus, self.showToolTips)
+        dialog = KLDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.KLWindow is not None and dialog.update and self.KLWindow.isVisible():
@@ -472,7 +472,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def mutualInfo(self):
-        dialog = MIDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = MIDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
@@ -486,7 +486,7 @@ class MainWindow(QMainWindow):
                 self.showMIResults.setVisible(True)
 
     def acousticSim(self):
-        dialog = ASDialog(self,self.showToolTips)
+        dialog = ASDialog(self, self.settings, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.ASWindow is not None and dialog.update and self.ASWindow.isVisible():
@@ -501,7 +501,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def neighDen(self):
-        dialog = NDDialog(self, self.corpusModel,self.showToolTips)
+        dialog = NDDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
@@ -523,7 +523,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def phonoProb(self):
-        dialog = PPDialog(self, self.corpusModel,self.showToolTips)
+        dialog = PPDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
@@ -545,7 +545,7 @@ class MainWindow(QMainWindow):
 
 
     def phonoSearch(self):
-        dialog = PhonoSearchDialog(self,self.corpusModel.corpus,self.showToolTips)
+        dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():

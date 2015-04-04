@@ -1,5 +1,6 @@
 
 from corpustools.gui.models import *
+from corpustools.corpus.classes import Word, Attribute
 
 def test_base_corpus_model(qtbot, specified_test_corpus, settings):
     model = BaseCorpusTableModel(specified_test_corpus, settings)
@@ -34,6 +35,49 @@ def test_base_table_model(qtbot, settings):
 def test_corpus_model(qtbot, specified_test_corpus, settings):
     model = CorpusModel(specified_test_corpus, settings)
     qtbot.addWidget(model)
+    assert(model.headerData(0,Qt.Horizontal,Qt.DisplayRole) == 'Spelling')
+    assert(model.headerData(1,Qt.Horizontal,Qt.DisplayRole) == 'Transcription')
+    assert(model.headerData(2,Qt.Horizontal,Qt.DisplayRole) == 'Frequency')
+
+    a = Attribute('test', 'spelling','Test2')
+
+    model.addColumn(a)
+    assert(model.headerData(3,Qt.Horizontal,Qt.DisplayRole) == 'Test2')
+
+    model.removeAttributes(['Test2'])
+    assert(len(model.columns) == 3)
+
+    a = Attribute('test','factor','Test')
+
+    model.addAbstractTier(a, {'C':['t','m']})
+    assert(model.wordObject(0).test == 'CC')
+    model.removeAttributes(['Test'])
+
+    a = Attribute('test','numeric','Test')
+
+    model.addCountColumn(a, 'transcription', ['t','m'])
+    assert(model.wordObject(0).test == 2)
+    model.removeAttributes(['Test'])
+
+    a = Attribute('test','tier','Test')
+
+    model.addTier(a, ['t','m'])
+    assert(model.wordObject(0).test == ['t','m'])
+    model.removeAttributes(['Test'])
+
+    w = model.wordObject(0)
+    assert(w.spelling == 'atema')
+    w = Word(spelling = 'atema', transcription = [])
+    model.replaceWord(0, w)
+    w = model.wordObject(0)
+    assert(w.spelling == 'atema' and w.transcription == [])
+    model.hideNonLexical(True)
+    w = model.wordObject(0)
+    assert(w.spelling != 'atema')
+    model.hideNonLexical(False)
+    w = model.wordObject(0)
+    assert(w.spelling == 'atema')
+
 
 #def test_discourse_model(qtbot):
     #model = DiscourseModel()
@@ -54,6 +98,19 @@ def test_feature_system_tree_model(qtbot, spe_specifier):
 def test_filter_model(qtbot):
     model = FilterModel()
     qtbot.addWidget(model)
+    a = Attribute('test','numeric','Test')
+    f = (a, '__eq__', 0)
+    model.addRow(f)
+    assert(model.data(model.index(0,0),Qt.DisplayRole) == 'Test == 0')
+
+    model.removeRow(0)
+
+    assert(len(model.filters) == 0)
+
+    a = Attribute('test','factor','Test')
+    f = (a, ['a','b','c'])
+    model.addRow(f)
+    assert(model.data(model.index(0,0),Qt.DisplayRole) == 'Test a, b, c')
 
 def test_segment_pair_model(qtbot):
     model = SegmentPairModel()
@@ -62,6 +119,14 @@ def test_segment_pair_model(qtbot):
 def test_variant_model(qtbot, unspecified_test_corpus):
     w = unspecified_test_corpus['atema']
     model = VariantModel(w)
+    qtbot.addWidget(model)
+
+def test_results_model(qtbot, settings):
+    model = ResultsModel([], [], settings)
+    qtbot.addWidget(model)
+
+def test_phono_search_results_model(qtbot, unspecified_test_corpus, settings):
+    model = PhonoSearchResultsModel([],[],[], settings)
     qtbot.addWidget(model)
 
 #def test_spontaneous_speech_model(qtbot):

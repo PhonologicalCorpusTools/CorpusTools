@@ -42,8 +42,8 @@ class PhonoSearchDialog(FunctionDialog):
     _about = ['']
 
     name = 'phonological search'
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, PSWorker())
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, PSWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips

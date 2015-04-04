@@ -116,8 +116,8 @@ class PDDialog(FunctionDialog):
                 ' The Ohio State University.')]
 
     name = 'predictability of distribution'
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, PDWorker())
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, PDWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips

@@ -78,8 +78,8 @@ class KLDialog(FunctionDialog):
 
 
 
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, KLWorker())
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, KLWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips

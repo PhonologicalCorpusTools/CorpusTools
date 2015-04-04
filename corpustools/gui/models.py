@@ -147,7 +147,7 @@ class FilterModel(QAbstractTableModel):
             return None
         elif role != Qt.DisplayRole:
             return None
-        f = self.filters[index.row()][index.column()]
+        f = self.filters[index.row()]
         if f[0].att_type == 'numeric':
             return_data = ' '.join([str(f[0]),self.conditionalMapping[f[1]], str(f[2])])
         else:

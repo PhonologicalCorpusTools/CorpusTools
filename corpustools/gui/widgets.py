@@ -1478,6 +1478,11 @@ class RadioSelectWidget(QGroupBox):
     def initialClick(self):
         self.widgets[0].click()
 
+    def click(self,index):
+        if index >= len(self.widgets):
+            return
+        self.widgets[index].click()
+
     def value(self):
         for w in self.widgets:
             if w.isChecked():

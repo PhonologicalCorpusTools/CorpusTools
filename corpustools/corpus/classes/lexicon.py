@@ -1054,6 +1054,9 @@ class Attribute(object):
     def __hash__(self):
         return hash(self.name)
 
+    def __repr__(self):
+        return '<Attribute of type {} with name \'{}\'>'.format(self.att_type,self.name)
+
     def __str__(self):
         return self.display_name
 

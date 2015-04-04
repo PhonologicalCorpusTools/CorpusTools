@@ -64,8 +64,8 @@ class SSDialog(FunctionDialog):
 
     name = 'string similarity'
 
-    def __init__(self, parent, corpusModel, showToolTips):
-        FunctionDialog.__init__(self, parent, SSWorker())
+    def __init__(self, parent, settings, corpusModel, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, SSWorker())
 
         self.corpusModel = corpusModel
         self.showToolTips = showToolTips
