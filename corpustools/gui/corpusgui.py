@@ -1055,17 +1055,13 @@ class AddTierDialog(CreateClassWidget):
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-        createType = self.createType.currentText()
-        createList = self.createWidget.value()
-        if not createList:
+        #createType = self.createType.currentText()
+        #createList = self.createWidget.value()
+        inClass, notInClass = self.generateClass()
+        if not inClass:
             reply = QMessageBox.critical(self,
-                                         "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
-            return
-        if createType == 'Features':
-            createList = createList[1:-1]
-            self.segList = self.corpus.features_to_segments(createList)
-        else:
-            self.segList = createList
+                                         "Missing information", "Please specify at least one segment or one feature value")
+        self.segList = inClass
         QDialog.accept(self)
 
 class AddCountColumnDialog(QDialog):

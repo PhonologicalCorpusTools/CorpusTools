@@ -1584,57 +1584,59 @@ class CreateClassWidget(QDialog):
         QDialog.__init__(self, parent)
 
         self.corpus = corpus
+        self.class_type = class_type
 
-        layout = QVBoxLayout()
+        self.mainLayout = QVBoxLayout()
 
-        if class_type == 'tier':
+        if self.class_type == 'tier':
             explanation = QLabel(('You can create Tiers in this window. A Tier is subpart of a word that consists only of '
-            'the segments you want, while maintaining their original ordering. You can define the properties of the Tier below. '
-            'A common example of a Tier is one consisting of all the vowels, or of all the obstruents in a word.\n'
+            'the segments you want, maintaining their original ordering. You can define the properties of the Tier below. '
+            'Tiers are commonly created on the basis of a feature class, e.g. all the vowels or of all the obstruents in a word. '
+            'PCT will allow you to create Tiers consisting of any arbitrary set of sounds.\n'
             'Once created, the Tier will be added as a column in your corpus, and it will be visible in the main window. '
             'You can then select this Tier inside of certain analysis functions.'))
-        elif class_type == 'class':
+        elif self.class_type == 'class':
             explanation = QLabel(('You can create Classes in this window. A Class is simply a set of sounds from the inventory '
-            'of your corpus. Classes can be \"natural\", meaning all the sounds share features, e.g. [+nasal] or '
-            '[-voice, -continuant], or they can be \"unnatural\", which means they are just arbitrary sets of sounds.\n'
-            'Once created, Classes can be selected from within certain analysis functions. Classes can also be used to '
-            'organize the inventory chart for your corpus'))
+            'of your corpus. Classes are normally created on the basis of shared phonological features, in which case they are '
+            'usually called  \"natural\" classes. An arbitrary set of sounds with no common features may be called \"unnatural\".\n'
+            'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
+            'Classes can also be used to organize the inventory chart for your corpus'))
 
         explanation.setWordWrap(True)
-        layout.addWidget(explanation)
-        nameFrame = QGroupBox('Name of {}'.format(class_type))
+        self.mainLayout.addWidget(explanation)
+
+        self.nameFrame = QGroupBox('Name of {}'.format(self.class_type))
         self.nameEdit = QLineEdit()
+        nameLayout = QFormLayout()
+        nameLayout.addRow(self.nameEdit)
+        self.nameFrame.setLayout(nameLayout)
+        self.mainLayout.addWidget(self.nameFrame)
 
-        box = QFormLayout()
-        box.addRow(self.nameEdit)
+        defineFrame = QFrame()
+        defineLayout = QHBoxLayout()
 
-        nameFrame.setLayout(box)
+        self.featuresFrame = QGroupBox('Features to define the {}'.format(self.class_type))
+        self.featureSelectWidget = FeatureBox('Features',self.corpus.inventory)
+        featuresLayout = QVBoxLayout()
+        featuresLayout.addWidget(self.featureSelectWidget)
+        self.featuresFrame.setLayout(featuresLayout)
+        #self.mainLayout.addWidget(self.featuresFrame)
 
-        layout.addWidget(nameFrame)
+        self.segFrame = QGroupBox('Segments to define the {}'.format(self.class_type))
+        self.segSelectWidget = InventoryBox('Segments',self.corpus.inventory)
+        segLayout = QVBoxLayout()
+        segLayout.addWidget(self.segSelectWidget)
+        self.segFrame.setLayout(segLayout)
+        #self.mainLayout.addWidget(self.segFrame)
 
-        self.createType = QComboBox()
-        self.createType.addItem('Segments')
-        if self.corpus.specifier is not None:
-            self.createType.addItem('Features')
-        else:
-            layout.addWidget(QLabel('Features for {} creation are not available without a feature system.'.format(wprd)))
+        defineLayout.addWidget(self.featuresFrame)
+        defineLayout.addWidget(self.segFrame)
+        defineFrame.setLayout(defineLayout)
 
-        self.createType.currentIndexChanged.connect(self.generateFrames)
+        self.mainLayout.addWidget(defineFrame)
 
-        layout.addWidget(QLabel('Basis for creating {}:'.format(class_type)))
-        layout.addWidget(self.createType, alignment = Qt.AlignLeft)
-        self.createFrame = QFrame()
-        createLayout = QVBoxLayout()
-        self.createWidget = InventoryBox('Segments to define the {}'.format(class_type),self.corpus.inventory)
-
-        createLayout.addWidget(self.createWidget)
-
-        self.createFrame.setLayout(createLayout)
-
-        layout.addWidget(self.createFrame)
-
-        self.createButton = QPushButton('Create {}'.format(class_type))
-        self.previewButton = QPushButton('Preview {}'.format(class_type))
+        self.createButton = QPushButton('Create {}'.format(self.class_type))
+        self.previewButton = QPushButton('Preview {}'.format(self.class_type))
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.createButton)
@@ -1647,11 +1649,11 @@ class CreateClassWidget(QDialog):
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
-        layout.addWidget(acFrame)
+        self.mainLayout.addWidget(acFrame)
 
-        self.setLayout(layout)
+        self.setLayout(self.mainLayout)
 
-        self.setWindowTitle('Create {}'.format(class_type))
+        self.setWindowTitle('Create {}'.format(self.class_type))
 
     def createFeatureFrame(self):
         self.createWidget.deleteLater()
@@ -1671,19 +1673,26 @@ class CreateClassWidget(QDialog):
         elif self.createType.currentText() == 'Features':
             self.createFeatureFrame()
 
-    def preview(self):
-        createType = self.createType.currentText()
-        createList = self.createWidget.value()
-        if not createList:
+    def generateClass(self):
+        featureList = self.featureSelectWidget.currentSpecification()
+        segList = self.segSelectWidget.value()
+        if (not featureList) and (not segList):
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
+                    "Missing information", "Please specify at least one segment, or at least one feature value")
             return
-        if createType == 'Features':
-            createList = createList[1:-1]
-            segList = self.corpus.features_to_segments(createList)
-        else:
-            segList = createList
-        notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
 
+        previewList = list()
+        if featureList:
+            previewList.extend(self.corpus.features_to_segments(featureList))
+        if segList:
+            previewList.extend(segList)
+        previewList = list(set(previewList))
+        notInPreviewList = [x.symbol for x in self.corpus.inventory if x.symbol not in previewList]
+        return previewList, notInPreviewList
+
+    def preview(self):
+        inClass, notInClass = self.generateClass()
         reply = QMessageBox.information(self,
-                "Tier preview", "Segments included: {}\nSegments excluded: {}".format(', '.join(segList),', '.join(notInSegList)))
+                "{} preview".format(self.class_type),
+                "Segments included: {}\nSegments excluded: {}".format(', '.join(inClass),
+                                                                      ', '.join(notInClass)))
