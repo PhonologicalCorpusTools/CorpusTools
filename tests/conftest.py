@@ -25,6 +25,8 @@ def test_dir():
 @pytest.fixture(scope='session')
 def settings():
     from corpustools.gui.config import Settings
+    s = Settings()
+    s['sigfigs'] = 3
     return Settings()
 
 @pytest.fixture(scope='module')
