@@ -39,6 +39,9 @@ class Speaker(object):
         for k,v in kwargs.items():
             setattr(self,k,v)
 
+    def __repr__(self):
+        return '<Speaker object with name \'{}\>'.format(self.name)
+
     def __str__(self):
         return str(self.name)
 
