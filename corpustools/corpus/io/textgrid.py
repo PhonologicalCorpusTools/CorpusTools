@@ -96,9 +96,9 @@ def guess_tiers(tg):
     attribute_tiers = list()
     tier_properities = dict()
     for i,t in enumerate(tg.intervalTiers):
-        tier_properties[t.name] = (i, len(t), len(t.uniqueLabels())
+        tier_properties[t.name] = (i, len(t), t.averageLabelLen(), len(t.uniqueLabels())
 
-    likely_segment = max(tier_properties.keys(), key = lambda x: tier_properties[x][1])
+    likely_segment = max(tier_properties.keys(), key = lambda x: tier_properties[x][2])
     segment_tiers.append(likely_segment)
     likely_spelling = min(x for x in tier_properties.keys() if x not in segment_tiers,
                         key = lambda x: tier_properties[x][0])
@@ -113,17 +113,29 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-
-
-
-
-def textgrid_to_data(path, segment_tier_names = None, spelling_tier_names = None,
-                            word_attribute_tier_names = None, speaker = None):
+def textgrid_to_data(path, spelling_tier_name, segment_tier_names = None,
+                            word_attribute_tier_names = None, speaker = None,
+                            delimiter = None):
     tg = load_textgrid(path)
     name = os.path.splitext(os.path.split(path)[1])[0]
 
     data = {'name': name,
             'hierarchy':{'phone':'word', 'word':'speaker'}}
+
+    if segment_tier_names is not None:
+        for n in segment_tier_names:
+            data[n] = list()
+            t = tg.getFirst(n)
+            for interval in t:
+                data[n].append({'label':interval.mark,'begin':interval.minTime,'end':maxTime})
+        phoneInd = 0
+
+    spelling_tier = tg.getFirst(n)
+
+    #for si in spelling_tier:
+
+
+
 
 
 def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):

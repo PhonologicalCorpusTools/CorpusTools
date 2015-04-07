@@ -28,6 +28,7 @@ def test_speaker_names(textgrid_test_dir):
 def test_basic(textgrid_test_dir):
     speaker = Speaker(None)
     expected = {'name':'phone_word',
+                'base_levels': ['phone'],
                 'data':{
                 'phone':[{'label':'', 'begin': 0, 'end': 0.25},
                         {'label':'a', 'begin': 0.25, 'end': 0.5},
