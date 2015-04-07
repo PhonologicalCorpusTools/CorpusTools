@@ -90,6 +90,41 @@ def load_textgrid(path):
     tg.read(path)
     return tg
 
+def guess_tiers(tg):
+    segment_tiers = list()
+    spelling_tiers = list()
+    attribute_tiers = list()
+    tier_properities = dict()
+    for i,t in enumerate(tg.intervalTiers):
+        tier_properties[t.name] = (i, len(t), len(t.uniqueLabels())
+
+    likely_segment = max(tier_properties.keys(), key = lambda x: tier_properties[x][1])
+    segment_tiers.append(likely_segment)
+    likely_spelling = min(x for x in tier_properties.keys() if x not in segment_tiers,
+                        key = lambda x: tier_properties[x][0])
+    spelling.append(likely_spelling)
+
+    for k in tier_properties.keys():
+        if k in segment_tiers:
+            continue
+        if k in spelling_tiers:
+            continue
+        attribute_tiers.append(k)
+
+    return spelling_tiers, segment_tiers, attribute_tiers
+
+
+
+
+
+def textgrid_to_data(path, segment_tier_names = None, spelling_tier_names = None,
+                            word_attribute_tier_names = None, speaker = None):
+    tg = load_textgrid(path)
+    name = os.path.splitext(os.path.split(path)[1])[0]
+
+    data = {'name': name,
+            'hierarchy':{'phone':'word', 'word':'speaker'}}
+
 
 def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):
     tg = load_textgrid(path)

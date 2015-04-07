@@ -448,6 +448,13 @@ class IntervalTier(object):
     def __max__(self):
         return self.maxTime
 
+    def uniqueLabels(self):
+        return set(x.mark for x in self.intervals)
+
+    def averageLabelLen(self):
+        labels = self.uniqueLabels()
+        return sum(len(lab) for lab in labels)/len(labels)
+
     def add(self, minTime, maxTime, mark):
         self.addInterval(Interval(minTime, maxTime, mark))
 
@@ -616,6 +623,13 @@ class TextGrid(object):
         Return the ith tier
         """
         return self.tiers[i]
+
+    @property
+    def intervalTiers(self):
+        for t in self.tiers:
+            if isinstance(t, PointTier):
+                continue
+            yield t
 
     def getFirst(self, tierName):
         """
