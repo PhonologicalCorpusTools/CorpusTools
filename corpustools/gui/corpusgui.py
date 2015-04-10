@@ -287,17 +287,20 @@ class CorpusLoadDialog(QDialog):
 
         buttonLayout = QVBoxLayout()
         self.downloadButton = QPushButton('Download example corpora')
+        self.loadCorpusButton = QPushButton('Import corpus')
         self.loadFromCsvButton = QPushButton('Load corpus from pre-formatted text file')
         self.loadFromTextButton = QPushButton('Create corpus from running text')
         self.importSpontaneousButton = QPushButton('Import spontaneous speech corpus')
         self.removeButton = QPushButton('Remove selected corpus')
         buttonLayout.addWidget(self.downloadButton)
+        buttonLayout.addWidget(self.loadCorpusButton)
         buttonLayout.addWidget(self.loadFromCsvButton)
         buttonLayout.addWidget(self.loadFromTextButton)
         buttonLayout.addWidget(self.importSpontaneousButton)
         buttonLayout.addWidget(self.removeButton)
 
         self.downloadButton.clicked.connect(self.openDownloadWindow)
+        self.loadCorpusButton.clicked.connect(self.openLoadWindow)
         self.loadFromCsvButton.clicked.connect(self.openCsvWindow)
         self.loadFromTextButton.clicked.connect(self.openTextWindow)
         self.importSpontaneousButton.clicked.connect(self.importSpontaneousWindow)
@@ -355,6 +358,12 @@ class CorpusLoadDialog(QDialog):
             self.progressDialog.reset()
             if result:
                 QDialog.accept(self)
+
+    def openLoadWindow(self):
+        dialog = LoadCorpusDialog(self, self.settings)
+        result = dialog.exec_()
+        if result:
+            self.getAvailableCorpora()
 
     def openDownloadWindow(self):
         dialog = DownloadCorpusDialog(self, self.settings)
@@ -473,7 +482,14 @@ class DownloadCorpusDialog(QDialog):
         if result:
             QDialog.accept(self)
 
-class LoadCorpusDialog(QDialog):
+class LoadCorpusDialog(PCTDialog):
+    supported_types = [(None, ''),('csv', 'Column delimited text file'),
+                        ('transcription', 'Transcribed text'),
+                        ('spelling', 'Orthography text'),
+                        ('ilg', 'Interlinear text'),
+                        ('textgrid', 'TextGrid'),
+                        ('buckeye', 'Buckeye format'),
+                        ('timit', 'Timit format')]
     def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
         self.settings = settings
@@ -484,14 +500,321 @@ class LoadCorpusDialog(QDialog):
         iolayout = QFormLayout()
 
         self.characters = set()
-        self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
+        self.pathWidget = FileWidget('Open corpus text','Text files (*.txt *.csv *.TextGrid *.words *.wrds)')
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
         self.pathWidget.pathEdit.textChanged.connect(self.getCharacters)
 
+        self.typeWidget = QComboBox()
+        self.typeWidget.addItem('')
+        self.typeWidget.addItem('Column delimited text file')
+        self.typeWidget.addItem('Transcribed text')
+        self.typeWidget.addItem('Orthography text')
+        self.typeWidget.addItem('Interlinear text')
+        self.typeWidget.addItem('TextGrid')
+        self.typeWidget.addItem('Buckeye format')
+        self.typeWidget.addItem('Timit format')
+
+        self.typeWidget.currentIndexChanged.connect(self.typeChanged)
+
+        self.textType = None
+
         iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
+
+        iolayout.addRow('Type of corpus', self.typeWidget)
 
         self.nameEdit = QLineEdit()
         iolayout.addRow(QLabel('Name for corpus'),self.nameEdit)
+
+        self.punctuation = PunctuationWidget(string.punctuation, 'Punctuation to ignore')
+        iolayout.addRow(self.punctuation)
+
+
+        ioframe = QGroupBox('Corpus details')
+        ioframe.setLayout(iolayout)
+
+        mainlayout.addWidget(ioframe)
+
+        optionlayout = QFormLayout()
+
+        translayout = QFormLayout()
+
+        self.transDelimiter = QLineEdit()
+        translayout.addRow(QLabel('Transcription delimiter'), self.transDelimiter)
+
+        self.digraphs = DigraphWidget(self)
+        translayout.addRow(self.digraphs)
+        transframe = QFrame()
+        transframe.setLayout(translayout)
+
+        self.featureSystem = FeatureSystemSelect(self.settings)
+        translayout.addRow(self.featureSystem)
+
+        self.supportCorpus = CorpusSelect(self,self.settings)
+        translayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
+
+        self.ignoreCase = QCheckBox()
+        translayout.addRow(QLabel('Ignore case'),self.ignoreCase)
+
+        self.columnDelimiterEdit = QLineEdit()
+        translayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
+
+        optionlayout.addRow(transframe)
+
+        optionframe = QGroupBox('Options')
+        optionframe.setLayout(optionlayout)
+        mainlayout.addWidget(optionframe)
+
+        mainframe = QFrame()
+        mainframe.setLayout(mainlayout)
+        layout.addWidget(mainframe)
+
+        scroll = QScrollArea()
+        self.columnFrame = QWidget()
+        self.columns = list()
+        lay = QHBoxLayout()
+        lay.addStretch()
+        self.columnFrame.setLayout(lay)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.columnFrame)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        #self.columnFrame.
+        layout.addWidget(scroll)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Import corpus')
+
+    def updateType(self, type):
+        print(type)
+        self.typeWidget.clear()
+        self.typeWidget.addItem('')
+        if type == 'textgrid':
+            self.typeWidget.addItem(self.supported_types[5][1])
+            self.typeWidget.setCurrentIndex(1)
+        elif type == 'csv':
+            self.typeWidget.addItem(self.supported_types[1][1])
+            self.typeWidget.setCurrentIndex(1)
+        elif type == 'text':
+            for t,label in self.supported_types:
+                if t in ['csv', 'transcription','spelling','ilg']:
+                    self.typeWidget.addItem(label)
+        elif type in ['buckeye', 'timit']:
+            for t,label in self.supported_types:
+                if t in ['buckeye', 'timit']:
+                    self.typeWidget.addItem(label)
+
+    def typeChanged(self):
+        curLabel = self.typeWidget.currentText()
+        for s, label in self.supported_types:
+            if label == curLabel:
+                self.textType = s
+                break
+        else:
+            self.textType = None
+            return
+        if self.textType == 'spelling':
+            self.transDelimiter.setEnabled(False)
+            self.digraphs.setEnabled(False)
+            self.supportCorpus.setEnabled(True)
+            self.ignoreCase.setEnabled(True)
+            self.featureSystem.setEnabled(False)
+        elif self.textType == 'transcription':
+            self.transDelimiter.setEnabled(True)
+            self.digraphs.setEnabled(True)
+            self.supportCorpus.setEnabled(False)
+            self.ignoreCase.setEnabled(False)
+            self.featureSystem.setEnabled(True)
+        elif self.textType == 'ilg':
+            self.transDelimiter.setEnabled(True)
+            self.digraphs.setEnabled(True)
+            self.supportCorpus.setEnabled(True)
+            self.ignoreCase.setEnabled(True)
+            self.featureSystem.setEnabled(True)
+        elif self.textType == 'csv':
+            self.transDelimiter.setEnabled(True)
+            self.digraphs.setEnabled(True)
+            self.supportCorpus.setEnabled(True)
+            self.ignoreCase.setEnabled(True)
+            self.featureSystem.setEnabled(True)
+        elif self.textType == 'textgrid':
+            self.transDelimiter.setEnabled(True)
+            self.digraphs.setEnabled(True)
+            self.supportCorpus.setEnabled(True)
+            self.ignoreCase.setEnabled(True)
+            self.featureSystem.setEnabled(True)
+        elif self.textType in ['buckeye', 'timit']:
+            self.transDelimiter.setEnabled(False)
+            self.digraphs.setEnabled(False)
+            self.supportCorpus.setEnabled(False)
+            self.ignoreCase.setEnabled(False)
+            self.featureSystem.setEnabled(True)
+        self.inspect()
+
+    def help(self):
+        self.helpDialog = HelpDialog(self,name = 'loading corpora',
+                                    section = 'creating-a-corpus-from-running-text')
+        self.helpDialog.exec_()
+
+    def setResults(self, results):
+        self.corpus = results
+
+    def ignoreList(self):
+        return self.punctuation.value()
+
+    def delimiters(self):
+        wordDelim = None
+        transDelim = self.transDelimiter.value()
+        if transDelim == []:
+            transDelim = None
+        return wordDelim, transDelim
+
+    def getCharacters(self):
+        path = self.pathWidget.value()
+        if path != '' and os.path.exists(path):
+            self.characters = inspect_transcription_corpus(path)
+        else:
+            self.characters = set()
+
+    @check_for_errors
+    def forceInspect(self, b):
+        if os.path.exists(self.pathWidget.value()):
+            colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+            if not colDelim:
+                colDelim = None
+            transDelim = self.transDelimiterEdit.text()
+            if not transDelim:
+                transDelim = None
+            atts, coldelim = inspect_csv(self.pathWidget.value(),
+                    coldelim = colDelim,
+                    transdelim = transDelim)
+            self.updateColumnFrame(atts)
+
+    def updateColumnFrame(self, atts):
+        for i in reversed(range(self.columnFrame.layout().count())):
+            w = self.columnFrame.layout().itemAt(i).widget()
+            if w is None:
+                del w
+                continue
+            w.setParent(None)
+            w.deleteLater()
+        self.columns = list()
+        for a in atts:
+            if a.att_type == 'tier':
+                self.transDelimiter.setText(a._delim)
+            c = AttributeWidget(attribute = a, disable_name = True)
+            self.columns.append(c)
+            self.columnFrame.layout().addWidget(c)
+
+    def generateKwargs(self):
+        path = self.pathWidget.value()
+        if path == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to the text file.")
+            return
+        if not os.path.exists(path):
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "The specified file does not exist.")
+            return
+        name = self.nameEdit.text()
+        if name == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the corpus.")
+            return
+        if name in get_corpora_list(self.settings['storage']):
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
+                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return None
+        wordDelim = None
+        wordDelim, transDelim = self.delimiters()
+        ignore_list = self.punctuation.value()
+
+        kwargs = {'corpus_name':name,
+                    'text_type':self.textType,
+                    'path':path,
+                    'delimiter': wordDelim,
+                    'ignore_list': ignore_list}
+        if self.textType == 'spelling':
+
+            supportCorpus = self.supportCorpus.path()
+            ignore_list = self.punctuation.value()
+            kwargs['ignore_case'] = self.ignoreCase.isChecked()
+            kwargs['support_corpus_path'] = supportCorpus
+        else:
+            feature_system_path = self.featureSystem.path()
+            kwargs['digraph_list'] = self.digraphs.value()
+            kwargs['trans_delimiter'] = transDelim
+            kwargs['feature_system_path'] = feature_system_path
+
+        return kwargs
+
+    def accept(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            if self.corpus is not None:
+                save_binary(self.corpus,
+                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
+            QDialog.accept(self)
+
+    def inspect(self):
+        if os.path.exists(self.pathWidget.value()):
+            if self.textType == 'csv':
+                atts, coldelim = inspect_csv(self.pathWidget.value())
+                self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
+                self.updateColumnFrame(atts)
+            else:
+                self.updateColumnFrame([])
+        else:
+            self.updateColumnFrame([])
+
+    def updateName(self):
+        path = self.pathWidget.value()
+        filename = os.path.split(path)[1]
+        name, ext = os.path.splitext(filename)
+        print(name,ext)
+        self.nameEdit.setText(name)
+        if ext.lower() == '.textgrid':
+            self.updateType('textgrid')
+        elif ext.lower() == '.csv':
+            self.updateType('csv')
+        elif ext.lower() == '.words':
+            self.updateType('buckeye')
+        elif ext.lower() == '.wrds':
+            self.updateType('timit')
+        elif ext.lower() == '.txt':
+            self.updateType('text')
+
 
 class CorpusFromTextDialog(QDialog):
     def __init__(self, parent, settings):
