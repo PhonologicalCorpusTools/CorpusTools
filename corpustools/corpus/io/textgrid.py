@@ -85,6 +85,30 @@ def figure_out_tiers(tiers, word_tier_name, phone_tier_name, speaker):
                     speakers[s]['other'].append(t)
     return speakers
 
+def inspect_textgrid(path, transdelim = None):
+    if transdelim is not None:
+        trans_delimiters = [transdelim]
+    else:
+        trans_delimiters = ['.',' ', ';', ',']
+    tg = load_textgrid(path)
+    spellings, segments, attributes = guess_tiers(tg)
+    atts = list()
+    for t in tg.intervalTiers:
+        if t in spellings:
+            a = Attribute(Attribute.sanitize_name(h), 'spelling', h)
+        elif t in segments:
+            a = Attribute(Attribute.sanitize_name(h), 'tier', h)
+        else:
+            cat = Attribute.guess_type(t.uniqueLabels, trans_delimiters)
+            a = Attribute(Attribute.sanitize_name(h), cat, h)
+            if cat == 'tier':
+                for t in trans_delimiters:
+                    if t in t.uniqueLabels[0]:
+                        a._delim = t
+                        break
+        atts.append(a)
+    return atts
+
 def load_textgrid(path):
     tg = TextGrid()
     tg.read(path)
@@ -96,11 +120,11 @@ def guess_tiers(tg):
     attribute_tiers = list()
     tier_properities = dict()
     for i,t in enumerate(tg.intervalTiers):
-        tier_properties[t.name] = (i, len(t), t.averageLabelLen(), len(t.uniqueLabels())
+        tier_properties[t.name] = (i, len(t), t.averageLabelLen(), len(t.uniqueLabels()))
 
     likely_segment = max(tier_properties.keys(), key = lambda x: tier_properties[x][2])
     segment_tiers.append(likely_segment)
-    likely_spelling = min(x for x in tier_properties.keys() if x not in segment_tiers,
+    likely_spelling = min((x for x in tier_properties.keys() if x not in segment_tiers),
                         key = lambda x: tier_properties[x][0])
     spelling.append(likely_spelling)
 

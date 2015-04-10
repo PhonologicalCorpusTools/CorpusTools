@@ -19,6 +19,7 @@ from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv
                                     import_spontaneous_speech_corpus,
                                     load_corpus_ilg)
 from corpustools.corpus.io.csv import inspect_csv
+from corpustools.corpus.io.textgrid import inspect_textgrid
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
@@ -471,6 +472,26 @@ class DownloadCorpusDialog(QDialog):
         self.progressDialog.reset()
         if result:
             QDialog.accept(self)
+
+class LoadCorpusDialog(QDialog):
+    def __init__(self, parent, settings):
+        QDialog.__init__(self, parent)
+        self.settings = settings
+        layout = QVBoxLayout()
+
+        mainlayout = QHBoxLayout()
+
+        iolayout = QFormLayout()
+
+        self.characters = set()
+        self.pathWidget = FileWidget('Open corpus text','Text files (*.txt)')
+        self.pathWidget.pathEdit.textChanged.connect(self.updateName)
+        self.pathWidget.pathEdit.textChanged.connect(self.getCharacters)
+
+        iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
+
+        self.nameEdit = QLineEdit()
+        iolayout.addRow(QLabel('Name for corpus'),self.nameEdit)
 
 class CorpusFromTextDialog(QDialog):
     def __init__(self, parent, settings):
