@@ -1,4 +1,4 @@
-
+import os
 import string
 import re
 
@@ -6,6 +6,8 @@ from .textgrid_classes import TextGrid, IntervalTier, PointTier
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError
+
+from .helper import compile_digraphs, parse_transcription, DiscourseData
 
 ### HELPERS ###
 def process_tier_name(name):
@@ -118,7 +120,7 @@ def guess_tiers(tg):
     segment_tiers = list()
     spelling_tiers = list()
     attribute_tiers = list()
-    tier_properities = dict()
+    tier_properties = dict()
     for i,t in enumerate(tg.intervalTiers):
         tier_properties[t.name] = (i, len(t), t.averageLabelLen(), len(t.uniqueLabels()))
 
@@ -126,7 +128,7 @@ def guess_tiers(tg):
     segment_tiers.append(likely_segment)
     likely_spelling = min((x for x in tier_properties.keys() if x not in segment_tiers),
                         key = lambda x: tier_properties[x][0])
-    spelling.append(likely_spelling)
+    spelling_tiers.append(likely_spelling)
 
     for k in tier_properties.keys():
         if k in segment_tiers:
@@ -137,29 +139,75 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-def textgrid_to_data(path, spelling_tier_name, segment_tier_names = None,
-                            word_attribute_tier_names = None, speaker = None,
-                            delimiter = None):
+def textgrid_to_data(path, annotation_types, speaker = None,
+                            delimiter = None, digraph_list = None):
+    if digraph_list is not None:
+        digraph_pattern = compile_digraphs(digraph_list)
+    else:
+        digraph_pattern = None
     tg = load_textgrid(path)
     name = os.path.splitext(os.path.split(path)[1])[0]
 
-    data = {'name': name,
-            'hierarchy':{'phone':'word', 'word':'speaker'}}
+    data = DiscourseData(name, annotation_types)
 
-    if segment_tier_names is not None:
-        for n in segment_tier_names:
-            data[n] = list()
-            t = tg.getFirst(n)
-            for interval in t:
-                data[n].append({'label':interval.mark,'begin':interval.minTime,'end':maxTime})
-        phoneInd = 0
+    for word_name in data.word_levels:
+        spelling_tier = tg.getFirst(word_name)
 
-    spelling_tier = tg.getFirst(n)
+        for si in spelling_tier:
+            annotations = dict()
+            word = {'label': si.mark, 'token':dict()}
+            for n in data.base_levels:
+                if data[word_name].subtype != n:
+                    continue
+                t = tg.getFirst(n)
+                tier_elements = list()
+                for ti in t:
+                    if ti.maxTime <= si.minTime:
+                        continue
+                    if ti.minTime >= si.maxTime:
+                        break
+                    #if not ti.mark:
+                    #    continue
 
-    #for si in spelling_tier:
+                    phoneBegin = ti.minTime
+                    phoneEnd = ti.maxTime
 
+                    if phoneBegin < si.minTime:
+                        phoneBegin = si.minTime
+                    if phoneEnd > si.maxTime:
+                        phoneEnd = si.maxTime
+                    if data[n].delimited:
+                        parsed = [{'label':x} for x in parse_transcription(ti.mark,
+                                        trans_delimiter,
+                                        digraph_pattern)]
+                        parsed[0]['begin'] = phoneBegin
+                        parsed[-1]['end'] = phoneEnd
+                        tier_elements.extend(parsed)
+                    else:
+                        tier_elements.append({'label': ti.mark,'begin': phoneBegin,'end': phoneEnd})
+                level_count = data.level_length(n)
+                word[n] = (level_count,level_count+len(tier_elements))
+                annotations[n] = tier_elements
 
+            mid_point = si.minTime + (si.maxTime - si.minTime)
+            for at in annotation_types:
+                if at.base:
+                    continue
+                if at.anchor:
+                    continue
+                t = tg.getFirst(at.name)
+                t = tg.getFirst(n)
+                ti = t.intervalContaining(mid_point)
+                value = ti.mark
+                if at.token:
+                    word['token'][at.name] = value
+                else:
+                    word[at.name] = value
 
+            annotations[word_name] = [word]
+            data.add_annotations(**annotations)
+
+    return data
 
 
 def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):
