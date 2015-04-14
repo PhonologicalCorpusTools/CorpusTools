@@ -76,9 +76,14 @@ class FilterWorker(Process):
                 args = self.job_q.get(timeout=1)
             except Empty:
                 break
-            for a in args:
-                if self.filter_function(*a):
-                    results.append(a)
+            try:
+                for a in args:
+                    if self.filter_function(*a):
+                        results.append(a)
+            except Exception as e:
+                self.stopped.stop()
+                self.filtered_q.put(e)
+                break
             self.job_q.task_done()
         if self.stopped.stop_check():
             return
@@ -145,16 +150,22 @@ def filter_mp(iterable, filter_function, num_procs, call_back, stop_check, debug
     if debug:
         print('queueadder joined!')
     return_list = list()
+    error = None
     while True:
         try:
             l = filtered_queue.get(timeout=2)
         except Empty:
             break
-        return_list.extend(l)
+        if isinstance(l, Exception):
+            error = l
+        else:
+            return_list.extend(l)
     if debug:
         print('emptied result queue')
     for p in procs:
         p.join()
+    if error is not None:
+        raise(error)
     if debug:
         print('joined')
         print(len(return_list))
@@ -178,11 +189,16 @@ class ScoreWorker(Process):
                 break
             results = list()
             for a in args:
-                score = self.function(*a)
-                if score is None:
-                    continue
-                return_value = tuple([x for x in a] + [score])
-                results.append(return_value)
+                try:
+                    score = self.function(*a)
+                    if score is None:
+                        continue
+                    return_value = tuple([x for x in a] + [score])
+                    results.append(return_value)
+                except Exception as e:
+                    self.scored_q.put(e)
+                    self.stopped.stop()
+                    break
             self.job_q.task_done()
             if self.stopped.stop_check():
                 continue
@@ -191,7 +207,7 @@ class ScoreWorker(Process):
         return
 
 
-def score_mp(iterable, function, num_procs, call_back, stop_check, debug = True,chunk_size = 500):
+def score_mp(iterable, function, num_procs, call_back, stop_check, debug = True, chunk_size = 500):
     job_queue = JoinableQueue(100)
     scored_queue = Queue()
     stopped = Stopped()
@@ -243,16 +259,22 @@ def score_mp(iterable, function, num_procs, call_back, stop_check, debug = True,
     if debug:
         print('queueadder joined!')
     return_list = list()
+    error = None
     while True:
         try:
             l = scored_queue.get(timeout=2)
         except Empty:
             break
-        return_list.extend(l)
+        if isinstance(l, Exception):
+            error = l
+        else:
+            return_list.extend(l)
     if debug:
         print('emptied result queue')
     for p in procs:
         p.join()
+    if error is not None:
+        raise(error)
     if debug:
         print('joined')
         print(len(return_list))
