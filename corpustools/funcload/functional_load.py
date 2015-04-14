@@ -666,6 +666,8 @@ def all_pairwise_fls(corpus, relative_fl=False, algorithm='minpair', frequency_c
     total_calculations = ((((len(corpus.inventory)-1)**2)-len(corpus.inventory)-1)/2)+1
     ct = 1
     t = time.time()
+    if '' in corpus.inventory:
+        raise Exception('Warning: Calculation of functional load for all segment pairs requires that all items in corpus have a non-null transcription.')
     for i, s1 in enumerate(corpus.inventory[:-1]):
         for s2 in corpus.inventory[i+1:]:
             if s1 != '#' and s2 != '#':
