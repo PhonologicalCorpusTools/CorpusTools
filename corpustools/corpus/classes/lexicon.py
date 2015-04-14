@@ -1738,6 +1738,21 @@ class Corpus(object):
         for word in sorted_list:
             yield self.wordlist[word]
 
+    def iter_words_case_insensitive(self):
+        """
+        Sorts the keys in the corpus dictionary,
+        then yields the values in that order
+
+        Returns
+        -------
+        generator
+            Sorted Words in the corpus
+        """
+        insensitive_mapping = [(x.upper(), x) for x in self.wordlist.keys()]
+        sorted_list = sorted(insensitive_mapping, key = lambda x: x[0])
+        for word in sorted_list:
+            yield self.wordlist[word[1]]
+
     def iter_sort(self):
         """
         Sorts the keys in the corpus dictionary, then yields the
@@ -2012,4 +2027,6 @@ class Corpus(object):
         return self.wordlist[item]
 
     def __iter__(self):
-        return iter(self.wordlist.values())
+        for k in sorted(self.wordlist.keys()):
+            yield self.wordlist[k]
+        #return iter(sorted(self.wordlist.values()))

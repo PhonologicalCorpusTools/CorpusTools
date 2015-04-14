@@ -10,7 +10,7 @@ from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,Disc
 
 from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
                         RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
-                        AddCountColumnDialog,
+                        AddCountColumnDialog, ExportForAlignerDialog,
                         ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
@@ -299,6 +299,12 @@ class MainWindow(QMainWindow):
 
     def exportCorpus(self):
         dialog = ExportCorpusDialog(self,self.corpusModel.corpus)
+        result = dialog.exec_()
+        if result:
+            pass
+
+    def exportForAligner(self):
+        dialog = ExportForAlignerDialog(self,self.corpus)
         result = dialog.exec_()
         if result:
             pass
@@ -676,6 +682,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Export corpus", triggered=self.exportCorpus)
 
+        self.exportAlignerDictAct = QAction( "Export corpus for use in forced alignment",
+                self,
+                statusTip="Export corpus for forced alignment", triggered=self.exportForAligner)
+
         self.exportFeatureSystemAct = QAction( "Export feature system as text file...",
                 self,
                 statusTip="Export feature system", triggered=self.exportFeatureMatrix)
@@ -855,6 +865,7 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction(self.createSubsetAct)
         self.fileMenu.addAction(self.saveCorpusAct)
         self.fileMenu.addAction(self.exportCorpusAct)
+        self.fileMenu.addAction(self.exportAlignerDictAct)
         self.fileMenu.addAction(self.exportFeatureSystemAct)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.quitAct)

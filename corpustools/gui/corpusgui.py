@@ -19,6 +19,7 @@ from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv
                                     import_spontaneous_speech_corpus,
                                     load_corpus_ilg)
 from corpustools.corpus.io.csv import inspect_csv
+from corpustools.utils import export_discourses_aligner
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
@@ -1679,6 +1680,70 @@ class CorpusFromCsvDialog(PCTDialog):
                     corpus.specifier.add_segment(s.strip('\''),{})
                 corpus.specifier.validate()
         save_binary(corpus,corpus_name_to_path(self.settings['storage'],name))
+
+        QDialog.accept(self)
+
+class ExportForAlignerDialog(QDialog):
+    def __init__(self, parent, corpus):
+        QDialog.__init__(self, parent)
+
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+
+        inlayout = QFormLayout()
+
+        self.pathWidget = DirectoryWidget()
+
+        inlayout.addRow('Save directory',self.pathWidget)
+
+        self.includeVariantsCheck = QCheckBox()
+        self.includeVariantsCheck.setChecked(True)
+        inlayout.addRow('Include pronunciation variants:',self.includeVariantsCheck)
+
+        self.minFreqEdit = QLineEdit()
+        self.minFreqEdit.setText('0.05')
+        inlayout.addRow('Minimum relative frequency of variants:',self.minFreqEdit)
+
+        inframe = QFrame()
+        inframe.setLayout(inlayout)
+
+        layout.addWidget(inframe)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Export corpus for forced alignment')
+
+    def accept(self):
+        path = self.pathWidget.value()
+
+        if path == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a path to save the corpus.")
+            return
+        minfreq = self.minFreqEdit.text()
+        try:
+            minfreq = float(minfreq)
+            if minfreq > 1 or minfreq < 0:
+                raise(ValueError)
+        except ValueError:
+            reply = QMessageBox.critical(self,
+                    "Invalid information", "Minimum relative frequency must be between 0 and 1.")
+            return
+        export_discourses_aligner(self.corpus, path, self.includeVariantsCheck.isChecked(), minfreq)
 
         QDialog.accept(self)
 
