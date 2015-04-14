@@ -1,9 +1,9 @@
 import re
 
-from corpustools.corpus.classes import Discourse, Attribute
+from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
 
 class AnnotationType(object):
-    def __init__(self, name, subtype, supertype, anchor = False,
+    def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
                     token = False, base = False,
                     delimited = False, speaker = None):
         self._list = list()
@@ -19,6 +19,13 @@ class AnnotationType(object):
             self.output_name = re.sub('{}\W*'.format(self.speaker),'',self.name)
         else:
             self.output_name = self.name
+        if attribute is None:
+            self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name)
+        else:
+            self.attribute = attribute
+
+    def __getitem__(self, key):
+        return self._list[key]
 
     def add(self, annotations):
         self._list.extend(annotations)
@@ -49,6 +56,9 @@ class DiscourseData(object):
 
     def __getitem__(self, key):
         return self.data[key]
+
+    def __contains__(self, item):
+        return item in self.data
 
     def keys(self):
         return self.data.keys()
@@ -141,44 +151,56 @@ def compile_digraphs(digraph_list):
 
 def parse_transcription(string, delimiter, digraph_pattern):
     if delimiter is not None:
-        return string.split(delimiter)
-    if digraph_pattern is not None:
-        return digraph_re.findall(string)
-    return [x for x in string]
+        string = string.split(delimiter)
+    elif digraph_pattern is not None:
+        string = digraph_re.findall(string)
+    return [x for x in string if x != '']
 
 def data_to_discourse(data, attribute_mapping):
-    d = Discourse(name = data['name'])
-    corpus = Corpus(data['name']+ ' lexicon')
-    base = data['base_levels']
-    if base is not None:
-        spelling_name = data['hierarchy'][base[0]]
-    elif len(data['hierarchy'].keys()) > 0:
-        spelling_name = list(data['hierarchy'].keys())[0]
-    else:
-        spelling_name = list(data['data'].keys())[0]
-
-    for i,s in enumerate(data['data'][spelling_name]):
-
-        spelling = s['label']
-        try:
-            word = corpus.find(spelling)
-        except KeyError:
-            word_kwargs = {'spelling': (attribute_mapping[spelling_name],spelling)}
+    d = Discourse(name = data.name)
+    corpus = Corpus(data.name + ' lexicon')
+    ind = 0
+    for level in data.word_levels:
+        prev_time = None
+        for i, s in enumerate(data[level]):
+            word_kwargs = dict()
             word_token_kwargs = dict()
-            for k, v in s.items():
-                if k not in attribute_mapping:
-                    continue
+            for k,v in s.items():
                 if k == 'label':
-                    continue
-                if k in base:
-                    v = data['data'][k][s[k][0]:s[k][1]]
-                att = attribute_mapping[k]
-                word_kwargs[att.name] = (att, v)
-            word = Word(**word_kwargs)
-            corpus.add_word(word)
-        for k,v in s.items():
-            if k in attribute_mapping:
-                continue
-        word.frequency += 1
+                    word_kwargs['spelling'] = (attribute_mapping[level],v)
+                elif k == 'token':
+                    for token_key, token_value in v.items():
+                        att = attribute_mapping[token_key]
+                        word_token_kwargs[att.name] = (att, token_value)
+                elif k in data:
+                    att = attribute_mapping[k]
+                    seq = data[k][v[0]:v[1]]
+                    if data[k].token:
+                        word_token_kwargs[att.name] = (att, seq)
+                        if 'begin' in seq[0]:
+                            word_token_kwargs['begin'] = seq[0]['begin']
+                            word_token_kwargs['end'] = seq[-1]['end']
 
+                    else:
+                        word_kwargs[att.name] = (att, seq)
+                else:
+                    att = attribute_mapping[k]
+                    word_kwargs[att.name] = (att, v)
+            print(word_kwargs)
+            word = corpus.get_or_create_word(**word_kwargs)
+            word_token_kwargs['word'] = word
+            if 'begin' not in word_token_kwargs:
+                word_token_kwargs['begin'] = ind
+                word_token_kwargs['end'] = ind + 1
+            if prev_time is not None:
+                word_token_kwargs['previous_token_time'] = prev_time
+            wordtoken = WordToken(**word_token_kwargs)
+            word.frequency += 1
+            word.wordtokens.append(wordtoken)
+            d.add_word(wordtoken)
+            if prev_time is not None:
+                d[prev_time].following_token_time = wordtoken.begin
+            prev_time = wordtoken.begin
+            ind += 1
+    d.lexicon = corpus
     return d

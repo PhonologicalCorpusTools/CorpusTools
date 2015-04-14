@@ -5,6 +5,7 @@ from .lexicon import Transcription, Corpus, Attribute
 
 import os
 import wave
+import math
 
 class Speaker(object):
     """
@@ -141,12 +142,13 @@ class SpontaneousSpeechCorpus(object):
                 t = line['Transcription']
             else:
                 t = list()
-            word = self.lexicon.get_or_create_word(spelling, transcription)
+            word = self.lexicon.get_or_create_word(spelling=spelling,
+                                                    transcription=transcription)
             word.frequency += 1
             token_kwargs = {'word':word, 'transcription':t,
                             'begin': line['Begin'], 'end': line['End']}
             if previous_time is not None:
-                token_kwargs['previous_token'] = d[previous_time]
+                token_kwargs['previous_token_time'] = previous_time
             additional_keys = [(Attribute.sanitize_name(x),x)
                             for x in line.keys()
                             if Attribute.sanitize_name(x) not in token_kwargs.keys()
@@ -276,7 +278,7 @@ class Discourse(object):
     def __str__(self):
         return self.name
 
-    def add_word(self,wordtoken):
+    def add_word(self, wordtoken):
         """
         Adds a WordToken to the Discourse
 
@@ -466,32 +468,41 @@ class WordToken(object):
     """
     def __init__(self,**kwargs):
         self.wordtype = kwargs.pop('word',None)
-        self._transcription = kwargs.pop('transcription',None)
-        if self._transcription is not None:
-            self._transcription = Transcription(self._transcription)
-        self._spelling = kwargs.pop('spelling',None)
-
-        self.begin = kwargs.pop('begin',None)
-        self.end = kwargs.pop('end',None)
-
-        prev = kwargs.pop('previous_token',None)
-        if prev is None:
-            self.previous_token_time = None
-        else:
-            self.previous_token_time = prev.begin
-        foll = kwargs.pop('following_token',None)
-        if foll is None:
-            self.following_token_time = None
-        else:
-            self.following_token_time = foll.begin
-
-        self.discourse = kwargs.pop('discourse',None)
-        self.speaker = kwargs.pop('speaker',None)
-
-        for k,v in kwargs.items():
-            setattr(self,k,v)
-
+        self.previous_token_time = None
+        self.following_token_time = None
+        self.discourse = None
+        self.speaker = None
         self.wavpath = None
+        self._spelling = None
+        self._transcription = None
+
+        for key, value in kwargs.items():
+            if key == 'transcription':
+                key = '_transcription'
+            elif key == 'spelling':
+                key = '_spelling'
+            if isinstance(value, tuple):
+                att, value = value
+                if att.att_type == 'numeric':
+                    try:
+                        value = float(value)
+                    except (ValueError, TypeError):
+                        value = float('nan')
+                elif att.att_type == 'tier':
+                    value = Transcription(value)
+            else:
+                key = key.lower()
+                if isinstance(value,list):
+                    #assume transcription type stuff
+                    value = Transcription(value)
+                elif key != '_spelling':
+                    try:
+                        f = float(value)
+                        if not math.isnan(f) and not math.isinf(f):
+                            value = f
+                    except (ValueError, TypeError):
+                        pass
+            setattr(self, key, value)
 
     def __getstate__(self):
         state = self.__dict__.copy()

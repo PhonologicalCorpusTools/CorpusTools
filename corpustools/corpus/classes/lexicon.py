@@ -326,7 +326,11 @@ class Transcription(object):
                 if isinstance(s,str):
                     self._list.append(s)
                 elif isinstance(s,dict):
-                    self._list.append(s['symbol'])
+                    try:
+                        symbol = s['label']
+                    except KeyError:
+                        symbol = s['symbol']
+                    self._list.append(symbol)
                     if 'begin' in s and 'end' in s:
                         self._times.append((s['begin'],s['end']))
                 elif isinstance(s,list):
@@ -669,7 +673,7 @@ class Word(object):
                         pass
                 if key not in self.descriptors:
                     self.descriptors.append(key)
-            setattr(self,key, value)
+            setattr(self, key, value)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
@@ -1835,7 +1839,6 @@ class Corpus(object):
                     except KeyError:
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
-                        self._graph.add_node(key)
                         break
             else:
                 return
@@ -1876,7 +1879,7 @@ class Corpus(object):
                 if s not in self._inventory:
                     self._inventory[s] = Segment(s)
 
-    def get_or_create_word(self, spelling, transcription):
+    def get_or_create_word(self, **kwargs):
         """
         Get a Word object that has the spelling and transcription
         specified or create that Word, add it to the Corpus and return it.
@@ -1895,15 +1898,26 @@ class Corpus(object):
             Existing or newly created Word with the spelling and transcription
             specified
         """
+        try:
+            spelling = kwargs['spelling']
+            if isinstance(spelling,tuple):
+                spelling = spelling[1]
+        except KeyError:
+            return None
+
         words = self.find_all(spelling)
-        if transcription is None:
-            transcription = list()
         for w in words:
-            if str(w.transcription) == '.'.join(transcription):
-                word = w
-                break
+            for k,v in kwargs.items():
+                if isinstance(v,tuple):
+                    v = v[1]
+                if isinstance(v,list):
+                    v = Transcription(v)
+                if getattr(w,k) != v:
+                    break
+            else:
+                return w
         else:
-            word = Word(spelling=spelling,transcription=transcription)
+            word = Word(**kwargs)
             self.add_word(word)
         return word
 
