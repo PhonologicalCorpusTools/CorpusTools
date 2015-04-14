@@ -123,12 +123,12 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list,
                 spell = ''.join(trans)
                 if spell == '':
                     continue
-                word = corpus.get_or_create_word(spell, trans)
+                word = corpus.get_or_create_word(spelling=spell, transcription=trans)
                 word.frequency += 1
                 if previous_time is not None:
                     wordtoken = WordToken(word=word,
                                     begin = begin, end = begin + 1,
-                                    previous_token = discourse[previous_time])
+                                    previous_token_time = previous_time)
                 else:
                     wordtoken = WordToken(word=word,
                                     begin = begin, end = begin + 1)

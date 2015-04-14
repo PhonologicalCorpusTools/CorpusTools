@@ -47,6 +47,7 @@ def test_basic(textgrid_test_dir):
                         {'label':'b', 'begin': 0.5, 'end': 0.75},
                         {'label':'', 'begin': 0.75, 'end': 1}])
 
+@pytest.mark.xfail
 def test_two_speakers(textgrid_test_dir):
     path = os.path.join(textgrid_test_dir,'2speakers.TextGrid')
     data = textgrid_to_data(path, [AnnotationType('Speaker 1 - word','Speaker 1 - phone',None, anchor=True, speaker = 'Speaker 1'),

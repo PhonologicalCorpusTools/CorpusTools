@@ -92,12 +92,12 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
                         trans = support.find(spell, ignore_case = ignore_case).transcription
                     except KeyError:
                         pass
-                word = corpus.get_or_create_word(spell, trans)
+                word = corpus.get_or_create_word(spelling = spell, transcription = trans)
                 word.frequency += 1
                 if previous_time is not None:
                     wordtoken = WordToken(word=word,
                                     begin = begin, end = begin + 1,
-                                    previous_token = discourse[previous_time])
+                                    previous_token_time = previous_time)
                 else:
                     wordtoken = WordToken(word=word,
                                     begin = begin, end = begin + 1)
