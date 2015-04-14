@@ -1835,7 +1835,7 @@ class Corpus(object):
                     except KeyError:
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
-                        self._graph.add_node(key)
+                        #self._graph.add_node(key)
                         break
             else:
                 return
