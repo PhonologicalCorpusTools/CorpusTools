@@ -12,6 +12,16 @@ from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to
 def inspect_ilg(path):
     pass
 
+def text_to_lines(path, delimiter):
+    with open(path, encoding='utf-8-sig', mode='r') as f:
+        text = f.read()
+        if delimiter is not None and delimiter not in text:
+            e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
+            raise(e)
+    lines = enumerate(text.splitlines())
+    lines = [x for x in lines if x[1].strip() != '']
+    return lines
+
 def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = None,
                 trans_delimiter = None,
                     stop_check = None, call_back = None):
@@ -21,15 +31,12 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
         digraph_pattern = compile_digraphs(digraph_list)
     else:
         digraph_pattern = None
-    with open(path, encoding='utf-8-sig', mode='r') as f:
-        text = f.read()
-        if delimiter is not None and delimiter not in text:
-            e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
-            raise(e)
-        lines = enumerate(text.splitlines())
-        lines = [x for x in lines if x[1].strip() != '']
+
+    lines = text_to_lines(path, delimiter)
+
     if len(lines) % len(annotation_types) != 0:
         raise(ILGLinesMismatchError(lines))
+
     if call_back is not None:
         call_back('Processing file...')
         call_back(0,len(lines))
@@ -52,7 +59,7 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
             if annotation_type.delimited:
                 line = [parse_transcription(x,
                                         trans_delimiter,
-                                        digraph_pattern) for x in line]
+                                        digraph_pattern, ignore_list) for x in line]
             cur_line[annotation_type.name] = line
         for word_name in data.word_levels:
             for i, s in enumerate(cur_line[word_name]):

@@ -1,6 +1,7 @@
 import re
 
 from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
+from corpustools.exceptions import DelimiterError
 
 class AnnotationType(object):
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
@@ -20,7 +21,10 @@ class AnnotationType(object):
         else:
             self.output_name = self.name
         if attribute is None:
-            self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name)
+            if base:
+                self.attribute = Attribute(Attribute.sanitize_name(name), 'tier', name)
+            else:
+                self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name)
         else:
             self.attribute = attribute
 
@@ -149,12 +153,23 @@ def compile_digraphs(digraph_list):
     pattern += '|\w'
     return re.compile(pattern)
 
-def parse_transcription(string, delimiter, digraph_pattern):
+def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None):
     if delimiter is not None:
         string = string.split(delimiter)
     elif digraph_pattern is not None:
         string = digraph_re.findall(string)
+    if ignore_list is not None:
+        string = [x for x in string if x not in ignore_list]
     return [x for x in string if x != '']
+
+def text_to_lines(path, delimiter):
+    with open(path, encoding='utf-8-sig', mode='r') as f:
+        text = f.read()
+        if delimiter is not None and delimiter not in text:
+            e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
+            raise(e)
+    lines = [x for x in text.splitlines() if x.strip() != '']
+    return lines
 
 def data_to_discourse(data, attribute_mapping):
     d = Discourse(name = data.name)
@@ -165,6 +180,7 @@ def data_to_discourse(data, attribute_mapping):
         for i, s in enumerate(data[level]):
             word_kwargs = dict()
             word_token_kwargs = dict()
+            print(s)
             for k,v in s.items():
                 if k == 'label':
                     word_kwargs['spelling'] = (attribute_mapping[level],v)

@@ -5,7 +5,65 @@ from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
 
-def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
+from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to_discourse, AnnotationType,text_to_lines
+
+def spelling_text_to_data(path, delimiter, ignore_list, annotation_types = None,
+                            support_corpus_path = None, ignore_case = True,
+                            stop_check = None, call_back = None):
+
+    name = os.path.splitext(os.path.split(path)[1])[0]
+    if support_corpus_path is not None:
+        if not os.path.exists(support_corpus_path):
+            raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
+        support = load_binary(support_corpus_path)
+    if annotation_types is None:
+        if support_corpus_path is not None:
+            annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False),
+                                AnnotationType('transcription', None, None, base = True)]
+        else:
+            annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False)]
+    data = DiscourseData(name, annotation_types)
+
+    lines = text_to_lines(path, delimiter)
+    if call_back is not None:
+        call_back('Processing file...')
+        call_back(0,len(lines))
+        cur = 0
+
+    for line in lines:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 20 == 0:
+                call_back(cur)
+        if not line or line == '\n':
+            continue
+        line = line.split(delimiter)
+        annotations = dict()
+        for word in line:
+            spell = word.strip()
+            spell = ''.join(x for x in spell if not x in ignore_list)
+            if spell == '':
+                continue
+            word = {'label':spell, 'token':dict()}
+            if support_corpus_path is not None:
+                trans = None
+                try:
+                    trans = support.find(spell, ignore_case = ignore_case).transcription
+                except KeyError:
+                    trans = list()
+                n = data.base_levels[0]
+                tier_elements = [{'label':x} for x in trans]
+                level_count = data.level_length(n)
+                word[n] = (level_count,level_count+len(tier_elements))
+                annotations[n] = tier_elements
+            annotations['spelling'] = [word]
+            data.add_annotations(**annotations)
+
+    return data
+
+def load_spelling_corpus(corpus_name, path, delimiter, ignore_list, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """
@@ -50,66 +108,11 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
 
     """
 
-    discourse = Discourse(name = corpus_name)
-    if support_corpus_path is not None:
-        if not os.path.exists(support_corpus_path):
-            raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
-        support = load_binary(support_corpus_path)
-    corpus = Corpus(corpus_name)
-
-    with open(path, encoding='utf-8-sig', mode='r') as f:
-        text = f.read()
-        if delimiter is not None and delimiter not in text:
-            e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
-            raise(e)
-
-        lines = text.splitlines()
-        if call_back is not None:
-            call_back('Processing file...')
-            call_back(0,len(lines))
-            cur = 0
-        begin = 0
-        previous_time = None
-
-        for line in lines:
-            if stop_check is not None and stop_check():
-                return
-            if call_back is not None:
-                cur += 1
-                if cur % 20 == 0:
-                    call_back(cur)
-            if not line or line == '\n':
-                continue
-            line = line.split(delimiter)
-            for word in line:
-                spell = word.strip()
-                spell = ''.join(x for x in spell if not x in ignore_list)
-                if spell == '':
-                    continue
-                trans = None
-                if support_corpus_path is not None:
-                    try:
-                        trans = support.find(spell, ignore_case = ignore_case).transcription
-                    except KeyError:
-                        pass
-                word = corpus.get_or_create_word(spelling = spell, transcription = trans)
-                word.frequency += 1
-                if previous_time is not None:
-                    wordtoken = WordToken(word=word,
-                                    begin = begin, end = begin + 1,
-                                    previous_token_time = previous_time)
-                else:
-                    wordtoken = WordToken(word=word,
-                                    begin = begin, end = begin + 1)
-                word.wordtokens.append(wordtoken)
-                discourse.add_word(wordtoken)
-                if previous_time is not None:
-                    discourse[previous_time].following_token_time = wordtoken.begin
-
-                previous_time = wordtoken.begin
-                begin += 1
-    discourse.lexicon = corpus
-
+    data = spelling_text_to_data(path, delimiter, ignore_list, annotation_types,
+                support_corpus_path, ignore_case,
+                    stop_check, call_back)
+    mapping = { x.name: x.attribute for x in data.data.values()}
+    discourse = data_to_discourse(data, mapping)
     return discourse
 
 def export_corpus_spelling(discourse, path, single_line = False):
