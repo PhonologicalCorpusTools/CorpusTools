@@ -2,11 +2,14 @@ import os
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 
-from .textgrid import textgrids_to_data, align_textgrids
-from .multiple_files import multiple_files_to_data, align_multiple_files
+from .textgrid import load_discourse_textgrid, align_textgrids
+from .multiple_files import load_discourse_multiple_files, align_multiple_files
 
 phone_file_extensions = ['phones','phn']
 word_file_extensions = ['words','wrd']
+
+def inspect_directory(directory):
+    pass
 
 def import_spontaneous_speech_corpus(corpus_name, directory, **kwargs):
     """
@@ -71,7 +74,6 @@ def import_spontaneous_speech_corpus(corpus_name, directory, **kwargs):
     stop_check = kwargs.pop('stop_check', None)
     call_back = kwargs.pop('call_back', None)
     speaker_source = kwargs.pop('speaker_source', None)
-    delimiter = kwargs.pop('delimiter', None)
 
     corpus = SpontaneousSpeechCorpus(corpus_name,directory)
 
@@ -100,8 +102,11 @@ def import_spontaneous_speech_corpus(corpus_name, directory, **kwargs):
             elif f.endswith('.wav'):
                 wavs.append(os.path.join(root,f))
     if dialect == 'textgrid':
-        word_tier_name = kwargs.pop('word_tier_name', None)
-        phone_tier_name = kwargs.pop('phone_tier_name', None)
+        annotation_types = kwargs.pop('annotation_types', None)
+        if annotation_types is None:
+            raise(PCTError('Tiers must be specified for their type of annotation when loading from TextGrids.'))
+        delimiter = kwargs.pop('delimiter', None)
+        digraph_list = kwargs.pop('digraph_list', None)
         dialogs = align_textgrids(textgrids, wavs, speaker_source, stop_check, call_back)
     else:
         dialogs = align_multiple_files(words, phones, wavs, speaker_source, stop_check, call_back)
@@ -120,18 +125,18 @@ def import_spontaneous_speech_corpus(corpus_name, directory, **kwargs):
         if dialect == 'textgrid':
             if 'textgrid' not in v:
                 continue
-            data = textgrids_to_data(v['textgrid'], word_tier_name,
-                                                    phone_tier_name,
-                                                    v['speaker'], delimiter)
+            discourse = load_discourse_textgrid(path, annotation_types,
+                            delimiter, digraph_list)
+            discourse.speaker = Speaker(v['speaker'])
         else:
             if 'words' not in v:
                 continue
             if 'phones' not in v:
                 continue
-            data = multiple_files_to_data(v['words'], v['phones'], dialect)
-            discourse_info['speaker'] = Speaker(v['speaker'])
+            discourse = load_discourse_multiple_files(v['words'], v['phones'], dialect)
+            discourse.speaker = Speaker(v['speaker'])
 
         if 'wav' in v:
-            discourse_info['wav_path'] = v['wav']
-        corpus.add_discourse(data, discourse_info,delimiter=delimiter)
+            discourse.wav_path = v['wav']
+        corpus.add_discourse(discourse)
     return corpus

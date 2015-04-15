@@ -111,7 +111,7 @@ class SpontaneousSpeechCorpus(object):
         self.lexicon.has_wordtokens = True
 
 
-    def add_discourse(self, data, discourse_info, delimiter=None):
+    def add_discourse(self, discourse):
         """
         Add a discourse to the SpontaneousSpeechCorpus
 
@@ -129,55 +129,8 @@ class SpontaneousSpeechCorpus(object):
             String to split segments into multiple segments, if needed.
             Defaults to None
         """
-        d = Discourse(**discourse_info)
-        d_atts = d.attributes
-        previous_time = None
-        for line in data:
-            spelling = line['lookup_spelling']
-            if 'lookup_transcription' in line:
-                transcription = line['lookup_transcription']
-            else:
-                transcription = list()
-            if 'Transcription' in line:
-                t = line['Transcription']
-            else:
-                t = list()
-            word = self.lexicon.get_or_create_word(spelling=spelling,
-                                                    transcription=transcription)
-            word.frequency += 1
-            token_kwargs = {'word':word, 'transcription':t,
-                            'begin': line['Begin'], 'end': line['End']}
-            if previous_time is not None:
-                token_kwargs['previous_token_time'] = previous_time
-            additional_keys = [(Attribute.sanitize_name(x),x)
-                            for x in line.keys()
-                            if Attribute.sanitize_name(x) not in token_kwargs.keys()
-                            and not x.startswith('lookup_')]
-            for sank, unsank in additional_keys:
-                token_kwargs[sank] = line[unsank]
-            wordtoken = WordToken(**token_kwargs)
-            word.wordtokens.append(wordtoken)
-            d.add_word(wordtoken)
-            att_names = [Attribute(Attribute.sanitize_name(x),
-                                    'spelling',
-                                    x) for x in line.keys()
-                if Attribute.sanitize_name(x) not in d_atts and not x.islower()]
-            d.update_attributes(att_names)
-            if delimiter is not None:
-                segs = list()
-                for s in t:
-                    if delimiter in s['symbol']:
-                        segs.extend(s['symbol'].split(delimiter))
-                    else:
-                        segs.append(s['symbol'])
-            else:
-                segs = [x['symbol'] for x in t]
-            self.lexicon.update_inventory(segs)
-            if previous_time is not None:
-                d[previous_time].following_token_time = wordtoken.begin
-
-            previous_time = wordtoken.begin
-        self.discourses[str(d)] = d
+        self.discourses[str(discourse)] = discourse
+        self.lexicon += discourse.lexicon
 
 class Discourse(object):
     """
@@ -216,6 +169,8 @@ class Discourse(object):
                             Attribute('end','numeric', 'End')]
 
         self.words = dict()
+
+        self.lexicon = Corpus(self.name + ' lexicon')
 
     @property
     def attributes(self):
@@ -289,6 +244,7 @@ class Discourse(object):
         """
         wordtoken.discourse = self
         self.words[wordtoken.begin] = wordtoken
+
 
     def __getitem__(self, key):
         if isinstance(key, float) or isinstance(key, int):

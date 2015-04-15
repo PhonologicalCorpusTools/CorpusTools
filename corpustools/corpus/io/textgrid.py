@@ -139,7 +139,7 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-def textgrid_to_data(path, annotation_types, speaker = None,
+def textgrid_to_data(path, annotation_types,
                             delimiter = None, digraph_list = None):
     if digraph_list is not None:
         digraph_pattern = compile_digraphs(digraph_list)
@@ -209,6 +209,15 @@ def textgrid_to_data(path, annotation_types, speaker = None,
 
     return data
 
+
+def load_discourse_textgrid(path, annotation_types,
+                            delimiter = None, digraph_list = None):
+    data = textgrid_to_data(path, annotation_types, speaker,
+                            delimiter, digraph_list)
+    mapping = { x.name: x.attribute for x in data.data.values()}
+    discourse = data_to_discourse(data, mapping)
+
+    return discourse
 
 def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):
     tg = load_textgrid(path)

@@ -1185,6 +1185,24 @@ class Corpus(object):
             return False
         return True
 
+    def __iadd__(self, other):
+        for a in other.attributes:
+            if a not in self.attributes:
+                self.add_attribute(a)
+        for w in other:
+            try:
+                sw = self.find(w.spelling)
+                sw.frequency += w.frequency
+                for a in self.attributes:
+                    if getattr(sw, a.name) == a.default_value and getattr(w, a.name) != a.default_value:
+                        setattr(sw, a.name, getattr(w, a.name))
+                sw.wordtokens += w.wordtokens
+            except KeyError:
+                self.add_word(w)
+        if self.specifier is None and other.specifier is not None:
+            self.set_feature_matrix(other.specifier)
+        return self
+
     def key(self, word):
         key = word.spelling
         if self[key] == word:

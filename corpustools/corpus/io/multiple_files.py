@@ -5,49 +5,83 @@ import re
 FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
 
+from .helper import DiscourseData,data_to_discourse, AnnotationType
+
 def phone_match(one,two):
     if one != two and one not in two:
         return False
     return True
 
 def multiple_files_to_data(word_path,phone_path, dialect):
+    if dialect == 'timit':
+        annotation_types = [AnnotationType('spelling', 'transcription', None, anchor = True),
+                            AnnotationType('transcription', None, 'spelling', base = True, token = True)]
+    elif dialect == 'buckeye':
+        annotation_types = [AnnotationType('spelling', 'surface_transcription', None, anchor = True),
+                            AnnotationType('transcription', None, 'spelling', base = True, token = False),
+                            AnnotationType('surface_transcription', None, 'spelling', base = True, token = True),
+                            AnnotationType('category', None, 'spelling', base = False, token = True)]
+    else:
+        raise(NotImplementedError)
+    name = os.path.splitext(os.path.split(word_path)[1])[0]
 
     words = read_words(word_path, dialect)
     phones = read_phones(phone_path, dialect)
+
+    data = DiscourseData(name, annotation_types)
     for i, w in enumerate(words):
-        beg = w['Begin']
-        end = w['End']
+        annotations = dict()
+        word = {'label':w['spelling'], 'token': dict()}
+        beg = w['begin']
+        end = w['end']
         if dialect == 'timit':
             found_all = False
             found = []
             while not found_all:
                 p = phones.pop(0)
-                if p['begin'] < w['Begin']:
+                if p['begin'] < beg:
                     continue
                 found.append(p)
-                if p['end'] == w['End']:
+                if p['end'] == end:
                     found_all = True
-            words[i]['Transcription'] = found
+            n = 'transcription'
+            level_count = data.level_length(n)
+            word[n] = (level_count,level_count+len(found))
+            annotations[n] = found
         elif dialect == 'buckeye':
-            if w['lookup_transcription'] is None:
-                continue
-            expected = w['sr']
-            found = []
-            while len(found) < len(expected):
-                cur_phone = phones.pop(0)
-                if phone_match(cur_phone['symbol'],expected[len(found)]) \
-                    and cur_phone['end'] >= beg and cur_phone['begin'] <= end:
-                        found.append(cur_phone)
-                if not len(phones) and i < len(words)-1:
-                    print(name)
-                    print(w)
-                    raise(Exception)
-            found[0]['begin'] = words[i]['Begin']
-            found[-1]['end'] = words[i]['End']
-            words[i]['Transcription'] = found
-        else:
-            raise(NotImplementedError)
-    return words
+            if w['transcription'] is None:
+                for n in data.base_levels:
+                    level_count = data.level_length(n)
+                    word[n] = (level_count,level_count)
+            else:
+                for n in data.base_levels:
+                    if data[n].token:
+                        expected = w[n]
+                        found = []
+                        while len(found) < len(expected):
+                            cur_phone = phones.pop(0)
+                            if phone_match(cur_phone['label'],expected[len(found)]) \
+                                and cur_phone['end'] >= beg and cur_phone['begin'] <= end:
+                                    found.append(cur_phone)
+                            if not len(phones) and i < len(words)-1:
+                                print(name)
+                                print(w)
+                                raise(Exception)
+                    else:
+                        found = [{'label':x} for x in w[n]]
+                    level_count = data.level_length(n)
+                    word[n] = (level_count,level_count+len(found))
+                    annotations[n] = found
+        annotations[data.word_levels[0]] = [word]
+        data.add_annotations(**annotations)
+    return data
+
+def load_discourse_multiple_files(word_path,phone_path, dialect):
+    data = multiple_files_to_data(word_path,phone_path, dialect)
+    mapping = { x.name: x.attribute for x in data.data.values()}
+    discourse = data_to_discourse(data, mapping)
+
+    return discourse
 
 def read_phones(path, dialect, sr = None):
     output = list()
@@ -64,7 +98,7 @@ def read_phones(path, dialect, sr = None):
                 if sr is not None:
                     start /= sr
                     end /= sr
-                output.append({'symbol':phone,'begin':begin,'end':end})
+                output.append({'label':phone,'begin':begin,'end':end})
         elif dialect == 'buckeye':
             f = re.split("#\r{0,1}\n",file_handle.read())[1]
             flist = f.splitlines()
@@ -73,7 +107,7 @@ def read_phones(path, dialect, sr = None):
                 line = re.split("\s+\d{3}\s+",l.strip())
                 end = float(line[0])
                 label = re.split(" {0,1};| {0,1}\+",line[1])[0]
-                output.append({'symbol':label,'begin':begin,'end':end})
+                output.append({'label':label,'begin':begin,'end':end})
                 begin = end
 
         else:
@@ -93,7 +127,7 @@ def read_words(path, dialect, sr = None):
                 if sr is not None:
                     start /= sr
                     end /= sr
-                output.append({'lookup_spelling':word, 'Begin':start, 'End':end})
+                output.append({'spelling':word, 'begin':start, 'end':end})
         elif dialect == 'buckeye':
             f = re.split(r"#\r{0,1}\n",file_handle.read())[1]
             begin = 0.0
@@ -112,9 +146,9 @@ def read_words(path, dialect, sr = None):
                     category = None
                 if word in FILLERS:
                     category = 'UH'
-                line = {'lookup_spelling':word,'Begin':begin,'End':end,
-                        'lookup_transcription':citation,'sr':phonetic,
-                        'Category':category}
+                line = {'spelling':word,'begin':begin,'end':end,
+                        'transcription':citation,'surface_transcription':phonetic,
+                        'category':category}
                 output.append(line)
                 begin = end
         else:

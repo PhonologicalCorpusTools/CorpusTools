@@ -173,7 +173,6 @@ def text_to_lines(path, delimiter):
 
 def data_to_discourse(data, attribute_mapping):
     d = Discourse(name = data.name)
-    corpus = Corpus(data.name + ' lexicon')
     ind = 0
     for level in data.word_levels:
         prev_time = None
@@ -193,7 +192,7 @@ def data_to_discourse(data, attribute_mapping):
                     seq = data[k][v[0]:v[1]]
                     if data[k].token:
                         word_token_kwargs[att.name] = (att, seq)
-                        if 'begin' in seq[0]:
+                        if len(seq) > 0 and 'begin' in seq[0]:
                             word_token_kwargs['begin'] = seq[0]['begin']
                             word_token_kwargs['end'] = seq[-1]['end']
 
@@ -203,7 +202,7 @@ def data_to_discourse(data, attribute_mapping):
                     att = attribute_mapping[k]
                     word_kwargs[att.name] = (att, v)
             print(word_kwargs)
-            word = corpus.get_or_create_word(**word_kwargs)
+            word = d.lexicon.get_or_create_word(**word_kwargs)
             word_token_kwargs['word'] = word
             if 'begin' not in word_token_kwargs:
                 word_token_kwargs['begin'] = ind
@@ -218,5 +217,4 @@ def data_to_discourse(data, attribute_mapping):
                 d[prev_time].following_token_time = wordtoken.begin
             prev_time = wordtoken.begin
             ind += 1
-    d.lexicon = corpus
     return d
