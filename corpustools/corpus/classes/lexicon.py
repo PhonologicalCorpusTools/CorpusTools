@@ -1015,6 +1015,17 @@ class Attribute(object):
             else:
                 self._default_value = Transcription(None)
 
+    @property
+    def delimiter(self):
+        if self.att_type != 'tier':
+            return None
+        else:
+            return self._delim
+
+    @delimiter.setter
+    def delimiter(self, value):
+        self._delim = value
+
     @staticmethod
     def guess_type(values, trans_delimiters = None):
         if trans_delimiters is None:

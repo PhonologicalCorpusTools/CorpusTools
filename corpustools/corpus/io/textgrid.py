@@ -7,7 +7,7 @@ from .textgrid_classes import TextGrid, IntervalTier, PointTier
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError
 
-from .helper import compile_digraphs, parse_transcription, DiscourseData
+from .helper import compile_digraphs, parse_transcription, DiscourseData, AnnotationType,data_to_discourse
 
 ### HELPERS ###
 def process_tier_name(name):
@@ -94,22 +94,34 @@ def inspect_textgrid(path, transdelim = None):
         trans_delimiters = ['.',' ', ';', ',']
     tg = load_textgrid(path)
     spellings, segments, attributes = guess_tiers(tg)
-    atts = list()
+    if len(segments) == 0:
+        base = None
+    else:
+        base = segments[0]
+    if len(spellings) == 0:
+        anchor = None
+    else:
+        anchor = spellings[0]
+    anno_types = list()
     for t in tg.intervalTiers:
-        if t in spellings:
-            a = Attribute(Attribute.sanitize_name(h), 'spelling', h)
-        elif t in segments:
-            a = Attribute(Attribute.sanitize_name(h), 'tier', h)
+        if t.name in spellings:
+            a = AnnotationType(t.name, base, None, anchor = True, token = False)
+        elif t.name in segments:
+            a = AnnotationType(t.name, None, anchor, base = True, token = True)
         else:
-            cat = Attribute.guess_type(t.uniqueLabels, trans_delimiters)
-            a = Attribute(Attribute.sanitize_name(h), cat, h)
+            labels = t.uniqueLabels()
+            cat = Attribute.guess_type(labels, trans_delimiters)
+            att = Attribute(Attribute.sanitize_name(t.name), cat, t.name)
             if cat == 'tier':
-                for t in trans_delimiters:
-                    if t in t.uniqueLabels[0]:
-                        a._delim = t
+                a.delimited = True
+                for delim in trans_delimiters:
+                    if delim in next(iter(labels)):
+                        att.delimiter = delim
                         break
-        atts.append(a)
-    return atts
+            a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
+
+        anno_types.append(a)
+    return anno_types
 
 def load_textgrid(path):
     tg = TextGrid()
@@ -139,8 +151,8 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-def textgrid_to_data(path, annotation_types,
-                            delimiter = None, digraph_list = None):
+def textgrid_to_data(path, annotation_types, ignore_list = None, digraph_list = None,
+                            call_back = None, stop_check = None):
     if digraph_list is not None:
         digraph_pattern = compile_digraphs(digraph_list)
     else:
@@ -157,7 +169,7 @@ def textgrid_to_data(path, annotation_types,
             annotations = dict()
             word = {'label': si.mark, 'token':dict()}
             for n in data.base_levels:
-                if data[word_name].subtype != n:
+                if data[word_name].speaker != data[n].speaker and data[n].speaker is not None:
                     continue
                 t = tg.getFirst(n)
                 tier_elements = list()
@@ -176,15 +188,17 @@ def textgrid_to_data(path, annotation_types,
                         phoneBegin = si.minTime
                     if phoneEnd > si.maxTime:
                         phoneEnd = si.maxTime
+                    print(n,data[n].delimited)
                     if data[n].delimited:
                         parsed = [{'label':x} for x in parse_transcription(ti.mark,
-                                        trans_delimiter,
+                                        data[n].attribute.delimiter,
                                         digraph_pattern)]
-                        parsed[0]['begin'] = phoneBegin
-                        parsed[-1]['end'] = phoneEnd
-                        tier_elements.extend(parsed)
+                        if len(parsed) > 0:
+                            parsed[0]['begin'] = phoneBegin
+                            parsed[-1]['end'] = phoneEnd
+                            tier_elements.extend(parsed)
                     else:
-                        tier_elements.append({'label': ti.mark,'begin': phoneBegin,'end': phoneEnd})
+                        tier_elements.append({'label': ti.mark,'begin': phoneBegin, 'end': phoneEnd})
                 level_count = data.level_length(n)
                 word[n] = (level_count,level_count+len(tier_elements))
                 annotations[n] = tier_elements
@@ -195,9 +209,13 @@ def textgrid_to_data(path, annotation_types,
                     continue
                 if at.anchor:
                     continue
+                if at.delimited:
+                    continue
                 t = tg.getFirst(at.name)
-                t = tg.getFirst(n)
                 ti = t.intervalContaining(mid_point)
+                #if ti is None:
+                #    word[at.name] = None
+                #    continue
                 value = ti.mark
                 if at.token:
                     word['token'][at.name] = value
@@ -206,14 +224,16 @@ def textgrid_to_data(path, annotation_types,
 
             annotations[word_name] = [word]
             data.add_annotations(**annotations)
-
     return data
 
 
-def load_discourse_textgrid(path, annotation_types,
-                            delimiter = None, digraph_list = None):
-    data = textgrid_to_data(path, annotation_types, speaker,
-                            delimiter, digraph_list)
+def load_discourse_textgrid(corpus_name, path, annotation_types, ignore_list = None,
+                            digraph_list = None,
+                            feature_system_path = None,
+                            call_back = None, stop_check = None):
+    data = textgrid_to_data(path, annotation_types,ignore_list,
+                            trans_delimiter, digraph_list, call_back, stop_check)
+    data.name = corpus_name
     mapping = { x.name: x.attribute for x in data.data.values()}
     discourse = data_to_discourse(data, mapping)
 

@@ -6,6 +6,8 @@ import os
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word, Attribute
 from corpustools.corpus.io.binary import save_binary, load_binary
 
+from .helper import parse_transcription
+
 from corpustools.exceptions import DelimiterError, PCTError
 
 import time
@@ -62,8 +64,9 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     return atts, best
 
 def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
-                    feature_system_path = None,
-                    attributes = None):
+                    feature_system_path = None, digraph_list = None,
+                    attributes = None,
+                    stop_check = None, call_back = None):
     """
     Load a corpus from a column-delimited text file
 
@@ -97,6 +100,10 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
+    if digraph_list is not None:
+        digraph_pattern = compile_digraphs(digraph_list)
+    else:
+        digraph_pattern = None
     with open(path, encoding='utf-8') as f:
         headers = f.readline()
         headers = headers.split(delimiter)
@@ -127,10 +134,7 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
                 v = v.strip()
                 if use_att:
                     if k.att_type == 'tier':
-                        if trans_delimiter:
-                            trans = v.split(trans_delimiter)
-                        else:
-                            trans = [x for x in v]
+                        trans = parse_transcription(v, k.delimiter, digraph_pattern)
                         if not trans_check and len(trans) > 1:
                             trans_check = True
                         d[k.name] = (k, trans)

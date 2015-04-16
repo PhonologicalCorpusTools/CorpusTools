@@ -19,7 +19,9 @@ from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv
                                     import_spontaneous_speech_corpus,
                                     load_corpus_ilg)
 from corpustools.corpus.io.csv import inspect_csv
-from corpustools.corpus.io.textgrid import inspect_textgrid
+from corpustools.corpus.io.textgrid import inspect_textgrid, load_discourse_textgrid
+from corpustools.corpus.io.multiple_files import load_discourse_multiple_files
+from corpustools.corpus.io.helper import AnnotationType
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
@@ -37,6 +39,75 @@ def get_corpora_list(storage_directory):
 
 def corpus_name_to_path(storage_directory,name):
     return os.path.join(storage_directory,'CORPUS',name+'.corpus')
+
+class AnnotationTypeWidget(QGroupBox):
+    def __init__(self, annotation_type = None, parent = None):
+        QGroupBox.__init__(self, 'Annotation type details', parent)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of annotation type',self.nameWidget)
+
+        if annotation_type is not None:
+            self.annotation_type = annotation_type
+            self.nameWidget.setText(annotation_type.name)
+        else:
+            self.annotation_type = None
+
+        self.nameWidget.setEnabled(False)
+
+        self.levelWidget = QComboBox()
+        self.levelWidget.addItem('Word')
+        self.levelWidget.addItem('Phone')
+        self.levelWidget.addItem('Other sublexical')
+        self.levelWidget.addItem('Word attribute')
+        self.levelWidget.setCurrentIndex(2)
+
+        main.addRow('Hierarchical level',self.levelWidget)
+
+        self.typeTokenWidget = QComboBox()
+        self.typeTokenWidget.addItem('Word type')
+        self.typeTokenWidget.addItem('Word token')
+
+        main.addRow('Associated with',self.typeTokenWidget)
+
+        if self.annotation_type is not None:
+            if self.annotation_type.token:
+                self.typeTokenWidget.setCurrentIndex(1)
+            if self.annotation_type.anchor:
+                self.levelWidget.setCurrentIndex(0)
+            if self.annotation_type.base:
+                self.levelWidget.setCurrentIndex(1)
+            self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
+        else:
+            self.attributeWidget = AttributeWidget()
+
+        main.addRow(self.attributeWidget)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def value(self):
+        att = self.attributeWidget.value()
+        delimited = getattr(att, '_delim', None) is not None
+        token = self.typeTokenWidget.currentText() == 'Word token'
+        if self.levelWidget.currentText() == 'Word':
+            anchor = True
+            base = False
+        elif self.levelWidget.currentText() == 'Phone':
+            anchor = False
+            base = True
+        else:
+            anchor = False
+            base = False
+        name = self.nameWidget.text()
+
+        return AnnotationType(name, None, None, attribute = att,
+                            delimited = delimited,
+                            token = token, anchor = anchor, base = base)
 
 class AttributeWidget(QGroupBox):
     def __init__(self, attribute = None, exclude_tier = False,
@@ -64,7 +135,16 @@ class AttributeWidget(QGroupBox):
                 continue
             self.typeWidget.addItem(at.title())
 
+        self.delimiterEdit = QLineEdit()
 
+        if attribute is not None:
+            delim = attribute.delimiter
+            print(attribute.name,delim)
+            if delim is not None:
+                self.delimiterEdit.setText(delim)
+
+        main.addRow('Delimiter', self.delimiterEdit)
+        self.typeWidget.currentIndexChanged.connect(self.updateDelimiter)
         main.addRow('Type of column',self.typeWidget)
 
         self.useAs = QComboBox()
@@ -90,6 +170,12 @@ class AttributeWidget(QGroupBox):
 
         self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
 
+    def updateDelimiter(self):
+        if self.typeWidget.currentText() == 'Tier':
+            self.delimiterEdit.setEnabled(True)
+        else:
+            self.delimiterEdit.setEnabled(False)
+
     def updateUseAs(self):
         t = self.useAs.currentText().lower()
         if t == 'custom column':
@@ -112,7 +198,14 @@ class AttributeWidget(QGroupBox):
             name = Attribute.sanitize_name(display)
         else:
             name = use
-        return Attribute(name, cat, display)
+        att = Attribute(name, cat, display)
+        if cat == 'tier':
+            delim = self.delimiterEdit.text()
+            if delim == '':
+                att.delimiter = None
+            else:
+                att.delimiter = delim
+        return att
 
 class CorpusSelect(QComboBox):
     def __init__(self, parent, settings):
@@ -163,6 +256,33 @@ class SpontaneousLoadWorker(FunctionWorker):
                                                 name,
                                                 directory,
                                                 **kwargs)
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
+            self.errorEncountered.emit(e)
+            return
+        self.dataReady.emit(corpus)
+
+class LoadCorpusWorker(FunctionWorker):
+    def run(self):
+        time.sleep(0.1)
+        textType = self.kwargs.pop('text_type')
+        try:
+            if textType == 'spelling':
+                    corpus = load_spelling_corpus(**self.kwargs)
+            elif textType == 'transcription':
+                corpus = load_transcription_corpus(**self.kwargs)
+            elif textType == 'ilg':
+                corpus = load_corpus_ilg(**self.kwargs)
+            elif textType == 'textgrid':
+                corpus = load_discourse_textgrid(**self.kwargs)
+            elif textType == 'csv':
+                corpus = load_corpus_csv(**self.kwargs)
+            elif textType in ['buckeye', 'timit']:
+                self.kwargs['dialect'] = textType
+                corpus = load_discourse_multiple_files(**self.kwargs)
         except PCTError as e:
             self.errorEncountered.emit(e)
             return
@@ -491,7 +611,7 @@ class LoadCorpusDialog(PCTDialog):
                         ('buckeye', 'Buckeye format'),
                         ('timit', 'Timit format')]
     def __init__(self, parent, settings):
-        QDialog.__init__(self, parent)
+        PCTDialog.__init__(self, parent)
         self.settings = settings
         layout = QVBoxLayout()
 
@@ -604,6 +724,17 @@ class LoadCorpusDialog(PCTDialog):
 
         self.setWindowTitle('Import corpus')
 
+        self.thread = LoadCorpusWorker()
+        self.thread.errorEncountered.connect(self.handleError)
+
+        self.progressDialog.setWindowTitle('Importing corpus...')
+        self.progressDialog.beginCancel.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.progressDialog.updateProgress)
+        self.thread.updateProgressText.connect(self.progressDialog.updateText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+        self.thread.finishedCancelling.connect(self.progressDialog.reject)
+
     def updateType(self, type):
         print(type)
         self.typeWidget.clear()
@@ -638,36 +769,42 @@ class LoadCorpusDialog(PCTDialog):
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(False)
+            self.columnDelimiterEdit.setEnabled(False)
         elif self.textType == 'transcription':
             self.transDelimiter.setEnabled(True)
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(False)
             self.ignoreCase.setEnabled(False)
             self.featureSystem.setEnabled(True)
+            self.columnDelimiterEdit.setEnabled(False)
         elif self.textType == 'ilg':
             self.transDelimiter.setEnabled(True)
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(True)
+            self.columnDelimiterEdit.setEnabled(False)
         elif self.textType == 'csv':
             self.transDelimiter.setEnabled(True)
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(True)
+            self.columnDelimiterEdit.setEnabled(True)
         elif self.textType == 'textgrid':
             self.transDelimiter.setEnabled(True)
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(True)
+            self.columnDelimiterEdit.setEnabled(False)
         elif self.textType in ['buckeye', 'timit']:
             self.transDelimiter.setEnabled(False)
             self.digraphs.setEnabled(False)
             self.supportCorpus.setEnabled(False)
             self.ignoreCase.setEnabled(False)
             self.featureSystem.setEnabled(True)
+            self.columnDelimiterEdit.setEnabled(False)
         self.inspect()
 
     def help(self):
@@ -683,15 +820,23 @@ class LoadCorpusDialog(PCTDialog):
 
     def delimiters(self):
         wordDelim = None
-        transDelim = self.transDelimiter.value()
-        if transDelim == []:
+        transDelim = self.transDelimiter.text()
+        if transDelim == '':
             transDelim = None
-        return wordDelim, transDelim
+        colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+        return wordDelim, transDelim, colDelim
 
     def getCharacters(self):
         path = self.pathWidget.value()
         if path != '' and os.path.exists(path):
-            self.characters = inspect_transcription_corpus(path)
+            if self.textType == 'transcription':
+                self.characters = find_characters_transcription(path)
+            elif self.textType == 'csv':
+                pass
+            elif self.textType == 'textgrid':
+                pass
+            elif self.textType == 'ilg':
+                pass
         else:
             self.characters = set()
 
@@ -709,7 +854,8 @@ class LoadCorpusDialog(PCTDialog):
                     transdelim = transDelim)
             self.updateColumnFrame(atts)
 
-    def updateColumnFrame(self, atts):
+    def updateColumnFrame(self, atts, attribute = False):
+
         for i in reversed(range(self.columnFrame.layout().count())):
             w = self.columnFrame.layout().itemAt(i).widget()
             if w is None:
@@ -719,9 +865,12 @@ class LoadCorpusDialog(PCTDialog):
             w.deleteLater()
         self.columns = list()
         for a in atts:
-            if a.att_type == 'tier':
-                self.transDelimiter.setText(a._delim)
-            c = AttributeWidget(attribute = a, disable_name = True)
+            if attribute:
+                if a.delimiter is not None:
+                    self.transDelimiter.setText(a.delimiter)
+                c = AttributeWidget(attribute = a, disable_name = True)
+            else:
+                c = AnnotationTypeWidget(a)
             self.columns.append(c)
             self.columnFrame.layout().addWidget(c)
 
@@ -729,17 +878,63 @@ class LoadCorpusDialog(PCTDialog):
         path = self.pathWidget.value()
         if path == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a path to the text file.")
+                    "Missing information", "Please specify a file or directory.")
             return
         if not os.path.exists(path):
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The specified file does not exist.")
+                    "Invalid information", "The specified path does not exist.")
             return
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a name for the corpus.")
             return
+        if self.textType == None:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a type of file to load.")
+            return
+        wordDelim, transDelim, colDelim = self.delimiters()
+        ignore_list = self.punctuation.value()
+        feature_system_path = self.featureSystem.path()
+        supportCorpus = self.supportCorpus.path()
+        kwargs = {'corpus_name': name,
+                    'path': path,
+                    'text_type': self.textType,
+                    'ignore_list':ignore_list}
+        if self.textType == 'csv':
+            del kwargs['ignore_list']
+            kwargs['delimiter'] = colDelim
+            kwargs['digraph_list'] = self.digraphs.value()
+            kwargs['feature_system_path'] = feature_system_path
+        elif self.textType == 'textgrid':
+            kwargs['annotation_types'] = [x.value() for x in self.columns]
+            kwargs['digraph_list'] = self.digraphs.value()
+            kwargs['feature_system_path'] = feature_system_path
+        elif self.textType == 'spelling':
+            kwargs['delimiter'] = wordDelim
+            kwargs['ignore_case'] = self.ignoreCase.isChecked()
+            kwargs['support_corpus_path'] = supportCorpus
+        elif self.textType == 'transcription':
+            kwargs['delimiter':] = wordDelim
+            kwargs['digraph_list'] = self.digraphs.value()
+            kwargs['feature_system_path'] = feature_system_path
+        elif self.textType == 'ilg':
+            kwargs['delimiter':] = wordDelim
+            kwargs['digraph_list'] = self.digraphs.value()
+            kwargs['feature_system_path'] = feature_system_path
+        elif self.textType in ['buckeye', 'timit']:
+            base, ext = os.path.splitext(path)
+            if ext == '.words':
+                phone_path = base +'.phones'
+            elif ext == '.wrd':
+                phone_path = base + '.phn'
+            if not os.path.exists(phone_path):
+                reply = QMessageBox.critical(self,
+                        "Invalid information", "The phone file for the specifie words file does not exist.")
+                return
+            kwargs['word_path'] = kwargs.pop('path')
+            kwargs['phone_path'] = phone_path
+            del kwargs['ignore_list']
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
@@ -747,30 +942,11 @@ class LoadCorpusDialog(PCTDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
-        wordDelim = None
-        wordDelim, transDelim = self.delimiters()
-        ignore_list = self.punctuation.value()
-
-        kwargs = {'corpus_name':name,
-                    'text_type':self.textType,
-                    'path':path,
-                    'delimiter': wordDelim,
-                    'ignore_list': ignore_list}
-        if self.textType == 'spelling':
-
-            supportCorpus = self.supportCorpus.path()
-            ignore_list = self.punctuation.value()
-            kwargs['ignore_case'] = self.ignoreCase.isChecked()
-            kwargs['support_corpus_path'] = supportCorpus
-        else:
-            feature_system_path = self.featureSystem.path()
-            kwargs['digraph_list'] = self.digraphs.value()
-            kwargs['trans_delimiter'] = transDelim
-            kwargs['feature_system_path'] = feature_system_path
 
         return kwargs
 
-    def accept(self):
+    @check_for_errors
+    def accept(self, b):
         kwargs = self.generateKwargs()
         if kwargs is None:
             return
@@ -787,12 +963,16 @@ class LoadCorpusDialog(PCTDialog):
                     corpus_name_to_path(self.settings['storage'],self.corpus.name))
             QDialog.accept(self)
 
+    @check_for_errors
     def inspect(self):
         if os.path.exists(self.pathWidget.value()):
             if self.textType == 'csv':
                 atts, coldelim = inspect_csv(self.pathWidget.value())
                 self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
-                self.updateColumnFrame(atts)
+                self.updateColumnFrame(atts, attribute = True)
+            elif self.textType == 'textgrid':
+                anno_types = inspect_textgrid(self.pathWidget.value())
+                self.updateColumnFrame(anno_types)
             else:
                 self.updateColumnFrame([])
         else:

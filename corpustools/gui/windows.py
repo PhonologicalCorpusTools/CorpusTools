@@ -13,9 +13,8 @@ from corpustools.exceptions import PCTError, PCTPythonError
 
 class ProgressDialog(QProgressDialog):
     beginCancel = Signal()
-    def __init__(self, name, parent):
+    def __init__(self, parent):
         QProgressDialog.__init__(self, parent)
-        self.setWindowTitle('Calculating {}'.format(name))
         self.cancelButton = QPushButton('Cancel')
         self.setAutoClose(False)
         self.setAutoReset(False)
@@ -126,6 +125,12 @@ class FunctionWorker(QThread):
 
 class PCTDialog(QDialog):
 
+    def __init__(self, parent = None):
+        QDialog.__init__(self, parent)
+
+        self.progressDialog = ProgressDialog(self)
+
+
     def handleError(self,error):
         if isinstance(error, PCTError):
             if hasattr(error, 'main'):
@@ -162,6 +167,7 @@ class PCTDialog(QDialog):
         else:
             reply = QMessageBox.critical(self,
                     "Error encountered", str(error))
+        self.progressDialog.reject()
         return None
 
 class FunctionDialog(PCTDialog):
@@ -198,17 +204,13 @@ class FunctionDialog(PCTDialog):
         self.thread = worker
         self.thread.errorEncountered.connect(self.handleError)
 
-        self.progressDialog = ProgressDialog(self.name, self)
+        self.progressDialog.setWindowTitle('Calculating {}'.format(self.name))
         self.progressDialog.beginCancel.connect(self.thread.stop)
         self.thread.updateProgress.connect(self.progressDialog.updateProgress)
         self.thread.updateProgressText.connect(self.progressDialog.updateText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
-
-    def handleError(self, error):
-        PCTDialog.handleError(self, error)
-        self.progressDialog.reject()
 
     def setResults(self, results):
         self.results = results

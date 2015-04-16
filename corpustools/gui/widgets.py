@@ -505,6 +505,8 @@ class DigraphWidget(QGroupBox):
     def value(self):
         text = self.editField.text()
         values = [x.strip() for x in text.split(',') if x.strip() != '']
+        if len(values) == 0:
+            return None
         return values
 
 class FileWidget(QFrame):

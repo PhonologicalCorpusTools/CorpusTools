@@ -12,7 +12,8 @@ def phone_match(one,two):
         return False
     return True
 
-def multiple_files_to_data(word_path,phone_path, dialect):
+def multiple_files_to_data(word_path,phone_path, dialect,
+                           call_back = None, stop_check = None):
     if dialect == 'timit':
         annotation_types = [AnnotationType('spelling', 'transcription', None, anchor = True),
                             AnnotationType('transcription', None, 'spelling', base = True, token = True)]
@@ -76,8 +77,11 @@ def multiple_files_to_data(word_path,phone_path, dialect):
         data.add_annotations(**annotations)
     return data
 
-def load_discourse_multiple_files(word_path,phone_path, dialect):
-    data = multiple_files_to_data(word_path,phone_path, dialect)
+def load_discourse_multiple_files(corpus_name, word_path,phone_path, dialect,
+                                    call_back = None, stop_check = None):
+    data = multiple_files_to_data(word_path,phone_path, dialect,
+                                    call_back = None, stop_check = None)
+    data.name = corpus_name
     mapping = { x.name: x.attribute for x in data.data.values()}
     discourse = data_to_discourse(data, mapping)
 

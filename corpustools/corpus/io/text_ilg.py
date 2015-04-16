@@ -23,7 +23,6 @@ def text_to_lines(path, delimiter):
     return lines
 
 def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = None,
-                trans_delimiter = None,
                     stop_check = None, call_back = None):
     #if 'spelling' not in line_names:
     #    raise(PCTError('Spelling required for parsing interlinear gloss files.'))
@@ -58,7 +57,7 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
 
             if annotation_type.delimited:
                 line = [parse_transcription(x,
-                                        trans_delimiter,
+                                        annotation_type.attribute.delimiter,
                                         digraph_pattern, ignore_list) for x in line]
             cur_line[annotation_type.name] = line
         for word_name in data.word_levels:

@@ -157,7 +157,7 @@ def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None):
     if delimiter is not None:
         string = string.split(delimiter)
     elif digraph_pattern is not None:
-        string = digraph_re.findall(string)
+        string = digraph_pattern.findall(string)
     if ignore_list is not None:
         string = [x for x in string if x not in ignore_list]
     return [x for x in string if x != '']
@@ -189,6 +189,8 @@ def data_to_discourse(data, attribute_mapping):
                         word_token_kwargs[att.name] = (att, token_value)
                 elif k in data:
                     att = attribute_mapping[k]
+                    print(data[k])
+                    print(repr(v))
                     seq = data[k][v[0]:v[1]]
                     if data[k].token:
                         word_token_kwargs[att.name] = (att, seq)

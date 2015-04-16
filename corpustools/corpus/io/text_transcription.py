@@ -10,6 +10,22 @@ from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to
 from .binary import load_binary
 
 def inspect_transcription_corpus(path):
+    trans_delimiters = ['.', ';', ',']
+    with open(path, encoding='utf-8-sig', mode='r') as f:
+        for line in f.readlines():
+            trial = line.strip().split()
+            for t in trial:
+                for delim in trans_delimiters:
+                    if delim in t:
+                        break
+    att = Attribute('transcription','tier','Transcription')
+    att.delimiter = delim
+    annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False),
+                            AnnotationType('transcription', None, None, attribute = att,
+                                            base = True, delimited = True)]
+    return annotation_types
+
+def find_characters_transcription(path):
     characters = set()
     with open(path, encoding='utf-8-sig', mode='r') as f:
         for line in f.readlines():
@@ -28,8 +44,8 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
     name = os.path.splitext(os.path.split(path)[1])[0]
 
     if annotation_types is None:
-            annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False),
-                                AnnotationType('transcription', None, None, base = True)]
+        annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False),
+                                AnnotationType('transcription', None, None, base = True, delimited = True)]
     data = DiscourseData(name, annotation_types)
 
     lines = text_to_lines(path, delimiter)
@@ -50,8 +66,9 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
             continue
         line = line.split(delimiter)
         for word in line:
+            n = data.base_levels[0]
             annotations = dict()
-            trans = parse_transcription(word, trans_delimiter, digraph_pattern, ignore_list)
+            trans = parse_transcription(word, data[n].attribute.delimiter, digraph_pattern, ignore_list)
             if not trans_check and trans_delimiter is not None and len(trans) > 1:
                 trans_check = True
             spell = ''.join(trans)
@@ -60,7 +77,6 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
 
             word = {'label':spell,'token': dict()}
 
-            n = data.base_levels[0]
             tier_elements = [{'label':x} for x in trans]
             level_count = data.level_length(n)
             word[n] = (level_count,level_count+len(tier_elements))
