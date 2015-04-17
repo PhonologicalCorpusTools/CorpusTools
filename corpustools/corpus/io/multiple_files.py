@@ -12,18 +12,24 @@ def phone_match(one,two):
         return False
     return True
 
-def multiple_files_to_data(word_path,phone_path, dialect,
-                           call_back = None, stop_check = None):
-    if dialect == 'timit':
-        annotation_types = [AnnotationType('spelling', 'transcription', None, anchor = True),
-                            AnnotationType('transcription', None, 'spelling', base = True, token = True)]
-    elif dialect == 'buckeye':
+def inspect_discourse_multiple_files(word_path, dialect):
+    if dialect == 'buckeye':
         annotation_types = [AnnotationType('spelling', 'surface_transcription', None, anchor = True),
                             AnnotationType('transcription', None, 'spelling', base = True, token = False),
                             AnnotationType('surface_transcription', None, 'spelling', base = True, token = True),
                             AnnotationType('category', None, 'spelling', base = False, token = True)]
+    elif dialect == 'timit':
+
+        annotation_types = [AnnotationType('spelling', 'transcription', None, anchor = True),
+                            AnnotationType('transcription', None, 'spelling', base = True, token = True)]
     else:
         raise(NotImplementedError)
+    return annotation_types
+
+def multiple_files_to_data(word_path,phone_path, dialect, annotation_types = None,
+                           call_back = None, stop_check = None):
+    if annotation_types is None:
+        annotation_types = inspect_discourse_multiple_files(word_path, dialect)
     name = os.path.splitext(os.path.split(word_path)[1])[0]
 
     words = read_words(word_path, dialect)
@@ -73,15 +79,32 @@ def multiple_files_to_data(word_path,phone_path, dialect,
                     level_count = data.level_length(n)
                     word[n] = (level_count,level_count+len(found))
                     annotations[n] = found
+                for at in annotation_types:
+                    if at.base:
+                        continue
+                    if at.anchor:
+                        continue
+                    value = w[at.name]
+                    if at.delimited:
+                        value = [{'label':x} for x in parse_transcription(ti.mark,
+                                            at.attribute.delimiter,
+                                            digraph_pattern)]
+                    if at.token:
+                        word['token'][at.name] = value
+                    else:
+                        word[at.name] = value
         annotations[data.word_levels[0]] = [word]
         data.add_annotations(**annotations)
     return data
 
 def load_discourse_multiple_files(corpus_name, word_path,phone_path, dialect,
+                                    annotation_types = None,
                                     call_back = None, stop_check = None):
     data = multiple_files_to_data(word_path,phone_path, dialect,
-                                    call_back = None, stop_check = None)
-    data.name = corpus_name
+                                    annotation_types,
+                                    call_back, stop_check)
+    if corpus_name is not None:
+        data.name = corpus_name
     mapping = { x.name: x.attribute for x in data.data.values()}
     discourse = data_to_discourse(data, mapping)
 

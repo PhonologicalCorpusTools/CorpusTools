@@ -10,19 +10,30 @@ from collections import OrderedDict
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
 
-from corpustools.corpus.io import (load_binary, download_binary, load_corpus_csv,
-                                    load_spelling_corpus,
-                                    save_binary,export_corpus_csv,
-                                    import_spontaneous_speech_corpus,
-                                    load_corpus_ilg)
-from corpustools.corpus.io.csv import inspect_csv
-from corpustools.corpus.io.textgrid import inspect_textgrid, load_discourse_textgrid
+from corpustools.corpus.io import (load_binary, download_binary,
+                                    save_binary,
+                                    import_spontaneous_speech_corpus
+                                    )
+from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
+                                    export_corpus_csv,
+                                    characters_corpus_csv)
+from corpustools.corpus.io.textgrid import (inspect_discourse_textgrid,
+                                            load_discourse_textgrid,
+                                            characters_discourse_textgrid)
 
-from corpustools.corpus.io.text_transcription import (load_transcription_corpus,
-                                                        inspect_transcription_corpus,
-                                                        find_characters_transcription)
+from corpustools.corpus.io.text_ilg import (load_discourse_ilg,
+                                        inspect_discourse_ilg,
+                                        characters_discourse_ilg)
 
-from corpustools.corpus.io.multiple_files import load_discourse_multiple_files
+from corpustools.corpus.io.text_spelling import (load_discourse_spelling,
+                                                inspect_discourse_spelling)
+
+from corpustools.corpus.io.text_transcription import (load_discourse_transcription,
+                                                        inspect_discourse_transcription,
+                                                        characters_discourse_transcription)
+
+from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
+                                                    inspect_discourse_multiple_files)
 
 from corpustools.corpus.io.helper import get_corpora_list, corpus_name_to_path
 
@@ -63,11 +74,11 @@ class LoadCorpusWorker(FunctionWorker):
         textType = self.kwargs.pop('text_type')
         try:
             if textType == 'spelling':
-                    corpus = load_spelling_corpus(**self.kwargs)
+                    corpus = load_discourse_spelling(**self.kwargs)
             elif textType == 'transcription':
-                corpus = load_transcription_corpus(**self.kwargs)
+                corpus = load_discourse_transcription(**self.kwargs)
             elif textType == 'ilg':
-                corpus = load_corpus_ilg(**self.kwargs)
+                corpus = load_discourse_ilg(**self.kwargs)
             elif textType == 'textgrid':
                 corpus = load_discourse_textgrid(**self.kwargs)
             elif textType == 'csv':
@@ -344,10 +355,14 @@ class LoadCorpusDialog(PCTDialog):
         translayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
 
         self.ignoreCase = QCheckBox()
-        translayout.addRow(QLabel('Ignore case'),self.ignoreCase)
+        translayout.addRow(QLabel('Ignore case for look up'),self.ignoreCase)
 
         self.columnDelimiterEdit = QLineEdit()
         translayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
+
+        self.forceInspectButton = QPushButton('Reinspect with this column delimiter')
+        translayout.addRow(self.forceInspectButton)
+        self.forceInspectButton.clicked.connect(self.forceInspect)
 
         optionlayout.addRow(transframe)
 
@@ -406,8 +421,9 @@ class LoadCorpusDialog(PCTDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
 
+        self.typeChanged()
+
     def updateType(self, type):
-        print(type)
         self.typeWidget.clear()
         self.typeWidget.addItem('')
         if type == 'textgrid':
@@ -440,36 +456,49 @@ class LoadCorpusDialog(PCTDialog):
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(False)
             self.columnDelimiterEdit.setEnabled(False)
+            self.forceInspectButton.setEnabled(False)
         elif self.textType == 'transcription':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(False)
             self.ignoreCase.setEnabled(False)
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
+            self.forceInspectButton.setEnabled(False)
         elif self.textType == 'ilg':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
+            self.forceInspectButton.setEnabled(False)
         elif self.textType == 'csv':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(True)
+            self.forceInspectButton.setEnabled(True)
         elif self.textType == 'textgrid':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
+            self.forceInspectButton.setEnabled(False)
         elif self.textType in ['buckeye', 'timit']:
             self.digraphs.setEnabled(False)
             self.supportCorpus.setEnabled(False)
             self.ignoreCase.setEnabled(False)
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
+            self.forceInspectButton.setEnabled(False)
+        else:
+            self.digraphs.setEnabled(False)
+            self.supportCorpus.setEnabled(False)
+            self.ignoreCase.setEnabled(False)
+            self.featureSystem.setEnabled(False)
+            self.columnDelimiterEdit.setEnabled(False)
+            self.forceInspectButton.setEnabled(False)
         self.inspect()
 
     def help(self):
@@ -490,18 +519,17 @@ class LoadCorpusDialog(PCTDialog):
 
     def getCharacters(self):
         path = self.pathWidget.value()
+        characters = set()
 
         if path != '' and os.path.exists(path):
             if self.textType == 'transcription':
-                characters = find_characters_transcription(path)
+                characters = characters_discourse_transcription(path)
             elif self.textType == 'csv':
                 pass
             elif self.textType == 'textgrid':
                 pass
             elif self.textType == 'ilg':
                 pass
-        else:
-            characters = set()
 
         minus = set(self.ignoreList())
         wd, cd = self.delimiters()
@@ -513,7 +541,7 @@ class LoadCorpusDialog(PCTDialog):
         else:
             delims.append(wd)
         for c in self.columns:
-            if c.delimiter is not None:
+            if c.value().delimiter is not None:
                 delims.append(cd)
         if cd is not None:
             if isinstance(cd,list):
@@ -530,13 +558,9 @@ class LoadCorpusDialog(PCTDialog):
             colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
             if not colDelim:
                 colDelim = None
-            transDelim = self.transDelimiterEdit.text()
-            if not transDelim:
-                transDelim = None
             atts, coldelim = inspect_csv(self.pathWidget.value(),
-                    coldelim = colDelim,
-                    transdelim = transDelim)
-            self.updateColumnFrame(atts)
+                    coldelim = colDelim)
+            self.updateColumnFrame(atts, attribute = True)
 
     def updateColumnFrame(self, atts, attribute = False):
 
@@ -550,8 +574,6 @@ class LoadCorpusDialog(PCTDialog):
         self.columns = list()
         for a in atts:
             if attribute:
-                if a.delimiter is not None:
-                    self.transDelimiter.setText(a.delimiter)
                 c = AttributeWidget(attribute = a, disable_name = True)
             else:
                 c = AnnotationTypeWidget(a)
@@ -577,7 +599,7 @@ class LoadCorpusDialog(PCTDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a type of file to load.")
             return
-        wordDelim, transDelim, colDelim = self.delimiters()
+        wordDelim, colDelim = self.delimiters()
         ignore_list = self.punctuation.value()
         feature_system_path = self.featureSystem.path()
         supportCorpus = self.supportCorpus.path()
@@ -585,13 +607,14 @@ class LoadCorpusDialog(PCTDialog):
                     'path': path,
                     'text_type': self.textType,
                     'ignore_list':ignore_list}
+        kwargs['annotation_types'] = [x.value() for x in self.columns]
         if self.textType == 'csv':
             del kwargs['ignore_list']
+            kwargs['attributes'] = kwargs.pop('annotation_types')
             kwargs['delimiter'] = colDelim
             kwargs['digraph_list'] = self.digraphs.value()
             kwargs['feature_system_path'] = feature_system_path
         elif self.textType == 'textgrid':
-            kwargs['annotation_types'] = [x.value() for x in self.columns]
             kwargs['digraph_list'] = self.digraphs.value()
             kwargs['feature_system_path'] = feature_system_path
         elif self.textType == 'spelling':
@@ -649,16 +672,26 @@ class LoadCorpusDialog(PCTDialog):
 
     @check_for_errors
     def inspect(self):
+        if self.textType is None:
+            return
         if os.path.exists(self.pathWidget.value()):
             if self.textType == 'csv':
                 atts, coldelim = inspect_csv(self.pathWidget.value())
                 self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
                 self.updateColumnFrame(atts, attribute = True)
-            elif self.textType == 'textgrid':
-                anno_types = inspect_textgrid(self.pathWidget.value())
-                self.updateColumnFrame(anno_types)
             else:
-                self.updateColumnFrame([])
+                if self.textType == 'textgrid':
+                    anno_types = inspect_discourse_textgrid(self.pathWidget.value())
+                    self.updateColumnFrame(anno_types)
+                elif self.textType == 'transcription':
+                    anno_types = inspect_discourse_transcription(self.pathWidget.value())
+                elif self.textType == 'spelling':
+                    anno_types = inspect_discourse_spelling(self.pathWidget.value())
+                elif self.textType in ['buckeye','timit']:
+
+                    anno_types = inspect_discourse_multiple_files(self.pathWidget.value(), self.textType)
+                self.updateColumnFrame(anno_types)
+
         else:
             self.updateColumnFrame([])
         if self.textType is not None:

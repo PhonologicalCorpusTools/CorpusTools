@@ -1,7 +1,7 @@
 import os
 import re
 
-from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
+from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attribute
 
 from corpustools.exceptions import DelimiterError, PCTOSError
 
@@ -9,7 +9,7 @@ from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to
 
 from .binary import load_binary
 
-def inspect_transcription_corpus(path):
+def inspect_discourse_transcription(path):
     trans_delimiters = ['.', ';', ',']
     with open(path, encoding='utf-8-sig', mode='r') as f:
         for line in f.readlines():
@@ -25,7 +25,7 @@ def inspect_transcription_corpus(path):
                                             base = True, delimited = True)]
     return annotation_types
 
-def find_characters_transcription(path):
+def characters_discourse_transcription(path):
     characters = set()
     with open(path, encoding='utf-8-sig', mode='r') as f:
         for line in f.readlines():
@@ -44,8 +44,7 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
     name = os.path.splitext(os.path.split(path)[1])[0]
 
     if annotation_types is None:
-        annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False),
-                                AnnotationType('transcription', None, None, base = True, delimited = True)]
+        annotation_types = inspect_discourse_transcription(path)
     data = DiscourseData(name, annotation_types)
 
     lines = text_to_lines(path, delimiter)
@@ -89,7 +88,7 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
     return data
 
 
-def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, annotation_types = None,
+def load_discourse_transcription(corpus_name, path, delimiter, ignore_list, annotation_types = None,
                     digraph_list = None, trans_delimiter = None,
                     feature_system_path = None,
                     stop_check = None, call_back = None):
@@ -159,7 +158,7 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list, annotat
 
     return discourse
 
-def export_corpus_transcription(discourse, path, trans_delim = '.', single_line = False):
+def export_discourse_transcription(discourse, path, trans_delim = '.', single_line = False):
     with open(path, encoding='utf-8', mode='w') as f:
         count = 0
         for i, wt in enumerate(discourse):

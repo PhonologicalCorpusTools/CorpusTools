@@ -6,7 +6,7 @@ from corpustools.corpus.classes import Speaker
 
 from corpustools.corpus.io.helper import AnnotationType
 
-from corpustools.corpus.io.textgrid import (textgrids_to_data,textgrid_to_data,
+from corpustools.corpus.io.textgrid import (textgrid_to_data,
                                             process_tier_name,load_textgrid,
                                             guess_tiers,
                                             get_speaker_names)

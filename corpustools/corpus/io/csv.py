@@ -12,6 +12,9 @@ from corpustools.exceptions import DelimiterError, PCTError
 
 import time
 
+def characters_corpus_csv(path):
+    pass
+
 def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     if coldelim is not None:
         common_delimiters = [coldelim]

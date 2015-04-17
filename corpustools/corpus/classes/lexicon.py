@@ -1891,6 +1891,8 @@ class Corpus(object):
                 elif isinstance(getattr(word,d),(int, float)):
                     self._attributes.append(Attribute(d,'numeric'))
         for a in self.attributes:
+            if not hasattr(word,a.name):
+                word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word,a.name))
 
     def update_inventory(self, transcription):

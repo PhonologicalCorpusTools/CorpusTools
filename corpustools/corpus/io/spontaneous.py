@@ -133,7 +133,7 @@ def import_spontaneous_speech_corpus(corpus_name, directory, **kwargs):
                 continue
             if 'phones' not in v:
                 continue
-            discourse = load_discourse_multiple_files(v['words'], v['phones'], dialect)
+            discourse = load_discourse_multiple_files(None, v['words'], v['phones'], dialect)
             discourse.speaker = Speaker(v['speaker'])
 
         if 'wav' in v:

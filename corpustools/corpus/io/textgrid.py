@@ -9,6 +9,9 @@ from corpustools.exceptions import TextGridTierError
 
 from .helper import compile_digraphs, parse_transcription, DiscourseData, AnnotationType,data_to_discourse
 
+def characters_discourse_textgrid(path):
+    pass
+
 ### HELPERS ###
 def process_tier_name(name):
     t = '^({0}|\s)*(\w+\s*\w+)({0}|\s)*(\w*\s*\w*)({0}|\s)*$'.format('|'.join([re.escape(x) for x in string.punctuation]))
@@ -87,7 +90,7 @@ def figure_out_tiers(tiers, word_tier_name, phone_tier_name, speaker):
                     speakers[s]['other'].append(t)
     return speakers
 
-def inspect_textgrid(path, transdelim = None):
+def inspect_discourse_textgrid(path, transdelim = None):
     if transdelim is not None:
         trans_delimiters = [transdelim]
     else:
@@ -113,10 +116,12 @@ def inspect_textgrid(path, transdelim = None):
             cat = Attribute.guess_type(labels, trans_delimiters)
             att = Attribute(Attribute.sanitize_name(t.name), cat, t.name)
             if cat == 'tier':
-                a.delimited = True
-                for delim in trans_delimiters:
-                    if delim in next(iter(labels)):
-                        att.delimiter = delim
+                for l in labels:
+                    for delim in trans_delimiters:
+                        if delim in l:
+                            att.delimiter = delim
+                            break
+                    if att.delimiter is not None:
                         break
             a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
 
@@ -188,7 +193,6 @@ def textgrid_to_data(path, annotation_types, ignore_list = None, digraph_list = 
                         phoneBegin = si.minTime
                     if phoneEnd > si.maxTime:
                         phoneEnd = si.maxTime
-                    print(n,data[n].delimited)
                     if data[n].delimited:
                         parsed = [{'label':x} for x in parse_transcription(ti.mark,
                                         data[n].attribute.delimiter,
@@ -209,14 +213,16 @@ def textgrid_to_data(path, annotation_types, ignore_list = None, digraph_list = 
                     continue
                 if at.anchor:
                     continue
-                if at.delimited:
-                    continue
                 t = tg.getFirst(at.name)
                 ti = t.intervalContaining(mid_point)
                 #if ti is None:
                 #    word[at.name] = None
                 #    continue
                 value = ti.mark
+                if at.delimited:
+                    value = [{'label':x} for x in parse_transcription(ti.mark,
+                                        at.attribute.delimiter,
+                                        digraph_pattern)]
                 if at.token:
                     word['token'][at.name] = value
                 else:
@@ -232,7 +238,7 @@ def load_discourse_textgrid(corpus_name, path, annotation_types, ignore_list = N
                             feature_system_path = None,
                             call_back = None, stop_check = None):
     data = textgrid_to_data(path, annotation_types,ignore_list,
-                            trans_delimiter, digraph_list, call_back, stop_check)
+                            digraph_list, call_back, stop_check)
     data.name = corpus_name
     mapping = { x.name: x.attribute for x in data.data.values()}
     discourse = data_to_discourse(data, mapping)

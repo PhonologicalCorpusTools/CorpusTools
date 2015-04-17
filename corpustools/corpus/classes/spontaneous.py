@@ -176,22 +176,6 @@ class Discourse(object):
     def attributes(self):
         return self._attributes
 
-    def update_attributes(self, attributes):
-        """
-        Add additional WordToken attributes to track.  If any of the
-        attributes to be added overlaps in `name` with the current attributes, it is
-        not added.
-
-        Parameters
-        ----------
-        attributes : list of Attributes
-            Attributes of WordTokens to be tracked by the Discourse
-
-        """
-        for a in attributes:
-            if a not in self._attributes:
-                self._attributes.append(a)
-
     def keys(self):
         """
         Returns a sorted list of keys for looking up WordTokens
@@ -244,6 +228,33 @@ class Discourse(object):
         """
         wordtoken.discourse = self
         self.words[wordtoken.begin] = wordtoken
+        for a in self.attributes:
+            if not hasattr(wordtoken,a.name):
+                wordtoken.add_attribute(a.name, a.default_value)
+            a.update_range(getattr(wordtoken,a.name))
+
+    def add_attribute(self, attribute, initialize_defaults = False):
+        """
+        Add an Attribute of any type to the Discourse or replace an existing Attribute.
+
+        Parameters
+        ----------
+        attribute : Attribute
+            Attribute to add or replace
+
+        initialize_defaults : boolean
+            If True, word tokens will have this attribute set to the ``default_value``
+            of the attribute, defaults to False
+        """
+        for i,a in enumerate(self._attributes):
+            if attribute.name == a.name:
+                self._attributes[i] = attribute
+                break
+        else:
+            self._attributes.append(attribute)
+        if initialize_defaults:
+            for word in self:
+                word.add_attribute(attribute.name,attribute.default_value)
 
 
     def __getitem__(self, key):
@@ -486,6 +497,10 @@ class WordToken(object):
     def __repr__(self):
         return '<WordToken: {}, {}, {}-{}>'.format(str(self.wordtype),
                             str(self.transcription),self.begin,self.end)
+
+
+    def add_attribute(self, tier_name, default_value):
+        setattr(self, tier_name, default_value)
 
     @property
     def previous_token(self):

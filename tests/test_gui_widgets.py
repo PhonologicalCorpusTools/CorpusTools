@@ -407,3 +407,7 @@ def test_attribute_filter_dialog(qtbot, unspecified_test_corpus):
     assert(dialog.filter == (unspecified_test_corpus.attributes[2],operator.eq,50))
 
 
+
+def test_corpus_select(qtbot, settings):
+    widget = CorpusSelect(None, settings)
+    qtbot.addWidget(widget)

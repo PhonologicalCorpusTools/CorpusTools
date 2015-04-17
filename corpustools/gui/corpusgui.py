@@ -10,7 +10,7 @@ from collections import OrderedDict
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
 
-from corpustools.corpus.classes import Word
+from corpustools.corpus.classes import Word, Attribute
 
 from .widgets import (RadioSelectWidget, FeatureBox,
                     InventoryBox,

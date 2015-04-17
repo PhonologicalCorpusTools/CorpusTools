@@ -9,7 +9,10 @@ from corpustools.exceptions import (DelimiterError, ILGError, ILGLinesMismatchEr
 
 from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to_discourse
 
-def inspect_ilg(path):
+def inspect_discourse_ilg(path):
+    pass
+
+def characters_discourse_ilg(path):
     pass
 
 def text_to_lines(path, delimiter):
@@ -84,19 +87,19 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
     return data
 
 
-def load_corpus_ilg(corpus_name, path, annotation_types, delimiter,
+def load_discourse_ilg(corpus_name, path, annotation_types, delimiter,
                     ignore_list, digraph_list = None,
-                    trans_delimiter = None, feature_system_path = None,
+                    feature_system_path = None,
                     stop_check = None, call_back = None):
     data = ilg_to_data(path, annotation_types, delimiter, ignore_list,
-                digraph_list,trans_delimiter,
+                digraph_list,
                     stop_check, call_back)
     mapping = { x.name: x.attribute for x in annotation_types}
     discourse = data_to_discourse(data, mapping)
 
     return discourse
 
-def export_corpus_ilg(discourse, path, trans_delim = '.'):
+def export_discourse_ilg(discourse, path, trans_delim = '.'):
     with open(path, encoding='utf-8', mode='w') as f:
         spellings = list()
         transcriptions = list()
