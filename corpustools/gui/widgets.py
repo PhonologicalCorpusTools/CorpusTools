@@ -10,6 +10,196 @@ from .models import SegmentPairModel, EnvironmentModel, FilterModel
 
 from .delegates import SwitchDelegate
 
+from corpustools.corpus.classes import Attribute
+from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path
+
+class CorpusSelect(QComboBox):
+    def __init__(self, parent, settings):
+        QComboBox.__init__(self,parent)
+        self.settings = settings
+        self.addItem('None')
+
+        for i,s in enumerate(get_corpora_list(self.settings['storage'])):
+            self.addItem(s)
+
+    def value(self):
+        val = self.currentText()
+        if val == 'None':
+            return ''
+        return val
+
+    def path(self):
+        if self.value() != '':
+            return corpus_name_to_path(self.settings['storage'],self.value())
+        return None
+
+class AnnotationTypeWidget(QGroupBox):
+    def __init__(self, annotation_type = None, parent = None):
+        QGroupBox.__init__(self, 'Annotation type details', parent)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of annotation type',self.nameWidget)
+
+        if annotation_type is not None:
+            self.annotation_type = annotation_type
+            self.nameWidget.setText(annotation_type.name)
+        else:
+            self.annotation_type = None
+
+        self.nameWidget.setEnabled(False)
+
+        self.levelWidget = QComboBox()
+        self.levelWidget.addItem('Word')
+        self.levelWidget.addItem('Phone')
+        self.levelWidget.addItem('Other sublexical')
+        self.levelWidget.addItem('Word attribute')
+        self.levelWidget.setCurrentIndex(2)
+
+        main.addRow('Hierarchical level',self.levelWidget)
+
+        self.typeTokenWidget = QComboBox()
+        self.typeTokenWidget.addItem('Word type')
+        self.typeTokenWidget.addItem('Word token')
+
+        main.addRow('Associated with',self.typeTokenWidget)
+
+        if self.annotation_type is not None:
+            if self.annotation_type.token:
+                self.typeTokenWidget.setCurrentIndex(1)
+            if self.annotation_type.anchor:
+                self.levelWidget.setCurrentIndex(0)
+            if self.annotation_type.base:
+                self.levelWidget.setCurrentIndex(1)
+            self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
+        else:
+            self.attributeWidget = AttributeWidget()
+
+        main.addRow(self.attributeWidget)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def value(self):
+        att = self.attributeWidget.value()
+        delimited = getattr(att, '_delim', None) is not None
+        token = self.typeTokenWidget.currentText() == 'Word token'
+        if self.levelWidget.currentText() == 'Word':
+            anchor = True
+            base = False
+        elif self.levelWidget.currentText() == 'Phone':
+            anchor = False
+            base = True
+        else:
+            anchor = False
+            base = False
+        name = self.nameWidget.text()
+
+        return AnnotationType(name, None, None, attribute = att,
+                            delimited = delimited,
+                            token = token, anchor = anchor, base = base)
+
+class AttributeWidget(QGroupBox):
+    def __init__(self, attribute = None, exclude_tier = False,
+                disable_name = False, parent = None):
+        QGroupBox.__init__(self, 'Column details', parent)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        if attribute is not None:
+            self.attribute = attribute
+            self.nameWidget.setText(attribute.display_name)
+        else:
+            self.attribute = None
+
+        if disable_name:
+            self.nameWidget.setEnabled(False)
+
+        self.typeWidget = QComboBox()
+        for at in Attribute.ATT_TYPES:
+            if exclude_tier and at == 'tier':
+                continue
+            self.typeWidget.addItem(at.title())
+
+        self.delimiterEdit = QLineEdit()
+
+        if attribute is not None:
+            delim = attribute.delimiter
+            print(attribute.name,delim)
+            if delim is not None:
+                self.delimiterEdit.setText(delim)
+
+        main.addRow('Delimiter', self.delimiterEdit)
+        self.typeWidget.currentIndexChanged.connect(self.updateDelimiter)
+        main.addRow('Type of column',self.typeWidget)
+
+        self.useAs = QComboBox()
+        self.useAs.addItem('Custom column')
+        self.useAs.addItem('Spelling')
+        self.useAs.addItem('Transcription')
+        self.useAs.addItem('Frequency')
+        self.useAs.currentIndexChanged.connect(self.updateUseAs)
+
+        for i in range(self.useAs.count()):
+            if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
+                self.useAs.setCurrentIndex(i)
+                if attribute.name == 'transcription' and attribute.att_type != 'tier':
+                    attribute.att_type = 'tier'
+
+        for i in range(self.typeWidget.count()):
+            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
+                self.typeWidget.setCurrentIndex(i)
+
+        main.addRow('Use column as', self.useAs)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def updateDelimiter(self):
+        if self.typeWidget.currentText() == 'Tier':
+            self.delimiterEdit.setEnabled(True)
+        else:
+            self.delimiterEdit.setEnabled(False)
+
+    def updateUseAs(self):
+        t = self.useAs.currentText().lower()
+        if t == 'custom column':
+            self.typeWidget.setEnabled(True)
+        else:
+            for i in range(self.typeWidget.count()):
+                if t == 'spelling' and self.typeWidget.itemText(i) == 'Spelling':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'transcription' and self.typeWidget.itemText(i) == 'Tier':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'frequency' and self.typeWidget.itemText(i) == 'Numeric':
+                    self.typeWidget.setCurrentIndex(i)
+            self.typeWidget.setEnabled(False)
+
+    def value(self):
+        display = self.nameWidget.text()
+        cat = self.typeWidget.currentText().lower()
+        use = self.useAs.currentText().lower()
+        if use.startswith('custom'):
+            name = Attribute.sanitize_name(display)
+        else:
+            name = use
+        att = Attribute(name, cat, display)
+        if cat == 'tier':
+            delim = self.delimiterEdit.text()
+            if delim == '':
+                att.delimiter = None
+            else:
+                att.delimiter = delim
+        return att
+
 class ThumbListWidget(QListWidget):
     def __init__(self, ordering, parent=None):
         super(ThumbListWidget, self).__init__(parent)
@@ -472,24 +662,15 @@ class DigraphWidget(QGroupBox):
         self.button.clicked.connect(self.construct)
         layout.addWidget(self.button)
         self.setLayout(layout)
+        self.characters = list()
+
+    def setCharacters(self, characters):
+        self.characters = characters
 
     def construct(self):
-        minus = set(self._parent.ignoreList())
-        wd, td = self._parent.delimiters()
-        delims = []
-        if wd is None:
-            delims.extend([' ','\t','\n'])
-        elif isinstance(wd,list):
-            delims.extend(wd)
-        else:
-            delims.append(wd)
-        if td is not None:
-            if isinstance(td,list):
-                delims.extend(td)
-            else:
-                delims.append(td)
-        minus.update(delims)
-        possible = sorted(self._parent.characters - minus, key = lambda x: x.lower())
+        if len(self.characters) == 0:
+            return
+        possible = sorted(self.characters, key = lambda x: x.lower())
         dialog = DigraphDialog(possible,self)
         addOneMore = True
         while addOneMore:
@@ -500,7 +681,6 @@ class DigraphWidget(QGroupBox):
                     self.editField.setText(','.join(val))
             dialog.digraphLine.setText('')
             addOneMore = dialog.addOneMore
-
 
     def value(self):
         text = self.editField.text()

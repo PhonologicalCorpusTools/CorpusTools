@@ -1,4 +1,5 @@
 import re
+import os
 
 from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
 from corpustools.exceptions import DelimiterError
@@ -40,6 +41,10 @@ class AnnotationType(object):
 
     def __len__(self):
         return len(self._list)
+
+    @property
+    def delimiter(self):
+        return self.attribute.delimiter
 
     @property
     def is_word_anchor(self):
@@ -147,6 +152,14 @@ class DiscourseData(object):
 
     def level_length(self, key):
         return len(self.data[key])
+
+def get_corpora_list(storage_directory):
+    corpus_dir = os.path.join(storage_directory,'CORPUS')
+    corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
+    return corpora
+
+def corpus_name_to_path(storage_directory,name):
+    return os.path.join(storage_directory,'CORPUS',name+'.corpus')
 
 def compile_digraphs(digraph_list):
     pattern = '|'.join(d for d in digraph_list)

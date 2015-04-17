@@ -8,10 +8,12 @@ from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
                     LexiconView,PhonoSearchResults)
 from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
 
-from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
-                        RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
+from .iogui import CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog, save_binary
+
+from .corpusgui import (AddTierDialog, AddAbstractTierDialog,
+                        RemoveAttributeDialog,AddColumnDialog,
                         AddCountColumnDialog,
-                        ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
+                        AddWordDialog, CorpusSummary, )
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
                         ExportFeatureSystemDialog)

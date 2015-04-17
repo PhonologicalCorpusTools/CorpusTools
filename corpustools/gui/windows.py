@@ -175,7 +175,7 @@ class FunctionDialog(PCTDialog):
     _about = None
     name = ''
     def __init__(self,parent, worker):
-        QDialog.__init__(self, parent)
+        PCTDialog.__init__(self, parent)
         layout = QVBoxLayout()
 
         self.newTableButton = QPushButton('Calculate {}\n(start new results table)'.format(self.name))
