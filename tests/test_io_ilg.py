@@ -3,7 +3,9 @@ import pytest
 import os
 import sys
 
-from corpustools.corpus.io.text_ilg import load_discourse_ilg, ilg_to_data, export_discourse_ilg
+from corpustools.corpus.io.text_ilg import (load_discourse_ilg,
+                                            inspect_discourse_ilg,
+                                            ilg_to_data, export_discourse_ilg)
 
 from corpustools.corpus.io.helper import AnnotationType
 
@@ -12,6 +14,12 @@ from corpustools.exceptions import DelimiterError, ILGWordMismatchError
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Discourse, Attribute)
 
 from corpustools.utils import generate_discourse
+
+def test_inspect_ilg(ilg_test_dir):
+    basic_path = os.path.join(ilg_test_dir, 'test_basic.txt')
+    annotypes = inspect_discourse_ilg(basic_path)
+    assert(len(annotypes) == 2)
+    assert(annotypes[1].delimiter == '.')
 
 @pytest.mark.xfail
 def test_export_ilg(export_test_dir, unspecified_test_corpus):

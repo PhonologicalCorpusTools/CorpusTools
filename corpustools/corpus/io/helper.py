@@ -176,7 +176,7 @@ def text_to_lines(path, delimiter):
         if delimiter is not None and delimiter not in text:
             e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
             raise(e)
-    lines = [x for x in text.splitlines() if x.strip() != '']
+    lines = [x.strip().split(delimiter) for x in text.splitlines() if x.strip() != '']
     return lines
 
 def data_to_discourse(data, attribute_mapping):

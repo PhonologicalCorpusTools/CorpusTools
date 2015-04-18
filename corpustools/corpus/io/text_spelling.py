@@ -7,8 +7,10 @@ from .binary import load_binary
 
 from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to_discourse, AnnotationType,text_to_lines
 
-def inspect_discourse_spelling(path):
+def inspect_discourse_spelling(path, support_corpus_path = None):
     annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False)]
+    if support_corpus_path is not None:
+        annotation_types += [AnnotationType('transcription', None, None, base = True)]
     return annotation_types
 
 def spelling_text_to_data(path, delimiter, ignore_list, annotation_types = None,
@@ -21,9 +23,7 @@ def spelling_text_to_data(path, delimiter, ignore_list, annotation_types = None,
             raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
         support = load_binary(support_corpus_path)
     if annotation_types is None:
-        annotation_types = inspect_discourse_spelling(path)
-        if support_corpus_path is not None:
-            annotation_types += [AnnotationType('transcription', None, None, base = True)]
+        annotation_types = inspect_discourse_spelling(path, support_corpus_path)
     data = DiscourseData(name, annotation_types)
 
     lines = text_to_lines(path, delimiter)
@@ -41,7 +41,6 @@ def spelling_text_to_data(path, delimiter, ignore_list, annotation_types = None,
                 call_back(cur)
         if not line or line == '\n':
             continue
-        line = line.split(delimiter)
         annotations = dict()
         for word in line:
             spell = word.strip()

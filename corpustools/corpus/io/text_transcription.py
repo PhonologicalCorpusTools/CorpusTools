@@ -63,7 +63,6 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
                 call_back(cur)
         if not line or line == '\n':
             continue
-        line = line.split(delimiter)
         for word in line:
             n = data.base_levels[0]
             annotations = dict()

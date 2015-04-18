@@ -94,7 +94,10 @@ class ILGLinesMismatchError(PCTError):
         self.information = ''
         self.details = 'The following is the contents of the file after initial preprocessing:\n\n'
         for line in lines:
-            self.details += line + '\n'
+            if isinstance(line,tuple):
+                self.details += '{}: {}\n'.format(*line)
+            else:
+                self.details += str(line) + '\n'
 
 class TextGridTierError(PCTError):
     """

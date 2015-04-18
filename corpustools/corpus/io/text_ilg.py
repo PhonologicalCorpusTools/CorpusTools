@@ -1,16 +1,72 @@
 
 import os
 import re
+from collections import Counter
 
-from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
+from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attribute
 
 from corpustools.exceptions import (DelimiterError, ILGError, ILGLinesMismatchError,
                                 ILGWordMismatchError)
 
-from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to_discourse
+from .helper import compile_digraphs, parse_transcription, DiscourseData, AnnotationType,data_to_discourse
 
-def inspect_discourse_ilg(path):
-    pass
+def calculate_lines_per_gloss(lines):
+    line_counts = [len(x[1]) for x in lines]
+    equaled = list()
+    for i,line in enumerate(line_counts):
+        if i == 0:
+            equaled.append(False)
+        else:
+            equaled.append(line == line_counts[i-1])
+    if False not in equaled[1:]:
+        #All lines happen to have the same length
+        for i in range(2,6):
+            if len(lines) % i == 0:
+                number = i
+    else:
+        false_intervals = list()
+        ind = 0
+        for i,e in enumerate(equaled):
+            if i == 0:
+                continue
+            if not e:
+                false_intervals.append(i - ind)
+                ind = i
+        false_intervals.append(i+1 - ind)
+        counter = Counter(false_intervals)
+        number = max(counter.keys(), key = lambda x: (counter[x],x))
+        if number > 10:
+            prev_maxes = set([number])
+            while number > 10:
+                prev_maxes.add(number)
+                number = max(x for x in false_intervals if x not in prev_maxes)
+    return number
+
+def inspect_discourse_ilg(path, number = None):
+    trans_delimiters = ['.', ';', ',']
+    lines = text_to_lines(path, None)
+    if number is None:
+        number = calculate_lines_per_gloss(lines)
+    annotation_types = list()
+    for i in range(number):
+        if i == 0:
+            a = AnnotationType('spelling', None, None, anchor = True, token = False)
+        else:
+            labels = lines[i][1]
+            cat = Attribute.guess_type(labels, trans_delimiters)
+            name = 'Line {}'.format(i)
+            att = Attribute(Attribute.sanitize_name(name), cat, name)
+            if cat == 'tier':
+                for l in labels:
+                    for delim in trans_delimiters:
+                        if delim in l:
+                            att.delimiter = delim
+                            break
+                    if att.delimiter is not None:
+                        break
+            a = AnnotationType(name, None, annotation_types[0].name, token = False, attribute = att)
+        annotation_types.append(a)
+    return annotation_types
 
 def characters_discourse_ilg(path):
     pass
@@ -22,7 +78,7 @@ def text_to_lines(path, delimiter):
             e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
             raise(e)
     lines = enumerate(text.splitlines())
-    lines = [x for x in lines if x[1].strip() != '']
+    lines = [(x[0],x[1].strip().split(delimiter)) for x in lines if x[1].strip() != '']
     return lines
 
 def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = None,
@@ -53,7 +109,6 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
             if annotation_type.name == 'ignore':
                 continue
             actual_line_ind, line = lines[index+line_ind]
-            line = line.strip().split(delimiter)
             if len(cur_line.values()) != 0 and len(list(cur_line.values())[-1]) != len(line):
                 raise(ILGWordMismatchError((actual_line_ind-1, list(cur_line.values())[-1]),
                                             (actual_line_ind, line)))

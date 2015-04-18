@@ -341,6 +341,32 @@ class LoadCorpusDialog(PCTDialog):
 
         optionlayout = QFormLayout()
 
+        csvFrame = QGroupBox('Column delimited file options')
+
+        csvlayout = QFormLayout()
+
+        self.columnDelimiterEdit = QLineEdit()
+        csvlayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
+
+        csvFrame.setLayout(csvlayout)
+
+        optionlayout.addRow(csvFrame)
+
+        ilgFrame = QGroupBox('Interlinear gloss file options')
+
+        ilglayout = QFormLayout()
+
+        self.lineNumberEdit = QLineEdit()
+        ilglayout.addRow(QLabel('Number of lines per gloss (auto-detected)'),self.lineNumberEdit)
+
+        ilgFrame.setLayout(ilglayout)
+
+        optionlayout.addRow(ilgFrame)
+
+        self.forceInspectButton = QPushButton('Reinspect')
+        optionlayout.addRow(self.forceInspectButton)
+        self.forceInspectButton.clicked.connect(self.forceInspect)
+
         translayout = QFormLayout()
 
         self.digraphs = DigraphWidget(self)
@@ -351,20 +377,23 @@ class LoadCorpusDialog(PCTDialog):
         self.featureSystem = FeatureSystemSelect(self.settings)
         translayout.addRow(self.featureSystem)
 
+        optionlayout.addRow(transframe)
+
+        lookupFrame = QGroupBox('Support corpus')
+
+        lookuplayout = QFormLayout()
+
         self.supportCorpus = CorpusSelect(self,self.settings)
-        translayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
+
+        self.supportCorpus.currentIndexChanged.connect(self.typeChanged)
+        lookuplayout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
 
         self.ignoreCase = QCheckBox()
-        translayout.addRow(QLabel('Ignore case for look up'),self.ignoreCase)
+        lookuplayout.addRow(QLabel('Ignore case for look up'),self.ignoreCase)
 
-        self.columnDelimiterEdit = QLineEdit()
-        translayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
+        lookupFrame.setLayout(lookuplayout)
 
-        self.forceInspectButton = QPushButton('Reinspect with this column delimiter')
-        translayout.addRow(self.forceInspectButton)
-        self.forceInspectButton.clicked.connect(self.forceInspect)
-
-        optionlayout.addRow(transframe)
+        optionlayout.addRow(lookupFrame)
 
         optionframe = QGroupBox('Options')
         optionframe.setLayout(optionlayout)
@@ -457,6 +486,7 @@ class LoadCorpusDialog(PCTDialog):
             self.featureSystem.setEnabled(False)
             self.columnDelimiterEdit.setEnabled(False)
             self.forceInspectButton.setEnabled(False)
+            self.lineNumberEdit.setEnabled(False)
         elif self.textType == 'transcription':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(False)
@@ -464,13 +494,15 @@ class LoadCorpusDialog(PCTDialog):
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
             self.forceInspectButton.setEnabled(False)
+            self.lineNumberEdit.setEnabled(False)
         elif self.textType == 'ilg':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
             self.ignoreCase.setEnabled(True)
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
-            self.forceInspectButton.setEnabled(False)
+            self.forceInspectButton.setEnabled(True)
+            self.lineNumberEdit.setEnabled(True)
         elif self.textType == 'csv':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
@@ -478,6 +510,7 @@ class LoadCorpusDialog(PCTDialog):
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(True)
             self.forceInspectButton.setEnabled(True)
+            self.lineNumberEdit.setEnabled(False)
         elif self.textType == 'textgrid':
             self.digraphs.setEnabled(True)
             self.supportCorpus.setEnabled(True)
@@ -485,6 +518,7 @@ class LoadCorpusDialog(PCTDialog):
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
             self.forceInspectButton.setEnabled(False)
+            self.lineNumberEdit.setEnabled(False)
         elif self.textType in ['buckeye', 'timit']:
             self.digraphs.setEnabled(False)
             self.supportCorpus.setEnabled(False)
@@ -492,6 +526,7 @@ class LoadCorpusDialog(PCTDialog):
             self.featureSystem.setEnabled(True)
             self.columnDelimiterEdit.setEnabled(False)
             self.forceInspectButton.setEnabled(False)
+            self.lineNumberEdit.setEnabled(False)
         else:
             self.digraphs.setEnabled(False)
             self.supportCorpus.setEnabled(False)
@@ -499,6 +534,7 @@ class LoadCorpusDialog(PCTDialog):
             self.featureSystem.setEnabled(False)
             self.columnDelimiterEdit.setEnabled(False)
             self.forceInspectButton.setEnabled(False)
+            self.lineNumberEdit.setEnabled(False)
         self.inspect()
 
     def help(self):
@@ -555,12 +591,24 @@ class LoadCorpusDialog(PCTDialog):
     @check_for_errors
     def forceInspect(self, b):
         if os.path.exists(self.pathWidget.value()):
-            colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
-            if not colDelim:
-                colDelim = None
-            atts, coldelim = inspect_csv(self.pathWidget.value(),
-                    coldelim = colDelim)
-            self.updateColumnFrame(atts, attribute = True)
+            if self.textType == 'csv':
+                colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+                if not colDelim:
+                    colDelim = None
+                atts, coldelim = inspect_csv(self.pathWidget.value(),
+                        coldelim = colDelim)
+                self.updateColumnFrame(atts, attribute = True)
+            elif self.textType == 'ilg':
+                number = self.lineNumberEdit.text()
+                if number == '':
+                    number = None
+                else:
+                    try:
+                        number = int(number)
+                    except:
+                        number = None
+                annotation_types = inspect_discourse_ilg(self.pathWidget.value(), number = number)
+                self.updateColumnFrame(annotation_types)
 
     def updateColumnFrame(self, atts, attribute = False):
 
@@ -607,28 +655,25 @@ class LoadCorpusDialog(PCTDialog):
                     'path': path,
                     'text_type': self.textType,
                     'ignore_list':ignore_list}
+        kwargs['delimiter'] = wordDelim
         kwargs['annotation_types'] = [x.value() for x in self.columns]
+        kwargs['digraph_list'] = self.digraphs.value()
+        kwargs['feature_system_path'] = feature_system_path
         if self.textType == 'csv':
             del kwargs['ignore_list']
             kwargs['attributes'] = kwargs.pop('annotation_types')
             kwargs['delimiter'] = colDelim
-            kwargs['digraph_list'] = self.digraphs.value()
-            kwargs['feature_system_path'] = feature_system_path
         elif self.textType == 'textgrid':
-            kwargs['digraph_list'] = self.digraphs.value()
-            kwargs['feature_system_path'] = feature_system_path
+            pass
         elif self.textType == 'spelling':
-            kwargs['delimiter'] = wordDelim
             kwargs['ignore_case'] = self.ignoreCase.isChecked()
             kwargs['support_corpus_path'] = supportCorpus
+            del kwargs['feature_system_path']
+            del kwargs['digraph_list']
         elif self.textType == 'transcription':
-            kwargs['delimiter':] = wordDelim
-            kwargs['digraph_list'] = self.digraphs.value()
-            kwargs['feature_system_path'] = feature_system_path
+            pass
         elif self.textType == 'ilg':
-            kwargs['delimiter':] = wordDelim
-            kwargs['digraph_list'] = self.digraphs.value()
-            kwargs['feature_system_path'] = feature_system_path
+            pass
         elif self.textType in ['buckeye', 'timit']:
             base, ext = os.path.splitext(path)
             if ext == '.words':
@@ -642,6 +687,8 @@ class LoadCorpusDialog(PCTDialog):
             kwargs['word_path'] = kwargs.pop('path')
             kwargs['phone_path'] = phone_path
             del kwargs['ignore_list']
+            del kwargs['digraph_list']
+            del kwargs['feature_system_path']
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
@@ -682,11 +729,13 @@ class LoadCorpusDialog(PCTDialog):
             else:
                 if self.textType == 'textgrid':
                     anno_types = inspect_discourse_textgrid(self.pathWidget.value())
-                    self.updateColumnFrame(anno_types)
+                elif self.textType == 'ilg':
+                    anno_types = inspect_discourse_ilg(self.pathWidget.value())
+                    self.lineNumberEdit.setText(str(len(anno_types)))
                 elif self.textType == 'transcription':
                     anno_types = inspect_discourse_transcription(self.pathWidget.value())
                 elif self.textType == 'spelling':
-                    anno_types = inspect_discourse_spelling(self.pathWidget.value())
+                    anno_types = inspect_discourse_spelling(self.pathWidget.value(), self.supportCorpus.path())
                 elif self.textType in ['buckeye','timit']:
 
                     anno_types = inspect_discourse_multiple_files(self.pathWidget.value(), self.textType)
