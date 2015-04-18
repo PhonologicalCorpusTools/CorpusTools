@@ -1018,7 +1018,10 @@ class FeatureBox(QWidget):
         self.setLayout(layout)
 
     def inspectInventory(self):
-        self.features = sorted(self.inventory[-1].features.keys())
+        self.features = list()
+        for i in self.inventory:
+            if len(i.features.keys()) > 0:
+                self.features = [x for x in i.features.keys()]
         self.values = set()
         for v in self.inventory:
             self.values.update(v.features.values())
@@ -1201,7 +1204,10 @@ class SegFeatSelect(QGroupBox):
         self.segExclusive = exclusive
         self.corpus = corpus
         self.inventory = self.corpus.inventory
-        self.features = self.inventory[-1].features.keys()
+        self.features = list()
+        for i in self.inventory:
+            if len(i.features.keys()) > 0:
+                self.features = [x for x in i.features.keys()]
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
@@ -1246,7 +1252,11 @@ class EnvironmentDialog(QDialog):
         QDialog.__init__(self,parent)
 
         self.inventory = inventory
-        self.features = inventory[-1].features.keys()
+        self.features = list()
+        for i in self.inventory:
+            if len(i.features.keys()) > 0:
+                self.features = [x for x in i.features.keys()]
+                break
 
         layout = QVBoxLayout()
 
@@ -1379,6 +1389,7 @@ class EnvironmentDialog(QDialog):
 
     def reject(self):
         self.addOneMore = False
+        self.reset()
         QDialog.reject(self)
 
 class EnvironmentSelectWidget(QGroupBox):
@@ -1425,6 +1436,8 @@ class EnvironmentSelectWidget(QGroupBox):
             if result:
                 self.table.model().addRow([dialog.env])
             addOneMore = dialog.addOneMore
+        del addOneMore
+        dialog.deleteLater()
 
     def removeEnv(self):
         select = self.table.selectionModel()
