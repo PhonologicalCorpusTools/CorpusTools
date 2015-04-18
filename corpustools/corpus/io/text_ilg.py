@@ -49,12 +49,13 @@ def inspect_discourse_ilg(path, number = None):
         number = calculate_lines_per_gloss(lines)
     annotation_types = list()
     for i in range(number):
+        name = 'Line {}'.format(i+1)
         if i == 0:
-            a = AnnotationType('spelling', None, None, anchor = True, token = False)
+            att = Attribute('spelling','spelling','Spelling')
+            a = AnnotationType(name, None, None, anchor = True, token = False, attribute = att)
         else:
             labels = lines[i][1]
             cat = Attribute.guess_type(labels, trans_delimiters)
-            name = 'Line {}'.format(i)
             att = Attribute(Attribute.sanitize_name(name), cat, name)
             if cat == 'tier':
                 for l in labels:
@@ -103,21 +104,29 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
     name = os.path.splitext(os.path.split(path)[1])[0]
 
     data = DiscourseData(name, annotation_types)
+    mismatching_lines = list()
     while index < len(lines):
         cur_line = dict()
+        mismatch = False
         for line_ind, annotation_type in enumerate(annotation_types):
             if annotation_type.name == 'ignore':
                 continue
             actual_line_ind, line = lines[index+line_ind]
             if len(cur_line.values()) != 0 and len(list(cur_line.values())[-1]) != len(line):
-                raise(ILGWordMismatchError((actual_line_ind-1, list(cur_line.values())[-1]),
-                                            (actual_line_ind, line)))
+                mismatch = True
 
             if annotation_type.delimited:
                 line = [parse_transcription(x,
                                         annotation_type.attribute.delimiter,
                                         digraph_pattern, ignore_list) for x in line]
             cur_line[annotation_type.name] = line
+        if mismatch:
+            start_line = lines[index][0]
+            end_line = start_line + len(annotation_types)
+            mismatching_lines.append(((start_line, end_line), cur_line))
+        if len(mismatching_lines) > 0:
+            index += len(annotation_types)
+            continue
         for word_name in data.word_levels:
             for i, s in enumerate(cur_line[word_name]):
                 annotations = dict()
@@ -139,6 +148,8 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
                 annotations[word_name] = [word]
                 data.add_annotations(**annotations)
         index += len(annotation_types)
+    if len(mismatching_lines) > 0:
+        raise(ILGWordMismatchError(mismatching_lines))
     return data
 
 

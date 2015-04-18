@@ -13,6 +13,17 @@ from .delegates import SwitchDelegate
 from corpustools.corpus.classes import Attribute
 from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path
 
+
+
+class NonScrollingComboBox(QComboBox):
+    def __init__(self, parent = None):
+        QComboBox.__init__(self, parent)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+    def wheelEvent(self, e):
+        e.ignore()
+
+
 class CorpusSelect(QComboBox):
     def __init__(self, parent, settings):
         QComboBox.__init__(self,parent)
@@ -51,7 +62,7 @@ class AnnotationTypeWidget(QGroupBox):
 
         self.nameWidget.setEnabled(False)
 
-        self.levelWidget = QComboBox()
+        self.levelWidget = NonScrollingComboBox()
         self.levelWidget.addItem('Word')
         self.levelWidget.addItem('Phone')
         self.levelWidget.addItem('Other sublexical')
@@ -60,7 +71,7 @@ class AnnotationTypeWidget(QGroupBox):
 
         main.addRow('Hierarchical level',self.levelWidget)
 
-        self.typeTokenWidget = QComboBox()
+        self.typeTokenWidget = NonScrollingComboBox()
         self.typeTokenWidget.addItem('Word type')
         self.typeTokenWidget.addItem('Word token')
 
@@ -122,7 +133,7 @@ class AttributeWidget(QGroupBox):
         if disable_name:
             self.nameWidget.setEnabled(False)
 
-        self.typeWidget = QComboBox()
+        self.typeWidget = NonScrollingComboBox()
         for at in Attribute.ATT_TYPES:
             if exclude_tier and at == 'tier':
                 continue
@@ -140,7 +151,7 @@ class AttributeWidget(QGroupBox):
         self.typeWidget.currentIndexChanged.connect(self.updateDelimiter)
         main.addRow('Type of column',self.typeWidget)
 
-        self.useAs = QComboBox()
+        self.useAs = NonScrollingComboBox()
         self.useAs.addItem('Custom column')
         self.useAs.addItem('Spelling')
         self.useAs.addItem('Transcription')
