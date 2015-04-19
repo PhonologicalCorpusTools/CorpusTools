@@ -45,8 +45,10 @@ class CorpusSelect(QComboBox):
         return None
 
 class AnnotationTypeWidget(QGroupBox):
-    def __init__(self, annotation_type = None, parent = None):
-        QGroupBox.__init__(self, 'Annotation type details', parent)
+    def __init__(self, annotation_type = None, parent = None, title = None):
+        if title is None:
+            title = 'Annotation type details'
+        QGroupBox.__init__(self, title, parent)
 
         main = QFormLayout()
 

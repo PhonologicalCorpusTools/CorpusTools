@@ -478,7 +478,6 @@ class LoadCorpusDialog(PCTDialog):
                 break
         else:
             self.textType = None
-            return
         if self.textType == 'spelling':
             self.digraphs.setEnabled(False)
             self.supportCorpus.setEnabled(True)
@@ -624,7 +623,18 @@ class LoadCorpusDialog(PCTDialog):
             if attribute:
                 c = AttributeWidget(attribute = a, disable_name = True)
             else:
-                c = AnnotationTypeWidget(a)
+                title = None
+                if self.textType == 'textgrid':
+                    title = 'Tier details'
+                elif self.textType in ['ilg','spelling']:
+                    title = 'Line details'
+                elif self.textType == 'transcription':
+                    if a.name == 'transcription':
+                        title = 'Line details'
+                    else:
+                        title = 'Spellings inferred from text'
+
+                c = AnnotationTypeWidget(a, title = title)
             self.columns.append(c)
             self.columnFrame.layout().addWidget(c)
 
@@ -719,9 +729,7 @@ class LoadCorpusDialog(PCTDialog):
 
     @check_for_errors
     def inspect(self):
-        if self.textType is None:
-            return
-        if os.path.exists(self.pathWidget.value()):
+        if self.textType is not None and os.path.exists(self.pathWidget.value()):
             if self.textType == 'csv':
                 atts, coldelim = inspect_csv(self.pathWidget.value())
                 self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
