@@ -983,8 +983,6 @@ class MainWindow(QMainWindow):
         for i in self.__dict__:
             item = self.__dict__[i]
             clean(item)
-     # end cleanUp
-# end class CustomWindow
 
 def clean(item):
     """Clean up the memory by closing and deleting the item if possible."""
