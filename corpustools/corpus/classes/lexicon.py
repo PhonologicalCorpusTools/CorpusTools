@@ -1130,6 +1130,10 @@ class Inventory(object):
         else:
             self._data = data
         self.features = []
+        self.possible_values = set()
+
+    def __len__(self):
+        return len(self._data.keys())
 
     def keys(self):
         return self._data.keys()
@@ -1141,6 +1145,8 @@ class Inventory(object):
         return self._data.items()
 
     def __getitem__(self, key):
+        if isinstance(key, slice):
+            return sorted(self._data.keys())[key]
         return self._data[key]
 
     def __setitem__(self, key, value):

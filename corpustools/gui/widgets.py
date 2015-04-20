@@ -1333,7 +1333,7 @@ class EnvironmentDialog(QDialog):
         acFrame.setLayout(acLayout)
 
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
-
+        self.addOneMore = False
         self.setLayout(layout)
         #self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Create {}'.format(self.parent().name))
@@ -1359,16 +1359,14 @@ class EnvironmentDialog(QDialog):
         self.rhsFeature.clearAll()
 
     def accept(self):
-        if self.lhsEnvType.currentIndex() == 0:
-            lhs = self.lhsInventory.value()
-        else:
-            lhs = self.lhsFeature.value()
+        lhs = self.lhsInventory.value()
+        rhs = self.rhsInventory.value()
 
-        if self.rhsEnvType.currentIndex() == 0:
-            rhs = self.rhsInventory.value()
-        else:
-            rhs = self.rhsFeature.value()
         if self.parent().name == 'environment':
+            if self.lhsEnvType.currentIndex() != 0:
+                lhs = self.lhsFeature.value()
+            if  self.rhsEnvType.currentIndex() != 0:
+                rhs = self.rhsFeature.value()
             env = '{}_{}'.format(lhs, rhs)
         else:
             if lhs == '':
