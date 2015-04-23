@@ -79,11 +79,21 @@ class PhonoSearchDialog(FunctionDialog):
         pslayout.addWidget(self.envWidget)
 
 
-        optionLayout = QVBoxLayout()
+        optionLayout = QFormLayout()
 
         self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        optionLayout.addWidget(self.tierWidget)
+        optionLayout.addRow(self.tierWidget)
+
+        self.longDistanceCheck = QCheckBox()
+
+        optionLayout.addRow('Allow for intervening segments', self.longDistanceCheck)
+
+        self.forceSegmentsCheck = QCheckBox()
+
+        self.forceSegmentsCheck.setChecked(True)
+
+        optionLayout.addRow('Force summary by segments', self.forceSegmentsCheck)
 
         optionFrame = QGroupBox('Options')
 
@@ -123,12 +133,17 @@ class PhonoSearchDialog(FunctionDialog):
                     "Missing information", "Please specify at least one {}.".format(targetType[:-1].lower()))
             return
         if targetType == 'Features':
+            self.features = targetList
             targetList = targetList[1:-1]
             kwargs['seg_list'] = self.corpus.features_to_segments(targetList)
         else:
+            self.features = None
             kwargs['seg_list'] = targetList
+        if self.forceSegmentsCheck.isChecked():
+            self.features = None
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
+        kwargs['long_distance'] = self.longDistanceCheck.isChecked()
         envs = self.envWidget.value()
         if len(envs) > 0:
             kwargs['envs'] = envs
@@ -155,5 +170,5 @@ class PhonoSearchDialog(FunctionDialog):
                 envs = [str(x[1]) for x in f]
             except IndexError:
                 envs = []
-            self.results.append([w, str(getattr(w,self.tierWidget.value())),segs,
-                                envs])
+            self.results.append((self.features, [w, str(getattr(w,self.tierWidget.value())),segs,
+                                envs]))

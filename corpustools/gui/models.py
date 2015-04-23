@@ -40,7 +40,7 @@ class BaseTableModel(QAbstractTableModel):
                 else:
                     data = 'No'
             elif isinstance(data,list):
-                data = ', '.join(data)
+                data = ', '.join(map(str,data))
             else:
                 data = str(data)
         except IndexError:
@@ -452,18 +452,22 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.summary_header = summary_header
         self.columns = self.header
 
-        self.rows = results
-        self.allData = self.rows
+        self.rows = [x[1] for x in results] #Tuples of feature specification, result_line)
+        self.allData = results
         self.summarized = False
 
     def _summarize(self):
         typefreq = defaultdict(float)
         tokenfreq = defaultdict(float)
         for line in self.allData:
+            features, line = line
             segs = line[2]
             envs = line[3]
             for i,seg in enumerate(segs):
-                segenv = seg,envs[i]
+                if features is None:
+                    segenv = seg,envs[i]
+                else:
+                    segenv = features,envs[i]
                 typefreq[segenv] += 1
                 tokenfreq[segenv] += line[0].frequency
 
@@ -480,7 +484,7 @@ class PhonoSearchResultsModel(BaseTableModel):
         if self.summarized:
             self._summarize()
         else:
-            self.rows = self.allData
+            self.rows = [x[1] for x in self.allData]
             self.columns = self.header
         self.layoutChanged.emit()
 
