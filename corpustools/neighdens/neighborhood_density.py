@@ -11,7 +11,7 @@ from functools import partial
 from math import factorial
 import operator
 
-from corpustools.exceptions import PCTError
+from corpustools.exceptions import NeighDenError
 
 def args_to_key(*args):
     return '_'.join(['neighbor']+[str(x) for x in args])
@@ -78,7 +78,7 @@ def neighborhood_density_graph(corpus, query, sequence_type = 'transcription',
             stop_check = None, call_back = None):
     detail_key = string_sim_key(algorithm, sequence_type, count_what)
     if detail_key not in corpus._graph.graph['symbolsim']:
-        raise(PCTError("Optimized graph not found!"))
+        raise(NeighDenError("Optimized graph not found!"))
     if stop_check is not None and stop_check():
         return
     key = corpus.key(query)
@@ -150,7 +150,12 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
         Maximum edit distance from the queried word to consider a word a neighbor.
 
     count_what : str
-        If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency
+        If 'type', count neighbors in terms of their type frequency.
+        If 'token', count neighbors in terms of their token frequency.
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -241,6 +246,10 @@ def find_mutation_minpairs(corpus, query,
 
     sequence_type : str
         Tier (or spelling or transcription) on which to search for minimal pairs
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------

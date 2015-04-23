@@ -295,7 +295,7 @@ class DiscourseModel(BaseCorpusTableModel):
         #    i.setFlags(i.flags() | (not Qt.ItemIsEditable))
         #    self.appendRow(i)
 
-        self.sort(2,Qt.AscendingOrder)
+        #self.sort(2,Qt.AscendingOrder)
 
     def rowsToTimes(self,rows):
         return [self.rows[x] for x in rows]
@@ -448,7 +448,6 @@ class ResultsModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
         self.settings = settings
         self.columns = header
-
         self.rows = results
 
 class PhonoSearchResultsModel(BaseTableModel):

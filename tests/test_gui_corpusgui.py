@@ -1,6 +1,8 @@
 
 
 from corpustools.gui.corpusgui import *
+#from corpustools.gui.widgets import AddTierDialog
+
 
 def test_attribute_widget(qtbot,specified_test_corpus):
     new = AttributeWidget()

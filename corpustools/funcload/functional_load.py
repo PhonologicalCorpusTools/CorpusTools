@@ -7,12 +7,45 @@ import copy
 from math import factorial
 import time
 
-
+from corpustools.exceptions import FuncLoadError
 
 def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
         relative_count = True, distinguish_homophones = False,
         sequence_type = 'transcription',
         stop_check = None, call_back = None):
+    """Calculate the functional load of the contrast between two segments
+    as a count of minimal pairs using pronunciation variants of words instead
+    of a single transcription.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        The domain over which functional load is calculated.
+    segment_pairs : list of length-2 tuples of str
+        The pairs of segments to be conflated.
+    frequency_cutoff : number, optional
+        Minimum frequency of words to consider, if desired.
+    relative_count : bool, optional
+        If True, divide the number of minimal pairs by the total count
+        by the total number of words that contain either of the two segments.
+    distinguish_homophones : bool, optional
+        If False, then you'll count sock~shock (sock=clothing) and
+        sock~shock (sock=punch) as just one minimal pair; but if True,
+        you'll overcount alternative spellings of the same word, e.g.
+        axel~actual and axle~actual. False is the value used by Wedel et al.
+    sequence_type : string
+        The attribute of Words to calculate FL over. Normally this will
+        be the transcription, but it can also be the spelling or a
+        user-specified tier.
+
+    Returns
+    -------
+    int or float
+        If `relative_count`==False, returns an int of the raw number of
+        minimal pairs. If `relative_count`==True, returns a float of that
+        count divided by the total number of words in the corpus that
+        include either `s1` or `s2`.
+    """
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
 
     neutralized = list()
@@ -73,6 +106,29 @@ def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
     return result
 
 def matches_wordtokens(first, second):
+    """
+    Determines the degree of overlap between two words' pronunciation
+    variants.
+
+    The degree of overlap is the number of pairwise comparisons that are
+    minimal pairs divided by all the possible minimal pairs (number of variants
+    for the first word multiplied by the number of variants for the second word)
+
+    Parameters
+    ----------
+    first : tuple
+        Tuple of a list of neutralized pronunciation variants, the spelling of the word,
+        and the word's unneutralized sequence at the word level
+    second : tuple
+        Tuple of a list of neutralized pronunciation variants, the spelling of the word,
+        and the word's unneutralized sequence at the word level
+
+    Returns
+    -------
+    float
+        Returns the ratio of actual minimal pairs between the two sets
+        of variants and the possible minimal pairs
+    """
     if first[2] == second[2] and first[1] == second[1]:
         return 0
     possible_overlap = len(first[0]) * len(second[0])
@@ -88,6 +144,25 @@ def matches_wordtokens(first, second):
     return actual_overlap / possible_overlap
 
 def matches(first, second):
+    """
+    Determine if two neutralized transcriptions are a minimal pair or not
+
+    Parameters
+    ----------
+    first : tuple
+        Tuple of the neutralized sequence, the spelling of the word,
+        and the unneutralized sequence
+    second : tuple
+        Tuple of the neutralized sequence, the spelling of the word,
+        and the unneutralized sequence
+
+    Returns
+    -------
+    bool
+        Returns True if the neutralized sequences match, they both contain
+        neutralized segments, and the spellings and original transcriptions
+        are different; otherwise returns False
+    """
     return (first[0] == second[0] and first[1] != second[1]
         and 'NEUTR:' in first[0] and 'NEUTR:' in second[0]
         and first[2] != second[2])
@@ -115,7 +190,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    sequence_type : string
+    sequence_type : str
         The attribute of Words to calculate FL over. Normally this will
         be the transcription, but it can also be the spelling or a
         user-specified tier.
@@ -130,8 +205,8 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
     """
 
     if frequency_cutoff > 0.0:
-
         corpus = [word for word in corpus if word.frequency >= frequency_cutoff]
+
     if stop_check is not None and stop_check():
         return
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
@@ -178,6 +253,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
         minpairs = set(minpairs)
 
     result = len(minpairs)
+
     if relative_count and len(neutralized) > 0:
         result /= len(neutralized)
 
@@ -188,7 +264,17 @@ def deltah_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
             type_or_token = 'most_frequent_type', sequence_type = 'transcription',
             stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between between two
-    segments as the decrease in corpus entropy caused by a merger.
+    segments as the decrease in corpus entropy caused by a merger using
+    pronunciation variants of words instead of a single transcription.
+
+    The supported frequency options are as follows: `most_frequent_type`
+    selects the most frequent pronunciation variant as the transcription and uses the type
+    frequency of the word; `most_frequent_token` does the same thing as
+    `most_frequent_type` but uses the token frequency of the word;
+    `count_token` treats each pronunciation variant as its own transcription
+    and uses the token frequency of each variant; `relative_type` is similar
+    to `count_token`, but the frequencies are normalized by the overall
+    frequency of the word, yielding a type-like frequency.
 
     Parameters
     ----------
@@ -198,11 +284,15 @@ def deltah_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
         The pairs of segments to be conflated.
     frequency_cutoff : number, optional
         Minimum frequency of words to consider, if desired.
-    type_or_token : str {'type', 'token'}
+    type_or_token : str {'most_frequent_type', 'most_frequent_token', 'count_token', 'relative_type'}
         Specify whether entropy is based on type or token frequency.
     sequence_type : string
         The attribute of Words to calculate FL over. Normally this will be the
         transcription, but it can also be the spelling or a user-specified tier.
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -300,6 +390,10 @@ def deltah_fl(corpus, segment_pairs, frequency_cutoff = 0,
     sequence_type : string
         The attribute of Words to calculate FL over. Normally this will be the
         transcription, but it can also be the spelling or a user-specified tier.
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -394,6 +488,10 @@ def relative_minpair_fl(corpus, segment, frequency_cutoff = 0,
         The attribute of Words to calculate FL over. Normally this will
         be the transcription, but it can also be the spelling or a
         user-specified tier.
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -441,6 +539,10 @@ def relative_deltah_fl(corpus, segment, frequency_cutoff = 0,
         The attribute of Words to calculate FL over. Normally this
         will be the transcription, but it can also be the spelling or a
         user-specified tier.
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -565,6 +667,8 @@ def all_pairwise_fls(corpus, relative_fl=False, algorithm='minpair', frequency_c
     total_calculations = ((((len(corpus.inventory)-1)**2)-len(corpus.inventory)-1)/2)+1
     ct = 1
     t = time.time()
+    if '' in corpus.inventory:
+        raise Exception('Warning: Calculation of functional load for all segment pairs requires that all items in corpus have a non-null transcription.')
     for i, s1 in enumerate(corpus.inventory[:-1]):
         for s2 in corpus.inventory[i+1:]:
             if s1 != '#' and s2 != '#':

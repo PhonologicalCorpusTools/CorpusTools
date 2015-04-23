@@ -12,9 +12,7 @@ from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
 from corpustools.multiprocessing import score_mp, PCTMultiprocessingError
 
-
-class StringSimilarityError(Exception):
-    pass
+from corpustools.exceptions import StringSimilarityError
 
 def string_sim_key(algorithm, sequence_type, count_what):
     if algorithm == 'khorsi':
@@ -111,6 +109,10 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     min_rel: double
         Filters out all words that are lower than min_rel from a relatedness measure
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------

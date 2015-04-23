@@ -1,20 +1,23 @@
 import os
+import random
 import sys
+
 
 from .imports import *
 
 from .config import Settings, PreferencesDialog
 from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
-                    LexiconView,PhonoSearchResults)
-from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
+                    LexiconView,PhonoSearchResults, MutualInfoVowelHarmonyWindow)
 
-from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
+from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel, DiscourseModel
+
+from .corpusgui import (CorpusLoadDialog, AddAbstractTierDialog, AddTierDialog,
                         RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
                         AddCountColumnDialog,
                         ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
-                        ExportFeatureSystemDialog)
+                        ExportFeatureSystemDialog, FeatureClassManager)
 
 from .windows import SelfUpdateWorker
 
@@ -28,6 +31,8 @@ from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
+from .luckygui import LuckyDialog
+from .autogui import AutoDialog
 from .helpgui import AboutDialog, HelpDialog
 
 from .optimizegui import OptimizeStringSimDialog
@@ -129,7 +134,6 @@ class MainWindow(QMainWindow):
         self.featureSystemStatus = QLabel()
         self.featureSystemStatus.setText("No feature system selected")
         self.statusBar().addWidget(self.featureSystemStatus)
-
         self.setWindowTitle("Phonological CorpusTools")
         self.createActions()
         self.createMenus()
@@ -145,7 +149,9 @@ class MainWindow(QMainWindow):
         self.MIWindow = None
         self.KLWindow = None
         self.PhonoSearchWindow = None
+        self.AutoWindow = None
         self.setMinimumWidth(self.menuBar().sizeHint().width())
+
 
     def sizeHint(self):
         sz = QMainWindow.sizeHint(self)
@@ -282,6 +288,12 @@ class MainWindow(QMainWindow):
 
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self, self.settings)
+        result = dialog.exec_()
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def loadFeatureClasses(self):
+        dialog = FeatureClassManager(self, self.settings, self.corpusModel)
         result = dialog.exec_()
 
     def subsetCorpus(self):
@@ -455,6 +467,8 @@ class MainWindow(QMainWindow):
                 self.FLWindow.rejected.connect(lambda: self.showFLResults.setVisible(False))
                 self.showFLResults.setVisible(True)
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def kullbackLeibler(self):
         dialog = KLDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
@@ -468,6 +482,21 @@ class MainWindow(QMainWindow):
                 self.showKLResults.triggered.connect(self.KLWindow.activateWindow)
                 self.KLWindow.rejected.connect(lambda: self.showKLResults.setVisible(False))
                 self.showKLResults.setVisible(True)
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def autoAnalysis(self):
+        dialog = AutoDialog(self, self.corpusModel, self.showToolTips)
+        result = dialog.exec_()
+        # if self.AutoWindow is not None and dialog.update and self.AutoWindow.isVisible():
+        #     self.AutoWindow.table.model().addRows(dialog.results)
+        # else:
+        #     self.AutoWindow = MutualInfoVowelHarmonyWindow('Vowel Harmony', dialog, self)
+        #     self.AutoWindow.show()
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.raise_)
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.activateWindow)
+        #     self.AutoWindow.rejected.connect(lambda: self.showAutoResults.setVisible(False))
+        #     self.showAutoResults.setVisible(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -647,7 +676,7 @@ class MainWindow(QMainWindow):
             else:
                 self.enableSave()
 
-
+    @check_for_empty_corpus
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpus)
         result = dialog.exec_()
@@ -661,6 +690,10 @@ class MainWindow(QMainWindow):
         self.manageFeatureSystemsAct = QAction( "Manage feature systems...",
                 self,
                 statusTip="Manage feature systems", triggered=self.loadFeatureMatrices)
+
+        self.manageFeatureClassesAct = QAction( "Manage feature classes...",
+                self,
+                statusTip = "Create/change feature classes", triggered=self.loadFeatureClasses)
 
         self.createSubsetAct = QAction( "Generate a corpus subset",
                 self,
@@ -764,6 +797,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate acoustic similarity for corpus")#, triggered=self.acousticSim)
 
+        self.autoAnalysisAct = QAction( "Look for phonological patterns...",
+                self,
+                statusTip = "Look for phonological patterns", triggered = self.autoAnalysis)
+
         self.optimizeStringSimAct = QAction( "Precalculate string similarities...",
                 self,
                 statusTip=("Precalculate string similarities across the "
@@ -847,6 +884,9 @@ class MainWindow(QMainWindow):
         self.showPPResults = QAction("Phonotactic probability results", self)
         self.showPPResults.setVisible(False)
 
+        self.showAutoResults = QAction("Automatic phonological analysis results", self)
+        self.showAutoResults.setVisible(False)
+
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
         self.fileMenu.addAction(self.loadCorpusAct)
@@ -880,6 +920,7 @@ class MainWindow(QMainWindow):
 
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
+        self.featureMenu.addAction(self.manageFeatureClassesAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.phonoProbAct)
@@ -891,9 +932,10 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
+        self.analysisMenu.addAction(self.autoAnalysisAct)
 
-        self.optimizeMenu = self.menuBar().addMenu("Optimize")
-        self.optimizeMenu.addAction(self.optimizeStringSimAct)
+        #self.optimizeMenu = self.menuBar().addMenu("Optimize")
+        #self.optimizeMenu.addAction(self.optimizeStringSimAct)
 
         #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 
@@ -983,8 +1025,6 @@ class MainWindow(QMainWindow):
         for i in self.__dict__:
             item = self.__dict__[i]
             clean(item)
-     # end cleanUp
-# end class CustomWindow
 
 def clean(item):
     """Clean up the memory by closing and deleting the item if possible."""

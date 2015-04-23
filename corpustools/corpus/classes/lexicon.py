@@ -5,8 +5,7 @@ import collections
 import operator
 import math
 
-class CorpusIntegrityError(Exception):
-    pass
+from corpustools.exceptions import CorpusIntegrityError
 
 class Segment(object):
     """
@@ -676,6 +675,9 @@ class Word(object):
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
+    def reverse(self):
+        pass
+
     def __hash__(self):
         return hash((self.spelling,str(self.transcription)))
 
@@ -1127,6 +1129,62 @@ class Attribute(object):
                 self._range = set(self._range)
             self._range.update([x for x in value])
 
+class Inventory(object):
+    def __init__(self, data = None):
+        if data is None:
+            self._data = {'#' : Segment('#')}
+        else:
+            self._data = data
+        self.features = []
+        self.possible_values = set()
+        self.classes = dict()
+
+    def __len__(self):
+        return len(self._data.keys())
+
+    def keys(self):
+        return self._data.keys()
+
+    def values(self):
+        return self._data.values()
+
+    def items(self):
+        return self._data.items()
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return sorted(self._data.keys())[key]
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+    def __iter__(self):
+        for k in sorted(self._data.keys()):
+            yield self._data[k]
+
+    def __contains__(self, item):
+        if isinstance(item, str):
+            return item in self._data.keys()
+        elif isinstance(item, Segment):
+            return item.symbol in self._data.keys()
+        return False
+
+    def specify(self, specifier):
+        if specifier is None:
+            for k in self._data.keys():
+                self._data[k].specify({})
+            self.features = list()
+            self.possible_values = set()
+        else:
+            for k in self._data.keys():
+                try:
+                    self._data[k].specify(specifier[k].features)
+                except KeyError:
+                    pass
+            self.features = specifier.features
+            self.possible_values = specifier.possible_values
+
 class Corpus(object):
     """
     Lexicon to store information about Words, such as transcriptions,
@@ -1168,7 +1226,7 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self._inventory = {'#' : Segment('#')} #set of Segments, if transcription exists
+        self._inventory = Inventory()
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
@@ -1381,6 +1439,14 @@ class Corpus(object):
     @property
     def words(self):
         return sorted(list(self.wordlist.keys()))
+
+    def symbol_to_segment(self, symbol):
+        for seg in self.inventory:
+            if seg.symbol == symbol:
+                return seg
+        else:
+            raise CorpusIntegrityError('Could not find {} in the inventory'.format(symbol))
+
 
     def features_to_segments(self, feature_description):
         """
@@ -1601,6 +1667,8 @@ class Corpus(object):
         try:
             if '_inventory' not in state:
                 state['_inventory'] = state['inventory']
+            if not isinstance(state['_inventory'], Inventory):
+                state['_inventory'] = Inventory(state['_inventory'])
             if 'has_spelling' not in state:
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' not in state:
@@ -1641,12 +1709,7 @@ class Corpus(object):
 
 
     def _specify_features(self):
-        if self.specifier is not None:
-            for k in self._inventory.keys():
-                try:
-                    self._inventory[k].specify(self.specifier[k].features)
-                except KeyError:
-                    pass
+        self.inventory.specify(self.specifier)
 
     def check_coverage(self):
         """
@@ -1780,7 +1843,7 @@ class Corpus(object):
         list
             Sorted list of segment symbols used in transcriptions in the corpus
         """
-        return sorted(list(self._inventory.values()))
+        return self._inventory
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -1839,7 +1902,7 @@ class Corpus(object):
                     except KeyError:
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
-                        self._graph.add_node(key)
+                        #self._graph.add_node(key)
                         break
             else:
                 return
@@ -2017,3 +2080,4 @@ class Corpus(object):
 
     def __iter__(self):
         return iter(self.wordlist.values())
+
