@@ -4,7 +4,7 @@ from .imports import *
 
 from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
                         RadioSelectWidget, InventoryBox, FeatureBox,
-                        TierWidget)
+                        TierWidget, SegmentSelectionWidget)
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -51,29 +51,9 @@ class PhonoSearchDialog(FunctionDialog):
         psFrame = QFrame()
         pslayout = QHBoxLayout()
 
+        self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
 
-        self.targetFrame = QFrame()
-        targetLayout = QVBoxLayout()
-
-        self.targetType = QComboBox()
-        self.targetType.addItem('Segments')
-        if self.corpus.specifier is not None:
-            self.targetType.addItem('Features')
-        else:
-            targetLayout.addWidget(QLabel('Phonological search based on features is not available without a feature system.'))
-
-        self.targetType.currentIndexChanged.connect(self.generateFrames)
-
-        targetLayout.addWidget(QLabel('Basis for search:'))
-        targetLayout.addWidget(self.targetType, alignment = Qt.AlignLeft)
-
-        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
-
-        targetLayout.addWidget(self.targetWidget)
-
-        self.targetFrame.setLayout(targetLayout)
-
-        pslayout.addWidget(self.targetFrame)
+        pslayout.addWidget(self.targetWidget)
 
         self.envWidget = EnvironmentSelectWidget(self.corpus.inventory)
         pslayout.addWidget(self.envWidget)
@@ -96,37 +76,14 @@ class PhonoSearchDialog(FunctionDialog):
         self.setWindowTitle('Phonological search')
         self.progressDialog.setWindowTitle('Searching')
 
-    def createFeatureFrame(self):
-        self.targetWidget.deleteLater()
-
-        self.targetWidget = FeatureBox('Features of segments to search',self.corpus.inventory)
-        self.targetFrame.layout().addWidget(self.targetWidget)
-
-    def createSegmentFrame(self):
-        self.targetWidget.deleteLater()
-
-        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
-        self.targetFrame.layout().addWidget(self.targetWidget)
-
-    def generateFrames(self,ind=0):
-        if self.targetType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.targetType.currentText() == 'Features':
-            self.createFeatureFrame()
-
     def generateKwargs(self):
         kwargs = {}
-        targetType = self.targetType.currentText()
         targetList = self.targetWidget.value()
         if not targetList:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one {}.".format(targetType[:-1].lower()))
             return
-        if targetType == 'Features':
-            targetList = targetList[1:-1]
-            kwargs['seg_list'] = self.corpus.features_to_segments(targetList)
-        else:
-            kwargs['seg_list'] = targetList
+        kwargs['seg_list'] = targetList
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
         envs = self.envWidget.value()

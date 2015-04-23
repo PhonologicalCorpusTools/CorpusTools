@@ -1170,6 +1170,41 @@ class Inventory(object):
             return item.symbol in self._data.keys()
         return False
 
+    def valid_feature_strings(self):
+        strings = list()
+        for v in self.possible_values:
+            for f in self.features:
+                strings.append(v+f)
+        return strings
+
+    def features_to_segments(self, feature_description):
+        """
+        Given a feature description, return the segments in the inventory
+        that match that feature description
+
+        Feature descriptions should be either lists, such as
+        ['+feature1', '-feature2'] or strings that can be separated into
+        lists by ',', such as '+feature1,-feature2'.
+
+        Parameters
+        ----------
+        feature_description : string or list
+            Feature values that specify the segments, see above for format
+
+        Returns
+        -------
+        list of Segments
+            Segments that match the feature description
+
+        """
+        segments = list()
+        if isinstance(feature_description,str):
+            feature_description = feature_description.split(',')
+        for k,v in self._data.items():
+            if v.feature_match(feature_description):
+                segments.append(k)
+        return segments
+
     def specify(self, specifier):
         if specifier is None:
             for k in self._data.keys():

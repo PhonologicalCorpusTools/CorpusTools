@@ -8,7 +8,8 @@ try:
                                 pyqtSignal as Signal,QThread,QAbstractTableModel,
                                 QSize, QSettings,QPoint, QItemSelectionModel,
                                 QSortFilterProxyModel, QAbstractItemModel,
-                            QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime)
+                            QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
+                            QStringListModel)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
@@ -20,7 +21,8 @@ try:
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper,
-                                QSlider, QItemDelegate, QScrollArea, QStackedWidget)
+                                QSlider, QItemDelegate, QScrollArea, QStackedWidget,
+                                QCompleter)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
     try:
         from PyQt5.QtWebKitWidgets import QWebView
