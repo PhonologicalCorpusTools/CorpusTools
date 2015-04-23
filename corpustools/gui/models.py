@@ -442,7 +442,6 @@ class ResultsModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
         self.settings = settings
         self.columns = header
-
         self.rows = results
 
 class PhonoSearchResultsModel(BaseTableModel):

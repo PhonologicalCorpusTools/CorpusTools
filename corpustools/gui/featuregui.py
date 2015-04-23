@@ -14,10 +14,11 @@ from .views import TableWidget, SubTreeView
 
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
-from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget
+from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget, InventoryBox, CreateClassWidget
 
 from .windows import DownloadWorker
 from .helpgui import HelpDialog
+
 
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
@@ -627,6 +628,39 @@ class EditSegmentDialog(QDialog):
                 return
         self.featspec = {f:v.currentText() for f,v in self.featureSelects.items()}
         QDialog.accept(self)
+
+class FeatureClassManager(CreateClassWidget):
+    def __init__(self, parent, settings, corpusModel):
+        self.corpus = corpusModel.corpus
+        super().__init__(parent, self.corpus, class_type='class')
+
+    def accept(self):
+        className = self.nameEdit.text()
+        className = className.strip()
+        className = className.replace(' ', '')
+        if className == '':
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please enter a name for the tier.")
+            return
+        elif className in self.corpus.inventory.classes.keys():
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate class names",
+                                 "'{}' is already the name of a class. Please select a new name".format(className))
+                                 #QMessageBox.NoButton, self)
+            msgBox.addButton("OK", QMessageBox.AcceptRole)
+        createType = self.createType.currentText()
+        createList = self.createWidget.value()
+        if not createList:
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
+            return
+        if createType == 'Features':
+            createList = createList[1:-1]
+            self.segList = self.corpus.features_to_segments(createList)
+        else:
+            self.segList = createList
+        QDialog.accept(self)
+
 
 
 class FeatureMatrixManager(QDialog):

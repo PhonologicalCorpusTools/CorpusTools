@@ -1,13 +1,18 @@
+
 import sys
-from itertools import combinations
 import operator
+from itertools import combinations
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
+    QMessageBox, QGroupBox, QLineEdit
+from corpustools.corpus.classes import Attribute
+from corpustools.gui.views import TableWidget
 
 from .imports import *
-
 from .views import TableWidget
-
 from .models import SegmentPairModel, EnvironmentModel, FilterModel
 
+#from .corpusgui import AddTierDialog
 from .delegates import SwitchDelegate
 
 class ThumbListWidget(QListWidget):
@@ -622,6 +627,8 @@ class InventoryTable(QTableWidget):
         for i in range(ver.count()):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
+
+
 
 class SegmentButton(QPushButton):
     def sizeHint(self):
@@ -1263,7 +1270,7 @@ class EnvironmentDialog(QDialog):
 
         rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        if parent.name == 'environment':
+        if parent.name == 'environment' or parent.name == 'class':
             self.lhsEnvType = QComboBox()
             self.rhsEnvType = QComboBox()
             self.lhsEnvType.addItem('Segments')
@@ -1321,16 +1328,16 @@ class EnvironmentDialog(QDialog):
         self.oneButton = QPushButton('Add')
         self.anotherButton = QPushButton('Add and create another')
         self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
-        acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
-        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.acLayout = QHBoxLayout()
+        self.acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
+        self.acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
+        self.acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
         self.oneButton.clicked.connect(self.one)
         self.anotherButton.clicked.connect(self.another)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
-        acFrame.setLayout(acLayout)
+        acFrame.setLayout(self.acLayout)
 
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
         self.addOneMore = False
@@ -1510,3 +1517,215 @@ class RadioSelectWidget(QGroupBox):
                 w.setEnabled(self.enabled[key])
             else:
                 w.setEnabled(True)
+
+
+class SegmentClassSelectWidget(QFrame):
+
+    def __init__(self, parent, corpus):
+        #super(AddTierDialog, self).__init__()
+        super().__init__(parent)
+
+        self.corpus = corpus
+
+        layout = QVBoxLayout()
+        box = QFormLayout()
+        self.createType = QComboBox()
+        self.createType.addItem('Segments')
+        if self.corpus.specifier is not None:
+            self.createType.addItem('Features')
+        else:
+            layout.addWidget(QLabel('Features for class creation are not available without a feature system.'))
+
+        self.createType.currentIndexChanged.connect(self.generateFrames)
+
+        layout.addWidget(QLabel('Basis for creating class:'))
+        layout.addWidget(self.createType, alignment = Qt.AlignLeft)
+        self.createFrame = QFrame()
+        createLayout = QVBoxLayout()
+
+        self.createWidget = InventoryBox('Segments to define this class',self.corpus.inventory)
+        self.createType.currentIndexChanged.connect(self.generateFrames)
+
+        createLayout.addWidget(self.createWidget)
+
+        self.createFrame.setLayout(createLayout)
+
+        layout.addWidget(self.createFrame)
+
+        self.createButton = QPushButton('Create class')
+        self.previewButton = QPushButton('Preview class')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.previewButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.previewButton.clicked.connect(self.preview)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+        self.setWindowTitle('Create class')
+
+    def createFeatureFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = FeatureBox('Features to define the class',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def createSegmentFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = InventoryBox('Segments to define the class',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def generateFrames(self,ind=0):
+        if self.createType.currentText() == 'Segments':
+            self.createSegmentFrame()
+        elif self.createType.currentText() == 'Features':
+            self.createFeatureFrame()
+
+    def preview(self):
+        createType = self.createType.currentText()
+        createList = self.createWidget.value()
+        if not createList:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
+            return
+        if createType == 'Features':
+            createList = createList[1:-1]
+            segList = self.corpus.features_to_segments(createList)
+        else:
+            segList = createList
+        notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
+
+        reply = QMessageBox.information(self,
+                "Class preview", "Segments included: {}\nSegments excluded: {}".format(', '.join(segList),', '.join(notInSegList)))
+
+    def accept(self):
+         QDialog.accept(self)
+
+
+class CreateClassWidget(QDialog):
+    def __init__(self, parent, corpus, class_type):
+        QDialog.__init__(self, parent)
+
+        self.corpus = corpus
+        self.class_type = class_type
+
+        self.mainLayout = QVBoxLayout()
+
+        if self.class_type == 'tier':
+            explanation = QLabel(('You can create Tiers in this window. A Tier is subpart of a word that consists only of '
+            'the segments you want, maintaining their original ordering. You can define the properties of the Tier below. '
+            'Tiers are commonly created on the basis of a feature class, e.g. all the vowels or of all the obstruents in a word. '
+            'PCT will allow you to create Tiers consisting of any arbitrary set of sounds.\n'
+            'Once created, the Tier will be added as a column in your corpus, and it will be visible in the main window. '
+            'You can then select this Tier inside of certain analysis functions.'))
+        elif self.class_type == 'class':
+            explanation = QLabel(('You can create Classes in this window. A Class is simply a set of sounds from the inventory '
+            'of your corpus. Classes are normally created on the basis of shared phonological features, in which case they are '
+            'usually called  \"natural\" classes. An arbitrary set of sounds with no common features may be called \"unnatural\".\n'
+            'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
+            'Classes can also be used to organize the inventory chart for your corpus'))
+
+        explanation.setWordWrap(True)
+        self.mainLayout.addWidget(explanation)
+
+        self.nameFrame = QGroupBox('Name of {}'.format(self.class_type))
+        self.nameEdit = QLineEdit()
+        nameLayout = QFormLayout()
+        nameLayout.addRow(self.nameEdit)
+        self.nameFrame.setLayout(nameLayout)
+        self.mainLayout.addWidget(self.nameFrame)
+
+        defineFrame = QFrame()
+        defineLayout = QHBoxLayout()
+
+        self.featuresFrame = QGroupBox('Features to define the {}'.format(self.class_type))
+        self.featureSelectWidget = FeatureBox('Features',self.corpus.inventory)
+        featuresLayout = QVBoxLayout()
+        featuresLayout.addWidget(self.featureSelectWidget)
+        self.featuresFrame.setLayout(featuresLayout)
+        #self.mainLayout.addWidget(self.featuresFrame)
+
+        self.segFrame = QGroupBox('Segments to define the {}'.format(self.class_type))
+        self.segSelectWidget = InventoryBox('Segments',self.corpus.inventory)
+        segLayout = QVBoxLayout()
+        segLayout.addWidget(self.segSelectWidget)
+        self.segFrame.setLayout(segLayout)
+        #self.mainLayout.addWidget(self.segFrame)
+
+        defineLayout.addWidget(self.featuresFrame)
+        defineLayout.addWidget(self.segFrame)
+        defineFrame.setLayout(defineLayout)
+
+        self.mainLayout.addWidget(defineFrame)
+
+        self.createButton = QPushButton('Create {}'.format(self.class_type))
+        self.previewButton = QPushButton('Preview {}'.format(self.class_type))
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.previewButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.previewButton.clicked.connect(self.preview)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        self.mainLayout.addWidget(acFrame)
+
+        self.setLayout(self.mainLayout)
+
+        self.setWindowTitle('Create {}'.format(self.class_type))
+
+    def createFeatureFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = FeatureBox('Features to define the tier',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def createSegmentFrame(self):
+        self.createWidget.deleteLater()
+
+        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
+        self.createFrame.layout().addWidget(self.createWidget)
+
+    def generateFrames(self,ind=0):
+        if self.createType.currentText() == 'Segments':
+            self.createSegmentFrame()
+        elif self.createType.currentText() == 'Features':
+            self.createFeatureFrame()
+
+    def generateClass(self):
+        featureList = self.featureSelectWidget.currentSpecification()
+        segList = self.segSelectWidget.value()
+        if (not featureList) and (not segList):
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify at least one segment, or at least one feature value")
+            return
+
+        previewList = list()
+        if featureList:
+            previewList.extend(self.corpus.features_to_segments(featureList))
+        if segList:
+            previewList.extend(segList)
+        previewList = list(set(previewList))
+        notInPreviewList = [x.symbol for x in self.corpus.inventory if x.symbol not in previewList]
+        return previewList, notInPreviewList
+
+    def preview(self):
+        inClass, notInClass = self.generateClass()
+        reply = QMessageBox.information(self,
+                "{} preview".format(self.class_type),
+                "Segments included: {}\nSegments excluded: {}".format(', '.join(inClass),
+                                                                      ', '.join(notInClass)))
+

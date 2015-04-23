@@ -675,6 +675,9 @@ class Word(object):
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
+    def reverse(self):
+        pass
+
     def __hash__(self):
         return hash((self.spelling,str(self.transcription)))
 
@@ -1131,6 +1134,7 @@ class Inventory(object):
             self._data = data
         self.features = []
         self.possible_values = set()
+        self.classes = dict()
 
     def __len__(self):
         return len(self._data.keys())
@@ -1432,6 +1436,14 @@ class Corpus(object):
     @property
     def words(self):
         return sorted(list(self.wordlist.keys()))
+
+    def symbol_to_segment(self, symbol):
+        for seg in self.inventory:
+            if seg.symbol == symbol:
+                return seg
+        else:
+            raise CorpusIntegrityError('Could not find {} in the inventory'.format(symbol))
+
 
     def features_to_segments(self, feature_description):
         """
@@ -2065,3 +2077,4 @@ class Corpus(object):
 
     def __iter__(self):
         return iter(self.wordlist.values())
+

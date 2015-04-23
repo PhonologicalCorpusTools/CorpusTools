@@ -1,6 +1,8 @@
 
 
 from corpustools.gui.corpusgui import *
+#from corpustools.gui.widgets import AddTierDialog
+
 
 def test_add_abstract_tier(qtbot, specified_test_corpus):
     dialog = AddAbstractTierDialog(None,specified_test_corpus)
