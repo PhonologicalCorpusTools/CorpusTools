@@ -4,21 +4,63 @@ import os
 import sys
 
 from corpustools.corpus.io import (download_binary, save_binary, load_binary,
-                                load_corpus_csv,load_spelling_corpus, load_transcription_corpus,
-                                export_corpus_csv, export_feature_matrix_csv,
-                                load_feature_matrix_csv,
-                                load_corpus_ilg)
+                                load_corpus_csv, export_corpus_csv,
+                                load_spelling_corpus, export_corpus_spelling,
+                                load_transcription_corpus, export_corpus_transcription,
+                                load_feature_matrix_csv, export_feature_matrix_csv,
+                                load_corpus_ilg, export_corpus_ilg)
 
 from corpustools.corpus.io.csv import inspect_csv
 
 from corpustools.exceptions import DelimiterError, ILGWordMismatchError
 
-from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix)
+from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Discourse)
 
-TEST_DIR = 'tests/data'
+from corpustools.utils import generate_discourse
 
-def test_inspect_example():
-    example_path = os.path.join(TEST_DIR,'example.txt')
+
+def test_discourse_generate(unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    assert(isinstance(d, Discourse))
+
+def test_export_spelling(test_dir, unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    export_path = os.path.join(test_dir,'exported','test_export_spelling.txt')
+    export_corpus_spelling(d, export_path, single_line = False)
+
+    d2 = load_spelling_corpus('test', export_path, ' ', [])
+    for k in unspecified_test_corpus.keys():
+        assert(d2.lexicon[k].spelling == unspecified_test_corpus[k].spelling)
+        assert(d2.lexicon[k].frequency == unspecified_test_corpus[k].frequency)
+
+def test_export_transcription(test_dir, unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    export_path = os.path.join(test_dir,'exported','test_export_transcription.txt')
+    export_corpus_transcription(d, export_path, single_line = False)
+
+    d2 = load_transcription_corpus('test', export_path, ' ', [], trans_delimiter='.')
+    words = sorted([x for x in unspecified_test_corpus], key = lambda x: x.transcription)
+    words2 = sorted([x for x in d2.lexicon], key = lambda x: x.transcription)
+    for i,w in enumerate(words):
+        w2 = words2[i]
+        assert(w.transcription == w2.transcription)
+        assert(w.frequency == w2.frequency)
+
+def test_export_ilg(test_dir, unspecified_test_corpus):
+    d = generate_discourse(unspecified_test_corpus)
+    export_path = os.path.join(test_dir, 'exported','test_export_ilg.txt')
+    export_corpus_ilg(d, export_path)
+
+    d2 = load_corpus_ilg('test', export_path, None, [], trans_delimiter='.')
+
+    for k in unspecified_test_corpus.keys():
+        assert(d2.lexicon[k].spelling == unspecified_test_corpus[k].spelling)
+        assert(d2.lexicon[k].transcription == unspecified_test_corpus[k].transcription)
+        assert(d2.lexicon[k].frequency == unspecified_test_corpus[k].frequency)
+    assert(d2.lexicon == unspecified_test_corpus)
+
+def test_inspect_example(test_dir):
+    example_path = os.path.join(test_dir, 'example.txt')
     atts, coldelim = inspect_csv(example_path)
     assert(coldelim == ',')
     for a in atts:
@@ -30,19 +72,20 @@ def test_inspect_example():
         elif a.name == 'spelling':
             assert(a.att_type == 'spelling')
 
-def test_ilg_basic():
-    basic_path = os.path.join(TEST_DIR,'ilg','test_basic.txt')
+
+def test_ilg_basic(test_dir):
+    basic_path = os.path.join(test_dir, 'ilg','test_basic.txt')
     corpus = load_corpus_ilg('test', basic_path,delimiter=None,ignore_list=[], trans_delimiter = '.')
     #print(corpus.words)
     assert(corpus.lexicon.find('a').frequency == 2)
 
-def test_ilg_mismatched():
-    mismatched_path = os.path.join(TEST_DIR,'ilg','test_mismatched.txt')
+def test_ilg_mismatched(test_dir):
+    mismatched_path = os.path.join(test_dir, 'ilg','test_mismatched.txt')
     with pytest.raises(ILGWordMismatchError):
         t = load_corpus_ilg('test', mismatched_path, delimiter=None,ignore_list=[], trans_delimiter = '.')
 
-def test_corpus_csv(unspecified_test_corpus):
-    example_path = os.path.join(TEST_DIR,'example.txt')
+def test_corpus_csv(test_dir, unspecified_test_corpus):
+    example_path = os.path.join(test_dir, 'example.txt')
     with pytest.raises(DelimiterError):
         load_corpus_csv('example',example_path,delimiter='\t')
     with pytest.raises(DelimiterError):
@@ -54,8 +97,8 @@ def test_corpus_csv(unspecified_test_corpus):
     assert(isinstance(c,Corpus))
     assert(c == unspecified_test_corpus)
 
-def test_load_spelling_no_ignore():
-    spelling_path = os.path.join(TEST_DIR,'test_text_spelling.txt')
+def test_load_spelling_no_ignore(test_dir):
+    spelling_path = os.path.join(test_dir, 'test_text_spelling.txt')
     with pytest.raises(DelimiterError):
         load_spelling_corpus('test', spelling_path,"?",[])
 
@@ -64,15 +107,15 @@ def test_load_spelling_no_ignore():
     assert(c.lexicon['ab'].frequency == 2)
 
 
-def test_load_spelling_ignore():
-    spelling_path = os.path.join(TEST_DIR,'test_text_spelling.txt')
+def test_load_spelling_ignore(test_dir):
+    spelling_path = os.path.join(test_dir, 'test_text_spelling.txt')
     c = load_spelling_corpus('test',spelling_path,' ',["'",'.'])
 
     assert(c.lexicon['ab'].frequency == 3)
     assert(c.lexicon['cabd'].frequency == 1)
 
-def test_load_transcription():
-    transcription_path = os.path.join(TEST_DIR,'test_text_transcription.txt')
+def test_load_transcription(test_dir):
+    transcription_path = os.path.join(test_dir, 'test_text_transcription.txt')
     with pytest.raises(DelimiterError):
         load_transcription_corpus('test',
                             transcription_path," ",[],
@@ -82,8 +125,8 @@ def test_load_transcription():
 
     assert(sorted(c.lexicon.inventory) == sorted(['#','a','b','c','d']))
 
-def test_load_transcription_morpheme():
-    transcription_morphemes_path = os.path.join(TEST_DIR,'test_text_transcription_morpheme_boundaries.txt')
+def test_load_transcription_morpheme(test_dir):
+    transcription_morphemes_path = os.path.join(test_dir, 'test_text_transcription_morpheme_boundaries.txt')
     c = load_transcription_corpus('test',transcription_morphemes_path,' ',['-','=','.'],trans_delimiter='.')
 
     assert(c.lexicon['cab'].frequency == 2)
@@ -122,8 +165,8 @@ def test_load_transcription_morpheme():
 
         #self.assertEqual(c,example_c)
 
-def test_save(unspecified_test_corpus):
-    save_path = os.path.join(TEST_DIR,'testsave.corpus')
+def test_save(test_dir, unspecified_test_corpus):
+    save_path = os.path.join(test_dir, 'testsave.corpus')
     save_binary(unspecified_test_corpus,save_path)
 
     c = load_binary(save_path)
@@ -147,8 +190,8 @@ def test_save(unspecified_test_corpus):
         #example_c = load_binary(self.example_path)
         #self.assertEqual(c,example_c)
 
-def test_basic():
-    basic_path = os.path.join(TEST_DIR,'test_feature_matrix.txt')
+def test_basic_feature_matrix(test_dir):
+    basic_path = os.path.join(test_dir, 'test_feature_matrix.txt')
 
     with pytest.raises(DelimiterError):
         load_feature_matrix_csv('test',basic_path,' ')
@@ -158,14 +201,14 @@ def test_basic():
     assert(fm.name == 'test')
     assert(fm['a','feature1'] == '+')
 
-def test_missing_value():
-    missing_value_path = os.path.join(TEST_DIR,'test_feature_matrix_missing_value.txt')
+def test_missing_value(test_dir):
+    missing_value_path = os.path.join(test_dir, 'test_feature_matrix_missing_value.txt')
     fm = load_feature_matrix_csv('test',missing_value_path,',')
 
     assert(fm['d','feature2'] == 'n')
 
-def test_extra_feature():
-    extra_feature_path = os.path.join(TEST_DIR,'test_feature_matrix_extra_feature.txt')
+def test_extra_feature(test_dir):
+    extra_feature_path = os.path.join(test_dir, 'test_feature_matrix_extra_feature.txt')
     fm = load_feature_matrix_csv('test',extra_feature_path,',')
 
     with pytest.raises(KeyError):

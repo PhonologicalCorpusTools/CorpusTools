@@ -20,7 +20,7 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     else:
         trans_delimiters = ['.',' ', ';', ',']
 
-    with open(path,'r') as f:
+    with open(path,'r', encoding='utf-8') as f:
         lines = []
         head = f.readline().strip()
         for i in range(num_lines):

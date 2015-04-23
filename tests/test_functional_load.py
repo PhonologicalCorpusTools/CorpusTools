@@ -2,15 +2,16 @@
 import sys
 import os
 
-from corpustools.funcload.functional_load import minpair_fl, deltah_fl, relative_minpair_fl, relative_deltah_fl, all_pairwise_fls
+from corpustools.funcload.functional_load import (minpair_fl, deltah_fl,
+                                relative_minpair_fl, relative_deltah_fl, all_pairwise_fls,
+                                minpair_fl_wordtokens,deltah_fl_wordtokens)
 from corpustools.corpus.classes import Segment
 
 
 #class NeutralizeTest(unittest.TestCase):
 #    pass
 
-
-def test_non_minimal_pair_corpus(unspecified_test_corpus):
+def test_non_minimal_pair_corpus_minpair(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
                     'segment_pairs':[('s','ʃ')],
                     'frequency_cutoff':0,
@@ -89,7 +90,7 @@ def test_non_minimal_pair_corpus(unspecified_test_corpus):
     for c,v in calls:
         assert(abs(minpair_fl(**c)-v) < 0.0001)
 
-def test_non_minimal_pair_corpus(unspecified_test_corpus):
+def test_non_minimal_pair_corpus_deltah(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
                 'segment_pairs':[('s','ʃ')],
                 'frequency_cutoff':0,
@@ -166,10 +167,170 @@ def test_non_minimal_pair_corpus(unspecified_test_corpus):
                 'frequency_cutoff':3,
                 'type_or_token':'token'},0.25053),]
 
-
     for c,v in calls:
         assert(abs(deltah_fl(**c)-v) < 0.0001)
 
+
+def test_minimal_pair_wordtokens(unspecified_discourse_corpus):
+    c = unspecified_discourse_corpus.lexicon
+    calls = [({'corpus': c,
+                    'segment_pairs':[('s','ʃ')],
+                    'frequency_cutoff':0,
+                    'relative_count':True},0.125),
+            ({'corpus': c,
+                    'segment_pairs':[('s','ʃ')],
+                    'frequency_cutoff':0,
+                    'relative_count':False},1),
+            ({'corpus': c,
+                    'segment_pairs':[('m','n')],
+                    'frequency_cutoff':0,
+                    'relative_count':True},0.11111),
+            ({'corpus': c,
+                    'segment_pairs':[('m','n')],
+                    'frequency_cutoff':0,
+                    'relative_count':False},1),
+            ({'corpus': c,
+                    'segment_pairs':[('e','o')],
+                    'frequency_cutoff':0,
+                    'relative_count':True},0),
+            ({'corpus': c,
+                    'segment_pairs':[('e','o')],
+                    'frequency_cutoff':0,
+                    'relative_count':False},0),
+
+            ({'corpus': c,
+                    'segment_pairs':[('s','ʃ')],
+                    'frequency_cutoff':3,
+                    'relative_count':True},0.14286),
+            ({'corpus': c,
+                    'segment_pairs':[('s','ʃ')],
+                    'frequency_cutoff':3,
+                    'relative_count':False},1),
+            ({'corpus': c,
+                    'segment_pairs':[('m','n')],
+                    'frequency_cutoff':3,
+                    'relative_count':True},0),
+            ({'corpus': c,
+                    'segment_pairs':[('m','n')],
+                    'frequency_cutoff':3,
+                    'relative_count':False},0),
+            ({'corpus': c,
+                    'segment_pairs':[('e','o')],
+                    'frequency_cutoff':3,
+                    'relative_count':True},0),
+            ({'corpus': c,
+                    'segment_pairs':[('e','o')],
+                    'frequency_cutoff':3,
+                    'relative_count':False},0),
+
+            ({'corpus': c,
+                    'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
+                    'frequency_cutoff':0,
+                    'relative_count':True},0.14286),
+            ({'corpus': c,
+                    'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
+                    'frequency_cutoff':0,
+                    'relative_count':False},2),
+            ({'corpus': c,
+                    'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
+                    'frequency_cutoff':3,
+                    'relative_count':True},0.09091),
+            ({'corpus': c,
+                    'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
+                    'frequency_cutoff':3,
+                    'relative_count':False},1)]
+
+    for c,v in calls:
+        assert(abs(minpair_fl_wordtokens(**c)-v) < 0.0001)
+
+def test_deltah_wordtokens(unspecified_discourse_corpus):
+    c = unspecified_discourse_corpus.lexicon
+    calls = [({'corpus': c,
+                'segment_pairs':[('s','ʃ')],
+                'frequency_cutoff':0,
+                'type_or_token':'most_frequent_type'},0.13333),
+            ({'corpus': c,
+                'segment_pairs':[('s','ʃ')],
+                'frequency_cutoff':0,
+                'type_or_token':'most_frequent_token'},0.24794),
+            ({'corpus': c,
+                'segment_pairs':[('m','n')],
+                'frequency_cutoff':0,
+                'type_or_token':'relative_type'},0.13333),
+            ({'corpus': c,
+                'segment_pairs':[('m','n')],
+                'frequency_cutoff':0,
+                'type_or_token':'count_token'},0.00691),
+            ({'corpus': c,
+                'segment_pairs':[('e','o')],
+                'frequency_cutoff':0,
+                'type_or_token':'most_frequent_type'},0),
+            ({'corpus': c,
+                'segment_pairs':[('e','o')],
+                'frequency_cutoff':0,
+                'type_or_token':'most_frequent_token'},0),
+
+            ({'corpus': c,
+                'segment_pairs':[('s','ʃ')],
+                'frequency_cutoff':3,
+                'type_or_token':'relative_type'},0.16667),
+            ({'corpus': c,
+                'segment_pairs':[('s','ʃ')],
+                'frequency_cutoff':3,
+                'type_or_token':'count_token'},0.25053),
+            ({'corpus': c,
+                'segment_pairs':[('m','n')],
+                'frequency_cutoff':3,
+                'type_or_token':'most_frequent_type'},0),
+            ({'corpus': c,
+                'segment_pairs':[('m','n')],
+                'frequency_cutoff':3,
+                'type_or_token':'most_frequent_token'},0),
+            ({'corpus': c,
+                'segment_pairs':[('e','o')],
+                'frequency_cutoff':3,
+                'type_or_token':'relative_type'},0),
+            ({'corpus': c,
+                'segment_pairs':[('e','o')],
+                'frequency_cutoff':3,
+                'type_or_token':'count_token'},0),
+
+            ({'corpus': c,
+                'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')],
+                'frequency_cutoff':0,
+                'type_or_token':'most_frequent_type'},0.26667),
+            ({'corpus': c,
+                'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')],
+                'frequency_cutoff':0,
+                'type_or_token':'most_frequent_token'},0.25485),
+
+            ({'corpus': c,
+                'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')],
+                'frequency_cutoff':3,
+                'type_or_token':'relative_type'},0.16667),
+            ({'corpus': c,
+                'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')],
+                'frequency_cutoff':3,
+                'type_or_token':'count_token'},0.25053),]
+
+    for c,v in calls:
+        assert(abs(deltah_fl_wordtokens(**c)-v) < 0.0001)
 
 def test_relative_minpair(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
@@ -231,7 +392,7 @@ def test_relative_deltah(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
                     'segment':'s',
                     'frequency_cutoff':0,
-                    'type_or_token':'type'},0.0275487),
+                    'type_or_token':'type'},0.014814),
             ({'corpus': unspecified_test_corpus,
                     'segment':'s',
                     'frequency_cutoff':0,
@@ -239,7 +400,7 @@ def test_relative_deltah(unspecified_test_corpus):
             ({'corpus': unspecified_test_corpus,
                     'segment':'n',
                     'frequency_cutoff':0,
-                    'type_or_token':'type'},0.000767),
+                    'type_or_token':'type'},0.014814),
             ({'corpus': unspecified_test_corpus,
                     'segment':'n',
                     'frequency_cutoff':0,
@@ -256,7 +417,7 @@ def test_relative_deltah(unspecified_test_corpus):
             ({'corpus': unspecified_test_corpus,
                     'segment':'s',
                     'frequency_cutoff':3,
-                    'type_or_token':'type'}, 0.027837),
+                    'type_or_token':'type'}, 0.0185185),
             ({'corpus': unspecified_test_corpus,
                     'segment':'s',
                     'frequency_cutoff':3,
@@ -290,15 +451,15 @@ def test_mass_fl(unspecified_test_corpus):
                     'frequency_cutoff':0,
                     'type_or_token':'type'},
 
-                        ([(('s', 'ʃ'), 0.125), (('m', 'n'), 0.1111111111111111), (('i', 't'), 0.0), (('t', 'u'), 0.0), 
-                         (('m', 't'), 0.0), (('i', 'u'), 0.0), (('e', 'o'), 0.0), (('n', 'o'), 0.0), (('i', 'ʃ'), 0.0), 
-                         (('u', 'ɑ'), 0.0), (('m', 'ʃ'), 0.0), (('m', 'ɑ'), 0.0), (('t', 'ʃ'), 0.0), (('e', 'n'), 0.0), 
-                         (('o', 't'), 0.0), (('e', 'ɑ'), 0.0), (('n', 'u'), 0.0), (('n', 't'), 0.0), (('o', 'ʃ'), 0.0), 
-                         (('e', 'u'), 0.0), (('s', 't'), 0.0), (('ɑ', 'ʃ'), 0.0), (('n', 's'), 0.0), (('e', 's'), 0.0), 
-                         (('i', 's'), 0.0), (('m', 'u'), 0.0), (('e', 'i'), 0.0), (('i', 'n'), 0.0), (('i', 'o'), 0.0), 
-                         (('i', 'm'), 0.0), (('n', 'ɑ'), 0.0), (('t', 'ɑ'), 0.0), (('s', 'ɑ'), 0.0), (('s', 'u'), 0.0), 
-                         (('i', 'ɑ'), 0.0), (('o', 's'), 0.0), (('e', 'ʃ'), 0.0), (('u', 'ʃ'), 0.0), (('m', 'o'), 0.0), 
-                         (('e', 'm'), 0.0), (('o', 'u'), 0.0), (('n', 'ʃ'), 0.0), (('e', 't'), 0.0), (('o', 'ɑ'), 0.0), 
+                        ([(('s', 'ʃ'), 0.125), (('m', 'n'), 0.1111111111111111), (('i', 't'), 0.0), (('t', 'u'), 0.0),
+                         (('m', 't'), 0.0), (('i', 'u'), 0.0), (('e', 'o'), 0.0), (('n', 'o'), 0.0), (('i', 'ʃ'), 0.0),
+                         (('u', 'ɑ'), 0.0), (('m', 'ʃ'), 0.0), (('m', 'ɑ'), 0.0), (('t', 'ʃ'), 0.0), (('e', 'n'), 0.0),
+                         (('o', 't'), 0.0), (('e', 'ɑ'), 0.0), (('n', 'u'), 0.0), (('n', 't'), 0.0), (('o', 'ʃ'), 0.0),
+                         (('e', 'u'), 0.0), (('s', 't'), 0.0), (('ɑ', 'ʃ'), 0.0), (('n', 's'), 0.0), (('e', 's'), 0.0),
+                         (('i', 's'), 0.0), (('m', 'u'), 0.0), (('e', 'i'), 0.0), (('i', 'n'), 0.0), (('i', 'o'), 0.0),
+                         (('i', 'm'), 0.0), (('n', 'ɑ'), 0.0), (('t', 'ɑ'), 0.0), (('s', 'ɑ'), 0.0), (('s', 'u'), 0.0),
+                         (('i', 'ɑ'), 0.0), (('o', 's'), 0.0), (('e', 'ʃ'), 0.0), (('u', 'ʃ'), 0.0), (('m', 'o'), 0.0),
+                         (('e', 'm'), 0.0), (('o', 'u'), 0.0), (('n', 'ʃ'), 0.0), (('e', 't'), 0.0), (('o', 'ɑ'), 0.0),
                          (('m', 's'), 0.0)]))]
 
 

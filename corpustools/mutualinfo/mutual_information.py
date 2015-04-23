@@ -5,13 +5,42 @@ import math
 from collections import defaultdict
 from corpustools.corpus.classes.lexicon import CorpusIntegrityError
 
-from corpustools.exceptions import MutualInformationError
 import time
+
+from corpustools.exceptions import MutualInfoError
 
 def pointwise_mi(corpus, query, sequence_type,
                 halve_edges = False, in_word = False,
                 stop_check = None, call_back = None):
-    """query should be a tuple of two strings, each a segment/letter"""
+    """
+    Calculate the mutual information for a bigram.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        Corpus to use
+    query : tuple
+        Tuple of two strings, each a segment/letter
+    sequence_type : str
+        The attribute of Words to calculate mutual information over. Normally this
+        will be the transcription, but it can also be the spelling or a
+        user-specified tier.
+    halve_edges : bool
+        Flag whether to only count word boundaries once per word rather than
+        twice, defaults to False
+    in_word : bool
+        Flag to calculate non-local, non-ordered mutual information,
+        defaults to False
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
+
+    Returns
+    -------
+    float
+        Mutual information of the bigram
+    """
     if call_back is not None:
         call_back("Generating probabilities...")
         call_back(0,0)
@@ -29,22 +58,23 @@ def pointwise_mi(corpus, query, sequence_type,
     try:
         prob_s1 = unigram_dict[query[0]]
     except KeyError:
-        raise CorpusIntegrityError('The segment {} was not found in the corpus'.format(query[0]))
+        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[0])))
     try:
         prob_s2 = unigram_dict[query[1]]
     except KeyError:
-        raise CorpusIntegrityError('The segment {} was not found in the corpus'.format(query[1]))
+        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[1])))
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
         raise MutualInformationError('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type))
 
     if unigram_dict[query[0]] == 0.0:
-        raise MutualInformationError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
     if unigram_dict[query[1]] == 0.0:
-        raise MutualInformationError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
     if bigram_dict[query] == 0.0:
-        raise MutualInformationError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
+
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 

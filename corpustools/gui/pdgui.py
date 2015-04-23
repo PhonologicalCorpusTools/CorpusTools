@@ -6,7 +6,8 @@ from .widgets import (EnvironmentSelectWidget, EnvironmentDialog, SegmentPairSel
 from .windows import FunctionWorker, FunctionDialog
 import itertools
 
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
+from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs,
+                        calc_prod_wordtokens, calc_prod_wordtokens_all_envs)
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
@@ -16,61 +17,77 @@ class PDWorker(FunctionWorker):
         kwargs = self.kwargs
         self.results = list()
         if 'envs' in kwargs:
-            for pair in kwargs['segment_pairs']:
-                try:
-                    res = calc_prod(kwargs['corpus'], pair[0],pair[1],
-                                    kwargs['envs'],
-                                    kwargs['sequence_type'],
-                                    kwargs['type_token'],
-                                    kwargs['strict'],
-                                    True,
-                                    stop_check = kwargs['stop_check'],
-                                    call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if self.stopped:
-                    return
+            if kwargs['pair_behavior'] == 'individual':
+
+                for pair in kwargs['segment_pairs']:
+                    try:
+                        if kwargs['wordtokens']:
+                            res = calc_prod_wordtokens(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['envs'],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                kwargs['strict'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                        else:
+                            res = calc_prod(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['envs'],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                kwargs['strict'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
+                    except Exception as e:
+                        e = PCTPythonError(e)
+                        self.errorEncountered.emit(e)
+                        return
+                    if self.stopped:
+                        break
+                    self.results.append(res)
+            else:
+                raise(NotImplementedError)
                 self.results.append(res)
 
         else:
-            for pair in kwargs['segment_pairs']:
-                try:
-                    res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
-                                             kwargs['sequence_type'],
-                                             kwargs['type_token'],
-                                             True,
-                                             stop_check = kwargs['stop_check'],
-                                             call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if self.stopped:
-                    return
-                self.results.append(res)
+            if kwargs['pair_behavior'] == 'individual':
 
-        # if kwargs['pair_behavior'] == 'cols':
-        #                 print(self.results)
-        #                 h_avg = sum([r[0] for r in self.results])/len(self.results)
-        #                 seg1_freq_sum = sum([r[2] for r in self.results])
-        #                 seg2_freq_sum = sum([r[3] for r in self.results])
-        #                 self.results.append([self.SegmentClassSelector.class1features,
-        #                                       self.SegmentClassSelector.class2features,
-        #                                       self.tierWidget.displayValue(),
-        #                                       'COL-AVG',
-        #                                       seg1_freq_sum,
-        #                                       seg2_freq_sum,
-        #                                       sum(seg1_freq_sum, seg2_freq_sum),
-        #                                       h_avg,
-        #                                       self.typeTokenWidget.value()])
+                for pair in kwargs['segment_pairs']:
+                    try:
+                        if kwargs['wordtokens']:
+                            res = calc_prod_wordtokens_all_envs(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                        else:
+                            res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
+                                kwargs['sequence_type'],
+                                kwargs['type_token'],
+                                True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                    except PCTError as e:
+                        self.errorEncountered.emit(e)
+                        return
+                    except Exception as e:
+                        e = PCTPythonError(e)
+                        self.errorEncountered.emit(e)
+                        return
+                    if self.stopped:
+                        break
+                    self.results.append(res)
+            else:
+                raise(NotImplementedError)
+                self.results.append(res)
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 
@@ -124,11 +141,23 @@ class PDDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        typetokenEnabled = {'Word types':self.corpus.has_transcription,
+                    'Word tokens':self.corpus.has_wordtokens}
+        self.wordtokensWidget = RadioSelectWidget('Analyze word types or tokens',
+                                            OrderedDict([('Word types','wordtypes'),
+                                            ('Word tokens','wordtokens')
+                                            ]),
+                                            {'Word types':self.typesSelected,
+                                            'Word tokens':self.tokensSelected},
+                                            typetokenEnabled)
+
+        optionLayout.addWidget(self.wordtokensWidget)
+
         self.tierWidget = TierWidget(corpus,include_spelling=False)
 
         optionLayout.addWidget(self.tierWidget)
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token',
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
 
@@ -215,6 +244,17 @@ class PDDialog(FunctionDialog):
             self.class1name = self.addSegClassWindow.class1features
             self.class2name = self.addSegClassWindow.class2features
 
+    def typesSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+    def tokensSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([
+                    ('Use most frequent pronunciation as the type','most_frequent_type'),
+                    ('Use most frequent pronunciation for all tokens','most_frequent_token'),
+                    ('Use raw counts of each pronunciation (token frequency)','count_token'),
+                    ('Use relative counts of each pronunciation (type frequency)','relative_type')]))
+
     def generateKwargs(self):
         kwargs = {}
         segPairs = self.segPairWidget.value()
@@ -228,6 +268,10 @@ class PDDialog(FunctionDialog):
             kwargs['envs'] = envs
 
         kwargs['corpus'] = self.corpus
+        if self.wordtokensWidget.value() == 'wordtokens':
+            kwargs['wordtokens'] = True
+        else:
+            kwargs['wordtokens'] = False
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
         kwargs['pair_behavior'] = self.groupSegments.value()

@@ -1,6 +1,7 @@
 import sys
 import subprocess
-
+import time
+import datetime
 
 from .imports import *
 
@@ -10,10 +11,85 @@ from corpustools.corpus.io import download_binary
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
+class ProgressDialog(QProgressDialog):
+    beginCancel = Signal()
+    def __init__(self, name, parent):
+        QProgressDialog.__init__(self, parent)
+        self.setWindowTitle('Calculating {}'.format(name))
+        self.cancelButton = QPushButton('Cancel')
+        self.setAutoClose(False)
+        self.setAutoReset(False)
+        self.setCancelButton(self.cancelButton)
+
+        self.information = ''
+        self.startTime = None
+
+        self.rates = list()
+        self.eta = None
+
+        self.beginCancel.connect(self.updateForCancel)
+        b = self.findChildren(QPushButton)[0]
+        b.clicked.disconnect()
+        b.clicked.connect(self.cancel)
+
+    def cancel(self):
+        self.beginCancel.emit()
+
+    def updateForCancel(self):
+        self.show()
+        self.setMaximum(0)
+        self.cancelButton.setEnabled(False)
+        self.cancelButton.setText('Canceling...')
+        self.setLabelText('Canceling...')
+
+    def reject(self):
+        QProgressDialog.cancel(self)
+
+    def updateText(self,text):
+        if self.wasCanceled():
+            return
+        self.information = text
+        eta = 'Unknown'
+
+        self.setLabelText('{}\nTime left: {}'.format(self.information,eta))
+
+    def updateProgress(self, progress):
+        if self.wasCanceled():
+            return
+        if progress == 0:
+            self.setMaximum(100)
+            self.cancelButton.setText('Cancel')
+            self.cancelButton.setEnabled(True)
+            self.startTime = time.time()
+
+            self.eta = None
+        else:
+            elapsed = time.time() - self.startTime
+            self.rates.append(elapsed / progress)
+            self.rates = self.rates[-20:]
+            if len(self.rates) > 18:
+
+                rate = sum(self.rates)/len(self.rates)
+                eta = int((1 - progress) * rate)
+                if self.eta is None:
+                    self.eta = eta
+                if eta < self.eta or eta > self.eta + 10:
+                    self.eta = eta
+        self.setValue(progress*100)
+        if self.eta is None:
+            eta = 'Unknown'
+
+        else:
+            if self.eta < 0:
+                self.eta = 0
+            eta = str(datetime.timedelta(seconds = self.eta))
+        self.setLabelText('{}\nEstimated time left: {}'.format(self.information,eta))
+
 class FunctionWorker(QThread):
-    updateProgress = Signal(int)
+    updateProgress = Signal(object)
     updateProgressText = Signal(str)
     errorEncountered = Signal(object)
+    finishedCancelling = Signal()
 
     dataReady = Signal(object)
 
@@ -46,7 +122,7 @@ class FunctionWorker(QThread):
             if len(args) > 1:
                 self.total = args[1]
         if self.total:
-            self.updateProgress.emit(int((progress/self.total)*100))
+            self.updateProgress.emit((progress/self.total))
 
 class PCTDialog(QDialog):
 
@@ -122,31 +198,20 @@ class FunctionDialog(PCTDialog):
         self.thread = worker
         self.thread.errorEncountered.connect(self.handleError)
 
-        self.progressDialog = QProgressDialog('Calculating {}...'.format(self.name),
-                                                'Cancel',0,100, self)
-        self.progressDialog.setWindowTitle('Calculating {}'.format(self.name))
-        self.progressDialog.setAutoClose(False)
-        self.progressDialog.setAutoReset(False)
-        self.progressDialog.canceled.connect(self.thread.stop)
-        self.thread.updateProgress.connect(self.updateProgress)
-        self.thread.updateProgressText.connect(self.updateProgressText)
+        self.progressDialog = ProgressDialog(self.name, self)
+        self.progressDialog.beginCancel.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.progressDialog.updateProgress)
+        self.thread.updateProgressText.connect(self.progressDialog.updateText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+        self.thread.finishedCancelling.connect(self.progressDialog.reject)
 
     def handleError(self, error):
         PCTDialog.handleError(self, error)
-        self.progressDialog.cancel()
+        self.progressDialog.reject()
 
     def setResults(self, results):
         self.results = results
-
-    def updateProgressText(self, text):
-        self.progressDialog.setLabelText(text)
-        self.progressDialog.reset()
-
-    def updateProgress(self,progress):
-        self.progressDialog.setValue(progress)
-        self.progressDialog.repaint()
 
     def calc(self):
         raise(NotImplementedError)

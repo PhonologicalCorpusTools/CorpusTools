@@ -3,7 +3,7 @@ import re
 
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 
-from corpustools.exceptions import DelimiterError
+from corpustools.exceptions import DelimiterError, PCTOSError
 
 from .binary import load_binary
 
@@ -76,7 +76,7 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list,
 
     if feature_system_path is not None:
         if not os.path.exists(feature_system_path):
-            raise(OSError("The feature path specified ({}) does not exist".format(feature_system_path)))
+            raise(PCTOSError("The feature path specified ({}) does not exist".format(feature_system_path)))
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
 
@@ -144,3 +144,16 @@ def load_transcription_corpus(corpus_name, path, delimiter, ignore_list,
 
     discourse.lexicon = corpus
     return discourse
+
+def export_corpus_transcription(discourse, path, trans_delim = '.', single_line = False):
+    with open(path, encoding='utf-8', mode='w') as f:
+        count = 0
+        for i, wt in enumerate(discourse):
+            count += 1
+            f.write(trans_delim.join(wt.transcription))
+            if i != len(discourse) -1:
+                if not single_line and count <= 10:
+                    f.write(' ')
+                else:
+                    count = 0
+                    f.write('\n')

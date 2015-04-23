@@ -31,18 +31,19 @@ def main():
     try: # Full path specified
         filename, extension = os.path.splitext(args.csv_file_name)
         filename = path_leaf(filename)
-        corpus = load_corpus_csv(args.csv_file_name, args.csv_file_name, 
+        corpus = load_corpus_csv(args.csv_file_name, args.csv_file_name,
                 delimiter, args.trans_delimiter, args.feature_file_name)
         save_binary(corpus, filename+'.corpus')
     except FileNotFoundError:
+        #FIXME! os.path.join takes care of os specific paths
         try: # Unix filepaths
             filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name)
-            corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name, 
+            corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name,
                     delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'/'+args.feature_file_name)
             save_binary(corpus, filename+'.corpus')
         except FileNotFoundError: # Windows filepaths
             filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name)
-            corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name, 
+            corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name,
                     delimiter, args.trans_delimiter, os.path.dirname(os.path.realpath(__file__))+'\\'+args.feature_file_name)
             save_binary(corpus, filename+'.corpus')
 

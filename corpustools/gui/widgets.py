@@ -982,7 +982,8 @@ class FeatureBox(QWidget):
         QWidget.__init__(self,parent)
 
         self.inventory = inventory
-        self.inspectInventory()
+        self.features = self.inventory.features
+        self.values = self.inventory.possible_values
         layout = QHBoxLayout()
 
         #layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -1023,13 +1024,6 @@ class FeatureBox(QWidget):
         layout.addWidget(self.envList)
 
         self.setLayout(layout)
-
-    def inspectInventory(self):
-        self.features = sorted(self.inventory[-1].features.keys())
-        self.values = set()
-        for v in self.inventory:
-            self.values.update(v.features.values())
-        self.values = sorted([x for x in self.values if x != ''])
 
     def addFeature(self):
         curFeature = self.featureList.currentItem()
@@ -1208,7 +1202,10 @@ class SegFeatSelect(QGroupBox):
         self.segExclusive = exclusive
         self.corpus = corpus
         self.inventory = self.corpus.inventory
-        self.features = self.inventory[-1].features.keys()
+        self.features = list()
+        for i in self.inventory:
+            if len(i.features.keys()) > 0:
+                self.features = [x for x in i.features.keys()]
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
@@ -1249,11 +1246,11 @@ class SegFeatSelect(QGroupBox):
             return self.corpus.features_to_segments(self.sel.value()[1:-1])
 
 class EnvironmentDialog(QDialog):
+    rowToAdd = Signal(str)
     def __init__(self, inventory,parent=None):
         QDialog.__init__(self,parent)
 
         self.inventory = inventory
-        self.features = inventory[-1].features.keys()
 
         layout = QVBoxLayout()
 
@@ -1261,24 +1258,24 @@ class EnvironmentDialog(QDialog):
 
         layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        self.lhsEnvFrame = QGroupBox('Left hand side')
+        lhsEnvFrame = QGroupBox('Left hand side')
 
-        self.rhsEnvFrame = QGroupBox('Right hand side')
+        rhsEnvFrame = QGroupBox('Right hand side')
 
-        self.lhsEnvLayout = QVBoxLayout()
+        lhsEnvLayout = QVBoxLayout()
 
-        self.lhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        lhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        self.rhsEnvLayout = QVBoxLayout()
+        rhsEnvLayout = QVBoxLayout()
 
-        self.rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
         if parent.name == 'environment' or parent.name == 'class':
             self.lhsEnvType = QComboBox()
             self.rhsEnvType = QComboBox()
             self.lhsEnvType.addItem('Segments')
             self.rhsEnvType.addItem('Segments')
-            if len(self.features) > 0:
+            if len(self.inventory.features) > 0:
                 self.lhsEnvType.addItem('Features')
                 self.rhsEnvType.addItem('Features')
             else:
@@ -1287,30 +1284,42 @@ class EnvironmentDialog(QDialog):
             self.lhsEnvType.currentIndexChanged.connect(self.generateLhsFrame)
             self.rhsEnvType.currentIndexChanged.connect(self.generateRhsFrame)
 
-            self.lhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
-            self.lhsEnvLayout.addWidget(self.lhsEnvType, alignment = Qt.AlignLeft)
+            lhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
+            lhsEnvLayout.addWidget(self.lhsEnvType, alignment = Qt.AlignLeft)
 
-            self.rhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
-            self.rhsEnvLayout.addWidget(self.rhsEnvType, alignment = Qt.AlignLeft)
+            rhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
+            rhsEnvLayout.addWidget(self.rhsEnvType, alignment = Qt.AlignLeft)
 
-        self.lhs = InventoryBox('',self.inventory)
-        self.lhs.setExclusive(True)
+        self.lhs = QStackedWidget()
+        self.lhsInventory = InventoryBox('',self.inventory)
+        self.lhsInventory.setExclusive(True)
+        self.lhsFeature = FeatureBox('',self.inventory)
+        self.lhs.addWidget(self.lhsInventory)
 
-        self.rhs = InventoryBox('',self.inventory)
-        self.rhs.setExclusive(True)
+        if len(self.inventory.features) > 0:
+            self.lhs.addWidget(self.lhsFeature)
 
-        self.lhsEnvLayout.addWidget(self.lhs)
-        self.rhsEnvLayout.addWidget(self.rhs)
+        self.rhs = QStackedWidget()
+        self.rhsInventory = InventoryBox('',self.inventory)
+        self.rhsInventory.setExclusive(True)
+        self.rhsFeature = FeatureBox('',self.inventory)
+        self.rhs.addWidget(self.rhsInventory)
 
-        self.lhsEnvFrame.setLayout(self.lhsEnvLayout)
+        if len(self.inventory.features) > 0:
+            self.rhs.addWidget(self.rhsFeature)
 
-        self.rhsEnvFrame.setLayout(self.rhsEnvLayout)
+        lhsEnvLayout.addWidget(self.lhs)
+        rhsEnvLayout.addWidget(self.rhs)
+
+        lhsEnvFrame.setLayout(lhsEnvLayout)
+
+        rhsEnvFrame.setLayout(rhsEnvLayout)
         envFrame = QFrame()
 
         envLayout = QHBoxLayout()
 
-        envLayout.addWidget(self.lhsEnvFrame)
-        envLayout.addWidget(self.rhsEnvFrame)
+        envLayout.addWidget(lhsEnvFrame)
+        envLayout.addWidget(rhsEnvFrame)
 
         envFrame.setLayout(envLayout)
 
@@ -1331,28 +1340,16 @@ class EnvironmentDialog(QDialog):
         acFrame.setLayout(self.acLayout)
 
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
-
+        self.addOneMore = False
         self.setLayout(layout)
         #self.setFixedSize(self.sizeHint())
-        self.setWindowTitle('Create {}'.format(parent.name))
+        self.setWindowTitle('Create {}'.format(self.parent().name))
 
     def generateLhsFrame(self,ind=0):
-        self.lhs.deleteLater()
-        if self.lhsEnvType.currentText() == 'Segments':
-            self.lhs = InventoryBox('',self.inventory)
-            self.lhs.setExclusive(True)
-        elif self.lhsEnvType.currentText() == 'Features':
-            self.lhs = FeatureBox('',self.inventory)
-        self.lhsEnvLayout.addWidget(self.lhs)
+        self.lhs.setCurrentIndex(self.lhsEnvType.currentIndex())
 
     def generateRhsFrame(self,ind=0):
-        self.rhs.deleteLater()
-        if self.rhsEnvType.currentText() == 'Segments':
-            self.rhs = InventoryBox('',self.inventory)
-            self.rhs.setExclusive(True)
-        elif self.rhsEnvType.currentText() == 'Features':
-            self.rhs = FeatureBox('',self.inventory)
-        self.rhsEnvLayout.addWidget(self.rhs)
+        self.rhs.setCurrentIndex(self.rhsEnvType.currentIndex())
 
     def one(self):
         self.addOneMore = False
@@ -1363,29 +1360,39 @@ class EnvironmentDialog(QDialog):
         self.accept()
 
     def reset(self):
-        self.lhs.clearAll()
-        self.rhs.clearAll()
+        self.lhsInventory.clearAll()
+        self.lhsFeature.clearAll()
+        self.rhsInventory.clearAll()
+        self.rhsFeature.clearAll()
 
     def accept(self):
+        lhs = self.lhsInventory.value()
+        rhs = self.rhsInventory.value()
+
         if self.parent().name == 'environment':
-            self.env = '{}_{}'.format(self.lhs.value(),self.rhs.value())
+            if self.lhsEnvType.currentIndex() != 0:
+                lhs = self.lhsFeature.value()
+            if  self.rhsEnvType.currentIndex() != 0:
+                rhs = self.rhsFeature.value()
+            env = '{}_{}'.format(lhs, rhs)
         else:
-            lhs = self.lhs.value()
             if lhs == '':
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please specify a left hand of the bigram.")
                 return
-            rhs = self.rhs.value()
             if rhs == '':
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please specify a right hand of the bigram.")
                 return
 
-            self.env = '{}{}'.format(lhs,rhs)
-        QDialog.accept(self)
+            env = '{}{}'.format(lhs,rhs)
+        self.rowToAdd.emit(env)
+        if not self.addOneMore:
+            QDialog.accept(self)
+        else:
+            self.reset()
 
     def reject(self):
-        self.addOneMore = False
         QDialog.reject(self)
 
 class EnvironmentSelectWidget(QGroupBox):
@@ -1423,15 +1430,16 @@ class EnvironmentSelectWidget(QGroupBox):
 
         self.setLayout(vbox)
 
+    def addRow(self, row):
+        self.table.model().addRow([row])
+
     def envPopup(self):
         dialog = EnvironmentDialog(self.inventory,self)
-        addOneMore = True
-        while addOneMore:
-            dialog.reset()
-            result = dialog.exec_()
-            if result:
-                self.table.model().addRow([dialog.env])
-            addOneMore = dialog.addOneMore
+        dialog.rowToAdd.connect(self.addRow)
+        result = dialog.exec_()
+        dialog.rowToAdd.disconnect()
+        dialog.deleteLater()
+
 
     def removeEnv(self):
         select = self.table.selectionModel()
@@ -1448,20 +1456,39 @@ class BigramWidget(EnvironmentSelectWidget):
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options, actions=None, enabled=None,parent=None):
         QGroupBox.__init__(self,title,parent)
+        self.is_enabled = True
+        self.actions = None
+        self.enabled = None
+        self.setLayout(QFormLayout())
+        self.setOptions(options, actions, enabled)
 
-        self.options = options
-        vbox = QFormLayout()
+    def initOptions(self):
         self.widgets = []
-        for key in options.keys():
+        for key in self.options.keys():
             w = QRadioButton(key)
-            if actions is not None:
-                w.clicked.connect(actions[key])
-            if enabled is not None:
-                w.setEnabled(enabled[key])
+            if self.actions is not None:
+                w.clicked.connect(self.actions[key])
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            if not self.is_enabled:
+                w.setEnabled(False)
             self.widgets.append(w)
-            vbox.addRow(w)
+            self.layout().addRow(w)
         self.widgets[0].setChecked(True)
-        self.setLayout(vbox)
+
+    def setOptions(self, options, actions = None, enabled = None):
+        for i in reversed(range(self.layout().count())):
+            w = self.layout().itemAt(i).widget()
+            self.layout().removeWidget(w)
+            w.setParent(None)
+            w.deleteLater()
+        self.options = options
+        if actions is not None:
+            self.actions = actions
+        if enabled is not None:
+            self.enabled = enabled
+        self.initOptions()
+
 
     def initialClick(self):
         self.widgets[0].click()
@@ -1479,12 +1506,17 @@ class RadioSelectWidget(QGroupBox):
         return ''
 
     def disable(self):
+        self.is_enabled = False
         for w in self.widgets:
             w.setEnabled(False)
 
     def enable(self):
+        self.is_enabled = True
         for w in self.widgets:
-            w.setEnabled(True)
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            else:
+                w.setEnabled(True)
 
 
 class SegmentClassSelectWidget(QFrame):
@@ -1696,3 +1728,4 @@ class CreateClassWidget(QDialog):
                 "{} preview".format(self.class_type),
                 "Segments included: {}\nSegments excluded: {}".format(', '.join(inClass),
                                                                       ', '.join(notInClass)))
+

@@ -57,10 +57,6 @@ class AttributeWidget(QGroupBox):
                 continue
             self.typeWidget.addItem(at.title())
 
-        for i in range(self.typeWidget.count()):
-            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
-                self.typeWidget.setCurrentIndex(i)
-
 
         main.addRow('Type of column',self.typeWidget)
 
@@ -69,16 +65,37 @@ class AttributeWidget(QGroupBox):
         self.useAs.addItem('Spelling')
         self.useAs.addItem('Transcription')
         self.useAs.addItem('Frequency')
+        self.useAs.currentIndexChanged.connect(self.updateUseAs)
 
         for i in range(self.useAs.count()):
             if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
                 self.useAs.setCurrentIndex(i)
+                if attribute.name == 'transcription' and attribute.att_type != 'tier':
+                    attribute.att_type = 'tier'
+
+        for i in range(self.typeWidget.count()):
+            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
+                self.typeWidget.setCurrentIndex(i)
 
         main.addRow('Use column as', self.useAs)
 
         self.setLayout(main)
 
         self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def updateUseAs(self):
+        t = self.useAs.currentText().lower()
+        if t == 'custom column':
+            self.typeWidget.setEnabled(True)
+        else:
+            for i in range(self.typeWidget.count()):
+                if t == 'spelling' and self.typeWidget.itemText(i) == 'Spelling':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'transcription' and self.typeWidget.itemText(i) == 'Tier':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'frequency' and self.typeWidget.itemText(i) == 'Numeric':
+                    self.typeWidget.setCurrentIndex(i)
+            self.typeWidget.setEnabled(False)
 
     def value(self):
         display = self.nameWidget.text()
@@ -1410,7 +1427,10 @@ class CorpusFromCsvDialog(PCTDialog):
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.columnFrame)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setMinimumHeight(120)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
         #self.columnFrame.
         formLayout.addRow(scroll)
 
@@ -1450,14 +1470,23 @@ class CorpusFromCsvDialog(PCTDialog):
     @check_for_errors
     def forceInspect(self, b):
         if os.path.exists(self.pathWidget.value()):
+            colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
+            if not colDelim:
+                colDelim = None
+            transDelim = self.transDelimiterEdit.text()
+            if not transDelim:
+                transDelim = None
             atts, coldelim = inspect_csv(self.pathWidget.value(),
-                    coldelim = self.columnDelimiterEdit.text(),
-                    transdelim = self.transDelimiterEdit.text())
+                    coldelim = colDelim,
+                    transdelim = transDelim)
             self.updateColumnFrame(atts)
 
     def updateColumnFrame(self, atts):
-        for i in reversed(range(self.columnFrame.layout().count()-1)):
+        for i in reversed(range(self.columnFrame.layout().count())):
             w = self.columnFrame.layout().itemAt(i).widget()
+            if w is None:
+                del w
+                continue
             w.setParent(None)
             w.deleteLater()
         self.columns = list()
@@ -1475,6 +1504,8 @@ class CorpusFromCsvDialog(PCTDialog):
             atts, coldelim = inspect_csv(self.pathWidget.value())
             self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
             self.updateColumnFrame(atts)
+        else:
+            self.updateColumnFrame([])
 
     @check_for_errors
     def accept(self, b):

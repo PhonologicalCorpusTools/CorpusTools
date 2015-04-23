@@ -37,8 +37,9 @@ def test_segment_pair_model(qtbot):
     model = SegmentPairModel()
     qtbot.addWidget(model)
 
-def test_variant_model(qtbot):
-    model = VariantModel([])
+def test_variant_model(qtbot, unspecified_test_corpus):
+    w = unspecified_test_corpus['atema']
+    model = VariantModel(w)
     qtbot.addWidget(model)
 
 #def test_spontaneous_speech_model(qtbot):

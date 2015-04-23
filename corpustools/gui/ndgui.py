@@ -4,7 +4,10 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.neighdens.neighborhood_density import neighborhood_density,find_mutation_minpairs
+from corpustools.neighdens.neighborhood_density import (neighborhood_density,
+                            neighborhood_density_all_words,
+                            find_mutation_minpairs_all_words,
+                            find_mutation_minpairs)
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
 
@@ -48,40 +51,37 @@ class NDWorker(FunctionWorker):
                     print_neighden_results(kwargs['output_filename'],res[1])
                 self.results.append([q,res[0]])
         else:
-            call_back = kwargs['call_back']
-            call_back('Calculating neighborhood densities...')
-            call_back(0,len(corpus))
-            cur = 0
             kwargs['corpusModel'].addColumn(kwargs['attribute'])
-            for w in corpus:
-                if self.stopped:
-                    break
-                cur += 1
-                call_back(cur)
-                try:
-                    if kwargs['algorithm'] != 'substitution':
-                        res = neighborhood_density(corpus, w,
+            try:
+                if kwargs['algorithm'] != 'substitution':
+                    neighborhood_density_all_words(corpus,
+                                            kwargs['attribute'],
                                             algorithm = kwargs['algorithm'],
                                             sequence_type = kwargs['sequence_type'],
                                             count_what = kwargs['count_what'],
                                             max_distance = kwargs['max_distance'],
-                                            stop_check = kwargs['stop_check'])
-                    else:
-                        res = find_mutation_minpairs(corpus, w,
+                                            num_cores = kwargs['num_cores'],
+                                            call_back = kwargs['call_back'],
+                                            stop_check = kwargs['stop_check']
+                                            )
+                else:
+                    find_mutation_minpairs_all_words(corpus,
+                                            kwargs['attribute'],
                                             sequence_type = kwargs['sequence_type'],
+                                            num_cores = kwargs['num_cores'],
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if self.stopped:
-                    break
-                setattr(w,kwargs['attribute'].name,res[0])
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
+            if self.stopped:
+                kwargs['corpusModel'].removeAttributes([kwargs['attribute'].display_name])
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 
@@ -303,7 +303,8 @@ class NDDialog(FunctionDialog):
                 'algorithm': alg,
                 'sequence_type':self.tierWidget.value(),
                 'count_what':typeToken,
-                'max_distance':max_distance}
+                'max_distance':max_distance,
+                'num_cores':self.parent().settings['num_cores'],}
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
@@ -387,8 +388,7 @@ class NDDialog(FunctionDialog):
         self.thread.start()
 
         result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
+        print(result)
         if result:
             self.accept()
 

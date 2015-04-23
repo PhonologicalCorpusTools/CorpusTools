@@ -67,6 +67,7 @@ class ASWorker(FunctionWorker):
         else:
             self.results.append(['AVG', 'AVG',sum(asim.values())/len(asim)])
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 

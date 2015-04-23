@@ -44,7 +44,12 @@ class KLWorker(FunctionWorker):
                 e = PCTPythonError(e)
                 self.errorEncountered.emit(e)
                 return
+            if self.stopped:
+                break
             self.results.append(res)
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 class KLDialog(FunctionDialog):

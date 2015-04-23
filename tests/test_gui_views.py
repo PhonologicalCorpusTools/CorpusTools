@@ -25,6 +25,7 @@ def test_text_view(qtbot):
     widget = TextView()
     qtbot.addWidget(widget)
 
-def test_variant_view(qtbot):
-    widget = VariantView(None, {})
+def test_variant_view(qtbot, unspecified_test_corpus):
+    w = unspecified_test_corpus['atema']
+    widget = VariantView(None, w)
     qtbot.addWidget(widget)

@@ -5,8 +5,7 @@ import collections
 import operator
 import math
 
-class CorpusIntegrityError(Exception):
-    pass
+from corpustools.exceptions import CorpusIntegrityError
 
 class Segment(object):
     """
@@ -339,6 +338,9 @@ class Transcription(object):
                 else:
                     raise(NotImplementedError('That format for seg_list is not supported.'))
 
+    def __hash__(self):
+        return hash(str(self))
+
     def __getitem__(self, key):
         if isinstance(key,int) or isinstance(key,slice):
             return self._list[key]
@@ -421,7 +423,8 @@ class Transcription(object):
         else:
             lhs = self[pos-1]
             rhs = self[pos+1]
-        return lhs,rhs
+        return Environment(lhs, rhs)
+        #return lhs,rhs
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -628,12 +631,12 @@ class Word(object):
 
     """
 
-    _corpus = None
-
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
         'lowercase_freq', 'log10_freq']
 
     def __init__(self, **kwargs):
+
+        _corpus = None
 
         self.transcription = None
         self.spelling = None
@@ -733,6 +736,11 @@ class Word(object):
         matching_segs = self.transcription.match_segments(tier_segments)
         new_tier = Transcription(matching_segs)
         setattr(self,tier_name,new_tier)
+        for wt in self.wordtokens:
+            matching_segs = wt.transcription.match_segments(tier_segments)
+            new_tier = Transcription(matching_segs)
+            setattr(wt,tier_name,new_tier)
+
 
     def remove_attribute(self, attribute_name):
         """Deletes a tier attribute from a Word
@@ -755,6 +763,9 @@ class Word(object):
         except ValueError:
             pass #attribute_name does not exist
 
+    def variants(self, sequence_type = 'transcription'):
+        return collections.Counter(getattr(x,sequence_type) for x in self.wordtokens)
+
     def enumerate_symbols(self,tier_name):
         for pos,seg in enumerate(getattr(self, tier_name)):
             yield pos,seg
@@ -774,10 +785,7 @@ class Word(object):
 
         """
         tier = getattr(self,tier_name)
-        lhs, rhs = tier.get_env(pos)
-        e = Environment(lhs, rhs)
-
-        return e
+        return tier.get_env(pos)
 
     def __repr__(self):
         return '<Word: \'%s\'>' % self.spelling
@@ -1118,6 +1126,62 @@ class Attribute(object):
                 self._range = set(self._range)
             self._range.update([x for x in value])
 
+class Inventory(object):
+    def __init__(self, data = None):
+        if data is None:
+            self._data = {'#' : Segment('#')}
+        else:
+            self._data = data
+        self.features = []
+        self.possible_values = set()
+        self.classes = dict()
+
+    def __len__(self):
+        return len(self._data.keys())
+
+    def keys(self):
+        return self._data.keys()
+
+    def values(self):
+        return self._data.values()
+
+    def items(self):
+        return self._data.items()
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return sorted(self._data.keys())[key]
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+    def __iter__(self):
+        for k in sorted(self._data.keys()):
+            yield self._data[k]
+
+    def __contains__(self, item):
+        if isinstance(item, str):
+            return item in self._data.keys()
+        elif isinstance(item, Segment):
+            return item.symbol in self._data.keys()
+        return False
+
+    def specify(self, specifier):
+        if specifier is None:
+            for k in self._data.keys():
+                self._data[k].specify({})
+            self.features = list()
+            self.possible_values = set()
+        else:
+            for k in self._data.keys():
+                try:
+                    self._data[k].specify(specifier[k].features)
+                except KeyError:
+                    pass
+            self.features = specifier.features
+            self.possible_values = specifier.possible_values
+
 class Corpus(object):
     """
     Lexicon to store information about Words, such as transcriptions,
@@ -1159,10 +1223,11 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self._inventory = Inventory()#{'#' : Segment('#')} #set of Segments, if transcription exists
+        self._inventory = Inventory()
         self.has_frequency = True
         self.has_spelling = False
         self.has_transcription = False
+        self.has_wordtokens = False
         self._freq_base = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
@@ -1174,6 +1239,25 @@ class Corpus(object):
         if self.wordlist != other.wordlist:
             return False
         return True
+
+    def key(self, word):
+        key = word.spelling
+        if self[key] == word:
+            return key
+        count = 0
+        while True:
+            count += 1
+            key = '{} ({})'.format(word.spelling,count)
+            try:
+                if self[key] == word:
+                    return key
+            except KeyError:
+                break
+
+
+    def keys(self):
+        for k in sorted(self.wordlist.keys()):
+            yield k
 
     def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
                         gramsize = 1, probability = False):
@@ -1571,15 +1655,24 @@ class Corpus(object):
         for word in self:
             word.remove_attribute(name)
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_freq_base'] = None # don't save caches
+        return state
+
     def __setstate__(self,state):
         try:
             if '_inventory' not in state:
                 state['_inventory'] = state['inventory']
+            if not isinstance(state['_inventory'], Inventory):
+                state['_inventory'] = Inventory(state['_inventory'])
             if 'has_spelling' not in state:
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' not in state:
                 state['has_transcription'] = state['has_transcription_value']
-            if '_freq_base' not in state:
+            if 'has_wordtokens' not in state:
+                state['has_wordtokens'] = False
+            if '_freq_base' not in state or state['_freq_base'] is None:
                 state['_freq_base'] = dict()
             if '_attributes' not in state:
                 state['_attributes'] = [Attribute('spelling','spelling'),
@@ -1593,7 +1686,6 @@ class Corpus(object):
                     pass
             self.__dict__.update(state)
             self._specify_features()
-
             #Backwards compatability
             for k,w in self.wordlist.items():
                 #print(w)
@@ -1614,12 +1706,7 @@ class Corpus(object):
 
 
     def _specify_features(self):
-        if self.specifier is not None:
-            for k in self._inventory.keys():
-                try:
-                    self._inventory[k].specify(self.specifier[k].features)
-                except KeyError:
-                    pass
+        self.inventory.specify(self.specifier)
 
     def check_coverage(self):
         """
@@ -1753,7 +1840,7 @@ class Corpus(object):
         list
             Sorted list of segment symbols used in transcriptions in the corpus
         """
-        return sorted(list(self._inventory.values()))
+        return self._inventory
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -1812,6 +1899,7 @@ class Corpus(object):
                     except KeyError:
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
+                        #self._graph.add_node(key)
                         break
             else:
                 return
@@ -1989,11 +2077,4 @@ class Corpus(object):
 
     def __iter__(self):
         return iter(self.wordlist.values())
-
-class Inventory(dict):
-
-    def __init__(self):
-        super().__init__()
-        self['#'] = Segment('#')
-        self.classes = dict()
 

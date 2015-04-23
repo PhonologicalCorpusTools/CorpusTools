@@ -30,13 +30,13 @@ class CorpusTest(unittest.TestCase):
             self.assertEqual(corpus.find(w['spelling']),Word(**w))
             self.assertTrue(w['spelling'] in corpus)
 
-        self.assertEqual(corpus._inventory,{'#':Segment('#'),
+        self.assertEqual(corpus._inventory._data,{'#':Segment('#'),
                                         'a':Segment('a'),
                                         'b':Segment('b'),
                                         'c':Segment('c'),
                                         'd':Segment('d')})
 
-        self.assertEqual(corpus.inventory,sorted(['#','a','b','c','d']))
+        #self.assertEqual(corpus.inventory,sorted(['#','a','b','c','d']))
 
     def test_homographs(self):
         return
@@ -350,9 +350,9 @@ class TranscriptionTest(unittest.TestCase):
     def test_environment(self):
         cab = Transcription(self.cab)
 
-        self.assertEqual(('c','b'), cab.get_env(1))
-        self.assertEqual(('#','a'), cab.get_env(0))
-        self.assertEqual(('a','#'), cab.get_env(2))
+        self.assertEqual('c_b', str(cab.get_env(1)))
+        self.assertEqual('#_a', str(cab.get_env(0)))
+        self.assertEqual('a_#', str(cab.get_env(2)))
 
 class EnvironmentTest(unittest.TestCase):
     def setUp(self):

@@ -4,14 +4,78 @@ Created on May 12, 2014
 @author: Michael
 '''
 from functools import partial
+from math import factorial
 from corpustools.corpus.classes import Word
 from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
+from corpustools.multiprocessing import score_mp, PCTMultiprocessingError
 
-class StringSimilarityError(Exception):
-    pass
+from corpustools.exceptions import StringSimilarityError
+
+def string_sim_key(algorithm, sequence_type, count_what):
+    if algorithm == 'khorsi':
+        return 'string_sim_{}_{}_{}'.format(algorithm, sequence_type, count_what)
+    else:
+        return 'string_sim_{}_{}'.format(algorithm, sequence_type)
+
+def khorsi_wrapper(w1, w2, freq_base,
+                                sequence_type, max_distance):
+    score = khorsi(w1, w2, freq_base = freq_base, sequence_type = sequence_type)
+    if score >= max_distance:
+        return score
+    else:
+        return None
+
+def edit_distance_wrapper(w1, w2, sequence_type, max_distance):
+    score = edit_distance(w1, w2, sequence_type)
+    if score <= max_distance:
+        return score
+    else:
+        return None
+
+def phono_edit_distance_wrapper(w1, w2, sequence_type, features, max_distance):
+    score = phono_edit_distance(w1, w2, sequence_type = sequence_type,features = features)
+    if score <= max_distance:
+        return score
+    else:
+        return None
+
+def optimize_string_similarity(corpus, algorithm, sequence_type, count_what, num_cores = -1,
+                            max_distance = 10,
+                            call_back = None, stop_check = None):
+    return
+    if num_cores == -1:
+        raise(PCTMultiprocessingError("This function requires multiprocessing."))
+    if call_back is not None:
+        call_back('Generating neighborhood density graph...')
+        num_comps = factorial(len(corpus))/(factorial(len(corpus)-2)*2)
+        call_back(0,num_comps/500)
+    detail_key = string_sim_key(algorithm, sequence_type, count_what)
+
+    keys = list(corpus.keys())
+    iterable = ((corpus.wordlist[keys[i]],corpus.wordlist[keys[j]])
+                    for i in range(len(keys)) for j in range(i+1,len(keys)))
+
+    if algorithm == 'khorsi':
+        freq_base = corpus.get_frequency_base(sequence_type, count_what)
+        function = partial(khorsi_wrapper,freq_base=freq_base,
+                                sequence_type = sequence_type,
+                                max_distance = max_distance)
+    elif algorithm == 'edit_distance':
+        function =  partial(edit_distance_wrapper, sequence_type = sequence_type,
+                                            max_distance = max_distance)
+    elif algorithm == 'phono_edit_distance':
+        function = partial(phono_edit_distance_wrapper,sequence_type = sequence_type,
+                                                        features = corpus.specifier,
+                                                        max_distance = max_distance)
+
+    edges = score_mp(iterable, function, num_cores, call_back, stop_check)
+    for e in edges:
+        corpus._graph.add_edge(corpus.key(e[0]), corpus.key(e[1]),key = detail_key, weight = e[2])
+    if detail_key not in corpus._graph.graph['symbolsim']:
+        corpus._graph.graph['symbolsim'].append(detail_key)
 
 def string_similarity(corpus, query, algorithm, **kwargs):
     """
@@ -45,6 +109,10 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     min_rel: double
         Filters out all words that are lower than min_rel from a relatedness measure
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------

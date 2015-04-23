@@ -20,13 +20,22 @@ class FLWorker(FunctionWorker):
             for pair in kwargs['segment_pairs']:
                 if kwargs['func_type'] == 'min_pairs':
                     try:
-                        res = FL.minpair_fl(kwargs['corpus'], [pair],
-                            frequency_cutoff = kwargs['frequency_cutoff'],
-                            relative_count = kwargs['relative_count'],
-                            distinguish_homophones= kwargs['distinguish_homophones'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
+                        if kwargs['wordtokens']:
+                            res = FL.minpair_fl_wordtokens(kwargs['corpus'], [pair],
+                                frequency_cutoff = kwargs['frequency_cutoff'],
+                                relative_count = kwargs['relative_count'],
+                                distinguish_homophones= kwargs['distinguish_homophones'],
+                                sequence_type = kwargs['sequence_type'],
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                        else:
+                            res = FL.minpair_fl(kwargs['corpus'], [pair],
+                                frequency_cutoff = kwargs['frequency_cutoff'],
+                                relative_count = kwargs['relative_count'],
+                                distinguish_homophones= kwargs['distinguish_homophones'],
+                                sequence_type = kwargs['sequence_type'],
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
                     except PCTError as e:
                         self.errorEncountered.emit(e)
                         return
@@ -36,12 +45,20 @@ class FLWorker(FunctionWorker):
                         return
                 elif kwargs['func_type'] == 'entropy':
                     try:
-                        res = FL.deltah_fl(kwargs['corpus'], [pair],
-                            frequency_cutoff=kwargs['frequency_cutoff'],
-                            type_or_token=kwargs['type_or_token'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
+                        if kwargs['wordtokens']:
+                            res = FL.deltah_fl_wordtokens(kwargs['corpus'], [pair],
+                                frequency_cutoff=kwargs['frequency_cutoff'],
+                                type_or_token=kwargs['type_or_token'],
+                                sequence_type = kwargs['sequence_type'],
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                        else:
+                            res = FL.deltah_fl(kwargs['corpus'], [pair],
+                                frequency_cutoff=kwargs['frequency_cutoff'],
+                                type_or_token=kwargs['type_or_token'],
+                                sequence_type = kwargs['sequence_type'],
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
                     except PCTError as e:
                         self.errorEncountered.emit(e)
                         return
@@ -50,12 +67,22 @@ class FLWorker(FunctionWorker):
                         self.errorEncountered.emit(e)
                         return
                 if self.stopped:
-                    return
+                    break
                 self.results.append(res)
         else:
             if kwargs['func_type'] == 'min_pairs':
                 try:
-                    res = FL.minpair_fl(kwargs['corpus'],
+                    if kwargs['wordtokens']:
+                        res = FL.minpair_fl_wordtokens(kwargs['corpus'],
+                            kwargs['segment_pairs'],
+                            frequency_cutoff = kwargs['frequency_cutoff'],
+                            relative_count = kwargs['relative_count'],
+                            distinguish_homophones= kwargs['distinguish_homophones'],
+                            sequence_type = kwargs['sequence_type'],
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
+                    else:
+                        res = FL.minpair_fl(kwargs['corpus'],
                             kwargs['segment_pairs'],
                             frequency_cutoff=kwargs['frequency_cutoff'],
                             relative_count = kwargs['relative_count'],
@@ -72,13 +99,22 @@ class FLWorker(FunctionWorker):
                     return
             elif kwargs['func_type'] == 'entropy':
                 try:
-                    res = FL.deltah_fl(kwargs['corpus'],
+                    if kwargs['wordtokens']:
+                        res = FL.deltah_fl_wordtokens(kwargs['corpus'],
                             kwargs['segment_pairs'],
                             frequency_cutoff=kwargs['frequency_cutoff'],
                             type_or_token=kwargs['type_or_token'],
                             sequence_type = kwargs['sequence_type'],
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
+                    else:
+                        res = FL.deltah_fl(kwargs['corpus'],
+                        kwargs['segment_pairs'],
+                        frequency_cutoff=kwargs['frequency_cutoff'],
+                        type_or_token=kwargs['type_or_token'],
+                        sequence_type = kwargs['sequence_type'],
+                        stop_check = kwargs['stop_check'],
+                        call_back = kwargs['call_back'])
                 except PCTError as e:
                     self.errorEncountered.emit(e)
                     return
@@ -86,9 +122,10 @@ class FLWorker(FunctionWorker):
                     e = PCTPythonError(e)
                     self.errorEncountered.emit(e)
                     return
-            if self.stopped:
-                return
             self.results.append(res)
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 
@@ -150,6 +187,18 @@ class FLDialog(FunctionDialog):
         fllayout.addWidget(secondPane)
 
         optionLayout = QVBoxLayout()
+
+        typetokenEnabled = {'Word types':self.corpus.has_transcription,
+                    'Word tokens':self.corpus.has_wordtokens}
+        self.wordtokensWidget = RadioSelectWidget('Analyze word types or tokens',
+                                            OrderedDict([('Word types','wordtypes'),
+                                            ('Word tokens','wordtokens')
+                                            ]),
+                                            {'Word types':self.typesSelected,
+                                            'Word tokens':self.tokensSelected},
+                                            typetokenEnabled)
+
+        optionLayout.addWidget(self.wordtokensWidget)
 
         self.tierWidget = TierWidget(corpus,include_spelling=False)
 
@@ -244,6 +293,17 @@ class FLDialog(FunctionDialog):
                             ' entropy caused by a merger of paired segments in the set.'
             "</FONT>"))
 
+    def typesSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+    def tokensSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([
+                    ('Use most frequent pronunciation as the type','most_frequent_type'),
+                    ('Use most frequent pronunciation for all tokens','most_frequent_token'),
+                    ('Use raw counts of each pronunciation (token frequency)','count_token'),
+                    ('Use relative counts of each pronunciation (type frequency)','relative_type')]))
+
     def minPairsSelected(self):
         self.typeTokenWidget.disable()
         self.relativeCountWidget.setEnabled(True)
@@ -264,7 +324,7 @@ class FLDialog(FunctionDialog):
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        return {'corpus':self.corpus,
+        kwargs = {'corpus':self.corpus,
                 'segment_pairs':segPairs,
                 'sequence_type': self.tierWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
@@ -273,6 +333,11 @@ class FLDialog(FunctionDialog):
                 'pair_behavior':self.segPairOptionsWidget.value(),
                 'type_or_token':self.typeTokenWidget.value(),
                 'func_type':self.algorithmWidget.value()}
+        if self.wordtokensWidget.value() == 'wordtokens':
+            kwargs['wordtokens'] = True
+        else:
+            kwargs['wordtokens'] = False
+        return kwargs
 
     def calc(self):
         kwargs = self.generateKwargs()
