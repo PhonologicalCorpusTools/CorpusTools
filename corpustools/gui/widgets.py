@@ -1,7 +1,7 @@
 
 import sys
 import operator
-from itertools import combinations
+from itertools import combinations, permutations, chain
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
     QMessageBox, QGroupBox, QLineEdit
@@ -639,6 +639,149 @@ class SegmentButton(QPushButton):
         sh.setWidth(self.fontMetrics().boundingRect(self.text()).width()+14)
         return sh
 
+class FeatureEdit(QLineEdit):
+    featureEntered = Signal(list)
+    featuresFinalized = Signal(list)
+    def __init__(self,inventory, parent=None):
+        QLineEdit.__init__(self, parent)
+        self.completer = None
+        self.inventory = inventory
+        self.valid_strings = self.inventory.valid_feature_strings()
+
+    def setCompleter(self,completer):
+        if self.completer:
+            self.disconnect(self.completer,0,0)
+        self.completer = completer
+        if (not self.completer):
+            return
+        self.completer.setWidget(self)
+        self.completer.setCompletionMode(QCompleter.PopupCompletion)
+        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.activated.connect(self.insertCompletion)
+
+    def features(self):
+        if self.text() == '':
+            return []
+        text = self.text().split(' ')
+        features = [x for x in text if x in self.valid_strings]
+        return features
+
+    def completer(self):
+        return self.completer
+
+    def insertCompletion(self,string):
+        text = self.text().split(' ')
+        text[-1] = string
+        self.featureEntered.emit(text)
+        self.setText(' '.join(text))
+
+    def currentFeature(self):
+        return self.text().split(' ')[-1]
+
+    def keyPressEvent(self,e):
+        if e.key() == Qt.Key_Backspace:
+            if self.text() == '':
+                return
+            if (self.completer and self.completer.popup().isVisible()):
+                super().backspace()
+                return
+            text = self.text().split(' ')
+            text = text[:-1]
+            self.featureEntered.emit(text)
+            self.setText(' '.join(text))
+            return
+        if self.completer and self.completer.popup().isVisible():
+                if e.key() in ( Qt.Key_Space, Qt.Key_Enter,
+                                Qt.Key_Return,Qt.Key_Escape,
+                                Qt.Key_Tab,Qt.Key_Backtab):
+                    e.ignore()
+                    return
+        else:
+            if e.key() in (Qt.Key_Enter, Qt.Key_Return):
+                if self.text() != '':
+                    self.featuresFinalized.emit(self.features())
+                    self.setText('')
+                    self.featureEntered.emit([])
+                    return
+        isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
+        if (not self.completer or not isShortcut):
+            super().keyPressEvent(e)
+
+
+        completionPrefix = self.currentFeature()
+
+        self.completer.update(completionPrefix)
+        self.completer.popup().setCurrentIndex(self.completer.completionModel().index(0, 0))
+
+        cr = self.cursorRect()
+        cr.setWidth(self.completer.popup().sizeHintForColumn(0)
+                    + self.completer.popup().verticalScrollBar().sizeHint().width())
+        self.completer.complete(cr)
+
+class FeatureCompleter(QCompleter):
+    def __init__(self,inventory,parent=None):
+        QCompleter.__init__(self, parent)
+        self.stringList = inventory.valid_feature_strings()
+        self.setModel(QStringListModel())
+
+    def update(self,completionText):
+        to_filter = completionText.lower()
+        filtered = [x for x in self.stringList
+                        if x.lower().startswith(to_filter)
+                        or x[1:].lower().startswith(to_filter)]
+        self.model().setStringList(filtered)
+        self.popup().setCurrentIndex(self.model().index(0, 0))
+
+class SegmentSelectionWidget(QWidget):
+    def __init__(self, inventory, parent = None):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+
+        self.searchWidget = FeatureEdit(self.inventory)
+        self.completer = FeatureCompleter(self.inventory)
+        self.searchWidget.setCompleter(self.completer)
+
+        layout = QVBoxLayout()
+
+        headlayout = QHBoxLayout()
+        formlay = QFormLayout()
+
+        formlay.addRow('Select by feature',self.searchWidget)
+
+        formframe = QFrame()
+
+        formframe.setLayout(formlay)
+        headlayout.addWidget(formframe)
+
+        self.clearAllButton = QPushButton('Clear selections')
+
+        headlayout.addWidget(self.clearAllButton)
+
+        headframe = QFrame()
+
+        headframe.setLayout(headlayout)
+        layout.addWidget(headframe)
+
+        scroll = QScrollArea()
+        self.inventoryFrame = InventoryBox('', self.inventory)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.inventoryFrame)
+        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        #self.columnFrame.
+        layout.addWidget(scroll)
+
+        self.setLayout(layout)
+
+        self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
+        self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegments)
+        self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
+
+    def value(self):
+        return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
     consonantColumns = ['Labial','Labiodental','Dental','Alveolar','Alveopalatal','Retroflex',
@@ -683,14 +826,9 @@ class InventoryBox(QWidget):
             smallbox = QVBoxLayout()
             smallbox.setSizeConstraint(QLayout.SetFixedSize)
             smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-            cons = QGroupBox('Consonants')
-            cons.setFlat(True)
-            cons.setCheckable(True)
-            cons.setChecked(False)
-            cons.toggled.connect(self.showHideCons)
+            cons = QFrame()
             consBox = QVBoxLayout()
             self.consTable = InventoryTable()
-            self.consTable.hide()
             consBox.addWidget(self.consTable)
             cons.setLayout(consBox)
 
@@ -735,15 +873,10 @@ class InventoryBox(QWidget):
                     wid.setLayout(b)
                     self.consTable.setCellWidget(j,i,wid)
 
-            vow = QGroupBox('Vowels')
-            vow.setFlat(True)
-            vow.setCheckable(True)
-            vow.setChecked(False)
-            vow.toggled.connect(self.showHideVow)
+            vow = QFrame()
             vowBox = QGridLayout()
             vowBox.setAlignment(Qt.AlignTop)
             self.vowTable = InventoryTable()
-            self.vowTable.hide()
             vowBox.addWidget(self.vowTable,0, Qt.AlignLeft|Qt.AlignTop)
             vow.setLayout(vowBox)
             vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
@@ -890,17 +1023,18 @@ class InventoryBox(QWidget):
 
         self.setLayout(box)
 
-    def showHideCons(self, checked):
-        if checked:
-            self.consTable.show()
-        else:
-            self.consTable.hide()
+    def highlightSegments(self, features):
+        segs = self.inventory.features_to_segments(features)
+        for btn in self.btnGroup.buttons():
+            btn.setStyleSheet("QPushButton{}")
+            if features and btn.text() in segs:
+                btn.setStyleSheet("QPushButton{background-color: red;}")
 
-    def showHideVow(self, checked):
-        if checked:
-            self.vowTable.show()
-        else:
-            self.vowTable.hide()
+    def selectSegments(self, features):
+        segs = self.inventory.features_to_segments(features)
+        for btn in self.btnGroup.buttons():
+            if features and btn.text() in segs:
+                btn.setChecked(True)
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
@@ -1492,6 +1626,11 @@ class RadioSelectWidget(QGroupBox):
 
     def initialClick(self):
         self.widgets[0].click()
+
+    def click(self,index):
+        if index >= len(self.widgets):
+            return
+        self.widgets[index].click()
 
     def value(self):
         for w in self.widgets:

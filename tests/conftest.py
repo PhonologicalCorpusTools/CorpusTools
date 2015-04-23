@@ -10,10 +10,28 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         WordToken, Discourse)
 
 from corpustools.utils import generate_discourse
+
+from corpustools.gui.main import QApplicationMessaging
 #@pytest.fixture(scope='session')
 #def application():
 #    from corpustools.gui.imports import QApplication
 #    return QApplication([])
+
+
+#Overwrite pytest-qt's qpp fixture
+@pytest.yield_fixture(scope='session')
+def qapp():
+    """
+    fixture that instantiates the QApplication instance that will be used by
+    the tests.
+    """
+    app = QApplicationMessaging.instance()
+    if app is None:
+        app = QApplicationMessaging([])
+        yield app
+        app.exit()
+    else:
+        yield app # pragma: no cover
 
 @pytest.fixture(scope='module')
 def test_dir():
@@ -25,6 +43,8 @@ def test_dir():
 @pytest.fixture(scope='session')
 def settings():
     from corpustools.gui.config import Settings
+    s = Settings()
+    s['sigfigs'] = 3
     return Settings()
 
 @pytest.fixture(scope='module')

@@ -1,13 +1,38 @@
 
 from corpustools.gui.views import *
+from corpustools.gui.models import CorpusModel
 
 def test_discourse_view(qtbot):
     widget = DiscourseView()
     qtbot.addWidget(widget)
 
-def test_lexicon_view(qtbot):
+def test_lexicon_view(qtbot, unspecified_test_corpus, settings):
     widget = LexiconView()
+    model = CorpusModel(unspecified_test_corpus, settings)
     qtbot.addWidget(widget)
+    qtbot.addWidget(model)
+
+    widget.setModel(model)
+    widget.search()
+    assert(len(widget.table.selectionModel().selectedRows()) == 0)
+    widget.searchField.setText('ma')
+    widget.search()
+    assert(len(widget.table.selectionModel().selectedRows()) == 1)
+    assert(widget.table.selectionModel().selectedRows()[0].row() == 0)
+    widget.search()
+    assert(len(widget.table.selectionModel().selectedRows()) == 1)
+    assert(widget.table.selectionModel().selectedRows()[0].row() == 2)
+    widget.searchField.setText('matemma')
+    widget.search()
+    assert(len(widget.table.selectionModel().selectedRows()) == 0)
+
+    w = model.wordObject(0)
+    widget.highlightType(w)
+    assert(len(widget.table.selectionModel().selectedRows()) == 1)
+    assert(widget.table.selectionModel().selectedRows()[0].row() == 0)
+
+
+
 
 #def test_phono_search_results():
 #   widget = PhonoSearchResults()

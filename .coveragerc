@@ -12,7 +12,7 @@ exclude_lines =
     raise NotImplementedError
     pass
 
-    if sys.platform
+    if sys\.platform
     if hasattr\(sys, 'frozen'\):
 
     except ImportError:
@@ -21,3 +21,9 @@ exclude_lines =
     if stop_check
 
     def run\(self\):
+
+    def calc\(self\):
+
+    def setResults
+
+    if dialog\.exec_():

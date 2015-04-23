@@ -109,8 +109,8 @@ class NDDialog(FunctionDialog):
 
     name = 'neighborhood density'
 
-    def __init__(self, parent, corpusModel, showToolTips):
-        FunctionDialog.__init__(self, parent, NDWorker())
+    def __init__(self, parent, settings, corpusModel, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, NDWorker())
 
         self.corpusModel = corpusModel
         self.showToolTips = showToolTips
@@ -304,7 +304,7 @@ class NDDialog(FunctionDialog):
                 'sequence_type':self.tierWidget.value(),
                 'count_what':typeToken,
                 'max_distance':max_distance,
-                'num_cores':self.parent().settings['num_cores'],}
+                'num_cores':self.settings['num_cores'],}
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
