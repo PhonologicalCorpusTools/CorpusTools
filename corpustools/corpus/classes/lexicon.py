@@ -1348,6 +1348,8 @@ class Corpus(object):
         return_dict = { k:v for k,v in freq_base.items()}
         if halve_edges and '#' in return_dict:
             return_dict['#'] = (return_dict['#'] / 2) + 1
+            if not probability:
+                return_dict['total'] -= return_dict['#'] - 2
         if probability:
             return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
         return return_dict
