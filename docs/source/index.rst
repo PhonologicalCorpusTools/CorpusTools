@@ -25,6 +25,7 @@ Contents:
    mutual_information.rst
    acoustic_similarity.rst
    citing_pct.rst
+   example_corpus_phonotactics.rst
    references.rst
    apireference
    release
