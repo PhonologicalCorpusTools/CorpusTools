@@ -159,8 +159,8 @@ def neighborhood_density(corpus, query, sequence_type = 'transcription',
 
     Returns
     -------
-    float
-        The number of neighbors for the queried word.
+    tuple(int, set)
+        Tuple of the number of neighbors and the set of neighbor Words.
     """
     #detail_key = string_sim_key(algorithm, sequence_type, count_what)
     #if detail_key in corpus._graph.graph['symbolsim']:

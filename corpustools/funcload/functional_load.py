@@ -40,11 +40,11 @@ def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
 
     Returns
     -------
-    int or float
-        If `relative_count`==False, returns an int of the raw number of
-        minimal pairs. If `relative_count`==True, returns a float of that
+    tuple(int or float, list)
+        Tuple of: 0. if `relative_count`==False, an int of the raw number of
+        minimal pairs; if `relative_count`==True, a float of that
         count divided by the total number of words in the corpus that
-        include either `s1` or `s2`.
+        include either `s1` or `s2`; and 1. list of minimal pairs.
     """
     all_segments = list(itertools.chain.from_iterable(segment_pairs))
 
@@ -103,7 +103,7 @@ def minpair_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
     if relative_count and len(neutralized) > 0:
         result /= len(neutralized)
 
-    return result
+    return (result, minpairs)
 
 def matches_wordtokens(first, second):
     """
@@ -197,11 +197,11 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
 
     Returns
     -------
-    int or float
-        If `relative_count`==False, returns an int of the raw number of
-        minimal pairs. If `relative_count`==True, returns a float of that
+    tuple(int or float, list)
+        Tuple of: 0. if `relative_count`==False, an int of the raw number of
+        minimal pairs; if `relative_count`==True, a float of that
         count divided by the total number of words in the corpus that
-        include either `s1` or `s2`.
+        include either `s1` or `s2`; and 1. list of minimal pairs.
     """
 
     if frequency_cutoff > 0.0:
@@ -257,7 +257,7 @@ def minpair_fl(corpus, segment_pairs, frequency_cutoff = 0,
     if relative_count and len(neutralized) > 0:
         result /= len(neutralized)
 
-    return result
+    return (result, minpairs)
 
 
 def deltah_fl_wordtokens(corpus, segment_pairs, frequency_cutoff = 0,
@@ -510,7 +510,7 @@ def relative_minpair_fl(corpus, segment, frequency_cutoff = 0,
             relative_count = relative_count,
             distinguish_homophones = distinguish_homophones,
             sequence_type=sequence_type,
-            stop_check = stop_check, call_back = call_back))
+            stop_check = stop_check, call_back = call_back)[0])
     return sum(results)/len(segment_pairs)
 
 
@@ -681,7 +681,7 @@ def all_pairwise_fls(corpus, relative_fl=False, algorithm='minpair', frequency_c
                 if type(s2) != str:
                     s2 = s2.symbol
                 if algorithm == 'minpair':
-                    fl = minpair_fl(corpus, [(s1, s2)], frequency_cutoff=frequency_cutoff, relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type)
+                    fl = minpair_fl(corpus, [(s1, s2)], frequency_cutoff=frequency_cutoff, relative_count=relative_count, distinguish_homophones=distinguish_homophones, sequence_type=sequence_type)[0]
                 elif algorithm == 'deltah':
                     fl = deltah_fl(corpus, [(s1, s2)], frequency_cutoff=frequency_cutoff, type_or_token=type_or_token, sequence_type=sequence_type)
                 fls[(s1, s2)] = fl

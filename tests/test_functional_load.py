@@ -88,7 +88,7 @@ def test_non_minimal_pair_corpus_minpair(unspecified_test_corpus):
                     'relative_count':False},1)]
 
     for c,v in calls:
-        assert(abs(minpair_fl(**c)-v) < 0.0001)
+        assert(abs(minpair_fl(**c)[0]-v) < 0.0001)
 
 def test_non_minimal_pair_corpus_deltah(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
@@ -249,7 +249,7 @@ def test_minimal_pair_wordtokens(unspecified_discourse_corpus):
                     'relative_count':False},1)]
 
     for c,v in calls:
-        assert(abs(minpair_fl_wordtokens(**c)-v) < 0.0001)
+        assert(abs(minpair_fl_wordtokens(**c)[0]-v) < 0.0001)
 
 def test_deltah_wordtokens(unspecified_discourse_corpus):
     c = unspecified_discourse_corpus.lexicon
