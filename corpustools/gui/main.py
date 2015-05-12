@@ -19,6 +19,8 @@ from .corpusgui import (CorpusLoadDialog, AddAbstractTierDialog, AddTierDialog,
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
                         ExportFeatureSystemDialog, FeatureClassManager)
 
+from .inventorygui import InventoryManager
+
 from .windows import SelfUpdateWorker
 
 from .ssgui import SSDialog
@@ -287,6 +289,12 @@ class MainWindow(QMainWindow):
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self, self.settings)
         result = dialog.exec_()
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def manageInventoryChart(self):
+        dialog = InventoryManager(self, self.corpusModel)
+        results = dialog.exec_()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -680,6 +688,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Manage feature systems", triggered=self.loadFeatureMatrices)
 
+        self.manageInventoryAct = QAction ( "Manage inventory chart...",
+                self,
+                statusTip="Manage inventory chart", triggered=self.manageInventoryChart)
+
         self.manageFeatureClassesAct = QAction( "Manage feature classes...",
                 self,
                 statusTip = "Create/change feature classes", triggered=self.loadFeatureClasses)
@@ -903,6 +915,7 @@ class MainWindow(QMainWindow):
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
         self.featureMenu.addAction(self.manageFeatureClassesAct)
+        self.featureMenu.addAction(self.manageInventoryAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.phonoProbAct)

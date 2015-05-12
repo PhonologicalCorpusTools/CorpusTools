@@ -640,7 +640,7 @@ class FeatureClassManager(CreateClassWidget):
         className = className.replace(' ', '')
         if className == '':
             reply = QMessageBox.critical(self,
-                                         "Missing information", "Please enter a name for the tier.")
+                                         "Missing information", "Please enter a name for the class.")
             return
         elif className in self.corpus.inventory.classes.keys():
 
@@ -660,7 +660,6 @@ class FeatureClassManager(CreateClassWidget):
         else:
             self.segList = createList
         QDialog.accept(self)
-
 
 
 class FeatureMatrixManager(QDialog):
