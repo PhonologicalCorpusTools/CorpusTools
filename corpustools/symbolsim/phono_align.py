@@ -11,22 +11,34 @@ from codecs import open
 class Aligner(object):
 
     def __init__(self, features_tf=True, ins_penalty=1, del_penalty=1,
-                 sub_penalty=1, tolerance=0, features=None):
+                 sub_penalty=1, tolerance=0, features=None,
+                 underspec_cost=0.25,
+                 ins_del_basis='empty'): # other option is 'average'
         self.features_tf = features_tf
         self.ins_penalty = ins_penalty
         self.del_penalty = del_penalty
         self.sub_penalty = sub_penalty
         self.tolerance = tolerance
         self.features = features
+        self.underspec_cost = underspec_cost # should be set to 1.0 to disable underspecification
+        self.ins_del_basis = ins_del_basis
 
         if features_tf:
-            try:
-                self.silence_features = self.features['empty']
-            except (TypeError, KeyError):
-                feature_names = self.features.features
-                self.silence_features = {}
-                for feature in feature_names:
-                    self.silence_features[feature] = '0'
+            if self.ins_del_basis == 'empty':
+                try:
+                    self.silence_features = self.features['empty']
+                except (TypeError, KeyError):
+                    feature_names = self.features.features
+                    self.silence_features = {}
+                    for feature in feature_names:
+                        self.silence_features[feature] = '0'
+            elif self.ins_del_basis == 'average':
+                total = 0
+                for segment1 in self.features:
+                    for segment2 in self.features:
+                        if segment1 != segment2:
+                            total += self.compare_segments(segment1, segment2, self.underspec_cost)
+                self.ins_del_difference = total / (len(self.features)^2 - len(self.features))
 
     def align(self, seq1=None, seq2=None):
         similarity_matrix = self.make_similarity_matrix(seq1, seq2)
@@ -55,18 +67,18 @@ class Aligner(object):
         d[0][0]['f'] = 0
 
         for x in range(1, len(seq1)+1):
-            d[x][0]['f'] = d[x-1][0]['f'] + self.compare_segments(seq1[x-1], 'empty')
+            d[x][0]['f'] = d[x-1][0]['f'] + self.compare_segments(seq1[x-1], 'empty', self.underspec_cost)
             d[x][0]['left'] = 1
 
         for y in range(1, len(seq2)+1):
-            d[0][y]['f'] = d[0][y-1]['f'] + self.compare_segments('empty', seq2[y-1])
+            d[0][y]['f'] = d[0][y-1]['f'] + self.compare_segments('empty', seq2[y-1], self.underspec_cost)
             d[0][y]['above'] = 1
 
         for x in range(1, len(seq1)+1):
             for y in range(1, len(seq2)+1):
-                aboveleft = (d[x - 1][y - 1]['f'] + self.compare_segments(seq1[x-1], seq2[y-1]))
-                left = d[x - 1][y]['f'] + self.compare_segments(seq1[x-1], 'empty')
-                above = d[x][y - 1]['f'] + self.compare_segments('empty', seq2[y-1])
+                aboveleft = (d[x - 1][y - 1]['f'] + self.compare_segments(seq1[x-1], seq2[y-1], self.underspec_cost))
+                left = d[x - 1][y]['f'] + self.compare_segments(seq1[x-1], 'empty', self.underspec_cost)
+                above = d[x][y - 1]['f'] + self.compare_segments('empty', seq2[y-1], self.underspec_cost)
 
                 if compare(aboveleft,above) and compare(aboveleft,left):
                     d[x][y]['f'] = aboveleft
@@ -88,7 +100,7 @@ class Aligner(object):
 
     def compare_segments(self, segment1, segment2, underspec_cost=.25):
 
-        def check_feature_difference(val1, val2):
+        def check_feature_difference(val1, val2, underspec_cost):
             if val1 == val2:
                 return 0
             elif val1 == '0' or val2 == '0':
@@ -107,19 +119,25 @@ class Aligner(object):
         if self.features_tf:
             if segment1 == 'empty':
                 fs2 = self.features[segment2symbol]
-                return (sum(check_feature_difference('0',
-                            sign) for sign in fs2.features.values()) * self.ins_penalty)
+                if self.ins_del_basis == 'empty':
+                    distance = (sum(check_feature_difference('0',
+                            sign, underspec_cost) for sign in fs2.features.values()))
+                elif self.ins_del_basis == 'average':
+                    distance = ins_del_difference
+                return distance * self.ins_penalty
 
             elif segment2 == 'empty':
-
                 fs1 = self.features[segment1symbol]
-                return (sum(check_feature_difference(sign,
-                        '0') for sign in fs1.features.values()) *
-                        self.del_penalty)
+                if self.ins_del_basis == 'empty':
+                    distance = (sum(check_feature_difference(sign,
+                        '0', underspec_cost) for sign in fs1.features.values()))
+                elif self.ins_del_basis == 'average':
+                    distance = ins_del_difference
+                return distance * self.del_penalty
             else:
                 fs1 = self.features[segment1symbol]
                 fs2 = self.features[segment2symbol]
-                return (sum(check_feature_difference(fs1[k], fs2[k]) for k in fs1.features.keys()) * self.sub_penalty)
+                return (sum(check_feature_difference(fs1[k], fs2[k], underspec_cost) for k in fs1.features.keys()) * self.sub_penalty)
         else:
             if segment1 == 'empty':
                 return self.ins_penalty

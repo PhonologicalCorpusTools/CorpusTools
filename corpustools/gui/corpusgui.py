@@ -305,7 +305,7 @@ class CorpusLoadDialog(QDialog):
         formFrame.setLayout(formLayout)
         layout.addWidget(formFrame)
 
-        self.acceptButton = QPushButton('Load selected corpus')
+        self.acceptButton = QPushButton('Load selected corpus', default=True)
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
