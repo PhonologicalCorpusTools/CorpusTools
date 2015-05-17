@@ -109,7 +109,7 @@ class PDDialog(FunctionDialog):
         pdFrame = QFrame()
         pdlayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
 
         pdlayout.addWidget(self.segPairWidget)
 
@@ -117,7 +117,7 @@ class PDDialog(FunctionDialog):
         addSegClassButton.clicked.connect(self.addSegClass)
         pdlayout.addWidget(addSegClassButton)
 
-        self.envWidget = EnvironmentSelectWidget(corpus.inventory)
+        self.envWidget = EnvironmentSelectWidget(corpus)
         self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
 
@@ -293,7 +293,7 @@ class SegmentClassSelector(EnvironmentDialog):
 
     def __init__(self, parent, corpus):
         parent.name = 'class'
-        super().__init__(corpus.inventory, parent)
+        super().__init__(corpus, parent)
         self.lhsEnvFrame.setTitle('First class')
         self.rhsEnvFrame.setTitle('Second class')
         self.anotherButton.hide()

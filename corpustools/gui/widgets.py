@@ -1,7 +1,7 @@
 
 import sys
 import operator
-from itertools import combinations
+from itertools import combinations, product
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
     QMessageBox, QGroupBox, QLineEdit
@@ -628,7 +628,23 @@ class InventoryTable(QTableWidget):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
 
+class EditableInventoryTable(InventoryTable):
 
+    def __init__(self, corpus):
+        super().__init__()
+        self.corpus = corpus
+        self.horizontalHeader().setSectionsClickable(True)
+        self.horizontalHeader().sectionClicked.connect(self.editChart)
+        self.verticalHeader().setSectionsClickable(True)
+        self.verticalHeader().sectionClicked.connect(self.editChart)
+
+    def editChart(self):
+        dialog = CreateClassWidget(self, self.corpus, class_type='inventory')
+        results = dialog.exec_()
+        if results:
+            name = dialog.name
+            segs = dialog.segList[0]
+            print(name, segs)
 
 class SegmentButton(QPushButton):
     def sizeHint(self):
@@ -641,254 +657,207 @@ class SegmentButton(QPushButton):
 
 
 class InventoryBox(QWidget):
-    consonantColumns = ['Labial','Labiodental','Dental','Alveolar','Alveopalatal','Retroflex',
-                    'Palatal','Velar','Uvular','Pharyngeal','Epiglottal','Glottal']
 
-    consonantRows = ['Stop','Nasal','Fricative','Affricate','Approximate','Trill','Tap',
-                    'Lateral fricative','Lateral approximate','Lateral flap']
-
-    vowelColumns = ['Front','Near front','Central','Near back','Back']
-
-    vowelRows = ['Close','Near close','Close mid','Mid','Open mid','Near open','Open']
-
-    def __init__(self, title,inventory,parent=None):
+    def __init__(self,title, corpus,parent=None,editable=False):
         QWidget.__init__(self,parent)
 
-        self.inventory = inventory
+        self.inventory = corpus.inventory
+        self.consonantColumns = corpus.specifier.getConsonantColumns()
+        self.consonantRows = corpus.specifier.getConsonantRows()
+        self.vowelColumns = ['Front','Near front','Central','Near back','Back']
+        self.vowelRows = ['Close','Near close','Close mid','Mid','Open mid','Near open','Open']
+
         #find cats
         consColumns = set()
         consRows = set()
         vowColumns = set()
         vowRows = set()
+        consList = list()
+        vowList = list()
+        uncategorized = list()
+
         for s in self.inventory:
             try:
-                c = s.category
+                c = corpus.specifier.categorize(s)
             except KeyError:
                 c = None
+                uncategorized.append(s)
             if c is not None:
                 if c[0] == 'Vowel':
                     vowColumns.add(c[2])
                     vowRows.add(c[1])
+                    vowList.append((s,c))
                 elif c[0] == 'Consonant':
                     consColumns.add(c[1])
                     consRows.add(c[2])
+                    consList.append((s,c))
 
-        self.btnGroup = QButtonGroup()
+        self.btnGroup = QButtonGroup()#This has all of the SegmentButtons, see also self.value()
         self.btnGroup.setExclusive(False)
-        if len(consColumns) and len(vowColumns):
-            box = QVBoxLayout()
 
-            box.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-            box.setSpacing(0)
-            smallbox = QVBoxLayout()
-            smallbox.setSizeConstraint(QLayout.SetFixedSize)
-            smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-            cons = QGroupBox('Consonants')
-            cons.setFlat(True)
-            cons.setCheckable(True)
-            cons.setChecked(False)
-            cons.toggled.connect(self.showHideCons)
-            consBox = QVBoxLayout()
-            self.consTable = InventoryTable()
-            self.consTable.hide()
-            consBox.addWidget(self.consTable)
-            cons.setLayout(consBox)
+        box = QVBoxLayout()
+        box.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        box.setSpacing(0)
 
-            consColumns = [ x for x in self.consonantColumns if x in consColumns]
-            consColMapping = {x:i for i,x in enumerate(consColumns)}
-            consRows = [ x for x in self.consonantRows if x in consRows]
-            consRowMapping = {x:i for i,x in enumerate(consRows)}
+        smallbox = QVBoxLayout()
+        smallbox.setSizeConstraint(QLayout.SetFixedSize)
+        smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-            self.consTable.setColumnCount(len(consColumns))
-            self.consTable.setRowCount(len(consRows))
-            self.consTable.setHorizontalHeaderLabels(consColumns)
-            self.consTable.resizeColumnsToContents()
-            self.consTable.setVerticalHeaderLabels(consRows)
+        cons = self.makeConsBox(consColumns,consRows,consList,corpus,editable)
+        vow = self.makeVowelBox(vowColumns,vowRows,vowList,corpus,editable)
+        unk = self.makeUncategorizedBox(uncategorized)
+        self.consTable.resize()
+        self.vowTable.resize()
 
-            for i in range(len(consColumns)):
-                for j in range(len(consRows)):
-                    wid = QWidget()
-                    wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-
-                    b = QGridLayout()
-                    b.setAlignment(Qt.AlignCenter)
-                    b.setContentsMargins(0, 0, 0, 0)
-                    b.setSpacing(0)
-                    l = QWidget()
-                    l.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    lb = QVBoxLayout()
-                    lb.setAlignment(Qt.AlignCenter)
-                    lb.setContentsMargins(0, 0, 0, 0)
-                    lb.setSpacing(0)
-                    l.setLayout(lb)
-                    #l.hide()
-                    b.addWidget(l,0,0)#, alignment = Qt.AlignCenter)
-                    r = QWidget()
-                    r.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    rb = QVBoxLayout()
-                    rb.setAlignment(Qt.AlignCenter)
-                    rb.setContentsMargins(0, 0, 0, 0)
-                    rb.setSpacing(0)
-                    r.setLayout(rb)
-                    #r.hide()
-                    b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
-                    wid.setLayout(b)
-                    self.consTable.setCellWidget(j,i,wid)
-
-            vow = QGroupBox('Vowels')
-            vow.setFlat(True)
-            vow.setCheckable(True)
-            vow.setChecked(False)
-            vow.toggled.connect(self.showHideVow)
-            vowBox = QGridLayout()
-            vowBox.setAlignment(Qt.AlignTop)
-            self.vowTable = InventoryTable()
-            self.vowTable.hide()
-            vowBox.addWidget(self.vowTable,0, Qt.AlignLeft|Qt.AlignTop)
-            vow.setLayout(vowBox)
-            vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
-            vowColMapping = {x:i for i,x in enumerate(vowColumns)}
-            vowRows = [ x for x in self.vowelRows if x in vowRows]
-            vowRowMapping = {x:i for i,x in enumerate(vowRows)}
-
-            self.vowTable.setColumnCount(len(vowColumns))
-            self.vowTable.setRowCount(len(vowRows) + 1)
-            self.vowTable.setHorizontalHeaderLabels(vowColumns)
-            self.vowTable.resizeColumnsToContents()
-            self.vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
-
-            for i in range(len(vowColumns)):
-                for j in range(len(vowRows)):
-                    wid = QWidget()
-                    wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    b = QGridLayout()
-                    b.setAlignment(Qt.AlignCenter)
-                    b.setContentsMargins(0, 0, 0, 0)
-                    b.setSpacing(0)
-                    l = QWidget()
-                    l.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    lb = QVBoxLayout()
-                    lb.setAlignment(Qt.AlignCenter)
-                    lb.setContentsMargins(0, 0, 0, 0)
-                    lb.setSpacing(0)
-                    l.setLayout(lb)
-                    #l.hide()
-                    b.addWidget(l,0,0)#, alignment = Qt.AlignCenter)
-                    r = QWidget()
-                    r.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    rb = QVBoxLayout()
-                    rb.setAlignment(Qt.AlignCenter)
-                    rb.setContentsMargins(0, 0, 0, 0)
-                    rb.setSpacing(0)
-                    r.setLayout(rb)
-                    #r.hide()
-                    b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
-
-                    wid.setLayout(b)
-                    self.vowTable.setCellWidget(j,i,wid)
-
-            self.vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
-            diphWid = QWidget()
-            diphWid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-            diphBox = QHBoxLayout()
-            #diphBox.setAlignment(Qt.AlignCenter)
-            diphBox.setContentsMargins(0, 0, 0, 0)
-            diphBox.setSpacing(0)
-            diphWid.setLayout(diphBox)
-            self.vowTable.setCellWidget(len(vowRows),0,diphWid)
-
-            unk = QGroupBox('Other')
-            unk.setFlat(True)
-            #unk.setCheckable(True)
-            #unk.setChecked(False)
-            #unk.toggled.connect(self.showHideUnk)
-            unkBox = QGridLayout()
-            unk.setLayout(unkBox)
-
-            unkRow = 0
-            unkCol = -1
-            for s in inventory:
-                try:
-                    cat = s.category
-                except KeyError:
-                    cat = None
-                btn = SegmentButton(s.symbol)
-                btn.setCheckable(True)
-                btn.setAutoExclusive(False)
-                btn.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                #btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
-                #btn.setMaximumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
-                #btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() +7)
-                #btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
-                self.btnGroup.addButton(btn)
-                if cat is None:
-                    unkCol += 1
-                    if unkCol > 11:
-                        unkCol = 0
-                        unkRow += 1
-                    unkBox.addWidget(btn,unkRow,unkCol)
-
-                elif cat[0] == 'Vowel':
-                    if cat[1] is None or cat[2] is None:
-                        continue
-                    col = vowColMapping[cat[2]]
-                    row = vowRowMapping[cat[1]]
-                    if cat[3] == 'Unrounded':
-                        colTwo = 0
-                    else:
-                        colTwo = 1
-                    cell = self.vowTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
-
-                    cell.show()
-                    cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
-                    cell.setMinimumHeight(cell.sizeHint().height())
-                    #vowTable.cellWidget(row,col).setMinimumSize(cell.sizeHint())
-
-
-                elif cat[0] == 'Consonant':
-                    col = consColMapping[cat[1]]
-                    row = consRowMapping[cat[2]]
-                    if cat[3] == 'Voiceless':
-                        colTwo = 0
-                    else:
-                        colTwo = 1
-                    cell = self.consTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
-
-                    cell.show()
-                    cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
-                    #cell.setMinimumHeight(cell.sizeHint().height())
-
-                elif cat[0] == 'Diphthong':
-                    diphBox.addWidget(btn)
-
-            self.consTable.resize()
-            self.vowTable.resize()
-            smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
-
-            smallbox.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
-            b = QFrame()
-            b.setLayout(smallbox)
-            box.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
-            box.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
-        else:
-            box = QGridLayout()
-
-            row = 0
-            col = 0
-            for s in inventory:
-                btn = SegmentButton(s.symbol)
-                btn.setCheckable(True)
-                btn.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed)
-                btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
-
-                box.addWidget(btn,row,col)
-                self.btnGroup.addButton(btn)
-                col += 1
-                if col > 11:
-                    col = 0
-                    row += 1
+        smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
+        smallbox.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
+        b = QFrame()
+        b.setLayout(smallbox)
+        box.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
+        box.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
 
         self.setLayout(box)
+
+    def makeConsBox(self,consColumns,consRows,consList,corpus,editable):
+        cons = QGroupBox('Consonants')
+        cons.setFlat(True)
+        cons.toggled.connect(self.showHideCons)
+        consBox = QVBoxLayout()
+        if editable:
+            self.consTable = EditableInventoryTable(corpus)
+            cons.setCheckable(False)
+            self.showHideCons(True)
+        else:
+            self.consTable = InventoryTable()
+            cons.setCheckable(True)
+            cons.setChecked(False)
+            self.consTable.hide()
+        consBox.addWidget(self.consTable)
+        cons.setLayout(consBox)
+
+        consColumns = [ x for x in self.consonantColumns if x in consColumns]
+        consColMapping = {i:x for i,x in enumerate(consColumns)}
+        consRows = [ x for x in self.consonantRows if x in consRows]
+        consRowMapping = {i:x for i,x in enumerate(consRows)}
+
+        self.consTable.setColumnCount(len(consColumns))
+        self.consTable.setRowCount(len(consRows))
+        self.consTable.setHorizontalHeaderLabels(consColumns)
+        self.consTable.resizeColumnsToContents()
+        self.consTable.setVerticalHeaderLabels(consRows)
+
+        for i,j in product(range(len(consColumns)), range(len(consRows))):
+            for seg,category in consList:
+                if consRowMapping[i] in category and consColMapping[j] in category:
+                    btn = self.generateSegmentButton(seg.symbol)
+                    self.consTable.setCellWidget(j,i,btn)
+        return cons
+
+    def makeVowelBox(self,vowColumns,vowRows,vowList,corpus,editable):
+        vow = QGroupBox('Vowels')
+        vow.setFlat(True)
+        vow.toggled.connect(self.showHideVow)
+        vowBox = QGridLayout()
+        vowBox.setAlignment(Qt.AlignTop)
+        if editable:
+            self.vowTable = EditableInventoryTable(corpus)
+            vow.setCheckable(False)
+            self.showHideVow(True)
+        else:
+            self.vowTable = InventoryTable()
+            vow.setCheckable(True)
+            vow.setChecked(False)
+            self.vowTable.hide()
+        vowBox.addWidget(self.vowTable,0, Qt.AlignLeft|Qt.AlignTop)
+        vow.setLayout(vowBox)
+        vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
+        vowColMapping = {i:x for i,x in enumerate(vowColumns)}
+        vowRows = [ x for x in self.vowelRows if x in vowRows]
+        vowRowMapping = {i:x for i,x in enumerate(vowRows)}
+
+        self.vowTable.setColumnCount(len(vowColumns))
+        self.vowTable.setRowCount(len(vowRows) + 1)
+        self.vowTable.setHorizontalHeaderLabels(vowColumns)
+        self.vowTable.resizeColumnsToContents()
+        self.vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
+
+        for i,j in product(range(len(vowColumns)), range(len(vowRows))):
+            for seg,category in vowList:
+                if vowRowMapping[i] in category and vowColMapping[j] in category:
+                    btn = self.generateSegmentButton(seg.symbol)
+                    self.vowTable.setCellWidget(j,i,btn)
+
+        self.vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
+        diphWid = QWidget()
+        diphWid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+        diphBox = QHBoxLayout()
+        #diphBox.setAlignment(Qt.AlignCenter)
+        diphBox.setContentsMargins(0, 0, 0, 0)
+        diphBox.setSpacing(0)
+        diphWid.setLayout(diphBox)
+        self.vowTable.setCellWidget(len(vowRows),0,diphWid)
+        return vow
+
+    def makeUncategorizedBox(self,uncategorized):
+        unk = QGroupBox('Uncategorized')
+        unk.setFlat(True)
+        # unk.setCheckable(True)
+        # unk.setChecked(False)
+        # unk.toggled.connect(self.showHideUnk)
+        unkBox = QGridLayout()
+        unk.setLayout(unkBox)
+
+        unkRow = 0
+        unkCol = -1
+        for s in uncategorized:
+            btn = SegmentButton(s.symbol)
+            btn.setCheckable(True)
+            btn.setAutoExclusive(False)
+            btn.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+            #btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
+            #btn.setMaximumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
+            #btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() +7)
+            #btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
+            self.btnGroup.addButton(btn)
+
+            unkCol += 1
+            if unkCol > 11:
+                unkCol = 0
+                unkRow += 1
+            unkBox.addWidget(btn,unkRow,unkCol)
+        return unk
+
+    def generateSegmentButton(self,symbol):
+        wid = SegmentButton(symbol)#This needs to be a SegmentButton for the i,j segment
+        wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+        b = QGridLayout()
+        b.setAlignment(Qt.AlignCenter)
+        b.setContentsMargins(0, 0, 0, 0)
+        b.setSpacing(0)
+        l = QWidget()
+        l.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+        lb = QVBoxLayout()
+        lb.setAlignment(Qt.AlignCenter)
+        lb.setContentsMargins(0, 0, 0, 0)
+        lb.setSpacing(0)
+        l.setLayout(lb)
+        #l.hide()
+        b.addWidget(l,0,0)#, alignment = Qt.AlignCenter)
+        r = QWidget()
+        r.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+        rb = QVBoxLayout()
+        rb.setAlignment(Qt.AlignCenter)
+        rb.setContentsMargins(0, 0, 0, 0)
+        rb.setSpacing(0)
+        r.setLayout(rb)
+        #r.hide()
+        b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
+        wid.setLayout(b)
+        wid.setCheckable(True)
+        wid.setAutoExclusive(False)
+        wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+        self.btnGroup.addButton(wid)
+        return wid
 
     def showHideCons(self, checked):
         if checked:
@@ -931,10 +900,10 @@ class InventoryBox(QWidget):
 
 class TranscriptionWidget(QGroupBox):
     transcriptionChanged = Signal(object)
-    def __init__(self, title,inventory,parent=None):
+    def __init__(self, title,corpus,parent=None):
         QGroupBox.__init__(self,title,parent)
-        self.inventory = inventory
-
+        self.inventory = corpus.inventory
+        self.corpus = corpus
         layout = QFormLayout()
 
         self.transEdit = QLineEdit()
@@ -944,7 +913,7 @@ class TranscriptionWidget(QGroupBox):
         self.showInv.clicked.connect(self.showHide)
         layout.addRow(self.transEdit,self.showInv)
 
-        self.segments = InventoryBox('Inventory',self.inventory)
+        self.segments = InventoryBox('Inventory',self.corpus)
         for btn in self.segments.btnGroup.buttons():
             btn.setCheckable(False)
             btn.setAutoDefault(False)
@@ -1060,7 +1029,7 @@ class FeatureBox(QWidget):
 
 
 class SegmentPairDialog(QDialog):
-    def __init__(self, inventory,parent=None):
+    def __init__(self, corpus, parent=None):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
@@ -1071,7 +1040,7 @@ class SegmentPairDialog(QDialog):
 
         segLayout = QHBoxLayout()
 
-        self.segFrame = InventoryBox('Segments',inventory)
+        self.segFrame = InventoryBox('Segments',corpus)
 
         segLayout.addWidget(self.segFrame)
 
@@ -1155,10 +1124,11 @@ class SegPairTableWidget(TableWidget):
 
 
 class SegmentPairSelectWidget(QGroupBox):
-    def __init__(self,inventory,parent=None):
+    def __init__(self,corpus,parent=None):
         QGroupBox.__init__(self,'Segments',parent)
 
-        self.inventory = inventory
+        self.inventory = corpus.inventory
+        self.corpus = corpus
 
         vbox = QVBoxLayout()
         self.addButton = QPushButton('Add pair of sounds')
@@ -1180,7 +1150,7 @@ class SegmentPairSelectWidget(QGroupBox):
         self.setFixedWidth(self.minimumSizeHint().width())
 
     def segPairPopup(self):
-        dialog = SegmentPairDialog(self.inventory)
+        dialog = SegmentPairDialog(self.corpus)
         addOneMore = True
         while addOneMore:
             dialog.reset()
@@ -1223,7 +1193,7 @@ class SegFeatSelect(QGroupBox):
         layout.addWidget(QLabel('Basis segment selection:'))
         layout.addWidget(self.typeSelect, alignment = Qt.AlignLeft)
 
-        self.sel = InventoryBox('',self.inventory)
+        self.sel = InventoryBox('',self.corpus)
         self.sel.setExclusive(self.segExclusive)
 
         layout.addWidget(self.sel)
@@ -1233,7 +1203,7 @@ class SegFeatSelect(QGroupBox):
     def generateFrame(self):
         self.sel.deleteLater()
         if self.typeSelect.currentText() == 'Segments':
-            self.sel = InventoryBox('',self.inventory)
+            self.sel = InventoryBox('',self.corpus)
             self.sel.setExclusive(self.segExclusive)
         elif self.typeSelect.currentText() == 'Features':
             self.sel = FeatureBox('',self.inventory)
@@ -1249,10 +1219,11 @@ class SegFeatSelect(QGroupBox):
             return self.corpus.features_to_segments(self.sel.value()[1:-1])
 
 class EnvironmentDialog(QDialog):
-    def __init__(self, inventory,parent=None):
+    def __init__(self, corpus, parent=None):
         QDialog.__init__(self,parent)
 
-        self.inventory = inventory
+        self.inventory = corpus.inventory
+        self.corpus = corpus
         self.features = inventory[-1].features.keys()
 
         layout = QVBoxLayout()
@@ -1293,10 +1264,10 @@ class EnvironmentDialog(QDialog):
             self.rhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
             self.rhsEnvLayout.addWidget(self.rhsEnvType, alignment = Qt.AlignLeft)
 
-        self.lhs = InventoryBox('',self.inventory)
+        self.lhs = InventoryBox('',self.corpus)
         self.lhs.setExclusive(True)
 
-        self.rhs = InventoryBox('',self.inventory)
+        self.rhs = InventoryBox('',self.corpus)
         self.rhs.setExclusive(True)
 
         self.lhsEnvLayout.addWidget(self.lhs)
@@ -1390,11 +1361,11 @@ class EnvironmentDialog(QDialog):
 
 class EnvironmentSelectWidget(QGroupBox):
     name = 'environment'
-    def __init__(self,inventory,parent=None):
+    def __init__(self,corpus,parent=None):
         QGroupBox.__init__(self,'{}s'.format(self.name.title()),parent)
 
-        self.inventory = inventory
-
+        self.inventory = corpus.inventory
+        self.corpus = corpus
         vbox = QVBoxLayout()
 
         self.addButton = QPushButton('Add {}'.format(self.name))
@@ -1424,7 +1395,7 @@ class EnvironmentSelectWidget(QGroupBox):
         self.setLayout(vbox)
 
     def envPopup(self):
-        dialog = EnvironmentDialog(self.inventory,self)
+        dialog = EnvironmentDialog(self.corpus,self)
         addOneMore = True
         while addOneMore:
             dialog.reset()
@@ -1511,7 +1482,7 @@ class SegmentClassSelectWidget(QFrame):
         self.createFrame = QFrame()
         createLayout = QVBoxLayout()
 
-        self.createWidget = InventoryBox('Segments to define this class',self.corpus.inventory)
+        self.createWidget = InventoryBox('Segments to define this class',self.corpus)
         self.createType.currentIndexChanged.connect(self.generateFrames)
 
         createLayout.addWidget(self.createWidget)
@@ -1549,7 +1520,7 @@ class SegmentClassSelectWidget(QFrame):
     def createSegmentFrame(self):
         self.createWidget.deleteLater()
 
-        self.createWidget = InventoryBox('Segments to define the class',self.corpus.inventory)
+        self.createWidget = InventoryBox('Segments to define the class',self.corpus)
         self.createFrame.layout().addWidget(self.createWidget)
 
     def generateFrames(self,ind=0):
@@ -1580,7 +1551,7 @@ class SegmentClassSelectWidget(QFrame):
 
 
 class CreateClassWidget(QDialog):
-    def __init__(self, parent, corpus, class_type):
+    def __init__(self, parent, corpus, class_type=None):
         QDialog.__init__(self, parent)
 
         self.corpus = corpus
@@ -1589,18 +1560,26 @@ class CreateClassWidget(QDialog):
         self.mainLayout = QVBoxLayout()
 
         if self.class_type == 'tier':
-            explanation = QLabel(('You can create Tiers in this window. A Tier is subpart of a word that consists only of '
+            explanation = ('You can create Tiers in this window. A Tier is subpart of a word that consists only of '
             'the segments you want, maintaining their original ordering. You can define the properties of the Tier below. '
             'Tiers are commonly created on the basis of a feature class, e.g. all the vowels or of all the obstruents in a word. '
             'PCT will allow you to create Tiers consisting of any arbitrary set of sounds.\n'
             'Once created, the Tier will be added as a column in your corpus, and it will be visible in the main window. '
-            'You can then select this Tier inside of certain analysis functions.'))
+            'You can then select this Tier inside of certain analysis functions.')
         elif self.class_type == 'class':
-            explanation = QLabel(('You can create Classes in this window. A Class is simply a set of sounds from the inventory '
+            explanation = ('You can create Classes in this window. A Class is simply a set of sounds from the inventory '
             'of your corpus. Classes are normally created on the basis of shared phonological features, in which case they are '
             'usually called  \"natural\" classes. An arbitrary set of sounds with no common features may be called \"unnatural\".\n'
             'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
-            'Classes can also be used to organize the inventory chart for your corpus'))
+            'Classes can also be used to organize the inventory chart for your corpus')
+        elif self.class_type == 'inventory':
+            explanation = ('This window allows you to specify the details of the column or row you selected in your '
+                            'inventory. You can change the name, and you can set a filter for which kinds of segments '
+                            'should appear in this column or row.')
+        else:
+            explanation = ''
+
+        explanation = QLabel(explanation)
 
         explanation.setWordWrap(True)
         self.mainLayout.addWidget(explanation)
@@ -1623,7 +1602,7 @@ class CreateClassWidget(QDialog):
         #self.mainLayout.addWidget(self.featuresFrame)
 
         self.segFrame = QGroupBox('Segments to define the {}'.format(self.class_type))
-        self.segSelectWidget = InventoryBox('Segments',self.corpus.inventory)
+        self.segSelectWidget = InventoryBox('Segments',self.corpus)
         segLayout = QVBoxLayout()
         segLayout.addWidget(self.segSelectWidget)
         self.segFrame.setLayout(segLayout)
@@ -1655,6 +1634,33 @@ class CreateClassWidget(QDialog):
 
         self.setWindowTitle('Create {}'.format(self.class_type))
 
+    def accept(self):
+        className = self.nameEdit.text()
+        className = className.strip()
+        className = className.replace(' ', '')
+        if className == '':
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please enter a name for the class.")
+            return
+        elif self.corpus._inventory.hasClass(className):
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate class names",
+                                 "'{}' is already the name of a class. Please select a new name".format(className))
+                                 #QMessageBox.NoButton, self)
+            msgBox.addButton("OK", QMessageBox.AcceptRole)
+        self.name = className
+
+        self.segList = self.generateClass()
+        if not self.segList:
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
+            return
+
+
+        QDialog.accept(self)
+
+
+
     def createFeatureFrame(self):
         self.createWidget.deleteLater()
 
@@ -1664,7 +1670,7 @@ class CreateClassWidget(QDialog):
     def createSegmentFrame(self):
         self.createWidget.deleteLater()
 
-        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
+        self.createWidget = InventoryBox('Segments to define the tier',self.corpus)
         self.createFrame.layout().addWidget(self.createWidget)
 
     def generateFrames(self,ind=0):

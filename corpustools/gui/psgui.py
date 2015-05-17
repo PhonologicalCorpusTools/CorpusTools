@@ -64,7 +64,7 @@ class PhonoSearchDialog(FunctionDialog):
         targetLayout.addWidget(QLabel('Basis for search:'))
         targetLayout.addWidget(self.targetType, alignment = Qt.AlignLeft)
 
-        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
+        self.targetWidget = InventoryBox('Segments to search',self.corpus)
 
         targetLayout.addWidget(self.targetWidget)
 
@@ -72,7 +72,7 @@ class PhonoSearchDialog(FunctionDialog):
 
         pslayout.addWidget(self.targetFrame)
 
-        self.envWidget = EnvironmentSelectWidget(self.corpus.inventory)
+        self.envWidget = EnvironmentSelectWidget(self.corpus)
         pslayout.addWidget(self.envWidget)
 
 
@@ -102,7 +102,7 @@ class PhonoSearchDialog(FunctionDialog):
     def createSegmentFrame(self):
         self.targetWidget.deleteLater()
 
-        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
+        self.targetWidget = InventoryBox('Segments to search',self.corpus)
         self.targetFrame.layout().addWidget(self.targetWidget)
 
     def generateFrames(self,ind=0):

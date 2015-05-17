@@ -83,7 +83,7 @@ class FADialog(FunctionDialog):
 
         falayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
 
         falayout.addWidget(self.segPairWidget)
 

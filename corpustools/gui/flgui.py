@@ -129,7 +129,7 @@ class FLDialog(FunctionDialog):
         flFrame = QFrame()
         fllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
 
         fllayout.addWidget(self.segPairWidget)
 

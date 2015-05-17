@@ -739,7 +739,7 @@ class InventorySummary(QWidget):
 
         layout.setAlignment(Qt.AlignTop)
 
-        self.segments = InventoryBox('Segments',self.corpus.inventory)
+        self.segments = InventoryBox('Segments',self.corpus)
         self.segments.setExclusive(True)
         for b in self.segments.btnGroup.buttons():
             b.clicked.connect(self.summarizeSegment)
@@ -930,7 +930,7 @@ class AddWordDialog(QDialog):
 
         for a in self.corpus.attributes:
             if a.att_type == 'tier' and a.name == 'transcription':
-                self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus.inventory)
+                self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus)
                 self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
                 main.addRow(self.edits[a.name])
             elif a.att_type == 'tier':

@@ -82,7 +82,7 @@ class KLDialog(FunctionDialog):
         klframe = QFrame()
         kllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
         kllayout.addWidget(self.segPairWidget)
 
         self.side = str()

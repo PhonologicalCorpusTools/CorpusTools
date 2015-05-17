@@ -86,7 +86,7 @@ def test_radio_select_widget(qtbot):
 
 
 def test_inventory_box(qtbot, specified_test_corpus):
-    widget = InventoryBox('Inventory', specified_test_corpus.inventory)
+    widget = InventoryBox('Inventory', specified_test_corpus)
     qtbot.addWidget(widget)
 
     widget.setExclusive(True)
@@ -107,7 +107,7 @@ def test_inventory_box(qtbot, specified_test_corpus):
     assert(set(widget.value()) == set([ x.symbol for x in specified_test_corpus.inventory]))
 
 def test_transcription_widget(qtbot, specified_test_corpus):
-    widget = TranscriptionWidget('Transcription', specified_test_corpus.inventory)
+    widget = TranscriptionWidget('Transcription', specified_test_corpus)
     qtbot.addWidget(widget)
 
     widget.setText('test')
@@ -202,7 +202,7 @@ def test_digraph_dialog(qtbot):
     assert(dialog.value() == 'aa')
 
 def test_segment_pair_widget(qtbot, specified_test_corpus):
-    widget = SegmentPairSelectWidget(specified_test_corpus.inventory)
+    widget = SegmentPairSelectWidget(specified_test_corpus)
     qtbot.addWidget(widget)
 
     assert(widget.value() == [])
@@ -226,7 +226,7 @@ def test_segment_pair_widget(qtbot, specified_test_corpus):
 
 
 def test_environment_select_widget(qtbot, specified_test_corpus):
-    widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
+    widget = EnvironmentSelectWidget(specified_test_corpus)
     qtbot.addWidget(widget)
 
     assert(widget.value() == [])
@@ -245,9 +245,9 @@ def test_environment_select_widget(qtbot, specified_test_corpus):
 
 def test_environment_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
     # Test with features
-    widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
+    widget = EnvironmentSelectWidget(specified_test_corpus)
     qtbot.addWidget(widget)
-    dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
+    dialog = EnvironmentDialog(specified_test_corpus, widget)
     qtbot.addWidget(dialog)
 
     assert(dialog.lhsEnvType.count() == 2)
@@ -271,7 +271,7 @@ def test_environment_dialog(qtbot, specified_test_corpus, unspecified_test_corpu
 
     # Test without features
     widget = EnvironmentSelectWidget(unspecified_test_corpus.inventory)
-    dialog = EnvironmentDialog(unspecified_test_corpus.inventory, widget)
+    dialog = EnvironmentDialog(unspecified_test_corpus, widget)
 
     assert(dialog.lhsEnvType.count() == 1)
     assert(dialog.rhsEnvType.count() == 1)
@@ -287,7 +287,7 @@ def test_bigram_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
     # Test without features
     widget = BigramWidget(specified_test_corpus.inventory)
     qtbot.addWidget(widget)
-    dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
+    dialog = EnvironmentDialog(specified_test_corpus, widget)
     qtbot.addWidget(dialog)
 
     b1 = dialog.lhs.btnGroup.buttons()[0]
