@@ -630,21 +630,37 @@ class InventoryTable(QTableWidget):
 
 class EditableInventoryTable(InventoryTable):
 
-    def __init__(self, corpus):
+    def __init__(self, parent):
         super().__init__()
-        self.corpus = corpus
+        self.parent = parent
         self.horizontalHeader().setSectionsClickable(True)
-        self.horizontalHeader().sectionClicked.connect(self.editChart)
+        self.horizontalHeader().sectionClicked.connect(self.editChartRow)
         self.verticalHeader().setSectionsClickable(True)
-        self.verticalHeader().sectionClicked.connect(self.editChart)
+        self.verticalHeader().sectionClicked.connect(self.editChartCol)
 
-    def editChart(self):
-        dialog = CreateClassWidget(self, self.corpus, class_type='inventory')
+    def editChartRow(self, index):
+        print(self.horizontalHeaderItem(index).text())
+        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory')
         results = dialog.exec_()
         if results:
-            name = dialog.name
-            segs = dialog.segList[0]
-            print(name, segs)
+            self.parent.consonantColumns[index] = dialog.name
+            self.horizontalHeaderItem(index).setText(dialog.name)
+            #self.segs = dialog.segList[0]
+            #self.parent.resetInventoryBox()
+
+    def editChartCol(self, index):
+        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory')
+        results = dialog.exec_()
+        if results:
+            new_name = dialog.name
+            old_name = self.verticalHeaderItem(index).getText()
+            self.parent.consonantColumns[index] = new_name
+            self.verticalHeaderItem(index).setText(new_name)
+            self.parent.corpus.specifier.colNames[old_name] = new_name
+            #self.segs = dialog.segList[0]
+            #self.parent.resetInventoryBox()
+            self.parent.consTable.resize()
+
 
 class SegmentButton(QPushButton):
     def sizeHint(self):
@@ -660,13 +676,22 @@ class InventoryBox(QWidget):
 
     def __init__(self,title, corpus,parent=None,editable=False):
         QWidget.__init__(self,parent)
-
         self.inventory = corpus.inventory
+        self.corpus = corpus
+        self.editable = editable
         self.consonantColumns = corpus.specifier.getConsonantColumns()
         self.consonantRows = corpus.specifier.getConsonantRows()
         self.vowelColumns = ['Front','Near front','Central','Near back','Back']
         self.vowelRows = ['Close','Near close','Close mid','Mid','Open mid','Near open','Open']
+        self.generateInventoryBox()
 
+    def resetInventoryBox(self):
+        #self.layout.removeWidget(self.box)
+        self.box.deleteLater()
+        self.box = None
+        self.generateInventoryBox()
+
+    def generateInventoryBox(self):
         #find cats
         consColumns = set()
         consRows = set()
@@ -678,11 +703,12 @@ class InventoryBox(QWidget):
 
         for s in self.inventory:
             try:
-                c = corpus.specifier.categorize(s)
+                c = self.corpus.specifier.categorize(s)
             except KeyError:
                 c = None
                 uncategorized.append(s)
             if c is not None:
+                print(c)
                 if c[0] == 'Vowel':
                     vowColumns.add(c[2])
                     vowRows.add(c[1])
@@ -692,39 +718,47 @@ class InventoryBox(QWidget):
                     consRows.add(c[2])
                     consList.append((s,c))
 
+        print('cons={}'.format(consList))
+        print('vow={}'.format(vowList))
+        print('uncategorized={}'.format(uncategorized))
         self.btnGroup = QButtonGroup()#This has all of the SegmentButtons, see also self.value()
         self.btnGroup.setExclusive(False)
 
-        box = QVBoxLayout()
-        box.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        box.setSpacing(0)
+        self.box = QVBoxLayout()
+        self.box.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.box.setSpacing(0)
 
         smallbox = QVBoxLayout()
         smallbox.setSizeConstraint(QLayout.SetFixedSize)
         smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        cons = self.makeConsBox(consColumns,consRows,consList,corpus,editable)
-        vow = self.makeVowelBox(vowColumns,vowRows,vowList,corpus,editable)
+        cons = self.makeConsBox(consColumns,consRows,consList,self.editable)
+        vow = self.makeVowelBox(vowColumns,vowRows,vowList,self.editable)
         unk = self.makeUncategorizedBox(uncategorized)
         self.consTable.resize()
         self.vowTable.resize()
 
+        # explanation = QLabel(('Click on any row or column name to edit the details of which segments appear there. '
+        #                         'You can add or remove rows and columns using the buttons at the bottom.'))
+        # explanation.setWordWrap(200)
+        #smallbox.addWidget(explanation, alignment = Qt.AlignTop)
         smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
         smallbox.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
+
         b = QFrame()
         b.setLayout(smallbox)
-        box.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
-        box.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
+        self.box.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
+        self.box.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
 
-        self.setLayout(box)
+        self.setLayout(self.box)
 
-    def makeConsBox(self,consColumns,consRows,consList,corpus,editable):
+    def makeConsBox(self,consColumns,consRows,consList,editable):
         cons = QGroupBox('Consonants')
         cons.setFlat(True)
         cons.toggled.connect(self.showHideCons)
         consBox = QVBoxLayout()
         if editable:
-            self.consTable = EditableInventoryTable(corpus)
+            self.consTable = EditableInventoryTable(self)
             cons.setCheckable(False)
             self.showHideCons(True)
         else:
@@ -748,19 +782,19 @@ class InventoryBox(QWidget):
 
         for i,j in product(range(len(consColumns)), range(len(consRows))):
             for seg,category in consList:
-                if consRowMapping[i] in category and consColMapping[j] in category:
+                if consColMapping[i] in category and consRowMapping[j] in category:
                     btn = self.generateSegmentButton(seg.symbol)
                     self.consTable.setCellWidget(j,i,btn)
         return cons
 
-    def makeVowelBox(self,vowColumns,vowRows,vowList,corpus,editable):
+    def makeVowelBox(self,vowColumns,vowRows,vowList,editable):
         vow = QGroupBox('Vowels')
         vow.setFlat(True)
         vow.toggled.connect(self.showHideVow)
         vowBox = QGridLayout()
         vowBox.setAlignment(Qt.AlignTop)
         if editable:
-            self.vowTable = EditableInventoryTable(corpus)
+            self.vowTable = EditableInventoryTable(self)
             vow.setCheckable(False)
             self.showHideVow(True)
         else:
@@ -1573,6 +1607,7 @@ class CreateClassWidget(QDialog):
             'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
             'Classes can also be used to organize the inventory chart for your corpus')
         elif self.class_type == 'inventory':
+            self.class_type = 'row or column'
             explanation = ('This window allows you to specify the details of the column or row you selected in your '
                             'inventory. You can change the name, and you can set a filter for which kinds of segments '
                             'should appear in this column or row.')
@@ -1653,13 +1688,9 @@ class CreateClassWidget(QDialog):
         self.segList = self.generateClass()
         if not self.segList:
             reply = QMessageBox.critical(self,
-                                         "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
+                                         "Missing information", "Please specify at least one segment or feature")
             return
-
-
         QDialog.accept(self)
-
-
 
     def createFeatureFrame(self):
         self.createWidget.deleteLater()
