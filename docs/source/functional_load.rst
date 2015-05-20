@@ -549,3 +549,9 @@ the script to produce an output file called output.txt.  You would need
 to run the following command::
 
    pct_funcload example.corpus -l -o output.txt
+
+
+API reference
+-------------
+.. automodule:: corpustools.funcload.functional_load
+   :members:
