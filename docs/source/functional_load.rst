@@ -551,10 +551,3 @@ to run the following command::
    pct_funcload example.corpus -l -o output.txt
 
 .. _functional_load_api:
-
-API reference
--------------
-test
-
-.. automodule:: corpustools.funcload
-   :members:
