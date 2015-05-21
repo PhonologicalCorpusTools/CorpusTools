@@ -553,5 +553,6 @@ to run the following command::
 
 API reference
 -------------
+test
 .. automodule:: corpustools.funcload.functional_load
    :members:
