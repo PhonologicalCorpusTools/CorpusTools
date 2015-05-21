@@ -548,12 +548,13 @@ All other parameters are set to defaults. In addition, you want
 the script to produce an output file called output.txt.  You would need
 to run the following command::
 
-   pct_funcload example.corpus -l -o output.txt x
+   pct_funcload example.corpus -l -o output.txt
 
 .. _functional_load_api:
 
 API reference
 -------------
 test
-.. automodule:: corpustools.funcload.functional_load
+
+.. automodule:: corpustools.funcload
    :members:
