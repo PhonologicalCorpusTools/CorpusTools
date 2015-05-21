@@ -548,7 +548,7 @@ All other parameters are set to defaults. In addition, you want
 the script to produce an output file called output.txt.  You would need
 to run the following command::
 
-   pct_funcload example.corpus -l -o output.txt
+   pct_funcload example.corpus -l -o output.txt x
 
 .. _functional_load_api:
 
