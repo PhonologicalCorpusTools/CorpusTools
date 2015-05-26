@@ -491,23 +491,22 @@ class FeatureMatrix(object):
         pass
 
     def generateGenericHayesConsNames(self):
-        self.consCols['Labial'] = (0,{'labial': '+'}, None)
-        self.consCols['Labiodental'] = (1,{'labiodental': '+'}, None)
-        self.consCols['Dental'] = (2,{'anterior': '+', 'coronal':'+'}, None)
-        self.consCols['Alveopalatal'] = (3,{'anterior': '-', 'coronal':'+'}, None)
-        self.consCols['Palatal'] = (4,{'dorsal': '+', 'coronal':'+'}, None)
-        self.consCols['Velar'] = (5,{'dorsal': '+'}, None)
-        self.consCols['Uvular'] = (6,{'dorsal': '+', 'back':'+'}, None)
-        self.consCols['Glottal'] = (7,{'dorsal': '-', 'coronal':'-'}, None)
-
-        self.consRows['Stop'] = (0,{'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None)
-        self.consRows['Nasal'] = (1,{'nasal': '+'}, None)
-        self.consRows['Trill'] = (2,{'trill': '+'}, None)
-        self.consRows['Tap'] = (3,{'tap': '+'}, None)
-        self.consRows['Fricative'] = (4,{'sonorant': '-','continuant':'+'}, None)
-        self.consRows['Affricate'] = (5,{'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None)
-        self.consRows['Approximant'] = (6,{'sonorant': '+', 'lateral':'-'}, None)
-        self.consRows['Lateral approximant'] = (7,{'sonorant': '+', 'lateral':'+'}, None)
+        self.consCols['Labial'] = [0,{'consonantal':'+', 'labial': '+', 'coronal':'-'}, None]
+        self.consCols['Labiodental'] = [1,{'consonantal':'+', 'labiodental': '+',}, None]
+        self.consCols['Dental'] = [2,{'consonantal':'+', 'anterior': '+', 'coronal':'+', 'labial':'-'}, None]
+        self.consCols['Alveopalatal'] = [3,{'consonantal':'+', 'anterior': '-', 'coronal':'+', 'labial':'-'}, None]
+        self.consCols['Palatal'] = [4,{'consonantal':'+', 'dorsal': '+', 'coronal':'+', 'labial':'-'}, None]
+        self.consCols['Velar'] = [5,{'consonantal':'+', 'dorsal': '+', 'labial':'-'}, None]
+        self.consCols['Uvular'] = [6,{'consonantal':'+', 'dorsal': '+', 'back':'+', 'labial':'-'}, None]
+        self.consCols['Glottal'] = [7,{'consonantal':'+', 'dorsal': '-', 'coronal':'-', 'labial':'-', 'nasal': '-'}, None]
+        self.consRows['Stop'] = [0,{'consonantal':'+', 'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None]
+        self.consRows['Nasal'] = [1,{'consonantal':'+', 'nasal': '+'}, None]
+        self.consRows['Trill'] = [2,{'consonantal':'+', 'trill': '+'}, None]
+        self.consRows['Tap'] = [3,{'consonantal':'+', 'tap': '+'}, None]
+        self.consRows['Fricative'] = [4,{'consonantal':'+', 'sonorant': '-','continuant':'+'}, None]
+        self.consRows['Affricate'] = [5,{'consonantal':'+', 'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None]
+        self.consRows['Approximant'] = [6,{'consonantal':'+', 'sonorant': '+', 'lateral':'-'}, None]
+        self.consRows['Lateral approximant'] = [7,{'consonantal':'+', 'sonorant': '+', 'lateral':'+'}, None]
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):

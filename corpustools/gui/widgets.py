@@ -641,7 +641,7 @@ class EditableInventoryTable(InventoryTable):
 
     def editChartRow(self, index):
         old_name = self.verticalHeaderItem(index).text()
-        default_specs = self.parent.corpus.specifier.consRows[self.verticalHeaderItem(index).text()]
+        default_specs = self.parent.corpus.specifier.consRows[old_name]
         dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory',
                                    default_name=old_name, default_specs=default_specs)
         results = dialog.exec_()
@@ -649,11 +649,14 @@ class EditableInventoryTable(InventoryTable):
             new_name = dialog.name
             if new_name != old_name:
                 self.parent.corpus.specifier.consRows[new_name] = self.parent.corpus.specifier.consRows.pop(old_name)
+            featureList = dialog.featureList
+            self.parent.corpus.specifier.consRows[new_name][1] = {f[1:]:f[0] for f in featureList}
+            self.parent.corpus.specifier.consRows[new_name][2] = [s for s in dialog.selectedSegs]
             self.parent.resetInventoryBox(*self.generateInventoryBoxData())
 
     def editChartCol(self, index):
         old_name = self.horizontalHeaderItem(index).text()
-        default_specs = self.parent.corpus.specifier.consCols[self.horizontalHeaderItem(index).text()]
+        default_specs = self.parent.corpus.specifier.consCols[old_name]
         dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory',
                                    default_name=old_name, default_specs=default_specs)
         results = dialog.exec_()
@@ -661,6 +664,9 @@ class EditableInventoryTable(InventoryTable):
             new_name = dialog.name
             if new_name != old_name:
                 self.parent.corpus.specifier.consCols[new_name] = self.parent.corpus.specifier.consCols.pop(old_name)
+            featureList = dialog.featureList
+            self.parent.corpus.specifier.consCols[new_name][1] = {f[1:]:f[0] for f in featureList}
+            self.parent.corpus.specifier.consCols[new_name][2] = [s for s in dialog.selectedSegs]
             self.parent.resetInventoryBox(*self.generateInventoryBoxData())
 
     def generateInventoryBoxData(self):
@@ -669,7 +675,8 @@ class EditableInventoryTable(InventoryTable):
         consColumns = sorted(consColNames, key=lambda x:self.parent.corpus.specifier.consCols[x][0])
         consRowNames = self.parent.corpus.specifier.consRows.keys()
         consRows = sorted(consRowNames, key=lambda x:self.parent.corpus.specifier.consRows[x][0])
-
+        # needed_cols = list(set([feature_list[1] for seg,feature_list in consList]))
+        # needed_rows = list(set([feature_list[2] for seg,feature_list in consList]))
         categorized = list()
         uncategorized = list()
         for s in self.parent.corpus.inventory:
@@ -766,9 +773,6 @@ class InventoryBox(QWidget):
             self.vowTable.resize()
 
         if unk is not None:
-            #b = QFrame()
-            #b.setLayout(self.smallbox)
-            #self.smallbox.addWidget(b, alignment = Qt.AlignLeft | Qt.AlignTop)
             self.smallbox.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
 
     def makeConsBox(self,consColumns,consRows,consList,editable):
@@ -810,8 +814,6 @@ class InventoryBox(QWidget):
                     btn = self.generateSegmentButton(seg.symbol)
                     self.consTable.setCellWidget(consRowMapping[v], consColMapping[h], btn)
                     break
-            else:
-                print('seg {} with features {} did not match anything'.format(seg, category))
         return cons
 
     def makeVowelBox(self,vowColumns,vowRows,vowList,editable):
@@ -1717,8 +1719,10 @@ class CreateClassWidget(QDialog):
                                  #QMessageBox.NoButton, self)
             msgBox.addButton("OK", QMessageBox.AcceptRole)
         self.name = className
-
         self.segList = self.generateClass()
+        self.featureList = self.featureSelectWidget.currentSpecification()
+        self.selectedSegs = self.segSelectWidget.value()
+
         if not self.segList:
             reply = QMessageBox.critical(self,
                                          "Missing information", "Please specify at least one segment or feature")
