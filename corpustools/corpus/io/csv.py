@@ -235,7 +235,7 @@ def make_safe(value, delimiter):
         return delimiter.join(map(lambda x: make_safe(x, delimiter),value))
     return str(value)
 
-def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.'):
+def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.', include_variants = False):
     """
     Save a corpus as a column-delimited text file
 
@@ -253,13 +253,28 @@ def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.'):
     trans_delimiter : str
         Character to mark boundaries in transcriptions.  Defaults to '.'
 
+    include_variants : bool
+        Whether to include a column of pronunciation variants.  Defaults to False.
+
     """
     word = corpus.random_word()
     header = sorted(word.descriptors)
     with open(path, encoding='utf-8', mode='w') as f:
-        print(delimiter.join(header), file=f)
-        for key in corpus.iter_sort():
-            print(delimiter.join(make_safe(getattr(key, value),trans_delimiter) for value in header), file=f)
+        if include_variants:
+            print(delimiter.join(header + ['Variants']), file=f)
+        else:
+            print(delimiter.join(header), file=f)
+
+        for word in corpus.iter_sort():
+            outline = [make_safe(getattr(word, value),trans_delimiter) for value in header]
+            if include_variants:
+                var = word.variants()
+                d = ', '
+                if delimiter == ',':
+                    d = '; '
+                var = d.join(make_safe(x,trans_delimiter) for x in sorted(var.keys(), key = lambda y: var[y]))
+                outline.append(var)
+            print(delimiter.join(outline), file=f)
 
 def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
     """

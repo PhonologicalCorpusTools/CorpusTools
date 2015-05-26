@@ -868,6 +868,10 @@ class ExportCorpusDialog(QDialog):
 
         inlayout.addRow('Transcription delimiter:',self.transDelimiterEdit)
 
+        self.variantCheck = QCheckBox()
+
+        inlayout.addRow('Include pronunciation variants', self.variantCheck)
+
         inframe = QFrame()
         inframe.setLayout(inlayout)
 
@@ -905,6 +909,6 @@ class ExportCorpusDialog(QDialog):
             return
         transDelim = self.transDelimiterEdit.text()
 
-        export_corpus_csv(self.corpus,filename,colDelim,transDelim)
+        export_corpus_csv(self.corpus,filename,colDelim,transDelim, self.variantCheck.isChecked())
 
         QDialog.accept(self)

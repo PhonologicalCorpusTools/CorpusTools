@@ -280,6 +280,8 @@ class MainWindow(QMainWindow):
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)
+            self.exportCorpusAct.setEnabled(True)
+            self.exportFeatureSystemAct.setEnabled(True)
         #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
@@ -677,10 +679,12 @@ class MainWindow(QMainWindow):
         self.exportCorpusAct = QAction( "Export corpus as text file (use with spreadsheets etc.)...",
                 self,
                 statusTip="Export corpus", triggered=self.exportCorpus)
+        self.exportCorpusAct.setEnabled(False)
 
         self.exportFeatureSystemAct = QAction( "Export feature system as text file...",
                 self,
                 statusTip="Export feature system", triggered=self.exportFeatureMatrix)
+        self.exportFeatureSystemAct.setEnabled(False)
 
         self.editPreferencesAct = QAction( "Preferences...",
                 self,
