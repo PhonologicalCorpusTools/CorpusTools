@@ -78,8 +78,8 @@ level directory. Run it in *one* of the following ways:
    window is open, nagivate to the top level CorpusTools folder---the
    one that has setup.py in it. (Use the command 'cd' to navigate your
    filesystem; Google "terminal change directory" for further instructions.)
-   Once in the correct directory, run this command: `python3 setup.py install`
-   (no quotes). You may lack proper permissions to run this file, in
+   Once in the correct directory, run this command: `python3 setup.py install`.
+   You may lack proper permissions to run this file, in
    which case on Linux or Mac OS X you can instead run `sudo python3 setup.py install`.
    If Python 3.x is the only version of Python on your system, it may be
    possible or necessary to use the command `python` rather than `python3`.
