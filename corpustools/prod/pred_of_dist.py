@@ -6,6 +6,8 @@ from corpustools.corpus.classes import EnvironmentFilter
 
 from corpustools.exceptions import ProdError
 
+from corpustools.contextmanagers import BaseCorpusContext, CanonicalVariantContext
+
 def count_segs_wordtokens(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, call_back):
     """
     Count the frequency of segments in a corpus, for internal use as
@@ -284,8 +286,7 @@ def check_envs_wordtokens(corpus, seg1, seg2, envs, sequence_type,
 
     return env_matches, missing_envs, overlapping_envs
 
-def check_envs(corpus, seg1, seg2, envs, sequence_type,
-                    type_or_token, stop_check, call_back):
+def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
     """
     Search for the specified segments in the specified environments in
     the corpus.

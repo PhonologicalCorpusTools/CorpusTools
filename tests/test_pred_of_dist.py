@@ -5,6 +5,7 @@ import os
 from corpustools.prod.pred_of_dist import (check_envs, calc_prod, count_segs,
                                         calc_prod_wordtokens)
 
+from corpustools.contextmanagers import CanonicalVariantContext, MostFrequentVariantContext
 
 def test_prod_allenvs(specified_test_corpus):
     return
@@ -20,7 +21,8 @@ def test_prod_token(specified_test_corpus):
     expected["AVG"] = 0.9496532099899153
     type_or_token = 'token'
     tier = 'transcription'
-    result = calc_prod(specified_test_corpus,seg1,seg2,env_list,tier, type_or_token)
+    with CanonicalVariantContext(specified_test_corpus, tier, type_or_token) as c:
+        result = calc_prod(c, seg1, seg2, env_list)
     for k,v in result.items():
         k = str(k).replace("'",'').replace(' ','')
         assert(expected[k]-v < 0.001)
