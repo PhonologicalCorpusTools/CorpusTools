@@ -429,6 +429,13 @@ class Transcription(object):
     def __len__(self):
         return len(self._list)
 
+class RowColInfo(object):
+
+    def __init__(name,features,segments):
+        self.name = name
+        self.features = features
+        self.segments = segments
+
 class FeatureMatrix(object):
     """
     An object that stores feature values for segments
@@ -464,8 +471,8 @@ class FeatureMatrix(object):
         #What are these?
         self.matrix['#'] = Segment('#')
         #self.matrix[''] = {'*':''}
-        self.consCols = collections.OrderedDict()
-        self.consRows = collections.OrderedDict()
+        self.consCols = dict()
+        self.consRows = dict()
         self.generateGenericConsNames()
 
     def generateGenericConsNames(self):
@@ -484,22 +491,23 @@ class FeatureMatrix(object):
         pass
 
     def generateGenericHayesConsNames(self):
-        self.consCols['Labial'] = ({'labial': '+'}, None)
-        self.consCols['Labiodental'] = ({'labiodental': '+'}, None)
-        self.consCols['Dental'] = ({'anterior': '+', 'coronal':'+'}, None)
-        self.consCols['Alveopalatal'] = ({'anterior': '-', 'coronal':'+'}, None)
-        self.consCols['Palatal'] = ({'dorsal': '+', 'coronal':'+'}, None)
-        self.consCols['Velar'] = ({'dorsal': '+'}, None)
-        self.consCols['Uvular'] = ({'dorsal': '+', 'back':'+'}, None)
-        self.consCols['Glottal'] = ({'dorsal': '-', 'coronal':'-'}, None)
-        self.consRows['Stop'] = ({'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None)
-        self.consRows['Nasal'] = ({'nasal': '+'}, None)
-        self.consRows['Trill'] = ({'trill': '+'}, None)
-        self.consRows['Tap'] = ({'tap': '+'}, None)
-        self.consRows['Fricative'] = ({'sonorant': '-','continuant':'+'}, None)
-        self.consRows['Affricate'] = ({'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None)
-        self.consRows['Approximant'] = ({'sonorant': '+', 'lateral':'-'}, None)
-        self.consRows['Lateral approximant'] = ({'sonorant': '+', 'lateral':'+'}, None)
+        self.consCols['Labial'] = (0,{'labial': '+'}, None)
+        self.consCols['Labiodental'] = (1,{'labiodental': '+'}, None)
+        self.consCols['Dental'] = (2,{'anterior': '+', 'coronal':'+'}, None)
+        self.consCols['Alveopalatal'] = (3,{'anterior': '-', 'coronal':'+'}, None)
+        self.consCols['Palatal'] = (4,{'dorsal': '+', 'coronal':'+'}, None)
+        self.consCols['Velar'] = (5,{'dorsal': '+'}, None)
+        self.consCols['Uvular'] = (6,{'dorsal': '+', 'back':'+'}, None)
+        self.consCols['Glottal'] = (7,{'dorsal': '-', 'coronal':'-'}, None)
+
+        self.consRows['Stop'] = (0,{'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None)
+        self.consRows['Nasal'] = (1,{'nasal': '+'}, None)
+        self.consRows['Trill'] = (2,{'trill': '+'}, None)
+        self.consRows['Tap'] = (3,{'tap': '+'}, None)
+        self.consRows['Fricative'] = (4,{'sonorant': '-','continuant':'+'}, None)
+        self.consRows['Affricate'] = (5,{'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None)
+        self.consRows['Approximant'] = (6,{'sonorant': '+', 'lateral':'-'}, None)
+        self.consRows['Lateral approximant'] = (7,{'sonorant': '+', 'lateral':'+'}, None)
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
@@ -629,20 +637,11 @@ class FeatureMatrix(object):
         return featline
 
     def getConsonantColumns(self):
-        return self.consCols.keys()
+        return self.consCols
 
     def getConsonantRows(self):
-        return self.consRows.keys()
+        return self.consRows
 
-    def assign_default_category(self,seg):
-
-        if 'voc' in seg.features:
-            category = self.spe_categories(seg)
-        elif 'consonantal' in seg.features:
-            category = self.hayes_categories(seg)
-        else:
-            category = None
-        return category
 
     def spe_categories(self,seg):
         category = list()
@@ -876,10 +875,10 @@ class FeatureMatrix(object):
         else:
             category = ['Consonant']
         for row,col in itertools.product(self.consRows, self.consCols):
-            row_features, row_segs = self.consRows[row]
-            col_features, col_segs = self.consCols[col]
+            row_index, row_features, row_segs = self.consRows[row]
+            col_index, col_features, col_segs = self.consCols[col]
 
-            if (row_segs is not None and seg in row_segs) or (col_segs is not None and seg in col_segs):
+            if (row_segs is not None and seg in row_segs) and (col_segs is not None and seg in col_segs):
                 category.extend([col, row])
                 break
             elif (all(seg_features[feature]==value for feature,value in row_features.items()) and
