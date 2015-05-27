@@ -309,3 +309,10 @@ EXAMPLE 3: You wish to find a list of the minimal pairs of the word 'nata'.
 You would need to run the following command::
 
    pct_neighdens example.corpus nata -m
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

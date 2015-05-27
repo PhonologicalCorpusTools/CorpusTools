@@ -664,3 +664,10 @@ And the individual results from the same search, sorted by environment:
    the diphthong; e.g., all of [aɪ], [eɪ], [ɔɪ], [aʊ], and [oʊ] are
    [-high]; of these five, only [aɪ] and [aʊ] are [+low]; only [eɪ]
    is [+front]; only [oʊ] and [ɔɪ] are [+back]; only [oʊ] and [ɔɪ] are [+round].
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

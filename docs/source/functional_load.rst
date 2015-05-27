@@ -550,4 +550,9 @@ to run the following command::
 
    pct_funcload example.corpus -l -o output.txt
 
-.. _functional_load_api:
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

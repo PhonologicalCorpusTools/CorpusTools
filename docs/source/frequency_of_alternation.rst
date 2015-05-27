@@ -166,3 +166,10 @@ table can be closed and you will be returned to your corpus view.
    in PCT is an extremely inaccurate way of calculating frequency of
    alternation, and should be used only with a full understanding of
    its severe limitations.
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.
