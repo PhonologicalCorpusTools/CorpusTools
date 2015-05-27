@@ -1,7 +1,7 @@
 .. _string_similarity:
 
 *******************************************
-String similarity and neighbourhood density
+String similarity
 *******************************************
 
 .. _about_string_similarity:

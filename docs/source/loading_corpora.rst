@@ -610,3 +610,8 @@ results window, etc.) and copy / paste a tab-delimited string version
 of the data into another program (e.g., a spreadsheet or text editor)
 using your standard copy & paste keyboard commands (i.e., Ctrl-C and
 Ctrl-V on a PC; Command-C and Command-V on a Mac).
+
+Further details
+---------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`apireference`.

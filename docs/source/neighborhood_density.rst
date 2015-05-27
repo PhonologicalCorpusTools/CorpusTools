@@ -1,7 +1,7 @@
 .. _neighborhood_density:
 
 *******************************************
-String similarity and neighbourhood density
+Neighbourhood density
 *******************************************
 
 .. _about_neighborhood_density:
