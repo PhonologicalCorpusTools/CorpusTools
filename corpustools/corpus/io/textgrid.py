@@ -124,7 +124,7 @@ def inspect_discourse_textgrid(path, transdelim = None):
                     if att.delimiter is not None:
                         break
             a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
-
+        a.add(x.mark for x in t)
         anno_types.append(a)
     return anno_types
 

@@ -1,5 +1,6 @@
 import re
 import os
+import string
 
 from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
 from corpustools.exceptions import DelimiterError
@@ -8,6 +9,9 @@ class AnnotationType(object):
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
                     token = False, base = False,
                     delimited = False, speaker = None):
+        self.characters = set()
+        self.ignored = set()
+        self.digraphs = set()
         self._list = list()
         self.name = name
         self.subtype = subtype
@@ -32,8 +36,11 @@ class AnnotationType(object):
     def __getitem__(self, key):
         return self._list[key]
 
-    def add(self, annotations):
-        self._list.extend(annotations)
+    def add(self, annotations, save = True):
+        for a in annotations:
+            self.characters.update(a)
+            if save:
+                self._list.append(a)
 
     def __iter__(self):
         for x in self._list:
@@ -41,6 +48,10 @@ class AnnotationType(object):
 
     def __len__(self):
         return len(self._list)
+
+    @property
+    def punctuation(self):
+        return self.characters & set(string.punctuation)
 
     @property
     def delimiter(self):

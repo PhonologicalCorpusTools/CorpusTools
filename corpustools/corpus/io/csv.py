@@ -6,7 +6,7 @@ import os
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word, Attribute
 from corpustools.corpus.io.binary import save_binary, load_binary
 
-from .helper import parse_transcription
+from .helper import parse_transcription, AnnotationType
 
 from corpustools.exceptions import DelimiterError, PCTError
 
@@ -28,11 +28,13 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     with open(path,'r', encoding='utf-8') as f:
         lines = []
         head = f.readline().strip()
-        for i in range(num_lines):
-            line = f.readline()
-            if not line:
-                break
-            lines.append(line)
+        for line in f.readlines():
+            lines.append(line.strip())
+        #for i in range(num_lines):
+        #    line = f.readline()
+        #    if not line:
+        #        break
+        #    lines.append(line)
 
     best = ''
     num = 1
@@ -55,13 +57,15 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
             vals[head[i]].append(l[i])
     atts = list()
     for h in head:
-        cat = Attribute.guess_type(vals[h], trans_delimiters)
-        a = Attribute(Attribute.sanitize_name(h), cat, h)
+        cat = Attribute.guess_type(vals[h][:num_lines], trans_delimiters)
+        att = Attribute(Attribute.sanitize_name(h), cat, h)
         if cat == 'tier':
             for t in trans_delimiters:
                 if t in vals[h][0]:
-                    a._delim = t
+                    att._delim = t
                     break
+        a = AnnotationType(h, None, None, token = False, attribute = att)
+        a.add(vals[h], save = False)
         atts.append(a)
 
     return atts, best
