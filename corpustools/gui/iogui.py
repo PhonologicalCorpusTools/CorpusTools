@@ -554,7 +554,10 @@ class LoadCorpusDialog(PCTDialog):
     def inspect(self):
         if self.textType is not None and os.path.exists(self.pathWidget.value()):
             if self.textType == 'csv':
-                atts, coldelim = inspect_csv(self.pathWidget.value())
+                try:
+                    atts, coldelim = inspect_csv(self.pathWidget.value())
+                except:
+                    return
                 self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
                 self.updateColumnFrame(atts, column = True)
             else:
