@@ -115,16 +115,16 @@ def inspect_discourse_textgrid(path, transdelim = None):
             labels = t.uniqueLabels()
             cat = Attribute.guess_type(labels, trans_delimiters)
             att = Attribute(Attribute.sanitize_name(t.name), cat, t.name)
+            a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
             if cat == 'tier':
                 for l in labels:
                     for delim in trans_delimiters:
                         if delim in l:
-                            att.delimiter = delim
+                            a.trans_delimiter = delim
                             break
-                    if att.delimiter is not None:
+                    if a.trans_delimiter is not None:
                         break
-            a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
-        a.add(x.mark for x in t)
+        a.add((x.mark for x in t), save = False)
         anno_types.append(a)
     return anno_types
 
@@ -141,8 +141,10 @@ def guess_tiers(tg):
     for i,t in enumerate(tg.intervalTiers):
         tier_properties[t.name] = (i, len(t), t.averageLabelLen(), len(t.uniqueLabels()))
 
-    likely_segment = max(tier_properties.keys(), key = lambda x: tier_properties[x][2])
-    segment_tiers.append(likely_segment)
+    max_labels = max(tier_properties.values(), key = lambda x: x[2])
+    likely_segment = [k for k,v in tier_properties.items() if v == max_labels]
+    if len(likely_segment) == 1:
+        segment_tiers.append(likely_segment)
     likely_spelling = min((x for x in tier_properties.keys() if x not in segment_tiers),
                         key = lambda x: tier_properties[x][0])
     spelling_tiers.append(likely_spelling)

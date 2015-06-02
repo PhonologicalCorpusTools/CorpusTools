@@ -306,16 +306,15 @@ class SupportCorpusWidget(QGroupBox):
 
 
 class LoadCorpusDialog(PCTDialog):
-    supported_types = [(None, ''),('csv', 'Column delimited text file'),
-                        ('transcription', 'Transcribed text'),
-                        ('spelling', 'Orthography text'),
+    supported_types = [(None, ''),('csv', 'Column-delimited file'),
+                        ('running', 'Running text'),
                         ('ilg', 'Interlinear text'),
                         ('textgrid', 'TextGrid'),
-                        ('buckeye', 'Buckeye format'),
-                        ('timit', 'Timit format')]
+                        ('multiple', 'Multiple files'),]
     def __init__(self, parent, settings):
         PCTDialog.__init__(self, parent)
         self.settings = settings
+        self.textType = None
 
         self.createWidgets()
 
@@ -325,17 +324,23 @@ class LoadCorpusDialog(PCTDialog):
 
         iolayout = QFormLayout()
 
+        pathlayout = QHBoxLayout()
+
         self.characters = set()
-        self.pathWidget = FileWidget('Open corpus text','Text files (*.txt *.csv *.TextGrid *.words *.wrds)')
+        self.pathWidget = FileWidget('Select file','Text files (*.txt *.csv *.TextGrid *.words *.wrds)')
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
 
-
-        self.textType = None
-
-        iolayout.addRow(QLabel('Path to corpus'),self.pathWidget)
+        pathlayout.addWidget(QLabel('Source path'))
+        pathlayout.addWidget(self.pathWidget)
 
         self.nameEdit = QLineEdit()
-        iolayout.addRow(QLabel('Name for corpus'),self.nameEdit)
+        pathlayout.addWidget(QLabel('Corpus name'))
+        pathlayout.addWidget(self.nameEdit)
+
+        pathframe = QFrame()
+        pathframe.setLayout(pathlayout)
+
+        iolayout.addRow(pathframe)
 
         #self.punctuation = PunctuationWidget(string.punctuation, 'Punctuation to ignore')
         #iolayout.addRow(self.punctuation)
@@ -359,20 +364,16 @@ class LoadCorpusDialog(PCTDialog):
         csvlayout.addRow(self.csvFeatureSystem)
 
         csvFrame.setLayout(csvlayout)
-        self.tabWidget.addTab(csvFrame,'Column delimited text file')
+        self.tabWidget.addTab(csvFrame,'Column-delimited file')
 
-        transFrame = QFrame()
-        translayout = QFormLayout()
+        runningFrame = QFrame()
+        runninglayout = QFormLayout()
+        runninglayout.addRow('Text type', self.runningSelect)
 
-        translayout.addRow(self.transFeatureSystem)
-        transFrame.setLayout(translayout)
-        self.tabWidget.addTab(transFrame,'Transcribed text')
-
-        orthFrame = QFrame()
-        orthlayout = QFormLayout()
-        orthlayout.addRow(self.orthLookupWidget)
-        orthFrame.setLayout(orthlayout)
-        self.tabWidget.addTab(orthFrame,'Orthographic text')
+        runninglayout.addRow(self.runningFeatureSystem)
+        runninglayout.addRow(self.runningLookupWidget)
+        runningFrame.setLayout(runninglayout)
+        self.tabWidget.addTab(runningFrame,'Running text')
 
         ilgFrame = QFrame()
         ilglayout = QFormLayout()
@@ -390,17 +391,12 @@ class LoadCorpusDialog(PCTDialog):
         tgFrame.setLayout(tglayout)
         self.tabWidget.addTab(tgFrame,'TextGrid')
 
-        buckeyeFrame = QFrame()
-        buckeyelayout = QFormLayout()
-        buckeyelayout.addRow(self.buckeyeFeatureSystem)
-        buckeyeFrame.setLayout(buckeyelayout)
-        self.tabWidget.addTab(buckeyeFrame,'Buckeye format')
-
-        timitFrame = QFrame()
-        timitlayout = QFormLayout()
-        timitlayout.addRow(self.timitFeatureSystem)
-        timitFrame.setLayout(timitlayout)
-        self.tabWidget.addTab(timitFrame,'TIMIT format')
+        multFrame = QFrame()
+        multlayout = QFormLayout()
+        multlayout.addRow('File format', self.multSelect)
+        multlayout.addRow(self.multFeatureSystem)
+        multFrame.setLayout(multlayout)
+        self.tabWidget.addTab(multFrame,'Multiple files')
 
         self.tabWidget.currentChanged.connect(self.typeChanged)
 
@@ -418,7 +414,6 @@ class LoadCorpusDialog(PCTDialog):
         self.columnFrame.setLayout(lay)
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.columnFrame)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setMinimumHeight(140)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
@@ -464,37 +459,81 @@ class LoadCorpusDialog(PCTDialog):
 
         self.lineNumberEdit = QLineEdit()
         self.csvFeatureSystem = FeatureSystemSelect(self.settings)
-        self.transFeatureSystem = FeatureSystemSelect(self.settings)
+        self.runningFeatureSystem = FeatureSystemSelect(self.settings)
         self.ilgFeatureSystem = FeatureSystemSelect(self.settings)
         self.tgFeatureSystem = FeatureSystemSelect(self.settings)
-        self.buckeyeFeatureSystem = FeatureSystemSelect(self.settings)
-        self.timitFeatureSystem = FeatureSystemSelect(self.settings)
+        self.multFeatureSystem = FeatureSystemSelect(self.settings)
 
         self.csvForceInspectButton = QPushButton('Reinspect')
         self.csvForceInspectButton.clicked.connect(self.forceInspect)
 
         self.ilgForceInspectButton = QPushButton('Reinspect')
         self.ilgForceInspectButton.clicked.connect(self.forceInspect)
-
-
-        self.orthLookupWidget = SupportCorpusWidget(self.settings)
+        self.runningLookupWidget = SupportCorpusWidget(self.settings)
         self.ilgLookupWidget = SupportCorpusWidget(self.settings)
         self.tgLookupWidget = SupportCorpusWidget(self.settings)
 
+        self.multSelect = QComboBox()
+        self.multSelect.addItem('Buckeye')
+        self.multSelect.addItem('Timit')
+        self.multSelect.currentIndexChanged.connect(self.typeChanged)
+
+        self.runningSelect = QComboBox()
+        self.runningSelect.addItem('Orthography')
+        self.runningSelect.addItem('Transcribed')
+        self.runningSelect.currentIndexChanged.connect(self.typeChanged)
+
+
     def updateType(self, type):
+        curIndex = self.tabWidget.currentIndex()
+        if type == 'text':
+            if curIndex > 2:
+                self.tabWidget.setTabEnabled(0,True)
+                self.tabWidget.setCurrentIndex(0)
+            else:
+                self.inspect()
+        elif type == 'textgrid':
+            if curIndex != 3:
+                self.tabWidget.setTabEnabled(3,True)
+                self.tabWidget.setCurrentIndex(3)
+            else:
+                self.inspect()
+        elif type == 'multiple':
+            if curIndex != 4:
+                self.tabWidget.setTabEnabled(4,True)
+                self.tabWidget.setCurrentIndex(4)
+            else:
+                self.inspect()
+        elif type == 'csv':
+            if curIndex != 0:
+                self.tabWidget.setTabEnabled(0,True)
+                self.tabWidget.setCurrentIndex(0)
+            else:
+                self.inspect()
         for i in range(self.tabWidget.count()):
-            self.tabWidget.setTabEnabled(i, False)
             if type == 'text':
-                if self.supported_types[i + 1][0] in ['csv', 'transcription','spelling','ilg']:
+                if self.supported_types[i + 1][0] in ['csv', 'running','ilg']:
                     self.tabWidget.setTabEnabled(i, True)
-                if i == 0:
-                    self.tabWidget.setCurrentIndex(i)
+                else:
+                    self.tabWidget.setTabEnabled(i, False)
             elif type == self.supported_types[i + 1][0]:
                 self.tabWidget.setTabEnabled(i, True)
-                self.tabWidget.setCurrentIndex(i)
+            else:
+                self.tabWidget.setTabEnabled(i, False)
 
     def typeChanged(self):
-        self.textType = self.supported_types[self.tabWidget.currentIndex() + 1][0]
+        type = self.supported_types[self.tabWidget.currentIndex() + 1][0]
+        if type == 'running':
+            if self.runningSelect.currentText() == 'Orthography':
+                type = 'spelling'
+            else:
+                type = 'transcription'
+        elif type == 'multiple':
+            if self.multSelect.currentText() == 'Buckeye':
+                type = 'buckeye'
+            else:
+                type = 'timit'
+        self.textType = type
         self.inspect()
 
     def help(self):
@@ -505,50 +544,10 @@ class LoadCorpusDialog(PCTDialog):
     def setResults(self, results):
         self.corpus = results
 
-    def ignoreList(self):
-        return []
-        return self.punctuation.value()
-
     def delimiters(self):
         wordDelim = None
         colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
         return wordDelim, colDelim
-
-    def getCharacters(self):
-        return
-        path = self.pathWidget.value()
-        characters = set()
-
-        if path != '' and os.path.exists(path):
-            if self.textType == 'transcription':
-                characters = characters_discourse_transcription(path)
-            elif self.textType == 'csv':
-                pass
-            elif self.textType == 'textgrid':
-                pass
-            elif self.textType == 'ilg':
-                pass
-
-        minus = set(self.ignoreList())
-        wd, cd = self.delimiters()
-        delims = []
-        if wd is None:
-            delims.extend([' ','\t','\n'])
-        elif isinstance(wd,list):
-            delims.extend(wd)
-        else:
-            delims.append(wd)
-        for c in self.columns:
-            if c.value().delimiter is not None:
-                delims.append(cd)
-        if cd is not None:
-            if isinstance(cd,list):
-                delims.extend(cd)
-            else:
-                delims.append(cd)
-        minus.update(delims)
-        characters = characters - minus
-        self.digraphs.setCharacters(characters)
 
     @check_for_errors
     def inspect(self):
@@ -556,7 +555,8 @@ class LoadCorpusDialog(PCTDialog):
             if self.textType == 'csv':
                 try:
                     atts, coldelim = inspect_csv(self.pathWidget.value())
-                except:
+                except PCTError:
+                    self.updateColumnFrame([])
                     return
                 self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
                 self.updateColumnFrame(atts, column = True)
@@ -569,7 +569,7 @@ class LoadCorpusDialog(PCTDialog):
                 elif self.textType == 'transcription':
                     anno_types = inspect_discourse_transcription(self.pathWidget.value())
                 elif self.textType == 'spelling':
-                    anno_types = inspect_discourse_spelling(self.pathWidget.value(), self.orthLookupWidget.path())
+                    anno_types = inspect_discourse_spelling(self.pathWidget.value())
                 elif self.textType in ['buckeye','timit']:
 
                     anno_types = inspect_discourse_multiple_files(self.pathWidget.value(), self.textType)
@@ -577,8 +577,6 @@ class LoadCorpusDialog(PCTDialog):
 
         else:
             self.updateColumnFrame([])
-        if self.textType is not None:
-            self.getCharacters()
 
     @check_for_errors
     def forceInspect(self, b):
@@ -616,18 +614,8 @@ class LoadCorpusDialog(PCTDialog):
             w.deleteLater()
         self.columns = list()
         for a in reversed(atts):
-            title = None
-            if self.textType == 'textgrid':
-                title = 'Tier details'
-            elif self.textType in ['ilg','spelling']:
-                title = 'Line details'
-            elif self.textType == 'transcription':
-                if a.name == 'transcription':
-                    title = 'Line details'
-                else:
-                    title = 'Spellings inferred from text'
-
-            c = AnnotationTypeWidget(a, title = title, column = column)
+            show_attribute = self.textType not in ['spelling','transcription']
+            c = AnnotationTypeWidget(a, column = column, show_attribute = show_attribute)
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
 
@@ -729,10 +717,8 @@ class LoadCorpusDialog(PCTDialog):
             self.updateType('textgrid')
         elif ext.lower() == '.csv':
             self.updateType('csv')
-        elif ext.lower() == '.words':
-            self.updateType('buckeye')
-        elif ext.lower() == '.wrds':
-            self.updateType('timit')
+        elif ext.lower() in ['.words','.wrds']:
+            self.updateType('multiple')
         elif ext.lower() == '.txt':
             self.updateType('text')
 

@@ -14,6 +14,9 @@ from corpustools.corpus.classes import Attribute
 from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path
 
 
+def truncate_string(string, length = 10):
+    return (string[:length] + '...') if len(string) > length + 3 else string
+
 
 class NonScrollingComboBox(QComboBox):
     def __init__(self, parent = None):
@@ -50,31 +53,45 @@ class ParsingDialog(QDialog):
         self.characters = annotation_type.characters
         self.setWindowTitle('Parsing {}'.format(annotation_type.name))
 
-        layout = QVBoxLayout()
+        layout = QFormLayout()
 
-        self.example = QLabel('Example: '+' '.join(annotation_type[:5]))
+        self.example = QLabel(' '.join(annotation_type[:5]))
         self.example.setWordWrap(True)
-        layout.addWidget(self.example)
+        layout.addRow('Example:',self.example)
 
         self.punctuationWidget = PunctuationWidget(annotation_type.punctuation)
 
         self.delimiterWidget = QLineEdit()
 
+        self.morphDelimiterWidget = PunctuationWidget(['-','='],'Morpheme delimiter')
+
         self.digraphWidget = DigraphWidget()
         self.digraphWidget.characters = annotation_type.characters
 
         self.punctuationWidget.selectionChanged.connect(self.punctuationChanged)
-        delimiter = annotation_type.attribute.delimiter
+        delimiter = annotation_type.delimiter
         if delimiter is not None:
             self.delimiterWidget.setText(delimiter)
             self.punctuationWidget.updateButtons([delimiter])
         self.delimiterWidget.textChanged.connect(self.updatePunctuation)
         if att_type == 'tier':
-            layout.addWidget(self.delimiterWidget)
+            layout.addRow('Transcription delimiter',self.delimiterWidget)
+        layout.addRow(self.morphDelimiterWidget)
+        self.morphDelimiterWidget.selectionChanged.connect(self.updatePunctuation)
 
-        layout.addWidget(self.punctuationWidget)
+        self.numberBehaviorSelect = QComboBox()
+        self.numberBehaviorSelect.addItem('Same as other characters')
+        self.numberBehaviorSelect.addItem('Tone')
+        self.numberBehaviorSelect.addItem('Stress')
+
         if att_type == 'tier':
-            layout.addWidget(self.digraphWidget)
+            if len(self.characters & set(['0','1','2'])):
+                layout.addRow('Number parsing', self.numberBehaviorSelect)
+            else:
+                layout.addRow('Number parsing', QLabel('No numbers'))
+        layout.addRow(self.punctuationWidget)
+        if att_type == 'tier':
+            layout.addRow(self.digraphWidget)
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
@@ -87,9 +104,26 @@ class ParsingDialog(QDialog):
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
-        layout.addWidget(acFrame)
+        layout.addRow(acFrame)
 
         self.setLayout(layout)
+
+    def ignored(self):
+        return self.punctuationWidget.value()
+
+    def morphDelimiters(self):
+        return self.morphDelimiterWidget.value()
+
+    def transDelimiter(self):
+        return self.delimiterWidget.text()
+
+    def numberBehavior(self):
+        if self.numberBehaviorSelect.currentIndex() == 0:
+            return None
+        return self.numberBehaviorSelect.currentText().lower()
+
+    def digraphs(self):
+        return self.digraphWidget.value()
 
     def updatePunctuation(self):
         delimiter = self.delimiterWidget.text()
@@ -97,18 +131,21 @@ class ParsingDialog(QDialog):
             delimiter = []
         else:
             delimiter = [delimiter]
+        delimiter += self.morphDelimiterWidget.value()
         self.punctuationWidget.updateButtons(delimiter)
 
     def punctuationChanged(self):
         self.digraphWidget.characters = self.characters - \
-                                        self.punctuationWidget.value()
+                                        self.punctuationWidget.value() - \
+                                        self.morphDelimiterWidget.value()
         delimiter = self.delimiterWidget.text()
         if delimiter != '':
             self.digraphWidget.characters -= set([delimiter])
 
 
 class AnnotationTypeWidget(QGroupBox):
-    def __init__(self, annotation_type, parent = None, title = None, column = False):
+    def __init__(self, annotation_type, parent = None, title = None, column = False,
+                show_attribute = True):
         #if title is None:
         #    title = 'Annotation type details'
         QGroupBox.__init__(self, annotation_type.name, parent)
@@ -126,12 +163,12 @@ class AnnotationTypeWidget(QGroupBox):
 
         self.levelWidget = NonScrollingComboBox()
         self.levelWidget.addItem('Word')
-        self.levelWidget.addItem('Phone')
+        self.levelWidget.addItem('Segment')
         self.levelWidget.addItem('Other sublexical')
-        self.levelWidget.addItem('Word attribute')
-        self.levelWidget.setCurrentIndex(2)
-
-        proplayout.addRow('Hierarchical level',self.levelWidget)
+        self.levelWidget.addItem('Word property')
+        self.levelWidget.setCurrentIndex(3)
+        if not column:
+            proplayout.addRow('Linguistic level',self.levelWidget)
 
         self.typeTokenWidget = NonScrollingComboBox()
         self.typeTokenWidget.addItem('Word type')
@@ -140,19 +177,22 @@ class AnnotationTypeWidget(QGroupBox):
         proplayout.addRow('Associated with',self.typeTokenWidget)
 
         self.delimiterLabel = QLabel('None')
-        if self.annotation_type.attribute.delimiter is not None:
-            self.delimiterLabel.setText(self.annotation_type.attribute.delimiter)
+        if self.annotation_type.delimiter is not None:
+            self.delimiterLabel.setText(self.annotation_type.delimiter)
         self.morphDelimiterLabel = QLabel('None')
 
         self.ignoreLabel = QLabel('None')
 
         self.digraphLabel = QLabel('None')
 
+        self.numberLabel = QLabel('None')
+
         self.editButton = QPushButton('Edit parsing settings')
         self.editButton.clicked.connect(self.editParsingProperties)
 
         proplayout.addRow('Transcription delimiter', self.delimiterLabel)
         proplayout.addRow('Morpheme delimiter', self.morphDelimiterLabel)
+        proplayout.addRow('Number parsing', self.numberLabel)
         proplayout.addRow('Ignored characters', self.ignoreLabel)
         proplayout.addRow('Digraphs',self.digraphLabel)
         proplayout.addRow(self.editButton)
@@ -174,12 +214,13 @@ class AnnotationTypeWidget(QGroupBox):
                 self.levelWidget.setCurrentIndex(0)
             else:
                 self.levelWidget.setCurrentIndex(3)
-
-        main.addWidget(self.attributeWidget)
+        if show_attribute:
+            main.addWidget(self.attributeWidget)
 
         self.setLayout(main)
 
         self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
 
         self.typeChanged()
 
@@ -192,7 +233,31 @@ class AnnotationTypeWidget(QGroupBox):
     def editParsingProperties(self):
         dialog = ParsingDialog(self, self.annotation_type, self.attributeWidget.type())
         if dialog.exec_():
-            pass
+            self.annotation_type.ignored = dialog.ignored()
+            self.annotation_type.digraphs = dialog.digraphs()
+            self.annotation_type.morph_delimiters = dialog.morphDelimiters()
+            self.annotation_type.trans_delimiter = dialog.transDelimiter()
+            self.annotation_type.number_behavior = dialog.numberBehavior()
+            if dialog.ignored():
+                self.ignoreLabel.setText(truncate_string(' '.join(dialog.ignored())))
+            else:
+                self.ignoreLabel.setText('None')
+            if dialog.digraphs():
+                self.digraphLabel.setText(truncate_string(' '.join(dialog.digraphs())))
+            else:
+                self.digraphLabel.setText('None')
+            if dialog.morphDelimiters():
+                self.morphDelimiterLabel.setText(truncate_string(' '.join(dialog.morphDelimiters())))
+            else:
+                self.morphDelimiterLabel.setText('None')
+            if dialog.transDelimiter():
+                self.delimiterLabel.setText(truncate_string(' '.join(dialog.transDelimiter())))
+            else:
+                self.delimiterLabel.setText('None')
+            if dialog.numberBehavior():
+                self.numberLabel.setText(str(dialog.numberBehavior()))
+            else:
+                self.numberLabel.setText('None')
 
     def value(self):
         att = self.attributeWidget.value()
@@ -802,7 +867,7 @@ class DigraphWidget(QGroupBox):
         text = self.editField.text()
         values = [x.strip() for x in text.split(',') if x.strip() != '']
         if len(values) == 0:
-            return None
+            return []
         return values
 
 class FileWidget(QFrame):

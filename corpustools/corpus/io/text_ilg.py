@@ -13,6 +13,7 @@ from .helper import compile_digraphs, parse_transcription, DiscourseData, Annota
 def calculate_lines_per_gloss(lines):
     line_counts = [len(x[1]) for x in lines]
     equaled = list()
+    number = 1
     for i,line in enumerate(line_counts):
         if i == 0:
             equaled.append(False)

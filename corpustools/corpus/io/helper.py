@@ -12,6 +12,9 @@ class AnnotationType(object):
         self.characters = set()
         self.ignored = set()
         self.digraphs = set()
+        self.trans_delimiter = None
+        self.morph_delimiters = set()
+        self.number_behavior = None
         self._list = list()
         self.name = name
         self.subtype = subtype
@@ -39,8 +42,10 @@ class AnnotationType(object):
     def add(self, annotations, save = True):
         for a in annotations:
             self.characters.update(a)
-            if save:
+            if save or len(self._list) < 10:
+                #If save is False, only the first 10 annotations are saved
                 self._list.append(a)
+
 
     def __iter__(self):
         for x in self._list:
@@ -55,7 +60,7 @@ class AnnotationType(object):
 
     @property
     def delimiter(self):
-        return self.attribute.delimiter
+        return self.trans_delimiter
 
     @property
     def is_word_anchor(self):

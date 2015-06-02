@@ -11,18 +11,22 @@ from .binary import load_binary
 
 def inspect_discourse_transcription(path):
     trans_delimiters = ['.', ';', ',']
+
+    att = Attribute('transcription','tier','Transcription')
+    a = AnnotationType('transcription', None, None, attribute = att,
+                                            base = True)
     with open(path, encoding='utf-8-sig', mode='r') as f:
         for line in f.readlines():
             trial = line.strip().split()
-            for t in trial:
-                for delim in trans_delimiters:
-                    if delim in t:
-                        break
-    att = Attribute('transcription','tier','Transcription')
-    att.delimiter = delim
-    annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False),
-                            AnnotationType('transcription', None, None, attribute = att,
-                                            base = True, delimited = True)]
+            if a.trans_delimiter is None:
+                for t in trial:
+                    for delim in trans_delimiters:
+                        if delim in t:
+                            a.trans_delimiter = delim
+                            break
+
+            a.add(trial, save = False)
+    annotation_types = [a]
     return annotation_types
 
 def characters_discourse_transcription(path):
