@@ -850,7 +850,6 @@ class Environment(object):
     def __ne__(self,other):
         return not self.__eq__(other)
 
-
 class EnvironmentFilter(object):
     """
     Environments are strings of the form "[+feature,-feature]_[+feature]"
@@ -1267,6 +1266,7 @@ class Corpus(object):
         self.has_transcription = False
         self.has_wordtokens = False
         self._freq_base = dict()
+        self.variants = 'Canonical'
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
@@ -1296,137 +1296,7 @@ class Corpus(object):
     def keys(self):
         for k in sorted(self.wordlist.keys()):
             yield k
-
-    def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
-                        gramsize = 1, probability = False):
-        """
-        Generate (and cache) frequencies for each segment in the Corpus.
-
-        Parameters
-        ----------
-        sequence_type : string
-            Specifies whether to use 'spelling', 'transcription' or the name of a
-            transcription tier to use for comparisons
-
-        count_what: string
-            The type of frequency to use, either 'type' or 'token'
-
-        halve_edges : boolean
-            If True, word boundary symbols ('#') will only be counted once
-            per word, rather than twice.  Defaults to False.
-
-        gramsize : integer
-            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
-
-        probability : boolean
-            If True, frequency counts will be normalized by total frequency,
-            defaults to False
-
-        Returns
-        -------
-        dict
-            Keys are segments (or sequences of segments) and values are
-            their frequency in the Corpus
-        """
-        if (sequence_type, count_what, gramsize) not in self._freq_base:
-            freq_base = collections.defaultdict(float)
-            for word in self:
-                if count_what == 'token':
-                    freq = word.frequency
-                else:
-                    freq = 1
-                seq = ['#'] + [x for x in getattr(word, sequence_type)] + ['#']
-                #seq = getattr(word, sequence_type)
-                grams = zip(*[seq[i:] for i in range(gramsize)])
-                for x in grams:
-                    if len(x) == 1:
-                        x = x[0]
-                    freq_base[x] += freq
-            freq_base['total'] = sum(value for value in freq_base.values())
-            self._freq_base[(sequence_type, count_what, gramsize)] = freq_base
-        freq_base = self._freq_base[(sequence_type, count_what, gramsize)]
-        return_dict = { k:v for k,v in freq_base.items()}
-        if halve_edges and '#' in return_dict:
-            return_dict['#'] = (return_dict['#'] / 2) + 1
-            if not probability:
-                return_dict['total'] -= return_dict['#'] - 2
-        if probability:
-            return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
-        return return_dict
-
-    def get_phone_probs(self, sequence_type, count_what, gramsize = 1,
-                        probability = True, preserve_position = True,
-                        log_count = True):
-        """
-        Generate (and cache) phonotactic probabilities for segments in
-        the Corpus.
-
-        Parameters
-        ----------
-        sequence_type : string
-            Specifies whether to use 'spelling', 'transcription' or the name of a
-            transcription tier to use for comparisons
-
-        count_what: string
-            The type of frequency to use, either 'type' or 'token'
-
-        gramsize : integer
-            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
-
-        probability : boolean
-            If True, frequency counts will be normalized by total frequency,
-            defaults to False
-
-        preserve_position : boolean
-            If True, segments will in different positions in the transcription
-            will not be collapsed, defaults to True
-
-        log_count : boolean
-            If True, token frequencies will be logrithmically-transformed
-            prior to being summed
-
-        Returns
-        -------
-        dict
-            Keys are segments (or sequences of segments) and values are
-            their phonotactic probability in the Corpus
-        """
-        if (sequence_type, count_what, gramsize, probability,
-                    preserve_position, log_count) not in self._freq_base:
-            freq_base = collections.defaultdict(float)
-            totals = collections.defaultdict(float)
-            for word in self:
-                if count_what == 'token':
-                    freq = word.frequency
-                    if log_count:
-                        freq = math.log(freq)
-                else:
-                    freq = 1
-                grams = zip(*[getattr(word, sequence_type)[i:] for i in range(gramsize)])
-                for i, x in enumerate(grams):
-                    #if len(x) == 1:
-                    #    x = x[0]
-                    if preserve_position:
-                        x = (x,i)
-                        totals[i] += freq
-
-                    freq_base[x] += freq
-
-            if not preserve_position:
-                freq_base['total'] = sum(value for value in freq_base.values())
-            else:
-                freq_base['total'] = totals
-            self._freq_base[(sequence_type, count_what, gramsize, probability,
-                    preserve_position, log_count)] = freq_base
-        freq_base = self._freq_base[(sequence_type, count_what, gramsize,
-                    probability,preserve_position, log_count)]
-        return_dict = { k:v for k,v in freq_base.items()}
-        if probability and not preserve_position:
-            return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
-        elif probability:
-            return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
-        return return_dict
-
+    
     def subset(self, filters):
         """
         Generate a subset of the corpus based on filters.
@@ -2116,5 +1986,32 @@ class Corpus(object):
         return self.wordlist[item]
 
     def __iter__(self):
-        return iter(self.wordlist.values())
+        for w in self.wordlist.values():
+            yield w
+        #return iter(self.wordlist.values())
+        
+    def as_token_variants(self):
+        for w in self:
+            for v in w.variants:
+                
+                yield v
 
+    def wordlist_variants(self, value):
+        if value == 'canonical':
+            return
+        elif value == 'frequent':
+            for word in self.wordlist:
+                key = word.spelling()
+                trans = word.variants.most_common()
+                self.wordlist[key].transcription = trans
+            return
+        elif value == 'separate':
+            
+            return
+        elif value == 'weighted':
+            
+            return
+        else:
+            #write an error message
+            return
+                    
