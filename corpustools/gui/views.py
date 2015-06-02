@@ -58,8 +58,8 @@ class TableWidget(QTableView):
         #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         #except AttributeError:
         #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
-        self.resizeColumnsToContents()
+        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
+        #self.resizeColumnsToContents()
         try:
             self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         except AttributeError:
