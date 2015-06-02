@@ -164,7 +164,7 @@ class PDDialog(FunctionDialog):
 
 
         self.groupSegments = RadioSelectWidget('Calculate pairs or columns',
-                                               OrderedDict([('Do pairs individually', 'pairs'),
+                                               OrderedDict([('Do pairs individually', 'individual'),
                                                    ('Average over each column', 'cols')]))
 
         optionLayout.addWidget(self.groupSegments)
