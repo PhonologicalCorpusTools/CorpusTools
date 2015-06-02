@@ -97,11 +97,23 @@ class BaseCorpusTableModel(BaseTableModel):
     def sort(self, col, order):
         """sort table by given column number col"""
         self.layoutAboutToBeChanged.emit()
-        self.rows = sorted(self.rows,
-                key=lambda x: getattr(self.corpus[x],self.columns[col].name))
+        try:
+            self.rows = sorted(self.rows,
+                    key=lambda x: getattr(self.corpus[x],
+                                        self.columns[col].name))
+        except TypeError:
+            self.rows = sorted(self.rows,
+                    key=lambda x: getattr(self.corpus[x],
+                                self.coerce_to_float(self.columns[col].name)))
         if order == Qt.DescendingOrder:
             self.rows.reverse()
         self.layoutChanged.emit()
+
+    def coerce_to_float(self, val):
+        try:
+            return float(val)
+        except ValueError:
+            return 0.0
 
     def data(self, index, role=None):
         if not index.isValid():
