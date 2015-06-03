@@ -115,8 +115,11 @@ class CorpusLoadDialog(QDialog):
 
         buttonLayout = QVBoxLayout()
         self.downloadButton = QPushButton('Download example corpora')
+        self.downloadButton.setAutoDefault(False)
         self.loadCorpusButton = QPushButton('Import corpus')
+        self.loadCorpusButton.setAutoDefault(False)
         self.removeButton = QPushButton('Remove selected corpus')
+        self.removeButton.setAutoDefault(False)
         buttonLayout.addWidget(self.downloadButton)
         buttonLayout.addWidget(self.loadCorpusButton)
         buttonLayout.addWidget(self.removeButton)
@@ -135,6 +138,7 @@ class CorpusLoadDialog(QDialog):
         layout.addWidget(formFrame)
 
         self.acceptButton = QPushButton('Load selected corpus')
+        self.acceptButton.setDefault(True)
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
@@ -421,6 +425,9 @@ class LoadCorpusDialog(PCTDialog):
         layout.addWidget(scroll)
 
         self.acceptButton = QPushButton('Ok')
+        self.csvForceInspectButton.setAutoDefault(False)
+        self.ilgForceInspectButton.setAutoDefault(False)
+        self.acceptButton.setDefault(True)
         self.cancelButton = QPushButton('Cancel')
         self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
