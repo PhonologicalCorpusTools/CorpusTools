@@ -380,7 +380,7 @@ class LoadCorpusDialog(PCTDialog):
         ilglayout.addRow(QLabel('Number of lines per gloss (auto-detected)'),self.lineNumberEdit)
         ilglayout.addRow(self.ilgForceInspectButton)
         ilglayout.addRow(self.ilgFeatureSystem)
-        ilglayout.addRow(self.ilgLookupWidget)
+        #ilglayout.addRow(self.ilgLookupWidget)
         ilgFrame.setLayout(ilglayout)
         self.tabWidget.addTab(ilgFrame,'Interlinear text')
 
@@ -418,7 +418,6 @@ class LoadCorpusDialog(PCTDialog):
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
         scroll.setSizePolicy(policy)
-        #self.columnFrame.
         layout.addWidget(scroll)
 
         self.acceptButton = QPushButton('Ok')
@@ -652,8 +651,8 @@ class LoadCorpusDialog(PCTDialog):
             kwargs['feature_system_path'] = self.runningFeatureSystem.path()
         elif self.textType == 'ilg':
             kwargs['feature_system_path'] = self.ilgFeatureSystem.path()
-            (kwargs['support_corpus_path'],
-                kwargs['ignore_case']) = self.ilgLookupWidget.value()
+            #(kwargs['support_corpus_path'],
+            #    kwargs['ignore_case']) = self.ilgLookupWidget.value()
         elif self.textType in ['buckeye', 'timit']:
             kwargs['feature_system_path'] = self.multFeatureSystem.path()
             base, ext = os.path.splitext(path)
