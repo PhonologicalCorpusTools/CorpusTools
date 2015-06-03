@@ -36,6 +36,13 @@ class AnnotationType(object):
         else:
             self.attribute = attribute
 
+    def __repr__(self):
+        return '<AnnotationType "{}" with Attribute "{}"'.format(self.name,
+                                                        self.attribute.name)
+
+    def __str__(self):
+        return self.name
+
     def __getitem__(self, key):
         return self._list[key]
 
@@ -53,6 +60,10 @@ class AnnotationType(object):
 
     def __len__(self):
         return len(self._list)
+
+    @property
+    def digraph_pattern(self):
+        return compile_digraphs(self.digraphs)
 
     @property
     def punctuation(self):
@@ -173,20 +184,27 @@ def corpus_name_to_path(storage_directory,name):
     return os.path.join(storage_directory,'CORPUS',name+'.corpus')
 
 def compile_digraphs(digraph_list):
-    pattern = '|'.join(d for d in digraph_list)
-    pattern += '|\w'
+    digraph_list = sorted(digraph_list, key = lambda x: len(x), reverse=True)
+    pattern = '|'.join(re.escape(d) for d in digraph_list)
+    pattern += '|\S'
     return re.compile(pattern)
 
 def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None):
     if delimiter is not None:
         string = string.split(delimiter)
     elif digraph_pattern is not None:
+        print(string)
+        print(delimiter)
+        print(digraph_pattern)
+        print(ignore_list)
         string = digraph_pattern.findall(string)
     if ignore_list is not None:
         string = [x for x in string if x not in ignore_list]
+    print(string)
     return [x for x in string if x != '']
 
-def text_to_lines(path, delimiter):
+def text_to_lines(path):
+    delimiter = None
     with open(path, encoding='utf-8-sig', mode='r') as f:
         text = f.read()
         if delimiter is not None and delimiter not in text:
