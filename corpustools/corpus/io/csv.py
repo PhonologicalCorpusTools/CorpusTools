@@ -12,9 +12,6 @@ from corpustools.exceptions import DelimiterError, PCTError
 
 import time
 
-def characters_corpus_csv(path):
-    pass
-
 def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     if coldelim is not None:
         common_delimiters = [coldelim]
@@ -59,20 +56,20 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     for h in head:
         cat = Attribute.guess_type(vals[h][:num_lines], trans_delimiters)
         att = Attribute(Attribute.sanitize_name(h), cat, h)
+        a = AnnotationType(h, None, None, token = False, attribute = att)
         if cat == 'tier':
             for t in trans_delimiters:
                 if t in vals[h][0]:
-                    att._delim = t
+                    a.trans_delimiter = t
                     break
-        a = AnnotationType(h, None, None, token = False, attribute = att)
         a.add(vals[h], save = False)
         atts.append(a)
 
     return atts, best
 
-def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
-                    feature_system_path = None, digraph_list = None,
-                    attributes = None,
+def load_corpus_csv(corpus_name, path, delimiter,
+                    feature_system_path = None,
+                    annotation_types = None,
                     stop_check = None, call_back = None):
     """
     Load a corpus from a column-delimited text file
@@ -107,10 +104,10 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
-    if digraph_list is not None:
-        digraph_pattern = compile_digraphs(digraph_list)
-    else:
-        digraph_pattern = None
+
+    if annotation_types is None:
+        annotation_types, _ = inspect_csv(path, coldelim = delimiter)
+
     with open(path, encoding='utf-8') as f:
         headers = f.readline()
         headers = headers.split(delimiter)
@@ -124,12 +121,9 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
         headers[0] = headers[0].strip('\ufeff')
         if 'feature_system' in headers[-1]:
             headers = headers[0:len(headers)-1]
-        use_att = False
-        if attributes is not None:
-            use_att = True
-            headers = attributes
-            for a in attributes:
-                corpus.add_attribute(a)
+        headers = annotation_types
+        for a in headers:
+            corpus.add_attribute(a.attribute)
         trans_check = False
 
         for line in f.readlines():
@@ -139,25 +133,13 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
             d = {}
             for k,v in zip(headers,line.split(delimiter)):
                 v = v.strip()
-                if use_att:
-                    if k.att_type == 'tier':
-                        trans = parse_transcription(v, k.delimiter, digraph_pattern)
-                        if not trans_check and len(trans) > 1:
-                            trans_check = True
-                        d[k.name] = (k, trans)
-                    else:
-                        d[k.name] = (k, v)
+                if k.attribute.att_type == 'tier':
+                    trans = parse_transcription(v, k.delimiter, k.digraph_pattern)
+                    if not trans_check and len(trans) > 1:
+                        trans_check = True
+                    d[k.attribute.name] = (k.attribute, trans)
                 else:
-                    if k == 'transcription' or 'tier' in k:
-                        if trans_delimiter:
-                            trans = v.split(trans_delimiter)
-                        else:
-                            trans = [x for x in v]
-                        if not trans_check and len(trans) > 1:
-                            trans_check = True
-                        d[k] = trans
-                    else:
-                        d[k] = v
+                    d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters which is a period

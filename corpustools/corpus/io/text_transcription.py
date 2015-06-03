@@ -5,7 +5,8 @@ from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attri
 
 from corpustools.exceptions import DelimiterError, PCTOSError
 
-from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to_discourse, AnnotationType,text_to_lines
+from .helper import (compile_digraphs, parse_transcription, DiscourseData,
+                    data_to_discourse, AnnotationType, text_to_lines)
 
 from .binary import load_binary
 
@@ -29,34 +30,33 @@ def inspect_discourse_transcription(path):
     annotation_types = [a]
     return annotation_types
 
-def characters_discourse_transcription(path):
-    characters = set()
-    with open(path, encoding='utf-8-sig', mode='r') as f:
-        for line in f.readlines():
-            characters.update(line)
-    return characters
-
-def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = None,
-                            digraph_list = None, trans_delimiter = None,
+def transcription_text_to_data(path, annotation_types = None,
                             stop_check = None, call_back = None):
 
-    if digraph_list is not None:
-        digraph_pattern = compile_digraphs(digraph_list)
-    else:
-        digraph_pattern = None
 
     name = os.path.splitext(os.path.split(path)[1])[0]
 
     if annotation_types is None:
         annotation_types = inspect_discourse_transcription(path)
+
+    a = AnnotationType('spelling', None, None,
+                attribute = Attribute('spelling','spelling','Spelling'),
+                                            anchor = True)
+    annotation_types.append(a)
+    if annotation_types[0].digraphs:
+        digraph_pattern = compile_digraphs(annotation_types[0].digraphs)
+    else:
+        digraph_pattern = None
+
     data = DiscourseData(name, annotation_types)
 
-    lines = text_to_lines(path, delimiter)
+    lines = text_to_lines(path)
     if call_back is not None:
         call_back('Processing file...')
         call_back(0,len(lines))
         cur = 0
     trans_check = False
+    n = 'transcription'
 
     for line in lines:
         if stop_check is not None and stop_check():
@@ -68,10 +68,10 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
         if not line or line == '\n':
             continue
         for word in line:
-            n = data.base_levels[0]
             annotations = dict()
-            trans = parse_transcription(word, data[n].attribute.delimiter, digraph_pattern, ignore_list)
-            if not trans_check and trans_delimiter is not None and len(trans) > 1:
+            trans = parse_transcription(word, data[n].delimiter,
+                            digraph_pattern, data[n].ignored)
+            if not trans_check and data[n].delimiter is not None and len(trans) > 1:
                 trans_check = True
             spell = ''.join(trans)
             if spell == '':
@@ -81,18 +81,17 @@ def transcription_text_to_data(path, delimiter, ignore_list, annotation_types = 
 
             tier_elements = [{'label':x} for x in trans]
             level_count = data.level_length(n)
-            word[n] = (level_count,level_count+len(tier_elements))
+            word[n] = (level_count, level_count + len(tier_elements))
             annotations[n] = tier_elements
             annotations['spelling'] = [word]
             data.add_annotations(**annotations)
-    if trans_delimiter and not trans_check:
+    if data[n].delimiter and not trans_check:
         raise(DelimiterError('The transcription delimiter specified does not create multiple segments. Please specify another delimiter.'))
 
     return data
 
 
-def load_discourse_transcription(corpus_name, path, delimiter, ignore_list, annotation_types = None,
-                    digraph_list = None, trans_delimiter = None,
+def load_discourse_transcription(corpus_name, path, annotation_types = None,
                     feature_system_path = None,
                     stop_check = None, call_back = None):
     """
@@ -149,8 +148,7 @@ def load_discourse_transcription(corpus_name, path, delimiter, ignore_list, anno
         if not os.path.exists(feature_system_path):
             raise(PCTOSError("The feature path specified ({}) does not exist".format(feature_system_path)))
 
-    data = transcription_text_to_data(path, delimiter, ignore_list, annotation_types,
-                            digraph_list, trans_delimiter,
+    data = transcription_text_to_data(path, annotation_types,
                             stop_check, call_back)
     mapping = { x.name: x.attribute for x in data.data.values()}
     discourse = data_to_discourse(data, mapping)

@@ -5,15 +5,22 @@ from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
 
-from .helper import compile_digraphs, parse_transcription, DiscourseData,data_to_discourse, AnnotationType,text_to_lines
+from .helper import (compile_digraphs, parse_transcription, DiscourseData,
+                        data_to_discourse, AnnotationType, text_to_lines)
 
 def inspect_discourse_spelling(path, support_corpus_path = None):
-    annotation_types = [AnnotationType('spelling', None, None, anchor = True, token = False)]
+    a = AnnotationType('spelling', None, None, anchor = True, token = False)
+    with open(path, encoding='utf-8-sig', mode='r') as f:
+        for line in f.readlines():
+            trial = line.strip().split()
+
+            a.add(trial, save = False)
+    annotation_types = [a]
     if support_corpus_path is not None:
         annotation_types += [AnnotationType('transcription', None, None, base = True)]
     return annotation_types
 
-def spelling_text_to_data(path, delimiter, ignore_list, annotation_types = None,
+def spelling_text_to_data(path, delimiter, annotation_types = None,
                             support_corpus_path = None, ignore_case = True,
                             stop_check = None, call_back = None):
 
@@ -64,7 +71,7 @@ def spelling_text_to_data(path, delimiter, ignore_list, annotation_types = None,
 
     return data
 
-def load_discourse_spelling(corpus_name, path, delimiter, ignore_list, annotation_types = None,
+def load_discourse_spelling(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """

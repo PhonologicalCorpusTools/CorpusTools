@@ -236,7 +236,11 @@ class AnnotationTypeWidget(QGroupBox):
             self.annotation_type.ignored = dialog.ignored()
             self.annotation_type.digraphs = dialog.digraphs()
             self.annotation_type.morph_delimiters = dialog.morphDelimiters()
-            self.annotation_type.trans_delimiter = dialog.transDelimiter()
+            d = dialog.transDelimiter()
+            if d == '':
+                self.annotation_type.trans_delimiter = None
+            else:
+                self.annotation_type.trans_delimiter = d
             self.annotation_type.number_behavior = dialog.numberBehavior()
             if dialog.ignored():
                 self.ignoreLabel.setText(truncate_string(' '.join(dialog.ignored())))
@@ -261,22 +265,20 @@ class AnnotationTypeWidget(QGroupBox):
 
     def value(self):
         att = self.attributeWidget.value()
-        delimited = getattr(att, '_delim', None) is not None
-        token = self.typeTokenWidget.currentText() == 'Word token'
+        a = self.annotation_type
+        a.attribute = att
+        a.token = self.typeTokenWidget.currentText() == 'Word token'
         if self.levelWidget.currentText() == 'Word':
-            anchor = True
-            base = False
+            a.anchor = True
+            a.base = False
         elif self.levelWidget.currentText() == 'Phone':
-            anchor = False
-            base = True
+            a.anchor = False
+            a.base = True
         else:
-            anchor = False
-            base = False
-        name = self.nameWidget.text()
+            a.anchor = False
+            a.base = False
 
-        return AnnotationType(name, None, None, attribute = att,
-                            delimited = delimited,
-                            token = token, anchor = anchor, base = base)
+        return a
 
 class AttributeWidget(QGroupBox):
     def __init__(self, attribute = None, exclude_tier = False,
@@ -694,7 +696,7 @@ class PunctuationWidget(QGroupBox):
         layout = QVBoxLayout()
         self.warning = QLabel('No punctuation detected (other than specified delimiters)')
         if len(punctuation) > 0:
-            self.warning.setHidden(True)
+            self.warning.hide()
         layout.addWidget(self.warning)
         box = QGridLayout()
 
@@ -727,6 +729,10 @@ class PunctuationWidget(QGroupBox):
         self.uncheckAll = QPushButton('Uncheck all')
         self.uncheckAll.setAutoDefault(False)
         self.uncheckAll.clicked.connect(self.uncheck)
+
+        if len(punctuation) < 2:
+            self.checkAll.hide()
+            self.uncheckAll.hide()
         buttonlayout.addWidget(self.checkAll, alignment = Qt.AlignLeft)
         buttonlayout.addWidget(self.uncheckAll, alignment = Qt.AlignLeft)
         buttonframe = QFrame()
@@ -740,15 +746,21 @@ class PunctuationWidget(QGroupBox):
         for b in self.btnGroup.buttons():
             if b.text() in to_ignore:
                 b.setChecked(False)
-                b.setHidden(True)
+                b.hide()
             else:
-                b.setHidden(False)
+                b.show()
             if not b.isHidden():
                 count_visible += 1
         if count_visible == 0:
-            self.warning.setHidden(False)
+            self.warning.show()
         else:
-            self.warning.setHidden(True)
+            self.warning.hide()
+        if count_visible < 2:
+            self.checkAll.hide()
+            self.uncheckAll.hide()
+        else:
+            self.checkAll.show()
+            self.uncheckAll.show()
         self.selectionChanged.emit()
 
     def check(self):

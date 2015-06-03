@@ -15,22 +15,19 @@ from corpustools.corpus.io import (load_binary, download_binary,
                                     import_spontaneous_speech_corpus
                                     )
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
-                                    export_corpus_csv,
-                                    characters_corpus_csv)
+                                    export_corpus_csv)
+
 from corpustools.corpus.io.textgrid import (inspect_discourse_textgrid,
-                                            load_discourse_textgrid,
-                                            characters_discourse_textgrid)
+                                            load_discourse_textgrid)
 
 from corpustools.corpus.io.text_ilg import (load_discourse_ilg,
-                                        inspect_discourse_ilg,
-                                        characters_discourse_ilg)
+                                        inspect_discourse_ilg)
 
 from corpustools.corpus.io.text_spelling import (load_discourse_spelling,
                                                 inspect_discourse_spelling)
 
 from corpustools.corpus.io.text_transcription import (load_discourse_transcription,
-                                                        inspect_discourse_transcription,
-                                                        characters_discourse_transcription)
+                                                        inspect_discourse_transcription)
 
 from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
                                                     inspect_discourse_multiple_files)
@@ -303,6 +300,9 @@ class SupportCorpusWidget(QGroupBox):
 
     def path(self):
         return self.supportCorpus.path()
+
+    def value(self):
+        return self.path(), self.ignoreCase.isChecked()
 
 
 class LoadCorpusDialog(PCTDialog):
@@ -634,38 +634,28 @@ class LoadCorpusDialog(PCTDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a name for the corpus.")
             return
-        if self.textType == None:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a type of file to load.")
-            return
-        wordDelim, colDelim = self.delimiters()
-        ignore_list = self.punctuation.value()
-        feature_system_path = self.featureSystem.path()
-        supportCorpus = self.supportCorpus.path()
         kwargs = {'corpus_name': name,
                     'path': path,
-                    'text_type': self.textType,
-                    'ignore_list':ignore_list}
-        kwargs['delimiter'] = wordDelim
-        kwargs['annotation_types'] = [x.value() for x in self.columns]
-        kwargs['digraph_list'] = self.digraphs.value()
-        kwargs['feature_system_path'] = feature_system_path
+                    'text_type': self.textType}
+        kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
         if self.textType == 'csv':
-            del kwargs['ignore_list']
-            kwargs['attributes'] = kwargs.pop('annotation_types')
-            kwargs['delimiter'] = colDelim
+            kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(
+                                        self.columnDelimiterEdit.text()
+                                        )[0]
+            kwargs['feature_system_path'] = self.csvFeatureSystem.path()
         elif self.textType == 'textgrid':
-            pass
+            kwargs['feature_system_path'] = self.tgFeatureSystem.path()
         elif self.textType == 'spelling':
-            kwargs['ignore_case'] = self.ignoreCase.isChecked()
-            kwargs['support_corpus_path'] = supportCorpus
-            del kwargs['feature_system_path']
-            del kwargs['digraph_list']
+            (kwargs['support_corpus_path'],
+                kwargs['ignore_case']) = self.runningLookupWidget.value()
         elif self.textType == 'transcription':
-            pass
+            kwargs['feature_system_path'] = self.runningFeatureSystem.path()
         elif self.textType == 'ilg':
-            pass
+            kwargs['feature_system_path'] = self.ilgFeatureSystem.path()
+            (kwargs['support_corpus_path'],
+                kwargs['ignore_case']) = self.ilgLookupWidget.value()
         elif self.textType in ['buckeye', 'timit']:
+            kwargs['feature_system_path'] = self.multFeatureSystem.path()
             base, ext = os.path.splitext(path)
             if ext == '.words':
                 phone_path = base +'.phones'
@@ -677,9 +667,6 @@ class LoadCorpusDialog(PCTDialog):
                 return
             kwargs['word_path'] = kwargs.pop('path')
             kwargs['phone_path'] = phone_path
-            del kwargs['ignore_list']
-            del kwargs['digraph_list']
-            del kwargs['feature_system_path']
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
@@ -689,6 +676,35 @@ class LoadCorpusDialog(PCTDialog):
                 return None
 
         return kwargs
+
+    def createWidgets(self):
+        self.columnDelimiterEdit = QLineEdit()
+
+        self.lineNumberEdit = QLineEdit()
+        self.csvFeatureSystem = FeatureSystemSelect(self.settings)
+        self.runningFeatureSystem = FeatureSystemSelect(self.settings)
+        self.ilgFeatureSystem = FeatureSystemSelect(self.settings)
+        self.tgFeatureSystem = FeatureSystemSelect(self.settings)
+        self.multFeatureSystem = FeatureSystemSelect(self.settings)
+
+        self.csvForceInspectButton = QPushButton('Reinspect')
+        self.csvForceInspectButton.clicked.connect(self.forceInspect)
+
+        self.ilgForceInspectButton = QPushButton('Reinspect')
+        self.ilgForceInspectButton.clicked.connect(self.forceInspect)
+        self.runningLookupWidget = SupportCorpusWidget(self.settings)
+        self.ilgLookupWidget = SupportCorpusWidget(self.settings)
+        self.tgLookupWidget = SupportCorpusWidget(self.settings)
+
+        self.multSelect = QComboBox()
+        self.multSelect.addItem('Buckeye')
+        self.multSelect.addItem('Timit')
+        self.multSelect.currentIndexChanged.connect(self.typeChanged)
+
+        self.runningSelect = QComboBox()
+        self.runningSelect.addItem('Orthography')
+        self.runningSelect.addItem('Transcribed')
+        self.runningSelect.currentIndexChanged.connect(self.typeChanged)
 
     @check_for_errors
     def accept(self, b):

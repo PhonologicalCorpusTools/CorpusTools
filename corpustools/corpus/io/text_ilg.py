@@ -70,9 +70,6 @@ def inspect_discourse_ilg(path, number = None):
         annotation_types.append(a)
     return annotation_types
 
-def characters_discourse_ilg(path):
-    pass
-
 def text_to_lines(path, delimiter):
     with open(path, encoding='utf-8-sig', mode='r') as f:
         text = f.read()
