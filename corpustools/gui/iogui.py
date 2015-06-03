@@ -314,7 +314,7 @@ class LoadCorpusDialog(PCTDialog):
                         ('running', 'Running text'),
                         ('ilg', 'Interlinear text'),
                         ('textgrid', 'TextGrid'),
-                        ('multiple', 'Multiple files'),]
+                        ('multiple', 'Other standards'),]
     def __init__(self, parent, settings):
         PCTDialog.__init__(self, parent)
         self.settings = settings
@@ -350,7 +350,7 @@ class LoadCorpusDialog(PCTDialog):
         #iolayout.addRow(self.punctuation)
 
 
-        ioframe = QGroupBox('Corpus details')
+        ioframe = QFrame()
         ioframe.setLayout(iolayout)
 
         mainlayout.addWidget(ioframe)
@@ -400,7 +400,7 @@ class LoadCorpusDialog(PCTDialog):
         multlayout.addRow('File format', self.multSelect)
         multlayout.addRow(self.multFeatureSystem)
         multFrame.setLayout(multlayout)
-        self.tabWidget.addTab(multFrame,'Multiple files')
+        self.tabWidget.addTab(multFrame,'Other standards')
 
         self.tabWidget.currentChanged.connect(self.typeChanged)
 
@@ -408,8 +408,9 @@ class LoadCorpusDialog(PCTDialog):
         mainframe.setLayout(mainlayout)
         layout.addWidget(mainframe)
 
-        layout.addWidget(self.tabWidget)
-
+        iolayout.addWidget(self.tabWidget)
+        previewlayout = QVBoxLayout()
+        previewlayout.addWidget(QLabel('Parsing preview'))
         scroll = QScrollArea()
         self.columnFrame = QWidget()
         self.columns = list()
@@ -422,7 +423,8 @@ class LoadCorpusDialog(PCTDialog):
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
         scroll.setSizePolicy(policy)
-        layout.addWidget(scroll)
+        previewlayout.addWidget(scroll)
+        mainlayout.addLayout(previewlayout)
 
         self.acceptButton = QPushButton('Ok')
         self.csvForceInspectButton.setAutoDefault(False)
@@ -565,7 +567,7 @@ class LoadCorpusDialog(PCTDialog):
                     self.updateColumnFrame([])
                     return
                 self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
-                self.updateColumnFrame(atts, column = True)
+                self.updateColumnFrame(atts)
             else:
                 if self.textType == 'textgrid':
                     anno_types = inspect_discourse_textgrid(self.pathWidget.value())
@@ -593,7 +595,7 @@ class LoadCorpusDialog(PCTDialog):
                     colDelim = None
                 atts, coldelim = inspect_csv(self.pathWidget.value(),
                         coldelim = colDelim)
-                self.updateColumnFrame(atts, column = True)
+                self.updateColumnFrame(atts)
             elif self.textType == 'ilg':
                 number = self.lineNumberEdit.text()
                 if number == '':
@@ -606,11 +608,7 @@ class LoadCorpusDialog(PCTDialog):
                 annotation_types = inspect_discourse_ilg(self.pathWidget.value(), number = number)
                 self.updateColumnFrame(annotation_types)
 
-    def updateColumnFrame(self, atts, column = False):
-        if column:
-            self.columnFrame.layout().setDirection(QBoxLayout.LeftToRight)
-        else:
-            self.columnFrame.layout().setDirection(QBoxLayout.TopToBottom)
+    def updateColumnFrame(self, atts):
         for i in reversed(range(self.columnFrame.layout().count()-1)):
             w = self.columnFrame.layout().itemAt(i).widget()
             if w is None:
@@ -621,7 +619,7 @@ class LoadCorpusDialog(PCTDialog):
         self.columns = list()
         for a in reversed(atts):
             show_attribute = self.textType not in ['spelling','transcription']
-            c = AnnotationTypeWidget(a, column = column, show_attribute = show_attribute)
+            c = AnnotationTypeWidget(a, show_attribute = show_attribute)
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
 
@@ -682,35 +680,6 @@ class LoadCorpusDialog(PCTDialog):
                 return None
 
         return kwargs
-
-    def createWidgets(self):
-        self.columnDelimiterEdit = QLineEdit()
-
-        self.lineNumberEdit = QLineEdit()
-        self.csvFeatureSystem = FeatureSystemSelect(self.settings)
-        self.runningFeatureSystem = FeatureSystemSelect(self.settings)
-        self.ilgFeatureSystem = FeatureSystemSelect(self.settings)
-        self.tgFeatureSystem = FeatureSystemSelect(self.settings)
-        self.multFeatureSystem = FeatureSystemSelect(self.settings)
-
-        self.csvForceInspectButton = QPushButton('Reinspect')
-        self.csvForceInspectButton.clicked.connect(self.forceInspect)
-
-        self.ilgForceInspectButton = QPushButton('Reinspect')
-        self.ilgForceInspectButton.clicked.connect(self.forceInspect)
-        self.runningLookupWidget = SupportCorpusWidget(self.settings)
-        self.ilgLookupWidget = SupportCorpusWidget(self.settings)
-        self.tgLookupWidget = SupportCorpusWidget(self.settings)
-
-        self.multSelect = QComboBox()
-        self.multSelect.addItem('Buckeye')
-        self.multSelect.addItem('Timit')
-        self.multSelect.currentIndexChanged.connect(self.typeChanged)
-
-        self.runningSelect = QComboBox()
-        self.runningSelect.addItem('Orthography')
-        self.runningSelect.addItem('Transcribed')
-        self.runningSelect.currentIndexChanged.connect(self.typeChanged)
 
     @check_for_errors
     def accept(self, b):

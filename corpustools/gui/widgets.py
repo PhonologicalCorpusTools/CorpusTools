@@ -144,16 +144,13 @@ class ParsingDialog(QDialog):
 
 
 class AnnotationTypeWidget(QGroupBox):
-    def __init__(self, annotation_type, parent = None, title = None, column = False,
+    def __init__(self, annotation_type, parent = None,
                 show_attribute = True):
         #if title is None:
         #    title = 'Annotation type details'
         QGroupBox.__init__(self, annotation_type.name, parent)
 
-        if column:
-            main = QVBoxLayout()
-        else:
-            main = QHBoxLayout()
+        main = QHBoxLayout()
 
         #main.addWidget(QLabel(annotation_type.name))
 
@@ -167,8 +164,7 @@ class AnnotationTypeWidget(QGroupBox):
         self.levelWidget.addItem('Other sublexical')
         self.levelWidget.addItem('Word property')
         self.levelWidget.setCurrentIndex(3)
-        if not column:
-            proplayout.addRow('Linguistic level',self.levelWidget)
+        proplayout.addRow('Linguistic level',self.levelWidget)
 
         self.typeTokenWidget = NonScrollingComboBox()
         self.typeTokenWidget.addItem('Word type')
@@ -209,11 +205,6 @@ class AnnotationTypeWidget(QGroupBox):
 
         self.attributeWidget.typeWidget.currentIndexChanged.connect(self.typeChanged)
 
-        if column:
-            if self.attributeWidget.use() == 'spelling':
-                self.levelWidget.setCurrentIndex(0)
-            else:
-                self.levelWidget.setCurrentIndex(3)
         if show_attribute:
             main.addWidget(self.attributeWidget)
 
