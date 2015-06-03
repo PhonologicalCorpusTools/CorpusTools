@@ -45,7 +45,7 @@ def calculate_lines_per_gloss(lines):
 
 def inspect_discourse_ilg(path, number = None):
     trans_delimiters = ['.', ';', ',']
-    lines = text_to_lines(path, None)
+    lines = text_to_lines(path)
     if number is None:
         number = calculate_lines_per_gloss(lines)
     annotation_types = list()
@@ -70,7 +70,8 @@ def inspect_discourse_ilg(path, number = None):
         annotation_types.append(a)
     return annotation_types
 
-def text_to_lines(path, delimiter):
+def text_to_lines(path):
+    delimiter = None
     with open(path, encoding='utf-8-sig', mode='r') as f:
         text = f.read()
         if delimiter is not None and delimiter not in text:
@@ -80,16 +81,12 @@ def text_to_lines(path, delimiter):
     lines = [(x[0],x[1].strip().split(delimiter)) for x in lines if x[1].strip() != '']
     return lines
 
-def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = None,
+def ilg_to_data(path, annotation_types,
                     stop_check = None, call_back = None):
     #if 'spelling' not in line_names:
     #    raise(PCTError('Spelling required for parsing interlinear gloss files.'))
-    if digraph_list is not None:
-        digraph_pattern = compile_digraphs(digraph_list)
-    else:
-        digraph_pattern = None
 
-    lines = text_to_lines(path, delimiter)
+    lines = text_to_lines(path)
 
     if len(lines) % len(annotation_types) != 0:
         raise(ILGLinesMismatchError(lines))
@@ -101,6 +98,8 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
     index = 0
     name = os.path.splitext(os.path.split(path)[1])[0]
 
+    for a in annotation_types:
+        a.reset()
     data = DiscourseData(name, annotation_types)
     mismatching_lines = list()
     while index < len(lines):
@@ -115,8 +114,9 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
 
             if annotation_type.delimited:
                 line = [parse_transcription(x,
-                                        annotation_type.attribute.delimiter,
-                                        digraph_pattern, ignore_list) for x in line]
+                                        annotation_type.delimiter,
+                                        annotation_type.digraph_pattern,
+                                        annotation_type.ignored) for x in line]
             cur_line[annotation_type.name] = line
         if mismatch:
             start_line = lines[index][0]
@@ -151,12 +151,10 @@ def ilg_to_data(path, annotation_types, delimiter, ignore_list, digraph_list = N
     return data
 
 
-def load_discourse_ilg(corpus_name, path, annotation_types, delimiter,
-                    ignore_list, digraph_list = None,
+def load_discourse_ilg(corpus_name, path, annotation_types,
                     feature_system_path = None,
                     stop_check = None, call_back = None):
-    data = ilg_to_data(path, annotation_types, delimiter, ignore_list,
-                digraph_list,
+    data = ilg_to_data(path, annotation_types,
                     stop_check, call_back)
     mapping = { x.name: x.attribute for x in annotation_types}
     discourse = data_to_discourse(data, mapping)

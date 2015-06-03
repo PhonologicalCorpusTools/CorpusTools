@@ -20,7 +20,7 @@ def inspect_discourse_spelling(path, support_corpus_path = None):
         annotation_types += [AnnotationType('transcription', None, None, base = True)]
     return annotation_types
 
-def spelling_text_to_data(path, delimiter, annotation_types = None,
+def spelling_text_to_data(path, annotation_types = None,
                             support_corpus_path = None, ignore_case = True,
                             stop_check = None, call_back = None):
 
@@ -31,9 +31,11 @@ def spelling_text_to_data(path, delimiter, annotation_types = None,
         support = load_binary(support_corpus_path)
     if annotation_types is None:
         annotation_types = inspect_discourse_spelling(path, support_corpus_path)
+    for a in annotation_types:
+        a.reset()
     data = DiscourseData(name, annotation_types)
 
-    lines = text_to_lines(path, delimiter)
+    lines = text_to_lines(path)
     if call_back is not None:
         call_back('Processing file...')
         call_back(0,len(lines))
@@ -51,7 +53,7 @@ def spelling_text_to_data(path, delimiter, annotation_types = None,
         annotations = dict()
         for word in line:
             spell = word.strip()
-            spell = ''.join(x for x in spell if not x in ignore_list)
+            spell = ''.join(x for x in spell if not x in data['spelling'].ignored)
             if spell == '':
                 continue
             word = {'label':spell, 'token':dict()}
@@ -116,7 +118,7 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
 
     """
 
-    data = spelling_text_to_data(path, delimiter, ignore_list, annotation_types,
+    data = spelling_text_to_data(path, annotation_types,
                 support_corpus_path, ignore_case,
                     stop_check, call_back)
     mapping = { x.name: x.attribute for x in data.data.values()}

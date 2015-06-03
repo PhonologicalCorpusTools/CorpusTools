@@ -158,15 +158,13 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-def textgrid_to_data(path, annotation_types, ignore_list = None, digraph_list = None,
+def textgrid_to_data(path, annotation_types,
                             call_back = None, stop_check = None):
-    if digraph_list is not None:
-        digraph_pattern = compile_digraphs(digraph_list)
-    else:
-        digraph_pattern = None
     tg = load_textgrid(path)
     name = os.path.splitext(os.path.split(path)[1])[0]
 
+    for a in annotation_types:
+        a.reset()
     data = DiscourseData(name, annotation_types)
 
     for word_name in data.word_levels:
@@ -197,8 +195,9 @@ def textgrid_to_data(path, annotation_types, ignore_list = None, digraph_list = 
                         phoneEnd = si.maxTime
                     if data[n].delimited:
                         parsed = [{'label':x} for x in parse_transcription(ti.mark,
-                                        data[n].attribute.delimiter,
-                                        digraph_pattern)]
+                                        data[n].delimiter,
+                                        data[n].digraph_pattern,
+                                        data[n].ignored)]
                         if len(parsed) > 0:
                             parsed[0]['begin'] = phoneBegin
                             parsed[-1]['end'] = phoneEnd
@@ -223,8 +222,11 @@ def textgrid_to_data(path, annotation_types, ignore_list = None, digraph_list = 
                 value = ti.mark
                 if at.delimited:
                     value = [{'label':x} for x in parse_transcription(ti.mark,
-                                        at.attribute.delimiter,
-                                        digraph_pattern)]
+                                        at.delimiter,
+                                        at.digraph_pattern,
+                                        at.ignored)]
+                elif at.ignored:
+                    value = ''.join(x for x in value if x not in at.ignored)
                 if at.token:
                     word['token'][at.name] = value
                 else:
@@ -235,12 +237,10 @@ def textgrid_to_data(path, annotation_types, ignore_list = None, digraph_list = 
     return data
 
 
-def load_discourse_textgrid(corpus_name, path, annotation_types, ignore_list = None,
-                            digraph_list = None,
+def load_discourse_textgrid(corpus_name, path, annotation_types,
                             feature_system_path = None,
                             call_back = None, stop_check = None):
-    data = textgrid_to_data(path, annotation_types,ignore_list,
-                            digraph_list, call_back, stop_check)
+    data = textgrid_to_data(path, annotation_types, call_back, stop_check)
     data.name = corpus_name
     mapping = { x.name: x.attribute for x in data.data.values()}
     discourse = data_to_discourse(data, mapping)

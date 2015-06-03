@@ -38,7 +38,8 @@ def transcription_text_to_data(path, annotation_types = None,
 
     if annotation_types is None:
         annotation_types = inspect_discourse_transcription(path)
-
+    for a in annotation_types:
+        a.reset()
     a = AnnotationType('spelling', None, None,
                 attribute = Attribute('spelling','spelling','Spelling'),
                                             anchor = True)

@@ -26,7 +26,7 @@ def inspect_discourse_multiple_files(word_path, dialect):
         raise(NotImplementedError)
     return annotation_types
 
-def multiple_files_to_data(word_path,phone_path, dialect, annotation_types = None,
+def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = None,
                            call_back = None, stop_check = None):
     if annotation_types is None:
         annotation_types = inspect_discourse_multiple_files(word_path, dialect)
@@ -99,6 +99,7 @@ def multiple_files_to_data(word_path,phone_path, dialect, annotation_types = Non
 
 def load_discourse_multiple_files(corpus_name, word_path,phone_path, dialect,
                                     annotation_types = None,
+                                    feature_system_path = None,
                                     call_back = None, stop_check = None):
     data = multiple_files_to_data(word_path,phone_path, dialect,
                                     annotation_types,

@@ -7,21 +7,19 @@ from corpustools.exceptions import DelimiterError
 
 class AnnotationType(object):
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
-                    token = False, base = False,
-                    delimited = False, speaker = None):
+                    token = False, base = False,speaker = None):
         self.characters = set()
         self.ignored = set()
         self.digraphs = set()
         self.trans_delimiter = None
         self.morph_delimiters = set()
         self.number_behavior = None
-        self._list = list()
+        self._list = []
         self.name = name
         self.subtype = subtype
         self.supertype = supertype
         self.token = token
         self.base = base
-        self.delimited = delimited
         self.anchor = anchor
         self.speaker = speaker
         if self.speaker is not None:
@@ -35,6 +33,9 @@ class AnnotationType(object):
                 self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name)
         else:
             self.attribute = attribute
+
+    def reset(self):
+        self._list = []
 
     def __repr__(self):
         return '<AnnotationType "{}" with Attribute "{}"'.format(self.name,
@@ -53,6 +54,13 @@ class AnnotationType(object):
                 #If save is False, only the first 10 annotations are saved
                 self._list.append(a)
 
+    @property
+    def delimited(self):
+        if self.delimiter is not None:
+            return True
+        if self.digraphs:
+            return True
+        return False
 
     def __iter__(self):
         for x in self._list:
@@ -193,14 +201,9 @@ def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None):
     if delimiter is not None:
         string = string.split(delimiter)
     elif digraph_pattern is not None:
-        print(string)
-        print(delimiter)
-        print(digraph_pattern)
-        print(ignore_list)
         string = digraph_pattern.findall(string)
     if ignore_list is not None:
         string = [x for x in string if x not in ignore_list]
-    print(string)
     return [x for x in string if x != '']
 
 def text_to_lines(path):
