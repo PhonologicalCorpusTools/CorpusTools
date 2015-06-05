@@ -516,14 +516,22 @@ class EditFeatureMatrixDialog(QDialog):
 
     def checkCoverage(self):
         corpus_inventory = self.corpus.inventory
-        feature_inventory = self.specifier.segments
+        try:
+            feature_inventory = self.specifier.segments
+        except AttributeError:
+            reply = QMessageBox.warning(self,
+                    "Missing feature system", "No feature system has been specified.")
         missing = []
         for seg in corpus_inventory:
             if seg not in feature_inventory:
                 missing.append(str(seg))
         if missing:
             reply = QMessageBox.warning(self,
-                    "Missing segments", ', '.join(missing))
+                    "Missing segments", ('The following segments are not specified'
+                                        ' for features: '+', '.join(missing) + '\nIf you'
+                                        ' are shown a \'blank\' segment, please ensure'
+                                        ' that your segment delimiters are placed'
+                                        ' correctly and are never adjacent to each other.'))
             return
         reply = QMessageBox.information(self,
                     "Missing segments", 'All segments are specified for features!')
