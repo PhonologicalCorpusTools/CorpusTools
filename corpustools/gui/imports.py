@@ -35,3 +35,6 @@ try:
     #print('PyQt5 version')
 except ImportError:
     raise(Exception("We could not find an installation of PyQt5.  Please double check that it is installed."))
+
+import locale
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')

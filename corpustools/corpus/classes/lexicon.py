@@ -4,6 +4,7 @@ import random
 import collections
 import operator
 import math
+import locale
 
 from corpustools.exceptions import CorpusIntegrityError
 
@@ -648,7 +649,7 @@ class Word(object):
                 att, value = value
                 if att.att_type == 'numeric':
                     try:
-                        value = float(value)
+                        value = locale.atof(value)
                     except (ValueError, TypeError):
                         value = float('nan')
                 elif att.att_type == 'tier':
@@ -669,7 +670,7 @@ class Word(object):
                         pass
                 if key not in self.descriptors:
                     self.descriptors.append(key)
-            setattr(self,key, value)
+            setattr(self, key, value)
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
