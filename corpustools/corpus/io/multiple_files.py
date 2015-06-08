@@ -1,11 +1,13 @@
 
 import os
 import re
+import gc
 
 FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
 
-from .helper import DiscourseData,data_to_discourse, AnnotationType
+from corpustools.corpus.classes import SpontaneousSpeechCorpus
+from .helper import DiscourseData,data_to_discourse, AnnotationType, find_wav_path
 
 def phone_match(one,two):
     if one != two and one not in two:
@@ -32,11 +34,25 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
         annotation_types = inspect_discourse_multiple_files(word_path, dialect)
     name = os.path.splitext(os.path.split(word_path)[1])[0]
 
+    if call_back is not None:
+        call_back('Reading files...')
+        call_back(0,0)
     words = read_words(word_path, dialect)
     phones = read_phones(phone_path, dialect)
 
     data = DiscourseData(name, annotation_types)
+
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(words))
+        cur = 0
     for i, w in enumerate(words):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 20 == 0:
+                call_back(cur)
         annotations = dict()
         word = {'label':w['spelling'], 'token': dict()}
         beg = w['begin']
@@ -97,18 +113,60 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
         data.add_annotations(**annotations)
     return data
 
+def load_directory_multiple_files(corpus_name, path, dialect,
+                                    annotation_types = None,
+                                    feature_system_path = None,
+                                    stop_check = None, call_back = None):
+    if call_back is not None:
+        call_back('Finding  files...')
+        call_back(0, 0)
+    file_tuples = []
+    for root, subdirs, files in os.walk(path):
+        for filename in files:
+            if stop_check is not None and stop_check():
+                return
+            if not (filename.lower().endswith('.words') or filename.lower().endswith('.wrd')):
+                continue
+            file_tuples.append((root, filename))
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(file_tuples))
+        cur = 0
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for i, t in enumerate(file_tuples):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back('Parsing file {} of {}...'.format(i+1,len(file_tuples)))
+            call_back(i)
+        root, filename = t
+        name,ext = os.path.splitext(filename)
+        if ext == '.words':
+            phone_ext = '.phones'
+        else:
+            phone_ext = '.phn'
+        word_path = os.path.join(root,filename)
+        phone_path = os.path.splitext(word_path)[0] + phone_ext
+        d = load_discourse_multiple_files(name, word_path, phone_path,
+                                            dialect, annotation_types, feature_system_path,
+                                            stop_check, None)
+        corpus.add_discourse(d)
+        gc.collect()
+    return corpus
+
 def load_discourse_multiple_files(corpus_name, word_path,phone_path, dialect,
                                     annotation_types = None,
                                     feature_system_path = None,
-                                    call_back = None, stop_check = None):
+                                    stop_check = None, call_back = None):
     data = multiple_files_to_data(word_path,phone_path, dialect,
                                     annotation_types,
                                     call_back, stop_check)
     if corpus_name is not None:
         data.name = corpus_name
+    data.wav_path = find_wav_path(word_path)
     mapping = { x.name: x.attribute for x in data.data.values()}
     discourse = data_to_discourse(data, mapping)
-
+    del data
     return discourse
 
 def read_phones(path, dialect, sr = None):

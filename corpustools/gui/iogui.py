@@ -2,6 +2,7 @@ import os
 import sys
 import codecs
 import string
+import gc
 
 from .imports import *
 
@@ -11,26 +12,30 @@ from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
 
 from corpustools.corpus.io import (load_binary, download_binary,
-                                    save_binary,
-                                    import_spontaneous_speech_corpus
+                                    save_binary
                                     )
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
                                     export_corpus_csv)
 
 from corpustools.corpus.io.textgrid import (inspect_discourse_textgrid,
-                                            load_discourse_textgrid)
+                                            load_discourse_textgrid,
+                                            load_directory_textgrid)
 
 from corpustools.corpus.io.text_ilg import (load_discourse_ilg,
-                                        inspect_discourse_ilg)
+                                            inspect_discourse_ilg,
+                                            load_directory_ilg)
 
 from corpustools.corpus.io.text_spelling import (load_discourse_spelling,
-                                                inspect_discourse_spelling)
+                                                inspect_discourse_spelling,
+                                                load_directory_spelling)
 
 from corpustools.corpus.io.text_transcription import (load_discourse_transcription,
-                                                        inspect_discourse_transcription)
+                                                        inspect_discourse_transcription,
+                                                        load_directory_transcription)
 
 from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
-                                                    inspect_discourse_multiple_files)
+                                                    inspect_discourse_multiple_files,
+                                                    load_directory_multiple_files)
 
 from corpustools.corpus.io.helper import (get_corpora_list,
                                         corpus_name_to_path,
@@ -71,20 +76,39 @@ class LoadCorpusWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         textType = self.kwargs.pop('text_type')
+        isDirectory = self.kwargs.pop('isDirectory')
         try:
             if textType == 'spelling':
+
+                if isDirectory:
+                    corpus = load_directory_spelling(**self.kwargs)
+                else:
                     corpus = load_discourse_spelling(**self.kwargs)
             elif textType == 'transcription':
-                corpus = load_discourse_transcription(**self.kwargs)
+
+                if isDirectory:
+                    corpus = load_directory_transcription(**self.kwargs)
+                else:
+                    corpus = load_discourse_transcription(**self.kwargs)
             elif textType == 'ilg':
-                corpus = load_discourse_ilg(**self.kwargs)
+
+                if isDirectory:
+                    corpus = load_directory_ilg(**self.kwargs)
+                else:
+                    corpus = load_discourse_ilg(**self.kwargs)
             elif textType == 'textgrid':
-                corpus = load_discourse_textgrid(**self.kwargs)
+                if isDirectory:
+                    corpus = load_directory_textgrid(**self.kwargs)
+                else:
+                    corpus = load_discourse_textgrid(**self.kwargs)
             elif textType == 'csv':
                 corpus = load_corpus_csv(**self.kwargs)
             elif textType in ['buckeye', 'timit']:
                 self.kwargs['dialect'] = textType
-                corpus = load_discourse_multiple_files(**self.kwargs)
+                if isDirectory:
+                    corpus = load_directory_multiple_files(**self.kwargs)
+                else:
+                    corpus = load_discourse_multiple_files(**self.kwargs)
         except PCTError as e:
             self.errorEncountered.emit(e)
             return
@@ -92,12 +116,17 @@ class LoadCorpusWorker(FunctionWorker):
             e = PCTPythonError(e)
             self.errorEncountered.emit(e)
             return
+        gc.collect()
+        if self.stopped:
+            time.sleep(0.1)
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(corpus)
 
 
-class CorpusLoadDialog(QDialog):
-    def __init__(self, parent,settings):
-        QDialog.__init__(self, parent)
+class CorpusLoadDialog(PCTDialog):
+    def __init__(self, parent, settings):
+        PCTDialog.__init__(self, parent)
         self.corpus = None
         self.settings = settings
         layout = QVBoxLayout()
@@ -159,12 +188,13 @@ class CorpusLoadDialog(QDialog):
 
         self.thread = LoadWorker()
 
-        self.progressDialog = QProgressDialog('Loading...','Cancel',0,0,self)
-        self.progressDialog.setWindowTitle('Loading corpus')
-        self.progressDialog.setMinimumDuration(0)
-        self.progressDialog.canceled.connect(self.thread.stop)
+        self.progressDialog.setWindowTitle('Loading...')
+        self.progressDialog.beginCancel.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.progressDialog.updateProgress)
+        self.thread.updateProgressText.connect(self.progressDialog.updateText)
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
+        self.thread.finishedCancelling.connect(self.progressDialog.reject)
 
     def setResults(self, results):
         self.corpus = results
@@ -385,7 +415,7 @@ class LoadCorpusDialog(PCTDialog):
         PCTDialog.__init__(self, parent)
         self.settings = settings
         self.textType = None
-        self.directory = False
+        self.isDirectory = False
 
         self.createWidgets()
 
@@ -476,7 +506,7 @@ class LoadCorpusDialog(PCTDialog):
         self.columnFrame.setLayout(lay)
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.columnFrame)
-        scroll.setMinimumHeight(140)
+        scroll.setMinimumWidth(140)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
         scroll.setSizePolicy(policy)
@@ -555,10 +585,10 @@ class LoadCorpusDialog(PCTDialog):
         curIndex = self.tabWidget.currentIndex()
         print(type)
         if type == 'text':
-            if not self.directory and curIndex > 2:
+            if not self.isDirectory and curIndex > 2:
                 self.tabWidget.setTabEnabled(0,True)
                 self.tabWidget.setCurrentIndex(0)
-            elif self.directory:
+            elif self.isDirectory:
                 self.tabWidget.setTabEnabled(1,True)
                 self.tabWidget.setCurrentIndex(1)
                 self.tabWidget.setTabEnabled(0,False)
@@ -585,7 +615,7 @@ class LoadCorpusDialog(PCTDialog):
         for i in range(self.tabWidget.count()):
             if type == 'text':
                 if self.supported_types[i + 1][0] in ['csv', 'running','ilg']:
-                    if self.directory and self.supported_types[i + 1][0] == 'csv':
+                    if self.isDirectory and self.supported_types[i + 1][0] == 'csv':
                         continue
                     self.tabWidget.setTabEnabled(i, True)
                 else:
@@ -608,7 +638,7 @@ class LoadCorpusDialog(PCTDialog):
             else:
                 type = 'timit'
         self.textType = type
-        if self.directory:
+        if self.isDirectory:
             t = 'text'
             if type == 'textgrid':
                 t = type
@@ -713,6 +743,7 @@ class LoadCorpusDialog(PCTDialog):
             return
         kwargs = {'corpus_name': name,
                     'path': path,
+                    'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
         if self.textType == 'csv':
@@ -733,17 +764,18 @@ class LoadCorpusDialog(PCTDialog):
             #    kwargs['ignore_case']) = self.ilgLookupWidget.value()
         elif self.textType in ['buckeye', 'timit']:
             kwargs['feature_system_path'] = self.multFeatureSystem.path()
-            base, ext = os.path.splitext(path)
-            if ext == '.words':
-                phone_path = base +'.phones'
-            elif ext == '.wrd':
-                phone_path = base + '.phn'
-            if not os.path.exists(phone_path):
-                reply = QMessageBox.critical(self,
-                        "Invalid information", "The phone file for the specifie words file does not exist.")
-                return
-            kwargs['word_path'] = kwargs.pop('path')
-            kwargs['phone_path'] = phone_path
+            if not self.isDirectory:
+                base, ext = os.path.splitext(path)
+                if ext == '.words':
+                    phone_path = base +'.phones'
+                elif ext == '.wrd':
+                    phone_path = base + '.phn'
+                if not os.path.exists(phone_path):
+                    reply = QMessageBox.critical(self,
+                            "Invalid information", "The phone file for the specifie words file does not exist.")
+                    return
+                kwargs['word_path'] = kwargs.pop('path')
+                kwargs['phone_path'] = phone_path
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
@@ -774,15 +806,16 @@ class LoadCorpusDialog(PCTDialog):
 
     def updateName(self):
         path = self.pathWidget.value()
+        filename = os.path.split(path)[1]
         if os.path.isdir(path):
-            self.directory = True
+            self.isDirectory = True
+            self.nameEdit.setText(filename)
             self.updateType(self.pathWidget.suggested_type)
             return
-        filename = os.path.split(path)[1]
         name, ext = os.path.splitext(filename)
         ext = ext.lower()
         self.nameEdit.setText(name)
-        self.directory = False
+        self.isDirectory = False
         if ext == '.textgrid':
             self.updateType('textgrid')
         elif ext == '.csv':

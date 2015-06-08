@@ -1,6 +1,6 @@
 import os
 
-from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Discourse, WordToken
 
 from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
@@ -84,6 +84,22 @@ def spelling_text_to_data(path, annotation_types = None,
             data.add_annotations(**annotations)
 
     return data
+
+def load_directory_spelling(corpus_name, path, annotation_types = None,
+                            support_corpus_path = None, ignore_case = False,
+                            stop_check = None, call_back = None):
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for root, subdirs, files in os.walk(path):
+        for filename in files:
+            if not filename.lower().endswith('.txt'):
+                continue
+            name = os.path.splitext(filename)[0]
+            d = load_discourse_spelling(name, os.path.join(root,filename),
+                                        annotation_types, support_corpus_path,
+                                        ignore_case,
+                                        stop_check, call_back)
+            corpus.add_discourse(d)
+    return corpus
 
 def load_discourse_spelling(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,

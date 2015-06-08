@@ -117,17 +117,8 @@ class SpontaneousSpeechCorpus(object):
 
         Parameters
         ----------
-        data : list of dictionaries
-            Dictionaries should minimally have `Spelling`, `Begin` and
-            `End` as keys, and `Transcription` if the production has
-            a transcription
-
-        discourse_info : dictionary
-            Dictionary of information for building the discourse
-
-        delimiter : string
-            String to split segments into multiple segments, if needed.
-            Defaults to None
+        discourse : Discourse
+            Discourse to be added
         """
         self.discourses[str(discourse)] = discourse
         self.lexicon += discourse.lexicon
@@ -138,7 +129,7 @@ class Discourse(object):
 
     Parameters
     ----------
-    name : string
+    name : str
         Identifier for the Discourse
 
     speaker : Speaker
@@ -150,7 +141,7 @@ class Discourse(object):
         The Discourse object tracks all of the attributes used by its
         WordToken objects
 
-    words : dictionary of WordTokens
+    words : dict of WordTokens
         The keys are the beginning times of the WordTokens (or their
         place in a text if it's not a speech discourse) and the values
         are the WordTokens
@@ -159,6 +150,7 @@ class Discourse(object):
     def __init__(self, **kwargs):
         self.name = ''
         self.speaker = Speaker(None)
+        self.wav_path = None
 
         for k,v in kwargs.items():
             setattr(self,k,v)
@@ -276,11 +268,13 @@ class Discourse(object):
             True if a .wav file is associated and if that file exists,
             False otherwise
         """
-        if hasattr(self,'wav_path') and os.path.exists(self.wav_path):
+        if self.wav_path is not None and os.path.exists(self.wav_path):
             return True
         return False
 
     def __setstate__(self,state):
+        if 'wav_path' not in state:
+            state['wav_path'] = None
         self.__dict__.update(state)
         if hasattr(self,'lexicon'):
             self.lexicon.has_wordtokens = True

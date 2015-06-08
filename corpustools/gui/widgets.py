@@ -54,7 +54,7 @@ class ParsingDialog(QDialog):
         self.setWindowTitle('Parsing {}'.format(annotation_type.name))
 
         layout = QFormLayout()
-
+        print(annotation_type._list)
         self.example = QLabel(' '.join(annotation_type[:5]))
         self.example.setWordWrap(True)
         layout.addRow('Example:',self.example)
@@ -218,8 +218,41 @@ class AnnotationTypeWidget(QGroupBox):
     def typeChanged(self):
         if self.attributeWidget.type() in ['spelling','tier']:
             self.editButton.setEnabled(True)
+            self.updateParsingLabels()
         else:
             self.editButton.setEnabled(False)
+
+    def updateParsingLabels(self):
+        if self.attributeWidget.type() == 'spelling':
+            self.digraphLabel.setText('N/A')
+            self.numberLabel.setText('N/A')
+            self.delimiterLabel.setText('N/A')
+            self.morphDelimiterLabel.setText('N/A')
+        elif self.attributeWidget.type() == 'tier':
+            if self.annotation_type.digraphs:
+                self.digraphLabel.setText(truncate_string(' '.join(self.annotation_type.digraphs)))
+            else:
+                self.digraphLabel.setText('None')
+            if self.annotation_type.morph_delimiters:
+                self.morphDelimiterLabel.setText(
+                        truncate_string(' '.join(
+                            self.annotation_type.morph_delimiters
+                            )
+                        ))
+            else:
+                self.morphDelimiterLabel.setText('None')
+            if self.annotation_type.trans_delimiter:
+                self.delimiterLabel.setText(truncate_string(' '.join(self.annotation_type.trans_delimiter)))
+            else:
+                self.delimiterLabel.setText('None')
+            if self.annotation_type.number_behavior:
+                self.numberLabel.setText(str(self.annotation_type.number_behavior))
+            else:
+                self.numberLabel.setText('None')
+        if self.annotation_type.ignored:
+            self.ignoreLabel.setText(truncate_string(' '.join(self.annotation_type.ignored)))
+        else:
+            self.ignoreLabel.setText('None')
 
     def editParsingProperties(self):
         dialog = ParsingDialog(self, self.annotation_type, self.attributeWidget.type())
@@ -233,26 +266,7 @@ class AnnotationTypeWidget(QGroupBox):
             else:
                 self.annotation_type.trans_delimiter = d
             self.annotation_type.number_behavior = dialog.numberBehavior()
-            if dialog.ignored():
-                self.ignoreLabel.setText(truncate_string(' '.join(dialog.ignored())))
-            else:
-                self.ignoreLabel.setText('None')
-            if dialog.digraphs():
-                self.digraphLabel.setText(truncate_string(' '.join(dialog.digraphs())))
-            else:
-                self.digraphLabel.setText('None')
-            if dialog.morphDelimiters():
-                self.morphDelimiterLabel.setText(truncate_string(' '.join(dialog.morphDelimiters())))
-            else:
-                self.morphDelimiterLabel.setText('None')
-            if dialog.transDelimiter():
-                self.delimiterLabel.setText(truncate_string(' '.join(dialog.transDelimiter())))
-            else:
-                self.delimiterLabel.setText('None')
-            if dialog.numberBehavior():
-                self.numberLabel.setText(str(dialog.numberBehavior()))
-            else:
-                self.numberLabel.setText('None')
+            self.updateParsingLabels()
 
     def value(self):
         att = self.attributeWidget.value()
@@ -262,7 +276,7 @@ class AnnotationTypeWidget(QGroupBox):
         if self.levelWidget.currentText() == 'Word':
             a.anchor = True
             a.base = False
-        elif self.levelWidget.currentText() == 'Phone':
+        elif self.levelWidget.currentText() == 'Segment':
             a.anchor = False
             a.base = True
         else:

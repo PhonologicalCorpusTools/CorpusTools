@@ -1,7 +1,7 @@
 import os
 import re
 
-from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attribute
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Discourse, WordToken, Attribute
 
 from corpustools.exceptions import DelimiterError, PCTOSError
 
@@ -105,10 +105,25 @@ def transcription_text_to_data(path, annotation_types = None,
             annotations[n] = tier_elements
             annotations['spelling'] = [word]
             data.add_annotations(**annotations)
-    if data[n].delimiter and not trans_check:
-        raise(DelimiterError('The transcription delimiter specified does not create multiple segments. Please specify another delimiter.'))
+    #if data[n].delimiter and not trans_check:
+    #    raise(DelimiterError('The transcription delimiter specified does not create multiple segments. Please specify another delimiter.'))
 
     return data
+
+def load_directory_transcription(corpus_name, path, annotation_types = None,
+                                feature_system_path = None,
+                                stop_check = None, call_back = None):
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for root, subdirs, files in os.walk(path):
+        for filename in files:
+            if not filename.lower().endswith('.txt'):
+                continue
+            name = os.path.splitext(filename)[0]
+            d = load_discourse_transcription(name, os.path.join(root,filename),
+                                        annotation_types, feature_system_path,
+                                        stop_check, call_back)
+            corpus.add_discourse(d)
+    return corpus
 
 
 def load_discourse_transcription(corpus_name, path, annotation_types = None,

@@ -5,9 +5,10 @@ import re
 from .textgrid_classes import TextGrid, IntervalTier, PointTier
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
-from corpustools.exceptions import TextGridTierError
+from corpustools.exceptions import TextGridTierError, PCTError
 
-from .helper import compile_digraphs, parse_transcription, DiscourseData, AnnotationType,data_to_discourse
+from .helper import (compile_digraphs, parse_transcription, DiscourseData,
+                    AnnotationType,data_to_discourse, find_wav_path)
 
 ### HELPERS ###
 def process_tier_name(name):
@@ -100,7 +101,7 @@ def inspect_discourse_textgrid(path):
         textgrids.append(path)
     anno_types = []
     for t in textgrids:
-        tg = load_textgrid(path)
+        tg = load_textgrid(t)
         spellings, segments, attributes = guess_tiers(tg)
         if len(segments) == 0:
             base = None
@@ -120,7 +121,7 @@ def inspect_discourse_textgrid(path):
                     labels = ti.uniqueLabels()
                     cat = Attribute.guess_type(labels, trans_delimiters)
                     att = Attribute(Attribute.sanitize_name(ti.name), cat, ti.name)
-                    a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
+                    a = AnnotationType(ti.name, None, anchor, token = False, attribute = att)
                     if cat == 'tier':
                         for l in labels:
                             for delim in trans_delimiters:
@@ -132,6 +133,8 @@ def inspect_discourse_textgrid(path):
                 a.add((x.mark for x in ti), save = False)
                 anno_types.append(a)
         else:
+            if len(anno_types) != len(list(tg.intervalTiers)):
+                raise(PCTError("The TextGrids must have the same number of tiers."))
             for i, ti in enumerate(tg.intervalTiers):
                 anno_types[i].add((x.mark for x in ti), save = False)
 
@@ -167,15 +170,14 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-def textgrid_to_data(path, annotation_types,
-                            call_back = None, stop_check = None):
+def textgrid_to_data(path, annotation_types, stop_check = None,
+                            call_back = None):
     tg = load_textgrid(path)
     name = os.path.splitext(os.path.split(path)[1])[0]
 
     for a in annotation_types:
         a.reset()
     data = DiscourseData(name, annotation_types)
-
     for word_name in data.word_levels:
         spelling_tier = tg.getFirst(word_name)
 
@@ -248,18 +250,30 @@ def textgrid_to_data(path, annotation_types,
 
 def load_discourse_textgrid(corpus_name, path, annotation_types,
                             feature_system_path = None,
-                            call_back = None, stop_check = None):
+                            stop_check = None, call_back = None):
     data = textgrid_to_data(path, annotation_types, call_back, stop_check)
     data.name = corpus_name
     mapping = { x.name: x.attribute for x in data.data.values()}
+    data.wav_path = find_wav_path(path)
     discourse = data_to_discourse(data, mapping)
 
     return discourse
 
 def load_directory_textgrid(corpus_name, path, annotation_types,
                             feature_system_path = None,
-                            call_back = None, stop_check = None):
-    
+                            stop_check = None, call_back = None):
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for root, subdirs, files in os.walk(path):
+        for filename in files:
+            if not filename.lower().endswith('.textgrid'):
+                continue
+            name = os.path.splitext(filename)[0]
+            d = load_discourse_textgrid(name, os.path.join(root,filename),
+                                        annotation_types, feature_system_path,
+                                        stop_check, call_back)
+            corpus.add_discourse(d)
+    return corpus
+
 
 def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):
     tg = load_textgrid(path)

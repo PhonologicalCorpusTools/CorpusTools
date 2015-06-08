@@ -3,6 +3,7 @@ import os
 import re
 from collections import Counter
 
+from corpustools.corpus.classes import SpontaneousSpeechCorpus
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attribute
 
 from corpustools.exceptions import (DelimiterError, ILGError, ILGLinesMismatchError,
@@ -185,6 +186,21 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
     discourse = data_to_discourse(data, mapping)
 
     return discourse
+
+def load_directory_ilg(corpus_name, path, annotation_types,
+                        feature_system_path = None,
+                        stop_check = None, call_back = None):
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for root, subdirs, files in os.walk(path):
+        for filename in files:
+            if not filename.lower().endswith('.txt'):
+                continue
+            name = os.path.splitext(filename)[0]
+            d = load_discourse_ilg(name, os.path.join(root,filename),
+                                        annotation_types, feature_system_path,
+                                        stop_check, call_back)
+            corpus.add_discourse(d)
+    return corpus
 
 def export_discourse_ilg(discourse, path, trans_delim = '.'):
     with open(path, encoding='utf-8', mode='w') as f:

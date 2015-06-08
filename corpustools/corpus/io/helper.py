@@ -97,6 +97,7 @@ class DiscourseData(object):
     def __init__(self, name, levels):
         self.name = name
         self.data = {x.name: x for x in levels}
+        self.wav_path = None
 
     def __getitem__(self, key):
         return self.data[key]
@@ -114,14 +115,14 @@ class DiscourseData(object):
         return self.data.items()
 
     def collapse_speakers(self):
-        newdata = dict()
+        newdata = {}
         shifts = {self.data[x].output_name: 0 for x in self.base_levels}
         #Sort keys by speaker, then non-base levels, then base levels
 
         keys = list()
         speakers = sorted(set(x.speaker for x in self.data.values() if x.speaker is not None))
         for s in speakers:
-            base = list()
+            base = []
             for k,v in self.data.items():
                 if v.speaker != s:
                     continue
@@ -162,7 +163,7 @@ class DiscourseData(object):
 
     @property
     def word_levels(self):
-        levels = list()
+        levels = []
         for k in self.data.keys():
             if self.data[k].is_word_anchor:
                 levels.append(k)
@@ -170,7 +171,7 @@ class DiscourseData(object):
 
     @property
     def base_levels(self):
-        levels = list()
+        levels = []
         for k in self.data.keys():
             if self.data[k].base:
                 levels.append(k)
@@ -214,7 +215,11 @@ def inspect_directory(directory):
                 continue
             counter[t] += 1
             relevant_files[t].append(f)
-    likely_type = max(counter.keys(), key = lambda x: counter[x])
+    max_value = max(counter.values())
+    for t in ['textgrid', 'multiple', 'text']:
+        if counter[t] == max_value:
+            likely_type = t
+            break
 
     return likely_type, relevant_files
 
@@ -238,14 +243,22 @@ def text_to_lines(path):
     lines = [x.strip().split(delimiter) for x in text.splitlines() if x.strip() != '']
     return lines
 
+def find_wav_path(path):
+    name, ext = os.path.splitext(path)
+    wav_path = name + '.wav'
+    if os.path.exists(wav_path):
+        return wav_path
+    return None
+
 def data_to_discourse(data, attribute_mapping):
-    d = Discourse(name = data.name)
+    d = Discourse(name = data.name, wav_path = data.wav_path)
     ind = 0
+
     for level in data.word_levels:
         prev_time = None
         for i, s in enumerate(data[level]):
-            word_kwargs = dict()
-            word_token_kwargs = dict()
+            word_kwargs = {}
+            word_token_kwargs = {}
             for k,v in s.items():
                 if k == 'label':
                     word_kwargs['spelling'] = (attribute_mapping[level],v)
