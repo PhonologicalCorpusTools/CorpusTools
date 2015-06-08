@@ -197,13 +197,35 @@ def compile_digraphs(digraph_list):
     pattern += '|\S'
     return re.compile(pattern)
 
+def inspect_directory(directory):
+    types = ['textgrid', 'text', 'multiple']
+    counter = {x: 0 for x in types}
+    relevant_files = {x: [] for x in types}
+    for root, subdirs, files in os.walk(directory):
+        for f in files:
+            ext = os.path.splitext(f)[-1].lower()
+            if ext == '.textgrid':
+                t = 'textgrid'
+            elif ext == '.txt':
+                t = 'text'
+            elif ext in ['.words','.wrds']:
+                t = 'multiple'
+            else:
+                continue
+            counter[t] += 1
+            relevant_files[t].append(f)
+    likely_type = max(counter.keys(), key = lambda x: counter[x])
+
+    return likely_type, relevant_files
+
+
 def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None):
+    if ignore_list is not None:
+        string = ''.join(x for x in string if x not in ignore_list)
     if delimiter is not None:
         string = string.split(delimiter)
     elif digraph_pattern is not None:
         string = digraph_pattern.findall(string)
-    if ignore_list is not None:
-        string = [x for x in string if x not in ignore_list]
     return [x for x in string if x != '']
 
 def text_to_lines(path):

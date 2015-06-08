@@ -43,11 +43,27 @@ def calculate_lines_per_gloss(lines):
                 number = max(x for x in false_intervals if x not in prev_maxes)
     return number
 
+def most_frequent_value(dictionary):
+    c = Counter(dictionary.values())
+    return max(c.keys(), key = lambda x: c[x])
+
 def inspect_discourse_ilg(path, number = None):
     trans_delimiters = ['.', ';', ',']
-    lines = text_to_lines(path)
-    if number is None:
-        number = calculate_lines_per_gloss(lines)
+    lines = {}
+    if os.path.isdir(path):
+        numbers = {}
+        for root, subdirs, files in os.walk(path):
+            for filename in files:
+                if not filename.lower().endswith('.txt'):
+                    continue
+                p = os.path.join(root, filename)
+                lines[p] = text_to_lines(p)
+                numbers[p] = calculate_lines_per_gloss(lines[p])
+        number = most_frequent_value(numbers)
+    else:
+        lines[path] = text_to_lines(path)
+        number = calculate_lines_per_gloss(lines[path])
+        p = path
     annotation_types = list()
     for i in range(number):
         name = 'Line {}'.format(i+1)
@@ -55,7 +71,7 @@ def inspect_discourse_ilg(path, number = None):
             att = Attribute('spelling','spelling','Spelling')
             a = AnnotationType(name, None, None, anchor = True, token = False, attribute = att)
         else:
-            labels = lines[i][1]
+            labels = lines[p][i][1]
             cat = Attribute.guess_type(labels, trans_delimiters)
             att = Attribute(Attribute.sanitize_name(name), cat, name)
             if cat == 'tier':
@@ -67,7 +83,16 @@ def inspect_discourse_ilg(path, number = None):
                     if att.delimiter is not None:
                         break
             a = AnnotationType(name, None, annotation_types[0].name, token = False, attribute = att)
+
+        a.add(lines[p][i][1], save = False)
         annotation_types.append(a)
+    for k,v in lines.items():
+        if k == p:
+            continue
+        for i in range(number):
+            labels = lines[k][i][1]
+            annotation_types[i].add(labels, save = False)
+
     return annotation_types
 
 def text_to_lines(path):

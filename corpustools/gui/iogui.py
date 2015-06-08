@@ -32,7 +32,9 @@ from corpustools.corpus.io.text_transcription import (load_discourse_transcripti
 from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
                                                     inspect_discourse_multiple_files)
 
-from corpustools.corpus.io.helper import get_corpora_list, corpus_name_to_path
+from corpustools.corpus.io.helper import (get_corpora_list,
+                                        corpus_name_to_path,
+                                        inspect_directory)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
@@ -309,6 +311,70 @@ class SupportCorpusWidget(QGroupBox):
         return self.path(), self.ignoreCase.isChecked()
 
 
+class CorpusSourceWidget(QWidget):
+    def __init__(self, parent = None):
+        QWidget.__init__(self, parent)
+
+        self.filefilter = 'Text files (*.txt *.csv *.TextGrid *.words *.wrds)'
+        self.relevent_files = None
+        self.suggested_type = None
+
+        layout = QHBoxLayout()
+        pathLayout = QVBoxLayout()
+        buttonLayout = QVBoxLayout()
+
+        self.pathEdit = QLineEdit()
+        pathLayout.addWidget(self.pathEdit)
+
+        self.pathButton = QPushButton('Choose file...')
+        self.pathButton.setAutoDefault(False)
+        self.pathButton.setDefault(False)
+        self.pathButton.clicked.connect(self.pickFile)
+        buttonLayout.addWidget(self.pathButton)
+
+        self.directoryButton = QPushButton('Choose directory...')
+        self.directoryButton.setAutoDefault(False)
+        self.directoryButton.setDefault(False)
+        self.directoryButton.clicked.connect(self.pickDirectory)
+        buttonLayout.addWidget(self.directoryButton)
+
+        self.mouseover = QLabel('Mouseover for included files')
+        self.mouseover.setToolTip('No included files')
+        pathLayout.addWidget(self.mouseover)
+
+        layout.addLayout(pathLayout)
+        layout.addLayout(buttonLayout)
+        self.setLayout(layout)
+
+        self.textChanged = self.pathEdit.textChanged
+
+    def pickDirectory(self):
+        filename = QFileDialog.getExistingDirectory(self, "Choose a directory")
+        if filename:
+
+            self.suggested_type, self.relevent_files = inspect_directory(filename)
+            self.updateType(self.suggested_type)
+            self.pathEdit.setText(filename)
+        else:
+            self.relevent_files = None
+            self.suggested_type = None
+
+    def updateType(self, type):
+        if self.relevent_files is None or type is None:
+            self.mouseover.setToolTip('No included files')
+        else:
+            self.mouseover.setToolTip('\n'.join(self.relevent_files[type]))
+
+    def pickFile(self):
+        filename = QFileDialog.getOpenFileName(self, 'Select file',
+                                                filter=self.filefilter)
+        if filename:
+            self.pathEdit.setText(filename[0])
+
+    def value(self):
+        return self.pathEdit.text()
+
+
 class LoadCorpusDialog(PCTDialog):
     supported_types = [(None, ''),('csv', 'Column-delimited file'),
                         ('running', 'Running text'),
@@ -319,38 +385,30 @@ class LoadCorpusDialog(PCTDialog):
         PCTDialog.__init__(self, parent)
         self.settings = settings
         self.textType = None
+        self.directory = False
 
         self.createWidgets()
 
         layout = QVBoxLayout()
-
         mainlayout = QHBoxLayout()
-
         iolayout = QFormLayout()
-
         pathlayout = QHBoxLayout()
 
-        self.characters = set()
-        self.pathWidget = FileWidget('Select file','Text files (*.txt *.csv *.TextGrid *.words *.wrds)')
+        self.pathWidget = CorpusSourceWidget()
         self.pathWidget.pathEdit.textChanged.connect(self.updateName)
 
-        pathlayout.addWidget(QLabel('Source path'))
+        pathlayout.addWidget(QLabel('Corpus source'))
         pathlayout.addWidget(self.pathWidget)
 
         self.nameEdit = QLineEdit()
         pathlayout.addWidget(QLabel('Corpus name'))
         pathlayout.addWidget(self.nameEdit)
 
-        pathframe = QFrame()
+        pathframe = QWidget()
         pathframe.setLayout(pathlayout)
-
         iolayout.addRow(pathframe)
 
-        #self.punctuation = PunctuationWidget(string.punctuation, 'Punctuation to ignore')
-        #iolayout.addRow(self.punctuation)
-
-
-        ioframe = QFrame()
+        ioframe = QWidget()
         ioframe.setLayout(iolayout)
 
         mainlayout.addWidget(ioframe)
@@ -359,8 +417,7 @@ class LoadCorpusDialog(PCTDialog):
 
         optionlayout = QFormLayout()
 
-        csvFrame = QFrame()
-
+        csvFrame = QWidget()
         csvlayout = QFormLayout()
         csvlayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
         csvlayout.addRow(self.csvForceInspectButton)
@@ -370,7 +427,7 @@ class LoadCorpusDialog(PCTDialog):
         csvFrame.setLayout(csvlayout)
         self.tabWidget.addTab(csvFrame,'Column-delimited file')
 
-        runningFrame = QFrame()
+        runningFrame = QWidget()
         runninglayout = QFormLayout()
         runninglayout.addRow('Text type', self.runningSelect)
 
@@ -379,7 +436,7 @@ class LoadCorpusDialog(PCTDialog):
         runningFrame.setLayout(runninglayout)
         self.tabWidget.addTab(runningFrame,'Running text')
 
-        ilgFrame = QFrame()
+        ilgFrame = QWidget()
         ilglayout = QFormLayout()
         ilglayout.addRow(QLabel('Number of lines per gloss (auto-detected)'),self.lineNumberEdit)
         ilglayout.addRow(self.ilgForceInspectButton)
@@ -388,7 +445,7 @@ class LoadCorpusDialog(PCTDialog):
         ilgFrame.setLayout(ilglayout)
         self.tabWidget.addTab(ilgFrame,'Interlinear text')
 
-        tgFrame = QFrame()
+        tgFrame = QWidget()
         tglayout = QFormLayout()
         tglayout.addRow(self.tgFeatureSystem)
         tglayout.addRow(self.tgLookupWidget)
@@ -427,8 +484,6 @@ class LoadCorpusDialog(PCTDialog):
         mainlayout.addLayout(previewlayout)
 
         self.acceptButton = QPushButton('Ok')
-        self.csvForceInspectButton.setAutoDefault(False)
-        self.ilgForceInspectButton.setAutoDefault(False)
         self.acceptButton.setDefault(True)
         self.cancelButton = QPushButton('Cancel')
         self.helpButton = QPushButton('Help')
@@ -440,7 +495,7 @@ class LoadCorpusDialog(PCTDialog):
         self.cancelButton.clicked.connect(self.reject)
         self.helpButton.clicked.connect(self.help)
 
-        acFrame = QFrame()
+        acFrame = QWidget()
         acFrame.setLayout(acLayout)
 
         layout.addWidget(acFrame)
@@ -477,6 +532,10 @@ class LoadCorpusDialog(PCTDialog):
 
         self.ilgForceInspectButton = QPushButton('Reinspect')
         self.ilgForceInspectButton.clicked.connect(self.forceInspect)
+
+        self.csvForceInspectButton.setAutoDefault(False)
+        self.ilgForceInspectButton.setAutoDefault(False)
+
         self.runningLookupWidget = SupportCorpusWidget(self.settings)
         self.ilgLookupWidget = SupportCorpusWidget(self.settings)
         self.tgLookupWidget = SupportCorpusWidget(self.settings)
@@ -494,10 +553,15 @@ class LoadCorpusDialog(PCTDialog):
 
     def updateType(self, type):
         curIndex = self.tabWidget.currentIndex()
+        print(type)
         if type == 'text':
-            if curIndex > 2:
+            if not self.directory and curIndex > 2:
                 self.tabWidget.setTabEnabled(0,True)
                 self.tabWidget.setCurrentIndex(0)
+            elif self.directory:
+                self.tabWidget.setTabEnabled(1,True)
+                self.tabWidget.setCurrentIndex(1)
+                self.tabWidget.setTabEnabled(0,False)
             else:
                 self.inspect()
         elif type == 'textgrid':
@@ -521,6 +585,8 @@ class LoadCorpusDialog(PCTDialog):
         for i in range(self.tabWidget.count()):
             if type == 'text':
                 if self.supported_types[i + 1][0] in ['csv', 'running','ilg']:
+                    if self.directory and self.supported_types[i + 1][0] == 'csv':
+                        continue
                     self.tabWidget.setTabEnabled(i, True)
                 else:
                     self.tabWidget.setTabEnabled(i, False)
@@ -542,6 +608,13 @@ class LoadCorpusDialog(PCTDialog):
             else:
                 type = 'timit'
         self.textType = type
+        if self.directory:
+            t = 'text'
+            if type == 'textgrid':
+                t = type
+            elif type in ['buckeye','timit']:
+                t = 'multiple'
+            self.pathWidget.updateType(t)
         self.inspect()
 
     def help(self):
@@ -701,17 +774,24 @@ class LoadCorpusDialog(PCTDialog):
 
     def updateName(self):
         path = self.pathWidget.value()
+        if os.path.isdir(path):
+            self.directory = True
+            self.updateType(self.pathWidget.suggested_type)
+            return
         filename = os.path.split(path)[1]
         name, ext = os.path.splitext(filename)
+        ext = ext.lower()
         self.nameEdit.setText(name)
-        if ext.lower() == '.textgrid':
+        self.directory = False
+        if ext == '.textgrid':
             self.updateType('textgrid')
-        elif ext.lower() == '.csv':
+        elif ext == '.csv':
             self.updateType('csv')
-        elif ext.lower() in ['.words','.wrds']:
+        elif ext in ['.words','.wrds']:
             self.updateType('multiple')
-        elif ext.lower() == '.txt':
+        elif ext == '.txt':
             self.updateType('text')
+
 
 
 class SubsetCorpusDialog(QDialog):

@@ -5,16 +5,28 @@ from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
 from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
 
-from .helper import (compile_digraphs, parse_transcription, DiscourseData,
+from .helper import (DiscourseData,
                         data_to_discourse, AnnotationType, text_to_lines)
 
 def inspect_discourse_spelling(path, support_corpus_path = None):
     a = AnnotationType('spelling', None, None, anchor = True, token = False)
-    with open(path, encoding='utf-8-sig', mode='r') as f:
-        for line in f.readlines():
-            trial = line.strip().split()
+    if os.path.isdir(path):
+        for root, subdirs, files in os.walk(path):
+            for filename in files:
+                if not filename.lower().endswith('.txt'):
+                    continue
+                with open(os.path.join(root,filename),
+                            encoding='utf-8-sig', mode='r') as f:
+                    for line in f.readlines():
+                        trial = line.strip().split()
 
-            a.add(trial, save = False)
+                        a.add(trial, save = False)
+    else:
+        with open(path, encoding='utf-8-sig', mode='r') as f:
+            for line in f.readlines():
+                trial = line.strip().split()
+
+                a.add(trial, save = False)
     annotation_types = [a]
     if support_corpus_path is not None:
         annotation_types += [AnnotationType('transcription', None, None, base = True)]

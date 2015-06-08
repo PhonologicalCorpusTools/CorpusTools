@@ -16,17 +16,36 @@ def inspect_discourse_transcription(path):
     att = Attribute('transcription','tier','Transcription')
     a = AnnotationType('transcription', None, None, attribute = att,
                                             base = True)
-    with open(path, encoding='utf-8-sig', mode='r') as f:
-        for line in f.readlines():
-            trial = line.strip().split()
-            if a.trans_delimiter is None:
-                for t in trial:
-                    for delim in trans_delimiters:
-                        if delim in t:
-                            a.trans_delimiter = delim
-                            break
 
-            a.add(trial, save = False)
+    if os.path.isdir(path):
+        for root, subdirs, files in os.walk(path):
+            for filename in files:
+                if not filename.lower().endswith('.txt'):
+                    continue
+                with open(os.path.join(root,filename),
+                            encoding='utf-8-sig', mode='r') as f:
+                    for line in f.readlines():
+                        trial = line.strip().split()
+                        if a.trans_delimiter is None:
+                            for t in trial:
+                                for delim in trans_delimiters:
+                                    if delim in t:
+                                        a.trans_delimiter = delim
+                                        break
+
+                        a.add(trial, save = False)
+    else:
+        with open(path, encoding='utf-8-sig', mode='r') as f:
+            for line in f.readlines():
+                trial = line.strip().split()
+                if a.trans_delimiter is None:
+                    for t in trial:
+                        for delim in trans_delimiters:
+                            if delim in t:
+                                a.trans_delimiter = delim
+                                break
+
+                a.add(trial, save = False)
     annotation_types = [a]
     return annotation_types
 
