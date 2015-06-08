@@ -9,9 +9,6 @@ from corpustools.exceptions import TextGridTierError
 
 from .helper import compile_digraphs, parse_transcription, DiscourseData, AnnotationType,data_to_discourse
 
-def characters_discourse_textgrid(path):
-    pass
-
 ### HELPERS ###
 def process_tier_name(name):
     t = '^({0}|\s)*(\w+\s*\w+)({0}|\s)*(\w*\s*\w*)({0}|\s)*$'.format('|'.join([re.escape(x) for x in string.punctuation]))
@@ -90,42 +87,54 @@ def figure_out_tiers(tiers, word_tier_name, phone_tier_name, speaker):
                     speakers[s]['other'].append(t)
     return speakers
 
-def inspect_discourse_textgrid(path, transdelim = None):
-    if transdelim is not None:
-        trans_delimiters = [transdelim]
+def inspect_discourse_textgrid(path):
+    trans_delimiters = ['.',' ', ';', ',']
+    textgrids = []
+    if os.path.isdir(path):
+        for root, subdirs, files in os.walk(path):
+            for filename in files:
+                if not filename.lower().endswith('.textgrid'):
+                    continue
+                textgrids.append(os.path.join(root,filename))
     else:
-        trans_delimiters = ['.',' ', ';', ',']
-    tg = load_textgrid(path)
-    spellings, segments, attributes = guess_tiers(tg)
-    if len(segments) == 0:
-        base = None
-    else:
-        base = segments[0]
-    if len(spellings) == 0:
-        anchor = None
-    else:
-        anchor = spellings[0]
-    anno_types = list()
-    for t in tg.intervalTiers:
-        if t.name in spellings:
-            a = AnnotationType(t.name, base, None, anchor = True, token = False)
-        elif t.name in segments:
-            a = AnnotationType(t.name, None, anchor, base = True, token = True)
+        textgrids.append(path)
+    anno_types = []
+    for t in textgrids:
+        tg = load_textgrid(path)
+        spellings, segments, attributes = guess_tiers(tg)
+        if len(segments) == 0:
+            base = None
         else:
-            labels = t.uniqueLabels()
-            cat = Attribute.guess_type(labels, trans_delimiters)
-            att = Attribute(Attribute.sanitize_name(t.name), cat, t.name)
-            a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
-            if cat == 'tier':
-                for l in labels:
-                    for delim in trans_delimiters:
-                        if delim in l:
-                            a.trans_delimiter = delim
-                            break
-                    if a.trans_delimiter is not None:
-                        break
-        a.add((x.mark for x in t), save = False)
-        anno_types.append(a)
+            base = segments[0]
+        if len(spellings) == 0:
+            anchor = None
+        else:
+            anchor = spellings[0]
+        if len(anno_types) == 0:
+            for ti in tg.intervalTiers:
+                if ti.name in spellings:
+                    a = AnnotationType(ti.name, base, None, anchor = True, token = False)
+                elif ti.name in segments:
+                    a = AnnotationType(ti.name, None, anchor, base = True, token = True)
+                else:
+                    labels = ti.uniqueLabels()
+                    cat = Attribute.guess_type(labels, trans_delimiters)
+                    att = Attribute(Attribute.sanitize_name(ti.name), cat, ti.name)
+                    a = AnnotationType(t.name, None, anchor, token = False, attribute = att)
+                    if cat == 'tier':
+                        for l in labels:
+                            for delim in trans_delimiters:
+                                if delim in l:
+                                    a.trans_delimiter = delim
+                                    break
+                            if a.trans_delimiter is not None:
+                                break
+                a.add((x.mark for x in ti), save = False)
+                anno_types.append(a)
+        else:
+            for i, ti in enumerate(tg.intervalTiers):
+                anno_types[i].add((x.mark for x in ti), save = False)
+
     return anno_types
 
 def load_textgrid(path):
@@ -246,6 +255,11 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     discourse = data_to_discourse(data, mapping)
 
     return discourse
+
+def load_directory_textgrid(corpus_name, path, annotation_types,
+                            feature_system_path = None,
+                            call_back = None, stop_check = None):
+    
 
 def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):
     tg = load_textgrid(path)
