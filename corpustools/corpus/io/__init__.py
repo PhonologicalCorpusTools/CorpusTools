@@ -10,6 +10,4 @@ from .text_transcription import (load_discourse_transcription,
                                 export_discourse_transcription,
                                 inspect_discourse_transcription)
 
-from .spontaneous import import_spontaneous_speech_corpus
-
 from .text_ilg import load_discourse_ilg, export_discourse_ilg

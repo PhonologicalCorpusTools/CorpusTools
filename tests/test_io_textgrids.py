@@ -6,26 +6,8 @@ from corpustools.corpus.classes import Speaker
 
 from corpustools.corpus.io.helper import AnnotationType, Annotation, BaseAnnotation
 
-from corpustools.corpus.io.textgrid import (textgrid_to_data,
-                                            process_tier_name,load_textgrid,
-                                            guess_tiers,
-                                            get_speaker_names)
-
-def test_process_name():
-    tier_names = [('Speaker 1 - Word', ('Speaker 1','Word')),
-                        ('Word = Speaker 1',('Word','Speaker 1')),
-                        ('Orthography (Speaker1)',('Orthography','Speaker1')),
-                        ('Orthography (Speaker 1)',('Orthography','Speaker 1')),
-                        ('Orthography (Speaker_1)',('Orthography','Speaker_1')),
-                        ('Orthography',('Orthography',None))
-                        ]
-    for t in tier_names:
-        assert(process_tier_name(t[0]) == t[1])
-
-def test_speaker_names(textgrid_test_dir):
-    tg = load_textgrid(os.path.join(textgrid_test_dir,'2speakers.TextGrid'))
-    speakers = get_speaker_names(tg, 'word')
-    assert(speakers == ['Speaker 1', 'Speaker 2'])
+from corpustools.corpus.io.textgrid import (textgrid_to_data,load_textgrid,
+                                            guess_tiers)
 
 #def test_guess_tiers(textgrid_test_dir):
 #    tg = load_textgrid(os.path.join(textgrid_test_dir,'phone_word.TextGrid'))
