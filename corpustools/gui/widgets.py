@@ -65,7 +65,8 @@ class ParsingDialog(QDialog):
 
         self.punctuationWidget = PunctuationWidget(annotation_type.punctuation)
         self.delimiterWidget = QLineEdit()
-        self.morphDelimiterWidget = PunctuationWidget(['-','='],'Morpheme delimiter')
+        self.morphDelimiterWidget = PunctuationWidget(annotation_type.punctuation & set('-='),
+                                                        'Morpheme delimiter')
         self.digraphWidget = DigraphWidget()
         self.numberBehaviorSelect = QComboBox()
         self.numberBehaviorSelect.addItem('Same as other characters')
@@ -133,6 +134,8 @@ class ParsingDialog(QDialog):
             delimiter = []
         else:
             delimiter = [delimiter]
+        self.morphDelimiterWidget.updateButtons(delimiter, emit = False)
+
         delimiter += self.morphDelimiterWidget.value()
         self.punctuationWidget.updateButtons(delimiter)
 
@@ -703,7 +706,7 @@ class PunctuationWidget(QGroupBox):
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         layout = QVBoxLayout()
-        self.warning = QLabel('No punctuation detected (other than specified delimiters)')
+        self.warning = QLabel('None detected (other than any transcription delimiters)')
         if len(punctuation) > 0:
             self.warning.hide()
         layout.addWidget(self.warning)
@@ -750,7 +753,7 @@ class PunctuationWidget(QGroupBox):
         layout.addWidget(buttonframe)
         self.setLayout(layout)
 
-    def updateButtons(self, to_ignore):
+    def updateButtons(self, to_ignore, emit = True):
         count_visible = 0
         for b in self.btnGroup.buttons():
             if b.text() in to_ignore:
@@ -770,7 +773,8 @@ class PunctuationWidget(QGroupBox):
         else:
             self.checkAll.show()
             self.uncheckAll.show()
-        self.selectionChanged.emit()
+        if emit:
+            self.selectionChanged.emit()
 
     def check(self):
         for b in self.btnGroup.buttons():
