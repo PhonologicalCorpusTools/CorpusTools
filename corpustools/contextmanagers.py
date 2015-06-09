@@ -8,7 +8,6 @@ from corpustools.corpus.classes.lexicon import Word
 
 class BaseCorpusContext(object):
     def __init__(self, corpus, sequence_type, type_or_token, attribute = None):
-        print('tigers!')
         self.sequence_type = sequence_type
         self.type_or_token = type_or_token
         self.corpus = corpus
@@ -136,7 +135,6 @@ class CanonicalVariantContext(BaseCorpusContext):
     def __enter__(self):
         return self
         
-        
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
 
@@ -150,6 +148,9 @@ class CanonicalVariantContext(BaseCorpusContext):
 class MostFrequentVariantContext(BaseCorpusContext):
     
     def __enter__(self):
+        if not self.corpus.has_wordtokens:
+            print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
+            error
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -157,78 +158,70 @@ class MostFrequentVariantContext(BaseCorpusContext):
     
     def __iter__(self):
         for w in self.corpus:
+            v = w.variants(self.sequence_type)
             w = copy.copy(w)
+            if len(v.keys()) > 0:                                       # Set sequence type to the most frequent variant
+                setattr(w, self.sequence_type, max(v.keys(), key=lambda k: v[k]))
             if self.type_or_token == 'type':
                 w.frequency = 1
-            # Set the most frequent variant as the transcription
-            v = w.variants(self.sequence_type)
-            setattr(w, self.sequence_type, max(v.keys(), key=lambda k: a[k])) 
             yield w
 
 class SeparatedTokensVariantContext(BaseCorpusContext):
     
     def __enter__(self):
-        try:
-            w = next(iter(self.corpus.wordlist.values()))
-            if len(w.variants()) == 0:
-                print('effed up bro')
-                return None
-        except:
-            return self
+        if not self.corpus.has_wordtokens:
+            print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
+            error
+        return self
         
-    def __iter__(self):
-        for w in self.corpus:
-            var = w.variants()
-            for v in var:
-                # Construct new word from each variant
-                if self.type_or_token == 'type':
-                    freq = 1
-                if self.sequence_type == 'spelling':
-                    spell = getattr(w, 'spelling')
-                    trans = v.value()
-                    freq = v.key()
-                elif self.sequence_type == 'transcription':
-                    spell = v.value()
-                    trans = getattr(w, 'transcription')
-                    freq = v.key()
-                else:
-                    print('Throw some keyword error')
-                w = Word(spelling = spell, transcription = trans, frequency = freq)
-                yield w
-            
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
+        
+    def __iter__(self):
+        for i, word in enumerate(self.corpus):
+            variants = word.variants()
+            for v in variants:                                      # Create a new word from each variant
+                if self.sequence_type == 'spelling':
+                    spell = v
+                    trans = getattr(word, 'transcription')
+                    freq = variants[v]
+                else:
+                    spell = getattr(word, 'spelling')
+                    trans = v
+                    freq = variants[v]
+                if self.type_or_token == 'type':
+                    freq = 1
+                w = Word(spelling = spell, transcription = trans, frequency = freq)
+                yield w
+
 
 class WeightedVariantContext(BaseCorpusContext):
     
     def __enter__(self):
-        try:
-            w = next(iter(self.corpus.wordlist.values()))
-            if len(w.variants()) == 0:
-                print('effed up bro')
-                return None
-        except:
-            return self
-
-    def __iter__(self):
-        for w in self.corpus:
-            var = w.variants()
-            for v in var:
-                # Construct new word from each variant
-                if self.type_or_token == 'type':
-                    freq = 1/(len(var))
-                if self.sequence_type == 'spelling':
-                    spell = getattr(w, 'spelling')
-                    trans = v.value()
-                    freq = v.key()/sum(var.keys())
-                elif self.sequence_type == 'transcription':
-                    spell = v.value()
-                    trans = getattr(w, 'transcription')
-                    freq = v.key()/sum(var.keys())
-                else:
-                    print('Throw some keyword error')
-                w = Word(spelling = spell, transcription = trans, frequency = freq)
-                yield w
+        if not self.corpus.has_wordtokens:
+            print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
+            error
+        return self
             
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
+        
+    def __iter__(self):
+        for i, word in enumerate(self.corpus):
+            variants = word.variants()
+            num_of_variants = len(variants)
+            total_variants = sum(variants.values())
+            for v in variants:                                      # Create a new word from each variant
+                if self.sequence_type == 'spelling':
+                    spell = v
+                    trans = getattr(word, 'transcription')
+                    freq = variants[v]/total_variants
+                else:
+                    spell = getattr(word, 'spelling')
+                    trans = v
+                    freq = variants[v]/total_variants
+                if self.type_or_token == 'type':
+                    freq = 1/num_of_variants
+                w = Word(spelling = spell, transcription = trans, frequency = freq)
+                yield w
+

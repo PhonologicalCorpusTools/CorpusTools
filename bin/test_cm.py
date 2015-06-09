@@ -12,24 +12,36 @@ corpus_name = 'Speakers'
 corpus = lb('C:\\Users\\Michael\\Documents\\PCT\\CorpusTools\\CORPUS\\' + corpus_name + '.corpus')
 outf_name = 'C:\\Users\\Michael\\Desktop\\' + corpus_name + '_test_out.txt'
 
+if corpus_name == 'Speakers':
+    corpus = getattr(corpus, 'lexicon')
 
-with CanonicalVariantContext(getattr(corpus, 'lexicon'), 'transcription', 'type') as c:
+with CanonicalVariantContext(corpus, 'transcription', 'type') as c:
     counter = 0
     for word in c:
         counter += 1
-        """
-        if word.spelling == 'nata':
-            w1 = word
-        if word.spelling == 'mata':
-            w2 = word
-        """
+        #if word.spelling == 'nata':
+            #w1 = word
+        #if word.spelling == 'mata':
+            #w2 = word
     print(counter)
             
     #a = ss(c, (w1, w2), 'khorsi')
     #print(a)
 
 
-with SeparatedTokensVariantContext(getattr(corpus, 'lexicon'), 'transcription', 'type') as c:
+with MostFrequentVariantContext(corpus, 'transcription', 'type') as c:
+    counter = 0
+    for word in c:
+        counter += 1
+    print(counter)
+
+with SeparatedTokensVariantContext(corpus, 'transcription', 'type') as c:
+    counter = 0
+    for word in c:
+        counter += 1
+    print(counter)
+
+with WeightedVariantContext(corpus, 'transcription', 'type') as c:
     counter = 0
     for word in c:
         counter += 1
