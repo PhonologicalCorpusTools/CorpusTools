@@ -59,7 +59,6 @@ class ParsingDialog(QDialog):
         self.setWindowTitle('Parsing {}'.format(annotation_type.name))
 
         layout = QFormLayout()
-        print(annotation_type._list)
         self.example = QLabel(' '.join(annotation_type[:5]))
         self.example.setWordWrap(True)
         layout.addRow('Example:',self.example)
@@ -195,7 +194,7 @@ class AnnotationTypeWidget(QGroupBox):
         proplayout.addRow('Morpheme delimiter', self.morphDelimiterLabel)
         proplayout.addRow('Number parsing', self.numberLabel)
         proplayout.addRow('Ignored characters', self.ignoreLabel)
-        proplayout.addRow('Digraphs',self.digraphLabel)
+        proplayout.addRow('Multicharacter segments',self.digraphLabel)
         proplayout.addRow(self.editButton)
 
         main.addLayout(proplayout)
@@ -796,7 +795,7 @@ class DigraphDialog(QDialog):
         QDialog.__init__(self, parent)
         layout = QFormLayout()
         self.digraphLine = QLineEdit()
-        layout.addRow(QLabel('Digraph'),self.digraphLine)
+        layout.addRow(QLabel('Multicharacter segment'),self.digraphLine)
         symbolframe = QGroupBox('Characters')
         box = QGridLayout()
 
@@ -833,7 +832,7 @@ class DigraphDialog(QDialog):
         layout.addRow(acFrame)
         self.setLayout(layout)
         self.setFixedSize(self.sizeHint())
-        self.setWindowTitle('Construct Digraph')
+        self.setWindowTitle('Construct segment')
 
     def addCharacter(self):
         self.digraphLine.setText(self.digraphLine.text()+self.sender().text())
@@ -858,12 +857,12 @@ class DigraphDialog(QDialog):
 class DigraphWidget(QGroupBox):
     def __init__(self,parent = None):
         self._parent = parent
-        QGroupBox.__init__(self,'Digraphs',parent)
+        QGroupBox.__init__(self,'Multicharacter segments',parent)
         layout = QVBoxLayout()
 
         self.editField = QLineEdit()
         layout.addWidget(self.editField)
-        self.button = QPushButton('Construct a digraph')
+        self.button = QPushButton('Construct a segment')
         self.button.setAutoDefault(False)
         self.button.clicked.connect(self.construct)
         layout.addWidget(self.button)

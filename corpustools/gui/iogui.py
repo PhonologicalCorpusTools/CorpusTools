@@ -583,7 +583,6 @@ class LoadCorpusDialog(PCTDialog):
 
     def updateType(self, type):
         curIndex = self.tabWidget.currentIndex()
-        print(type)
         if type == 'text':
             if not self.isDirectory and curIndex > 2:
                 self.tabWidget.setTabEnabled(0,True)
