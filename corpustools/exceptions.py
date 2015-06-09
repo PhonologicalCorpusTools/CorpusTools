@@ -68,15 +68,17 @@ class ILGWordMismatchError(PCTError):
     transcription_line : list
         List of words in the transcription line
     """
-    def __init__(self, spelling_line, transcription_line):
-        self.main = "There doesn't appear to be equal numbers of words in the orthography and transcription lines."
+    def __init__(self, mismatching_lines):
+        self.main = "There doesn't appear to be equal numbers of words in one or more of the glosses."
 
         self.information = ''
-        self.details = 'The following is the contents of the two lines:\n\n'
-        self.details += '(line {}, {} words) '.format(spelling_line[0],len(spelling_line[1]))
-        self.details += ' '.join(spelling_line[1]) + '\n'
-        self.details += '(line {}, {} words) '.format(transcription_line[0],len(transcription_line[1]))
-        self.details += ' '.join(transcription_line[1])
+        self.details = 'The following glosses did not have matching numbers of words:\n\n'
+        for ml in mismatching_lines:
+            line_inds, line = ml
+            self.details += 'From lines {} to {}:\n'.format(*line_inds)
+            for k,v in line.items():
+                self.details += '({}, {} words) '.format(k,len(v))
+                self.details += ' '.join(str(x) for x in v) + '\n'
 
 class ILGLinesMismatchError(PCTError):
     """
@@ -94,7 +96,10 @@ class ILGLinesMismatchError(PCTError):
         self.information = ''
         self.details = 'The following is the contents of the file after initial preprocessing:\n\n'
         for line in lines:
-            self.details += line + '\n'
+            if isinstance(line,tuple):
+                self.details += '{}: {}\n'.format(*line)
+            else:
+                self.details += str(line) + '\n'
 
 class TextGridTierError(PCTError):
     """

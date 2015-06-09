@@ -6,6 +6,37 @@ from corpustools.gui.widgets import *
 from corpustools.corpus.classes.lexicon import Attribute
 
 
+def test_attribute_widget(qtbot,specified_test_corpus):
+    new = AttributeWidget()
+    assert(new.nameWidget.isEnabled())
+    new.nameWidget.setText('test')
+
+    for i,v in enumerate(['Custom column', 'Spelling', 'Transcription', 'Frequency']):
+        new.useAs.setCurrentIndex(i)
+        att = new.value()
+        if i == 0:
+            assert(new.typeWidget.isEnabled())
+            assert(att.name == 'test')
+            assert(att.att_type == 'spelling')
+        elif i == 1:
+            assert(not new.typeWidget.isEnabled())
+            assert(new.typeWidget.currentText() == 'Spelling')
+            assert(att.name == 'spelling')
+            assert(att.display_name == 'test')
+            assert(att.att_type == 'spelling')
+        elif i == 2:
+            assert(not new.typeWidget.isEnabled())
+            assert(new.typeWidget.currentText() == 'Tier')
+            assert(att.name == 'transcription')
+            assert(att.display_name == 'test')
+            assert(att.att_type == 'tier')
+        elif i == 3:
+            assert(not new.typeWidget.isEnabled())
+            assert(new.typeWidget.currentText() == 'Numeric')
+            assert(att.name == 'frequency')
+            assert(att.display_name == 'test')
+            assert(att.att_type == 'numeric')
+
 def test_directory_widget(qtbot):
     widget = DirectoryWidget()
     qtbot.addWidget(widget)
@@ -23,19 +54,19 @@ def test_punctuation_widget(qtbot):
     bs = widget.btnGroup.buttons()
     bs[0].setChecked(True)
 
-    assert(widget.value() == ['.'])
+    assert(widget.value() == {'.'})
 
     # Test check all
 
     widget.checkAll.clicked.emit()
 
-    assert(widget.value() == ['.',',','-'])
+    assert(widget.value() == {'.',',','-'})
 
     # Test uncheck all
 
     widget.uncheckAll.clicked.emit()
 
-    assert(widget.value() == [])
+    assert(widget.value() == set())
 
 def test_tier_widget(qtbot, specified_test_corpus):
     # Test with spelling
@@ -407,3 +438,7 @@ def test_attribute_filter_dialog(qtbot, unspecified_test_corpus):
     assert(dialog.filter == (unspecified_test_corpus.attributes[2],operator.eq,50))
 
 
+
+def test_corpus_select(qtbot, settings):
+    widget = CorpusSelect(None, settings)
+    qtbot.addWidget(widget)

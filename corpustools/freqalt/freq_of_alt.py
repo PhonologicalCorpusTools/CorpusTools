@@ -40,8 +40,8 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
     phono_align: boolean (1 or 0), optional
         1 means 'only count alternations that are likely phonologically aligned,'
         defaults to not force phonological alignment
-    min_pairs_okay: boolean (1 or 0), optional
-        1 means allow minimal pairs (e.g. in English, 's' and 't' do not
+    min_pairs_okay: bool, optional
+        True means allow minimal pairs (e.g. in English, 's' and 't' do not
         alternate in minimal pairs,
         so allowing minimal pairs may skew results)
     stop_check : callable or None

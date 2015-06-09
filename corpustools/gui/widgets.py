@@ -15,6 +15,363 @@ from .models import SegmentPairModel, EnvironmentModel, FilterModel
 #from .corpusgui import AddTierDialog
 from .delegates import SwitchDelegate
 
+from corpustools.corpus.classes import Attribute
+from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path
+
+
+def truncate_string(string, length = 10):
+    return (string[:length] + '...') if len(string) > length + 3 else string
+
+
+class NonScrollingComboBox(QComboBox):
+    def __init__(self, parent = None):
+        QComboBox.__init__(self, parent)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+    def wheelEvent(self, e):
+        e.ignore()
+
+
+class CorpusSelect(QComboBox):
+    def __init__(self, parent, settings):
+        QComboBox.__init__(self,parent)
+        self.settings = settings
+        self.addItem('None')
+
+        for i,s in enumerate(get_corpora_list(self.settings['storage'])):
+            self.addItem(s)
+
+    def value(self):
+        val = self.currentText()
+        if val == 'None':
+            return ''
+        return val
+
+    def path(self):
+        if self.value() != '':
+            return corpus_name_to_path(self.settings['storage'],self.value())
+        return None
+
+class ParsingDialog(QDialog):
+    def __init__(self, parent, annotation_type, att_type):
+        QDialog.__init__(self, parent)
+        self.characters = annotation_type.characters
+        self.setWindowTitle('Parsing {}'.format(annotation_type.name))
+
+        layout = QFormLayout()
+        print(annotation_type._list)
+        self.example = QLabel(' '.join(annotation_type[:5]))
+        self.example.setWordWrap(True)
+        layout.addRow('Example:',self.example)
+
+        self.punctuationWidget = PunctuationWidget(annotation_type.punctuation)
+
+        self.delimiterWidget = QLineEdit()
+
+        self.morphDelimiterWidget = PunctuationWidget(['-','='],'Morpheme delimiter')
+
+        self.digraphWidget = DigraphWidget()
+        self.digraphWidget.characters = annotation_type.characters
+
+        self.punctuationWidget.selectionChanged.connect(self.punctuationChanged)
+        delimiter = annotation_type.delimiter
+        if delimiter is not None:
+            self.delimiterWidget.setText(delimiter)
+            self.punctuationWidget.updateButtons([delimiter])
+        self.delimiterWidget.textChanged.connect(self.updatePunctuation)
+        if att_type == 'tier':
+            layout.addRow('Transcription delimiter',self.delimiterWidget)
+        layout.addRow(self.morphDelimiterWidget)
+        self.morphDelimiterWidget.selectionChanged.connect(self.updatePunctuation)
+
+        self.numberBehaviorSelect = QComboBox()
+        self.numberBehaviorSelect.addItem('Same as other characters')
+        self.numberBehaviorSelect.addItem('Tone')
+        self.numberBehaviorSelect.addItem('Stress')
+
+        if att_type == 'tier':
+            if len(self.characters & set(['0','1','2'])):
+                layout.addRow('Number parsing', self.numberBehaviorSelect)
+            else:
+                layout.addRow('Number parsing', QLabel('No numbers'))
+        layout.addRow(self.punctuationWidget)
+        if att_type == 'tier':
+            layout.addRow(self.digraphWidget)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addRow(acFrame)
+
+        self.setLayout(layout)
+
+    def ignored(self):
+        return self.punctuationWidget.value()
+
+    def morphDelimiters(self):
+        return self.morphDelimiterWidget.value()
+
+    def transDelimiter(self):
+        return self.delimiterWidget.text()
+
+    def numberBehavior(self):
+        if self.numberBehaviorSelect.currentIndex() == 0:
+            return None
+        return self.numberBehaviorSelect.currentText().lower()
+
+    def digraphs(self):
+        return self.digraphWidget.value()
+
+    def updatePunctuation(self):
+        delimiter = self.delimiterWidget.text()
+        if delimiter == '':
+            delimiter = []
+        else:
+            delimiter = [delimiter]
+        delimiter += self.morphDelimiterWidget.value()
+        self.punctuationWidget.updateButtons(delimiter)
+
+    def punctuationChanged(self):
+        self.digraphWidget.characters = self.characters - \
+                                        self.punctuationWidget.value() - \
+                                        self.morphDelimiterWidget.value()
+        delimiter = self.delimiterWidget.text()
+        if delimiter != '':
+            self.digraphWidget.characters -= set([delimiter])
+
+
+class AnnotationTypeWidget(QGroupBox):
+    def __init__(self, annotation_type, parent = None,
+                show_attribute = True):
+        #if title is None:
+        #    title = 'Annotation type details'
+        QGroupBox.__init__(self, annotation_type.name, parent)
+
+        main = QHBoxLayout()
+
+        #main.addWidget(QLabel(annotation_type.name))
+
+        self.annotation_type = annotation_type
+
+        proplayout = QFormLayout()
+
+        self.levelWidget = NonScrollingComboBox()
+        self.levelWidget.addItem('Word')
+        self.levelWidget.addItem('Segment')
+        self.levelWidget.addItem('Other sublexical')
+        self.levelWidget.addItem('Word property')
+        self.levelWidget.setCurrentIndex(3)
+        proplayout.addRow('Linguistic level',self.levelWidget)
+
+        self.typeTokenWidget = NonScrollingComboBox()
+        self.typeTokenWidget.addItem('Word type')
+        self.typeTokenWidget.addItem('Word token')
+
+        proplayout.addRow('Associated with',self.typeTokenWidget)
+
+        self.delimiterLabel = QLabel('None')
+        if self.annotation_type.delimiter is not None:
+            self.delimiterLabel.setText(self.annotation_type.delimiter)
+        self.morphDelimiterLabel = QLabel('None')
+
+        self.ignoreLabel = QLabel('None')
+
+        self.digraphLabel = QLabel('None')
+
+        self.numberLabel = QLabel('None')
+
+        self.editButton = QPushButton('Edit parsing settings')
+        self.editButton.clicked.connect(self.editParsingProperties)
+
+        proplayout.addRow('Transcription delimiter', self.delimiterLabel)
+        proplayout.addRow('Morpheme delimiter', self.morphDelimiterLabel)
+        proplayout.addRow('Number parsing', self.numberLabel)
+        proplayout.addRow('Ignored characters', self.ignoreLabel)
+        proplayout.addRow('Digraphs',self.digraphLabel)
+        proplayout.addRow(self.editButton)
+
+        main.addLayout(proplayout)
+
+        if self.annotation_type.token:
+            self.typeTokenWidget.setCurrentIndex(1)
+        if self.annotation_type.anchor:
+            self.levelWidget.setCurrentIndex(0)
+        if self.annotation_type.base:
+            self.levelWidget.setCurrentIndex(1)
+        self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
+
+        self.attributeWidget.typeWidget.currentIndexChanged.connect(self.typeChanged)
+
+        if show_attribute:
+            main.addWidget(self.attributeWidget)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+
+        self.typeChanged()
+
+    def typeChanged(self):
+        if self.attributeWidget.type() in ['spelling','tier']:
+            self.editButton.setEnabled(True)
+            self.updateParsingLabels()
+        else:
+            self.editButton.setEnabled(False)
+
+    def updateParsingLabels(self):
+        if self.attributeWidget.type() == 'spelling':
+            self.digraphLabel.setText('N/A')
+            self.numberLabel.setText('N/A')
+            self.delimiterLabel.setText('N/A')
+            self.morphDelimiterLabel.setText('N/A')
+        elif self.attributeWidget.type() == 'tier':
+            if self.annotation_type.digraphs:
+                self.digraphLabel.setText(truncate_string(' '.join(self.annotation_type.digraphs)))
+            else:
+                self.digraphLabel.setText('None')
+            if self.annotation_type.morph_delimiters:
+                self.morphDelimiterLabel.setText(
+                        truncate_string(' '.join(
+                            self.annotation_type.morph_delimiters
+                            )
+                        ))
+            else:
+                self.morphDelimiterLabel.setText('None')
+            if self.annotation_type.trans_delimiter:
+                self.delimiterLabel.setText(truncate_string(' '.join(self.annotation_type.trans_delimiter)))
+            else:
+                self.delimiterLabel.setText('None')
+            if self.annotation_type.number_behavior:
+                self.numberLabel.setText(str(self.annotation_type.number_behavior))
+            else:
+                self.numberLabel.setText('None')
+        if self.annotation_type.ignored:
+            self.ignoreLabel.setText(truncate_string(' '.join(self.annotation_type.ignored)))
+        else:
+            self.ignoreLabel.setText('None')
+
+    def editParsingProperties(self):
+        dialog = ParsingDialog(self, self.annotation_type, self.attributeWidget.type())
+        if dialog.exec_():
+            self.annotation_type.ignored = dialog.ignored()
+            self.annotation_type.digraphs = dialog.digraphs()
+            self.annotation_type.morph_delimiters = dialog.morphDelimiters()
+            d = dialog.transDelimiter()
+            if d == '':
+                self.annotation_type.trans_delimiter = None
+            else:
+                self.annotation_type.trans_delimiter = d
+            self.annotation_type.number_behavior = dialog.numberBehavior()
+            self.updateParsingLabels()
+
+    def value(self):
+        att = self.attributeWidget.value()
+        a = self.annotation_type
+        a.attribute = att
+        a.token = self.typeTokenWidget.currentText() == 'Word token'
+        if self.levelWidget.currentText() == 'Word':
+            a.anchor = True
+            a.base = False
+        elif self.levelWidget.currentText() == 'Segment':
+            a.anchor = False
+            a.base = True
+        else:
+            a.anchor = False
+            a.base = False
+
+        return a
+
+class AttributeWidget(QGroupBox):
+    def __init__(self, attribute = None, exclude_tier = False,
+                disable_name = False, parent = None):
+        QGroupBox.__init__(self, 'Column details', parent)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        if attribute is not None:
+            self.attribute = attribute
+            self.nameWidget.setText(attribute.display_name)
+        else:
+            self.attribute = None
+
+        if disable_name:
+            self.nameWidget.setEnabled(False)
+
+        self.typeWidget = NonScrollingComboBox()
+        for at in Attribute.ATT_TYPES:
+            if exclude_tier and at == 'tier':
+                continue
+            self.typeWidget.addItem(at.title())
+
+        main.addRow('Type of column',self.typeWidget)
+
+        self.useAs = NonScrollingComboBox()
+        self.useAs.addItem('Custom column')
+        self.useAs.addItem('Spelling')
+        self.useAs.addItem('Transcription')
+        self.useAs.addItem('Frequency')
+        self.useAs.currentIndexChanged.connect(self.updateUseAs)
+
+        for i in range(self.useAs.count()):
+            if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
+                self.useAs.setCurrentIndex(i)
+                if attribute.name == 'transcription' and attribute.att_type != 'tier':
+                    attribute.att_type = 'tier'
+
+        for i in range(self.typeWidget.count()):
+            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
+                self.typeWidget.setCurrentIndex(i)
+
+        main.addRow('Use column as', self.useAs)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def type(self):
+        return self.typeWidget.currentText().lower()
+
+    def updateUseAs(self):
+        t = self.useAs.currentText().lower()
+        if t == 'custom column':
+            self.typeWidget.setEnabled(True)
+        else:
+            for i in range(self.typeWidget.count()):
+                if t == 'spelling' and self.typeWidget.itemText(i) == 'Spelling':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'transcription' and self.typeWidget.itemText(i) == 'Tier':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'frequency' and self.typeWidget.itemText(i) == 'Numeric':
+                    self.typeWidget.setCurrentIndex(i)
+            self.typeWidget.setEnabled(False)
+
+    def use(self):
+        return self.useAs.currentText().lower()
+
+    def value(self):
+        display = self.nameWidget.text()
+        cat = self.type()
+        use = self.use()
+        if use.startswith('custom'):
+            name = Attribute.sanitize_name(display)
+        else:
+            name = use
+        att = Attribute(name, cat, display)
+        return att
+
 class ThumbListWidget(QListWidget):
     def __init__(self, ordering, parent=None):
         super(ThumbListWidget, self).__init__(parent)
@@ -340,18 +697,24 @@ class TierWidget(QGroupBox):
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
-    def __init__(self, punctuation, title = 'Punctuation',parent = None):
-        QGroupBox.__init__(self,title,parent)
+    selectionChanged = Signal()
+    def __init__(self, punctuation, title = 'Punctuation to ignore', parent = None):
+        QGroupBox.__init__(self, title, parent)
 
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         layout = QVBoxLayout()
+        self.warning = QLabel('No punctuation detected (other than specified delimiters)')
+        if len(punctuation) > 0:
+            self.warning.hide()
+        layout.addWidget(self.warning)
         box = QGridLayout()
 
         row = 0
         col = 0
         for s in punctuation:
             btn = QPushButton(s)
+            btn.clicked.connect(self.selectionChanged.emit)
             btn.setAutoDefault(False)
             btn.setCheckable(True)
             btn.setAutoExclusive(False)
@@ -376,6 +739,10 @@ class PunctuationWidget(QGroupBox):
         self.uncheckAll = QPushButton('Uncheck all')
         self.uncheckAll.setAutoDefault(False)
         self.uncheckAll.clicked.connect(self.uncheck)
+
+        if len(punctuation) < 2:
+            self.checkAll.hide()
+            self.uncheckAll.hide()
         buttonlayout.addWidget(self.checkAll, alignment = Qt.AlignLeft)
         buttonlayout.addWidget(self.uncheckAll, alignment = Qt.AlignLeft)
         buttonframe = QFrame()
@@ -384,13 +751,37 @@ class PunctuationWidget(QGroupBox):
         layout.addWidget(buttonframe)
         self.setLayout(layout)
 
+    def updateButtons(self, to_ignore):
+        count_visible = 0
+        for b in self.btnGroup.buttons():
+            if b.text() in to_ignore:
+                b.setChecked(False)
+                b.hide()
+            else:
+                b.show()
+            if not b.isHidden():
+                count_visible += 1
+        if count_visible == 0:
+            self.warning.show()
+        else:
+            self.warning.hide()
+        if count_visible < 2:
+            self.checkAll.hide()
+            self.uncheckAll.hide()
+        else:
+            self.checkAll.show()
+            self.uncheckAll.show()
+        self.selectionChanged.emit()
+
     def check(self):
         for b in self.btnGroup.buttons():
             b.setChecked(True)
+        self.selectionChanged.emit()
 
     def uncheck(self):
         for b in self.btnGroup.buttons():
             b.setChecked(False)
+        self.selectionChanged.emit()
 
     def value(self):
         value = []
@@ -398,7 +789,7 @@ class PunctuationWidget(QGroupBox):
             if b.isChecked():
                 t = b.text()
                 value.append(t)
-        return value
+        return set(value)
 
 class DigraphDialog(QDialog):
     def __init__(self, characters, parent = None):
@@ -477,24 +868,12 @@ class DigraphWidget(QGroupBox):
         self.button.clicked.connect(self.construct)
         layout.addWidget(self.button)
         self.setLayout(layout)
+        self.characters = list()
 
     def construct(self):
-        minus = set(self._parent.ignoreList())
-        wd, td = self._parent.delimiters()
-        delims = []
-        if wd is None:
-            delims.extend([' ','\t','\n'])
-        elif isinstance(wd,list):
-            delims.extend(wd)
-        else:
-            delims.append(wd)
-        if td is not None:
-            if isinstance(td,list):
-                delims.extend(td)
-            else:
-                delims.append(td)
-        minus.update(delims)
-        possible = sorted(self._parent.characters - minus, key = lambda x: x.lower())
+        if len(self.characters) == 0:
+            return
+        possible = sorted(self.characters, key = lambda x: x.lower())
         dialog = DigraphDialog(possible,self)
         addOneMore = True
         while addOneMore:
@@ -506,10 +885,11 @@ class DigraphWidget(QGroupBox):
             dialog.digraphLine.setText('')
             addOneMore = dialog.addOneMore
 
-
     def value(self):
         text = self.editField.text()
         values = [x.strip() for x in text.split(',') if x.strip() != '']
+        if len(values) == 0:
+            return []
         return values
 
 class FileWidget(QFrame):

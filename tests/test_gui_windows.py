@@ -6,7 +6,7 @@ from corpustools.gui.windows import *
     #qtbot.addWidget(dialog)
 
 def test_progress_dialog(qtbot):
-    dialog = ProgressDialog('test',None)
+    dialog = ProgressDialog(None)
     qtbot.addWidget(dialog)
 
 

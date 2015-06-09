@@ -9,12 +9,16 @@ from .config import Settings, PreferencesDialog
 from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
                     LexiconView,PhonoSearchResults, MutualInfoVowelHarmonyWindow)
 
-from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel, DiscourseModel
+from .models import (CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,
+                    DiscourseModel)
 
-from .corpusgui import (CorpusLoadDialog, AddAbstractTierDialog, AddTierDialog,
-                        RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
+from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog,
+                    save_binary)
+
+from .corpusgui import (AddTierDialog, AddAbstractTierDialog,
+                        RemoveAttributeDialog,AddColumnDialog,
                         AddCountColumnDialog,
-                        ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
+                        AddWordDialog, CorpusSummary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
                         ExportFeatureSystemDialog, FeatureClassManager)
@@ -284,6 +288,8 @@ class MainWindow(QMainWindow):
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)
+            self.exportCorpusAct.setEnabled(True)
+            self.exportFeatureSystemAct.setEnabled(True)
         #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
@@ -708,10 +714,12 @@ class MainWindow(QMainWindow):
         self.exportCorpusAct = QAction( "Export corpus as text file (use with spreadsheets etc.)...",
                 self,
                 statusTip="Export corpus", triggered=self.exportCorpus)
+        self.exportCorpusAct.setEnabled(False)
 
         self.exportFeatureSystemAct = QAction( "Export feature system as text file...",
                 self,
                 statusTip="Export feature system", triggered=self.exportFeatureMatrix)
+        self.exportFeatureSystemAct.setEnabled(False)
 
         self.editPreferencesAct = QAction( "Preferences...",
                 self,

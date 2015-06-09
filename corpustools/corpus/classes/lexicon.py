@@ -320,24 +320,33 @@ class Transcription(object):
     Transcription object, sequence of symbols
     """
     def __init__(self,seg_list):
-        self._list = list()
-        self._times = list()
+        self._list = []
+        #self._times = []
         if seg_list is not None:
             for i,s in enumerate(seg_list):
-                if isinstance(s,str):
-                    self._list.append(s)
-                elif isinstance(s,dict):
-                    self._list.append(s['symbol'])
-                    if 'begin' in s and 'end' in s:
-                        self._times.append((s['begin'],s['end']))
-                elif isinstance(s,list):
-                    if len(s) == 3:
-                        self._list.append(s[0])
-                        self._times.append((s[1],s[2]))
+                try:
+                    self._list.append(s.label)
+                    #if s.begin is not None and s.end is not None:
+                    #    self._times.append((s.begin,s.end))
+                except AttributeError:
+                    if isinstance(s,str):
+                        self._list.append(s)
+                    elif isinstance(s,dict):
+                        try:
+                            symbol = s['label']
+                        except KeyError:
+                            symbol = s['symbol']
+                        self._list.append(symbol)
+                        #if 'begin' in s and 'end' in s:
+                        #    self._times.append((s['begin'],s['end']))
+                    elif isinstance(s,list):
+                        if len(s) == 3:
+                            self._list.append(s[0])
+                            #self._times.append((s[1],s[2]))
+                        else:
+                            raise(NotImplementedError('That format for seg_list is not supported.'))
                     else:
                         raise(NotImplementedError('That format for seg_list is not supported.'))
-                else:
-                    raise(NotImplementedError('That format for seg_list is not supported.'))
 
     def __hash__(self):
         return hash(str(self))
@@ -1015,6 +1024,17 @@ class Attribute(object):
             else:
                 self._default_value = Transcription(None)
 
+    @property
+    def delimiter(self):
+        if self.att_type != 'tier':
+            return None
+        else:
+            return self._delim
+
+    @delimiter.setter
+    def delimiter(self, value):
+        self._delim = value
+
     @staticmethod
     def guess_type(values, trans_delimiters = None):
         if trans_delimiters is None:
@@ -1278,6 +1298,24 @@ class Corpus(object):
         if self.wordlist != other.wordlist:
             return False
         return True
+
+    def __iadd__(self, other):
+        for a in other.attributes:
+            if a not in self.attributes:
+                self.add_attribute(a)
+        for w in other:
+            try:
+                sw = self.find(w.spelling)
+                sw.frequency += w.frequency
+                for a in self.attributes:
+                    if getattr(sw, a.name) == a.default_value and getattr(w, a.name) != a.default_value:
+                        setattr(sw, a.name, getattr(w, a.name))
+                sw.wordtokens += w.wordtokens
+            except KeyError:
+                self.add_word(w)
+        if self.specifier is None and other.specifier is not None:
+            self.set_feature_matrix(other.specifier)
+        return self
 
     def key(self, word):
         key = word.spelling
@@ -1940,7 +1978,6 @@ class Corpus(object):
                     except KeyError:
                     #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
-                        #self._graph.add_node(key)
                         break
             else:
                 return
@@ -1953,6 +1990,7 @@ class Corpus(object):
 
         if word.transcription is not None:
             self.update_inventory(word.transcription)
+            word.transcription._list = [self._inventory[x].symbol for x in word.transcription._list]
             if not self.has_transcription:
                 self.has_transcription = True
         for d in word.descriptors:
@@ -1964,6 +2002,8 @@ class Corpus(object):
                 elif isinstance(getattr(word,d),(int, float)):
                     self._attributes.append(Attribute(d,'numeric'))
         for a in self.attributes:
+            if not hasattr(word,a.name):
+                word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word,a.name))
 
     def update_inventory(self, transcription):
@@ -1981,7 +2021,7 @@ class Corpus(object):
                 if s not in self._inventory:
                     self._inventory[s] = Segment(s)
 
-    def get_or_create_word(self, spelling, transcription):
+    def get_or_create_word(self, **kwargs):
         """
         Get a Word object that has the spelling and transcription
         specified or create that Word, add it to the Corpus and return it.
@@ -2000,15 +2040,26 @@ class Corpus(object):
             Existing or newly created Word with the spelling and transcription
             specified
         """
+        try:
+            spelling = kwargs['spelling']
+            if isinstance(spelling,tuple):
+                spelling = spelling[1]
+        except KeyError:
+            return None
+
         words = self.find_all(spelling)
-        if transcription is None:
-            transcription = list()
         for w in words:
-            if str(w.transcription) == '.'.join(transcription):
-                word = w
-                break
+            for k,v in kwargs.items():
+                if isinstance(v,tuple):
+                    v = v[1]
+                if isinstance(v,list):
+                    v = Transcription(v)
+                if getattr(w,k) != v:
+                    break
+            else:
+                return w
         else:
-            word = Word(spelling=spelling,transcription=transcription)
+            word = Word(**kwargs)
             self.add_word(word)
         return word
 

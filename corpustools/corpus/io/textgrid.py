@@ -1,890 +1,381 @@
-#!/usr/bin/env python -O
-#
-# Copyright (c) 2011-2013 Kyle Gorman, Max Bane, Morgan Sonderegger
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#
-# textgrid.py: classes for Praat TextGrid and HTK mlf files
-#
-# Max Bane <bane@uchicago.edu>
-# Kyle Gorman <gormanky@ohsu.edu>
-# Morgan Sonderegger <morgan.sonderegger@mcgill.ca>
-
-
+import os
+import string
 import re
-import codecs
-import os.path
 
-from sys import stderr
-from bisect import bisect_left
+from .textgrid_classes import TextGrid, IntervalTier, PointTier
 
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
+from corpustools.exceptions import TextGridTierError, PCTError
 
-def readFile(f):
-    """
-    This helper method returns an appropriate file handle given a path f.
-    This handles UTF-8, which is itself an ASCII extension, so also ASCII.
-    """
-    try:
-        source = open(f, 'r', encoding='utf-16')
-        source.readline() # header junk
-    except UnicodeError:
-        try:
-            source = open(f, 'r', encoding='utf-8')
-            source.readline() # header junk
-        except UnicodeError:
-            source = open(f, 'r')
-            source.readline() # header junk
-    source.readline() # header junk
-    source.readline() # header junk
+from .helper import (compile_digraphs, parse_transcription, DiscourseData,
+                    AnnotationType,data_to_discourse, find_wav_path,
+                    Annotation, BaseAnnotation)
 
-    return source
+### HELPERS ###
+def process_tier_name(name):
+    t = '^({0}|\s)*(\w+\s*\w+)({0}|\s)*(\w*\s*\w*)({0}|\s)*$'.format('|'.join([re.escape(x) for x in string.punctuation]))
+    pattern = re.compile(t)
+    matches = pattern.match(name)
+    r1 = matches.group(2)
+    if r1 == '':
+        r1 = None
+    r2 = matches.group(4)
+    if r2 == '':
+        r2 = None
+    return r1,r2
 
+def is_word_tier(tier_name,word_tier_name):
+    if word_tier_name.lower() in tier_name.lower():
+        return True
+    return False
 
-class Point(object):
-    """
-    Represents a point in time with an associated textual mark, as stored
-    in a PointTier.
+def is_phone_tier(tier_name,phone_tier_name):
+    if phone_tier_name.lower() in tier_name.lower():
+        return True
+    return False
 
-    # Point/Point comparison
-    >>> foo = Point(3.0, 'foo')
-    >>> bar = Point(4.0, 'bar')
-    >>> foo < bar
-    True
-    >>> foo == Point(3.0, 'baz')
-    True
-    >>> bar > foo
-    True
+### END HELPERS ###
 
-    # Point/Value comparison
-    >>> foo < 4.0
-    True
-    >>> foo == 3.0
-    True
-    >>> foo > 5.0
-    False
-
-    # Point/Interval comparison
-    >>> baz = Interval(3.0, 5.0, 'baz')
-    >>> foo < baz
-    False
-    >>> foo == baz
-    False
-    >>> bar == baz
-    True
-    """
-
-    def __init__(self, time, mark):
-        self.time = time
-        self.mark = mark
-
-    def __repr__(self):
-        return 'Point({0}, {1})'.format(self.time,
-                                        self.mark if self.mark else None)
-
-    def __lt__(self, other):
-        if hasattr(other, 'time'):
-            return self.time < other.time
-        elif hasattr(other, 'minTime'):
-            return self.time < other.minTime
+def get_speaker_names(tiers,word_name):
+    speakers = list()
+    for t in tiers:
+        if not is_word_tier(t.name,word_name):
+            continue
+        names = process_tier_name(t.name)
+        if word_name.lower() in names[0]:
+            speakers.append(names[1])
         else:
-            return self.time < other
+            speakers.append(names[0])
+    return sorted(set(speakers))
 
-    def __gt__(self, other):
-        if hasattr(other, 'time'):
-            return self.time > other.time
-        elif hasattr(other, 'maxTime'):
-            return self.time > other.maxTime
+def figure_out_tiers(tiers, word_tier_name, phone_tier_name, speaker):
+    if not word_tier_name:
+        word_tier_name = 'word'
+    if not phone_tier_name:
+        phone_tier_name = 'phone'
+    # tier checking
+    for t in tiers:
+        if is_word_tier(t.name, word_tier_name):
+            break
+    else:
+        raise(TextGridTierError('word',word_tier_name,tiers))
+    for t in tiers:
+        if is_phone_tier(t.name, phone_tier_name):
+            break
+    else:
+        raise(TextGridTierError('phone',phone_tier_name,tiers))
+
+    speakers_in_tiers = get_speaker_names(tiers,word_tier_name)
+    if speaker is None or speakers_in_tiers != ['Unknown']:
+        speakers = {Speaker(x): {'word_tier':'', 'phone_tier':'', 'other':list()}
+                    for x in speakers_in_tiers}
+    else:
+        speakers = {Speaker(speaker):{'word_tier':'','phone_tier':'','other':list()}}
+    for t in tiers:
+        if isinstance(t,PointTier):
+            continue
+        names = process_tier_name(t.name)
+        for s,v in speakers.items():
+            if s.name in names:
+                if names[0] == s.name:
+                    tier = names[1]
+                else:
+                    tier = names[0]
+                if is_word_tier(tier, word_tier_name):
+                    speakers[s]['word_tier'] = t
+                elif is_phone_tier(tier,phone_tier_name):
+                    speakers[s]['phone_tier'] = t
+                else:
+                    speakers[s]['other'].append(t)
+    return speakers
+
+def inspect_discourse_textgrid(path):
+    trans_delimiters = ['.',' ', ';', ',']
+    textgrids = []
+    if os.path.isdir(path):
+        for root, subdirs, files in os.walk(path):
+            for filename in files:
+                if not filename.lower().endswith('.textgrid'):
+                    continue
+                textgrids.append(os.path.join(root,filename))
+    else:
+        textgrids.append(path)
+    anno_types = []
+    for t in textgrids:
+        tg = load_textgrid(t)
+        spellings, segments, attributes = guess_tiers(tg)
+        if len(segments) == 0:
+            base = None
         else:
-            return self.time > other
-
-    def __eq__(self,other):
-        if isinstance(other, Point):
-            return self.time == other.time
-        elif isinstance(other, Interval):
-            return other.minTime < self.time < other.maxTime
+            base = segments[0]
+        if len(spellings) == 0:
+            anchor = None
         else:
-            return self.time == other
-
-    def __cmp__(self, other):
-        """
-        In addition to the obvious semantics, Point/Interval comparison is
-        0 iff the point is inside the interval (non-inclusively), if you
-        need inclusive membership, use Interval.__contains__
-        """
-        if hasattr(other, 'time'):
-            return cmp(self.time, other.time)
-        elif hasattr(other, 'minTime') and hasattr(other, 'maxTime'):
-            return cmp(self.time, other.minTime) + \
-                   cmp(self.time, other.maxTime)
-        else: # hopefully numerical
-            return cmp(self.time, other)
-
-    def __iadd__(self, other):
-        self.time += other
-
-    def __isub__(self, other):
-        self.time -= other
-
-
-def decode(string):
-    """
-    Decode HTK's mangling of UTF-8 strings into something useful
-    """
-    #print(string)
-    return string
-    return string.decode('string_escape').decode('UTF-8')
-
-class Interval(object):
-    """
-    Represents an interval of time, with an associated textual mark, as
-    stored in an IntervalTier.
-
-    >>> foo = Point(3.0, 'foo')
-    >>> bar = Point(4.0, 'bar')
-    >>> baz = Interval(3.0, 5.0, 'baz')
-    >>> foo in baz
-    True
-    >>> 3.0 in baz
-    True
-    >>> bar in baz
-    True
-    >>> 4.0 in baz
-    True
-    """
-
-    def __init__(self, minTime, maxTime, mark):
-        if minTime > maxTime: # not an actual interval
-            raise ValueError(minTime, maxTime)
-        self.minTime = minTime
-        self.maxTime = maxTime
-        self.mark = mark
-
-    def __repr__(self):
-        return 'Interval({0}, {1}, {2})'.format(self.minTime, self.maxTime,
-                                         self.mark if self.mark else None)
-
-    def duration(self):
-        """
-        Returns the duration of the interval in seconds.
-        """
-        return self.maxTime - self.minTime
-
-    def __lt__(self,other):
-        if hasattr(other, 'minTime'):
-            if self.overlaps(other):
-                raise(ValueError(self, other))
-            return self.minTime < other.minTime
-        elif hasattr(other, 'time'):
-            return self.maxTime < other.time
+            anchor = spellings[0]
+        if len(anno_types) == 0:
+            for ti in tg.intervalTiers:
+                if ti.name in spellings:
+                    a = AnnotationType(ti.name, base, None, anchor = True, token = False)
+                elif ti.name in segments:
+                    a = AnnotationType(ti.name, None, anchor, base = True, token = True)
+                else:
+                    labels = ti.uniqueLabels()
+                    cat = Attribute.guess_type(labels, trans_delimiters)
+                    att = Attribute(Attribute.sanitize_name(ti.name), cat, ti.name)
+                    a = AnnotationType(ti.name, None, anchor, token = False, attribute = att)
+                    if cat == 'tier':
+                        for l in labels:
+                            for delim in trans_delimiters:
+                                if delim in l:
+                                    a.trans_delimiter = delim
+                                    break
+                            if a.trans_delimiter is not None:
+                                break
+                a.add((x.mark for x in ti), save = False)
+                anno_types.append(a)
         else:
-            return self.maxTime < other
-
-    def __gt__(self,other):
-        if hasattr(other, 'maxTime'):
-            if self.overlaps(other):
-                raise(ValueError(self, other))
-            return self.maxTime > other.maxTime
-        elif hasattr(other, 'time'):
-            return self.minTime > other.time
-        else:
-            return self.minTime > other
-
-    def __cmp__(self, other):
-        if hasattr(other, 'minTime') and hasattr(other, 'maxTime'):
-            if self.overlaps(other):
-                raise ValueError(self, other)
-                # this returns the two intervals, so user can patch things
-                # up if s/he so chooses
-            return cmp(self.minTime, other.minTime)
-        elif hasattr(other, 'time'): # comparing Intervals and Points
-            return cmp(self.minTime, other.time) + \
-                   cmp(self.maxTime, other.time)
-        else:
-            return cmp(self.minTime, other) + cmp(self.maxTime, other)
-
-    def __eq__(self, other):
-        """
-        This might seem superfluous but not that a ValueError will be
-        raised if you compare two intervals to each other...not anymore
-        """
-        if hasattr(other, 'minTime') and hasattr(other, 'maxTime'):
-            if self.minTime == other.minTime:
-                if self.maxTime == other.maxTime:
-                    return True
-        elif hasattr(other, 'time'):
-            return self.minTime < other.time < self.maxTime
-        else:
-            return False
-
-    def __iadd__(self, other):
-        self.minTime += other
-        self.maxTime += other
-
-    def __isub__(self, other):
-        self.minTime -= other
-        self.maxTime -= other
-
-    def overlaps(self, other):
-        """
-        Tests whether self overlaps with the given interval. Symmetric.
-        See: http://www.rgrjr.com/emacs/overlap.html
-        """
-        return other.minTime < self.maxTime and \
-               self.minTime < other.maxTime
-
-    def __contains__(self, other):
-        """
-        Tests whether the given time point is contained in this interval,
-        either a numeric type or a Point object.
-        """
-        if hasattr(other, 'minTime') and hasattr(other, 'maxTime'):
-            return self.minTime <= other.minTime and \
-                   other.maxTime <= self.maxTime
-        elif hasattr(other, 'time'):
-            return self.minTime <= other.time <= self.maxTime
-        else:
-            return self.minTime <= other <= self.maxTime
-
-    def bounds(self):
-        return (self.minTime, self.maxTime)
-
-
-class PointTier(object):
-    """
-    Represents Praat PointTiers (also called TextTiers) as list of Points
-    (e.g., for point in pointtier). A PointTier is used much like a Python
-    set in that it has add/remove methods, not append/extend methods.
-
-    >>> foo = PointTier('foo')
-    >>> foo.add(4.0, 'bar')
-    >>> foo.add(2.0, 'baz')
-    >>> foo
-    PointTier(foo, [Point(2.0, baz), Point(4.0, bar)])
-    >>> foo.remove(4.0, 'bar')
-    >>> foo.add(6.0, 'bar')
-    >>> foo
-    PointTier(foo, [Point(2.0, baz), Point(6.0, bar)])
-    """
-
-    def __init__(self, name=None, minTime=0., maxTime=None):
-        self.name = name
-        self.minTime = minTime
-        self.maxTime = maxTime
-        self.points = []
-
-    def __str__(self):
-        return '<PointTier {0}, {1} points>'.format(self.name, len(self))
-
-    def __repr__(self):
-        return 'PointTier({0}, {1})'.format(self.name, self.points)
-
-    def __iter__(self):
-        return iter(self.points)
-
-    def __len__(self):
-        return len(self.points)
-
-    def __getitem__(self, i):
-        return self.points[i]
-
-    def __min__(self):
-        return self.minTime
-
-    def __max__(self):
-        return self.maxTime
-
-    def add(self, time, mark):
-        """
-        constructs a Point and adds it to the PointTier, maintaining order
-        """
-        self.addPoint(Point(time, mark))
-
-    def addPoint(self, point):
-        if point < self.minTime:
-            raise ValueError(self.minTime) # too early
-        if self.maxTime and point > self.maxTime:
-            raise ValueError(self.maxTime) # too late
-        i = bisect_left(self.points, point)
-        if i < len(self.points) and self.points[i].time == point.time:
-            return
-            raise ValueError(point)# we already got one right there
-        self.points.insert(i, point)
-
-    def remove(self, time, mark):
-        """
-        removes a constructed Point i from the PointTier
-        """
-        self.removePoint(Point(time, mark))
-
-    def removePoint(self, point):
-        self.points.remove(point)
-
-    def read(self, f):
-        """
-        Read the Points contained in the Praat-formated PointTier/TextTier
-        file indicated by string f
-        """
-        source = readFile(f)
-        self.minTime = float(source.readline().split()[2])
-        self.maxTime = float(source.readline().split()[2])
-        for i in range(int(source.readline().rstrip().split()[3])):
-            source.readline().rstrip() # header
-            itim = float(source.readline().rstrip().split()[2])
-            imrk = source.readline().rstrip().split()[2].replace('"', '')
-            self.points.append(Point(imrk, itim))
-
-    def write(self, f):
-        """
-        Write the current state into a Praat-format PointTier/TextTier
-        file. f may be a file object to write to, or a string naming a
-        path for writing
-        """
-        sink = f if hasattr(f, 'write') else codecs.open(f, 'w', 'UTF-8')
-        print('File type = "ooTextFile"', file=sink)
-        print('Object class = "TextTier"', file=sink)
-
-        print('xmin = {0}'.format(min(self)), file=sink)
-        print('xmax = {0}'.format(max(self)), file=sink)
-        print('points: size = {0}'.format(len(self)), file=sink)
-        for (i, point) in enumerate(self.points, 1):
-            print('points [{0}]:'.format(i), file=sink)
-            print('\ttime = {0}'.format(point.time), file=sink)
-            print('\tmark = {0}'.format(point.mark), file=sink)
-        sink.close()
-
-    def bounds(self):
-        return (self.minTime, self.maxTime or self.points[-1].time)
-
-    # alternative constructor
-
-    @classmethod
-    def fromFile(cls, f, name=None):
-        pt = cls(name=name)
-        pt.read(f)
-        return pt
-
-
-class IntervalTier(object):
-    """
-    Represents Praat IntervalTiers as list of sequence types of Intervals
-    (e.g., for interval in intervaltier). An IntervalTier is used much like a
-    Python set in that it has add/remove methods, not append/extend methods.
-
-    >>> foo = IntervalTier('foo')
-    >>> foo.add(0.0, 2.0, 'bar')
-    >>> foo.add(2.0, 2.5, 'baz')
-    >>> foo
-    IntervalTier(foo, [Interval(0.0, 2.0, bar), Interval(2.0, 2.5, baz)])
-    >>> foo.remove(0.0, 2.0, 'bar')
-    >>> foo
-    IntervalTier(foo, [Interval(2.0, 2.5, baz)])
-    >>> foo.add(0.0, 1.0, 'bar')
-    >>> foo
-    IntervalTier(foo, [Interval(0.0, 1.0, bar), Interval(2.0, 2.5, baz)])
-    >>> foo.add(1.0, 3.0, 'baz')
-    Traceback (most recent call last):
-        ...
-    ValueError: (Interval(2.0, 2.5, baz), Interval(1.0, 3.0, baz))
-    >>> foo.intervalContaining(2.25)
-    Interval(2.0, 2.5, baz)
-    >>> foo = IntervalTier('foo', maxTime=3.5)
-    >>> foo.add(2.7, 3.7, 'bar')
-    Traceback (most recent call last):
-        ...
-    ValueError: 3.5
-    >>> foo.add(1.3, 2.4, 'bar')
-    >>> foo.add(2.7, 3.3, 'baz')
-    >>> temp = foo._fillInTheGaps('') # not for users, but a good quick test
-    >>> temp[0]
-    Interval(0.0, 1.3, None)
-    >>> temp[-1]
-    Interval(3.3, 3.5, None)
-    >>> temp[2]
-    Interval(2.4, 2.7, None)
-    """
-
-    def __init__(self, name=None, minTime=0., maxTime=None):
-        self.name = name
-        self.minTime = minTime
-        self.maxTime = maxTime
-        self.intervals = []
-
-    def __str__(self):
-        return '<IntervalTier {0}, {1} intervals>'.format(self.name,
-                                                          len(self))
-
-    def __repr__(self):
-        return 'IntervalTier({0}, {1})'.format(self.name, self.intervals)
-
-    def __iter__(self):
-        return iter(self.intervals)
-
-    def __len__(self):
-        return len(self.intervals)
-
-    def __getitem__(self, i):
-        return self.intervals[i]
-
-    def __min__(self):
-        return self.minTime
-
-    def __max__(self):
-        return self.maxTime
-
-    def add(self, minTime, maxTime, mark):
-        self.addInterval(Interval(minTime, maxTime, mark))
-
-    def addInterval(self, interval):
-        if interval.minTime < self.minTime: # too early
-            raise ValueError(self.minTime)
-        if self.maxTime and interval.maxTime > self.maxTime: # too late
-            #raise ValueError, self.maxTime
-            raise ValueError(self.maxTime)
-        i = bisect_left(self.intervals, interval)
-        if i != len(self.intervals) and self.intervals[i] == interval:
-            raise ValueError(self.intervals[i])
-        self.intervals.insert(i, interval)
-
-    def remove(self, minTime, maxTime, mark):
-        self.removeInterval(Interval(minTime, maxTime, mark))
-
-    def removeInterval(self, interval):
-        self.intervals.remove(interval)
-
-    def indexContaining(self, time):
-        """
-        Returns the index of the interval containing the given time point,
-        or None if the time point is outside the bounds of this tier. The
-        argument can be a numeric type, or a Point object.
-        """
-        i = bisect_left(self.intervals, time)
-        if i != len(self.intervals):
-            if self.intervals[i].minTime <= time <= \
-                                            self.intervals[i].maxTime:
-                return i
-
-    def intervalContaining(self, time):
-        """
-        Returns the interval containing the given time point, or None if
-        the time point is outside the bounds of this tier. The argument
-        can be a numeric type, or a Point object.
-        """
-        i = self.indexContaining(time)
-        if i:
-            return self.intervals[i]
-
-    def read(self, f):
-        """
-        Read the Intervals contained in the Praat-formated IntervalTier
-        file indicated by string f
-        """
-        source = readFile(f)
-        self.minTime = float(source.readline().split()[2])
-        self.maxTime = float(source.readline().split()[2])
-        for i in range(int(source.readline().rstrip().split()[3])):
-            source.readline().rstrip() # header
-            imin = float(source.readline().rstrip().split()[2])
-            imax = float(source.readline().rstrip().split()[2])
-            imrk = source.readline().rstrip().split()[2].replace('"', '')
-            self.intervals.append(Interval(imin, imax, imrk))
-        source.close()
-
-    def _fillInTheGaps(self, null):
-        """
-        Returns a pseudo-IntervalTier with the temporal gaps filled in
-        """
-        prev_t = self.minTime
-        output = []
-        for interval in self.intervals:
-            if prev_t < interval.minTime:
-                output.append(Interval(prev_t, interval.minTime, null))
-            output.append(interval)
-            prev_t = interval.maxTime
-        # last interval
-        if self.maxTime is not None and prev_t < self.maxTime: # also false if maxTime isn't defined
-            output.append(Interval(prev_t, self.maxTime, null))
-        return output
-
-    def write(self, f, null=''):
-        """
-        Write the current state into a Praat-format IntervalTier file. f
-        may be a file object to write to, or a string naming a path for
-        writing
-        """
-        sink = f if hasattr(f, 'write') else open(f, 'w')
-        print('File type = "ooTextFile"',file=sink)
-        print('Object class = "IntervalTier"\n',file=sink)
-        print('xmin = {0}'.format(self.minTime),file=sink)
-        print('xmax = {0}'.format(self.maxTime if self.maxTime \
-                                          else self.intervals[-1].maxTime),file=sink)
-        # compute the number of intervals and make the empty ones
-        output = self._fillInTheGaps(null)
-        # write it all out
-        print('intervals: size = {0}'.format(len(output)),file=sink)
-        for (i, interval) in enumerate(output, 1):
-            print('intervals [{0}]'.format(i),file=sink)
-            print('\txmin = {0}'.format(interval.minTime),file=sink)
-            print('\txmax = {0}'.format(interval.maxTime),file=sink)
-            print('\ttext = "{0}"'.format(interval.mark),file=sink)
-        sink.close()
-
-    def bounds(self):
-        return self.minTime, self.maxTime or self.intervals[-1].maxTime
-
-    # alternative constructor
-
-    @classmethod
-    def fromFile(cls, f, name=None):
-        it = cls(name=name)
-        it.intervals = []
-        it.read(f)
-        return it
-
-
-class TextGrid(object):
-    """
-    Represents Praat TextGrids as list of sequence types of tiers (e.g.,
-    for tier in textgrid), and as map from names to tiers (e.g.,
-    textgrid['tierName']). Whereas the *Tier classes that make up a
-    TextGrid impose a strict ordering on Points/Intervals, a TextGrid
-    instance is given order by the user. Like a true Python list, there
-    are append/extend methods for a TextGrid.
-
-    >>> foo = TextGrid('foo')
-    >>> bar = PointTier('bar')
-    >>> bar.add(1.0, 'spam')
-    >>> bar.add(2.75, 'eggs')
-    >>> baz = IntervalTier('baz')
-    >>> baz.add(0.0, 2.5, 'spam')
-    >>> baz.add(2.5, 3.5, 'eggs')
-    >>> foo.extend([bar, baz])
-    >>> foo.append(bar) # now there are two copies of bar in the TextGrid
-    >>> foo.minTime
-    0.0
-    >>> foo.maxTime # nothing
-    >>> foo.getFirst('bar')
-    PointTier(bar, [Point(1.0, spam), Point(2.75, eggs)])
-    >>> foo.getList('bar')[1]
-    PointTier(bar, [Point(1.0, spam), Point(2.75, eggs)])
-    >>> foo.getNames()
-    ['bar', 'baz', 'bar']
-    """
-
-    def __init__(self, name=None, minTime=0., maxTime=None):
-        """
-        Construct a TextGrid instance with the given (optional) name
-        (which is only relevant for MLF stuff). If file is given, it is a
-        string naming the location of a Praat-format TextGrid file from
-        which to populate this instance.
-        """
-        self.name = name
-        self.minTime = minTime
-        self.maxTime = maxTime
-        self.tiers = []
-
-    def __str__(self):
-        return '<TextGrid {0}, {1} Tiers>'.format(self.name, len(self))
-
-    def __repr__(self):
-        return 'TextGrid({0}, {1})'.format(self.name, self.tiers)
-
-    def __iter__(self):
-        return iter(self.tiers)
-
-    def __len__(self):
-        return len(self.tiers)
-
-    def __getitem__(self, i):
-        """
-        Return the ith tier
-        """
-        return self.tiers[i]
-
-    def getFirst(self, tierName):
-        """
-        Return the first tier with the given name.
-        """
-        for t in self.tiers:
-            if t.name == tierName:
-                return t
-
-    def getList(self, tierName):
-        """
-        Return a list of all tiers with the given name.
-        """
-        tiers = []
-        for t in self.tiers:
-            if t.name == tierName:
-                tiers.append(t)
-        return tiers
-
-    def getNames(self):
-        """
-        return a list of the names of the intervals contained in this
-        TextGrid
-        """
-        return [tier.name for tier in self.tiers]
-
-    def __min__(self):
-        return self.minTime
-
-    def __max__(self):
-        return self.maxTime
-
-    def append(self, tier):
-        if self.maxTime is not None and tier.maxTime is not None and tier.maxTime > self.maxTime:
-            raise ValueError(self.maxTime) # too late
-        self.tiers.append(tier)
-
-    def extend(self, tiers):
-        if min([t.minTime for t in tiers]) < self.minTime:
-            raise ValueError(self.minTime) # too early
-        if self.maxTime and max([t.minTime for t in tiers]) > self.maxTime:
-            raise ValueError(self.maxTime) # too late
-        self.tiers.extend(tiers)
-
-    def pop(self, i=None):
-        """
-        Remove and return tier at index i (default last). Will raise
-        IndexError if TextGrid is empty or index is out of range.
-        """
-        return (self.tiers.pop(i) if i else self.tiers.pop())
-
-    @staticmethod
-    def _getMark(text):
-        """
-        Get the "mark" text on a line. Since Praat doesn't prevent you
-        from using your platform's newline character in "text" fields, we
-        read until we find a match. Regression tests are in `RWtests.py`.
-        """
-        m = None
-        my_line = ''
-        while True:
-            my_line += text.readline()
-            m = re.search(r'(\S+)\s(=)\s(".*")', my_line,
-                          re.DOTALL)
-            if m != None:
-                break
-        return m.groups()[2][1:-1]
-
-    def read(self, f):
-        """
-        Read the tiers contained in the Praat-formated TextGrid file
-        indicated by string f
-        """
-        source = readFile(f)
-        self.minTime = round(float(source.readline().split()[2]), 5)
-        self.maxTime = round(float(source.readline().split()[2]), 5)
-        source.readline() # more header junk
-        m = int(source.readline().rstrip().split()[2]) # will be self.n
-        source.readline()
-        for i in range(m): # loop over grids
-            source.readline()
-            if source.readline().rstrip().split()[2] == '"IntervalTier"':
-                inam = source.readline().rstrip().split(' = ')[1].strip('"')
-                imin = round(float(source.readline().rstrip().split()[2]), 5)
-                imax = round(float(source.readline().rstrip().split()[2]), 5)
-                itie = IntervalTier(inam)
-                for j in range(int(source.readline().rstrip().split()[3])):
-                    source.readline().rstrip().split() # header junk
-                    jmin = round(float(source.readline().rstrip().split()[2]), 5)
-                    jmax = round(float(source.readline().rstrip().split()[2]), 5)
-                    jmrk = self._getMark(source)
-                    if jmin < jmax: # non-null
-                        itie.addInterval(Interval(jmin, jmax, jmrk))
-                self.append(itie)
-            else: # pointTier
-                inam = source.readline().rstrip().split(' = ')[1].strip('"')
-                imin = round(float(source.readline().rstrip().split()[2]), 5)
-                imax = round(float(source.readline().rstrip().split()[2]), 5)
-                itie = PointTier(inam)
-                n = int(source.readline().rstrip().split()[3])
-                for j in range(n):
-                    source.readline().rstrip() # header junk
-                    jtim = round(float(source.readline().rstrip().split()[2]),
-                                                                           5)
-                    jmrk = source.readline().rstrip().split()[2][1:-1]
-                    itie.addPoint(Point(jtim, jmrk))
-                self.append(itie)
-        source.close()
-
-    def write(self, f, null=''):
-        """
-        Write the current state into a Praat-format TextGrid file. f may
-        be a file object to write to, or a string naming a path to open
-        for writing.
-        """
-        sink = f if hasattr(f, 'write') else codecs.open(f, 'w', 'UTF-8')
-        print('File type = "ooTextFile"',file=sink)
-        print('Object class = "TextGrid"\n',file=sink)
-        print('xmin = {0}'.format(self.minTime),file=sink)
-        # compute max time
-        maxT = self.maxTime
-        if not maxT:
-            maxT = max([t.maxTime if t.maxTime else t[-1].maxTime \
-                                               for t in self.tiers])
-        print('xmax = {0}'.format(maxT),file=sink)
-        print('tiers? <exists>',file=sink)
-        print('size = {0}'.format(len(self)),file=sink)
-        print('item []:',file=sink)
-        for (i, tier) in enumerate(self.tiers, 1):
-            print('\titem [{0}]:'.format(i),file=sink)
-            if tier.__class__ == IntervalTier:
-                print('\t\tclass = "IntervalTier"',file=sink)
-                print('\t\tname = "{0}"'.format(tier.name),file=sink)
-                print('\t\txmin = {0}'.format(tier.minTime),file=sink)
-                print('\t\txmax = {0}'.format(maxT),file=sink)
-                # compute the number of intervals and make the empty ones
-                output = tier._fillInTheGaps(null)
-                print('\t\tintervals: size = {0}'.format(
-                                                           len(output)),file=sink)
-                for (j, interval) in enumerate(output, 1):
-                    print('\t\t\tintervals [{0}]:'.format(j),file=sink)
-                    print('\t\t\t\txmin = {0}'.format(
-                                                        interval.minTime),file=sink)
-                    print('\t\t\t\txmax = {0}'.format(
-                                                        interval.maxTime),file=sink)
-                    print('\t\t\t\ttext = "{0}"'.format(
-                                                        interval.mark),file=sink)
-            elif tier.__class__ == PointTier: # PointTier
-                print('\t\tclass = "TextTier"',file=sink)
-                print('\t\tname = "{0}"'.format(tier.name),file=sink)
-                print('\t\txmin = {0}'.format(min(tier)),file=sink)
-                print('\t\txmax = {0}'.format(max(tier)),file=sink)
-                print('\t\tpoints: size = {0}'.format(len(tier)),file=sink)
-                for (k, point) in enumerate(tier, 1):
-                    print('\t\t\tpoints [{0}]:'.format(k),file=sink)
-                    print('\t\t\t\ttime = {0}'.format(point.time),file=sink)
-                    print('\t\t\t\tmark = "{0}"'.format(
-                                                           point.mark),file=sink)
-        sink.close()
-
-    # alternative constructor
-
-    @classmethod
-    def fromFile(cls, f, name=None):
-        tg = cls(name=name)
-        tg.read(f)
-        return tg
-
-
-class MLF(object):
-    """
-    Read in a HTK .mlf file generated with HVite -o SM and turn it into a
-    list of TextGrids. The resulting class can be iterated over to give
-    one TextGrid at a time, or the write(prefix='') class method can be
-    used to write all the resulting TextGrids into separate files.
-
-    Unlike other classes, this is always initialized from a text file.
-    """
-
-    def __init__(self, f, samplerate=10e6):
-        self.grids = []
-        self.read(f, samplerate)
-
-    def __iter__(self):
-        return iter(self.grids)
-
-    def __str__(self):
-        return '<MLF, {0} TextGrids>'.format(len(self))
-
-    def __repr__(self):
-        return 'MLF({0})'.format(self.grids)
-
-    def __len__(self):
-        return len(self.grids)
-
-    def __getitem__(self, i):
-        """
-        Return the ith TextGrid
-        """
-        return self.grids[i]
-
-    def read(self, f, samplerate):
-        source = open(f, 'r') # HTK returns ostensible ASCII
-        samplerate = float(samplerate)
-        source.readline() # header
-        while True: # loop over text
-            name = re.match('\"(.*)\"', source.readline().rstrip())
-            if name:
-                name = name.groups()[0]
-                grid = TextGrid(name)
-                phon = IntervalTier(name='phones')
-                word = IntervalTier(name='words')
-                wmrk = ''
-                wsrt = 0.
-                wend = 0.
-                while 1: # loop over the lines in each grid
-                    line = source.readline().rstrip().split()
-                    if len(line) == 4: # word on this baby
-                        pmin = round(float(line[0]) / samplerate, 5)
-                        pmax = round(float(line[1]) / samplerate, 5)
-                        if pmin == pmax:
-                            raise ValueError('null duration interval')
-                        phon.add(pmin, pmax, line[2])
-                        if wmrk:
-                            word.add(wsrt, wend, wmrk)
-                        wmrk = decode(line[3])
-                        wsrt = pmin
-                        wend = pmax
-                    elif len(line) == 3: # just phone
-                        pmin = round(float(line[0]) / samplerate, 5)
-                        pmax = round(float(line[1]) / samplerate, 5)
-                        if line[2] == 'sp' and pmin != pmax:
-                            if wmrk:
-                                word.add(wsrt, wend, wmrk)
-                            wmrk = decode(line[2])
-                            wsrt = pmin
-                            wend = pmax
-                        elif pmin != pmax:
-                            phon.add(pmin, pmax, line[2])
-                        wend = pmax
-                    else: # it's a period
-                        word.add(wsrt, wend, wmrk)
-                        self.grids.append(grid)
+            if len(anno_types) != len(list(tg.intervalTiers)):
+                raise(PCTError("The TextGrids must have the same number of tiers."))
+            for i, ti in enumerate(tg.intervalTiers):
+                anno_types[i].add((x.mark for x in ti), save = False)
+
+    return anno_types
+
+def load_textgrid(path):
+    tg = TextGrid()
+    tg.read(path)
+    return tg
+
+def guess_tiers(tg):
+    segment_tiers = list()
+    spelling_tiers = list()
+    attribute_tiers = list()
+    tier_properties = dict()
+    for i,t in enumerate(tg.intervalTiers):
+        tier_properties[t.name] = (i, len(t), t.averageLabelLen(), len(t.uniqueLabels()))
+
+    max_labels = max(tier_properties.values(), key = lambda x: x[2])
+    likely_segment = [k for k,v in tier_properties.items() if v == max_labels]
+    if len(likely_segment) == 1:
+        segment_tiers.append(likely_segment)
+    likely_spelling = min((x for x in tier_properties.keys() if x not in segment_tiers),
+                        key = lambda x: tier_properties[x][0])
+    spelling_tiers.append(likely_spelling)
+
+    for k in tier_properties.keys():
+        if k in segment_tiers:
+            continue
+        if k in spelling_tiers:
+            continue
+        attribute_tiers.append(k)
+
+    return spelling_tiers, segment_tiers, attribute_tiers
+
+def textgrid_to_data(path, annotation_types, stop_check = None,
+                            call_back = None):
+    tg = load_textgrid(path)
+    name = os.path.splitext(os.path.split(path)[1])[0]
+
+    for a in annotation_types:
+        a.reset()
+    data = DiscourseData(name, annotation_types)
+    for word_name in data.word_levels:
+        spelling_tier = tg.getFirst(word_name)
+
+        for si in spelling_tier:
+            annotations = dict()
+            word = Annotation(si.mark)
+            for n in data.base_levels:
+                if data[word_name].speaker != data[n].speaker \
+                            and data[n].speaker is not None:
+                    continue
+                t = tg.getFirst(n)
+                tier_elements = list()
+                for ti in t:
+                    if ti.maxTime <= si.minTime:
+                        continue
+                    if ti.minTime >= si.maxTime:
                         break
-                grid.append(phon)
-                grid.append(word)
-            else:
-                source.close()
-                break
+                    #if not ti.mark:
+                    #    continue
 
-    def write(self, prefix=''):
-        """
-        Write the current state into Praat-formatted TextGrids. The
-        filenames that the output is stored in are taken from the HTK
-        label files. If a string argument is given, then the any prefix in
-        the name of the label file (e.g., "mfc/myLabFile.lab"), it is
-        truncated and files are written to the directory given by the
-        prefix. An IOError will result if the folder does not exist.
+                    phoneBegin = ti.minTime
+                    phoneEnd = ti.maxTime
 
-        The number of TextGrids is returned.
-        """
-        for grid in self.grids:
-            (junk, tail) = os.path.split(grid.name)
-            (root, junk) = os.path.splitext(tail)
-            my_path = os.path.join(prefix, root + '.TextGrid')
-            grid.write(codecs.open(my_path, 'w', 'UTF-8'))
-        return len(self.grids)
+                    if phoneBegin < si.minTime:
+                        phoneBegin = si.minTime
+                    if phoneEnd > si.maxTime:
+                        phoneEnd = si.maxTime
+                    if data[n].delimited:
+                        parsed = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
+                                        data[n].delimiter,
+                                        data[n].digraph_pattern,
+                                        data[n].ignored)]
+                        if len(parsed) > 0:
+                            parsed[0].begin = phoneBegin
+                            parsed[-1].end = phoneEnd
+                            tier_elements.extend(parsed)
+                    else:
+                        tier_elements.append(BaseAnnotation(ti.mark, phoneBegin, phoneEnd))
+                level_count = data.level_length(n)
+                word.references.append(n)
+                word.begins.append(level_count)
+                word.ends.append(level_count + len(tier_elements))
+                annotations[n] = tier_elements
+
+            mid_point = si.minTime + (si.maxTime - si.minTime)
+            for at in annotation_types:
+                if at.base:
+                    continue
+                if at.anchor:
+                    continue
+                t = tg.getFirst(at.name)
+                ti = t.intervalContaining(mid_point)
+                #if ti is None:
+                #    word[at.name] = None
+                #    continue
+                value = ti.mark
+                if at.delimited:
+                    value = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
+                                        at.delimiter,
+                                        at.digraph_pattern,
+                                        at.ignored)]
+                elif at.ignored:
+                    value = ''.join(x for x in value if x not in at.ignored)
+                if at.token:
+                    word.token[at.name] = value
+                else:
+                    word.additional[at.name] = value
+
+            annotations[word_name] = [word]
+            data.add_annotations(**annotations)
+    return data
 
 
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
+def load_discourse_textgrid(corpus_name, path, annotation_types,
+                            lexicon = None,
+                            feature_system_path = None,
+                            stop_check = None, call_back = None):
+    data = textgrid_to_data(path, annotation_types, call_back, stop_check)
+    data.name = corpus_name
+    data.wav_path = find_wav_path(path)
+    discourse = data_to_discourse(data, lexicon)
+
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        discourse.lexicon.set_feature_matrix(feature_matrix)
+    return discourse
+
+def load_directory_textgrid(corpus_name, path, annotation_types,
+                            feature_system_path = None,
+                            stop_check = None, call_back = None):
+    if call_back is not None:
+        call_back('Finding  files...')
+        call_back(0, 0)
+    file_tuples = []
+    for root, subdirs, files in os.walk(path):
+        for filename in files:
+            if stop_check is not None and stop_check():
+                return
+            if not filename.lower().endswith('.textgrid'):
+                continue
+            file_tuples.append((root, filename))
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(file_tuples))
+        cur = 0
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for i, t in enumerate(file_tuples):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back('Parsing file {} of {}...'.format(i+1, len(file_tuples)))
+            call_back(i)
+        root, filename = t
+        name = os.path.splitext(filename)[0]
+        d = load_discourse_textgrid(name, os.path.join(root,filename),
+                                    annotation_types, corpus.lexicon,
+                                    None,
+                                    stop_check, call_back)
+        corpus.add_discourse(d)
+
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        corpus.lexicon.set_feature_matrix(feature_matrix)
+    return corpus
+
+
+def textgrids_to_data(path, word_tier_name, phone_tier_name, speaker, delimiter):
+    tg = load_textgrid(path)
+    name = os.path.splitext(os.path.split(path)[1])[0]
+    speaker_delimited = figure_out_tiers(tg.tiers,
+                                        word_tier_name,
+                                        phone_tier_name,speaker)
+    data = {'name': name,
+            'hierarchy':{'phone':'word', 'word':'speaker'}}
+
+    words = list()
+    for s, v in speaker_delimited.items():
+        for wi in v['word_tier']:
+            w = {'lookup_spelling':wi.mark, 'Begin':wi.minTime, 'End': wi.maxTime, 'Speaker':s}
+            w['Transcription'] = list()
+            for pi in v['phone_tier']:
+                if pi.maxTime <= w['Begin']:
+                    continue
+                if pi.minTime >= w['End']:
+                    break
+                if not pi.mark:
+                    continue
+
+                phoneBegin = pi.minTime
+                phoneEnd = pi.maxTime
+                if phoneBegin < w['Begin']:
+                    phoneBegin = w['Begin']
+                if phoneEnd > w['End']:
+                    phoneEnd = w['End']
+                w['Transcription'].append({'symbol':pi.mark,'begin':phoneBegin,'end':phoneEnd})
+            for o in v['other']:
+                for oi in o:
+                    if oi.maxTime < w['Begin']:
+                        continue
+                    if not oi.mark:
+                        continue
+                    if oi.minTime >= w['End']:
+                        break
+                    if oi.minTime <= w['Begin'] and oi.maxTime >= w['End']:
+                        w[Attribute.sanitize_name(o.name)] = oi.mark
+            words.append(w)
+    return words
+
+def align_textgrids(textgrids, wavs, speaker_source, stop_check, call_back):
+    if call_back is not None:
+        call_back('Matching files...')
+        call_back(0,len(textgrids))
+        cur = 0
+    dialogs = {}
+    for p in textgrids:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
+        name = os.path.splitext(os.path.split(p)[1])[0]
+        dialogs[name] = {'textgrid':p}
+        if speaker_source == 'filename':
+            dialogs[name]['speaker'] = name[:3] #Hack?
+        elif speaker_source == 'directory':
+            dialogs[name]['speaker'] = os.path.basename(os.path.dirname(p))
+        else:
+            dialogs[name]['speaker'] = None
+    for p3 in wavs:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
+        name = os.path.splitext(os.path.split(p3)[1])[0]
+        try:
+            dialogs[name]['wav'] = p3
+        except KeyError:
+            pass
+    return dialogs
