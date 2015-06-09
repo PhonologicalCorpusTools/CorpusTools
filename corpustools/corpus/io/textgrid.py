@@ -153,17 +153,18 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
                     continue
                 t = tg.getFirst(at.name)
                 ti = t.intervalContaining(mid_point)
-                #if ti is None:
-                #    word[at.name] = None
-                #    continue
-                value = ti.mark
-                if at.delimited:
-                    value = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
-                                        at.delimiter,
-                                        at.digraph_pattern,
-                                        at.ignored)]
-                elif at.ignored:
-                    value = ''.join(x for x in value if x not in at.ignored)
+
+                if ti is None:
+                    value = None
+                else:
+                    value = ti.mark
+                    if at.delimited:
+                        value = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
+                                            at.delimiter,
+                                            at.digraph_pattern,
+                                            at.ignored)]
+                    elif at.ignored:
+                        value = ''.join(x for x in value if x not in at.ignored)
                 if at.token:
                     word.token[at.name] = value
                 else:
