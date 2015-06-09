@@ -78,7 +78,7 @@ class ILGWordMismatchError(PCTError):
             self.details += 'From lines {} to {}:\n'.format(*line_inds)
             for k,v in line.items():
                 self.details += '({}, {} words) '.format(k,len(v))
-                self.details += ' '.join(v) + '\n'
+                self.details += ' '.join(str(x) for x in v) + '\n'
 
 class ILGLinesMismatchError(PCTError):
     """

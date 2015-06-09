@@ -9,7 +9,9 @@ from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attri
 from corpustools.exceptions import (DelimiterError, ILGError, ILGLinesMismatchError,
                                 ILGWordMismatchError)
 
-from .helper import compile_digraphs, parse_transcription, DiscourseData, AnnotationType,data_to_discourse
+from .helper import (compile_digraphs, parse_transcription,
+                    DiscourseData, AnnotationType,data_to_discourse,
+                    Annotation, BaseAnnotation)
 
 def calculate_lines_per_gloss(lines):
     line_counts = [len(x[1]) for x in lines]
@@ -65,7 +67,7 @@ def inspect_discourse_ilg(path, number = None):
         lines[path] = text_to_lines(path)
         number = calculate_lines_per_gloss(lines[path])
         p = path
-    annotation_types = list()
+    annotation_types = []
     for i in range(number):
         name = 'Line {}'.format(i+1)
         if i == 0:
@@ -75,16 +77,15 @@ def inspect_discourse_ilg(path, number = None):
             labels = lines[p][i][1]
             cat = Attribute.guess_type(labels, trans_delimiters)
             att = Attribute(Attribute.sanitize_name(name), cat, name)
-            if cat == 'tier':
+            a = AnnotationType(name, None, annotation_types[0].name, token = False, attribute = att)
+            if cat == 'tier' and a.trans_delimiter is None:
                 for l in labels:
                     for delim in trans_delimiters:
                         if delim in l:
-                            att.delimiter = delim
+                            a.trans_delimiter = delim
                             break
-                    if att.delimiter is not None:
+                    if a.trans_delimiter is not None:
                         break
-            a = AnnotationType(name, None, annotation_types[0].name, token = False, attribute = att)
-
         a.add(lines[p][i][1], save = False)
         annotation_types.append(a)
     for k,v in lines.items():
@@ -129,7 +130,7 @@ def ilg_to_data(path, annotation_types,
     data = DiscourseData(name, annotation_types)
     mismatching_lines = list()
     while index < len(lines):
-        cur_line = dict()
+        cur_line = {}
         mismatch = False
         for line_ind, annotation_type in enumerate(annotation_types):
             if annotation_type.name == 'ignore':
@@ -153,53 +154,82 @@ def ilg_to_data(path, annotation_types,
             continue
         for word_name in data.word_levels:
             for i, s in enumerate(cur_line[word_name]):
-                annotations = dict()
-                word = {'label':s, 'token':dict()}
+                annotations = {}
+                word = Annotation(s)
 
                 for n in data.base_levels:
-                    tier_elements = [{'label':x} for x in cur_line[n][i]]
+                    tier_elements = [BaseAnnotation(x) for x in cur_line[n][i]]
                     level_count = data.level_length(n)
-                    word[n] = (level_count,level_count+len(tier_elements))
+                    word.references.append(n)
+                    word.begins.append(level_count)
+                    word.ends.append(level_count + len(tier_elements))
                     annotations[n] = tier_elements
                 for line_type in cur_line.keys():
-                    if data[line_type].token:
-                        word['token'][line_type] = cur_line[line_type][i]
                     if data[line_type].base:
                         continue
                     if data[line_type].anchor:
                         continue
-                    word[line_type] = cur_line[line_type][i]
+                    if data[line_type].token:
+                        word.token[line_type] = cur_line[line_type][i]
+                    else:
+                        word.additional[line_type] = cur_line[line_type][i]
                 annotations[word_name] = [word]
                 data.add_annotations(**annotations)
         index += len(annotation_types)
+
     if len(mismatching_lines) > 0:
         raise(ILGWordMismatchError(mismatching_lines))
     return data
 
 
 def load_discourse_ilg(corpus_name, path, annotation_types,
+                    lexicon = None,
                     feature_system_path = None,
                     stop_check = None, call_back = None):
     data = ilg_to_data(path, annotation_types,
                     stop_check, call_back)
-    mapping = { x.name: x.attribute for x in annotation_types}
-    discourse = data_to_discourse(data, mapping)
+    discourse = data_to_discourse(data, lexicon)
+
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        discourse.lexicon.set_feature_matrix(feature_matrix)
 
     return discourse
 
 def load_directory_ilg(corpus_name, path, annotation_types,
                         feature_system_path = None,
                         stop_check = None, call_back = None):
-    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    if call_back is not None:
+        call_back('Finding  files...')
+        call_back(0, 0)
+    file_tuples = []
     for root, subdirs, files in os.walk(path):
         for filename in files:
             if not filename.lower().endswith('.txt'):
                 continue
-            name = os.path.splitext(filename)[0]
-            d = load_discourse_ilg(name, os.path.join(root,filename),
-                                        annotation_types, feature_system_path,
-                                        stop_check, call_back)
-            corpus.add_discourse(d)
+            file_tuples.append((root, filename))
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(file_tuples))
+        cur = 0
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for i, t in enumerate(file_tuples):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back('Parsing file {} of {}...'.format(i+1,len(file_tuples)))
+            call_back(i)
+        root, filename = t
+        name = os.path.splitext(filename)[0]
+        d = load_discourse_ilg(name, os.path.join(root,filename),
+                                    annotation_types, corpus.lexicon,
+                                    None,
+                                    stop_check, call_back)
+        corpus.add_discourse(d)
+
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        corpus.lexicon.set_feature_matrix(feature_matrix)
     return corpus
 
 def export_discourse_ilg(discourse, path, trans_delim = '.'):

@@ -15,20 +15,20 @@ def test_inspect_example(csv_test_dir):
     assert(coldelim == ',')
     for a in atts:
         if a.name == 'frequency':
-            assert(a.att_type == 'numeric')
+            assert(a.attribute.att_type == 'numeric')
         elif a.name == 'transcription':
-            assert(a.att_type == 'tier')
-            assert(a._delim == '.')
+            assert(a.attribute.att_type == 'tier')
+            assert(a.delimiter == '.')
         elif a.name == 'spelling':
-            assert(a.att_type == 'spelling')
+            assert(a.attribute.att_type == 'spelling')
 
 
 def test_corpus_csv(csv_test_dir, unspecified_test_corpus):
     example_path = os.path.join(csv_test_dir, 'example.txt')
     with pytest.raises(DelimiterError):
         load_corpus_csv('example',example_path,delimiter='\t')
-    with pytest.raises(DelimiterError):
-        load_corpus_csv('example',example_path,delimiter=',',trans_delimiter='/')
+    #with pytest.raises(DelimiterError):
+    #    load_corpus_csv('example',example_path,delimiter=',')
 
 
     c = load_corpus_csv('example',example_path,delimiter=',')

@@ -6,7 +6,8 @@ from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Di
 from corpustools.exceptions import DelimiterError, PCTOSError
 
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
-                    data_to_discourse, AnnotationType, text_to_lines)
+                    data_to_discourse, AnnotationType, text_to_lines,
+                    Annotation, BaseAnnotation)
 
 from .binary import load_binary
 
@@ -57,23 +58,20 @@ def transcription_text_to_data(path, annotation_types = None,
 
     if annotation_types is None:
         annotation_types = inspect_discourse_transcription(path)
+
     for a in annotation_types:
         a.reset()
     a = AnnotationType('spelling', None, None,
                 attribute = Attribute('spelling','spelling','Spelling'),
                                             anchor = True)
     annotation_types.append(a)
-    if annotation_types[0].digraphs:
-        digraph_pattern = compile_digraphs(annotation_types[0].digraphs)
-    else:
-        digraph_pattern = None
 
     data = DiscourseData(name, annotation_types)
 
     lines = text_to_lines(path)
     if call_back is not None:
         call_back('Processing file...')
-        call_back(0,len(lines))
+        call_back(0, len(lines))
         cur = 0
     trans_check = False
     n = 'transcription'
@@ -90,18 +88,20 @@ def transcription_text_to_data(path, annotation_types = None,
         for word in line:
             annotations = dict()
             trans = parse_transcription(word, data[n].delimiter,
-                            digraph_pattern, data[n].ignored)
-            if not trans_check and data[n].delimiter is not None and len(trans) > 1:
-                trans_check = True
+                            data[n].digraph_pattern, data[n].ignored)
+            #if not trans_check and data[n].delimiter is not None and len(trans) > 1:
+            #    trans_check = True
             spell = ''.join(trans)
             if spell == '':
                 continue
 
-            word = {'label':spell,'token': dict()}
+            word = Annotation(spell)
 
-            tier_elements = [{'label':x} for x in trans]
+            tier_elements = [BaseAnnotation(x) for x in trans]
             level_count = data.level_length(n)
-            word[n] = (level_count, level_count + len(tier_elements))
+            word.references.append(n)
+            word.begins.append(level_count)
+            word.ends.append(level_count + len(tier_elements))
             annotations[n] = tier_elements
             annotations['spelling'] = [word]
             data.add_annotations(**annotations)
@@ -113,21 +113,39 @@ def transcription_text_to_data(path, annotation_types = None,
 def load_directory_transcription(corpus_name, path, annotation_types = None,
                                 feature_system_path = None,
                                 stop_check = None, call_back = None):
-    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    if call_back is not None:
+        call_back('Finding  files...')
+        call_back(0, 0)
+    file_tuples = []
     for root, subdirs, files in os.walk(path):
         for filename in files:
             if not filename.lower().endswith('.txt'):
                 continue
-            name = os.path.splitext(filename)[0]
-            d = load_discourse_transcription(name, os.path.join(root,filename),
-                                        annotation_types, feature_system_path,
-                                        stop_check, call_back)
-            corpus.add_discourse(d)
+            file_tuples.append((root, filename))
+
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(file_tuples))
+        cur = 0
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for i, t in enumerate(file_tuples):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back('Parsing file {} of {}...'.format(i+1,len(file_tuples)))
+            call_back(i)
+        root, filename = t
+        name = os.path.splitext(filename)[0]
+        d = load_discourse_transcription(name, os.path.join(root,filename),
+                                    annotation_types,
+                                    corpus.lexicon, None,
+                                    stop_check, call_back)
+        corpus.add_discourse(d)
     return corpus
 
 
 def load_discourse_transcription(corpus_name, path, annotation_types = None,
-                    feature_system_path = None,
+                    lexicon = None, feature_system_path = None,
                     stop_check = None, call_back = None):
     """
     Load a corpus from a text file containing running transcribed text
@@ -185,8 +203,8 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
 
     data = transcription_text_to_data(path, annotation_types,
                             stop_check, call_back)
-    mapping = { x.name: x.attribute for x in data.data.values()}
-    discourse = data_to_discourse(data, mapping)
+
+    discourse = data_to_discourse(data, lexicon)
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)

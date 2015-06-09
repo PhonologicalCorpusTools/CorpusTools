@@ -14,15 +14,26 @@ class BaseAnnotation(object):
     def __iter__(self):
         return iter(self.label)
 
+    def __repr__(self):
+        return '<BaseAnnotation "{}" from {} to {}>'.format(self.label,
+                                                            self.begin,
+                                                            self.end)
+    def __eq__(self, other):
+        return self.label == other.label and self.begin == other.begin \
+                and self.end == other.end
 
 class Annotation(BaseAnnotation):
     def __init__(self, label = None):
-        self.label = None
+        self.label = label
         self.begins = []
         self.ends = []
         self.references = []
-        self.token = None
-        self.additional = None
+        self.token = {}
+        self.additional = {}
+
+    def __eq__(self, other):
+        return self.label == other.label and self.begins == other.begins \
+                and self.ends == other.ends
 
 class AnnotationType(object):
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,

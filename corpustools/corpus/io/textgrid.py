@@ -8,7 +8,8 @@ from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribu
 from corpustools.exceptions import TextGridTierError, PCTError
 
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
-                    AnnotationType,data_to_discourse, find_wav_path)
+                    AnnotationType,data_to_discourse, find_wav_path,
+                    Annotation, BaseAnnotation)
 
 ### HELPERS ###
 def process_tier_name(name):
@@ -183,9 +184,10 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
 
         for si in spelling_tier:
             annotations = dict()
-            word = {'label': si.mark, 'token':dict()}
+            word = Annotation(si.mark)
             for n in data.base_levels:
-                if data[word_name].speaker != data[n].speaker and data[n].speaker is not None:
+                if data[word_name].speaker != data[n].speaker \
+                            and data[n].speaker is not None:
                     continue
                 t = tg.getFirst(n)
                 tier_elements = list()
@@ -205,18 +207,20 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
                     if phoneEnd > si.maxTime:
                         phoneEnd = si.maxTime
                     if data[n].delimited:
-                        parsed = [{'label':x} for x in parse_transcription(ti.mark,
+                        parsed = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
                                         data[n].delimiter,
                                         data[n].digraph_pattern,
                                         data[n].ignored)]
                         if len(parsed) > 0:
-                            parsed[0]['begin'] = phoneBegin
-                            parsed[-1]['end'] = phoneEnd
+                            parsed[0].begin = phoneBegin
+                            parsed[-1].end = phoneEnd
                             tier_elements.extend(parsed)
                     else:
-                        tier_elements.append({'label': ti.mark,'begin': phoneBegin, 'end': phoneEnd})
+                        tier_elements.append(BaseAnnotation(ti.mark, phoneBegin, phoneEnd))
                 level_count = data.level_length(n)
-                word[n] = (level_count,level_count+len(tier_elements))
+                word.references.append(n)
+                word.begins.append(level_count)
+                word.ends.append(level_count + len(tier_elements))
                 annotations[n] = tier_elements
 
             mid_point = si.minTime + (si.maxTime - si.minTime)
@@ -232,16 +236,16 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
                 #    continue
                 value = ti.mark
                 if at.delimited:
-                    value = [{'label':x} for x in parse_transcription(ti.mark,
+                    value = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
                                         at.delimiter,
                                         at.digraph_pattern,
                                         at.ignored)]
                 elif at.ignored:
                     value = ''.join(x for x in value if x not in at.ignored)
                 if at.token:
-                    word['token'][at.name] = value
+                    word.token[at.name] = value
                 else:
-                    word[at.name] = value
+                    word.additional[at.name] = value
 
             annotations[word_name] = [word]
             data.add_annotations(**annotations)
@@ -249,29 +253,55 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
 
 
 def load_discourse_textgrid(corpus_name, path, annotation_types,
+                            lexicon = None,
                             feature_system_path = None,
                             stop_check = None, call_back = None):
     data = textgrid_to_data(path, annotation_types, call_back, stop_check)
     data.name = corpus_name
-    mapping = { x.name: x.attribute for x in data.data.values()}
     data.wav_path = find_wav_path(path)
-    discourse = data_to_discourse(data, mapping)
+    discourse = data_to_discourse(data, lexicon)
 
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        discourse.lexicon.set_feature_matrix(feature_matrix)
     return discourse
 
 def load_directory_textgrid(corpus_name, path, annotation_types,
                             feature_system_path = None,
                             stop_check = None, call_back = None):
-    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    if call_back is not None:
+        call_back('Finding  files...')
+        call_back(0, 0)
+    file_tuples = []
     for root, subdirs, files in os.walk(path):
         for filename in files:
+            if stop_check is not None and stop_check():
+                return
             if not filename.lower().endswith('.textgrid'):
                 continue
-            name = os.path.splitext(filename)[0]
-            d = load_discourse_textgrid(name, os.path.join(root,filename),
-                                        annotation_types, feature_system_path,
-                                        stop_check, call_back)
-            corpus.add_discourse(d)
+            file_tuples.append((root, filename))
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(file_tuples))
+        cur = 0
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for i, t in enumerate(file_tuples):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back('Parsing file {} of {}...'.format(i+1, len(file_tuples)))
+            call_back(i)
+        root, filename = t
+        name = os.path.splitext(filename)[0]
+        d = load_discourse_textgrid(name, os.path.join(root,filename),
+                                    annotation_types, corpus.lexicon,
+                                    None,
+                                    stop_check, call_back)
+        corpus.add_discourse(d)
+
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        corpus.lexicon.set_feature_matrix(feature_matrix)
     return corpus
 
 

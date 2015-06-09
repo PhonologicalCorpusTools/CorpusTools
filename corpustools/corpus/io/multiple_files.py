@@ -32,6 +32,8 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                            call_back = None, stop_check = None):
     if annotation_types is None:
         annotation_types = inspect_discourse_multiple_files(word_path, dialect)
+    for a in annotation_types:
+        a.reset()
     name = os.path.splitext(os.path.split(word_path)[1])[0]
 
     if call_back is not None:
@@ -63,14 +65,16 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
             found = []
             while not found_all:
                 p = phones.pop(0)
-                if p['begin'] < beg:
+                if p.begin < beg:
                     continue
                 found.append(p)
-                if p['end'] == end:
+                if p.end == end:
                     found_all = True
             n = 'transcription'
             level_count = data.level_length(n)
-            word[n] = (level_count,level_count+len(found))
+            word.references.append(n)
+            word.begins.append(level_count)
+            word.ends.append(level_count + len(found))
             annotations[n] = found
         elif dialect == 'buckeye':
             if w['transcription'] is None:
@@ -111,12 +115,8 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                                             at.attribute.delimiter,
                                             digraph_pattern)]
                     if at.token:
-                        if word.token is None:
-                            word.token = {}
                         word.token[at.name] = value
                     else:
-                        if word.additional is None:
-                            word.additional = {}
                         word.additional[at.name] = value
         annotations[data.word_levels[0]] = [word]
         data.add_annotations(**annotations)
@@ -146,7 +146,7 @@ def load_directory_multiple_files(corpus_name, path, dialect,
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
-            call_back('Parsing file {} of {}...'.format(i+1,len(file_tuples)))
+            call_back('Parsing file {} of {}...'.format(i+1, len(file_tuples)))
             call_back(i)
         root, filename = t
         name,ext = os.path.splitext(filename)
@@ -158,9 +158,13 @@ def load_directory_multiple_files(corpus_name, path, dialect,
         phone_path = os.path.splitext(word_path)[0] + phone_ext
         d = load_discourse_multiple_files(name, word_path, phone_path,
                                             dialect, annotation_types,
-                                            corpus.lexicon, feature_system_path,
+                                            corpus.lexicon, None,
                                             stop_check, None)
         corpus.add_discourse(d)
+
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        corpus.lexicon.set_feature_matrix(feature_matrix)
     return corpus
 
 def load_discourse_multiple_files(corpus_name, word_path,phone_path, dialect,
@@ -171,11 +175,13 @@ def load_discourse_multiple_files(corpus_name, word_path,phone_path, dialect,
     data = multiple_files_to_data(word_path,phone_path, dialect,
                                     annotation_types,
                                     call_back, stop_check)
-    if corpus_name is not None:
-        data.name = corpus_name
+    data.name = corpus_name
     data.wav_path = find_wav_path(word_path)
     discourse = data_to_discourse(data, lexicon)
-    del data
+
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        discourse.lexicon.set_feature_matrix(feature_matrix)
     return discourse
 
 def read_phones(path, dialect, sr = None):

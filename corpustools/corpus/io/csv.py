@@ -107,6 +107,9 @@ def load_corpus_csv(corpus_name, path, delimiter,
 
     if annotation_types is None:
         annotation_types, _ = inspect_csv(path, coldelim = delimiter)
+    else:
+        for a in annotation_types:
+            a.reset()
 
     with open(path, encoding='utf-8') as f:
         headers = f.readline()

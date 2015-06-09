@@ -58,15 +58,6 @@ def test_init():
     corpus.add_discourse(d)
 
     d = corpus.discourses['']
-    assert(d[0].previous_token == None)
-    assert(d[1].previous_token == d[0])
-    assert(d[2].previous_token == d[1])
-    assert(d[3].previous_token == d[2])
-
-    assert(d[0].following_token == d[1])
-    assert(d[1].following_token == d[2])
-    assert(d[2].following_token == d[3])
-    assert(d[3].following_token == None)
 
     assert(d[0].wordtype.frequency == 2)
     assert(d[1].wordtype.frequency == 1)

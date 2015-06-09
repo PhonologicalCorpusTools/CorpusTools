@@ -7,7 +7,7 @@ from corpustools.corpus.io.text_ilg import (load_discourse_ilg,
                                             inspect_discourse_ilg,
                                             ilg_to_data, export_discourse_ilg)
 
-from corpustools.corpus.io.helper import AnnotationType
+from corpustools.corpus.io.helper import BaseAnnotation, Annotation, AnnotationType
 
 from corpustools.exceptions import DelimiterError, ILGWordMismatchError
 
@@ -27,7 +27,7 @@ def test_export_ilg(export_test_dir, unspecified_test_corpus):
     export_path = os.path.join(export_test_dir, 'test_export_ilg.txt')
     export_discourse_ilg(d, export_path)
 
-    d2 = load_discourse_ilg('test', export_path, None, [], trans_delimiter='.')
+    d2 = load_discourse_ilg('test', export_path)
 
     for k in unspecified_test_corpus.keys():
         assert(d2.lexicon[k].spelling == unspecified_test_corpus[k].spelling)
@@ -39,41 +39,64 @@ def test_ilg_data(ilg_test_dir):
     basic_path = os.path.join(ilg_test_dir, 'test_basic.txt')
     tier_att = Attribute('transcription','tier')
     tier_att.delimiter = '.'
-    data = ilg_to_data(basic_path, [AnnotationType('spelling', 'transcription',
+    ats = [AnnotationType('spelling', 'transcription',
                                         None, token = False, anchor = True),
                                     AnnotationType('transcription', None, None,
-                                        token = False, base = True, delimited = True,
-                                        attribute = tier_att)],
-                    delimiter=None,ignore_list=[])
-    assert(data['spelling']._list == [{'label':'a','token':{},'transcription':(0,2)},
-                                    {'label':'a','token':{},'transcription':(2,4)},
-                                    {'label':'b','token':{},'transcription':(4,6)}])
-    assert(data['transcription']._list == [{'label':'a'},
-                                        {'label':'b'},
-                                        {'label':'a'},
-                                        {'label':'b'},
-                                        {'label':'c'},
-                                        {'label':'d'}])
+                                        token = False, base = True,
+                                        attribute = tier_att)]
+    ats[1].trans_delimiter = '.'
+    data = ilg_to_data(basic_path, ats)
+
+    expected_words = []
+    a = Annotation('a')
+    a.references.append('transcription')
+    a.begins.append(0)
+    a.ends.append(2)
+    expected_words.append(a)
+
+    a = Annotation('a')
+    a.references.append('transcription')
+    a.begins.append(2)
+    a.ends.append(4)
+    expected_words.append(a)
+
+    a = Annotation('b')
+    a.references.append('transcription')
+    a.begins.append(4)
+    a.ends.append(6)
+    expected_words.append(a)
+
+    assert(data['spelling']._list == expected_words)
+    assert(data['transcription']._list == [BaseAnnotation('a'),
+                                        BaseAnnotation('b'),
+                                        BaseAnnotation('a'),
+                                        BaseAnnotation('b'),
+                                        BaseAnnotation('c'),
+                                        BaseAnnotation('d')])
 
 def test_ilg_basic(ilg_test_dir):
     basic_path = os.path.join(ilg_test_dir, 'test_basic.txt')
     tier_att = Attribute('transcription','tier')
     tier_att.delimiter = '.'
-    corpus = load_discourse_ilg('test', basic_path,
-            [AnnotationType('spelling', 'transcription', None, token = False,
-                            anchor = True),
-            AnnotationType('transcription', None, None, attribute = tier_att, token = False,
-                            base = True, delimited = True)],
-            delimiter=None,ignore_list=[])
+    ats = [AnnotationType('spelling', 'transcription',
+                                        None, token = False, anchor = True),
+                                    AnnotationType('transcription', None, None,
+                                        token = False, base = True,
+                                        attribute = tier_att)]
+    ats[1].trans_delimiter = '.'
+    corpus = load_discourse_ilg('test', basic_path, ats)
     print(corpus.words)
     print(corpus.lexicon.words)
     assert(corpus.lexicon.find('a').frequency == 2)
 
 def test_ilg_mismatched(ilg_test_dir):
     mismatched_path = os.path.join(ilg_test_dir, 'test_mismatched.txt')
+
+    ats = [AnnotationType('spelling', 'transcription',
+                                        None, token = False, anchor = True),
+                                    AnnotationType('transcription', None, None,
+                                        token = False, base = True,
+                                        attribute = Attribute('transcription','tier'))]
+    ats[1].trans_delimiter = '.'
     with pytest.raises(ILGWordMismatchError):
-        t = load_discourse_ilg('test', mismatched_path,
-            [AnnotationType('spelling', 'transcription', None, token = False,
-                            anchor = True),
-            AnnotationType('transcription', None, None, attribute = Attribute('transcription','tier'), token = False,
-                            base = True, delimited = True)], delimiter=None,ignore_list=[])
+        t = load_discourse_ilg('test', mismatched_path, ats)

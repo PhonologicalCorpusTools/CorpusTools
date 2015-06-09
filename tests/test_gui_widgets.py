@@ -23,19 +23,19 @@ def test_punctuation_widget(qtbot):
     bs = widget.btnGroup.buttons()
     bs[0].setChecked(True)
 
-    assert(widget.value() == ['.'])
+    assert(widget.value() == {'.'})
 
     # Test check all
 
     widget.checkAll.clicked.emit()
 
-    assert(widget.value() == ['.',',','-'])
+    assert(widget.value() == {'.',',','-'})
 
     # Test uncheck all
 
     widget.uncheckAll.clicked.emit()
 
-    assert(widget.value() == [])
+    assert(widget.value() == set())
 
 def test_tier_widget(qtbot, specified_test_corpus):
     # Test with spelling

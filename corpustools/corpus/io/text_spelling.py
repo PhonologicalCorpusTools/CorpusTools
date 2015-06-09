@@ -5,7 +5,7 @@ from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Di
 from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
 
-from .helper import (DiscourseData,
+from .helper import (DiscourseData, Annotation, BaseAnnotation,
                         data_to_discourse, AnnotationType, text_to_lines)
 
 def inspect_discourse_spelling(path, support_corpus_path = None):
@@ -43,6 +43,7 @@ def spelling_text_to_data(path, annotation_types = None,
         support = load_binary(support_corpus_path)
     if annotation_types is None:
         annotation_types = inspect_discourse_spelling(path, support_corpus_path)
+
     for a in annotation_types:
         a.reset()
     data = DiscourseData(name, annotation_types)
@@ -50,7 +51,7 @@ def spelling_text_to_data(path, annotation_types = None,
     lines = text_to_lines(path)
     if call_back is not None:
         call_back('Processing file...')
-        call_back(0,len(lines))
+        call_back(0, len(lines))
         cur = 0
 
     for line in lines:
@@ -62,23 +63,25 @@ def spelling_text_to_data(path, annotation_types = None,
                 call_back(cur)
         if not line or line == '\n':
             continue
-        annotations = dict()
+        annotations = {}
         for word in line:
             spell = word.strip()
             spell = ''.join(x for x in spell if not x in data['spelling'].ignored)
             if spell == '':
                 continue
-            word = {'label':spell, 'token':dict()}
+            word = Annotation(spell)
             if support_corpus_path is not None:
                 trans = None
                 try:
                     trans = support.find(spell, ignore_case = ignore_case).transcription
                 except KeyError:
-                    trans = list()
+                    trans = []
                 n = data.base_levels[0]
-                tier_elements = [{'label':x} for x in trans]
+                tier_elements = [BaseAnnotation(x) for x in trans]
                 level_count = data.level_length(n)
-                word[n] = (level_count,level_count+len(tier_elements))
+                word.references.append(n)
+                word.begins.append(level_count)
+                word.ends.append(level_count + len(tier_elements))
                 annotations[n] = tier_elements
             annotations['spelling'] = [word]
             data.add_annotations(**annotations)
@@ -88,20 +91,38 @@ def spelling_text_to_data(path, annotation_types = None,
 def load_directory_spelling(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
-    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    if call_back is not None:
+        call_back('Finding  files...')
+        call_back(0, 0)
+    file_tuples = []
     for root, subdirs, files in os.walk(path):
         for filename in files:
             if not filename.lower().endswith('.txt'):
                 continue
-            name = os.path.splitext(filename)[0]
-            d = load_discourse_spelling(name, os.path.join(root,filename),
-                                        annotation_types, support_corpus_path,
-                                        ignore_case,
-                                        stop_check, call_back)
-            corpus.add_discourse(d)
+            file_tuples.append((root, filename))
+
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(file_tuples))
+        cur = 0
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for i, t in enumerate(file_tuples):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back('Parsing file {} of {}...'.format(i+1,len(file_tuples)))
+            call_back(i)
+        root, filename = t
+        name = os.path.splitext(filename)[0]
+        d = load_discourse_spelling(name, os.path.join(root,filename),
+                                    annotation_types, corpus.lexicon,
+                                    support_corpus_path, ignore_case,
+                                    stop_check, call_back)
+        corpus.add_discourse(d)
     return corpus
 
 def load_discourse_spelling(corpus_name, path, annotation_types = None,
+                            lexicon = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """
@@ -149,8 +170,7 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
     data = spelling_text_to_data(path, annotation_types,
                 support_corpus_path, ignore_case,
                     stop_check, call_back)
-    mapping = { x.name: x.attribute for x in data.data.values()}
-    discourse = data_to_discourse(data, mapping)
+    discourse = data_to_discourse(data, lexicon)
     return discourse
 
 def export_discourse_spelling(discourse, path, single_line = False):

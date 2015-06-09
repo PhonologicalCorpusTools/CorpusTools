@@ -4,7 +4,7 @@ import os
 
 from corpustools.corpus.classes import Speaker
 
-from corpustools.corpus.io.helper import AnnotationType
+from corpustools.corpus.io.helper import AnnotationType, Annotation, BaseAnnotation
 
 from corpustools.corpus.io.textgrid import (textgrid_to_data,
                                             process_tier_name,load_textgrid,
@@ -27,25 +27,43 @@ def test_speaker_names(textgrid_test_dir):
     speakers = get_speaker_names(tg, 'word')
     assert(speakers == ['Speaker 1', 'Speaker 2'])
 
-def test_guess_tiers(textgrid_test_dir):
-    tg = load_textgrid(os.path.join(textgrid_test_dir,'phone_word.TextGrid'))
-    result = guess_tiers(tg)
-    assert(result[0] == ['word'])
-    assert(result[1] == ['phone'])
-    assert(result[2] == [])
+#def test_guess_tiers(textgrid_test_dir):
+#    tg = load_textgrid(os.path.join(textgrid_test_dir,'phone_word.TextGrid'))
+#    result = guess_tiers(tg)
+#    assert(result[0] == ['word'])
+#    assert(result[1] == ['phone'])
+#    assert(result[2] == [])
 
 def test_basic(textgrid_test_dir):
     speaker = Speaker(None)
     path = os.path.join(textgrid_test_dir,'phone_word.TextGrid')
     data = textgrid_to_data(path, [AnnotationType('word','phone',None, anchor=True),
                                 AnnotationType('phone',None,None, base=True)])
-    assert(data['word']._list == [{'label': '','token':{}, 'phone':(0,1)},
-                        {'label': 'a','token':{}, 'phone':(1,3)},
-                        {'label': '','token':{}, 'phone':(3,4)}])
-    assert(data['phone']._list == [{'label':'', 'begin': 0, 'end': 0.25},
-                        {'label':'a', 'begin': 0.25, 'end': 0.5},
-                        {'label':'b', 'begin': 0.5, 'end': 0.75},
-                        {'label':'', 'begin': 0.75, 'end': 1}])
+    expected_words = []
+
+    a = Annotation('')
+    a.references.append('phone')
+    a.begins.append(0)
+    a.ends.append(1)
+    expected_words.append(a)
+
+    a = Annotation('a')
+    a.references.append('phone')
+    a.begins.append(1)
+    a.ends.append(3)
+    expected_words.append(a)
+
+    a = Annotation('')
+    a.references.append('phone')
+    a.begins.append(3)
+    a.ends.append(4)
+    expected_words.append(a)
+    assert(data['word']._list == expected_words)
+
+    assert(data['phone']._list == [BaseAnnotation('', 0, 0.25),
+                        BaseAnnotation('a', 0.25, 0.5),
+                        BaseAnnotation('b', 0.5, 0.75),
+                        BaseAnnotation('', 0.75, 1)])
 
 @pytest.mark.xfail
 def test_two_speakers(textgrid_test_dir):
