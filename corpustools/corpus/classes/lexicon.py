@@ -1265,8 +1265,6 @@ class Corpus(object):
         self.has_spelling = False
         self.has_transcription = False
         self.has_wordtokens = False
-        self._freq_base = dict()
-        self.variants = 'Canonical'
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]

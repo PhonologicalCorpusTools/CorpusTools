@@ -168,7 +168,13 @@ class MostFrequentVariantContext(BaseCorpusContext):
 class SeparatedTokensVariantContext(BaseCorpusContext):
     
     def __enter__(self):
-        return self
+        try:
+            w = next(iter(self.corpus.wordlist.values()))
+            if len(w.variants()) == 0:
+                print('effed up bro')
+                return None
+        except:
+            return self
         
     def __iter__(self):
         for w in self.corpus:
@@ -196,7 +202,13 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
 class WeightedVariantContext(BaseCorpusContext):
     
     def __enter__(self):
-        return self
+        try:
+            w = next(iter(self.corpus.wordlist.values()))
+            if len(w.variants()) == 0:
+                print('effed up bro')
+                return None
+        except:
+            return self
 
     def __iter__(self):
         for w in self.corpus:

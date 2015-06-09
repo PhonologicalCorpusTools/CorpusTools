@@ -113,8 +113,6 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         The first two elements of the tuple are the words that were compared
         and the final element is their relatedness score
     """
-    sequence_type = kwargs.get('sequence_type', 'spelling')
-    count_what = kwargs.get('count_what', 'type')
     stop_check = kwargs.get('stop_check', None)
     call_back = kwargs.get('call_back', None)
     min_rel = kwargs.get('min_rel', None)
@@ -128,12 +126,14 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             freq_base['total'] -= bound_count
         except KeyError:
             pass
-        relate_func = partial(khorsi,freq_base=freq_base,
-                                sequence_type = sequence_type)
+        
+        print(type(corpus))
+        relate_func = partial(khorsi, freq_base=freq_base,
+                                sequence_type = getattr(corpus, 'sequence_type'))
     elif algorithm == 'edit_distance':
-        relate_func =  partial(edit_distance, sequence_type = sequence_type)
+        relate_func =  partial(edit_distance, sequence_type = getattr(corpus, 'sequence_type'))
     elif algorithm == 'phono_edit_distance':
-        relate_func = partial(phono_edit_distance,sequence_type = sequence_type, features = corpus.corpus.specifier)
+        relate_func = partial(phono_edit_distance,sequence_type = getattr(corpus, 'sequence_type'), features = corpus.corpus.specifier)
     else:
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
 
@@ -195,7 +195,6 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             related_data.append( (w1,w2,relatedness) )
 
     return related_data
-
 
 def ensure_query_is_word(query, corpus, sequence_type, segment_delimiter):
     if isinstance(query, Word):
