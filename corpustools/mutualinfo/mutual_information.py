@@ -3,6 +3,8 @@
 import sys
 import math
 from collections import defaultdict
+from corpustools.corpus.classes.lexicon import CorpusIntegrityError
+
 import time
 
 from corpustools.exceptions import MutualInfoError
@@ -64,8 +66,7 @@ def pointwise_mi(corpus, query, sequence_type,
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
-        return None
-        # raise(Exception('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type)))
+        raise MutualInformationError('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type))
 
     if unigram_dict[query[0]] == 0.0:
         raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
@@ -73,6 +74,7 @@ def pointwise_mi(corpus, query, sequence_type,
         raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
     if bigram_dict[query] == 0.0:
         raise MutualInfoError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
+
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 

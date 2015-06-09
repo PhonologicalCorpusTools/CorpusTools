@@ -2,11 +2,9 @@ import os
 import sys
 import codecs
 import string
-
-from .imports import *
-
 from collections import OrderedDict
 
+from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
 
@@ -14,10 +12,10 @@ from corpustools.corpus.classes import Word, Attribute
 
 from .widgets import (RadioSelectWidget, FeatureBox,
                     InventoryBox,
-                    TranscriptionWidget, SegFeatSelect, TierWidget)
-
+                    CreateClassWidget, TranscriptionWidget, SegFeatSelect, TierWidget)
 from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
+
 
 class InventorySummary(QWidget):
     def __init__(self, corpus, parent=None):
@@ -322,6 +320,38 @@ class AddWordDialog(QDialog):
         self.word = Word(**kwargs)
         QDialog.accept(self)
 
+class AddTierDialog(CreateClassWidget):
+    def __init__(self, parent, corpus, class_type='tier'):
+        super().__init__(parent, corpus, class_type)
+
+    def accept(self):
+        tierName = self.nameEdit.text()
+        self.attribute = Attribute(tierName.lower().replace(' ',''),'tier',tierName)
+        if tierName == '':
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please enter a name for the tier.")
+            return
+        elif self.attribute.name in self.corpus.basic_attributes:
+            reply = QMessageBox.critical(self,
+                                         "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
+            return
+        elif self.attribute in self.corpus.attributes:
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
+                                 "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
+            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
+            if msgBox.exec_() != QMessageBox.AcceptRole:
+                return
+        #createType = self.createType.currentText()
+        #createList = self.createWidget.value()
+        inClass, notInClass = self.generateClass()
+        if not inClass:
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please specify at least one segment or one feature value")
+        self.segList = inClass
+        QDialog.accept(self)
+
 class AddCountColumnDialog(QDialog):
     def __init__(self, parent, corpus):
         QDialog.__init__(self,parent)
@@ -565,132 +595,6 @@ class AddAbstractTierDialog(QDialog):
 
         QDialog.accept(self)
 
-class AddTierDialog(QDialog):
-    def __init__(self, parent, corpus):
-        QDialog.__init__(self, parent)
-
-        self.corpus = corpus
-
-        layout = QVBoxLayout()
-
-        nameFrame = QGroupBox('Name of tier')
-        self.nameEdit = QLineEdit()
-
-        box = QFormLayout()
-        box.addRow(self.nameEdit)
-
-        nameFrame.setLayout(box)
-
-        layout.addWidget(nameFrame)
-
-        self.createType = QComboBox()
-        self.createType.addItem('Segments')
-        if self.corpus.specifier is not None:
-            self.createType.addItem('Features')
-        else:
-            layout.addWidget(QLabel('Features for tier creation are not available without a feature system.'))
-
-        self.createType.currentIndexChanged.connect(self.generateFrames)
-
-        layout.addWidget(QLabel('Basis for creating tier:'))
-        layout.addWidget(self.createType, alignment = Qt.AlignLeft)
-        self.createFrame = QFrame()
-        createLayout = QVBoxLayout()
-        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
-
-        createLayout.addWidget(self.createWidget)
-
-        self.createFrame.setLayout(createLayout)
-
-        layout.addWidget(self.createFrame)
-
-        self.createButton = QPushButton('Create tier')
-        self.previewButton = QPushButton('Preview tier')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.createButton)
-        acLayout.addWidget(self.previewButton)
-        acLayout.addWidget(self.cancelButton)
-        self.createButton.clicked.connect(self.accept)
-        self.previewButton.clicked.connect(self.preview)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-        self.setLayout(layout)
-
-        self.setWindowTitle('Create tier')
-
-    def createFeatureFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = FeatureBox('Features to define the tier',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def createSegmentFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def generateFrames(self,ind=0):
-        if self.createType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.createType.currentText() == 'Features':
-            self.createFeatureFrame()
-
-    def preview(self):
-        createType = self.createType.currentText()
-        createList = self.createWidget.value()
-        if not createList:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
-            return
-        if createType == 'Features':
-            createList = createList[1:-1]
-            segList = self.corpus.features_to_segments(createList)
-        else:
-            segList = createList
-        notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
-
-        reply = QMessageBox.information(self,
-                "Tier preview", "Segments included: {}\nSegments excluded: {}".format(', '.join(segList),', '.join(notInSegList)))
-
-
-    def accept(self):
-        tierName = self.nameEdit.text()
-        self.attribute = Attribute(tierName.lower().replace(' ',''),'tier',tierName)
-        if tierName == '':
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please enter a name for the tier.")
-            return
-        elif self.attribute.name in self.corpus.basic_attributes:
-            reply = QMessageBox.critical(self,
-                    "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
-            return
-        elif self.attribute in self.corpus.attributes:
-
-            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
-                    "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
-            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
-            msgBox.addButton("Cancel", QMessageBox.RejectRole)
-            if msgBox.exec_() != QMessageBox.AcceptRole:
-                return
-        createType = self.createType.currentText()
-        createList = self.createWidget.value()
-        if not createList:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
-            return
-        if createType == 'Features':
-            createList = createList[1:-1]
-            self.segList = self.corpus.features_to_segments(createList)
-        else:
-            self.segList = createList
-        QDialog.accept(self)
 
 class RemoveAttributeDialog(QDialog):
     def __init__(self, parent, corpus):

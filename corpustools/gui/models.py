@@ -8,6 +8,10 @@ class BaseTableModel(QAbstractTableModel):
     rows = []
     allData = []
 
+    def __init__(self, settings, parent = None):
+        QAbstractTableModel.__init__(self, parent)
+        self.settings = settings
+
     def rowCount(self,parent=None):
         return len(self.rows)
 
@@ -80,14 +84,36 @@ class BaseCorpusTableModel(BaseTableModel):
     rows = []
     allData = []
 
+    def __init__(self, corpus, settings, parent = None):
+        BaseTableModel.__init__(self, settings, parent)
+        self.corpus = corpus
+
+        self.columns = self.corpus.attributes
+
+        self.rows = self.corpus.words
+
+        self.allData = self.rows
+
     def sort(self, col, order):
         """sort table by given column number col"""
         self.layoutAboutToBeChanged.emit()
-        self.rows = sorted(self.rows,
-                key=lambda x: getattr(self.corpus[x],self.columns[col].name))
+        try:
+            self.rows = sorted(self.rows,
+                    key=lambda x: getattr(self.corpus[x],
+                                        self.columns[col].name))
+        except TypeError:
+            self.rows = sorted(self.rows,
+                    key=lambda x: getattr(self.corpus[x],
+                                self.coerce_to_float(self.columns[col].name)))
         if order == Qt.DescendingOrder:
             self.rows.reverse()
         self.layoutChanged.emit()
+
+    def coerce_to_float(self, val):
+        try:
+            return float(val)
+        except ValueError:
+            return 0.0
 
     def data(self, index, role=None):
         if not index.isValid():
@@ -133,7 +159,7 @@ class FilterModel(QAbstractTableModel):
             return None
         elif role != Qt.DisplayRole:
             return None
-        f = self.filters[index.row()][index.column()]
+        f = self.filters[index.row()]
         if f[0].att_type == 'numeric':
             return_data = ' '.join([str(f[0]),self.conditionalMapping[f[1]], str(f[2])])
         else:
@@ -281,7 +307,7 @@ class DiscourseModel(BaseCorpusTableModel):
         #    i.setFlags(i.flags() | (not Qt.ItemIsEditable))
         #    self.appendRow(i)
 
-        self.sort(2,Qt.AscendingOrder)
+        #self.sort(2,Qt.AscendingOrder)
 
     def rowsToTimes(self,rows):
         return [self.rows[x] for x in rows]
@@ -301,16 +327,8 @@ class DiscourseModel(BaseCorpusTableModel):
 
 class CorpusModel(BaseCorpusTableModel):
     def __init__(self, corpus, settings, parent=None):
-        QAbstractTableModel.__init__(self, parent)
-        self.settings = settings
-        self.corpus = corpus
+        BaseCorpusTableModel.__init__(self, corpus, settings, parent)
         self.nonLexHidden = False
-
-        self.columns = self.corpus.attributes
-
-        self.rows = self.corpus.words
-
-        self.allData = self.rows
 
     def hideNonLexical(self, b):
         self.nonLexHidden = b
@@ -442,7 +460,6 @@ class ResultsModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
         self.settings = settings
         self.columns = header
-
         self.rows = results
 
 class PhonoSearchResultsModel(BaseTableModel):

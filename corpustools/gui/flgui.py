@@ -157,8 +157,8 @@ class FLDialog(FunctionDialog):
 
     name = 'functional load'
 
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, FLWorker())
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, FLWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips

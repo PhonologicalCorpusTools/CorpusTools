@@ -1,7 +1,7 @@
 .. _string_similarity:
 
 *******************************************
-String similarity and neighbourhood density
+String similarity
 *******************************************
 
 .. _about_string_similarity:
@@ -13,7 +13,7 @@ String similarity is any measure of how similar any two sequences of
 characters are. These character strings can be strings of letters or
 phonemes; both of the methods of calculation included in PCT allow for
 calculations using either type of character. It is, therefore, a basic
-measure of overall form-based similarity.
+measure of overall form-based similarity. 
 
 String similarity finds more widespread use in areas of linguistics other
 than phonology; it is, for example, used in Natural Language Processing
@@ -256,3 +256,10 @@ Here’s an example result file for the above selection:
 To return to the function dialogue box with your most recently used
 selections, click on “Reopen function dialog.” Otherwise, the results
 table can be closed and you will be returned to your corpus view.
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

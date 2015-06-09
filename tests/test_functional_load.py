@@ -88,7 +88,7 @@ def test_non_minimal_pair_corpus_minpair(unspecified_test_corpus):
                     'relative_count':False},1)]
 
     for c,v in calls:
-        assert(abs(minpair_fl(**c)-v) < 0.0001)
+        assert(abs(minpair_fl(**c)[0]-v) < 0.0001)
 
 def test_non_minimal_pair_corpus_deltah(unspecified_test_corpus):
     calls = [({'corpus': unspecified_test_corpus,
@@ -249,7 +249,7 @@ def test_minimal_pair_wordtokens(unspecified_discourse_corpus):
                     'relative_count':False},1)]
 
     for c,v in calls:
-        assert(abs(minpair_fl_wordtokens(**c)-v) < 0.0001)
+        assert(abs(minpair_fl_wordtokens(**c)[0]-v) < 0.0001)
 
 def test_deltah_wordtokens(unspecified_discourse_corpus):
     c = unspecified_discourse_corpus.lexicon
@@ -445,13 +445,27 @@ def test_relative_deltah(unspecified_test_corpus):
 
 
 def test_mass_fl(unspecified_test_corpus):
-    ## parameter variation should be accounted for via the tests above; this function is just a wrapper for their functions' calls
     calls = [({'corpus': unspecified_test_corpus,
                     'algorithm':'minpair',
                     'frequency_cutoff':0,
-                    'type_or_token':'type'},
+                    'relative_count':True},
 
                         ([(('s', 'ʃ'), 0.125), (('m', 'n'), 0.1111111111111111), (('i', 't'), 0.0), (('t', 'u'), 0.0),
+                         (('m', 't'), 0.0), (('i', 'u'), 0.0), (('e', 'o'), 0.0), (('n', 'o'), 0.0), (('i', 'ʃ'), 0.0),
+                         (('u', 'ɑ'), 0.0), (('m', 'ʃ'), 0.0), (('m', 'ɑ'), 0.0), (('t', 'ʃ'), 0.0), (('e', 'n'), 0.0),
+                         (('o', 't'), 0.0), (('e', 'ɑ'), 0.0), (('n', 'u'), 0.0), (('n', 't'), 0.0), (('o', 'ʃ'), 0.0),
+                         (('e', 'u'), 0.0), (('s', 't'), 0.0), (('ɑ', 'ʃ'), 0.0), (('n', 's'), 0.0), (('e', 's'), 0.0),
+                         (('i', 's'), 0.0), (('m', 'u'), 0.0), (('e', 'i'), 0.0), (('i', 'n'), 0.0), (('i', 'o'), 0.0),
+                         (('i', 'm'), 0.0), (('n', 'ɑ'), 0.0), (('t', 'ɑ'), 0.0), (('s', 'ɑ'), 0.0), (('s', 'u'), 0.0),
+                         (('i', 'ɑ'), 0.0), (('o', 's'), 0.0), (('e', 'ʃ'), 0.0), (('u', 'ʃ'), 0.0), (('m', 'o'), 0.0),
+                         (('e', 'm'), 0.0), (('o', 'u'), 0.0), (('n', 'ʃ'), 0.0), (('e', 't'), 0.0), (('o', 'ɑ'), 0.0),
+                         (('m', 's'), 0.0)])),
+            ({'corpus': unspecified_test_corpus,
+                    'algorithm':'minpair',
+                    'frequency_cutoff':0,
+                    'relative_count':False},
+
+                        ([(('s', 'ʃ'), 1.0), (('m', 'n'), 1.0), (('i', 't'), 0.0), (('t', 'u'), 0.0),
                          (('m', 't'), 0.0), (('i', 'u'), 0.0), (('e', 'o'), 0.0), (('n', 'o'), 0.0), (('i', 'ʃ'), 0.0),
                          (('u', 'ɑ'), 0.0), (('m', 'ʃ'), 0.0), (('m', 'ɑ'), 0.0), (('t', 'ʃ'), 0.0), (('e', 'n'), 0.0),
                          (('o', 't'), 0.0), (('e', 'ɑ'), 0.0), (('n', 'u'), 0.0), (('n', 't'), 0.0), (('o', 'ʃ'), 0.0),
