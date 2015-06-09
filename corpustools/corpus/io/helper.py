@@ -5,11 +5,15 @@ import string
 from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
 from corpustools.exceptions import DelimiterError
 
+NUMBER_CHARACTERS = set(string.digits)
+
 class BaseAnnotation(object):
     def __init__(self, label = None, begin = None, end = None):
         self.label = label
         self.begin = begin
         self.end = end
+        self.stress = None
+        self.tone = None
 
     def __iter__(self):
         return iter(self.label)
@@ -34,6 +38,9 @@ class Annotation(BaseAnnotation):
     def __eq__(self, other):
         return self.label == other.label and self.begins == other.begins \
                 and self.ends == other.ends
+
+    def __repr__(self):
+        return '<Annotation "{}">'.format(self.label)
 
 class AnnotationType(object):
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
@@ -257,14 +264,33 @@ def inspect_directory(directory):
     return likely_type, relevant_files
 
 
-def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None):
+def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None, number_behavior = None):
     if ignore_list is not None:
         string = ''.join(x for x in string if x not in ignore_list)
     if delimiter is not None:
         string = string.split(delimiter)
     elif digraph_pattern is not None:
         string = digraph_pattern.findall(string)
-    return [x for x in string if x != '']
+    final_string = []
+    for seg in string:
+        if seg == '':
+            continue
+        num = None
+        if number_behavior is not None:
+            if number_behavior == 'stress':
+                num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
+                seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
+            elif number_behavior == 'tone':
+                num = ''
+                seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
+            if num == '':
+                num = None
+
+        a = BaseAnnotation(seg)
+        if number_behavior is not None and num is not None:
+            setattr(a,number_behavior, num)
+        final_string.append(a)
+    return final_string
 
 def text_to_lines(path):
     delimiter = None

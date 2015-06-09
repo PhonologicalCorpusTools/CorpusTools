@@ -129,16 +129,23 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
                     if phoneEnd > si.maxTime:
                         phoneEnd = si.maxTime
                     if data[n].delimited:
-                        parsed = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
+                        parsed = parse_transcription(ti.mark,
                                         data[n].delimiter,
                                         data[n].digraph_pattern,
-                                        data[n].ignored)]
+                                        data[n].ignored,
+                                        data[n].number_behavior)
                         if len(parsed) > 0:
                             parsed[0].begin = phoneBegin
                             parsed[-1].end = phoneEnd
                             tier_elements.extend(parsed)
                     else:
-                        tier_elements.append(BaseAnnotation(ti.mark, phoneBegin, phoneEnd))
+                        if ti.mark == '':
+                            ti.mark = '#'
+                        a = parse_transcription(ti.mark, None, None,
+                                        data[n].ignored, data[n].number_behavior)[0]
+                        a.begin = phoneBegin
+                        a.end = phoneEnd
+                        tier_elements.append(a)
                 level_count = data.level_length(n)
                 word.references.append(n)
                 word.begins.append(level_count)
@@ -159,10 +166,11 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
                 else:
                     value = ti.mark
                     if at.delimited:
-                        value = [BaseAnnotation(x) for x in parse_transcription(ti.mark,
+                        value = parse_transcription(ti.mark,
                                             at.delimiter,
                                             at.digraph_pattern,
-                                            at.ignored)]
+                                            at.ignored,
+                                            at.number_behavior)
                     elif at.ignored:
                         value = ''.join(x for x in value if x not in at.ignored)
                 if at.token:

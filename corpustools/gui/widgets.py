@@ -16,7 +16,7 @@ from .models import SegmentPairModel, EnvironmentModel, FilterModel
 from .delegates import SwitchDelegate
 
 from corpustools.corpus.classes import Attribute
-from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path
+from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
 
 
 def truncate_string(string, length = 10):
@@ -64,12 +64,15 @@ class ParsingDialog(QDialog):
         layout.addRow('Example:',self.example)
 
         self.punctuationWidget = PunctuationWidget(annotation_type.punctuation)
-
         self.delimiterWidget = QLineEdit()
-
         self.morphDelimiterWidget = PunctuationWidget(['-','='],'Morpheme delimiter')
-
         self.digraphWidget = DigraphWidget()
+        self.numberBehaviorSelect = QComboBox()
+        self.numberBehaviorSelect.addItem('Same as other characters')
+        self.numberBehaviorSelect.addItem('Tone')
+        self.numberBehaviorSelect.addItem('Stress')
+        self.numberBehaviorSelect.currentIndexChanged.connect(self.updatePunctuation)
+
         self.digraphWidget.characters = annotation_type.characters
 
         self.punctuationWidget.selectionChanged.connect(self.punctuationChanged)
@@ -82,11 +85,6 @@ class ParsingDialog(QDialog):
             layout.addRow('Transcription delimiter',self.delimiterWidget)
         layout.addRow(self.morphDelimiterWidget)
         self.morphDelimiterWidget.selectionChanged.connect(self.updatePunctuation)
-
-        self.numberBehaviorSelect = QComboBox()
-        self.numberBehaviorSelect.addItem('Same as other characters')
-        self.numberBehaviorSelect.addItem('Tone')
-        self.numberBehaviorSelect.addItem('Stress')
 
         if att_type == 'tier':
             if len(self.characters & set(['0','1','2'])):
@@ -142,6 +140,8 @@ class ParsingDialog(QDialog):
         self.digraphWidget.characters = self.characters - \
                                         self.punctuationWidget.value() - \
                                         self.morphDelimiterWidget.value()
+        if self.numberBehaviorSelect.currentIndex() != 0:
+            self.digraphWidget.characters -= NUMBER_CHARACTERS
         delimiter = self.delimiterWidget.text()
         if delimiter != '':
             self.digraphWidget.characters -= set([delimiter])

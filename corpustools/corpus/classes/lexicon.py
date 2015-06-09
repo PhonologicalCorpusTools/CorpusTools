@@ -322,12 +322,15 @@ class Transcription(object):
     def __init__(self,seg_list):
         self._list = []
         #self._times = []
+        self.stress_pattern = {}
         if seg_list is not None:
             for i,s in enumerate(seg_list):
                 try:
                     self._list.append(s.label)
                     #if s.begin is not None and s.end is not None:
                     #    self._times.append((s.begin,s.end))
+                    if s.stress is not None:
+                        self.stress_pattern[i] = s.stress
                 except AttributeError:
                     if isinstance(s,str):
                         self._list.append(s)
@@ -348,6 +351,12 @@ class Transcription(object):
                     else:
                         raise(NotImplementedError('That format for seg_list is not supported.'))
 
+
+    def __setstate__(self, state):
+        if 'stress_pattern' not in state:
+            state['stress_pattern'] = {}
+        self.__dict__.update(state)
+
     def __hash__(self):
         return hash(str(self))
 
@@ -357,7 +366,15 @@ class Transcription(object):
         raise(KeyError)
 
     def __str__(self):
-        return '.'.join(self._list)
+        if self.stress_pattern:
+            temp_list = []
+            for i,s in enumerate(self._list):
+                if i in self.stress_pattern:
+                    s += self.stress_pattern[i]
+                temp_list.append(s)
+            return '.'.join(temp_list)
+        else:
+            return '.'.join(self._list)
 
     def __iter__(self):
         for s in self._list:
@@ -410,7 +427,7 @@ class Transcription(object):
         """
         Returns a matching segments from a list of segments
         """
-        match = list()
+        match = []
         for s in self:
             if s in segments:
                 match.append(s)
@@ -693,7 +710,7 @@ class Word(object):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state['wordtokens'] = list()
+        state['wordtokens'] = []
         state['_corpus'] = None
         #for k,v in state.items():
         #    if (k == 'transcription' or k in self.tiers) and v is not None:
@@ -701,11 +718,11 @@ class Word(object):
         return state
 
     def __setstate__(self, state):
-        self.transcription = list()
+        self.transcription = []
         self.spelling = ''
         self.frequency = 0
         if 'wordtokens' not in state:
-            state['wordtokens'] = list()
+            state['wordtokens'] = []
         if 'descriptors' not in state:
             state['descriptors'] = ['spelling','transcription', 'frequency']
         if 'frequency' not in state['descriptors']:
@@ -719,7 +736,7 @@ class Word(object):
         self.__dict__.update(state)
 
     def add_abstract_tier(self, tier_name, tier_segments):
-        tier = list()
+        tier = []
         for s in self.transcription:
             for k,v in tier_segments.items():
                 if s in v:
@@ -1159,6 +1176,12 @@ class Inventory(object):
         self.features = []
         self.possible_values = set()
         self.classes = dict()
+        self.stresses = collections.defaultdict(set)
+
+    def __setstate__(self, state):
+        if 'stresses' not in state:
+            state['stresses'] = {}
+        self.__dict__.update(state)
 
     def __len__(self):
         return len(self._data.keys())
@@ -2020,6 +2043,9 @@ class Corpus(object):
             if isinstance(s, str):
                 if s not in self._inventory:
                     self._inventory[s] = Segment(s)
+        if transcription.stress_pattern:
+            for k,v in transcription.stress_pattern.items():
+                self._inventory.stresses[v].add(transcription[k])
 
     def get_or_create_word(self, **kwargs):
         """

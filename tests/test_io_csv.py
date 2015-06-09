@@ -82,3 +82,12 @@ def test_extra_feature(features_test_dir):
         fm.__getitem__(('a','feature3'))
 
 
+def test_stressed(csv_test_dir):
+    stressed_path = os.path.join(csv_test_dir, 'stressed.txt')
+    ats,_ = inspect_csv(stressed_path, coldelim = ',')
+    print(ats)
+    ats[1].number_behavior = 'stress'
+    c = load_corpus_csv('stressed',stressed_path,',', ats)
+    assert(c.inventory['uw'].symbol == 'uw')
+    assert(c.inventory.stresses == {'1': set(['uw','iy']),
+                                    '0': set(['uw','iy','ah'])})

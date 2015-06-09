@@ -68,8 +68,8 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     return atts, best
 
 def load_corpus_csv(corpus_name, path, delimiter,
-                    feature_system_path = None,
                     annotation_types = None,
+                    feature_system_path = None,
                     stop_check = None, call_back = None):
     """
     Load a corpus from a column-delimited text file
@@ -107,9 +107,8 @@ def load_corpus_csv(corpus_name, path, delimiter,
 
     if annotation_types is None:
         annotation_types, _ = inspect_csv(path, coldelim = delimiter)
-    else:
-        for a in annotation_types:
-            a.reset()
+    for a in annotation_types:
+        a.reset()
 
     with open(path, encoding='utf-8') as f:
         headers = f.readline()
@@ -119,11 +118,6 @@ def load_corpus_csv(corpus_name, path, delimiter,
                                 'that the delimiter you typed in matches '
                                 'the one used in the file.'))
             raise(e)
-
-        headers = [h.strip() for h in headers]
-        headers[0] = headers[0].strip('\ufeff')
-        if 'feature_system' in headers[-1]:
-            headers = headers[0:len(headers)-1]
         headers = annotation_types
         for a in headers:
             corpus.add_attribute(a.attribute)
@@ -137,7 +131,10 @@ def load_corpus_csv(corpus_name, path, delimiter,
             for k,v in zip(headers,line.split(delimiter)):
                 v = v.strip()
                 if k.attribute.att_type == 'tier':
-                    trans = parse_transcription(v, k.delimiter, k.digraph_pattern)
+                    trans = parse_transcription(v, k.delimiter,
+                                                    k.digraph_pattern,
+                                                    k.ignored,
+                                                    k.number_behavior)
                     if not trans_check and len(trans) > 1:
                         trans_check = True
                     d[k.attribute.name] = (k.attribute, trans)

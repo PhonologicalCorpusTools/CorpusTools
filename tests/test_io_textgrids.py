@@ -42,10 +42,10 @@ def test_basic(textgrid_test_dir):
     expected_words.append(a)
     assert(data['word']._list == expected_words)
 
-    assert(data['phone']._list == [BaseAnnotation('', 0, 0.25),
+    assert(data['phone']._list == [BaseAnnotation('#', 0, 0.25),
                         BaseAnnotation('a', 0.25, 0.5),
                         BaseAnnotation('b', 0.5, 0.75),
-                        BaseAnnotation('', 0.75, 1)])
+                        BaseAnnotation('#', 0.75, 1)])
 
 @pytest.mark.xfail
 def test_two_speakers(textgrid_test_dir):
