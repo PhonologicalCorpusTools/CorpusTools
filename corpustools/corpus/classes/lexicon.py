@@ -323,6 +323,8 @@ class Transcription(object):
         self._list = []
         #self._times = []
         self.stress_pattern = {}
+        self.boundaries = []
+        cur_group = 0
         if seg_list is not None:
             for i,s in enumerate(seg_list):
                 try:
@@ -331,6 +333,10 @@ class Transcription(object):
                     #    self._times.append((s.begin,s.end))
                     if s.stress is not None:
                         self.stress_pattern[i] = s.stress
+                    if s.group is not None:
+                        if s.group != cur_group:
+                            self.boundaries.append(i)
+                            cur_group = s.group
                 except AttributeError:
                     if isinstance(s,str):
                         self._list.append(s)
@@ -355,6 +361,8 @@ class Transcription(object):
     def __setstate__(self, state):
         if 'stress_pattern' not in state:
             state['stress_pattern'] = {}
+        if 'boundaries' not in state:
+            state['boundaries'] = []
         self.__dict__.update(state)
 
     def __hash__(self):
@@ -366,15 +374,20 @@ class Transcription(object):
         raise(KeyError)
 
     def __str__(self):
-        if self.stress_pattern:
-            temp_list = []
-            for i,s in enumerate(self._list):
-                if i in self.stress_pattern:
-                    s += self.stress_pattern[i]
-                temp_list.append(s)
-            return '.'.join(temp_list)
+        temp_list = []
+        for i,s in enumerate(self._list):
+            if self.stress_pattern and i in self.stress_pattern:
+                s += self.stress_pattern[i]
+            temp_list.append(s)
+        if self.boundaries:
+            beg = 0
+            bound_list = []
+            for i in self.boundaries:
+                bound_list.append('.'.join(temp_list[beg:i]))
+            bound_list.append('.'.join(temp_list[i:]))
+            return '-'.join(bound_list)
         else:
-            return '.'.join(self._list)
+            return '.'.join(temp_list)
 
     def __iter__(self):
         for s in self._list:
@@ -389,14 +402,21 @@ class Transcription(object):
         return self._list + other._list
 
     def __eq__(self, other):
-        if not isinstance(other, Transcription) and not isinstance(other,list):
-            return False
-
-        if len(other) != len(self):
-            return False
-        for i,s  in enumerate(self):
-            if s != other[i]:
+        if isinstance(other,list):
+            if len(other) != len(self):
                 return False
+            for i,s  in enumerate(self):
+                if s != other[i]:
+                    return False
+            return True
+        if not isinstance(other, Transcription):
+            return False
+        if self._list != other._list:
+            return False
+        if self.stress_pattern != other.stress_pattern:
+            return False
+        if self.boundaries != other.boundaries:
+            return False
         return True
 
     def __lt__(self,other):

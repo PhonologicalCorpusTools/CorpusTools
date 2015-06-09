@@ -70,7 +70,10 @@ def text_test_dir(text_test_dir):
 
 def test_load_transcription_morpheme(text_test_dir):
     transcription_morphemes_path = os.path.join(text_test_dir, 'test_text_transcription_morpheme_boundaries.txt')
-    c = load_discourse_transcription('test',transcription_morphemes_path)
+    ats = inspect_discourse_transcription(transcription_morphemes_path)
+    ats[0].morph_delimiters = set('-=')
+    c = load_discourse_transcription('test',transcription_morphemes_path, ats)
 
-    assert(c.lexicon['ca-b'].frequency == 1)
+    assert(c.lexicon['cab'].frequency == 2)
+    assert(str(c.lexicon['cab'].transcription) == 'c.a-b')
 

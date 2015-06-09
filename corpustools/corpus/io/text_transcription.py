@@ -87,9 +87,7 @@ def transcription_text_to_data(path, annotation_types = None,
             continue
         for word in line:
             annotations = dict()
-            trans = parse_transcription(word, data[n].delimiter,
-                            data[n].digraph_pattern, data[n].ignored,
-                            data[n].number_behavior)
+            trans = parse_transcription(word, data[n])
             #if not trans_check and data[n].delimiter is not None and len(trans) > 1:
             #    trans_check = True
             spell = ''.join(x.label for x in trans)

@@ -131,10 +131,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
             for k,v in zip(headers,line.split(delimiter)):
                 v = v.strip()
                 if k.attribute.att_type == 'tier':
-                    trans = parse_transcription(v, k.delimiter,
-                                                    k.digraph_pattern,
-                                                    k.ignored,
-                                                    k.number_behavior)
+                    trans = parse_transcription(v, k)
                     if not trans_check and len(trans) > 1:
                         trans_check = True
                     d[k.attribute.name] = (k.attribute, trans)

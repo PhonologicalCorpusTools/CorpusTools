@@ -140,11 +140,7 @@ def ilg_to_data(path, annotation_types,
                 mismatch = True
 
             if annotation_type.delimited:
-                line = [parse_transcription(x,
-                                        annotation_type.delimiter,
-                                        annotation_type.digraph_pattern,
-                                        annotation_type.ignored,
-                                        annotation_type.number_behavior) for x in line]
+                line = [parse_transcription(x, annotation_type) for x in line]
             cur_line[annotation_type.name] = line
         if mismatch:
             start_line = lines[index][0]

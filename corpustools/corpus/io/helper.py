@@ -14,6 +14,7 @@ class BaseAnnotation(object):
         self.end = end
         self.stress = None
         self.tone = None
+        self.group = None
 
     def __iter__(self):
         return iter(self.label)
@@ -108,6 +109,8 @@ class AnnotationType(object):
 
     @property
     def digraph_pattern(self):
+        if len(self.digraphs) == 0:
+            return None
         return compile_digraphs(self.digraphs)
 
     @property
@@ -264,31 +267,43 @@ def inspect_directory(directory):
     return likely_type, relevant_files
 
 
-def parse_transcription(string, delimiter, digraph_pattern, ignore_list = None, number_behavior = None):
-    if ignore_list is not None:
-        string = ''.join(x for x in string if x not in ignore_list)
-    if delimiter is not None:
-        string = string.split(delimiter)
-    elif digraph_pattern is not None:
-        string = digraph_pattern.findall(string)
+def parse_transcription(string, annotation_type):
+    md = annotation_type.morph_delimiters
+    if len(md) and any(x in string for x in md):
+        morphs = re.split("|".join(md),string)
+        transcription = []
+        for i, m in enumerate(morphs):
+            trans = parse_transcription(m, annotation_type)
+            for t in trans:
+                t.group = i
+            transcription += trans
+        return transcription
+    ignored = annotation_type.ignored
+    if ignored is not None:
+        string = ''.join(x for x in string if x not in ignored)
+    if annotation_type.trans_delimiter is not None:
+        string = string.split(annotation_type.trans_delimiter)
+    elif annotation_type.digraph_pattern is not None:
+        string = annotation_type.digraph_pattern.findall(string)
+
     final_string = []
     for seg in string:
         if seg == '':
             continue
         num = None
-        if number_behavior is not None:
-            if number_behavior == 'stress':
+        if annotation_type.number_behavior is not None:
+            if annotation_type.number_behavior == 'stress':
                 num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
                 seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
-            elif number_behavior == 'tone':
+            elif annotation_type.number_behavior == 'tone':
                 num = ''
                 seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
             if num == '':
                 num = None
 
         a = BaseAnnotation(seg)
-        if number_behavior is not None and num is not None:
-            setattr(a,number_behavior, num)
+        if annotation_type.number_behavior is not None and num is not None:
+            setattr(a, annotation_type.number_behavior, num)
         final_string.append(a)
     return final_string
 
