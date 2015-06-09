@@ -121,7 +121,7 @@ class SpontaneousSpeechCorpus(object):
             Discourse to be added
         """
         self.discourses[str(discourse)] = discourse
-        self.lexicon += discourse.lexicon
+        #self.lexicon += discourse.lexicon
 
 class Discourse(object):
     """
@@ -429,8 +429,6 @@ class WordToken(object):
     """
     def __init__(self,**kwargs):
         self.wordtype = kwargs.pop('word',None)
-        self.previous_token_time = None
-        self.following_token_time = None
         self.discourse = None
         self.speaker = None
         self.wavpath = None
@@ -496,17 +494,17 @@ class WordToken(object):
     def add_attribute(self, tier_name, default_value):
         setattr(self, tier_name, default_value)
 
-    @property
-    def previous_token(self):
-        if self.discourse is not None and self.previous_token_time is not None:
-            return self.discourse[self.previous_token_time]
-        return None
+    #@property
+    #def previous_token(self):
+    #    if self.discourse is not None and self.previous_token_time is not None:
+    #        return self.discourse[self.previous_token_time]
+    #    return None
 
-    @property
-    def following_token(self):
-        if self.discourse is not None and self.following_token_time is not None:
-            return self.discourse[self.following_token_time]
-        return None
+    #@property
+    #def following_token(self):
+    #    if self.discourse is not None and self.following_token_time is not None:
+    #        return self.discourse[self.following_token_time]
+    #    return None
 
     @property
     def duration(self):
@@ -528,10 +526,10 @@ class WordToken(object):
             return self.wordtype.transcription
         return None
 
-    @property
-    def previous_conditional_probability(self):
-        if self.previous_token is not None:
-            return self.discourse.calc_frequency(
-                                (self.previous_token.wordtype,self.wordtype)
-                                ) / self.discourse.calc_frequency(self.previous_token.wordtype)
-        return None
+    #@property
+    #def previous_conditional_probability(self):
+    #    if self.previous_token is not None:
+    #        return self.discourse.calc_frequency(
+    #                            (self.previous_token.wordtype,self.wordtype)
+    #                            ) / self.discourse.calc_frequency(self.previous_token.wordtype)
+    #    return None

@@ -319,28 +319,33 @@ class Transcription(object):
     Transcription object, sequence of symbols
     """
     def __init__(self,seg_list):
-        self._list = list()
-        self._times = list()
+        self._list = []
+        #self._times = []
         if seg_list is not None:
             for i,s in enumerate(seg_list):
-                if isinstance(s,str):
-                    self._list.append(s)
-                elif isinstance(s,dict):
-                    try:
-                        symbol = s['label']
-                    except KeyError:
-                        symbol = s['symbol']
-                    self._list.append(symbol)
-                    if 'begin' in s and 'end' in s:
-                        self._times.append((s['begin'],s['end']))
-                elif isinstance(s,list):
-                    if len(s) == 3:
-                        self._list.append(s[0])
-                        self._times.append((s[1],s[2]))
+                try:
+                    self._list.append(s.label)
+                    #if s.begin is not None and s.end is not None:
+                    #    self._times.append((s.begin,s.end))
+                except AttributeError:
+                    if isinstance(s,str):
+                        self._list.append(s)
+                    elif isinstance(s,dict):
+                        try:
+                            symbol = s['label']
+                        except KeyError:
+                            symbol = s['symbol']
+                        self._list.append(symbol)
+                        #if 'begin' in s and 'end' in s:
+                        #    self._times.append((s['begin'],s['end']))
+                    elif isinstance(s,list):
+                        if len(s) == 3:
+                            self._list.append(s[0])
+                            #self._times.append((s[1],s[2]))
+                        else:
+                            raise(NotImplementedError('That format for seg_list is not supported.'))
                     else:
                         raise(NotImplementedError('That format for seg_list is not supported.'))
-                else:
-                    raise(NotImplementedError('That format for seg_list is not supported.'))
 
     def __hash__(self):
         return hash(str(self))
@@ -1880,6 +1885,7 @@ class Corpus(object):
 
         if word.transcription is not None:
             self.update_inventory(word.transcription)
+            word.transcription._list = [self._inventory[x].symbol for x in word.transcription._list]
             if not self.has_transcription:
                 self.has_transcription = True
         for d in word.descriptors:

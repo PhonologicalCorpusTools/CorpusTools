@@ -5,6 +5,25 @@ import string
 from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
 from corpustools.exceptions import DelimiterError
 
+class BaseAnnotation(object):
+    def __init__(self, label = None, begin = None, end = None):
+        self.label = label
+        self.begin = begin
+        self.end = end
+
+    def __iter__(self):
+        return iter(self.label)
+
+
+class Annotation(BaseAnnotation):
+    def __init__(self, label = None):
+        self.label = None
+        self.begins = []
+        self.ends = []
+        self.references = []
+        self.token = None
+        self.additional = None
+
 class AnnotationType(object):
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
                     token = False, base = False,speaker = None):
@@ -113,6 +132,9 @@ class DiscourseData(object):
 
     def items(self):
         return self.data.items()
+
+    def mapping(self):
+        return { x.name: x.attribute for x in self.data.values()}
 
     def collapse_speakers(self):
         newdata = {}
@@ -250,58 +272,58 @@ def find_wav_path(path):
         return wav_path
     return None
 
-def data_to_discourse(data, attribute_mapping):
+def data_to_discourse(data, lexicon = None):
+    attribute_mapping = data.mapping()
     d = Discourse(name = data.name, wav_path = data.wav_path)
     ind = 0
+    if lexicon is None:
+        lexicon = d.lexicon
+
+    for k,v in attribute_mapping.items():
+        a = data[k]
+
+        if a.token and v not in d.attributes:
+            d.add_attribute(v, initialize_defaults = True)
+
+        if not a.token and v not in d.lexicon.attributes:
+            lexicon.add_attribute(v, initialize_defaults = True)
 
     for level in data.word_levels:
-        prev_time = None
         for i, s in enumerate(data[level]):
-            word_kwargs = {}
+            word_kwargs = {'spelling':(attribute_mapping[level], s.label)}
             word_token_kwargs = {}
-            for k,v in s.items():
-                if k == 'label':
-                    word_kwargs['spelling'] = (attribute_mapping[level],v)
-                else:
-                    if k == 'token':
-                        for token_key, token_value in v.items():
-                            att = attribute_mapping[token_key]
-                            if att not in d.attributes:
-                                d.add_attribute(att, initialize_defaults = True)
-                            word_token_kwargs[att.name] = (att, token_value)
+            if s.token is not None:
+                for token_key, token_value in s.token.items():
+                    att = attribute_mapping[token_key]
+                    word_token_kwargs[att.name] = (att, token_value)
+            if s.additional is not None:
+                for add_key, add_value in s.additional.items():
+                    att = attribute_mapping[add_key]
+                    if data[add_key].token:
+                        word_token_kwargs[att.name] = (att, add_value)
                     else:
-                        att = attribute_mapping[k]
-                        if data[k].token:
-                            if att not in d.attributes:
-                                d.add_attribute(att, initialize_defaults = True)
-                        else:
-                            if att not in d.lexicon.attributes:
-                                d.lexicon.add_attribute(att, initialize_defaults = True)
-                        if k in data and len(data[k]) > 0:
-                            seq = data[k][v[0]:v[1]]
-                            if data[k].token:
-                                word_token_kwargs[att.name] = (att, seq)
-                                if len(seq) > 0 and 'begin' in seq[0]:
-                                    word_token_kwargs['begin'] = seq[0]['begin']
-                                    word_token_kwargs['end'] = seq[-1]['end']
+                        word_kwargs[att.name] = (att, add_value)
+            for j, r in enumerate(s.references):
+                if r in data and len(data[r]) > 0:
+                    seq = data[r][s.begins[j]:s.ends[j]]
+                    att = attribute_mapping[r]
+                    if data[r].token:
+                        word_token_kwargs[att.name] = (att, seq)
+                        if len(seq) > 0 and seq[0].begin is not None:
+                            word_token_kwargs['begin'] = seq[0].begin
+                            word_token_kwargs['end'] = seq[-1].end
 
-                            else:
-                                word_kwargs[att.name] = (att, seq)
-                        else:
-                            word_kwargs[att.name] = (att, v)
-            word = d.lexicon.get_or_create_word(**word_kwargs)
+                    else:
+                        word_kwargs[att.name] = (att, seq)
+
+            word = lexicon.get_or_create_word(**word_kwargs)
             word_token_kwargs['word'] = word
             if 'begin' not in word_token_kwargs:
                 word_token_kwargs['begin'] = ind
                 word_token_kwargs['end'] = ind + 1
-            if prev_time is not None:
-                word_token_kwargs['previous_token_time'] = prev_time
             wordtoken = WordToken(**word_token_kwargs)
             word.frequency += 1
             word.wordtokens.append(wordtoken)
             d.add_word(wordtoken)
-            if prev_time is not None:
-                d[prev_time].following_token_time = wordtoken.begin
-            prev_time = wordtoken.begin
             ind += 1
     return d
