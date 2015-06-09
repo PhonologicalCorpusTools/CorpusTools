@@ -6,8 +6,7 @@ from .widgets import (EnvironmentSelectWidget, EnvironmentDialog, SegmentPairSel
 from .windows import FunctionWorker, FunctionDialog
 import itertools
 
-from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs,
-                        calc_prod_wordtokens, calc_prod_wordtokens_all_envs)
+from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs)
 
 from corpustools.exceptions import PCTError, PCTPythonError
 

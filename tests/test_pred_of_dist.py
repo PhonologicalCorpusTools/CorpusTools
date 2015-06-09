@@ -2,8 +2,7 @@
 import sys
 import os
 
-from corpustools.prod.pred_of_dist import (check_envs, calc_prod, count_segs,
-                                        calc_prod_wordtokens)
+from corpustools.prod.pred_of_dist import (check_envs, calc_prod, count_segs)
 
 from corpustools.contextmanagers import CanonicalVariantContext, MostFrequentVariantContext
 
@@ -54,9 +53,10 @@ def test_prod_wordtokens_token(specified_discourse_corpus):
     env_list = list(expected.keys())
     expected["AVG"] = 0.9496532099899153
 
-    type_or_token = 'most_frequent_token'
+    type_or_token = 'type'
     tier = 'transcription'
-    result = calc_prod_wordtokens(specified_discourse_corpus.lexicon,seg1,seg2,env_list,tier, type_or_token)
+    with MostFrequentVariantContext(specified_discourse_corpus.lexicon, seg1, seg2, env_list, tier, type_or_token) as c:
+        result = calc_prod_wordtokens(c, seg1, seg2, env_list)
     for k,v in result.items():
         k = str(k).replace("'",'').replace(' ','')
         assert(expected[k]-v < 0.001)

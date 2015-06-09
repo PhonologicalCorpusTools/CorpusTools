@@ -48,17 +48,6 @@ def phonotactic_probability_vitevitch(corpus, query, sequence_type,
                                     segment_delimiter = '.',
                                     stop_check = None, call_back = None):
 
-    if isinstance(query, Word):
-        query_word = query
-    else:
-        try:
-            query_word = corpus.find(query)
-        except KeyError:
-            if segment_delimiter == None:
-                query_word = Word(**{sequence_type: list(query)})
-            else:
-                query_word = Word(**{sequence_type: query.split(segment_delimiter)})
-
     if probability_type == 'unigram':
         gramsize = 1
     elif probability_type == 'bigram':
@@ -66,7 +55,7 @@ def phonotactic_probability_vitevitch(corpus, query, sequence_type,
 
     prob_dict = corpus.get_phone_probs(sequence_type, count_what,
                                         gramsize = gramsize)
-    sequence = zip(*[getattr(query_word,sequence_type)[i:] for i in range(gramsize)])
+    sequence = zip(*[getattr(query,sequence_type)[i:] for i in range(gramsize)])
 
     totprob = 0
     tot = 0
