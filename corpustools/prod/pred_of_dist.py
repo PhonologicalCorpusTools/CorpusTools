@@ -301,11 +301,6 @@ def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
         Second segment to count
     envs : list
         List of environment specification to search
-    sequence_type : str
-        Tier to search on
-    type_or_token : str {'type', 'token'}
-        Specifies what kind of frequency to use in
-        calculating predictability of distribution
     stop_check : callable or None
         Optional function to check whether to gracefully terminate early
     call_back : callable or None
@@ -323,7 +318,7 @@ def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
         found in
     """
 
-    envs = [EnvironmentFilter(corpus, env) for env in envs]
+    envs = [EnvironmentFilter(getattr(corpus, 'corpus'), env) for env in envs]
     env_matches = {env: {seg1: 0, seg2: 0} for env in envs}
 
     missing_envs = defaultdict(set)
@@ -340,7 +335,7 @@ def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
             cur += 1
             if cur % 20 == 0:
                 call_back(cur)
-        tier = getattr(word, sequence_type)
+        tier = getattr(word, getattr(corpus, 'sequence_type'))
         for pos,seg in enumerate(tier):
             if not (seg == seg1 or seg == seg2):
                 continue
@@ -349,9 +344,9 @@ def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
             found_env_match = list()
             for env in envs:
                 if tier_env in env:
-                    if type_or_token == 'type':
+                    if getattr(corpus, 'type_or_token') == 'type':
                         value = 1
-                    elif type_or_token == 'token':
+                    elif getattr(corpus, 'type_or_token') == 'token':
                         value = word.frequency
                     env_matches[env][seg] += value
                     found_env_match.append(env)
@@ -653,7 +648,7 @@ def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
         of [entropy, frequency of environment, frequency of seg1, frequency
         of seg2] if all_info is True, or just entropy if all_info is False.
     """
-    returned = check_envs(corpus, seg1, seg2, envs,sequence_type, type_or_token, stop_check, call_back)
+    returned = check_envs(corpus, seg1, seg2, envs, stop_check, call_back)
 
     if stop_check is not None and stop_check():
         return

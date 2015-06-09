@@ -38,7 +38,8 @@ def test_prod_type(specified_test_corpus):
     expected["AVG"] = 0.9241743523004413
     type_or_token = 'type'
     tier = 'transcription'
-    result = calc_prod(specified_test_corpus,seg1,seg2,env_list,tier, type_or_token,all_info=False)
+    with CanonicalVariantContext(specified_test_corpus, tier, type_or_token) as c:
+        result = calc_prod(c, seg1, seg2, env_list, all_info=False)
     for k,v in result.items():
         k = str(k).replace("'",'').replace(' ','')
         assert(expected[k]-v < 0.001)

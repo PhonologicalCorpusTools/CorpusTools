@@ -123,11 +123,11 @@ class BaseCorpusContext(object):
         return return_dict
         
     def __exit__(self, exc_type, exc, exc_tb):
-        if exc_type is None:
+        #if exc_type is None:
             return True
         #Do cleanup
-        if not issubclass(exc_type,PCTError):
-            raise(PCTPythonError(exc))
+        #if not issubclass(exc_type,PCTError):
+            #raise(PCTPythonError(exc))
 
 
 class CanonicalVariantContext(BaseCorpusContext):
