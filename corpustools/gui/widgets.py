@@ -666,41 +666,37 @@ class EditableInventoryTable(InventoryTable):
                 selCol = self.selectionModel().selectedRows()[0].column()
                 if dropRow == -1:
                     dropRow = self.rowCount()#take maximum, user dragged past the bottom
-                elif dropRow == 0:
-                    pass
-                elif selRow < dropRow: #going from lower to higher row
-                    dropRow +=1
-                    self.insertRow(dropRow)
-                elif selRow > dropRow: #going from higher to lower row
-                    self.insertRow(dropRow)
-                for c in range(self.columnCount()):
-                    print(selRow,c)
-                    source = self.itemAt(selRow,c)
-                    print(self.item(selRow,c), self.itemAt(selRow,c))
-                    self.setItem(dropRow,c,source)
+                # elif dropRow == 0:
+                #     pass
+                elif selRow < dropRow: #going from top to bottom
+                    self.insertRow(selRow+1)
+                    for c in range(self.columnCount()):
+                        self.setCellWidget(selRow+1,c,MultiSegmentCell([]))
+                    for r in range(selRow+1, dropRow+1):
+                        for c in range(self.columnCount()):
+                            source = self.cellWidget(r+1,c)
+                            self.setCellWidget(r,c,source)
+                    for c in range(self.columnCount()):
+                        source = self.cellWidget(selRow,c)
+                        print(source)
+                        self.setCellWidget(dropRow,c,source)
+                        #PROBLEM HERE: WHY IS THIS NOT BEING PROPERLY SET?
+                    self.removeRow(selRow)
+                elif selRow > dropRow: #going from bottom to top
+                    self.insertRow(selRow-1)
 
+                self.resizeRowsToContents()
+                # for r in range(selRow, dropRow):
+                #     for c in range(self.columnCount()):
+                #         source = self.cellWidget(r+1,c)
+                #         print(r,c,source)
+                #         self.setCellWidget(r,c,source)
+                #         return
+                #         self.resizeRowsToContents()
+                        #self.removeCellWidget(selRow,c)
+                #self.removeRow(selRow)
+                event.accept()
 
-                    #for j in range(selRow, self.rowCount()):
-                     #   source = QTableWidgetItem(self.item(r, j))
-
-
-                #selRows = self.selectionModel().selectedRows()
-                #top = selRows[0].row()
-                #offset = dropRow - top
-                # for i, row in enumerate(selRows):
-                #     r = row.row() + offset
-                #     if r > self.rowCount() or r < 0:
-                #         r = 0
-                #
-                #     for j in range(self.columnCount()):
-                #         source = QTableWidgetItem(self.item(r, j))
-                #         self.setItem(r, j, source)
-                #for row in reversed(selRows):
-                 #   self.removeRow(row)
-
-                #event.accept()
-        else:
-            QTableView.dropEvent(event)
 
     def droppingOnItself(self, event, index):
         dropAction = event.dropAction()
@@ -719,6 +715,12 @@ class EditableInventoryTable(InventoryTable):
         return False
 
     def dropOn(self, event):
+        """
+        :param event:
+        :return:
+        (True,index) if it is possible to do a drop, where index is a QModelIndex of where the drop is happening
+        (Fale,None) otherwise
+        """
         if event.isAccepted():
             return False, None
 
@@ -924,7 +926,7 @@ class InventoryBox(QWidget):
         consRowMapping = {x:i for i,x in enumerate(verticalHeaderLabelText)}
 
         self.consTable.resizeColumnsToContents()
-        button_map = defaultdict(list)
+        button_map = {(h,v): list() for (h,v) in product(horizontalHeaderLabelText, verticalHeaderLabelText)}#defaultdict(list)
 
         for seg,category in consList:
             for h,v in product(horizontalHeaderLabelText, verticalHeaderLabelText):
@@ -936,6 +938,7 @@ class InventoryBox(QWidget):
         for key,buttons in button_map.items():
             c,r = key
             self.consTable.setCellWidget(consRowMapping[r],consColMapping[c],MultiSegmentCell(buttons))
+
         return cons
 
     def makeVowelBox(self,vowColumns,vowRows,vowList,editable):
@@ -1091,11 +1094,15 @@ class MultiSegmentCell(QWidget):
 
         #layout.setContentsMargins(0,0,0,0)
         #layout.setSpacing(0)
-
+        self.button_names = list()
         for b in buttons:
             layout.addWidget(b)
+            self.button_names.append(b.text())
 
         self.setLayout(layout)
+
+    def __str__(self):
+        return ','.join(self.button_names)
 
 class TranscriptionWidget(QGroupBox):
     transcriptionChanged = Signal(object)
