@@ -1576,20 +1576,23 @@ class SegmentPairDialog(QDialog):
 
         layout = QVBoxLayout()
 
-        layout.setSizeConstraint(QLayout.SetFixedSize)
-
         segFrame = QFrame()
 
         segLayout = QHBoxLayout()
 
-        self.segFrame = InventoryBox('Segments',inventory)
+        scroll = QScrollArea()
+        self.inventoryFrame = InventoryBox('', inventory)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.inventoryFrame)
+        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        #self.columnFrame.
+        layout.addWidget(scroll)
 
-        segLayout.addWidget(self.segFrame)
-
-        segFrame.setLayout(segLayout)
-
-        layout.addWidget(segFrame)
-
+        self.setLayout(layout)
 
         self.oneButton = QPushButton('Add')
         self.anotherButton = QPushButton('Add and create another')
@@ -1608,7 +1611,6 @@ class SegmentPairDialog(QDialog):
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
-        self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Select segment pair')
 
     def one(self):
@@ -1620,14 +1622,14 @@ class SegmentPairDialog(QDialog):
         self.accept()
 
     def reset(self):
-        self.segFrame.clearAll()
+        self.inventoryFrame.clearAll()
 
     def reject(self):
         self.addOneMore = False
         QDialog.reject(self)
 
     def accept(self):
-        selected = self.segFrame.value()
+        selected = self.inventoryFrame.value()
         self.pairs = combinations(selected,2)
         QDialog.accept(self)
 
