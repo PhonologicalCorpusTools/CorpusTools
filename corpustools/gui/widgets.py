@@ -1912,7 +1912,132 @@ class EnvironmentDialog(QDialog):
     def reject(self):
         QDialog.reject(self)
 
+class EnvironmentSegmentWidget(QWidget):
+    def __init__(self, inventory, parent = None, middle = False):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+        self.segments = set()
+
+        layout = QVBoxLayout()
+        self.mainLabel = QLabel('{}')
+
+        layout.addWidget(self.mainLabel)
+
+        self.setLayout(layout)
+
+        self.mainLabel.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.mainLabel.customContextMenuRequested.connect(self.showMenu)
+
+    def mouseReleaseEvent(self, ev):
+        if ev.button() == Qt.LeftButton:
+            self.selectSegments()
+            ev.accept()
+
+    def selectSegments(self):
+        pass
+
+    def showMenu(self, pos):
+        removeAction = QAction(self)
+        removeAction.setText('Delete')
+        removeAction.triggered.connect(self.deleteLater)
+
+        menu = QMenu(self)
+        #menu.addAction(editAction)
+        menu.addAction(removeAction)
+
+        menu.popup(self.mapToGlobal(pos))
+
+class EnvironmentWidget(QWidget):
+    def __init__(self, inventory, parent = None):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+        layout = QHBoxLayout()
+
+        self.lhsAddNew = QPushButton('+')
+
+        self.lhsAddNew.clicked.connect(self.addLhs)
+
+        self.lhsWidget = QWidget()
+
+        lhslayout = QHBoxLayout()
+        self.lhsWidget.setLayout(lhslayout)
+
+        self.rhsAddNew = QPushButton('+')
+
+        self.rhsAddNew.clicked.connect(self.addRhs)
+
+        self.rhsWidget = QWidget()
+
+        rhslayout = QHBoxLayout()
+        self.rhsWidget.setLayout(rhslayout)
+
+        self.middleWidget = QLabel('_')#EnvironmentSegmentWidget(middle = True)
+
+        self.removeButton = QPushButton('Remove environment')
+
+        layout.addWidget(self.lhsAddNew)
+
+        layout.addWidget(self.lhsWidget)
+
+        layout.addWidget(self.middleWidget)
+
+        layout.addWidget(self.rhsWidget)
+
+        layout.addWidget(self.rhsAddNew)
+
+        layout.addStretch()
+
+        optionlayout = QVBoxLayout()
+
+        optionlayout.addWidget(self.removeButton)
+
+        layout.addLayout(optionlayout)
+
+        self.setLayout(layout)
+
+    def addLhs(self):
+        segWidget = EnvironmentSegmentWidget(self.inventory)
+        self.lhsWidget.layout().insertWidget(0,segWidget)
+
+    def addRhs(self):
+        segWidget = EnvironmentSegmentWidget(self.inventory)
+        self.rhsWidget.layout().addWidget(segWidget)
+        self.rhsWidgets.append(segWidget)
+
 class EnvironmentSelectWidget(QGroupBox):
+    def __init__(self, inventory,parent=None):
+        QGroupBox.__init__(self,'Environments',parent)
+
+        self.inventory = inventory
+
+        layout = QVBoxLayout()
+
+        scroll = QScrollArea()
+        self.environmentFrame = QWidget()
+        self.environments = []
+        lay = QBoxLayout(QBoxLayout.TopToBottom)
+        self.addButton = QPushButton('New environment')
+        self.addButton.clicked.connect(self.addNewEnvironment)
+        lay.addWidget(self.addButton)
+        lay.addStretch()
+        self.environmentFrame.setLayout(lay)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.environmentFrame)
+        scroll.setMinimumWidth(140)
+
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        layout.addWidget(scroll)
+
+        self.setLayout(layout)
+
+    def addNewEnvironment(self):
+        envWidget = EnvironmentWidget(self.inventory)
+        self.environmentFrame.layout().insertWidget(len(self.environments), envWidget)
+        self.environments.append(envWidget)
+
+class BigramWidget(QGroupBox):
     name = 'environment'
     def __init__(self,inventory,parent=None):
         QGroupBox.__init__(self,'{}s'.format(self.name.title()),parent)
@@ -1966,9 +2091,6 @@ class EnvironmentSelectWidget(QGroupBox):
 
     def value(self):
         return [x[0] for x in self.table.model().rows]
-
-class BigramWidget(EnvironmentSelectWidget):
-    name = 'bigram'
 
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options, actions=None, enabled=None,parent=None):
