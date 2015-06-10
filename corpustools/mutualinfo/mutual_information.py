@@ -9,8 +9,7 @@ import time
 
 from corpustools.exceptions import MutualInfoError
 
-def pointwise_mi(corpus, query, sequence_type,
-                halve_edges = False, in_word = False,
+def pointwise_mi(corpus, query, halve_edges = False, in_word = False,
                 stop_check = None, call_back = None):
     """
     Calculate the mutual information for a bigram.
@@ -21,10 +20,6 @@ def pointwise_mi(corpus, query, sequence_type,
         Corpus to use
     query : tuple
         Tuple of two strings, each a segment/letter
-    sequence_type : str
-        The attribute of Words to calculate mutual information over. Normally this
-        will be the transcription, but it can also be the spelling or a
-        user-specified tier.
     halve_edges : bool
         Flag whether to only count word boundaries once per word rather than
         twice, defaults to False
@@ -45,13 +40,12 @@ def pointwise_mi(corpus, query, sequence_type,
         call_back("Generating probabilities...")
         call_back(0,0)
         cur = 0
-    count_what = 'type'
     if in_word:
-        unigram_dict = get_in_word_unigram_frequencies(corpus, query, sequence_type, count_what)
-        bigram_dict = get_in_word_bigram_frequency(corpus, query, sequence_type, count_what)
+        unigram_dict = get_in_word_unigram_frequencies(corpus, query)
+        bigram_dict = get_in_word_bigram_frequency(corpus, query)
     else:
-        unigram_dict = corpus.get_frequency_base(sequence_type, count_what, halve_edges, gramsize = 1, probability=True)
-        bigram_dict = corpus.get_frequency_base(sequence_type, count_what, halve_edges, gramsize = 2, probability=True)
+        unigram_dict = corpus.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
+        bigram_dict = corpus.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
 
     #if '#' in query:
     #    raise(Exception("Word boundaries are currently unsupported."))
@@ -66,7 +60,7 @@ def pointwise_mi(corpus, query, sequence_type,
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
-        raise MutualInformationError('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type))
+        raise MutualInformationError('The bigram {} was not found in the corpus using {}s'.format(''.join(query), getattr(corpus, 'sequence_type')))
 
     if unigram_dict[query[0]] == 0.0:
         raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
@@ -79,21 +73,14 @@ def pointwise_mi(corpus, query, sequence_type,
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 
 
-def get_in_word_unigram_frequencies(corpus, query, sequence_type, count_what):
-    seg1_total = sum([get_frequency(word, count_what) if query[0] in getattr(word, sequence_type) else 0.0 for word in corpus])
-    seg2_total = sum([get_frequency(word, count_what) if query[1] in getattr(word, sequence_type) else 0.0 for word in corpus])
+def get_in_word_unigram_frequencies(corpus, query):
+    seg1_total = sum([word.frequency if query[0] in getattr(word, getattr(corpus, 'sequence_type')) else 0.0 for word in corpus])
+    seg2_total = sum([word.frequency if query[1] in getattr(word, getattr(corpus, 'sequence_type')) else 0.0 for word in corpus])
     return {query[0]: seg1_total / len(corpus), query[1]: seg2_total / len(corpus)}
 
-def get_in_word_bigram_frequency(corpus, query, sequence_type, count_what):
-    total = sum([get_frequency(word, count_what) if query[0] in getattr(word, sequence_type) and query[1] in getattr(word, sequence_type) else 0.0 for word in corpus])
+def get_in_word_bigram_frequency(corpus, query):
+    total = sum([word.frequency if query[0] in getattr(word, getattr(corpus, 'sequence_type')) and query[1] in getattr(word, getattr(corpus, 'sequence_type')) else 0.0 for word in corpus])
     return {query: total / len(corpus)}
-
-def get_frequency(word, count_what):
-    if count_what == 'type':
-        return 1.0
-    elif count_what == 'token':
-        return float(getattr(word, 'frequency'))
-
 
 def all_mis(corpus, sequence_type,
             halve_edges = False, in_word = False,

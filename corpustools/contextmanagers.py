@@ -13,10 +13,21 @@ class BaseCorpusContext(object):
         self.corpus = corpus
         self.attribute = attribute
         self._freq_base = dict()
+        self.length = None
 
     def __enter__(self):
         pass
-        
+    
+    def __len__(self):
+        if self.length is not None:
+            return self.length
+        else:
+            counter = 0
+            for w in self:
+                counter += 1
+            self.length = counter
+            return self.length
+            
     def get_frequency_base(self, gramsize = 1, halve_edges=False, probability = False):
         """
         Generate (and cache) frequencies for each segment in the Corpus.
@@ -40,7 +51,6 @@ class BaseCorpusContext(object):
             Keys are segments (or sequences of segments) and values are
             their frequency in the Corpus
         """
-        print('hello')
         if (gramsize) not in self._freq_base:
             freq_base = collections.defaultdict(float)
             for word in self:
@@ -144,7 +154,7 @@ class CanonicalVariantContext(BaseCorpusContext):
             if self.type_or_token == 'type':
                 w.frequency = 1
             yield w
-
+    
 class MostFrequentVariantContext(BaseCorpusContext):
     
     def __enter__(self):
@@ -165,7 +175,7 @@ class MostFrequentVariantContext(BaseCorpusContext):
             if self.type_or_token == 'type':
                 w.frequency = 1
             yield w
-
+    
 class SeparatedTokensVariantContext(BaseCorpusContext):
     
     def __enter__(self):

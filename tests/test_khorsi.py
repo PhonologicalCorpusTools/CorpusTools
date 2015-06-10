@@ -5,7 +5,7 @@ import os
 
 from corpustools.symbolsim.khorsi import lcs
 from corpustools.symbolsim.string_similarity import string_similarity
-
+from corpustools.contextmanagers import CanonicalVariantContext, MostFrequentVariantContext, WeightedVariantContext
 
 def test_freq_base_spelling_type(unspecified_test_corpus):
     expected = {'#':30,
@@ -22,7 +22,8 @@ def test_freq_base_spelling_type(unspecified_test_corpus):
                 'u':4,
                 'total':110}
 
-    freq_base = unspecified_test_corpus.get_frequency_base('spelling','type')
+    with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'type') as c:
+        freq_base = c.get_frequency_base()
     assert(freq_base == expected)
 
 def test_freq_base_spelling_token(unspecified_test_corpus):
@@ -39,8 +40,9 @@ def test_freq_base_spelling_token(unspecified_test_corpus):
                 't':271,
                 'u':265,
                 'total':4572}
-
-    freq_base = unspecified_test_corpus.get_frequency_base('spelling','token')
+    
+    with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'token') as c:
+        freq_base = c.get_frequency_base()
     assert(freq_base == expected)
 
 def test_freq_base_transcription_type(unspecified_test_corpus):
@@ -56,8 +58,9 @@ def test_freq_base_transcription_type(unspecified_test_corpus):
                 't':11,
                 'u':4,
                 'total':102}
-
-    freq_base = unspecified_test_corpus.get_frequency_base('transcription','type')
+    
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        freq_base = c.get_frequency_base()
     assert(freq_base == expected)
 
 def test_freq_base_transcription_token(unspecified_test_corpus):
@@ -74,7 +77,8 @@ def test_freq_base_transcription_token(unspecified_test_corpus):
                 'u':265,
                 'total':4034}
 
-    freq_base = unspecified_test_corpus.get_frequency_base('transcription','token')
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        freq_base = c.get_frequency_base()
     assert(freq_base == expected)
 
 def test_lcs_spelling(unspecified_test_corpus):
@@ -172,7 +176,8 @@ def test_mass_relate_spelling_type(unspecified_test_corpus):
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('ʃi'),-17.53815687),]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'khorsi',sequence_type='spelling',count_what = 'type')
+    with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'type') as c:
+        calced = string_similarity(c, unspecified_test_corpus.find('atema'), 'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)
 
@@ -193,7 +198,8 @@ def test_mass_relate_spelling_type(unspecified_test_corpus):
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('ʃi'),-7.54617756),]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'khorsi',sequence_type='spelling',count_what = 'type')
+    with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'type') as c:
+        calced = string_similarity(c, unspecified_test_corpus.find('sasi'),'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)
 
@@ -215,7 +221,8 @@ def test_mass_relate_spelling_token(unspecified_test_corpus):
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('ʃi'),-22.4838445)]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'khorsi',sequence_type='spelling',count_what = 'token')
+    with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'token') as c:
+        calced = string_similarity(c,unspecified_test_corpus.find('atema'),'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)
 
@@ -236,7 +243,8 @@ def test_mass_relate_spelling_token(unspecified_test_corpus):
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('ʃi'),-10.12650306)]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'khorsi',sequence_type='spelling',count_what = 'token')
+    with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'token') as c:
+        calced = string_similarity(c,unspecified_test_corpus.find('sasi'),'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)
 
@@ -258,7 +266,8 @@ def test_mass_relate_transcription_type(unspecified_test_corpus):
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('ʃi'),-14.60340869),]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'khorsi',sequence_type='transcription',count_what = 'type')
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        calced = string_similarity(c,unspecified_test_corpus.find('atema'),'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)
 
@@ -279,7 +288,8 @@ def test_mass_relate_transcription_type(unspecified_test_corpus):
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('ʃi'),-6.943894326),]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'khorsi',sequence_type='transcription',count_what = 'type')
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        calced = string_similarity(c,unspecified_test_corpus.find('sasi'),'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)
 
@@ -301,7 +311,8 @@ def test_mass_relate_transcription_token(unspecified_test_corpus):
                 (unspecified_test_corpus.find('atema'),unspecified_test_corpus.find('ʃi'),-15.68503325),]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('atema'),'khorsi',sequence_type='transcription',count_what = 'token')
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        calced = string_similarity(c,unspecified_test_corpus.find('atema'),'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)
 
@@ -322,6 +333,7 @@ def test_mass_relate_transcription_token(unspecified_test_corpus):
                 (unspecified_test_corpus.find('sasi'),unspecified_test_corpus.find('ʃi'),-5.994066536),]
     expected.sort(key=lambda t:t[2])
     expected.reverse()
-    calced = string_similarity(unspecified_test_corpus,unspecified_test_corpus.find('sasi'),'khorsi',sequence_type='transcription',count_what = 'token')
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        calced = string_similarity(c,unspecified_test_corpus.find('sasi'),'khorsi')
     for i, v in enumerate(expected):
         assert(abs(calced[i][2] - v[2]) < 0.0001)

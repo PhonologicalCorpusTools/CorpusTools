@@ -11,8 +11,7 @@ from .io import print_freqalt_results
 
 from corpustools.exceptions import FreqAltError
 
-def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
-                    sequence_type='transcription', output_filename = None,
+def calc_freq_of_alt(corpus, s1, s2, relator_type, output_filename = None,
                     min_rel = None, max_rel = None, phono_align = False,
                     min_pairs_okay = False, from_gui=False, stop_check = None,
                     call_back = None):
@@ -28,11 +27,6 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
     relator_type: string
         The type of relator to be used to measure relatedness, e.g.
         'string_similarity'
-    sequence_type: string
-        The type of segments to be used ('spelling' = roman letters,
-        'transcription' = IPA symbols)
-    count_what: string
-        The type of frequency, either 'type' or 'token'
     max_rel: double
         Filters out all words that are higher than max_rel from a relatedness measure
     min_rel: double
@@ -69,7 +63,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
             cur += 1
             if cur % 1000 == 0:
                 call_back(cur)
-        tier = getattr(w, sequence_type)
+        tier = getattr(w, getattr(corpus, 'sequence_type'))
         if s1 in tier:
             list_s1.append(w)
             all_words.add(w.spelling)
@@ -85,7 +79,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
         cur = 0
     related_list = list()
     if phono_align:
-        al = pam.Aligner(features=corpus.specifier)
+        al = pam.Aligner(features=getattr(corpus, 'corpus').specifier)
     for w1 in list_s1:
         for w2 in list_s2:
             if stop_check is not None and stop_check():
@@ -97,9 +91,7 @@ def calc_freq_of_alt(corpus, s1, s2, relator_type, count_what,
                     call_back(cur)
             if w1 == w2:
                 continue
-            ss = string_similarity(corpus, (w1,w2), relator_type,
-                                                sequence_type = sequence_type,
-                                                count_what = count_what)
+            ss = string_similarity(corpus, (w1,w2), relator_type)
             if min_rel is not None and ss[0][-1] < min_rel:
                 continue
             if max_rel is not None and ss[0][-1] > max_rel:

@@ -66,26 +66,26 @@ def test_basic_corpus_probs(unspecified_test_corpus):
 
 #Not passing around a word object!
 
-#def test_basic_phonoprob(unspecified_test_corpus):
-    #expected = {'atema':0.1011173499,
-                #'enuta':0.1011173499,
-                #'ta':0.4353651056,
-                #'mata':0.1881114313,
-                #'nata':0.1782478499}
-    #for k,v in expected.items():
-        #with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
-            #res = phonotactic_probability_vitevitch(c, k, 'unigram')
-        #assert(abs(v - res) < 0.0001)
+def test_basic_phonoprob(unspecified_test_corpus):
+    expected = {'atema':0.1011173499,
+                'enuta':0.1011173499,
+                'ta':0.4353651056,
+                'mata':0.1881114313,
+                'nata':0.1782478499}
+    for k,v in expected.items():
+        with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+            res = phonotactic_probability_vitevitch(c, unspecified_test_corpus.find(k), 'unigram')
+        assert(abs(v - res) < 0.0001)
 
-    #expected = {'atema':0.0798992942,
-                #'enuta':0.0798992942,
-                #'ta':0.1507780332,
-                #'mata':0.0626335622,
-                #'nata':0.0494821204}
-    #for k,v in expected.items():
-        #with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
-            #res = phonotactic_probability_vitevitch(c, k, 'bigram')
-        #assert(abs(v - res) < 0.0001)
+    expected = {'atema':0.0798992942,
+                'enuta':0.0798992942,
+                'ta':0.1507780332,
+                'mata':0.0626335622,
+                'nata':0.0494821204}
+    for k,v in expected.items():
+        with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+            res = phonotactic_probability_vitevitch(c, unspecified_test_corpus.find(k), 'bigram')
+        assert(abs(v - res) < 0.0001)
 
 #def test_iphod(self):
     #return
