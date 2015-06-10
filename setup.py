@@ -50,9 +50,11 @@ setup(name='corpustools',
                 'corpustools.mutualinfo',
                 'corpustools.phonoprob',
                 'corpustools.command_line'],
+      dependency_links = ['https://github.com/kylebgorman/textgrid/tarball/master#egg=textgrid-1.0'],
       install_requires=[
           'numpy',
           'scipy',
+          'textgrid'
           #'python-acoustic-similarity'
       ],
       entry_points = {
