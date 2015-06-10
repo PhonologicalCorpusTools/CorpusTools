@@ -3,10 +3,9 @@ from math import log2
 import os
 
 from corpustools.corpus.classes import EnvironmentFilter
-
 from corpustools.exceptions import ProdError
 
-def count_segs(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, call_back):
+def count_segs(corpus, seg1, seg2, stop_check, call_back):
     seg1_counts = 0
     seg2_counts = 0
 
@@ -21,19 +20,19 @@ def count_segs(corpus, seg1, seg2, sequence_type, type_or_token, stop_check, cal
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        tier = getattr(word, sequence_type)
+        tier = getattr(word, getattr(corpus, 'sequence_type'))
         for seg in tier:
             if seg == seg1:
-                seg1_counts = seg1_counts+1 if type_or_token == 'type' else seg1_counts+word.frequency
+                seg1_counts = seg1_counts+1 if getattr(corpus, 'type_or_token') == 'type' else seg1_counts+word.frequency
             elif seg == seg2:
-                seg2_counts = seg2_counts+1 if type_or_token == 'type' else seg2_counts+word.frequency
+                seg2_counts = seg2_counts+1 if getattr(corpus, 'type_or_token') == 'type' else seg2_counts+word.frequency
 
     return seg1_counts, seg2_counts
 
 
-def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_check, call_back):
+def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
 
-    envs = [EnvironmentFilter(corpus, env) for env in envs]
+    envs = [EnvironmentFilter(getattr(corpus, 'corpus'), env) for env in envs]
     env_matches = {env:{seg1:[0], seg2:[0]} for env in envs}
 
     missing_envs = defaultdict(set)
@@ -50,19 +49,15 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        for pos,seg in enumerate(getattr(word, sequence_type)):
+        for pos,seg in enumerate(getattr(word, getattr(corpus, 'sequence_type'))):
             if not (seg == seg1 or seg == seg2):
                 continue
 
-            word_env = word.get_env(pos, sequence_type)
+            word_env = word.get_env(pos, getattr(corpus, 'sequence_type'))
             found_env_match = list()
             for env in envs:
                 if word_env in env:
-                    if type_or_token == 'type':
-                        value = 1
-                    elif type_or_token == 'token':
-                        value = word.frequency
-                    env_matches[env][seg].append(value)
+                    env_matches[env][seg].append(word.frequency)
                     found_env_match.append(env)
 
             if not found_env_match:
@@ -86,8 +81,7 @@ def check_envs(corpus, seg1, seg2, envs, sequence_type, type_or_token, stop_chec
 
     return env_matches, missing_envs, overlapping_envs
 
-def calc_prod_all_envs(corpus, seg1, seg2, sequence_type = 'transcription',
-                type_or_token = 'type', all_info = False, stop_check = None,
+def calc_prod_all_envs(corpus, seg1, seg2, all_info = False, stop_check = None,
                 call_back = None):
     """
     Main function for calculating predictability of distribution for
@@ -101,12 +95,6 @@ def calc_prod_all_envs(corpus, seg1, seg2, sequence_type = 'transcription',
         The first segment
     seg2 : string
         The second segment
-    sequence_type : string
-        Name of the Corpus tier to use for finding environments, defaults
-        to 'transcription'
-    type_or_token : string
-        Specify whether to use type frequency or token frequency in
-        calculating predictability of distribution
     all_info : bool
         If true, all the intermediate numbers for calculating predictability
         of distribution will be returned.  If false, only the final entropy
@@ -119,10 +107,11 @@ def calc_prod_all_envs(corpus, seg1, seg2, sequence_type = 'transcription',
         frequency of seg2] if all_info is True, or just entropy if
         all_info is False.
     """
-    returned  = count_segs(corpus, seg1, seg2, sequence_type, type_or_token,stop_check,call_back)
+    freq_base  = corpus.get_frequency_base()
     if stop_check is not None and stop_check():
         return
-    seg1_count, seg2_count = returned
+    seg1_count = freq_base[seg1]
+    seg2_count = freq_base[seg2]
     total_count = seg1_count + seg2_count
     if total_count:
         H = -1 * ((seg1_count/total_count) * log2(seg1_count/total_count) + (seg2_count/total_count) * log2(seg2_count/total_count))
@@ -133,8 +122,7 @@ def calc_prod_all_envs(corpus, seg1, seg2, sequence_type = 'transcription',
     return H
 
 
-def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
-        type_or_token='type', strict = True, all_info = False, stop_check = None,
+def calc_prod(corpus, seg1, seg2, envs, strict = True, all_info = False, stop_check = None,
                 call_back = None):
     """
     Main function for calculating predictability of distribution for
@@ -151,12 +139,6 @@ def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
     envs : list of strings
         List of strings that specify environments either using features
         or segments
-    sequence_type : string
-        Name of the Corpus tier to use for finding environments, defaults
-        to 'transcription'
-    type_or_token : string
-        Specify whether to use type frequency or token frequency in
-        calculating predictability of distribution
     strict : bool
         If true, exceptions will be raised for non-exhausive environments
         and non-unique environments.  If false, only warnings will be
@@ -173,7 +155,7 @@ def calc_prod(corpus, seg1, seg2, envs, sequence_type='transcription',
         of [entropy, frequency of environment, frequency of seg1, frequency
         of seg2] if all_info is True, or just entropy if all_info is False.
     """
-    returned = check_envs(corpus, seg1, seg2, envs,sequence_type, type_or_token, stop_check, call_back)
+    returned = check_envs(corpus, seg1, seg2, envs, stop_check, call_back)
 
     if stop_check is not None and stop_check():
         return

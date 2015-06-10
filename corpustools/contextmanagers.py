@@ -150,7 +150,7 @@ class MostFrequentVariantContext(BaseCorpusContext):
     def __enter__(self):
         if not self.corpus.has_wordtokens:
             print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
-            error
+            #error
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
@@ -171,7 +171,7 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
     def __enter__(self):
         if not self.corpus.has_wordtokens:
             print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
-            error
+            #error
         return self
         
     def __exit__(self, exc_type, exc, exc_tb):
@@ -200,7 +200,7 @@ class WeightedVariantContext(BaseCorpusContext):
     def __enter__(self):
         if not self.corpus.has_wordtokens:
             print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
-            error
+            #error
         return self
             
     def __exit__(self, exc_type, exc, exc_tb):

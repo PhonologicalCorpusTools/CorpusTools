@@ -42,8 +42,7 @@ def phonotactic_probability(corpus, query, algorithm, sequence_type,
                                     segment_delimiter,
                                     stop_check, call_back)
 
-def phonotactic_probability_vitevitch(corpus, query, sequence_type,
-                                    count_what = 'token',
+def phonotactic_probability_vitevitch(corpus, query,
                                     probability_type = 'unigram',
                                     segment_delimiter = '.',
                                     stop_check = None, call_back = None):
@@ -53,9 +52,8 @@ def phonotactic_probability_vitevitch(corpus, query, sequence_type,
     elif probability_type == 'bigram':
         gramsize = 2
 
-    prob_dict = corpus.get_phone_probs(sequence_type, count_what,
-                                        gramsize = gramsize)
-    sequence = zip(*[getattr(query,sequence_type)[i:] for i in range(gramsize)])
+    prob_dict = corpus.get_phone_probs(gramsize = gramsize)
+    sequence = zip(*[getattr(query, getattr(corpus, 'sequence_type'))[i:] for i in range(gramsize)])
 
     totprob = 0
     tot = 0
@@ -66,7 +64,7 @@ def phonotactic_probability_vitevitch(corpus, query, sequence_type,
             notfound = []
 
             for seg in s:
-                if seg not in corpus.inventory:
+                if seg not in getattr(corpus, 'corpus').inventory:
                     notfound.append(seg)
             if len(notfound):
                 raise(PhonoProbError("Segments not found in the corpus: {}".format(', '.join(notfound))))
