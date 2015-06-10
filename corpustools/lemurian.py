@@ -15,7 +15,7 @@ import itertools
 
 #There are two phonological processes:
 #[-cont][+voice] -> [-voice] / [+cont] (positional neutralization)
-# This devoices stops after fricatives, which can only occur in onset. Voiceless stops are already in the inventory.
+#This devoices stops after fricatives, which can only occur in onset. Voiceless stops are already in the inventory.
 #s->z / V_V (intervocalic voicing)
 #This voices /s/ between vowels. /z/ otherwise is not in the inventory.
 
@@ -70,7 +70,7 @@ def pick_a_back_vowel():
 def stop():
     pass
 
-spelling_rules = {'x':'h', 'wu':'u', 'ji':'i', 'N': 'N', 'M':'N'}
+spelling_rules = {'x':'h', 'wu':'u', 'ji':'i', 'N': 'N', 'M':'N', 'z':'s'}
 
 transitions = {#pick an onset
                'q1': (pick_a_cons,['q5','q6']), #C2 will be either a glide or nothing
@@ -124,19 +124,28 @@ def make_minimal_pairs(lexicon, subset_size):
 
     coronal_pairs = int(round(subset_size*.75))
     other_pairs = int(round(subset_size*.25))
-    words_with_coronals = [word for word in lexicon if any(letter in coronals for letter in word)]
+    words_with_coronals = [word for word in lexicon if any(letter in coronals for letter in word if not letter in nasals)]
+    #nasals are avoided because it's hard to find which are codas at this point
     minimal_pairs = list()
 
     for j in range(coronal_pairs):
         word = random.choice(words_with_coronals)
-        pos = [i for (i,x) in enumerate(word) if x in coronals]
-        pos = random.choice(pos)
-        seg1 = word[pos]
-        seg2 = random.choice([c for c in coronals if not c == seg1])
+        pos = [(i,x) for (i,x) in enumerate(word) if x in coronals]
+
+        pos,seg1 = random.choice(pos)
+        nextseg = word[pos+1]
+
+        if nextseg in vowels or nextseg in glides:#any consonant can go here
+            seg2 = random.choice([s for s in coronals if not s == seg1])
+        elif nextseg in stops or nextseg in nasals: #it's a complex onset, must be a fricative
+            seg2 = random.choice(['f','x'])
+        else:
+            seg2 = seg1 #no change
+
+
         possible_word = word[:]
         possible_word[pos] = seg2
         minimal_pairs.append(possible_word)
-
 
     for j in range(other_pairs):
         word = random.choice(lexicon)
@@ -147,9 +156,14 @@ def make_minimal_pairs(lexicon, subset_size):
         elif seg1 in back:
             seg2 = random.choice([b for b in back if not b == seg1])
         elif seg1 in glides:
-            pass#glides have really restriced distributions
+            pass#glides have really restricted distributions, leave them alone
         else:
-            seg2 = random.choice([c for c in cons if not c == seg1])
+            if seg1 in stops:
+                seg2 = random.choice([s for s in stops if not s == seg1])
+            elif seg1 in nasals:
+                seg2 = random.choice([n for n in nasals if not n == seg1])
+            elif seg1 in fricatives:
+                seg2 = random.choice([f for f in fricatives if not f == seg1])
         possible_word = word[:]
         possible_word[pos] = seg2
         minimal_pairs.append(possible_word)
@@ -158,6 +172,7 @@ def make_minimal_pairs(lexicon, subset_size):
 
 def generate_lexicon(lexicon_size, max_syllable_length, minimal_pair_num):
     lexicon = list()
+    lexicon.extend(['usalu', 'mesesa', 'rosudu', 'ljoso', 'asamkyo'])
     #for n in range(lexicon_size):
     syl_count = 0
     word = list()
@@ -181,6 +196,7 @@ def generate_lexicon(lexicon_size, max_syllable_length, minimal_pair_num):
             next_state = random.choice(start_states)
         elif next_state == 'q7' or next_state=='q8':#vowel states
             syl_count += 1
+    lexicon = [[w for w in word if w] for word in lexicon]
     lexicon.extend(make_minimal_pairs(lexicon, minimal_pair_num))
     return [''.join(word) for word in lexicon]
 
@@ -200,7 +216,7 @@ def make_corpus(lexicon):
 
 
 if __name__ == '__main__':
-    lexicon = generate_lexicon(15, 3, 15)#base lexicon size, max syllable length, number of minimal pairs to add to base lexicon
+    lexicon = generate_lexicon(60, 3, 40)#base lexicon size, max syllable length, number of minimal pairs to add to base lexicon
     lexicon = allophones(lexicon)
     corpus = make_corpus(lexicon)
     with open(os.path.join(os.getcwd(),'lemurian.txt'), mode='w', encoding='utf-8') as f:

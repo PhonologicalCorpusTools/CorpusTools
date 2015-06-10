@@ -134,6 +134,7 @@ class FunctionDialog(PCTDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
 
     def handleError(self, error):
+        print(error)
         PCTDialog.handleError(self, error)
         self.progressDialog.cancel()
 

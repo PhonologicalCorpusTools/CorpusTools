@@ -2,9 +2,10 @@
 import sys
 import operator
 from itertools import combinations, product
+from collections import defaultdict
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
-    QMessageBox, QGroupBox, QLineEdit
+    QMessageBox, QGroupBox, QLineEdit, QTableWidgetItem
 from corpustools.corpus.classes import Attribute
 from corpustools.gui.views import TableWidget
 
@@ -635,9 +636,125 @@ class EditableInventoryTable(InventoryTable):
         super().__init__()
         self.parent = parent
         self.horizontalHeader().setSectionsClickable(True)
-        self.horizontalHeader().sectionClicked.connect(self.editChartCol)
+        self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
         self.verticalHeader().setSectionsClickable(True)
-        self.verticalHeader().sectionClicked.connect(self.editChartRow)
+        self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
+
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.viewport().setAcceptDrops(True)
+        self.setDragDropOverwriteMode(False)
+        self.setDropIndicatorShown(True)
+
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+
+    def dragMoveEvent(self,event):
+        event.accept()
+
+    def dropEvent(self, event):
+
+        if event.source() == self and (event.dropAction() == Qt.MoveAction or self.dragDropMode() == QAbstractItemView.InternalMove):
+            success, index = self.dropOn(event)
+            if not success:
+                return
+            dropRow = index.row()
+            dropCol = index.column()
+            if success:
+                selRow = self.selectionModel().selectedRows()[0].row()
+                selCol = self.selectionModel().selectedRows()[0].column()
+                if dropRow == -1:
+                    dropRow = self.rowCount()#take maximum, user dragged past the bottom
+                elif dropRow == 0:
+                    pass
+                elif selRow < dropRow: #going from lower to higher row
+                    dropRow +=1
+                    self.insertRow(dropRow)
+                elif selRow > dropRow: #going from higher to lower row
+                    self.insertRow(dropRow)
+                for c in range(self.columnCount()):
+                    print(selRow,c)
+                    source = self.itemAt(selRow,c)
+                    print(self.item(selRow,c), self.itemAt(selRow,c))
+                    self.setItem(dropRow,c,source)
+
+
+                    #for j in range(selRow, self.rowCount()):
+                     #   source = QTableWidgetItem(self.item(r, j))
+
+
+                #selRows = self.selectionModel().selectedRows()
+                #top = selRows[0].row()
+                #offset = dropRow - top
+                # for i, row in enumerate(selRows):
+                #     r = row.row() + offset
+                #     if r > self.rowCount() or r < 0:
+                #         r = 0
+                #
+                #     for j in range(self.columnCount()):
+                #         source = QTableWidgetItem(self.item(r, j))
+                #         self.setItem(r, j, source)
+                #for row in reversed(selRows):
+                 #   self.removeRow(row)
+
+                #event.accept()
+        else:
+            QTableView.dropEvent(event)
+
+    def droppingOnItself(self, event, index):
+        dropAction = event.dropAction()
+
+        if self.dragDropMode() == QAbstractItemView.InternalMove:
+            dropAction = Qt.MoveAction
+
+        if event.source() == self and event.possibleActions() & Qt.MoveAction and dropAction == Qt.MoveAction:
+            selectedIndexes = self.selectedIndexes()
+            child = index
+            while child.isValid() and child != self.rootIndex():
+                if child in selectedIndexes:
+                    return True
+                child = child.parent()
+
+        return False
+
+    def dropOn(self, event):
+        if event.isAccepted():
+            return False, None
+
+        index = QModelIndex()
+        #get values with index.row() or index.col()
+        #the value appears to be -1 if the user drags off the table limits
+
+        if self.viewport().rect().contains(event.pos()):
+            index = self.indexAt(event.pos())
+            if not index.isValid() or not self.visualRect(index).contains(event.pos()):
+                index = self.rootIndex()
+
+        if self.model().supportedDropActions() and event.dropAction():
+
+            if not self.droppingOnItself(event, index):
+                # print 'row is %d'%row
+                # print 'col is %d'%col
+                return True, index
+
+        return False, None
+
+    def position(self, pos, rect, index):
+        r = QAbstractItemView.OnViewport
+        margin = 2
+        if pos.y() - rect.top() < margin:
+            r = QAbstractItemView.AboveItem
+        elif rect.bottom() - pos.y() < margin:
+            r = QAbstractItemView.BelowItem
+        elif rect.contains(pos, True):
+            r = QAbstractItemView.OnItem
+
+        if r == QAbstractItemView.OnItem and not (self.model().flags(index) & Qt.ItemIsDropEnabled):
+            r = QAbstractItemView.AboveItem if pos.y() < rect.center().y() else QAbstractItemView.BelowItem
+
+        return r
+
 
     def editChartRow(self, index):
         old_name = self.verticalHeaderItem(index).text()
@@ -807,13 +924,18 @@ class InventoryBox(QWidget):
         consRowMapping = {x:i for i,x in enumerate(verticalHeaderLabelText)}
 
         self.consTable.resizeColumnsToContents()
+        button_map = defaultdict(list)
 
         for seg,category in consList:
             for h,v in product(horizontalHeaderLabelText, verticalHeaderLabelText):
                 if h in category and v in category:
                     btn = self.generateSegmentButton(seg.symbol)
-                    self.consTable.setCellWidget(consRowMapping[v], consColMapping[h], btn)
+                    button_map[(h,v)].append(btn)
                     break
+
+        for key,buttons in button_map.items():
+            c,r = key
+            self.consTable.setCellWidget(consRowMapping[r],consColMapping[c],MultiSegmentCell(buttons))
         return cons
 
     def makeVowelBox(self,vowColumns,vowRows,vowList,editable):
@@ -960,6 +1082,20 @@ class InventoryBox(QWidget):
                 if b.isChecked():
                     value.append(b.text())
             return value
+
+class MultiSegmentCell(QWidget):
+
+    def __init__(self,buttons,parent=None):
+        super().__init__(parent)
+        layout = QHBoxLayout()
+
+        #layout.setContentsMargins(0,0,0,0)
+        #layout.setSpacing(0)
+
+        for b in buttons:
+            layout.addWidget(b)
+
+        self.setLayout(layout)
 
 class TranscriptionWidget(QGroupBox):
     transcriptionChanged = Signal(object)
@@ -1287,7 +1423,7 @@ class EnvironmentDialog(QDialog):
 
         self.inventory = corpus.inventory
         self.corpus = corpus
-        self.features = inventory[-1].features.keys()
+        self.features = self.corpus.specifier.features
 
         layout = QVBoxLayout()
 

@@ -499,6 +499,7 @@ class FeatureMatrix(object):
         self.consCols['Velar'] = [5,{'consonantal':'+', 'dorsal': '+', 'labial':'-'}, None]
         self.consCols['Uvular'] = [6,{'consonantal':'+', 'dorsal': '+', 'back':'+', 'labial':'-'}, None]
         self.consCols['Glottal'] = [7,{'consonantal':'+', 'dorsal': '-', 'coronal':'-', 'labial':'-', 'nasal': '-'}, None]
+
         self.consRows['Stop'] = [0,{'consonantal':'+', 'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None]
         self.consRows['Nasal'] = [1,{'consonantal':'+', 'nasal': '+'}, None]
         self.consRows['Trill'] = [2,{'consonantal':'+', 'trill': '+'}, None]
@@ -873,6 +874,7 @@ class FeatureMatrix(object):
             category = ['Vowel']
         else:
             category = ['Consonant']
+
         for row,col in itertools.product(self.consRows, self.consCols):
             row_index, row_features, row_segs = self.consRows[row]
             col_index, col_features, col_segs = self.consCols[col]
