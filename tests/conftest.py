@@ -69,14 +69,14 @@ def features_test_dir(test_dir):
 @pytest.fixture(scope='module')
 def binary_test_dir(test_dir):
     path = os.path.join(test_dir, 'binary')
-    if not path:
+    if not os.path.exists(path):
         os.makedirs(path)
     return path
 
 @pytest.fixture(scope='module')
 def export_test_dir(test_dir):
-    path = os.path.join(test_dir, 'exported')
-    if not path:
+    path = os.path.join(test_dir, 'export')
+    if not os.path.exists(path):
         os.makedirs(path)
     return path
 
