@@ -1163,6 +1163,9 @@ class SegmentSelectionWidget(QWidget):
         self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegments)
         self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
 
+    def clearAll(self):
+        self.inventoryFrame.clearAll()
+
     def value(self):
         return self.inventoryFrame.value()
 
@@ -1576,21 +1579,9 @@ class SegmentPairDialog(QDialog):
 
         layout = QVBoxLayout()
 
-        segFrame = QFrame()
+        self.inventoryFrame = SegmentSelectionWidget(inventory)
 
-        segLayout = QHBoxLayout()
-
-        scroll = QScrollArea()
-        self.inventoryFrame = InventoryBox('', inventory)
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.inventoryFrame)
-        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setMinimumHeight(140)
-        policy = scroll.sizePolicy()
-        policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        #self.columnFrame.
-        layout.addWidget(scroll)
+        layout.addWidget(self.inventoryFrame)
 
         self.setLayout(layout)
 
