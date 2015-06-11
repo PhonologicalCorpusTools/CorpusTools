@@ -665,36 +665,27 @@ class EditableInventoryTable(InventoryTable):
                 selRow = self.selectionModel().selectedRows()[0].row()
                 selCol = self.selectionModel().selectedRows()[0].column()
                 if dropRow == -1:
-                    dropRow = self.rowCount()#take maximum, user dragged past the bottom
-                # elif dropRow == 0:
-                #     pass
-                elif selRow < dropRow: #going from top to bottom
-                    self.insertRow(selRow+1)
-                    for c in range(self.columnCount()):
-                        self.setCellWidget(selRow+1,c,MultiSegmentCell([]))
-                    for r in range(selRow+1, dropRow+1):
-                        for c in range(self.columnCount()):
-                            source = self.cellWidget(r+1,c)
-                            self.setCellWidget(r,c,source)
-                    for c in range(self.columnCount()):
-                        source = self.cellWidget(selRow,c)
-                        print(source)
-                        self.setCellWidget(dropRow,c,source)
-                        #PROBLEM HERE: WHY IS THIS NOT BEING PROPERLY SET?
-                    self.removeRow(selRow)
-                elif selRow > dropRow: #going from bottom to top
-                    self.insertRow(selRow-1)
+                    insertAt = self.rowCount()#take maximum, user dragged past the bottom
+                elif selRow < dropRow:
+                    insertAt = dropRow+1
+                elif selRow > dropRow:
+                    insertAt = dropRow-1
+
+                #if insertAt < 0:
+                #    insertAt = 0
+                if insertAt > self.rowCount():
+                    insertAt = self.rowCount()
+
+                self.insertRow(insertAt)
+                self.setVerticalHeaderItem(insertAt, QTableWidgetItem(self.verticalHeaderItem(selRow).text()))
+
+
+                for c in range(self.columnCount()):
+                    source = self.cellWidget(selRow,c)
+                    self.setCellWidget(insertAt,c,source)
 
                 self.resizeRowsToContents()
-                # for r in range(selRow, dropRow):
-                #     for c in range(self.columnCount()):
-                #         source = self.cellWidget(r+1,c)
-                #         print(r,c,source)
-                #         self.setCellWidget(r,c,source)
-                #         return
-                #         self.resizeRowsToContents()
-                        #self.removeCellWidget(selRow,c)
-                #self.removeRow(selRow)
+
                 event.accept()
 
 
