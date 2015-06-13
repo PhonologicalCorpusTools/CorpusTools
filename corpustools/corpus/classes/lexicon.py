@@ -429,12 +429,6 @@ class Transcription(object):
     def __len__(self):
         return len(self._list)
 
-class RowColInfo(object):
-
-    def __init__(name,features,segments):
-        self.name = name
-        self.features = features
-        self.segments = segments
 
 class FeatureMatrix(object):
     """

@@ -603,18 +603,18 @@ class InventoryTable(QTableWidget):
 
         try:
             self.horizontalHeader().setSectionsClickable(False)
-            self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            #self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
             self.verticalHeader().setSectionsClickable(False)
-            self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            #self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
         except AttributeError:
             self.horizontalHeader().setClickable(False)
-            self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+            #self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
             self.verticalHeader().setClickable(False)
-            self.verticalHeader().setResizeMode(QHeaderView.Fixed)
+            #self.verticalHeader().setResizeMode(QHeaderView.Fixed)
 
         self.setSelectionMode(QAbstractItemView.NoSelection)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        #self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     def resize(self):
         self.resizeRowsToContents()
@@ -636,8 +636,10 @@ class EditableInventoryTable(InventoryTable):
         super().__init__()
         self.parent = parent
         self.horizontalHeader().setSectionsClickable(True)
+        self.horizontalHeader().sectionClicked.connect(self.highlightColumn)
         self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
         self.verticalHeader().setSectionsClickable(True)
+        self.verticalHeader().sectionClicked.connect(self.highlightRow)
         self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
 
         self.setDragEnabled(True)
@@ -647,11 +649,26 @@ class EditableInventoryTable(InventoryTable):
         self.setDropIndicatorShown(True)
 
         self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        #self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setDragDropMode(QAbstractItemView.InternalMove)
+
+    def allowReordering(self, value):
+        self.setDragEnabled(value)
+        self.setAcceptDrops(value)
+        self.viewport().setAcceptDrops(value)
+        self.setDragDropOverwriteMode(value)
+        self.setDropIndicatorShown(value)
 
     def dragMoveEvent(self,event):
         event.accept()
+
+    def highlightRow(self,row_num):
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.selectRow(row_num)
+
+    def highlightColumn(self,col_num):
+        self.setSelectionBehavior(QAbstractItemView.SelectColumns)
+        self.selectColumn(col_num)
 
     def dropEvent(self, event):
 
@@ -659,34 +676,73 @@ class EditableInventoryTable(InventoryTable):
             success, index = self.dropOn(event)
             if not success:
                 return
-            dropRow = index.row()
-            dropCol = index.column()
-            if success:
-                selRow = self.selectionModel().selectedRows()[0].row()
-                selCol = self.selectionModel().selectedRows()[0].column()
-                if dropRow == -1:
-                    insertAt = self.rowCount()#take maximum, user dragged past the bottom
-                elif selRow < dropRow:
-                    insertAt = dropRow+1
-                elif selRow > dropRow:
-                    insertAt = dropRow-1
 
-                #if insertAt < 0:
-                #    insertAt = 0
+        if self.selectionBehavior() == QAbstractItemView.SelectRows:
+            dropRow = index.row()
+            selRow = self.selectionModel().selectedRows()[0].row()
+
+            if dropRow == -1:
+                insertAt = self.rowCount()#take maximum, user dragged past the bottom
+
+            if selRow < dropRow:
+                insertAt = dropRow+1
+                sourceRow = selRow
                 if insertAt > self.rowCount():
                     insertAt = self.rowCount()
 
-                self.insertRow(insertAt)
-                self.setVerticalHeaderItem(insertAt, QTableWidgetItem(self.verticalHeaderItem(selRow).text()))
+            elif selRow > dropRow:
+                insertAt = dropRow
+                sourceRow = selRow+1
+                if sourceRow > self.rowCount():
+                    sourceRow = self.rowCount()
 
+            self.insertRow(insertAt)
+            self.setVerticalHeaderItem(insertAt, QTableWidgetItem(self.verticalHeaderItem(sourceRow).text()))
+            for c in range(self.columnCount()):
+                sourceWidget = self.cellWidget(sourceRow,c)
+                self.setCellWidget(insertAt,c,sourceWidget)
 
-                for c in range(self.columnCount()):
-                    source = self.cellWidget(selRow,c)
-                    self.setCellWidget(insertAt,c,source)
+            headers = [self.verticalHeaderItem(r).text() for r in range(self.rowCount())]
+            self.parent.corpus.specifier.matrix = {k:v for k,v in self.parent.corpus.specifier.matrix.items() if k in headers}
+            for r in range(self.rowCount()):
+                self.parent.corpus.specifier.consRows[self.verticalHeaderItem(r).text()][0] = r
 
-                self.resizeRowsToContents()
+            self.resizeRowsToContents()
+            event.accept()
 
-                event.accept()
+        elif self.selectionBehavior() == QAbstractItemView.SelectColumns:
+            dropCol = index.column()
+            selCol = self.selectionModel().selectedColumns()[0].column()
+            if dropCol == -1:
+                insertAt = self.columnCount()#take maximum, user dragged past the bottom
+
+            if selCol < dropCol:
+                insertAt = dropCol+1
+                sourceCol = selCol
+                if insertAt > self.columnCount():
+                    insertAt = self.columnCount()
+
+            elif selCol > dropCol:
+                insertAt = dropCol
+                sourceCol = selCol+1
+                if sourceCol > self.columnCount():
+                    sourceCol = self.columnCount()
+
+            self.insertColumn(insertAt)
+            self.setHorizontalHeaderItem(insertAt, QTableWidgetItem(self.horizontalHeaderItem(sourceCol).text()))
+            for r in range(self.rowCount()):
+                sourceWidget = self.cellWidget(r,sourceCol)
+                self.setCellWidget(r,insertAt,sourceWidget)
+
+            self.resizeColumnsToContents()
+            self.removeColumn(sourceCol)
+
+            headers = [self.horizontalHeaderItem(c).text() for c in range(self.columnCount())]
+            self.parent.corpus.specifier.matrix = {k:v for k,v in self.parent.corpus.specifier.matrix.items() if k in headers}
+            for c in range(self.columnCount()):
+                self.parent.corpus.specifier.consCols[self.verticalHeaderItem(c).text()][0] = c
+
+            event.accept()
 
 
     def droppingOnItself(self, event, index):
@@ -764,7 +820,11 @@ class EditableInventoryTable(InventoryTable):
             self.parent.corpus.specifier.consRows[new_name][2] = [s for s in dialog.selectedSegs]
             self.parent.resetInventoryBox(*self.generateInventoryBoxData())
 
+    def saveReordering(self):
+        pass
+
     def editChartCol(self, index):
+
         old_name = self.horizontalHeaderItem(index).text()
         default_specs = self.parent.corpus.specifier.consCols[old_name]
         dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory',
