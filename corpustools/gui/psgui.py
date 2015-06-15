@@ -51,9 +51,9 @@ class PhonoSearchDialog(FunctionDialog):
         psFrame = QFrame()
         pslayout = QHBoxLayout()
 
-        self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
+        #self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
 
-        pslayout.addWidget(self.targetWidget)
+        #pslayout.addWidget(self.targetWidget)
 
         self.envWidget = EnvironmentSelectWidget(self.corpus.inventory)
         pslayout.addWidget(self.envWidget)

@@ -22,7 +22,6 @@ from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpu
 def truncate_string(string, length = 10):
     return (string[:length] + '...') if len(string) > length + 3 else string
 
-
 class NonScrollingComboBox(QComboBox):
     def __init__(self, parent = None):
         QComboBox.__init__(self, parent)
@@ -30,7 +29,6 @@ class NonScrollingComboBox(QComboBox):
 
     def wheelEvent(self, e):
         e.ignore()
-
 
 class CorpusSelect(QComboBox):
     def __init__(self, parent, settings):
@@ -148,7 +146,6 @@ class ParsingDialog(QDialog):
         delimiter = self.delimiterWidget.text()
         if delimiter != '':
             self.digraphWidget.characters -= set([delimiter])
-
 
 class AnnotationTypeWidget(QGroupBox):
     def __init__(self, annotation_type, parent = None,
@@ -494,7 +491,6 @@ class NumericFilter(QWidget):
 
         return self.conditionals[ind], self.valueEdit.text()
 
-
 class AttributeFilterDialog(QDialog):
     def __init__(self, attributes,parent=None):
         QDialog.__init__(self,parent)
@@ -656,7 +652,6 @@ class AttributeFilterWidget(QGroupBox):
 
     def value(self):
         return [x[0] for x in self.table.model().filters]
-
 
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
@@ -856,8 +851,6 @@ class DigraphDialog(QDialog):
         self.addOneMore = False
         QDialog.reject(self)
 
-
-
 class DigraphWidget(QGroupBox):
     def __init__(self,parent = None):
         self._parent = parent
@@ -1011,8 +1004,6 @@ class InventoryTable(QTableWidget):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
 
-
-
 class SegmentButton(QPushButton):
     def sizeHint(self):
         sh = QPushButton.sizeHint(self)
@@ -1160,8 +1151,11 @@ class SegmentSelectionWidget(QWidget):
         self.setLayout(layout)
 
         self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
-        self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegments)
+        self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegmentFeatures)
         self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
+
+    def select(self, segments):
+        self.inventoryFrame.selectSegments(segments)
 
     def value(self):
         return self.inventoryFrame.value()
@@ -1413,11 +1407,15 @@ class InventoryBox(QWidget):
             if features and btn.text() in segs:
                 btn.setStyleSheet("QPushButton{background-color: red;}")
 
-    def selectSegments(self, features):
+    def selectSegmentFeatures(self, features):
         segs = self.inventory.features_to_segments(features)
-        for btn in self.btnGroup.buttons():
-            if features and btn.text() in segs:
-                btn.setChecked(True)
+        self.selectSegments(segs)
+
+    def selectSegments(self, segs):
+        if len(segs) > 0:
+            for btn in self.btnGroup.buttons():
+                if btn.text() in segs:
+                    btn.setChecked(True)
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
@@ -1491,8 +1489,6 @@ class TranscriptionWidget(QGroupBox):
             self.segments.hide()
             self.showInv.setText('Show inventory')
         self.updateGeometry()
-
-
 
 class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
@@ -1568,7 +1564,6 @@ class FeatureBox(QWidget):
         if not val:
             return ''
         return '[{}]'.format(','.join(val))
-
 
 class SegmentPairDialog(QDialog):
     def __init__(self, inventory,parent=None):
@@ -1663,7 +1658,6 @@ class SegPairTableWidget(TableWidget):
 
     def addSwitch(self, index, begin, end):
         self.openPersistentEditor(self.model().index(begin, 2))
-
 
 class SegmentPairSelectWidget(QGroupBox):
     def __init__(self,inventory,parent=None):
@@ -1912,14 +1906,67 @@ class EnvironmentDialog(QDialog):
     def reject(self):
         QDialog.reject(self)
 
+
+class SegmentSelectDialog(QDialog):
+    def __init__(self, inventory, selected = None, parent=None):
+        QDialog.__init__(self,parent)
+
+        layout = QVBoxLayout()
+
+        segFrame = QFrame()
+
+        segLayout = QHBoxLayout()
+
+        self.segFrame = SegmentSelectionWidget(inventory)
+
+        if selected is not None:
+            self.segFrame.select(selected)
+
+        segLayout.addWidget(self.segFrame)
+
+        segFrame.setLayout(segLayout)
+
+        layout.addWidget(segFrame)
+
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Select segment pair')
+
+    def value(self):
+        return self.segFrame.value()
+
+    def reset(self):
+        self.segFrame.clearAll()
+
+
 class EnvironmentSegmentWidget(QWidget):
     def __init__(self, inventory, parent = None, middle = False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
 
+        self.middle = middle
+
         layout = QVBoxLayout()
-        self.mainLabel = QLabel('{}')
+        if self.middle:
+            lab = '_'
+        else:
+            lab = '{}'
+        self.mainLabel = QLabel(lab)
+        self.mainLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
         layout.addWidget(self.mainLabel)
 
@@ -1933,8 +1980,19 @@ class EnvironmentSegmentWidget(QWidget):
             self.selectSegments()
             ev.accept()
 
+    def updateLabel(self):
+        if self.middle:
+            lab = '_\n\n{%s}'
+        else:
+            lab = '{%s}'
+        lab = lab % ', '.join(self.segments)
+        self.mainLabel.setText(lab)
+
     def selectSegments(self):
-        pass
+        dialog = SegmentSelectDialog(self.inventory, self.segments, self)
+        if dialog.exec_():
+            self.segments = dialog.value()
+            self.updateLabel()
 
     def showMenu(self, pos):
         removeAction = QAction(self)
@@ -1942,7 +2000,6 @@ class EnvironmentSegmentWidget(QWidget):
         removeAction.triggered.connect(self.deleteLater)
 
         menu = QMenu(self)
-        #menu.addAction(editAction)
         menu.addAction(removeAction)
 
         menu.popup(self.mapToGlobal(pos))
@@ -1971,7 +2028,7 @@ class EnvironmentWidget(QWidget):
         rhslayout = QHBoxLayout()
         self.rhsWidget.setLayout(rhslayout)
 
-        self.middleWidget = QLabel('_')#EnvironmentSegmentWidget(middle = True)
+        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True)
 
         self.removeButton = QPushButton('Remove environment')
 
@@ -2002,7 +2059,6 @@ class EnvironmentWidget(QWidget):
     def addRhs(self):
         segWidget = EnvironmentSegmentWidget(self.inventory)
         self.rhsWidget.layout().addWidget(segWidget)
-        self.rhsWidgets.append(segWidget)
 
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self, inventory,parent=None):
@@ -2024,6 +2080,7 @@ class EnvironmentSelectWidget(QGroupBox):
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.environmentFrame)
         scroll.setMinimumWidth(140)
+        scroll.setMinimumHeight(200)
 
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
@@ -2162,7 +2219,6 @@ class RadioSelectWidget(QGroupBox):
             else:
                 w.setEnabled(True)
 
-
 class SegmentClassSelectWidget(QFrame):
 
     def __init__(self, parent, corpus):
@@ -2253,7 +2309,6 @@ class SegmentClassSelectWidget(QFrame):
 
     def accept(self):
          QDialog.accept(self)
-
 
 class CreateClassWidget(QDialog):
     def __init__(self, parent, corpus, class_type):

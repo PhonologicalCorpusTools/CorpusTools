@@ -357,6 +357,17 @@ class Transcription(object):
                     else:
                         raise(NotImplementedError('That format for seg_list is not supported.'))
 
+    def __contains__(self, other):
+        if isinstance(other, EnvironmentFilter):
+            if all(other.middle not in self):
+                return False
+        elif isinstance(other, Segment):
+            if other.symbol in self._list:
+                return True
+        elif isinstance(other, str):
+            if other in self._list:
+                return True
+        return False
 
     def __setstate__(self, state):
         if 'stress_pattern' not in state:
@@ -900,63 +911,26 @@ class Environment(object):
 
 class EnvironmentFilter(object):
     """
-    Environments are strings of the form "[+feature,-feature]_[+feature]"
-    or "[+feature]_" or "a_b" or "_b"
+
     """
-    def __init__(self, corpus, env):
+    def __init__(self, middle_segments, lhs = None, rhs = None):
+        self.middle = set(middle_segments)
+        self.lhs = lhs
+        self.rhs = rhs
 
-        #there's a problem where some feature names have underscores in them
-        #so doing lhs,rhs=env.split('_') causes unpacking problems
-        #this in an awakward work-around that checks to see if either side of
-        #the environment is a list of features, by looking for brackets, then
-        #splits by brackets if necessary. However, I can't split out any
-        #starting brackets [ because I also use those for identifying lists
-        #at a later point
-        #otherwise, if its just segment envrionments, split by underscore
-        if ']_[' in env:
-            #both sides are lists
-            lhs, rhs = env.split(']_')
-        elif '_[' in env:
-            #only the right hand side is a list of a features
-            lhs, rhs = env.split('_', maxsplit=1)
-        elif ']_' in env:
-            #only the left hand side is a list of features
-            lhs, rhs = env.split(']_')
-        else: #both sides are segments
-            lhs, rhs = env.split('_')
+    def compile_re_pattern(self):
+        pass
 
-        if not lhs:
-            self.lhs_string  = ''
-            self.lhs = list()
-        elif lhs.startswith('['):
-            self.lhs_string = lhs
-            lhs = lhs.lstrip('[')
-            lhs = lhs.rstrip(']')
-            #lhs = {feature[1:]:feature[0] for feature in lhs.split(',')}
-            lhs = lhs.split(',')
-            self.lhs = corpus.features_to_segments(lhs)
-        #else it's a segment, just leave it as the string it already is
-        else:
-            self.lhs_string = lhs
-            self.lhs = [lhs]
+    def set_lhs(self, lhs):
+        self.lhs = lhs
+        self.compile_re_pattern()
 
-        if not rhs:
-            self.rhs_string  = ''
-            self.rhs = list()
-        elif rhs.startswith('['):
-            self.rhs_string = rhs
-            rhs = rhs.lstrip('[')
-            rhs = rhs.rstrip(']')
-            #rhs = {feature[1:]:feature[0] for feature in rhs.split(',')}
-            rhs = rhs.split(',')
-            self.rhs = corpus.features_to_segments(rhs)
-        #else it's a segment, just leave it as the string it already is
-        else:
-            self.rhs_string = rhs
-            self.rhs = [rhs]
+    def set_rhs(self, rhs):
+        self.rhs = rhs
+        self.compile_re_pattern()
 
     def __str__(self):
-        return '_'.join([self.lhs_string,self.rhs_string])
+        return '_'.join([self.lhs_string, self.rhs_string])
 
     def __eq__(self, other):
         if not hasattr(other,'lhs'):
@@ -970,7 +944,7 @@ class EnvironmentFilter(object):
         return True
 
     def __hash__(self):
-        return hash((self.rhs_string, self.lhs_string))
+        return hash((self.rhs, self.lhs))
 
     def __contains__(self, item):
         if not isinstance(item, Environment):
