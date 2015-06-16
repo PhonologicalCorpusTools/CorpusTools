@@ -128,3 +128,5 @@ def test_prod_wordtokens_type(specified_discourse_corpus):
     for k,v in result.items():
         assert(expected_envs[k]-v < 0.001)
 
+def test_prod_pronunciation_variants(pronunciation_variants_corpus):
+    pass
