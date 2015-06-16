@@ -188,20 +188,26 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
         
     def __iter__(self):
-        for i, word in enumerate(self.corpus):
+        for word in self.corpus:
             variants = word.variants()
             for v in variants:                                      # Create a new word from each variant
+                kwargs = {}
                 if self.sequence_type == 'spelling':
-                    spell = v
-                    trans = getattr(word, 'transcription')
-                    freq = variants[v]
+                    kwargs['spelling'] = v
+                    kwargs['transcription'] = word.transcription
+                    kwargs['frequency'] = variants[v]
+                elif self.sequence_type == 'transcription':
+                    kwargs['spelling'] = word.spelling
+                    kwargs['transcription'] = v
+                    kwargs['frequency'] = variants[v]
                 else:
-                    spell = getattr(word, 'spelling')
-                    trans = v
-                    freq = variants[v]
+                    kwargs['spelling'] = word.spelling
+                    kwargs['transcription'] = word.transcription
+                    kwargs['frequency'] = variants[v]
+                    kwargs[self.sequence_type] = v
                 if self.type_or_token == 'type':
-                    freq = 1
-                w = Word(spelling = spell, transcription = trans, frequency = freq)
+                    kwargs['frequency'] = 1
+                w = Word(**kwargs)
                 yield w
 
 
@@ -217,21 +223,27 @@ class WeightedVariantContext(BaseCorpusContext):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
         
     def __iter__(self):
-        for i, word in enumerate(self.corpus):
+        for word in self.corpus:
             variants = word.variants()
             num_of_variants = len(variants)
             total_variants = sum(variants.values())
             for v in variants:                                      # Create a new word from each variant
+                kwargs = {}
                 if self.sequence_type == 'spelling':
-                    spell = v
-                    trans = getattr(word, 'transcription')
-                    freq = variants[v]/total_variants
+                    kwargs['spelling'] = v
+                    kwargs['transcription'] = word.transcription
+                    kwargs['frequency'] = variants[v]/total_variants
+                elif self.sequence_type == 'transcription':
+                    kwargs['spelling'] = word.spelling
+                    kwargs['transcription'] = v
+                    kwargs['frequency'] = variants[v]/total_variants
                 else:
-                    spell = getattr(word, 'spelling')
-                    trans = v
-                    freq = variants[v]/total_variants
+                    kwargs['spelling'] = word.spelling
+                    kwargs['transcription'] = word.transcription
+                    kwargs['frequency'] = variants[v]/total_variants
+                    kwargs[self.sequence_type] = v
                 if self.type_or_token == 'type':
-                    freq = 1/num_of_variants
-                w = Word(spelling = spell, transcription = trans, frequency = freq)
+                    kwargs['frequency'] = 1/num_of_variants
+                w = Word(**kwargs)
                 yield w
 
