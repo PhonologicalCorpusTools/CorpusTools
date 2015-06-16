@@ -467,21 +467,28 @@ class FeatureMatrix(object):
         #self.matrix[''] = {'*':''}
         self.consCols = dict()
         self.consRows = dict()
-        self.generateGenericConsNames()
+        self.vowCols = dict()
+        self.vowRows = dict()
+        self.generateGenericNames()
 
-    def generateGenericConsNames(self):
+    def generateGenericNames(self):
         if 'consonantal' in self.features:
             self.generateGenericHayesConsNames()
+            self.generateGenericHayesVowelNames()
             self.vowel_feature = '-consonantal'
             self.voice_feature = '+voice'
         elif 'voc' in self.features:
             self.generateGenericSPEConsNames()
+            self.generateGenericSPEVowelNames()
             self.vowel_feature = '+voc'
             self.voice_feature = '+voice'
         else:
             pass
 
-    def generateGeneraticSPEConsNames(self):
+    def generateGenericSPEConsNames(self):
+        pass
+
+    def generateGenericSPEVowelNames(self):
         pass
 
     def generateGenericHayesConsNames(self):
@@ -502,6 +509,18 @@ class FeatureMatrix(object):
         self.consRows['Affricate'] = [5,{'consonantal':'+', 'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None]
         self.consRows['Approximant'] = [6,{'consonantal':'+', 'sonorant': '+', 'lateral':'-'}, None]
         self.consRows['Lateral approximant'] = [7,{'consonantal':'+', 'sonorant': '+', 'lateral':'+'}, None]
+
+    def generateGenericHayesVowelNames(self):
+        self.vowCols['Front'] = [0, {'consonantal': '-', 'front': '+', 'back':'-', 'tense':'+'}, None]
+        self.vowCols['Near-front'] = [1, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'}, None]
+        self.vowCols['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
+        self.vowCols['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense':'-'}, None]
+        self.vowCols['Back'] = [4, {'consonantal': '-', 'front':'-', 'back':'+', 'tense':'+'}, None]
+
+        self.vowRows['High'] = [0, {'consonantal':'-', 'high':'+', 'low':'-', 'tense':'+'}, None]
+        self.vowRows['Mid-high'] = [1,{'consonantal':'-', 'high':'-', 'low':'-', 'tense':'+'}, None]
+        self.vowRows['Mid-low'] = [2, {'consonantal':'-', 'high':'-', 'low':'-', 'tense':'-'}, None]
+        self.vowRows['Low'] = [3, {'consonantal':'-', 'high':'-', 'low':'+', 'tense':'+'}, None]
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
@@ -636,6 +655,11 @@ class FeatureMatrix(object):
     def getConsonantRows(self):
         return self.consRows
 
+    def getVowelColumns(self):
+        return self.vowCols
+
+    def getVowelRows(self):
+        return self.vowRows
 
     def spe_categories(self,seg):
         category = list()
@@ -866,12 +890,16 @@ class FeatureMatrix(object):
         seg_features = seg.features
         if self.isVowel(seg):
             category = ['Vowel']
+            iterRows = self.vowRows
+            iterCols = self.vowCols
         else:
             category = ['Consonant']
+            iterRows = self.consRows
+            iterCols = self.consCols
 
-        for row,col in itertools.product(self.consRows, self.consCols):
-            row_index, row_features, row_segs = self.consRows[row]
-            col_index, col_features, col_segs = self.consCols[col]
+        for row,col in itertools.product(iterRows, iterCols):
+            row_index, row_features, row_segs = iterRows[row]
+            col_index, col_features, col_segs = iterCols[col]
 
             if (row_segs is not None and seg in row_segs) and (col_segs is not None and seg in col_segs):
                 category.extend([col, row])
@@ -887,7 +915,6 @@ class FeatureMatrix(object):
             category.append('Voiced')
         else:
             category.append('Voiceless')
-
         return category
 
 

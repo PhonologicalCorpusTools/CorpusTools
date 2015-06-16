@@ -629,12 +629,29 @@ class InventoryTable(QTableWidget):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
 
+
+class RightClickMenuButton(QPushButton):
+
+    def __init__(self, name, parent = None):
+        super(RightClickMenuButton, self).__init__(name)
+
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+        delete = QAction(self)
+        delete.setText("remove")
+        delete.triggered.connect(self.removeButton)
+        self.addAction(delete)
+
+    def removeButton(self):
+        self.deleteLater()
+
+
 class EditableInventoryTable(InventoryTable):
 
-    def __init__(self, parent):
+    def __init__(self, parent, is_cons_table=True):
         #parent is an InventoryBox
         super().__init__()
         self.parent = parent
+        self.isConsTable = is_cons_table
         self.horizontalHeader().setSectionsClickable(True)
         self.horizontalHeader().sectionClicked.connect(self.highlightColumn)
         self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
@@ -649,8 +666,87 @@ class EditableInventoryTable(InventoryTable):
         self.setDropIndicatorShown(True)
 
         self.setSelectionMode(QAbstractItemView.SingleSelection)
-        #self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setDragDropMode(QAbstractItemView.InternalMove)
+
+        self.verticalHeader().setContextMenuPolicy(Qt.ActionsContextMenu)
+        deleteRowAct = QAction(self)
+        deleteRowAct.setText("Remove row")
+        deleteRowAct.triggered.connect(self.userRemoveRow)
+        addRowAct = QAction(self)
+        addRowAct.setText("Add row")
+        addRowAct.triggered.connect(self.userAddRow)
+        self.verticalHeader().addAction(deleteRowAct)
+        self.verticalHeader().addAction(addRowAct)
+
+
+        self.horizontalHeader().setContextMenuPolicy(Qt.ActionsContextMenu)
+        deleteColAct = QAction(self)
+        deleteColAct.setText("Remove column")
+        deleteColAct.triggered.connect(self.userRemoveColumn)
+        addColAct = QAction(self)
+        addColAct.setText("Add column")
+        addColAct.triggered.connect(self.userAddColumn)
+        self.horizontalHeader().addAction(addColAct)
+        self.horizontalHeader().addAction(deleteColAct)
+
+
+    def userRemoveRow(self):
+        target = self.selectionModel().selectedRows()[0].row()
+        self.removeRow(target)
+        targetRows = self.parent.corpus.specifier.consRows if self.isConsTable else self.parent.corpus.specifier.vowRows
+        for key,value in targetRows.items():
+            if value[0] >= target:
+                targetRows[key][0] -= 1
+
+    def userAddRow(self):
+        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory')
+        results = dialog.exec_()
+        if results:
+            target = self.selectionModel().selectedRows()[0].row()
+            target += 1
+            self.insertRow(target)
+            targetRows = self.parent.corpus.specifier.consRows if self.isConsTable else self.parent.corpus.specifier.vowRows
+            for key,value in targetRows.items():
+                if value[0] >= target:
+                    targetRows[key][0] += 1
+            new_name = dialog.name
+            featureList = {f[1:]:f[0] for f in dialog.featureList}
+            segList = [s for s in dialog.selectedSegs]
+            if self.isConsTable:
+                self.parent.corpus.specifier.consRows[new_name] = [target, featureList, segList]
+            else:
+                self.parent.corpus.specifier.vowRows[new_name] = [target, featureList, segList]
+            self.parent.resetInventoryBox(*self.generateInventoryBoxData())
+
+    def userRemoveColumn(self):
+        target = self.selectionModel().selectedColumns()[0].column()
+        self.removeColumn(target)
+        targetCols = self.parent.corpus.specifier.consCols if self.isConsTable else self.parent.corpus.specifier.vowCols
+        for key,value in targetCols.items():
+            if value[0] >= target:
+                targetCols[key][0] -= 1
+
+
+    def userAddColumn(self):
+        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory')
+        results = dialog.exec_()
+        if results:
+            target = self.selectionModel().selectedColumns()[0].column()
+            target += 1
+            self.insertColumn(target)
+            targetCols = self.parent.corpus.specifier.consCols if self.isConsTable else self.parent.corpus.specifier.vowCols
+            for key,value in targetCols.items():
+                if value[0] >= target:
+                    targetCols[key][0] += 1
+            new_name = dialog.name
+            featureList = {f[1:]:f[0] for f in dialog.featureList}
+            segList = [s for s in dialog.selectedSegs]
+            if self.isConsTable:
+                self.parent.corpus.specifier.consCols[new_name] = [target, featureList, segList]
+            else:
+                self.parent.corpus.specifier.vowCols[new_name] = [target, featureList, segList]
+            self.parent.resetInventoryBox(*self.generateInventoryBoxData())
+
 
     def allowReordering(self, value):
         self.setDragEnabled(value)
@@ -703,9 +799,18 @@ class EditableInventoryTable(InventoryTable):
                 self.setCellWidget(insertAt,c,sourceWidget)
 
             headers = [self.verticalHeaderItem(r).text() for r in range(self.rowCount())]
-            self.parent.corpus.specifier.matrix = {k:v for k,v in self.parent.corpus.specifier.matrix.items() if k in headers}
+            chooseRows = self.parent.corpus.specifier.consRows if self.isConsTable else self.parent.corpus.specifier.vowRows
+            a = self.verticalHeaderItem(sourceRow).text()
+            b = self.verticalHeaderItem(dropRow).text()
+            chooseRows[a][0], chooseRows[b][0] = chooseRows[b][0], chooseRows[a][0]
+
+            if self.isConsTable:
+                self.parent.corpus.specifier.consRows = {k:v for k,v in self.parent.corpus.specifier.consRows.items() if k in headers}
+            else:
+                self.parent.corpus.specifier.vowRows = {k:v for k,v in self.parent.corpus.specifier.vowRows.items() if k in headers}
+
             for r in range(self.rowCount()):
-                self.parent.corpus.specifier.consRows[self.verticalHeaderItem(r).text()][0] = r
+                chooseRows[self.verticalHeaderItem(r).text()][0] = r
 
             self.resizeRowsToContents()
             event.accept()
@@ -738,9 +843,18 @@ class EditableInventoryTable(InventoryTable):
             self.removeColumn(sourceCol)
 
             headers = [self.horizontalHeaderItem(c).text() for c in range(self.columnCount())]
-            self.parent.corpus.specifier.matrix = {k:v for k,v in self.parent.corpus.specifier.matrix.items() if k in headers}
+            chooseCols = self.parent.corpus.specifier.consCols if self.isConsTable else self.parent.corpus.specifier.vowCols
+            a = self.horizontalHeaderItem(sourceCol).text()
+            b = self.horizontalHeaderItem(dropCol).text()
+            chooseCols[a][0], chooseCols[b][0] = chooseCols[b][0], chooseCols[a][0]
+
+            if self.isConsTable:
+                self.parent.corpus.specifier.consCols = {k:v for k,v in self.parent.corpus.specifier.consCols.items() if k in headers}
+            else:
+                self.parent.corpus.specifier.vowCols = {k:v for k,v in self.parent.corpus.specifier.vowCols.items() if k in headers}
+
             for c in range(self.columnCount()):
-                self.parent.corpus.specifier.consCols[self.verticalHeaderItem(c).text()][0] = c
+                chooseCols[self.horizontalHeaderItem(c).text()][0] = c
 
             event.accept()
 
@@ -807,17 +921,18 @@ class EditableInventoryTable(InventoryTable):
 
     def editChartRow(self, index):
         old_name = self.verticalHeaderItem(index).text()
-        default_specs = self.parent.corpus.specifier.consRows[old_name]
+        targetRows = self.parent.corpus.specifier.consRows if self.isConsTable else self.parent.corpus.specifier.vowRows
+        default_specs = targetRows[old_name]
         dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory',
                                    default_name=old_name, default_specs=default_specs)
         results = dialog.exec_()
         if results:
             new_name = dialog.name
             if new_name != old_name:
-                self.parent.corpus.specifier.consRows[new_name] = self.parent.corpus.specifier.consRows.pop(old_name)
+                targetRows[new_name] = targetRows.pop(old_name)
             featureList = dialog.featureList
-            self.parent.corpus.specifier.consRows[new_name][1] = {f[1:]:f[0] for f in featureList}
-            self.parent.corpus.specifier.consRows[new_name][2] = [s for s in dialog.selectedSegs]
+            targetRows[new_name][1] = {f[1:]:f[0] for f in featureList}
+            targetRows[new_name][2] = [s for s in dialog.selectedSegs]
             self.parent.resetInventoryBox(*self.generateInventoryBoxData())
 
     def saveReordering(self):
@@ -826,17 +941,17 @@ class EditableInventoryTable(InventoryTable):
     def editChartCol(self, index):
 
         old_name = self.horizontalHeaderItem(index).text()
-        default_specs = self.parent.corpus.specifier.consCols[old_name]
-        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory',
-                                   default_name=old_name, default_specs=default_specs)
+        targetCols = self.parent.corpus.specifier.consCols if self.isConsTable else self.parent.corpus.specifier.vowCols
+        default_specs = targetCols[old_name]
+        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory', default_name=old_name, default_specs=default_specs)
         results = dialog.exec_()
         if results:
             new_name = dialog.name
             if new_name != old_name:
-                self.parent.corpus.specifier.consCols[new_name] = self.parent.corpus.specifier.consCols.pop(old_name)
+                targetCols[new_name] = targetCols.pop(old_name)
             featureList = dialog.featureList
-            self.parent.corpus.specifier.consCols[new_name][1] = {f[1:]:f[0] for f in featureList}
-            self.parent.corpus.specifier.consCols[new_name][2] = [s for s in dialog.selectedSegs]
+            targetCols[new_name][1] = {f[1:]:f[0] for f in featureList}
+            targetCols[new_name][2] = [s for s in dialog.selectedSegs]
             self.parent.resetInventoryBox(*self.generateInventoryBoxData())
 
     def generateInventoryBoxData(self):
@@ -879,8 +994,8 @@ class InventoryBox(QWidget):
         self.editable = editable
         self.consonantColumns = corpus.specifier.getConsonantColumns()
         self.consonantRows = corpus.specifier.getConsonantRows()
-        self.vowelColumns = ['Front','Near front','Central','Near back','Back']
-        self.vowelRows = ['Close','Near close','Close mid','Mid','Open mid','Near open','Open']
+        self.vowelColumns = corpus.specifier.getVowelColumns()
+        self.vowelRows = corpus.specifier.getVowelRows()
         self.generateInventoryBox()
 
     def resetInventoryBox(self, cols, rows, segs, editable):
@@ -888,8 +1003,8 @@ class InventoryBox(QWidget):
             self.smallbox.itemAt(i).widget().setParent(None)
         categorized, uncategorized = segs
         cons = self.makeConsBox(cols, rows, categorized, editable)
+        vow = self.makeVowelBox(cols, rows, categorized, editable)
         unk = self.makeUncategorizedBox(uncategorized)
-        vow = None
         self.addTables(cons,vow,unk)
 
     def generateInventoryBox(self):
@@ -930,7 +1045,6 @@ class InventoryBox(QWidget):
         unk = self.makeUncategorizedBox(uncategorized)
 
         self.addTables(cons,vow,unk)
-
         self.setLayout(self.smallbox)
 
     def addTables(self,cons,vow,unk):
@@ -940,7 +1054,7 @@ class InventoryBox(QWidget):
 
         if vow is not None:
             self.smallbox.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
-            self.vowTable.resize()
+            self.vowelTable.resize()
 
         if unk is not None:
             self.smallbox.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
@@ -951,7 +1065,7 @@ class InventoryBox(QWidget):
         cons.toggled.connect(self.showHideCons)
         consBox = QVBoxLayout()
         if editable:
-            self.consTable = EditableInventoryTable(self)
+            self.consTable = EditableInventoryTable(self,True)
             cons.setCheckable(False)
             self.showHideCons(True)
         else:
@@ -992,50 +1106,54 @@ class InventoryBox(QWidget):
 
         return cons
 
-    def makeVowelBox(self,vowColumns,vowRows,vowList,editable):
-        vow = QGroupBox('Vowels')
-        vow.setFlat(True)
-        vow.toggled.connect(self.showHideVow)
-        vowBox = QGridLayout()
-        vowBox.setAlignment(Qt.AlignTop)
+    def makeVowelBox(self,vowelColumns,vowelRows,vowelList,editable):
+        vowel = QGroupBox('Vowels')
+        vowel.setFlat(True)
+        vowel.toggled.connect(self.showHideVow)
+        vowelBox = QGridLayout()
+        vowelBox.setAlignment(Qt.AlignTop)
         if editable:
-            self.vowTable = EditableInventoryTable(self)
-            vow.setCheckable(False)
+            self.vowelTable = EditableInventoryTable(self,False)
+            vowel.setCheckable(False)
             self.showHideVow(True)
         else:
-            self.vowTable = InventoryTable()
-            vow.setCheckable(True)
-            vow.setChecked(False)
-            self.vowTable.hide()
-        vowBox.addWidget(self.vowTable,0, Qt.AlignLeft|Qt.AlignTop)
-        vow.setLayout(vowBox)
-        vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
-        vowColMapping = {i:x for i,x in enumerate(vowColumns)}
-        vowRows = [ x for x in self.vowelRows if x in vowRows]
-        vowRowMapping = {i:x for i,x in enumerate(vowRows)}
+            self.vowelTable = InventoryTable()
+            vowel.setCheckable(True)
+            vowel.setChecked(False)
+            self.vowelTable.hide()
 
-        self.vowTable.setColumnCount(len(vowColumns))
-        self.vowTable.setRowCount(len(vowRows) + 1)
-        self.vowTable.setHorizontalHeaderLabels(vowColumns)
-        self.vowTable.resizeColumnsToContents()
-        self.vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
+        vowelBox.addWidget(self.vowelTable)
+        vowel.setLayout(vowelBox)
 
-        for i,j in product(range(len(vowColumns)), range(len(vowRows))):
-            for seg,category in vowList:
-                if vowRowMapping[i] in category and vowColMapping[j] in category:
+        needed_cols = list(set([feature_list[1] for seg,feature_list in vowelList]))
+        needed_rows = list(set([feature_list[2] for seg,feature_list in vowelList]))
+
+        self.vowelTable.setColumnCount(len(needed_cols))
+        self.vowelTable.setRowCount(len(needed_rows))
+
+        horizontalHeaderLabelText = sorted(needed_cols, key=lambda x:self.vowelColumns[x][0])
+        self.vowelTable.setHorizontalHeaderLabels(horizontalHeaderLabelText)
+        vowelColMapping = {x:i for i,x in enumerate(horizontalHeaderLabelText)}
+
+        verticalHeaderLabelText = sorted(needed_rows, key=lambda x:self.vowelRows[x][0])
+        self.vowelTable.setVerticalHeaderLabels(verticalHeaderLabelText)
+        vowelRowMapping = {x:i for i,x in enumerate(verticalHeaderLabelText)}
+
+        self.vowelTable.resizeColumnsToContents()
+        button_map = {(h,v): list() for (h,v) in product(horizontalHeaderLabelText, verticalHeaderLabelText)}#defaultdict(list)
+
+        for seg,category in vowelList:
+            for h,v in product(horizontalHeaderLabelText, verticalHeaderLabelText):
+                if h in category and v in category:
                     btn = self.generateSegmentButton(seg.symbol)
-                    self.vowTable.setCellWidget(j,i,btn)
+                    button_map[(h,v)].append(btn)
+                    break
 
-        self.vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
-        diphWid = QWidget()
-        diphWid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-        diphBox = QHBoxLayout()
-        #diphBox.setAlignment(Qt.AlignCenter)
-        diphBox.setContentsMargins(0, 0, 0, 0)
-        diphBox.setSpacing(0)
-        diphWid.setLayout(diphBox)
-        self.vowTable.setCellWidget(len(vowRows),0,diphWid)
-        return vow
+        for key,buttons in button_map.items():
+            c,r = key
+            self.vowelTable.setCellWidget(vowelRowMapping[r],vowelColMapping[c],MultiSegmentCell(buttons))
+
+        return vowel
 
     def makeUncategorizedBox(self,uncategorized):
         unk = QGroupBox('Uncategorized')
@@ -1106,9 +1224,9 @@ class InventoryBox(QWidget):
 
     def showHideVow(self, checked):
         if checked:
-            self.vowTable.show()
+            self.vowelTable.show()
         else:
-            self.vowTable.hide()
+            self.vowelTable.hide()
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()

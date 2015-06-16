@@ -295,6 +295,8 @@ class MainWindow(QMainWindow):
     def manageInventoryChart(self):
         dialog = InventoryManager(self, self.corpusModel.corpus)
         results = dialog.exec_()
+        if results:
+            pass
 
     @check_for_empty_corpus
     @check_for_transcription
