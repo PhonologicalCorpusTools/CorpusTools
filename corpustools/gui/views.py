@@ -58,8 +58,8 @@ class TableWidget(QTableView):
         #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         #except AttributeError:
         #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
-        self.resizeColumnsToContents()
+        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
+        #self.resizeColumnsToContents()
         try:
             self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         except AttributeError:
@@ -781,10 +781,8 @@ class ResultsWindow(QDialog):
         self.table.setModel(dataModel)
         try:
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-            self.table.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
         except AttributeError:
             self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-            self.table.horizontalHeader().setResizeMode(0,QHeaderView.Stretch)
         layout.addWidget(self.table)
         self.aclayout = QHBoxLayout()
         self.redoButton = QPushButton('Reopen function dialog')

@@ -21,7 +21,7 @@ try:
                                 QAbstractItemView, QHeaderView, QDockWidget, QTreeView,
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper,
-                                QSlider, QItemDelegate, QScrollArea, QStackedWidget,
+                                QSlider, QItemDelegate, QScrollArea, QBoxLayout, QStackedWidget,
                                 QCompleter)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
     try:
@@ -35,3 +35,11 @@ try:
     #print('PyQt5 version')
 except ImportError:
     raise(Exception("We could not find an installation of PyQt5.  Please double check that it is installed."))
+
+import locale
+import sys
+if sys.platform.startswith('win'):
+    locale_string = 'English_US'
+else:
+    locale_string = 'en_US.UTF-8'
+locale.setlocale(locale.LC_ALL, locale_string)

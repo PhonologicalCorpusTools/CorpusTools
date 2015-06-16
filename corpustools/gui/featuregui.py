@@ -459,10 +459,7 @@ class EditFeatureMatrixDialog(QDialog):
         elif mode == 'Matrix':
             self.table = TableWidget()
             self.table.setModel(FeatureSystemTableModel(self.specifier))
-            try:
-                self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-            except AttributeError:
-                self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            self.table.resizeColumnsToContents()
             self.layout().insertWidget(0,self.table)
 
     def changeFeatureSystem(self):
@@ -478,6 +475,7 @@ class EditFeatureMatrixDialog(QDialog):
             self.table.setModel(FeatureSystemItemModel(self.specifier))
         else:
             self.table.setModel(FeatureSystemTableModel(self.specifier))
+            self.table.resizeColumnsToContents()
 
     def addSegment(self):
         dialog = EditSegmentDialog(self,self.table.model().specifier)
@@ -516,14 +514,22 @@ class EditFeatureMatrixDialog(QDialog):
 
     def checkCoverage(self):
         corpus_inventory = self.corpus.inventory
-        feature_inventory = self.specifier.segments
+        try:
+            feature_inventory = self.specifier.segments
+        except AttributeError:
+            reply = QMessageBox.warning(self,
+                    "Missing feature system", "No feature system has been specified.")
         missing = []
         for seg in corpus_inventory:
             if seg not in feature_inventory:
                 missing.append(str(seg))
         if missing:
             reply = QMessageBox.warning(self,
-                    "Missing segments", ', '.join(missing))
+                    "Missing segments", ('The following segments are not specified'
+                                        ' for features: '+', '.join(missing) + '\nIf you'
+                                        ' are shown a \'blank\' segment, please ensure'
+                                        ' that your segment delimiters are placed'
+                                        ' correctly and are never adjacent to each other.'))
             return
         reply = QMessageBox.information(self,
                     "Missing segments", 'All segments are specified for features!')

@@ -188,3 +188,10 @@ The resulting table of results:
 .. image:: static/klresults.png
    :width: 90%
    :align: center
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

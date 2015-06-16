@@ -9,6 +9,8 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
                                         WordToken, Discourse)
 
+from corpustools.corpus.io import load_discourse_textgrid, inspect_discourse_textgrid
+
 from corpustools.utils import generate_discourse
 
 from corpustools.gui.main import QApplicationMessaging
@@ -36,9 +38,49 @@ def qapp():
 @pytest.fixture(scope='module')
 def test_dir():
     test_dir = 'tests/data'
-    if not os.path.exists(os.path.join(test_dir,'exported')):
-        os.makedirs(os.path.join(test_dir,'exported'))
     return test_dir
+
+@pytest.fixture(scope='module')
+def buckeye_test_dir(test_dir):
+    return os.path.join(test_dir, 'buckeye')
+
+@pytest.fixture(scope='module')
+def timit_test_dir(test_dir):
+    return os.path.join(test_dir, 'timit')
+
+@pytest.fixture(scope='module')
+def textgrid_test_dir(test_dir):
+    return os.path.join(test_dir, 'textgrids')
+
+@pytest.fixture(scope='module')
+def text_test_dir(test_dir):
+    return os.path.join(test_dir, 'text')
+
+@pytest.fixture(scope='module')
+def ilg_test_dir(test_dir):
+    return os.path.join(test_dir, 'ilg')
+
+@pytest.fixture(scope='module')
+def csv_test_dir(test_dir):
+    return os.path.join(test_dir, 'csv')
+
+@pytest.fixture(scope='module')
+def features_test_dir(test_dir):
+    return os.path.join(test_dir, 'features')
+
+@pytest.fixture(scope='module')
+def binary_test_dir(test_dir):
+    path = os.path.join(test_dir, 'binary')
+    if not path:
+        os.makedirs(path)
+    return path
+
+@pytest.fixture(scope='module')
+def export_test_dir(test_dir):
+    path = os.path.join(test_dir, 'exported')
+    if not path:
+        os.makedirs(path)
+    return path
 
 @pytest.fixture(scope='session')
 def settings():
@@ -140,3 +182,13 @@ def specified_discourse_corpus():
     d = generate_discourse(c)
     d.lexicon.set_feature_matrix(fm)
     return d
+
+@pytest.fixture(scope = 'module')
+def pronunciation_variants_corpus(textgrid_test_dir):
+    path = os.path.join(textgrid_test_dir, 'pronunc_variants_corpus.TextGrid)
+    annotypes = inspect_discourse_textgrid(path)
+    annotypes[0].attribute.name = 'spelling'
+    annotypes[1].attribute.name = 'transcription'
+    annotypes[2].attribute.name = 'transcription'
+    annotypes[2].token = True
+    yield load_discourse_textgrid('test', path, annotypes)

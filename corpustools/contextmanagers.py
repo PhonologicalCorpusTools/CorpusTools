@@ -16,8 +16,8 @@ class BaseCorpusContext(object):
         self.length = None
 
     def __enter__(self):
-        pass
-    
+        return self
+
     def __len__(self):
         if self.length is not None:
             return self.length
@@ -27,7 +27,7 @@ class BaseCorpusContext(object):
                 counter += 1
             self.length = counter
             return self.length
-            
+
     def get_frequency_base(self, gramsize = 1, halve_edges=False, probability = False):
         """
         Generate (and cache) frequencies for each segment in the Corpus.
@@ -54,7 +54,11 @@ class BaseCorpusContext(object):
         if (gramsize) not in self._freq_base:
             freq_base = collections.defaultdict(float)
             for word in self:
-                seq = ['#'] + [x for x in getattr(word, self.sequence_type)] + ['#']
+                tier = getattr(word, self.sequence_type)
+                if self.sequence_type == 'spelling':
+                    seq = ['#'] + [x for x in tier] + ['#']
+                else:
+                    seq = tier.with_word_boundaries()
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:
                     if len(x) == 1:
@@ -62,8 +66,6 @@ class BaseCorpusContext(object):
                     freq_base[x] += word.frequency
             freq_base['total'] = sum(value for value in freq_base.values())
             self._freq_base[(gramsize)] = freq_base
-        print('whaddup')
-        time.sleep(2)
         freq_base = self._freq_base[(gramsize)]
         return_dict = { k:v for k,v in freq_base.items()}
         if halve_edges and '#' in return_dict:
@@ -123,7 +125,7 @@ class BaseCorpusContext(object):
             else:
                 freq_base['total'] = totals
             self._freq_base[(gramsize, probability, preserve_position, log_count)] = freq_base
-            
+
         freq_base = self._freq_base[(gramsize, probability,preserve_position, log_count)]
         return_dict = { k:v for k,v in freq_base.items()}
         if probability and not preserve_position:
@@ -131,7 +133,7 @@ class BaseCorpusContext(object):
         elif probability:
             return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
         return return_dict
-        
+
     def __exit__(self, exc_type, exc, exc_tb):
         #if exc_type is None:
             return True
@@ -141,10 +143,8 @@ class BaseCorpusContext(object):
 
 
 class CanonicalVariantContext(BaseCorpusContext):
-    
-    def __enter__(self):
-        return self
-        
+
+
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
 
@@ -154,18 +154,17 @@ class CanonicalVariantContext(BaseCorpusContext):
             if self.type_or_token == 'type':
                 w.frequency = 1
             yield w
-    
+
 class MostFrequentVariantContext(BaseCorpusContext):
-    
+
     def __enter__(self):
         if not self.corpus.has_wordtokens:
-            print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
-            #error
+            raise(PCTError('The corpus specified does not have variants.'))
         return self
 
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
-    
+
     def __iter__(self):
         for w in self.corpus:
             v = w.variants(self.sequence_type)
@@ -175,18 +174,17 @@ class MostFrequentVariantContext(BaseCorpusContext):
             if self.type_or_token == 'type':
                 w.frequency = 1
             yield w
-    
+
 class SeparatedTokensVariantContext(BaseCorpusContext):
-    
+
     def __enter__(self):
         if not self.corpus.has_wordtokens:
-            print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
-            #error
+            raise(PCTError('The corpus specified does not have variants.'))
         return self
-        
+
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
-        
+
     def __iter__(self):
         for word in self.corpus:
             variants = word.variants()
@@ -212,16 +210,15 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
 
 
 class WeightedVariantContext(BaseCorpusContext):
-    
+
     def __enter__(self):
         if not self.corpus.has_wordtokens:
-            print('Advisory: Calling variants on a corpus without variants doesn''t make any sense!')
-            #error
+            raise(PCTError('The corpus specified does not have variants.'))
         return self
-            
+
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
-        
+
     def __iter__(self):
         for word in self.corpus:
             variants = word.variants()

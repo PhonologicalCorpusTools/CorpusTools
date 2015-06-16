@@ -68,15 +68,17 @@ class ILGWordMismatchError(PCTError):
     transcription_line : list
         List of words in the transcription line
     """
-    def __init__(self, spelling_line, transcription_line):
-        self.main = "There doesn't appear to be equal numbers of words in the orthography and transcription lines."
+    def __init__(self, mismatching_lines):
+        self.main = "There doesn't appear to be equal numbers of words in one or more of the glosses."
 
         self.information = ''
-        self.details = 'The following is the contents of the two lines:\n\n'
-        self.details += '(line {}, {} words) '.format(spelling_line[0],len(spelling_line[1]))
-        self.details += ' '.join(spelling_line[1]) + '\n'
-        self.details += '(line {}, {} words) '.format(transcription_line[0],len(transcription_line[1]))
-        self.details += ' '.join(transcription_line[1])
+        self.details = 'The following glosses did not have matching numbers of words:\n\n'
+        for ml in mismatching_lines:
+            line_inds, line = ml
+            self.details += 'From lines {} to {}:\n'.format(*line_inds)
+            for k,v in line.items():
+                self.details += '({}, {} words) '.format(k,len(v))
+                self.details += ' '.join(str(x) for x in v) + '\n'
 
 class ILGLinesMismatchError(PCTError):
     """
@@ -94,7 +96,10 @@ class ILGLinesMismatchError(PCTError):
         self.information = ''
         self.details = 'The following is the contents of the file after initial preprocessing:\n\n'
         for line in lines:
-            self.details += line + '\n'
+            if isinstance(line,tuple):
+                self.details += '{}: {}\n'.format(*line)
+            else:
+                self.details += str(line) + '\n'
 
 class TextGridTierError(PCTError):
     """
@@ -175,10 +180,6 @@ class ProdError(PCTError):
 
     Parameters
     ----------
-    seg1 : str
-        First segment used in predictability of distribution function call
-    seg2 : str
-        Second segment used in predictability of distribution function call
     envs : list
         Environments specified in predictability of distribution function call
     missing : dict
@@ -188,22 +189,22 @@ class ProdError(PCTError):
     overlapping : dict
         Dictionary of the specified environments that are overlapping
     """
-    def __init__(self, seg1, seg2, envs, missing, overlapping):
-        self.segs = (seg1, seg2)
+    def __init__(self, envs, missing, overlapping):
+        self.segs = tuple(envs[0].middle)
         self.envs = envs
         self.missing = missing
         self.overlapping = overlapping
-        self.filename = 'pred_of_dist_{}_{}_error.txt'.format(seg1,seg2)
+        self.filename = 'pred_of_dist_{}_{}_error.txt'.format(*self.segs)
         self.information = ('Please refer to file \'{}\' in the errors directory '
                 'for details or click on Show Details.').format(self.filename)
         if missing and overlapping:
             self.main = 'Exhaustivity and uniqueness were both not met for the segments {}.'.format(
-                        ' and '.join([seg1, seg2]))
+                        ' and '.join(self.segs))
 
             self.value = ('Exhaustivity and uniqueness were both not met for the segments {}. '
                             '\n\nPlease refer to file {} in the errors directory '
                             'to view them.').format(
-                        ' and '.join([seg1, seg2]),self.filename)
+                        ' and '.join(self.segs),self.filename)
         elif missing:
             self.main = 'The environments specified were not exhaustive.'
             if len(missing.keys()) > 20:
@@ -212,14 +213,14 @@ class ProdError(PCTError):
                         'The number of missing environments exceeded 20. '
                         '\n\nPlease refer to file {} in the errors directory '
                         'to view them.').format(
-                        ' and '.join([seg1, seg2]),self.filename)
+                        ' and '.join(self.segs),self.filename)
             else:
                 self.value = ('The environments specified were not exhaustive. '
                     'The segments {} were found in environments not specified. '
                     'The following environments did not match any environments specified:\n\n{}'
                     '\n\nPlease refer to file {} in the errors directory '
                         'for details.').format(
-                    ' and '.join([seg1, seg2]),
+                    ' and '.join(self.segs),
                     ' ,'.join(str(w) for w in missing.keys()),self.filename)
 
         elif overlapping:
@@ -229,11 +230,11 @@ class ProdError(PCTError):
                             'were not unique. '
                             '\n\nPlease refer to file {} in the errors directory '
                             'to view them.').format(
-                        ' and '.join([seg1, seg2]),self.filename)
+                        ' and '.join(self.segs),self.filename)
             else:
                 self.value = ('The environments specified were not unique. '
                             'The following environments for {} overlapped:\n\n'
-                            ).format(' and '.join([seg1, seg2]))
+                            ).format(' and '.join(self.segs))
                 for k,v in overlapping.items():
                     self.value +='{}: {}\n'.format(
                             ' ,'.join(str(env) for env in k),

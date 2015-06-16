@@ -274,3 +274,10 @@ following command::
    in contrast to “mutual information,” which would be the expected
    average value of the pointwise mutual information of all possible
    values of X and Y. We simplify to use “mutual information” throughout.
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

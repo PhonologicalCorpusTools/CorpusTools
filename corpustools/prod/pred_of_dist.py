@@ -5,35 +5,13 @@ import os
 from corpustools.corpus.classes import EnvironmentFilter
 from corpustools.exceptions import ProdError
 
-def count_segs(corpus, seg1, seg2, stop_check, call_back):
-    seg1_counts = 0
-    seg2_counts = 0
+def check_envs(corpus, envs, stop_check, call_back):
+    """
+    Search for the specified segments in the specified environments in
+    the corpus.
+"""
 
-    if call_back is not None:
-        call_back('Finding instances of segments...')
-        call_back(0,len(corpus))
-        cur = 0
-    for word in corpus:
-        if stop_check is not None and stop_check():
-            return
-        if call_back is not None:
-            cur += 1
-            if cur % 100 == 0:
-                call_back(cur)
-        tier = getattr(word, getattr(corpus, 'sequence_type'))
-        for seg in tier:
-            if seg == seg1:
-                seg1_counts = seg1_counts+1 if getattr(corpus, 'type_or_token') == 'type' else seg1_counts+word.frequency
-            elif seg == seg2:
-                seg2_counts = seg2_counts+1 if getattr(corpus, 'type_or_token') == 'type' else seg2_counts+word.frequency
-
-    return seg1_counts, seg2_counts
-
-
-def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
-
-    envs = [EnvironmentFilter(getattr(corpus, 'corpus'), env) for env in envs]
-    env_matches = {env:{seg1:[0], seg2:[0]} for env in envs}
+    env_matches = {env: {seg: 0 for seg in env.middle} for env in envs}
 
     missing_envs = defaultdict(set)
     overlapping_envs = defaultdict(dict)
@@ -49,32 +27,30 @@ def check_envs(corpus, seg1, seg2, envs, stop_check, call_back):
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        for pos,seg in enumerate(getattr(word, getattr(corpus, 'sequence_type'))):
-            if not (seg == seg1 or seg == seg2):
+
+        tier = getattr(word, corpus.sequence_type)
+        overlaps = defaultdict(list)
+        found_env = False
+        for env in envs:
+            a = env.is_applicable(tier.with_word_boundaries())
+            if not a:
                 continue
-
-            word_env = word.get_env(pos, getattr(corpus, 'sequence_type'))
-            found_env_match = list()
-            for env in envs:
-                if word_env in env:
-                    env_matches[env][seg].append(word.frequency)
-                    found_env_match.append(env)
-
-            if not found_env_match:
-                #found and environemnts with segs the user wants, but in
-                #an environement that was not supplied. Alert the user
-                #about this later
-                k = str(word_env)
+            es = tier.find(env)
+            if es is not None:
+                found_env = True
+                for e in es:
+                    env_matches[env][e.middle] += word.frequency
+                    overlaps[e].append(env)
 
 
-                missing_envs[str(word_env)].update([str(word)])
+        if not found_env and any(m in tier for m in envs[0].middle):
+            actual_env = tier.find_nonmatch(envs[0])
+            missing_envs[str(actual_env)].update([str(word)])
 
-            elif len(found_env_match) > 1:
-                #the user supplied environmnets that overlap, e.g. they want
-                #_[-voice] and also _k, but we shouldn't count this twice
-                #alert the user about this later
-                k = tuple(str(env) for env in found_env_match)
-                k2 = str(word_env)
+        for k,v in overlaps.items():
+            if len(v) > 1:
+                k = tuple(str(env) for env in v)
+                k2 = str(k)
                 if k2 not in overlapping_envs[k]:
                     overlapping_envs[k][k2] = set()
                 overlapping_envs[k][k2].update([str(word)])
@@ -122,7 +98,7 @@ def calc_prod_all_envs(corpus, seg1, seg2, all_info = False, stop_check = None,
     return H
 
 
-def calc_prod(corpus, seg1, seg2, envs, strict = True, all_info = False, stop_check = None,
+def calc_prod(corpus, envs, strict = True, all_info = False, stop_check = None,
                 call_back = None):
     """
     Main function for calculating predictability of distribution for
@@ -132,13 +108,8 @@ def calc_prod(corpus, seg1, seg2, envs, strict = True, all_info = False, stop_ch
     ----------
     corpus : Corpus
         The Corpus object to use
-    seg1 : string
-        The first segment
-    seg2 : string
-        The second segment
-    envs : list of strings
-        List of strings that specify environments either using features
-        or segments
+    envs : list of EnvironmentFilter
+        List of EnvironmentFilter objects that specify environments
     strict : bool
         If true, exceptions will be raised for non-exhausive environments
         and non-unique environments.  If false, only warnings will be
@@ -155,20 +126,24 @@ def calc_prod(corpus, seg1, seg2, envs, strict = True, all_info = False, stop_ch
         of [entropy, frequency of environment, frequency of seg1, frequency
         of seg2] if all_info is True, or just entropy if all_info is False.
     """
-    returned = check_envs(corpus, seg1, seg2, envs, stop_check, call_back)
+    seg_list = envs[0].middle
+    for e in envs:
+        if e.middle != seg_list:
+            raise(PCTError("Middle segments of all environments must be the same."))
+
+    returned = check_envs(corpus, envs, stop_check, call_back)
 
     if stop_check is not None and stop_check():
         return
     env_matches, miss_envs, overlap_envs = returned
     if miss_envs or overlap_envs:
         if strict:
-            raise(ProdError(seg1, seg2, envs, miss_envs, overlap_envs))
+            raise(ProdError(envs, miss_envs, overlap_envs))
 
     H_dict = OrderedDict()
 
     #CALCULATE ENTROPY IN INDIVIDUAL ENVIRONMENTS FIRST
-    total_seg1_matches = 0
-    total_seg2_matches = 0
+    total_matches = {x: 0 for x in seg_list}
     total_frequency = 0
 
     if call_back is not None:
@@ -181,25 +156,25 @@ def calc_prod(corpus, seg1, seg2, envs, strict = True, all_info = False, stop_ch
         if call_back is not None:
             cur += 1
             call_back(cur)
-        seg1_matches = sum(env_matches[env][seg1])
-        seg2_matches = sum(env_matches[env][seg2])
-        total_seg1_matches += seg1_matches
-        total_seg2_matches += seg2_matches
-
-        total_tokens = seg1_matches + seg2_matches
+        total_tokens = 0
+        matches = {}
+        for seg in seg_list:
+            matches[seg] = env_matches[env][seg]
+            total_matches[seg] += matches[seg]
+            total_tokens += matches[seg]
         total_frequency += total_tokens
 
         if not total_tokens:
             H = 0
         else:
-            seg1_prob = seg1_matches/total_tokens
-            seg2_prob = seg2_matches/total_tokens
-            seg1_H = log2(seg1_prob)*seg1_prob if seg1_prob > 0 else 0
-            seg2_H = log2(seg2_prob)*seg2_prob if seg2_prob > 0 else 0
-            H = sum([seg1_H, seg2_H])*-1
+            seg_H = {}
+            for seg in seg_list:
+                seg_prob = matches[seg] / total_tokens
+                seg_H[seg] = log2(seg_prob)*seg_prob if seg_prob > 0 else 0
+            H = sum(seg_H.values())*-1
             if not H:
                 H = H+0 #avoid the -0.0 problem
-        H_dict[env] = [H, total_tokens, seg1_matches, seg2_matches]
+        H_dict[env] = [H, total_tokens] + [matches[x] for x in seg_list]
 
     #CALCULATE WEIGHTED ENTROPY LAST
     weighted_H = 0
@@ -208,11 +183,11 @@ def calc_prod(corpus, seg1, seg2, envs, strict = True, all_info = False, stop_ch
 
 
     try:
-        avg_h = (total_seg1_matches+total_seg2_matches)/total_frequency
+        avg_h = sum(total_matches.values())/total_frequency
     except ZeroDivisionError:
         avg_h = 0.0
 
-    H_dict['AVG'] = (weighted_H, avg_h, total_seg1_matches, total_seg2_matches)
+    H_dict['AVG'] = [weighted_H, avg_h] + [total_matches[x] for x in seg_list]
 
     if not all_info:
         for k,v in H_dict.items():

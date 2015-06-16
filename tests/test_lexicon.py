@@ -347,12 +347,6 @@ class TranscriptionTest(unittest.TestCase):
         self.assertEqual('c', cab[0])
         self.assertRaises(IndexError,cab.__getitem__,4)
 
-    def test_environment(self):
-        cab = Transcription(self.cab)
-
-        self.assertEqual('c_b', str(cab.get_env(1)))
-        self.assertEqual('#_a', str(cab.get_env(0)))
-        self.assertEqual('a_#', str(cab.get_env(2)))
 
 class EnvironmentTest(unittest.TestCase):
     def setUp(self):
@@ -387,27 +381,32 @@ class EnvironmentFilterTest(unittest.TestCase):
         self.corpus.set_feature_matrix(fm)
 
     def test_init(self):
-        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_')
-        self.assertEqual(sorted(envfilt.lhs),sorted(['a','b']))
-        self.assertEqual(envfilt.rhs,[])
+        segs = self.corpus.features_to_segments('+feature1')
+        envfilt = EnvironmentFilter(['a'], lhs = [segs])
+        self.assertEqual(sorted(envfilt.lhs[0]),sorted(['a','b']))
+        self.assertEqual(envfilt.rhs, None)
 
-        envfilt = EnvironmentFilter(self.corpus,'_[-feature1]')
-        self.assertEqual(sorted(envfilt.rhs),sorted(['c','d']))
-        self.assertEqual(envfilt.lhs,[])
+        segs = self.corpus.features_to_segments('-feature1')
+        envfilt = EnvironmentFilter('a',rhs = [segs])
+        self.assertEqual(sorted(envfilt.rhs[0]),sorted(['c','d']))
+        self.assertEqual(envfilt.lhs,None)
 
-        envfilt = EnvironmentFilter(self.corpus,'_[-feature1,-feature2]')
-        self.assertEqual(sorted(envfilt.rhs),sorted(['d']))
+        segs = self.corpus.features_to_segments('-feature1,-feature2')
+        envfilt = EnvironmentFilter('a',rhs = [segs])
+        self.assertEqual(sorted(envfilt.rhs[0]),sorted(['d']))
 
     def test_contains(self):
-        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_')
-        env1 = Environment('a','b')
-        env2 = Environment('c','#')
-        env3 = Environment('a','c')
+        segs = self.corpus.features_to_segments('+feature1')
+        envfilt = EnvironmentFilter('a',lhs = [segs])
+        env1 = Environment('a', None, lhs = ['a'], rhs = ['b'])
+        env2 = Environment('a', None, lhs = ['c'], rhs = ['#'])
+        env3 = Environment('a', None, lhs = ['a'], rhs = ['c'])
 
         self.assertTrue(env1 in envfilt)
         self.assertFalse(env2 in envfilt)
 
-        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_[+feature1]')
+        segs = self.corpus.features_to_segments('+feature1')
+        envfilt = EnvironmentFilter('a',rhs = [segs], lhs=[segs])
         self.assertTrue(env1 in envfilt)
         self.assertFalse(env2 in envfilt)
         self.assertFalse(env3 in envfilt)

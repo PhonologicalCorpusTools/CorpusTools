@@ -5,7 +5,9 @@ import os
 
 from corpustools.symbolsim.khorsi import lcs
 from corpustools.symbolsim.string_similarity import string_similarity
-from corpustools.contextmanagers import CanonicalVariantContext, MostFrequentVariantContext, WeightedVariantContext
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        WeightedVariantContext)
 
 def test_freq_base_spelling_type(unspecified_test_corpus):
     expected = {'#':30,
@@ -40,7 +42,7 @@ def test_freq_base_spelling_token(unspecified_test_corpus):
                 't':271,
                 'u':265,
                 'total':4572}
-    
+
     with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'token') as c:
         freq_base = c.get_frequency_base()
     assert(freq_base == expected)
@@ -58,7 +60,7 @@ def test_freq_base_transcription_type(unspecified_test_corpus):
                 't':11,
                 'u':4,
                 'total':102}
-    
+
     with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
         freq_base = c.get_frequency_base()
     assert(freq_base == expected)

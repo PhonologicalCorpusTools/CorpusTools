@@ -60,7 +60,8 @@ def pointwise_mi(corpus, query, halve_edges = False, in_word = False,
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
-        raise MutualInformationError('The bigram {} was not found in the corpus using {}s'.format(''.join(query), getattr(corpus, 'sequence_type')))
+        raise MutualInfoError('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type))
+
 
     if unigram_dict[query[0]] == 0.0:
         raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))

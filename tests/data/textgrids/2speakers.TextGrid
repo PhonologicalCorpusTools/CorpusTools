@@ -11,9 +11,29 @@ item []:
         name = "Speaker 1 - phone" 
         xmin = 0 
         xmax = 1 
-        intervals: size = 1 
+        intervals: size = 6 
         intervals [1]:
             xmin = 0 
+            xmax = 0.1 
+            text = "" 
+        intervals [2]:
+            xmin = 0.1 
+            xmax = 0.2 
+            text = "a" 
+        intervals [3]:
+            xmin = 0.2 
+            xmax = 0.3 
+            text = "b" 
+        intervals [4]:
+            xmin = 0.3 
+            xmax = 0.4 
+            text = "c" 
+        intervals [5]:
+            xmin = 0.4 
+            xmax = 0.5 
+            text = "d" 
+        intervals [6]:
+            xmin = 0.5 
             xmax = 1 
             text = "" 
     item [2]:
@@ -21,9 +41,21 @@ item []:
         name = "Speaker 1 - word" 
         xmin = 0 
         xmax = 1 
-        intervals: size = 1 
+        intervals: size = 4 
         intervals [1]:
             xmin = 0 
+            xmax = 0.1 
+            text = "" 
+        intervals [2]:
+            xmin = 0.1 
+            xmax = 0.3 
+            text = "a" 
+        intervals [3]:
+            xmin = 0.3 
+            xmax = 0.5 
+            text = "b" 
+        intervals [4]:
+            xmin = 0.5 
             xmax = 1 
             text = "" 
     item [3]:
@@ -31,9 +63,29 @@ item []:
         name = "Speaker 2 - phone" 
         xmin = 0 
         xmax = 1 
-        intervals: size = 1 
+        intervals: size = 6 
         intervals [1]:
             xmin = 0 
+            xmax = 0.5 
+            text = "" 
+        intervals [2]:
+            xmin = 0.5 
+            xmax = 0.6 
+            text = "a" 
+        intervals [3]:
+            xmin = 0.6 
+            xmax = 0.7 
+            text = "b" 
+        intervals [4]:
+            xmin = 0.7 
+            xmax = 0.8 
+            text = "d" 
+        intervals [5]:
+            xmin = 0.8 
+            xmax = 0.9 
+            text = "e" 
+        intervals [6]:
+            xmin = 0.9 
             xmax = 1 
             text = "" 
     item [4]:
@@ -41,8 +93,20 @@ item []:
         name = "Speaker 2 - word" 
         xmin = 0 
         xmax = 1 
-        intervals: size = 1 
+        intervals: size = 4 
         intervals [1]:
             xmin = 0 
+            xmax = 0.5 
+            text = "" 
+        intervals [2]:
+            xmin = 0.5 
+            xmax = 0.7 
+            text = "a" 
+        intervals [3]:
+            xmin = 0.7 
+            xmax = 0.9 
+            text = "c" 
+        intervals [4]:
+            xmin = 0.9 
             xmax = 1 
             text = "" 
