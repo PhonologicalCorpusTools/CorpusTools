@@ -17,13 +17,16 @@ class PDWorker(FunctionWorker):
         kwargs = self.kwargs
         self.results = list()
         if 'envs' in kwargs:
+            envs = kwargs.pop('envs')
             if kwargs['pair_behavior'] == 'individual':
 
                 for pair in kwargs['segment_pairs']:
+                    for env in envs:
+                        env.middle = set(pair)
                     try:
                         if kwargs['wordtokens']:
-                            res = calc_prod_wordtokens(kwargs['corpus'], pair[0],pair[1],
-                                kwargs['envs'],
+                            res = calc_prod_wordtokens(kwargs['corpus'],
+                                envs,
                                 kwargs['sequence_type'],
                                 kwargs['type_token'],
                                 kwargs['strict'],
@@ -31,8 +34,8 @@ class PDWorker(FunctionWorker):
                                 stop_check = kwargs['stop_check'],
                                 call_back = kwargs['call_back'])
                         else:
-                            res = calc_prod(kwargs['corpus'], pair[0],pair[1],
-                                kwargs['envs'],
+                            res = calc_prod(kwargs['corpus'],
+                                envs,
                                 kwargs['sequence_type'],
                                 kwargs['type_token'],
                                 kwargs['strict'],
@@ -92,13 +95,13 @@ class PDWorker(FunctionWorker):
 
 
 class PDDialog(FunctionDialog):
-    header = ['Sound1',
-                'Sound2',
+    header = ['First segment',
+                'Second segment',
                 'Tier',
                 'Environment',
-                'Freq. of Sound1',
-                'Freq. of Sound2',
-                'Freq. of env.',
+                'Frequency of first segment',
+                'Frequency of second segment',
+                'Frequency of environment',
                 'Entropy',
                 'Type or token']
 
@@ -129,11 +132,11 @@ class PDDialog(FunctionDialog):
 
         pdlayout.addWidget(self.segPairWidget)
 
-        addSegClassButton = QPushButton('Add a class of sounds')
-        addSegClassButton.clicked.connect(self.addSegClass)
-        pdlayout.addWidget(addSegClassButton)
+        #addSegClassButton = QPushButton('Add a class of sounds')
+        #addSegClassButton.clicked.connect(self.addSegClass)
+        #pdlayout.addWidget(addSegClassButton)
 
-        self.envWidget = EnvironmentSelectWidget(corpus.inventory)
+        self.envWidget = EnvironmentSelectWidget(corpus.inventory, middle = False)
         self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
 

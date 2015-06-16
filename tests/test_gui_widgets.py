@@ -255,63 +255,14 @@ def test_segment_pair_widget(qtbot, specified_test_corpus):
     widget.removePair()
     assert(widget.value() == [])
 
-
 def test_environment_select_widget(qtbot, specified_test_corpus):
     widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
 
-    assert(widget.value() == [])
+def test_environment_widget(qtbot, specified_test_corpus):
+    widget = EnvironmentWidget(specified_test_corpus.inventory)
 
-    widget.table.model().addRow(['_a'])
-
-    assert(widget.value() == ['_a'])
-
-    widget.table.selectionModel().select(
-                widget.table.model().createIndex(0,0),
-                QItemSelectionModel.Select|QItemSelectionModel.Rows)
-
-    widget.removeEnv()
-
-    assert(widget.value() == [])
-
-def test_environment_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
-    # Test with features
-    widget = EnvironmentSelectWidget(specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
-    dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
-    qtbot.addWidget(dialog)
-
-    assert(dialog.lhsEnvType.count() == 2)
-    assert(dialog.rhsEnvType.count() == 2)
-
-    assert(isinstance(dialog.lhs.currentWidget(), InventoryBox))
-    dialog.lhsEnvType.setCurrentIndex(1)
-    assert(isinstance(dialog.lhs.currentWidget(), FeatureBox))
-
-    assert(isinstance(dialog.rhs.currentWidget(), InventoryBox))
-    dialog.rhsEnvType.setCurrentIndex(1)
-    assert(isinstance(dialog.rhs.currentWidget(), FeatureBox))
-
-    f, v = list(dialog.rhs.currentWidget().features)[0], list(dialog.rhs.currentWidget().values)[0]
-    dialog.rhs.currentWidget().featureList.setCurrentRow(0)
-    b = dialog.rhs.currentWidget().buttons[0]
-    b.clicked.emit()
-
-    dialog.accept()
-    #assert(dialog.env == '_[{}{}]'.format(v,f))
-
-    # Test without features
-    widget = EnvironmentSelectWidget(unspecified_test_corpus.inventory)
-    dialog = EnvironmentDialog(unspecified_test_corpus.inventory, widget)
-
-    assert(dialog.lhsEnvType.count() == 1)
-    assert(dialog.rhsEnvType.count() == 1)
-
-    b = dialog.lhs.currentWidget().btnGroup.buttons()[0]
-    b.setChecked(True)
-
-    dialog.accept()
-    #assert(dialog.env == '{}_'.format(b.text()))
+def test_environment_segment_widget(qtbot, specified_test_corpus):
+    widget = EnvironmentSegmentWidget(specified_test_corpus.inventory)
 
 def test_bigram_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
 

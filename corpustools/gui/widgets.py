@@ -5,7 +5,6 @@ from itertools import combinations, permutations, chain
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
     QMessageBox, QGroupBox, QLineEdit
-from corpustools.corpus.classes import Attribute
 from corpustools.gui.views import TableWidget
 
 from .imports import *
@@ -15,7 +14,7 @@ from .models import SegmentPairModel, EnvironmentModel, FilterModel
 #from .corpusgui import AddTierDialog
 from .delegates import SwitchDelegate
 
-from corpustools.corpus.classes import Attribute
+from corpustools.corpus.classes import Attribute, EnvironmentFilter
 from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
 
 
@@ -1953,19 +1952,22 @@ class SegmentSelectDialog(QDialog):
 
 
 class EnvironmentSegmentWidget(QWidget):
-    def __init__(self, inventory, parent = None, middle = False):
+    def __init__(self, inventory, parent = None, middle = False, enabled = True):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
+        self.enabled = enabled
 
         self.middle = middle
 
         layout = QVBoxLayout()
         if self.middle:
-            lab = '_'
+            lab = '_\n\n{}'
         else:
             lab = '{}'
         self.mainLabel = QLabel(lab)
+        self.mainLabel.setMargin(4)
+        self.mainLabel.setFrameShape(QFrame.Box)
         self.mainLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
         layout.addWidget(self.mainLabel)
@@ -1976,6 +1978,9 @@ class EnvironmentSegmentWidget(QWidget):
         self.mainLabel.customContextMenuRequested.connect(self.showMenu)
 
     def mouseReleaseEvent(self, ev):
+        if not self.enabled:
+            ev.ignore()
+            return
         if ev.button() == Qt.LeftButton:
             self.selectSegments()
             ev.accept()
@@ -1995,6 +2000,8 @@ class EnvironmentSegmentWidget(QWidget):
             self.updateLabel()
 
     def showMenu(self, pos):
+        if self.middle:
+            return
         removeAction = QAction(self)
         removeAction.setText('Delete')
         removeAction.triggered.connect(self.deleteLater)
@@ -2004,8 +2011,11 @@ class EnvironmentSegmentWidget(QWidget):
 
         menu.popup(self.mapToGlobal(pos))
 
+    def value(self):
+        return self.segments
+
 class EnvironmentWidget(QWidget):
-    def __init__(self, inventory, parent = None):
+    def __init__(self, inventory, parent = None, middle = True):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         layout = QHBoxLayout()
@@ -2028,18 +2038,16 @@ class EnvironmentWidget(QWidget):
         rhslayout = QHBoxLayout()
         self.rhsWidget.setLayout(rhslayout)
 
-        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True)
+        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True, enabled = middle)
 
         self.removeButton = QPushButton('Remove environment')
 
+        self.removeButton.clicked.connect(self.deleteLater)
+
         layout.addWidget(self.lhsAddNew)
-
         layout.addWidget(self.lhsWidget)
-
         layout.addWidget(self.middleWidget)
-
         layout.addWidget(self.rhsWidget)
-
         layout.addWidget(self.rhsAddNew)
 
         layout.addStretch()
@@ -2060,17 +2068,29 @@ class EnvironmentWidget(QWidget):
         segWidget = EnvironmentSegmentWidget(self.inventory)
         self.rhsWidget.layout().addWidget(segWidget)
 
-class EnvironmentSelectWidget(QGroupBox):
-    def __init__(self, inventory,parent=None):
-        QGroupBox.__init__(self,'Environments',parent)
+    def value(self):
+        lhs = []
+        for ind in range(self.lhsWidget.layout().count()):
+            wid = self.lhsWidget.layout().itemAt(ind).widget()
+            lhs.append(wid.value())
+        rhs = []
+        for ind in range(self.rhsWidget.layout().count()):
+            wid = self.rhsWidget.layout().itemAt(ind).widget()
+            rhs.append(wid.value())
+        middle = self.middleWidget.value()
 
+        return EnvironmentFilter(middle, lhs, rhs)
+
+class EnvironmentSelectWidget(QGroupBox):
+    def __init__(self, inventory, parent = None, middle = True):
+        QGroupBox.__init__(self,'Environments',parent)
+        self.middle = middle
         self.inventory = inventory
 
         layout = QVBoxLayout()
 
         scroll = QScrollArea()
         self.environmentFrame = QWidget()
-        self.environments = []
         lay = QBoxLayout(QBoxLayout.TopToBottom)
         self.addButton = QPushButton('New environment')
         self.addButton.clicked.connect(self.addNewEnvironment)
@@ -2090,12 +2110,20 @@ class EnvironmentSelectWidget(QGroupBox):
         self.setLayout(layout)
 
     def addNewEnvironment(self):
-        envWidget = EnvironmentWidget(self.inventory)
-        self.environmentFrame.layout().insertWidget(len(self.environments), envWidget)
-        self.environments.append(envWidget)
+        envWidget = EnvironmentWidget(self.inventory, middle = self.middle)
+        pos = self.environmentFrame.layout().count() - 2
+        self.environmentFrame.layout().insertWidget(pos,envWidget)
+
+    def value(self):
+        envs = []
+        for ind in range(self.environmentFrame.layout().count() - 2):
+            wid = self.environmentFrame.layout().itemAt(ind).widget()
+            envs.append(wid.value())
+        return envs
+
 
 class BigramWidget(QGroupBox):
-    name = 'environment'
+    name = 'bigram'
     def __init__(self,inventory,parent=None):
         QGroupBox.__init__(self,'{}s'.format(self.name.title()),parent)
 

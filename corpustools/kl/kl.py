@@ -10,7 +10,6 @@
 #-------------------------------------------------------------------------------
 
 from corpustools.corpus.classes import Corpus
-from corpustools.corpus.io import load_binary
 import argparse
 from math import log
 from collections import defaultdict
@@ -58,15 +57,22 @@ def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, ca
     if not seg1 in corpus.inventory or not seg2 in corpus.inventory:
         raise ValueError('One segment does not exist in this corpus')
 
+    sequence_type = 'transcription' # needs to be generalized
+
     allC = defaultdict(Context)
     seg_counts = {'seg1':0, 'seg2':0}
+
+
     for word in corpus.iter_words():
-        for pos,seg in word.enumerate_symbols('transcription'):
-            thisc = word.get_env(pos,'transcription')
+        tier = getattr(word, sequence_type)
+        symbols = tier.with_word_boundaries()
+        for pos in range(1, len(symbols)-1):
+            seg = symbols[pos]
+            thisc = (symbols[pos-1],symbols[pos+1])
             if side.startswith('r'):
-                thisc = thisc.rhs
+                thisc = thisc[0]
             elif side.startswith('l'):
-                thisc = thisc.lhs
+                thisc = thisc[1]
 
             flag = False
             if seg1 == seg:
