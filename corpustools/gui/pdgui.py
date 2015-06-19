@@ -114,6 +114,10 @@ class PDDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
+
+        optionLayout.addWidget(self.tierWidget)
+
         self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
@@ -124,10 +128,6 @@ class PDDialog(FunctionDialog):
         self.variantsWidget = ContextWidget(self.corpus, actions)
 
         optionLayout.addWidget(self.variantsWidget)
-
-        self.tierWidget = TierWidget(corpus,include_spelling=False)
-
-        optionLayout.addWidget(self.tierWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -236,7 +236,7 @@ class PDDialog(FunctionDialog):
         return kwargs
 
     def setResults(self,results):
-        self.results = list()
+        self.results = []
         seg_pairs = self.segPairWidget.value()
         for i, r in enumerate(results):
             if isinstance(r,dict):

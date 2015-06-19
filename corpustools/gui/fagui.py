@@ -94,24 +94,50 @@ class FADialog(FunctionDialog):
         self.corpus = corpus
         self.showToolTips = showToolTips
 
+        if not self.corpus.has_transcription:
+            self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
+        elif self.corpus.specifier is None:
+            self.layout().addWidget(QLabel('Corpus does not have a feature system loaded, so not all options are available.'))
+
         falayout = QHBoxLayout()
 
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
 
         falayout.addWidget(self.segPairWidget)
 
-
+        algEnabled = {'Khorsi':True,
+                    'Edit distance':True,
+                    'Phonological edit distance':
+                        (self.corpus.has_transcription and
+                            self.corpus.specifier is not None)}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([('Edit distance','edit_distance'),
                                             ('Phonological edit distance','phono_edit_distance'),
-                                            ('Khorsi','khorsi'),]),
+                                            ('Khorsi','khorsi')]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
-                                            'Phonological edit distance':self.phonoEditDistSelected})
+                                            'Phonological edit distance':self.phonoEditDistSelected},
+                                            algEnabled)
 
+        midlayout = QFormLayout()
+        midlayout.addWidget(self.algorithmWidget)
 
-        falayout.addWidget(self.algorithmWidget)
+        threshFrame = QGroupBox('Threshold values')
 
+        self.minEdit = QLineEdit()
+        self.minEdit.setText('-15')
+        self.maxEdit = QLineEdit()
+        self.maxEdit.setText('6')
+
+        vbox = QFormLayout()
+        vbox.addRow('Minimum similarity (Khorsi):',self.minEdit)
+        vbox.addRow('Maximum distance (edit distance):',self.maxEdit)
+
+        threshFrame.setLayout(vbox)
+
+        midlayout.addWidget(threshFrame)
+
+        falayout.addLayout(midlayout)
         optionFrame = QGroupBox('Options')
 
         optionLayout = QVBoxLayout()
@@ -134,31 +160,9 @@ class FADialog(FunctionDialog):
 
         optionLayout.addWidget(self.minPairsWidget)
 
-        threshFrame = QGroupBox('Threshold values')
+        self.alignCheck = QCheckBox('Phonologically align words')
 
-        self.minEdit = QLineEdit()
-        self.minEdit.setText('-15')
-        self.maxEdit = QLineEdit()
-        self.maxEdit.setText('6')
-
-        vbox = QFormLayout()
-        vbox.addRow('Minimum similarity (Khorsi):',self.minEdit)
-        vbox.addRow('Maximum distance (edit distance):',self.maxEdit)
-
-        threshFrame.setLayout(vbox)
-
-        optionLayout.addWidget(threshFrame)
-
-        alignFrame = QGroupBox('Alignment')
-
-        self.alignCheck = QCheckBox('Do phonological alignment')
-
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.alignCheck)
-
-        alignFrame.setLayout(vbox)
-
-        optionLayout.addWidget(alignFrame)
+        optionLayout.addWidget(self.alignCheck)
 
         corpusSizeFrame = QGroupBox('Corpus size')
 
@@ -241,7 +245,7 @@ class FADialog(FunctionDialog):
                                         'get a subset that is a quarter the size of your original corpus.'
             "</FONT>"))
 
-            alignFrame.setToolTip(("<FONT COLOR=black>"
+            self.alignCheck.setToolTip(("<FONT COLOR=black>"
             'Select this option to use '
                                         'PCTs phonological aligner. This is an automated check '
                                         'which attempts to ensure that the two target phonemes are aligned '

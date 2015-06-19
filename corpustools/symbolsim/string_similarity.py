@@ -4,7 +4,6 @@ Created on May 12, 2014
 @author: Michael
 '''
 from functools import partial
-from math import factorial
 from corpustools.corpus.classes import Word
 from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.edit_distance import edit_distance
@@ -14,8 +13,7 @@ from corpustools.multiprocessing import score_mp, PCTMultiprocessingError
 
 from corpustools.exceptions import StringSimilarityError
 
-def khorsi_wrapper(w1, w2, freq_base,
-                                sequence_type, max_distance):
+def khorsi_wrapper(w1, w2, freq_base,sequence_type, max_distance):
     score = khorsi(w1, w2, freq_base = freq_base, sequence_type = sequence_type)
     if score >= max_distance:
         return score

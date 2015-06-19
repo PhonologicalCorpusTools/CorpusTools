@@ -110,7 +110,7 @@ def minpair_fl(corpus_context, segment_pairs,
             continue
         ordered_pair = sorted([str(first[2]), str(second[2])])
         minpairs.append(tuple(ordered_pair))
-    print(minpairs)
+
     if not distinguish_homophones:
         minpairs = set(minpairs)
 

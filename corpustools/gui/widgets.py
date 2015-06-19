@@ -2265,7 +2265,7 @@ class RestrictedContextWidget(RadioSelectWidget):
 
 class ContextWidget(RestrictedContextWidget):
     separate = 'Count each word token as a separate entry'
-    relative = 'Weight each word type by the relative frequency of its variants'
+    relative = 'Weight each word type\nby the relative frequency of its variants'
     separate_value = 'separatetoken'
     relative_value = 'relativetype'
     def __init__(self, corpus, actions = None, parent = None):

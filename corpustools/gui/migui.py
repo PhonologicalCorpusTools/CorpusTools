@@ -107,15 +107,12 @@ class MIDialog(FunctionDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
-        self.inWordCheck = QCheckBox()
-        inWordLabel = QLabel('Set domain to word')
+        self.inWordCheck = QCheckBox('Set domain to word')
+        optionLayout.addWidget(self.inWordCheck)
 
-        optionLayout.addRow(inWordLabel,self.inWordCheck)
-
-        self.halveEdgesCheck = QCheckBox()
+        self.halveEdgesCheck = QCheckBox('Halve word boundary count')
         self.halveEdgesCheck.setChecked(True)
-        halveEdgesLabel = QLabel('Halve word boundary count')
-        optionLayout.addRow(halveEdgesLabel,self.halveEdgesCheck)
+        optionLayout.addWidget(self.halveEdgesCheck)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -142,15 +139,13 @@ class MIDialog(FunctionDialog):
                         'and word edges (#).'
             "</FONT>")
             self.inWordCheck.setToolTip(inwordToolTip)
-            inWordLabel.setToolTip(inwordToolTip)
 
             halveEdgesToolTip = ("<FONT COLOR=black>"
             'make the number of edge characters (#) equal to '
                         'the size of the corpus + 1, rather than double the '
                         'size of the corpus - 1.'
             "</FONT>")
-            halveEdgesLabel.setToolTip(halveEdgesToolTip)
-            self.segPairWidget.setToolTip(halveEdgesToolTip)
+            self.halveEdgesCheck.setToolTip(halveEdgesToolTip)
 
 
 

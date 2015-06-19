@@ -93,13 +93,6 @@ class KLDialog(FunctionDialog):
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
         kllayout.addWidget(self.segPairWidget)
         optionLayout = QFormLayout()
-        self.contextRadioWidget = RadioSelectWidget('Contexts to examine',
-                                                    OrderedDict([('Left-hand side only','lhs'),
-                                                        ('Right-hand side only', 'rhs'),
-                                                        ('Both sides', 'both')]),
-                                                        #('All', 'all')]),
-                                                        )
-        optionLayout.addWidget(self.contextRadioWidget)
 
         self.tierWidget = TierWidget(corpus, include_spelling=False)
 
@@ -118,6 +111,14 @@ class KLDialog(FunctionDialog):
         optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
+
+        self.contextRadioWidget = RadioSelectWidget('Contexts to examine',
+                                                    OrderedDict([('Left-hand side only','lhs'),
+                                                        ('Right-hand side only', 'rhs'),
+                                                        ('Both sides', 'both')]),
+                                                        #('All', 'all')]),
+                                                        )
+        optionLayout.addWidget(self.contextRadioWidget)
 
         kllayout.addLayout(optionLayout)
         klframe.setLayout(kllayout)

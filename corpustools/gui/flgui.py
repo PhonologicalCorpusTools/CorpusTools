@@ -125,6 +125,17 @@ class FLDialog(FunctionDialog):
 
         optionLayout.addWidget(self.tierWidget)
 
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
+                                                    OrderedDict([('Type','type'),
+                                                    ('Token','token')]))
+        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
+                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
+        self.variantsWidget = ContextWidget(self.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
+
         self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
                                                 OrderedDict([('All segment pairs together','together'),
                                                 ('Each segment pair individually','individual')]))
@@ -153,26 +164,16 @@ class FLDialog(FunctionDialog):
 
         minPairOptionFrame.setLayout(box)
 
-        optionLayout.addWidget(minPairOptionFrame)
+        l.addWidget(minPairOptionFrame)
 
         entropyOptionFrame = QGroupBox('Change in entropy options')
 
         box = QVBoxLayout()
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
-                                                    OrderedDict([('Type','type'),
-                                                    ('Token','token')]))
-        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
-                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
-                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
-                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
-        self.variantsWidget = ContextWidget(self.corpus, actions)
-
-        optionLayout.addWidget(self.variantsWidget)
 
         box.addWidget(self.typeTokenWidget)
         entropyOptionFrame.setLayout(box)
-        optionLayout.addWidget(entropyOptionFrame)
+        l.addWidget(entropyOptionFrame)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
