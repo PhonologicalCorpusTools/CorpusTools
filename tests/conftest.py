@@ -9,6 +9,8 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
                                         WordToken, Discourse)
 
+from corpustools.corpus.io.textgrid import load_discourse_textgrid, inspect_discourse_textgrid
+
 from corpustools.utils import generate_discourse
 
 from corpustools.gui.main import QApplicationMessaging
@@ -180,3 +182,13 @@ def specified_discourse_corpus():
     d = generate_discourse(c)
     d.lexicon.set_feature_matrix(fm)
     return d
+
+@pytest.fixture(scope = 'module')
+def pronunciation_variants_corpus(textgrid_test_dir):
+    path = os.path.join(textgrid_test_dir, 'pronunc_variants_corpus.TextGrid')
+    annotypes = inspect_discourse_textgrid(path)
+    annotypes[0].attribute.name = 'spelling'
+    annotypes[1].attribute.name = 'transcription'
+    annotypes[2].attribute.name = 'transcription'
+    annotypes[2].token = True
+    return load_discourse_textgrid('test', path, annotypes)

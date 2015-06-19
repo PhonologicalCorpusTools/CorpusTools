@@ -3,7 +3,9 @@ from .imports import *
 
 from collections import OrderedDict
 
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
+from .widgets import (SegmentPairSelectWidget, RadioSelectWidget,
+                    FileWidget, SaveFileWidget, TierWidget,
+                    RestrictedContextWidget)
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -11,39 +13,46 @@ from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
+
 class FAWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
-        if kwargs['pair_behavior'] == 'individual':
-
-            for pair in kwargs['segment_pairs']:
-                try:
-                    res = calc_freq_of_alt(kwargs['corpus'], pair[0], pair[1],
-                                kwargs['relator_type'], kwargs['count_what'],
-                                sequence_type = kwargs['sequence_type'],
+        self.results = []
+        context = kwargs.pop('context')
+        if context == RestrictedContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == RestrictedContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        corpus = kwargs.pop('corpus')
+        st = kwargs.pop('sequence_type')
+        tt = kwargs.pop('type_token')
+        with cm(corpus, st, tt, None) as c:
+            try:
+                for pair in kwargs['segment_pairs']:
+                    res = calc_freq_of_alt(c, pair[0], pair[1],
+                                kwargs['algorithm'],
                                 min_rel=kwargs['min_rel'], max_rel=kwargs['max_rel'],
                                 min_pairs_okay=kwargs['include_minimal_pairs'],
-                                from_gui=True, phono_align=kwargs['phono_align'],
+                                from_gui = True, phono_align=kwargs['phono_align'],
                                 output_filename=kwargs['output_filename'],
                                 stop_check = kwargs['stop_check'],
                                 call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if self.stopped:
-                    break
-                self.results.append(res)
-        else:
-            raise(NotImplementedError)
-            self.results.append(res)
+                    if self.stopped:
+                        break
+                    self.results.append(res)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
-            time.sleep(0.1)
             self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
@@ -85,41 +94,33 @@ class FADialog(FunctionDialog):
         self.corpus = corpus
         self.showToolTips = showToolTips
 
+        if not self.corpus.has_transcription:
+            self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
+        elif self.corpus.specifier is None:
+            self.layout().addWidget(QLabel('Corpus does not have a feature system loaded, so not all options are available.'))
+
         falayout = QHBoxLayout()
 
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
 
         falayout.addWidget(self.segPairWidget)
 
-
+        algEnabled = {'Khorsi':True,
+                    'Edit distance':True,
+                    'Phonological edit distance':
+                        (self.corpus.has_transcription and
+                            self.corpus.specifier is not None)}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([('Edit distance','edit_distance'),
                                             ('Phonological edit distance','phono_edit_distance'),
-                                            ('Khorsi','khorsi'),]),
+                                            ('Khorsi','khorsi')]),
                                             {'Khorsi':self.khorsiSelected,
                                             'Edit distance':self.editDistSelected,
-                                            'Phonological edit distance':self.phonoEditDistSelected})
+                                            'Phonological edit distance':self.phonoEditDistSelected},
+                                            algEnabled)
 
-
-        falayout.addWidget(self.algorithmWidget)
-
-        optionFrame = QGroupBox('Options')
-
-        optionLayout = QVBoxLayout()
-
-        self.tierWidget = TierWidget(corpus,include_spelling=False)
-
-        optionLayout.addWidget(self.tierWidget)
-
-        self.typeTokenWidget = RadioSelectWidget('Type or token',
-                                            OrderedDict([('Count types','type'),
-                                            ('Count tokens','token')]))
-
-        optionLayout.addWidget(self.typeTokenWidget)
-
-        self.minPairsWidget = QCheckBox('Include minimal pairs')
-
-        optionLayout.addWidget(self.minPairsWidget)
+        midlayout = QFormLayout()
+        midlayout.addWidget(self.algorithmWidget)
 
         threshFrame = QGroupBox('Threshold values')
 
@@ -134,18 +135,34 @@ class FADialog(FunctionDialog):
 
         threshFrame.setLayout(vbox)
 
-        optionLayout.addWidget(threshFrame)
+        midlayout.addWidget(threshFrame)
 
-        alignFrame = QGroupBox('Alignment')
+        falayout.addLayout(midlayout)
+        optionFrame = QGroupBox('Options')
 
-        self.alignCheck = QCheckBox('Do phonological alignment')
+        optionLayout = QVBoxLayout()
 
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.alignCheck)
+        self.tierWidget = TierWidget(corpus,include_spelling=False)
 
-        alignFrame.setLayout(vbox)
+        optionLayout.addWidget(self.tierWidget)
 
-        optionLayout.addWidget(alignFrame)
+        self.typeTokenWidget = RadioSelectWidget('Type or token',
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+        actions = None
+        self.variantsWidget = RestrictedContextWidget(self.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
+        optionLayout.addWidget(self.typeTokenWidget)
+
+        self.minPairsWidget = QCheckBox('Include minimal pairs')
+
+        optionLayout.addWidget(self.minPairsWidget)
+
+        self.alignCheck = QCheckBox('Phonologically align words')
+
+        optionLayout.addWidget(self.alignCheck)
 
         corpusSizeFrame = QGroupBox('Corpus size')
 
@@ -228,7 +245,7 @@ class FADialog(FunctionDialog):
                                         'get a subset that is a quarter the size of your original corpus.'
             "</FONT>"))
 
-            alignFrame.setToolTip(("<FONT COLOR=black>"
+            self.alignCheck.setToolTip(("<FONT COLOR=black>"
             'Select this option to use '
                                         'PCTs phonological aligner. This is an automated check '
                                         'which attempts to ensure that the two target phonemes are aligned '
@@ -249,7 +266,7 @@ class FADialog(FunctionDialog):
         pairBehaviour = 'individual'
         kwargs = {'include_minimal_pairs':self.minPairsWidget.isChecked(),
                     'phono_align':self.alignCheck.isChecked(),
-                    'count_what':self.typeTokenWidget.value()}
+                    'type_token':self.typeTokenWidget.value()}
         segPairs = self.segPairWidget.value()
         if len(segPairs) == 0:
             reply = QMessageBox.critical(self,
@@ -282,7 +299,8 @@ class FADialog(FunctionDialog):
         else:
             out_file = None
         kwargs['sequence_type'] = self.tierWidget.value()
-        kwargs['relator_type'] = rel_type
+        kwargs['context'] = self.variantsWidget.value()
+        kwargs['algorithm'] = rel_type
         kwargs['corpus'] = corpus
         kwargs['min_rel'] = min_rel
         kwargs['max_rel'] = max_rel
@@ -290,37 +308,18 @@ class FADialog(FunctionDialog):
         kwargs['output_filename'] = out_file
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
     def setResults(self, results):
         self.results = list()
         seg_pairs = self.segPairWidget.value()
-        pair_behaviour = 'individual'
-        if pair_behaviour == 'individual':
-            for i, r in enumerate(results):
-                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                    self.tierWidget.displayValue(),
-                                    r[0],
-                                    r[1],
-                                    r[2],
-                                    self.typeTokenWidget.value(),
-                                    self.algorithmWidget.displayValue(),
-                                    self.alignCheck.isChecked()])
-
-        else:
-            pass
+        for i, r in enumerate(results):
+            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                self.tierWidget.displayValue(),
+                                r[0],
+                                r[1],
+                                r[2],
+                                self.typeTokenWidget.value(),
+                                self.algorithmWidget.displayValue(),
+                                self.alignCheck.isChecked()])
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()

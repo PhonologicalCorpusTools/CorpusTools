@@ -1,453 +1,311 @@
 
 import sys
 import os
+import pytest
 
 from corpustools.funcload.functional_load import (minpair_fl, deltah_fl,
-                                relative_minpair_fl, relative_deltah_fl, all_pairwise_fls,
-                                minpair_fl_wordtokens,deltah_fl_wordtokens)
+                                relative_minpair_fl, relative_deltah_fl,
+                                all_pairwise_fls,)
 from corpustools.corpus.classes import Segment
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 
 #class NeutralizeTest(unittest.TestCase):
 #    pass
 
-def test_non_minimal_pair_corpus_minpair(unspecified_test_corpus):
-    calls = [({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':0,
+def test_minpair(unspecified_test_corpus):
+
+    calls = [({'segment_pairs':[('s','ʃ')],
                     'relative_count':True},0.125),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('s','ʃ')],
                     'relative_count':False},1),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('m','n')],
                     'relative_count':True},0.11111),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('m','n')],
                     'relative_count':False},1),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('e','o')],
                     'relative_count':True},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('e','o')],
+                    'relative_count':False},0),
+            ({'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
+                    'relative_count':True},0.14286),
+            ({'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
+                    'relative_count':False},2),]
+
+    with CanonicalVariantContext(unspecified_test_corpus,
+                                'transcription', 'type') as c:
+        for kwargs, v in calls:
+            print(kwargs)
+            assert(abs(minpair_fl(c, **kwargs)[0]-v) < 0.0001)
+
+    calls = [({'segment_pairs':[('s','ʃ')],
+                    'relative_count':True},0.14286),
+            ({'segment_pairs':[('s','ʃ')],
+                    'relative_count':False},1),
+            ({'segment_pairs':[('m','n')],
+                    'relative_count':True},0),
+            ({'segment_pairs':[('m','n')],
+                    'relative_count':False},0),
+            ({'segment_pairs':[('e','o')],
+                    'relative_count':True},0),
+            ({'segment_pairs':[('e','o')],
                     'relative_count':False},0),
 
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':3,
-                    'relative_count':True},0.14286),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':3,
-                    'relative_count':False},1),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':3,
-                    'relative_count':True},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':3,
-                    'relative_count':False},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':3,
-                    'relative_count':True},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':3,
-                    'relative_count':False},0),
-
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ'),
+            ({'segment_pairs':[('s','ʃ'),
                                     ('m','n'),
                                     ('e','o')],
-                    'frequency_cutoff':0,
-                    'relative_count':True},0.14286),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ'),
-                                    ('m','n'),
-                                    ('e','o')],
-                    'frequency_cutoff':0,
-                    'relative_count':False},2),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ'),
-                                    ('m','n'),
-                                    ('e','o')],
-                    'frequency_cutoff':3,
                     'relative_count':True},0.09091),
-            ({'corpus': unspecified_test_corpus,
-                    'segment_pairs':[('s','ʃ'),
+            ({'segment_pairs':[('s','ʃ'),
                                     ('m','n'),
                                     ('e','o')],
-                    'frequency_cutoff':3,
                     'relative_count':False},1)]
 
-    for c,v in calls:
-        assert(abs(minpair_fl(**c)[0]-v) < 0.0001)
+    with CanonicalVariantContext(unspecified_test_corpus,
+                                'transcription', 'type', frequency_threshold = 3) as c:
+        for kwargs, v in calls:
+            print(kwargs)
+            assert(abs(minpair_fl(c, **kwargs)[0]-v) < 0.0001)
 
-def test_non_minimal_pair_corpus_deltah(unspecified_test_corpus):
-    calls = [({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':0,
-                'type_or_token':'type'},0.13333),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':0,
-                'type_or_token':'token'},0.24794),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':0,
-                'type_or_token':'type'},0.13333),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':0,
-                'type_or_token':'token'},0.00691),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'type'},0),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'token'},0),
-
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':3,
-                'type_or_token':'type'},0.16667),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':3,
-                'type_or_token':'token'},0.25053),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':3,
-                'type_or_token':'type'},0),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':3,
-                'type_or_token':'token'},0),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'type'},0),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'token'},0),
-
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ'),
+def test_deltah(unspecified_test_corpus):
+    type_calls = [({'segment_pairs':[('s','ʃ')]},0.13333),
+            ({'segment_pairs':[('m','n')]},0.13333),
+            ({'segment_pairs':[('e','o')]},0),
+            ({'segment_pairs':[('s','ʃ'),
                                 ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'type'},0.26667),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ'),
-                                ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'token'},0.25485),
+                                ('e','o')]},0.26667),]
 
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ'),
-                                ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'type'},0.16667),
-            ({'corpus': unspecified_test_corpus,
-                'segment_pairs':[('s','ʃ'),
-                                ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'token'},0.25053),]
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        for kwargs, v in type_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
 
-    for c,v in calls:
-        assert(abs(deltah_fl(**c)-v) < 0.0001)
+    type_calls = [({'segment_pairs':[('s','ʃ')]},0.16667),
+            ({'segment_pairs':[('m','n')]},0),
+            ({'segment_pairs':[('e','o')]},0),
+            ({'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')]},0.16667)]
+
+    with CanonicalVariantContext(unspecified_test_corpus,
+                            'transcription', 'type', frequency_threshold = 3) as c:
+        for kwargs, v in type_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    token_calls = [({'segment_pairs':[('s','ʃ')]},0.24794),
+            ({'segment_pairs':[('m','n')]},0.00691),
+            ({'segment_pairs':[('e','o')]},0),
+            ({'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')]},0.25485),]
+
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        for kwargs, v in token_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    token_calls = [({'segment_pairs':[('s','ʃ')]},0.25053),
+            ({'segment_pairs':[('m','n')]},0),
+            ({'segment_pairs':[('e','o')]},0),
+            ({'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')]},0.25053),]
+
+    with CanonicalVariantContext(unspecified_test_corpus,
+                            'transcription', 'token', frequency_threshold = 3) as c:
+        for kwargs, v in token_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
 
 
 def test_minimal_pair_wordtokens(unspecified_discourse_corpus):
-    c = unspecified_discourse_corpus.lexicon
-    calls = [({'corpus': c,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':0,
+    corpus = unspecified_discourse_corpus.lexicon
+
+    calls = [({'segment_pairs':[('s','ʃ')],
                     'relative_count':True},0.125),
-            ({'corpus': c,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('s','ʃ')],
                     'relative_count':False},1),
-            ({'corpus': c,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('m','n')],
                     'relative_count':True},0.11111),
-            ({'corpus': c,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('m','n')],
                     'relative_count':False},1),
-            ({'corpus': c,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('e','o')],
                     'relative_count':True},0),
-            ({'corpus': c,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':0,
+            ({'segment_pairs':[('e','o')],
                     'relative_count':False},0),
-
-            ({'corpus': c,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':3,
+            ({'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
                     'relative_count':True},0.14286),
-            ({'corpus': c,
-                    'segment_pairs':[('s','ʃ')],
-                    'frequency_cutoff':3,
+            ({'segment_pairs':[('s','ʃ'),
+                                    ('m','n'),
+                                    ('e','o')],
+                    'relative_count':False},2),]
+    with MostFrequentVariantContext(corpus, 'transcription', 'type') as c:
+        for kwargs, v in calls:
+            assert(abs(minpair_fl(c, **kwargs)[0]-v) < 0.0001)
+
+    calls = [({ 'segment_pairs':[('s','ʃ')],
+                    'relative_count':True},0.14286),
+            ({'segment_pairs':[('s','ʃ')],
                     'relative_count':False},1),
-            ({'corpus': c,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':3,
+            ({'segment_pairs':[('m','n')],
                     'relative_count':True},0),
-            ({'corpus': c,
-                    'segment_pairs':[('m','n')],
-                    'frequency_cutoff':3,
+            ({'segment_pairs':[('m','n')],
                     'relative_count':False},0),
-            ({'corpus': c,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':3,
+            ({'segment_pairs':[('e','o')],
                     'relative_count':True},0),
-            ({'corpus': c,
-                    'segment_pairs':[('e','o')],
-                    'frequency_cutoff':3,
+            ({'segment_pairs':[('e','o')],
                     'relative_count':False},0),
-
-            ({'corpus': c,
-                    'segment_pairs':[('s','ʃ'),
+            ({'segment_pairs':[('s','ʃ'),
                                     ('m','n'),
                                     ('e','o')],
-                    'frequency_cutoff':0,
-                    'relative_count':True},0.14286),
-            ({'corpus': c,
-                    'segment_pairs':[('s','ʃ'),
-                                    ('m','n'),
-                                    ('e','o')],
-                    'frequency_cutoff':0,
-                    'relative_count':False},2),
-            ({'corpus': c,
-                    'segment_pairs':[('s','ʃ'),
-                                    ('m','n'),
-                                    ('e','o')],
-                    'frequency_cutoff':3,
                     'relative_count':True},0.09091),
-            ({'corpus': c,
-                    'segment_pairs':[('s','ʃ'),
+            ({'segment_pairs':[('s','ʃ'),
                                     ('m','n'),
                                     ('e','o')],
-                    'frequency_cutoff':3,
                     'relative_count':False},1)]
-
-    for c,v in calls:
-        assert(abs(minpair_fl_wordtokens(**c)[0]-v) < 0.0001)
+    with MostFrequentVariantContext(corpus,
+            'transcription', 'type',frequency_threshold = 3) as c:
+        for kwargs, v in calls:
+            assert(abs(minpair_fl(c, **kwargs)[0]-v) < 0.0001)
 
 def test_deltah_wordtokens(unspecified_discourse_corpus):
-    c = unspecified_discourse_corpus.lexicon
-    calls = [({'corpus': c,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':0,
-                'type_or_token':'most_frequent_type'},0.13333),
-            ({'corpus': c,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':0,
-                'type_or_token':'most_frequent_token'},0.24794),
-            ({'corpus': c,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':0,
-                'type_or_token':'relative_type'},0.13333),
-            ({'corpus': c,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':0,
-                'type_or_token':'count_token'},0.00691),
-            ({'corpus': c,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'most_frequent_type'},0),
-            ({'corpus': c,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'most_frequent_token'},0),
-
-            ({'corpus': c,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':3,
-                'type_or_token':'relative_type'},0.16667),
-            ({'corpus': c,
-                'segment_pairs':[('s','ʃ')],
-                'frequency_cutoff':3,
-                'type_or_token':'count_token'},0.25053),
-            ({'corpus': c,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':3,
-                'type_or_token':'most_frequent_type'},0),
-            ({'corpus': c,
-                'segment_pairs':[('m','n')],
-                'frequency_cutoff':3,
-                'type_or_token':'most_frequent_token'},0),
-            ({'corpus': c,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'relative_type'},0),
-            ({'corpus': c,
-                'segment_pairs':[('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'count_token'},0),
-
-            ({'corpus': c,
-                'segment_pairs':[('s','ʃ'),
+    corpus = unspecified_discourse_corpus.lexicon
+    frequent_type_calls = [({'segment_pairs':[('s','ʃ')]},0.13333),
+            ({'segment_pairs':[('e','o')]},0),
+            ({'segment_pairs':[('s','ʃ'),
                                 ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'most_frequent_type'},0.26667),
-            ({'corpus': c,
-                'segment_pairs':[('s','ʃ'),
-                                ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':0,
-                'type_or_token':'most_frequent_token'},0.25485),
+                                ('e','o')]},0.26667),]
+    with MostFrequentVariantContext(corpus, 'transcription', 'type') as c:
+        for kwargs, v in frequent_type_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
 
-            ({'corpus': c,
-                'segment_pairs':[('s','ʃ'),
-                                ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'relative_type'},0.16667),
-            ({'corpus': c,
-                'segment_pairs':[('s','ʃ'),
-                                ('m','n'),
-                                ('e','o')],
-                'frequency_cutoff':3,
-                'type_or_token':'count_token'},0.25053),]
+    frequent_type_calls = [({'segment_pairs':[('m','n')]},0),]
+    with MostFrequentVariantContext(corpus,
+                    'transcription', 'type', frequency_threshold = 3) as c:
+        for kwargs, v in frequent_type_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
 
-    for c,v in calls:
-        assert(abs(deltah_fl_wordtokens(**c)-v) < 0.0001)
+    frequent_token_calls = [({'segment_pairs':[('s','ʃ')]},0.24794),
+            ({'segment_pairs':[('e','o')]},0),
+            ({'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')]},0.25485),]
+    with MostFrequentVariantContext(corpus, 'transcription', 'token') as c:
+        for kwargs, v in frequent_token_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    frequent_token_calls = [({'segment_pairs':[('m','n')]},0),]
+    with MostFrequentVariantContext(corpus,
+                    'transcription', 'token', frequency_threshold = 3) as c:
+        for kwargs, v in frequent_token_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    count_token_calls = [({'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')]},0.25483),
+            ({'segment_pairs':[('m','n')]},0.00691),]
+    with SeparatedTokensVariantContext(corpus, 'transcription', 'token') as c:
+        for kwargs, v in count_token_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    count_token_calls = [({'segment_pairs':[('s','ʃ')]},0.25053),
+            ({'segment_pairs':[('e','o')]},0),]
+    with SeparatedTokensVariantContext(corpus,
+                    'transcription', 'token', frequency_threshold = 3) as c:
+        for kwargs, v in count_token_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    relative_type_calls = [({'segment_pairs':[('m','n')]},0.13333),]
+    with WeightedVariantContext(corpus, 'transcription', 'type') as c:
+        for kwargs, v in relative_type_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    relative_type_calls = [({'segment_pairs':[('s','ʃ'),
+                                        ('m','n'),
+                                        ('e','o')]},0.16667),
+                    ({'segment_pairs':[('s','ʃ')]},0.16667),
+                    ({'segment_pairs':[('e','o')]},0),]
+    with WeightedVariantContext(corpus,
+                    'transcription', 'type', frequency_threshold = 3) as c:
+        for kwargs, v in relative_type_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
 
 def test_relative_minpair(unspecified_test_corpus):
-    calls = [({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':0,
+    calls = [({'segment':'s',
                     'relative_count':True},0.013888),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':0,
+            ({'segment':'s',
                     'relative_count':False},0.11111),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':0,
+            ({'segment':'n',
                     'relative_count':True},0.0123457),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':0,
+            ({'segment':'n',
                     'relative_count':False},0.11111),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':0,
+            ({'segment':'o',
                     'relative_count':True},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':0,
-                    'relative_count':False},0),
+            ({'segment':'o',
+                    'relative_count':False},0),]
 
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':3,
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        for kwargs, v in calls:
+            assert(abs(relative_minpair_fl(c, **kwargs)-v) < 0.0001)
+
+    calls = [({'segment':'s',
                     'relative_count':True},0.01587),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':3,
+            ({'segment':'s',
                     'relative_count':False},0.11111),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':3,
+            ({'segment':'n',
                     'relative_count':True},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':3,
+            ({'segment':'n',
                     'relative_count':False},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':3,
+            ({'segment':'o',
                     'relative_count':True},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':3,
+            ({'segment':'o',
                     'relative_count':False},0)]
 
 
-    for c,v in calls:
-        assert(abs(relative_minpair_fl(**c)-v) < 0.0001)
-
+    with CanonicalVariantContext(unspecified_test_corpus,
+                    'transcription', 'type', frequency_threshold = 3) as c:
+        for kwargs, v in calls:
+            assert(abs(relative_minpair_fl(c, **kwargs)-v) < 0.0001)
 
 def test_relative_deltah(unspecified_test_corpus):
-    calls = [({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':0,
-                    'type_or_token':'type'},0.014814),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':0,
-                    'type_or_token':'token'},0.0275487),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':0,
-                    'type_or_token':'type'},0.014814),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':0,
-                    'type_or_token':'token'},0.000767),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':0,
-                    'type_or_token':'type'},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':0,
-                    'type_or_token':'token'},0),
+    type_calls = [({'segment':'s'},0.014814),
+            ({'segment':'n'},0.014814),
+            ({'segment':'o'},0),]
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        for kwargs, v in type_calls:
+            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
 
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':3,
-                    'type_or_token':'type'}, 0.0185185),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'s',
-                    'frequency_cutoff':3,
-                    'type_or_token':'token'}, 0.027837),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':3,
-                    'type_or_token':'type'},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'n',
-                    'frequency_cutoff':3,
-                    'type_or_token':'token'},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':3,
-                    'type_or_token':'type'},0),
-            ({'corpus': unspecified_test_corpus,
-                    'segment':'o',
-                    'frequency_cutoff':3,
-                    'type_or_token':'token'},0)]
+    type_calls = [({'segment':'s'}, 0.0185185),
+            ({'segment':'n'},0),
+            ({'segment':'o'},0),]
+    with CanonicalVariantContext(unspecified_test_corpus,
+                        'transcription', 'type', frequency_threshold = 3) as c:
+        for kwargs, v in type_calls:
+            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
 
+    token_calls = [({'segment':'s'},0.0275487),
+            ({'segment':'n'},0.000767),
+            ({'segment':'o'},0),]
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        for kwargs, v in token_calls:
+            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
 
-    for c,v in calls:
-        assert(abs(relative_deltah_fl(**c)-v) < 0.0001)
-
+    token_calls = [({'segment':'s'}, 0.027837),
+            ({'segment':'n'},0),
+            ({'segment':'o'},0)]
+    with CanonicalVariantContext(unspecified_test_corpus,
+                        'transcription', 'token', frequency_threshold = 3) as c:
+        for kwargs, v in token_calls:
+            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
 
 def test_mass_fl(unspecified_test_corpus):
-    calls = [({'corpus': unspecified_test_corpus,
-                    'algorithm':'minpair',
-                    'frequency_cutoff':0,
+    calls = [({'algorithm':'minpair',
                     'relative_count':True},
 
                         ([(('s', 'ʃ'), 0.125), (('m', 'n'), 0.1111111111111111), (('i', 't'), 0.0), (('t', 'u'), 0.0),
@@ -460,9 +318,7 @@ def test_mass_fl(unspecified_test_corpus):
                          (('i', 'ɑ'), 0.0), (('o', 's'), 0.0), (('e', 'ʃ'), 0.0), (('u', 'ʃ'), 0.0), (('m', 'o'), 0.0),
                          (('e', 'm'), 0.0), (('o', 'u'), 0.0), (('n', 'ʃ'), 0.0), (('e', 't'), 0.0), (('o', 'ɑ'), 0.0),
                          (('m', 's'), 0.0)])),
-            ({'corpus': unspecified_test_corpus,
-                    'algorithm':'minpair',
-                    'frequency_cutoff':0,
+            ({'algorithm':'minpair',
                     'relative_count':False},
 
                         ([(('s', 'ʃ'), 1.0), (('m', 'n'), 1.0), (('i', 't'), 0.0), (('t', 'u'), 0.0),
@@ -477,7 +333,8 @@ def test_mass_fl(unspecified_test_corpus):
                          (('m', 's'), 0.0)]))]
 
 
-    for c,v in calls:
-        for result,prediction in zip(all_pairwise_fls(**c), v):
-            assert(abs(result[1]-prediction[1]) < 0.0001)
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        for kwargs, v in calls:
+            for result,prediction in zip(all_pairwise_fls(c, **kwargs), v):
+                assert(abs(result[1]-prediction[1]) < 0.0001)
 

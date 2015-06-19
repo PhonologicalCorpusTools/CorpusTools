@@ -1,17 +1,5 @@
-#-------------------------------------------------------------------------------
-# Name:        module1
-# Purpose:
-#
-# Author:      Scott
-#
-# Created:     12/01/2015
-# Copyright:   (c) Scott 2015
-# Licence:     <your licence>
-#-------------------------------------------------------------------------------
 
-from corpustools.corpus.classes import Corpus
-from corpustools.corpus.io import load_binary
-import argparse
+
 from math import log
 from collections import defaultdict
 import os
@@ -32,7 +20,8 @@ class Context(object):
     def __repr__(self):
         return str((self.seg1, self.seg2, self.other))
 
-def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, call_back=False):
+def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
+                        stop_check = False, call_back = False):
     """
     Calculates KL distances between two Phoneme objects in some context,
     either the left or right-hand side.
@@ -42,8 +31,8 @@ def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, ca
 
     Parameters
     ----------
-    corpus : Corpus
-        Corpus to use
+    corpus_context : CorpusContext
+        Context manager for a corpus
     seg1 : str
         First segment
     seg2 : str
@@ -55,32 +44,40 @@ def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, ca
     call_back : callable or None
         Optional function to supply progress information during the function
     """
-    if not seg1 in corpus.inventory or not seg2 in corpus.inventory:
+    ## FIXME:  This function should be refactored into in KL proper and
+    ## another function that determines underlying form type things
+
+    if not seg1 in corpus_context.inventory or not seg2 in corpus_context.inventory:
         raise ValueError('One segment does not exist in this corpus')
 
     allC = defaultdict(Context)
     seg_counts = {'seg1':0, 'seg2':0}
-    for word in corpus.iter_words():
-        for pos,seg in word.enumerate_symbols('transcription'):
-            thisc = word.get_env(pos,'transcription')
+
+
+    for word in corpus_context:
+        tier = getattr(word, corpus_context.sequence_type)
+        symbols = tier.with_word_boundaries()
+        for pos in range(1, len(symbols)-1):
+            seg = symbols[pos]
+            thisc = (symbols[pos-1],symbols[pos+1])
             if side.startswith('r'):
-                thisc = thisc.rhs
+                thisc = thisc[0]
             elif side.startswith('l'):
-                thisc = thisc.lhs
+                thisc = thisc[1]
 
             flag = False
             if seg1 == seg:
-                allC[thisc].seg1 += 1
-                seg_counts['seg1'] += 1
+                allC[thisc].seg1 += word.frequency
+                seg_counts['seg1'] += word.frequency
                 flag = True
 
             if seg2 == seg:
-                allC[thisc].seg2 += 1
-                seg_counts['seg2'] += 1
+                allC[thisc].seg2 += word.frequency
+                seg_counts['seg2'] += word.frequency
                 flag = True
 
             if not flag:
-                allC[thisc].other += 1
+                allC[thisc].other += word.frequency
 
     totalC = len(allC)
     freq_c = defaultdict(int)
@@ -104,13 +101,7 @@ def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, ca
 
     ur,sr = (seg1,seg2) if seg1_entropy < seg2_entropy else (seg2,seg1)
 
-    # seg1_features = corpus.segment_to_features(seg1)
-    # seg2_features = corpus.segment_to_features(seg2)
-    # feature_difference = sum([1 for feature in seg1_features.keys() if not seg1_features[f] == seg2_features[f]])
-
     if outfile is not None:
-        if not os.path.isfile(outfile):
-            outfile = os.path.join(os.getcwd(), outfile)
         if not outfile.endswith('.txt'):
             outfile += '.txt'
 
@@ -123,12 +114,8 @@ def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, ca
                                 result.seg1/result.sum(),
                                 result.seg2/result.sum()),
                         file=f)
-        #print('Done!')
 
-    #else:
-    #    print(KL, seg1_entropy, seg2_entropy, ur, sr)
-
-    is_spurious = check_spurious(ur, sr, corpus)
+    is_spurious = check_spurious(ur, sr, corpus_context)
 
     if side.startswith('r'):
         retside = 'right'
@@ -136,13 +123,15 @@ def KullbackLeibler(corpus, seg1, seg2, side, outfile=None, stop_check=False, ca
         retside = 'left'
     elif side.startswith('b'):
         retside = 'both'
-    return seg1, seg2, retside, seg1_entropy, seg2_entropy, KL, ur, is_spurious
+    return seg1_entropy, seg2_entropy, KL, ur, is_spurious
 
 
-def check_spurious(ur, sr, corpus):
+def check_spurious(ur, sr, corpus_context):
     #returns a string, not a bool, for printing to a results table
-    ur = corpus.segment_to_features(ur).features
-    sr = corpus.segment_to_features(sr).features
+    if corpus_context.specifier is None:
+        return 'Maybe'
+    ur = corpus_context.corpus.segment_to_features(ur).features
+    sr = corpus_context.corpus.segment_to_features(sr).features
     diff = lambda flist1,flist2: len([f1 for f1,f2 in zip(sorted(flist1.values()),
                                                           sorted(flist2.values()))
                                       if not f1==f2])
@@ -151,7 +140,7 @@ def check_spurious(ur, sr, corpus):
     if seg_diff == 1:
         return 'No' #minimally different, could be allophones
 
-    for seg in corpus.inventory:
+    for seg in corpus_context.inventory:
         if diff(seg.features, ur) < seg_diff:
             return 'Yes' #something else is more similar
 

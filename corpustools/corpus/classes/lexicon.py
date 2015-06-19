@@ -357,6 +357,64 @@ class Transcription(object):
                     else:
                         raise(NotImplementedError('That format for seg_list is not supported.'))
 
+    def with_word_boundaries(self):
+        return ['#'] + self._list + ['#']
+
+    def find_nonmatch(self, environment):
+        if not isinstance(environment, EnvironmentFilter):
+            return None
+        if all(m not in self for m in environment.middle):
+            return None
+        num_segs = len(environment)
+
+        possibles = zip(*[self.with_word_boundaries()[i:]
+                                for i in range(num_segs)])
+        envs = []
+        lhs_num = environment.lhs_count()
+        middle_num = lhs_num
+        rhs_num = middle_num + 1
+        for i, p in enumerate(possibles):
+            if p not in environment and p[middle_num] in environment.middle:
+                lhs = p[:lhs_num]
+                middle = p[middle_num]
+                rhs = p[rhs_num:]
+                envs.append(Environment(middle, i + middle_num, lhs, rhs))
+        if not envs:
+            return None
+        return envs
+
+    def find(self, environment):
+        if not isinstance(environment, EnvironmentFilter):
+            return None
+        if all(m not in self for m in environment.middle):
+            return None
+        num_segs = len(environment)
+
+        possibles = zip(*[self.with_word_boundaries()[i:]
+                                for i in range(num_segs)])
+        lhs_num = environment.lhs_count()
+        middle_num = lhs_num
+        rhs_num = middle_num + 1
+        envs = []
+        for i, p in enumerate(possibles):
+            if p in environment:
+                lhs = p[:lhs_num]
+                middle = p[middle_num]
+                rhs = p[rhs_num:]
+                envs.append(Environment(middle, i + middle_num, lhs, rhs))
+        if not envs:
+            return None
+        return envs
+
+
+    def __contains__(self, other):
+        if isinstance(other, Segment):
+            if other.symbol in self._list:
+                return True
+        elif isinstance(other, str):
+            if other in self._list:
+                return True
+        return False
 
     def __setstate__(self, state):
         if 'stress_pattern' not in state:
@@ -452,26 +510,6 @@ class Transcription(object):
             if s in segments:
                 match.append(s)
         return match
-
-    def get_env(self,pos):
-        """
-        Return the symbol to the left and the symbol to the right of the position
-        """
-
-        if len(self) == 1:
-            lhs = '#'
-            rhs = '#'
-        elif pos == 0:
-            lhs = '#'
-            rhs = self[pos+1]
-        elif pos == len(self)-1:
-            lhs = self[pos-1]
-            rhs = '#'
-        else:
-            lhs = self[pos-1]
-            rhs = self[pos+1]
-        return Environment(lhs, rhs)
-        #return lhs,rhs
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -867,18 +905,54 @@ class Word(object):
 
 class Environment(object):
 
-    def __init__(self, lhs, rhs):
+    def __init__(self, middle, position, lhs = None, rhs = None):
+        self.middle = middle
+        self.position = position
         self.lhs = lhs
         self.rhs = rhs
+        self.lhs_string = None
+        self.rhs_string = None
+        self.middle_string = None
+
+    def __getitem__(self, key):
+        if self.lhs is not None:
+            if key < len(self.lhs):
+                return self.lhs[key]
+            elif key == len(self.lhs):
+                return self.middle
+            elif self.rhs is not None:
+                return self.rhs[key - len(self.lhs) - 1]
+            else:
+                raise(KeyError('Index out of bounds'))
+        else:
+            if key == 0:
+                return self.middle
+            elif self.rhs is not None:
+                return self.rhs[key - 1]
+            else:
+                raise(KeyError('Index out of bounds'))
 
     def __str__(self):
-        return '_'.join([self.lhs, self.rhs])
+        elements = []
+        if self.lhs_string is not None:
+            elements.append(self.lhs_string)
+        elif self.lhs is not None:
+            elements.append(''.join(self.lhs))
+        else:
+             elements.append('')
+        if self.rhs_string is not None:
+            elements.append(self.rhs_string)
+        elif self.rhs is not None:
+            elements.append(''.join(self.rhs))
+        else:
+             elements.append('')
+        return '_'.join(elements)
 
     def __repr__(self):
         return self.__str__()
 
     def __hash__(self):
-        return hash((self.lhs,self.rhs))
+        return hash((self.lhs, self.position, self.middle, self.rhs))
 
     def __eq__(self,other):
         """
@@ -892,71 +966,108 @@ class Environment(object):
             return False
         if other.rhs and other.rhs != self.rhs:
             return False
+        if other.position != self.position:
+            return False
         return True
 
     def __ne__(self,other):
         return not self.__eq__(other)
 
-
 class EnvironmentFilter(object):
     """
-    Environments are strings of the form "[+feature,-feature]_[+feature]"
-    or "[+feature]_" or "a_b" or "_b"
+
     """
-    def __init__(self, corpus, env):
+    def __init__(self, middle_segments, lhs = None, rhs = None):
+        self.middle = middle_segments
+        if lhs is not None:
+            lhs = tuple(lhs)
+        self.lhs = lhs
+        if rhs is not None:
+            rhs = tuple(rhs)
+        self.rhs = rhs
 
-        #there's a problem where some feature names have underscores in them
-        #so doing lhs,rhs=env.split('_') causes unpacking problems
-        #this in an awakward work-around that checks to see if either side of
-        #the environment is a list of features, by looking for brackets, then
-        #splits by brackets if necessary. However, I can't split out any
-        #starting brackets [ because I also use those for identifying lists
-        #at a later point
-        #otherwise, if its just segment envrionments, split by underscore
-        if ']_[' in env:
-            #both sides are lists
-            lhs, rhs = env.split(']_')
-        elif '_[' in env:
-            #only the right hand side is a list of a features
-            lhs, rhs = env.split('_', maxsplit=1)
-        elif ']_' in env:
-            #only the left hand side is a list of features
-            lhs, rhs = env.split(']_')
-        else: #both sides are segments
-            lhs, rhs = env.split('_')
+        self.lhs_string = None
+        self.rhs_string = None
+        self.sanitize()
 
-        if not lhs:
-            self.lhs_string  = ''
-            self.lhs = list()
-        elif lhs.startswith('['):
-            self.lhs_string = lhs
-            lhs = lhs.lstrip('[')
-            lhs = lhs.rstrip(']')
-            #lhs = {feature[1:]:feature[0] for feature in lhs.split(',')}
-            lhs = lhs.split(',')
-            self.lhs = corpus.features_to_segments(lhs)
-        #else it's a segment, just leave it as the string it already is
-        else:
-            self.lhs_string = lhs
-            self.lhs = [lhs]
+    def sanitize(self):
+        if self.lhs is not None:
+            new_lhs = []
+            for seg_set in self.lhs:
+                if not isinstance(seg_set,frozenset):
+                    new_lhs.append(frozenset(seg_set))
+                else:
+                    new_lhs.append(seg_set)
+            self.lhs = tuple(new_lhs)
+        if self.rhs is not None:
+            new_rhs = []
+            for seg_set in self.rhs:
+                if not isinstance(seg_set,frozenset):
+                    new_rhs.append(frozenset(seg_set))
+                else:
+                    new_rhs.append(seg_set)
+            self.rhs = tuple(new_rhs)
+        if not isinstance(self.middle, frozenset):
+            self.middle = frozenset(self.middle)
 
-        if not rhs:
-            self.rhs_string  = ''
-            self.rhs = list()
-        elif rhs.startswith('['):
-            self.rhs_string = rhs
-            rhs = rhs.lstrip('[')
-            rhs = rhs.rstrip(']')
-            #rhs = {feature[1:]:feature[0] for feature in rhs.split(',')}
-            rhs = rhs.split(',')
-            self.rhs = corpus.features_to_segments(rhs)
-        #else it's a segment, just leave it as the string it already is
-        else:
-            self.rhs_string = rhs
-            self.rhs = [rhs]
+    def is_applicable(self, sequence):
+        if len(sequence) < len(self):
+            return False
+        return True
+
+    def compile_re_pattern(self):
+        pass
+
+    def lhs_count(self):
+        if self.lhs is None:
+            return 0
+        return len(self.lhs)
+
+    def rhs_count(self):
+        if self.rhs is None:
+            return 0
+        return len(self.rhs)
+
+    def set_lhs(self, lhs):
+        self.lhs = lhs
+        self.compile_re_pattern()
+
+    def set_rhs(self, rhs):
+        self.rhs = rhs
+        self.compile_re_pattern()
+
+    def __iter__(self):
+        if self.lhs is not None:
+            for s in self.lhs:
+                yield s
+        yield self.middle
+        if self.rhs is not None:
+            for s in self.rhs:
+                yield s
+
+    def __len__(self):
+        length = len(self.middle)
+        if self.lhs is not None:
+            length += len(self.lhs)
+        if self.rhs is not None:
+            length += len(self.rhs)
+        return length
 
     def __str__(self):
-        return '_'.join([self.lhs_string,self.rhs_string])
+        elements = []
+        if self.lhs_string is not None:
+            elements.append(self.lhs_string)
+        elif self.lhs is not None:
+            elements.append(''.join('{' + ','.join(x) + '}' for x in self.lhs))
+        else:
+             elements.append('')
+        if self.rhs_string is not None:
+            elements.append(self.rhs_string)
+        elif self.rhs is not None:
+            elements.append(''.join('{' + ','.join(x) + '}' for x in self.rhs))
+        else:
+             elements.append('')
+        return '_'.join(elements)
 
     def __eq__(self, other):
         if not hasattr(other,'lhs'):
@@ -970,16 +1081,11 @@ class EnvironmentFilter(object):
         return True
 
     def __hash__(self):
-        return hash((self.rhs_string, self.lhs_string))
+        return hash((self.rhs, self.lhs))
 
-    def __contains__(self, item):
-        if not isinstance(item, Environment):
-            return False
-        if self.rhs:
-            if item.rhs not in self.rhs:
-                return False
-        if self.lhs:
-            if item.lhs not in self.lhs:
+    def __contains__(self, sequence):
+        for i, s in enumerate(self):
+            if sequence[i] not in s:
                 return False
         return True
 
@@ -1330,7 +1436,6 @@ class Corpus(object):
         self.has_spelling = False
         self.has_transcription = False
         self.has_wordtokens = False
-        self._freq_base = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
@@ -1379,136 +1484,6 @@ class Corpus(object):
         for k in sorted(self.wordlist.keys()):
             yield k
 
-    def get_frequency_base(self, sequence_type, count_what, halve_edges=False,
-                        gramsize = 1, probability = False):
-        """
-        Generate (and cache) frequencies for each segment in the Corpus.
-
-        Parameters
-        ----------
-        sequence_type : string
-            Specifies whether to use 'spelling', 'transcription' or the name of a
-            transcription tier to use for comparisons
-
-        count_what: string
-            The type of frequency to use, either 'type' or 'token'
-
-        halve_edges : boolean
-            If True, word boundary symbols ('#') will only be counted once
-            per word, rather than twice.  Defaults to False.
-
-        gramsize : integer
-            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
-
-        probability : boolean
-            If True, frequency counts will be normalized by total frequency,
-            defaults to False
-
-        Returns
-        -------
-        dict
-            Keys are segments (or sequences of segments) and values are
-            their frequency in the Corpus
-        """
-        if (sequence_type, count_what, gramsize) not in self._freq_base:
-            freq_base = collections.defaultdict(float)
-            for word in self:
-                if count_what == 'token':
-                    freq = word.frequency
-                else:
-                    freq = 1
-                seq = ['#'] + [x for x in getattr(word, sequence_type)] + ['#']
-                #seq = getattr(word, sequence_type)
-                grams = zip(*[seq[i:] for i in range(gramsize)])
-                for x in grams:
-                    if len(x) == 1:
-                        x = x[0]
-                    freq_base[x] += freq
-            freq_base['total'] = sum(value for value in freq_base.values())
-            self._freq_base[(sequence_type, count_what, gramsize)] = freq_base
-        freq_base = self._freq_base[(sequence_type, count_what, gramsize)]
-        return_dict = { k:v for k,v in freq_base.items()}
-        if halve_edges and '#' in return_dict:
-            return_dict['#'] = (return_dict['#'] / 2) + 1
-            if not probability:
-                return_dict['total'] -= return_dict['#'] - 2
-        if probability:
-            return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
-        return return_dict
-
-    def get_phone_probs(self, sequence_type, count_what, gramsize = 1,
-                        probability = True, preserve_position = True,
-                        log_count = True):
-        """
-        Generate (and cache) phonotactic probabilities for segments in
-        the Corpus.
-
-        Parameters
-        ----------
-        sequence_type : string
-            Specifies whether to use 'spelling', 'transcription' or the name of a
-            transcription tier to use for comparisons
-
-        count_what: string
-            The type of frequency to use, either 'type' or 'token'
-
-        gramsize : integer
-            Size of n-gram to use for getting frequency, defaults to 1 (unigram)
-
-        probability : boolean
-            If True, frequency counts will be normalized by total frequency,
-            defaults to False
-
-        preserve_position : boolean
-            If True, segments will in different positions in the transcription
-            will not be collapsed, defaults to True
-
-        log_count : boolean
-            If True, token frequencies will be logrithmically-transformed
-            prior to being summed
-
-        Returns
-        -------
-        dict
-            Keys are segments (or sequences of segments) and values are
-            their phonotactic probability in the Corpus
-        """
-        if (sequence_type, count_what, gramsize, probability,
-                    preserve_position, log_count) not in self._freq_base:
-            freq_base = collections.defaultdict(float)
-            totals = collections.defaultdict(float)
-            for word in self:
-                if count_what == 'token':
-                    freq = word.frequency
-                    if log_count:
-                        freq = math.log(freq)
-                else:
-                    freq = 1
-                grams = zip(*[getattr(word, sequence_type)[i:] for i in range(gramsize)])
-                for i, x in enumerate(grams):
-                    #if len(x) == 1:
-                    #    x = x[0]
-                    if preserve_position:
-                        x = (x,i)
-                        totals[i] += freq
-
-                    freq_base[x] += freq
-
-            if not preserve_position:
-                freq_base['total'] = sum(value for value in freq_base.values())
-            else:
-                freq_base['total'] = totals
-            self._freq_base[(sequence_type, count_what, gramsize, probability,
-                    preserve_position, log_count)] = freq_base
-        freq_base = self._freq_base[(sequence_type, count_what, gramsize,
-                    probability,preserve_position, log_count)]
-        return_dict = { k:v for k,v in freq_base.items()}
-        if probability and not preserve_position:
-            return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
-        elif probability:
-            return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
-        return return_dict
-
     def subset(self, filters):
         """
         Generate a subset of the corpus based on filters.
@@ -1537,7 +1512,6 @@ class Corpus(object):
         new_corpus = Corpus('')
         new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
                     for x in self.attributes]
-        print(filters)
         for word in self:
             for f in filters:
                 if f[0].att_type == 'numeric':
@@ -1810,7 +1784,6 @@ class Corpus(object):
             self._specify_features()
             #Backwards compatability
             for k,w in self.wordlist.items():
-                #print(w)
                 w._corpus = self
                 for a in self.attributes:
                     if a.att_type == 'tier':
@@ -1843,72 +1816,6 @@ class Corpus(object):
         if not self.specifier is not None:
             return []
         return [x for x in self._inventory.keys() if x not in self.specifier]
-
-    def phonological_search(self,seg_list,envs=None, sequence_type = 'transcription',
-                            call_back = None, stop_check = None):
-        """
-        Perform a search of a corpus for segments, with the option of only
-        searching in certain phonological environments.
-
-        Parameters
-        ----------
-        seg_list : list of strings or Segments
-            Segments to search for
-
-        envs : list
-            Environments to search in
-
-        sequence_type : string
-            Specifies whether to use 'transcription' or the name of a
-            transcription tier to use for comparisons
-
-
-        stop_check : callable
-            Callable that returns a boolean for whether to exit before
-            finishing full calculation
-
-        call_back : callable
-            Function that can handle strings (text updates of progress),
-            tuples of two integers (0, total number of steps) and an integer
-            for updating progress out of the total set by a tuple
-
-        Returns
-        -------
-        list
-            A list of tuples with the first element a word and the second
-            a tuple of the segment and the environment that matched
-        """
-        if sequence_type == 'spelling':
-            return None
-        if call_back is not None:
-            call_back('Searching...')
-            call_back(0,len(self))
-            cur = 0
-        if envs is not None:
-            envs = [EnvironmentFilter(self, env) for env in envs]
-        results = list()
-        for word in self:
-            if stop_check is not None and stop_check():
-                return
-            if call_back is not None:
-                cur += 1
-                if cur % 20 == 0:
-                    call_back(cur)
-            founds = list()
-            for pos,seg in enumerate(getattr(word, sequence_type)):
-                if not seg in seg_list:
-                    continue
-                if envs is None:
-                    founds.append((seg,''))
-                    continue
-                word_env = word.get_env(pos, sequence_type)
-                for env in envs:
-                    if word_env in env:
-                        founds.append((seg,env))
-                        break
-            if founds:
-                results.append((word, founds))
-        return results
 
     def iter_words(self):
         """
@@ -2215,4 +2122,5 @@ class Corpus(object):
 
     def __iter__(self):
         return iter(self.wordlist.values())
+
 

@@ -2,89 +2,63 @@ from collections import OrderedDict
 
 from corpustools.gui.widgets import SegmentClassSelectWidget
 from .imports import *
-from .widgets import (EnvironmentSelectWidget, EnvironmentDialog, SegmentPairSelectWidget, RadioSelectWidget, TierWidget)
+from .widgets import (EnvironmentSelectWidget, EnvironmentDialog,
+                    SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+                    ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 import itertools
 
-from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs,
-                        calc_prod_wordtokens, calc_prod_wordtokens_all_envs)
+from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs)
 
 from corpustools.exceptions import PCTError, PCTPythonError
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 class PDWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
-        if 'envs' in kwargs:
-            if kwargs['pair_behavior'] == 'individual':
-
+        self.results = []
+        context = kwargs.pop('context')
+        if context == ContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == ContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        elif context == ContextWidget.separate_value:
+            cm = SeparatedTokensVariantContext
+        elif context == ContextWidget.relative_value:
+            cm = WeightedVariantContext
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
+            try:
+                envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
-                    try:
-                        if kwargs['wordtokens']:
-                            res = calc_prod_wordtokens(kwargs['corpus'], pair[0],pair[1],
-                                kwargs['envs'],
-                                kwargs['sequence_type'],
-                                kwargs['type_token'],
-                                kwargs['strict'],
-                                True,
-                                stop_check = kwargs['stop_check'],
-                                call_back = kwargs['call_back'])
-                        else:
-                            res = calc_prod(kwargs['corpus'], pair[0],pair[1],
-                                kwargs['envs'],
-                                kwargs['sequence_type'],
-                                kwargs['type_token'],
-                                kwargs['strict'],
-                                True,
-                                stop_check = kwargs['stop_check'],
-                                call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
+                    if envs is not None:
+                        for env in envs:
+                            env.middle = set(pair)
+                            res = calc_prod(c,
+                                    envs,
+                                    kwargs['strict'],
+                                    all_info = True,
+                                    stop_check = kwargs['stop_check'],
+                                    call_back = kwargs['call_back'])
+                    else:
+                        res = calc_prod_all_envs(c, pair[0], pair[1],
+                            all_info = True,
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
                     if self.stopped:
                         break
                     self.results.append(res)
-            else:
-                raise(NotImplementedError)
-                self.results.append(res)
-
-        else:
-            if kwargs['pair_behavior'] == 'individual':
-
-                for pair in kwargs['segment_pairs']:
-                    try:
-                        if kwargs['wordtokens']:
-                            res = calc_prod_wordtokens_all_envs(kwargs['corpus'], pair[0],pair[1],
-                                kwargs['sequence_type'],
-                                kwargs['type_token'],
-                                True,
-                                stop_check = kwargs['stop_check'],
-                                call_back = kwargs['call_back'])
-                        else:
-                            res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
-                                kwargs['sequence_type'],
-                                kwargs['type_token'],
-                                True,
-                                stop_check = kwargs['stop_check'],
-                                call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                    if self.stopped:
-                        break
-                    self.results.append(res)
-            else:
-                raise(NotImplementedError)
-                self.results.append(res)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
             self.finishedCancelling.emit()
             return
@@ -92,13 +66,13 @@ class PDWorker(FunctionWorker):
 
 
 class PDDialog(FunctionDialog):
-    header = ['Sound1',
-                'Sound2',
-                'Tier',
+    header = ['First segment',
+                'Second segment',
+                'Transcription tier',
                 'Environment',
-                'Freq. of Sound1',
-                'Freq. of Sound2',
-                'Freq. of env.',
+                'Frequency of first segment',
+                'Frequency of second segment',
+                'Frequency of environment',
                 'Entropy',
                 'Type or token']
 
@@ -129,28 +103,16 @@ class PDDialog(FunctionDialog):
 
         pdlayout.addWidget(self.segPairWidget)
 
-        addSegClassButton = QPushButton('Add a class of sounds')
-        addSegClassButton.clicked.connect(self.addSegClass)
-        pdlayout.addWidget(addSegClassButton)
+        #addSegClassButton = QPushButton('Add a class of sounds')
+        #addSegClassButton.clicked.connect(self.addSegClass)
+        #pdlayout.addWidget(addSegClassButton)
 
-        self.envWidget = EnvironmentSelectWidget(corpus.inventory)
+        self.envWidget = EnvironmentSelectWidget(corpus.inventory, middle = False)
         self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
 
 
         optionLayout = QVBoxLayout()
-
-        typetokenEnabled = {'Word types':self.corpus.has_transcription,
-                    'Word tokens':self.corpus.has_wordtokens}
-        self.wordtokensWidget = RadioSelectWidget('Analyze word types or tokens',
-                                            OrderedDict([('Word types','wordtypes'),
-                                            ('Word tokens','wordtokens')
-                                            ]),
-                                            {'Word types':self.typesSelected,
-                                            'Word tokens':self.tokensSelected},
-                                            typetokenEnabled)
-
-        optionLayout.addWidget(self.wordtokensWidget)
 
         self.tierWidget = TierWidget(corpus,include_spelling=False)
 
@@ -159,15 +121,15 @@ class PDDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
+                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
+        self.variantsWidget = ContextWidget(self.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
-
-
-        self.groupSegments = RadioSelectWidget('Calculate pairs or columns',
-                                               OrderedDict([('Do pairs individually', 'individual'),
-                                                   ('Average over each column', 'cols')]))
-
-        optionLayout.addWidget(self.groupSegments)
 
         checkFrame = QGroupBox('Exhaustivity and uniqueness')
 
@@ -267,101 +229,33 @@ class PDDialog(FunctionDialog):
             kwargs['envs'] = envs
 
         kwargs['corpus'] = self.corpus
-        if self.wordtokensWidget.value() == 'wordtokens':
-            kwargs['wordtokens'] = True
-        else:
-            kwargs['wordtokens'] = False
+        kwargs['context'] = self.variantsWidget.value()
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
-        kwargs['pair_behavior'] = self.groupSegments.value()
         kwargs['type_token'] = self.typeTokenWidget.value()
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
-
     def setResults(self,results):
-        self.results = list()
+        self.results = []
         seg_pairs = self.segPairWidget.value()
-        seg_pairs_options = 'individual'
-        if seg_pairs_options == 'individual':
-            for i, r in enumerate(results):
-                if isinstance(r,dict):
-                    for env,v in r.items():
-                        self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                            self.tierWidget.displayValue(),
-                                            env,
-                                            v[2], # freq of seg1
-                                            v[3], #freq of seg2
-                                            v[1], #total_tokens
-                                            v[0], #H
-                                            self.typeTokenWidget.value()])
-                else:
+        for i, r in enumerate(results):
+            if isinstance(r,dict):
+                for env,v in r.items():
                     self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                            self.tierWidget.displayValue(),
-                                            'FREQ-ONLY',
-                                            r[2], # freq of seg1
-                                            r[3], #freq of seg2
-                                            r[1], #total_tokens
-                                            r[0], #H
-                                            self.typeTokenWidget.value()])
+                                        self.tierWidget.displayValue(),
+                                        env,
+                                        v[2], # freq of seg1
+                                        v[3], #freq of seg2
+                                        v[1], #total_tokens
+                                        v[0], #H
+                                        self.typeTokenWidget.value()])
+            else:
+                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                        self.tierWidget.displayValue(),
+                                        'FREQ-ONLY',
+                                        r[2], # freq of seg1
+                                        r[3], #freq of seg2
+                                        r[1], #total_tokens
+                                        r[0], #H
+                                        self.typeTokenWidget.value()])
 
-        if self.groupSegments.value() == 'cols':
-                        h_avg = sum([r[0] for r in results])/len(results)
-                        seg1_freq_sum = sum([r[2] for r in results])
-                        seg2_freq_sum = sum([r[3] for r in results])
-                        self.results.append([self.class1name,
-                                              self.class2name,
-                                              self.tierWidget.displayValue(),
-                                              'COL-AVG',
-                                              seg1_freq_sum,
-                                              seg2_freq_sum,
-                                              sum([seg1_freq_sum, seg2_freq_sum]),
-                                              h_avg,
-                                              self.typeTokenWidget.value()])
-
-
-class SegmentClassSelector(EnvironmentDialog):
-
-    def __init__(self, parent, corpus):
-        parent.name = 'class'
-        super().__init__(corpus.inventory, parent)
-        self.lhsEnvFrame.setTitle('First class')
-        self.rhsEnvFrame.setTitle('Second class')
-        self.anotherButton.hide()
-        self.corpus = corpus
-
-    def accept(self):
-
-        lhs = self.lhs.value()
-        rhs = self.rhs.value()
-        if not (lhs and rhs):
-            reply = QMessageBox.critical(self,
-                                         "Missing information", "Please specify two segment classes")
-            return
-
-        self.class1features = lhs[1:-1].split(',')
-        self.class2features = rhs[1:-1].split(',')
-        class1segs = list()
-        class2segs = list()
-        for seg in self.corpus.inventory:
-            if all(seg.features[feature[1:]]==feature[0] for feature in self.class1features):
-               class1segs.append(seg.symbol)
-            if all(seg.features[feature[1:]]==feature[0] for feature in self.class2features):
-               class2segs.append(seg.symbol)
-
-        self.pairs = itertools.product(class1segs, class2segs)
-        self.pairs = [p for p in self.pairs if not p[0]==p[1]]
-
-        QDialog.accept(self)

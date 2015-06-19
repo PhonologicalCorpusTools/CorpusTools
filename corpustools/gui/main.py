@@ -39,8 +39,6 @@ from .luckygui import LuckyDialog
 from .autogui import AutoDialog
 from .helpgui import AboutDialog, HelpDialog
 
-from .optimizegui import OptimizeStringSimDialog
-
 from . import pct_rc
 
 class QApplicationMessaging(QApplication):
@@ -672,16 +670,6 @@ class MainWindow(QMainWindow):
                         "Error encountered", "Something went wrong during the update process.")
             app.cleanup()
 
-    def optimizeStringSim(self):
-        dialog = OptimizeStringSimDialog(self,self.corpus)
-        result = dialog.exec_()
-        if result:
-            if self.settings['autosave']:
-                self.saveCorpus()
-                self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
-
     @check_for_empty_corpus
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpus)
@@ -809,13 +797,6 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip = "Look for phonological patterns", triggered = self.autoAnalysis)
 
-        self.optimizeStringSimAct = QAction( "Precalculate string similarities...",
-                self,
-                statusTip=("Precalculate string similarities across the "
-                            "corpus to speed up neighborhood density, "
-                            "frequency of alternation and string similarity"),
-                triggered = self.optimizeStringSim)
-
         self.toggleWarningsAct = QAction( "Show warnings",
                 self,
                 statusTip="Show warnings", triggered=self.toggleWarnings)
@@ -941,11 +922,6 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
         self.analysisMenu.addAction(self.autoAnalysisAct)
-
-        #self.optimizeMenu = self.menuBar().addMenu("Optimize")
-        #self.optimizeMenu.addAction(self.optimizeStringSimAct)
-
-        #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
         #self.viewMenu.addAction(self.showInventoryAct)

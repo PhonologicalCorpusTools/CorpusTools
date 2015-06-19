@@ -217,7 +217,17 @@ class FunctionDialog(PCTDialog):
         self.results = results
 
     def calc(self):
-        raise(NotImplementedError)
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            self.accept()
 
     def newTable(self):
         self.update = False

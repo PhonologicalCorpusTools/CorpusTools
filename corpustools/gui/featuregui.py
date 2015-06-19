@@ -459,10 +459,7 @@ class EditFeatureMatrixDialog(QDialog):
         elif mode == 'Matrix':
             self.table = TableWidget()
             self.table.setModel(FeatureSystemTableModel(self.specifier))
-            try:
-                self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-            except AttributeError:
-                self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            self.table.resizeColumnsToContents()
             self.layout().insertWidget(0,self.table)
 
     def changeFeatureSystem(self):
@@ -478,6 +475,7 @@ class EditFeatureMatrixDialog(QDialog):
             self.table.setModel(FeatureSystemItemModel(self.specifier))
         else:
             self.table.setModel(FeatureSystemTableModel(self.specifier))
+            self.table.resizeColumnsToContents()
 
     def addSegment(self):
         dialog = EditSegmentDialog(self,self.table.model().specifier)

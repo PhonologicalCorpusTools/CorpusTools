@@ -9,6 +9,7 @@ from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
 from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.corpus.classes.lexicon import EnvironmentFilter
+from corpustools.phonosearch import phonological_search
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
@@ -16,9 +17,8 @@ class PSWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        corpus = kwargs.pop('corpus')
         try:
-            self.results = corpus.phonological_search(**kwargs)
+            self.results = phonological_search(**kwargs)
 
         except PCTError as e:
             self.errorEncountered.emit(e)
@@ -51,9 +51,9 @@ class PhonoSearchDialog(FunctionDialog):
         psFrame = QFrame()
         pslayout = QHBoxLayout()
 
-        self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
+        #self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
 
-        pslayout.addWidget(self.targetWidget)
+        #pslayout.addWidget(self.targetWidget)
 
         self.envWidget = EnvironmentSelectWidget(self.corpus.inventory)
         pslayout.addWidget(self.envWidget)
@@ -78,38 +78,26 @@ class PhonoSearchDialog(FunctionDialog):
 
     def generateKwargs(self):
         kwargs = {}
-        targetList = self.targetWidget.value()
-        if not targetList:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one {}.".format(targetType[:-1].lower()))
-            return
-        kwargs['seg_list'] = targetList
-        kwargs['corpus'] = self.corpus
-        kwargs['sequence_type'] = self.tierWidget.value()
         envs = self.envWidget.value()
         if len(envs) > 0:
+            for i, e in enumerate(envs):
+                if len(e.middle) == 0:
+                    reply = QMessageBox.critical(self,
+                            "Missing information",
+    "Please specify at least segment to search for in environment {}.".format(i+1))
+                    return
             kwargs['envs'] = envs
+
+        kwargs['corpus'] = self.corpus
+        kwargs['sequence_type'] = self.tierWidget.value()
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
     def setResults(self,results):
-        self.results = list()
+        self.results = []
         for w,f in results:
-            segs = [x[0] for x in f]
+            segs = [x.middle for x in f]
             try:
-                envs = [str(x[1]) for x in f]
+                envs = [str(x) for x in f]
             except IndexError:
                 envs = []
             self.results.append([w, str(getattr(w,self.tierWidget.value())),segs,

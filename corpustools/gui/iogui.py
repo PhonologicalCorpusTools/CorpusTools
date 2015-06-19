@@ -12,8 +12,8 @@ from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
 
 from corpustools.corpus.io import (load_binary, download_binary,
-                                    save_binary
-                                    )
+                                    save_binary)
+
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
                                     export_corpus_csv)
 

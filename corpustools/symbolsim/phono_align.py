@@ -4,7 +4,6 @@
 ## Based on aligner.js (by Michael Becker and Blake Allen),
 ## which in turn was based on Peter Kleiweg's Levenshtein Demo.
 
-import random
 from collections import defaultdict
 from codecs import open
 

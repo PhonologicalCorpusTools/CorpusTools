@@ -12,46 +12,51 @@ from corpustools.corpus.classes import Attribute
 from corpustools.exceptions import PCTError, PCTPythonError
 
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
+from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget,
+                    TierWidget, RestrictedContextWidget)
 from .corpusgui import AddWordDialog
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 
 class PPWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
+        self.results = []
+        context = kwargs.pop('context')
+        if context == RestrictedContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == RestrictedContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
         corpus = kwargs['corpusModel'].corpus
-        if 'query' in kwargs:
-            for q in kwargs['query']:
-                try:
-                    res = phonotactic_probability_vitevitch(corpus, q,
-                                        algorithm = kwargs['algorithm'],
-                                        sequence_type = kwargs['sequence_type'],
-                                        count_what = kwargs['count_what'],
-                                        probability_type = kwargs['probability_type'],
-                                        stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if self.stopped:
-                    break
-                self.results.append([q,res])
-        else:
-            kwargs['corpusModel'].addColumn(kwargs['attribute'])
+        st = kwargs['sequence_type']
+        tt = kwargs['type_token']
+        att = kwargs.get('attribute', None)
+        with cm(corpus, st, tt, att) as c:
             try:
-                phonotactic_probability_all_words(corpus,
-                                        kwargs['attribute'],
-                                        algorithm = kwargs['algorithm'],
-                                        sequence_type = kwargs['sequence_type'],
-                                        #num_cores = kwargs['num_cores'],
-                                        stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])
+                if 'query' in kwargs:
+                    for q in kwargs['query']:
+                        res = phonotactic_probability(c, q,
+                                            algorithm = kwargs['algorithm'],
+                                            probability_type = kwargs['probability_type'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
+                        if self.stopped:
+                            break
+                        self.results.append([q,res])
+                else:
+                    end = kwargs['corpusModel'].beginAddColumn(att)
+                    phonotactic_probability_all_words(c,
+                                            algorithm = kwargs['algorithm'],
+                                            probability_type = kwargs['probability_type'],
+                                            #num_cores = kwargs['num_cores'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
+                    end = kwargs['corpusModel'].endAddColumn(end)
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return
@@ -63,7 +68,6 @@ class PPWorker(FunctionWorker):
             self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
-
 
 class PPDialog(FunctionDialog):
     header = ['Word',
@@ -158,6 +162,10 @@ class PPDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+        actions = None
+        self.variantsWidget = RestrictedContextWidget(self.corpusModel.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -211,8 +219,9 @@ class PPDialog(FunctionDialog):
     def generateKwargs(self):
         kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': self.algorithmWidget.value(),
+                'context': self.variantsWidget.value(),
                 'sequence_type':self.tierWidget.value(),
-                'count_what':self.typeTokenWidget.value(),
+                'type_token':self.typeTokenWidget.value(),
                 'probability_type':self.probabilityTypeWidget.value()}
 
         if self.compType is None:
@@ -282,19 +291,6 @@ class PPDialog(FunctionDialog):
             kwargs['attribute'] = attribute
 
         return kwargs
-
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
 
     def setResults(self, results):
         self.results = list()

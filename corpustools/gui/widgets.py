@@ -1,11 +1,11 @@
 
 import sys
 import operator
+from collections import OrderedDict
 from itertools import combinations, permutations, chain
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
     QMessageBox, QGroupBox, QLineEdit
-from corpustools.corpus.classes import Attribute
 from corpustools.gui.views import TableWidget
 
 from .imports import *
@@ -15,13 +15,12 @@ from .models import SegmentPairModel, EnvironmentModel, FilterModel
 #from .corpusgui import AddTierDialog
 from .delegates import SwitchDelegate
 
-from corpustools.corpus.classes import Attribute
+from corpustools.corpus.classes import Attribute, EnvironmentFilter
 from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
 
 
 def truncate_string(string, length = 10):
     return (string[:length] + '...') if len(string) > length + 3 else string
-
 
 class NonScrollingComboBox(QComboBox):
     def __init__(self, parent = None):
@@ -30,7 +29,6 @@ class NonScrollingComboBox(QComboBox):
 
     def wheelEvent(self, e):
         e.ignore()
-
 
 class CorpusSelect(QComboBox):
     def __init__(self, parent, settings):
@@ -148,7 +146,6 @@ class ParsingDialog(QDialog):
         delimiter = self.delimiterWidget.text()
         if delimiter != '':
             self.digraphWidget.characters -= set([delimiter])
-
 
 class AnnotationTypeWidget(QGroupBox):
     def __init__(self, annotation_type, parent = None,
@@ -494,7 +491,6 @@ class NumericFilter(QWidget):
 
         return self.conditionals[ind], self.valueEdit.text()
 
-
 class AttributeFilterDialog(QDialog):
     def __init__(self, attributes,parent=None):
         QDialog.__init__(self,parent)
@@ -657,7 +653,6 @@ class AttributeFilterWidget(QGroupBox):
     def value(self):
         return [x[0] for x in self.table.model().filters]
 
-
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
         QGroupBox.__init__(self,'Tier',parent)
@@ -667,6 +662,7 @@ class TierWidget(QGroupBox):
 
         self.tierSelect = QComboBox()
         self.atts = list()
+        self.spellingName = corpus.attributes[0].display_name
         if include_spelling:
             self.atts.append(corpus.attributes[0])
             self.tierSelect.addItem(corpus.attributes[0].display_name)
@@ -680,10 +676,10 @@ class TierWidget(QGroupBox):
     def setSpellingEnabled(self, b):
         self.spellingEnabled = b
         if b:
-            if self.tierSelect.itemText(0) != 'Spelling':
-                self.tierSelect.insertItem(0,'Spelling')
+            if self.tierSelect.itemText(0) != self.spellingName:
+                self.tierSelect.insertItem(0,self.spellingName)
         else:
-            if self.tierSelect.itemText(0) == 'Spelling':
+            if self.tierSelect.itemText(0) == self.spellingName:
                 self.tierSelect.removeItem(0)
 
     def value(self):
@@ -856,8 +852,6 @@ class DigraphDialog(QDialog):
         self.addOneMore = False
         QDialog.reject(self)
 
-
-
 class DigraphWidget(QGroupBox):
     def __init__(self,parent = None):
         self._parent = parent
@@ -1011,8 +1005,6 @@ class InventoryTable(QTableWidget):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
 
-
-
 class SegmentButton(QPushButton):
     def sizeHint(self):
         sh = QPushButton.sizeHint(self)
@@ -1160,8 +1152,11 @@ class SegmentSelectionWidget(QWidget):
         self.setLayout(layout)
 
         self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
-        self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegments)
+        self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegmentFeatures)
         self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
+
+    def select(self, segments):
+        self.inventoryFrame.selectSegments(segments)
 
     def clearAll(self):
         self.inventoryFrame.clearAll()
@@ -1416,11 +1411,15 @@ class InventoryBox(QWidget):
             if features and btn.text() in segs:
                 btn.setStyleSheet("QPushButton{background-color: red;}")
 
-    def selectSegments(self, features):
+    def selectSegmentFeatures(self, features):
         segs = self.inventory.features_to_segments(features)
-        for btn in self.btnGroup.buttons():
-            if features and btn.text() in segs:
-                btn.setChecked(True)
+        self.selectSegments(segs)
+
+    def selectSegments(self, segs):
+        if len(segs) > 0:
+            for btn in self.btnGroup.buttons():
+                if btn.text() in segs:
+                    btn.setChecked(True)
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
@@ -1494,8 +1493,6 @@ class TranscriptionWidget(QGroupBox):
             self.segments.hide()
             self.showInv.setText('Show inventory')
         self.updateGeometry()
-
-
 
 class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
@@ -1571,7 +1568,6 @@ class FeatureBox(QWidget):
         if not val:
             return ''
         return '[{}]'.format(','.join(val))
-
 
 class SegmentPairDialog(QDialog):
     def __init__(self, inventory,parent=None):
@@ -1656,7 +1652,6 @@ class SegPairTableWidget(TableWidget):
 
     def addSwitch(self, index, begin, end):
         self.openPersistentEditor(self.model().index(begin, 2))
-
 
 class SegmentPairSelectWidget(QGroupBox):
     def __init__(self,inventory,parent=None):
@@ -1905,8 +1900,225 @@ class EnvironmentDialog(QDialog):
     def reject(self):
         QDialog.reject(self)
 
+
+class SegmentSelectDialog(QDialog):
+    def __init__(self, inventory, selected = None, parent=None):
+        QDialog.__init__(self,parent)
+
+        layout = QVBoxLayout()
+
+        segFrame = QFrame()
+
+        segLayout = QHBoxLayout()
+
+        self.segFrame = SegmentSelectionWidget(inventory)
+
+        if selected is not None:
+            self.segFrame.select(selected)
+
+        segLayout.addWidget(self.segFrame)
+
+        segFrame.setLayout(segLayout)
+
+        layout.addWidget(segFrame)
+
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Select segment pair')
+
+    def value(self):
+        return self.segFrame.value()
+
+    def reset(self):
+        self.segFrame.clearAll()
+
+
+class EnvironmentSegmentWidget(QWidget):
+    def __init__(self, inventory, parent = None, middle = False, enabled = True):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+        self.segments = set()
+        self.enabled = enabled
+
+        self.middle = middle
+
+        layout = QVBoxLayout()
+        if self.middle:
+            lab = '_\n\n{}'
+        else:
+            lab = '{}'
+        self.mainLabel = QLabel(lab)
+        self.mainLabel.setMargin(4)
+        self.mainLabel.setFrameShape(QFrame.Box)
+        self.mainLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+        layout.addWidget(self.mainLabel)
+
+        self.setLayout(layout)
+
+        self.mainLabel.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.mainLabel.customContextMenuRequested.connect(self.showMenu)
+
+    def mouseReleaseEvent(self, ev):
+        if not self.enabled:
+            ev.ignore()
+            return
+        if ev.button() == Qt.LeftButton:
+            self.selectSegments()
+            ev.accept()
+
+    def updateLabel(self):
+        if self.middle:
+            lab = '_\n\n{%s}'
+        else:
+            lab = '{%s}'
+        lab = lab % ', '.join(self.segments)
+        self.mainLabel.setText(lab)
+
+    def selectSegments(self):
+        dialog = SegmentSelectDialog(self.inventory, self.segments, self)
+        if dialog.exec_():
+            self.segments = dialog.value()
+            self.updateLabel()
+
+    def showMenu(self, pos):
+        if self.middle:
+            return
+        removeAction = QAction(self)
+        removeAction.setText('Delete')
+        removeAction.triggered.connect(self.deleteLater)
+
+        menu = QMenu(self)
+        menu.addAction(removeAction)
+
+        menu.popup(self.mapToGlobal(pos))
+
+    def value(self):
+        return self.segments
+
+class EnvironmentWidget(QWidget):
+    def __init__(self, inventory, parent = None, middle = True):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+        layout = QHBoxLayout()
+
+        self.lhsAddNew = QPushButton('+')
+
+        self.lhsAddNew.clicked.connect(self.addLhs)
+
+        self.lhsWidget = QWidget()
+
+        lhslayout = QHBoxLayout()
+        self.lhsWidget.setLayout(lhslayout)
+
+        self.rhsAddNew = QPushButton('+')
+
+        self.rhsAddNew.clicked.connect(self.addRhs)
+
+        self.rhsWidget = QWidget()
+
+        rhslayout = QHBoxLayout()
+        self.rhsWidget.setLayout(rhslayout)
+
+        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True, enabled = middle)
+
+        self.removeButton = QPushButton('Remove environment')
+
+        self.removeButton.clicked.connect(self.deleteLater)
+
+        layout.addWidget(self.lhsAddNew)
+        layout.addWidget(self.lhsWidget)
+        layout.addWidget(self.middleWidget)
+        layout.addWidget(self.rhsWidget)
+        layout.addWidget(self.rhsAddNew)
+
+        layout.addStretch()
+
+        optionlayout = QVBoxLayout()
+
+        optionlayout.addWidget(self.removeButton)
+
+        layout.addLayout(optionlayout)
+
+        self.setLayout(layout)
+
+    def addLhs(self):
+        segWidget = EnvironmentSegmentWidget(self.inventory)
+        self.lhsWidget.layout().insertWidget(0,segWidget)
+
+    def addRhs(self):
+        segWidget = EnvironmentSegmentWidget(self.inventory)
+        self.rhsWidget.layout().addWidget(segWidget)
+
+    def value(self):
+        lhs = []
+        for ind in range(self.lhsWidget.layout().count()):
+            wid = self.lhsWidget.layout().itemAt(ind).widget()
+            lhs.append(wid.value())
+        rhs = []
+        for ind in range(self.rhsWidget.layout().count()):
+            wid = self.rhsWidget.layout().itemAt(ind).widget()
+            rhs.append(wid.value())
+        middle = self.middleWidget.value()
+
+        return EnvironmentFilter(middle, lhs, rhs)
+
 class EnvironmentSelectWidget(QGroupBox):
-    name = 'environment'
+    def __init__(self, inventory, parent = None, middle = True):
+        QGroupBox.__init__(self,'Environments',parent)
+        self.middle = middle
+        self.inventory = inventory
+
+        layout = QVBoxLayout()
+
+        scroll = QScrollArea()
+        self.environmentFrame = QWidget()
+        lay = QBoxLayout(QBoxLayout.TopToBottom)
+        self.addButton = QPushButton('New environment')
+        self.addButton.clicked.connect(self.addNewEnvironment)
+        lay.addWidget(self.addButton)
+        lay.addStretch()
+        self.environmentFrame.setLayout(lay)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.environmentFrame)
+        scroll.setMinimumWidth(140)
+        scroll.setMinimumHeight(200)
+
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        layout.addWidget(scroll)
+
+        self.setLayout(layout)
+
+    def addNewEnvironment(self):
+        envWidget = EnvironmentWidget(self.inventory, middle = self.middle)
+        pos = self.environmentFrame.layout().count() - 2
+        self.environmentFrame.layout().insertWidget(pos,envWidget)
+
+    def value(self):
+        envs = []
+        for ind in range(self.environmentFrame.layout().count() - 2):
+            wid = self.environmentFrame.layout().itemAt(ind).widget()
+            envs.append(wid.value())
+        return envs
+
+
+class BigramWidget(QGroupBox):
+    name = 'bigram'
     def __init__(self,inventory,parent=None):
         QGroupBox.__init__(self,'{}s'.format(self.name.title()),parent)
 
@@ -1959,9 +2171,6 @@ class EnvironmentSelectWidget(QGroupBox):
 
     def value(self):
         return [x[0] for x in self.table.model().rows]
-
-class BigramWidget(EnvironmentSelectWidget):
-    name = 'bigram'
 
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options, actions=None, enabled=None,parent=None):
@@ -2033,6 +2242,38 @@ class RadioSelectWidget(QGroupBox):
             else:
                 w.setEnabled(True)
 
+class RestrictedContextWidget(RadioSelectWidget):
+    canonical = 'Use canonical forms only'
+    frequent = 'Use most frequent forms only'
+    canonical_value = 'canonical'
+    frequent_value = 'mostfrequent'
+    def __init__(self, corpus, actions = None, parent = None):
+        typetokenEnabled = {self.canonical: corpus.has_transcription,
+                    self.frequent: corpus.has_wordtokens}
+        RadioSelectWidget.__init__(self,'Pronunciation variants',
+                                            OrderedDict([(self.canonical, self.canonical_value),
+                                            (self.frequent, self.frequent_value)]),
+                                            actions,
+                                            typetokenEnabled)
+
+class ContextWidget(RestrictedContextWidget):
+    separate = 'Count each word token as a separate entry'
+    relative = 'Weight each word type\nby the relative frequency of its variants'
+    separate_value = 'separatetoken'
+    relative_value = 'relativetype'
+    def __init__(self, corpus, actions = None, parent = None):
+        typetokenEnabled = {self.canonical: corpus.has_transcription,
+                    self.frequent: corpus.has_wordtokens,
+                    self.separate: corpus.has_wordtokens,
+                    self.relative: corpus.has_wordtokens}
+        RadioSelectWidget.__init__(self,'Pronunciation variants',
+                                            OrderedDict([(self.canonical, self.canonical_value),
+                                            (self.frequent, self.frequent_value),
+                                            (self.separate, self.separate_value),
+                                            (self.relative, self.relative_value)
+                                            ]),
+                                            actions,
+                                            typetokenEnabled)
 
 class SegmentClassSelectWidget(QFrame):
 
@@ -2124,7 +2365,6 @@ class SegmentClassSelectWidget(QFrame):
 
     def accept(self):
          QDialog.accept(self)
-
 
 class CreateClassWidget(QDialog):
     def __init__(self, parent, corpus, class_type):

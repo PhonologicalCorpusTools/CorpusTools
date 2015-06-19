@@ -163,6 +163,7 @@ class Discourse(object):
         self.words = dict()
 
         self.lexicon = Corpus(self.name + ' lexicon')
+        self.lexicon.has_wordtokens = True
 
     @property
     def attributes(self):

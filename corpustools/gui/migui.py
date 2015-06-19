@@ -5,24 +5,41 @@ from collections import OrderedDict
 from corpustools.mutualinfo.mutual_information import pointwise_mi
 
 from .imports import *
-from .widgets import BigramWidget, TierWidget
+from .widgets import (BigramWidget, RadioSelectWidget, TierWidget, ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.exceptions import PCTError, PCTPythonError
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 class MIWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
-        for pair in kwargs['segment_pairs']:
+        self.results = []
+        context = kwargs.pop('context')
+        if context == ContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == ContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        elif context == ContextWidget.separate_value:
+            cm = SeparatedTokensVariantContext
+        elif context == ContextWidget.relative_value:
+            cm = WeightedVariantContext
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
             try:
-                res = pointwise_mi(kwargs['corpus'], pair,
-                        sequence_type = kwargs['sequence_type'],
-                        halve_edges = kwargs['halve_edges'],
-                        in_word = kwargs['in_word'],
-                        stop_check = kwargs['stop_check'],
-                        call_back = kwargs['call_back'])
+                for pair in kwargs['segment_pairs']:
+                    res = pointwise_mi(c, pair,
+                            halve_edges = kwargs['halve_edges'],
+                            in_word = kwargs['in_word'],
+                            stop_check = kwargs['stop_check'],
+                            call_back = kwargs['call_back'])
+                    if self.stopped:
+                        break
+                    self.results.append(res)
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return
@@ -30,9 +47,6 @@ class MIWorker(FunctionWorker):
                 e = PCTPythonError(e)
                 self.errorEncountered.emit(e)
                 return
-            if self.stopped:
-                break
-            self.results.append(res)
         if self.stopped:
             self.finishedCancelling.emit()
             return
@@ -44,6 +58,7 @@ class MIDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
                 'Transcription tier',
+                'Type or token',
                 'Domain',
                 'Halved edges',
                 'Mutual information']
@@ -78,15 +93,26 @@ class MIDialog(FunctionDialog):
 
         optionLayout.addRow(self.tierWidget)
 
-        self.inWordCheck = QCheckBox()
-        inWordLabel = QLabel('Set domain to word')
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
 
-        optionLayout.addRow(inWordLabel,self.inWordCheck)
+        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
+                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
+        self.variantsWidget = ContextWidget(self.corpus, actions)
 
-        self.halveEdgesCheck = QCheckBox()
+        optionLayout.addWidget(self.variantsWidget)
+
+        optionLayout.addWidget(self.typeTokenWidget)
+
+        self.inWordCheck = QCheckBox('Set domain to word')
+        optionLayout.addWidget(self.inWordCheck)
+
+        self.halveEdgesCheck = QCheckBox('Halve word boundary count')
         self.halveEdgesCheck.setChecked(True)
-        halveEdgesLabel = QLabel('Halve word boundary count')
-        optionLayout.addRow(halveEdgesLabel,self.halveEdgesCheck)
+        optionLayout.addWidget(self.halveEdgesCheck)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -113,15 +139,13 @@ class MIDialog(FunctionDialog):
                         'and word edges (#).'
             "</FONT>")
             self.inWordCheck.setToolTip(inwordToolTip)
-            inWordLabel.setToolTip(inwordToolTip)
 
             halveEdgesToolTip = ("<FONT COLOR=black>"
             'make the number of edge characters (#) equal to '
                         'the size of the corpus + 1, rather than double the '
                         'size of the corpus - 1.'
             "</FONT>")
-            halveEdgesLabel.setToolTip(halveEdgesToolTip)
-            self.segPairWidget.setToolTip(halveEdgesToolTip)
+            self.halveEdgesCheck.setToolTip(halveEdgesToolTip)
 
 
 
@@ -132,27 +156,16 @@ class MIDialog(FunctionDialog):
                     "Missing information", "Please specify at least one bigram.")
             return None
         return {'corpus':self.corpus,
+                'context': self.variantsWidget.value(),
+                'type_token': self.typeTokenWidget.value(),
                 'segment_pairs':[tuple(y for y in x) for x in segPairs],
                 'in_word': self.inWordCheck.isChecked(),
                 'halve_edges': self.halveEdgesCheck.isChecked(),
                 'sequence_type': self.tierWidget.value()}
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
 
     def setResults(self,results):
-        self.results = list()
+        self.results = []
         seg_pairs = [tuple(y for y in x) for x in self.segPairWidget.value()]
         if self.inWordCheck.isChecked():
             dom = 'Word'
@@ -161,5 +174,6 @@ class MIDialog(FunctionDialog):
         for i, r in enumerate(results):
             self.results.append([seg_pairs[i][0],seg_pairs[i][1],
                                 self.tierWidget.displayValue(),
+                                self.typeTokenWidget.value(),
                                 dom, self.halveEdgesCheck.isChecked(),
                                 r])
