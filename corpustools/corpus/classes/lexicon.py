@@ -1483,7 +1483,7 @@ class Corpus(object):
     def keys(self):
         for k in sorted(self.wordlist.keys()):
             yield k
-    
+
     def subset(self, filters):
         """
         Generate a subset of the corpus based on filters.
@@ -2121,32 +2121,6 @@ class Corpus(object):
         return self.wordlist[item]
 
     def __iter__(self):
-        for w in self.wordlist.values():
-            yield w
-        #return iter(self.wordlist.values())
-        
-    def as_token_variants(self):
-        for w in self:
-            for v in w.variants:
-                
-                yield v
+        return iter(self.wordlist.values())
 
-    def wordlist_variants(self, value):
-        if value == 'canonical':
-            return
-        elif value == 'frequent':
-            for word in self.wordlist:
-                key = word.spelling()
-                trans = word.variants.most_common()
-                self.wordlist[key].transcription = trans
-            return
-        elif value == 'separate':
-            
-            return
-        elif value == 'weighted':
-            
-            return
-        else:
-            #write an error message
-            return
-                    
+

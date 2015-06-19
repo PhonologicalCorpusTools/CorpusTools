@@ -64,26 +64,14 @@ def neighborhood_density(corpus_context, query,
 
     Parameters
     ----------
-    corpus : Corpus
-        The domain over which neighborhood density is calculated.
-
+    corpus_context : CorpusContext
+        Context manager for a corpus
     query : Word
         The word whose neighborhood density to calculate.
-
-    sequence_type : str
-        If 'spelling', will calculate neighborhood density on spelling.
-        If 'transcription' will calculate neighborhood density on transcriptions.
-        Otherwise, calculate on specified tier.
-
     algorithm : str
         The algorithm used to determine distance
-
-    max_distance : number, optional
+    max_distance : float, optional
         Maximum edit distance from the queried word to consider a word a neighbor.
-
-    count_what : str
-        If 'type', count neighbors in terms of their type frequency.
-        If 'token', count neighbors in terms of their token frequency.
     stop_check : callable or None
         Optional function to check whether to gracefully terminate early
     call_back : callable or None
@@ -162,14 +150,10 @@ def find_mutation_minpairs(corpus_context, query,
 
     Parameters
     ----------
-    corpus : Corpus
-        The domain over which the search for minimal pairs is carried out
-
+    corpus_context : CorpusContext
+        Context manager for a corpus
     query : Word
         The word whose minimal pairs to find
-
-    sequence_type : str
-        Tier (or spelling or transcription) on which to search for minimal pairs
     stop_check : callable or None
         Optional function to check whether to gracefully terminate early
     call_back : callable or None

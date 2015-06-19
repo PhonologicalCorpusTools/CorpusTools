@@ -16,8 +16,8 @@ def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
 
     Parameters
     ----------
-    corpus : Corpus
-        Corpus to use
+    corpus_context : CorpusContext
+        Context manager for a corpus
     query : tuple
         Tuple of two strings, each a segment/letter
     halve_edges : bool

@@ -1,6 +1,5 @@
 from corpustools.exceptions import PCTError, PCTPythonError
 import math
-import time
 import collections
 import copy
 

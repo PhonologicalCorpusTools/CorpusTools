@@ -40,23 +40,19 @@ def string_similarity(corpus_context, query, algorithm, **kwargs):
 
     Parameters
     ----------
-    corpus: Corpus
-        The corpus object to use
-
+    corpus_context : CorpusContext
+        Context manager for a corpus
     query: string, tuple, or list of tuples
         If this is a string, every word in the corpus will be compared to it,
         if this is a tuple with two strings, those words will be compared to
         each other,
         if this is a list of tuples, each tuple's strings will be compared to
         each other.
-
     algorithm: string
         The algorithm of string similarity to be used, currently supports
         'khorsi', 'edit_distance', and 'phono_edit_distance'
-
     max_rel: double
         Filters out all words that are higher than max_rel from a relatedness measure
-
     min_rel: double
         Filters out all words that are lower than min_rel from a relatedness measure
     stop_check : callable or None

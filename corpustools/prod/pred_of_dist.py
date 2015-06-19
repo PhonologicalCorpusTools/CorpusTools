@@ -5,7 +5,7 @@ import os
 from corpustools.corpus.classes import EnvironmentFilter
 from corpustools.exceptions import ProdError
 
-def check_envs(corpus, envs, stop_check, call_back):
+def check_envs(corpus_context, envs, stop_check, call_back):
     """
     Search for the specified segments in the specified environments in
     the corpus.
@@ -20,7 +20,7 @@ def check_envs(corpus, envs, stop_check, call_back):
         call_back('Finding instances of environments...')
         call_back(0,len(corpus))
         cur = 0
-    for word in corpus:
+    for word in corpus_context:
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -28,7 +28,7 @@ def check_envs(corpus, envs, stop_check, call_back):
             if cur % 100 == 0:
                 call_back(cur)
 
-        tier = getattr(word, corpus.sequence_type)
+        tier = getattr(word, corpus_context.sequence_type)
         overlaps = defaultdict(list)
         found_env = False
         for env in envs:
@@ -57,7 +57,7 @@ def check_envs(corpus, envs, stop_check, call_back):
 
     return env_matches, missing_envs, overlapping_envs
 
-def calc_prod_all_envs(corpus, seg1, seg2, all_info = False, stop_check = None,
+def calc_prod_all_envs(corpus_context, seg1, seg2, all_info = False, stop_check = None,
                 call_back = None):
     """
     Main function for calculating predictability of distribution for
@@ -65,11 +65,11 @@ def calc_prod_all_envs(corpus, seg1, seg2, all_info = False, stop_check = None,
 
     Parameters
     ----------
-    corpus : Corpus
-        The Corpus object to use
-    seg1 : string
+    corpus_context : CorpusContext
+        Context manager for a corpus
+    seg1 : str
         The first segment
-    seg2 : string
+    seg2 : str
         The second segment
     all_info : bool
         If true, all the intermediate numbers for calculating predictability
@@ -83,7 +83,7 @@ def calc_prod_all_envs(corpus, seg1, seg2, all_info = False, stop_check = None,
         frequency of seg2] if all_info is True, or just entropy if
         all_info is False.
     """
-    freq_base  = corpus.get_frequency_base()
+    freq_base  = corpus_context.get_frequency_base()
     if stop_check is not None and stop_check():
         return
     seg1_count = freq_base[seg1]
@@ -98,7 +98,7 @@ def calc_prod_all_envs(corpus, seg1, seg2, all_info = False, stop_check = None,
     return H
 
 
-def calc_prod(corpus, envs, strict = True, all_info = False, stop_check = None,
+def calc_prod(corpus_context, envs, strict = True, all_info = False, stop_check = None,
                 call_back = None):
     """
     Main function for calculating predictability of distribution for
@@ -106,8 +106,8 @@ def calc_prod(corpus, envs, strict = True, all_info = False, stop_check = None,
 
     Parameters
     ----------
-    corpus : Corpus
-        The Corpus object to use
+    corpus_context : CorpusContext
+        Context manager for a corpus
     envs : list of EnvironmentFilter
         List of EnvironmentFilter objects that specify environments
     strict : bool
@@ -121,7 +121,7 @@ def calc_prod(corpus, envs, strict = True, all_info = False, stop_check = None,
 
     Returns
     -------
-    dictionary
+    dict
         Keys are the environments specified and values are either a list
         of [entropy, frequency of environment, frequency of seg1, frequency
         of seg2] if all_info is True, or just entropy if all_info is False.
@@ -131,7 +131,7 @@ def calc_prod(corpus, envs, strict = True, all_info = False, stop_check = None,
         if e.middle != seg_list:
             raise(PCTError("Middle segments of all environments must be the same."))
 
-    returned = check_envs(corpus, envs, stop_check, call_back)
+    returned = check_envs(corpus_context, envs, stop_check, call_back)
 
     if stop_check is not None and stop_check():
         return
@@ -180,7 +180,6 @@ def calc_prod(corpus, envs, strict = True, all_info = False, stop_check = None,
     weighted_H = 0
     for env in env_matches:
         weighted_H += H_dict[env][0] * (H_dict[env][1] / total_frequency) if total_frequency>0 else 0
-
 
     try:
         avg_h = sum(total_matches.values())/total_frequency

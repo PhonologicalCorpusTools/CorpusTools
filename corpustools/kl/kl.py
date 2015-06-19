@@ -31,8 +31,8 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
 
     Parameters
     ----------
-    corpus : Corpus
-        Corpus to use
+    corpus_context : CorpusContext
+        Context manager for a corpus
     seg1 : str
         First segment
     seg2 : str

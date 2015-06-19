@@ -42,12 +42,10 @@ def minpair_fl(corpus_context, segment_pairs,
 
     Parameters
     ----------
-    corpus : Corpus
-        The domain over which functional load is calculated.
+    corpus_context : CorpusContext
+        Context manager for a corpus
     segment_pairs : list of length-2 tuples of str
         The pairs of segments to be conflated.
-    frequency_cutoff : number, optional
-        Minimum frequency of words to consider, if desired.
     relative_count : bool, optional
         If True, divide the number of minimal pairs by the total count
         by the total number of words that contain either of the two segments.
@@ -56,10 +54,6 @@ def minpair_fl(corpus_context, segment_pairs,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    sequence_type : str
-        The attribute of Words to calculate FL over. Normally this will
-        be the transcription, but it can also be the spelling or a
-        user-specified tier.
 
     Returns
     -------
@@ -128,17 +122,10 @@ def deltah_fl(corpus_context, segment_pairs,
 
     Parameters
     ----------
-    corpus : Corpus
-        The domain over which functional load is calculated.
+    corpus_context : CorpusContext
+        Context manager for a corpus
     segment_pairs : list of length-2 tuples of str
         The pairs of segments to be conflated.
-    frequency_cutoff : number, optional
-        Minimum frequency of words to consider, if desired.
-    type_or_token : str {'type', 'token'}
-        Specify whether entropy is based on type or token frequency.
-    sequence_type : string
-        The attribute of Words to calculate FL over. Normally this will be the
-        transcription, but it can also be the spelling or a user-specified tier.
     stop_check : callable or None
         Optional function to check whether to gracefully terminate early
     call_back : callable or None
@@ -208,29 +195,18 @@ def relative_minpair_fl(corpus_context, segment,
 
     Parameters
     ----------
-    corpus : Corpus
-        The domain over which functional load is calculated.
-
+    corpus_context : CorpusContext
+        Context manager for a corpus
     segment : str
         The target segment.
-
-    frequency_cutoff : number, optional
-        Minimum frequency of words to consider, if desired.
-
     relative_count : bool, optional
         If True, divide the number of minimal pairs by the total count
         by the total number of words that contain either of the two segments.
-
     distinguish_homophones : bool, optional
         If False, then you'll count sock~shock (sock=clothing) and
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-
-    sequence_type : string
-        The attribute of Words to calculate FL over. Normally this will
-        be the transcription, but it can also be the spelling or a
-        user-specified tier.
     stop_check : callable or None
         Optional function to check whether to gracefully terminate early
     call_back : callable or None
@@ -264,22 +240,10 @@ def relative_deltah_fl(corpus_context, segment,
 
     Parameters
     ----------
-    corpus : Corpus
-        The domain over which functional load is calculated.
-
+    corpus_context : CorpusContext
+        Context manager for a corpus
     segment : str
         The target segment.
-
-    frequency_cutoff : number, optional
-        Minimum frequency of words to consider, if desired.
-
-    type_or_token : str {'type', 'token'}
-        Specify whether entropy is based on type or token frequency.
-
-    sequence_type : string
-        The attribute of Words to calculate FL over. Normally this
-        will be the transcription, but it can also be the spelling or a
-        user-specified tier.
     stop_check : callable or None
         Optional function to check whether to gracefully terminate early
     call_back : callable or None
@@ -366,22 +330,22 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
 
     Parameters
     ----------
-    corpus : Corpus
-        The domain over which functional load is calculated.
+    corpus_context : CorpusContext
+        Context manager for a corpus
     relative_fl : bool
-        If False, return the FL for all segment pairs. If True, return the relative (average) FL for each segment.
+        If False, return the FL for all segment pairs. If True, return
+        the relative (average) FL for each segment.
     algorithm : str {'minpair', 'deltah'}
-        Algorithm to use for calculating functional load: "minpair" for minimal pair count or "deltah" for change in entropy.
-    frequency_cutoff : number, optional
-        Minimum frequency of words to consider, if desired.
+        Algorithm to use for calculating functional load: "minpair" for
+        minimal pair count or "deltah" for change in entropy.
     relative_count : bool, optional
-        If True, divide the number of minimal pairs by the total count by the total number of words that contain either of the two segments.
+        If True, divide the number of minimal pairs by the total count
+        by the total number of words that contain either of the two segments.
     distinguish_homophones : bool, optional
-        If False, then you'll count sock~shock (sock=clothing) and sock~shock (sock=punch) as just one minimal pair; but if True, you'll overcount alternative spellings of the same word, e.g. axel~actual and axle~actual. False is the value used by Wedel et al.
-    sequence_type : string
-        The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.
-    type_or_token : str {'type', 'token'}
-        Specify whether entropy is based on type or token frequency. Only used by the deltah algorithm.
+        If False, then you'll count sock~shock (sock=clothing) and
+        sock~shock (sock=punch) as just one minimal pair; but if True,
+        you'll overcount alternative spellings of the same word, e.g.
+        axel~actual and axle~actual. False is the value used by Wedel et al.
 
     Returns
     -------

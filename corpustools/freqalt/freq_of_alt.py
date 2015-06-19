@@ -20,6 +20,8 @@ def calc_freq_of_alt(corpus_context, seg1, seg2, algorithm, output_filename = No
 
     Parameters
     ----------
+    corpus_context : CorpusContext
+        Context manager for a corpus
     seg1: char
         A sound segment, e.g. 's', 't'
     seg2: char
