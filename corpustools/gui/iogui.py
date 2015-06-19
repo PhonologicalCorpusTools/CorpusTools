@@ -369,6 +369,7 @@ class CorpusSourceWidget(QWidget):
         buttonLayout.addWidget(self.directoryButton)
 
         self.mouseover = QLabel('Mouseover for included files')
+        self.mouseover.setFrameShape(QFrame.Box)
         self.mouseover.setToolTip('No included files')
         pathLayout.addWidget(self.mouseover)
 

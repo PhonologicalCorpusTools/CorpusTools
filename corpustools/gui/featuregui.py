@@ -687,8 +687,11 @@ class FeatureMatrixManager(QDialog):
 
         buttonLayout = QVBoxLayout()
         self.downloadButton = QPushButton('Download feature systems')
+        self.downloadButton.setAutoDefault(False)
         self.loadFromCsvButton = QPushButton('Create feature system from text file')
+        self.loadFromCsvButton.setAutoDefault(False)
         self.removeButton = QPushButton('Remove selected feature system')
+        self.removeButton.setAutoDefault(False)
         buttonLayout.addWidget(self.downloadButton)
         buttonLayout.addWidget(self.loadFromCsvButton)
         buttonLayout.addWidget(self.removeButton)
@@ -707,6 +710,7 @@ class FeatureMatrixManager(QDialog):
         layout.addWidget(formFrame)
 
         self.acceptButton = QPushButton('Done')
+        self.acceptButton.setDefault(True)
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         self.acceptButton.clicked.connect(self.accept)
