@@ -92,19 +92,6 @@ class PhonoSearchDialog(FunctionDialog):
         kwargs['sequence_type'] = self.tierWidget.value()
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
     def setResults(self,results):
         self.results = []
         for w,f in results:

@@ -1,42 +1,48 @@
-#-------------------------------------------------------------------------------
-# Name:        module1
-# Purpose:
-#
-# Author:      Scott
-#
-# Created:     12/01/2015
-# Copyright:   (c) Scott 2015
-# Licence:     <your licence>
-#-------------------------------------------------------------------------------
 
-from corpustools.corpus.classes import Corpus
-from corpustools.corpus.io import load_binary
-import argparse
+
 from math import log
 from collections import defaultdict, OrderedDict
 import os
 from codecs import open
 
 from .imports import *
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget
+from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget, ContextWidget
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.kl.kl import KullbackLeibler
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
+
 class KLWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
-        for pair in kwargs['segment_pairs']:
+        self.results = []
+        context = kwargs.pop('context')
+        if context == ContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == ContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        elif context == ContextWidget.separate_value:
+            cm = SeparatedTokensVariantContext
+        elif context == ContextWidget.relative_value:
+            cm = WeightedVariantContext
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
             try:
-                res = KullbackLeibler(kwargs['corpus'],
-                                pair[0], pair[1],
-                                outfile = None,
-                                side = kwargs['side'],
-                                stop_check = kwargs['stop_check'],
-                                call_back = kwargs['call_back'])
+                for pair in kwargs['segment_pairs']:
+                    res = KullbackLeibler(c,
+                                    pair[0], pair[1],
+                                    outfile = None,
+                                    side = kwargs['side'],
+                                    stop_check = kwargs['stop_check'],
+                                    call_back = kwargs['call_back'])
+                    if self.stopped:
+                        break
+                    self.results.append(res)
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return
@@ -44,9 +50,6 @@ class KLWorker(FunctionWorker):
                 e = PCTPythonError(e)
                 self.errorEncountered.emit(e)
                 return
-            if self.stopped:
-                break
-            self.results.append(res)
         if self.stopped:
             self.finishedCancelling.emit()
             return
@@ -55,6 +58,8 @@ class KLWorker(FunctionWorker):
 class KLDialog(FunctionDialog):
     header = ['Segment 1',
                 'Segment 2',
+                'Transcription tier',
+                'Type or token',
                 'Context',
                 'Segment 1 entropy',
                 'Segment 2 entropy',
@@ -76,8 +81,6 @@ class KLDialog(FunctionDialog):
 
     name = 'Kullback-Leibler'
 
-
-
     def __init__(self, parent, settings, corpus, showToolTips):
         FunctionDialog.__init__(self, parent, settings, KLWorker())
 
@@ -89,33 +92,36 @@ class KLDialog(FunctionDialog):
 
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
         kllayout.addWidget(self.segPairWidget)
-
-        self.side = str()
+        optionLayout = QFormLayout()
         self.contextRadioWidget = RadioSelectWidget('Contexts to examine',
                                                     OrderedDict([('Left-hand side only','lhs'),
                                                         ('Right-hand side only', 'rhs'),
                                                         ('Both sides', 'both')]),
                                                         #('All', 'all')]),
                                                         )
-        kllayout.addWidget(self.contextRadioWidget)
+        optionLayout.addWidget(self.contextRadioWidget)
 
+        self.tierWidget = TierWidget(corpus, include_spelling=False)
 
+        optionLayout.addRow(self.tierWidget)
+
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
+                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
+        self.variantsWidget = ContextWidget(self.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
+
+        optionLayout.addWidget(self.typeTokenWidget)
+
+        kllayout.addLayout(optionLayout)
         klframe.setLayout(kllayout)
         self.layout().insertWidget(0, klframe)
-
-
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
 
     def generateKwargs(self):
         kwargs = {}
@@ -126,6 +132,19 @@ class KLDialog(FunctionDialog):
             return None
         kwargs['segment_pairs'] = segPairs
         kwargs['corpus'] = self.corpus
+        kwargs['context'] = self.variantsWidget.value()
+        kwargs['sequence_type'] = self.tierWidget.value()
+        kwargs['type_token'] = self.typeTokenWidget.value()
         kwargs['side'] = self.contextRadioWidget.value()[0]
 
         return kwargs
+
+    def setResults(self,results):
+        self.results = []
+        seg_pairs = [tuple(y for y in x) for x in self.segPairWidget.value()]
+        context = self.contextRadioWidget.displayValue()
+        for i, r in enumerate(results):
+            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                self.tierWidget.displayValue(),
+                                self.typeTokenWidget.value(),
+                                context]+list(r))

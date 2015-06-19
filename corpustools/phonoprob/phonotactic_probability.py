@@ -4,18 +4,20 @@ from corpustools.corpus.classes import Word
 
 from corpustools.exceptions import PhonoProbError
 
-def phonotactic_probability_all_words(corpus, attribute, algorithm, sequence_type,
-                                    count_what = 'token',
+from corpustools.contextmanagers import ensure_context
+
+def phonotactic_probability_all_words(corpus_context, algorithm,
                                     probability_type = 'unigram',
-                                    segment_delimiter = '.',
                                     num_cores = -1,
                                     stop_check = None, call_back = None):
+    ensure_context(corpus_context)
     if call_back is not None:
         call_back('Calculating phonotactic probabilities...')
-        call_back(0,len(corpus))
+        call_back(0,len(corpus_context))
         cur = 0
+    num_cores = -1 # Multiprocessing not yet implemented
     if num_cores == -1:
-        for w in corpus:
+        for w in corpus_context:
             if stop_check is not None and stop_check():
                 break
             if call_back is not None:
@@ -23,37 +25,33 @@ def phonotactic_probability_all_words(corpus, attribute, algorithm, sequence_typ
                 if cur % 20 == 0:
                     call_back(cur)
             if algorithm == 'vitevitch':
-                res = phonotactic_probability_vitevitch(corpus, w,
-                                        sequence_type = sequence_type,
-                                        count_what = count_what,
+                res = phonotactic_probability_vitevitch(corpus_context, w,
                                         probability_type = probability_type,
                                         stop_check = stop_check)
-                setattr(w,attribute.name,res)
+                setattr(w.original, corpus_context.attribute.name,res)
+    if stop_check is not None and stop_check():
+        corpus_context.corpus.remove_attribute(corpus_context.attribute)
 
-def phonotactic_probability(corpus, query, algorithm, sequence_type,
-                                    count_what = 'token',
+def phonotactic_probability(corpus_context, query, algorithm,
                                     probability_type = 'unigram',
-                                    segment_delimiter = '.',
                                     stop_check = None, call_back = None):
     if algorithm == 'vitevitch':
-        return phonotactic_probability_vitevitch(corpus, query, sequence_type,
-                                    count_what,
+        return phonotactic_probability_vitevitch(corpus_context, query,
                                     probability_type,
-                                    segment_delimiter,
                                     stop_check, call_back)
 
-def phonotactic_probability_vitevitch(corpus, query,
+def phonotactic_probability_vitevitch(corpus_context, query,
                                     probability_type = 'unigram',
-                                    segment_delimiter = '.',
                                     stop_check = None, call_back = None):
+    ensure_context(corpus_context)
 
     if probability_type == 'unigram':
         gramsize = 1
     elif probability_type == 'bigram':
         gramsize = 2
 
-    prob_dict = corpus.get_phone_probs(gramsize = gramsize)
-    sequence = zip(*[getattr(query, getattr(corpus, 'sequence_type'))[i:] for i in range(gramsize)])
+    prob_dict = corpus_context.get_phone_probs(gramsize = gramsize)
+    sequence = zip(*[getattr(query, corpus_context.sequence_type)[i:] for i in range(gramsize)])
 
     totprob = 0
     tot = 0
@@ -64,7 +62,7 @@ def phonotactic_probability_vitevitch(corpus, query,
             notfound = []
 
             for seg in s:
-                if seg not in getattr(corpus, 'corpus').inventory:
+                if seg not in corpus_context.inventory:
                     notfound.append(seg)
             if len(notfound):
                 raise(PhonoProbError("Segments not found in the corpus: {}".format(', '.join(notfound))))

@@ -9,7 +9,7 @@ import time
 
 from corpustools.exceptions import MutualInfoError
 
-def pointwise_mi(corpus, query, halve_edges = False, in_word = False,
+def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
                 stop_check = None, call_back = None):
     """
     Calculate the mutual information for a bigram.
@@ -41,11 +41,11 @@ def pointwise_mi(corpus, query, halve_edges = False, in_word = False,
         call_back(0,0)
         cur = 0
     if in_word:
-        unigram_dict = get_in_word_unigram_frequencies(corpus, query)
-        bigram_dict = get_in_word_bigram_frequency(corpus, query)
+        unigram_dict = get_in_word_unigram_frequencies(corpus_context, query)
+        bigram_dict = get_in_word_bigram_frequency(corpus_context, query)
     else:
-        unigram_dict = corpus.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
-        bigram_dict = corpus.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
+        unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
+        bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
 
     #if '#' in query:
     #    raise(Exception("Word boundaries are currently unsupported."))
@@ -74,34 +74,41 @@ def pointwise_mi(corpus, query, halve_edges = False, in_word = False,
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 
 
-def get_in_word_unigram_frequencies(corpus, query):
-    seg1_total = sum([word.frequency if query[0] in getattr(word, getattr(corpus, 'sequence_type')) else 0.0 for word in corpus])
-    seg2_total = sum([word.frequency if query[1] in getattr(word, getattr(corpus, 'sequence_type')) else 0.0 for word in corpus])
-    return {query[0]: seg1_total / len(corpus), query[1]: seg2_total / len(corpus)}
+def get_in_word_unigram_frequencies(corpus_context, query):
+    totals = [0 for x in query]
+    for word in corpus_context:
+        for i, q in enumerate(query):
+            if q in getattr(word, corpus_context.sequence_type):
+                totals[i] += word.frequency
+    return {k: totals[i] / len(corpus_context) for i, k in enumerate(query)}
 
-def get_in_word_bigram_frequency(corpus, query):
-    total = sum([word.frequency if query[0] in getattr(word, getattr(corpus, 'sequence_type')) and query[1] in getattr(word, getattr(corpus, 'sequence_type')) else 0.0 for word in corpus])
-    return {query: total / len(corpus)}
+def get_in_word_bigram_frequency(corpus_context, query):
+    total = 0
+    for word in corpus_context:
+        tier = getattr(word, corpus_context.sequence_type)
+        if all(x in tier for x in query):
+            total += word.frequency
+    return {query: total / len(corpus_context)}
 
-def all_mis(corpus, sequence_type,
+def all_mis(corpus_context,
             halve_edges = False, in_word = False,
             stop_check = None, call_back = None):
     mis = {}
-    total_calculations = ((len(corpus.inventory)**2)-len(corpus.inventory)/2)+1
+    total_calculations = ((len(corpus_context.inventory)**2)-len(corpus_context.inventory)/2)+1
     ct = 1
     t = time.time()
-    for s1 in corpus.inventory:
-        for s2 in corpus.inventory:
-                print('Performing MI calculation {} out of {} possible'.format(str(ct), str(total_calculations)))
+    for s1 in corpus_context.inventory:
+        for s2 in corpus_context.inventory:
+                #print('Performing MI calculation {} out of {} possible'.format(str(ct), str(total_calculations)))
                 ct += 1
-                print('Duration of last calculation: {}'.format(str(time.time() - t)))
+                #print('Duration of last calculation: {}'.format(str(time.time() - t)))
                 t = time.time()
                 if type(s1) != str:
                     s1 = s1.symbol
                 if type(s2) != str:
                     s2 = s2.symbol
-                print(s1,s2)
-                mi = pointwise_mi(corpus, (s1, s2), sequence_type, halve_edges = halve_edges, in_word = in_word)
+                #print(s1,s2)
+                mi = pointwise_mi(corpus_context, (s1, s2), halve_edges = halve_edges, in_word = in_word)
                 mis[(s1,s2)] = mi
 
     ordered_mis = sorted([(pair, str(mis[pair])) for pair in mis], key=lambda p: p[1])

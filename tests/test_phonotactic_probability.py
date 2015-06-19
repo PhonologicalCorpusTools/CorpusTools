@@ -9,7 +9,7 @@ from corpustools.contextmanagers import CanonicalVariantContext, MostFrequentVar
 def test_basic_corpus_probs(unspecified_test_corpus):
     with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
         prob_dict = c.get_phone_probs(1, log_count = False, probability=False)
-        
+
     expected = {(('i',), 1):3, (('s',), 2):3, (('ʃ',), 6):1, (('t',), 3):1,
                 (('m',), 3):1, (('s',), 0):1, (('o',), 1):1, (('u',), 1):2,
                 (('u',), 2):1, (('n',), 4):1, (('o',), 3):3, (('ʃ',), 2):4,
@@ -72,8 +72,8 @@ def test_basic_phonoprob(unspecified_test_corpus):
                 'ta':0.4353651056,
                 'mata':0.1881114313,
                 'nata':0.1782478499}
-    for k,v in expected.items():
-        with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        for k,v in expected.items():
             res = phonotactic_probability_vitevitch(c, unspecified_test_corpus.find(k), 'unigram')
         assert(abs(v - res) < 0.0001)
 
@@ -82,8 +82,8 @@ def test_basic_phonoprob(unspecified_test_corpus):
                 'ta':0.1507780332,
                 'mata':0.0626335622,
                 'nata':0.0494821204}
-    for k,v in expected.items():
-        with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
+        for k,v in expected.items():
             res = phonotactic_probability_vitevitch(c, unspecified_test_corpus.find(k), 'bigram')
         assert(abs(v - res) < 0.0001)
 

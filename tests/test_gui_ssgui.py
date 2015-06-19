@@ -41,7 +41,7 @@ def test_ssgui(qtbot, specified_test_corpus, settings):
     assert(kwargs['query'][0].spelling == 'atema', kwargs['query'][0].spelling == 'mata')
     assert(kwargs['min_rel'] == 20)
     assert(kwargs['max_rel'] == 21)
-    assert(kwargs['count_what'] == 'type')
+    assert(kwargs['type_token'] == 'type')
 
     dialog.algorithmWidget.click(1)
     assert(dialog.algorithmWidget.value() == 'phono_edit_distance')

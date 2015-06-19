@@ -7,27 +7,41 @@ from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
 from corpustools.exceptions import PCTError, PCTPythonError
 
-from .widgets import RadioSelectWidget, FileWidget, TierWidget
+from .widgets import (RadioSelectWidget, FileWidget, TierWidget,
+                        RestrictedContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 from .corpusgui import AddWordDialog
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 class SSWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        try:
-            corpus = kwargs.pop('corpusModel').corpus
-            query = kwargs.pop('query')
-            alg = kwargs.pop('algorithm')
-            self.results = string_similarity(corpus,
-                                        query,alg,**kwargs)
-        except PCTError as e:
-            self.errorEncountered.emit(e)
-            return
-        except Exception as e:
-            e = PCTPythonError(e)
-            self.errorEncountered.emit(e)
-            return
+        context = kwargs.pop('context')
+        if context == RestrictedContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == RestrictedContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        corpus = kwargs.pop('corpusModel').corpus
+        st = kwargs.pop('sequence_type')
+        tt = kwargs.pop('type_token')
+        with cm(corpus, st, tt, None) as c:
+            try:
+                query = kwargs.pop('query')
+                alg = kwargs.pop('algorithm')
+                self.results = string_similarity(c,
+                                            query, alg,**kwargs)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
             self.finishedCancelling.emit()
             return
@@ -72,12 +86,16 @@ class SSDialog(FunctionDialog):
 
         if not self.corpusModel.corpus.has_transcription:
             self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
+        elif self.corpusModel.corpus.specifier is None:
+            self.layout().addWidget(QLabel('Corpus does not have a feature system loaded, so not all options are available.'))
 
         sslayout = QHBoxLayout()
 
         algEnabled = {'Khorsi':True,
                     'Edit distance':True,
-                    'Phonological edit distance':self.corpusModel.corpus.has_transcription}
+                    'Phonological edit distance':
+                        (self.corpusModel.corpus.has_transcription and
+                            self.corpusModel.corpus.specifier is not None)}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([('Edit distance','edit_distance'),
                                             ('Phonological edit distance','phono_edit_distance'),
@@ -158,6 +176,10 @@ class SSDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+        actions = None
+        self.variantsWidget = RestrictedContextWidget(self.corpusModel.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -286,9 +308,10 @@ class SSDialog(FunctionDialog):
             except ValueError:
                 pass
         kwargs = {'corpusModel':self.corpusModel,
+                'context': self.variantsWidget.value(),
                 'algorithm': self.algorithmWidget.value(),
                 'sequence_type':self.tierWidget.value(),
-                'count_what': self.typeTokenWidget.value(),
+                'type_token': self.typeTokenWidget.value(),
                 'min_rel':min_rel,
                 'max_rel':max_rel}
         #Error checking
@@ -373,18 +396,6 @@ class SSDialog(FunctionDialog):
             kwargs['query'] = read_pairs_file(pairs_path)
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        if result:
-            self.accept()
-
     def setResults(self, results):
         self.results = list()
         for result in results:
@@ -398,7 +409,7 @@ class SSDialog(FunctionDialog):
             else:
                 typetoken = self.typeTokenWidget.value()
             self.results.append([w1, w2,
-                        self.tierWidget.displayValue(),
+                        self.tierWidget.value(),
                          similarity, typetoken,
                         self.algorithmWidget.displayValue()])
 

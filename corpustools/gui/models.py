@@ -88,7 +88,7 @@ class BaseCorpusTableModel(BaseTableModel):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
 
-        self.columns = self.corpus.attributes
+        self.columns = [x for x in self.corpus.attributes]
 
         self.rows = self.corpus.words
 
@@ -370,20 +370,27 @@ class CorpusModel(BaseCorpusTableModel):
         else:
             end = False
         self.corpus.add_tier(attribute, segList)
-        self.columns = self.corpus.attributes
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
 
-    def addColumn(self, attribute):
+    def beginAddColumn(self, attribute):
         if attribute not in self.columns:
             end = True
             self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
         else:
             end = False
-        self.corpus.add_attribute(attribute,initialize_defaults=True)
-        self.columns = self.corpus.attributes
+        return end
+
+    def endAddColumn(self, end = False):
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
+
+    def addColumn(self, attribute):
+        end = self.beginAddColumn(attribute)
+        self.corpus.add_attribute(attribute,initialize_defaults=True)
+        self.endAddColumn(end)
 
     def addCountColumn(self, attribute, sequenceType, segList):
         if attribute not in self.columns:
@@ -392,7 +399,7 @@ class CorpusModel(BaseCorpusTableModel):
         else:
             end = False
         self.corpus.add_count_attribute(attribute, sequenceType, segList)
-        self.columns = self.corpus.attributes
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
 
@@ -404,7 +411,7 @@ class CorpusModel(BaseCorpusTableModel):
         else:
             end = False
         self.corpus.add_abstract_tier(attribute, segList)
-        self.columns = self.corpus.attributes
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
 
@@ -419,7 +426,7 @@ class CorpusModel(BaseCorpusTableModel):
                 return
             self.beginRemoveColumns(QModelIndex(),ind,ind)
             self.corpus.remove_attribute(att)
-            self.columns = self.corpus.attributes
+            self.columns = [x for x in self.corpus.attributes]
             self.endRemoveColumns()
 
 class SegmentPairModel(BaseTableModel):

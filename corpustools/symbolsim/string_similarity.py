@@ -14,12 +14,6 @@ from corpustools.multiprocessing import score_mp, PCTMultiprocessingError
 
 from corpustools.exceptions import StringSimilarityError
 
-def string_sim_key(algorithm, sequence_type, count_what):
-    if algorithm == 'khorsi':
-        return 'string_sim_{}_{}_{}'.format(algorithm, sequence_type, count_what)
-    else:
-        return 'string_sim_{}_{}'.format(algorithm, sequence_type)
-
 def khorsi_wrapper(w1, w2, freq_base,
                                 sequence_type, max_distance):
     score = khorsi(w1, w2, freq_base = freq_base, sequence_type = sequence_type)
@@ -42,42 +36,7 @@ def phono_edit_distance_wrapper(w1, w2, sequence_type, features, max_distance):
     else:
         return None
 
-def optimize_string_similarity(corpus, algorithm, sequence_type, count_what, num_cores = -1,
-                            max_distance = 10,
-                            call_back = None, stop_check = None):
-    return
-    if num_cores == -1:
-        raise(PCTMultiprocessingError("This function requires multiprocessing."))
-    if call_back is not None:
-        call_back('Generating neighborhood density graph...')
-        num_comps = factorial(len(corpus))/(factorial(len(corpus)-2)*2)
-        call_back(0,num_comps/500)
-    detail_key = string_sim_key(algorithm, sequence_type, count_what)
-
-    keys = list(corpus.keys())
-    iterable = ((corpus.wordlist[keys[i]],corpus.wordlist[keys[j]])
-                    for i in range(len(keys)) for j in range(i+1,len(keys)))
-
-    if algorithm == 'khorsi':
-        freq_base = corpus.get_frequency_base(sequence_type, count_what)
-        function = partial(khorsi_wrapper,freq_base=freq_base,
-                                sequence_type = sequence_type,
-                                max_distance = max_distance)
-    elif algorithm == 'edit_distance':
-        function =  partial(edit_distance_wrapper, sequence_type = sequence_type,
-                                            max_distance = max_distance)
-    elif algorithm == 'phono_edit_distance':
-        function = partial(phono_edit_distance_wrapper,sequence_type = sequence_type,
-                                                        features = corpus.specifier,
-                                                        max_distance = max_distance)
-
-    edges = score_mp(iterable, function, num_cores, call_back, stop_check)
-    for e in edges:
-        corpus._graph.add_edge(corpus.key(e[0]), corpus.key(e[1]),key = detail_key, weight = e[2])
-    if detail_key not in corpus._graph.graph['symbolsim']:
-        corpus._graph.graph['symbolsim'].append(detail_key)
-
-def string_similarity(corpus, query, algorithm, **kwargs):
+def string_similarity(corpus_context, query, algorithm, **kwargs):
     """
     This function computes similarity of pairs of words across a corpus.
 
@@ -119,28 +78,29 @@ def string_similarity(corpus, query, algorithm, **kwargs):
     max_rel = kwargs.get('max_rel', None)
 
     if algorithm == 'khorsi':
-        freq_base = corpus.get_frequency_base()
+        freq_base = corpus_context.get_frequency_base()
         try:
             bound_count = freq_base['#']
             freq_base = {k:v for k,v in freq_base.items() if k != '#'}
             freq_base['total'] -= bound_count
         except KeyError:
             pass
-        
-        print(type(corpus))
         relate_func = partial(khorsi, freq_base=freq_base,
-                                sequence_type = getattr(corpus, 'sequence_type'))
+                                sequence_type = corpus_context.sequence_type)
     elif algorithm == 'edit_distance':
-        relate_func =  partial(edit_distance, sequence_type = getattr(corpus, 'sequence_type'))
+        relate_func =  partial(edit_distance,
+                                sequence_type = corpus_context.sequence_type)
     elif algorithm == 'phono_edit_distance':
-        relate_func = partial(phono_edit_distance,sequence_type = getattr(corpus, 'sequence_type'), features = corpus.corpus.specifier)
+        relate_func = partial(phono_edit_distance,
+                                sequence_type = corpus_context.sequence_type,
+                                features = corpus_context.specifier)
     else:
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
 
-    related_data = list()
+    related_data = []
     if isinstance(query,Word):
         if call_back is not None:
-            total = len(corpus)
+            total = len(corpus_context)
             if min_rel is not None or max_rel is not None:
                 total *= 2
             cur = 0
@@ -148,7 +108,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             call_back(cur,total)
         targ_word = query
         relate = list()
-        for word in corpus:
+        for word in corpus_context:
             if stop_check is not None and stop_check():
                 return
             if call_back is not None:
@@ -196,15 +156,3 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     return related_data
 
-def ensure_query_is_word(query, corpus, sequence_type, segment_delimiter):
-    if isinstance(query, Word):
-        query_word = query
-    else:
-        try:
-            query_word = corpus.find(query)
-        except KeyError:
-            if segment_delimiter == None:
-                query_word = Word(**{sequence_type: list(query)})
-            else:
-                query_word = Word(**{sequence_type: query.split(segment_delimiter)})
-    return query_word

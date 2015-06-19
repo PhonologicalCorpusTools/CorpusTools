@@ -28,6 +28,14 @@ class PCTPythonError(PCTError):
         self.details = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
 
+## Context Manager exceptions
+
+class PCTContextError(PCTError):
+    """
+    Exception class for when context managers should be used and aren't.
+    """
+    pass
+
 ## Corpus loading exceptions
 
 class PCTOSError(PCTError):

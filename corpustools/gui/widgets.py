@@ -662,6 +662,7 @@ class TierWidget(QGroupBox):
 
         self.tierSelect = QComboBox()
         self.atts = list()
+        self.spellingName = corpus.attributes[0].display_name
         if include_spelling:
             self.atts.append(corpus.attributes[0])
             self.tierSelect.addItem(corpus.attributes[0].display_name)
@@ -675,10 +676,10 @@ class TierWidget(QGroupBox):
     def setSpellingEnabled(self, b):
         self.spellingEnabled = b
         if b:
-            if self.tierSelect.itemText(0) != 'Spelling':
-                self.tierSelect.insertItem(0,'Spelling')
+            if self.tierSelect.itemText(0) != self.spellingName:
+                self.tierSelect.insertItem(0,self.spellingName)
         else:
-            if self.tierSelect.itemText(0) == 'Spelling':
+            if self.tierSelect.itemText(0) == self.spellingName:
                 self.tierSelect.removeItem(0)
 
     def value(self):
@@ -2248,13 +2249,23 @@ class RadioSelectWidget(QGroupBox):
             else:
                 w.setEnabled(True)
 
-class ContextWidget(RadioSelectWidget):
+class RestrictedContextWidget(RadioSelectWidget):
     canonical = 'Use canonical forms only'
     frequent = 'Use most frequent forms only'
-    separate = 'Count each word token as a separate entry'
-    relative = 'Weight each word type by the relative frequency of its variants'
     canonical_value = 'canonical'
     frequent_value = 'mostfrequent'
+    def __init__(self, corpus, actions = None, parent = None):
+        typetokenEnabled = {self.canonical: corpus.has_transcription,
+                    self.frequent: corpus.has_wordtokens}
+        RadioSelectWidget.__init__(self,'Pronunciation variants',
+                                            OrderedDict([(self.canonical, self.canonical_value),
+                                            (self.frequent, self.frequent_value)]),
+                                            actions,
+                                            typetokenEnabled)
+
+class ContextWidget(RestrictedContextWidget):
+    separate = 'Count each word token as a separate entry'
+    relative = 'Weight each word type by the relative frequency of its variants'
     separate_value = 'separatetoken'
     relative_value = 'relativetype'
     def __init__(self, corpus, actions = None, parent = None):
