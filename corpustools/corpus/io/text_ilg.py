@@ -162,6 +162,8 @@ def ilg_to_data(path, annotation_types,
                     word.ends.append(level_count + len(tier_elements))
                     annotations[n] = tier_elements
                 for line_type in cur_line.keys():
+                    if data[line_type].ignored:
+                        continue
                     if data[line_type].base:
                         continue
                     if data[line_type].anchor:

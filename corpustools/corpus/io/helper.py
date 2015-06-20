@@ -45,9 +45,9 @@ class Annotation(BaseAnnotation):
 
 class AnnotationType(object):
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
-                    token = False, base = False,speaker = None):
+                    token = False, base = False, speaker = None):
         self.characters = set()
-        self.ignored = set()
+        self.ignored_characters = set()
         self.digraphs = set()
         self.trans_delimiter = None
         self.morph_delimiters = set()
@@ -60,6 +60,7 @@ class AnnotationType(object):
         self.base = base
         self.anchor = anchor
         self.speaker = speaker
+        self.ignored = False
         if self.speaker is not None:
             self.output_name = re.sub('{}\W*'.format(self.speaker),'',self.name)
         else:
@@ -155,7 +156,7 @@ class DiscourseData(object):
         return self.data.items()
 
     def mapping(self):
-        return { x.name: x.attribute for x in self.data.values()}
+        return { x.name: x.attribute for x in self.data.values() if not x.ignored}
 
     def collapse_speakers(self):
         newdata = {}
@@ -278,7 +279,7 @@ def parse_transcription(string, annotation_type):
                 t.group = i
             transcription += trans
         return transcription
-    ignored = annotation_type.ignored
+    ignored = annotation_type.ignored_characters
     if ignored is not None:
         string = ''.join(x for x in string if x not in ignored)
     if annotation_type.trans_delimiter is not None:

@@ -149,7 +149,7 @@ class ParsingDialog(QDialog):
 
 class AnnotationTypeWidget(QGroupBox):
     def __init__(self, annotation_type, parent = None,
-                show_attribute = True):
+                ignorable = True):
         #if title is None:
         #    title = 'Annotation type details'
         QGroupBox.__init__(self, annotation_type.name, parent)
@@ -171,7 +171,8 @@ class AnnotationTypeWidget(QGroupBox):
         self.typeWidget.addItem('Transcription')
         self.typeWidget.addItem('Other (numeric)')
         self.typeWidget.addItem('Other (character)')
-        self.typeWidget.addItem('Notes (ignored)')
+        if ignorable:
+            self.typeWidget.addItem('Notes (ignored)')
         self.typeWidget.setCurrentIndex(0)
         proplayout.addRow('Annotation type',self.typeWidget)
         self.typeWidget.currentIndexChanged.connect(self.typeChanged)
@@ -214,7 +215,7 @@ class AnnotationTypeWidget(QGroupBox):
             self.associationWidget.click(1)
         if self.annotation_type.anchor:
             self.typeWidget.setCurrentIndex(0)
-        elif self.annotation_type.base:
+        elif self.annotation_type.base or self.annotation_type.delimiter is not None:
             self.typeWidget.setCurrentIndex(1)
         #self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
 
@@ -277,15 +278,21 @@ class AnnotationTypeWidget(QGroupBox):
                 self.numberLabel.setText(str(self.annotation_type.number_behavior))
             else:
                 self.numberLabel.setText('None')
-        if self.annotation_type.ignored:
-            self.ignoreLabel.setText(truncate_string(' '.join(self.annotation_type.ignored)))
+        if self.annotation_type.ignored_characters:
+            self.ignoreLabel.setText(truncate_string(' '.join(self.annotation_type.ignored_characters)))
         else:
             self.ignoreLabel.setText('None')
 
     def editParsingProperties(self):
-        dialog = ParsingDialog(self, self.annotation_type, self.attributeWidget.type())
+        if self.typeWidget.currentText() == 'Orthography':
+            atype = 'spelling'
+        elif self.typeWidget.currentText() == 'Transcription':
+            atype = 'tier'
+        else:
+            return
+        dialog = ParsingDialog(self, self.annotation_type, atype)
         if dialog.exec_():
-            self.annotation_type.ignored = dialog.ignored()
+            self.annotation_type.ignored_characters = dialog.ignored()
             self.annotation_type.digraphs = dialog.digraphs()
             self.annotation_type.morph_delimiters = dialog.morphDelimiters()
             d = dialog.transDelimiter()
@@ -317,8 +324,8 @@ class AnnotationTypeWidget(QGroupBox):
         elif self.typeWidget.currentText() == 'Other (character)':
             atype = 'factor'
         elif self.typeWidget.currentText() == 'Notes (ignored)':
-            a.name = 'ignore'
-        if a.name is not None:
+            a.ignored = True
+        if not a.ignored:
             a.attribute = Attribute(name, atype, display_name)
         return a
 

@@ -149,6 +149,8 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
 
             mid_point = si.minTime + (si.maxTime - si.minTime)
             for at in annotation_types:
+                if at.ignored:
+                    continue
                 if at.base:
                     continue
                 if at.anchor:

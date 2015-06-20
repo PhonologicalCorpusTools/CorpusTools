@@ -105,6 +105,8 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                     word.ends.append(level_count+len(found))
                     annotations[n] = found
                 for at in annotation_types:
+                    if at.ignored:
+                        continue
                     if at.base:
                         continue
                     if at.anchor:
