@@ -217,6 +217,8 @@ class AnnotationTypeWidget(QGroupBox):
             self.typeWidget.setCurrentIndex(0)
         elif self.annotation_type.base or self.annotation_type.delimiter is not None:
             self.typeWidget.setCurrentIndex(1)
+        elif self.annotation_type.attribute.att_type == 'numeric':
+            self.typeWidget.setCurrentIndex(2)
         #self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
 
         self.nameWidget.setText(self.annotation_type.attribute.display_name)
