@@ -51,7 +51,7 @@ def test_load_spelling_no_ignore(text_test_dir):
 def test_load_spelling_ignore(text_test_dir):
     spelling_path = os.path.join(text_test_dir, 'test_text_spelling.txt')
     a = inspect_discourse_spelling(spelling_path)
-    a[0].ignored = set(["'",'.'])
+    a[0].ignored_characters = set(["'",'.'])
     c = load_discourse_spelling('test',spelling_path, a)
 
     assert(c.lexicon['ab'].frequency == 3)

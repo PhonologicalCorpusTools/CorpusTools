@@ -66,7 +66,7 @@ def spelling_text_to_data(path, annotation_types = None,
         annotations = {}
         for word in line:
             spell = word.strip()
-            spell = ''.join(x for x in spell if not x in data['spelling'].ignored)
+            spell = ''.join(x for x in spell if not x in data['spelling'].ignored_characters)
             if spell == '':
                 continue
             word = Annotation(spell)
