@@ -162,19 +162,26 @@ class AnnotationTypeWidget(QGroupBox):
 
         proplayout = QFormLayout()
 
-        self.levelWidget = NonScrollingComboBox()
-        self.levelWidget.addItem('Word')
-        self.levelWidget.addItem('Segment')
-        self.levelWidget.addItem('Other sublexical')
-        self.levelWidget.addItem('Word property')
-        self.levelWidget.setCurrentIndex(3)
-        proplayout.addRow('Linguistic level',self.levelWidget)
+        self.nameWidget = QLineEdit()
 
-        self.typeTokenWidget = NonScrollingComboBox()
-        self.typeTokenWidget.addItem('Word type')
-        self.typeTokenWidget.addItem('Word token')
+        proplayout.addRow('Name',self.nameWidget)
 
-        proplayout.addRow('Associated with',self.typeTokenWidget)
+        self.typeWidget = NonScrollingComboBox()
+        self.typeWidget.addItem('Orthography')
+        self.typeWidget.addItem('Transcription')
+        self.typeWidget.addItem('Other (numeric)')
+        self.typeWidget.addItem('Other (character)')
+        self.typeWidget.addItem('Notes (ignored)')
+        self.typeWidget.setCurrentIndex(0)
+        proplayout.addRow('Annotation type',self.typeWidget)
+        self.typeWidget.currentIndexChanged.connect(self.typeChanged)
+
+        self.associationWidget = RadioSelectWidget('Word association',
+                                            OrderedDict([
+                                            ('Associate this with the lexical item','type'),
+                                            ('Allow this property to vary within lexical items','token'),]))
+
+        proplayout.addRow(self.associationWidget)
 
         self.delimiterLabel = QLabel('None')
         if self.annotation_type.delimiter is not None:
@@ -187,30 +194,33 @@ class AnnotationTypeWidget(QGroupBox):
 
         self.numberLabel = QLabel('None')
 
+        parselayout = QFormLayout()
+
         self.editButton = QPushButton('Edit parsing settings')
         self.editButton.clicked.connect(self.editParsingProperties)
 
-        proplayout.addRow('Transcription delimiter', self.delimiterLabel)
-        proplayout.addRow('Morpheme delimiter', self.morphDelimiterLabel)
-        proplayout.addRow('Number parsing', self.numberLabel)
-        proplayout.addRow('Ignored characters', self.ignoreLabel)
-        proplayout.addRow('Multicharacter segments',self.digraphLabel)
-        proplayout.addRow(self.editButton)
+        parselayout.addRow('Transcription delimiter', self.delimiterLabel)
+        parselayout.addRow('Morpheme delimiter', self.morphDelimiterLabel)
+        parselayout.addRow('Number parsing', self.numberLabel)
+        parselayout.addRow('Ignored characters', self.ignoreLabel)
+        parselayout.addRow('Multicharacter segments',self.digraphLabel)
+        parselayout.addRow(self.editButton)
 
         main.addLayout(proplayout)
+        main.addLayout(parselayout)
+
 
         if self.annotation_type.token:
-            self.typeTokenWidget.setCurrentIndex(1)
+            self.associationWidget.click(1)
         if self.annotation_type.anchor:
-            self.levelWidget.setCurrentIndex(0)
-        if self.annotation_type.base:
-            self.levelWidget.setCurrentIndex(1)
-        self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
+            self.typeWidget.setCurrentIndex(0)
+        elif self.annotation_type.base:
+            self.typeWidget.setCurrentIndex(1)
+        #self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
 
-        self.attributeWidget.typeWidget.currentIndexChanged.connect(self.typeChanged)
-
-        if show_attribute:
-            main.addWidget(self.attributeWidget)
+        self.nameWidget.setText(self.annotation_type.attribute.display_name)
+        #if show_attribute:
+        #    main.addWidget(self.attributeWidget)
 
         self.setLayout(main)
 
@@ -220,19 +230,33 @@ class AnnotationTypeWidget(QGroupBox):
         self.typeChanged()
 
     def typeChanged(self):
-        if self.attributeWidget.type() in ['spelling','tier']:
+        if self.typeWidget.currentIndex() in [0, 1]:
             self.editButton.setEnabled(True)
             self.updateParsingLabels()
         else:
             self.editButton.setEnabled(False)
+        self.suggestName()
+
+    def suggestName(self):
+        if self.typeWidget.currentText() == 'Orthography':
+            self.nameWidget.setText('Spelling')
+        elif self.typeWidget.currentText() == 'Transcription':
+            self.nameWidget.setText('Transcription')
+        elif self.typeWidget.currentText() == 'Other (numeric)':
+            self.nameWidget.setText(self.annotation_type.attribute.display_name)
+        elif self.typeWidget.currentText() == 'Other (character)':
+            self.nameWidget.setText(self.annotation_type.attribute.display_name)
+        elif self.typeWidget.currentText() == 'Notes (ignored)':
+            self.nameWidget.setText('Ignored')
+
 
     def updateParsingLabels(self):
-        if self.attributeWidget.type() == 'spelling':
+        if self.typeWidget.currentIndex() == 0:
             self.digraphLabel.setText('N/A')
             self.numberLabel.setText('N/A')
             self.delimiterLabel.setText('N/A')
             self.morphDelimiterLabel.setText('N/A')
-        elif self.attributeWidget.type() == 'tier':
+        elif self.typeWidget.currentIndex() == 1:
             if self.annotation_type.digraphs:
                 self.digraphLabel.setText(truncate_string(' '.join(self.annotation_type.digraphs)))
             else:
@@ -273,20 +297,29 @@ class AnnotationTypeWidget(QGroupBox):
             self.updateParsingLabels()
 
     def value(self):
-        att = self.attributeWidget.value()
         a = self.annotation_type
-        a.attribute = att
-        a.token = self.typeTokenWidget.currentText() == 'Word token'
-        if self.levelWidget.currentText() == 'Word':
+        a.token = self.associationWidget.value() == 'token'
+        display_name = self.nameWidget.text()
+        a.anchor = False
+        a.base = False
+        name = Attribute.sanitize_name(display_name)
+        if self.typeWidget.currentText() == 'Orthography':
             a.anchor = True
             a.base = False
-        elif self.levelWidget.currentText() == 'Segment':
+            name = 'spelling'
+            atype = 'spelling'
+        elif self.typeWidget.currentText() == 'Transcription':
             a.anchor = False
             a.base = True
-        else:
-            a.anchor = False
-            a.base = False
-
+            atype = 'tier'
+        elif self.typeWidget.currentText() == 'Other (numeric)':
+            atype = 'numeric'
+        elif self.typeWidget.currentText() == 'Other (character)':
+            atype = 'factor'
+        elif self.typeWidget.currentText() == 'Notes (ignored)':
+            a.name = 'ignore'
+        if a.name is not None:
+            a.attribute = Attribute(name, atype, display_name)
         return a
 
 class AttributeWidget(QGroupBox):

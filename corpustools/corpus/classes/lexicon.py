@@ -1434,11 +1434,17 @@ class Corpus(object):
         self._inventory = Inventory()
         self.has_frequency = True
         self.has_spelling = False
-        self.has_transcription = False
         self.has_wordtokens = False
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
+
+    @property
+    def has_transcription(self):
+        for a in self.attributes:
+            if a.att_type == 'tier' and len(a.range) > 0:
+                return True
+        return False
 
     def __eq__(self, other):
         if not isinstance(other,Corpus):
@@ -1764,8 +1770,8 @@ class Corpus(object):
                 state['_inventory'] = Inventory(state['_inventory'])
             if 'has_spelling' not in state:
                 state['has_spelling'] = state['has_spelling_value']
-            if 'has_transcription' not in state:
-                state['has_transcription'] = state['has_transcription_value']
+            if 'has_transcription' in state:
+                del state['has_transcription']
             if 'has_wordtokens' not in state:
                 state['has_wordtokens'] = False
             if '_freq_base' not in state or state['_freq_base'] is None:
@@ -1941,8 +1947,6 @@ class Corpus(object):
         if word.transcription is not None:
             self.update_inventory(word.transcription)
             word.transcription._list = [self._inventory[x].symbol for x in word.transcription._list]
-            if not self.has_transcription:
-                self.has_transcription = True
         for d in word.descriptors:
             if d not in self.attributes:
                 if isinstance(getattr(word,d),str):
