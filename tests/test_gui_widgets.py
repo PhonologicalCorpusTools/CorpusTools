@@ -6,6 +6,48 @@ from corpustools.gui.widgets import *
 from corpustools.corpus.classes.lexicon import Attribute
 
 
+def test_parsing_dialog(qtbot, transcription_annotation_type):
+    dialog = ParsingDialog(None, transcription_annotation_type, 'tier')
+    qtbot.addWidget(dialog)
+
+    assert(dialog.transDelimiter() == '.')
+    assert(dialog.ignored() == set())
+    assert(dialog.morphDelimiters() == set())
+    assert(dialog.digraphs() == [])
+    assert(dialog.numberBehavior() == None)
+
+def test_transcription_annotation_type_widget(qtbot, transcription_annotation_type):
+    widget = AnnotationTypeWidget(transcription_annotation_type)
+    qtbot.addWidget(widget)
+    assert(widget.value() == transcription_annotation_type)
+
+def test_spelling_annotation_type_widget(qtbot, spelling_annotation_type):
+    widget = AnnotationTypeWidget(spelling_annotation_type)
+    qtbot.addWidget(widget)
+    assert(widget.value() == spelling_annotation_type)
+
+def test_numeric_annotation_type_widget(qtbot, numeric_annotation_type):
+    widget = AnnotationTypeWidget(numeric_annotation_type)
+    qtbot.addWidget(widget)
+    assert(widget.value() == numeric_annotation_type)
+
+def test_digraph_widget(qtbot):
+    widget = DigraphWidget()
+    qtbot.addWidget(widget)
+    assert(widget.value() == [])
+
+def test_segment_select_widget(qtbot, specified_test_corpus):
+    widget = SegmentSelectionWidget(specified_test_corpus.inventory)
+    qtbot.addWidget(widget)
+
+def test_segment_select_dialog(qtbot, specified_test_corpus):
+    widget = SegmentSelectDialog(specified_test_corpus.inventory)
+    qtbot.addWidget(widget)
+
+def test_segment_pair_dialog(qtbot, specified_test_corpus):
+    dialog = SegmentPairDialog(specified_test_corpus.inventory)
+    qtbot.addWidget(dialog)
+
 def test_attribute_widget(qtbot,specified_test_corpus):
     new = AttributeWidget()
     assert(new.nameWidget.isEnabled())
@@ -393,3 +435,6 @@ def test_attribute_filter_dialog(qtbot, unspecified_test_corpus):
 def test_corpus_select(qtbot, settings):
     widget = CorpusSelect(None, settings)
     qtbot.addWidget(widget)
+
+    assert(widget.value() == '')
+    assert(widget.path() is None)

@@ -7,7 +7,8 @@ import sys
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
-                                        WordToken, Discourse)
+                                        WordToken, Discourse, Attribute)
+from corpustools.corpus.io.helper import AnnotationType
 
 from corpustools.corpus.io.textgrid import load_discourse_textgrid, inspect_discourse_textgrid
 
@@ -18,7 +19,6 @@ from corpustools.gui.main import QApplicationMessaging
 #def application():
 #    from corpustools.gui.imports import QApplication
 #    return QApplication([])
-
 
 #Overwrite pytest-qt's qpp fixture
 @pytest.yield_fixture(scope='session')
@@ -192,3 +192,22 @@ def pronunciation_variants_corpus(textgrid_test_dir):
     annotypes[2].attribute.name = 'transcription'
     annotypes[2].token = True
     return load_discourse_textgrid('test', path, annotypes)
+
+@pytest.fixture(scope = 'module')
+def spelling_annotation_type():
+    a = AnnotationType('test', None, None)
+    a.attribute = Attribute('test', 'spelling')
+    return a
+
+@pytest.fixture(scope = 'module')
+def transcription_annotation_type():
+    a = AnnotationType('test', None, None)
+    a.trans_delimiter = '.'
+    a.attribute = Attribute('test', 'tier')
+    return a
+
+@pytest.fixture(scope = 'module')
+def numeric_annotation_type():
+    a = AnnotationType('test', None, None)
+    a.attribute = Attribute('test', 'numeric')
+    return a
