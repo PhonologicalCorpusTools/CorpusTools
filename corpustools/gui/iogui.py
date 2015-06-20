@@ -721,8 +721,8 @@ class LoadCorpusDialog(PCTDialog):
             w.deleteLater()
         self.columns = list()
         for a in reversed(atts):
-            show_attribute = self.textType not in ['spelling','transcription']
-            c = AnnotationTypeWidget(a, show_attribute = show_attribute)
+            ignorable = self.textType not in ['spelling','transcription']
+            c = AnnotationTypeWidget(a, ignorable = ignorable)
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
 
