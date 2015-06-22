@@ -1,7 +1,6 @@
 import os
-import random
 import sys
-
+import logging
 
 from .imports import *
 
@@ -96,6 +95,10 @@ class MainWindow(QMainWindow):
         self.unsavedChanges = False
 
         self.settings = Settings()
+        logging.basicConfig(filename = os.path.join(
+                                self.settings.log_directory(), 'pct_gui.log'),
+                            level = logging.INFO,
+                            filemode = 'w')
 
         self.showWarnings = True
         self.showToolTips = True

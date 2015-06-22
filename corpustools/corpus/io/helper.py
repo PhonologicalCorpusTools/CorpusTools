@@ -1,6 +1,7 @@
 import re
 import os
 import string
+import logging
 
 from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
 from corpustools.exceptions import DelimiterError
@@ -72,6 +73,15 @@ class AnnotationType(object):
                 self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name)
         else:
             self.attribute = attribute
+
+    def pretty_print(self):
+        string = ('{}:\n'.format(self.name) +
+                '    Ignored characters: {}\n'.format(', '.join(self.ignored_characters)) +
+                '    Digraphs: {}\n'.format(', '.join(self.digraphs)) +
+                '    Transcription delimiter: {}\n'.format(self.trans_delimiter) +
+                '    Morpheme delimiters: {}\n'.format(', '.join(self.morph_delimiters)) +
+                '    Number behavior: {}\n'.format(self.number_behavior))
+        return string
 
     def reset(self):
         self._list = []
@@ -324,6 +334,13 @@ def find_wav_path(path):
     if os.path.exists(wav_path):
         return wav_path
     return None
+
+def log_annotation_types(annotation_types):
+    logging.info('Annotation type info')
+    logging.info('--------------------')
+    logging.info('')
+    for a in annotation_types:
+        logging.info(a.pretty_print())
 
 def data_to_discourse(data, lexicon = None):
     attribute_mapping = data.mapping()

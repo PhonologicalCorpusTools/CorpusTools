@@ -1,8 +1,6 @@
 import os
-import sys
 import codecs
-import string
-import gc
+import logging
 
 from .imports import *
 
@@ -39,7 +37,8 @@ from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
 
 from corpustools.corpus.io.helper import (get_corpora_list,
                                         corpus_name_to_path,
-                                        inspect_directory)
+                                        inspect_directory,
+                                        log_annotation_types)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
@@ -77,6 +76,8 @@ class LoadCorpusWorker(FunctionWorker):
         time.sleep(0.1)
         textType = self.kwargs.pop('text_type')
         isDirectory = self.kwargs.pop('isDirectory')
+        logging.info('Importing {} corpus'.format(textType))
+        log_annotation_types(self.kwargs['annotation_types'])
         try:
             if textType == 'spelling':
 
@@ -116,7 +117,6 @@ class LoadCorpusWorker(FunctionWorker):
             e = PCTPythonError(e)
             self.errorEncountered.emit(e)
             return
-        gc.collect()
         if self.stopped:
             time.sleep(0.1)
             self.finishedCancelling.emit()

@@ -59,12 +59,14 @@ class ParsingDialog(QDialog):
         layout = QFormLayout()
         self.example = QLabel(' '.join(annotation_type[:5]))
         self.example.setWordWrap(True)
-        layout.addRow('Example:',self.example)
+        layout.addRow('Example:', self.example)
 
         self.punctuationWidget = PunctuationWidget(annotation_type.punctuation)
+        self.punctuationWidget.setPunctuation(annotation_type.ignored_characters)
         self.delimiterWidget = QLineEdit()
         self.morphDelimiterWidget = PunctuationWidget(annotation_type.punctuation & set('-='),
                                                         'Morpheme delimiter')
+        self.morphDelimiterWidget.setPunctuation(annotation_type.morph_delimiters)
         self.digraphWidget = DigraphWidget()
         self.numberBehaviorSelect = QComboBox()
         self.numberBehaviorSelect.addItem('Same as other characters')
@@ -73,6 +75,7 @@ class ParsingDialog(QDialog):
         self.numberBehaviorSelect.currentIndexChanged.connect(self.updatePunctuation)
 
         self.digraphWidget.characters = annotation_type.characters
+        self.digraphWidget.setDigraphs(annotation_type.digraphs)
 
         self.punctuationWidget.selectionChanged.connect(self.punctuationChanged)
         delimiter = annotation_type.delimiter
@@ -814,6 +817,12 @@ class PunctuationWidget(QGroupBox):
         if emit:
             self.selectionChanged.emit()
 
+    def setPunctuation(self, punc):
+        for b in self.btnGroup.buttons():
+            if b.text() in punc:
+                b.setChecked(True)
+        self.selectionChanged.emit()
+
     def check(self):
         for b in self.btnGroup.buttons():
             b.setChecked(True)
@@ -908,6 +917,9 @@ class DigraphWidget(QGroupBox):
         layout.addWidget(self.button)
         self.setLayout(layout)
         self.characters = list()
+
+    def setDigraphs(self, digraphs):
+        self.editField.setText(','.join(digraphs))
 
     def construct(self):
         if len(self.characters) == 0:
