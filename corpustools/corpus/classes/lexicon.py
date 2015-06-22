@@ -1367,8 +1367,8 @@ class Inventory(object):
             Segments that match the feature description
 
         """
-        segments = list()
-        if isinstance(feature_description,str):
+        segments = []
+        if isinstance(feature_description, str):
             feature_description = feature_description.split(',')
         for k,v in self._data.items():
             if v.feature_match(feature_description):

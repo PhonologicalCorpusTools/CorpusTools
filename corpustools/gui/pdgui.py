@@ -1,6 +1,5 @@
 from collections import OrderedDict
 
-from corpustools.gui.widgets import SegmentClassSelectWidget
 from .imports import *
 from .widgets import (EnvironmentSelectWidget, EnvironmentDialog,
                     SegmentPairSelectWidget, RadioSelectWidget, TierWidget,

@@ -1,5 +1,6 @@
 
 import sys
+import re
 import operator
 from collections import OrderedDict
 from itertools import combinations, permutations, chain
@@ -1071,6 +1072,8 @@ class SegmentButton(QPushButton):
 class FeatureEdit(QLineEdit):
     featureEntered = Signal(list)
     featuresFinalized = Signal(list)
+    delimPattern = re.compile('([,; ]+)')
+
     def __init__(self,inventory, parent=None):
         QLineEdit.__init__(self, parent)
         self.completer = None
@@ -1078,10 +1081,10 @@ class FeatureEdit(QLineEdit):
         self.valid_strings = self.inventory.valid_feature_strings()
 
     def setCompleter(self,completer):
-        if self.completer:
+        if self.completer is not None:
             self.disconnect(self.completer,0,0)
         self.completer = completer
-        if (not self.completer):
+        if self.completer is None:
             return
         self.completer.setWidget(self)
         self.completer.setCompletionMode(QCompleter.PopupCompletion)
@@ -1091,34 +1094,31 @@ class FeatureEdit(QLineEdit):
     def features(self):
         if self.text() == '':
             return []
-        text = self.text().split(' ')
+        text = self.delimPattern.split(self.text())
         features = [x for x in text if x in self.valid_strings]
         return features
 
-    def completer(self):
-        return self.completer
+    def parseText(self):
+        m = self.delimPattern.search(self.text())
+        if m is None:
+            d = ''
+        else:
+            d = m.group(0)
+        text = self.delimPattern.split(self.text())
+        return d, text
 
-    def insertCompletion(self,string):
-        text = self.text().split(' ')
+
+    def insertCompletion(self, string):
+        d, text = self.parseText()
         text[-1] = string
+        text = [x for x in text if x in self.valid_strings]
         self.featureEntered.emit(text)
-        self.setText(' '.join(text))
+        self.setText(d.join(text))
 
     def currentFeature(self):
-        return self.text().split(' ')[-1]
+        return self.delimPattern.split(self.text())[-1]
 
     def keyPressEvent(self,e):
-        if e.key() == Qt.Key_Backspace:
-            if self.text() == '':
-                return
-            if (self.completer and self.completer.popup().isVisible()):
-                super().backspace()
-                return
-            text = self.text().split(' ')
-            text = text[:-1]
-            self.featureEntered.emit(text)
-            self.setText(' '.join(text))
-            return
         if self.completer and self.completer.popup().isVisible():
                 if e.key() in ( Qt.Key_Space, Qt.Key_Enter,
                                 Qt.Key_Return,Qt.Key_Escape,
@@ -1133,9 +1133,15 @@ class FeatureEdit(QLineEdit):
                     self.featureEntered.emit([])
                     return
         isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
-        if (not self.completer or not isShortcut):
+        if (self.completer is None or not isShortcut):
             super().keyPressEvent(e)
 
+        if e.key() in (Qt.Key_Space, Qt.Key_Semicolon, Qt.Key_Comma):
+            e.ignore()
+            return
+
+        d, text = self.parseText()
+        self.featureEntered.emit([x for x in text if x in self.valid_strings])
 
         completionPrefix = self.currentFeature()
 
@@ -1170,29 +1176,35 @@ class SegmentSelectionWidget(QWidget):
         self.completer = FeatureCompleter(self.inventory)
         self.searchWidget.setCompleter(self.completer)
 
+        self.inventoryFrame = InventoryBox('', self.inventory)
+
         layout = QVBoxLayout()
 
-        headlayout = QHBoxLayout()
-        formlay = QFormLayout()
+        if len(inventory.features) > 0:
+            headlayout = QHBoxLayout()
+            formlay = QFormLayout()
 
-        formlay.addRow('Select by feature',self.searchWidget)
+            formlay.addRow('Select by feature',self.searchWidget)
 
-        formframe = QFrame()
+            formframe = QFrame()
 
-        formframe.setLayout(formlay)
-        headlayout.addWidget(formframe)
+            formframe.setLayout(formlay)
+            headlayout.addWidget(formframe)
 
-        self.clearAllButton = QPushButton('Clear selections')
+            self.clearAllButton = QPushButton('Clear selections')
 
-        headlayout.addWidget(self.clearAllButton)
+            headlayout.addWidget(self.clearAllButton)
+            headframe = QFrame()
 
-        headframe = QFrame()
+            headframe.setLayout(headlayout)
+            self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
 
-        headframe.setLayout(headlayout)
+        else:
+            headframe = QLabel('No feature matrix associated with this corpus.')
+
         layout.addWidget(headframe)
 
         scroll = QScrollArea()
-        self.inventoryFrame = InventoryBox('', self.inventory)
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.inventoryFrame)
         #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -1207,7 +1219,7 @@ class SegmentSelectionWidget(QWidget):
 
         self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
         self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegmentFeatures)
-        self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
+
 
     def select(self, segments):
         self.inventoryFrame.selectSegments(segments)
@@ -2329,97 +2341,6 @@ class ContextWidget(RestrictedContextWidget):
                                             actions,
                                             typetokenEnabled)
 
-class SegmentClassSelectWidget(QFrame):
-
-    def __init__(self, parent, corpus):
-        #super(AddTierDialog, self).__init__()
-        super().__init__(parent)
-
-        self.corpus = corpus
-
-        layout = QVBoxLayout()
-        box = QFormLayout()
-        self.createType = QComboBox()
-        self.createType.addItem('Segments')
-        if self.corpus.specifier is not None:
-            self.createType.addItem('Features')
-        else:
-            layout.addWidget(QLabel('Features for class creation are not available without a feature system.'))
-
-        self.createType.currentIndexChanged.connect(self.generateFrames)
-
-        layout.addWidget(QLabel('Basis for creating class:'))
-        layout.addWidget(self.createType, alignment = Qt.AlignLeft)
-        self.createFrame = QFrame()
-        createLayout = QVBoxLayout()
-
-        self.createWidget = InventoryBox('Segments to define this class',self.corpus.inventory)
-        self.createType.currentIndexChanged.connect(self.generateFrames)
-
-        createLayout.addWidget(self.createWidget)
-
-        self.createFrame.setLayout(createLayout)
-
-        layout.addWidget(self.createFrame)
-
-        self.createButton = QPushButton('Create class')
-        self.previewButton = QPushButton('Preview class')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.createButton)
-        acLayout.addWidget(self.previewButton)
-        acLayout.addWidget(self.cancelButton)
-        self.createButton.clicked.connect(self.accept)
-        self.previewButton.clicked.connect(self.preview)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-        self.setLayout(layout)
-
-        self.setWindowTitle('Create class')
-
-    def createFeatureFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = FeatureBox('Features to define the class',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def createSegmentFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = InventoryBox('Segments to define the class',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def generateFrames(self,ind=0):
-        if self.createType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.createType.currentText() == 'Features':
-            self.createFeatureFrame()
-
-    def preview(self):
-        createType = self.createType.currentText()
-        createList = self.createWidget.value()
-        if not createList:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
-            return
-        if createType == 'Features':
-            createList = createList[1:-1]
-            segList = self.corpus.features_to_segments(createList)
-        else:
-            segList = createList
-        notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
-
-        reply = QMessageBox.information(self,
-                "Class preview", "Segments included: {}\nSegments excluded: {}".format(', '.join(segList),', '.join(notInSegList)))
-
-    def accept(self):
-         QDialog.accept(self)
-
 class CreateClassWidget(QDialog):
     def __init__(self, parent, corpus, class_type):
         QDialog.__init__(self, parent)
@@ -2453,38 +2374,16 @@ class CreateClassWidget(QDialog):
         self.nameFrame.setLayout(nameLayout)
         self.mainLayout.addWidget(self.nameFrame)
 
-        defineFrame = QFrame()
-        defineLayout = QHBoxLayout()
+        self.defineFrame = SegmentSelectionWidget(self.corpus.inventory)
 
-        self.featuresFrame = QGroupBox('Features to define the {}'.format(self.class_type))
-        self.featureSelectWidget = FeatureBox('Features',self.corpus.inventory)
-        featuresLayout = QVBoxLayout()
-        featuresLayout.addWidget(self.featureSelectWidget)
-        self.featuresFrame.setLayout(featuresLayout)
-        #self.mainLayout.addWidget(self.featuresFrame)
-
-        self.segFrame = QGroupBox('Segments to define the {}'.format(self.class_type))
-        self.segSelectWidget = InventoryBox('Segments',self.corpus.inventory)
-        segLayout = QVBoxLayout()
-        segLayout.addWidget(self.segSelectWidget)
-        self.segFrame.setLayout(segLayout)
-        #self.mainLayout.addWidget(self.segFrame)
-
-        defineLayout.addWidget(self.featuresFrame)
-        defineLayout.addWidget(self.segFrame)
-        defineFrame.setLayout(defineLayout)
-
-        self.mainLayout.addWidget(defineFrame)
+        self.mainLayout.addWidget(self.defineFrame)
 
         self.createButton = QPushButton('Create {}'.format(self.class_type))
-        self.previewButton = QPushButton('Preview {}'.format(self.class_type))
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.createButton)
-        acLayout.addWidget(self.previewButton)
         acLayout.addWidget(self.cancelButton)
         self.createButton.clicked.connect(self.accept)
-        self.previewButton.clicked.connect(self.preview)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
@@ -2496,38 +2395,13 @@ class CreateClassWidget(QDialog):
 
         self.setWindowTitle('Create {}'.format(self.class_type))
 
-    def createFeatureFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = FeatureBox('Features to define the tier',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def createSegmentFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = InventoryBox('Segments to define the tier',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def generateFrames(self,ind=0):
-        if self.createType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.createType.currentText() == 'Features':
-            self.createFeatureFrame()
 
     def generateClass(self):
-        featureList = self.featureSelectWidget.currentSpecification()
-        segList = self.segSelectWidget.value()
-        if (not featureList) and (not segList):
+        previewList = self.defineFrame.value()
+        if (previewList):
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one segment, or at least one feature value")
+                    "Missing information", "Please specify at least one segment.")
             return
-
-        previewList = list()
-        if featureList:
-            previewList.extend(self.corpus.features_to_segments(featureList))
-        if segList:
-            previewList.extend(segList)
-        previewList = list(set(previewList))
         notInPreviewList = [x.symbol for x in self.corpus.inventory if x.symbol not in previewList]
         return previewList, notInPreviewList
 

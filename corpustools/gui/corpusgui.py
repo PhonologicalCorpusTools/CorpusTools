@@ -322,7 +322,7 @@ class AddWordDialog(QDialog):
 
 class AddTierDialog(CreateClassWidget):
     def __init__(self, parent, corpus, class_type='tier'):
-        super().__init__(parent, corpus, class_type)
+        CreateClassWidget.__init__(self, parent, corpus, class_type)
 
     def accept(self):
         tierName = self.nameEdit.text()
