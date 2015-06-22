@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
         logging.basicConfig(filename = os.path.join(
                                 self.settings.log_directory(), 'pct_gui.log'),
                             level = logging.INFO,
+                            encoding = 'utf-8',
                             filemode = 'w')
 
         self.showWarnings = True
