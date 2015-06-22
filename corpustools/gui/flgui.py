@@ -36,7 +36,8 @@ class FLWorker(FunctionWorker):
             cm = WeightedVariantContext
         with cm(kwargs.pop('corpus'),
                 kwargs.pop('sequence_type'),
-                kwargs.pop('type_token')) as c:
+                kwargs.pop('type_token'),
+                frequency_threshold = kwargs.pop('frequency_cutoff')) as c:
             try:
                 pairs = kwargs.pop('segment_pairs')
                 if kwargs.pop('pair_behavior') == 'individual':
