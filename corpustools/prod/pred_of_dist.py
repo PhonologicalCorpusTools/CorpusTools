@@ -3,7 +3,7 @@ from math import log2
 import os
 
 from corpustools.corpus.classes import EnvironmentFilter
-from corpustools.exceptions import ProdError
+from corpustools.exceptions import ProdError, PCTError
 
 def check_envs(corpus_context, envs, stop_check, call_back):
     """

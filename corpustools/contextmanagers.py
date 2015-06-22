@@ -214,7 +214,7 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
         for word in self.corpus:
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
-            variants = word.variants()
+            variants = word.variants(self.sequence_type)
             for v in variants:                                      # Create a new word from each variant
                 kwargs = {}
                 if self.sequence_type == 'spelling':
@@ -251,7 +251,7 @@ class WeightedVariantContext(BaseCorpusContext):
         for word in self.corpus:
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
-            variants = word.variants()
+            variants = word.variants(self.sequence_type)
             num_of_variants = len(variants)
             total_variants = sum(variants.values())
             for v in variants:                                      # Create a new word from each variant

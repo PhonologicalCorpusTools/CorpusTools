@@ -37,12 +37,12 @@ class PDWorker(FunctionWorker):
                     if envs is not None:
                         for env in envs:
                             env.middle = set(pair)
-                            res = calc_prod(c,
-                                    envs,
-                                    kwargs['strict'],
-                                    all_info = True,
-                                    stop_check = kwargs['stop_check'],
-                                    call_back = kwargs['call_back'])
+                        res = calc_prod(c,
+                                envs,
+                                kwargs['strict'],
+                                all_info = True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
                     else:
                         res = calc_prod_all_envs(c, pair[0], pair[1],
                             all_info = True,
