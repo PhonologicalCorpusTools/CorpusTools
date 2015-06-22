@@ -1702,7 +1702,7 @@ class Corpus(object):
             Specification of what segments should be counted
         """
         if isinstance(attribute,str):
-            attribute = Attribute(attribute,'tier')
+            attribute = Attribute(attribute, 'tier')
         for i,a in enumerate(self._attributes):
             if attribute.name == a.name:
                 self._attributes[i] = attribute
@@ -1774,8 +1774,8 @@ class Corpus(object):
                 del state['has_transcription']
             if 'has_wordtokens' not in state:
                 state['has_wordtokens'] = False
-            if '_freq_base' not in state or state['_freq_base'] is None:
-                state['_freq_base'] = dict()
+            if '_freq_base' in state:
+                del state['_freq_base']
             if '_attributes' not in state:
                 state['_attributes'] = [Attribute('spelling','spelling'),
                                         Attribute('transcription','tier'),

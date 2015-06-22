@@ -218,7 +218,9 @@ def make_safe(value, delimiter):
         return delimiter.join(map(lambda x: make_safe(x, delimiter),value))
     return str(value)
 
-def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.', include_variants = False):
+def export_corpus_csv(corpus, path,
+                    delimiter = ',', trans_delimiter = '.',
+                    variant_behavior = None):
     """
     Save a corpus as a column-delimited text file
 
@@ -240,24 +242,48 @@ def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.', inclu
         Whether to include a column of pronunciation variants.  Defaults to False.
 
     """
-    word = corpus.random_word()
-    header = sorted(word.descriptors)
+    header = []
+    for a in corpus.attributes:
+        header.append(str(a))
+
+    if variant_behavior == 'token':
+        for a in corpus.attributes:
+            if a.att_type == 'tier':
+                header.append('Token_' + str(a))
+        header.append('Token_Frequency')
+    elif variant_behavior == 'column':
+        header += ['Variants']
+
     with open(path, encoding='utf-8', mode='w') as f:
-        if include_variants:
-            print(delimiter.join(header + ['Variants']), file=f)
-        else:
-            print(delimiter.join(header), file=f)
+        print(delimiter.join(header), file=f)
 
         for word in corpus.iter_sort():
-            outline = [make_safe(getattr(word, value),trans_delimiter) for value in header]
-            if include_variants:
+            word_outline = []
+            for a in corpus.attributes:
+                word_outline.append(make_safe(getattr(word, a.name),trans_delimiter))
+            if variant_behavior == 'token':
+                var = word.variants()
+                for v, freq in var.items():
+                    token_line = []
+                    for a in corpus.attributes:
+                        if a.att_type == 'tier':
+                            if a.name == 'transcription':
+                                token_line.append(make_safe(v, trans_delimiter))
+                            else:
+                                segs = a.range
+                                t = v.match_segments(segs)
+                                token_line.append(make_safe(v, trans_delimiter))
+                    token_line.append(make_safe(freq, trans_delimiter))
+                    print(delimiter.join(word_outline + token_line), file=f)
+                continue
+            elif variant_behavior == 'column':
                 var = word.variants()
                 d = ', '
                 if delimiter == ',':
                     d = '; '
                 var = d.join(make_safe(x,trans_delimiter) for x in sorted(var.keys(), key = lambda y: var[y]))
-                outline.append(var)
-            print(delimiter.join(outline), file=f)
+                word_outline.append(var)
+            print(delimiter.join(word_outline), file=f)
 
 def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
     """

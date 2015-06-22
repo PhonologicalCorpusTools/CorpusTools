@@ -900,6 +900,9 @@ class SubsetCorpusDialog(QDialog):
         QDialog.accept(self)
 
 class ExportCorpusDialog(QDialog):
+    variantOptions = [('Do not include', None),
+                        ('Include in each word\'s line', 'column'),
+                        ('Have a line for each variant', 'token')]
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
 
@@ -923,9 +926,14 @@ class ExportCorpusDialog(QDialog):
 
         inlayout.addRow('Transcription delimiter:',self.transDelimiterEdit)
 
-        self.variantCheck = QCheckBox()
+        self.variantWidget = QComboBox()
+        for o in self.variantOptions:
+            self.variantWidget.addItem(o[0])
 
-        inlayout.addRow('Include pronunciation variants', self.variantCheck)
+        if not self.corpus.has_wordtokens:
+            self.variantWidget.setEnabled(False)
+
+        inlayout.addRow('Exporting pronunciation variants', self.variantWidget)
 
         inframe = QFrame()
         inframe.setLayout(inlayout)
@@ -963,7 +971,7 @@ class ExportCorpusDialog(QDialog):
                     "Invalid information", "The column delimiter must be a single character.")
             return
         transDelim = self.transDelimiterEdit.text()
-
-        export_corpus_csv(self.corpus,filename,colDelim,transDelim, self.variantCheck.isChecked())
+        variant_behavior = self.variantOptions[self.variantWidget.currentIndex()][1]
+        export_corpus_csv(self.corpus,filename,colDelim,transDelim, variant_behavior)
 
         QDialog.accept(self)
