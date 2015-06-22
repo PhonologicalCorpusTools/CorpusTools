@@ -95,11 +95,11 @@ class MainWindow(QMainWindow):
         self.unsavedChanges = False
 
         self.settings = Settings()
-        logging.basicConfig(filename = os.path.join(
+        logging.basicConfig(handlers = [logging.FileHandler(os.path.join(
                                 self.settings.log_directory(), 'pct_gui.log'),
-                            level = logging.INFO,
                             encoding = 'utf-8',
-                            filemode = 'w')
+                            mode = 'w')],
+                            level = logging.INFO)
 
         self.showWarnings = True
         self.showToolTips = True

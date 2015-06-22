@@ -76,7 +76,8 @@ class LoadCorpusWorker(FunctionWorker):
         time.sleep(0.1)
         textType = self.kwargs.pop('text_type')
         isDirectory = self.kwargs.pop('isDirectory')
-        logging.info('Importing {} corpus'.format(textType))
+        logging.info('Importing {} corpus named {}'.format(textType, self.kwargs['corpus_name']))
+        logging.info('Path: '.format(self.kwargs['path']))
         log_annotation_types(self.kwargs['annotation_types'])
         try:
             if textType == 'spelling':
