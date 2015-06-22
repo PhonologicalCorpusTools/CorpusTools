@@ -59,7 +59,6 @@ class FLWorker(FunctionWorker):
         if self.stopped:
             self.finishedCancelling.emit()
             return
-        print(self.results)
         self.dataReady.emit(self.results)
 
 
