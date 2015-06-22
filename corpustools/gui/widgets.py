@@ -177,7 +177,7 @@ class AnnotationTypeWidget(QGroupBox):
         self.typeWidget.addItem('Other (character)')
         if ignorable:
             self.typeWidget.addItem('Notes (ignored)')
-        self.typeWidget.setCurrentIndex(0)
+        self.typeWidget.setCurrentIndex(3)
         proplayout.addRow('Annotation type',self.typeWidget)
         self.typeWidget.currentIndexChanged.connect(self.typeChanged)
 
