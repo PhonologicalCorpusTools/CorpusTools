@@ -18,7 +18,7 @@ def check_envs(corpus_context, envs, stop_check, call_back):
 
     if call_back is not None:
         call_back('Finding instances of environments...')
-        call_back(0,len(corpus))
+        call_back(0,len(corpus_context))
         cur = 0
     for word in corpus_context:
         if stop_check is not None and stop_check():
@@ -148,7 +148,7 @@ def calc_prod(corpus_context, envs, strict = True, all_info = False, stop_check 
 
     if call_back is not None:
         call_back('Calculating predictability of distribution...')
-        call_back(0,len(corpus))
+        call_back(0,len(corpus_context))
         cur = 0
     for env in env_matches:
         if stop_check is not None and stop_check():

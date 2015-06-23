@@ -7,6 +7,7 @@ from collections import OrderedDict
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
+from corpustools.contextmanagers import CanonicalVariantContext
 
 from corpustools.corpus.classes import Word, Attribute
 
@@ -16,12 +17,13 @@ from .widgets import (RadioSelectWidget, FeatureBox,
 from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
 
-
 class InventorySummary(QWidget):
     def __init__(self, corpus, parent=None):
         QWidget.__init__(self,parent)
 
         self.corpus = corpus
+        self.type_context = CanonicalVariantContext(self.corpus, 'transcription', 'type')
+        self.token_context = CanonicalVariantContext(self.corpus, 'transcription', 'token')
 
         layout = QHBoxLayout()
 
@@ -32,7 +34,16 @@ class InventorySummary(QWidget):
         for b in self.segments.btnGroup.buttons():
             b.clicked.connect(self.summarizeSegment)
 
-        layout.addWidget(self.segments)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.segments)
+        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        #self.columnFrame.
+        layout.addWidget(scroll)
 
         self.detailFrame = QFrame()
 
@@ -48,11 +59,11 @@ class InventorySummary(QWidget):
 
         layout = QFormLayout()
         layout.setAlignment(Qt.AlignTop)
+        with self.type_context as c:
+            freq_base = c.get_frequency_base(gramsize = 1,
+                            probability = False)
 
-        freq_base = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
-                        probability = False)
-
-        probs = self.corpus.get_frequency_base('transcription', 'type', gramsize = 1,
+            probs = c.get_frequency_base(gramsize = 1,
                         probability = True)
 
         layout.addRow(QLabel('Type frequency:'),
@@ -61,11 +72,12 @@ class InventorySummary(QWidget):
                                                 )
                             ))
 
-        freq_base = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
-                        probability = False)
+        with self.token_context as c:
+            freq_base = c.get_frequency_base(gramsize = 1,
+                            probability = False)
 
-        probs = self.corpus.get_frequency_base('transcription', 'token', gramsize = 1,
-                        probability = True)
+            probs = c.get_frequency_base(gramsize = 1,
+                            probability = True)
 
         layout.addRow(QLabel('Token frequency:'),
                             QLabel('{:,.1f} ({:.2%})'.format(

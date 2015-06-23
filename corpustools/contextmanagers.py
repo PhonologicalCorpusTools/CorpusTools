@@ -160,8 +160,6 @@ class BaseCorpusContext(object):
 
 
 class CanonicalVariantContext(BaseCorpusContext):
-
-
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
 
