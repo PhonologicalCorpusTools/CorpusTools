@@ -542,6 +542,12 @@ class FeatureMatrix(object):
         #Backwards compatability
         if '_default_value' not in state:
             self._default_value = 'n'
+        if 'consCols' not in state:
+            self.consCols = dict()
+            self.consRows = dict()
+            self.vowCols = dict()
+            self.vowRows = dict()
+            self.generateGenericNames()
 
     def __iter__(self):
         for k in sorted(self.matrix.keys()):
