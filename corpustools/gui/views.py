@@ -57,8 +57,8 @@ class TableWidget(QTableView):
         #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         #except AttributeError:
         #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
-        self.resizeColumnsToContents()
+        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
+        #self.resizeColumnsToContents()
         try:
             self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         except AttributeError:
@@ -264,17 +264,17 @@ class LexiconView(QWidget):
 
     def showVariants(self, index):
         variantDialog = VariantView(self,
-                self.table.model().wordObject(index.row()).wordtokens)
+                self.table.model().wordObject(index.row()))
         variantDialog.show()
 
 class VariantView(QDialog):
-    def __init__(self, parent, wordtokens):
+    def __init__(self, parent, word):
         QDialog.__init__(self, parent)
         self.setWindowTitle('Pronunciation variants')
         layout = QVBoxLayout()
         self.table = TableWidget()
         layout.addWidget(self.table)
-        self.table.setModel(VariantModel(wordtokens))
+        self.table.setModel(VariantModel(word))
         closeButton = QPushButton('Close')
         closeButton.clicked.connect(self.reject)
         layout.addWidget(closeButton)
@@ -780,10 +780,8 @@ class ResultsWindow(QDialog):
         self.table.setModel(dataModel)
         try:
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-            self.table.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
         except AttributeError:
             self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-            self.table.horizontalHeader().setResizeMode(0,QHeaderView.Stretch)
         layout.addWidget(self.table)
         self.aclayout = QHBoxLayout()
         self.redoButton = QPushButton('Reopen function dialog')

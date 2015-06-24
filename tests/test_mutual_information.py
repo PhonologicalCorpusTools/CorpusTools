@@ -2,23 +2,29 @@
 import sys
 import os
 
-# from corpustools.neighdens.neighborhood_density import neighborhood_density
+from corpustools.mutualinfo.mutual_information import pointwise_mi, all_mis
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        WeightedVariantContext)
 
-# class NeighDenTest(unittest.TestCase):
-#     def setUp(self):
-#         self.corpus = create_unspecified_test_corpus()
+def test_pointwise_mi(unspecified_test_corpus):
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        calls = [
+                ({'corpus_context': c,
+                        'query':('e', 'm')}, 2.7319821866519507),
+                ({'corpus_context': c,
+                        'query':('t', 'n'),
+                        'in_word':True}, 0.5849625007211564),
+                ({'corpus_context': c,
+                        'query':('e', 'm'),
+                        'halve_edges':True}, 2.7319821866519507)
 
-#     def test_basic_corpus(self):
-#         calls = [({'corpus': self.corpus,
-#                         'query':'mata',
-#                         'max_distance':1},1.0),
-#                 ({'corpus': self.corpus,
-#                         'query':'nata',
-#                         'max_distance':2},3.0)]
+            ]
 
-#         for c,v in calls:
-#             result = neighborhood_density(**c)
-#             msgcall = 'Call: {}\nExpected: {}\nActually got:{}'.format(c,v,result)
-#             self.assertTrue(abs(result[0]-v) < 0.0001,msg=msgcall)
+        for c,v in calls:
+            result = pointwise_mi(**c)
+            assert(abs(result-v) < 0.0001)
 
-
+    #with CanonicalVariantContext(unspecified_test_corpus, 'spelling', 'type') as c:
+    #   result = pointwise_mi(c, query = ('t', 'a'))
+    #   assert(result == 0)

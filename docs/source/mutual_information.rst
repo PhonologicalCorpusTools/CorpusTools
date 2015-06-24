@@ -219,9 +219,17 @@ Positional arguments:
 
    Name of corpus file
 
-.. cmdoption:: query
+Mandatory argument group (call must have one of these two):
 
-   Bigram, as str separated by comma
+.. cmdoption:: -q QUERY
+               --query QUERY
+
+   Bigram or segment pair, as str separated by comma
+
+.. cmdoption:: -l
+               --all_pairwise_mis
+
+   Flag: calculate MI for all orders of all pairs of segments
 
 Optional arguments:
 
@@ -233,7 +241,7 @@ Optional arguments:
 .. cmdoption:: -s SEQUENCE_TYPE
                --sequence_type SEQUENCE_TYPE
 
-   The attribute of Words to calculate FL over. Normally, this will be
+   The attribute of Words to calculate MI over. Normally, this will be
    the transcription, but it can also be the spelling or a user-specified tier.
 
 .. cmdoption:: -o OUTFILE
@@ -245,17 +253,31 @@ EXAMPLE 1: If your corpus file is example.corpus and you want to calculate
 the mutual information of the bigram 'si' using defaults for all optional
 arguments, you would run the following command in your terminal window::
 
-   pct_mutualinfo example.corpus s,i
+   pct_mutualinfo example.corpus -q s,i
 
 EXAMPLE 2: Suppose you want to calculate the mutual information of the
 bigram 'si' on the spelling tier. In addition, you want the script to
 produce an output file called output.txt. You would need to run the
 following command::
 
-   pct_mutualinfo example.corpus s,i -s spelling -o output.txt
+   pct_mutualinfo example.corpus -q s,i -s spelling -o output.txt
+
+EXAMPLE 3: Suppose you want to calculate the mutual information of all
+bigram types in the corpus. In addition, you want the script to
+produce an output file called output.txt. You would need to run the
+following command::
+
+   pct_mutualinfo example.corpus -l -o output.txt
 
 .. [1] The algorithm in PCT calculates what is sometimes referred to
    as the “pointwise” mutual information of a pair of units X and Y,
    in contrast to “mutual information,” which would be the expected
    average value of the pointwise mutual information of all possible
    values of X and Y. We simplify to use “mutual information” throughout.
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

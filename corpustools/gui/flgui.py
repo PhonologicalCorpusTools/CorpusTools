@@ -5,90 +5,60 @@ from collections import OrderedDict
 import corpustools.funcload.functional_load as FL
 
 from .imports import *
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget
+from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+                    ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.exceptions import PCTError, PCTPythonError
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 class FLWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
-        if kwargs['pair_behavior'] == 'individual':
-
-            for pair in kwargs['segment_pairs']:
-                if kwargs['func_type'] == 'min_pairs':
-                    try:
-                        res = FL.minpair_fl(kwargs['corpus'], [pair],
-                            frequency_cutoff = kwargs['frequency_cutoff'],
-                            relative_count = kwargs['relative_count'],
-                            distinguish_homophones= kwargs['distinguish_homophones'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                elif kwargs['func_type'] == 'entropy':
-                    try:
-                        res = FL.deltah_fl(kwargs['corpus'], [pair],
-                            frequency_cutoff=kwargs['frequency_cutoff'],
-                            type_or_token=kwargs['type_or_token'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                if self.stopped:
-                    return
-                self.results.append(res)
+        self.results = []
+        context = kwargs.pop('context')
+        if kwargs.pop('algorithm') == 'min_pairs':
+            func = FL.minpair_fl
         else:
-            if kwargs['func_type'] == 'min_pairs':
-                try:
-                    res = FL.minpair_fl(kwargs['corpus'],
-                            kwargs['segment_pairs'],
-                            frequency_cutoff=kwargs['frequency_cutoff'],
-                            relative_count = kwargs['relative_count'],
-                            distinguish_homophones= kwargs['distinguish_homophones'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-            elif kwargs['func_type'] == 'entropy':
-                try:
-                    res = FL.deltah_fl(kwargs['corpus'],
-                            kwargs['segment_pairs'],
-                            frequency_cutoff=kwargs['frequency_cutoff'],
-                            type_or_token=kwargs['type_or_token'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-            if self.stopped:
+            func = FL.deltah_fl
+        if context == ContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == ContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        elif context == ContextWidget.separate_value:
+            cm = SeparatedTokensVariantContext
+        elif context == ContextWidget.relative_value:
+            cm = WeightedVariantContext
+        with cm(kwargs.pop('corpus'),
+                kwargs.pop('sequence_type'),
+                kwargs.pop('type_token'),
+                frequency_threshold = kwargs.pop('frequency_cutoff')) as c:
+            try:
+                pairs = kwargs.pop('segment_pairs')
+                if kwargs.pop('pair_behavior') == 'individual':
+                    for pair in pairs:
+                        res = func(c, [pair], **kwargs)
+                        if self.stopped:
+                            break
+                        self.results.append(res)
+                else:
+                    res = func(c, pairs, **kwargs)
+                    self.results.append(res)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
                 return
-            self.results.append(res)
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 
@@ -120,8 +90,8 @@ class FLDialog(FunctionDialog):
 
     name = 'functional load'
 
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, FLWorker())
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, FLWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips
@@ -155,6 +125,17 @@ class FLDialog(FunctionDialog):
 
         optionLayout.addWidget(self.tierWidget)
 
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
+                                                    OrderedDict([('Type','type'),
+                                                    ('Token','token')]))
+        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
+                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
+                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
+        self.variantsWidget = ContextWidget(self.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
+
         self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
                                                 OrderedDict([('All segment pairs together','together'),
                                                 ('Each segment pair individually','individual')]))
@@ -183,19 +164,16 @@ class FLDialog(FunctionDialog):
 
         minPairOptionFrame.setLayout(box)
 
-        optionLayout.addWidget(minPairOptionFrame)
+        l.addWidget(minPairOptionFrame)
 
         entropyOptionFrame = QGroupBox('Change in entropy options')
 
         box = QVBoxLayout()
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
-                                                    OrderedDict([('Type','type'),
-                                                    ('Token','token')]))
 
         box.addWidget(self.typeTokenWidget)
         entropyOptionFrame.setLayout(box)
-        optionLayout.addWidget(entropyOptionFrame)
+        l.addWidget(entropyOptionFrame)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -244,6 +222,17 @@ class FLDialog(FunctionDialog):
                             ' entropy caused by a merger of paired segments in the set.'
             "</FONT>"))
 
+    def typesSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+    def tokensSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([
+                    ('Use most frequent pronunciation as the type','most_frequent_type'),
+                    ('Use most frequent pronunciation for all tokens','most_frequent_token'),
+                    ('Use raw counts of each pronunciation (token frequency)','count_token'),
+                    ('Use relative counts of each pronunciation (type frequency)','relative_type')]))
+
     def minPairsSelected(self):
         self.typeTokenWidget.disable()
         self.relativeCountWidget.setEnabled(True)
@@ -264,29 +253,19 @@ class FLDialog(FunctionDialog):
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        return {'corpus':self.corpus,
+        alg = self.algorithmWidget.value()
+        kwargs = {'corpus':self.corpus,
                 'segment_pairs':segPairs,
+                'context': self.variantsWidget.value(),
                 'sequence_type': self.tierWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
-                'relative_count':self.relativeCountWidget.isChecked(),
-                'distinguish_homophones':self.homophoneWidget.isChecked(),
                 'pair_behavior':self.segPairOptionsWidget.value(),
-                'type_or_token':self.typeTokenWidget.value(),
-                'func_type':self.algorithmWidget.value()}
-
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
+                'type_token':self.typeTokenWidget.value(),
+                'algorithm': alg}
+        if alg == 'min_pairs':
+            kwargs['relative_count'] = self.relativeCountWidget.isChecked()
+            kwargs['distinguish_homophones'] = self.homophoneWidget.isChecked()
+        return kwargs
 
     def setResults(self,results):
         self.results = list()
@@ -297,6 +276,8 @@ class FLDialog(FunctionDialog):
             frequency_cutoff = 0.0
         if self.segPairOptionsWidget.value() == 'individual':
             for i, r in enumerate(results):
+                if isinstance(r, tuple):
+                    r = r[0]
                 self.results.append([seg_pairs[i][0],seg_pairs[i][1],
                                     self.tierWidget.displayValue(),
                                     self.algorithmWidget.displayValue(),
@@ -306,11 +287,15 @@ class FLDialog(FunctionDialog):
                                     frequency_cutoff,
                                     self.typeTokenWidget.value()])
         else:
+            if isinstance(results[0], tuple):
+                r = results[0][0]
+            else:
+                r = results[0]
             self.results.append([', '.join(x[0] for x in seg_pairs),
                                 ', '.join(x[1] for x in seg_pairs),
                                     self.tierWidget.displayValue(),
                                     self.algorithmWidget.displayValue(),
-                                    results[0],
+                                    r,
                                     self.homophoneWidget.isChecked(),
                                     self.relativeCountWidget.isChecked(),
                                     frequency_cutoff,

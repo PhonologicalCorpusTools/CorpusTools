@@ -82,48 +82,48 @@ Consider a toy example, in which the following corpus is assumed
 in a PCT corpus, as it is assumed that each row in the corpus represents
 1 type; it is included here for clarity):
 
-+--------+-----------------------+-----------------------+-----------------------+
-|        |        Original       | Under [h] / [ŋ] merger| Under [t] / [d] merger|
-|        +--------+------+-------+--------+------+-------+--------+------+-------+
-|  Word  | Trans. | Type | Token | Trans. | Type | Token | Trans. | Type | Token |
-|        |        | Freq.| Freq. |        | Freq.| Freq. |        | Freq.| Freq. |
-+========+========+======+=======+========+======+=======+========+======+=======+
-|  hot   |  [hɑt] |    1 |     2 |  [Xɑt] |    1 |     2 |  [hɑX] |    1 |     2 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  song  |  [sɑŋ] |    1 |     4 |  [sɑX] |    1 |     4 |  [sɑŋ] |    1 |     4 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  hat   |  [hæt] |    1 |     1 |  [Xæt] |    1 |     1 |  [hæX] |    1 |     1 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  sing  |  [sɪŋ] |    1 |     6 |  [sɪX] |    1 |     6 |  [sɪŋ] |    1 |     6 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  tot   |  [tɑt] |    1 |     3 |  [tɑt] |    1 |     3 |  [XɑX] |      |       |
-+--------+--------+------+-------+--------+------+-------+--------+    1 |     8 |
-|  dot   |  [dɑt] |    1 |     5 |  [dɑt] |    1 |     5 |  [XɑX] |      |       |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  hip   |  [hɪp] |    1 |     2 |  [Xɪp] |    1 |     2 |  [hɪp] |    1 |     2 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  hid   |  [hɪd] |    1 |     7 |  [Xɪd] |    1 |     7 |  [hɪX] |    1 |     7 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  team  |  [tim] |    1 |     5 |  [tim] |    1 |     5 |  [Xim] |      |       |
-+--------+--------+------+-------+--------+------+-------+--------+    1 |    10 |
-|  deem  |  [dim] |    1 |     5 |  [dim] |    1 |     5 |  [Xim] |      |       |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  toot  |  [tut] |    1 |     9 |  [tut] |    1 |     9 |  [XuX] |      |       |
-+--------+--------+------+-------+--------+------+-------+--------+    1 |    11 |
-|  dude  |  [dud] |    1 |     2 |  [dud] |    1 |     2 |  [XuX] |      |       |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  hiss  |  [hɪs] |    1 |     3 |  [Xɪs] |    1 |     3 |  [hɪs] |    1 |     3 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|  his   |  [hɪz] |    1 |     5 |  [Xɪz] |    1 |     5 |  [hɪz] |    1 |     5 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-| sizzle | [sɪzəl]|    1 |     4 | [sɪzəl]|    1 |     4 | [sɪzəl]|    1 |     4 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-| dizzy  |  [dɪzi]|    1 |     3 |  [dɪzi]|    1 |     3 |  [Xɪzi]|      |       |
-+--------+--------+------+-------+--------+------+-------+--------+    1 |     7 |
-| tizzy  |  [tɪzi]|    1 |     4 |  [tɪzi]|    1 |     4 |  [Xɪzi]|      |       |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
-|      Total      |   17 |    70 |        |   17 |    70 |        |   13 |    70 |
-+--------+--------+------+-------+--------+------+-------+--------+------+-------+
++--------+-----------------------+
+|        |        Original       |
+|        +--------+------+-------+
+|  Word  | Trans. | Type | Token |
+|        |        | Freq.| Freq. |
++========+========+======+=======+
+|  hot   |  [hɑt] |    1 |     2 |
++--------+--------+------+-------+
+|  song  |  [sɑŋ] |    1 |     4 |
++--------+--------+------+-------+
+|  hat   |  [hæt] |    1 |     1 |
++--------+--------+------+-------+
+|  sing  |  [sɪŋ] |    1 |     6 |
++--------+--------+------+-------+
+|  tot   |  [tɑt] |    1 |     3 |
++--------+--------+------+-------+
+|  dot   |  [dɑt] |    1 |     5 |
++--------+--------+------+-------+
+|  hip   |  [hɪp] |    1 |     2 |
++--------+--------+------+-------+
+|  hid   |  [hɪd] |    1 |     7 |
++--------+--------+------+-------+
+|  team  |  [tim] |    1 |     5 |
++--------+--------+------+-------+
+|  deem  |  [dim] |    1 |     5 |
++--------+--------+------+-------+
+|  toot  |  [tut] |    1 |     9 |
++--------+--------+------+-------+
+|  dude  |  [dud] |    1 |     2 |
++--------+--------+------+-------+
+|  hiss  |  [hɪs] |    1 |     3 |
++--------+--------+------+-------+
+|  his   |  [hɪz] |    1 |     5 |
++--------+--------+------+-------+
+| sizzle | [sɪzəl]|    1 |     4 |
++--------+--------+------+-------+
+| dizzy  |  [dɪzi]|    1 |     3 |
++--------+--------+------+-------+
+| tizzy  |  [tɪzi]|    1 |     4 |
++--------+--------+------+-------+
+|      Total      |   17 |    70 |
++-----------------+------+-------+
 
 The starting entropy, assuming word types as the relative unit of
 structure and counting, is:
@@ -152,11 +152,91 @@ The starting entropy, assuming word tokens, is:
 + (\frac{3}{70} log_{2}(\frac{3}{70})) + (\frac{4}{70} log_{2}(\frac{4}{70}))]
 = 3.924`
 
+
+
++--------+-----------------------+
+|        | Under [h] / [ŋ] merger|
+|        +--------+------+-------+
+|  Word  | Trans. | Type | Token |
+|        |        | Freq.| Freq. |
++========+========+======+=======+
+|  hot   |  [Xɑt] |    1 |     2 |
++--------+--------+------+-------+
+|  song  |  [sɑX] |    1 |     4 |
++--------+--------+------+-------+
+|  hat   |  [Xæt] |    1 |     1 |
++--------+--------+------+-------+
+|  sing  |  [sɪX] |    1 |     6 |
++--------+--------+------+-------+
+|  tot   |  [tɑt] |    1 |     3 |
++--------+--------+------+-------+
+|  dot   |  [dɑt] |    1 |     5 |
++--------+--------+------+-------+
+|  hip   |  [Xɪp] |    1 |     2 |
++--------+--------+------+-------+
+|  hid   |  [Xɪd] |    1 |     7 |
++--------+--------+------+-------+
+|  team  |  [tim] |    1 |     5 |
++--------+--------+------+-------+
+|  deem  |  [dim] |    1 |     5 |
++--------+--------+------+-------+
+|  toot  |  [tut] |    1 |     9 |
++--------+--------+------+-------+
+|  dude  |  [dud] |    1 |     2 |
++--------+--------+------+-------+
+|  hiss  |  [Xɪs] |    1 |     3 |
++--------+--------+------+-------+
+|  his   |  [Xɪz] |    1 |     5 |
++--------+--------+------+-------+
+| sizzle | [sɪzəl]|    1 |     4 |
++--------+--------+------+-------+
+| dizzy  |  [dɪzi]|    1 |     3 |
++--------+--------+------+-------+
+| tizzy  |  [tɪzi]|    1 |     4 |
++--------+--------+------+-------+
+|      Total      |   17 |    70 |
++-----------------+------+-------+
+
 Upon merger of [h] and [ŋ], there is no change in the number of unique words;
 there are still 17 unique words with all their same token frequencies.
 Thus, the entropy after an [h] / [ŋ] merger will be the same as it was
 before the merger. The functional load, then would be 0, as the pre-merger
 and post-merger entropies are identical.
+
++-----------+-----------------------+
+|           | Under [t] / [d] merger|
+|           +--------+------+-------+
+|  Word     | Trans. | Type | Token |
+|           |        | Freq.| Freq. |
++===========+========+======+=======+
+|  hot      |  [hɑX] |    1 |     2 |
++-----------+--------+------+-------+
+|  song     |  [sɑŋ] |    1 |     4 |
++-----------+--------+------+-------+
+|  hat      |  [hæX] |    1 |     1 |
++-----------+--------+------+-------+
+|  sing     |  [sɪŋ] |    1 |     6 |
++-----------+--------+------+-------+
+|tot/dot    |  [XɑX] |    1 |     8 |
++-----------+--------+------+-------+
+|  hip      |  [hɪp] |    1 |     2 |
++-----------+--------+------+-------+
+|  hid      |  [hɪX] |    1 |     7 |
++-----------+--------+------+-------+
+|team/deem  |  [Xim] |    1 |    10 |
++-----------+--------+------+-------+
+|toot/dude  |  [XuX] |    1 |    11 |
++-----------+--------+------+-------+
+|  hiss     |  [hɪs] |    1 |     3 |
++-----------+--------+------+-------+
+|  his      |  [hɪz] |    1 |     5 |
++-----------+--------+------+-------+
+| sizzle    | [sɪzəl]|    1 |     4 |
++-----------+--------+------+-------+
+|dizzy/tizzy|  [Xɪzi]|    1 |     7 |
++-----------+--------+------+-------+
+|      Total         |   13 |    70 |
++--------------------+------+-------+
 
 Upon merger of [t] and [d], on the other hand, four pairs of words have
 been collapsed. E.g., the difference between *team* and *deem* no longer
@@ -379,9 +459,17 @@ Positional arguments:
 
    Name of corpus file
 
-.. cmdoption:: pairs_file_name_or_segment
+Mandatory argument group (call must have one of these two):
+
+.. cmdoption:: -p PAIRS_FILE_NAME_OR_SEGMENT
+               --pairs_file_name_or_segment PAIRS_FILE_NAME_OR_SEGMENT
 
    Name of file with segment pairs (or target segment if relative fl is True)
+
+.. cmdoption:: -l
+               --all_pairwise_fls
+
+   Flag: calculate FL for all pairs of segments
 
 Optional arguments:
 
@@ -442,7 +530,7 @@ text file that contains the text “m\tn” (where \t is a tab; no quotes
 in the file). Let us call this file pairs.txt. You would then run the
 following command in your terminal window::
 
-   pct_funcload example.corpus pairs.txt
+   pct_funcload example.corpus -p pairs.txt
 
 EXAMPLE 2: Suppose you want to calculate the relative (average) functional
 load of the segment [m]. Your corpus file is again example.corpus. You
@@ -452,4 +540,19 @@ instead of (the default value of) token frequency. In addition, you want
 the script to produce an output file called output.txt.  You would need
 to run the following command::
 
-   pct_funcload example.corpus m -a deltah -t type -o output.txt
+   pct_funcload example.corpus -p m -a deltah -t type -o output.txt
+
+EXAMPLE 3: Suppose you want to calculate the functional
+loads of all segment pairs. Your corpus file is again example.corpus.
+All other parameters are set to defaults. In addition, you want
+the script to produce an output file called output.txt.  You would need
+to run the following command::
+
+   pct_funcload example.corpus -l -o output.txt
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

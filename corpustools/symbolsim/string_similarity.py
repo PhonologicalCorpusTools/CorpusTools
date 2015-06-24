@@ -9,42 +9,56 @@ from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 
+from corpustools.multiprocessing import score_mp, PCTMultiprocessingError
 
-class StringSimilarityError(Exception):
-    pass
+from corpustools.exceptions import StringSimilarityError
 
-def string_similarity(corpus, query, algorithm, **kwargs):
+def khorsi_wrapper(w1, w2, freq_base,sequence_type, max_distance):
+    score = khorsi(w1, w2, freq_base = freq_base, sequence_type = sequence_type)
+    if score >= max_distance:
+        return score
+    else:
+        return None
+
+def edit_distance_wrapper(w1, w2, sequence_type, max_distance):
+    score = edit_distance(w1, w2, sequence_type)
+    if score <= max_distance:
+        return score
+    else:
+        return None
+
+def phono_edit_distance_wrapper(w1, w2, sequence_type, features, max_distance):
+    score = phono_edit_distance(w1, w2, sequence_type = sequence_type,features = features)
+    if score <= max_distance:
+        return score
+    else:
+        return None
+
+def string_similarity(corpus_context, query, algorithm, **kwargs):
     """
     This function computes similarity of pairs of words across a corpus.
 
     Parameters
     ----------
-    corpus: Corpus
-        The corpus object to use
-
+    corpus_context : CorpusContext
+        Context manager for a corpus
     query: string, tuple, or list of tuples
         If this is a string, every word in the corpus will be compared to it,
         if this is a tuple with two strings, those words will be compared to
         each other,
         if this is a list of tuples, each tuple's strings will be compared to
         each other.
-
     algorithm: string
         The algorithm of string similarity to be used, currently supports
         'khorsi', 'edit_distance', and 'phono_edit_distance'
-
-    sequence_type: string
-        Specifies whether to use 'spelling', 'transcription' or the name of a
-        transcription tier to use for comparisons
-
-    count_what: string
-        The type of frequency to use, either 'type' or 'token'
-
     max_rel: double
         Filters out all words that are higher than max_rel from a relatedness measure
-
     min_rel: double
         Filters out all words that are lower than min_rel from a relatedness measure
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -52,35 +66,35 @@ def string_similarity(corpus, query, algorithm, **kwargs):
         The first two elements of the tuple are the words that were compared
         and the final element is their relatedness score
     """
-
-    sequence_type = kwargs.get('sequence_type', 'spelling')
-    count_what = kwargs.get('count_what', 'type')
     stop_check = kwargs.get('stop_check', None)
     call_back = kwargs.get('call_back', None)
     min_rel = kwargs.get('min_rel', None)
     max_rel = kwargs.get('max_rel', None)
 
     if algorithm == 'khorsi':
-        freq_base = corpus.get_frequency_base(sequence_type, count_what)
+        freq_base = corpus_context.get_frequency_base()
         try:
             bound_count = freq_base['#']
             freq_base = {k:v for k,v in freq_base.items() if k != '#'}
             freq_base['total'] -= bound_count
         except KeyError:
             pass
-        relate_func = partial(khorsi,freq_base=freq_base,
-                                sequence_type = sequence_type)
+        relate_func = partial(khorsi, freq_base=freq_base,
+                                sequence_type = corpus_context.sequence_type)
     elif algorithm == 'edit_distance':
-        relate_func =  partial(edit_distance, sequence_type = sequence_type)
+        relate_func =  partial(edit_distance,
+                                sequence_type = corpus_context.sequence_type)
     elif algorithm == 'phono_edit_distance':
-        relate_func = partial(phono_edit_distance,sequence_type = sequence_type, features = corpus.specifier)
+        relate_func = partial(phono_edit_distance,
+                                sequence_type = corpus_context.sequence_type,
+                                features = corpus_context.specifier)
     else:
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
 
-    related_data = list()
+    related_data = []
     if isinstance(query,Word):
         if call_back is not None:
-            total = len(corpus)
+            total = len(corpus_context)
             if min_rel is not None or max_rel is not None:
                 total *= 2
             cur = 0
@@ -88,7 +102,7 @@ def string_similarity(corpus, query, algorithm, **kwargs):
             call_back(cur,total)
         targ_word = query
         relate = list()
-        for word in corpus:
+        for word in corpus_context:
             if stop_check is not None and stop_check():
                 return
             if call_back is not None:
@@ -136,16 +150,3 @@ def string_similarity(corpus, query, algorithm, **kwargs):
 
     return related_data
 
-
-def ensure_query_is_word(query, corpus, sequence_type, segment_delimiter):
-    if isinstance(query, Word):
-        query_word = query
-    else:
-        try:
-            query_word = corpus.find(query)
-        except KeyError:
-            if segment_delimiter == None:
-                query_word = Word(**{sequence_type: list(query)})
-            else:
-                query_word = Word(**{sequence_type: query.split(segment_delimiter)})
-    return query_word

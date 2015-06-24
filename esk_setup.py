@@ -48,6 +48,7 @@ freezer_options = {
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
                             "acousticsim",
+                            "textgrid",
                             "sys"],
                 "excludes":[
                         'corpustools.acousticsim.tests',
@@ -106,6 +107,7 @@ build_exe_options = {"excludes": [
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
                             "acousticsim",
+                            "textgrid",
                             "sys"]
                             }
 
@@ -118,10 +120,9 @@ bdist_mac_options = {'iconfile':'docs/images/icon.icns',
 bdist_dmg_options = {'applications_shortcut':True}
 
 setup(name="PhonologicalCorpusTools",
-        version="1.0.1",
+        version="1.1.0",
         scripts=[exe],
         packages=['corpustools',
-                #'corpustools.acousticsim',
                 'corpustools.corpus',
                 'corpustools.corpus.io',
                 'corpustools.corpus.classes',
@@ -130,7 +131,6 @@ setup(name="PhonologicalCorpusTools",
                 'corpustools.kl',
                 'corpustools.prod',
                 'corpustools.gui',
-                #'corpustools.acousticsim',
                 'corpustools.symbolsim',
                 'corpustools.neighdens'],
         data_files = incl_files,

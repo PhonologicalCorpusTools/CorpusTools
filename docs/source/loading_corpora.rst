@@ -45,6 +45,11 @@ Vaden, K. I., Halpin, H. R., Hickok, G. S. (2009). Irvine Phonotactic Online
 Dictionary, Version 2.0. [Data file]. Available from `http://www.iphod.com/
 <http://www.iphod.com/>`_.
 
+The example corpus is a small corpus designed to provide minimal examples 
+of many types of phonotactic properties that can be investigated with PCT.
+For a list of the phonotactic restrictions in this corpus, see the 
+Appendix :ref:`example_corpus_phonotactics`.
+
 After the corpus has been downloaded, it appears in the lefthand side of
 the “Load Corpus” dialogue box. Simply select the corpus and click on
 “Load selected corpus” at the bottom of the dialogue box. Once these
@@ -605,3 +610,10 @@ results window, etc.) and copy / paste a tab-delimited string version
 of the data into another program (e.g., a spreadsheet or text editor)
 using your standard copy & paste keyboard commands (i.e., Ctrl-C and
 Ctrl-V on a PC; Command-C and Command-V on a Mac).
+
+.. _classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

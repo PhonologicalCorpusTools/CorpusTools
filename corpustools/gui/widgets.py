@@ -1,12 +1,9 @@
 
 import sys
+import re
 import operator
-from itertools import combinations, product
-from collections import defaultdict
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QComboBox, QLabel, QFrame, QPushButton, QHBoxLayout, \
-    QMessageBox, QGroupBox, QLineEdit, QTableWidgetItem
-from corpustools.corpus.classes import Attribute
+from collections import OrderedDict, defaultdict
+from itertools import combinations, permutations, chain, product
 from corpustools.gui.views import TableWidget
 
 from .imports import *
@@ -15,6 +12,407 @@ from .models import SegmentPairModel, EnvironmentModel, FilterModel
 
 #from .corpusgui import AddTierDialog
 from .delegates import SwitchDelegate
+
+from corpustools.corpus.classes import Attribute, EnvironmentFilter
+from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
+
+
+def truncate_string(string, length = 10):
+    return (string[:length] + '...') if len(string) > length + 3 else string
+
+class NonScrollingComboBox(QComboBox):
+    def __init__(self, parent = None):
+        QComboBox.__init__(self, parent)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+    def wheelEvent(self, e):
+        e.ignore()
+
+class CorpusSelect(QComboBox):
+    def __init__(self, parent, settings):
+        QComboBox.__init__(self,parent)
+        self.settings = settings
+        self.addItem('None')
+
+        for i,s in enumerate(get_corpora_list(self.settings['storage'])):
+            self.addItem(s)
+
+    def value(self):
+        val = self.currentText()
+        if val == 'None':
+            return ''
+        return val
+
+    def path(self):
+        if self.value() != '':
+            return corpus_name_to_path(self.settings['storage'],self.value())
+        return None
+
+class ParsingDialog(QDialog):
+    def __init__(self, parent, annotation_type, att_type):
+        QDialog.__init__(self, parent)
+        self.characters = annotation_type.characters
+        self.setWindowTitle('Parsing {}'.format(annotation_type.name))
+
+        layout = QFormLayout()
+        self.example = QLabel(' '.join(annotation_type[:5]))
+        self.example.setWordWrap(True)
+        layout.addRow('Example:', self.example)
+
+        self.punctuationWidget = PunctuationWidget(annotation_type.punctuation)
+        self.punctuationWidget.setPunctuation(annotation_type.ignored_characters)
+        self.delimiterWidget = QLineEdit()
+        self.morphDelimiterWidget = PunctuationWidget(annotation_type.punctuation & set('-='),
+                                                        'Morpheme delimiter')
+        self.morphDelimiterWidget.setPunctuation(annotation_type.morph_delimiters)
+        self.digraphWidget = DigraphWidget()
+        self.numberBehaviorSelect = QComboBox()
+        self.numberBehaviorSelect.addItem('Same as other characters')
+        self.numberBehaviorSelect.addItem('Tone')
+        self.numberBehaviorSelect.addItem('Stress')
+        self.numberBehaviorSelect.currentIndexChanged.connect(self.updatePunctuation)
+
+        self.digraphWidget.characters = annotation_type.characters
+        self.digraphWidget.setDigraphs(annotation_type.digraphs)
+
+        self.punctuationWidget.selectionChanged.connect(self.punctuationChanged)
+        delimiter = annotation_type.delimiter
+        if delimiter is not None:
+            self.delimiterWidget.setText(delimiter)
+            self.punctuationWidget.updateButtons([delimiter])
+        self.delimiterWidget.textChanged.connect(self.updatePunctuation)
+        if att_type == 'tier':
+            layout.addRow('Transcription delimiter',self.delimiterWidget)
+        layout.addRow(self.morphDelimiterWidget)
+        self.morphDelimiterWidget.selectionChanged.connect(self.updatePunctuation)
+
+        if att_type == 'tier':
+            if len(self.characters & set(['0','1','2'])):
+                layout.addRow('Number parsing', self.numberBehaviorSelect)
+            else:
+                layout.addRow('Number parsing', QLabel('No numbers'))
+        layout.addRow(self.punctuationWidget)
+        if att_type == 'tier':
+            layout.addRow(self.digraphWidget)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addRow(acFrame)
+
+        self.setLayout(layout)
+
+    def ignored(self):
+        return self.punctuationWidget.value()
+
+    def morphDelimiters(self):
+        return self.morphDelimiterWidget.value()
+
+    def transDelimiter(self):
+        return self.delimiterWidget.text()
+
+    def numberBehavior(self):
+        if self.numberBehaviorSelect.currentIndex() == 0:
+            return None
+        return self.numberBehaviorSelect.currentText().lower()
+
+    def digraphs(self):
+        return self.digraphWidget.value()
+
+    def updatePunctuation(self):
+        delimiter = self.delimiterWidget.text()
+        if delimiter == '':
+            delimiter = []
+        else:
+            delimiter = [delimiter]
+        self.morphDelimiterWidget.updateButtons(delimiter, emit = False)
+
+        delimiter += self.morphDelimiterWidget.value()
+        self.punctuationWidget.updateButtons(delimiter)
+
+    def punctuationChanged(self):
+        self.digraphWidget.characters = self.characters - \
+                                        self.punctuationWidget.value() - \
+                                        self.morphDelimiterWidget.value()
+        if self.numberBehaviorSelect.currentIndex() != 0:
+            self.digraphWidget.characters -= NUMBER_CHARACTERS
+        delimiter = self.delimiterWidget.text()
+        if delimiter != '':
+            self.digraphWidget.characters -= set([delimiter])
+
+class AnnotationTypeWidget(QGroupBox):
+    def __init__(self, annotation_type, parent = None,
+                ignorable = True):
+        #if title is None:
+        #    title = 'Annotation type details'
+        QGroupBox.__init__(self, annotation_type.name, parent)
+
+        main = QHBoxLayout()
+
+        #main.addWidget(QLabel(annotation_type.name))
+
+        self.annotation_type = annotation_type
+
+        proplayout = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        proplayout.addRow('Name',self.nameWidget)
+
+        self.typeWidget = NonScrollingComboBox()
+        self.typeWidget.addItem('Orthography')
+        self.typeWidget.addItem('Transcription')
+        self.typeWidget.addItem('Other (numeric)')
+        self.typeWidget.addItem('Other (character)')
+        if ignorable:
+            self.typeWidget.addItem('Notes (ignored)')
+        self.typeWidget.setCurrentIndex(3)
+        proplayout.addRow('Annotation type',self.typeWidget)
+        self.typeWidget.currentIndexChanged.connect(self.typeChanged)
+
+        self.associationWidget = RadioSelectWidget('Word association',
+                                            OrderedDict([
+                                            ('Associate this with the lexical item','type'),
+                                            ('Allow this property to vary within lexical items','token'),]))
+
+        proplayout.addRow(self.associationWidget)
+
+        self.delimiterLabel = QLabel('None')
+        if self.annotation_type.delimiter is not None:
+            self.delimiterLabel.setText(self.annotation_type.delimiter)
+        self.morphDelimiterLabel = QLabel('None')
+
+        self.ignoreLabel = QLabel('None')
+
+        self.digraphLabel = QLabel('None')
+
+        self.numberLabel = QLabel('None')
+
+        parselayout = QFormLayout()
+
+        self.editButton = QPushButton('Edit parsing settings')
+        self.editButton.clicked.connect(self.editParsingProperties)
+
+        parselayout.addRow('Transcription delimiter', self.delimiterLabel)
+        parselayout.addRow('Morpheme delimiter', self.morphDelimiterLabel)
+        parselayout.addRow('Number parsing', self.numberLabel)
+        parselayout.addRow('Ignored characters', self.ignoreLabel)
+        parselayout.addRow('Multicharacter segments',self.digraphLabel)
+        parselayout.addRow(self.editButton)
+
+        main.addLayout(proplayout)
+        main.addLayout(parselayout)
+
+
+        if self.annotation_type.token:
+            self.associationWidget.click(1)
+        if self.annotation_type.anchor:
+            self.typeWidget.setCurrentIndex(0)
+        elif self.annotation_type.base or self.annotation_type.delimiter is not None:
+            self.typeWidget.setCurrentIndex(1)
+        elif self.annotation_type.attribute.att_type == 'numeric':
+            self.typeWidget.setCurrentIndex(2)
+        #self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
+
+        self.nameWidget.setText(self.annotation_type.attribute.display_name)
+        #if show_attribute:
+        #    main.addWidget(self.attributeWidget)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+
+        self.typeChanged()
+
+    def typeChanged(self):
+        if self.typeWidget.currentIndex() in [0, 1]:
+            self.editButton.setEnabled(True)
+            self.updateParsingLabels()
+        else:
+            self.editButton.setEnabled(False)
+        self.suggestName()
+
+    def suggestName(self):
+        if self.typeWidget.currentText() == 'Orthography':
+            self.nameWidget.setText('Spelling')
+        elif self.typeWidget.currentText() == 'Transcription':
+            self.nameWidget.setText('Transcription')
+        elif self.typeWidget.currentText() == 'Other (numeric)':
+            self.nameWidget.setText(self.annotation_type.attribute.display_name)
+        elif self.typeWidget.currentText() == 'Other (character)':
+            self.nameWidget.setText(self.annotation_type.attribute.display_name)
+        elif self.typeWidget.currentText() == 'Notes (ignored)':
+            self.nameWidget.setText('Ignored')
+
+
+    def updateParsingLabels(self):
+        if self.typeWidget.currentIndex() == 0:
+            self.digraphLabel.setText('N/A')
+            self.numberLabel.setText('N/A')
+            self.delimiterLabel.setText('N/A')
+            self.morphDelimiterLabel.setText('N/A')
+        elif self.typeWidget.currentIndex() == 1:
+            if self.annotation_type.digraphs:
+                self.digraphLabel.setText(truncate_string(' '.join(self.annotation_type.digraphs)))
+            else:
+                self.digraphLabel.setText('None')
+            if self.annotation_type.morph_delimiters:
+                self.morphDelimiterLabel.setText(
+                        truncate_string(' '.join(
+                            self.annotation_type.morph_delimiters
+                            )
+                        ))
+            else:
+                self.morphDelimiterLabel.setText('None')
+            if self.annotation_type.trans_delimiter:
+                self.delimiterLabel.setText(truncate_string(' '.join(self.annotation_type.trans_delimiter)))
+            else:
+                self.delimiterLabel.setText('None')
+            if self.annotation_type.number_behavior:
+                self.numberLabel.setText(str(self.annotation_type.number_behavior))
+            else:
+                self.numberLabel.setText('None')
+        if self.annotation_type.ignored_characters:
+            self.ignoreLabel.setText(truncate_string(' '.join(self.annotation_type.ignored_characters)))
+        else:
+            self.ignoreLabel.setText('None')
+
+    def editParsingProperties(self):
+        if self.typeWidget.currentText() == 'Orthography':
+            atype = 'spelling'
+        elif self.typeWidget.currentText() == 'Transcription':
+            atype = 'tier'
+        else:
+            return
+        dialog = ParsingDialog(self, self.annotation_type, atype)
+        if dialog.exec_():
+            self.annotation_type.ignored_characters = dialog.ignored()
+            self.annotation_type.digraphs = dialog.digraphs()
+            self.annotation_type.morph_delimiters = dialog.morphDelimiters()
+            d = dialog.transDelimiter()
+            if d == '':
+                self.annotation_type.trans_delimiter = None
+            else:
+                self.annotation_type.trans_delimiter = d
+            self.annotation_type.number_behavior = dialog.numberBehavior()
+            self.updateParsingLabels()
+
+    def value(self):
+        a = self.annotation_type
+        a.token = self.associationWidget.value() == 'token'
+        display_name = self.nameWidget.text()
+        a.anchor = False
+        a.base = False
+        name = Attribute.sanitize_name(display_name)
+        if self.typeWidget.currentText() == 'Orthography':
+            a.anchor = True
+            a.base = False
+            name = 'spelling'
+            atype = 'spelling'
+        elif self.typeWidget.currentText() == 'Transcription':
+            a.anchor = False
+            a.base = True
+            atype = 'tier'
+        elif self.typeWidget.currentText() == 'Other (numeric)':
+            atype = 'numeric'
+        elif self.typeWidget.currentText() == 'Other (character)':
+            atype = 'factor'
+        elif self.typeWidget.currentText() == 'Notes (ignored)':
+            a.ignored = True
+        if not a.ignored:
+            a.attribute = Attribute(name, atype, display_name)
+        return a
+
+class AttributeWidget(QGroupBox):
+    def __init__(self, attribute = None, exclude_tier = False,
+                disable_name = False, parent = None):
+        QGroupBox.__init__(self, 'Column details', parent)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        main.addRow('Name of column',self.nameWidget)
+
+        if attribute is not None:
+            self.attribute = attribute
+            self.nameWidget.setText(attribute.display_name)
+        else:
+            self.attribute = None
+
+        if disable_name:
+            self.nameWidget.setEnabled(False)
+
+        self.typeWidget = NonScrollingComboBox()
+        for at in Attribute.ATT_TYPES:
+            if exclude_tier and at == 'tier':
+                continue
+            self.typeWidget.addItem(at.title())
+
+        main.addRow('Type of column',self.typeWidget)
+
+        self.useAs = NonScrollingComboBox()
+        self.useAs.addItem('Custom column')
+        self.useAs.addItem('Spelling')
+        self.useAs.addItem('Transcription')
+        self.useAs.addItem('Frequency')
+        self.useAs.currentIndexChanged.connect(self.updateUseAs)
+
+        for i in range(self.useAs.count()):
+            if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
+                self.useAs.setCurrentIndex(i)
+                if attribute.name == 'transcription' and attribute.att_type != 'tier':
+                    attribute.att_type = 'tier'
+
+        for i in range(self.typeWidget.count()):
+            if attribute is not None and self.typeWidget.itemText(i) == attribute.att_type.title():
+                self.typeWidget.setCurrentIndex(i)
+
+        main.addRow('Use column as', self.useAs)
+
+        self.setLayout(main)
+
+        self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+
+    def type(self):
+        return self.typeWidget.currentText().lower()
+
+    def updateUseAs(self):
+        t = self.useAs.currentText().lower()
+        if t == 'custom column':
+            self.typeWidget.setEnabled(True)
+        else:
+            for i in range(self.typeWidget.count()):
+                if t == 'spelling' and self.typeWidget.itemText(i) == 'Spelling':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'transcription' and self.typeWidget.itemText(i) == 'Tier':
+                    self.typeWidget.setCurrentIndex(i)
+                elif t == 'frequency' and self.typeWidget.itemText(i) == 'Numeric':
+                    self.typeWidget.setCurrentIndex(i)
+            self.typeWidget.setEnabled(False)
+
+    def use(self):
+        return self.useAs.currentText().lower()
+
+    def value(self):
+        display = self.nameWidget.text()
+        cat = self.type()
+        use = self.use()
+        if use.startswith('custom'):
+            name = Attribute.sanitize_name(display)
+        else:
+            name = use
+        att = Attribute(name, cat, display)
+        return att
 
 class ThumbListWidget(QListWidget):
     def __init__(self, ordering, parent=None):
@@ -135,7 +533,6 @@ class NumericFilter(QWidget):
         ind = self.conditionalSelect.currentIndex()
 
         return self.conditionals[ind], self.valueEdit.text()
-
 
 class AttributeFilterDialog(QDialog):
     def __init__(self, attributes,parent=None):
@@ -299,7 +696,6 @@ class AttributeFilterWidget(QGroupBox):
     def value(self):
         return [x[0] for x in self.table.model().filters]
 
-
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
         QGroupBox.__init__(self,'Tier',parent)
@@ -309,6 +705,7 @@ class TierWidget(QGroupBox):
 
         self.tierSelect = QComboBox()
         self.atts = list()
+        self.spellingName = corpus.attributes[0].display_name
         if include_spelling:
             self.atts.append(corpus.attributes[0])
             self.tierSelect.addItem(corpus.attributes[0].display_name)
@@ -322,10 +719,10 @@ class TierWidget(QGroupBox):
     def setSpellingEnabled(self, b):
         self.spellingEnabled = b
         if b:
-            if self.tierSelect.itemText(0) != 'Spelling':
-                self.tierSelect.insertItem(0,'Spelling')
+            if self.tierSelect.itemText(0) != self.spellingName:
+                self.tierSelect.insertItem(0,self.spellingName)
         else:
-            if self.tierSelect.itemText(0) == 'Spelling':
+            if self.tierSelect.itemText(0) == self.spellingName:
                 self.tierSelect.removeItem(0)
 
     def value(self):
@@ -341,18 +738,24 @@ class TierWidget(QGroupBox):
         return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
-    def __init__(self, punctuation, title = 'Punctuation',parent = None):
-        QGroupBox.__init__(self,title,parent)
+    selectionChanged = Signal()
+    def __init__(self, punctuation, title = 'Punctuation to ignore', parent = None):
+        QGroupBox.__init__(self, title, parent)
 
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         layout = QVBoxLayout()
+        self.warning = QLabel('None detected (other than any transcription delimiters)')
+        if len(punctuation) > 0:
+            self.warning.hide()
+        layout.addWidget(self.warning)
         box = QGridLayout()
 
         row = 0
         col = 0
         for s in punctuation:
             btn = QPushButton(s)
+            btn.clicked.connect(self.selectionChanged.emit)
             btn.setAutoDefault(False)
             btn.setCheckable(True)
             btn.setAutoExclusive(False)
@@ -377,6 +780,10 @@ class PunctuationWidget(QGroupBox):
         self.uncheckAll = QPushButton('Uncheck all')
         self.uncheckAll.setAutoDefault(False)
         self.uncheckAll.clicked.connect(self.uncheck)
+
+        if len(punctuation) < 2:
+            self.checkAll.hide()
+            self.uncheckAll.hide()
         buttonlayout.addWidget(self.checkAll, alignment = Qt.AlignLeft)
         buttonlayout.addWidget(self.uncheckAll, alignment = Qt.AlignLeft)
         buttonframe = QFrame()
@@ -385,13 +792,44 @@ class PunctuationWidget(QGroupBox):
         layout.addWidget(buttonframe)
         self.setLayout(layout)
 
+    def updateButtons(self, to_ignore, emit = True):
+        count_visible = 0
+        for b in self.btnGroup.buttons():
+            if b.text() in to_ignore:
+                b.setChecked(False)
+                b.hide()
+            else:
+                b.show()
+            if not b.isHidden():
+                count_visible += 1
+        if count_visible == 0:
+            self.warning.show()
+        else:
+            self.warning.hide()
+        if count_visible < 2:
+            self.checkAll.hide()
+            self.uncheckAll.hide()
+        else:
+            self.checkAll.show()
+            self.uncheckAll.show()
+        if emit:
+            self.selectionChanged.emit()
+
+    def setPunctuation(self, punc):
+        for b in self.btnGroup.buttons():
+            if b.text() in punc:
+                b.setChecked(True)
+        self.selectionChanged.emit()
+
     def check(self):
         for b in self.btnGroup.buttons():
             b.setChecked(True)
+        self.selectionChanged.emit()
 
     def uncheck(self):
         for b in self.btnGroup.buttons():
             b.setChecked(False)
+        self.selectionChanged.emit()
 
     def value(self):
         value = []
@@ -399,14 +837,14 @@ class PunctuationWidget(QGroupBox):
             if b.isChecked():
                 t = b.text()
                 value.append(t)
-        return value
+        return set(value)
 
 class DigraphDialog(QDialog):
     def __init__(self, characters, parent = None):
         QDialog.__init__(self, parent)
         layout = QFormLayout()
         self.digraphLine = QLineEdit()
-        layout.addRow(QLabel('Digraph'),self.digraphLine)
+        layout.addRow(QLabel('Multicharacter segment'),self.digraphLine)
         symbolframe = QGroupBox('Characters')
         box = QGridLayout()
 
@@ -443,7 +881,7 @@ class DigraphDialog(QDialog):
         layout.addRow(acFrame)
         self.setLayout(layout)
         self.setFixedSize(self.sizeHint())
-        self.setWindowTitle('Construct Digraph')
+        self.setWindowTitle('Construct segment')
 
     def addCharacter(self):
         self.digraphLine.setText(self.digraphLine.text()+self.sender().text())
@@ -463,39 +901,28 @@ class DigraphDialog(QDialog):
         self.addOneMore = False
         QDialog.reject(self)
 
-
-
 class DigraphWidget(QGroupBox):
     def __init__(self,parent = None):
         self._parent = parent
-        QGroupBox.__init__(self,'Digraphs',parent)
+        QGroupBox.__init__(self,'Multicharacter segments',parent)
         layout = QVBoxLayout()
 
         self.editField = QLineEdit()
         layout.addWidget(self.editField)
-        self.button = QPushButton('Construct a digraph')
+        self.button = QPushButton('Construct a segment')
         self.button.setAutoDefault(False)
         self.button.clicked.connect(self.construct)
         layout.addWidget(self.button)
         self.setLayout(layout)
+        self.characters = list()
+
+    def setDigraphs(self, digraphs):
+        self.editField.setText(','.join(digraphs))
 
     def construct(self):
-        minus = set(self._parent.ignoreList())
-        wd, td = self._parent.delimiters()
-        delims = []
-        if wd is None:
-            delims.extend([' ','\t','\n'])
-        elif isinstance(wd,list):
-            delims.extend(wd)
-        else:
-            delims.append(wd)
-        if td is not None:
-            if isinstance(td,list):
-                delims.extend(td)
-            else:
-                delims.append(td)
-        minus.update(delims)
-        possible = sorted(self._parent.characters - minus, key = lambda x: x.lower())
+        if len(self.characters) == 0:
+            return
+        possible = sorted(self.characters, key = lambda x: x.lower())
         dialog = DigraphDialog(possible,self)
         addOneMore = True
         while addOneMore:
@@ -507,10 +934,11 @@ class DigraphWidget(QGroupBox):
             dialog.digraphLine.setText('')
             addOneMore = dialog.addOneMore
 
-
     def value(self):
         text = self.editField.text()
         values = [x.strip() for x in text.split(',') if x.strip() != '']
+        if len(values) == 0:
+            return []
         return values
 
 class FileWidget(QFrame):
@@ -629,6 +1057,7 @@ class InventoryTable(QTableWidget):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
 
+<<<<<<< HEAD
 
 class RightClickMenuButton(QPushButton):
 
@@ -975,6 +1404,8 @@ class EditableInventoryTable(InventoryTable):
         #segs = [s for s in self.parent.corpus.inventory]
         return [consColumns, consRows, segs, True]
 
+=======
+>>>>>>> origin/develop
 class SegmentButton(QPushButton):
     def sizeHint(self):
         sh = QPushButton.sizeHint(self)
@@ -984,6 +1415,166 @@ class SegmentButton(QPushButton):
         sh.setWidth(self.fontMetrics().boundingRect(self.text()).width()+14)
         return sh
 
+class FeatureEdit(QLineEdit):
+    featureEntered = Signal(list)
+    featuresFinalized = Signal(list)
+    delimPattern = re.compile('([,; ]+)')
+
+    def __init__(self,inventory, parent=None):
+        QLineEdit.__init__(self, parent)
+        self.completer = None
+        self.inventory = inventory
+        self.valid_strings = self.inventory.valid_feature_strings()
+
+    def setCompleter(self,completer):
+        if self.completer is not None:
+            self.disconnect(self.completer,0,0)
+        self.completer = completer
+        if self.completer is None:
+            return
+        self.completer.setWidget(self)
+        self.completer.setCompletionMode(QCompleter.PopupCompletion)
+        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.activated.connect(self.insertCompletion)
+
+    def features(self):
+        if self.text() == '':
+            return []
+        text = self.delimPattern.split(self.text())
+        features = [x for x in text if x in self.valid_strings]
+        return features
+
+    def parseText(self):
+        m = self.delimPattern.search(self.text())
+        if m is None:
+            d = ''
+        else:
+            d = m.group(0)
+        text = self.delimPattern.split(self.text())
+        return d, text
+
+
+    def insertCompletion(self, string):
+        d, text = self.parseText()
+        text[-1] = string
+        text = [x for x in text if x in self.valid_strings]
+        self.featureEntered.emit(text)
+        self.setText(d.join(text))
+
+    def currentFeature(self):
+        return self.delimPattern.split(self.text())[-1]
+
+    def keyPressEvent(self,e):
+        if self.completer and self.completer.popup().isVisible():
+                if e.key() in ( Qt.Key_Space, Qt.Key_Enter,
+                                Qt.Key_Return,Qt.Key_Escape,
+                                Qt.Key_Tab,Qt.Key_Backtab):
+                    e.ignore()
+                    return
+        else:
+            if e.key() in (Qt.Key_Enter, Qt.Key_Return):
+                if self.text() != '':
+                    self.featuresFinalized.emit(self.features())
+                    self.setText('')
+                    self.featureEntered.emit([])
+                    return
+        isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
+        if (self.completer is None or not isShortcut):
+            super().keyPressEvent(e)
+
+        if e.key() in (Qt.Key_Space, Qt.Key_Semicolon, Qt.Key_Comma):
+            e.ignore()
+            return
+
+        d, text = self.parseText()
+        self.featureEntered.emit([x for x in text if x in self.valid_strings])
+
+        completionPrefix = self.currentFeature()
+
+        self.completer.update(completionPrefix)
+        self.completer.popup().setCurrentIndex(self.completer.completionModel().index(0, 0))
+
+        cr = self.cursorRect()
+        cr.setWidth(self.completer.popup().sizeHintForColumn(0)
+                    + self.completer.popup().verticalScrollBar().sizeHint().width())
+        self.completer.complete(cr)
+
+class FeatureCompleter(QCompleter):
+    def __init__(self,inventory,parent=None):
+        QCompleter.__init__(self, parent)
+        self.stringList = inventory.valid_feature_strings()
+        self.setModel(QStringListModel())
+
+    def update(self,completionText):
+        to_filter = completionText.lower()
+        filtered = [x for x in self.stringList
+                        if x.lower().startswith(to_filter)
+                        or x[1:].lower().startswith(to_filter)]
+        self.model().setStringList(filtered)
+        self.popup().setCurrentIndex(self.model().index(0, 0))
+
+class SegmentSelectionWidget(QWidget):
+    def __init__(self, inventory, parent = None):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+
+        self.searchWidget = FeatureEdit(self.inventory)
+        self.completer = FeatureCompleter(self.inventory)
+        self.searchWidget.setCompleter(self.completer)
+
+        self.inventoryFrame = InventoryBox('', self.inventory)
+
+        layout = QVBoxLayout()
+
+        if len(inventory.features) > 0:
+            headlayout = QHBoxLayout()
+            formlay = QFormLayout()
+
+            formlay.addRow('Select by feature',self.searchWidget)
+
+            formframe = QFrame()
+
+            formframe.setLayout(formlay)
+            headlayout.addWidget(formframe)
+
+            self.clearAllButton = QPushButton('Clear selections')
+
+            headlayout.addWidget(self.clearAllButton)
+            headframe = QFrame()
+
+            headframe.setLayout(headlayout)
+            self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
+
+        else:
+            headframe = QLabel('No feature matrix associated with this corpus.')
+
+        layout.addWidget(headframe)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.inventoryFrame)
+        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        #self.columnFrame.
+        layout.addWidget(scroll)
+
+        self.setLayout(layout)
+
+        self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
+        self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegmentFeatures)
+
+
+    def select(self, segments):
+        self.inventoryFrame.selectSegments(segments)
+
+    def clearAll(self):
+        self.inventoryFrame.clearAll()
+
+    def value(self):
+        return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
 
@@ -1216,17 +1807,22 @@ class InventoryBox(QWidget):
         self.btnGroup.addButton(wid)
         return wid
 
-    def showHideCons(self, checked):
-        if checked:
-            self.consTable.show()
-        else:
-            self.consTable.hide()
+    def highlightSegments(self, features):
+        segs = self.inventory.features_to_segments(features)
+        for btn in self.btnGroup.buttons():
+            btn.setStyleSheet("QPushButton{}")
+            if features and btn.text() in segs:
+                btn.setStyleSheet("QPushButton{background-color: red;}")
 
-    def showHideVow(self, checked):
-        if checked:
-            self.vowelTable.show()
-        else:
-            self.vowelTable.hide()
+    def selectSegmentFeatures(self, features):
+        segs = self.inventory.features_to_segments(features)
+        self.selectSegments(segs)
+
+    def selectSegments(self, segs):
+        if len(segs) > 0:
+            for btn in self.btnGroup.buttons():
+                if btn.text() in segs:
+                    btn.setChecked(True)
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
@@ -1319,14 +1915,13 @@ class TranscriptionWidget(QGroupBox):
             self.showInv.setText('Show inventory')
         self.updateGeometry()
 
-
-
 class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
         QWidget.__init__(self,parent)
 
         self.inventory = inventory
-        self.inspectInventory()
+        self.features = self.inventory.features
+        self.values = self.inventory.possible_values
         layout = QHBoxLayout()
 
         #layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -1368,13 +1963,6 @@ class FeatureBox(QWidget):
 
         self.setLayout(layout)
 
-    def inspectInventory(self):
-        self.features = sorted(self.inventory[-1].features.keys())
-        self.values = set()
-        for v in self.inventory:
-            self.values.update(v.features.values())
-        self.values = sorted([x for x in self.values if x != ''])
-
     def addFeature(self):
         curFeature = self.featureList.currentItem()
         if curFeature:
@@ -1402,27 +1990,17 @@ class FeatureBox(QWidget):
             return ''
         return '[{}]'.format(','.join(val))
 
-
 class SegmentPairDialog(QDialog):
     def __init__(self, corpus, parent=None):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
 
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.inventoryFrame = SegmentSelectionWidget(inventory)
 
-        segFrame = QFrame()
+        layout.addWidget(self.inventoryFrame)
 
-        segLayout = QHBoxLayout()
-
-        self.segFrame = InventoryBox('Segments',corpus)
-
-        segLayout.addWidget(self.segFrame)
-
-        segFrame.setLayout(segLayout)
-
-        layout.addWidget(segFrame)
-
+        self.setLayout(layout)
 
         self.oneButton = QPushButton('Add')
         self.anotherButton = QPushButton('Add and create another')
@@ -1441,7 +2019,6 @@ class SegmentPairDialog(QDialog):
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
-        self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Select segment pair')
 
     def one(self):
@@ -1453,14 +2030,14 @@ class SegmentPairDialog(QDialog):
         self.accept()
 
     def reset(self):
-        self.segFrame.clearAll()
+        self.inventoryFrame.clearAll()
 
     def reject(self):
         self.addOneMore = False
         QDialog.reject(self)
 
     def accept(self):
-        selected = self.segFrame.value()
+        selected = self.inventoryFrame.value()
         self.pairs = combinations(selected,2)
         QDialog.accept(self)
 
@@ -1496,7 +2073,6 @@ class SegPairTableWidget(TableWidget):
 
     def addSwitch(self, index, begin, end):
         self.openPersistentEditor(self.model().index(begin, 2))
-
 
 class SegmentPairSelectWidget(QGroupBox):
     def __init__(self,corpus,parent=None):
@@ -1553,7 +2129,10 @@ class SegFeatSelect(QGroupBox):
         self.segExclusive = exclusive
         self.corpus = corpus
         self.inventory = self.corpus.inventory
-        self.features = self.inventory[-1].features.keys()
+        self.features = list()
+        for i in self.inventory:
+            if len(i.features.keys()) > 0:
+                self.features = [x for x in i.features.keys()]
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
@@ -1594,12 +2173,11 @@ class SegFeatSelect(QGroupBox):
             return self.corpus.features_to_segments(self.sel.value()[1:-1])
 
 class EnvironmentDialog(QDialog):
-    def __init__(self, corpus, parent=None):
+    rowToAdd = Signal(str)
+    def __init__(self, inventory,parent=None):
         QDialog.__init__(self,parent)
 
-        self.inventory = corpus.inventory
-        self.corpus = corpus
-        self.features = self.corpus.specifier.features
+        self.inventory = inventory
 
         layout = QVBoxLayout()
 
@@ -1607,24 +2185,24 @@ class EnvironmentDialog(QDialog):
 
         layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        self.lhsEnvFrame = QGroupBox('Left hand side')
+        lhsEnvFrame = QGroupBox('Left hand side')
 
-        self.rhsEnvFrame = QGroupBox('Right hand side')
+        rhsEnvFrame = QGroupBox('Right hand side')
 
-        self.lhsEnvLayout = QVBoxLayout()
+        lhsEnvLayout = QVBoxLayout()
 
-        self.lhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        lhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        self.rhsEnvLayout = QVBoxLayout()
+        rhsEnvLayout = QVBoxLayout()
 
-        self.rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
         if parent.name == 'environment' or parent.name == 'class':
             self.lhsEnvType = QComboBox()
             self.rhsEnvType = QComboBox()
             self.lhsEnvType.addItem('Segments')
             self.rhsEnvType.addItem('Segments')
-            if len(self.features) > 0:
+            if len(self.inventory.features) > 0:
                 self.lhsEnvType.addItem('Features')
                 self.rhsEnvType.addItem('Features')
             else:
@@ -1633,30 +2211,42 @@ class EnvironmentDialog(QDialog):
             self.lhsEnvType.currentIndexChanged.connect(self.generateLhsFrame)
             self.rhsEnvType.currentIndexChanged.connect(self.generateRhsFrame)
 
-            self.lhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
-            self.lhsEnvLayout.addWidget(self.lhsEnvType, alignment = Qt.AlignLeft)
+            lhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
+            lhsEnvLayout.addWidget(self.lhsEnvType, alignment = Qt.AlignLeft)
 
-            self.rhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
-            self.rhsEnvLayout.addWidget(self.rhsEnvType, alignment = Qt.AlignLeft)
+            rhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
+            rhsEnvLayout.addWidget(self.rhsEnvType, alignment = Qt.AlignLeft)
 
-        self.lhs = InventoryBox('',self.corpus)
-        self.lhs.setExclusive(True)
+        self.lhs = QStackedWidget()
+        self.lhsInventory = InventoryBox('',self.inventory)
+        self.lhsInventory.setExclusive(True)
+        self.lhsFeature = FeatureBox('',self.inventory)
+        self.lhs.addWidget(self.lhsInventory)
 
-        self.rhs = InventoryBox('',self.corpus)
-        self.rhs.setExclusive(True)
+        if len(self.inventory.features) > 0:
+            self.lhs.addWidget(self.lhsFeature)
 
-        self.lhsEnvLayout.addWidget(self.lhs)
-        self.rhsEnvLayout.addWidget(self.rhs)
+        self.rhs = QStackedWidget()
+        self.rhsInventory = InventoryBox('',self.inventory)
+        self.rhsInventory.setExclusive(True)
+        self.rhsFeature = FeatureBox('',self.inventory)
+        self.rhs.addWidget(self.rhsInventory)
 
-        self.lhsEnvFrame.setLayout(self.lhsEnvLayout)
+        if len(self.inventory.features) > 0:
+            self.rhs.addWidget(self.rhsFeature)
 
-        self.rhsEnvFrame.setLayout(self.rhsEnvLayout)
+        lhsEnvLayout.addWidget(self.lhs)
+        rhsEnvLayout.addWidget(self.rhs)
+
+        lhsEnvFrame.setLayout(lhsEnvLayout)
+
+        rhsEnvFrame.setLayout(rhsEnvLayout)
         envFrame = QFrame()
 
         envLayout = QHBoxLayout()
 
-        envLayout.addWidget(self.lhsEnvFrame)
-        envLayout.addWidget(self.rhsEnvFrame)
+        envLayout.addWidget(lhsEnvFrame)
+        envLayout.addWidget(rhsEnvFrame)
 
         envFrame.setLayout(envLayout)
 
@@ -1677,28 +2267,16 @@ class EnvironmentDialog(QDialog):
         acFrame.setLayout(self.acLayout)
 
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
-
+        self.addOneMore = False
         self.setLayout(layout)
         #self.setFixedSize(self.sizeHint())
-        self.setWindowTitle('Create {}'.format(parent.name))
+        self.setWindowTitle('Create {}'.format(self.parent().name))
 
     def generateLhsFrame(self,ind=0):
-        self.lhs.deleteLater()
-        if self.lhsEnvType.currentText() == 'Segments':
-            self.lhs = InventoryBox('',self.inventory)
-            self.lhs.setExclusive(True)
-        elif self.lhsEnvType.currentText() == 'Features':
-            self.lhs = FeatureBox('',self.inventory)
-        self.lhsEnvLayout.addWidget(self.lhs)
+        self.lhs.setCurrentIndex(self.lhsEnvType.currentIndex())
 
     def generateRhsFrame(self,ind=0):
-        self.rhs.deleteLater()
-        if self.rhsEnvType.currentText() == 'Segments':
-            self.rhs = InventoryBox('',self.inventory)
-            self.rhs.setExclusive(True)
-        elif self.rhsEnvType.currentText() == 'Features':
-            self.rhs = FeatureBox('',self.inventory)
-        self.rhsEnvLayout.addWidget(self.rhs)
+        self.rhs.setCurrentIndex(self.rhsEnvType.currentIndex())
 
     def one(self):
         self.addOneMore = False
@@ -1709,34 +2287,261 @@ class EnvironmentDialog(QDialog):
         self.accept()
 
     def reset(self):
-        self.lhs.clearAll()
-        self.rhs.clearAll()
+        self.lhsInventory.clearAll()
+        self.lhsFeature.clearAll()
+        self.rhsInventory.clearAll()
+        self.rhsFeature.clearAll()
 
     def accept(self):
+        lhs = self.lhsInventory.value()
+        rhs = self.rhsInventory.value()
+
         if self.parent().name == 'environment':
-            self.env = '{}_{}'.format(self.lhs.value(),self.rhs.value())
+            if self.lhsEnvType.currentIndex() != 0:
+                lhs = self.lhsFeature.value()
+            if  self.rhsEnvType.currentIndex() != 0:
+                rhs = self.rhsFeature.value()
+            env = '{}_{}'.format(lhs, rhs)
         else:
-            lhs = self.lhs.value()
             if lhs == '':
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please specify a left hand of the bigram.")
                 return
-            rhs = self.rhs.value()
             if rhs == '':
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please specify a right hand of the bigram.")
                 return
 
-            self.env = '{}{}'.format(lhs,rhs)
-        QDialog.accept(self)
+            env = '{}{}'.format(lhs,rhs)
+        self.rowToAdd.emit(env)
+        if not self.addOneMore:
+            QDialog.accept(self)
+        else:
+            self.reset()
 
     def reject(self):
-        self.addOneMore = False
         QDialog.reject(self)
 
+
+class SegmentSelectDialog(QDialog):
+    def __init__(self, inventory, selected = None, parent=None):
+        QDialog.__init__(self,parent)
+
+        layout = QVBoxLayout()
+
+        segFrame = QFrame()
+
+        segLayout = QHBoxLayout()
+
+        self.segFrame = SegmentSelectionWidget(inventory)
+
+        if selected is not None:
+            self.segFrame.select(selected)
+
+        segLayout.addWidget(self.segFrame)
+
+        segFrame.setLayout(segLayout)
+
+        layout.addWidget(segFrame)
+
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Select segment pair')
+
+    def value(self):
+        return self.segFrame.value()
+
+    def reset(self):
+        self.segFrame.clearAll()
+
+
+class EnvironmentSegmentWidget(QWidget):
+    def __init__(self, inventory, parent = None, middle = False, enabled = True):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+        self.segments = set()
+        self.enabled = enabled
+
+        self.middle = middle
+
+        layout = QVBoxLayout()
+        if self.middle:
+            lab = '_\n\n{}'
+        else:
+            lab = '{}'
+        self.mainLabel = QLabel(lab)
+        self.mainLabel.setMargin(4)
+        self.mainLabel.setFrameShape(QFrame.Box)
+        self.mainLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+        layout.addWidget(self.mainLabel)
+
+        self.setLayout(layout)
+
+        self.mainLabel.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.mainLabel.customContextMenuRequested.connect(self.showMenu)
+
+    def mouseReleaseEvent(self, ev):
+        if not self.enabled:
+            ev.ignore()
+            return
+        if ev.button() == Qt.LeftButton:
+            self.selectSegments()
+            ev.accept()
+
+    def updateLabel(self):
+        if self.middle:
+            lab = '_\n\n{%s}'
+        else:
+            lab = '{%s}'
+        lab = lab % ', '.join(self.segments)
+        self.mainLabel.setText(lab)
+
+    def selectSegments(self):
+        dialog = SegmentSelectDialog(self.inventory, self.segments, self)
+        if dialog.exec_():
+            self.segments = dialog.value()
+            self.updateLabel()
+
+    def showMenu(self, pos):
+        if self.middle:
+            return
+        removeAction = QAction(self)
+        removeAction.setText('Delete')
+        removeAction.triggered.connect(self.deleteLater)
+
+        menu = QMenu(self)
+        menu.addAction(removeAction)
+
+        menu.popup(self.mapToGlobal(pos))
+
+    def value(self):
+        return self.segments
+
+class EnvironmentWidget(QWidget):
+    def __init__(self, inventory, parent = None, middle = True):
+        QWidget.__init__(self, parent)
+        self.inventory = inventory
+        layout = QHBoxLayout()
+
+        self.lhsAddNew = QPushButton('+')
+
+        self.lhsAddNew.clicked.connect(self.addLhs)
+
+        self.lhsWidget = QWidget()
+
+        lhslayout = QHBoxLayout()
+        self.lhsWidget.setLayout(lhslayout)
+
+        self.rhsAddNew = QPushButton('+')
+
+        self.rhsAddNew.clicked.connect(self.addRhs)
+
+        self.rhsWidget = QWidget()
+
+        rhslayout = QHBoxLayout()
+        self.rhsWidget.setLayout(rhslayout)
+
+        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True, enabled = middle)
+
+        self.removeButton = QPushButton('Remove environment')
+
+        self.removeButton.clicked.connect(self.deleteLater)
+
+        layout.addWidget(self.lhsAddNew)
+        layout.addWidget(self.lhsWidget)
+        layout.addWidget(self.middleWidget)
+        layout.addWidget(self.rhsWidget)
+        layout.addWidget(self.rhsAddNew)
+
+        layout.addStretch()
+
+        optionlayout = QVBoxLayout()
+
+        optionlayout.addWidget(self.removeButton)
+
+        layout.addLayout(optionlayout)
+
+        self.setLayout(layout)
+
+    def addLhs(self):
+        segWidget = EnvironmentSegmentWidget(self.inventory)
+        self.lhsWidget.layout().insertWidget(0,segWidget)
+
+    def addRhs(self):
+        segWidget = EnvironmentSegmentWidget(self.inventory)
+        self.rhsWidget.layout().addWidget(segWidget)
+
+    def value(self):
+        lhs = []
+        for ind in range(self.lhsWidget.layout().count()):
+            wid = self.lhsWidget.layout().itemAt(ind).widget()
+            lhs.append(wid.value())
+        rhs = []
+        for ind in range(self.rhsWidget.layout().count()):
+            wid = self.rhsWidget.layout().itemAt(ind).widget()
+            rhs.append(wid.value())
+        middle = self.middleWidget.value()
+
+        return EnvironmentFilter(middle, lhs, rhs)
+
 class EnvironmentSelectWidget(QGroupBox):
-    name = 'environment'
-    def __init__(self,corpus,parent=None):
+    def __init__(self, inventory, parent = None, middle = True):
+        QGroupBox.__init__(self,'Environments',parent)
+        self.middle = middle
+        self.inventory = inventory
+
+        layout = QVBoxLayout()
+
+        scroll = QScrollArea()
+        self.environmentFrame = QWidget()
+        lay = QBoxLayout(QBoxLayout.TopToBottom)
+        self.addButton = QPushButton('New environment')
+        self.addButton.clicked.connect(self.addNewEnvironment)
+        lay.addWidget(self.addButton)
+        lay.addStretch()
+        self.environmentFrame.setLayout(lay)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.environmentFrame)
+        scroll.setMinimumWidth(140)
+        scroll.setMinimumHeight(200)
+
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        layout.addWidget(scroll)
+
+        self.setLayout(layout)
+
+    def addNewEnvironment(self):
+        envWidget = EnvironmentWidget(self.inventory, middle = self.middle)
+        pos = self.environmentFrame.layout().count() - 2
+        self.environmentFrame.layout().insertWidget(pos,envWidget)
+
+    def value(self):
+        envs = []
+        for ind in range(self.environmentFrame.layout().count() - 2):
+            wid = self.environmentFrame.layout().itemAt(ind).widget()
+            envs.append(wid.value())
+        return envs
+
+
+class BigramWidget(QGroupBox):
+    name = 'bigram'
+    def __init__(self,inventory,parent=None):
         QGroupBox.__init__(self,'{}s'.format(self.name.title()),parent)
 
         self.inventory = corpus.inventory
@@ -1769,15 +2574,15 @@ class EnvironmentSelectWidget(QGroupBox):
 
         self.setLayout(vbox)
 
+    def addRow(self, row):
+        self.table.model().addRow([row])
+
     def envPopup(self):
-        dialog = EnvironmentDialog(self.corpus,self)
-        addOneMore = True
-        while addOneMore:
-            dialog.reset()
-            result = dialog.exec_()
-            if result:
-                self.table.model().addRow([dialog.env])
-            addOneMore = dialog.addOneMore
+        dialog = EnvironmentDialog(self.inventory,self)
+        dialog.rowToAdd.connect(self.addRow)
+        result = dialog.exec_()
+        dialog.rowToAdd.disconnect()
+        dialog.deleteLater()
 
     def removeEnv(self):
         select = self.table.selectionModel()
@@ -1788,29 +2593,50 @@ class EnvironmentSelectWidget(QGroupBox):
     def value(self):
         return [x[0] for x in self.table.model().rows]
 
-class BigramWidget(EnvironmentSelectWidget):
-    name = 'bigram'
-
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options, actions=None, enabled=None,parent=None):
         QGroupBox.__init__(self,title,parent)
+        self.is_enabled = True
+        self.actions = None
+        self.enabled = None
+        self.setLayout(QFormLayout())
+        self.setOptions(options, actions, enabled)
 
-        self.options = options
-        vbox = QFormLayout()
+    def initOptions(self):
         self.widgets = []
-        for key in options.keys():
+        for key in self.options.keys():
             w = QRadioButton(key)
-            if actions is not None:
-                w.clicked.connect(actions[key])
-            if enabled is not None:
-                w.setEnabled(enabled[key])
+            if self.actions is not None:
+                w.clicked.connect(self.actions[key])
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            if not self.is_enabled:
+                w.setEnabled(False)
             self.widgets.append(w)
-            vbox.addRow(w)
+            self.layout().addRow(w)
         self.widgets[0].setChecked(True)
-        self.setLayout(vbox)
+
+    def setOptions(self, options, actions = None, enabled = None):
+        for i in reversed(range(self.layout().count())):
+            w = self.layout().itemAt(i).widget()
+            self.layout().removeWidget(w)
+            w.setParent(None)
+            w.deleteLater()
+        self.options = options
+        if actions is not None:
+            self.actions = actions
+        if enabled is not None:
+            self.enabled = enabled
+        self.initOptions()
+
 
     def initialClick(self):
         self.widgets[0].click()
+
+    def click(self,index):
+        if index >= len(self.widgets):
+            return
+        self.widgets[index].click()
 
     def value(self):
         for w in self.widgets:
@@ -1825,105 +2651,50 @@ class RadioSelectWidget(QGroupBox):
         return ''
 
     def disable(self):
+        self.is_enabled = False
         for w in self.widgets:
             w.setEnabled(False)
 
     def enable(self):
+        self.is_enabled = True
         for w in self.widgets:
-            w.setEnabled(True)
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            else:
+                w.setEnabled(True)
 
+class RestrictedContextWidget(RadioSelectWidget):
+    canonical = 'Use canonical forms only'
+    frequent = 'Use most frequent forms only'
+    canonical_value = 'canonical'
+    frequent_value = 'mostfrequent'
+    def __init__(self, corpus, actions = None, parent = None):
+        typetokenEnabled = {self.canonical: corpus.has_transcription,
+                    self.frequent: corpus.has_wordtokens}
+        RadioSelectWidget.__init__(self,'Pronunciation variants',
+                                            OrderedDict([(self.canonical, self.canonical_value),
+                                            (self.frequent, self.frequent_value)]),
+                                            actions,
+                                            typetokenEnabled)
 
-class SegmentClassSelectWidget(QFrame):
-
-    def __init__(self, parent, corpus):
-        #super(AddTierDialog, self).__init__()
-        super().__init__(parent)
-
-        self.corpus = corpus
-
-        layout = QVBoxLayout()
-        box = QFormLayout()
-        self.createType = QComboBox()
-        self.createType.addItem('Segments')
-        if self.corpus.specifier is not None:
-            self.createType.addItem('Features')
-        else:
-            layout.addWidget(QLabel('Features for class creation are not available without a feature system.'))
-
-        self.createType.currentIndexChanged.connect(self.generateFrames)
-
-        layout.addWidget(QLabel('Basis for creating class:'))
-        layout.addWidget(self.createType, alignment = Qt.AlignLeft)
-        self.createFrame = QFrame()
-        createLayout = QVBoxLayout()
-
-        self.createWidget = InventoryBox('Segments to define this class',self.corpus)
-        self.createType.currentIndexChanged.connect(self.generateFrames)
-
-        createLayout.addWidget(self.createWidget)
-
-        self.createFrame.setLayout(createLayout)
-
-        layout.addWidget(self.createFrame)
-
-        self.createButton = QPushButton('Create class')
-        self.previewButton = QPushButton('Preview class')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.createButton)
-        acLayout.addWidget(self.previewButton)
-        acLayout.addWidget(self.cancelButton)
-        self.createButton.clicked.connect(self.accept)
-        self.previewButton.clicked.connect(self.preview)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-        self.setLayout(layout)
-
-        self.setWindowTitle('Create class')
-
-    def createFeatureFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = FeatureBox('Features to define the class',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def createSegmentFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = InventoryBox('Segments to define the class',self.corpus)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def generateFrames(self,ind=0):
-        if self.createType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.createType.currentText() == 'Features':
-            self.createFeatureFrame()
-
-    def preview(self):
-        createType = self.createType.currentText()
-        createList = self.createWidget.value()
-        if not createList:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
-            return
-        if createType == 'Features':
-            createList = createList[1:-1]
-            segList = self.corpus.features_to_segments(createList)
-        else:
-            segList = createList
-        notInSegList = [x.symbol for x in self.corpus.inventory if x.symbol not in segList]
-
-        reply = QMessageBox.information(self,
-                "Class preview", "Segments included: {}\nSegments excluded: {}".format(', '.join(segList),', '.join(notInSegList)))
-
-    def accept(self):
-         QDialog.accept(self)
-
+class ContextWidget(RestrictedContextWidget):
+    separate = 'Count each word token as a separate entry'
+    relative = 'Weight each word type\nby the relative frequency of its variants'
+    separate_value = 'separatetoken'
+    relative_value = 'relativetype'
+    def __init__(self, corpus, actions = None, parent = None):
+        typetokenEnabled = {self.canonical: corpus.has_transcription,
+                    self.frequent: corpus.has_wordtokens,
+                    self.separate: corpus.has_wordtokens,
+                    self.relative: corpus.has_wordtokens}
+        RadioSelectWidget.__init__(self,'Pronunciation variants',
+                                            OrderedDict([(self.canonical, self.canonical_value),
+                                            (self.frequent, self.frequent_value),
+                                            (self.separate, self.separate_value),
+                                            (self.relative, self.relative_value)
+                                            ]),
+                                            actions,
+                                            typetokenEnabled)
 
 class CreateClassWidget(QDialog):
     def __init__(self, parent, corpus, class_type=None, default_name=None, default_specs=None):
@@ -1969,42 +2740,16 @@ class CreateClassWidget(QDialog):
         self.nameFrame.setLayout(nameLayout)
         self.mainLayout.addWidget(self.nameFrame)
 
-        defineFrame = QFrame()
-        defineLayout = QHBoxLayout()
+        self.defineFrame = SegmentSelectionWidget(self.corpus.inventory)
 
-        self.featuresFrame = QGroupBox('Features to define the {}'.format(self.class_type))
-        self.featureSelectWidget = FeatureBox('Features',self.corpus.inventory)
-        featuresLayout = QVBoxLayout()
-        featuresLayout.addWidget(self.featureSelectWidget)
-        self.featuresFrame.setLayout(featuresLayout)
-        if default_specs is not None:
-            index, feature_defaults, seg_defaults = default_specs
-            for name,value in feature_defaults.items():
-                self.featureSelectWidget.envList.addItem(value+name)
-            #self.mainLayout.addWidget(self.featuresFrame)
-
-        self.segFrame = QGroupBox('Segments to define the {}'.format(self.class_type))
-        self.segSelectWidget = InventoryBox('Segments',self.corpus)
-        segLayout = QVBoxLayout()
-        segLayout.addWidget(self.segSelectWidget)
-        self.segFrame.setLayout(segLayout)
-        #self.mainLayout.addWidget(self.segFrame)
-
-        defineLayout.addWidget(self.featuresFrame)
-        defineLayout.addWidget(self.segFrame)
-        defineFrame.setLayout(defineLayout)
-
-        self.mainLayout.addWidget(defineFrame)
+        self.mainLayout.addWidget(self.defineFrame)
 
         self.createButton = QPushButton('Create {}'.format(self.class_type))
-        self.previewButton = QPushButton('Preview {}'.format(self.class_type))
         self.cancelButton = QPushButton('Cancel')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.createButton)
-        acLayout.addWidget(self.previewButton)
         acLayout.addWidget(self.cancelButton)
         self.createButton.clicked.connect(self.accept)
-        self.previewButton.clicked.connect(self.preview)
         self.cancelButton.clicked.connect(self.reject)
 
         acFrame = QFrame()
@@ -2016,63 +2761,12 @@ class CreateClassWidget(QDialog):
 
         self.setWindowTitle('Create {}'.format(self.class_type))
 
-    def accept(self):
-        className = self.nameEdit.text()
-        className = className.strip()
-        className = className.replace(' ', '')
-        if className == '':
-            reply = QMessageBox.critical(self,
-                                         "Missing information", "Please enter a name for the class.")
-            return
-        elif self.corpus._inventory.hasClass(className):
-
-            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate class names",
-                                 "'{}' is already the name of a class. Please select a new name".format(className))
-                                 #QMessageBox.NoButton, self)
-            msgBox.addButton("OK", QMessageBox.AcceptRole)
-        self.name = className
-        self.segList = self.generateClass()
-        self.featureList = self.featureSelectWidget.currentSpecification()
-        self.selectedSegs = self.segSelectWidget.value()
-
-        if not self.segList:
-            reply = QMessageBox.critical(self,
-                                         "Missing information", "Please specify at least one segment or feature")
-            return
-        QDialog.accept(self)
-
-    def createFeatureFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = FeatureBox('Features to define the tier',self.corpus.inventory)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def createSegmentFrame(self):
-        self.createWidget.deleteLater()
-
-        self.createWidget = InventoryBox('Segments to define the tier',self.corpus)
-        self.createFrame.layout().addWidget(self.createWidget)
-
-    def generateFrames(self,ind=0):
-        if self.createType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.createType.currentText() == 'Features':
-            self.createFeatureFrame()
-
     def generateClass(self):
-        featureList = self.featureSelectWidget.currentSpecification()
-        segList = self.segSelectWidget.value()
-        if (not featureList) and (not segList):
+        previewList = self.defineFrame.value()
+        if (previewList):
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one segment, or at least one feature value")
+                    "Missing information", "Please specify at least one segment.")
             return
-
-        previewList = list()
-        if featureList:
-            previewList.extend(self.corpus.features_to_segments(featureList))
-        if segList:
-            previewList.extend(segList)
-        previewList = list(set(previewList))
         notInPreviewList = [x.symbol for x in self.corpus.inventory if x.symbol not in previewList]
         return previewList, notInPreviewList
 
@@ -2082,3 +2776,4 @@ class CreateClassWidget(QDialog):
                 "{} preview".format(self.class_type),
                 "Segments included: {}\nSegments excluded: {}".format(', '.join(inClass),
                                                                       ', '.join(notInClass)))
+

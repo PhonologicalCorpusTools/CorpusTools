@@ -6,6 +6,8 @@ import os
 from corpustools.corpus.classes import Corpus, FeatureMatrix, Word, Attribute
 from corpustools.corpus.io.binary import save_binary, load_binary
 
+from .helper import parse_transcription, AnnotationType
+
 from corpustools.exceptions import DelimiterError, PCTError
 
 import time
@@ -20,14 +22,16 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     else:
         trans_delimiters = ['.',' ', ';', ',']
 
-    with open(path,'r') as f:
+    with open(path,'r', encoding='utf-8') as f:
         lines = []
         head = f.readline().strip()
-        for i in range(num_lines):
-            line = f.readline()
-            if not line:
-                break
-            lines.append(line)
+        for line in f.readlines():
+            lines.append(line.strip())
+        #for i in range(num_lines):
+        #    line = f.readline()
+        #    if not line:
+        #        break
+        #    lines.append(line)
 
     best = ''
     num = 1
@@ -50,20 +54,23 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
             vals[head[i]].append(l[i])
     atts = list()
     for h in head:
-        cat = Attribute.guess_type(vals[h], trans_delimiters)
-        a = Attribute(Attribute.sanitize_name(h), cat, h)
+        cat = Attribute.guess_type(vals[h][:num_lines], trans_delimiters)
+        att = Attribute(Attribute.sanitize_name(h), cat, h)
+        a = AnnotationType(h, None, None, token = False, attribute = att)
         if cat == 'tier':
             for t in trans_delimiters:
                 if t in vals[h][0]:
-                    a._delim = t
+                    a.trans_delimiter = t
                     break
+        a.add(vals[h], save = False)
         atts.append(a)
 
     return atts, best
 
-def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
+def load_corpus_csv(corpus_name, path, delimiter,
+                    annotation_types = None,
                     feature_system_path = None,
-                    attributes = None):
+                    stop_check = None, call_back = None):
     """
     Load a corpus from a column-delimited text file
 
@@ -97,6 +104,12 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
+
+    if annotation_types is None:
+        annotation_types, _ = inspect_csv(path, coldelim = delimiter)
+    for a in annotation_types:
+        a.reset()
+
     with open(path, encoding='utf-8') as f:
         headers = f.readline()
         headers = headers.split(delimiter)
@@ -105,17 +118,9 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
                                 'that the delimiter you typed in matches '
                                 'the one used in the file.'))
             raise(e)
-
-        headers = [h.strip() for h in headers]
-        headers[0] = headers[0].strip('\ufeff')
-        if 'feature_system' in headers[-1]:
-            headers = headers[0:len(headers)-1]
-        use_att = False
-        if attributes is not None:
-            use_att = True
-            headers = attributes
-            for a in attributes:
-                corpus.add_attribute(a)
+        headers = annotation_types
+        for a in headers:
+            corpus.add_attribute(a.attribute)
         trans_check = False
 
         for line in f.readlines():
@@ -125,28 +130,13 @@ def load_corpus_csv(corpus_name, path, delimiter, trans_delimiter='.',
             d = {}
             for k,v in zip(headers,line.split(delimiter)):
                 v = v.strip()
-                if use_att:
-                    if k.att_type == 'tier':
-                        if trans_delimiter:
-                            trans = v.split(trans_delimiter)
-                        else:
-                            trans = [x for x in v]
-                        if not trans_check and len(trans) > 1:
-                            trans_check = True
-                        d[k.name] = (k, trans)
-                    else:
-                        d[k.name] = (k, v)
+                if k.attribute.att_type == 'tier':
+                    trans = parse_transcription(v, k)
+                    if not trans_check and len(trans) > 1:
+                        trans_check = True
+                    d[k.attribute.name] = (k.attribute, trans)
                 else:
-                    if k == 'transcription' or 'tier' in k:
-                        if trans_delimiter:
-                            trans = v.split(trans_delimiter)
-                        else:
-                            trans = [x for x in v]
-                        if not trans_check and len(trans) > 1:
-                            trans_check = True
-                        d[k] = trans
-                    else:
-                        d[k] = v
+                    d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters which is a period
@@ -228,7 +218,9 @@ def make_safe(value, delimiter):
         return delimiter.join(map(lambda x: make_safe(x, delimiter),value))
     return str(value)
 
-def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.'):
+def export_corpus_csv(corpus, path,
+                    delimiter = ',', trans_delimiter = '.',
+                    variant_behavior = None):
     """
     Save a corpus as a column-delimited text file
 
@@ -246,13 +238,52 @@ def export_corpus_csv(corpus,path, delimiter = ',', trans_delimiter = '.'):
     trans_delimiter : str
         Character to mark boundaries in transcriptions.  Defaults to '.'
 
+    include_variants : bool
+        Whether to include a column of pronunciation variants.  Defaults to False.
+
     """
-    word = corpus.random_word()
-    header = sorted(word.descriptors)
+    header = []
+    for a in corpus.attributes:
+        header.append(str(a))
+
+    if variant_behavior == 'token':
+        for a in corpus.attributes:
+            if a.att_type == 'tier':
+                header.append('Token_' + str(a))
+        header.append('Token_Frequency')
+    elif variant_behavior == 'column':
+        header += ['Variants']
+
     with open(path, encoding='utf-8', mode='w') as f:
         print(delimiter.join(header), file=f)
-        for key in corpus.iter_sort():
-            print(delimiter.join(make_safe(getattr(key, value),trans_delimiter) for value in header), file=f)
+
+        for word in corpus.iter_sort():
+            word_outline = []
+            for a in corpus.attributes:
+                word_outline.append(make_safe(getattr(word, a.name),trans_delimiter))
+            if variant_behavior == 'token':
+                var = word.variants()
+                for v, freq in var.items():
+                    token_line = []
+                    for a in corpus.attributes:
+                        if a.att_type == 'tier':
+                            if a.name == 'transcription':
+                                token_line.append(make_safe(v, trans_delimiter))
+                            else:
+                                segs = a.range
+                                t = v.match_segments(segs)
+                                token_line.append(make_safe(v, trans_delimiter))
+                    token_line.append(make_safe(freq, trans_delimiter))
+                    print(delimiter.join(word_outline + token_line), file=f)
+                continue
+            elif variant_behavior == 'column':
+                var = word.variants()
+                d = ', '
+                if delimiter == ',':
+                    d = '; '
+                var = d.join(make_safe(x,trans_delimiter) for x in sorted(var.keys(), key = lambda y: var[y]))
+                word_outline.append(var)
+            print(delimiter.join(word_outline), file=f)
 
 def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
     """
