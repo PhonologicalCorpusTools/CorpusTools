@@ -265,6 +265,13 @@ class Segment(object):
                         return False
                 except KeyError:
                     return False
+        elif isinstance(specification, dict):
+            for f,v in specification.items():
+                try:
+                    if self.features[f] != v:
+                        return False
+                except KeyError:
+                    return False
         return True
 
     def __contains__(self,item):
@@ -553,62 +560,56 @@ class FeatureMatrix(object):
         #What are these?
         self.matrix['#'] = Segment('#')
         #self.matrix[''] = {'*':''}
-        self.consCols = dict()
-        self.consRows = dict()
-        self.vowCols = dict()
-        self.vowRows = dict()
-        self.generateGenericNames()
+        self.cons_columns = {}
+        self.cons_rows = {}
+        self.vow_columns = {}
+        self.vow_rows = {}
+        self.generate_generic_names()
 
-    def generateGenericNames(self):
+    def generate_generic_names(self):
         if 'consonantal' in self.features:
-            self.generateGenericHayesConsNames()
-            self.generateGenericHayesVowelNames()
+            self.generate_generic_hayes()
             self.vowel_feature = '-consonantal'
             self.voice_feature = '+voice'
         elif 'voc' in self.features:
-            self.generateGenericSPEConsNames()
-            self.generateGenericSPEVowelNames()
+            self.generate_generic_spe()
             self.vowel_feature = '+voc'
             self.voice_feature = '+voice'
         else:
             pass
 
-    def generateGenericSPEConsNames(self):
+    def generate_generic_spe(self):
         pass
 
-    def generateGenericSPEVowelNames(self):
-        pass
+    def generate_generic_hayes(self):
+        self.cons_columns['Labial'] = [0,{'consonantal':'+', 'labial': '+', 'coronal':'-'}, None]
+        self.cons_columns['Labiodental'] = [1,{'consonantal':'+', 'labiodental': '+',}, None]
+        self.cons_columns['Dental'] = [2,{'consonantal':'+', 'anterior': '+', 'coronal':'+', 'labial':'-'}, None]
+        self.cons_columns['Alveopalatal'] = [3,{'consonantal':'+', 'anterior': '-', 'coronal':'+', 'labial':'-'}, None]
+        self.cons_columns['Palatal'] = [4,{'consonantal':'+', 'dorsal': '+', 'coronal':'+', 'labial':'-'}, None]
+        self.cons_columns['Velar'] = [5,{'consonantal':'+', 'dorsal': '+', 'labial':'-'}, None]
+        self.cons_columns['Uvular'] = [6,{'consonantal':'+', 'dorsal': '+', 'back':'+', 'labial':'-'}, None]
+        self.cons_columns['Glottal'] = [7,{'consonantal':'+', 'dorsal': '-', 'coronal':'-', 'labial':'-', 'nasal': '-'}, None]
 
-    def generateGenericHayesConsNames(self):
-        self.consCols['Labial'] = [0,{'consonantal':'+', 'labial': '+', 'coronal':'-'}, None]
-        self.consCols['Labiodental'] = [1,{'consonantal':'+', 'labiodental': '+',}, None]
-        self.consCols['Dental'] = [2,{'consonantal':'+', 'anterior': '+', 'coronal':'+', 'labial':'-'}, None]
-        self.consCols['Alveopalatal'] = [3,{'consonantal':'+', 'anterior': '-', 'coronal':'+', 'labial':'-'}, None]
-        self.consCols['Palatal'] = [4,{'consonantal':'+', 'dorsal': '+', 'coronal':'+', 'labial':'-'}, None]
-        self.consCols['Velar'] = [5,{'consonantal':'+', 'dorsal': '+', 'labial':'-'}, None]
-        self.consCols['Uvular'] = [6,{'consonantal':'+', 'dorsal': '+', 'back':'+', 'labial':'-'}, None]
-        self.consCols['Glottal'] = [7,{'consonantal':'+', 'dorsal': '-', 'coronal':'-', 'labial':'-', 'nasal': '-'}, None]
+        self.cons_rows['Stop'] = [0,{'consonantal':'+', 'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None]
+        self.cons_rows['Nasal'] = [1,{'consonantal':'+', 'nasal': '+'}, None]
+        self.cons_rows['Trill'] = [2,{'consonantal':'+', 'trill': '+'}, None]
+        self.cons_rows['Tap'] = [3,{'consonantal':'+', 'tap': '+'}, None]
+        self.cons_rows['Fricative'] = [4,{'consonantal':'+', 'sonorant': '-','continuant':'+'}, None]
+        self.cons_rows['Affricate'] = [5,{'consonantal':'+', 'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None]
+        self.cons_rows['Approximant'] = [6,{'consonantal':'+', 'sonorant': '+', 'lateral':'-'}, None]
+        self.cons_rows['Lateral approximant'] = [7,{'consonantal':'+', 'sonorant': '+', 'lateral':'+'}, None]
 
-        self.consRows['Stop'] = [0,{'consonantal':'+', 'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None]
-        self.consRows['Nasal'] = [1,{'consonantal':'+', 'nasal': '+'}, None]
-        self.consRows['Trill'] = [2,{'consonantal':'+', 'trill': '+'}, None]
-        self.consRows['Tap'] = [3,{'consonantal':'+', 'tap': '+'}, None]
-        self.consRows['Fricative'] = [4,{'consonantal':'+', 'sonorant': '-','continuant':'+'}, None]
-        self.consRows['Affricate'] = [5,{'consonantal':'+', 'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None]
-        self.consRows['Approximant'] = [6,{'consonantal':'+', 'sonorant': '+', 'lateral':'-'}, None]
-        self.consRows['Lateral approximant'] = [7,{'consonantal':'+', 'sonorant': '+', 'lateral':'+'}, None]
+        self.vow_columns['Front'] = [0, {'consonantal': '-', 'front': '+', 'back':'-', 'tense':'+'}, None]
+        self.vow_columns['Near-front'] = [1, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'}, None]
+        self.vow_columns['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
+        self.vow_columns['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense':'-'}, None]
+        self.vow_columns['Back'] = [4, {'consonantal': '-', 'front':'-', 'back':'+', 'tense':'+'}, None]
 
-    def generateGenericHayesVowelNames(self):
-        self.vowCols['Front'] = [0, {'consonantal': '-', 'front': '+', 'back':'-', 'tense':'+'}, None]
-        self.vowCols['Near-front'] = [1, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'}, None]
-        self.vowCols['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
-        self.vowCols['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense':'-'}, None]
-        self.vowCols['Back'] = [4, {'consonantal': '-', 'front':'-', 'back':'+', 'tense':'+'}, None]
-
-        self.vowRows['High'] = [0, {'consonantal':'-', 'high':'+', 'low':'-', 'tense':'+'}, None]
-        self.vowRows['Mid-high'] = [1,{'consonantal':'-', 'high':'-', 'low':'-', 'tense':'+'}, None]
-        self.vowRows['Mid-low'] = [2, {'consonantal':'-', 'high':'-', 'low':'-', 'tense':'-'}, None]
-        self.vowRows['Low'] = [3, {'consonantal':'-', 'high':'-', 'low':'+', 'tense':'+'}, None]
+        self.vow_rows['High'] = [0, {'consonantal':'-', 'high':'+', 'low':'-', 'tense':'+'}, None]
+        self.vow_rows['Mid-high'] = [1,{'consonantal':'-', 'high':'-', 'low':'-', 'tense':'+'}, None]
+        self.vow_rows['Mid-low'] = [2, {'consonantal':'-', 'high':'-', 'low':'-', 'tense':'-'}, None]
+        self.vow_rows['Low'] = [3, {'consonantal':'-', 'high':'-', 'low':'+', 'tense':'+'}, None]
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
@@ -630,12 +631,15 @@ class FeatureMatrix(object):
         #Backwards compatability
         if '_default_value' not in state:
             self._default_value = 'n'
-        if 'consCols' not in state:
-            self.consCols = dict()
-            self.consRows = dict()
-            self.vowCols = dict()
-            self.vowRows = dict()
-            self.generateGenericNames()
+        if 'cons_columns' not in state:
+            self.cons_columns = {}
+            self.cons_rows = {}
+            self.vow_columns = {}
+            self.vow_rows = {}
+            self.vowel_feature = None
+            self.voice_feature = None
+            self.rounded_feature = None
+            self.generate_generic_names()
 
     def __iter__(self):
         for k in sorted(self.matrix.keys()):
@@ -1635,8 +1639,18 @@ class Inventory(object):
             self._data = data
         self.features = []
         self.possible_values = set()
-        self.classes = dict()
+        self.classes = {}
         self.stresses = collections.defaultdict(set)
+        self.cons_columns = {}
+        self.cons_rows = {}
+        self.vow_columns = {}
+        self.vow_rows = {}
+
+    def hasClass(self, class_name):
+        if class_name in self.classes.keys():
+            return True
+        else:
+            return False
 
     def __setstate__(self, state):
         if 'stresses' not in state:
@@ -1713,16 +1727,82 @@ class Inventory(object):
         if specifier is None:
             for k in self._data.keys():
                 self._data[k].specify({})
-            self.features = list()
+            self.features = []
             self.possible_values = set()
+            self.cons_columns = {}
+            self.cons_rows = {}
+            self.vow_columns = {}
+            self.vow_rows = {}
         else:
             for k in self._data.keys():
                 try:
                     self._data[k].specify(specifier[k].features)
                 except KeyError:
-                    pass
+                    self._data[k].specify({})
             self.features = specifier.features
             self.possible_values = specifier.possible_values
+
+            self.voice_feature = specifier.voice_feature
+            self.vowel_feature = specifier.vowel_feature
+            self.rounded_feature = specifier.rounded_feature
+
+            self.cons_columns = {}
+            for k,v in specifier.cons_columns.items():
+                self.cons_columns[k] = [v[0], self.features_to_segments(v[1])]
+
+            self.cons_rows = {}
+            for k,v in specifier.cons_rows.items():
+                self.cons_rows[k] = [v[0], self.features_to_segments(v[1])]
+
+            self.vow_columns = {}
+            for k,v in specifier.vow_columns.items():
+                self.vow_columns[k] = [v[0], self.features_to_segments(v[1])]
+
+            self.vow_rows = {}
+            for k,v in specifier.vow_rows.items():
+                self.vow_rows[k] = [v[0], self.features_to_segments(v[1])]
+
+    def is_voiced(self, seg):
+        return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
+
+    def is_vowel(self, seg):
+        return seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
+
+    def is_rounded(self, seg):
+        return seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
+
+    def categorize(self,seg):
+        if self.is_vowel(seg):
+            category = ['Vowel']
+            iterRows = self.vow_rows
+            iterCols = self.cons_rows
+        else:
+            category = ['Consonant']
+            iterRows = self.cons_rows
+            iterCols = self.cons_columns
+
+        for row,col in itertools.product(iterRows, iterCols):
+            row_index, row_segs = iterRows[row]
+            col_index, col_segs = iterCols[col]
+
+            if (row_segs is not None and seg in row_segs) and (col_segs is not None and seg in col_segs):
+                category.extend([col, row])
+                break
+        else:
+            raise KeyError(seg.symbol)
+        if self.is_vowel(seg):
+            if self.is_rounded(seg):
+                category.append('Rounded')
+            else:
+                category.append('Unrounded')
+
+        else:
+            if self.is_voiced(seg):
+                category.append('Voiced')
+            else:
+                category.append('Voiceless')
+        return category
+
 
 class Corpus(object):
     """
@@ -2463,9 +2543,4 @@ class Corpus(object):
         return iter(self.wordlist.values())
 
 
-    def hasClass(self, class_name):
-        if class_name in self.classes.keys():
-            return True
-        else:
-            return False
 

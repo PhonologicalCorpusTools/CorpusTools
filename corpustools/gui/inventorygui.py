@@ -23,9 +23,9 @@ class InventoryManager(QDialog):
         topmessage = ('You can edit your inventory chart from this window. Double-click on a row or column to edit the '
                       'class of segments which appear in that row or column. You can also single click on a heading to '
                       'highlight the row or column, then drag-and-drop to reorganize the table.')
-        layout.addWidget(QLabel().setText(topmessage))
+        layout.addWidget(QLabel(topmessage))
 
-        self.segSelectWidget = InventoryBox(self, self.corpus, editable=True)
+        self.segSelectWidget = InventoryBox(self, self.corpus.inventory, editable=True)
         segLayout = QVBoxLayout()
         segLayout.addWidget(self.segSelectWidget)
         layout.addLayout(segLayout)
