@@ -42,7 +42,7 @@ To determine whether two words have an alternation of the targeted phonemes,
 one word must contain phoneme 1, the other must contain phoneme 2, and some
 threshold of “relatedness” must be met. In an ideal world, this would be
 determined by a combination of orthographic, phonological, and semantic
-similarity; see discussion in Hall et al. (in submission). Within PCT,
+similarity; see discussion in XXX Hall et al. (in submission) XXX. Within PCT,
 however, a much more basic relatedness criterion is used: string similarity.
 This is indeed what [Khorsi2012]_ proposes as a measure of morphological
 relatedness, and though we caution that this is not in particularly close
@@ -77,33 +77,17 @@ Implementing the frequency of alternation function in the GUI
 To start the analysis, click on “Analysis” / “Calculate frequency of
 alternation...” in the main menu, and then follow these steps:
 
-1. **Segments**: The first step is to choose which two sounds you wish to
-   check alternations for. Click on “Add pair of sounds”; PCT will
-   automatically populate a menu of all sounds in the corpus, so all
-   that needs to be done is the selection of the targeted two sounds.
-   Multiple pairs of sounds can be added by selecting “Add and create
-   another” instead “Add” in the selection window.
+1. **Segments**: First, select which pairs of sounds you want the functional
+   load to be calculated for. Do this by clicking on “Add pair of sounds”;
+   the “Select segment pair” dialogue box will open. The order that the sounds are selected in is irrelevant; picking [i] first and [u] second will yield the same
+   results as picking [u] first and [i] second. Once sounds
+   have been selected, click “Add.” Pairs will appear in the “Functional
+   load” dialogue box. See more about interacting with the sound selection box (including, e.g., the use of features in selecting sounds and the options for selecting multiple pairs) in :ref:`sound_selection`.
+
 2. **String similarity algorithm**: Next, choose which distance / similarity
    metric to use. Refer to :ref:`method_string_similarity` for more details.
-3. **Tier**: The tier from which string similarity is to be calculated can
-   be selected. Generally, one is likely to care most about full
-   transcriptions, but other tiers (e.g., a vowel tier) can also be
-   selected; in this case, all information removed from the tier is
-   ignored.
-4. **Frequency Type**: Next, select which frequency type to use for your
-   similarity metric, either type or token frequency. This parameter is
-   only available if using the Khorsi similarity metric, which relies on
-   counting the frequency of occurrence of the sounds in the currently
-   selected corpus; neither edit distance metric involves frequency.
-5. **Minimal pairs**: Then, select whether you wish to include alternations
-   that occur in minimal pairs. If, for example, the goal is to populate
-   a list containing all instances where two segments potentially
-   alternate, select “include minimal pairs.” Alternatively, if one
-   wishes to discard known alternations that are contrastive, select
-   “ignore minimal pairs.” (E.g., “bat” and “pat” look like a potential
-   “alternation” of [b] and [p] to PCT, because they are extremely similar
-   except for the sounds in question, which are also phonologically aligned.)
-6. **Threshold values**: If the Khorsi algorithm is selected, enter the minimum
+
+3. **Threshold values**: If the Khorsi algorithm is selected, enter the minimum
    similarity value required for two words to count as being related.
    Currently the default is -15; this is an arbitrary (and relatively
    low / non-conservative) value. We recommend reading [Khorsi2012]_ and
@@ -114,9 +98,34 @@ alternation...” in the main menu, and then follow these steps:
    as being related. Again, there is a default (6) that is relatively
    high and non-conservative; an understanding of edit distances is crucial
    for applying this threshold in a meaningful way.
-7. **Phonological alignment**: Choose whether you want to require the phones
+
+4. **Tier**: The tier from which string similarity is to be calculated can
+   be selected. Generally, one is likely to care most about full
+   transcriptions, but other tiers (e.g., a vowel tier) can also be
+   selected; in this case, all information removed from the tier is
+   ignored.
+
+5. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms. 
+
+6. **Frequency Type**: Next, select which frequency type to use for your
+   similarity metric, either type or token frequency. This parameter is
+   only available if using the Khorsi similarity metric, which relies on
+   counting the frequency of occurrence of the sounds in the currently
+   selected corpus; neither edit distance metric involves frequency.
+
+7. **Minimal pairs**: Then, select whether you wish to include alternations
+   that occur in minimal pairs. If, for example, the goal is to populate
+   a list containing all instances where two segments potentially
+   alternate, select “include minimal pairs.” Alternatively, if one
+   wishes to discard known alternations that are contrastive, select
+   “ignore minimal pairs.” (E.g., “bat” and “pat” look like a potential
+   “alternation” of [b] and [p] to PCT, because they are extremely similar
+   except for the sounds in question, which are also phonologically aligned.)
+ 
+8. **Phonological alignment**: Choose whether you want to require the phones
    to be phonologically aligned or not, as per the above explanation.
-8. **Corpus size**: Calculating the full set of possible alternations for a
+
+9. **Corpus size**: Calculating the full set of possible alternations for a
    pair of sounds may be extremely time-consuming, as all words in the
    corpus must be compared pairwise. To avoid this problem, a subset of
    the corpus can be selected (in which case, we recommend running the
@@ -125,7 +134,8 @@ alternation...” in the main menu, and then follow these steps:
    like PCT to extract from the corpus as a subset (e.g., 5000) or (2) a
    decimal, which will result in that percentage of the corpus being used
    as a subset (e.g., 0.05 for 5% of the corpus).
-9. **Output alternations**: You can choose whether you want PCT to output a
+
+10. **Output alternations**: You can choose whether you want PCT to output a
    list of all the words it considers to be “alternations.” This is useful
    for determining how accurate the calculation is. If you do want the
    list to be created, enter a file path or select it using the system
@@ -135,11 +145,12 @@ alternation...” in the main menu, and then follow these steps:
 An example of selecting the parameters for frequency of alternation,
 using the sample corpus:
 
-.. image:: static/freqaltdialog.png
+XXX
+.. image:: _static/freqaltdialog.png
    :width: 90%
    :align: center
 
-10. **Results**: Once all options have been selected, click “Calculate
+11. **Results**: Once all options have been selected, click “Calculate
     frequency of alternation.” If this is not the first calculation,
     and you want to add the results to a pre-existing results table,
     select the choice that says “add to current results table.” Otherwise,
@@ -148,12 +159,13 @@ using the sample corpus:
     of words with either sound, and total number of words with an
     alternation, the frequency of alternation and information about
     the specified similarity / distance metric and selected threshold
-    values. To save these results to a .txt file, click on “Save to file”
+    values, and the selected option with respect to pronunciation variants. To save these results to a .txt file, click on “Save to file”
     at the bottom of the table.
 
 An example of the results table:
 
-.. image:: static/freqaltresults.png
+XXX
+.. image:: _static/freqaltresults.png
    :width: 90%
    :align: center
 
@@ -166,6 +178,7 @@ table can be closed and you will be returned to your corpus view.
    in PCT is an extremely inaccurate way of calculating frequency of
    alternation, and should be used only with a full understanding of
    its severe limitations.
+
 
 .. _classes_and_functions:
 
