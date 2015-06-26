@@ -450,8 +450,9 @@ class EditFeatureMatrixDialog(QDialog):
         self.changeDisplay()
 
     def accept(self):
-        path = system_name_to_path(self.settings['storage'],self.specifier.name)
-        save_binary(self.specifier, path)
+        if self.specifier is not None:
+            path = system_name_to_path(self.settings['storage'],self.specifier.name)
+            save_binary(self.specifier, path)
         QDialog.accept(self)
 
     def help(self):
@@ -460,6 +461,8 @@ class EditFeatureMatrixDialog(QDialog):
         self.helpDialog.exec_()
 
     def editCategories(self):
+        if self.specifier is None:
+            return
         dialog = EditCategoriesDialog(self, self.specifier)
         if dialog.exec_():
             self.specifier.vowel_feature = dialog.vowel()
@@ -478,6 +481,8 @@ class EditFeatureMatrixDialog(QDialog):
 
 
     def changeDisplay(self):
+        if self.specifier is None:
+            return
         mode = self.displayWidget.currentText()
         self.table.deleteLater()
         if mode == 'Tree':
@@ -499,18 +504,18 @@ class EditFeatureMatrixDialog(QDialog):
                 self.specifier = load_binary(path)
             except OSError:
                 return
-        if self.displayWidget.currentText() == 'Tree':
-            self.table.setModel(FeatureSystemItemModel(self.specifier))
-        else:
-            self.table.setModel(FeatureSystemTableModel(self.specifier))
-            self.table.resizeColumnsToContents()
+        self.changeDisplay()
 
     def addSegment(self):
+        if self.specifier is None:
+            return
         dialog = EditSegmentDialog(self,self.table.model().specifier)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
 
     def editSegment(self):
+        if self.specifier is None:
+            return
         if self.displayWidget.currentText() == 'Tree':
             index = self.table.selectionModel().currentIndex()
             seg = self.table.model().data(index,Qt.DisplayRole)
@@ -530,17 +535,25 @@ class EditFeatureMatrixDialog(QDialog):
             self.table.model().addSegment(dialog.seg,dialog.featspec)
 
     def addFeature(self):
+        if self.specifier is None:
+            return
         dialog = AddFeatureDialog(self,self.table.model().specifier)
         if dialog.exec_():
             self.table.model().addFeature(dialog.featureName, dialog.defaultValue)
 
     def hide(self):
+        if self.specifier is None:
+            return
         self.table.model().filter(self.corpus.inventory)
 
     def showAll(self):
+        if self.specifier is None:
+            return
         self.table.model().showAll()
 
     def checkCoverage(self):
+        if self.specifier is None:
+            return
         corpus_inventory = self.corpus.inventory
         try:
             feature_inventory = self.specifier.segments
