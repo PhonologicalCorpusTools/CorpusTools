@@ -14,7 +14,8 @@ from .views import TableWidget, SubTreeView
 
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
-from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget, InventoryBox, CreateClassWidget
+from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
+                    InventoryBox, CreateClassWidget, FeatureEdit, FeatureCompleter)
 
 from .windows import DownloadWorker
 from .helpgui import HelpDialog
@@ -411,6 +412,11 @@ class EditFeatureMatrixDialog(QDialog):
 
         box.addRow('Display mode:',self.displayWidget)
 
+        self.editCategoriesButton = QPushButton('Edit inventory categories')
+        self.editCategoriesButton.clicked.connect(self.editCategories)
+
+        box.addRow(self.editCategoriesButton)
+
         viewFrame.setLayout(box)
 
         optionLayout.addWidget(viewFrame)
@@ -443,13 +449,40 @@ class EditFeatureMatrixDialog(QDialog):
 
         self.changeDisplay()
 
+    def accept(self):
+        if self.specifier is not None:
+            path = system_name_to_path(self.settings['storage'],self.specifier.name)
+            save_binary(self.specifier, path)
+        QDialog.accept(self)
+
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
                                     section = 'applying-editing-feature-systems')
-
         self.helpDialog.exec_()
 
+    def editCategories(self):
+        if self.specifier is None:
+            return
+        dialog = EditCategoriesDialog(self, self.specifier)
+        if dialog.exec_():
+            self.specifier.vowel_feature = dialog.vowel()
+            self.specifier.voice_feature = dialog.voiced()
+            self.specifier.diph_feature = dialog.diphthong()
+            self.specifier.rounded_feature = dialog.rounded()
+            p, m, h, b = dialog.value()
+            for k,v in p.items():
+                self.specifier.places[k] = v
+            for k,v in m.items():
+                self.specifier.manners[k] = v
+            for k,v in h.items():
+                self.specifier.height[k] = v
+            for k,v in b.items():
+                self.specifier.backness[k] = v
+
+
     def changeDisplay(self):
+        if self.specifier is None:
+            return
         mode = self.displayWidget.currentText()
         self.table.deleteLater()
         if mode == 'Tree':
@@ -471,18 +504,18 @@ class EditFeatureMatrixDialog(QDialog):
                 self.specifier = load_binary(path)
             except OSError:
                 return
-        if self.displayWidget.currentText() == 'Tree':
-            self.table.setModel(FeatureSystemItemModel(self.specifier))
-        else:
-            self.table.setModel(FeatureSystemTableModel(self.specifier))
-            self.table.resizeColumnsToContents()
+        self.changeDisplay()
 
     def addSegment(self):
+        if self.specifier is None:
+            return
         dialog = EditSegmentDialog(self,self.table.model().specifier)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
 
     def editSegment(self):
+        if self.specifier is None:
+            return
         if self.displayWidget.currentText() == 'Tree':
             index = self.table.selectionModel().currentIndex()
             seg = self.table.model().data(index,Qt.DisplayRole)
@@ -496,23 +529,31 @@ class EditFeatureMatrixDialog(QDialog):
                 return
             selected = selected[0]
             seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
-        print(seg)
+
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
 
     def addFeature(self):
+        if self.specifier is None:
+            return
         dialog = AddFeatureDialog(self,self.table.model().specifier)
         if dialog.exec_():
             self.table.model().addFeature(dialog.featureName, dialog.defaultValue)
 
     def hide(self):
+        if self.specifier is None:
+            return
         self.table.model().filter(self.corpus.inventory)
 
     def showAll(self):
+        if self.specifier is None:
+            return
         self.table.model().showAll()
 
     def checkCoverage(self):
+        if self.specifier is None:
+            return
         corpus_inventory = self.corpus.inventory
         try:
             feature_inventory = self.specifier.segments
@@ -533,6 +574,165 @@ class EditFeatureMatrixDialog(QDialog):
             return
         reply = QMessageBox.information(self,
                     "Missing segments", 'All segments are specified for features!')
+
+class CategoryWidget(QWidget):
+    def __init__(self, category, features, specifier, parent = None):
+        QWidget.__init__(self, parent)
+
+        self.specifier = specifier
+        self.category = category
+        layout = QHBoxLayout()
+
+        self.searchWidget = FeatureEdit(self.specifier)
+        self.completer = FeatureCompleter(self.specifier)
+        self.searchWidget.setCompleter(self.completer)
+        if isinstance(features, dict):
+            self.searchWidget.setText(', '.join(v+k for k,v in features.items()))
+        elif isinstance(features, list):
+            self.searchWidget.setText(', '.join(features))
+        elif isinstance(features, str):
+            self.searchWidget.setText(features)
+
+        layout.addWidget(self.searchWidget)
+
+        self.previewWidget = QLabel('Mouseover for included segments')
+        self.previewWidget.setFrameShape(QFrame.Box)
+
+        self.updateSegments()
+        self.searchWidget.featureEntered.connect(self.updateSegments)
+
+        layout.addWidget(self.previewWidget)
+        self.setLayout(layout)
+
+    def updateSegments(self, features = None):
+        if features is None:
+            features = self.searchWidget.features()
+        if len(features) == 0:
+            self.previewWidget.setToolTip('No included segments')
+        else:
+            segments = self.specifier.features_to_segments(features)
+
+            self.previewWidget.setToolTip(', '.join(segments))
+
+    def features(self):
+        return self.searchWidget.features()
+
+    def value(self):
+        return self.category, self.searchWidget.features()
+
+class EditCategoriesDialog(QDialog):
+    def __init__(self, parent, specifier):
+        QDialog.__init__(self, parent)
+        self.specifier = specifier
+
+        layout = QVBoxLayout()
+        self.tabWidget = QTabWidget()
+
+        midlayout = QHBoxLayout()
+
+        catlayout = QFormLayout()
+
+        self.vowelWidget = CategoryWidget('Vowel', self.specifier.vowel_feature, specifier)
+        catlayout.addRow('Feature specifying vowels',self.vowelWidget)
+
+        self.voiceWidget = CategoryWidget('Voiced', self.specifier.voice_feature, specifier)
+        catlayout.addRow('Feature specifying voiced obstruents',self.voiceWidget)
+
+        self.diphWidget = CategoryWidget('Diphthong', self.specifier.diph_feature, specifier)
+        catlayout.addRow('Feature specifying diphthongs',self.diphWidget)
+
+        self.roundedWidget = CategoryWidget('Rounded', self.specifier.rounded_feature, specifier)
+        catlayout.addRow('Feature specifying rounded vowels',self.roundedWidget)
+
+        catFrame = QWidget()
+        catFrame.setLayout(catlayout)
+        self.tabWidget.addTab(catFrame,'Major distinctions')
+
+
+        placesFrame = QWidget()
+        placeslayout = QFormLayout()
+
+        self.places = []
+        self.manners = []
+        self.height = []
+        self.backness = []
+
+        for k,v in self.specifier.places.items():
+            w = CategoryWidget(k, v, specifier)
+            placeslayout.addRow(k, w)
+            self.places.append(w)
+
+        placesFrame.setLayout(placeslayout)
+        self.tabWidget.addTab(placesFrame,'Places of articulation')
+
+        mannersFrame = QWidget()
+        mannerslayout = QFormLayout()
+        for k,v in self.specifier.manners.items():
+            w = CategoryWidget(k, v, specifier)
+            mannerslayout.addRow(k, w)
+            self.manners.append(w)
+
+        mannersFrame.setLayout(mannerslayout)
+        self.tabWidget.addTab(mannersFrame,'Manners of articulation')
+
+        heightFrame = QWidget()
+        heightlayout = QFormLayout()
+        for k,v in self.specifier.height.items():
+            w = CategoryWidget(k, v, specifier)
+            heightlayout.addRow(k, w)
+            self.height.append(w)
+
+        heightFrame.setLayout(heightlayout)
+        self.tabWidget.addTab(heightFrame,'Vowel height')
+
+        backnessFrame = QWidget()
+        backnesslayout = QFormLayout()
+        for k,v in self.specifier.backness.items():
+            w = CategoryWidget(k, v, specifier)
+            backnesslayout.addRow(k, w)
+            self.backness.append(w)
+
+        backnessFrame.setLayout(backnesslayout)
+        self.tabWidget.addTab(backnessFrame,'Vowel backness')
+
+        midlayout.addWidget(self.tabWidget)
+
+        layout.addLayout(midlayout)
+
+        self.acceptButton = QPushButton('Ok')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.cancelButton)
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+        self.setWindowTitle('Edit categories')
+        self.setLayout(layout)
+
+    def vowel(self):
+        return self.vowelWidget.features()
+
+    def voiced(self):
+        return self.voiceWidget.features()
+
+    def rounded(self):
+        return self.roundedWidget.features()
+
+    def diphthong(self):
+        return self.diphWidget.features()
+
+    def value(self):
+        p = {w.category: w.features() for w in self.places}
+        m = {w.category: w.features() for w in self.manners}
+        h = {w.category: w.features() for w in self.height}
+        b = {w.category: w.features() for w in self.backness}
+        return p, m, h, b
+
 
 class EditSegmentDialog(QDialog):
     def __init__(self, parent, specifier, segment = None):
@@ -851,3 +1051,4 @@ class SystemFromCsvDialog(QDialog):
         save_binary(system,system_name_to_path(self.settings['storage'],name))
 
         QDialog.accept(self)
+

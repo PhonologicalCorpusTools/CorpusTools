@@ -594,7 +594,7 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         if specifier is not None:
             self.segments = [s for s in self.specifier]
         else:
-            self.segments = list()
+            self.segments = []
         self.generateData()
 
     def rowCount(self, parent):
@@ -657,23 +657,23 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         self._rootNode = TreeItem("Segment")
         consItem = TreeItem('Consonants', self._rootNode)
         placeItem = TreeItem('Place',consItem)
-        placeValues = list()
+        placeValues = []
         mannerItem = TreeItem('Manner',consItem)
-        mannerValues = list()
+        mannerValues = []
         voiceItem = TreeItem('Voicing',consItem)
-        voiceValues = list()
+        voiceValues = []
 
         vowItem = TreeItem('Vowels', self._rootNode)
         heightItem = TreeItem('Height',vowItem)
-        heightValues = list()
+        heightValues = []
         backItem = TreeItem('Backness',vowItem)
-        backValues = list()
+        backValues = []
         roundItem = TreeItem('Rounding',vowItem)
-        roundValues = list()
+        roundValues = []
         diphItem = TreeItem('Diphthongs',vowItem)
 
         for s in self.segments:
-            cat = s.category
+            cat = self.specifier.categorize(s)
             if cat is None:
                 continue
             if cat[0] == 'Consonant':
