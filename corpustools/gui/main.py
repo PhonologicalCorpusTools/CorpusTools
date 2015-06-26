@@ -909,7 +909,7 @@ class MainWindow(QMainWindow):
 
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
-        self.featureMenu.addAction(self.manageFeatureClassesAct)
+        #self.featureMenu.addAction(self.manageFeatureClassesAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.phonoProbAct)

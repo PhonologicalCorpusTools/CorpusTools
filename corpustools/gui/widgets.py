@@ -1108,6 +1108,12 @@ class FeatureEdit(QLineEdit):
         text = self.delimPattern.split(self.text())
         return d, text
 
+    def finalize(self):
+        if self.text() != '':
+            self.featuresFinalized.emit(self.features())
+            if self.clearOnEnter:
+                self.setText('')
+                self.featureEntered.emit([])
 
     def insertCompletion(self, string):
         d, text = self.parseText()
@@ -1128,12 +1134,8 @@ class FeatureEdit(QLineEdit):
                     return
         else:
             if e.key() in (Qt.Key_Enter, Qt.Key_Return):
-                if self.text() != '':
-                    self.featuresFinalized.emit(self.features())
-                    if self.clearOnEnter:
-                        self.setText('')
-                        self.featureEntered.emit([])
-                    return
+                self.finalize()
+                return
         isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
         if (self.completer is None or not isShortcut):
             super().keyPressEvent(e)
@@ -1193,30 +1195,24 @@ class SegmentSelectionWidget(QWidget):
             formframe.setLayout(formlay)
             headlayout.addWidget(formframe)
 
+            self.commitButton = QPushButton('Select highlighted')
+
+            headlayout.addWidget(self.commitButton)
+
             self.clearAllButton = QPushButton('Clear selections')
 
             headlayout.addWidget(self.clearAllButton)
             headframe = QFrame()
 
             headframe.setLayout(headlayout)
+            self.commitButton.clicked.connect(self.searchWidget.finalize)
             self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
 
         else:
             headframe = QLabel('No feature matrix associated with this corpus.')
 
         layout.addWidget(headframe)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.inventoryFrame)
-        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setMinimumHeight(140)
-        policy = scroll.sizePolicy()
-        policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        #self.columnFrame.
-        layout.addWidget(scroll)
-
+        layout.addWidget(self.inventoryFrame)
         self.setLayout(layout)
 
         self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
@@ -1464,7 +1460,22 @@ class InventoryBox(QWidget):
                     col = 0
                     row += 1
 
-        self.setLayout(box)
+        mainWidget = QWidget()
+        mainWidget.setLayout(box)
+
+        layout = QVBoxLayout()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(mainWidget)
+        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        #self.columnFrame.
+        layout.addWidget(scroll)
+
+        self.setLayout(layout)
 
     def highlightSegments(self, features):
         segs = self.inventory.features_to_segments(features)
@@ -1555,81 +1566,6 @@ class TranscriptionWidget(QGroupBox):
             self.segments.hide()
             self.showInv.setText('Show inventory')
         self.updateGeometry()
-
-class FeatureBox(QWidget):
-    def __init__(self, title,inventory,parent=None):
-        QWidget.__init__(self,parent)
-
-        self.inventory = inventory
-        self.features = self.inventory.features
-        self.values = self.inventory.possible_values
-        layout = QHBoxLayout()
-
-        #layout.setSizeConstraint(QLayout.SetFixedSize)
-
-        self.featureList = QListWidget()
-
-        for f in self.features:
-            self.featureList.addItem(f)
-        self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
-        layout.addWidget(self.featureList)
-
-        buttonLayout = QVBoxLayout()
-        buttonLayout.setSpacing(0)
-        self.buttons = list()
-        for v in self.values:
-            b = QPushButton('Add [{}feature]'.format(v))
-            b.value = v
-            b.clicked.connect(self.addFeature)
-            buttonLayout.addWidget(b, alignment = Qt.AlignCenter)
-            self.buttons.append(b)
-
-        self.clearOneButton = QPushButton('Remove selected')
-        self.clearOneButton.clicked.connect(self.clearOne)
-        buttonLayout.addWidget(self.clearOneButton, alignment = Qt.AlignCenter)
-
-        self.clearButton = QPushButton('Remove all')
-        self.clearButton.clicked.connect(self.clearAll)
-        buttonLayout.addWidget(self.clearButton, alignment = Qt.AlignCenter)
-
-        buttonFrame = QFrame()
-        buttonFrame.setLayout(buttonLayout)
-        layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
-
-        self.envList = QListWidget()
-        self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+25)
-        self.envList.setSelectionMode(QAbstractItemView.ExtendedSelection)
-
-        layout.addWidget(self.envList)
-
-        self.setLayout(layout)
-
-    def addFeature(self):
-        curFeature = self.featureList.currentItem()
-        if curFeature:
-            val = self.sender().value
-            feat = curFeature.text()
-            key = val+feat
-            if key not in self.currentSpecification():
-                self.envList.addItem(key)
-
-    def clearOne(self):
-        items = self.envList.selectedItems()
-        for i in items:
-            item = self.envList.takeItem(self.envList.row(i))
-            #self.sourceWidget.addItem(item)
-
-    def clearAll(self):
-        self.envList.clear()
-
-    def currentSpecification(self):
-        return [self.envList.item(i).text() for i in range(self.envList.count())]
-
-    def value(self):
-        val = self.currentSpecification()
-        if not val:
-            return ''
-        return '[{}]'.format(','.join(val))
 
 class SegmentPairDialog(QDialog):
     def __init__(self, inventory,parent=None):
@@ -1763,55 +1699,6 @@ class SegmentPairSelectWidget(QGroupBox):
     def value(self):
         return self.table.model().rows
 
-class SegFeatSelect(QGroupBox):
-    def __init__(self,corpus, title, parent = None, exclusive = False):
-        QGroupBox.__init__(self,title,parent)
-        self.segExclusive = exclusive
-        self.corpus = corpus
-        self.inventory = self.corpus.inventory
-        self.features = list()
-        for i in self.inventory:
-            if len(i.features.keys()) > 0:
-                self.features = [x for x in i.features.keys()]
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-
-        self.typeSelect = QComboBox()
-        self.typeSelect.addItem('Segments')
-        if len(self.features) > 0:
-            self.typeSelect.addItem('Features')
-        else:
-            layout.addWidget(QLabel('Features are not available for selection without a feature system.'))
-        self.typeSelect.currentIndexChanged.connect(self.generateFrame)
-
-        layout.addWidget(QLabel('Basis segment selection:'))
-        layout.addWidget(self.typeSelect, alignment = Qt.AlignLeft)
-
-        self.sel = InventoryBox('',self.inventory)
-        self.sel.setExclusive(self.segExclusive)
-
-        layout.addWidget(self.sel)
-
-        self.setLayout(layout)
-
-    def generateFrame(self):
-        self.sel.deleteLater()
-        if self.typeSelect.currentText() == 'Segments':
-            self.sel = InventoryBox('',self.inventory)
-            self.sel.setExclusive(self.segExclusive)
-        elif self.typeSelect.currentText() == 'Features':
-            self.sel = FeatureBox('',self.inventory)
-        self.layout().addWidget(self.sel)
-
-    def value(self):
-        return self.sel.value()
-
-    def segments(self):
-        if self.typeSelect.currentText() == 'Segments':
-            return self.sel.value()
-        elif self.typeSelect.currentText() == 'Features':
-            return self.corpus.features_to_segments(self.sel.value()[1:-1])
-
 class EnvironmentDialog(QDialog):
     rowToAdd = Signal(str)
     def __init__(self, inventory,parent=None):
@@ -1820,8 +1707,6 @@ class EnvironmentDialog(QDialog):
         self.inventory = inventory
 
         layout = QVBoxLayout()
-
-        layout.setSizeConstraint(QLayout.SetFixedSize)
 
         layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
@@ -1837,43 +1722,9 @@ class EnvironmentDialog(QDialog):
 
         rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        if parent.name == 'environment' or parent.name == 'class':
-            self.lhsEnvType = QComboBox()
-            self.rhsEnvType = QComboBox()
-            self.lhsEnvType.addItem('Segments')
-            self.rhsEnvType.addItem('Segments')
-            if len(self.inventory.features) > 0:
-                self.lhsEnvType.addItem('Features')
-                self.rhsEnvType.addItem('Features')
-            else:
-                layout.addWidget(QLabel('Features for {} selection are not available without a feature system.'.format(parent.name)))
+        self.lhs = SegmentSelectionWidget(self.inventory)
 
-            self.lhsEnvType.currentIndexChanged.connect(self.generateLhsFrame)
-            self.rhsEnvType.currentIndexChanged.connect(self.generateRhsFrame)
-
-            lhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
-            lhsEnvLayout.addWidget(self.lhsEnvType, alignment = Qt.AlignLeft)
-
-            rhsEnvLayout.addWidget(QLabel('Basis for building {}:'.format(parent.name)))
-            rhsEnvLayout.addWidget(self.rhsEnvType, alignment = Qt.AlignLeft)
-
-        self.lhs = QStackedWidget()
-        self.lhsInventory = InventoryBox('',self.inventory)
-        self.lhsInventory.setExclusive(True)
-        self.lhsFeature = FeatureBox('',self.inventory)
-        self.lhs.addWidget(self.lhsInventory)
-
-        if len(self.inventory.features) > 0:
-            self.lhs.addWidget(self.lhsFeature)
-
-        self.rhs = QStackedWidget()
-        self.rhsInventory = InventoryBox('',self.inventory)
-        self.rhsInventory.setExclusive(True)
-        self.rhsFeature = FeatureBox('',self.inventory)
-        self.rhs.addWidget(self.rhsInventory)
-
-        if len(self.inventory.features) > 0:
-            self.rhs.addWidget(self.rhsFeature)
+        self.rhs = SegmentSelectionWidget(self.inventory)
 
         lhsEnvLayout.addWidget(self.lhs)
         rhsEnvLayout.addWidget(self.rhs)
@@ -2394,10 +2245,6 @@ class CreateClassWidget(QDialog):
 
     def generateClass(self):
         previewList = self.defineFrame.value()
-        if (previewList):
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one segment.")
-            return
         notInPreviewList = [x.symbol for x in self.corpus.inventory if x.symbol not in previewList]
         return previewList, notInPreviewList
 

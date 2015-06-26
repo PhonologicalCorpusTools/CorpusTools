@@ -11,9 +11,9 @@ from corpustools.contextmanagers import CanonicalVariantContext
 
 from corpustools.corpus.classes import Word, Attribute
 
-from .widgets import (RadioSelectWidget, FeatureBox,
+from .widgets import (RadioSelectWidget, SegmentSelectionWidget,
                     InventoryBox,
-                    CreateClassWidget, TranscriptionWidget, SegFeatSelect, TierWidget)
+                    CreateClassWidget, TranscriptionWidget, TierWidget)
 from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
 
@@ -34,16 +34,7 @@ class InventorySummary(QWidget):
         for b in self.segments.btnGroup.buttons():
             b.clicked.connect(self.summarizeSegment)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.segments)
-        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setMinimumHeight(140)
-        policy = scroll.sizePolicy()
-        policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        #self.columnFrame.
-        layout.addWidget(scroll)
+        layout.addWidget(self.segments)
 
         self.detailFrame = QFrame()
 
@@ -381,7 +372,7 @@ class AddCountColumnDialog(QDialog):
 
         main.addRow('Tier to count on',self.tierWidget)
 
-        self.segmentSelect = SegFeatSelect(self.corpus,'Segment selection')
+        self.segmentSelect = SegmentSelectionWidget(self.corpus.inventory)
 
         main.addRow(self.segmentSelect)
 
@@ -430,7 +421,7 @@ class AddCountColumnDialog(QDialog):
 
         self.sequenceType = self.tierWidget.value()
 
-        self.segList = self.segmentSelect.segments()
+        self.segList = self.segmentSelect.value()
 
         QDialog.accept(self)
 

@@ -6,7 +6,8 @@ import os
 from codecs import open
 
 from .imports import *
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget, ContextWidget
+from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+                    ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.kl.kl import KullbackLeibler
 

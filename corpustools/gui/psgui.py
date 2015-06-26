@@ -3,7 +3,7 @@
 from .imports import *
 
 from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
-                        RadioSelectWidget, InventoryBox, FeatureBox,
+                        RadioSelectWidget, InventoryBox,
                         TierWidget, SegmentSelectionWidget)
 
 from .windows import FunctionWorker, FunctionDialog

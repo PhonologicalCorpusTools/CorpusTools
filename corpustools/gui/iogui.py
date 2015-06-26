@@ -42,10 +42,10 @@ from corpustools.corpus.io.helper import (get_corpora_list,
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
-from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
+from .widgets import (FileWidget, RadioSelectWidget,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
                     DigraphWidget, InventoryBox, AttributeFilterWidget,
-                    TranscriptionWidget, SegFeatSelect, TierWidget,
+                    TranscriptionWidget, TierWidget,
                     AttributeWidget, AnnotationTypeWidget,
                     CorpusSelect)
 
