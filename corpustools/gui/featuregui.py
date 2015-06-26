@@ -6,6 +6,8 @@ from .imports import *
 from collections import OrderedDict
 import codecs
 
+from corpustools.exceptions import PCTError, PCTPythonError
+
 from corpustools.corpus.io import (load_binary, download_binary,
                     load_feature_matrix_csv, save_binary, DelimiterError,
                     export_feature_matrix_csv)
@@ -17,8 +19,26 @@ from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
                     InventoryBox, CreateClassWidget, FeatureEdit, FeatureCompleter)
 
-from .windows import DownloadWorker
+from .windows import FunctionWorker, DownloadWorker, PCTDialog
 from .helpgui import HelpDialog
+
+class LoadFeatureSystemWorker(FunctionWorker):
+    def run(self):
+        time.sleep(0.1)
+        try:
+            system = load_feature_matrix_csv(**self.kwargs)
+        except PCTError as e:
+            self.errorEncountered.emit(e)
+            return
+        except Exception as e:
+            e = PCTPythonError(e)
+            self.errorEncountered.emit(e)
+            return
+        if self.stopped:
+            time.sleep(0.1)
+            self.finishedCancelling.emit()
+            return
+        self.dataReady.emit(system)
 
 
 def get_systems_list(storage_directory):
@@ -254,9 +274,11 @@ class DownloadFeatureMatrixDialog(QDialog):
                                             OrderedDict([('IPA','ipa'),
                                                         ('ARPABET (CMU)','arpabet'),
                                                         ('XSAMPA','sampa'),
+                                                        ('CPA','cpa'),
                                                         ('CELEX','celex'),
                                                         ('DISC','disc'),
-                                                        ('Klatt','klatt')]))
+                                                        ('Klatt','klatt'),
+                                                        ('Buckeye','buckeye')]))
 
         self.featureWidget = RadioSelectWidget('Select a feature system',
                                         OrderedDict([('Sound Pattern of English (SPE)','spe'),
@@ -954,9 +976,9 @@ class FeatureMatrixManager(QDialog):
         for s in systems:
             self.systemsList.addItem(s)
 
-class SystemFromCsvDialog(QDialog):
+class SystemFromCsvDialog(PCTDialog):
     def __init__(self, parent, settings):
-        QDialog.__init__(self, parent)
+        PCTDialog.__init__(self, parent)
 
         self.settings = settings
         layout = QVBoxLayout()
@@ -1000,12 +1022,24 @@ class SystemFromCsvDialog(QDialog):
 
         self.setWindowTitle('Create feature system from csv')
 
+        self.thread = LoadFeatureSystemWorker()
+        self.thread.errorEncountered.connect(self.handleError)
+
+        self.progressDialog.setWindowTitle('Importing corpus...')
+        self.progressDialog.beginCancel.connect(self.thread.stop)
+        self.thread.updateProgress.connect(self.progressDialog.updateProgress)
+        self.thread.updateProgressText.connect(self.progressDialog.updateText)
+        self.thread.dataReady.connect(self.setResults)
+        self.thread.dataReady.connect(self.progressDialog.accept)
+        self.thread.finishedCancelling.connect(self.progressDialog.reject)
+
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
                                     section = 'loading-a-custom-feature-system')
         self.helpDialog.exec_()
 
-    def accept(self):
+    def generateKwargs(self):
+        kwargs = {}
         path = self.pathWidget.value()
         if path == '':
             reply = QMessageBox.critical(self,
@@ -1015,7 +1049,7 @@ class SystemFromCsvDialog(QDialog):
             reply = QMessageBox.critical(self,
                     "Invalid information", "Feature matrix file could not be located. Please verify the path and file name.")
             return
-
+        kwargs['path'] = path
         name = self.featureSystemSelect.value()
         if name == '':
             reply = QMessageBox.critical(self,
@@ -1029,26 +1063,37 @@ class SystemFromCsvDialog(QDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
+        if not name:
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a name for the transcription and feature systems.")
+            return
+        kwargs['name'] = name
         colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
         if not colDelim:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a column delimiter.")
             return
-        if not name:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a name for the transcription and feature systems.")
-            return
-        try:
-            system = load_feature_matrix_csv(name, path, colDelim)
-        except DelimiterError:
-            reply = QMessageBox.critical(self,
-                    "Invalid information", "Could not parse the file.\nCheck that the delimiter you typed in matches the one used in the file.")
-            return
-        except KeyError:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Could not find a 'symbol' column.  Please make sure that the segment symbols are in a column named 'symbol'.")
-            return
-        save_binary(system,system_name_to_path(self.settings['storage'],name))
+        kwargs['delimiter'] = colDelim
+        return kwargs
 
-        QDialog.accept(self)
+    def setResults(self, results):
+        self.specifier = results
+
+    def accept(self):
+        kwargs = self.generateKwargs()
+        if kwargs is None:
+            return
+        self.thread.setParams(kwargs)
+
+        self.thread.start()
+
+        result = self.progressDialog.exec_()
+
+        self.progressDialog.reset()
+        if result:
+            if self.specifier is not None:
+                save_binary(self.specifier,
+                    system_name_to_path(self.settings['storage'],self.specifier.name))
+            QDialog.accept(self)
+
 

@@ -153,7 +153,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
     transcription_errors = corpus.check_coverage()
     return corpus
 
-def load_feature_matrix_csv(name,path,delimiter):
+def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back = None):
     """
     Load a FeatureMatrix from a column-delimited text file
 
@@ -176,21 +176,33 @@ def load_feature_matrix_csv(name,path,delimiter):
     """
     text_input = []
     with open(path, encoding='utf-8-sig', mode='r') as f:
-        reader = DictReader(f,delimiter=delimiter)
-        for line in reader:
-            if line:
-                if len(line.keys()) == 1:
-                    raise(DelimiterError)
-                if 'symbol' not in line:
-                    raise(KeyError)
-                #Compat
-                newline = {}
-                for k,v in line.items():
-                    if k == 'symbol':
-                        newline[k] = v
-                    elif v is not None:
-                        newline[k] = v[0]
-                text_input.append(newline)
+        reader = DictReader(f, delimiter = delimiter)
+        lines = list(reader)
+
+    if call_back is not None:
+        call_back('Reading file...')
+        call_back(0, len(lines))
+
+
+    for i, line in enumerate(lines):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back(i)
+
+        if line:
+            if len(line.keys()) == 1:
+                raise(DelimiterError)
+            if 'symbol' not in line:
+                raise(KeyError)
+            #Compat
+            newline = {}
+            for k,v in line.items():
+                if k == 'symbol':
+                    newline[k] = v
+                elif v is not None:
+                    newline[k] = v[0]
+            text_input.append(newline)
 
     feature_matrix = FeatureMatrix(name,text_input)
     feature_matrix.validate()

@@ -78,9 +78,13 @@ def download_binary(name, path, call_back = None):
         download_link = 'https://www.dropbox.com/s/4ymm9789xhrvxid/sampa2spe.feature?dl=1'
     elif name == 'sampa2hayes':
         download_link = 'https://www.dropbox.com/s/ch5yzlisoeaz58e/sampa2hayes.feature?dl=1'
+    elif name == 'buckeye2spe':
+        download_link = 'https://www.dropbox.com/s/p8cazx943ky8i3z/buckeye2spe.feature?dl=1'
+    elif name == 'buckeye2hayes':
+        download_link = 'https://www.dropbox.com/s/oi58pqd8dzl7puu/Buckeye2hayes.feature?dl=1'
     else:
         return False
-    filename,headers = urlretrieve(download_link,path, reporthook=report)
+    filename, headers = urlretrieve(download_link, path, reporthook=report)
     return True
 
 def load_binary(path):
