@@ -1108,7 +1108,7 @@ class EditableInventoryTable(InventoryTable):
 
     def showHorizontalHeaderMenu(self, pos):
         header = self.horizontalHeader()
-        column = header.logicalIndexAt(pos.x())
+        col = header.logicalIndexAt(pos.x())
 
         deleteColAct = QAction(self)
         deleteColAct.setText("Remove column")

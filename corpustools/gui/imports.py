@@ -22,7 +22,7 @@ try:
                                 QStyle, QMenu, QSizePolicy, QButtonGroup,QTabWidget,
                                 QTableWidget, QToolBar, QStyledItemDelegate, QDataWidgetMapper,
                                 QSlider, QItemDelegate, QScrollArea, QBoxLayout, QStackedWidget,
-                                QCompleter)
+                                QCompleter, QTableWidgetItem)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
     try:
         from PyQt5.QtWebKitWidgets import QWebView
