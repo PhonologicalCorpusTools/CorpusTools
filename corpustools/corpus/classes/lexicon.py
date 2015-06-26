@@ -332,7 +332,6 @@ class FeatureMatrix(object):
 
         #What are these?
         self.matrix['#'] = Segment('#')
-        #self.matrix[''] = {'*':''}
         self.places = collections.OrderedDict()
         self.manners = collections.OrderedDict()
         self.backness = collections.OrderedDict()
@@ -353,7 +352,44 @@ class FeatureMatrix(object):
             self.diph_feature = '.high'
             self.rounded_feature = '+round'
         else:
-            pass
+            self.generate_generic()
+            self.vowel_feature = []
+            self.voice_feature = []
+            self.diph_feature = []
+            self.rounded_feature = []
+
+    def generate_generic(self):
+        self.places['Labial'] = {}
+        self.places['Labiodental'] =  {}
+        self.places['Dental'] = {}
+        self.places['Alveolar'] = {}
+        self.places['Alveopalatal'] = {}
+        self.places['Palatal'] = {}
+        self.places['Velar'] = {}
+        self.places['Uvular'] = {}
+        self.places['Pharyngeal'] = {}
+        self.places['Glottal'] = {}
+
+        self.manners['Stop'] = {}
+        self.manners['Nasal'] = {}
+        self.manners['Trill'] = {}
+        self.manners['Tap'] = {}
+        self.manners['Fricative'] = {}
+        self.manners['Affricate'] = {}
+        self.manners['Approximant'] = {}
+        self.manners['Lateral approximant'] = {}
+
+        self.backness['Front'] = {}
+        self.backness['Near front'] = {}
+        self.backness['Central'] = {}
+        self.backness['Near back'] = {}
+        self.backness['Back'] = {}
+
+        self.height['Close'] = {}
+        self.height['Near close'] = {}
+        self.height['Close mid'] = {}
+        self.height['Open mid'] = {}
+        self.height['Open'] = {}
 
     def generate_generic_spe(self):
         self.places['Labial'] = {'ant':'+', 'back': '-', 'cor':'-'}
@@ -379,7 +415,7 @@ class FeatureMatrix(object):
         self.backness['Front'] = {'back':'-', 'tense':'+'}
         self.backness['Near front'] = {'back': '-', 'tense': '-'}
         self.backness['Central'] = {'back': 'n'}
-        self.backness['Near back'] = {'back': '-', 'tense':'-'}
+        self.backness['Near back'] = {'back': '+', 'tense':'-'}
         self.backness['Back'] = {'back':'+', 'tense':'+'}
 
         self.height['Close'] = {'high':'+', 'low':'-', 'tense':'+'}
@@ -464,6 +500,8 @@ class FeatureMatrix(object):
                 s = Segment(k)
                 s.specify(v)
                 state['matrix'][k] = s
+            else:
+                v.specify(v.features)
         self.__dict__.update(state)
 
         #Backwards compatability
@@ -474,7 +512,6 @@ class FeatureMatrix(object):
             self.manners = collections.OrderedDict()
             self.backness = collections.OrderedDict()
             self.height = collections.OrderedDict()
-            self.generate_generic_names()
             self.generate_generic_names()
 
     def __iter__(self):

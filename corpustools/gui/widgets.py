@@ -1397,7 +1397,7 @@ class InventoryBox(QWidget):
                 #btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() +7)
                 #btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
                 self.btnGroup.addButton(btn)
-                if cat is None:
+                if cat is None or None in cat:
                     unkCol += 1
                     if unkCol > 11:
                         unkCol = 0

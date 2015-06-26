@@ -426,18 +426,16 @@ def test_categories_spe(specified_test_corpus):
     inv = specified_test_corpus._inventory
 
     for k,v in cats.items():
-        assert(inv[k].category == v)
+        assert(inv.categorize(inv[k]) == v)
 
 def test_no_features():
     seg = Segment('')
 
-    assert(seg.category is None)
 
 def test_no_syllabic_feature():
     seg = Segment('')
     seg.specify({'feature1':'+','feature2':'+'})
 
-    assert(seg.category is None)
 
 
 class SegmentTest(unittest.TestCase):

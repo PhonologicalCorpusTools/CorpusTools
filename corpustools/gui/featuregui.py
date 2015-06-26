@@ -462,6 +462,10 @@ class EditFeatureMatrixDialog(QDialog):
     def editCategories(self):
         dialog = EditCategoriesDialog(self, self.specifier)
         if dialog.exec_():
+            self.specifier.vowel_feature = dialog.vowel()
+            self.specifier.voice_feature = dialog.voiced()
+            self.specifier.diph_feature = dialog.diphthong()
+            self.specifier.rounded_feature = dialog.rounded()
             p, m, h, b = dialog.value()
             for k,v in p.items():
                 self.specifier.places[k] = v
@@ -569,7 +573,12 @@ class CategoryWidget(QWidget):
         self.searchWidget = FeatureEdit(self.specifier)
         self.completer = FeatureCompleter(self.specifier)
         self.searchWidget.setCompleter(self.completer)
-        self.searchWidget.setText(', '.join(v+k for k,v in features.items()))
+        if isinstance(features, dict):
+            self.searchWidget.setText(', '.join(v+k for k,v in features.items()))
+        elif isinstance(features, list):
+            self.searchWidget.setText(', '.join(features))
+        elif isinstance(features, str):
+            self.searchWidget.setText(features)
 
         layout.addWidget(self.searchWidget)
 
@@ -604,8 +613,28 @@ class EditCategoriesDialog(QDialog):
         self.specifier = specifier
 
         layout = QVBoxLayout()
-
         self.tabWidget = QTabWidget()
+
+        midlayout = QHBoxLayout()
+
+        catlayout = QFormLayout()
+
+        self.vowelWidget = CategoryWidget('Vowel', self.specifier.vowel_feature, specifier)
+        catlayout.addRow('Feature specifying vowels',self.vowelWidget)
+
+        self.voiceWidget = CategoryWidget('Voiced', self.specifier.voice_feature, specifier)
+        catlayout.addRow('Feature specifying voiced obstruents',self.voiceWidget)
+
+        self.diphWidget = CategoryWidget('Diphthong', self.specifier.diph_feature, specifier)
+        catlayout.addRow('Feature specifying diphthongs',self.diphWidget)
+
+        self.roundedWidget = CategoryWidget('Rounded', self.specifier.rounded_feature, specifier)
+        catlayout.addRow('Feature specifying rounded vowels',self.roundedWidget)
+
+        catFrame = QWidget()
+        catFrame.setLayout(catlayout)
+        self.tabWidget.addTab(catFrame,'Major distinctions')
+
 
         placesFrame = QWidget()
         placeslayout = QFormLayout()
@@ -653,8 +682,9 @@ class EditCategoriesDialog(QDialog):
         backnessFrame.setLayout(backnesslayout)
         self.tabWidget.addTab(backnessFrame,'Vowel backness')
 
-        layout.addWidget(self.tabWidget)
+        midlayout.addWidget(self.tabWidget)
 
+        layout.addLayout(midlayout)
 
         self.acceptButton = QPushButton('Ok')
         self.cancelButton = QPushButton('Cancel')
@@ -668,8 +698,20 @@ class EditCategoriesDialog(QDialog):
         acFrame.setLayout(acLayout)
 
         layout.addWidget(acFrame)
-
+        self.setWindowTitle('Edit categories')
         self.setLayout(layout)
+
+    def vowel(self):
+        return self.vowelWidget.features()
+
+    def voiced(self):
+        return self.voiceWidget.features()
+
+    def rounded(self):
+        return self.roundedWidget.features()
+
+    def diphthong(self):
+        return self.diphWidget.features()
 
     def value(self):
         p = {w.category: w.features() for w in self.places}
