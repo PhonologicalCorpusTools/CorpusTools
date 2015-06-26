@@ -440,14 +440,14 @@ Implementing the functional load function on the command line
 In order to perform this analysis on the command line, you must enter
 a command in the following format into your Terminal::
 
-   pct_funcload CORPUSFILE ARG2
+   pct_funcload CORPUSFILE [additional arguments]
 
-...where CORPUSFILE is the name of your \*.corpus file and ARG2 is either
-the transcription character(s) of a single segment (if calculating relative
-functional load) or the name of your segment pair(s) file (if calculating a
-single functional load value). The segment pairs file must list the pairs
-of segments whose functional load you wish to calculate, with each pair
-separated by a tab (\t) and one pair on each line. You may also use
+...where CORPUSFILE is the name of your \*.corpus file. If calculating
+FL from a file of segment pairs, it must list the pairs
+of segments whose functional load you wish to calculate with each pair
+separated by a tab (\t) and one pair on each line. Note that you must either
+specify a file or segment (using -p) or request the functional loads of all
+segment pairs in the inventory (using -l). You may also use
 command line options to change various parameters of your functional
 load calculations. Descriptions of these arguments can be viewed by
 running ``pct_funcload –h`` or ``pct_funcload --help``. The help text from
@@ -477,6 +477,13 @@ Optional arguments:
                --help
 
    Show help message and exit
+
+.. cmdoption:: -c CONTEXT_TYPE
+               --context_type CONTEXT_TYPE
+
+   How to deal with variable pronunciations. Options are
+   'Canonical', 'MostFrequent', 'SeparatedTokens', or
+   'Weighted'. See documentation for details.
 
 .. cmdoption:: -a ALGORITHM
                --algorithm ALGORITHM
@@ -523,11 +530,11 @@ Optional arguments:
 
    Name of output file
 
-EXAMPLE 1: If your corpus file is example.corpus and you want to
-calculate the minimal pair functional load of the segments [m] and [n]
-using defaults for all optional arguments, you first need to create a
-text file that contains the text “m\tn” (where \t is a tab; no quotes
-in the file). Let us call this file pairs.txt. You would then run the
+EXAMPLE 1: If your corpus file is example.corpus (no prounciation variants)
+and you want to calculate the minimal pair functional load of the segments
+[m] and [n] using defaults for all optional arguments, you first need to 
+create a text file that contains the text “m\tn” (where \t is a tab; no 
+quotes in the file). Let us call this file pairs.txt. You would then run the
 following command in your terminal window::
 
    pct_funcload example.corpus -p pairs.txt

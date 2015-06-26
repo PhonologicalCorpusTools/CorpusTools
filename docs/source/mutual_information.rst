@@ -195,16 +195,18 @@ closed and you will be returned to your corpus view.
 
 .. _mi_cli:
 
+
 Implementing the mutual information function on the command line
 ----------------------------------------------------------------
 
 In order to perform this analysis on the command line, you must enter a
 command in the following format into your Terminal::
 
-   pct_mutualinfo CORPUSFILE ARG2
+   pct_mutualinfo CORPUSFILE [additional arguments]
 
-...where CORPUSFILE is the name of your \*.corpus file and ARG2 is the
-bigram whose mutual information you wish to calculate. The bigram must
+...where CORPUSFILE is the name of your \*.corpus file. If not calculating
+the mutal informations of all bigrams (using -l), the query bigram must
+be specified using -q, as '-q QUERY'. The bigram QUERY must
 be in the format 's1,s2' where s1 and s2 are the first and second
 segments in the bigram. You may also use command line options to
 change the sequency type to use for your calculations, or to specify
@@ -238,6 +240,13 @@ Optional arguments:
 
    Show help message and exit
 
+.. cmdoption:: -c CONTEXT_TYPE
+               --context_type CONTEXT_TYPE
+
+   How to deal with variable pronunciations. Options are
+   'Canonical', 'MostFrequent', 'SeparatedTokens', or
+   'Weighted'. See documentation for details.
+
 .. cmdoption:: -s SEQUENCE_TYPE
                --sequence_type SEQUENCE_TYPE
 
@@ -249,9 +258,10 @@ Optional arguments:
 
    Name of output file
 
-EXAMPLE 1: If your corpus file is example.corpus and you want to calculate
-the mutual information of the bigram 'si' using defaults for all optional
-arguments, you would run the following command in your terminal window::
+EXAMPLE 1: If your corpus file is example.corpus (no pronunciation variants)
+and you want to calculate the mutual information of the bigram 'si' using 
+defaults for all optional arguments, you would run the following command 
+in your terminal window::
 
    pct_mutualinfo example.corpus -q s,i
 
@@ -269,11 +279,6 @@ following command::
 
    pct_mutualinfo example.corpus -l -o output.txt
 
-.. [1] The algorithm in PCT calculates what is sometimes referred to
-   as the “pointwise” mutual information of a pair of units X and Y,
-   in contrast to “mutual information,” which would be the expected
-   average value of the pointwise mutual information of all possible
-   values of X and Y. We simplify to use “mutual information” throughout.
 
 .. _classes_and_functions:
 
@@ -281,3 +286,10 @@ Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
 source code, please refer to :ref:`api_reference`.
+
+
+.. [1] The algorithm in PCT calculates what is sometimes referred to
+   as the “pointwise” mutual information of a pair of units X and Y,
+   in contrast to “mutual information,” which would be the expected
+   average value of the pointwise mutual information of all possible
+   values of X and Y. We simplify to use “mutual information” throughout.

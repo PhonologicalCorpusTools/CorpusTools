@@ -256,6 +256,13 @@ Optional arguments:
 
    Show this help message and exit
 
+.. cmdoption:: -c CONTEXT_TYPE
+               --context_type CONTEXT_TYPE
+
+   How to deal with variable pronunciations. Options are
+   'Canonical', 'MostFrequent', 'SeparatedTokens', or
+   'Weighted'. See documentation for details.
+
 .. cmdoption:: -a ALGORITHM
                --algorithm ALGORITHM
 
@@ -289,8 +296,8 @@ Optional arguments:
    Name of output file.
 
 
-EXAMPLE 1: If your corpus file is example.corpus and you want to
-calculate the neighborhood density of the word 'nata' using defaults
+EXAMPLE 1: If your corpus file is example.corpus (no pronunciation variants)
+and you want to calculate the neighborhood density of the word 'nata' using defaults
 for all optional arguments, you would run the following command in your
 terminal window::
 

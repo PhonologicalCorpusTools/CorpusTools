@@ -189,6 +189,85 @@ The resulting table of results:
    :width: 90%
    :align: center
 
+
+Implementing the KL-divergence function on the command line
+-------------------------------------------------------------
+
+In order to perform this analysis on the command line, you must enter
+a command in the following format into your Terminal::
+
+   pct_funcload CORPUSFILE [additional arguments]
+
+...where CORPUSFILE is the name of your \*.corpus file. If calculating
+FL from a file of segment pairs, it must list the pairs
+of segments whose functional load you wish to calculate with each pair
+separated by a tab (\t) and one pair on each line. Note that you must either
+specify a file or segment (using -p) or request the functional loads of all
+segment pairs in the inventory (using -l). You may also use
+command line options to change various parameters of your functional
+load calculations. Descriptions of these arguments can be viewed by
+running ``pct_funcload –h`` or ``pct_funcload --help``. The help text from
+this command is copied below, augmented with specifications of default values:
+
+Positional arguments:
+
+.. cmdoption:: corpus_file_name
+
+   Name of corpus file
+
+.. cmdoption:: seg1
+
+   First segment
+
+.. cmdoption:: seg2
+
+   Second segment
+
+.. cmdoption:: side
+
+   Context to check. Options are 'right', 'left' and
+   'both'. You can enter just the first letter.
+
+
+Optional arguments:
+
+.. cmdoption:: -h
+               --help
+
+   Show help message and exit
+
+.. cmdoption:: -s SEQUENCE_TYPE
+               --sequence_type SEQUENCE_TYPE
+
+   The attribute of Words to calculate KL-divergence over. Normally this will be
+   the transcription, but it can also be the spelling or a user-specified tier.
+
+.. cmdoption:: -t TYPE_OR_TOKEN
+               --type_or_token TYPE_OR_TOKEN
+
+   Specifies whether quantifications are based on type
+   or token frequency.
+
+.. cmdoption:: -c CONTEXT_TYPE
+               --context_type CONTEXT_TYPE
+
+   How to deal with variable pronunciations. Options are
+   'Canonical', 'MostFrequent', 'SeparatedTokens', or
+   'Weighted'. See documentation for details.
+
+.. cmdoption:: -o OUTFILE
+               --outfile OUTFILE
+
+   Name of output file
+
+EXAMPLE 1: If your corpus file is example.corpus (no prounciation variants)
+and you want to calculate the KL-divergence of the segments
+[m] and [n] considering contexts on both sides and using defaults for all
+optional arguments, you would run the following command in your terminal window::
+
+   pct_kl example.corpus m n both
+
+
 .. _classes_and_functions:
 
 Classes and functions
