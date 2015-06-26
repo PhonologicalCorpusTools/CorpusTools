@@ -2,6 +2,7 @@ from corpustools.exceptions import PCTError, PCTPythonError
 import math
 import collections
 import copy
+import operator
 
 from corpustools.corpus.classes.lexicon import Word
 
@@ -190,8 +191,33 @@ class MostFrequentVariantContext(BaseCorpusContext):
                 continue
             v = word.variants(self.sequence_type)
             w = copy.copy(word)
-            if len(v.keys()) > 0:                                       # Set sequence type to the most frequent variant
-                setattr(w, self.sequence_type, max(v.keys(), key=lambda k: v[k]))
+            if len(v.keys()) > 0:                                       # Sort variants by most frequent
+                v_sorted = sorted(v.items(), k=operator.itemgetter(1), reverse=True)
+                if len(v_sorted) == 1:                                  # There's only 1 variant
+                    setattr(w, self.sequence_type, v_sorted[0][0])
+                elif v_sorted[0][1] != v_sorted[1][1]:                  # There's only one most frequent variant
+                    setattr(w, self.sequence_type, v_sorted[0][0])     
+                else:                                                   # There're variants tied for frequency
+                    highest_freq = v_sorted[0][1]
+                    v_candidates = list()
+                    for vv in v_sorted:
+                        if vv[1] != highest_freq:
+                            break
+                        else:
+                            v_candidates.append(vv[0])
+                    if getattr(w, self.sequence_type) in v_candidates:  # Use cannonical variant if it is one of most frequent
+                        pass
+                    else:                                               
+                        v_longest1 = max(v_candidates, key=len)
+                        v_candidates.reverse()
+                        v_longest2 = max(v_candidates, key=len)
+                        if v_longest1 == v_longest:
+                            setattr(w, self.sequence_type, v_longest1)  # Use longest variant if one exists
+                        else:
+                            v_candidates = [vv for vv in v_candidates if len(vv) == len(v_longest1)]
+                            v_candidates = sorted(v_candidates)
+                            setattr(w, self.sequence_type, v_candidates[0])  # Use longest variant that is first alphabetically
+                    
             if self.type_or_token == 'type':
                 w.frequency = 1
             w.original = word
