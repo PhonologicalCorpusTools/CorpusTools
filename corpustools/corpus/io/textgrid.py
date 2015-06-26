@@ -2,7 +2,7 @@ import os
 import string
 import re
 
-from .textgrid_classes import TextGrid, IntervalTier, PointTier
+from textgrid import TextGrid, IntervalTier
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError, PCTError
@@ -10,6 +10,14 @@ from corpustools.exceptions import TextGridTierError, PCTError
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
                     AnnotationType,data_to_discourse, find_wav_path,
                     Annotation, BaseAnnotation)
+
+def uniqueLabels(tier):
+    return set(x.mark for x in tier.intervals)
+
+def averageLabelLen(tier):
+    labels = uniqueLabels(tier)
+    return sum(len(lab) for lab in labels)/len(labels)
+
 
 def inspect_discourse_textgrid(path):
     trans_delimiters = ['.',' ', ';', ',']
@@ -34,14 +42,15 @@ def inspect_discourse_textgrid(path):
             anchor = None
         else:
             anchor = spellings[0]
+        interval_tiers = [x for x in tg.tiers if isinstance(x, IntervalTier)]
         if len(anno_types) == 0:
-            for ti in tg.intervalTiers:
+            for ti in interval_tiers:
                 if ti.name in spellings:
                     a = AnnotationType(ti.name, base, None, anchor = True, token = False)
                 elif ti.name in segments:
                     a = AnnotationType(ti.name, None, anchor, base = True, token = True)
                 else:
-                    labels = ti.uniqueLabels()
+                    labels = uniqueLabels(ti)
                     cat = Attribute.guess_type(labels, trans_delimiters)
                     att = Attribute(Attribute.sanitize_name(ti.name), cat, ti.name)
                     a = AnnotationType(ti.name, None, anchor, token = False, attribute = att)
@@ -56,9 +65,9 @@ def inspect_discourse_textgrid(path):
                 a.add((x.mark for x in ti), save = False)
                 anno_types.append(a)
         else:
-            if len(anno_types) != len(list(tg.intervalTiers)):
+            if len(anno_types) != len(interval_tiers):
                 raise(PCTError("The TextGrids must have the same number of tiers."))
-            for i, ti in enumerate(tg.intervalTiers):
+            for i, ti in enumerate(interval_tiers):
                 anno_types[i].add((x.mark for x in ti), save = False)
 
     return anno_types
@@ -69,12 +78,13 @@ def load_textgrid(path):
     return tg
 
 def guess_tiers(tg):
-    segment_tiers = list()
-    spelling_tiers = list()
-    attribute_tiers = list()
-    tier_properties = dict()
-    for i,t in enumerate(tg.intervalTiers):
-        tier_properties[t.name] = (i, len(t), t.averageLabelLen(), len(t.uniqueLabels()))
+    segment_tiers = []
+    spelling_tiers = []
+    attribute_tiers = []
+    tier_properties = {}
+    interval_tiers = [x for x in tg.tiers if isinstance(x, IntervalTier)]
+    for i,t in enumerate(interval_tiers):
+        tier_properties[t.name] = (i, len(t), averageLabelLen(t), len(uniqueLabels(t)))
 
     max_labels = max(tier_properties.values(), key = lambda x: x[2])
     likely_segment = [k for k,v in tier_properties.items() if v == max_labels]
