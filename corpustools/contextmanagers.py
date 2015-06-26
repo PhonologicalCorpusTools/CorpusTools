@@ -192,11 +192,11 @@ class MostFrequentVariantContext(BaseCorpusContext):
             v = word.variants(self.sequence_type)
             w = copy.copy(word)
             if len(v.keys()) > 0:                                       # Sort variants by most frequent
-                v_sorted = sorted(v.items(), k=operator.itemgetter(1), reverse=True)
+                v_sorted = sorted(v.items(), key=operator.itemgetter(1), reverse=True)
                 if len(v_sorted) == 1:                                  # There's only 1 variant
                     setattr(w, self.sequence_type, v_sorted[0][0])
                 elif v_sorted[0][1] != v_sorted[1][1]:                  # There's only one most frequent variant
-                    setattr(w, self.sequence_type, v_sorted[0][0])     
+                    setattr(w, self.sequence_type, v_sorted[0][0])
                 else:                                                   # There're variants tied for frequency
                     highest_freq = v_sorted[0][1]
                     v_candidates = list()
@@ -207,7 +207,7 @@ class MostFrequentVariantContext(BaseCorpusContext):
                             v_candidates.append(vv[0])
                     if getattr(w, self.sequence_type) in v_candidates:  # Use cannonical variant if it is one of most frequent
                         pass
-                    else:                                               
+                    else:
                         v_longest1 = max(v_candidates, key=len)
                         v_candidates.reverse()
                         v_longest2 = max(v_candidates, key=len)
@@ -217,7 +217,7 @@ class MostFrequentVariantContext(BaseCorpusContext):
                             v_candidates = [vv for vv in v_candidates if len(vv) == len(v_longest1)]
                             v_candidates = sorted(v_candidates)
                             setattr(w, self.sequence_type, v_candidates[0])  # Use longest variant that is first alphabetically
-                    
+
             if self.type_or_token == 'type':
                 w.frequency = 1
             w.original = word
