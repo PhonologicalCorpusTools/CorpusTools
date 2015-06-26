@@ -3,7 +3,7 @@ from urllib.request import urlretrieve
 
 import pickle
 
-def download_binary(name,path, call_back = None):
+def download_binary(name, path, call_back = None):
     """
     Download a binary file of example corpora and feature matrices.
 
@@ -46,6 +46,8 @@ def download_binary(name,path, call_back = None):
             call_back(blocknum * bs)
     if name == 'example':
         download_link = 'https://www.dropbox.com/s/a0uar9h8wtem8cf/example.corpus?dl=1'
+    elif name == 'lemurian':
+        download_link = 'https://www.dropbox.com/s/v6jwgym7tc98v4c/lemurian.corpus?dl=1'
     elif name == 'iphod':
         download_link = 'https://www.dropbox.com/s/xb16h5ppwmo579s/iphod.corpus?dl=1'
     elif name == 'ipa2spe':

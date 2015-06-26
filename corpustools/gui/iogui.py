@@ -253,6 +253,7 @@ class DownloadCorpusDialog(QDialog):
         layout = QVBoxLayout()
         self.corporaWidget = RadioSelectWidget('Select a corpus',
                                         OrderedDict([('Example toy corpus','example'),
+                                        ('Lemurian (Toy language)','lemurian'),
                                         ('IPHOD','iphod')]))
 
         layout.addWidget(self.corporaWidget)
