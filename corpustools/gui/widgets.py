@@ -1835,7 +1835,7 @@ class SegmentSelectDialog(QDialog):
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
-        self.setWindowTitle('Select segment pair')
+        self.setWindowTitle('Select segments')
 
     def value(self):
         return self.segFrame.value()

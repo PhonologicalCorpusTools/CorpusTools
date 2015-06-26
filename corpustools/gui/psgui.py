@@ -95,10 +95,10 @@ class PhonoSearchDialog(FunctionDialog):
     def setResults(self,results):
         self.results = []
         for w,f in results:
-            segs = [x.middle for x in f]
+            segs = tuple(x.middle for x in f)
             try:
-                envs = [str(x) for x in f]
+                envs = tuple(str(x) for x in f)
             except IndexError:
-                envs = []
-            self.results.append([w, str(getattr(w,self.tierWidget.value())),segs,
-                                envs])
+                envs = tuple()
+            self.results.append((w, str(getattr(w,self.tierWidget.value())), segs,
+                                envs))

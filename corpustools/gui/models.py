@@ -43,7 +43,7 @@ class BaseTableModel(QAbstractTableModel):
                     data = 'Yes'
                 else:
                     data = 'No'
-            elif isinstance(data,list):
+            elif isinstance(data,(list, tuple)):
                 data = ', '.join(data)
             else:
                 data = str(data)
@@ -477,8 +477,8 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.summary_header = summary_header
         self.columns = self.header
 
-        self.rows = results
-        self.allData = self.rows
+        self.allData = set(results)
+        self.rows = sorted(self.allData)
         self.summarized = False
 
     def _summarize(self):
@@ -505,13 +505,13 @@ class PhonoSearchResultsModel(BaseTableModel):
         if self.summarized:
             self._summarize()
         else:
-            self.rows = self.allData
+            self.rows = sorted(self.allData)
             self.columns = self.header
         self.layoutChanged.emit()
 
     def addRows(self,rows):
         self.layoutAboutToBeChanged.emit()
-        self.allData += rows
+        self.allData.update(rows)
         if self.summarized:
             self._summarize()
         self.layoutChanged.emit()

@@ -866,6 +866,7 @@ class PhonoSearchResults(ResultsWindow):
                 self.table.model().addRows(self.dialog.results)
             else:
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
+                        self.dialog.summary_header,
                                 self.dialog.results, self._parent.settings)
                 self.table.setModel(dataModel)
         self.raise_()
