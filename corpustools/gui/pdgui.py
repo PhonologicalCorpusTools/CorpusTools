@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from .imports import *
-from .widgets import (EnvironmentSelectWidget, EnvironmentDialog,
+from .widgets import (EnvironmentSelectWidget,
                     SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget)
 from .windows import FunctionWorker, FunctionDialog

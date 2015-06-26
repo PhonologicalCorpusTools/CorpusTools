@@ -196,65 +196,6 @@ def test_transcription_widget(qtbot, specified_test_corpus):
 
     assert(widget.text() == '.'.join(expected))
 
-def test_feature_box(qtbot, specified_test_corpus):
-    widget = FeatureBox('Transcription', specified_test_corpus.inventory)
-    qtbot.addWidget(widget)
-
-    # Test basic init
-
-    assert(set(widget.features) == set(['EXTRA','LONG','ant','back','cont','cor',
-                'del_rel','distr','glot_cl','hi_subgl_pr','high',
-                'lat','low','mv_glot_cl','nasal','round','son',
-                'strid','tense','voc','voice']))
-
-    assert(set(widget.values) == set(['n','+','-','.']))
-
-    f, v = list(widget.features)[0], list(widget.values)[0]
-    f2, v2 = list(widget.features)[1], list(widget.values)[1]
-
-    # Test default return value
-
-    assert(widget.value() == '')
-
-    # Test no action when no features selected
-
-    b = widget.buttons[0]
-    b.clicked.emit()
-    assert(widget.value() == '')
-
-    # Test single feature selected
-
-    widget.featureList.setCurrentRow(0)
-    b.clicked.emit()
-    assert(widget.value() == '[{}{}]'.format(v,f))
-
-    # Test multiple features selected
-
-    widget.featureList.setCurrentRow(1)
-    b2 = widget.buttons[1]
-    b2.clicked.emit()
-    assert(widget.value() == '[{}{},{}{}]'.format(v,f,v2,f2))
-
-    # Test to ensure values are unique
-
-    b2.clicked.emit()
-    assert(widget.value() == '[{}{},{}{}]'.format(v,f,v2,f2))
-
-    # Test clear all
-
-    widget.clearButton.clicked.emit()
-    assert(widget.value() == '')
-
-    widget.featureList.setCurrentRow(0)
-    b.clicked.emit()
-
-    widget.featureList.setCurrentRow(1)
-    b2.clicked.emit()
-
-    widget.envList.setCurrentRow(0)
-    widget.clearOneButton.clicked.emit()
-    assert(widget.value() == '[{}{}]'.format(v2,f2))
-
 def test_digraph_dialog(qtbot):
     dialog = DigraphDialog(['a','b','c'])
     qtbot.addWidget(dialog)
@@ -311,12 +252,12 @@ def test_bigram_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
     # Test without features
     widget = BigramWidget(specified_test_corpus.inventory)
     qtbot.addWidget(widget)
-    dialog = EnvironmentDialog(specified_test_corpus.inventory, widget)
+    dialog = BigramDialog(specified_test_corpus.inventory, widget)
     qtbot.addWidget(dialog)
 
-    b1 = dialog.lhsInventory.btnGroup.buttons()[0]
+    b1 = dialog.lhs.inventoryFrame.btnGroup.buttons()[0]
     b1.setChecked(True)
-    b2 = dialog.rhsInventory.btnGroup.buttons()[0]
+    b2 = dialog.rhs.inventoryFrame.btnGroup.buttons()[0]
     b2.setChecked(True)
 
     dialog.accept()
@@ -340,33 +281,6 @@ def test_bigram_widget(qtbot, specified_test_corpus):
 
     assert(widget.value() == [])
 
-def test_segfeat_select(qtbot, specified_test_corpus, unspecified_test_corpus):
-    widget = SegFeatSelect(specified_test_corpus,'')
-    qtbot.addWidget(widget)
-
-    assert(widget.typeSelect.count() == 2)
-
-    assert(isinstance(widget.sel, InventoryBox))
-    widget.typeSelect.setCurrentIndex(1)
-    assert(isinstance(widget.sel, FeatureBox))
-
-    widget.sel.envList.addItem('+voc')
-
-    assert(widget.value() == '[+voc]')
-
-    assert(set(widget.segments()) == set(['ɑ','e','i','u','o']))
-
-    widget = SegFeatSelect(unspecified_test_corpus,'')
-    qtbot.addWidget(widget)
-
-    assert(widget.typeSelect.count() == 1)
-
-    b = widget.sel.btnGroup.buttons()[0]
-    b.setChecked(True)
-
-    assert(widget.value() == [b.text()])
-
-    assert(widget.segments() == [b.text()])
 
 def test_factor_filter(qtbot):
     a = Attribute('name','factor','name')

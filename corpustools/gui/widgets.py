@@ -1699,7 +1699,7 @@ class SegmentPairSelectWidget(QGroupBox):
     def value(self):
         return self.table.model().rows
 
-class EnvironmentDialog(QDialog):
+class BigramDialog(QDialog):
     rowToAdd = Signal(str)
     def __init__(self, inventory,parent=None):
         QDialog.__init__(self,parent)
@@ -1761,13 +1761,7 @@ class EnvironmentDialog(QDialog):
         self.addOneMore = False
         self.setLayout(layout)
         #self.setFixedSize(self.sizeHint())
-        self.setWindowTitle('Create {}'.format(self.parent().name))
-
-    def generateLhsFrame(self,ind=0):
-        self.lhs.setCurrentIndex(self.lhsEnvType.currentIndex())
-
-    def generateRhsFrame(self,ind=0):
-        self.rhs.setCurrentIndex(self.rhsEnvType.currentIndex())
+        self.setWindowTitle('Create bigram')
 
     def one(self):
         self.addOneMore = False
@@ -1778,32 +1772,23 @@ class EnvironmentDialog(QDialog):
         self.accept()
 
     def reset(self):
-        self.lhsInventory.clearAll()
-        self.lhsFeature.clearAll()
-        self.rhsInventory.clearAll()
-        self.rhsFeature.clearAll()
+        self.lhs.clearAll()
+        self.rhs.clearAll()
 
     def accept(self):
-        lhs = self.lhsInventory.value()
-        rhs = self.rhsInventory.value()
+        lhs = self.lhs.value()
+        rhs = self.rhs.value()
 
-        if self.parent().name == 'environment':
-            if self.lhsEnvType.currentIndex() != 0:
-                lhs = self.lhsFeature.value()
-            if  self.rhsEnvType.currentIndex() != 0:
-                rhs = self.rhsFeature.value()
-            env = '{}_{}'.format(lhs, rhs)
-        else:
-            if lhs == '':
-                reply = QMessageBox.critical(self,
-                        "Missing information", "Please specify a left hand of the bigram.")
-                return
-            if rhs == '':
-                reply = QMessageBox.critical(self,
-                        "Missing information", "Please specify a right hand of the bigram.")
-                return
+        if lhs == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a left hand of the bigram.")
+            return
+        if rhs == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a right hand of the bigram.")
+            return
 
-            env = '{}{}'.format(lhs,rhs)
+        env = '{}{}'.format(lhs,rhs)
         self.rowToAdd.emit(env)
         if not self.addOneMore:
             QDialog.accept(self)
@@ -2031,17 +2016,16 @@ class EnvironmentSelectWidget(QGroupBox):
 
 
 class BigramWidget(QGroupBox):
-    name = 'bigram'
     def __init__(self,inventory,parent=None):
-        QGroupBox.__init__(self,'{}s'.format(self.name.title()),parent)
+        QGroupBox.__init__(self,'Bigrams',parent)
 
         self.inventory = inventory
 
         vbox = QVBoxLayout()
 
-        self.addButton = QPushButton('Add {}'.format(self.name))
+        self.addButton = QPushButton('Add bigram')
         self.addButton.clicked.connect(self.envPopup)
-        self.removeButton = QPushButton('Remove selected {}s'.format(self.name))
+        self.removeButton = QPushButton('Remove selected bigrams')
         self.removeButton.clicked.connect(self.removeEnv)
         self.addButton.setAutoDefault(False)
         self.addButton.setDefault(False)
@@ -2050,12 +2034,9 @@ class BigramWidget(QGroupBox):
 
         self.table = TableWidget()
         self.table.setSortingEnabled(False)
-        try:
-            self.table.horizontalHeader().setClickable(False)
-            self.table.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        except AttributeError:
-            self.table.horizontalHeader().setSectionsClickable(False)
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        self.table.horizontalHeader().setSectionsClickable(False)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setModel(EnvironmentModel())
         #self.table.resizeColumnsToContents()
 
@@ -2069,12 +2050,11 @@ class BigramWidget(QGroupBox):
         self.table.model().addRow([row])
 
     def envPopup(self):
-        dialog = EnvironmentDialog(self.inventory,self)
+        dialog = BigramDialog(self.inventory,self)
         dialog.rowToAdd.connect(self.addRow)
         result = dialog.exec_()
         dialog.rowToAdd.disconnect()
         dialog.deleteLater()
-
 
     def removeEnv(self):
         select = self.table.selectionModel()
