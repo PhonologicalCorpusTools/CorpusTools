@@ -188,6 +188,7 @@ class CorpusLoadDialog(PCTDialog):
         self.setWindowTitle('Load corpora')
 
         self.thread = LoadWorker()
+        self.thread.errorEncountered.connect(self.handleError)
 
         self.progressDialog.setWindowTitle('Loading...')
         self.progressDialog.beginCancel.connect(self.thread.stop)

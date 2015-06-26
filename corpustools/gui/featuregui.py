@@ -443,10 +443,14 @@ class EditFeatureMatrixDialog(QDialog):
 
         self.changeDisplay()
 
+    def accept(self):
+        path = system_name_to_path(self.settings['storage'],self.specifier.name)
+        save_binary(self.specifier, path)
+        QDialog.accept(self)
+
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
                                     section = 'applying-editing-feature-systems')
-
         self.helpDialog.exec_()
 
     def changeDisplay(self):
@@ -496,7 +500,7 @@ class EditFeatureMatrixDialog(QDialog):
                 return
             selected = selected[0]
             seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
-        print(seg)
+
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)

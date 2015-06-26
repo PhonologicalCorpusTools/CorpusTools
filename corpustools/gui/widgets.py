@@ -1231,20 +1231,14 @@ class SegmentSelectionWidget(QWidget):
         return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
-    consonantColumns = ['Labial','Labiodental','Dental','Alveolar','Alveopalatal','Retroflex',
-                    'Palatal','Velar','Uvular','Pharyngeal','Epiglottal','Glottal']
-
-    consonantRows = ['Stop','Nasal','Fricative','Affricate','Approximate','Trill','Tap',
-                    'Lateral fricative','Lateral approximate','Lateral flap']
-
-    vowelColumns = ['Front','Near front','Central','Near back','Back']
-
-    vowelRows = ['Close','Near close','Close mid','Mid','Open mid','Near open','Open']
-
     def __init__(self, title,inventory,parent=None):
         QWidget.__init__(self,parent)
 
         self.inventory = inventory
+        self.consonantColumns = inventory.places
+        self.consonantRows = inventory.manners
+        self.vowelColumns = inventory.backness
+        self.vowelRows = inventory.height
         #find cats
         consColumns = set()
         consRows = set()
@@ -1252,7 +1246,7 @@ class InventoryBox(QWidget):
         vowRows = set()
         for s in self.inventory:
             try:
-                c = s.category
+                c = self.inventory.categorize(s)
             except KeyError:
                 c = None
             if c is not None:
@@ -1389,9 +1383,10 @@ class InventoryBox(QWidget):
             unkCol = -1
             for s in inventory:
                 try:
-                    cat = s.category
+                    cat = self.inventory.categorize(s)
                 except KeyError:
                     cat = None
+                print(s.symbol, cat)
                 btn = SegmentButton(s.symbol)
                 btn.setCheckable(True)
                 btn.setAutoExclusive(False)

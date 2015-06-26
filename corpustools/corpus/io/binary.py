@@ -99,7 +99,7 @@ def load_binary(path):
         obj = pickle.load(f)
     return obj
 
-def save_binary(obj,path):
+def save_binary(obj, path):
     """
     Pickle a Corpus or FeatureMatrix object for later loading
 
