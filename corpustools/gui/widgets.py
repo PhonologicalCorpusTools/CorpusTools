@@ -1074,9 +1074,10 @@ class FeatureEdit(QLineEdit):
     featuresFinalized = Signal(list)
     delimPattern = re.compile('([,; ]+)')
 
-    def __init__(self,inventory, parent=None):
+    def __init__(self,inventory, clearOnEnter = True, parent=None):
         QLineEdit.__init__(self, parent)
         self.completer = None
+        self.clearOnEnter = clearOnEnter
         self.inventory = inventory
         self.valid_strings = self.inventory.valid_feature_strings()
 
@@ -1129,8 +1130,9 @@ class FeatureEdit(QLineEdit):
             if e.key() in (Qt.Key_Enter, Qt.Key_Return):
                 if self.text() != '':
                     self.featuresFinalized.emit(self.features())
-                    self.setText('')
-                    self.featureEntered.emit([])
+                    if self.clearOnEnter:
+                        self.setText('')
+                        self.featureEntered.emit([])
                     return
         isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
         if (self.completer is None or not isShortcut):
@@ -1386,7 +1388,6 @@ class InventoryBox(QWidget):
                     cat = self.inventory.categorize(s)
                 except KeyError:
                     cat = None
-                print(s.symbol, cat)
                 btn = SegmentButton(s.symbol)
                 btn.setCheckable(True)
                 btn.setAutoExclusive(False)

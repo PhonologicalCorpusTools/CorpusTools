@@ -428,6 +428,34 @@ class FeatureMatrix(object):
             return True
         return False
 
+    def features_to_segments(self, feature_description):
+        """
+        Given a feature description, return the segments in the inventory
+        that match that feature description
+
+        Feature descriptions should be either lists, such as
+        ['+feature1', '-feature2'] or strings that can be separated into
+        lists by ',', such as '+feature1,-feature2'.
+
+        Parameters
+        ----------
+        feature_description : string or list
+            Feature values that specify the segments, see above for format
+
+        Returns
+        -------
+        list of Segments
+            Segments that match the feature description
+
+        """
+        segments = []
+        if isinstance(feature_description, str):
+            feature_description = feature_description.split(',')
+        for k,v in self.matrix.items():
+            if v.feature_match(feature_description):
+                segments.append(k)
+        return segments
+
     def __setstate__(self,state):
         if '_features' not in state:
             state['_features'] = state['features']
@@ -521,6 +549,64 @@ class FeatureMatrix(object):
                     if f not in v:
                         self.matrix[k][f] = default
 
+
+    def valid_feature_strings(self):
+        strings = []
+        for v in self.possible_values:
+            for f in self.features:
+                strings.append(v+f)
+        return strings
+
+    def categorize(self, seg):
+        if seg == '#':
+            return None
+        seg_features = seg.features
+        if seg.feature_match(self.vowel_feature):
+            category = ['Vowel']
+
+            if seg.feature_match(self.diph_feature):
+                category.insert(0,'Diphthong')
+                return category
+
+            for k,v in self.height.items():
+                if seg.feature_match(v):
+                    category.append(k)
+                    break
+            else:
+                category.append(None)
+            for k,v in self.backness.items():
+                if seg.feature_match(v):
+                    category.append(k)
+                    break
+            else:
+                category.append(None)
+
+            if seg.feature_match(self.rounded_feature):
+                category.append('Rounded')
+            else:
+                category.append('Unrounded')
+        else:
+            category = ['Consonant']
+
+            for k,v in self.places.items():
+                if seg.feature_match(v):
+                    category.append(k)
+                    break
+            else:
+                category.append(None)
+
+            for k,v in self.manners.items():
+                if seg.feature_match(v):
+                    category.append(k)
+                    break
+            else:
+                category.append(None)
+
+            if seg.feature_match(self.voice_feature):
+                category.append('Voiced')
+            else:
+                category.append('Voiceless')
+        return category
     @property
     def segments(self):
         """
