@@ -11,7 +11,8 @@ try:
                             QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
                             QStringListModel)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
-                            QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap)
+                            QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap,
+                            QDesktopServices)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,
                                 QDialog, QListWidget, QGroupBox,QVBoxLayout,

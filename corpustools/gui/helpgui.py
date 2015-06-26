@@ -59,6 +59,7 @@ class HelpDialog(QDialog):
 
         layout = QVBoxLayout()
 
+
         self.webView = QWebView(self)
 
         html_name = 'index.html'
@@ -82,8 +83,15 @@ class HelpDialog(QDialog):
             url.setFragment(section)
         self.webView.setUrl(url)
 
+        self.urlLabel = QLabel("<qt>Online documentation available at \
+                        <a href = \"{}\">{}</a>.</qt>".format(url.url(), url.url()))
+        self.urlLabel.setWordWrap(True)
+        self.urlLabel.linkActivated.connect(self.openURL)
+        layout.addWidget(self.urlLabel)
         layout.addWidget(self.webView)
 
         self.setLayout(layout)
 
+    def openURL(self, URL):
+        QDesktopServices().openUrl(QUrl(URL))
 
