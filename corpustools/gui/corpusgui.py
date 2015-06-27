@@ -551,15 +551,24 @@ class AddAbstractTierDialog(QDialog):
 
         self.setWindowTitle('Create abstract tier')
 
+    def generateSegList(self):
+        consonants = []
+        vowels = []
+        for seg in self.corpus.inventory:
+            category = self.corpus.inventory.categorize(seg)
+            if category is None:
+                continue
+            elif category[0] == 'Consonant':
+                consonants.append(seg.symbol)
+            else:
+                vowels.append(seg.symbol)
+        segList = {'C' : consonants,
+                    'V' : vowels}
+        return segList
+
     def preview(self):
         if self.cvradio.isChecked():
-            segList = {'C' : [x.symbol for x in self.corpus.inventory
-                                    if x.category is not None
-                                    and x.category[0] == 'Consonant'],
-                        'V' : [x.symbol for x in self.corpus.inventory
-                                    if x.category is not None
-                                    and x.category[0] != 'Consonant'],
-                                    }
+            segList = self.generateSegList()
         preview = "The following abstract symbols correspond to the following segments:\n"
         for k,v in segList.items():
             preview += '{}: {}\n'.format(k,', '.join(v))
@@ -571,13 +580,7 @@ class AddAbstractTierDialog(QDialog):
         if self.cvradio.isChecked():
             tierName = 'CV skeleton'
             self.attribute = Attribute('cvskeleton','factor','CV skeleton')
-            self.segList = {'C' : [x.symbol for x in self.corpus.inventory
-                                    if x.category is not None
-                                    and x.category[0] == 'Consonant'],
-                        'V' : [x.symbol for x in self.corpus.inventory
-                                    if x.category is not None
-                                    and x.category[0] != 'Consonant'],
-                                    }
+            self.segList = self.generateSegList()
 
         if tierName == '':
             reply = QMessageBox.critical(self,
