@@ -1773,7 +1773,7 @@ class SegPairTableWidget(TableWidget):
         self.openPersistentEditor(self.model().index(begin, 2))
 
 class SegmentPairSelectWidget(QGroupBox):
-    def __init__(self,inventory,parent=None):
+    def __init__(self,inventory,parent=None, features = True):
         QGroupBox.__init__(self,'Segments',parent)
 
         self.inventory = inventory
@@ -1798,7 +1798,11 @@ class SegmentPairSelectWidget(QGroupBox):
 
         vbox.addWidget(self.addButton)
         #vbox.addWidget(self.addSetButton)
-        vbox.addWidget(self.addFeatButton)
+        if features:
+            if len(self.inventory.features) == 0:
+                self.addFeatButton.setEnabled(False)
+            vbox.addWidget(self.addFeatButton)
+
         vbox.addWidget(self.removeButton)
         vbox.addWidget(self.table)
         self.setLayout(vbox)

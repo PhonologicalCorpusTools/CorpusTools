@@ -52,18 +52,18 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
             if x not in corpus_context.inventory:
                 raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(x))
     else:
-        seg1 = [seg1]
         if not seg1 in corpus_context.inventory or not seg2 in corpus_context.inventory:
             raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(seg1))
+        seg1 = [seg1]
 
     if isinstance(seg2, tuple):
         for x in seg2:
             if x not in corpus_context.inventory:
                 raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(x))
     else:
-        seg2 = [seg2]
         if not seg2 in corpus_context.inventory:
             raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(seg2))
+        seg2 = [seg2]
 
     allC = defaultdict(Context)
     seg_counts = {'seg1':0, 'seg2':0}
