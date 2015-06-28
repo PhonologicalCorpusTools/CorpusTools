@@ -434,7 +434,7 @@ class SegmentPairModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = ['Segment 1', 'Segment 2', '']
-        self.rows = list()
+        self.rows = []
 
     def switchRow(self,row):
         seg1,seg2 = self.rows[row]

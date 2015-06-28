@@ -605,7 +605,7 @@ class CategoryWidget(QWidget):
         self.category = category
         layout = QHBoxLayout()
 
-        self.searchWidget = FeatureEdit(self.specifier)
+        self.searchWidget = FeatureEdit(self.specifier, clearOnEnter = False)
         self.completer = FeatureCompleter(self.specifier)
         self.searchWidget.setCompleter(self.completer)
         if isinstance(features, dict):

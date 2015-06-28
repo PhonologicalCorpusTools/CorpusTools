@@ -20,7 +20,14 @@ class Segment(object):
 
     def specify(self, feature_dict):
         self.features = {k.lower(): v for k,v in feature_dict.items()}
-        self.features = {k.lower(): v for k,v in feature_dict.items()}
+
+    def minimal_difference(self, other, feature):
+        for k, v in self.features.items():
+            if k == feature:
+                continue
+            if v != other[k]:
+                return False
+        return True
 
     def feature_match(self, specification):
         """
@@ -169,7 +176,7 @@ class Transcription(object):
     def find(self, environment):
         if not isinstance(environment, EnvironmentFilter):
             return None
-        if all(m not in self for m in environment.middle):
+        if all(m not in self for m in environment._middle):
             return None
         num_segs = len(environment)
 
@@ -978,7 +985,7 @@ class EnvironmentFilter(object):
 
     """
     def __init__(self, middle_segments, lhs = None, rhs = None):
-        self.middle = middle_segments
+        self.original_middle = middle_segments
         if lhs is not None:
             lhs = tuple(lhs)
         self.lhs = lhs
@@ -988,6 +995,15 @@ class EnvironmentFilter(object):
 
         self.lhs_string = None
         self.rhs_string = None
+        self.sanitize()
+
+    @property
+    def middle(self):
+        return self.original_middle
+
+    @middle.setter
+    def middle(self, middle_segments):
+        self.original_middle = middle_segments
         self.sanitize()
 
     def sanitize(self):
@@ -1009,6 +1025,12 @@ class EnvironmentFilter(object):
             self.rhs = tuple(new_rhs)
         if not isinstance(self.middle, frozenset):
             self.middle = frozenset(self.middle)
+        self._middle = set()
+        for m in self.middle:
+            if isinstance(m, str):
+                self._middle.add(m)
+            elif isinstance(m, (list, tuple, set)):
+                self._middle.update(m)
 
     def is_applicable(self, sequence):
         if len(sequence) < len(self):
@@ -1040,13 +1062,13 @@ class EnvironmentFilter(object):
         if self.lhs is not None:
             for s in self.lhs:
                 yield s
-        yield self.middle
+        yield self._middle
         if self.rhs is not None:
             for s in self.rhs:
                 yield s
 
     def __len__(self):
-        length = len(self.middle)
+        length = 1
         if self.lhs is not None:
             length += len(self.lhs)
         if self.rhs is not None:
@@ -1353,6 +1375,33 @@ class Inventory(object):
             for f in self.features:
                 strings.append(v+f)
         return strings
+
+    def find_min_feature_pairs(self, feature, others = None):
+        plus_segs = []
+        minus_segs = []
+        for seg in self:
+            if seg[feature] not in set('+-'):
+                continue
+            if seg in plus_segs:
+                continue
+            if seg in minus_segs:
+                continue
+            if not seg.feature_match(others):
+                continue
+            for seg2 in self:
+                if seg == seg2:
+                    continue
+                if seg.minimal_difference(seg2, feature):
+                    break
+            else:
+                continue
+            if seg[feature] == '+':
+                plus_segs.append(seg)
+                minus_segs.append(seg2)
+            else:
+                plus_segs.append(seg2)
+                minus_segs.append(seg)
+        return plus_segs, minus_segs
 
     def features_to_segments(self, feature_description):
         """
