@@ -47,8 +47,23 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
     ## FIXME:  This function should be refactored into in KL proper and
     ## another function that determines underlying form type things
 
-    if not seg1 in corpus_context.inventory or not seg2 in corpus_context.inventory:
-        raise ValueError('One segment does not exist in this corpus')
+    if isinstance(seg1, tuple):
+        for x in seg1:
+            if x not in corpus_context.inventory:
+                raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(x))
+    else:
+        seg1 = [seg1]
+        if not seg1 in corpus_context.inventory or not seg2 in corpus_context.inventory:
+            raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(seg1))
+
+    if isinstance(seg2, tuple):
+        for x in seg2:
+            if x not in corpus_context.inventory:
+                raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(x))
+    else:
+        seg2 = [seg2]
+        if not seg2 in corpus_context.inventory:
+            raise ValueError('Segment \'{}\' does not exist in this corpus.'.format(seg2))
 
     allC = defaultdict(Context)
     seg_counts = {'seg1':0, 'seg2':0}
@@ -66,12 +81,12 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
                 thisc = thisc[1]
 
             flag = False
-            if seg1 == seg:
+            if seg in seg1:
                 allC[thisc].seg1 += word.frequency
                 seg_counts['seg1'] += word.frequency
                 flag = True
 
-            if seg2 == seg:
+            if seg in seg2:
                 allC[thisc].seg2 += word.frequency
                 seg_counts['seg2'] += word.frequency
                 flag = True
@@ -127,11 +142,13 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
 
 
 def check_spurious(ur, sr, corpus_context):
+    if len(ur) > 1: #Set of segments, probably supplied from GUI, hack until refactor
+        return 'No'
     #returns a string, not a bool, for printing to a results table
     if corpus_context.specifier is None:
         return 'Maybe'
-    ur = corpus_context.corpus.segment_to_features(ur).features
-    sr = corpus_context.corpus.segment_to_features(sr).features
+    ur = corpus_context.corpus.segment_to_features(ur[0]).features
+    sr = corpus_context.corpus.segment_to_features(sr[0]).features
     diff = lambda flist1,flist2: len([f1 for f1,f2 in zip(sorted(flist1.values()),
                                                           sorted(flist2.values()))
                                       if not f1==f2])
