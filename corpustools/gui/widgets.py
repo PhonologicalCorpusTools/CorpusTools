@@ -1571,18 +1571,13 @@ class TranscriptionWidget(QGroupBox):
             self.showInv.setText('Show inventory')
         self.updateGeometry()
 
-class SegmentPairDialog(QDialog):
+class AbstractPairDialog(QDialog):
     rowToAdd = Signal(object)
-    def __init__(self, inventory,parent=None):
-        QDialog.__init__(self,parent)
+    def __init__(self, inventory, parent = None):
+        QDialog.__init__(self, parent)
+        self.inventory = inventory
 
         layout = QVBoxLayout()
-
-        self.inventoryFrame = SegmentSelectionWidget(inventory)
-
-        layout.addWidget(self.inventoryFrame)
-
-        self.setLayout(layout)
 
         self.oneButton = QPushButton('Add')
         self.anotherButton = QPushButton('Add and create another')
@@ -1601,7 +1596,6 @@ class SegmentPairDialog(QDialog):
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
-        self.setWindowTitle('Select segment pair')
 
     def one(self):
         self.addOneMore = False
@@ -1611,24 +1605,31 @@ class SegmentPairDialog(QDialog):
         self.addOneMore = True
         self.accept()
 
-    def reset(self):
-        self.inventoryFrame.clearAll()
-
     def reject(self):
         self.addOneMore = False
         QDialog.reject(self)
+
+class SegmentPairDialog(AbstractPairDialog):
+    def __init__(self, inventory, parent = None):
+        AbstractPairDialog.__init__(self, inventory,parent)
+
+        self.inventoryFrame = SegmentSelectionWidget(self.inventory)
+
+        self.layout().insertWidget(0, self.inventoryFrame)
+
+        self.setWindowTitle('Select segment pair')
+
+    def reset(self):
+        self.inventoryFrame.clearAll()
 
     def accept(self):
         selected = self.inventoryFrame.value()
         self.rowToAdd.emit(combinations(selected,2))
         QDialog.accept(self)
 
-class FeaturePairDialog(QDialog):
-    rowToAdd = Signal(object)
-    def __init__(self, inventory,parent=None):
-        QDialog.__init__(self,parent)
-        self.inventory = inventory
-        layout = QVBoxLayout()
+class FeaturePairDialog(AbstractPairDialog):
+    def __init__(self, inventory, parent = None):
+        AbstractPairDialog.__init__(self, inventory,parent)
 
         mainlayout = QFormLayout()
 
@@ -1648,7 +1649,7 @@ class FeaturePairDialog(QDialog):
 
         mainlayout.addRow('Filter pairs', self.searchWidget)
 
-        layout.addLayout(mainlayout)
+        self.layout().insertLayout(0,mainlayout)
         seglayout = QHBoxLayout()
 
         self.segOneFrame = QGroupBox('First segments')
@@ -1671,27 +1672,8 @@ class FeaturePairDialog(QDialog):
 
         seglayout.addWidget(self.segTwoFrame)
 
-        layout.addLayout(seglayout)
+        self.layout().insertLayout(1, seglayout)
 
-        self.setLayout(layout)
-
-        self.oneButton = QPushButton('Add')
-        self.anotherButton = QPushButton('Add and create another')
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
-        acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
-        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
-        self.oneButton.clicked.connect(self.one)
-        self.anotherButton.clicked.connect(self.another)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
-
-        self.setLayout(layout)
         self.setWindowTitle('Select feature pair')
 
     def updateSegments(self, features = None):
@@ -1715,22 +1697,10 @@ class FeaturePairDialog(QDialog):
         self.segOneLabel.setText('\n'.join(map(str,plus_segs)))
         self.segTwoLabel.setText('\n'.join(map(str,minus_segs)))
 
-    def one(self):
-        self.addOneMore = False
-        self.accept()
-
-    def another(self):
-        self.addOneMore = True
-        self.accept()
-
     def reset(self):
         self.featureWidget.setText('')
         self.searchWidget.setText('')
         self.updateSegments()
-
-    def reject(self):
-        self.addOneMore = False
-        QDialog.reject(self)
 
     def accept(self):
         self.rowToAdd.emit([(tuple(self.segOneLabel.text().split('\n')),
