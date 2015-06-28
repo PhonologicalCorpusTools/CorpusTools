@@ -12,7 +12,7 @@ def check_envs(corpus_context, envs, stop_check, call_back):
 """
 
     env_matches = {env: {seg: 0 for seg in env.middle} for env in envs}
-
+    is_sets = not all(isinstance(x, str) for x in envs[0].middle)
     missing_envs = defaultdict(set)
     overlapping_envs = defaultdict(dict)
 
@@ -39,7 +39,12 @@ def check_envs(corpus_context, envs, stop_check, call_back):
             if es is not None:
                 found_env = True
                 for e in es:
-                    env_matches[env][e.middle] += word.frequency
+                    if is_sets:
+                        for x in env.middle:
+                            if e.middle in x:
+                                env_matches[env][x] += word.frequency
+                    else:
+                        env_matches[env][e.middle] += word.frequency
                     overlaps[e].append(env)
 
 
@@ -86,8 +91,19 @@ def calc_prod_all_envs(corpus_context, seg1, seg2, all_info = False, stop_check 
     freq_base  = corpus_context.get_frequency_base()
     if stop_check is not None and stop_check():
         return
-    seg1_count = freq_base[seg1]
-    seg2_count = freq_base[seg2]
+    if isinstance(seg1, str):
+        seg1_count = freq_base[seg1]
+    elif isinstance(seg1, (tuple, list, set)):
+        seg1_count = sum(freq_base[x] for x in seg1)
+    else:
+        raise(NotImplementedError)
+
+    if isinstance(seg2, str):
+        seg2_count = freq_base[seg2]
+    elif isinstance(seg2, (tuple, list, set)):
+        seg2_count = sum(freq_base[x] for x in seg2)
+    else:
+        raise(NotImplementedError)
     total_count = seg1_count + seg2_count
     if total_count:
         H = -1 * ((seg1_count/total_count) * log2(seg1_count/total_count) + (seg2_count/total_count) * log2(seg2_count/total_count))

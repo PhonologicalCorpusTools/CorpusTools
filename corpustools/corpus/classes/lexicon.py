@@ -169,7 +169,7 @@ class Transcription(object):
     def find(self, environment):
         if not isinstance(environment, EnvironmentFilter):
             return None
-        if all(m not in self for m in environment.middle):
+        if all(m not in self for m in environment._middle):
             return None
         num_segs = len(environment)
 
@@ -978,7 +978,7 @@ class EnvironmentFilter(object):
 
     """
     def __init__(self, middle_segments, lhs = None, rhs = None):
-        self.middle = middle_segments
+        self.original_middle = middle_segments
         if lhs is not None:
             lhs = tuple(lhs)
         self.lhs = lhs
@@ -988,6 +988,15 @@ class EnvironmentFilter(object):
 
         self.lhs_string = None
         self.rhs_string = None
+        self.sanitize()
+
+    @property
+    def middle(self):
+        return self.original_middle
+
+    @middle.setter
+    def middle(self, middle_segments):
+        self.original_middle = middle_segments
         self.sanitize()
 
     def sanitize(self):
@@ -1009,6 +1018,12 @@ class EnvironmentFilter(object):
             self.rhs = tuple(new_rhs)
         if not isinstance(self.middle, frozenset):
             self.middle = frozenset(self.middle)
+        self._middle = set()
+        for m in self.middle:
+            if isinstance(m, str):
+                self._middle.add(m)
+            elif isinstance(m, (list, tuple, set)):
+                self._middle.update(m)
 
     def is_applicable(self, sequence):
         if len(sequence) < len(self):
@@ -1040,13 +1055,13 @@ class EnvironmentFilter(object):
         if self.lhs is not None:
             for s in self.lhs:
                 yield s
-        yield self.middle
+        yield self._middle
         if self.rhs is not None:
             for s in self.rhs:
                 yield s
 
     def __len__(self):
-        length = len(self.middle)
+        length = 1
         if self.lhs is not None:
             length += len(self.lhs)
         if self.rhs is not None:

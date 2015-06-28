@@ -1172,7 +1172,7 @@ class FeatureCompleter(QCompleter):
         self.popup().setCurrentIndex(self.model().index(0, 0))
 
 class SegmentSelectionWidget(QWidget):
-    def __init__(self, inventory, parent = None):
+    def __init__(self, inventory, parent = None, exclusive = False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
 
@@ -1181,6 +1181,8 @@ class SegmentSelectionWidget(QWidget):
         self.searchWidget.setCompleter(self.completer)
 
         self.inventoryFrame = InventoryBox('', self.inventory)
+        if exclusive:
+            self.inventoryFrame.setExclusive(True)
 
         layout = QVBoxLayout()
 
@@ -1218,6 +1220,8 @@ class SegmentSelectionWidget(QWidget):
         self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
         self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegmentFeatures)
 
+    def setExclusive(self, b):
+        self.inventoryFrame.setExclusive(b)
 
     def select(self, segments):
         self.inventoryFrame.selectSegments(segments)
@@ -1229,7 +1233,7 @@ class SegmentSelectionWidget(QWidget):
         return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
-    def __init__(self, title,inventory,parent=None):
+    def __init__(self, title, inventory,parent=None):
         QWidget.__init__(self,parent)
 
         self.inventory = inventory
@@ -1519,7 +1523,7 @@ class InventoryBox(QWidget):
             for b in self.btnGroup.buttons():
                 if b.isChecked():
                     value.append(b.text())
-            return value
+            return tuple(value)
 
 class TranscriptionWidget(QGroupBox):
     transcriptionChanged = Signal(object)
@@ -1568,6 +1572,7 @@ class TranscriptionWidget(QGroupBox):
         self.updateGeometry()
 
 class SegmentPairDialog(QDialog):
+    rowToAdd = Signal(object)
     def __init__(self, inventory,parent=None):
         QDialog.__init__(self,parent)
 
@@ -1615,7 +1620,7 @@ class SegmentPairDialog(QDialog):
 
     def accept(self):
         selected = self.inventoryFrame.value()
-        self.pairs = combinations(selected,2)
+        self.rowToAdd.emit(combinations(selected,2))
         QDialog.accept(self)
 
 class SegPairTableWidget(TableWidget):
@@ -1660,9 +1665,12 @@ class SegmentPairSelectWidget(QGroupBox):
         vbox = QVBoxLayout()
         self.addButton = QPushButton('Add pair of sounds')
         self.addButton.clicked.connect(self.segPairPopup)
+        self.addSetButton = QPushButton('Add pair of segment sets')
+        self.addSetButton.clicked.connect(self.segSetPairPopup)
         self.removeButton = QPushButton('Remove selected sound pair')
         self.removeButton.clicked.connect(self.removePair)
         self.addButton.setAutoDefault(False)
+        self.addSetButton.setDefault(False)
         self.addButton.setDefault(False)
         self.removeButton.setAutoDefault(False)
         self.removeButton.setDefault(False)
@@ -1670,20 +1678,29 @@ class SegmentPairSelectWidget(QGroupBox):
         self.table = SegPairTableWidget()
 
         vbox.addWidget(self.addButton)
+        vbox.addWidget(self.addSetButton)
         vbox.addWidget(self.removeButton)
         vbox.addWidget(self.table)
         self.setLayout(vbox)
 
-        self.setFixedWidth(self.minimumSizeHint().width())
+        #self.setFixedWidth(self.minimumSizeHint().width())
 
-    def segPairPopup(self):
-        dialog = SegmentPairDialog(self.inventory)
+    def segSetPairPopup(self):
+        dialog = SegmentSetPairDialog(self.inventory)
+        dialog.rowToAdd.connect(self.addPairs)
         addOneMore = True
         while addOneMore:
             dialog.reset()
             result = dialog.exec_()
-            if result:
-                self.addPairs(dialog.pairs)
+            addOneMore = dialog.addOneMore
+
+    def segPairPopup(self):
+        dialog = SegmentPairDialog(self.inventory)
+        dialog.rowToAdd.connect(self.addPairs)
+        addOneMore = True
+        while addOneMore:
+            dialog.reset()
+            result = dialog.exec_()
             addOneMore = dialog.addOneMore
 
     def addPairs(self, pairs):
@@ -1700,8 +1717,8 @@ class SegmentPairSelectWidget(QGroupBox):
         return self.table.model().rows
 
 class BigramDialog(QDialog):
-    rowToAdd = Signal(str)
-    def __init__(self, inventory,parent=None):
+    rowToAdd = Signal(object)
+    def __init__(self, inventory, parent = None):
         QDialog.__init__(self,parent)
 
         self.inventory = inventory
@@ -1710,9 +1727,9 @@ class BigramDialog(QDialog):
 
         layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        lhsEnvFrame = QGroupBox('Left hand side')
+        self.lhsEnvFrame = QGroupBox('Left hand side')
 
-        rhsEnvFrame = QGroupBox('Right hand side')
+        self.rhsEnvFrame = QGroupBox('Right hand side')
 
         lhsEnvLayout = QVBoxLayout()
 
@@ -1722,22 +1739,22 @@ class BigramDialog(QDialog):
 
         rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        self.lhs = SegmentSelectionWidget(self.inventory)
+        self.lhs = SegmentSelectionWidget(self.inventory, exclusive = True)
 
-        self.rhs = SegmentSelectionWidget(self.inventory)
+        self.rhs = SegmentSelectionWidget(self.inventory, exclusive = True)
 
         lhsEnvLayout.addWidget(self.lhs)
         rhsEnvLayout.addWidget(self.rhs)
 
-        lhsEnvFrame.setLayout(lhsEnvLayout)
+        self.lhsEnvFrame.setLayout(lhsEnvLayout)
 
-        rhsEnvFrame.setLayout(rhsEnvLayout)
+        self.rhsEnvFrame.setLayout(rhsEnvLayout)
         envFrame = QFrame()
 
         envLayout = QHBoxLayout()
 
-        envLayout.addWidget(lhsEnvFrame)
-        envLayout.addWidget(rhsEnvFrame)
+        envLayout.addWidget(self.lhsEnvFrame)
+        envLayout.addWidget(self.rhsEnvFrame)
 
         envFrame.setLayout(envLayout)
 
@@ -1788,16 +1805,21 @@ class BigramDialog(QDialog):
                     "Missing information", "Please specify a right hand of the bigram.")
             return
 
-        env = '{}{}'.format(lhs,rhs)
-        self.rowToAdd.emit(env)
+        env = lhs, rhs
+        self.rowToAdd.emit([env])
         if not self.addOneMore:
             QDialog.accept(self)
         else:
             self.reset()
 
-    def reject(self):
-        QDialog.reject(self)
-
+class SegmentSetPairDialog(BigramDialog):
+    def __init__(self, inventory, parent = None):
+        BigramDialog.__init__(self, inventory, parent)
+        self.lhsEnvFrame.setTitle('First set')
+        self.rhsEnvFrame.setTitle('Second set')
+        self.setWindowTitle('Create pairs of segment sets')
+        self.lhs.setExclusive(False)
+        self.rhs.setExclusive(False)
 
 class SegmentSelectDialog(QDialog):
     def __init__(self, inventory, selected = None, parent=None):
@@ -2047,7 +2069,7 @@ class BigramWidget(QGroupBox):
         self.setLayout(vbox)
 
     def addRow(self, row):
-        self.table.model().addRow([row])
+        self.table.model().addRow(''.join(row))
 
     def envPopup(self):
         dialog = BigramDialog(self.inventory,self)
