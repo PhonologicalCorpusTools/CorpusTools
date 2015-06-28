@@ -173,7 +173,7 @@ def test_inventory_box(qtbot, specified_test_corpus):
     assert(widget.value() == '')
 
     widget.setExclusive(False)
-    assert(widget.value() == [])
+    assert(widget.value() == ())
     for b in widget.btnGroup.buttons():
         b.setChecked(True)
 

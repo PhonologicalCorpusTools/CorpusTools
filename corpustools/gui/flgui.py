@@ -40,14 +40,14 @@ class FLWorker(FunctionWorker):
                 frequency_threshold = kwargs.pop('frequency_cutoff')) as c:
             try:
                 pairs = kwargs.pop('segment_pairs')
-                if kwargs.pop('pair_behavior') == 'individual':
-                    for pair in pairs:
-                        res = func(c, [pair], **kwargs)
-                        if self.stopped:
-                            break
-                        self.results.append(res)
-                else:
-                    res = func(c, pairs, **kwargs)
+                for pair in pairs:
+                    if isinstance(pair[0], (list, tuple)):
+                        in_list = list(zip(pair[0], pair[1]))
+                    else:
+                        in_list = [pair]
+                    res = func(c, in_list, **kwargs)
+                    if self.stopped:
+                        break
                     self.results.append(res)
             except PCTError as e:
                 self.errorEncountered.emit(e)
@@ -136,12 +136,6 @@ class FLDialog(FunctionDialog):
 
         optionLayout.addWidget(self.variantsWidget)
 
-        self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
-                                                OrderedDict([('All segment pairs together','together'),
-                                                ('Each segment pair individually','individual')]))
-
-        optionLayout.addWidget(self.segPairOptionsWidget)
-
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
         self.minFreqEdit = QLineEdit()
@@ -203,11 +197,6 @@ class FLDialog(FunctionDialog):
                                     ' vs. a tier containing only [+voc] segments).'
                                     ' New tiers can be created from the Corpus menu.'
                                     "</FONT>"))
-            self.segPairOptionsWidget.setToolTip(("<FONT COLOR=black>"
-            'Choose either to calculate the'
-                                ' functional load of a particular contrast among a group of segments'
-                                ' to calculate the functional loads of a series of segment pairs separately.'
-                                "</FONT>"))
             self.segPairWidget.setToolTip(("<FONT COLOR=black>"
             'Add pairs of sounds whose contrast to collapse.'
                                     ' For example, if you\'re interested in the functional load of the [s]'
@@ -259,7 +248,6 @@ class FLDialog(FunctionDialog):
                 'context': self.variantsWidget.value(),
                 'sequence_type': self.tierWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
-                'pair_behavior':self.segPairOptionsWidget.value(),
                 'type_token':self.typeTokenWidget.value(),
                 'algorithm': alg}
         if alg == 'min_pairs':
@@ -274,29 +262,14 @@ class FLDialog(FunctionDialog):
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        if self.segPairOptionsWidget.value() == 'individual':
-            for i, r in enumerate(results):
-                if isinstance(r, tuple):
-                    r = r[0]
-                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                    self.tierWidget.displayValue(),
-                                    self.algorithmWidget.displayValue(),
-                                    r,
-                                    self.homophoneWidget.isChecked(),
-                                    self.relativeCountWidget.isChecked(),
-                                    frequency_cutoff,
-                                    self.typeTokenWidget.value()])
-        else:
-            if isinstance(results[0], tuple):
-                r = results[0][0]
-            else:
-                r = results[0]
-            self.results.append([', '.join(x[0] for x in seg_pairs),
-                                ', '.join(x[1] for x in seg_pairs),
-                                    self.tierWidget.displayValue(),
-                                    self.algorithmWidget.displayValue(),
-                                    r,
-                                    self.homophoneWidget.isChecked(),
-                                    self.relativeCountWidget.isChecked(),
-                                    frequency_cutoff,
-                                    self.typeTokenWidget.value()])
+        for i, r in enumerate(results):
+            if isinstance(r, tuple):
+                r = r[0]
+            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+                                self.tierWidget.displayValue(),
+                                self.algorithmWidget.displayValue(),
+                                r,
+                                self.homophoneWidget.isChecked(),
+                                self.relativeCountWidget.isChecked(),
+                                frequency_cutoff,
+                                self.typeTokenWidget.value()])

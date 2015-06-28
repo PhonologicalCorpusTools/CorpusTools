@@ -20,7 +20,14 @@ class Segment(object):
 
     def specify(self, feature_dict):
         self.features = {k.lower(): v for k,v in feature_dict.items()}
-        self.features = {k.lower(): v for k,v in feature_dict.items()}
+
+    def minimal_difference(self, other, feature):
+        for k, v in self.features.items():
+            if k == feature:
+                continue
+            if v != other[k]:
+                return False
+        return True
 
     def feature_match(self, specification):
         """
@@ -1368,6 +1375,33 @@ class Inventory(object):
             for f in self.features:
                 strings.append(v+f)
         return strings
+
+    def find_min_feature_pairs(self, feature, others = None):
+        plus_segs = []
+        minus_segs = []
+        for seg in self:
+            if seg[feature] not in set('+-'):
+                continue
+            if seg in plus_segs:
+                continue
+            if seg in minus_segs:
+                continue
+            if not seg.feature_match(others):
+                continue
+            for seg2 in self:
+                if seg == seg2:
+                    continue
+                if seg.minimal_difference(seg2, feature):
+                    break
+            else:
+                continue
+            if seg[feature] == '+':
+                plus_segs.append(seg)
+                minus_segs.append(seg2)
+            else:
+                plus_segs.append(seg2)
+                minus_segs.append(seg)
+        return plus_segs, minus_segs
 
     def features_to_segments(self, feature_description):
         """

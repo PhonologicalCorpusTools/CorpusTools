@@ -1119,8 +1119,8 @@ class FeatureEdit(QLineEdit):
         d, text = self.parseText()
         text[-1] = string
         text = [x for x in text if x in self.valid_strings]
-        self.featureEntered.emit(text)
         self.setText(d.join(text))
+        self.featureEntered.emit(text)
 
     def currentFeature(self):
         return self.delimPattern.split(self.text())[-1]
@@ -1623,6 +1623,122 @@ class SegmentPairDialog(QDialog):
         self.rowToAdd.emit(combinations(selected,2))
         QDialog.accept(self)
 
+class FeaturePairDialog(QDialog):
+    rowToAdd = Signal(object)
+    def __init__(self, inventory,parent=None):
+        QDialog.__init__(self,parent)
+        self.inventory = inventory
+        layout = QVBoxLayout()
+
+        mainlayout = QFormLayout()
+
+        self.featureWidget = FeatureEdit(self.inventory, clearOnEnter = False)
+        self.featureWidget.valid_strings = self.inventory.features
+        self.featureCompleter = FeatureCompleter(self.inventory)
+        self.featureCompleter.stringList = self.inventory.features
+        self.featureWidget.setCompleter(self.featureCompleter)
+        self.featureWidget.featureEntered.connect(self.updateSegments)
+
+        mainlayout.addRow('Feature to make pairs',self.featureWidget)
+
+        self.searchWidget = FeatureEdit(self.inventory, clearOnEnter = False)
+        self.completer = FeatureCompleter(self.inventory)
+        self.searchWidget.setCompleter(self.completer)
+        self.searchWidget.featureEntered.connect(self.updateSegments)
+
+        mainlayout.addRow('Filter pairs', self.searchWidget)
+
+        layout.addLayout(mainlayout)
+        seglayout = QHBoxLayout()
+
+        self.segOneFrame = QGroupBox('First segments')
+
+        self.segTwoFrame = QGroupBox('Second segments')
+
+        self.segOneLabel = QLabel('No included segments')
+
+        box = QVBoxLayout()
+        box.addWidget(self.segOneLabel)
+        self.segOneFrame.setLayout(box)
+
+        self.segTwoLabel = QLabel('No included segments')
+
+        box = QVBoxLayout()
+        box.addWidget(self.segTwoLabel)
+        self.segTwoFrame.setLayout(box)
+
+        seglayout.addWidget(self.segOneFrame)
+
+        seglayout.addWidget(self.segTwoFrame)
+
+        layout.addLayout(seglayout)
+
+        self.setLayout(layout)
+
+        self.oneButton = QPushButton('Add')
+        self.anotherButton = QPushButton('Add and create another')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.oneButton.clicked.connect(self.one)
+        self.anotherButton.clicked.connect(self.another)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Select feature pair')
+
+    def updateSegments(self, features = None):
+        features = self.featureWidget.features()
+        if len(features) == 0:
+            self.segOneFrame.setTitle('First segments')
+            self.segTwoFrame.setTitle('Second segments')
+
+            self.segOneLabel.setText('No included segments')
+            self.segTwoLabel.setText('No included segments')
+            return
+        feature = features[0]
+        plus = '+' + feature
+        minus = '-' + feature
+        others = self.searchWidget.features()
+
+        plus_segs, minus_segs = self.inventory.find_min_feature_pairs(feature, others)
+        self.segOneFrame.setTitle('First segments ({})'.format(plus))
+        self.segTwoFrame.setTitle('Second segments ({})'.format(minus))
+
+        self.segOneLabel.setText('\n'.join(map(str,plus_segs)))
+        self.segTwoLabel.setText('\n'.join(map(str,minus_segs)))
+
+    def one(self):
+        self.addOneMore = False
+        self.accept()
+
+    def another(self):
+        self.addOneMore = True
+        self.accept()
+
+    def reset(self):
+        self.featureWidget.setText('')
+        self.searchWidget.setText('')
+        self.updateSegments()
+
+    def reject(self):
+        self.addOneMore = False
+        QDialog.reject(self)
+
+    def accept(self):
+        self.rowToAdd.emit([(tuple(self.segOneLabel.text().split('\n')),
+                            tuple(self.segTwoLabel.text().split('\n')))])
+        QDialog.accept(self)
+
+
+
 class SegPairTableWidget(TableWidget):
     def __init__(self, parent = None):
         TableWidget.__init__(self, parent)
@@ -1665,12 +1781,15 @@ class SegmentPairSelectWidget(QGroupBox):
         vbox = QVBoxLayout()
         self.addButton = QPushButton('Add pair of sounds')
         self.addButton.clicked.connect(self.segPairPopup)
-        self.addSetButton = QPushButton('Add pair of segment sets')
-        self.addSetButton.clicked.connect(self.segSetPairPopup)
+        #self.addSetButton = QPushButton('Add pair of segment sets')
+        #self.addSetButton.clicked.connect(self.segSetPairPopup)
+        self.addFeatButton = QPushButton('Add pair of features')
+        self.addFeatButton.clicked.connect(self.featurePairPopup)
         self.removeButton = QPushButton('Remove selected sound pair')
         self.removeButton.clicked.connect(self.removePair)
         self.addButton.setAutoDefault(False)
-        self.addSetButton.setDefault(False)
+        #self.addSetButton.setDefault(False)
+        self.addFeatButton.setDefault(False)
         self.addButton.setDefault(False)
         self.removeButton.setAutoDefault(False)
         self.removeButton.setDefault(False)
@@ -1678,12 +1797,23 @@ class SegmentPairSelectWidget(QGroupBox):
         self.table = SegPairTableWidget()
 
         vbox.addWidget(self.addButton)
-        vbox.addWidget(self.addSetButton)
+        #vbox.addWidget(self.addSetButton)
+        vbox.addWidget(self.addFeatButton)
         vbox.addWidget(self.removeButton)
         vbox.addWidget(self.table)
         self.setLayout(vbox)
 
         #self.setFixedWidth(self.minimumSizeHint().width())
+
+    def featurePairPopup(self):
+        dialog = FeaturePairDialog(self.inventory)
+        dialog.rowToAdd.connect(self.addPairs)
+        addOneMore = True
+        while addOneMore:
+            dialog.reset()
+            result = dialog.exec_()
+            addOneMore = dialog.addOneMore
+
 
     def segSetPairPopup(self):
         dialog = SegmentSetPairDialog(self.inventory)
