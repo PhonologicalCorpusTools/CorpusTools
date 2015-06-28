@@ -1685,17 +1685,18 @@ class FeaturePairDialog(AbstractPairDialog):
             self.segOneLabel.setText('No included segments')
             self.segTwoLabel.setText('No included segments')
             return
-        feature = features[0]
-        plus = '+' + feature
-        minus = '-' + feature
         others = self.searchWidget.features()
+        feature_values = self.inventory.find_min_feature_pairs(features, others)
+        values = sorted(feature_values.keys())
+        if len(values) == 0:
+            return
+        labelOne = [values[0][i] + features[i] for i in range(len(features))]
+        labelTwo = [values[1][i] + features[i] for i in range(len(features))]
+        self.segOneFrame.setTitle('First segments ({})'.format(', '.join(labelOne)))
+        self.segTwoFrame.setTitle('Second segments ({})'.format(', '.join(labelTwo)))
 
-        plus_segs, minus_segs = self.inventory.find_min_feature_pairs(feature, others)
-        self.segOneFrame.setTitle('First segments ({})'.format(plus))
-        self.segTwoFrame.setTitle('Second segments ({})'.format(minus))
-
-        self.segOneLabel.setText('\n'.join(map(str,plus_segs)))
-        self.segTwoLabel.setText('\n'.join(map(str,minus_segs)))
+        self.segOneLabel.setText('\n'.join(map(str,feature_values[values[0]])))
+        self.segTwoLabel.setText('\n'.join(map(str,feature_values[values[1]])))
 
     def reset(self):
         self.featureWidget.setText('')
