@@ -221,6 +221,9 @@ class Transcription(object):
             return self._list[key]
         raise(KeyError)
 
+    def __repr__(self):
+        return self.__str__()
+
     def __str__(self):
         temp_list = []
         for i,s in enumerate(self._list):

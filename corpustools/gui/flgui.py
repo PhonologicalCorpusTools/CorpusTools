@@ -139,10 +139,7 @@ class FLDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
                                                     OrderedDict([('Type','type'),
                                                     ('Token','token')]))
-        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
-                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
-                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
-                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
+        actions = None
         self.variantsWidget = ContextWidget(self.corpus, actions)
 
         optionLayout.addWidget(self.variantsWidget)

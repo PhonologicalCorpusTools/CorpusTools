@@ -84,7 +84,7 @@ def minpair_fl(corpus_context, segment_pairs,
         if any([s in tier for s in all_segments]):
             n = [neutralize_segment(seg, segment_pairs)
                     for seg in tier]
-            neutralized.append(('.'.join(n), w.spelling.lower(), tier))
+            neutralized.append(('.'.join(n), w, tier))
     if stop_check is not None and stop_check():
         return
 
@@ -102,17 +102,29 @@ def minpair_fl(corpus_context, segment_pairs,
                 call_back(cur)
         if not matches(first,second):
             continue
-        ordered_pair = sorted([str(first[2]), str(second[2])])
+        ordered_pair = sorted([(first[1],first[2]), (second[1], second[2])],
+                            key = lambda x: x[1])
         minpairs.append(tuple(ordered_pair))
 
     if not distinguish_homophones:
-        minpairs = set(minpairs)
-
-    result = len(minpairs)
+        actual_minpairs = {}
+        for pair in minpairs:
+            key = (pair[0][1], pair[1][1]) # Keys are tuples of tiers
+            if key not in actual_minpairs:
+                actual_minpairs[key] = (pair[0][0], pair[1][0]) # Values are words
+            else:
+                pair_freq = pair[0][0].frequency + pair[1][0].frequency
+                existing_freq = actual_minpairs[key][0].frequency + \
+                                actual_minpairs[key][1].frequency
+                if pair_freq > existing_freq:
+                    actual_minpairs[key] = (pair[0][0], pair[1][0])
+        result = sum((x[0].frequency + x[1].frequency)/2
+                    for x in actual_minpairs.values())
+    else:
+        result = sum((x[0][0].frequency + x[1][0].frequency)/2 for x in minpairs)
 
     if relative_count and len(neutralized) > 0:
-        result /= len(neutralized)
-
+        result /= sum(x[1].frequency for x in neutralized)
     return (result, minpairs)
 
 def deltah_fl(corpus_context, segment_pairs,
@@ -311,16 +323,14 @@ def entropy(probabilities):
 
 
 def neutralize_segment(segment, segment_pairs):
-    try: # segment is a segment
-        for sp in segment_pairs:
-            if segment.symbol in sp:
-                return 'NEUTR:'+''.join(str(x) for x in sp)
-        return segment.symbol
-    except: # segment is a str
-        for sp in segment_pairs:
-            if segment in sp:
-                return 'NEUTR:'+''.join(str(x) for x in sp)
-        return segment
+    for sp in segment_pairs:
+        try:
+            s = segment.symbol
+        except AttributeError:
+            s = segment
+        if s in sp:
+            return 'NEUTR:'+''.join(str(x) for x in sp)
+    return s
 
 
 def all_pairwise_fls(corpus_context, relative_fl = False,
