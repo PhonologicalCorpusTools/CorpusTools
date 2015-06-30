@@ -70,12 +70,14 @@ class PPWorker(FunctionWorker):
         self.dataReady.emit(self.results)
 
 class PPDialog(FunctionDialog):
-    header = ['Word',
-                'Tier',
-                'Phonotactic probability',
+    header = ['Corpus',
+                'Word',
                 'Algorithm',
                 'Probability type',
-                'Type or token']
+                'Transcription tier',
+                'Frequency type',
+                'Pronunciation variants',
+                'Phonotactic probability']
 
     _about = [('This function calculates the phonotactic probability '
                     'of a word based on positional probabilities of single '
@@ -293,14 +295,16 @@ class PPDialog(FunctionDialog):
         return kwargs
 
     def setResults(self, results):
-        self.results = list()
+        self.results = []
         for result in results:
             w, pp = result
-            self.results.append([str(w),
-                        self.tierWidget.displayValue(), pp,
+            self.results.append([self.corpusModel.corpus.name,str(w),
                         self.algorithmWidget.displayValue().replace('&&','&'),
                         self.probabilityTypeWidget.displayValue(),
-                        self.typeTokenWidget.value()])
+                        self.tierWidget.displayValue(),
+                        self.typeTokenWidget.value().title(),
+                        self.variantsWidget.value().title(),
+                        pp])
 
     def vitevitchSelected(self):
         self.probabilityTypeWidget.enable()

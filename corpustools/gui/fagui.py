@@ -58,15 +58,17 @@ class FAWorker(FunctionWorker):
         self.dataReady.emit(self.results)
 
 class FADialog(FunctionDialog):
-    header = ['Segment 1',
-                'Segment 2',
+    header = ['Corpus',
+                'First segment',
+                'Second segment',
+                'Algorithm'
                 'Transcription tier',
+                'Frequency type',
+                'Pronunication variants',
+                'Phonologically aligned'
                 'Total words in corpus',
                 'Total words with alternations',
-                'Frequency of alternation',
-                'Type or token',
-                'Distance metric',
-                'Phonological alignment?']
+                'Frequency of alternation']
 
     _about = [('This function calculates the frequency of alternation '
                     'of two segments. In general, an alternation is seen when'
@@ -309,17 +311,19 @@ class FADialog(FunctionDialog):
         return kwargs
 
     def setResults(self, results):
-        self.results = list()
+        self.results = []
         seg_pairs = self.segPairWidget.value()
         for i, r in enumerate(results):
-            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+            self.results.append([self.corpus.name,
+                                seg_pairs[i][0],seg_pairs[i][1],
+                                self.algorithmWidget.displayValue(),
+                                self.alignCheck.isChecked(),
                                 self.tierWidget.displayValue(),
+                                self.typeTokenWidget.value().title(),
+                                self.variantsWidget.value().title(),
                                 r[0],
                                 r[1],
-                                r[2],
-                                self.typeTokenWidget.value(),
-                                self.algorithmWidget.displayValue(),
-                                self.alignCheck.isChecked()])
+                                r[2]])
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()

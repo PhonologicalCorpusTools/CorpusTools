@@ -48,12 +48,14 @@ class SSWorker(FunctionWorker):
         self.dataReady.emit(self.results)
 
 class SSDialog(FunctionDialog):
-    header = ['Word 1',
-                'Word 2',
+    header = ['Corpus',
+                'First word',
+                'Second word',
+                'Algorithm',
                 'String type',
-                'Result',
-                'Type or token',
-                'Algorithm type']
+                'Frequency type',
+                'Pronunciation variants',
+                'Result']
 
     _about = [('This function calculates the similarity between words in the corpus,'
                 ' based on either their spelling or their transcription. Similarity '
@@ -407,11 +409,13 @@ class SSDialog(FunctionDialog):
             if self.algorithmWidget.value() != 'khorsi':
                 typetoken = 'N/A'
             else:
-                typetoken = self.typeTokenWidget.value()
-            self.results.append([w1, w2,
-                        self.tierWidget.value(),
-                         similarity, typetoken,
-                        self.algorithmWidget.displayValue()])
+                typetoken = self.typeTokenWidget.value().title()
+            self.results.append([self.corpusModel.corpus.name, w1, w2,
+                        self.algorithmWidget.displayValue(),
+                        self.tierWidget.displayValue(),
+                        typetoken,
+                        self.variantsWidget.value().title(),
+                         similarity ])
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()

@@ -4,18 +4,18 @@ from collections import Counter, defaultdict
 from .imports import *
 
 class BaseTableModel(QAbstractTableModel):
-    columns = []
-    rows = []
-    allData = []
 
     def __init__(self, settings, parent = None):
+        self.columns = []
+        self.rows = []
+        self.allData = []
         QAbstractTableModel.__init__(self, parent)
         self.settings = settings
 
-    def rowCount(self,parent=None):
+    def rowCount(self, parent = None):
         return len(self.rows)
 
-    def columnCount(self,parent=None):
+    def columnCount(self, parent = None):
         return len(self.columns)
 
     def sort(self, col, order):
@@ -27,7 +27,7 @@ class BaseTableModel(QAbstractTableModel):
             self.rows.reverse()
         self.layoutChanged.emit()
 
-    def data(self, index, role=None):
+    def data(self, index, role = None):
         if not index.isValid():
             return None
         elif role != Qt.DisplayRole:
@@ -460,7 +460,7 @@ class EnvironmentModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = ['']
-        self.rows = list()
+        self.rows = []
 
 class ResultsModel(BaseTableModel):
     def __init__(self, header, results, settings, parent=None):

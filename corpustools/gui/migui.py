@@ -55,12 +55,14 @@ class MIWorker(FunctionWorker):
 
 
 class MIDialog(FunctionDialog):
-    header = ['Segment 1',
-                'Segment 2',
-                'Transcription tier',
-                'Type or token',
+    header = ['Corpus',
+                'First segment',
+                'Second segment',
                 'Domain',
                 'Halved edges',
+                'Transcription tier',
+                'Frequency type',
+                'Pronunciation variants',
                 'Mutual information']
 
     _about = [('This function calculates the mutual information for a bigram'
@@ -147,8 +149,6 @@ class MIDialog(FunctionDialog):
             "</FONT>")
             self.halveEdgesCheck.setToolTip(halveEdgesToolTip)
 
-
-
     def generateKwargs(self):
         segPairs = self.segPairWidget.value()
         if len(segPairs) == 0:
@@ -163,7 +163,6 @@ class MIDialog(FunctionDialog):
                 'halve_edges': self.halveEdgesCheck.isChecked(),
                 'sequence_type': self.tierWidget.value()}
 
-
     def setResults(self,results):
         self.results = []
         seg_pairs = [tuple(y for y in x) for x in self.segPairWidget.value()]
@@ -172,8 +171,10 @@ class MIDialog(FunctionDialog):
         else:
             dom = 'Unigram/Bigram'
         for i, r in enumerate(results):
-            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                self.tierWidget.displayValue(),
-                                self.typeTokenWidget.value(),
+            self.results.append([self.corpus.name,
+                                seg_pairs[i][0],seg_pairs[i][1],
                                 dom, self.halveEdgesCheck.isChecked(),
+                                self.tierWidget.displayValue(),
+                                self.typeTokenWidget.value().title(),
+                                self.variantsWidget.value().title(),
                                 r])

@@ -86,12 +86,14 @@ class NDWorker(FunctionWorker):
 
 
 class NDDialog(FunctionDialog):
-    header = ['Word',
-                'Neighborhood density',
+    header = ['Corpus',
+                'Word',
+                'Algorithm',
+                'Threshold',
                 'String type',
-                'Type or token',
-                'Algorithm type',
-                'Threshold']
+                'Frequency type',
+                'Pronunciation variants',
+                'Neighborhood density']
 
     _about = [('This function calculates the neighborhood density (size)'
                     ' of a word. A neighborhood is the set of words sufficiently'
@@ -387,8 +389,16 @@ class NDDialog(FunctionDialog):
             kwargs['attribute'] = attribute
         return kwargs
 
+    header = ['Corpus',
+                'Word',
+                'Algorithm',
+                'Threshold',
+                'String type',
+                'Frequency type',
+                'Pronunciation variants',
+                'Neighborhood density']
     def setResults(self, results):
-        self.results = list()
+        self.results = []
         for result in results:
             w, nd = result
             if not isinstance(w,str):
@@ -396,14 +406,16 @@ class NDDialog(FunctionDialog):
             if self.algorithmWidget.value() != 'khorsi':
                 typetoken = 'N/A'
             else:
-                typetoken = self.typeTokenWidget.value()
+                typetoken = self.typeTokenWidget.value().title()
             if self.algorithmWidget.value() == 'substitution':
                 thresh = 'N/A'
             else:
-                thresh = self.maxDistanceEdit.text()
-            self.results.append([w, nd,
+                thresh = float(self.maxDistanceEdit.text())
+            self.results.append([self.corpusModel.corpus.name, w,
+                        self.algorithmWidget.displayValue(), thresh,
                         self.tierWidget.displayValue(), typetoken,
-                        self.algorithmWidget.displayValue(),thresh])
+                        self.variantsWidget.value().title(),
+                        nd])
 
     def substitutionSelected(self):
         self.typeTokenWidget.disable()

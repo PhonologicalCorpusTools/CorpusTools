@@ -2173,12 +2173,16 @@ class BigramWidget(QGroupBox):
 
         self.setLayout(vbox)
 
-    def addRow(self, row):
-        self.table.model().addRow(''.join(row))
+    def addRows(self, rows):
+        if isinstance(rows, list):
+            for row in rows:
+                self.table.model().addRow([row])
+        else:
+            self.table.model().addRow([row])
 
     def envPopup(self):
         dialog = BigramDialog(self.inventory,self)
-        dialog.rowToAdd.connect(self.addRow)
+        dialog.rowToAdd.connect(self.addRows)
         result = dialog.exec_()
         dialog.rowToAdd.disconnect()
         dialog.deleteLater()

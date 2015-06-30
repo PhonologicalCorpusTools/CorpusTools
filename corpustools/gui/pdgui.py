@@ -65,15 +65,17 @@ class PDWorker(FunctionWorker):
 
 
 class PDDialog(FunctionDialog):
-    header = ['First segment',
+    header = ['Corpus',
+                'First segment',
                 'Second segment',
-                'Transcription tier',
                 'Environment',
+                'Transcription tier',
+                'Frequency type',
+                'Pronunciation variants',
                 'Frequency of first segment',
                 'Frequency of second segment',
                 'Frequency of environment',
-                'Entropy',
-                'Type or token']
+                'Entropy']
 
     ABOUT = ['This function calculates'
                 ' the predictability of distribution of two sounds, using the measure of entropy'
@@ -240,21 +242,26 @@ class PDDialog(FunctionDialog):
         for i, r in enumerate(results):
             if isinstance(r,dict):
                 for env,v in r.items():
-                    self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                        self.tierWidget.displayValue(),
+                    self.results.append([self.corpus.name,
+                                        seg_pairs[i][0],seg_pairs[i][1],
                                         env,
+                                        self.tierWidget.displayValue(),
+                                        self.typeTokenWidget.value().title(),
+                                        self.variantsWidget.value().title(),
                                         v[2], # freq of seg1
                                         v[3], #freq of seg2
                                         v[1], #total_tokens
-                                        v[0], #H
-                                        self.typeTokenWidget.value()])
+                                        v[0]] #H
+                                        )
             else:
-                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                        self.tierWidget.displayValue(),
+                self.results.append([self.corpus.name,
+                                        seg_pairs[i][0],seg_pairs[i][1],
                                         'FREQ-ONLY',
+                                        self.tierWidget.displayValue(),
+                                        self.typeTokenWidget.value().title(),
+                                        self.variantsWidget.value().title(),
                                         r[2], # freq of seg1
                                         r[3], #freq of seg2
                                         r[1], #total_tokens
-                                        r[0], #H
-                                        self.typeTokenWidget.value()])
+                                        r[0]]) #H
 

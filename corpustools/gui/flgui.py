@@ -64,15 +64,17 @@ class FLWorker(FunctionWorker):
 
 
 class FLDialog(FunctionDialog):
-    header = ['Segment 1',
-                'Segment 2',
-                'Transcription tier',
-                'Type of functional load',
-                'Result',
+    header = ['Corpus',
+                'First segment',
+                'Second segment',
+                'Algorithm',
                 'Distinguished homophones?',
-                'Relative count?',
+                'Relative count',
+                'Transcription tier',
+                'Frequency type',
+                'Pronunication variants',
                 'Minimum word frequency',
-                'Type or token']
+                'Result']
 
     _about = [('This function calculates the functional load of the contrast'
                     ' between any two segments, based on either the number of minimal'
@@ -255,8 +257,8 @@ class FLDialog(FunctionDialog):
             kwargs['distinguish_homophones'] = self.homophoneWidget.isChecked()
         return kwargs
 
-    def setResults(self,results):
-        self.results = list()
+    def setResults(self, results):
+        self.results = []
         seg_pairs = self.segPairWidget.value()
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
@@ -265,11 +267,13 @@ class FLDialog(FunctionDialog):
         for i, r in enumerate(results):
             if isinstance(r, tuple):
                 r = r[0]
-            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                self.tierWidget.displayValue(),
+            self.results.append([self.corpus.name,
+                                seg_pairs[i][0],seg_pairs[i][1],
                                 self.algorithmWidget.displayValue(),
-                                r,
                                 self.homophoneWidget.isChecked(),
                                 self.relativeCountWidget.isChecked(),
+                                self.tierWidget.displayValue(),
+                                self.typeTokenWidget.value().title(),
+                                self.variantsWidget.value().title(),
                                 frequency_cutoff,
-                                self.typeTokenWidget.value()])
+                                r])

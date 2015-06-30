@@ -57,14 +57,16 @@ class KLWorker(FunctionWorker):
         self.dataReady.emit(self.results)
 
 class KLDialog(FunctionDialog):
-    header = ['Segment 1',
-                'Segment 2',
-                'Transcription tier',
-                'Type or token',
+    header = ['Corpus',
+                'First segment',
+                'Second segment',
                 'Context',
-                'Segment 1 entropy',
-                'Segment 2 entropy',
-                'KL',
+                'Transcription tier',
+                'Frequency type',
+                'Pronunciation variants',
+                'First segment entropy',
+                'Second segment entropy',
+                'Kullback-Leibler divergence',
                 'Possible UR',
                 'Spurious allophones?'
                 ]
@@ -146,7 +148,9 @@ class KLDialog(FunctionDialog):
         seg_pairs = [tuple(y for y in x) for x in self.segPairWidget.value()]
         context = self.contextRadioWidget.displayValue()
         for i, r in enumerate(results):
-            self.results.append([seg_pairs[i][0],seg_pairs[i][1],
+            self.results.append([self.corpus.name,
+                                seg_pairs[i][0],seg_pairs[i][1],
+                                context,
                                 self.tierWidget.displayValue(),
-                                self.typeTokenWidget.value(),
-                                context]+list(r))
+                                self.typeTokenWidget.value().title(),
+                                self.variantsWidget.value().title()]+list(r))
