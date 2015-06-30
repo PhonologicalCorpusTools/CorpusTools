@@ -437,7 +437,10 @@ class SegmentPairModel(BaseTableModel):
         self.rows = []
 
     def switchRow(self,row):
-        seg1,seg2 = self.rows[row]
+        try: # Only swap rows with 2 elements
+            seg1,seg2 = self.rows[row]
+        except ValueError:
+            return
 
         self.rows[row] = (seg2, seg1)
         self.dataChanged.emit(self.createIndex(row,0), self.createIndex(row,1))

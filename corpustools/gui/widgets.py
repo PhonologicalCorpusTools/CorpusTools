@@ -1627,6 +1627,24 @@ class SegmentPairDialog(AbstractPairDialog):
         self.rowToAdd.emit(combinations(selected,2))
         QDialog.accept(self)
 
+class SingleSegmentDialog(AbstractPairDialog):
+    def __init__(self, inventory, parent = None):
+        AbstractPairDialog.__init__(self, inventory, parent)
+        self.inventoryFrame = SegmentSelectionWidget(self.inventory, exclusive = True)
+
+        self.layout().insertWidget(0, self.inventoryFrame)
+
+        self.setWindowTitle('Select segment pair')
+
+    def reset(self):
+        self.inventoryFrame.clearAll()
+
+    def accept(self):
+        selected = self.inventoryFrame.value()
+        self.rowToAdd.emit([(selected,)])
+        QDialog.accept(self)
+
+
 class FeaturePairDialog(AbstractPairDialog):
     def __init__(self, inventory, parent = None):
         AbstractPairDialog.__init__(self, inventory,parent)
@@ -1744,20 +1762,23 @@ class SegPairTableWidget(TableWidget):
         self.openPersistentEditor(self.model().index(begin, 2))
 
 class SegmentPairSelectWidget(QGroupBox):
-    def __init__(self,inventory,parent=None, features = True):
+    def __init__(self,inventory, parent = None, features = True, single_segment = False):
         QGroupBox.__init__(self,'Segments',parent)
 
         self.inventory = inventory
 
         vbox = QVBoxLayout()
-        self.addButton = QPushButton('Add pair of sounds')
+        self.addSingleButton = QPushButton('Add one segment')
+        self.addSingleButton.clicked.connect(self.singleSegPopup)
+        self.addButton = QPushButton('Add pair of segments')
         self.addButton.clicked.connect(self.segPairPopup)
         #self.addSetButton = QPushButton('Add pair of segment sets')
         #self.addSetButton.clicked.connect(self.segSetPairPopup)
         self.addFeatButton = QPushButton('Add pair of features')
         self.addFeatButton.clicked.connect(self.featurePairPopup)
-        self.removeButton = QPushButton('Remove selected sound pair')
+        self.removeButton = QPushButton('Remove selected segment pair')
         self.removeButton.clicked.connect(self.removePair)
+        self.addSingleButton.setAutoDefault(False)
         self.addButton.setAutoDefault(False)
         #self.addSetButton.setDefault(False)
         self.addFeatButton.setDefault(False)
@@ -1766,7 +1787,8 @@ class SegmentPairSelectWidget(QGroupBox):
         self.removeButton.setDefault(False)
 
         self.table = SegPairTableWidget()
-
+        if single_segment:
+            vbox.addWidget(self.addSingleButton)
         vbox.addWidget(self.addButton)
         #vbox.addWidget(self.addSetButton)
         if features:
@@ -1779,6 +1801,15 @@ class SegmentPairSelectWidget(QGroupBox):
         self.setLayout(vbox)
 
         #self.setFixedWidth(self.minimumSizeHint().width())
+
+    def singleSegPopup(self):
+        dialog = SingleSegmentDialog(self.inventory)
+        dialog.rowToAdd.connect(self.addPairs)
+        addOneMore = True
+        while addOneMore:
+            dialog.reset()
+            result = dialog.exec_()
+            addOneMore = dialog.addOneMore
 
     def featurePairPopup(self):
         dialog = FeaturePairDialog(self.inventory)
@@ -2312,13 +2343,13 @@ class CreateClassWidget(QDialog):
             explanation = QLabel(('You can create Tiers in this window. A Tier is subpart of a word that consists only of '
             'the segments you want, maintaining their original ordering. You can define the properties of the Tier below. '
             'Tiers are commonly created on the basis of a feature class, e.g. all the vowels or of all the obstruents in a word. '
-            'PCT will allow you to create Tiers consisting of any arbitrary set of sounds.\n'
+            'PCT will allow you to create Tiers consisting of any arbitrary set of segments.\n'
             'Once created, the Tier will be added as a column in your corpus, and it will be visible in the main window. '
             'You can then select this Tier inside of certain analysis functions.'))
         elif self.class_type == 'class':
-            explanation = QLabel(('You can create Classes in this window. A Class is simply a set of sounds from the inventory '
+            explanation = QLabel(('You can create Classes in this window. A Class is simply a set of segments from the inventory '
             'of your corpus. Classes are normally created on the basis of shared phonological features, in which case they are '
-            'usually called  \"natural\" classes. An arbitrary set of sounds with no common features may be called \"unnatural\".\n'
+            'usually called  \"natural\" classes. An arbitrary set of segments with no common features may be called \"unnatural\".\n'
             'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
             'Classes can also be used to organize the inventory chart for your corpus'))
 

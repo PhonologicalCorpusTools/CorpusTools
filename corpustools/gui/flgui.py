@@ -25,8 +25,10 @@ class FLWorker(FunctionWorker):
         context = kwargs.pop('context')
         if kwargs.pop('algorithm') == 'min_pairs':
             func = FL.minpair_fl
+            rel_func = FL.relative_minpair_fl
         else:
             func = FL.deltah_fl
+            rel_func = FL.relative_deltah_fl
         if context == ContextWidget.canonical_value:
             cm = CanonicalVariantContext
         elif context == ContextWidget.frequent_value:
@@ -45,16 +47,19 @@ class FLWorker(FunctionWorker):
                 if output_filename is not None:
                     to_output = []
                 for pair in pairs:
-                    if isinstance(pair[0], (list, tuple)):
-                        in_list = list(zip(pair[0], pair[1]))
+                    if len(pair) == 1:
+                        res = rel_func(c, pair[0], **kwargs)
                     else:
-                        in_list = [pair]
-                    res = func(c, in_list, **kwargs)
-                    if self.stopped:
-                        break
+                        if isinstance(pair[0], (list, tuple)):
+                            in_list = list(zip(pair[0], pair[1]))
+                        else:
+                            in_list = [pair]
+                        res = func(c, in_list, **kwargs)
+                        if self.stopped:
+                            break
+                        if output_filename is not None:
+                            to_output.append((pair, res[1]))
                     self.results.append(res)
-                    if output_filename is not None:
-                        to_output.append((pair, res[1]))
                 if output_filename is not None:
                     save_minimal_pairs(output_filename, to_output)
             except PCTError as e:
@@ -109,7 +114,7 @@ class FLDialog(FunctionDialog):
         flFrame = QFrame()
         fllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory, single_segment = True)
 
         fllayout.addWidget(self.segPairWidget)
 
@@ -270,8 +275,13 @@ class FLDialog(FunctionDialog):
         for i, r in enumerate(results):
             if isinstance(r, tuple):
                 r = r[0]
+            seg_one = seg_pairs[i][0]
+            try:
+                seg_two = seg_pairs[i][1]
+            except IndexError:
+                seg_two = ''
             self.results.append([self.corpus.name,
-                                seg_pairs[i][0],seg_pairs[i][1],
+                                seg_one,seg_two,
                                 self.algorithmWidget.displayValue(),
                                 self.homophoneWidget.isChecked(),
                                 self.relativeCountWidget.isChecked(),
