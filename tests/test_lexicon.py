@@ -473,9 +473,8 @@ class SegmentTest(unittest.TestCase):
                         self.assertTrue(not seg.feature_match([fv+feature]))
 
 def test_redundant_features(specified_test_corpus):
-    print(specified_test_corpus.inventory.features)
-    feature = 'back'
-    r = specified_test_corpus.inventory.get_redundant_features(feature, others = '+voc')
-    print(r)
-    assert(False)
+    feature = ['back']
+    r = specified_test_corpus.inventory.get_redundant_features(feature, others = ['+voc', '-low'])
+
+    assert('round' in r)
 
