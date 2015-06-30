@@ -472,7 +472,10 @@ class SegmentTest(unittest.TestCase):
                     else:
                         self.assertTrue(not seg.feature_match([fv+feature]))
 
+def test_redundant_features(specified_test_corpus):
+    print(specified_test_corpus.inventory.features)
+    feature = 'back'
+    r = specified_test_corpus.inventory.get_redundant_features(feature, others = '+voc')
+    print(r)
+    assert(False)
 
-
-if __name__ == '__main__':
-    unittest.main()

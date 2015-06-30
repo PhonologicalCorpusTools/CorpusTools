@@ -1380,6 +1380,7 @@ class Inventory(object):
         plus_segs = []
         minus_segs = []
         output = collections.defaultdict(list)
+        redundant = self.get_redundant_features(features, others)
         for seg in self:
             if any(seg[f] not in set('+-') for f in features):
                 continue
@@ -1388,7 +1389,7 @@ class Inventory(object):
             for seg2 in self:
                 if seg == seg2:
                     continue
-                if seg.minimal_difference(seg2, features):
+                if seg.minimal_difference(seg2, features + redundant):
                     break
             else:
                 continue
@@ -1397,6 +1398,35 @@ class Inventory(object):
             if seg2 not in output[tuple(seg2[f] for f in features)]:
                 output[tuple(seg2[f] for f in features)].append(seg2)
         return output
+
+    def get_redundant_features(self, features, others = None):
+        redundant_features = []
+        if isinstance(features, str):
+            features = [features]
+        if others is None:
+            others = []
+        other_feature_names = [x[1:] for x in others]
+        for f in self.features:
+            if f in features:
+                continue
+            if f in other_feature_names:
+                continue
+            feature_values = collections.defaultdict(set)
+            for seg in self:
+                if others is not None:
+                    if not seg.feature_match(others):
+                        continue
+                if seg == '#':
+                    continue
+                value = tuple(seg[x] for x in features)
+                other_value = seg[f]
+                feature_values[value].add(other_value)
+                if any(len(x) > 1 for x in feature_values.values()):
+                    break
+            if any(len(x) > 1 for x in feature_values.values()):
+                continue
+            redundant_features.append(f)
+        return redundant_features
 
     def features_to_segments(self, feature_description):
         """
