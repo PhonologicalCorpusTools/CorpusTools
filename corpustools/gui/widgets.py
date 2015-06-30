@@ -1651,52 +1651,52 @@ class FeaturePairDialog(AbstractPairDialog):
 
         self.layout().insertLayout(0,mainlayout)
         seglayout = QHBoxLayout()
+        scroll = QScrollArea()
+        self.columnFrame = QWidget()
+        self.columns = []
+        lay = QBoxLayout(QBoxLayout.LeftToRight)
+        lay.addStretch()
+        self.columnFrame.setLayout(lay)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.columnFrame)
+        scroll.setMinimumWidth(140)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        seglayout.addWidget(scroll)
 
-        self.segOneFrame = QGroupBox('First segments')
-
-        self.segTwoFrame = QGroupBox('Second segments')
-
-        self.segOneLabel = QLabel('No included segments')
-
-        box = QVBoxLayout()
-        box.addWidget(self.segOneLabel)
-        self.segOneFrame.setLayout(box)
-
-        self.segTwoLabel = QLabel('No included segments')
-
-        box = QVBoxLayout()
-        box.addWidget(self.segTwoLabel)
-        self.segTwoFrame.setLayout(box)
-
-        seglayout.addWidget(self.segOneFrame)
-
-        seglayout.addWidget(self.segTwoFrame)
 
         self.layout().insertLayout(1, seglayout)
 
         self.setWindowTitle('Select feature pair')
 
     def updateSegments(self, features = None):
+        for i in reversed(range(self.columnFrame.layout().count()-1)):
+            w = self.columnFrame.layout().itemAt(i).widget()
+            if w is None:
+                del w
+                continue
+            w.setParent(None)
+            w.deleteLater()
         features = self.featureWidget.features()
         if len(features) == 0:
-            self.segOneFrame.setTitle('First segments')
-            self.segTwoFrame.setTitle('Second segments')
-
-            self.segOneLabel.setText('No included segments')
-            self.segTwoLabel.setText('No included segments')
             return
         others = self.searchWidget.features()
         feature_values = self.inventory.find_min_feature_pairs(features, others)
         values = sorted(feature_values.keys())
         if len(values) == 0:
             return
-        labelOne = [values[0][i] + features[i] for i in range(len(features))]
-        labelTwo = [values[1][i] + features[i] for i in range(len(features))]
-        self.segOneFrame.setTitle('First segments ({})'.format(', '.join(labelOne)))
-        self.segTwoFrame.setTitle('Second segments ({})'.format(', '.join(labelTwo)))
-
-        self.segOneLabel.setText('\n'.join(map(str,feature_values[values[0]])))
-        self.segTwoLabel.setText('\n'.join(map(str,feature_values[values[1]])))
+        self.columns = []
+        for i, a in reversed(list(enumerate(values))):
+            label = [values[i][j] + features[j] for j in range(len(features))]
+            c = QGroupBox('Segment set {} ({})'.format(i+1, ', '.join(label)))
+            layout = QVBoxLayout()
+            label = QLabel('\n'.join(map(str,feature_values[values[i]])))
+            layout.addWidget(label)
+            c.setLayout(layout)
+            self.columns.append(label)
+            self.columnFrame.layout().insertWidget(0, c)
 
     def reset(self):
         self.featureWidget.setText('')
@@ -1704,8 +1704,8 @@ class FeaturePairDialog(AbstractPairDialog):
         self.updateSegments()
 
     def accept(self):
-        self.rowToAdd.emit([(tuple(self.segOneLabel.text().split('\n')),
-                            tuple(self.segTwoLabel.text().split('\n')))])
+        selected = [tuple(x.text().split('\n')) for x in self.columns]
+        self.rowToAdd.emit(combinations(selected,2))
         QDialog.accept(self)
 
 
