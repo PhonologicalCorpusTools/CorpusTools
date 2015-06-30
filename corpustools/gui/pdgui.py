@@ -122,10 +122,7 @@ class PDDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
-        actions = {ContextWidget.canonical: lambda : self.typeTokenWidget.setEnabled(True),
-                  ContextWidget.frequent: lambda : self.typeTokenWidget.setEnabled(True),
-                  ContextWidget.separate: lambda : self.typeTokenWidget.setEnabled(False),
-                  ContextWidget.relative: lambda : self.typeTokenWidget.setEnabled(False)}
+        actions = None
         self.variantsWidget = ContextWidget(self.corpus, actions)
 
         optionLayout.addWidget(self.variantsWidget)

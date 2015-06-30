@@ -2269,8 +2269,8 @@ class RadioSelectWidget(QGroupBox):
 class RestrictedContextWidget(RadioSelectWidget):
     canonical = 'Use canonical forms only'
     frequent = 'Use most frequent forms only'
-    canonical_value = 'canonical'
-    frequent_value = 'mostfrequent'
+    canonical_value = 'canonical form'
+    frequent_value = 'most frequent variant'
     def __init__(self, corpus, actions = None, parent = None):
         typetokenEnabled = {self.canonical: corpus.has_transcription,
                     self.frequent: corpus.has_wordtokens}
@@ -2283,8 +2283,8 @@ class RestrictedContextWidget(RadioSelectWidget):
 class ContextWidget(RestrictedContextWidget):
     separate = 'Count each word token as a separate entry'
     relative = 'Weight each word type\nby the relative frequency of its variants'
-    separate_value = 'separatetoken'
-    relative_value = 'relativetype'
+    separate_value = 'separate token variants'
+    relative_value = 'relative type variants'
     def __init__(self, corpus, actions = None, parent = None):
         typetokenEnabled = {self.canonical: corpus.has_transcription,
                     self.frequent: corpus.has_wordtokens,
