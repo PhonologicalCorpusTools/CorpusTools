@@ -277,7 +277,7 @@ def inspect_directory(directory):
 
     return likely_type, relevant_files
 
-parse_numbers = re.compile('\d+|\w')
+parse_numbers = re.compile('\d+|\S')
 
 def parse_transcription(string, annotation_type):
     md = annotation_type.morph_delimiters

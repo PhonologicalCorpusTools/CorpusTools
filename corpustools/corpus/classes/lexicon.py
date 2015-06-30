@@ -244,7 +244,7 @@ class Transcription(object):
         if 'morpheme' in self.boundaries:
             beg = 0
             bound_list = []
-            for i in self.boundaries:
+            for i in self.boundaries['morpheme']:
                 bound_list.append('.'.join(temp_list[beg:i]))
             bound_list.append('.'.join(temp_list[i:]))
             return '-'.join(bound_list)
