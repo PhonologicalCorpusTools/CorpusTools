@@ -78,6 +78,9 @@ than the number of filters, as the number of coefficents returned by the
 discrete cosine transform is equal to the number of filters in the mel
 filterbank.
 
+Please note that the MFCCs calculated in PCT follow the HTK standard,
+and are not the same as those produced by Praat [PRAAT]_.
+
 Amplitude envelopes
 ```````````````````
 
