@@ -46,9 +46,14 @@ class FLWorker(FunctionWorker):
                 output_filename = kwargs.pop('output_filename', None)
                 if output_filename is not None:
                     to_output = []
+                    outf = open(output_filename, mode='w', encoding='utf-8')
+                    save_minimal_pairs(outf, [], write_header= True)
+                else:
+                    outf = None
                 for pair in pairs:
                     if len(pair) == 1:
-                        res = rel_func(c, pair[0], **kwargs)
+                        res = rel_func(c, pair[0],
+                            output_filename = outf,**kwargs)
                     else:
                         if isinstance(pair[0], (list, tuple)):
                             in_list = list(zip(pair[0], pair[1]))
@@ -61,7 +66,8 @@ class FLWorker(FunctionWorker):
                             to_output.append((pair, res[1]))
                     self.results.append(res)
                 if output_filename is not None:
-                    save_minimal_pairs(output_filename, to_output)
+                    save_minimal_pairs(outf, to_output)
+                    outf.close()
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return

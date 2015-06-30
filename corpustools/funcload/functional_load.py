@@ -8,6 +8,7 @@ from math import factorial
 import time
 
 from corpustools.exceptions import FuncLoadError
+from .io import save_minimal_pairs
 
 
 def matches(first, second):
@@ -201,6 +202,7 @@ def deltah_fl(corpus_context, segment_pairs,
 
 def relative_minpair_fl(corpus_context, segment,
             relative_count = True, distinguish_homophones = False,
+            output_filename = None,
             stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as a count of minimal pairs.
@@ -236,11 +238,18 @@ def relative_minpair_fl(corpus_context, segment,
     segment_pairs = [(segment,other) for other in all_segments
                         if other != segment and other != '#']
     results = []
+    to_output = []
     for sp in segment_pairs:
-        results.append(minpair_fl(corpus_context, [sp],
+        res = minpair_fl(corpus_context, [sp],
             relative_count = relative_count,
             distinguish_homophones = distinguish_homophones,
-            stop_check = stop_check, call_back = call_back)[0])
+            stop_check = stop_check, call_back = call_back)
+        results.append(res[0])
+
+        if output_filename is not None:
+            to_output.append((sp, res[1]))
+    if output_filename is not None:
+        save_minimal_pairs(output_filename, to_output)
     return sum(results)/len(segment_pairs)
 
 
