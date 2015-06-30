@@ -3,6 +3,7 @@ import string
 import re
 
 from textgrid import TextGrid, IntervalTier
+from textgrid.textgrid import readFile, Interval, Point, PointTier
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError, PCTError
@@ -10,6 +11,47 @@ from corpustools.exceptions import TextGridTierError, PCTError
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
                     AnnotationType,data_to_discourse, find_wav_path,
                     Annotation, BaseAnnotation)
+
+class PCTTextGrid(TextGrid):
+    def read(self, f):
+        """
+        Read the tiers contained in the Praat-formated TextGrid file
+        indicated by string f
+        """
+        source = readFile(f)
+        self.minTime = round(float(source.readline().split()[2]), 5)
+        self.maxTime = round(float(source.readline().split()[2]), 5)
+        source.readline() # more header junk
+        m = int(source.readline().rstrip().split()[2]) # will be self.n
+        source.readline()
+        for i in range(m): # loop over grids
+            source.readline()
+            if source.readline().rstrip().split()[2] == '"IntervalTier"':
+                inam = source.readline().rstrip().split(' = ')[1].strip('"')
+                imin = round(float(source.readline().rstrip().split()[2]), 5)
+                imax = round(float(source.readline().rstrip().split()[2]), 5)
+                itie = IntervalTier(inam)
+                for j in range(int(source.readline().rstrip().split()[3])):
+                    source.readline().rstrip().split() # header junk
+                    jmin = round(float(source.readline().rstrip().split()[2]), 5)
+                    jmax = round(float(source.readline().rstrip().split()[2]), 5)
+                    jmrk = self._getMark(source)
+                    if jmin < jmax: # non-null
+                        itie.addInterval(Interval(jmin, jmax, jmrk))
+                self.append(itie)
+            else: # pointTier
+                inam = source.readline().rstrip().split(' = ')[1].strip('"')
+                imin = round(float(source.readline().rstrip().split()[2]), 5)
+                imax = round(float(source.readline().rstrip().split()[2]), 5)
+                itie = PointTier(inam)
+                n = int(source.readline().rstrip().split()[3])
+                for j in range(n):
+                    source.readline().rstrip() # header junk
+                    jtim = round(float(source.readline().rstrip().split()[2]),
+                                                                           5)
+                    jmrk = source.readline().rstrip().split()[2][1:-1]
+
+        source.close()
 
 def uniqueLabels(tier):
     return set(x.mark for x in tier.intervals)
@@ -73,7 +115,7 @@ def inspect_discourse_textgrid(path):
     return anno_types
 
 def load_textgrid(path):
-    tg = TextGrid()
+    tg = PCTTextGrid()
     tg.read(path)
     return tg
 
