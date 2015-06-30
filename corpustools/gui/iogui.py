@@ -172,11 +172,14 @@ class CorpusLoadDialog(PCTDialog):
         self.acceptButton = QPushButton('Load selected corpus')
         self.acceptButton.setDefault(True)
         self.cancelButton = QPushButton('Cancel')
+        self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -197,6 +200,10 @@ class CorpusLoadDialog(PCTDialog):
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
+
+    def help(self):
+        self.helpDialog = HelpDialog(self, name = 'loading corpora')
+        self.helpDialog.exec_()
 
     def setResults(self, results):
         self.corpus = results
@@ -652,7 +659,7 @@ class LoadCorpusDialog(PCTDialog):
 
     def help(self):
         self.helpDialog = HelpDialog(self,name = 'loading corpora',
-                                    section = 'creating-a-corpus-from-running-text')
+                                    section = 'using-a-custom-corpus')
         self.helpDialog.exec_()
 
     def setResults(self, results):

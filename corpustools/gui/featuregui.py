@@ -932,10 +932,13 @@ class FeatureMatrixManager(QDialog):
         layout.addWidget(formFrame)
 
         self.acceptButton = QPushButton('Done')
+        self.helpButton = QPushButton('Help')
         self.acceptButton.setDefault(True)
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
+        self.helpButton.clicked.connect(self.help)
 
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
@@ -945,6 +948,10 @@ class FeatureMatrixManager(QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle('Manage feature systems')
+
+    def help(self):
+        self.helpDialog = HelpDialog(self, name = 'transcriptions and feature systems')
+        self.helpDialog.exec_()
 
     def openCsvWindow(self):
         dialog = SystemFromCsvDialog(self,self.settings)
