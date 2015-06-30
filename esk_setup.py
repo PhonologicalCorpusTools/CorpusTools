@@ -24,6 +24,8 @@ for root, dirnames, filenames in os.walk('docs\build'):
 incl_files = list(doc_files.items())
 base = None
 
+freezer_module = 'cxfreeze'
+
 freezer_options = {
                 "includes":[
                             "sip",
@@ -51,10 +53,6 @@ freezer_options = {
                             "textgrid",
                             "sys"],
                 "excludes":[
-                        'corpustools.acousticsim.tests',
-                        'corpustools.corpus.tests',
-                        'corpustools.funcload.tests',
-                        'corpustools.prod.tests',
                         'matplotlib',
                         "tcl",
                         'ttk',
@@ -79,10 +77,6 @@ exe = bdist_esky.Executable('corpustools/command_line/pct.py',
                             )
 
 build_exe_options = {"excludes": [
-                        'corpustools.acousticsim.tests',
-                        'corpustools.corpus.tests',
-                        'corpustools.funcload.tests',
-                        'corpustools.prod.tests',
                         'matplotlib',
                         "tcl",
                         'ttk',
@@ -124,15 +118,18 @@ setup(name="PhonologicalCorpusTools",
         scripts=[exe],
         packages=['corpustools',
                 'corpustools.corpus',
-                'corpustools.corpus.io',
                 'corpustools.corpus.classes',
+                'corpustools.corpus.io',
                 'corpustools.freqalt',
                 'corpustools.funcload',
                 'corpustools.kl',
                 'corpustools.prod',
+                'corpustools.phonosearch',
                 'corpustools.gui',
                 'corpustools.symbolsim',
-                'corpustools.neighdens'],
+                'corpustools.neighdens',
+                'corpustools.mutualinfo',
+                'corpustools.phonoprob',],
         data_files = incl_files,
         options={
                 #"bdist_mac_options":bdist_mac_options,
@@ -142,6 +139,5 @@ setup(name="PhonologicalCorpusTools",
                 "freezer_options":freezer_options
                             },
                 }
-                }
-                            },
+
      )
