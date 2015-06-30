@@ -1627,21 +1627,15 @@ class SegmentPairDialog(AbstractPairDialog):
         self.rowToAdd.emit(combinations(selected,2))
         QDialog.accept(self)
 
-class SingleSegmentDialog(AbstractPairDialog):
+class SingleSegmentDialog(SegmentPairDialog):
     def __init__(self, inventory, parent = None):
-        AbstractPairDialog.__init__(self, inventory, parent)
-        self.inventoryFrame = SegmentSelectionWidget(self.inventory, exclusive = True)
+        SegmentPairDialog.__init__(self, inventory, parent)
 
-        self.layout().insertWidget(0, self.inventoryFrame)
-
-        self.setWindowTitle('Select segment pair')
-
-    def reset(self):
-        self.inventoryFrame.clearAll()
+        self.setWindowTitle('Select individual segments')
 
     def accept(self):
         selected = self.inventoryFrame.value()
-        self.rowToAdd.emit([(selected,)])
+        self.rowToAdd.emit([(x,) for x in selected])
         QDialog.accept(self)
 
 
@@ -1768,7 +1762,7 @@ class SegmentPairSelectWidget(QGroupBox):
         self.inventory = inventory
 
         vbox = QVBoxLayout()
-        self.addSingleButton = QPushButton('Add one segment')
+        self.addSingleButton = QPushButton('Add individual segments')
         self.addSingleButton.clicked.connect(self.singleSegPopup)
         self.addButton = QPushButton('Add pair of segments')
         self.addButton.clicked.connect(self.segPairPopup)
