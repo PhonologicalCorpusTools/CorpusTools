@@ -113,8 +113,9 @@ class Transcription(object):
         self._list = []
         #self._times = []
         self.stress_pattern = {}
-        self.boundaries = []
+        self.boundaries = {}
         cur_group = 0
+        cur_tone = None
         if seg_list is not None:
             for i,s in enumerate(seg_list):
                 try:
@@ -123,9 +124,17 @@ class Transcription(object):
                     #    self._times.append((s.begin,s.end))
                     if s.stress is not None:
                         self.stress_pattern[i] = s.stress
+                    if s.tone is not None:
+                        if 'tone' not in self.boundaries:
+                            self.boundaries['tone'] = {}
+                        if s.tone != cur_tone:
+                            self.boundaries['tone'][i] = s.tone
+                            cur_tone = s.tone
                     if s.group is not None:
+                        if 'morpheme' not in self.boundaries:
+                            self.boundaries['morpheme'] = []
                         if s.group != cur_group:
-                            self.boundaries.append(i)
+                            self.boundaries['morpheme'].append(i)
                             cur_group = s.group
                 except AttributeError:
                     if isinstance(s,str):
@@ -210,7 +219,7 @@ class Transcription(object):
         if 'stress_pattern' not in state:
             state['stress_pattern'] = {}
         if 'boundaries' not in state:
-            state['boundaries'] = []
+            state['boundaries'] = {}
         self.__dict__.update(state)
 
     def __hash__(self):
@@ -229,8 +238,10 @@ class Transcription(object):
         for i,s in enumerate(self._list):
             if self.stress_pattern and i in self.stress_pattern:
                 s += self.stress_pattern[i]
+            if 'tone' in self.boundaries and i in self.boundaries['tone']:
+                s += self.boundaries['tone'][i]
             temp_list.append(s)
-        if self.boundaries:
+        if 'morpheme' in self.boundaries:
             beg = 0
             bound_list = []
             for i in self.boundaries:

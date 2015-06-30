@@ -249,7 +249,7 @@ def corpus_name_to_path(storage_directory,name):
 def compile_digraphs(digraph_list):
     digraph_list = sorted(digraph_list, key = lambda x: len(x), reverse=True)
     pattern = '|'.join(re.escape(d) for d in digraph_list)
-    pattern += '|\S'
+    pattern += '|\d+|\S'
     return re.compile(pattern)
 
 def inspect_directory(directory):
@@ -277,6 +277,7 @@ def inspect_directory(directory):
 
     return likely_type, relevant_files
 
+parse_numbers = re.compile('\d+|\w')
 
 def parse_transcription(string, annotation_type):
     md = annotation_type.morph_delimiters
@@ -296,7 +297,8 @@ def parse_transcription(string, annotation_type):
         string = string.split(annotation_type.trans_delimiter)
     elif annotation_type.digraph_pattern is not None:
         string = annotation_type.digraph_pattern.findall(string)
-
+    else:
+        string = parse_numbers.findall(string)
     final_string = []
     for seg in string:
         if seg == '':
@@ -307,11 +309,13 @@ def parse_transcription(string, annotation_type):
                 num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
                 seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
             elif annotation_type.number_behavior == 'tone':
-                num = ''
+                num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
                 seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
             if num == '':
                 num = None
-
+            if seg == '':
+                setattr(final_string[-1],annotation_type.number_behavior, num)
+                continue
         a = BaseAnnotation(seg)
         if annotation_type.number_behavior is not None and num is not None:
             setattr(a, annotation_type.number_behavior, num)
