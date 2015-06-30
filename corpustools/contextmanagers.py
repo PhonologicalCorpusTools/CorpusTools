@@ -166,6 +166,10 @@ class CanonicalVariantContext(BaseCorpusContext):
 
     def __iter__(self):
         for word in self.corpus:
+            if math.isnan(word.frequency):
+                continue
+            if self.type_or_token == 'token' and word.frequency == 0:
+                continue
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
             w = copy.copy(word)
@@ -187,6 +191,10 @@ class MostFrequentVariantContext(BaseCorpusContext):
 
     def __iter__(self):
         for word in self.corpus:
+            if math.isnan(word.frequency):
+                continue
+            if self.type_or_token == 'token' and word.frequency == 0:
+                continue
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
             v = word.variants(self.sequence_type)
@@ -236,6 +244,10 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
 
     def __iter__(self):
         for word in self.corpus:
+            if math.isnan(word.frequency):
+                continue
+            if self.type_or_token == 'token' and word.frequency == 0:
+                continue
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
             variants = word.variants(self.sequence_type)
@@ -273,6 +285,10 @@ class WeightedVariantContext(BaseCorpusContext):
 
     def __iter__(self):
         for word in self.corpus:
+            if math.isnan(word.frequency):
+                continue
+            if self.type_or_token == 'token' and word.frequency == 0:
+                continue
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
             variants = word.variants(self.sequence_type)
