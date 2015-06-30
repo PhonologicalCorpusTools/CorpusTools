@@ -921,7 +921,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
-        self.analysisMenu.addAction(self.autoAnalysisAct)
+        #self.analysisMenu.addAction(self.autoAnalysisAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
         #self.viewMenu.addAction(self.showInventoryAct)
