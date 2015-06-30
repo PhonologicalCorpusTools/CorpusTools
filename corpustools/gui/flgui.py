@@ -3,10 +3,11 @@
 from collections import OrderedDict
 
 import corpustools.funcload.functional_load as FL
+from corpustools.funcload.io import save_minimal_pairs
 
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
-                    ContextWidget)
+                    ContextWidget, SaveFileWidget)
 from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -40,6 +41,9 @@ class FLWorker(FunctionWorker):
                 frequency_threshold = kwargs.pop('frequency_cutoff')) as c:
             try:
                 pairs = kwargs.pop('segment_pairs')
+                output_filename = kwargs.pop('output_filename', None)
+                if output_filename is not None:
+                    to_output = []
                 for pair in pairs:
                     if isinstance(pair[0], (list, tuple)):
                         in_list = list(zip(pair[0], pair[1]))
@@ -49,6 +53,10 @@ class FLWorker(FunctionWorker):
                     if self.stopped:
                         break
                     self.results.append(res)
+                    if output_filename is not None:
+                        to_output.append((pair, res[1]))
+                if output_filename is not None:
+                    save_minimal_pairs(output_filename, to_output)
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return
@@ -127,6 +135,7 @@ class FLDialog(FunctionDialog):
 
         optionLayout.addWidget(self.tierWidget)
 
+
         self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
                                                     OrderedDict([('Type','type'),
                                                     ('Token','token')]))
@@ -137,6 +146,7 @@ class FLDialog(FunctionDialog):
         self.variantsWidget = ContextWidget(self.corpus, actions)
 
         optionLayout.addWidget(self.variantsWidget)
+        optionLayout.addWidget(self.typeTokenWidget)
 
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
@@ -158,18 +168,20 @@ class FLDialog(FunctionDialog):
         box.addWidget(self.relativeCountWidget)
         box.addWidget(self.homophoneWidget)
 
+        fileFrame = QGroupBox('Output list of minimal pairs to a file')
+
+        self.saveFileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
+
+        vbox = QHBoxLayout()
+        vbox.addWidget(self.saveFileWidget)
+
+        fileFrame.setLayout(vbox)
+
+        box.addWidget(fileFrame)
+
         minPairOptionFrame.setLayout(box)
 
         l.addWidget(minPairOptionFrame)
-
-        entropyOptionFrame = QGroupBox('Change in entropy options')
-
-        box = QVBoxLayout()
-
-
-        box.addWidget(self.typeTokenWidget)
-        entropyOptionFrame.setLayout(box)
-        l.addWidget(entropyOptionFrame)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -213,24 +225,13 @@ class FLDialog(FunctionDialog):
                             ' entropy caused by a merger of paired segments in the set.'
             "</FONT>"))
 
-    def typesSelected(self):
-        self.typeTokenWidget.setOptions(OrderedDict([('Count types','type'),
-                                            ('Count tokens','token')]))
-
-    def tokensSelected(self):
-        self.typeTokenWidget.setOptions(OrderedDict([
-                    ('Use most frequent pronunciation as the type','most_frequent_type'),
-                    ('Use most frequent pronunciation for all tokens','most_frequent_token'),
-                    ('Use raw counts of each pronunciation (token frequency)','count_token'),
-                    ('Use relative counts of each pronunciation (type frequency)','relative_type')]))
-
     def minPairsSelected(self):
-        self.typeTokenWidget.disable()
+        self.saveFileWidget.setEnabled(True)
         self.relativeCountWidget.setEnabled(True)
         self.homophoneWidget.setEnabled(True)
 
     def entropySelected(self):
-        self.typeTokenWidget.enable()
+        self.saveFileWidget.setEnabled(False)
         self.relativeCountWidget.setEnabled(False)
         self.homophoneWidget.setEnabled(False)
 
@@ -253,8 +254,13 @@ class FLDialog(FunctionDialog):
                 'type_token':self.typeTokenWidget.value(),
                 'algorithm': alg}
         if alg == 'min_pairs':
+            out_file = self.saveFileWidget.value()
+            if out_file == '':
+                out_file = None
             kwargs['relative_count'] = self.relativeCountWidget.isChecked()
             kwargs['distinguish_homophones'] = self.homophoneWidget.isChecked()
+            kwargs['output_filename'] = out_file
+
         return kwargs
 
     def setResults(self, results):
