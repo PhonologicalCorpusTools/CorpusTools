@@ -82,48 +82,48 @@ Consider a toy example, in which the following corpus is assumed
 in a PCT corpus, as it is assumed that each row in the corpus represents
 1 type; it is included here for clarity):
 
-+--------+-----------------------+
-|        |        Original       |
-|        +--------+------+-------+
-|  Word  | Trans. | Type | Token |
-|        |        | Freq.| Freq. |
-+========+========+======+=======+
-|  hot   |  [hɑt] |    1 |     2 |
-+--------+--------+------+-------+
-|  song  |  [sɑŋ] |    1 |     4 |
-+--------+--------+------+-------+
-|  hat   |  [hæt] |    1 |     1 |
-+--------+--------+------+-------+
-|  sing  |  [sɪŋ] |    1 |     6 |
-+--------+--------+------+-------+
-|  tot   |  [tɑt] |    1 |     3 |
-+--------+--------+------+-------+
-|  dot   |  [dɑt] |    1 |     5 |
-+--------+--------+------+-------+
-|  hip   |  [hɪp] |    1 |     2 |
-+--------+--------+------+-------+
-|  hid   |  [hɪd] |    1 |     7 |
-+--------+--------+------+-------+
-|  team  |  [tim] |    1 |     5 |
-+--------+--------+------+-------+
-|  deem  |  [dim] |    1 |     5 |
-+--------+--------+------+-------+
-|  toot  |  [tut] |    1 |     9 |
-+--------+--------+------+-------+
-|  dude  |  [dud] |    1 |     2 |
-+--------+--------+------+-------+
-|  hiss  |  [hɪs] |    1 |     3 |
-+--------+--------+------+-------+
-|  his   |  [hɪz] |    1 |     5 |
-+--------+--------+------+-------+
-| sizzle | [sɪzəl]|    1 |     4 |
-+--------+--------+------+-------+
-| dizzy  |  [dɪzi]|    1 |     3 |
-+--------+--------+------+-------+
-| tizzy  |  [tɪzi]|    1 |     4 |
-+--------+--------+------+-------+
-|      Total      |   17 |    70 |
-+-----------------+------+-------+
++--------+-----------------------+-----------------------+-----------------------+
+|        |        Original       | Under [h] / [ŋ] merger| Under [t] / [d] merger|
+|        +--------+------+-------+--------+------+-------+--------+------+-------+
+|  Word  | Trans. | Type | Token | Trans. | Type | Token | Trans. | Type | Token |
+|        |        | Freq.| Freq. |        | Freq.| Freq. |        | Freq.| Freq. |
++========+========+======+=======+========+======+=======+========+======+=======+
+|  hot   |  [hɑt] |    1 |     2 |  [Xɑt] |    1 |     2 |  [hɑX] |    1 |     2 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  song  |  [sɑŋ] |    1 |     4 |  [sɑX] |    1 |     4 |  [sɑŋ] |    1 |     4 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  hat   |  [hæt] |    1 |     1 |  [Xæt] |    1 |     1 |  [hæX] |    1 |     1 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  sing  |  [sɪŋ] |    1 |     6 |  [sɪX] |    1 |     6 |  [sɪŋ] |    1 |     6 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  tot   |  [tɑt] |    1 |     3 |  [tɑt] |    1 |     3 |  [XɑX] |      |       |
++--------+--------+------+-------+--------+------+-------+--------+    1 |     8 |
+|  dot   |  [dɑt] |    1 |     5 |  [dɑt] |    1 |     5 |  [XɑX] |      |       |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  hip   |  [hɪp] |    1 |     2 |  [Xɪp] |    1 |     2 |  [hɪp] |    1 |     2 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  hid   |  [hɪd] |    1 |     7 |  [Xɪd] |    1 |     7 |  [hɪX] |    1 |     7 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  team  |  [tim] |    1 |     5 |  [tim] |    1 |     5 |  [Xim] |      |       |
++--------+--------+------+-------+--------+------+-------+--------+    1 |    10 |
+|  deem  |  [dim] |    1 |     5 |  [dim] |    1 |     5 |  [Xim] |      |       |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  toot  |  [tut] |    1 |     9 |  [tut] |    1 |     9 |  [XuX] |      |       |
++--------+--------+------+-------+--------+------+-------+--------+    1 |    11 |
+|  dude  |  [dud] |    1 |     2 |  [dud] |    1 |     2 |  [XuX] |      |       |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  hiss  |  [hɪs] |    1 |     3 |  [Xɪs] |    1 |     3 |  [hɪs] |    1 |     3 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|  his   |  [hɪz] |    1 |     5 |  [Xɪz] |    1 |     5 |  [hɪz] |    1 |     5 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+| sizzle | [sɪzəl]|    1 |     4 | [sɪzəl]|    1 |     4 | [sɪzəl]|    1 |     4 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+| dizzy  |  [dɪzi]|    1 |     3 |  [dɪzi]|    1 |     3 |  [Xɪzi]|      |       |
++--------+--------+------+-------+--------+------+-------+--------+    1 |     7 |
+| tizzy  |  [tɪzi]|    1 |     4 |  [tɪzi]|    1 |     4 |  [Xɪzi]|      |       |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
+|      Total      |   17 |    70 |        |   17 |    70 |        |   13 |    70 |
++--------+--------+------+-------+--------+------+-------+--------+------+-------+
 
 The starting entropy, assuming word types as the relative unit of
 structure and counting, is:
@@ -152,91 +152,11 @@ The starting entropy, assuming word tokens, is:
 + (\frac{3}{70} log_{2}(\frac{3}{70})) + (\frac{4}{70} log_{2}(\frac{4}{70}))]
 = 3.924`
 
-
-
-+--------+-----------------------+
-|        | Under [h] / [ŋ] merger|
-|        +--------+------+-------+
-|  Word  | Trans. | Type | Token |
-|        |        | Freq.| Freq. |
-+========+========+======+=======+
-|  hot   |  [Xɑt] |    1 |     2 |
-+--------+--------+------+-------+
-|  song  |  [sɑX] |    1 |     4 |
-+--------+--------+------+-------+
-|  hat   |  [Xæt] |    1 |     1 |
-+--------+--------+------+-------+
-|  sing  |  [sɪX] |    1 |     6 |
-+--------+--------+------+-------+
-|  tot   |  [tɑt] |    1 |     3 |
-+--------+--------+------+-------+
-|  dot   |  [dɑt] |    1 |     5 |
-+--------+--------+------+-------+
-|  hip   |  [Xɪp] |    1 |     2 |
-+--------+--------+------+-------+
-|  hid   |  [Xɪd] |    1 |     7 |
-+--------+--------+------+-------+
-|  team  |  [tim] |    1 |     5 |
-+--------+--------+------+-------+
-|  deem  |  [dim] |    1 |     5 |
-+--------+--------+------+-------+
-|  toot  |  [tut] |    1 |     9 |
-+--------+--------+------+-------+
-|  dude  |  [dud] |    1 |     2 |
-+--------+--------+------+-------+
-|  hiss  |  [Xɪs] |    1 |     3 |
-+--------+--------+------+-------+
-|  his   |  [Xɪz] |    1 |     5 |
-+--------+--------+------+-------+
-| sizzle | [sɪzəl]|    1 |     4 |
-+--------+--------+------+-------+
-| dizzy  |  [dɪzi]|    1 |     3 |
-+--------+--------+------+-------+
-| tizzy  |  [tɪzi]|    1 |     4 |
-+--------+--------+------+-------+
-|      Total      |   17 |    70 |
-+-----------------+------+-------+
-
 Upon merger of [h] and [ŋ], there is no change in the number of unique words;
 there are still 17 unique words with all their same token frequencies.
 Thus, the entropy after an [h] / [ŋ] merger will be the same as it was
 before the merger. The functional load, then would be 0, as the pre-merger
 and post-merger entropies are identical.
-
-+-----------+-----------------------+
-|           | Under [t] / [d] merger|
-|           +--------+------+-------+
-|  Word     | Trans. | Type | Token |
-|           |        | Freq.| Freq. |
-+===========+========+======+=======+
-|  hot      |  [hɑX] |    1 |     2 |
-+-----------+--------+------+-------+
-|  song     |  [sɑŋ] |    1 |     4 |
-+-----------+--------+------+-------+
-|  hat      |  [hæX] |    1 |     1 |
-+-----------+--------+------+-------+
-|  sing     |  [sɪŋ] |    1 |     6 |
-+-----------+--------+------+-------+
-|tot/dot    |  [XɑX] |    1 |     8 |
-+-----------+--------+------+-------+
-|  hip      |  [hɪp] |    1 |     2 |
-+-----------+--------+------+-------+
-|  hid      |  [hɪX] |    1 |     7 |
-+-----------+--------+------+-------+
-|team/deem  |  [Xim] |    1 |    10 |
-+-----------+--------+------+-------+
-|toot/dude  |  [XuX] |    1 |    11 |
-+-----------+--------+------+-------+
-|  hiss     |  [hɪs] |    1 |     3 |
-+-----------+--------+------+-------+
-|  his      |  [hɪz] |    1 |     5 |
-+-----------+--------+------+-------+
-| sizzle    | [sɪzəl]|    1 |     4 |
-+-----------+--------+------+-------+
-|dizzy/tizzy|  [Xɪzi]|    1 |     7 |
-+-----------+--------+------+-------+
-|      Total         |   13 |    70 |
-+--------------------+------+-------+
 
 Upon merger of [t] and [d], on the other hand, four pairs of words have
 been collapsed. E.g., the difference between *team* and *deem* no longer
@@ -304,75 +224,43 @@ pairs is only based on type frequency; the frequency of the usage of
 the words is not used as a weighting factor, the way it can be under
 the calculation of functional load as change in entropy.
 
+Average Functional Load
+````````````````````````
+
+[Hume2013]_ suggests that the average functional load (there called "relative contrastiveness") is a useful way of indicating how much work an individual segment does, on average, in comparison to other segments. This is calculated by taking an individual segment, calculating the pairwise functional load of that segment and each other segment in the inventory, and then taking the average across all those pairs. This calculation can also be performed in PCT.
+
 .. _functional_load_gui:
 
 Implementing the functional load function in the GUI
 ----------------------------------------------------
 
-As with most analysis functions, a corpus must first be loaded (see :ref:`loading_corpora`).
+As with most analysis functions, a corpus must first be loaded (see
+:ref:`loading_corpora`).
 Once a corpus is loaded, use the following steps.
 
 1. **Getting started**: Choose “Analysis” / “Calculate functional load...”
    from the top menu bar.
-2. **Sound selection**: First, select which two sounds you want the functional
-   load to be calculated for. Do this by clicking on “Add pair of sounds”;
-   the “Select segment pair” dialogue box will open. The segment choices that
-   are available will automatically correspond to all of the unique
-   transcribed characters in your corpus. The order of the sounds is
-   irrelevant; picking [i] first and [u] second will yield the same
-   results as picking [u] first and [i] second. Once a pair of sounds
-   has been selected, click “Add.” They will appear in the “Functional
-   load” dialogue box. Multiple pairs of sounds can be selected and
-   added to the list for calculation simultaneously. To do this without
-   going back to the “Functional Load” dialogue box first, click “Add
-   and create another.” When multiple pairs are selected, they can be
-   treated in two different ways, listed under “Options” on the right-hand
-   side of the “Functional Load” dialogue box under “Multiple segment
-   pair behaviour”:
+2. **Sound selection**: First, decide whether you want to calculate the
+   average functional load of a single segment (i.e., its functional load
+   averaged across all possible pairwise comparisons), or the more standard
+   functional load of a pair of sounds, defined over segments or features.
+   To calculate the average functional load of a single sound, choose
+   "Add one segment"; to calculate the pairwise functional load of two
+   segments, choose "Add pair of segments"; to calculate the pairwise
+   functional load based on features, choose "Add pair of features."
 
-   a. **All segment pairs together**: This option allows for the calculation
-      of the functional load of featural contrasts. E.g., if the pairs [e]/[i]
-      and [o]/[u] are chosen, PCT will  calculate the functional load from
-      both pairs at the same time. This option is useful for investigating
-      the functional load of featural contrasts: e.g., if the above pairs
-      are the ONLY pairs of sounds in the corpus that differ by exactly the
-      single feature [high], then this option will allow you to calculate
-      the functional load of the [high] contrast. Note that the results
-      table will list “[e], [o]” as “sound 1” and “[i], [u]” as “sound 2”
-      in this scenario, to remind you that you are getting a single functional
-      load value. Note too that this does not collapse all four sounds to a
-      single sound (which would erroneously also neutralize [e]/[o], [e]/[u],
-      [i]/[o], [i]/[u]), but rather collapses each pair of segments and only
-      then checks for any minimal pairs or drop in entropy.
-   b. **Each segment pair individually**: This option cycles through the list
-      of pairs and gives the functional load of each pair individually
-      from the corpus. E.g., if the pairs [e]/[i] and [o]/[u] are chosen,
-      you will get results showing first the functional load of [e]/[i]
-      in the corpus and then the functional load of [o]/[u] in the corpus,
-      independently.
+For details on how to actually select segments or features, see
+:ref:`sound_selection` or :ref:`feature_selection` as relevant.
+
+When multiple individual segments or individual pairs are selected, each
+entry will be treated separately.
 
 3. **Functional load algorithm**: Select which of the two methods of calculation
    you want to use—i.e., minimal pairs or change in entropy.
    (See discussion above for details of each.)
-4. **Tier**: Select which tier the functional load should be calculated from.
-   The default is the “transcription” tier, i.e., looking at the entire
-   word transcriptions. If another tier has been created (see :ref:`create_tiers`),
-   functional load can be calculated on the basis of that tier. For example,
-   if a vowel tier has been created, then “minimal pairs” will be entries
-   that are identical except for one entry in the vowels only, entirely
-   independently of consonants. Thus, the words [mapotik] and [ʃɹaɡefli]
-   would be treated as a minimal pair, given that their vowel-tier
-   representations are [aoi] and [aei].
-5. **Minimum frequency**: It is possible to set a minimum token frequency
-   for words in the corpus in order to be included in the calculation.
-   This allows easy exclusion of rare words; for example, if one were
-   calculating the functional load of [s] vs. [ʃ] in English and didn’t
-   set a minimum frequency, words such as *santy* (vs. *shanty*) might be
-   included, which might not be a particularly accurate reflection of
-   the phonological knowledge of speakers. To include all words in the
-   corpus, regardless of their token frequency, set the the minimum frequency to 0.
-6. **Additional parameters for minimal pairs**: If minimal pairs serve as the
-   means of calculation, there are two additional parameters can be set.
+
+4. **Minimal pair options**: If minimal pairs serve as the
+   means of calculation, there are three additional parameters can be set.
 
    a. **Raw vs. relative count**: First, PCT can report only the raw count of
       minimal pairs that hinge on the contrast in the corpus, if you just
@@ -386,39 +274,71 @@ Once a corpus is loaded, use the following steps.
       and *shock* (v.), this would count as four minimal pairs if homophones
       are included, but only one if homophones are ignored. The default is
       to ignore homophones.
+   c. **Output list of minimal pairs to a file**: It is possible to save
+      a list of all the actual minimal pairs that PCT finds that hinge on a
+      particular chosen contrast to a .txt file. To do so, enter a file
+      path name, or select "Choose file..." to use a regular system
+      dialogue box. If nothing is entered here, no list will be saved,
+      but the overall output will still be provided (and can be saved independently).
 
-7. **Additional parameters for change in entropy**: If you are calculating
+5. **Change in entropy options**: If you are calculating
    functional load using change in entropy, one additional parameter can be set.
 
    a. **Type or token frequency**: As described in :ref:`method_change_entropy`, entropy can be
       calculated using either type or token frequencies. This option
       determines which to use.
 
+6. **Tier**: Select which tier the functional load should be calculated from.
+   The default is the “transcription” tier, i.e., looking at the entire
+   word transcriptions. If another tier has been created (see :ref:`create_tiers`),
+   functional load can be calculated on the basis of that tier. For example,
+   if a vowel tier has been created, then “minimal pairs” will be entries
+   that are identical except for one entry in the vowels only, entirely
+   independently of consonants. Thus, the words [mapotik] and [ʃɹaɡefli]
+   would be treated as a minimal pair, given that their vowel-tier
+   representations are [aoi] and [aei].
+
+7. **Pronunciation variants**: If the corpus contains multiple pronunciation
+   variants for lexical items, select what strategy should be used. For details,
+   see :ref:`pronunciation_variants`.
+
+8. **Minimum frequency**: It is possible to set a minimum token frequency
+   for words in the corpus in order to be included in the calculation.
+   This allows easy exclusion of rare words; for example, if one were
+   calculating the functional load of [s] vs. [ʃ] in English and didn’t
+   set a minimum frequency, words such as *santy* (vs. *shanty*) might be
+   included, which might not be a particularly accurate reflection of
+   the phonological knowledge of speakers. To include all words in the
+   corpus, regardless of their token frequency, set the the minimum frequency to 0.
+
 Here is an example of selecting [m] and [n], with functional load to be
 calculated on the basis of minimal pairs, only including words with a
-token frequency of at least 1, from the built-in example corpus:
+token frequency of at least 1, from the built-in example corpus (which
+only has canonical forms):
 
 .. image:: static/funtionalloaddialog.png
    :width: 90%
    :align: center
 
-8. Results table: Once all parameters have been set, click one of the two
-   “Calculate functional load” buttons. If this is the first calculation,
-   the option to “start new results table” should be selected. For subsequent
-   calculations, the calculation can be added to the already started table,
-   for direct comparison, or a new table can be started. [Note that if a
-   table is closed, new calculations will not be added to the previously
-   open table; a new table must be started.] Either way, the results table
-   will have the following columns, with one row per calculation: segment 1,
-   segment 2, which tier was used, which measurement method was selected,
-   the resulting functional load, what the minimum frequency was, and for
-   calculations using minimal pairs, whether the count is absolute or
-   relative and whether homophones were ignored or not. (For calculations
-   using change in entropy, “N/A” values are entered into the latter two columns.)
-9. Saving results: Once a results table has been generated for at least
-   one pair, the table can be saved by clicking on “Save to file” at the
-   bottom of the table to open a system dialogue box and save the results
-   at a user-designated location.
+10. **Results**: Once all parameters have been set, click one of the two
+    “Calculate functional load” buttons. If this is the first calculation,
+    the option to “start new results table” should be selected. For subsequent
+    calculations, the calculation can be added to the already started table,
+    for direct comparison, or a new table can be started. [Note that if a
+    table is closed, new calculations will not be added to the previously
+    open table; a new table must be started.] Either way, the results table
+    will have the following columns, with one row per calculation: segment 1,
+    segment 2, which tier was used, which measurement method was selected,
+    the resulting functional load, what the minimum frequency was, what
+    strategy was used for dealing with pronunciation variants, and for
+    calculations using minimal pairs, whether the count is absolute or
+    relative and whether homophones were ignored or not. (For calculations
+    using change in entropy, “N/A” values are entered into the latter two columns.)
+
+11. **Saving results**: Once a results table has been generated for at least
+    one pair, the table can be saved by clicking on “Save to file” at the
+    bottom of the table to open a system dialogue box and save the results
+    at a user-designated location.
 
 .. image:: static/funtionalloadresults.png
    :width: 90%
@@ -532,8 +452,8 @@ Optional arguments:
 
 EXAMPLE 1: If your corpus file is example.corpus (no prounciation variants)
 and you want to calculate the minimal pair functional load of the segments
-[m] and [n] using defaults for all optional arguments, you first need to 
-create a text file that contains the text “m\tn” (where \t is a tab; no 
+[m] and [n] using defaults for all optional arguments, you first need to
+create a text file that contains the text “m\tn” (where \t is a tab; no
 quotes in the file). Let us call this file pairs.txt. You would then run the
 following command in your terminal window::
 
@@ -557,7 +477,7 @@ to run the following command::
 
    pct_funcload example.corpus -l -o output.txt
 
-.. _classes_and_functions:
+.. _func_load_classes_and_functions:
 
 Classes and functions
 ---------------------

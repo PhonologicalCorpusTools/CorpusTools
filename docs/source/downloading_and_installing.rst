@@ -4,19 +4,21 @@
 Downloading and installing
 **************************
 
-PCT is currently available in beta form for Mac, PC, and Linux machines.
-It can be downloaded from `SourceForge
-<http://sourceforge.net/projects/phonologicalcorpustools/>`_
+PCT is currently available for Mac, PC, and Linux machines.
+It can be downloaded from `GitHub
+<http://phonologicalcorpustools.github.io/CorpusTools/>`_
 using the following steps. Note that there are several dependencies that are
 pre-requisites before PCT can function properly. For Mac and Windows machines,
 we have created executable files that bundle most of the dependencies and the
 PCT software itself into a single package. Using these is the easiest /
 fastest way to get PCT up and running on your machine.
 
-1. Go to the `PCT SourceForge page`_.
+XXX
+
+1. Go to the `PCT GitHub page`_.
 2. Click on the “Files” tab.
 3. Click on the link with the highest number (= most recent version).
-   As of February 2015, that is 1.0.
+   As of June 2015, that is 1.1.
 
 Windows Executable
 ==================
@@ -62,10 +64,11 @@ Linux / Fallback instructions
      <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.)
 
 2. Get the source code for PCT. Click on either the .zip or the .gz file
-   on the `PCT SourceForge page
-   <http://sourceforge.net/projects/phonologicalcorpustools/>`_,
+   on the `PCT GitHub page
+   <http://phonologicalcorpustools.github.io/CorpusTools/>`_,
    to download the zipped or tarball version of the code, depending
    on your preference.
+
 3. After expanding the file, you will find a file called ``setup.py``
    in the top level directory. Run it in one of the following ways:
 

@@ -223,7 +223,7 @@ To return to the function dialogue box with your most recently used
 selections, click on “Reopen function dialog.” Otherwise, the results
 table can be closed and you will be returned to your corpus view.
 
-.. _classes_and_functions:
+.. _acoustic_sim_classes_and_functions:
 
 Classes and functions
 ---------------------

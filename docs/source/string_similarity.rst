@@ -1,7 +1,7 @@
 .. _string_similarity:
 
 *******************************************
-String similarity
+String similarity and neighbourhood density
 *******************************************
 
 .. _about_string_similarity:
@@ -13,7 +13,7 @@ String similarity is any measure of how similar any two sequences of
 characters are. These character strings can be strings of letters or
 phonemes; both of the methods of calculation included in PCT allow for
 calculations using either type of character. It is, therefore, a basic
-measure of overall form-based similarity. 
+measure of overall form-based similarity.
 
 String similarity finds more widespread use in areas of linguistics other
 than phonology; it is, for example, used in Natural Language Processing
@@ -107,6 +107,7 @@ Formula for string similarity from [Khorsi2012]_:
 Note:
 
 * *w1, w2* are two words whose string similarity is to be measured
+
 * *LCS(w1, w2)* represents the Longest Common Shared Sequence of symbols
   between the two words
 
@@ -127,6 +128,7 @@ in the main menu, and then follow these steps:
    three methods described above is to be used to calculate string similarity.
    The options are phonological edit distance, standard (Levenshtein) edit
    distance, and the algorithm described above and in [Khorsi2012]_.
+
 2. **Comparison type**: Next, choose what kind of comparison is to be done.
    One can either take a single word and get its string similarity score
    to every other word in the corpus (useful, for example, when trying
@@ -159,15 +161,10 @@ in the main menu, and then follow these steps:
           the provided inventory will ensure that all characters are
           understood by PCT to correspond to existing characters in the
           corpus (with their concomitant featural interpretation). Click
-          on “Show inventory” and then choose to show “Consonants,”
-          “Vowels,” and/or other. (If there is no featural interpretation
-          of your inventory, you will simply see a list of all the
-          available segments, but they will not be classified by major
-          category.) Clicking on the individual segments will add them to
-          the transcription. The selections will remain even when the
-          sub-inventories are hidden; we allow for showing / hiding the
-          inventories to ensure that all relevant buttons on the dialogue
-          box are available, even on small computer screens. Note that
+          on “Show inventory.” (See also :ref:`inventory_categories`
+          for more on how to
+          set up the inventory window.) Clicking on the individual
+          segments will add them to the transcription. Note that
           you do NOT need to include word boundaries at the beginning
           and end of the word, even when the boundary symbol is included
           as a member of the inventory; these will be assumed
@@ -186,10 +183,9 @@ in the main menu, and then follow these steps:
       simply enter its standard orthographic form. For each word that is
       **not** in the corpus, you can add it by selecting “Create word/nonword”
       and following the steps described immediately above in (2b).
-   d. **List of word pairs (in the corpus)**: If there is a long list of pairs
+   d. **List of pairs of words (in the corpus)**: If there is a long list of pairs
       of words, one can simply create a tab-delimited plain .txt file
-      with one *word pair* per line. In this case, click on “Choose word
-      pairs file” and select the .txt file in the resulting system
+      with one *word pair* per line. In this case, click on “Choose file” and select the .txt file in the resulting system
       dialogue box. Note that this option is currently available only
       for words that already exist in the corpus, and that these pairs
       should be listed using their standard orthographic representations.
@@ -203,17 +199,18 @@ in the main menu, and then follow these steps:
    to be calculated on the basis of spelling, words that are *entered* are
    broken into their letter components. If similarity is to be calculated
    on the basis of transcription, the transcriptions are looked up in the
-   corpus. If a word does not occur in the corpus, its similarity to other
-   words can still be calculated on the basis of spelling, but not
-   transcription (as PCT has no way of inferring the transcription from
-   the spelling).
-3. **Frequency type**: If Khorsi similarity is to be calculated, the frequencies
+   corpus, or taken from the created nonword (see step # 1b above).
+
+3. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms.
+
+4. **Frequency type**: If Khorsi similarity is to be calculated, the frequencies
    of the symbols is relevant, and so will be looked up in the currently
    loaded corpus. Either type frequency or token frequency can be used for
    the calculation. This option will not be available for either edit
    distance algorithm, because frequency isn’t taken into account in
    either one.
-4. **Minimum / Maximum similarity**: If one is calculating the similarity of
+
+5. **Minimum / Maximum similarity**: If one is calculating the similarity of
    one word to all others in the corpus, an arbitrary minimum and maximum
    can be set to filter out words that are particularly close or distant.
    For example, one could require that only words with an edit distance
@@ -233,14 +230,13 @@ in the sample corpus, using token frequencies and comparing transcriptions:
    :width: 90%
    :align: center
 
-5. Results: Once all options have been selected, click “Calculate string
+6. **Results**: Once all options have been selected, click “Calculate string
    similarity.” If this is not the first calculation, and you want to
    add the results to a pre-existing results table, select the choice
    that says “add to current results table.” Otherwise, select “start
    new results table.” A dialogue box will open, showing a table of the
    results, including word 1, word 2, the result (i.e., the similarity
-   score for Khorsi or distance score for either of the edit algorithms),
-   whether type or token frequency was used (if the Khorsi method is
+   score for Khorsi or distance score for either of the edit algorithms), what choice was made regarding pronunciation variants, whether type or token frequency was used (if the Khorsi method is
    selected; otherwise, N/A), and which algorithm was used. Note that
    the entries in the table will be written in spelling regardless of
    whether spelling or transcriptions were used. This file can be saved
@@ -257,7 +253,7 @@ To return to the function dialogue box with your most recently used
 selections, click on “Reopen function dialog.” Otherwise, the results
 table can be closed and you will be returned to your corpus view.
 
-.. _classes_and_functions:
+.. _string_sim_classes_and_functions:
 
 Classes and functions
 ---------------------

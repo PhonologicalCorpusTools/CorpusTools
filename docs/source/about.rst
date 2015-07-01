@@ -12,9 +12,9 @@ About
 Phonological CorpusTools allows for easy computation of phonological metrics
 used in the literature for any corpus of language that you provide.
 
-`Github repository <https://github.com/kchall/CorpusTools/>`_
+`GitHub project page <http://phonologicalcorpustools.github.io/CorpusTools/>`_
 
-`SourceForge page <http://sourceforge.net/projects/phonologicalcorpustools/>`_
+`GitHub repository <https://github.com/PhonologicalCorpusTools/CorpusTools/>`_
 
 Contributors
 ------------

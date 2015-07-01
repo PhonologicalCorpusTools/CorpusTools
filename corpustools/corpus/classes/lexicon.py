@@ -1330,6 +1330,44 @@ class Attribute(object):
             self._range.update([x for x in value])
 
 class Inventory(object):
+    """
+    Inventories contain information about a Corpus' segmental inventory.
+    In many cases, they are similar to FeatureMatrices, but more tailored
+    to a specific corpus.  Where a FeatureMatrix would deal in feature
+    specifications, inventories will deal primarily in sets of segments.
+
+    Parameters
+    ----------
+
+    data : dict, optional
+        Mapping from segment symbol to Segment objects
+
+    Attributes
+    ----------
+    features : list
+        List of all features used as specifications for segments
+    possible_values : set
+        Set of values that segments use for features
+    stresses : dict
+        Mapping of stress values to segments that bear that stress
+    places : dict
+        Mapping from place of articulation labels to sets of segments
+    manners : dict
+        Mapping from manner of articulation labels to sets of segments
+    height : dict
+        Mapping from vowel height labels to sets of segments
+    backness : dict
+        Mapping from vowel backness labels to sets of segments
+    vowel_feature : str
+        Feature value (i.e., '+voc') that separates vowels from consonants
+    voice_feature : str
+        Feature value (i.e., '+voice') that codes voiced obstruents
+    diph_feature : str
+        Feature value (i.e., '+diphthong' or '.high') that separates
+        diphthongs from monophthongs
+    rounded_feature : str
+        Feature value (i.e., '+round') that codes rounded vowels
+    """
     def __init__(self, data = None):
         if data is None:
             self._data = {'#' : Segment('#')}
@@ -1609,8 +1647,8 @@ class Corpus(object):
     specifier : FeatureSpecifier
         See the FeatureSpecifier object
 
-    inventory : list
-        list of all Segments that appear at least once in the Words of the Corpus
+    inventory : Inventory
+        Inventory that contains information about segments in the Corpus
     """
 
     #__slots__ = ['name', 'wordlist', 'specifier',
@@ -1621,7 +1659,7 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self._inventory = Inventory()
+        self.inventory = Inventory()
         self.has_frequency = True
         self.has_spelling = False
         self.has_wordtokens = False
@@ -1760,7 +1798,7 @@ class Corpus(object):
         segments = list()
         if isinstance(feature_description,str):
             feature_description = feature_description.split(',')
-        for k,v in self._inventory.items():
+        for k,v in self.inventory.items():
             if v.feature_match(feature_description):
                 segments.append(k)
         return segments
@@ -1953,10 +1991,10 @@ class Corpus(object):
 
     def __setstate__(self,state):
         try:
-            if '_inventory' not in state:
-                state['_inventory'] = state['inventory']
-            if not isinstance(state['_inventory'], Inventory):
-                state['_inventory'] = Inventory(state['_inventory'])
+            if 'inventory' not in state:
+                state['inventory'] = state['_inventory']
+            if not isinstance(state['inventory'], Inventory):
+                state['inventory'] = Inventory(state['inventory'])
             if 'has_spelling' not in state:
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' in state:
@@ -2010,7 +2048,7 @@ class Corpus(object):
         """
         if not self.specifier is not None:
             return []
-        return [x for x in self._inventory.keys() if x not in self.specifier]
+        return [x for x in self.inventory.keys() if x not in self.specifier]
 
     def iter_words(self):
         """
@@ -2053,18 +2091,6 @@ class Corpus(object):
         """
         self.specifier = matrix
         self._specify_features()
-
-    @property
-    def inventory(self):
-        """
-        Returns a sorted list of segments used in transcriptions
-
-        Returns
-        -------
-        list
-            Sorted list of segment symbols used in transcriptions in the corpus
-        """
-        return self._inventory
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -2135,7 +2161,7 @@ class Corpus(object):
 
         if word.transcription is not None:
             self.update_inventory(word.transcription)
-            word.transcription._list = [self._inventory[x].symbol for x in word.transcription._list]
+            word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
         for d in word.descriptors:
             if d not in self.attributes:
                 if isinstance(getattr(word,d),str):
@@ -2161,11 +2187,11 @@ class Corpus(object):
         """
         for s in transcription:
             if isinstance(s, str):
-                if s not in self._inventory:
-                    self._inventory[s] = Segment(s)
+                if s not in self.inventory:
+                    self.inventory[s] = Segment(s)
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
-                self._inventory.stresses[v].add(transcription[k])
+                self.inventory.stresses[v].add(transcription[k])
 
     def get_or_create_word(self, **kwargs):
         """

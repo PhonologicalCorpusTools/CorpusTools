@@ -132,25 +132,37 @@ To start the analysis, click on “Analysis” / “Calculate mutual information
 in the main menu, and then follow these steps:
 
 1. **Bigram**: Click on the “Add bigram” button in the “Mutual Information”
-   dialogue box. A new window will open with a phonetic inventory of all
+   dialogue box. A new window will open with an inventory of all
    the segments that occur in your corpus. Select the bigram by clicking
    on one segment from the “left-hand side” and one segment from the
-   “right-hand side.” To add more than one bigram, click “Add and create
+   “right-hand side.” Note that the order of the sounds matters in this function! To add more than one bigram, click “Add and create
    another” to be automatically returned to the selection window. Once
    the last bigram has been selected, simply click “Add” to return to
    the Mutual Information dialogue box. All the selected bigrams will
    appear in a list. To remove one, click on it and select “Remove
    selected bigram.”
+
 2. **Tier**: Mutual information can be calculated on any available tier.
    The default is transcription. If a vowel tier has been created,
    for example, one could calculate the mutual information between
    vowels on that tier, ignoring intervening consonants, to examine
    harmony effects.
-3. **Domain**: Choosing “set domain to word” will change the calculation so
+
+3. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`.
+
+4. **Type vs. Token Frequency**: Next, pick whether you want the calculation
+   to be done on types or tokens, assuming that token frequencies are
+   available in your corpus. If they are not, this option will not be
+   available. (Note: if you think your corpus does include token frequencies,
+   but this option seems to be unavailable, see :ref:`corpus_format` on the required
+   format for a corpus.)
+
+5. **Domain**: Choosing “set domain to word” will change the calculation so
    that the calculation is for word-internal co-occurrence pMI. In this
    case, the order and adjacency  of the bigram does not matter; it is
    simply treated as a pair of segments that could occur anywhere in a word.
-4. **Word boundary count**: A standard word object in PCT contains word
+
+6. **Word boundary count**: A standard word object in PCT contains word
    boundaries on both sides of it (e.g., [#kæt#] ‘cat’). If words were
    concatenated in real running speech, however, one would expect to see
    only one word boundary between each pair of words (e.g., [#mai#kæt#]
@@ -161,7 +173,8 @@ in the main menu, and then follow these steps:
    to compensate for the extra “final” boundary at the end of an utterance.
    (It will make a difference only for calculations that include a boundary
    as one member of the pair.)
-5. **Results**: Once all options have been selected, click “Calculate mutual
+
+7. **Results**: Once all options have been selected, click “Calculate mutual
    information.” If this is not the first calculation, and you want to add
    the results to a pre-existing results table, select the choice that
    says “add to current results table.” Otherwise, select “start new
@@ -259,8 +272,8 @@ Optional arguments:
    Name of output file
 
 EXAMPLE 1: If your corpus file is example.corpus (no pronunciation variants)
-and you want to calculate the mutual information of the bigram 'si' using 
-defaults for all optional arguments, you would run the following command 
+and you want to calculate the mutual information of the bigram 'si' using
+defaults for all optional arguments, you would run the following command
 in your terminal window::
 
    pct_mutualinfo example.corpus -q s,i
@@ -280,7 +293,7 @@ following command::
    pct_mutualinfo example.corpus -l -o output.txt
 
 
-.. _classes_and_functions:
+.. _mutual_info_classes_and_functions:
 
 Classes and functions
 ---------------------

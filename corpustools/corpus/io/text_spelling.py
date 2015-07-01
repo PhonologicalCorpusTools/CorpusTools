@@ -91,6 +91,31 @@ def spelling_text_to_data(path, annotation_types = None,
 def load_directory_spelling(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
+    """
+    Loads a directory of orthographic texts.
+
+    Parameters
+    ----------
+    corpus_name : str
+        Name of corpus
+    path : str
+        Path to directory of text files
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse text files
+    support_corpus_path : str, optional
+        File path of corpus binary to load transcriptions from
+    ignore_case : bool, optional
+        Specifies whether lookups in the support corpus should ignore case
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        Corpus containing Discourses corresponding to the text files
+    """
     if call_back is not None:
         call_back('Finding  files...')
         call_back(0, 0)
@@ -110,7 +135,7 @@ def load_directory_spelling(corpus_name, path, annotation_types = None,
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
-            call_back('Parsing file {} of {}...'.format(i+1,len(file_tuples)))
+            call_back('Parsing file {} of {}...'.format(i+1, len(file_tuples)))
             call_back(i)
         root, filename = t
         name = os.path.splitext(filename)[0]

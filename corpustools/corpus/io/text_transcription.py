@@ -112,6 +112,29 @@ def transcription_text_to_data(path, annotation_types = None,
 def load_directory_transcription(corpus_name, path, annotation_types = None,
                                 feature_system_path = None,
                                 stop_check = None, call_back = None):
+    """
+    Loads a directory of transcribed texts.
+
+    Parameters
+    ----------
+    corpus_name : str
+        Name of corpus
+    path : str
+        Path to directory of text files
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse text files
+    feature_system_path : str, optional
+        File path of FeatureMatrix binary to specify segments
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        Corpus containing Discourses corresponding to the text files
+    """
     if call_back is not None:
         call_back('Finding  files...')
         call_back(0, 0)
@@ -153,47 +176,23 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
     ----------
     corpus_name : str
         Informative identifier to refer to corpus
-
     path : str
         Full path to text file
-
-    delimiter : str
-        Character to use for spliting text into words
-
-    ignore_list : list of strings
-        List of characters to ignore when parsing the text
-
-    digraph_list : list of strings
-        List of digraphs (sequences of two characters that should be
-        treated as a single segment) to use when reading transcriptions
-
-    trans_delimiter : str
-        Character to use for splitting transcriptions into a list
-        of segments. If it equals '', each character in the transcription
-        is interpreted as a segment.  Defaults to '.'
-
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse text files
+    lexicon : Corpus, optional
+        Corpus to store Discourse word information
     feature_system_path : str
         Full path to pickled FeatureMatrix to use with the Corpus
-
-    string_type : str
-        Specifies whether text files contains spellings or transcriptions.
-        Defaults to 'spelling'
-
-    stop_check : callable
-        Callable that returns a boolean for whether to exit before
-        finishing full calculation
-
-    call_back : callable
-        Function that can handle strings (text updates of progress),
-        tuples of two integers (0, total number of steps) and an integer
-        for updating progress out of the total set by a tuple
-
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
 
     Returns
     -------
     Discourse
-        Discourse  object generated from the text file
-
+        Discourse object generated from the text file
     """
 
     if feature_system_path is not None:

@@ -30,7 +30,7 @@ class CorpusTest(unittest.TestCase):
             self.assertEqual(corpus.find(w['spelling']),Word(**w))
             self.assertTrue(w['spelling'] in corpus)
 
-        self.assertEqual(corpus._inventory._data,{'#':Segment('#'),
+        self.assertEqual(corpus.inventory._data,{'#':Segment('#'),
                                         'a':Segment('a'),
                                         'b':Segment('b'),
                                         'c':Segment('c'),
@@ -423,7 +423,7 @@ def test_categories_spe(specified_test_corpus):
             'n':['Consonant','Dental','Nasal','Voiced'],
             'ʃ':['Consonant','Alveopalatal','Fricative','Voiceless'],
             't':['Consonant','Dental','Stop','Voiceless']}
-    inv = specified_test_corpus._inventory
+    inv = specified_test_corpus.inventory
 
     for k,v in cats.items():
         assert(inv.categorize(inv[k]) == v)

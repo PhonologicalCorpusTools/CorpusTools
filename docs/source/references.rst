@@ -29,6 +29,10 @@ References
 .. [SPE] Chomsky, Noam & Morris Halle. 1968. The sound pattern of English.
    New York: Harper & Row.
 
+.. [Connine2008] Connine, Cynthia M., Larissa J. Ranbom, and David J. Patterson. 2008.
+   Processing variant forms in spoken word recognition: The role of variant frequency.
+   Perception & Psychophysics 70:403-411.
+
 .. [Delvaux2007] Delvaux, V., Soquet, A., 2007. The influence of ambient speech on adult
    speech productions through unintentional imitation.
    Phonetica 64 (2-3), 145–173.
@@ -130,8 +134,16 @@ References
    Russian and Czech. American contributions to the Fifth
    International Conference of Slavists (Sofia), 191-219.
 
-.. [Lewandowski2012] Lewandowski, Natalie. 2012. Talent in nonnative phonetic convergence:
-   Universität Stuttgart Doctoral dissertation.
+.. [Kullback1951] Kullback, S.; Leibler, R.A. (1951).
+   "On information and sufficiency". Annals of Mathematical
+   Statistics 22 (1): 79–86. doi:10.1214/aoms/1177729694.
+
+.. [HKCAC] Leung, Man-Tak, and Sam-Po Law. 2001. HKCAC: The Hong Kong
+   Cantonese Adult Language Corpus. International Journal of Corpus
+   Linguistics 6:305-325.
+
+.. [Lewandowski2012] Lewandowski, Natalie. 2012. Talent in nonnative
+   phonetic convergence: Universität Stuttgart Doctoral dissertation.
 
 .. [Lu2012] Lu, Yu-an. 2012. The role of alternation in phonological relationships:
    Stony Brook University Doctoral dissertation.
@@ -148,12 +160,17 @@ References
    speech: Data and analysis, ed. by K. Maekawa & K. Yoneyama, 87-108.
    Tokyo: The National Institute of Japanese Language.
 
-.. [MATLAB] The MathWorks Inc. (2014).  MATLAB, Version R2014a.
+.. [Matlab] The MathWorks Inc. (2014).  MATLAB, Version R2014a.
 
-.. [Mielke2008] Mielke, Jeff. 2008. The emergence of distinctive features. Oxford: Oxford UP.
+.. [Mielke2008] Mielke, Jeff. 2008. The emergence of distinctive features.
+   Oxford: Oxford UP.
 
 .. [Mielke2012] Mielke, J. 2012. A phonetically based metric of sound similarity.
    Lingua, 122(2), 145-163.
+
+.. [LEXIQUE] New, Boris, Christophe Pallier, Marc Brysbaert, and Ludovic Ferrand.
+   2004. Lexique 2: A new French lexical database. Behavior Research Methods,
+   Instruments, and Computers 36:516-524.
 
 .. [Peperkamp2003] Peperkamp, Sharon, Michèle Pettinato & Emmanuel Dupoux. 2003.
    Allophonic variation and the acquisition of phoneme categories.
@@ -164,12 +181,24 @@ References
    Emmanuel. (2006). The acquisition of allophonic rules:
    Statistical learning with linguistic constraints. Cognition, 101, B31-B41.
 
-.. [Pike1947] Pike, Kenneth L. (1947). Phonemics. Ann Arbor: The University of Michigan Press.
+.. [Pike1947] Pike, Kenneth L. (1947). Phonemics. Ann Arbor: The University
+   of Michigan Press.
+
+.. [Pinnow2014] Pinnow, Eleni, and Cynthia M. Connine. 2014. Phonological variant
+   recognition: Representations and rules. Language and Speech 57:42-67.
+
+.. [Pitt2009] Pitt, Mark A. 2009. The strength and time course of lexical activation of
+   pronunciation variants. Journal of experimental Psychology: Human Perception and
+   Performance 35:896-910.
 
 .. [BUCKEYE] Pitt, M.A., Dilley, L., Johnson, K., Kiesling, S., Raymond, W.,
    Hume, E. and Fosler-Lussier, E. (2007) Buckeye Corpus of
    Conversational Speech (2nd release) [www.buckeyecorpus.osu.edu]
    Columbus, OH: Department of Psychology, Ohio State University (Distributor).
+
+.. [Pitt2011] Pitt, Mark A., Laura Dilley, and Michael Tat. 2011. Exploring the role of
+   exposure frequency in recognizing pronunciation variants. Journal of Phonetics
+   39:304-311.
 
 .. [R] R Core Team (2014).  R: A Language and Environment for Statistical
    Computing, Version 3.1.0. http://www.R-project.org/
@@ -185,14 +214,18 @@ References
 .. [Shannon1949] Shannon, Claude E., & Weaver, Warren. (1949). The Mathematical Theory of
    Communication (1998 ed.). Urbana-Champaign: University of Illinois Press.
 
-.. [Silverman2006] Silverman, Daniel. 2006. A critical introduction to phonology: Of sound,
-   mind, and body. London/New York: Continuum.
+.. [Silverman2006] Silverman, Daniel. 2006. A critical introduction to phonology: Of sound, mind, and body. London/New York: Continuum.
+
+.. [Sumner2009] Sumner, Mehan, and Arthur G. Samuel. 2009. The effect of experience on the
+   perception and representation of dialect variants. Journal of Memory and Language
+   60:487-501.
 
 .. [Surendran2003] Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load
    of phonological contrasts. In Tech. Rep. No. TR-2003-12. Chicago.
 
-.. [Thakur2011] Thakur, Purnima (2011). Sibilants in Gujarati phonology. Paper presented
-   at Information-theoretic approaches to linguistics, University of Colorado - Boulder.
+.. [Thakur2011] Thakur, Purnima (2011). Sibilants in Gujarati phonology.
+   Paper presented at Information-theoretic approaches to linguistics,
+   University of Colorado - Boulder.
 
 .. [Todd2012] Todd, Simon. 2012. Functional load and length-based Māori vowel
    contrast. Poster presented at the Annual Meeting of the New

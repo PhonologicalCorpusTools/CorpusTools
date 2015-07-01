@@ -16,10 +16,13 @@ Lexicon classes
 
    lexicon.Attribute
    lexicon.Corpus
+   lexicon.Inventory
    lexicon.FeatureMatrix
    lexicon.Segment
    lexicon.Transcription
    lexicon.Word
+   lexicon.EnvironmentFilter
+   lexicon.Environment
 
 .. _speech_classes_ref:
 
@@ -80,8 +83,8 @@ Export to CSV
    csv.export_corpus_csv
    csv.export_feature_matrix_csv
 
-Loading speech corpora
-----------------------
+Loading TextGrids
+-----------------
 
 .. currentmodule:: corpustools.corpus.io
 
@@ -89,7 +92,8 @@ Loading speech corpora
    :toctree: generate/
    :template: function.rst
 
-   spontaneous.import_spontaneous_speech_corpus
+   textgrid.load_discourse_textgrid
+   textgrid.load_directory_textgrid
 
 Running text
 ------------
@@ -100,8 +104,34 @@ Running text
    :toctree: generate/
    :template: function.rst
 
-   text_spelling.load_spelling_corpus
-   text_transcription.load_transcription_corpus
+   text_spelling.load_discourse_spelling
+   text_spelling.load_directory_spelling
+   text_transcription.load_discourse_transcription
+   text_transcription.load_directory_transcription
+
+Interlinear Text
+----------------
+
+.. currentmodule:: corpustools.corpus.io
+
+.. autosummary::
+   :toctree: generate/
+   :template: function.rst
+
+   text_ilg.load_discourse_ilg
+   text_ilg.load_directory_ilg
+
+Other standards
+---------------
+
+.. currentmodule:: corpustools.corpus.io
+
+.. autosummary::
+   :toctree: generate/
+   :template: function.rst
+
+   multiple_files.load_discourse_multiple_files
+   multiple_files.load_directory_multiple_files
 
 Analysis functions
 ==================
@@ -222,7 +252,6 @@ Symbol similarity
    :template: function.rst
 
    phono_edit_distance.phono_edit_distance
-
 
 
 

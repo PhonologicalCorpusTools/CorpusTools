@@ -21,8 +21,8 @@ also used for calculating functional load (see :ref:`method_functional_load`), w
 to document the *degree* to which sounds are contrastive in a language.
 This has been shown to be useful in, e.g., documenting sound changes
 [Hall2013b]_, understanding the choice of epenthetic vowel in a languages
-[Hume2013]_, modeling intra-speaker variability (Thakur 2011),
-gaining insight into synchronic phonological patterns (Hall & Hall 2013),
+[Hume2013]_, modeling intra-speaker variability [Thakur2011]_,
+gaining insight into synchronic phonological patterns [Hall2013a]_,
 and understanding the influence of phonological relations on perception
 ([Hall2009]_, [Hall2014a]_). See also the related measure of
 Kullback-Leibler divergence (:ref:`kullback-leibler`), which is used in [Peperkamp2006]_
@@ -87,47 +87,48 @@ which is again repeated from the examples of functional load, though
 just the original distribution of sounds.
 
 
-+--------+--------------------------------------------------+
-|        |        Original                                  |
-|        +---------------+----------------+-----------------+
-|  Word  | Transcription | Type frequency | Token frequency |
-+========+===============+================+=================+
-|  hot   |  [hɑt]        |              1 |               2 |
-+--------+---------------+----------------+-----------------+
-|  song  |  [sɑŋ]        |              1 |               4 |
-+--------+---------------+----------------+-----------------+
-|  hat   |  [hæt]        |              1 |               1 |
-+--------+---------------+----------------+-----------------+
-|  sing  |  [sɪŋ]        |              1 |               6 |
-+--------+---------------+----------------+-----------------+
-|  tot   |  [tɑt]        |              1 |               3 |
-+--------+---------------+----------------+-----------------+
-|  dot   |  [dɑt]        |              1 |               5 |
-+--------+---------------+----------------+-----------------+
-|  hip   |  [hɪp]        |              1 |               2 |
-+--------+---------------+----------------+-----------------+
-|  hid   |  [hɪd]        |              1 |               7 |
-+--------+---------------+----------------+-----------------+
-|  team  |  [tim]        |              1 |               5 |
-+--------+---------------+----------------+-----------------+
-|  deem  |  [dim]        |              1 |               5 |
-+--------+---------------+----------------+-----------------+
-|  toot  |  [tut]        |              1 |               9 |
-+--------+---------------+----------------+-----------------+
-|  dude  |  [dud]        |              1 |               2 |
-+--------+---------------+----------------+-----------------+
-|  hiss  |  [hɪs]        |              1 |               3 |
-+--------+---------------+----------------+-----------------+
-|  his   |  [hɪz]        |              1 |               5 |
-+--------+---------------+----------------+-----------------+
-| sizzle | [sɪzəl]       |              1 |               4 |
-+--------+---------------+----------------+-----------------+
-| dizzy  |  [dɪzi]       |              1 |               3 |
-+--------+---------------+----------------+-----------------+
-| tizzy  |  [tɪzi]       |              1 |               4 |
-+--------+---------------+----------------+-----------------+
-|      Total             |             17 |              70 |
-+------------------------+----------------+-----------------+
++--------+-----------------------+
+|        |        Original       |
+|        +--------+------+-------+
+|  Word  | Trans. | Type | Token |
+|        |        | Freq.| Freq. |
++========+========+======+=======+
+|  hot   |  [hɑt] |    1 |     2 |
++--------+--------+------+-------+
+|  song  |  [sɑŋ] |    1 |     4 |
++--------+--------+------+-------+
+|  hat   |  [hæt] |    1 |     1 |
++--------+--------+------+-------+
+|  sing  |  [sɪŋ] |    1 |     6 |
++--------+--------+------+-------+
+|  tot   |  [tɑt] |    1 |     3 |
++--------+--------+------+-------+
+|  dot   |  [dɑt] |    1 |     5 |
++--------+--------+------+-------+
+|  hip   |  [hɪp] |    1 |     2 |
++--------+--------+------+-------+
+|  hid   |  [hɪd] |    1 |     7 |
++--------+--------+------+-------+
+|  team  |  [tim] |    1 |     5 |
++--------+--------+------+-------+
+|  deem  |  [dim] |    1 |     5 |
++--------+--------+------+-------+
+|  toot  |  [tut] |    1 |     9 |
++--------+--------+------+-------+
+|  dude  |  [dud] |    1 |     2 |
++--------+--------+------+-------+
+|  hiss  |  [hɪs] |    1 |     3 |
++--------+--------+------+-------+
+|  his   |  [hɪz] |    1 |     5 |
++--------+--------+------+-------+
+| sizzle | [sɪzəl]|    1 |     4 |
++--------+--------+------+-------+
+| dizzy  |  [dɪzi]|    1 |     3 |
++--------+--------+------+-------+
+| tizzy  |  [tɪzi]|    1 |     4 |
++--------+--------+------+-------+
+|      Total      |   17 |    70 |
++--------+--------+------+-------+
 
 
 Consider the distribution of [h] and [ŋ], word-initially. In this
@@ -257,88 +258,51 @@ number of total words (either types or tokens) that occur in each
 environment, and divide by the total number of words (types or tokens)
 that occur in all environments.
 
-Calculation of systemic entropy of [t] and [d] for type frequency:
+Calculation of systemic entropy of [t] and [d]:
 
-+------+-------+-------+-------+-------+-----------------+
-| *e*  | [t]-  | [d]-  |       |       |                 |
-|      | words | words | H(*e*)| p(*e*)| p(*e*) * H(*e*) |
-+======+=======+=======+=======+=======+=================+
-| [#__]| tot,  | dot,  |     1 |(4+4)/ |          0.533  |
-|      | team, | dude, |       |(8+7)  |                 |
-|      | toot, | deem, |       |=8/15  |                 |
-|      | tizzy | dizzy |       |       |                 |
-+------+-------+-------+-------+-------+-----------------+
-| [__#]| hot,  | hid,  | 0.863 |7/15   |          0.403  |
-|      | hat,  | dude  |       |       |                 |
-|      | tot,  |       |       |       |                 |
-|      | dot,  |       |       |       |                 |
-|      | toot  |       |       |       |                 |
-+------+-------+-------+-------+-------+-----------------+
-|                                      |0.533+0.403=0.936|
-+--------------------------------------+-----------------+
-
-And for token frequency:
-
-+------+-------+-------+-------+--------+-----------------+
-| *e*  | [t]-  | [d]-  |       |        |                 |
-|      | words | words | H(*e*)| p(*e*) | p(*e*) * H(*e*) |
-+======+=======+=======+=======+========+=================+
-| [#__]| tot,  | dot,  |   0.98|(21+15)/|          0.543  |
-|      | team, | dude, |       |(36+29) |                 |
-|      | toot, | deem, |       |=36/65  |                 |
-|      | tizzy | dizzy |       |        |                 |
-+------+-------+-------+-------+--------+-----------------+
-| [__#]| hot,  | hid,  |  0.894| 29/65  |          0.399  |
-|      | hat,  | dude  |       |        |                 |
-|      | tot,  |       |       |        |                 |
-|      | dot,  |       |       |        |                 |
-|      | toot  |       |       |        |                 |
-+------+-------+-------+-------+--------+-----------------+
-|                                       |0.543+0.399=0.942|
-+---------------------------------------+-----------------+
++------+-------+-------+---------------------------------+----------------------------------+
+| *e*  | [t]-  | [d]-  |             Types               |             Types                |
+|      |       |       +-------+-------+-----------------+-------+--------+-----------------+
+|      | words | words | H(*e*)| p(*e*)| p(*e*) * H(*e*) | H(*e*)| p(*e*) | p(*e*) * H(*e*) |
++======+=======+=======+=======+=======+=================+=======+========+=================+
+| [#__]| tot,  | dot,  |     1 |(4+4)/ |          0.533  |   0.98|(21+15)/|          0.543  |
+|      | team, | dude, |       |(8+7)  |                 |       |(36+29) |                 |
+|      | toot, | deem, |       |=8/15  |                 |       |=36/65  |                 |
+|      | tizzy | dizzy |       |       |                 |       |        |                 |
++------+-------+-------+-------+-------+-----------------+-------+--------+-----------------+
+| [__#]| hot,  | hid,  | 0.863 |7/15   |          0.403  |  0.894| 29/65  |          0.399  |
+|      | hat,  | dude  |       |       |                 |       |        |                 |
+|      | tot,  |       |       |       |                 |       |        |                 |
+|      | dot,  |       |       |       |                 |       |        |                 |
+|      | toot  |       |       |       |                 |       |        |                 |
++------+-------+-------+-------+-------+-----------------+-------+--------+-----------------+
+|                                      |0.533+0.403=0.936|                |0.543+0.399=0.942|
++--------------------------------------+-----------------+----------------+-----------------+
 
 In this case, [t]/[d] are relatively highly unpredictably distributed
 (contrastive) in both environments, and both environments contributed
 approximately equally to the overall measure. Compare this to the example
 of [s]/[z], shown below.
 
-Calculation of systemic entropy of [s] and [z] for types:
+Calculation of systemic entropy of [s] and [z]:
 
-+------+-------+-------+-------+-------+-----------------+
-| *e*  | [s]-  | [z]-  |       |       |                 |
-|      | words | words | H(*e*)| p(*e*)| p(*e*) * H(*e*) |
-+======+=======+=======+=======+=======+=================+
-| [#__]| song, |       |     0 | 3/8   |          0      |
-|      | sing, |       |       |       |                 |
-|      | sizzle|       |       |       |                 |
-+------+-------+-------+-------+-------+-----------------+
-| [__#]| hiss  | his   | 1     |2/8    |          0.25   |
-+------+-------+-------+-------+-------+-----------------+
-| [V_V]|       |sizzle,| 0     |3/8    |          0      |
-|      |       |dizzy, |       |       |                 |
-|      |       |tizzy  |       |       |                 |
-+------+-------+-------+-------+-------+-----------------+
-|                                      |       0.25      |
-+--------------------------------------+-----------------+
-
-And for tokens:
-
-+------+-------+-------+-------+--------+-----------------+
-| *e*  | [s]-  | [z]-  |       |        |                 |
-|      | words | words | H(*e*)| p(*e*) | p(*e*) * H(*e*) |
-+======+=======+=======+=======+========+=================+
-| [#__]| song, |       |   0   |14/33   |          0      |
-|      | sing, |       |       |        |                 |
-|      | sizzle|       |       |        |                 |
-+------+-------+-------+-------+--------+-----------------+
-| [__#]| hiss  | his   |  0.954| 8/33   |          0.231  |
-+------+-------+-------+-------+--------+-----------------+
-| [V_V]|       |sizzle,|  0    | 11/33  |          0      |
-|      |       |dizzy, |       |        |                 |
-|      |       |tizzy  |       |        |                 |
-+------+-------+-------+-------+--------+-----------------+
-|                                       |     0.231       |
-+---------------------------------------+-----------------+
++------+-------+-------+---------------------------------+----------------------------------+
+| *e*  | [s]-  | [z]-  |             Types               |             Types                |
+|      |       |       +-------+-------+-----------------+-------+--------+-----------------+
+|      | words | words | H(*e*)| p(*e*)| p(*e*) * H(*e*) | H(*e*)| p(*e*) | p(*e*) * H(*e*) |
++======+=======+=======+=======+=======+=================+=======+========+=================+
+| [#__]| song, |       |     0 | 3/8   |          0      |   0   |14/33   |          0      |
+|      | sing, |       |       |       |                 |       |        |                 |
+|      | sizzle|       |       |       |                 |       |        |                 |
++------+-------+-------+-------+-------+-----------------+-------+--------+-----------------+
+| [__#]| hiss  | his   | 1     |2/8    |          0.25   |  0.954| 8/33   |          0.231  |
++------+-------+-------+-------+-------+-----------------+-------+--------+-----------------+
+| [V_V]|       |sizzle,| 0     |3/8    |          0      |  0    | 11/33  |          0      |
+|      |       |dizzy, |       |       |                 |       |        |                 |
+|      |       |tizzy  |       |       |                 |       |        |                 |
++------+-------+-------+-------+-------+-----------------+-------+--------+-----------------+
+|                                      |       0.25      |                |     0.231       |
++--------------------------------------+-----------------+----------------+-----------------+
 
 In this case, there is what would traditionally be called a contrast word
 finally, with the minimal pair *hiss* vs. *his*; this contrast is neutralized
@@ -406,37 +370,20 @@ distribution is calculated using the following steps.
 
 1. **Getting started**: Choose “Analysis” / “Calculate predictability of
    distribution...” from the top menu bar.
-2. **Sound selection**: On the left-hand side of the “Predictability of
-   distribution” dialogue box, select the two sounds of interest by
-   clicking “Add pair of sounds. The order of the sounds is
-   irrelevant; picking [i] first and [u] second will yield the
-   same results as [u] first and [i] second. Currently, PCT only
-   allows entire segments to be selected; the next release will allow
-   a “sound” to be defined as a collection of feature values. The
-   segment choices that are available will automatically correspond
-   to all of the unique transcribed characters in your corpus. You can
-   select more than one pair of sounds to examine in the same environments;
-   each pair of sounds will be treated individually.
-3. **Environments**: Click on “Add environment” to add an environment in
-   which to calculate predictability of distribution. The left side of
-   the “Create environment” dialogue box allows left-hand environments
-   to be specified (e.g., [+back]___), while the right side allows
-   right-hand environments to be specified (e.g., __#). Both can be used
-   simultaneously to specify environments on both sides (e.g., [+back]__#).
 
-   a. **Basis for building environments (segments vs. features)**: Environments
-      can be selected either as entire segments (including #) or as bundles
-      of features. Select from the drop-down menu which you prefer. Each
-      side of an environment can be specified using either type.
-   b. **Segment selection**: To specify an environment using segments, simply
-      click on the segment desired.
-   c. **Feature selection**: To specify an environment using features, select
-      the first feature from the list (e.g., [voice]), and then specify
-      whether you want it to be [+voice] or [-voice] by selecting “Add
-      [+feature]” or “Add [-feature]” as relevant. To add another feature
-      to this same environment, select another feature and again add
-      either the + or – value.
-   d. **No environments**: Note that if NO environments are added, PCT will
+2. **Segments**: First, select which pairs of sounds you want the predictability
+   of distribution to be calculated for. There are two options for this. First is to add individual pairs of sounds. Do this by clicking on “Add pair of sounds”;
+   the “Select segment pair” dialogue box will open. The order that the sounds are selected in is irrelevant; picking [i] first and [u] second will yield the same
+   results as picking [u] first and [i] second. See more about interacting with the sound selection box (including, e.g., the use of features in selecting sounds and the options for selecting multiple pairs) in :ref:`sound_selection`.
+
+The second alternative is to select pairs of sounds based on shared vs. contrasting features. This option allows you, for example, to test the predictability of distribution of the front/back contrast in vowels, regardless of vowel height. To do this, click on "Add pair of features"; the "Select feature pair" dialogue box will open. See :ref:`feature_selection` for more information on using this interface.
+
+Once sounds have been selected, click “Add.” Pairs will appear in the “Predictability of distribution” dialogue box.
+
+3. **Environments**: Click on “New environment” to add an environment in
+   which to calculate predictability of distribution. See :ref:`environment_selection` for details on how to use this interface. Note that you will not be able to edit the "target" segments in this function, because the targets are automatically populated from the list of pairs selected on the left-hand side.
+
+   a. **No environments**: Note that if NO environments are added, PCT will
       calculate the overall predictability of distribution of the two
       sounds based only on their frequency of occurrence. This will simply
       count the frequency of each sound in the pair and calculate the
@@ -448,19 +395,15 @@ distribution is calculated using the following steps.
    :width: 90%
    :align: center
 
-4. **Environment list**: Once all features / segments for a given environment
-   have been selected, for both the left- and right-hand sides, click on
-   “Add”; it will appear back in the “Predictability of Distribution”
-   dialogue box in the environment list. To automatically return to the
-   environment selection window to select another environment, click on
-   “Add and select another” instead. Individual environments from the
-   list can be selected and removed if it is determined that an environment
+4. **Environment list**: Individual environments from the
+   list can be selected and edited or removed if it is determined that an environment
    needs to be changed. It is this list that PCT will verify as being
    both exhaustive and unique; i.e., the default is that the environments
    on this list will exhaustively cover all instances in your corpus of
    the selected sounds, but will do so in such a way that each instance
    is counted exactly once.
-5. **Analysis tier**: Under “Options,” first pick the tier on which you want
+
+5. **Tier**: Under “Options,” first pick the tier on which you want
    predictability of distribution to be calculated. The default is for
    the entire transcription to be used, such that environments are defined
    on any surrounding segments. If a separate tier has been created as part
@@ -474,13 +417,17 @@ distribution is calculated using the following steps.
    environments are __[+back] and __[-back] on the vowel tier than to try
    to account for possible intervening segments on the entire transcription
    tier.
-6. **Type vs. Token Frequency**: Next, pick whether you want the calculation
+
+6. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`.
+
+7. **Type vs. Token Frequency**: Next, pick whether you want the calculation
    to be done on types or tokens, assuming that token frequencies are
    available in your corpus. If they are not, this option will not be
    available. (Note: if you think your corpus does include token frequencies,
    but this option seems to be unavailable, see :ref:`corpus_format` on the required
    format for a corpus.)
-7. **Exhaustivity & Uniqueness**: The default is for PCT to check for both
+
+8. **Exhaustivity & Uniqueness**: The default is for PCT to check for both
    exhaustivity and uniqueness of environments, as described above in
    :ref:`pred_dist_envs`. Un-checking this box will turn off this mechanism. For
    example, if you wanted to compare a series of different possible
@@ -498,12 +445,17 @@ distribution is calculated using the following steps.
       Furthermore, a .txt file is automatically created that lists all
       of the words, so that the environments can be easily adjusted. This
       file is stored in the ERRORS folder within the working directory
-      that contains the PCT software, and can be accessed directly by
+      that contains the PCT software (see also :ref:`preferences`), and can be accessed directly by
       clicking “Open errors directory.” If exhaustivity is not important,
       and only the entropy in individual environments matters, then it is
       safe to not enforce exhaustivity; it should be noted that the
       weighted average entropy across environments will NOT be accurate
       in this scenario, because not all words have been included.
+
+   .. image:: static/proderror.png
+      :width: 90%
+      :align: center
+
 
    b. If you ask PCT to check for uniqueness, and it is not met, an error
       message will appear that indicates that the environments
@@ -514,18 +466,13 @@ distribution is calculated using the following steps.
       PCT software. Clicking “Show details” in the error box also reveals
       this information.
 
-.. image:: static/proderror.png
-   :width: 90%
-   :align: center
-
 .. image:: static/proderror2.png
    :width: 90%
    :align: center
 
 Here’s an example of correctly exhaustive and unique selections for
 calculating the predictability of distribution based on token frequency
-for [s] and [ʃ] in the sample corpus:
-
+for [s] and [ʃ] in the example corpus (note that the environments were selected using features, e.g., _#, _[-voc], _[+voc, -high], _[+voc, +high], even though they appear as sets of segments in the environments):
 
 .. image:: static/proddialog.png
    :width: 90%
@@ -539,7 +486,7 @@ for [s] and [ʃ] in the sample corpus:
    appear in a pop-up window on screen.  The last row for each pair gives
    the weighted average entropy across all selected environments, with
    the environments being weighted by their own frequency of occurrence.
-   See the following example:
+   See the following example (noting that not all columns in the result file are visible on screen):
 
 .. image:: static/prodresults.png
    :width: 90%
@@ -553,7 +500,7 @@ To return to the function dialogue box with your most recently used
 selections, click on “Reopen function dialog.” Otherwise, the results
 table can be closed and you will be returned to your corpus view.
 
-.. _classes_and_functions:
+.. _prod_classes_and_functions:
 
 Classes and functions
 ---------------------

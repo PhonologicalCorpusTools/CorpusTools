@@ -5,33 +5,46 @@ Loading in corpora
 ******************
 
 In order to use the analysis functions in PCT, you’ll first need to open
-up a corpus. There are four possible ways of doing this: first, you can
-use a built-in corpus (a small, entirely invented sample corpus or the
-Irvine Phonotactic Online Dictionary of English [IPHOD]_;
-second, you can use a corpus that is independently stored on your local
-computer; third, you can create a new corpus from text; and fourth, you can
-import a spontaneous speech corpus (e.g. from Praat TextGrids or from your
-own local copy of a corpus such as the Buckeye corpus [BUCKEYE]_
-or TIMIT corpus [TIMIT]_. Each of these will be discussed
-in turn. The basic structure of a corpus, however, is a list of words
-with other possible information about each: e.g., its transcription,
-its frequency of occurrence, its lexical category, its syllable structure,
-etc. These are in columnar format; e.g., loaded from a CSV or
-tab-delimited text file.
+up a corpus. When we say a "corpus" in PCT, we mean a file that has the
+following basic structure: a list of words with other possible information
+about each: e.g., its transcription, its frequency of occurrence, its
+lexical category, its syllable structure, etc. These are in columnar format;
+e.g., loaded from a CSV or tab-delimited text file. (See more at :ref:`corpus_format`.)
+
+There are five possible ways of getting a corpus in PCT:
+
+1. Use one of the built-in corpora to get started immediately. You can
+   choose between two small, entirely invented corpora that have various
+   parameters (see :ref:`example_corpora`) or use the Irvine Phonotactic
+   Online Dictionary of English [IPHOD]_;
+
+2. Use a corpus in the above format that is independently stored on your
+   local computer;
+
+3. Create a corpus from running text (e.g., straight transcriptions of
+   speech or interlinear texts);
+
+4. Create a corpus from Praat TextGrids [PRAAT]_;
+
+5. Import a corpus from your own local copy of another standard corpus
+   (currently, we support the Buckeye corpus [BUCKEYE]_ and the
+   TIMIT corpus [TIMIT]_).
+
+Each of these options is discussed in more detail below.
 
 .. _download_corpora:
 
 Using a built-in corpus
 =======================
 
-To use a built-in corpus, simply go to the “Corpus” menu and select
-“Load corpus...” from the list, which will open the “Load corpus” dialogue box.
+To use a built-in corpus, simply go to the “File” menu and select
+“Load corpus...” from the list, which will open the “Load corpora” dialogue box.
 
 The first time you want to use a built-in corpus, you’ll need to download it
 (from a Dropbox link accessed by PCT internally); you must therefore be
 connected to the internet to complete this step. To do so, click on
 “Download example corpora” from the right-hand menu. This will allow
-you to download either the Example corpus and/or the IPHOD corpus
+you to download either of the two example corpora (one is called "example" and the other called "Lemurian" (both are entirely made up; see :ref:`example_corpora`)  and/or the IPHOD corpus
 [IPHOD]_. Note that the version of the IPHOD corpus that is
 contained here has been altered from the freely `downloadable version
 <http://www.iphod.com/>`_, in that it (1) does not have the derived columns and
@@ -45,18 +58,13 @@ Vaden, K. I., Halpin, H. R., Hickok, G. S. (2009). Irvine Phonotactic Online
 Dictionary, Version 2.0. [Data file]. Available from `http://www.iphod.com/
 <http://www.iphod.com/>`_.
 
-The example corpus is a small corpus designed to provide minimal examples 
-of many types of phonotactic properties that can be investigated with PCT.
-For a list of the phonotactic restrictions in this corpus, see the 
-Appendix :ref:`example_corpus_phonotactics`.
-
 After the corpus has been downloaded, it appears in the lefthand side of
-the “Load Corpus” dialogue box. Simply select the corpus and click on
+the “Load corpora” dialogue box. Simply select the corpus and click on
 “Load selected corpus” at the bottom of the dialogue box. Once these
 corpora have been downloaded once, you don’t have to do so again; they
 will be saved automatically to your local system unless and until you
 delete them. On subsequent loadings of the PCT software, you will still
-see these corpora listed in the lefthand side of the “Load Corpus” dialogue
+see these corpora listed in the lefthand side of the “Load corpora” dialogue
 box, as in the following diagram:
 
 
@@ -64,12 +72,12 @@ box, as in the following diagram:
    :width: 90%
    :align: center
 
-The example corpus and the included version of the IPHOD corpus include
+The example corpora and the included version of the IPHOD corpus include
 phonetic transcriptions in IPA, and are by default interpreted either
 using the feature system of [Mielke2012]_, which in turn is based on
 SPE features [SPE]_ [this is the default for the example corpus], or using
 the feature system suggested by [Hayes2009]_ [this is the default
-for the IPHOD corpus]. These systems are fully functional for doing subsequent
+for the IPHOD corpus and the Lemurian corpus]. These systems are fully functional for doing subsequent
 analyses. Note, however, that this is a built-in functionality of these
 particular corpora, and does not allow you to use SPE or Hayes features
 with other corpora. To use SPE features with other corpora, or to change
@@ -98,34 +106,274 @@ the first instance; hit “return” again to see the second, etc.). Note that t
 phonological search, please use the “Phonological search” function under
 the “Corpus” menu (see detailed discussion in :ref:`phonological_search`).
 
+For more details on the structure of the Lemurian corpus, which has been built to show particular kinds of phenomena that may be of interest to PCT users, please see the section on :ref:`Lemurian`.
+
 .. _custom_corpus:
 
-Using a custom corpus
-=====================
+Creating a corpus
+==================
 
-It is also possible to use a custom corpus, i.e., any corpus that is in
+It is also possible to create a corpus within PCT. These can be pre-formatted columnar corpora or corpora that are compiled from running text, TextGrids, or special corpus formats. It may be helpful to first load the relevant feature system for your corpus into PCT, so that the transcriptions in your corpus can be interpreted; detailed instructions for doing this are given in :ref:`transcriptions_and_feature_systems` (note that the corpus can be loaded in without featural interpretation, and features added later).
+
+In all cases, to use a custom corpus, click on “File” / “Load corpus...” and then
+choose “Import corpus.” The "Import corpus" dialogue box opens up.
+
+At the top of the box, enter the path for the file that will form the corpus or select it using “Choose file...” and navigating to it from a system dialogue box. If the corpus is being created from a series of .txt files or .TextGrid files or other special files instead of a single file (e.g., being compiled from multiple files of running text or specially formatted corpora such as the Buckeye corpus), you can instead choose the directory that contains the files. All files that PCT thinks are plausible will be selected, ignoring other files. For example, if you have both .txt and .pdf files in a directory, only the .txt files will be selected. If there are both .txt and .TextGrid files (both of which could be used by PCT), it will read in only the one that has a greater number of instances in the directory. That is, if there are more .TextGrid files than .txt files, it will assume it should read the .TextGrid files (or vice versa). If you have selected a directory, you can hover the mouse over the box labeled "Mouseover for included files" to see a pop-up list of exactly which files in a directory have been chosen. Obviously, you can manually force PCT to read in all of your intended files by simply putting all and only those files into a single directory. Note that for a pre-formatted columnar corpus, a single file must be chosen, rather than a directory of files.
+
+Enter a name for the corpus in the box to the right of the corpus source selection. (Note that on some screens, the box may initially appear to be absent; simply re-size the "Import corpus" dialogue box to make it appear.)
+
+PCT will automatically detect what kind of file type you have selected and select the tab for the corpus type that it thinks most likely. For .txt files, it will default to assuming it is a column-delimited file, but you can easily select the "running text" or "interlinear text" tabs instead. For .TextGrid files, it will take you to the TextGrid tab; if it detects a directory of Buckeye or TIMIT files, it will take you to the "Other standards" tab. The choices within each of these tabs is described below: :ref:`column-delimited`; :ref:`running_text`; :ref:`interlinear`; :ref:`textgrid`; :ref:`other_standards`
+
+.. _column-delimited:
+
+Column-delimited files
+======================
+
+If you have a corpus that is in
 the appropriate format (see :ref:`corpus_format`) and stored independently on your
-computer. Before doing so, it may be helpful to first load the appropriate
-feature system into PCT, so that the transcriptions in your corpus can be
-interpreted; detailed instructions for doing this are given in :ref:`transcriptions_and_feature_systems`. It is also
-possible to load the feature system after you’ve loaded the corpus.
+computer, you can read it in as a column-delimited file.
 
-To use a custom corpus, click on “Corpus” / “Load corpus...” and then
-choose “Load corpus from pre-formatted text file.” Then, enter the path
-for the corpus or select it using “Choose file...” and navigating to it
-from a system dialogue box. Enter a name for the corpus and indicate what
-the delimiter type is; the default is a comma (,); enter `\t`
-if the file is tab-delimited. Any symbol can be used; PCT will simply break
+Once you have selected the file path and named the corpus (see :ref:`custom_corpus`)
+, make sure that the "Column-delimited file" tab is selected. PCT will
+automatically try to figure out what delimiter (e.g., comma, tab) is used to
+separate columns, but you can also enter it manually (e.g., a comma (,) or a
+tab (\t)). Any symbol can be used; PCT will simply break
 elements at that symbol, so whatever symbol is used should be used only to
-delimit columns within the corpus. Finally, if there is a column in the corpus
-that shows phonetic transcription, choose which feature system you would like
-to use. As noted above, in order for there to be feature systems to choose from,
-you must first have loaded them into PCT (:ref:`transcriptions_and_feature_systems`).
+delimit columns within the corpus.
 
-Clicking “OK” in the “Load new corpus” dialogue box returns you to the
-“Load corpus” dialogue box, and you will see that the new corpus has been
-added to your list of available corpora. Select this new corpus and choose
-“Load selected corpus” to open it in PCT.
+If there is a column in the corpus that shows phonetic transcription, choose
+which feature system you would like to use. As noted above, in order for
+there to be feature systems to choose from, you must first have loaded
+them into PCT (:ref:`transcriptions_and_feature_systems`). If you haven't
+yet added any, you may still import the corpus and then add them later.
+
+On the right-hand side of the "Import corpus" dialogue box, you will see a
+"Parsing preview" window. This shows each of the columns in the corpus and
+allows you to specify particular parameters for each one. For details on
+this, please see the section on :ref:`parsing_parameters`.
+
+Once all selections have been made, click "Ok." PCT will process the corpus
+(depending on how big it is, this may take a few minutes). It will then
+appear listed in the "Available corpora" window in the "Load corpus"
+dialogue box; you can select it and then click "Load selected corpus" to open it.
+
+Note: the processed version of the corpus is stored in a .corpus file
+and automatically lives in a "CORPUS" folder in Documents / PCT / CorpusTools
+on your hard drive. See :ref:`preferences` for information on how to change this.
+
+See also :ref:`logging` for information about how the parameters you picked
+when loading the corpus are temporarily saved.
+
+Below is a picture of the "Import corpus" dialogue box set up to load in
+a .csv file with orthography, transcription, and frequency columns:
+
+.. image:: static/importcsv1.png
+   :width: 90%
+   :align: center
+
+And here is the "Parsing settings" window of the transcription column:
+
+.. image:: static/parsingsettings.png
+   :width: 90%
+   :align: center
+
+
+.. _running_text:
+
+Running Text
+============
+
+It is also possible to have PCT create a corpus for you from running text,
+either in orthographic or transcribed form. If the text is orthographic,
+of course, then segmental / phonological analysis won’t be possible, but
+if the text is itself a transcription, then all subsequent analysis functions
+are available. (Please see the section on :ref:`interlinear` for running texts that interleave orthographic and phonetic transcriptions.)
+
+Once you have selected the file path or directory and named the corpus
+(see :ref:`custom_corpus`), make sure that the "Running text" tab is
+selected. Select whether the text is spelling ("Orthography") or
+phonetic transcription ("Transcribed").
+
+If the running text is transcribed, choose which feature system you would
+like to use. As noted above, in order for there to be feature systems
+to choose from, you must first have loaded them into PCT
+(:ref:`transcriptions_and_feature_systems`). If you haven't yet added
+any, you may still import the corpus and then add them later.
+
+If the running text is orthographic, and you have a corpus that contains
+transcriptions for the language of the running text, you can have PCT look
+up the transcriptions of words in that "support corpus." This must be a
+corpus that has already been created in PCT. For example, you could first
+download the IPHOD corpus (see :ref:`download_corpora`) and then ask
+PCT to create a corpus from a .txt file that contains English prose,
+looking up each word's transcription in the IPHOD corpus. You can specify
+that case should be ignored during lookup (e.g., to allow PCT to find the
+transcriptions of words even if they happen to be capitalized at the
+beginning of sentences in the running text).
+
+At the right-hand side of the "Import corpus" dialogue box, you will see
+a "Parsing preview" window for the column of the corpus that will result
+from the running text. (The frequency of individual words in the text
+will be created automatically.) Please see the section on
+:ref:`parsing_parameters` for details on how to make choices in this window.
+
+Once all selections have been made, click "Ok." PCT will process the
+corpus (depending on how big it is, this may take a few minutes). It
+will then appear listed in the "Available corpora" window in the
+"Load corpus" dialogue box; you can select it and then click
+"Load selected corpus" to open it.
+
+Note: the processed version of the corpus is stored in a .corpus file
+and automatically lives in a "CORPUS" folder in Documents / PCT / CorpusTools
+on your hard drive. See :ref:`preferences` for information on how to change this.
+
+See also :ref:`logging` for information about how the parameters you picked
+when loading the corpus are temporarily saved.
+
+.. _interlinear:
+
+Interlinear Text
+=================
+
+In addition to plain running text (:ref:`running_text`), PCT also supports
+building corpora from interlinear texts, e.g., those with spelling and
+transcription on alternating lines. Interlinear texts may have any number
+of repeating lines.
+
+Once you have selected the file path or directory and named the corpus
+(see :ref:`custom_corpus`), make sure that the "Interlinear text" tab is selected.
+
+PCT will start by automatically inspecting the text for characteristics
+that seem to repeat on particular sets of lines, to figure out how many
+lines there are per "unit." E.g., a text that has spelling on the first
+line, transcription on the second, and glosses on the third will be
+automatically detected as having 3 lines per unit. The number can also
+be specified manually. Note that the text must maintain this pattern
+throughout; deviations will cause errors in how PCT reads in the data.
+
+If the text is transcribed, choose which feature system you would like to use.
+As noted above, in order for there to be feature systems to choose from,
+you must first have loaded them into PCT (:ref:`transcriptions_and_feature_systems`).
+If you haven't yet added any, you may still import the corpus and then add them later.
+
+On the right hand side of the dialogue box, you'll see a "Parsing preview"
+window which allows you to inspect each line of the gloss and specify how
+that line is interpreted. Please see the section on :ref:`parsing_parameters`
+for details on how to make choices in this window.
+
+Once all selections have been made, click "Ok." PCT will process the corpus
+(depending on how big it is, this may take a few minutes). It will then
+appear listed in the "Available corpora" window in the "Load corpus" dialogue
+box; you can select it and then click "Load selected corpus" to open it.
+
+Note: the processed version of the corpus is stored in a .corpus file and
+automatically lives in a "CORPUS" folder in Documents / PCT / CorpusTools
+on your hard drive. See :ref:`preferences` for information on how to change this.
+
+See also :ref:`logging` for information about how the parameters you
+picked when loading the corpus are temporarily saved.
+
+An example of the "Import corpus" dialogue box set up for loading in a
+3-line interlinear Gitksan text:
+
+.. image:: static/ilg_loading1.png
+   :width: 90%
+   :align: center
+
+
+
+.. _textgrid:
+
+TextGrids
+=========
+
+PCT can also be used to create corpora from a collection of Praat
+TextGrids [PRAAT]_. This is particularly useful for creating spontaneous
+speech corpora from recordings, especially if the transcription is
+based on what was actually spoken rather than on canonical forms of
+each word -- PCT can keep track of the individual pronunciation variants
+associated with individual words (see :ref:`pronunciation_variants`).
+
+Once you have selected the file path or directory and named the corpus
+(see :ref:`custom_corpus`), make sure that the "TextGrid" tab is selected
+(this should happen automatically if the file extension(s) is .TextGrid).
+
+If any of the tiers in the TextGrid is a transcription tier, choose which
+feature system you would like to use. As noted above, in order for there
+to be feature systems to choose from, you must first have loaded them into
+PCT (:ref:`transcriptions_and_feature_systems`). If you haven't yet added
+any, you may still import the corpus and then add them later.
+
+If any of the tiers in the TextGrid is orthographic, and you have a corpus
+that contains transcriptions for the language of the text, you can have PCT
+look up the transcriptions of words in that "support corpus." This must be a
+corpus that has already been created in PCT. For example, you could first
+download the IPHOD corpus (see :ref:`download_corpora`) and then ask PCT to
+create a corpus from a .txt file that contains English prose, looking up
+each word's transcription in the IPHOD corpus. You can specify that case
+should be ignored during lookup (e.g., to allow PCT to find the transcriptions
+of words even if they happen to be capitalized at the beginning of sentences
+in the running text).
+
+At the right-hand side of the "Import corpus" dialogue box, you'll see a
+"Parsing preview" window. This will give you choices for how to parse each
+tier of the TextGrid, labelled with the original names of the tiers. Please
+see the section on :ref:`parsing_parameters` for details on how to make
+choices in this window.
+
+Once all selections have been made, click "Ok." PCT will process the corpus
+(depending on how big it is, this may take a few minutes). It will then appear
+listed in the "Available corpora" window in the "Load corpus" dialogue box;
+you can select it and then click "Load selected corpus" to open it.
+
+Note: the processed version of the corpus is stored in a .corpus file and
+automatically lives in a "CORPUS" folder in Documents / PCT / CorpusTools
+on your hard drive. See :ref:`preferences` for information on how to change this.
+
+See also :ref:`logging` for information about how the parameters you picked
+when loading the corpus are temporarily saved.
+
+.. _other_standards:
+
+Other Standards
+===============
+
+Finally, PCT comes pre-equipped to handle certain other standard corpus types.
+At the moment, the only supported standards are the Buckeye corpus [BUCKEYE]_ and
+the TIMIT corpus [TIMIT]_. You must obtain your own copy of either of these
+corpora through their usual means and store it locally; PCT simply gives you a
+way to easily open these corpora in the standard PCT format.
+
+When selecting the corpus source, navigate to the directory where the
+Buckeye or TIMIT files are stored. PCT will automatically detect the
+format of files in the directory and select the "Other Standards" tab.
+Within that tab, it will also automatically select the file format.
+
+If the text is transcribed, choose which feature system you would like to
+use. As noted above, in order for there to be feature systems to choose
+from, you must first have loaded them into PCT
+(:ref:`transcriptions_and_feature_systems`). If you haven't yet added any,
+you may still import the corpus and then add them later. There is an
+option to download a Hayes-style feature system [Hayes2009] for the Buckeye
+corpus transcriptions.
+
+At the right-hand side of the "Import corpus" dialogue box, you'll see a
+"Parsing preview" window. This will give you choices for how to parse each
+part of the original corpus. Please see the section on :ref:`parsing_parameters`
+for details on how to make choices in this window.
+
+Once all selections have been made, click "Ok." PCT will process the corpus
+(depending on how big it is, this may take a few minutes). It will then appear
+listed in the "Available corpora" window in the "Load corpus" dialogue box;
+you can select it and then click "Load selected corpus" to open it.
+
+Note: the processed version of the corpus is stored in a .corpus file and
+automatically lives in a "CORPUS" folder in Documents / PCT / CorpusTools
+on your hard drive. See :ref:`preferences` for information on how to change this.
+
+See also :ref:`logging` for information about how the parameters you
+picked when loading the corpus are temporarily saved.
+
 
 .. _corpus_format:
 
@@ -147,64 +395,102 @@ the word in its lowercase form (cf. the SUBTLEX corpus), then whichever
 column is to be used for token frequency calculations should simply be
 labelled “frequency.”
 
-.. _running_text:
+.. _parsing_parameters:
 
-Creating a corpus from running text
-===================================
+Parsing Parameters
+__________________
 
-It is also possible to have PCT create a corpus for you from running text,
-either in orthographic or transcribed form. If the text is orthographic,
-of course, then segmental / phonological analysis won’t be possible, but
-if the text is itself transcribed, then all subsequent analysis functions
-are available.1 As with pre-existing corpora, it may be helpful to first
-load the relevant feature system into PCT, so that the transcriptions in
-your text can be interpreted; detailed instructions for doing this are given
-in :ref:`transcriptions_and_feature_systems` (note that the corpus can be loaded in without featural interpretation,
-and features added later).
+This section outlines the choices that can be made in the "Parsing Preview"
+section of the import corpus dialogue box. In order for this section to be
+available, you need to have first started to import a corpus and selected a
+file, as described in the section on :ref:`custom_corpus`.
 
-To create a corpus from text, click on “Corpus” / “Load corpus...” and
-then select either “Create corpus from running text (orthography)” or
-“Create corpus from running text (transcription).”
+1. **Name**: Specify the name of the column. If you are importing from a
+   column-delimited file or a TextGrid with tiers, PCT will default to the
+   name of the column / tier that is there. If you are reading from a running
+   text or interlinear gloss file, and have specified that the file is either
+   orthographic or transcribed, PCT will default to "Spelling" or
+   "Transcription," respectively. You may also manually enter the name.
 
-1. **File selection**: Select the name of the plain .txt file by entering the
-   path directly or choosing the file using a system dialogue box,
-   by clicking on “Choose file....”
-2. **Name of corpus**: Indicate what the name of the corpus should be; PCT
-   will default to the name of the original .txt file.
-3. **Word delimiter**: Enter the character used to delimit words in the
-   corpus (e.g., a space).
-4. **Punctuation**: If there is punctuation in the text, indicate which
-   elements should be ignored. Ignoring punctuation allows PCT to
-   compile an accurate count of unique words; for example, the words
-   “example” and “example,” should be treated as two tokens of the same
-   word, ignoring the comma at the end of the second one. Punctuation
-   can be included, however; this might be desirable in a case where a
-   punctuation symbol is being used within the transcription system
-   (e.g., [!] used for a retroflex click).
-5. **Corpus for transcriptions**: If the corpus is an orthographic one, but
-   you have a separate corpus that includes both orthographic and trancribed
-   representations of the words, you can have PCT automatically look up all
-   of the transcribed words in the separate corpus (e.g., you’re uploading a
-   new transcribed corpus of English, but want to look up the transcriptions
-   in IPHOD). Select the other corpus from the dropdown menu; if you haven’t
-   loaded the corpus into PCT already, this option is not available. Indicate
-   using the check box whether case (capitalization) should be ignored (e.g.,
-   if your corpus contains the name “Bud,” PCT will look for an exact
-   match, “Bud,” unless case is ignored, in which case, the common noun
-   “bud” will be accepted as a pronunciation source).
-6. **Transcription and feature selection**: If the corpus is a transcribed one,
-   you can select the transcription and featural system, if these systems
-   have already been loaded into PCT (see also discussion in :ref:`transcriptions_and_feature_systems`). You can
-   also indicate what the delimiter is for units of transcription (if
-   there is such a delimiter). See the note below for details.
-7. **A note about complex transcriptions**: There is no way for PCT to know
-   automatically when a single sound is represented by a sequence of
-   multiple characters – e.g., that the digraphs [aɪ], [th], [xw], [p’],
-   [tʃ], and [iː] are intended to represent single sounds rather than
-   sequences of two sounds. There are currently three possible ways of
-   ensuring that characters are interpreted correctly:
+2. **Annotation type**: Specify what type of information the column will
+   contain. The default is simply a numeric or character column, depending
+   on what type of information PCT automatically detects. **IMPORTANT**:
+   You should specify which column you want PCT to treat as the "Orthography"
+   and "Transcription" columns -- without these named annotation types, some
+   of the functions in PCT will not work, as they call on these particular
+   types of columns.
 
-   a. **One-to-one transcriptions**: The first way is to use a transcription
+3. **Word association**: Specify whether the information in the column
+   should be associated with lexical items or should be allowed to vary
+   within lexical items. Most types of information will be associated with
+   lexical items (e.g., spelling, frequency). There are some kinds of
+   information that do vary depending on the specific token, however,
+   such as pronunciation variants of individual words or the identity
+   of the speaker of an individual token. These are most likely to
+   arise when creating a corpus from a TextGrid that has a tier for
+   lexical items (e.g., based on spelling on canonical transcriptions)
+   and then a separate tier that will show the characteristics of
+   particular tokens (similar structures may be found with interlinear
+   glosses). See also :ref:`pronunciation_variants` and specifically
+   :ref:`creating_pronunciation_variants`.
+
+4. **Delimiters and Special Characters**: For transcription and orthography
+   columns, transcription and morpheme delimiters as well as any special
+   characters are previewed at the right-hand side of the column informatin
+   box. By clicking on "Edit parsing settings," you can edit these, as follows:
+
+    a. **Example**: At the top of the "parsing" dialogue box, you will see
+       an example of the entries in the column, to remind yourself of what
+       sort of entries you are dealing with.
+    b. **Transcription delimiter**: If your transcriptions are delimited
+       (i.e., have special characters that indicate segment breaks, as
+       in [t.ai.d] for the word 'tide,' you can enter the delimiting
+       character here). PCT will automatically search for this delimiter,
+       but you may adjust it manually as well. For more on understanding
+       complex transcriptions, see :ref:`complex_transcriptions`.
+    c. **Morpheme delimiter**: If your transcriptions include a morpheme
+       delimiter (i.e., have special characters that indicate morpheme breaks,
+       as in [ri-du] for the word 'redo,' you can enter the delimiting character
+       here. PCT will automatically search for this delimiter, but you may
+       adjust it manually as well.
+    d. **Number parsing**: If PCT detects that there are numbers in the
+       transcriptions, you have several options. Sometimes, numbers are
+       simply used as alternatives for segmental transcriptions (e.g., [2]
+       is used in the Lexique corpus [LEXIQUE]_ for IPA [ø]); in this case,
+       simply select that they should be treated the "Same as other characters."
+       In other cases, numbers may be used to indicate tone (e.g.,
+       [l.ei6.d.a1.k.s.eoi3] 'profits tax' might be used in a Cantonese corpus
+       like the Hong Kong Cantonese Adult Language Corpus [HKCAC]_ to indicate
+       the tone number associated with each vowel). In this case, select that
+       number parsing should be "Tone." Finally, numbers might be used to
+       indicate stress (e.g., [EH2.R.OW0.D.AY0.N.AE1.M.IH0.K] is the
+       representation of the word "aerodynamic" in the IPHOD corpus [IPHOD]_
+       using CMU [CMU]_ transcriptions that include stress).
+    e. **Punctuation to ignore**: If there are punctuation marks in the file,
+       and these have not already been specified as being used as either
+       transcription of morpheme delimiters, then they will be listed as
+       possible punctuation marks that PCT can ignore. Ignoring punctuation
+       allows PCT to compile an accurate count of unique words, especially
+       from running texts; for example, the words “example” and “example,”
+       should be treated as two tokens of the same word, ignoring the comma
+       at the end of the second one. Punctuation can be included, however;
+       this might be desirable in a case where a punctuation symbol is being
+       used within the transcription system (e.g., [!] used for a retroflex click).
+       Each symbol can be ignored or included as needed. (Clicking on the
+       symbol so that it is selected makes PCT IGNORE the symbol in the
+       corpus creation.)
+    f. **Multicharacter segments**: See the discussion in
+       :ref:`construct_multicharacter_sequences` in the section on
+       :ref:`complex_transcriptions` for details.
+
+.. _complex_transcriptions:
+
+Complex transcriptions (Digraphs and other multi-character sequences)
+---------------------------------------------------------------------
+
+There is no way for PCT to know automatically when a single sound is represented by a sequence of multiple characters – e.g., that the digraphs [aɪ], [th], [xw], [p’], [tʃ], and [iː] are intended to represent single sounds rather than sequences of two sounds. There are currently three possible ways of ensuring that characters are interpreted correctly:
+
+1. **One-to-one transcriptions**: The first way is to use a transcription
       system with a one-to-one correspondence between sounds and symbols,
       such as DISC. If you need to create a novel transcription system in
       order to accomplish this (e.g., using [A] to represent [aɪ] and [2]
@@ -215,11 +501,11 @@ then select either “Create corpus from running text (orthography)” or
       [2Ad]. This is a relatively easy solution to implement by using
       find-and-replace in a text editing software, though it does result
       in less easily human-readable transcriptions.
-   b. **Delimited transcriptions**: The second way is to use a standard
+2. **Delimited transcriptions**: The second way is to use a standard
       transcription system, such as IPA, but to delimit every unitary
       sound with a consistent mark that is not otherwise used in the
       transcription system (e.g., a period). Thus the word *tide* in
-      American English might be transcribed in IPA as [.th.aɪ.d.], with
+      American English might be transcribed in IPA as [th.aɪ.d], with
       periods around every sound that is to be treated as a single unit.
       When creating the corpus, PCT will give you the option of specifying
       what the character is. PCT will then read in all elements between
@@ -234,41 +520,68 @@ then select either “Create corpus from running text (orthography)” or
       commands to find “aɪ” and replace it with “.aɪ.” – but delimiters
       will also have to be added between the remaining single characters,
       without interrupting the digraphs.
-   c. **Constructed digraphs**: The third option is to tell PCT what the set of
-      digraphs is in your corpus manually, and then to have PCT automatically
-      identify these when it creates the corpus. In the “Create corpus from
-      running text (transcription)” dialogue box, there is an option to
-      “Construct a digraph.” Once you have entered the path name of the
-      file you are creating the corpus from, PCT will scan it for single
-      characters and present these to you as options for constructing digraphs
-      from. For example, in the following box, all of the single characters
-      in a Gitksan text file are presented, and can be selected sequentially
-      to create the appropriate digraphs. This method is somewhat more
-      labour-intensive in terms of knowing ahead of time what all the
-      digraphs are and being able to list them, but ensures that all
-      such occurrences are found in the text file. Note, however, that
-      if there’s a *distinction* to be made between a sequence of characters
-      and a digraph (e.g., [tʃ] as a sequence in *great ship* vs. as an
-      affricate in *grey chip*), this method will be unable to make that
-      distinction; all instances will be treated as digraphs.
 
-.. image:: static/digraph.png
-   :height: 200px
+.. _construct_multicharacter_sequences:
+
+Constructed multicharacter sequences
+------------------------------------
+
+The third option is to tell PCT what the set ofmulticharacter sequences is in
+your corpus manually, and then to have PCT automatically
+identify these when it creates the corpus. This can be done by editing
+the parsing settings for a column during the import of a corpus. In the
+“Import corpus” dialogue box, there is an option to edit the parsing
+settings for each column in the corpus. At the bottom there is an option
+for listing multicharacter segments in the corpus. You may enter these
+manually, separated by commas, or choose "Construct a segment" to have
+help from PCT. If you are entering them manually, you may copy and paste
+from other documents (e.g., if you have created a list of such sequences
+independently). If you choose "Construct a segment," PCT will scan the
+selected file for single
+characters and present these to you as options for constructing
+multi-character segments from.
+
+For example, in the following box, all of the single characters
+in a Gitksan text file are presented, and can be selected sequentially
+to create the appropriate multi-character segments. This method is somewhat more
+labour-intensive in terms of knowing ahead of time what all the
+multi-character segments are and being able to list them, but ensures that all
+such occurrences are found in the text file. Note, however, that
+if there’s a *distinction* to be made between a sequence of characters
+and a digraph (e.g., [tʃ] as a sequence in *great ship* vs. as an
+affricate in *grey chip*), this method will be unable to make that
+distinction; all instances will be treated as multi-character segments.
+Each multi-character segment can be as long as you like. If there are
+shorter sequences that are subsets of longer sequences, PCT will
+automatically look for the longer sequences first, and separate them
+out; it will then scan for the shorter sequences. E.g., it will search
+for and delimit [tsʷ'] before it searches for [tsʷ], regardless of the
+order in which the sequences are entered. Note that the list of
+multicharacter segments is **temporarily** saved in a log file for
+the current PCT session; you may want to open the log file and copy
+and paste the set of multicharacter segments to a new file for your
+own later use. For instance, this is useful for times when you may want
+to re-create the corpus with different settings or formatting and don't
+want to have to re-construct all the multi-character sequences by hand,
+as the entire list of multicharacter segments can simply be copy-pasted
+into the parsing dialogue box. See details on this feature in the
+:ref:`logging` section.
+
+.. _logging:
+
+Logging / Saving Parsing Parameters
+___________________________________
+
+When you import a new corpus into PCT, there are many parameters that you choose, such as the name of the corpus, the type of corpus, the various delimiters, ignored punctuation, multicharacter sequences, etc. -- see :ref:`custom_corpus`. Sometimes, you may find it necessary to tweak the parameters originally chosen once you've imported a corpus and loaded it in (for instance, you might realize that you forgot a particular digraph when you were specifying multicharacter segments). PCT automatically keeps a **temporary** log of the import settings on any given session. You can, for example, copy and paste the set of digraphs from this log to save and re-use in future sessions, rather than having to re-create them from scratch just to add a new one in. To limit the size of the log file, though, PCT will overwrite it every time PCT is re-launched with a new corpus import, so any information that is important should be saved from the log file manually.
+
+To access the log file, go to the directory where your PCT files are stored. By default, this is Documents / PCT / CorpusTools, but you can change this location; to do so, see the :ref:`preferences` section. Within this directory, click on the "log" folder; you will see a pct_gui.log file. This can be opened in any text editor. Information from this file can be copied and pasted into a separate document that can be saved for future reference.
+
+Here's an example of the log file after importing a 3-line interlinear gloss file of Gitksan:
+
+.. image:: static/pctguilog.png
+   :width: 90%
    :align: center
 
-8. **Create corpus**: Once the options have been selected, click on
-   “Create corpus.” The columns created are: individual lexical items
-   (words), their raw token frequency in the corpus, and their relative
-   token frequency (raw token frequency / total tokens in the corpus).
-9. **Use the corpus**: Once the corpus has been created, it also now appears
-   in your list of corpora in the “Load corpus” dialogue box. Simply
-   select it and choose “Load selected corpus” to open it for use in PCT.
-10. **Save the corpus**: The corpus itself will automatically be saved for use
-    on subsequent re-openings of PCT, without needing to be created again.
-    It can be exported as a .txt file and saved to a location of your choosing,
-    however, for use in spreadsheets or with other software. Once the corpus
-    has been created and loaded, simply go to “Corpus” / “Export corpus as
-    text file...” to save it using a system dialogue box.
 
 
 The following shows an example of a transcribed Gitksan story transformed
@@ -288,22 +601,16 @@ Henry Davis, for granting permission to use this text):
    :width: 90%
    :align: center
 
-3. The dialogue box for creating the corpus from text. Note that hyphens
+3. The dialogue boxes for creating the corpus from text. Note that hyphens
 and equal signs, which delimit morphological boundaries in the original,
-have been ignored during the read-in. A space is entered into the word
-delimiter box (not visible here). The period is selected as the transcription
-delimiter. A feature system called gitksan2hayes_delimited, which maps the
-delimited transcription system used in this example to the features given
-in [Hayes2009]_, has already been loaded into PCT (see :ref:`custom_feature`), and so is selected here.
+have been ignored during the read-in. A feature system called gitksan2hayes_delimited, which maps the delimited transcription system used in this example to the features given
+in [Hayes2009]_, has already been loaded into PCT (see :ref:`custom_feature`), and so is selected here. In this case, the multicharacter segments are indicated manually.
 
-.. image:: static/corpustranscribed.png
+.. image:: static/gitksanorthcorpus1.png
    :width: 90%
    :align: center
 
-Alternatively, the same corpus could be read in without being hand-delimited,
-by constructing digraphs within the load corpus dialogue box, as follows:
-
-.. image:: static/corpustranscribed_digraphs.png
+.. image:: static/gitksanparsing.png
    :width: 90%
    :align: center
 
@@ -320,43 +627,9 @@ in the running text; these words will be highlighted. Similarly,
 right-clicking a word in the running text gives you the option to
 “Look up word,” which will highlight the word’s entry in the corpus list.
 
-.. _spontaneous:
-
-Creating a spontaneous speech corpus
-====================================
-
-Currently, only limited functionality is available for spontaneous speech
-corpora, but this is a top priority for our next version. We provide an
-interface for importing the TIMIT corpus
-[TIMIT]_ or Buckeye corpus [BUCKEYE]_, if you have independently
-downloaded their corpus files. We currently provide preliminary
-capabilities to create a corpus by reading in the text from a set of Praat TextGrids.
-
-.. _textgrid:
-
-Working with your own TextGrids
--------------------------------
-
-Textgrids are automatically inspected for two kinds of tiers, words and
-phones. Word tiers are ones that have some variation of "word" in them,
-either plural or singular, and with any case (i.e. “Word,” “word,” and
-“WORD” would all be detected). Phone tiers are ones that have a variant
-of “phone,” “segment,” “transcription,” or “seg” in them. All Point Tiers
-are ignored. All other interval tiers are included as word token attributes
-(e.g.,  if there's a tier called “Speech style” and an interval named
-“casual” extends around the word token, the word token will have an
-attribute for “Speech style” with the value “casual”). If there are
-multiple speakers in a text gird, PCT expects word and phone tiers for
-each speaker, such as “Speaker 1 – word” and “Speaker 2 - word.”
-
-To create a spontaneous speech corpus from TextGrids, first ensure that
-your TextGrids are all located in a single directory and have the above
-properties. Click on “File” / “Load corpus...” / “Import spontaneous
-speech corpus.” Select the directory where your TextGrids are located,
-and choose “TextGrid” as the Corpus file set up option.
 
 Here is an example of creating a corpus based on three .TextGrid files
-from the Corpus of Spontaneous Japanese [CSJ]_.
+from the Corpus of Spontaneous Japanese [CSJ]_. Note that the hovering over the box labelled "Mouseover for included files" shows a list of the names of the files in the chosen directory. In the "parsing preview" window, each set of boxes corresponds to one tier of the TextGrids, and the original name of the TextGrid is shown at the top (e.g., "word," "seg"). Note that here, the orthographic tier is associated with the lexical item, while the transcription tier is allowed wot vary within lexical item, such that pronunciation variants are kept track of.
 
 .. image:: static/importspontaneous.png
    :width: 90%
@@ -371,7 +644,7 @@ different transcribed forms in the corpus itself. To see these various
 transcriptions, right-click on any word in the corpus and select “List
 pronunciation variants.” A new dialogue box will pop up that shows the
 individual pronunciation variants that occur in the corpus for that word,
-along with their token frequencies.
+along with their token frequencies. (See also :ref:`pronunciation_variants`.)
 
 .. image:: static/pronunciationvariant.png
    :width: 90%
@@ -384,13 +657,10 @@ a box on the right. This is not a corpus, but rather a sequential
 listing of each word that was extracted, along with the transcription
 and the timestamp of the beginning of that word in the TextGrid.
 Right-clicking on a word in this list will give you the option to
-look up the word’s summary entry in the corpus. Right-clicking a word
+look up the word’s summary entry in the corpus itself, which apears in the centre. Right-clicking a word
 in the overall corpus will give you the option to “Find all tokens” of
 that word in the transcriptions, where they will simply be highlighted.
 
-.. image:: static/spontaneouscorpus.png
-   :width: 90%
-   :align: center
 
 .. _corpus_cli:
 
@@ -451,15 +721,14 @@ your corpus at any time. To do so, go to “Corpus” / “Summary.”
 
 1. **General information**: At the top of the “Corpus summary” dialogue box,
    you’ll see the name of the corpus, the feature system currently being
-   used, and the number of words (entries) in the corpus.
+   used, and the number of word types (entries) in the corpus.
 2. **Inventory**: Under the “Inventory” tab, there will generally be three
    sections, “Consonants,” “Vowels,” and “Other.” (Note that this assumes
    there is an interpretable feature system being used; if not, then all
-   elements in the inventory will be shown together.) Clicking the box
-   next to “Consonants” will show you the current set of consonants,
-   roughly arranged according to the IPA chart. Similarly, clicking the
-   box next to “Vowels” will show you the current set of consonants,
-   roughly arranged according to the IPA chart. Any other symbols
+   elements in the inventory will be shown together.) If there is a feature
+   system in place, consonants and vowels will be arranged in a manner similar
+   to an IPA chart. (For more on how to edit this arrangement,
+   see :ref:`inventory_categories`.) Any other symbols
    (e.g., the symbol for a word boundary, #) will be shown under “Other.”
 
    a. **Segments**: Clicking on any individual segment in the inventory will
@@ -521,7 +790,7 @@ Saving and exporting a corpus or feature file
 =============================================
 
 If “Auto-save” is on (which is the default; see :ref:`preferences`), most changes
-to your corpus (adding words, tiers, etc.) will be saved automatically
+to your corpus (adding a feature system, words, tiers, etc.) will be saved automatically
 and will be available the next time you load the corpus in PCT. Some
 changes are not automatically saved (removing or editing word entries),
 even if Auto-save is on, to prevent inadvertant loss of information.
@@ -530,19 +799,24 @@ then quit PCT, you will receive a warning message indicating that there
 are unsaved changes. At that point, you may either choose “Don’t save”
 (and therefore lose any such changes), “Save” (to save the changes in
 its current state, to be used the next time it is loaded into PCT), or
-“Cancel” (and return to the corpus view). It is also possible to export
+“Cancel” (and return to the corpus view).
+
+It is also possible to export
 the corpus as a text file (.txt), which can be opened in other software,
 by selecting “File” / “Export corpus as text file” and entering the
-file name and location and the column and transcription delimiters.
+file name and location and the column and transcription delimiters. (Note: use \t to indicate a tab.) You can also choose whether and how to export pronunciation variants, if there are any in the corpus (see :ref:`pronunciation_variants` and the subsection :ref:`exporting_pronunciation_variants` for more details).
+
 Similarly, the feature system can also be exported to a .txt file by
 selecting “File” / “Export feature system as text file” and selecting
 the file name and location and the column delimiter. See more about
 the utility of doing so in :ref:`transcriptions_and_feature_systems`.
 
+See also information about the temporary log file that is created when a new corpus is imported by going to :ref:`logging`; this file has information about the various :ref:`parsing_parameters` that were chosen in the creation of any given corpus.
+
 .. _preferences_and_options:
 
-Setting preferences and options
-===============================
+Setting preferences & options; Getting help and updates
+========================================================
 
 .. _preferences:
 
@@ -600,6 +874,17 @@ PCT will also issue certain warnings if various parameters aren’t met.
 It is possible to turn warning messages off by going to “Options” /
 “Show warnings.”
 
+There is also extensive documentation for all aspects of PCT (of which the current text is part). There are several options for accessing this information:
+
+1. In the main PCT window (i.e., when viewing your corpus), click on "Help" from the "Help" menu. This will take you to the main help file, from which you can navigate to other specific topics.
+
+2. Go to the `online PCT documentation <http://corpustools.readthedocs.org/en/latest/index.html>_` to get access to the help files online.
+
+3. Go to the `PCT website
+<http://phonologicalcorpustools.github.io/CorpusTools/>`_ and download a .pdf copy of the entire help file for off-line use.
+
+4. While working in PCT, most dialogue boxes have options at the lower right-hand corner that say either "Help" or "About..." (e.g., "About functional load..."). Clicking this button will pull up the relevant help file.
+
 .. _copy_paste:
 
 Copying and pasting
@@ -611,9 +896,12 @@ of the data into another program (e.g., a spreadsheet or text editor)
 using your standard copy & paste keyboard commands (i.e., Ctrl-C and
 Ctrl-V on a PC; Command-C and Command-V on a Mac).
 
-.. _classes_and_functions:
+.. _updates:
 
-Classes and functions
----------------------
-For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+Updates
+--------
+
+To manually see whether there is a more recent version of PCT available for download, click on "Help" / "Check for updates...".
+
+To be automatically notified of new versions of PCT or any other major news that is relevant to all users, please sign up for the PCT mailing list, available from the `PCT website.
+<http://phonologicalcorpustools.github.io/CorpusTools/>`_

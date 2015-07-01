@@ -24,9 +24,9 @@ for extensive references.
 Method of calculation
 ---------------------
 
-One method for computing the phonotactic probability uses average unigram
+One method for computing the phonotactic probability, and the current algorithm implemented in PCT, uses average unigram
 or bigram positional probabilities across a word ([Vitevitch2004]_;
-their online calculator for this function is available `online
+their online calculator for this function is available `here
 <http://www.people.ku.edu/~mvitevit/PhonoProbHome.html>`_).
 For a word like *blick* in English, the unigram average would include the
 probability of /b/ occurring in the first position of a word, the
@@ -49,15 +49,20 @@ in the first position is radically different.
 There are other ways of calculating phonotactic probability that don't
 have the strict left-to-right positional assumptions that the Vitevitch
 & Luce algorithm has, such as the constraint-based method in BLICK by
-Bruce Hayes (BLICK is available as a `Windows executable
-<http://www.linguistics.ucla.edu/people/hayes/BLICK/>`_,
-`Python package <https://pypi.python.org/pypi/python-BLICK/0.2.12>`_
-and Python source code available at <https://github.com/mmcauliffe/python-BLICK/>_).
+Bruce Hayes (Windows executable available on the `Blick homepage`_, Python package
+available at `python-blick on PyPi`_
+with source code available at `python-blick on GitHub`_).
 However, such algorithms require training on a specific language, and
 the constraints are not computed from transcribed corpora in as
 straightforward a manner as the probabilities used in the Vitevitch &
 Luce algorithm. Therefore, PCT currently supports only the Vitevitch &
 Luce style algorithm.
+
+.. _Blick homepage: http://www.linguistics.ucla.edu/people/hayes/BLICK/
+
+.. _python-blick on PyPi: https://pypi.python.org/pypi/python-BLICK/0.2.12
+
+.. _python-blick on GitHub: https://github.com/mmcauliffe/python-BLICK/
 
 .. _phonotactic_probability_gui:
 
@@ -129,13 +134,16 @@ in the main menu, and then follow these steps:
 3. **Tier**: Phonotactic probability can be calculated from transcription
    tiers in a corpus (e.g., transcription or tiers that represent subsets
    of entries, such as a vowel or consonant tier).
-4. **Type vs. token frequency**: Specify whether phonotactic probabilities
+
+4. **Pronunciation variants**: Specify whether phonotactic probability should be calculated based on the canonical pronunciations of each word or the most frequent pronunciations (which may not be the same). See more in :ref:`pronunciation_variants`.
+
+5. **Type vs. token frequency**: Specify whether phonotactic probabilities
    should be based on word type frequency or token frequency.  The
    original Vitevitch & Luce algorithm uses token frequency. Token frequency
    will use the log frequency when calculating probabilities.
-5. **Probability type**: Specify whether to use biphone positional
+6. **Probability type**: Specify whether to use biphone positional
    probabilities or single segment positional probabilities.  Defaults to biphone.
-6. **Results**: Once all options have been selected, click “Calculate
+7. **Results**: Once all options have been selected, click “Calculate
    phonotactic probability.” If this is not the first calculation, and
    you want to add the results to a pre-existing results table, select
    the choice that says “add to current results table.” Otherwise, select
@@ -148,7 +156,7 @@ in the main menu, and then follow these steps:
    is being calculated, simply click on the “start new results table” option,
    and you will be returned to your corpus, where a new column has been added
    automatically.
-7. **Saving results**: The results tables can each be saved to tab-delimited .txt
+8. **Saving results**: The results tables can each be saved to tab-delimited .txt
    files by selecting “Save to file” at the bottom of the window. If all
    phonotactic probabilities are calculated for a corpus, the corpus
    itself can be saved by going to “File” / “Export corpus as text file,”
@@ -156,7 +164,7 @@ in the main menu, and then follow these steps:
    the phonotactic probabilities included.
 
 An example of the “Phonotactic Probability” dialogue box for calculating
-the probability of the non-word “pidger” [pɪdʒɚ] using unigram position
+the probability of the non-word “pidger” [pɪdʒɚ], or [P.IH.JH.ER] in Arpabet, using unigram position
 probabilities (using the IPHOD corpus):
 
 .. image:: static/phonoprobdialog.png
@@ -171,7 +179,7 @@ To return to the function dialogue box with your most recently used
 selections, click on “Reopen function dialog.” Otherwise, the results
 table can be closed and you will be returned to your corpus view.
 
-.. _classes_and_functions:
+.. _phono_prob_classes_and_functions:
 
 Classes and functions
 ---------------------
