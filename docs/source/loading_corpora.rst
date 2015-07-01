@@ -691,7 +691,7 @@ just the file name itself (plus extension) if your current working
 directory contains the files; alternatively, you can specify the full
 path to these files. Please do not mix short and full paths. You may also
 use command line options to change the column delimiter character or
-segment delimiter character from their defaults ('\t' and '',
+segment delimiter character from their defaults (``\t`` and ``''``,
 respectively). Descriptions of these arguments can be viewed by
 running ``pct_corpus -h`` or ``pct_corpus --help``. The help text from
 this command is copied below, augmented with specifications of default values:

@@ -25,9 +25,12 @@ Inventory:
 ----------
 
 Stops: /t/
-Nasals: /m,n/
-Fricatives: /s,ʃ/
-Vowels: /i,e,u,o,a/
+
+Nasals: /m, n/
+
+Fricatives: /s, ʃ/
+
+Vowels: /i, e, u, o, a/
 
 Phonological restrictions:
 --------------------------
@@ -58,17 +61,17 @@ the corpus is built:
 Inventory:
 ----------
 
-Stops: /p,b,t,d,k/
+Stops: /p, b, t, d, k/
 
-Nasals: /m,n/
+Nasals: /m, n/
 
-Fricatives: /f,s,x/
+Fricatives: /f, s, x/
 
-Liquids: /l,r/
+Liquids: /l, r/
 
-Glides: /j,w/
+Glides: /j, w/
 
-Vowels: /i,e,u,o,a/
+Vowels: /i, e, u, o, a/
 
 Phonotactics:
 -------------
@@ -83,7 +86,7 @@ has a maximum syllable of C1C2VC3 with the following phonotactics:
 5. C3 if present must be a nasal.
 
 Lemurian has front/back vowel harmony, and a word can only contain vowels
-from one of those categories. Front vowels are /i,e/, back vowels are /u,o/.
+from one of those categories. Front vowels are /i, e/, back vowels are /u, o/.
 The vowel /a/ is neutral and can appear with vowels from either set.
 
 Other phonological patterns:

@@ -50,7 +50,7 @@ Downloadable transcription and feature choices
 ==============================================
 
 Currently, the built-in transcription systems that are usable are
-IPA, ARPABET (used for the [CMU]_ dictionary), XSAMPA, CELEX, DISC,
+IPA, ARPABET (used for the [CMU]_ dictionary), XSAMPA, CPA, CELEX, DISC,
 Klatt, and Buckeye. These transcription systems can be associated with either the
 features as laid out in [Mielke2012]_, which in turn are based on [SPE]_,
 or as laid out in [Hayes2009]_ [#]_. Each of these
@@ -63,7 +63,7 @@ To download one of these systems, click on “Corpus” /
 
 1. **Download**: Click on “Download feature systems” to open up the relevant dialogue box.
 2. **Transcription**: Select which of the transcription systems you want
-   (IPA, ARPABET, XSAMPA, CELEX, DISC, Klatt, Buckeye).
+   (IPA, ARPABET, XSAMPA, CPA, CELEX, DISC, Klatt, or Buckeye).
 3. **Feature system**: Select which set of features you would like to map
    the transcription symbols to (SPE or Hayes).
 4. **Saving**: Click “OK” to have PCT load in the selected feature file
@@ -73,10 +73,6 @@ To download one of these systems, click on “Corpus” /
    use of PCT unless and until you delete it (done by selecting the
    system and clicking “Remove selected feature system”). Click “Done”
    to return to the regular corpus analysis window.
-
-The example below shows the selection of the CELEX transcription system,
-interpreted using Hayes features.
-
 
 .. image:: static/downloadfeature.png
    :width: 90%
@@ -117,17 +113,17 @@ dialogue box will open.
    system?). If this is a brand-new set of features, then select “Custom”
    from the dropdown menu. Then, enter a name for the feature system in the box.
 
-*Note: For both existing transcription and feature systems, you still
-need to include both the transcriptions and the features in the .txt
-file itself; you can simply indicate here in PCT that these transcriptions
-and / or features are identical to ones that are already extant in the
-system, so that they can be used / interpreted consistently. The name
-of the transcription / feature system file in PCT will conventionally
-be transcription2features (e.g., ipa2hayes for IPA symbols interpreted
-using Hayes features), so it’s useful to be consistent about what the names are.*
+.. note:: For both existing transcription and feature systems, you still
+   need to include both the transcriptions and the features in the .txt
+   file itself; you can simply indicate here in PCT that these transcriptions
+   and / or features are identical to ones that are already extant in the
+   system, so that they can be used / interpreted consistently. The name
+   of the transcription / feature system file in PCT will conventionally
+   be transcription2features (e.g., ipa2hayes for IPA symbols interpreted
+   using Hayes features), so it’s useful to be consistent about what the names are.
 
 4. **Delimiter**: Indicate what the column delimiter in the custom file is.
-   The default, tab, is indicated by ‘\t.’
+   The default, tab, is indicated by ``\t``.
 
 Click “OK,” and the feature system should now appear in your “Available
 feature systems” window. Click “Done.” See :ref:`applying_editing_feature` for more information about
@@ -202,10 +198,7 @@ The following options are shown:
    changes to this corpus’s feature system” after selecting a new feature
    system in order to actually apply it to the corpus.
 3. **Modify the feature system**: You can modify the current feature system
-   directly within PCT. There are three options. *Be sure to click on
-   “Save changes to this corpus’s feature system” after adding a new
-   segment or feature, or editing the feature specifications of a segment,
-   in order to actually apply the changes to the corpus*:
+   directly within PCT. There are three options.
 
    a. **Add segment**: To add a new segment and its associated feature values
       to the current feature system, click on “Add segment.” A new dialogue
@@ -226,6 +219,11 @@ The following options are shown:
       feature for each segment, simply click on the segment and then use
       the “Edit segment” functionality described above; the new feature
       will automatically be added to the dialogue box for each segment.
+
+.. warning:: Be sure to click on
+   “Save changes to this corpus’s feature system” after adding a new
+   segment or feature, or editing the feature specifications of a segment,
+   in order to actually apply the changes to the corpus.
 
 4. **Corpus inventory coverage**: There are two tools built in to help you
    check the coverage in your corpus.
@@ -292,15 +290,47 @@ is shown; the vowel chart is below in the actual PCT window):
 
 If the feature system being used is either the built-in [Hayes2009]_ or
 the [SPE]_ style feature system, the sorting of segments (regardless of
-the transcription system) in to a standard IPA-like chart will be done automatically (though it can still be edited). If a different feature system is used, however, the sorting may not be correct if PCT does not recognize the features. Therefore, the inventory categories can be edited.
+the transcription system) in to a standard IPA-like chart will be done
+automatically (though it can still be edited). If a different feature
+system is used, however, the sorting may not be correct if PCT does not
+recognize the features. Therefore, the inventory categories can be edited.
 
-To do so, click on "Edit inventory categories" in the “Features” / “View / change feature system....” menu. The "Edit categories" dialogue box appears. Essentially, you are telling PCT which feature values are associated with which segments in the inventory. There are five sets of categories to be edited: "Major distinctions," "Places of articulation," "Manners of articulation," "Vowel height," and "Vowel backness." Each is described below. In each case, PCT will ask for which feature or set of features is used to specify a particular set of segments. You can then type in the box the name of the feature; PCT will auto-complete feature names. Once a feature has been included, you can simply mouseover the box on the right-hand side to view which segments from the inventory are included by the selected features, to check that they are correct and exhaustive. (Note that the order of feature selection doesn't matter.)
+To do so, click on "Edit inventory categories" in the “Features” /
+“View / change feature system....” menu. The "Edit categories" dialogue
+box appears. Essentially, you are telling PCT which feature values are
+associated with which segments in the inventory. There are five sets of
+categories to be edited: "Major distinctions," "Places of articulation,"
+"Manners of articulation," "Vowel height," and "Vowel backness."
+Each is described below. In each case, PCT will ask for which feature or
+set of features is used to specify a particular set of segments. You can
+then type in the box the name of the feature; PCT will auto-complete feature
+names. Once a feature has been included, you can simply mouseover the box on
+the right-hand side to view which segments from the inventory are included by
+the selected features, to check that they are correct and exhaustive. (Note
+that the order of feature selection doesn't matter.)
 
-    a. **Major distinctions**: Use the major distinctions tab to edit major class distinctions, i.e., vowels vs. consonants; voicing; diphthongs; and rounding in vowels. For example, the feature specifying vowels in the [SPE]_ system is +voc; the feature in the [Hayes2009]_ system is +syllabic.
-    b. **Places of articulation**: Use the places of articulation tab to indicate which features are associated with each standard place of articulation. For example, the features to pick out labial segments in the [SPE]_ system are -cor, +ant, -back; in the [Hayes2009]_ system, they are -coronal, +labial.
-    c. **Manners of articulation**: Use the manners of articulation tab to indicate which features are associated with each standard manner of articulation. For example, the features to pick out stops in the [SPE]_ system are -cont, -nasal, -son; in the [Hayes2009]_ system, they are -delayed_release, -sonorant, -nasal, -continuant.
-    d. **Vowel height**: Use the vowel height tab to indicate which features are associated with each standard height of vowels. For example, the features to pick out close vowels in the [SPE]_ system are +high, +tense, -low; in the [Hayes2009]_ system, they are +high, +tense, -low.
-    e. **Vowel backness**: Use the vowel backness tab to indicate which features are associated with each standard degree of backness of vowels. For example, the features to pick out front vowels in the [SPE]_ system are +tense, -back; in the [Hayes2009]_ system, they are -back, +tense, +front.
+#. **Major distinctions**: Use the major distinctions tab to edit major
+   class distinctions, i.e., vowels vs. consonants; voicing; diphthongs;
+   and rounding in vowels. For example, the feature specifying vowels in
+   the [SPE]_ system is +voc; the feature in the [Hayes2009]_ system is +syllabic.
+#. **Places of articulation**: Use the places of articulation tab to
+   indicate which features are associated with each standard place of
+   articulation. For example, the features to pick out labial segments
+   in the [SPE]_ system are -cor, +ant, -back; in the [Hayes2009]_ system,
+   they are -coronal, +labial.
+#. **Manners of articulation**: Use the manners of articulation tab to
+   indicate which features are associated with each standard manner of
+   articulation. For example, the features to pick out stops in the [SPE]_
+   system are -cont, -nasal, -son; in the [Hayes2009]_ system, they are
+   -delayed_release, -sonorant, -nasal, -continuant.
+#. **Vowel height**: Use the vowel height tab to indicate which features
+   are associated with each standard height of vowels. For example,
+   the features to pick out close vowels in the [SPE]_ system are +high,
+   +tense, -low; in the [Hayes2009]_ system, they are +high, +tense, -low.
+#. **Vowel backness**: Use the vowel backness tab to indicate which
+   features are associated with each standard degree of backness of vowels.
+   For example, the features to pick out front vowels in the [SPE]_ system
+   are +tense, -back; in the [Hayes2009]_ system, they are -back, +tense, +front.
 
 Here is an example of the "Edit categories" box:
 
@@ -333,7 +363,7 @@ To create a new tier for a corpus that is currently open, click on the
 “Corpus” menu and select either “Add tier...” or “Add abstract tier...”;
 the “create tier” dialogue box opens. An “abstract” tier is a tier that is
 not based directly on the transcriptins themselves, but rather abstracts
-to a higher level. As of January 2015, the only abstract tier available is
+to a higher level. As of June 2015, the only abstract tier available is
 a CV skeleton tier. Before creating the tier, you can “preview” the tier
 as in the following example; this shows what segments PCT thinks are
 consonants and vowels in the current corpus.
@@ -349,7 +379,8 @@ The example corpus after an abstract CV tier has been added:
    :align: center
 
 To create a less abstract tier, i.e., one that is just an extraction of
-all transcription symbols in the corpus that have some particular characteristic(s), use the following instructions after choosing “Corpus” / “Add tier...”:
+all transcription symbols in the corpus that have some particular characteristic(s),
+use the following instructions after choosing “Corpus” / “Add tier...”:
 
 1. **Name**: Enter a short-hand name for the tier, which will appear as the
    column header in your corpus. For example, “vowels” or “consonants” or “nasals.”
@@ -359,17 +390,18 @@ all transcription symbols in the corpus that have some particular characteristic
 3. **Segments**: To actually select the segments, using either features or
    individually, follow the directions given in :ref:`sound_selection`.
 
-The image below shows an example of creating a tier to contain all the non-mid vowels in
-   the example corpus. (Note that the image shows the mid vowels highlighted but not yet selected; one would need to hit "enter" again or choose "Select highlighted" to make the actual selection):
+The image below shows an example of creating a tier to contain all the non-mid
+vowels in the example corpus. (Note that the image shows the mid vowels
+highlighted but not yet selected; one would need to hit "enter" again or
+choose "Select highlighted" to make the actual selection):
 
 .. image:: static/createtier.png
    :width: 90%
    :align: center
 
-The features available will
-   be based on whatever feature system has been selected as part of the
-   corpus; see :ref:`download_features` for information on selecting or defining different
-   features for the segments in the corpus.
+The features available will be based on whatever feature system has been
+selected as part of the corpus; see :ref:`download_features` for
+information on selecting or defining different features for the segments in the corpus.
 
 4. Finalizing the tier: To create the tier and return to the corpus,
    click on “Create tier.” It may take a moment to process the entire
