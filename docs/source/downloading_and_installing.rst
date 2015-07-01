@@ -4,20 +4,28 @@
 Downloading and installing
 **************************
 
+.. _PCT website: http://phonologicalcorpustools.github.io/CorpusTools/
+
+.. _GitHub repository: https://github.com/PhonologicalCorpusTools/CorpusTools/
+
+.. _kathleen.hall@ubc.ca: kathleen.hall@ubc.ca
+
+.. _PCT releases page: https://github.com/PhonologicalCorpusTools/CorpusTools/releases
+
 PCT is currently available for Mac, PC, and Linux machines.
-It can be downloaded from `GitHub
-<http://phonologicalcorpustools.github.io/CorpusTools/>`_
+It can be downloaded from `PCT releases page`_
 using the following steps. Note that there are several dependencies that are
 pre-requisites before PCT can function properly. For Mac and Windows machines,
 we have created executable files that bundle most of the dependencies and the
 PCT software itself into a single package. Using these is the easiest /
 fastest way to get PCT up and running on your machine.
 
-XXX
+Download
+========
 
-1. Go to the `PCT GitHub page`_.
-2. Click on the “Files” tab.
-3. Click on the link with the highest number (= most recent version).
+#. Go to the `PCT releases page`_.
+#. Click on the “Files” tab.
+#. Click on the link with the highest number (= most recent version).
    As of June 2015, that is 1.1.
 
 Windows Executable
@@ -64,8 +72,7 @@ Linux / Fallback instructions
      <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.)
 
 2. Get the source code for PCT. Click on either the .zip or the .gz file
-   on the `PCT GitHub page
-   <http://phonologicalcorpustools.github.io/CorpusTools/>`_,
+   on the `PCT releases page`_ or the `GitHub repository`_,
    to download the zipped or tarball version of the code, depending
    on your preference.
 

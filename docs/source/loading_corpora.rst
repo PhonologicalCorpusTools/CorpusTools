@@ -4,6 +4,14 @@
 Loading in corpora
 ******************
 
+.. _PCT website: http://phonologicalcorpustools.github.io/CorpusTools/
+
+.. _GitHub repository: https://github.com/PhonologicalCorpusTools/CorpusTools/
+
+.. _kathleen.hall@ubc.ca: kathleen.hall@ubc.ca
+
+.. _online PCT documentation: http://corpustools.readthedocs.org/en/latest/index.html
+
 In order to use the analysis functions in PCT, you’ll first need to open
 up a corpus. When we say a "corpus" in PCT, we mean a file that has the
 following basic structure: a list of words with other possible information
@@ -488,38 +496,42 @@ file, as described in the section on :ref:`custom_corpus`.
 Complex transcriptions (Digraphs and other multi-character sequences)
 ---------------------------------------------------------------------
 
-There is no way for PCT to know automatically when a single sound is represented by a sequence of multiple characters – e.g., that the digraphs [aɪ], [th], [xw], [p’], [tʃ], and [iː] are intended to represent single sounds rather than sequences of two sounds. There are currently three possible ways of ensuring that characters are interpreted correctly:
+There is no way for PCT to know automatically when a single sound is
+represented by a sequence of multiple characters – e.g., that the digraphs
+[aɪ], [tʰ], [xw], [p’], [tʃ], and [iː] are intended to represent single
+sounds rather than sequences of two sounds. There are currently three
+possible ways of ensuring that characters are interpreted correctly:
 
 1. **One-to-one transcriptions**: The first way is to use a transcription
-      system with a one-to-one correspondence between sounds and symbols,
-      such as DISC. If you need to create a novel transcription system in
-      order to accomplish this (e.g., using [A] to represent [aɪ] and [2]
-      to represent [th], etc.), you may certainly do so; it is then necessary
-      to create a novel feature file so that PCT can interpret your symbols
-      using known features. See detailed instructions on how to do this in
-      :ref:`download_features`. The word tide in American English might then be transcribed as
-      [2Ad]. This is a relatively easy solution to implement by using
-      find-and-replace in a text editing software, though it does result
-      in less easily human-readable transcriptions.
+   system with a one-to-one correspondence between sounds and symbols,
+   such as DISC. If you need to create a novel transcription system in
+   order to accomplish this (e.g., using [A] to represent [aɪ] and [2]
+   to represent [tʰ], etc.), you may certainly do so; it is then necessary
+   to create a novel feature file so that PCT can interpret your symbols
+   using known features. See detailed instructions on how to do this in
+   :ref:`download_features`. The word tide in American English might then be transcribed as
+   [2Ad]. This is a relatively easy solution to implement by using
+   find-and-replace in a text editing software, though it does result
+   in less easily human-readable transcriptions.
 2. **Delimited transcriptions**: The second way is to use a standard
-      transcription system, such as IPA, but to delimit every unitary
-      sound with a consistent mark that is not otherwise used in the
-      transcription system (e.g., a period). Thus the word *tide* in
-      American English might be transcribed in IPA as [th.aɪ.d], with
-      periods around every sound that is to be treated as a single unit.
-      When creating the corpus, PCT will give you the option of specifying
-      what the character is. PCT will then read in all elements between
-      delimiting characters as members of a single “segment” object, which
-      can be looked up in a standard feature file (either an included one
-      or a user-defined one; see :ref:`custom_feature`). This solution makes it easy to
-      read transcribed words, but can be more labour-intensive to implement
-      without knowledge of more sophisticated searching options (e.g.,
-      using regular expressions or other text manipulation coding) to
-      automatically insert delimiters in the appropriate places given a
-      list of complex segments. A first pass can be done using, e.g.,
-      commands to find “aɪ” and replace it with “.aɪ.” – but delimiters
-      will also have to be added between the remaining single characters,
-      without interrupting the digraphs.
+   transcription system, such as IPA, but to delimit every unitary
+   sound with a consistent mark that is not otherwise used in the
+   transcription system (e.g., a period). Thus the word *tide* in
+   American English might be transcribed in IPA as [tʰ.aɪ.d], with
+   periods around every sound that is to be treated as a single unit.
+   When creating the corpus, PCT will give you the option of specifying
+   what the character is. PCT will then read in all elements between
+   delimiting characters as members of a single “segment” object, which
+   can be looked up in a standard feature file (either an included one
+   or a user-defined one; see :ref:`custom_feature`). This solution makes it easy to
+   read transcribed words, but can be more labour-intensive to implement
+   without knowledge of more sophisticated searching options (e.g.,
+   using regular expressions or other text manipulation coding) to
+   automatically insert delimiters in the appropriate places given a
+   list of complex segments. A first pass can be done using, e.g.,
+   commands to find “aɪ” and replace it with “.aɪ.” – but delimiters
+   will also have to be added between the remaining single characters,
+   without interrupting the digraphs.
 
 .. _construct_multicharacter_sequences:
 
@@ -602,9 +614,9 @@ Henry Davis, for granting permission to use this text):
    :align: center
 
 3. The dialogue boxes for creating the corpus from text. Note that hyphens
-and equal signs, which delimit morphological boundaries in the original,
-have been ignored during the read-in. A feature system called gitksan2hayes_delimited, which maps the delimited transcription system used in this example to the features given
-in [Hayes2009]_, has already been loaded into PCT (see :ref:`custom_feature`), and so is selected here. In this case, the multicharacter segments are indicated manually.
+   and equal signs, which delimit morphological boundaries in the original,
+   have been ignored during the read-in. A feature system called gitksan2hayes_delimited, which maps the delimited transcription system used in this example to the features given
+   in [Hayes2009]_, has already been loaded into PCT (see :ref:`custom_feature`), and so is selected here. In this case, the multicharacter segments are indicated manually.
 
 .. image:: static/gitksanorthcorpus1.png
    :width: 90%
@@ -657,7 +669,8 @@ a box on the right. This is not a corpus, but rather a sequential
 listing of each word that was extracted, along with the transcription
 and the timestamp of the beginning of that word in the TextGrid.
 Right-clicking on a word in this list will give you the option to
-look up the word’s summary entry in the corpus itself, which apears in the centre. Right-clicking a word
+look up the word’s summary entry in the corpus itself, which apears in
+the centre. Right-clicking a word
 in the overall corpus will give you the option to “Find all tokens” of
 that word in the transcriptions, where they will simply be highlighted.
 
@@ -705,7 +718,7 @@ Positional arguments:
 EXAMPLE:
 
 If your pre-formatted text file is called mytext.txt and your features
-are hayes.feature, and if mytext.txt uses ; as column delimiters and .
+are hayes.feature, and if mytext.txt uses ``;`` as column delimiters and ``.``
 as segment delimiters, to create a corpus file, you would need to run
 the following command::
 
@@ -737,7 +750,8 @@ your corpus at any time. To do so, go to “Corpus” / “Summary.”
 
 3. **Columns**: Under the “Columns” tab, you can get information about each
    of the columns in your corpus (including any that you have added as
-   tiers or other columns; see :ref:`adding_editing_word_columns_tiers`). The column labels are listed in
+   tiers or other columns; see :ref:`adding_editing_word_columns_tiers`).
+   The column labels are listed in
    the drop-down menu. Selecting any column will show you its type
    (spelling, tier, numeric, factor) and other available information.
    Tier columns (based on transcriptions) will indicate which segments
@@ -804,19 +818,26 @@ its current state, to be used the next time it is loaded into PCT), or
 It is also possible to export
 the corpus as a text file (.txt), which can be opened in other software,
 by selecting “File” / “Export corpus as text file” and entering the
-file name and location and the column and transcription delimiters. (Note: use \t to indicate a tab.) You can also choose whether and how to export pronunciation variants, if there are any in the corpus (see :ref:`pronunciation_variants` and the subsection :ref:`exporting_pronunciation_variants` for more details).
+file name and location and the column and transcription delimiters.
+(Note: use \t to indicate a tab.) You can also choose whether and how to
+export pronunciation variants, if there are any in the corpus
+(see :ref:`pronunciation_variants` and the subsection
+:ref:`exporting_pronunciation_variants` for more details).
 
 Similarly, the feature system can also be exported to a .txt file by
 selecting “File” / “Export feature system as text file” and selecting
 the file name and location and the column delimiter. See more about
 the utility of doing so in :ref:`transcriptions_and_feature_systems`.
 
-See also information about the temporary log file that is created when a new corpus is imported by going to :ref:`logging`; this file has information about the various :ref:`parsing_parameters` that were chosen in the creation of any given corpus.
+See also information about the temporary log file that is created when a
+new corpus is imported by going to :ref:`logging`; this file has
+information about the various :ref:`parsing_parameters` that were
+chosen in the creation of any given corpus.
 
 .. _preferences_and_options:
 
 Setting preferences & options; Getting help and updates
-========================================================
+=======================================================
 
 .. _preferences:
 
@@ -857,7 +878,7 @@ selected by going to “Options” / “Preferences....” The following are ava
    resources and can be made faster by using multiprocessing. To allow
    PCT to use multiprocessing on multiple cores when that is possible,
    select this option and indicate how many cores should be used (enter
-   0 to have PCT automatically use the ¾ of the number of cores available
+   0 to have PCT automatically use ¾ of the number of cores available
    on your machine).
 
 .. _warnings:
@@ -874,16 +895,21 @@ PCT will also issue certain warnings if various parameters aren’t met.
 It is possible to turn warning messages off by going to “Options” /
 “Show warnings.”
 
-There is also extensive documentation for all aspects of PCT (of which the current text is part). There are several options for accessing this information:
+There is also extensive documentation for all aspects of PCT (of which
+the current text is part). There are several options for accessing this information:
 
-1. In the main PCT window (i.e., when viewing your corpus), click on "Help" from the "Help" menu. This will take you to the main help file, from which you can navigate to other specific topics.
+1. In the main PCT window (i.e., when viewing your corpus), click on
+   "Help" from the "Help" menu. This will take you to the main help file,
+   from which you can navigate to other specific topics.
 
-2. Go to the `online PCT documentation <http://corpustools.readthedocs.org/en/latest/index.html>_` to get access to the help files online.
+2. Go to the `online PCT documentation`_ to get access to the help files online.
 
-3. Go to the `PCT website
-<http://phonologicalcorpustools.github.io/CorpusTools/>`_ and download a .pdf copy of the entire help file for off-line use.
+3. Go to the `PCT website`_ and download a .pdf copy of the entire help
+   file for off-line use.
 
-4. While working in PCT, most dialogue boxes have options at the lower right-hand corner that say either "Help" or "About..." (e.g., "About functional load..."). Clicking this button will pull up the relevant help file.
+4. While working in PCT, most dialogue boxes have options at the lower
+   right-hand corner that say either "Help" or "About..." (e.g., "About
+   functional load..."). Clicking this button will pull up the relevant help file.
 
 .. _copy_paste:
 
@@ -901,7 +927,9 @@ Ctrl-V on a PC; Command-C and Command-V on a Mac).
 Updates
 --------
 
-To manually see whether there is a more recent version of PCT available for download, click on "Help" / "Check for updates...".
+To manually see whether there is a more recent version of PCT available
+for download, click on "Help" / "Check for updates...".
 
-To be automatically notified of new versions of PCT or any other major news that is relevant to all users, please sign up for the PCT mailing list, available from the `PCT website.
-<http://phonologicalcorpustools.github.io/CorpusTools/>`_
+To be automatically notified of new versions of PCT or any other major news
+that is relevant to all users, please sign up for the PCT mailing list,
+available from the `PCT website`_.

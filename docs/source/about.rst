@@ -5,6 +5,12 @@
    :align: center
    :target: #
 
+.. _PCT website: http://phonologicalcorpustools.github.io/CorpusTools/
+
+.. _GitHub repository: https://github.com/PhonologicalCorpusTools/CorpusTools/
+
+.. _kathleen.hall@ubc.ca: kathleen.hall@ubc.ca
+
 *****
 About
 *****
@@ -12,14 +18,14 @@ About
 Phonological CorpusTools allows for easy computation of phonological metrics
 used in the literature for any corpus of language that you provide.
 
-`GitHub project page <http://phonologicalcorpustools.github.io/CorpusTools/>`_
+`PCT website`_
 
-`GitHub repository <https://github.com/PhonologicalCorpusTools/CorpusTools/>`_
+`GitHub repository`_
 
 Contributors
 ------------
 |
-| Kathleen Currie Hall (`kathleen.hall@ubc.ca <kathleen.hall@ubc.ca>`_)
+| Kathleen Currie Hall (`kathleen.hall@ubc.ca`_)
 | Blake Allen
 | Michael Fry
 | Scott Mackie
