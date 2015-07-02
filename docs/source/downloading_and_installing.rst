@@ -24,17 +24,15 @@ Download
 ========
 
 #. Go to the `PCT releases page`_.
-#. Click on the “Files” tab.
-#. Click on the link with the highest number (= most recent version).
+#. Click on the link for your operating system with the highest number (= most recent version).
    As of June 2015, that is 1.1.
 
-Windows Executable
-==================
+Windows Installer
+=================
 
 #. NOTE: This method requires that you are running a 64-bit version of windows.
    You can check this in Control Panel -> System and Security -> System.
-#. Click on “win64.”
-#. Download the file called “corpustools-1.0.0-amd64.msi” (or similar,
+#. Download the file called “corpustools-1.1.0-amd64.msi” (or similar,
    for a more recent version), by clicking or right-clicking on the link.
    This is an installer program.
 #. Run the downloaded installer program by double-clicking on it, wherever
@@ -45,15 +43,12 @@ Windows Executable
 Mac Executable
 ==============
 
-#. Click on “macosx.”
-#. Download the file called “pct.zip” by clicking or ctrl-clicking on
-   the link. This is a zipped file containing the PCT application.
-#. Unzip the downloaded file from its local location (double-clicking
-   it should automatically open your local software for unzipping files,
-   e.g., StuffIt Expander or Archive Utility).
-#. Unzipping the file will give you access to the file “pct.app.” Double
-   click on this file to start PCT. You can drag the application to
-   your toolbar like any other application.
+#. Download the file called 'Phonological.CorpusTools-1.1.0.dmg' by clicking or ctrl-clicking on
+   the link.
+#. Open the dmg file and drag the Phonological CorpusTools app into Applications.
+#. Phonological CorpusTools is now available in your Applications, and can be
+   opened as other applications.  You may have to enable applications from
+   third-party developers in your security settings.
 #. If you run into trouble, try the “Fallback” instructions in below.
 
 Linux / Fallback instructions

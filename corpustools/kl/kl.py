@@ -37,6 +37,8 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
         First segment
     seg2 : str
         Second segment
+    side : str
+        One of 'right', 'left' or 'both'
     outfile : str
         Full path to save output
     stop_check : callable or None

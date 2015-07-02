@@ -1,8 +1,3 @@
-'''
-Created on May 12, 2014
-
-@author: Michael
-'''
 from functools import partial
 from corpustools.corpus.classes import Word
 from corpustools.symbolsim.khorsi import khorsi

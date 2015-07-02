@@ -80,6 +80,10 @@ def calc_prod_all_envs(corpus_context, seg1, seg2, all_info = False, stop_check 
         If true, all the intermediate numbers for calculating predictability
         of distribution will be returned.  If false, only the final entropy
         will be returned.  Defaults to False.
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -134,6 +138,10 @@ def calc_prod(corpus_context, envs, strict = True, all_info = False, stop_check 
         If true, all the intermediate numbers for calculating predictability
         of distribution will be returned.  If false, only the final entropy
         will be returned.  Defaults to False.
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
 
     Returns
     -------

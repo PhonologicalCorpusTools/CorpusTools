@@ -13,6 +13,28 @@ from corpustools.exceptions import DelimiterError, PCTError
 import time
 
 def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
+    """
+    Generate a list of AnnotationTypes for a specified text file for parsing
+    it as a column-delimited file
+
+    Parameters
+    ----------
+    path : str
+        Full path to text file
+    num_lines: int, optional
+        The number of lines to parse from the file
+    coldelim: str, optional
+        A prespecified column delimiter to use, will autodetect if not
+        supplied
+    transdelim : list, optional
+        A prespecfied set of transcription delimiters to look for, will
+        autodetect if not supplied
+
+    Returns
+    -------
+    list of AnnotationTypes
+        Autodetected AnnotationTypes for the text file
+    """
     if coldelim is not None:
         common_delimiters = [coldelim]
     else:
@@ -78,20 +100,18 @@ def load_corpus_csv(corpus_name, path, delimiter,
     ----------
     corpus_name : str
         Informative identifier to refer to corpus
-
     path : str
         Full path to text file
-
     delimiter : str
         Character to use for spliting lines into columns
-
-    trans_delimiter : str
-        Character to use for splitting transcriptions into a list
-        of segments. If it equals '', each character in the transcription
-        is interpreted as a segment.  Defaults to '.'
-
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse text files
     feature_system_path : str
         Full path to pickled FeatureMatrix to use with the Corpus
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -161,12 +181,14 @@ def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back 
     ----------
     name : str
         Informative identifier to refer to feature system
-
     path : str
         Full path to text file
-
     delimiter : str
         Character to use for spliting lines into columns
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -224,7 +246,6 @@ def make_safe(value, delimiter):
     -------
     str
         Safe string
-
     """
     if isinstance(value,list):
         return delimiter.join(map(lambda x: make_safe(x, delimiter),value))
@@ -240,19 +261,16 @@ def export_corpus_csv(corpus, path,
     ----------
     corpus : Corpus
         Corpus to save to text file
-
     path : str
         Full path to write text file
-
     delimiter : str
         Character to mark boundaries between columns.  Defaults to ','
-
     trans_delimiter : str
         Character to mark boundaries in transcriptions.  Defaults to '.'
-
-    include_variants : bool
-        Whether to include a column of pronunciation variants.  Defaults to False.
-
+    variant_behavior : str, optional
+        How to treat variants, 'token' will have a line for each variant,
+        'column' will have a single column for all variants for a word,
+        and the default will not include variants in the output
     """
     header = []
     for a in corpus.attributes:
@@ -297,7 +315,7 @@ def export_corpus_csv(corpus, path,
                 word_outline.append(var)
             print(delimiter.join(word_outline), file=f)
 
-def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
+def export_feature_matrix_csv(feature_matrix, path, delimiter = ','):
     """
     Save a FeatureMatrix as a column-delimited text file
 
@@ -305,13 +323,10 @@ def export_feature_matrix_csv(feature_matrix,path, delimiter = ','):
     ----------
     feature_matrix : FeatureMatrix
         FeatureMatrix to save to text file
-
     path : str
         Full path to write text file
-
     delimiter : str
         Character to mark boundaries between columns.  Defaults to ','
-
     """
     with open(path, encoding='utf-8', mode='w') as f:
         header = ['symbol'] + feature_matrix.features

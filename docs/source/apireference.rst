@@ -39,6 +39,22 @@ Speech corpus classes
    spontaneous.SpontaneousSpeechCorpus
    spontaneous.WordToken
 
+.. _corpus_context_api:
+
+Corpus context managers
+=======================
+.. currentmodule:: corpustools
+
+.. autosummary::
+   :toctree: generate/
+   :template: class.rst
+
+   contextmanagers.BaseCorpusContext
+   contextmanagers.CanonicalVariantContext
+   contextmanagers.MostFrequentVariantContext
+   contextmanagers.SeparatedTokensVariantContext
+   contextmanagers.WeightedVariantContext
+
 
 .. _corpus_io_api:
 

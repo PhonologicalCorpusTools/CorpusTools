@@ -26,9 +26,8 @@ def calc_freq_of_alt(corpus_context, seg1, seg2, algorithm, output_filename = No
         A sound segment, e.g. 's', 't'
     seg2: char
         A sound segment
-    relator_type: string
-        The type of relator to be used to measure relatedness, e.g.
-        'string_similarity'
+    algorithm: string
+        The string similarity algorithm
     max_rel: double
         Filters out all words that are higher than max_rel from a relatedness measure
     min_rel: double
@@ -40,9 +39,9 @@ def calc_freq_of_alt(corpus_context, seg1, seg2, algorithm, output_filename = No
         True means allow minimal pairs (e.g. in English, 's' and 't' do not
         alternate in minimal pairs,
         so allowing minimal pairs may skew results)
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the function
 
     Returns

@@ -27,6 +27,22 @@ def neighborhood_density_all_words(corpus_context,
             algorithm = 'edit_distance', max_distance = 1,
             num_cores = -1,
             stop_check = None, call_back = None):
+    """Calculate the neighborhood density of all words in the corpus and
+    adds them as attributes of the words.
+
+    Parameters
+    ----------
+    corpus_context : CorpusContext
+        Context manager for a corpus
+    algorithm : str
+        The algorithm used to determine distance
+    max_distance : float, optional
+        Maximum edit distance from the queried word to consider a word a neighbor.
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
+    """
     function = partial(neighborhood_density, corpus_context,
                         algorithm = algorithm,
                         max_distance = max_distance)
@@ -72,9 +88,9 @@ def neighborhood_density(corpus_context, query,
         The algorithm used to determine distance
     max_distance : float, optional
         Maximum edit distance from the queried word to consider a word a neighbor.
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the function
 
     Returns

@@ -57,9 +57,6 @@ from corpustools.corpus.classes import Word
     #m = al.make_similarity_matrix(getattr(word1, sequence_type), getattr(word2, sequence_type))
     #return m[-1][-1]['f']
 
-def edit_distance_wordtokens(word1, word2, sequence_type, max_distance = None):
-    pass
-
 def edit_distance(word1, word2, sequence_type, max_distance = None):
     """Returns the Levenshtein edit distance between a string from
     two words word1 and word2, code drawn from

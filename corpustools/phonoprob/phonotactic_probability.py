@@ -10,6 +10,23 @@ def phonotactic_probability_all_words(corpus_context, algorithm,
                                     probability_type = 'unigram',
                                     num_cores = -1,
                                     stop_check = None, call_back = None):
+    """Calculate the phonotactic_probability of all words in the corpus and
+    adds them as attributes of the words.
+
+    Parameters
+    ----------
+    corpus_context : CorpusContext
+        Context manager for a corpus
+    algorithm : str
+        Algorithm to use for calculating phonotactic probability (currently
+        only 'vitevitch')
+    probability_type : str
+        Either 'unigram' or 'bigram' probability
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
+    """
     ensure_context(corpus_context)
     if call_back is not None:
         call_back('Calculating phonotactic probabilities...')
@@ -35,6 +52,29 @@ def phonotactic_probability_all_words(corpus_context, algorithm,
 def phonotactic_probability(corpus_context, query, algorithm,
                                     probability_type = 'unigram',
                                     stop_check = None, call_back = None):
+    """Calculate the phonotactic_probability of a particular word.
+
+    Parameters
+    ----------
+    corpus_context : CorpusContext
+        Context manager for a corpus
+    query : Word
+        The word whose neighborhood density to calculate.
+    algorithm : str
+        Algorithm to use for calculating phonotactic probability (currently
+        only 'vitevitch')
+    probability_type : str
+        Either 'unigram' or 'bigram' probability
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
+
+    Returns
+    -------
+    float
+        Phonotactic probability of the word
+    """
     if algorithm == 'vitevitch':
         return phonotactic_probability_vitevitch(corpus_context, query,
                                     probability_type,
@@ -43,6 +83,27 @@ def phonotactic_probability(corpus_context, query, algorithm,
 def phonotactic_probability_vitevitch(corpus_context, query,
                                     probability_type = 'unigram',
                                     stop_check = None, call_back = None):
+    """Calculate the phonotactic_probability of a particular word using
+    the Vitevitch & Luce algorithm
+
+    Parameters
+    ----------
+    corpus_context : CorpusContext
+        Context manager for a corpus
+    query : Word
+        The word whose neighborhood density to calculate.
+    probability_type : str
+        Either 'unigram' or 'bigram' probability
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
+
+    Returns
+    -------
+    float
+        Phonotactic probability of the word
+    """
     ensure_context(corpus_context)
 
     if probability_type == 'unigram':

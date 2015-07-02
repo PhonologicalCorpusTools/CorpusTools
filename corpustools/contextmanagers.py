@@ -13,6 +13,23 @@ def ensure_context(context):
         raise(PCTContextError('Context manager required for here, please see API documentation for more details.'))
 
 class BaseCorpusContext(object):
+    """
+    Abstract Corpus context class that all other contexts inherit from.
+
+    Parameters
+    ----------
+    corpus : Corpus
+        Corpus to form context from
+    sequence_type : str
+        Sequence type to evaluate algorithms on (i.e., 'transcription')
+    type_or_token : str
+        The type of frequency to use for calculations
+    attribute : Attribute, optional
+        Attribute to save results to for calculations involving all words
+        in the Corpus
+    frequency_threshold: float, optional
+        If specified, ignore words below this token frequency
+    """
     def __init__(self, corpus, sequence_type, type_or_token,
                 attribute = None, frequency_threshold = 0):
         self.sequence_type = sequence_type
@@ -22,6 +39,7 @@ class BaseCorpusContext(object):
         self._freq_base = {}
         self.length = None
         self.frequency_threshold = frequency_threshold
+
     @property
     def inventory(self):
         return self.corpus.inventory
@@ -45,7 +63,7 @@ class BaseCorpusContext(object):
             self.length = counter
             return self.length
 
-    def get_frequency_base(self, gramsize = 1, halve_edges=False, probability = False):
+    def get_frequency_base(self, gramsize = 1, halve_edges = False, probability = False):
         """
         Generate (and cache) frequencies for each segment in the Corpus.
 
@@ -161,6 +179,11 @@ class BaseCorpusContext(object):
 
 
 class CanonicalVariantContext(BaseCorpusContext):
+    """
+    Corpus context that uses canonical forms for transcriptions and tiers
+
+    See the documentation of `BaseCorpusContext` for additional information
+    """
     def __exit__(self, exc_type, exc, exc_tb):
         BaseCorpusContext.__exit__(self, exc_type, exc, exc_tb)
 
@@ -179,7 +202,12 @@ class CanonicalVariantContext(BaseCorpusContext):
             yield w
 
 class MostFrequentVariantContext(BaseCorpusContext):
+    """
+    Corpus context that uses the most frequent pronunciation variants
+    for transcriptions and tiers
 
+    See the documentation of `BaseCorpusContext` for additional information
+    """
     def __enter__(self):
         self = BaseCorpusContext.__enter__(self)
         if not self.corpus.has_wordtokens:
@@ -232,7 +260,12 @@ class MostFrequentVariantContext(BaseCorpusContext):
             yield w
 
 class SeparatedTokensVariantContext(BaseCorpusContext):
+    """
+    Corpus context that treats pronunciation variants as separate types
+    for transcriptions and tiers
 
+    See the documentation of `BaseCorpusContext` for additional information
+    """
     def __enter__(self):
         self = BaseCorpusContext.__enter__(self)
         if not self.corpus.has_wordtokens:
@@ -273,7 +306,13 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
 
 
 class WeightedVariantContext(BaseCorpusContext):
+    """
+    Corpus context that weights frequency of pronunciation variants by the
+    number of variants or the token frequency
+    for transcriptions and tiers
 
+    See the documentation of `BaseCorpusContext` for additional information
+    """
     def __enter__(self):
         self = BaseCorpusContext.__enter__(self)
         if not self.corpus.has_wordtokens:

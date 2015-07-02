@@ -55,6 +55,10 @@ def minpair_fl(corpus_context, segment_pairs,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
 
     Returns
     -------
@@ -139,9 +143,9 @@ def deltah_fl(corpus_context, segment_pairs,
         Context manager for a corpus
     segment_pairs : list of length-2 tuples of str
         The pairs of segments to be conflated.
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the function
 
     Returns
@@ -221,9 +225,9 @@ def relative_minpair_fl(corpus_context, segment,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the function
 
     Returns
@@ -265,9 +269,9 @@ def relative_deltah_fl(corpus_context, segment,
         Context manager for a corpus
     segment : str
         The target segment.
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the function
 
     Returns
@@ -327,6 +331,7 @@ def entropy(probabilities):
     Returns
     -------
     float
+        Entropy
     """
     return -(sum([p*log(p,2) if p > 0 else 0 for p in probabilities]))
 

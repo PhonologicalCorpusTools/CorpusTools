@@ -1,15 +1,15 @@
 Phonological CorpusTools
 ========================
 
-[![Build Status](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools.svg?branch=master)](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools)
-[![Build status](https://ci.appveyor.com/api/projects/status/mru5m19d1ah0905b?svg=true)](https://ci.appveyor.com/project/mmcauliffe/corpustools)
-[![Coverage Status](https://coveralls.io/repos/PhonologicalCorpusTools/CorpusTools/badge.svg?branch=develop)](https://coveralls.io/r/PhonologicalCorpusTools/CorpusTools?branch=develop)
+[![Build Status](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools.svg?branch=master)](https://travis-ci.org/PhonologicalCorpusTools/CorpusTools?branch=master)
+[![Coverage Status](https://coveralls.io/repos/PhonologicalCorpusTools/CorpusTools/badge.svg?branch=master)](https://coveralls.io/r/PhonologicalCorpusTools/CorpusTools?branch=master)
+
 [![Documentation Status](https://readthedocs.org/projects/corpustools/badge/?version=latest)](https://readthedocs.org/projects/corpustools/?badge=latest)
 
 This document contains installation instructions for Phonological
 CorpusTools (PCT). For a description of available functionality, please
-refer to the manual available on SourceForge
-(https://sourceforge.net/projects/phonologicalcorpustools/files/?source=navbar).
+refer to the documentation available on ReadTheDocs
+(http://corpustools.readthedocs.org/en/master/).
 
 
 ## Standard installation (executable)
@@ -21,17 +21,17 @@ windows. You can check this by in Control Panel -> System and
 Security -> System.)
 
 Download the latest version's installer from the Phonological CorpusTools
-page on SourceForge (http://sourceforge.net/projects/phonologicalcorpustools).
+release page (https://github.com/PhonologicalCorpusTools/CorpusTools/releases).
 Double-click this file to install PCT to your computer. It can then be
 run the same as any other program, via Start -> Programs.
 
 ### Mac OS X
 
-Download the file 'pct.zip' from the Phonological CorpusTools page on
-SourceForge (http://sourceforge.net/projects/phonologicalcorpustools).
-Unzip this file to access 'pct.app' (most likely by double-clicking it).
-You can then double-click this file to run Phonological CorpusTools.
-You can move the icon to your toolbar like any other application.
+Download the file 'Phonological.CorpusTools-1.1.0.dmg' from the
+Phonological CorpusTools releases page
+(https://github.com/PhonologicalCorpusTools/CorpusTools/releases).
+Install Phonological CorpusTools by dragging the app into the Applications
+directory.
 
 ### Linux
 
@@ -58,7 +58,7 @@ installing from the precompiled binaries here:
 http://www.lfd.uci.edu/~gohlke/pythonlibs/ .)
 
 Download the latest version of the source code for Phonological CorpusTools
-from the SourceForge page (http://sourceforge.net/projects/phonologicalcorpustools).
+from the releases page (https://github.com/PhonologicalCorpusTools/CorpusTools/releases).
 After expanding the file, you will find a file called 'setup.py' in the top
 level directory. Run it in *one* of the following ways:
 
