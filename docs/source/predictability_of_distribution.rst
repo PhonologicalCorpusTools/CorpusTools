@@ -362,8 +362,8 @@ the “Summary” information feature (:ref:`corpus_summary`).
 
 .. _pred_dist_gui:
 
-Implementing the predictability of distribution function in the GUI
--------------------------------------------------------------------
+Calculating predictability of distribution in the GUI
+-----------------------------------------------------
 
 Assuming a corpus has been opened or created, predictability of
 distribution is calculated using the following steps.
@@ -383,7 +383,7 @@ Once sounds have been selected, click “Add.” Pairs will appear in the “Pre
 3. **Environments**: Click on “New environment” to add an environment in
    which to calculate predictability of distribution. See :ref:`environment_selection` for details on how to use this interface. Note that you will not be able to edit the "target" segments in this function, because the targets are automatically populated from the list of pairs selected on the left-hand side.
 
-   a. **No environments**: Note that if NO environments are added, PCT will
+   .. note:: If NO environments are added, PCT will
       calculate the overall predictability of distribution of the two
       sounds based only on their frequency of occurrence. This will simply
       count the frequency of each sound in the pair and calculate the
@@ -414,7 +414,7 @@ Once sounds have been selected, click “Add.” Pairs will appear in the “Pre
    non-adjacent contexts. For instance, if one wanted to investigate the
    extent to which [i] and [u] are predictably distributed before front
    vs. back vowels, it will be much easier to to specify that the relevant
-   environments are __[+back] and __[-back] on the vowel tier than to try
+   environments are _[+back] and _[-back] on the vowel tier than to try
    to account for possible intervening segments on the entire transcription
    tier.
 
@@ -452,9 +452,9 @@ Once sounds have been selected, click “Add.” Pairs will appear in the “Pre
       weighted average entropy across environments will NOT be accurate
       in this scenario, because not all words have been included.
 
-   .. image:: static/proderror.png
-      :width: 90%
-      :align: center
+      .. image:: static/proderror.png
+         :width: 90%
+         :align: center
 
 
    b. If you ask PCT to check for uniqueness, and it is not met, an error
@@ -466,17 +466,17 @@ Once sounds have been selected, click “Add.” Pairs will appear in the “Pre
       PCT software. Clicking “Show details” in the error box also reveals
       this information.
 
-.. image:: static/proderror2.png
-   :width: 90%
-   :align: center
+      .. image:: static/proderror2.png
+         :width: 90%
+         :align: center
 
-Here’s an example of correctly exhaustive and unique selections for
-calculating the predictability of distribution based on token frequency
-for [s] and [ʃ] in the example corpus (note that the environments were selected using features, e.g., _#, _[-voc], _[+voc, -high], _[+voc, +high], even though they appear as sets of segments in the environments):
+   Here’s an example of correctly exhaustive and unique selections for
+   calculating the predictability of distribution based on token frequency
+   for [s] and [ʃ] in the example corpus (note that the environments were selected using features, e.g., _#, _[-voc], _[+voc, -high], _[+voc, +high], even though they appear as sets of segments in the environments):
 
-.. image:: static/proddialog.png
-   :width: 90%
-   :align: center
+   .. image:: static/proddialog.png
+      :width: 90%
+      :align: center
 
 8. **Entropy calculation / results**: Once all environments have been specified,
    click “Calculate predictability of distribution.” If you want to start
@@ -488,21 +488,21 @@ for [s] and [ʃ] in the example corpus (note that the environments were selected
    the environments being weighted by their own frequency of occurrence.
    See the following example (noting that not all columns in the result file are visible on screen):
 
-.. image:: static/prodresults.png
-   :width: 90%
-   :align: center
+   .. image:: static/prodresults.png
+      :width: 90%
+      :align: center
 
 9. **Output file / Saving results**: If you want to save the table of results,
    click on “Save to file” at the bottom of the table. This opens up a
    system dialogue box where the directory and name can be selected.
 
-To return to the function dialogue box with your most recently used
-selections, click on “Reopen function dialog.” Otherwise, the results
-table can be closed and you will be returned to your corpus view.
+   To return to the function dialogue box with your most recently used
+   selections, click on “Reopen function dialog.” Otherwise, the results
+   table can be closed and you will be returned to your corpus view.
 
 .. _prod_classes_and_functions:
 
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`prod_api`.

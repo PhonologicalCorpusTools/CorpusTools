@@ -11,6 +11,16 @@ from corpustools.exceptions import CorpusIntegrityError
 class Segment(object):
     """
     Class for segment symbols
+
+    Parameters
+    ----------
+    symbol : str
+        Segment symbol
+
+    Attributes
+    ----------
+    features : dict
+        Feature specification for the segment
     """
 
     def __init__(self, symbol):
@@ -19,9 +29,34 @@ class Segment(object):
         self.features = {}
 
     def specify(self, feature_dict):
+        """
+        Specify a segment with a new feature specification
+
+        Parameters
+        ----------
+        feature_dict : dict
+            Feature specification
+        """
         self.features = {k.lower(): v for k,v in feature_dict.items()}
 
     def minimal_difference(self, other, features):
+        """
+        Check if this segment is a minimal feature difference with another
+        segment (ignoring some features)
+
+        Parameters
+        ----------
+        other : Segment
+            Segment to compare with
+        features : list
+            Features that are allowed to vary between the two segments
+
+        Returns
+        -------
+        bool
+            True if all features other than the specified ones match,
+            False otherwise
+        """
         for k, v in self.features.items():
             if k in features:
                 continue
@@ -32,8 +67,18 @@ class Segment(object):
     def feature_match(self, specification):
         """
         Return true if segment matches specification, false otherwise.
-        Specification can be a single feature value '+feature' or a list of
-        feature values ['+feature1','-feature2']
+
+        Parameters
+        ----------
+        specification : object
+            Specification can be a single feature value '+feature', a list of
+            feature values ['+feature1','-feature2'], or a dictionary of
+            features and values {'feature1': '+', 'feature2': '-'}
+
+        Returns
+        -------
+        bool
+            True if this segment contains the feature values in the specification
         """
         if isinstance(specification,str):
             try:
@@ -108,6 +153,23 @@ class Segment(object):
 class Transcription(object):
     """
     Transcription object, sequence of symbols
+
+    Parameters
+    ----------
+    seg_list : list
+        List of segments that form the transcription.
+        Elements in the list, can be Segments, strings, or BaseAnnotations
+
+    Attributes
+    ----------
+    _list : list
+        List of strings representing segment symbols
+    stress_pattern: dict
+        Dictionary with keys of segment indices and values of the stress
+        for that segment
+    boundaries : dict
+        Possible keys of 'morpheme' or 'tone' that keeps track of where
+        morpheme or tone boundaries are inserted
     """
     def __init__(self,seg_list):
         self._list = []
@@ -157,32 +219,30 @@ class Transcription(object):
                         raise(NotImplementedError('That format for seg_list is not supported.'))
 
     def with_word_boundaries(self):
+        """
+        Return the string of segments with word boundaries surrounding them
+
+        Returns
+        -------
+        list
+            Transcription with word boundaries
+        """
         return ['#'] + self._list + ['#']
 
-    def find_nonmatch(self, environment):
-        if not isinstance(environment, EnvironmentFilter):
-            return None
-        if all(m not in self for m in environment.middle):
-            return None
-        num_segs = len(environment)
-
-        possibles = zip(*[self.with_word_boundaries()[i:]
-                                for i in range(num_segs)])
-        envs = []
-        lhs_num = environment.lhs_count()
-        middle_num = lhs_num
-        rhs_num = middle_num + 1
-        for i, p in enumerate(possibles):
-            if p not in environment and p[middle_num] in environment.middle:
-                lhs = p[:lhs_num]
-                middle = p[middle_num]
-                rhs = p[rhs_num:]
-                envs.append(Environment(middle, i + middle_num, lhs, rhs))
-        if not envs:
-            return None
-        return envs
-
     def find(self, environment):
+        """
+        Find instances of an EnvironmentFilter in the Transcription
+
+        Parameters
+        ----------
+        environment : EnvironmentFilter
+            EnvironmentFilter to search for
+
+        Returns
+        -------
+        list
+            List of Environments that fit the EnvironmentFilter
+        """
         if not isinstance(environment, EnvironmentFilter):
             return None
         if all(m not in self for m in environment._middle):
@@ -197,6 +257,44 @@ class Transcription(object):
         envs = []
         for i, p in enumerate(possibles):
             if p in environment:
+                lhs = p[:lhs_num]
+                middle = p[middle_num]
+                rhs = p[rhs_num:]
+                envs.append(Environment(middle, i + middle_num, lhs, rhs))
+        if not envs:
+            return None
+        return envs
+
+    def find_nonmatch(self, environment):
+        """
+        Find all instances of an EnvironmentFilter in the Transcription
+        that match in the middle segments, but don't match on the sides
+
+        Parameters
+        ----------
+        environment : EnvironmentFilter
+            EnvironmentFilter to search for
+
+        Returns
+        -------
+        list
+            List of Environments that fit the EnvironmentFilter's middle
+            but not the sides
+        """
+        if not isinstance(environment, EnvironmentFilter):
+            return None
+        if all(m not in self for m in environment.middle):
+            return None
+        num_segs = len(environment)
+
+        possibles = zip(*[self.with_word_boundaries()[i:]
+                                for i in range(num_segs)])
+        envs = []
+        lhs_num = environment.lhs_count()
+        middle_num = lhs_num
+        rhs_num = middle_num + 1
+        for i, p in enumerate(possibles):
+            if p not in environment and p[middle_num] in environment.middle:
                 lhs = p[:lhs_num]
                 middle = p[middle_num]
                 rhs = p[rhs_num:]
@@ -308,6 +406,17 @@ class Transcription(object):
     def match_segments(self, segments):
         """
         Returns a matching segments from a list of segments
+
+        Parameters
+        ----------
+        segments : list
+            List of Segments or strings to filter the Transcription
+
+        Returns
+        -------
+        list
+            List of segments (in their original order) that match the
+            segment parameter
         """
         match = []
         for s in self:
@@ -325,16 +434,44 @@ class FeatureMatrix(object):
     """
     An object that stores feature values for segments
 
+    Parameters
+    ----------
+    name : str
+        Name to give the FeatureMatrix
+    feature_entries : list
+        List of dict with one dictionary per segment, requires the key
+        of symbol which identifies the segment
 
     Attributes
     ----------
     name : str
         An informative identifier for the feature matrix
+    features : list
+        Sorted list of feature names
+    possible_values : set
+        Set of values used in the FeatureMatrix
+    default_value : str
+        Default feature value, usually corresponding to unspecified features
+    stresses : dict
+        Mapping of stress values to segments that bear that stress
+    places : dict
+        Mapping from place of articulation labels to a feature specification
+    manners : dict
+        Mapping from manner of articulation labels to a feature specification
+    height : dict
+        Mapping from vowel height labels to a feature specification
+    backness : dict
+        Mapping from vowel backness labels to a feature specification
+    vowel_feature : str
+        Feature value (i.e., '+voc') that separates vowels from consonants
+    voice_feature : str
+        Feature value (i.e., '+voice') that codes voiced obstruents
+    diph_feature : str
+        Feature value (i.e., '+diphthong' or '.high') that separates
+        diphthongs from monophthongs
+    rounded_feature : str
+        Feature value (i.e., '+round') that codes rounded vowels
 
-    feature : list of Dictionary
-        Dictionaries in the list should contain feature names as keys
-        and feature values as values, as well as a special key-value pair
-        for the symbol
 
     """
 
@@ -496,7 +633,7 @@ class FeatureMatrix(object):
 
         Parameters
         ----------
-        feature_description : string or list
+        feature_description : str, list, or dict
             Feature values that specify the segments, see above for format
 
         Returns
@@ -573,10 +710,8 @@ class FeatureMatrix(object):
         ----------
         seg : str
             Segment symbol to add to the feature system
-
         feat_spec : dictionary
             Dictionary with features as keys and feature values as values
-
         """
 
         #Validation
@@ -595,7 +730,9 @@ class FeatureMatrix(object):
         ----------
         feature : str
             Name of the feature to add to the feature system
-
+        default : str, optional
+            If specified, set the value for all segments to this value,
+            otherwise use the FeatureMatrix's ``default_value``
         """
 
         self._features.update({feature})
@@ -609,6 +746,14 @@ class FeatureMatrix(object):
 
 
     def valid_feature_strings(self):
+        """
+        Get all combinations of ``possible_values`` and ``features``
+
+        Returns
+        -------
+        list
+            List of valid feature strings
+        """
         strings = []
         for v in self.possible_values:
             for f in self.features:
@@ -616,6 +761,35 @@ class FeatureMatrix(object):
         return strings
 
     def categorize(self, seg):
+        """
+        Categorize a segment into consonant/vowel, place of articulation,
+        manner of articulation, voicing, vowel height, vowel backness, and vowel
+        rounding.
+
+        For consonants, the category is of the format:
+
+        ('Consonant', PLACE, MANNER, VOICING)
+
+        For vowels, the category is of the format:
+
+        ('Vowel', HEIGHT, BACKNESS, ROUNDED)
+
+        Diphthongs are categorized differently:
+
+        ('Diphthong', 'Vowel')
+
+        Parameters
+        ----------
+        seg : Segment
+            Segment to categorize
+
+        Returns
+        -------
+        tuple or None
+            Returns categories according to the formats above, if any are
+            unable to be calculated, returns None in those places.
+            Returns None if a category cannot be found.
+        """
         if seg == '#':
             return None
         seg_features = seg.features
@@ -665,6 +839,7 @@ class FeatureMatrix(object):
             else:
                 category.append('Voiceless')
         return category
+
     @property
     def segments(self):
         """
@@ -720,21 +895,18 @@ class FeatureMatrix(object):
 class Word(object):
     """An object representing a word in a corpus
 
-    A Corpus object creates Words from information in a user-supplied text file.
-    The names of the attributes of a Word are therefore unpredictable.
+    Information about the attributes are contained in the Corpus' ``attributes``.
 
     Attributes
     ----------
     spelling : str
         A representation of a word that lacks phonological information.
 
-    transcription : list of Segments
+    transcription : Transcription
         A representation of a word that includes phonological information.
 
     frequency : float
         Token frequency in a corpus
-
-
     """
 
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
@@ -747,7 +919,7 @@ class Word(object):
         self.transcription = None
         self.spelling = None
         self.frequency = 0
-        self.wordtokens = list()
+        self.wordtokens = []
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
             if isinstance(value, tuple):
@@ -781,9 +953,6 @@ class Word(object):
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
-    def reverse(self):
-        pass
-
     def __hash__(self):
         return hash((self.spelling,str(self.transcription)))
 
@@ -815,6 +984,17 @@ class Word(object):
         self.__dict__.update(state)
 
     def add_abstract_tier(self, tier_name, tier_segments):
+        """
+        Add an abstract tier to the Word
+
+        Parameters
+        ----------
+        tier_name : str
+            Attribute name
+        tier_segments: dict
+            Dictionary with keys of the abstract segments (i.e., 'C' or 'V')
+            and values that are sets of segments
+        """
         tier = []
         for s in self.transcription:
             for k,v in tier_segments.items():
@@ -823,21 +1003,29 @@ class Word(object):
                     break
         setattr(self,tier_name,''.join(tier))
 
-    def add_attribute(self, tier_name, default_value):
-        setattr(self,tier_name, default_value)
-
-    def add_tier(self, tier_name, tier_segments):
-        """Adds a new tier attribute to a Word instance
+    def add_attribute(self, tier_name, value):
+        """
+        Add an arbitrary attribute to the Word
 
         Parameters
         ----------
         tier_name : str
-            User-supplied name for the new tier
+            Attribute name
+        value: object
+            Attribute value
+        """
+        setattr(self, tier_name, value)
 
-        tier_features: list of str
-            User-supplied list of phonological features values that define
-            which segments are included in the tier
+    def add_tier(self, tier_name, tier_segments):
+        """Adds a new tier attribute to the Word
 
+        Parameters
+        ----------
+        tier_name : str
+            Name for the new tier
+
+        tier_segments: list of segments
+            Segments that count for inclusion in the tier
         """
         matching_segs = self.transcription.match_segments(tier_segments)
         new_tier = Transcription(matching_segs)
@@ -857,7 +1045,7 @@ class Word(object):
             Name of tier attribute to be deleted.
 
         Notes
-        ----------
+        -----
         If attribute_name is not a valid attribute, this function does nothing. It
         does not raise an error.
 
@@ -870,35 +1058,26 @@ class Word(object):
             pass #attribute_name does not exist
 
     def variants(self, sequence_type = 'transcription'):
-        return collections.Counter(getattr(x,sequence_type) for x in self.wordtokens)
-
-    def enumerate_symbols(self,tier_name):
-        for pos,seg in enumerate(getattr(self, tier_name)):
-            yield pos,seg
-
-    def get_env(self,pos,tier_name):
-        """Get details of a particular environment in a Word
+        """
+        Get variants and frequencies for a Word
 
         Parameters
         ----------
-        pos : int
-            A position in the word, so 0<=pos<=len(self)
+        sequence_type : str, optional
+            Tier name to get variants
 
         Returns
-        ----------
-        e : Environment
-            Environment of the segment at the given position in the word
-
+        -------
+        dict
+            Dictionary with keys of Transcriptions and values of their frequencies
         """
-        tier = getattr(self,tier_name)
-        return tier.get_env(pos)
+        return collections.Counter(getattr(x,sequence_type) for x in self.wordtokens)
 
     def __repr__(self):
         return '<Word: \'%s\'>' % self.spelling
 
     def __str__(self):
         return self.spelling
-
 
     def __eq__(self, other):
         if not isinstance(other,Word):
@@ -925,7 +1104,21 @@ class Word(object):
         return self.spelling >= other.spelling
 
 class Environment(object):
+    """
+    Specific sequence of segments that was a match for an EnvironmentFilter
 
+    Parameters
+    ----------
+    middle : str
+        Middle segment
+    position : int
+        Position of the middle segment in the word (to differentiate between
+        repetitions of an environment in the same word
+    lhs : list, optional
+        Segments to the left of the middle segment
+    rhs : list, optional
+        Segments to the right of the middle segment
+    """
     def __init__(self, middle, position, lhs = None, rhs = None):
         self.middle = middle
         self.position = position
@@ -996,6 +1189,16 @@ class Environment(object):
 
 class EnvironmentFilter(object):
     """
+    Filter to use for searching words to generate Environments that match
+
+    Parameters
+    ----------
+    middle_segments : set
+        Set of segments to center environments
+    lhs : list, optional
+        List of set of segments on the left of the middle
+    rhs : list, optional
+        List of set of segments on the right of the middle
 
     """
     def __init__(self, middle_segments, lhs = None, rhs = None):
@@ -1009,7 +1212,7 @@ class EnvironmentFilter(object):
 
         self.lhs_string = None
         self.rhs_string = None
-        self.sanitize()
+        self._sanitize()
 
     @property
     def middle(self):
@@ -1018,9 +1221,9 @@ class EnvironmentFilter(object):
     @middle.setter
     def middle(self, middle_segments):
         self.original_middle = middle_segments
-        self.sanitize()
+        self._sanitize()
 
-    def sanitize(self):
+    def _sanitize(self):
         if self.lhs is not None:
             new_lhs = []
             for seg_set in self.lhs:
@@ -1047,6 +1250,22 @@ class EnvironmentFilter(object):
                 self._middle.update(m)
 
     def is_applicable(self, sequence):
+        """
+        Check whether the Environment filter is applicable to the sequence
+        (i.e., the sequence must be greater or equal in length to the
+        EnvironmentFilter)
+
+        Parameters
+        ----------
+        sequence : list
+            Sequence to check applicability
+
+        Returns
+        -------
+        bool
+            True if the sequence is equal length or longer than the
+            EnvironmentFilter
+        """
         if len(sequence) < len(self):
             return False
         return True
@@ -1055,11 +1274,27 @@ class EnvironmentFilter(object):
         pass
 
     def lhs_count(self):
+        """
+        Get the number of elements on the left hand side
+
+        Returns
+        -------
+        int
+            Length of the left hand side
+        """
         if self.lhs is None:
             return 0
         return len(self.lhs)
 
     def rhs_count(self):
+        """
+        Get the number of elements on the right hand side
+
+        Returns
+        -------
+        int
+            Length of the right hand side
+        """
         if self.rhs is None:
             return 0
         return len(self.rhs)
@@ -1216,6 +1451,23 @@ class Attribute(object):
 
     @staticmethod
     def guess_type(values, trans_delimiters = None):
+        """
+        Guess the attribute type for a sequence of values
+
+        Parameters
+        ----------
+        values : list
+            List of strings to evaluate for the attribute type
+        trans_delimiters : list, optional
+            List of delimiters to look for in transcriptions, defaults
+            to ``.``, ``;``, and ``,``
+
+        Returns
+        -------
+        str
+            Attribute type that had the most success in parsing the
+            values specified
+        """
         if trans_delimiters is None:
             trans_delimiters = ['.',' ', ';', ',']
         probable_values = {x: 0 for x in Attribute.ATT_TYPES}
@@ -1248,7 +1500,7 @@ class Attribute(object):
 
         Returns
         -------
-        string
+        str
             Sanitized name
         """
         return re.sub('\W','',name.lower())
@@ -1422,6 +1674,14 @@ class Inventory(object):
         return False
 
     def valid_feature_strings(self):
+        """
+        Get all combinations of ``possible_values`` and ``features``
+
+        Returns
+        -------
+        list
+            List of valid feature strings
+        """
         strings = []
         for v in self.possible_values:
             for f in self.features:
@@ -1429,6 +1689,23 @@ class Inventory(object):
         return strings
 
     def find_min_feature_pairs(self, features, others = None):
+        """
+        Find sets of segments that differ only in certain features,
+        optionally limited by a feature specification
+
+        Parameters
+        ----------
+        features : list
+            List of features (i.e. 'back' or 'round')
+        others : list, optional
+            Feature specification to limit sets
+
+        Returns
+        -------
+        dict
+            Dictionary with keys that correspond to the values of ``features``
+            and values that are the set of segments with those feature values
+        """
         plus_segs = []
         minus_segs = []
         output = collections.defaultdict(list)
@@ -1452,6 +1729,23 @@ class Inventory(object):
         return output
 
     def get_redundant_features(self, features, others = None):
+        """
+        Autodetects redundent features, with the ability to subset
+        the segments
+
+        Parameters
+        ----------
+        features : list
+            List of features to find other features that consistently
+            covary with them
+        others : list, optional
+            Feature specification that specifies a subset to look at
+
+        Returns
+        -------
+        list
+            List of redundant features
+        """
         redundant_features = []
         if isinstance(features, str):
             features = [features]
@@ -1509,6 +1803,14 @@ class Inventory(object):
         return segments
 
     def specify(self, specifier):
+        """
+        Specify segments in the inventory using a FeatureMatrix
+
+        Parameters
+        ----------
+        specifier : FeatureMatrix
+            Specifier to use for updating feature specifications
+        """
         if specifier is None:
             for k in self._data.keys():
                 self._data[k].specify({})
@@ -1568,6 +1870,35 @@ class Inventory(object):
                     self.backness[k] = set(self.features_to_segments(v))
 
     def categorize(self, seg):
+        """
+        Categorize a segment into consonant/vowel, place of articulation,
+        manner of articulation, voicing, vowel height, vowel backness, and vowel
+        rounding.
+
+        For consonants, the category is of the format:
+
+        ('Consonant', PLACE, MANNER, VOICING)
+
+        For vowels, the category is of the format:
+
+        ('Vowel', HEIGHT, BACKNESS, ROUNDED)
+
+        Diphthongs are categorized differently:
+
+        ('Diphthong', 'Vowel')
+
+        Parameters
+        ----------
+        seg : Segment
+            Segment to categorize
+
+        Returns
+        -------
+        tuple or None
+            Returns categories according to the formats above, if any are
+            unable to be calculated, returns None in those places.
+            Returns None if a category cannot be found.
+        """
         if seg == '#':
             return None
         seg_features = seg.features
@@ -1766,14 +2097,6 @@ class Corpus(object):
     @property
     def words(self):
         return sorted(list(self.wordlist.keys()))
-
-    def symbol_to_segment(self, symbol):
-        for seg in self.inventory:
-            if seg.symbol == symbol:
-                return seg
-        else:
-            raise CorpusIntegrityError('Could not find {} in the inventory'.format(symbol))
-
 
     def features_to_segments(self, feature_description):
         """
@@ -2266,19 +2589,18 @@ class Corpus(object):
         ----------
         word : str
             String representing the spelling of the word (not transcription)
-
         keyerror : bool
             Set whether a KeyError should be raised if a word is not found
 
         Returns
         -------
-        result : Word or EmptyWord
-
+        Word
+            Word that matches the spelling specified
 
         Raises
         ------
-        KeyError if keyerror == True and word is not found
-
+        KeyError
+            If keyerror == True and word is not found
         """
         patterns = [word]
         if ignore_case:

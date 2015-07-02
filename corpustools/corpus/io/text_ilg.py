@@ -51,6 +51,22 @@ def most_frequent_value(dictionary):
     return max(c.keys(), key = lambda x: c[x])
 
 def inspect_discourse_ilg(path, number = None):
+    """
+    Generate a list of AnnotationTypes for a specified text file for parsing
+    it as an interlinear gloss text file
+
+    Parameters
+    ----------
+    path : str
+        Full path to text file
+    number : int, optional
+        Number of lines per gloss, if not supplied, it is auto-detected
+
+    Returns
+    -------
+    list of AnnotationTypes
+        Autodetected AnnotationTypes for the text file
+    """
     trans_delimiters = ['.', ';', ',']
     lines = {}
     if os.path.isdir(path):
@@ -185,6 +201,32 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
                     lexicon = None,
                     feature_system_path = None,
                     stop_check = None, call_back = None):
+    """
+    Load a discourse from a text file containing interlinear glosses
+
+    Parameters
+    ----------
+    corpus_name : str
+        Informative identifier to refer to corpus
+    path : str
+        Full path to text file
+    annotation_types : list of AnnotationType
+        List of AnnotationType specifying how to parse the glosses.
+        Can be generated through ``inspect_discourse_ilg``.
+    lexicon : Corpus, optional
+        Corpus to store Discourse word information
+    feature_system_path : str
+        Full path to pickled FeatureMatrix to use with the Corpus
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
+
+    Returns
+    -------
+    Discourse
+        Discourse object generated from the text file
+    """
     data = ilg_to_data(path, annotation_types,
                     stop_check, call_back)
     discourse = data_to_discourse(data, lexicon)
@@ -198,6 +240,30 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
 def load_directory_ilg(corpus_name, path, annotation_types,
                         feature_system_path = None,
                         stop_check = None, call_back = None):
+    """
+    Loads a directory of interlinear gloss text files
+
+    Parameters
+    ----------
+    corpus_name : str
+        Name of corpus
+    path : str
+        Path to directory of text files
+    annotation_types : list of AnnotationType
+        List of AnnotationType specifying how to parse the glosses.
+        Can be generated through ``inspect_discourse_ilg``.
+    feature_system_path : str, optional
+        File path of FeatureMatrix binary to specify segments
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        Corpus containing Discourses corresponding to the text files
+    """
     if call_back is not None:
         call_back('Finding  files...')
         call_back(0, 0)
@@ -232,6 +298,19 @@ def load_directory_ilg(corpus_name, path, annotation_types,
     return corpus
 
 def export_discourse_ilg(discourse, path, trans_delim = '.'):
+    """
+    Export a discourse to an interlinear gloss text file, with a maximal
+    line size of 10 words
+
+    Parameters
+    ----------
+    discourse : Discourse
+        Discourse object to export
+    path : str
+        Path to export to
+    trans_delim : str, optional
+        Delimiter for segments, defaults to ``.``
+    """
     with open(path, encoding='utf-8', mode='w') as f:
         spellings = list()
         transcriptions = list()

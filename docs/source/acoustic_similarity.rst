@@ -130,8 +130,8 @@ file in the first directory to each .wav file in the second directory.
 
 .. _acoustic_similarity_gui:
 
-Implementing the acoustic similarity function in the GUI
---------------------------------------------------------
+Calculating acoustic similarity in the GUI
+------------------------------------------
 
 To start the analysis, click on the “Calculate acoustic similarity...” in
 the Analysis menu and provide the following parameters. Note that unlike

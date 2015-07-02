@@ -71,8 +71,8 @@ because the current instantiation is thought to be particularly valid.
 
 .. _frequency_of_alternation_gui:
 
-Implementing the frequency of alternation function in the GUI
--------------------------------------------------------------
+Calculating frequency of alternation in the GUI
+-----------------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate frequency of
 alternation...” in the main menu, and then follow these steps:
@@ -183,4 +183,4 @@ table can be closed and you will be returned to your corpus view.
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`freq_alt_api`.

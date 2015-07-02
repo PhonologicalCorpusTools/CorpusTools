@@ -31,6 +31,12 @@ Functional load
 
 * Added support for finding the average functional load of single segments
 
+Phonotactic probability
+=======================
+
+* Fixed an issue where calculating biphone probabilities on single segment
+  words would cause errors; now assigns a probability of 0 to those words
+
 Kullback-Leibler divergence
 ===========================
 
@@ -40,7 +46,7 @@ Kullback-Leibler divergence
 GUI
 ===
 
-* Added a dialog to the View/change feature system dialog to edit the
+* Added a dialog to the "View/change feature system" dialog to edit the
   categorization of segments into a coherent segment chart via features
 * Features can be used as input to the analysis functions, i.e. functional load
   of voice in the corpus (segements that are +voice compared to segments that
@@ -64,3 +70,8 @@ Environments
 * Right hand and left hand can be added, with multiple sets of segments
   on each side
 
+Known issues
+------------
+
+* Help pages for the Mac binary require internet connection to view, due
+  to issues including .html files in the .app binary

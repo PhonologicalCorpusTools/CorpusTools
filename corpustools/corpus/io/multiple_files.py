@@ -15,6 +15,21 @@ def phone_match(one,two):
     return True
 
 def inspect_discourse_multiple_files(word_path, dialect):
+    """
+    Generate a list of AnnotationTypes for a specified dialect
+
+    Parameters
+    ----------
+    word_path : str
+        Full path to text file
+    dialect : str
+        Either 'buckeye' or 'timit'
+
+    Returns
+    -------
+    list of AnnotationTypes
+        Autodetected AnnotationTypes for the dialect
+    """
     if dialect == 'buckeye':
         annotation_types = [AnnotationType('spelling', 'surface_transcription', None, anchor = True),
                             AnnotationType('transcription', None, 'spelling', base = True, token = False),
@@ -126,6 +141,33 @@ def load_directory_multiple_files(corpus_name, path, dialect,
                                     annotation_types = None,
                                     feature_system_path = None,
                                     stop_check = None, call_back = None):
+    """
+    Loads a directory of corpus standard files (separated into words files
+    and phones files)
+
+    Parameters
+    ----------
+    corpus_name : str
+        Name of corpus
+    path : str
+        Path to directory of text files
+    dialect : str
+        One of 'buckeye' or 'timit'
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse the glosses.
+        Auto-generated based on dialect.
+    feature_system_path : str, optional
+        File path of FeatureMatrix binary to specify segments
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        Corpus containing Discourses corresponding to the text files
+    """
     if call_back is not None:
         call_back('Finding  files...')
         call_back(0, 0)
@@ -167,11 +209,41 @@ def load_directory_multiple_files(corpus_name, path, dialect,
         corpus.lexicon.set_feature_matrix(feature_matrix)
     return corpus
 
-def load_discourse_multiple_files(corpus_name, word_path,phone_path, dialect,
+def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
                                     annotation_types = None,
                                     lexicon = None,
                                     feature_system_path = None,
                                     stop_check = None, call_back = None):
+    """
+    Load a discourse from a text file containing interlinear glosses
+
+    Parameters
+    ----------
+    corpus_name : str
+        Informative identifier to refer to corpus
+    word_path : str
+        Full path to words text file
+    phone_path : str
+        Full path to phones text file
+    dialect : str
+        One of 'buckeye' or 'timit'
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse the glosses.
+        Auto-generated based on dialect.
+    lexicon : Corpus, optional
+        Corpus to store Discourse word information
+    feature_system_path : str
+        Full path to pickled FeatureMatrix to use with the Corpus
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
+
+    Returns
+    -------
+    Discourse
+        Discourse object generated from the text file
+    """
     data = multiple_files_to_data(word_path,phone_path, dialect,
                                     annotation_types,
                                     call_back, stop_check)

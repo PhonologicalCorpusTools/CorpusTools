@@ -231,8 +231,8 @@ Average Functional Load
 
 .. _functional_load_gui:
 
-Implementing the functional load function in the GUI
-----------------------------------------------------
+Calculating functional load in the GUI
+--------------------------------------
 
 As with most analysis functions, a corpus must first be loaded (see
 :ref:`loading_corpora`).
@@ -249,11 +249,11 @@ Once a corpus is loaded, use the following steps.
    segments, choose "Add pair of segments"; to calculate the pairwise
    functional load based on features, choose "Add pair of features."
 
-For details on how to actually select segments or features, see
-:ref:`sound_selection` or :ref:`feature_selection` as relevant.
+   For details on how to actually select segments or features, see
+   :ref:`sound_selection` or :ref:`feature_selection` as relevant.
 
-When multiple individual segments or individual pairs are selected, each
-entry will be treated separately.
+   When multiple individual segments or individual pairs are selected, each
+   entry will be treated separately.
 
 3. **Functional load algorithm**: Select which of the two methods of calculation
    you want to use—i.e., minimal pairs or change in entropy.
@@ -311,10 +311,10 @@ entry will be treated separately.
    the phonological knowledge of speakers. To include all words in the
    corpus, regardless of their token frequency, set the the minimum frequency to 0.
 
-Here is an example of selecting [m] and [n], with functional load to be
-calculated on the basis of minimal pairs, only including words with a
-token frequency of at least 1, from the built-in example corpus (which
-only has canonical forms):
+   Here is an example of selecting [m] and [n], with functional load to be
+   calculated on the basis of minimal pairs, only including words with a
+   token frequency of at least 1, from the built-in example corpus (which
+   only has canonical forms):
 
 .. image:: static/funtionalloaddialog.png
    :width: 90%
@@ -324,10 +324,12 @@ only has canonical forms):
     “Calculate functional load” buttons. If this is the first calculation,
     the option to “start new results table” should be selected. For subsequent
     calculations, the calculation can be added to the already started table,
-    for direct comparison, or a new table can be started. [Note that if a
-    table is closed, new calculations will not be added to the previously
-    open table; a new table must be started.] Either way, the results table
-    will have the following columns, with one row per calculation: segment 1,
+    for direct comparison, or a new table can be started.
+
+    .. note:: that if a table is closed, new calculations will not be added to the previously
+       open table; a new table must be started.
+
+    Either way, the results table will have the following columns, with one row per calculation: segment 1,
     segment 2, which tier was used, which measurement method was selected,
     the resulting functional load, what the minimum frequency was, what
     strategy was used for dealing with pronunciation variants, and for
@@ -340,17 +342,17 @@ only has canonical forms):
     bottom of the table to open a system dialogue box and save the results
     at a user-designated location.
 
-.. image:: static/funtionalloadresults.png
-   :width: 90%
-   :align: center
+   .. image:: static/funtionalloadresults.png
+      :width: 90%
+      :align: center
 
-(Note that in the above screen shot, not all columns are visible;
-they are visible only by scrolling over to the right, due to constraints
-on the window size. All columns would be saved to the results file.)
+   .. note:: that in the above screen shot, not all columns are visible;
+      they are visible only by scrolling over to the right, due to constraints
+      on the window size. All columns would be saved to the results file.)
 
-To return to the function dialogue box with your most recently used
-selections, click on “Reopen function dialog.” Otherwise, the results
-table can be closed and you will be returned to your corpus view.
+   To return to the function dialogue box with your most recently used
+   selections, click on “Reopen function dialog.” Otherwise, the results
+   table can be closed and you will be returned to your corpus view.
 
 .. _functional_load_cli:
 
@@ -365,9 +367,9 @@ a command in the following format into your Terminal::
 ...where CORPUSFILE is the name of your \*.corpus file. If calculating
 FL from a file of segment pairs, it must list the pairs
 of segments whose functional load you wish to calculate with each pair
-separated by a tab (\t) and one pair on each line. Note that you must either
-specify a file or segment (using -p) or request the functional loads of all
-segment pairs in the inventory (using -l). You may also use
+separated by a tab (``\t``) and one pair on each line. Note that you must either
+specify a file or segment (using ``-p``) or request the functional loads of all
+segment pairs in the inventory (using ``-l``). You may also use
 command line options to change various parameters of your functional
 load calculations. Descriptions of these arguments can be viewed by
 running ``pct_funcload –h`` or ``pct_funcload --help``. The help text from
@@ -453,8 +455,8 @@ Optional arguments:
 EXAMPLE 1: If your corpus file is example.corpus (no prounciation variants)
 and you want to calculate the minimal pair functional load of the segments
 [m] and [n] using defaults for all optional arguments, you first need to
-create a text file that contains the text “m\tn” (where \t is a tab; no
-quotes in the file). Let us call this file pairs.txt. You would then run the
+create a text file that contains the text ``m\tn`` (where ``\t`` is a tab).
+Let us call this file pairs.txt. You would then run the
 following command in your terminal window::
 
    pct_funcload example.corpus -p pairs.txt
@@ -482,4 +484,4 @@ to run the following command::
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`func_load_api`.

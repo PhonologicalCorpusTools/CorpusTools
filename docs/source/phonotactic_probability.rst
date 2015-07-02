@@ -66,8 +66,8 @@ Luce style algorithm.
 
 .. _phonotactic_probability_gui:
 
-Implementing the phonotactic probability function in the GUI
-------------------------------------------------------------
+Calculating phonotactic probability in the GUI
+----------------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate phonotactic probability...”
 in the main menu, and then follow these steps:
@@ -184,4 +184,4 @@ table can be closed and you will be returned to your corpus view.
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`phono_prob_api`.

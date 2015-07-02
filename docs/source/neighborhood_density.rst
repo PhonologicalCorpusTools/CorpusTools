@@ -1,8 +1,8 @@
 .. _neighborhood_density:
 
-*******************************************
-String similarity and neighbourhood density
-*******************************************
+*********************
+Neighbourhood density
+*********************
 
 .. _about_neighborhood_density:
 
@@ -19,8 +19,8 @@ number of words that fit the criterion for being a neighbour.
 
 .. _method_neighborhood_density:
 
-Method of calculation: Neighbourhood density
---------------------------------------------
+Method of calculation
+---------------------
 
 A word's neighborhood density is equal to the number of other words in the
 corpus similar to that word (or, if using token frequencies, the sum of
@@ -38,8 +38,8 @@ refer to :ref:`method_string_similarity`.
 
 .. _neighborhood_density_gui:
 
-Implementing the neighbourhood density function in the GUI
-----------------------------------------------------------
+Calculating neighbourhood density in the GUI
+--------------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate neighbourhood
 density...” in the main menu, and then follow these steps:
@@ -325,4 +325,4 @@ You would need to run the following command::
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`neigh_den_api`.

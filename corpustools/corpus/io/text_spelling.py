@@ -9,6 +9,23 @@ from .helper import (DiscourseData, Annotation, BaseAnnotation,
                         data_to_discourse, AnnotationType, text_to_lines)
 
 def inspect_discourse_spelling(path, support_corpus_path = None):
+    """
+    Generate a list of AnnotationTypes for a specified text file for parsing
+    it as an orthographic text
+
+    Parameters
+    ----------
+    path : str
+        Full path to text file
+    support_corpus_path : str, optional
+        Full path to a corpus to look up transcriptions from spellings
+        in the text
+
+    Returns
+    -------
+    list of AnnotationTypes
+        Autodetected AnnotationTypes for the text file
+    """
     a = AnnotationType('spelling', None, None, anchor = True, token = False)
     if os.path.isdir(path):
         for root, subdirs, files in os.walk(path):
@@ -92,7 +109,7 @@ def load_directory_spelling(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """
-    Loads a directory of orthographic texts.
+    Loads a directory of orthographic texts
 
     Parameters
     ----------
@@ -106,9 +123,9 @@ def load_directory_spelling(corpus_name, path, annotation_types = None,
         File path of corpus binary to load transcriptions from
     ignore_case : bool, optional
         Specifies whether lookups in the support corpus should ignore case
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the function
 
     Returns
@@ -151,7 +168,7 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """
-    Load a corpus from a text file containing running text of
+    Load a discourse from a text file containing running text of
     orthography
 
     Parameters
@@ -161,26 +178,20 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
 
     path : str
         Full path to text file
-
-    delimiter : str
-        Character to use for spliting text into words
-
-    ignore_list : list of strings
-        List of characters to ignore when parsing the text
-
-    support_corpus_path : string
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse text files
+    lexicon : Corpus, optional
+        Corpus to store Discourse word information
+    support_corpus_path : str, optional
         Full path to a corpus to look up transcriptions from spellings
         in the text
-
-    ignore_case : bool
+    ignore_case : bool, optional
         Specify whether to ignore case when using spellings in the text
         to look up transcriptions
-
-    stop_check : callable
+    stop_check : callable, optional
         Callable that returns a boolean for whether to exit before
         finishing full calculation
-
-    call_back : callable
+    call_back : callable, optional
         Function that can handle strings (text updates of progress),
         tuples of two integers (0, total number of steps) and an integer
         for updating progress out of the total set by a tuple
@@ -189,7 +200,6 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
     -------
     Discourse
         Discourse object generated from the text file
-
     """
 
     data = spelling_text_to_data(path, annotation_types,
@@ -199,6 +209,19 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
     return discourse
 
 def export_discourse_spelling(discourse, path, single_line = False):
+    """
+    Export an orthography discourse to a text file
+
+    Parameters
+    ----------
+    discourse : Discourse
+        Discourse object to export
+    path : str
+        Path to export to
+    single_line : bool, optional
+        Flag to enforce all text to be on a single line, defaults to False.
+        If False, lines are 10 words long.
+    """
     with open(path, encoding='utf-8', mode='w') as f:
         count = 0
         for i, wt in enumerate(discourse):

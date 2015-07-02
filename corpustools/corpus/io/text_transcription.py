@@ -12,6 +12,20 @@ from .helper import (compile_digraphs, parse_transcription, DiscourseData,
 from .binary import load_binary
 
 def inspect_discourse_transcription(path):
+    """
+    Generate a list of AnnotationTypes for a specified text file for parsing
+    it as a transcribed text
+
+    Parameters
+    ----------
+    path : str
+        Full path to text file
+
+    Returns
+    -------
+    list of AnnotationTypes
+        Autodetected AnnotationTypes for the text file
+    """
     trans_delimiters = ['.', ';', ',']
 
     att = Attribute('transcription','tier','Transcription')
@@ -125,9 +139,9 @@ def load_directory_transcription(corpus_name, path, annotation_types = None,
         List of AnnotationType specifying how to parse text files
     feature_system_path : str, optional
         File path of FeatureMatrix binary to specify segments
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the loading
 
     Returns
@@ -170,7 +184,7 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
                     lexicon = None, feature_system_path = None,
                     stop_check = None, call_back = None):
     """
-    Load a corpus from a text file containing running transcribed text
+    Load a discourse from a text file containing running transcribed text
 
     Parameters
     ----------
@@ -182,11 +196,11 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
         List of AnnotationType specifying how to parse text files
     lexicon : Corpus, optional
         Corpus to store Discourse word information
-    feature_system_path : str
+    feature_system_path : str, optional
         Full path to pickled FeatureMatrix to use with the Corpus
-    stop_check : callable or None
+    stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
-    call_back : callable or None
+    call_back : callable, optional
         Optional function to supply progress information during the loading
 
     Returns
@@ -194,7 +208,6 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
     Discourse
         Discourse object generated from the text file
     """
-
     if feature_system_path is not None:
         if not os.path.exists(feature_system_path):
             raise(PCTOSError("The feature path specified ({}) does not exist".format(feature_system_path)))
@@ -211,6 +224,21 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
     return discourse
 
 def export_discourse_transcription(discourse, path, trans_delim = '.', single_line = False):
+    """
+    Export an transcribed discourse to a text file
+
+    Parameters
+    ----------
+    discourse : Discourse
+        Discourse object to export
+    path : str
+        Path to export to
+    trans_delim : str, optional
+        Delimiter for segments, defaults to ``.``
+    single_line : bool, optional
+        Flag to enforce all text to be on a single line, defaults to False.
+        If False, lines are 10 words long.
+    """
     with open(path, encoding='utf-8', mode='w') as f:
         count = 0
         for i, wt in enumerate(discourse):

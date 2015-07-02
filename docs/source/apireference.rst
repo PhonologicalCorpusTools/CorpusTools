@@ -4,7 +4,7 @@
 API Reference
 =============
 
-.. _lexicon_classes_ref:
+.. _lexicon_classes_api:
 
 Lexicon classes
 ---------------
@@ -40,7 +40,7 @@ Speech corpus classes
    spontaneous.WordToken
 
 
-.. _corpus_io_ref:
+.. _corpus_io_api:
 
 Corpus IO functions
 ===================
@@ -83,8 +83,8 @@ Export to CSV
    csv.export_corpus_csv
    csv.export_feature_matrix_csv
 
-Loading TextGrids
------------------
+TextGrids
+---------
 
 .. currentmodule:: corpustools.corpus.io
 
@@ -92,6 +92,7 @@ Loading TextGrids
    :toctree: generate/
    :template: function.rst
 
+   textgrid.inspect_discourse_textgrid
    textgrid.load_discourse_textgrid
    textgrid.load_directory_textgrid
 
@@ -104,13 +105,17 @@ Running text
    :toctree: generate/
    :template: function.rst
 
+   text_spelling.inspect_discourse_spelling
    text_spelling.load_discourse_spelling
    text_spelling.load_directory_spelling
+   text_spelling.export_discourse_spelling
+   text_transcription.inspect_discourse_transcription
    text_transcription.load_discourse_transcription
    text_transcription.load_directory_transcription
+   text_transcription.export_discourse_transcription
 
-Interlinear Text
-----------------
+Interlinear gloss text
+----------------------
 
 .. currentmodule:: corpustools.corpus.io
 
@@ -118,8 +123,10 @@ Interlinear Text
    :toctree: generate/
    :template: function.rst
 
+   text_ilg.inspect_discourse_ilg
    text_ilg.load_discourse_ilg
    text_ilg.load_directory_ilg
+   text_ilg.export_discourse_ilg
 
 Other standards
 ---------------
@@ -130,11 +137,15 @@ Other standards
    :toctree: generate/
    :template: function.rst
 
+   multiple_files.inspect_discourse_multiple_files
    multiple_files.load_discourse_multiple_files
    multiple_files.load_directory_multiple_files
 
 Analysis functions
 ==================
+
+
+.. _freq_alt_api:
 
 Frequency of alternation
 ------------------------
@@ -146,6 +157,8 @@ Frequency of alternation
    :template: function.rst
 
    freq_of_alt.calc_freq_of_alt
+
+.. _func_load_api:
 
 Functional load
 ---------------
@@ -161,6 +174,8 @@ Functional load
    functional_load.relative_minpair_fl
    functional_load.relative_deltah_fl
 
+.. _kl_api:
+
 Kullback-Leibler divergence
 ---------------------------
 
@@ -172,6 +187,9 @@ Kullback-Leibler divergence
 
    kl.KullbackLeibler
 
+
+.. _mutual_info_api:
+
 Mutual information
 ------------------
 
@@ -182,6 +200,8 @@ Mutual information
    :template: function.rst
 
    mutual_information.pointwise_mi
+
+.. _neigh_den_api:
 
 Neighborhood density
 --------------------
@@ -195,6 +215,8 @@ Neighborhood density
    neighborhood_density.neighborhood_density
    neighborhood_density.find_mutation_minpairs
 
+.. _phono_prob_api:
+
 Phonotactic probability
 -----------------------
 
@@ -205,6 +227,8 @@ Phonotactic probability
    :template: function.rst
 
    phonotactic_probability.phonotactic_probability_vitevitch
+
+.. _prod_api:
 
 Predictability of distribution
 ------------------------------
@@ -217,6 +241,8 @@ Predictability of distribution
 
    pred_of_dist.calc_prod_all_envs
    pred_of_dist.calc_prod
+
+.. _symbol_sim_api:
 
 Symbol similarity
 -----------------
@@ -252,10 +278,3 @@ Symbol similarity
    :template: function.rst
 
    phono_edit_distance.phono_edit_distance
-
-
-
-
-
-
-

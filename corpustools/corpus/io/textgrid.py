@@ -62,6 +62,19 @@ def averageLabelLen(tier):
 
 
 def inspect_discourse_textgrid(path):
+    """
+    Generate a list of AnnotationTypes for a specified TextGrid file
+
+    Parameters
+    ----------
+    path : str
+        Full path to TextGrid file
+
+    Returns
+    -------
+    list of AnnotationTypes
+        Autodetected AnnotationTypes for the TextGrid file
+    """
     trans_delimiters = ['.',' ', ';', ',']
     textgrids = []
     if os.path.isdir(path):
@@ -232,6 +245,32 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
                             lexicon = None,
                             feature_system_path = None,
                             stop_check = None, call_back = None):
+    """
+    Load a discourse from a TextGrid file
+
+    Parameters
+    ----------
+    corpus_name : str
+        Informative identifier to refer to corpus
+    path : str
+        Full path to TextGrid file
+    annotation_types : list of AnnotationType
+        List of AnnotationType specifying how to parse the TextGrids.
+        Can be generated through ``inspect_discourse_textgrid``.
+    lexicon : Corpus, optional
+        Corpus to store Discourse word information
+    feature_system_path : str
+        Full path to pickled FeatureMatrix to use with the Corpus
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
+
+    Returns
+    -------
+    Discourse
+        Discourse object generated from the TextGrid file
+    """
     data = textgrid_to_data(path, annotation_types, call_back, stop_check)
     data.name = corpus_name
     data.wav_path = find_wav_path(path)
@@ -245,6 +284,30 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
 def load_directory_textgrid(corpus_name, path, annotation_types,
                             feature_system_path = None,
                             stop_check = None, call_back = None):
+    """
+    Loads a directory of TextGrid files
+
+    Parameters
+    ----------
+    corpus_name : str
+        Name of corpus
+    path : str
+        Path to directory of TextGrid files
+    annotation_types : list of AnnotationType
+        List of AnnotationType specifying how to parse the TextGrids.
+        Can be generated through ``inspect_discourse_textgrid``.
+    feature_system_path : str, optional
+        File path of FeatureMatrix binary to specify segments
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the loading
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        Corpus containing Discourses corresponding to the TextGrid files
+    """
     if call_back is not None:
         call_back('Finding  files...')
         call_back(0, 0)

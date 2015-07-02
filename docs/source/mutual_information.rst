@@ -125,8 +125,8 @@ final pMI values being calculated.
 
 .. _mi_gui:
 
-Implementing the mutual information function in the GUI
--------------------------------------------------------
+Calculating mutual information in the GUI
+-----------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate mutual information...”
 in the main menu, and then follow these steps:
@@ -218,9 +218,9 @@ command in the following format into your Terminal::
    pct_mutualinfo CORPUSFILE [additional arguments]
 
 ...where CORPUSFILE is the name of your \*.corpus file. If not calculating
-the mutal informations of all bigrams (using -l), the query bigram must
-be specified using -q, as '-q QUERY'. The bigram QUERY must
-be in the format 's1,s2' where s1 and s2 are the first and second
+the mutal informations of all bigrams (using ``-l``), the query bigram must
+be specified using ``-q``, as ``-q QUERY``. The bigram QUERY must
+be in the format ``s1,s2`` where ``s1`` and ``s2`` are the first and second
 segments in the bigram. You may also use command line options to
 change the sequency type to use for your calculations, or to specify
 an output file name. Descriptions of these arguments can be viewed by
@@ -298,7 +298,7 @@ following command::
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`mutual_info_api`.
 
 
 .. [1] The algorithm in PCT calculates what is sometimes referred to

@@ -121,8 +121,8 @@ sounds can also be conducted using the functions in :ref:`acoustic_similarity`.
 
 .. kl_gui:
 
-Implementing the Kullback-Leibler Divergence function in the GUI
-----------------------------------------------------------------
+Calculating Kullback-Leibler Divergence in the GUI
+--------------------------------------------------
 
 To implement the KL function in the GUI, select “Analysis” / “Calculate
 Kullback-Leibler...” and then follow these steps:
@@ -175,9 +175,9 @@ Kullback-Leibler...” and then follow these steps:
    click on “Save to file” at the bottom of the table. This opens up a
    system dialogue box where the directory and name can be selected.
 
-To return to the function dialogue box with your most recently used
-selections, click on “Reopen function dialog.” Otherwise, the results
-table can be closed and you will be returned to your corpus view.
+   To return to the function dialogue box with your most recently used
+   selections, click on “Reopen function dialog.” Otherwise, the results
+   table can be closed and you will be returned to your corpus view.
 
 An example of calculating the KL scores in the Example corpus (which has canonical forms only), with the
 sounds [s], [ʃ], [t], [n], [m], [e], [u] selected (and therefore all
@@ -217,9 +217,9 @@ a command in the following format into your Terminal::
 ...where CORPUSFILE is the name of your \*.corpus file. If calculating
 FL from a file of segment pairs, it must list the pairs
 of segments whose functional load you wish to calculate with each pair
-separated by a tab (\t) and one pair on each line. Note that you must either
-specify a file or segment (using -p) or request the functional loads of all
-segment pairs in the inventory (using -l). You may also use
+separated by a tab (``\t``) and one pair on each line. Note that you must either
+specify a file or segment (using ``-p``) or request the functional loads of all
+segment pairs in the inventory (using ``-l``). You may also use
 command line options to change various parameters of your functional
 load calculations. Descriptions of these arguments can be viewed by
 running ``pct_funcload –h`` or ``pct_funcload --help``. The help text from
@@ -289,4 +289,4 @@ optional arguments, you would run the following command in your terminal window:
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`kl_api`.

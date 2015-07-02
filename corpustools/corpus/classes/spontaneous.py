@@ -27,8 +27,6 @@ class Speaker(object):
 
     age : int or string
         Age of Speaker
-
-
     """
     def __init__(self,name, **kwargs):
 
@@ -77,10 +75,10 @@ class SpontaneousSpeechCorpus(object):
 
     Parameters
     ----------
-    name : string
+    name : str
         Name to identify the SpontaneousSpeechCorpus
 
-    directory : string
+    directory : str
         Directory associated with the SpontaneousSpeechCorpus
 
     Attributes
@@ -88,10 +86,9 @@ class SpontaneousSpeechCorpus(object):
     lexicon : Corpus
         Corpus object with token frequencies from its Discourses
 
-    discourses : dictionary
+    discourses : dict
         Discourses of the SpontaneousSpeechCorpus indexed by the names of
         the Discourses
-
     """
     def __init__(self,name,directory):
         self.name = name
@@ -145,7 +142,6 @@ class Discourse(object):
         The keys are the beginning times of the WordTokens (or their
         place in a text if it's not a speech discourse) and the values
         are the WordTokens
-
     """
     def __init__(self, **kwargs):
         self.name = ''
@@ -235,7 +231,7 @@ class Discourse(object):
         attribute : Attribute
             Attribute to add or replace
 
-        initialize_defaults : boolean
+        initialize_defaults : bool
             If True, word tokens will have this attribute set to the ``default_value``
             of the attribute, defaults to False
         """
@@ -334,7 +330,7 @@ class Discourse(object):
             word.wordtokens.append(token)
         return corpus
 
-    def find_wordtype(self,wordtype):
+    def find_wordtype(self, wordtype):
         """
         Look up all WordTokens that are instances of a Word
 
@@ -375,12 +371,12 @@ class WordToken(object):
     word : Word
         Word that the WordToken is associated with
 
-    transcription : iterable of strings
+    transcription : iterable of str
         Transcription for the WordToken (can be different than the
         transcription of the Word type).  Defaults to None if not
         specified
 
-    spelling : string
+    spelling : str
         Spelling for the WordToken (can be different than the
         spelling of the Word type).  Defaults to None if not
         specified
@@ -413,7 +409,7 @@ class WordToken(object):
         The WordToken's transcription, or the word type's
         transcription if the WordToken's transcription is None
 
-    spelling : string
+    spelling : str
         The WordToken's spelling, or the word type's
         spelling if the WordToken's spelling is None
 

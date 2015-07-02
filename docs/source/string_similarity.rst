@@ -1,13 +1,13 @@
 .. _string_similarity:
 
-*******************************************
-String similarity and neighbourhood density
-*******************************************
+*****************
+String similarity
+*****************
 
 .. _about_string_similarity:
 
-About the functions
--------------------
+About the function
+------------------
 
 String similarity is any measure of how similar any two sequences of
 characters are. These character strings can be strings of letters or
@@ -38,8 +38,8 @@ number of words that fit the criterion for being a neighbour.
 
 .. _method_string_similarity:
 
-Method of calculation: String similarity
-----------------------------------------
+Method of calculation
+---------------------
 
 .. _edit_distance:
 
@@ -118,8 +118,8 @@ depending on the frequency of the individual characters in the loaded corpus.
 
 .. _string_similarity_gui:
 
-Implementing the string similarity function in the GUI
-------------------------------------------------------
+Calculating string similarity in the GUI
+----------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate string similarity...”
 in the main menu, and then follow these steps:
@@ -258,4 +258,4 @@ table can be closed and you will be returned to your corpus view.
 Classes and functions
 ---------------------
 For further details about the relevant classes and functions in PCT's
-source code, please refer to :ref:`api_reference`.
+source code, please refer to :ref:`symbol_sim_api`.
