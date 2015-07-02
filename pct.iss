@@ -1,9 +1,9 @@
 #define MyAppName "Phonological CorpusTools"
 #define MyDistName "PhonologicalCorpusTools"
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "1.1.0"
 #define MyPlatform "win-amd64"
 #define MyAppPublisher "PCT"
-#define MyAppURL "http://kchall.github.io/CorpusTools/"
+#define MyAppURL "http://phonologicalcorpustools.github.io/CorpusTools/"
 #define MyAppExeName "pct.exe"
 
 [Setup]
