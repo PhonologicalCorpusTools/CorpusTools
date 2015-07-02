@@ -67,6 +67,7 @@ class ASWorker(FunctionWorker):
         else:
             self.results.append(['AVG', 'AVG',sum(asim.values())/len(asim)])
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 
@@ -99,8 +100,8 @@ class ASDialog(FunctionDialog):
 
     name = 'acoustic similarity'
 
-    def __init__(self, parent, showToolTips):
-        FunctionDialog.__init__(self, parent, ASWorker())
+    def __init__(self, parent, settings, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, ASWorker())
 
         self.showToolTips = showToolTips
         aslayout = QHBoxLayout()
@@ -297,12 +298,13 @@ class ASDialog(FunctionDialog):
                 'rep':rep,
                 'match_func':alg,
                 'num_filters':filters,
-                'num_coeffs':coeffs,
                 'freq_lims':freq_lims,
                 'output_sim':self.outputSimWidget.isChecked(),
-                'use_multi':self.parent().settings['use_multi'],
-                'num_cores':self.parent().settings['num_cores'],
+                'use_multi':self.settings['use_multi'],
+                'num_cores':self.settings['num_cores'],
                 'return_all':True}
+        if rep == 'mfcc':
+            kwargs['num_coeffs'] = coeffs
         if self.compType is None:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a comparison type.")

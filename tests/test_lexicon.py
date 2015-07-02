@@ -30,13 +30,13 @@ class CorpusTest(unittest.TestCase):
             self.assertEqual(corpus.find(w['spelling']),Word(**w))
             self.assertTrue(w['spelling'] in corpus)
 
-        self.assertEqual(corpus._inventory,{'#':Segment('#'),
+        self.assertEqual(corpus.inventory._data,{'#':Segment('#'),
                                         'a':Segment('a'),
                                         'b':Segment('b'),
                                         'c':Segment('c'),
                                         'd':Segment('d')})
 
-        self.assertEqual(corpus.inventory,sorted(['#','a','b','c','d']))
+        #self.assertEqual(corpus.inventory,sorted(['#','a','b','c','d']))
 
     def test_homographs(self):
         return
@@ -347,12 +347,6 @@ class TranscriptionTest(unittest.TestCase):
         self.assertEqual('c', cab[0])
         self.assertRaises(IndexError,cab.__getitem__,4)
 
-    def test_environment(self):
-        cab = Transcription(self.cab)
-
-        self.assertEqual(('c','b'), cab.get_env(1))
-        self.assertEqual(('#','a'), cab.get_env(0))
-        self.assertEqual(('a','#'), cab.get_env(2))
 
 class EnvironmentTest(unittest.TestCase):
     def setUp(self):
@@ -387,33 +381,38 @@ class EnvironmentFilterTest(unittest.TestCase):
         self.corpus.set_feature_matrix(fm)
 
     def test_init(self):
-        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_')
-        self.assertEqual(sorted(envfilt.lhs),sorted(['a','b']))
-        self.assertEqual(envfilt.rhs,[])
+        segs = self.corpus.features_to_segments('+feature1')
+        envfilt = EnvironmentFilter(['a'], lhs = [segs])
+        self.assertEqual(sorted(envfilt.lhs[0]),sorted(['a','b']))
+        self.assertEqual(envfilt.rhs, None)
 
-        envfilt = EnvironmentFilter(self.corpus,'_[-feature1]')
-        self.assertEqual(sorted(envfilt.rhs),sorted(['c','d']))
-        self.assertEqual(envfilt.lhs,[])
+        segs = self.corpus.features_to_segments('-feature1')
+        envfilt = EnvironmentFilter('a',rhs = [segs])
+        self.assertEqual(sorted(envfilt.rhs[0]),sorted(['c','d']))
+        self.assertEqual(envfilt.lhs,None)
 
-        envfilt = EnvironmentFilter(self.corpus,'_[-feature1,-feature2]')
-        self.assertEqual(sorted(envfilt.rhs),sorted(['d']))
+        segs = self.corpus.features_to_segments('-feature1,-feature2')
+        envfilt = EnvironmentFilter('a',rhs = [segs])
+        self.assertEqual(sorted(envfilt.rhs[0]),sorted(['d']))
 
     def test_contains(self):
-        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_')
-        env1 = Environment('a','b')
-        env2 = Environment('c','#')
-        env3 = Environment('a','c')
+        segs = self.corpus.features_to_segments('+feature1')
+        envfilt = EnvironmentFilter('a',lhs = [segs])
+        env1 = Environment('a', None, lhs = ['a'], rhs = ['b'])
+        env2 = Environment('a', None, lhs = ['c'], rhs = ['#'])
+        env3 = Environment('a', None, lhs = ['a'], rhs = ['c'])
 
         self.assertTrue(env1 in envfilt)
         self.assertFalse(env2 in envfilt)
 
-        envfilt = EnvironmentFilter(self.corpus,'[+feature1]_[+feature1]')
+        segs = self.corpus.features_to_segments('+feature1')
+        envfilt = EnvironmentFilter('a',rhs = [segs], lhs=[segs])
         self.assertTrue(env1 in envfilt)
         self.assertFalse(env2 in envfilt)
         self.assertFalse(env3 in envfilt)
 
 
-def test_categories(specified_test_corpus):
+def test_categories_spe(specified_test_corpus):
     cats = {'ɑ':['Vowel','Open','Near back','Unrounded'],
             'u':['Vowel','Close','Back','Rounded'],
             'o':['Vowel','Close mid','Back','Rounded'],
@@ -424,10 +423,20 @@ def test_categories(specified_test_corpus):
             'n':['Consonant','Dental','Nasal','Voiced'],
             'ʃ':['Consonant','Alveopalatal','Fricative','Voiceless'],
             't':['Consonant','Dental','Stop','Voiceless']}
-    inv = specified_test_corpus._inventory
+    inv = specified_test_corpus.inventory
 
     for k,v in cats.items():
-        assert(inv[k].category == v)
+        assert(inv.categorize(inv[k]) == v)
+
+def test_no_features():
+    seg = Segment('')
+
+
+def test_no_syllabic_feature():
+    seg = Segment('')
+    seg.specify({'feature1':'+','feature2':'+'})
+
+
 
 class SegmentTest(unittest.TestCase):
     def setUp(self):
@@ -436,6 +445,20 @@ class SegmentTest(unittest.TestCase):
                             'c':{'feature1':'-','feature2':'+'},
                             'd':{'feature1':'-','feature2':'-'}}
 
+    def test_basic_segment_properties(self):
+        seg = Segment('')
+        assert(str(seg) == '')
+        assert(len(seg) == 0)
+        assert(seg != 's')
+
+        seg1 = Segment('a')
+        seg2 = Segment('b')
+
+        assert(seg1 < seg2)
+        assert(seg1 <= seg2)
+
+        assert(seg2 > seg1)
+        assert(seg2 >= seg1)
 
     def test_match_feature(self):
         for s,v in self.basic_info.items():
@@ -449,7 +472,9 @@ class SegmentTest(unittest.TestCase):
                     else:
                         self.assertTrue(not seg.feature_match([fv+feature]))
 
+def test_redundant_features(specified_test_corpus):
+    feature = ['back']
+    r = specified_test_corpus.inventory.get_redundant_features(feature, others = ['+voc', '-low'])
 
+    assert('round' in r)
 
-if __name__ == '__main__':
-    unittest.main()

@@ -49,10 +49,10 @@ names aren’t aligned with the feature values visually.
 Downloadable transcription and feature choices
 ==============================================
 
-Currently, the built-in transcription systems that are recognized are
-IPA, ARPABET (used for the [CMU]_ dictionary), XSAMPA, CELEX, DISC, and
-Klatt. These transcription systems can be associated with either the
-features as laid out in [Mielke2012]_, which in turn are based on [SPE],
+Currently, the built-in transcription systems that are usable are
+IPA, ARPABET (used for the [CMU]_ dictionary), XSAMPA, CPA, CELEX, DISC,
+Klatt, and Buckeye. These transcription systems can be associated with either the
+features as laid out in [Mielke2012]_, which in turn are based on [SPE]_,
 or as laid out in [Hayes2009]_ [#]_. Each of these
 transcription-to-feature mappings is laid out as above in a .txt file that
 can be downloaded from within PCT. The former system is called “spe” for
@@ -63,7 +63,7 @@ To download one of these systems, click on “Corpus” /
 
 1. **Download**: Click on “Download feature systems” to open up the relevant dialogue box.
 2. **Transcription**: Select which of the transcription systems you want
-   (IPA, ARPABET, XSAMPA, CELEX, DISC, Klatt).
+   (IPA, ARPABET, XSAMPA, CPA, CELEX, DISC, Klatt, or Buckeye).
 3. **Feature system**: Select which set of features you would like to map
    the transcription symbols to (SPE or Hayes).
 4. **Saving**: Click “OK” to have PCT load in the selected feature file
@@ -73,10 +73,6 @@ To download one of these systems, click on “Corpus” /
    use of PCT unless and until you delete it (done by selecting the
    system and clicking “Remove selected feature system”). Click “Done”
    to return to the regular corpus analysis window.
-
-The example below shows the selection of the CELEX transcription system,
-interpreted using Hayes features.
-
 
 .. image:: static/downloadfeature.png
    :width: 90%
@@ -117,17 +113,17 @@ dialogue box will open.
    system?). If this is a brand-new set of features, then select “Custom”
    from the dropdown menu. Then, enter a name for the feature system in the box.
 
-*Note: For both existing transcription and feature systems, you still
-need to include both the transcriptions and the features in the .txt
-file itself; you can simply indicate here in PCT that these transcriptions
-and / or features are identical to ones that are already extant in the
-system, so that they can be used / interpreted consistently. The name
-of the transcription / feature system file in PCT will conventionally
-be transcription2features (e.g., ipa2hayes for IPA symbols interpreted
-using Hayes features), so it’s useful to be consistent about what the names are.*
+.. note:: For both existing transcription and feature systems, you still
+   need to include both the transcriptions and the features in the .txt
+   file itself; you can simply indicate here in PCT that these transcriptions
+   and / or features are identical to ones that are already extant in the
+   system, so that they can be used / interpreted consistently. The name
+   of the transcription / feature system file in PCT will conventionally
+   be transcription2features (e.g., ipa2hayes for IPA symbols interpreted
+   using Hayes features), so it’s useful to be consistent about what the names are.
 
 4. **Delimiter**: Indicate what the column delimiter in the custom file is.
-   The default, tab, is indicated by ‘\t.’
+   The default, tab, is indicated by ``\t``.
 
 Click “OK,” and the feature system should now appear in your “Available
 feature systems” window. Click “Done.” See :ref:`applying_editing_feature` for more information about
@@ -175,8 +171,10 @@ and load it following the instructions in :ref:`load_custom_feature`.
 Applying / editing feature systems
 ==================================
 
-Once a feature system has been loaded into PCT (:ref:`download_features`, :ref:`custom_feature`), it is
-available for use with a corpus. To do so, first load in a corpus (:ref:`loading_corpora`);
+Once a feature system has been loaded into PCT (:ref:`download_features`,
+:ref:`custom_feature`), it is
+available for use with a corpus. To do so, first load in a corpus
+(:ref:`loading_corpora`);
 if you are using a custom corpus or creating a corpus from text, you can
 select the feature system you want to use during the loading. Once a
 corpus has been loaded (with or without a feature system), you can edit
@@ -194,15 +192,13 @@ The following options are shown:
    already specified, or if you would like to change the transcription or
    feature system, use the dropdown menus under “Change feature systems” to
    select from your currently available systems. If no system is available,
-   or the system you want to use is not available, go back to :ref:`download_features` or :ref:`custom_feature`
+   or the system you want to use is not available, go back to
+   :ref:`download_features` or :ref:`custom_feature`
    to learn how to load feature systems in to PCT. Be sure to click on “Save
    changes to this corpus’s feature system” after selecting a new feature
    system in order to actually apply it to the corpus.
 3. **Modify the feature system**: You can modify the current feature system
-   directly within PCT. There are three options. *Be sure to click on
-   “Save changes to this corpus’s feature system” after adding a new
-   segment or feature, or editing the feature specifications of a segment,
-   in order to actually apply the changes to the corpus*:
+   directly within PCT. There are three options.
 
    a. **Add segment**: To add a new segment and its associated feature values
       to the current feature system, click on “Add segment.” A new dialogue
@@ -223,6 +219,11 @@ The following options are shown:
       feature for each segment, simply click on the segment and then use
       the “Edit segment” functionality described above; the new feature
       will automatically be added to the dialogue box for each segment.
+
+.. warning:: Be sure to click on
+   “Save changes to this corpus’s feature system” after adding a new
+   segment or feature, or editing the feature specifications of a segment,
+   in order to actually apply the changes to the corpus.
 
 4. **Corpus inventory coverage**: There are two tools built in to help you
    check the coverage in your corpus.
@@ -247,11 +248,95 @@ The following options are shown:
       system itself by editing the .txt file and reloading it (more
       information given in :ref:`modifying_feature`).
 
+Below is an example of the "Edit feature" system dialogue box, loaded
+with the "ipa2spe" transcription and feature file:
+
+.. image:: static/editfeatures.png
+   :width: 90%
+   :align: center
+
 5. **Display options**: The standard view (shown below) is to display the
    segments and features as a matrix. One can also select “tree” view,
    which allows one to see a list of the segments included in the
    transcription system, organized by phonetic characteristics (but
    currently without all of their feature specifications).
+
+.. _inventory_categories:
+
+Edit inventory categories
+=========================
+
+There are many instances in which PCT
+needs to display the inventory of the corpus in order for sounds to be
+selected for search or analysis. The default is to display segments in
+alphabetical order, which is not necessarily particularly intuitive as
+far as a linguist's ability to interact with the list. For example, here
+is the unordered version of the segments in the sample "Lemurian" corpus
+(see :ref:`example_corpora`):
+
+.. image:: static/lemurian_unsorted.png
+   :width: 90%
+   :align: center
+
+Once a feature file has been associated with a corpus, this unordered set
+can be arranged into something more closely resembling an IPA chart. Here
+is the Lemurian corpus once the IPA symbols have been interpreted using
+Hayes-style features (note that for space reasons, only the consonant chart
+is shown; the vowel chart is below in the actual PCT window):
+
+.. image:: static/lemurian_sorted.png
+   :width: 90%
+   :align: center
+
+If the feature system being used is either the built-in [Hayes2009]_ or
+the [SPE]_ style feature system, the sorting of segments (regardless of
+the transcription system) in to a standard IPA-like chart will be done
+automatically (though it can still be edited). If a different feature
+system is used, however, the sorting may not be correct if PCT does not
+recognize the features. Therefore, the inventory categories can be edited.
+
+To do so, click on "Edit inventory categories" in the “Features” /
+“View / change feature system....” menu. The "Edit categories" dialogue
+box appears. Essentially, you are telling PCT which feature values are
+associated with which segments in the inventory. There are five sets of
+categories to be edited: "Major distinctions," "Places of articulation,"
+"Manners of articulation," "Vowel height," and "Vowel backness."
+Each is described below. In each case, PCT will ask for which feature or
+set of features is used to specify a particular set of segments. You can
+then type in the box the name of the feature; PCT will auto-complete feature
+names. Once a feature has been included, you can simply mouseover the box on
+the right-hand side to view which segments from the inventory are included by
+the selected features, to check that they are correct and exhaustive. (Note
+that the order of feature selection doesn't matter.)
+
+#. **Major distinctions**: Use the major distinctions tab to edit major
+   class distinctions, i.e., vowels vs. consonants; voicing; diphthongs;
+   and rounding in vowels. For example, the feature specifying vowels in
+   the [SPE]_ system is +voc; the feature in the [Hayes2009]_ system is +syllabic.
+#. **Places of articulation**: Use the places of articulation tab to
+   indicate which features are associated with each standard place of
+   articulation. For example, the features to pick out labial segments
+   in the [SPE]_ system are -cor, +ant, -back; in the [Hayes2009]_ system,
+   they are -coronal, +labial.
+#. **Manners of articulation**: Use the manners of articulation tab to
+   indicate which features are associated with each standard manner of
+   articulation. For example, the features to pick out stops in the [SPE]_
+   system are -cont, -nasal, -son; in the [Hayes2009]_ system, they are
+   -delayed_release, -sonorant, -nasal, -continuant.
+#. **Vowel height**: Use the vowel height tab to indicate which features
+   are associated with each standard height of vowels. For example,
+   the features to pick out close vowels in the [SPE]_ system are +high,
+   +tense, -low; in the [Hayes2009]_ system, they are +high, +tense, -low.
+#. **Vowel backness**: Use the vowel backness tab to indicate which
+   features are associated with each standard degree of backness of vowels.
+   For example, the features to pick out front vowels in the [SPE]_ system
+   are +tense, -back; in the [Hayes2009]_ system, they are -back, +tense, +front.
+
+Here is an example of the "Edit categories" box:
+
+.. image:: static/editcategories.png
+   :width: 90%
+   :align: center
 
 .. _create_tiers:
 
@@ -278,7 +363,7 @@ To create a new tier for a corpus that is currently open, click on the
 “Corpus” menu and select either “Add tier...” or “Add abstract tier...”;
 the “create tier” dialogue box opens. An “abstract” tier is a tier that is
 not based directly on the transcriptins themselves, but rather abstracts
-to a higher level. As of January 2015, the only abstract tier available is
+to a higher level. As of June 2015, the only abstract tier available is
 a CV skeleton tier. Before creating the tier, you can “preview” the tier
 as in the following example; this shows what segments PCT thinks are
 consonants and vowels in the current corpus.
@@ -294,67 +379,42 @@ The example corpus after an abstract CV tier has been added:
    :align: center
 
 To create a less abstract tier, i.e., one that is just an extraction of
-all transcription symbols in the corpus that have some particular feature
-value, use the following instructions after choosing “Corpus” / “Add tier...”:
+all transcription symbols in the corpus that have some particular characteristic(s),
+use the following instructions after choosing “Corpus” / “Add tier...”:
 
 1. **Name**: Enter a short-hand name for the tier, which will appear as the
    column header in your corpus. For example, “vowels” or “consonants” or “nasals.”
 2. **Basis for creating tier**: You can create the tier using natural classes
    if you base the tier on features; you can also create “unnatural” tiers
    that are simply extractions of any set of user-defined segments.
-3. **Segments**: If creating the tier on segments, you’ll see all the segments
-   in your corpus in a preview window arranged roughly along the lines of a
-   standard IPA chart. Select as many of these as you want. The image below
-   shows an example of creating a tier to contain all the non-mid vowels in
-   the example corpus:
+3. **Segments**: To actually select the segments, using either features or
+   individually, follow the directions given in :ref:`sound_selection`.
+
+The image below shows an example of creating a tier to contain all the non-mid
+vowels in the example corpus. (Note that the image shows the mid vowels
+highlighted but not yet selected; one would need to hit "enter" again or
+choose "Select highlighted" to make the actual selection):
 
 .. image:: static/createtier.png
    :width: 90%
    :align: center
 
+The features available will be based on whatever feature system has been
+selected as part of the corpus; see :ref:`download_features` for
+information on selecting or defining different features for the segments in the corpus.
 
-4. **Features**: If you’re creating the tier based on features, you’ll see
-   the list of all available features in your corpus on the left. Select a
-   feature that will be used to define the tier. To define the tier based
-   on positive values for that feature, select “Add [+feature].” To define
-   the tier based on negative values, select “Add [-feature].” For example,
-   to define a vowel tier, one might select the [voc] feature from the SPE
-   feature set, and then add positive values, as shown below. The selected
-   feature will appear in the right-hand menu. To add additional features,
-   repeat this step. For example, one could define a sibilant tier in the
-   SPE system by selecting [+cor] and [+strid]. The features available will
-   be based on whatever feature system has been selected as part of the
-   corpus; see :ref:`download_features` for information on selecting or defining different
-   features for the segments in the corpus.
-
-.. image:: static/createtierfeatures.png
-   :width: 90%
-   :align: center
-
-5. Preview: To see which segments the currently selected feature values
-   will extract, select “Preview tier.” This will show both the set of
-   segments included by the selected feature values, as well as the
-   segments that are excluded (to help verify that the selection is as
-   expected). A vowel tier based on [+voc] in the example corpus is
-   previewed below:
-
-.. image:: static/tierpreview.png
-   :width: 90%
-   :align: center
-
-
-6. Removing a feature: To remove a selected feature, click on that
-   feature in the “Selected features” menu and then choose “Remove feature.”
-7. Finalizing the tier: To create the tier and return to the corpus,
+4. Finalizing the tier: To create the tier and return to the corpus,
    click on “Create tier.” It may take a moment to process the entire
    corpus, but a new column should be added to the corpus that shows the
    segments matching these feature selections for every word in the corpus.
-8. Saving the tier: The tier can be saved along with the corpus for future
+
+5. Saving the tier: The tier can be saved along with the corpus for future
    use by selecting “Corpus” / “Save corpus” from the menu items (this will
    be done automatically if auto-save is on; see :ref:`preferences`). It is also possible
    to export the corpus as a text file (.txt), which can be opened in other
    software, by selecting “File” / “Export corpus as text file.”
-9. Removing a tier: To delete a tier that has been created, simply click on
+
+6. Removing a tier: To delete a tier that has been created, simply click on
    “Corpus” / “Remove tier or column...” and select the tier you want to
    remove; then click “Remove.” You can also right-click on the column name
    and select “Remove column.” Note that only tiers that have been added
@@ -435,11 +495,7 @@ that are contained in that entry. To add a count column, go to “Corpus”
 2. **Tier**: Specify what tier the count column should refer to in order to
    determine the counts (e.g., transcription or a derived tier such as
    a vowel tier).
-3. **Segment selection**: Choose to count things based on either segments or
-   features. If segments are counted, select the segment or segments from
-   the inventory (click on “Consonants” and / or “Vowels” to reveal which
-   segments are available in the inventory). If features are selected,
-   click on each feature and then the value of that feature that should be used.
+3. **Segment selection**: Use the standard :ref:`sound_selection` instructions to select which segments or types of segments to count.
 
 Click “Add count column” to return to the corpus and see the new column,
 with its count values automatically filled in.
@@ -486,14 +542,10 @@ and do the following:
    directly in to the transcription box, using the provided inventory will
    ensure that all characters are understood by PCT to correspond to existing
    characters in the corpus (with their concomitant featural interpretation).
-   Click on “Show inventory” and then choose to show “Consonants,” “Vowels,”
-   and/or other. (If there is no featural interpretation of your inventory,
+   (If there is no featural interpretation of your inventory,
    you will simply see a list of all the available segments, but they will
    not be classifed by major category.) Clicking on the individual segments
-   will add them to the transcription. The selections will remain even
-   when the sub-inventories are hidden; we allow for showing / hiding
-   the inventories to ensure that all relevant buttons on the dialogue
-   box are available, even on small computer screens. Note that you do
+   will add them to the transcription. Note that you do
    NOT need to include word boundaries at the beginning and end of the
    word, even when the boundary symbol is included as a member of the
    inventory; these will be assumed automatically by PCT.
@@ -510,7 +562,7 @@ Once all values are filled in, select “Create word” to return to the
 corpus with the word added. If auto-save is not on, you can save this
 new version of the corpus for future use by going to “File” / “Save corpus.”
 If you have added a word and the corpus has NOT been saved (either manually
-or through Auto-save) afterward, and then try to quit PCT, it will warn
+or through auto-save) afterward, and then try to quit PCT, it will warn
 you that you have unsaved changes and ask that you verify that you want
 to quit without saving them.
 
@@ -568,25 +620,13 @@ actual list of all the words in the corpus that contain the specified
 string. To conduct a search, choose “Corpus” / “Phonological search...”
 and do the following:
 
-1. **Basis for search**: Select either segments or features to search for.
-2. **Segment-based search selection**: If segments are chosen as the basis of
-   the search, you will see the segmental inventory of your corpus. Select
-   a segment that you want to search for.
-3. **Feature-based search selection**: If features are chosen as the basis of
-   the search, you will see the features associated with your corpus.
-   Select the feature and then the value of that feature that you want
-   to search for; it will automatically be added to the list. Multiple
-   features can be selected (e.g., [-voice, -continuant] if one wants to
-   search for voiceless stops).
-4. **Environments**: Click on “Environments” to add one or more environments
-   that you want to search for that contain the specified segment. Both
-   the left- and right-hand side of the environment can be specified,
-   and each can be specified using either segments (automatically populated
-   by your corpus’ inventory) or features (automatically populated by the
-   feature system associated with the corpus). After selecting an environment
-   by clicking on the relevant segments or features, click on “Add” if it
-   is the last environment you want to add, or “Add and create another”
-   if you want to add additional environments.
+1. **Environments**: Select the strings you want to search for. See :ref:`environment_selection` and :ref:`sound_selection` for details.
+
+2. **Tier**: Select the tier on which phonological search should be performed.
+   The default would be the transcription tier, so that phonological
+   environments are defined locally. But, for example, if a vowel tier
+   is selected, then one could search for the occurrence of, e.g., [i]
+   before mid vowels on that tier (hence ignoring intervening consonants). (Note that it is not currently possible to do a phonological search within :ref:`pronunciation_variants`; the search will look only at the canonical forms or whatever forms are listed in the specified tier.)
 
 An example of adding environments (in this case, the environment “word-initial,
 before a vowel”):
@@ -594,12 +634,6 @@ before a vowel”):
 .. image:: static/phonosearchenvironment.png
    :width: 90%
    :align: center
-
-5. Tier: Select the tier on which phonological search should be performed.
-   The default would be the transcription tier, so that phonological
-   environments are defined locally. But, for example, if a vowel tier
-   is selected, then one could search for the occurrence of, e.g., [i]
-   before mid vowels on that tier (hence ignoring intervening consonants).
 
 An example of the phonological search window, set up to search for
 voiceless stops word-initially before vowels and between [a] vowels,
@@ -611,31 +645,31 @@ on the transcription tier:
 
 
 
-6. Results: Once all selections have been made, click on “Calculate
-phonological search.” If there is not already an existing results table,
-or you want to start a new once, choose the “Start new results table”
-option. If you want to add the results to a pre-existing table, choose
-the “Add to current results table” option. The results appear in a new
-dialogue box that first shows the summary results, i.e., a list that
-contains the segment that was searched for, each environment that was
-searched for, the total count of words that contain that segment in that
-environment, and the total token frequency for those words (note that
-these are the frequencies of the WORDS containing the specified environments,
-so if for example, a particular word contains multiple instances of the same
-environment, this is NOT reflected in the counts). The individual words in
-the corpus that match the search criteria can be shown by clicking on “Show
-individual results” at the bottom of the screen; this opens a new dialogue
-box in which each word in the corpus that matches the search criteria is
-listed, including the transcription of the word, the segment that was found
-that matches the search criteria, and which environment that segment
-occurred in in that word. Note that the results can be sorted by any of
-the columns by clicking on that column’s name (e.g., to get all the words
-that contained the [a_a] environment together, simply click on the “Environment”
-label at the top of that column). To return to the summary results, click on
-“Show summary results.” Each set of results can be saved to a .txt file by
-clicking “Save to file” at the bottom of the relevant results window. To
-return to the search selection dialogue box, click on “Reopen function dialogue.”
-Otherwise, when finished, click on “Close window” to return to the corpus.
+3. **Results**: Once all selections have been made, click on “Calculate
+   phonological search.” If there is not already an existing results table,
+   or you want to start a new once, choose the “Start new results table”
+   option. If you want to add the results to a pre-existing table, choose
+   the “Add to current results table” option. The results appear in a new
+   dialogue box that first shows the summary results, i.e., a list that
+   contains the segment that was searched for, each environment that was
+   searched for, the total count of words that contain that segment in that
+   environment, and the total token frequency for those words (note that
+   these are the frequencies of the WORDS containing the specified environments,
+   so if for example, a particular word contains multiple instances of the same
+   environment, this is NOT reflected in the counts). The individual words in
+   the corpus that match the search criteria can be shown by clicking on “Show
+   individual results” at the bottom of the screen; this opens a new dialogue
+   box in which each word in the corpus that matches the search criteria is
+   listed, including the transcription of the word, the segment that was found
+   that matches the search criteria, and which environment that segment
+   occurred in in that word. Note that the results can be sorted by any of
+   the columns by clicking on that column’s name (e.g., to get all the words
+   that contained the [a_a] environment together, simply click on the “Environment”
+   label at the top of that column). To return to the summary results, click on
+   “Show summary results.” Each set of results can be saved to a .txt file by
+   clicking “Save to file” at the bottom of the relevant results window. To
+   return to the search selection dialogue box, click on “Reopen function dialogue.”
+   Otherwise, when finished, click on “Close window” to return to the corpus.
 
 An example of the summary results window for the above phonological search:
 
@@ -650,6 +684,12 @@ And the individual results from the same search, sorted by environment:
    :width: 90%
    :align: center
 
+.. _io_classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.
 
 
 .. [#] Note that the original [Hayes2009]_ system does not include

@@ -40,10 +40,6 @@ shortcut_table = [
     ]
 
 build_exe_options = {"excludes": [
-                        'corpustools.acousticsim.tests',
-                        'corpustools.corpus.tests',
-                        'corpustools.funcload.tests',
-                        'corpustools.prod.tests',
                         'matplotlib',
                         "tcl",
                         'ttk',
@@ -70,6 +66,7 @@ build_exe_options = {"excludes": [
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
                             "acousticsim",
+                            "textgrid",
                             "sys"]
                             }
 
@@ -90,7 +87,7 @@ bdist_mac_options = {'iconfile':'docs/images/icon.icns',
 bdist_dmg_options = {'applications_shortcut':True}
 
 setup(name='Phonological CorpusTools',
-      version='1.0.0',
+      version='1.1.0',
       description='',
       long_description='',
       classifiers=[
@@ -107,16 +104,18 @@ setup(name='Phonological CorpusTools',
       author_email='kathleen.hall@ubc.ca',
       packages=['corpustools',
                 'corpustools.corpus',
-                'corpustools.corpus.io',
                 'corpustools.corpus.classes',
+                'corpustools.corpus.io',
                 'corpustools.freqalt',
                 'corpustools.funcload',
                 'corpustools.kl',
                 'corpustools.prod',
+                'corpustools.phonosearch',
                 'corpustools.gui',
-                #'corpustools.acousticsim',
                 'corpustools.symbolsim',
-                'corpustools.neighdens'],
+                'corpustools.neighdens',
+                'corpustools.mutualinfo',
+                'corpustools.phonoprob',],
       executables = [Executable('corpustools/command_line/pct.py',
                             #targetName = 'pct',
                             base=base,

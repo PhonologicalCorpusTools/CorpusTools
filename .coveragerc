@@ -1,0 +1,29 @@
+[run]
+source = corpustools
+omit =
+    *_rc.py
+    *_ui.py
+
+[report]
+exclude_lines =
+    if __name__ == .__main__.:
+
+    raise AssertionError
+    raise NotImplementedError
+    pass
+
+    if sys\.platform
+    if hasattr\(sys, 'frozen'\):
+
+    except ImportError:
+
+    if call_back
+    if stop_check
+
+    def run\(self\):
+
+    def calc\(self\):
+
+    def setResults
+
+    if dialog\.exec_():

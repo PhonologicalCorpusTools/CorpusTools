@@ -1,8 +1,8 @@
 .. _neighborhood_density:
 
-*******************************************
-String similarity and neighbourhood density
-*******************************************
+*********************
+Neighbourhood density
+*********************
 
 .. _about_neighborhood_density:
 
@@ -19,14 +19,15 @@ number of words that fit the criterion for being a neighbour.
 
 .. _method_neighborhood_density:
 
-Method of calculation: Neighbourhood density
---------------------------------------------
+Method of calculation
+---------------------
 
 A word's neighborhood density is equal to the number of other words in the
 corpus similar to that word (or, if using token frequencies, the sum of
 those words' counts). The threshold that defines whether two words are
 considered similar to each other can be calculated using any of the three
-distance metrics described in :ref:`method_string_similarity`: Levenshtein edit distance,
+distance metrics described in :ref:`method_string_similarity`:
+Levenshtein edit distance,
 phonological edit distance, or Khorsi (2012) similarity. As implemented
 in PCT, for a query word, each other word in the corpus is checked for
 its similarity to the query word and then added to a list of neighbors
@@ -37,16 +38,16 @@ refer to :ref:`method_string_similarity`.
 
 .. _neighborhood_density_gui:
 
-Implementing the neighbourhood density function in the GUI
-----------------------------------------------------------
+Calculating neighbourhood density in the GUI
+--------------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate neighbourhood
 density...” in the main menu, and then follow these steps:
 
 1. **String similarity algorithm**: The first step is to choose which of the
-   three methods of string similarity is to be used to calculate
+   three methods of :ref:`string_similarity` is to be used to calculate
    neighbourhood density. Note that the standard way of calculating
-   density is using standard Levenstein edit distance. We include the
+   density is using regular (Levenshtein) edit distance. We include the
    other two algorithms here as options primarily for the purpose of
    allowing users to explore whether they might be useful measures; we
    make no claims that either phonological edit distance or the Khorsi
@@ -83,18 +84,12 @@ density...” in the main menu, and then follow these steps:
           the provided inventory will ensure that all characters are
           understood by PCT to correspond to existing characters in the
           corpus (with their concomitant featural interpretation). Click
-          on “Show inventory” and then choose to show “Consonants,”
-          “Vowels,” and/or other. (If there is no featural interpretation
-          of your inventory, you will simply see a list of all the
-          available segments, but they will not be classifed by major
-          category.) Clicking on the individual segments will add them
-          to the transcription. The selections will remain even when the
-          sub-inventories are hidden; we allow for showing / hiding the
-          inventories to ensure that all relevant buttons on the dialogue
-          box are available, even on small computer screens. Note that you
-          do NOT need to include word boundaries at the beginning and end
-          of the word, even when the boundary symbol is included as a member
-          of the inventory; these will be assumed automatically by PCT.
+          on “Show inventory.” (See also :ref:`inventory_categories` for more on how to set up the inventory window.) Clicking on the individual segments will add them to
+          the transcription. Note that
+          you do NOT need to include word boundaries at the beginning
+          and end of the word, even when the boundary symbol is included
+          as a member of the inventory; these will be assumed
+          automatically by PCT.
       iii. **Frequency and other columns**: These can be left at the default.
            Note that entering values will NOT affect the calculation; there
            is no particular need to enter anything here (it is an artifact
@@ -112,23 +107,28 @@ density...” in the main menu, and then follow these steps:
       written in standard orthography (their transcriptions will be looked
       up in the corpus if needed). If the words are **not** in the corpus, then
       only spelling-based neighbourhood density can currently be calculated;
-      again, the words should be written in orthographically.
+      again, the words should be written orthographically.
    d. **Whole corpus**: Alternatively, the neighbourhood density for every word
       in the corpus can be calculated. This is useful, for example, if one
       wishes to find words that match a particular neighbourhood density.
       The density of each word will be added to the corpus itself, as a
       separate column; in the “query” box, simply enter the name of that
       column (the default is “Neighborhood Density”).
+
 3. **Tier**: Neighbourhood density can be calculated from most of the available
    tiers in a corpus (e.g., spelling, transcription, or tiers that
    represent subsets of entries, such as a vowel or consonant tier).
    (If neighbourhood density is being calculated with phonological edit
    distance as the similarity metric, spelling cannot be used.) Standard
    neighbourhood density is calculated using edit distance on transcriptions.
-4. **Type vs. token frequency**: If the Khorsi algorithm is selected as the
+
+4. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms.
+
+5. **Type vs. token frequency**: If the Khorsi algorithm is selected as the
    string similarity metric, similarity can be calculated using either
    type or token frequency, as described in :ref:`khorsi`.
-5. **Distance / Similarity Threshold**: A specific threshold must be set to
+
+6. **Distance / Similarity Threshold**: A specific threshold must be set to
    determine what counts as a “neighbour.” If either of the edit distance
    metrics is selected, this should be the maximal distance that is
    allowed – in standard calculations of neighbourhood density, this
@@ -140,27 +140,30 @@ density...” in the main menu, and then follow these steps:
    instead, we recommend experimenting with the string similarity
    algorithm to determine what kinds of values are common for words
    that seem to count as neighbours, and working backward from that.
-6. **Output file**: If this option is left blank, PCT will simply return
+
+7. **Output file**: If this option is left blank, PCT will simply return
    the actual neighbourhood density for each word that is calculated
    (i.e., the number of neighbours of each word). If a file is chosen,
    then the number will still be returned, but additionally, a file
    will be created that lists all of the actual neighbours for each word.
-7. **Results**: Once all options have been selected, click “Calculate
+
+8. **Results**: Once all options have been selected, click “Calculate
    neighborhood density.” If this is not the first calculation, and
    you want to add the results to a pre-existing results table, select
    the choice that says “add to current results table.” Otherwise,
    select “start new results table.” A dialogue box will open, showing
    a table of the results, including the word, its neighbourhood density,
-   the string type from which neighbourhood density was calculated,
+   the string type from which neighbourhood density was calculated, what choice was made regarding pronunciation variants,
    whether type or token frequency was used (if applicable), the string
    similarity algorithm that was used, and the threshold value. If the
    neighbourhood density for all words in the corpus is being calculated,
    simply click on the “start new results table” option, and you will be
    returned to your corpus, where a new column has been added automatically.
-8. **Saving results**: The results tables can each be saved to tab-delimited
+
+9. **Saving results**: The results tables can each be saved to tab-delimited
    .txt files by selecting “Save to file” at the bottom of the window.
    Any output files containing actual lists of neighbours are already
-   saved as .txt files in the location specified (see step 6). If all
+   saved as .txt files in the location specified (see step 7). If all
    neighbourhood densities are calculated for a corpus, the corpus itself
    can be saved by going to “File” / “Export corpus as text file,” from
    where it can be reloaded into PCT for use in future sessions with the
@@ -180,7 +183,7 @@ The corpus with all words’ densities added:
    :width: 90%
    :align: center
 
-An example of calculating all the neighbours for a given word in the
+An example of calculating all the transcription neighbours for a given word in the
 IPHOD corpus, and saving the resulting list of neighbours to an output file:
 
 .. image:: static/neighdendialogoutput.png
@@ -218,7 +221,7 @@ selections after any results table has been created, click on “Reopen
 function dialog.” Otherwise, the results table can be closed and you
 will be returned to your corpus view.
 
-.._neighborhood_density_gui:
+.. _neighborhood_density_cli:
 
 Implementing the neighbourhood density function on the command line
 -------------------------------------------------------------------
@@ -256,6 +259,13 @@ Optional arguments:
 
    Show this help message and exit
 
+.. cmdoption:: -c CONTEXT_TYPE
+               --context_type CONTEXT_TYPE
+
+   How to deal with variable pronunciations. Options are
+   'Canonical', 'MostFrequent', 'SeparatedTokens', or
+   'Weighted'. See documentation for details.
+
 .. cmdoption:: -a ALGORITHM
                --algorithm ALGORITHM
 
@@ -289,8 +299,8 @@ Optional arguments:
    Name of output file.
 
 
-EXAMPLE 1: If your corpus file is example.corpus and you want to
-calculate the neighborhood density of the word 'nata' using defaults
+EXAMPLE 1: If your corpus file is example.corpus (no pronunciation variants)
+and you want to calculate the neighborhood density of the word 'nata' using defaults
 for all optional arguments, you would run the following command in your
 terminal window::
 
@@ -309,3 +319,10 @@ EXAMPLE 3: You wish to find a list of the minimal pairs of the word 'nata'.
 You would need to run the following command::
 
    pct_neighdens example.corpus nata -m
+
+.. _neigh_den_classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`neigh_den_api`.

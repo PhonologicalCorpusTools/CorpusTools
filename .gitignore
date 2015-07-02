@@ -16,6 +16,10 @@
 # Documentation
 docs/build/
 docs/source/generate/
+docs/source/generated/
+
+# Generated test files
+tests/data/export
 
 # Packages
 *.egg
@@ -47,3 +51,4 @@ nosetests.xml
 .project
 .pydevproject
 *.bat
+*.txt

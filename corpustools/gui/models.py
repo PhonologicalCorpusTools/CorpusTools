@@ -4,14 +4,18 @@ from collections import Counter, defaultdict
 from .imports import *
 
 class BaseTableModel(QAbstractTableModel):
-    columns = []
-    rows = []
-    allData = []
 
-    def rowCount(self,parent=None):
+    def __init__(self, settings, parent = None):
+        self.columns = []
+        self.rows = []
+        self.allData = []
+        QAbstractTableModel.__init__(self, parent)
+        self.settings = settings
+
+    def rowCount(self, parent = None):
         return len(self.rows)
 
-    def columnCount(self,parent=None):
+    def columnCount(self, parent = None):
         return len(self.columns)
 
     def sort(self, col, order):
@@ -23,7 +27,7 @@ class BaseTableModel(QAbstractTableModel):
             self.rows.reverse()
         self.layoutChanged.emit()
 
-    def data(self, index, role=None):
+    def data(self, index, role = None):
         if not index.isValid():
             return None
         elif role != Qt.DisplayRole:
@@ -39,7 +43,7 @@ class BaseTableModel(QAbstractTableModel):
                     data = 'Yes'
                 else:
                     data = 'No'
-            elif isinstance(data,list):
+            elif isinstance(data,(list, tuple)):
                 data = ', '.join(data)
             else:
                 data = str(data)
@@ -80,14 +84,36 @@ class BaseCorpusTableModel(BaseTableModel):
     rows = []
     allData = []
 
+    def __init__(self, corpus, settings, parent = None):
+        BaseTableModel.__init__(self, settings, parent)
+        self.corpus = corpus
+
+        self.columns = [x for x in self.corpus.attributes]
+
+        self.rows = self.corpus.words
+
+        self.allData = self.rows
+
     def sort(self, col, order):
         """sort table by given column number col"""
         self.layoutAboutToBeChanged.emit()
-        self.rows = sorted(self.rows,
-                key=lambda x: getattr(self.corpus[x],self.columns[col].name))
+        try:
+            self.rows = sorted(self.rows,
+                    key=lambda x: getattr(self.corpus[x],
+                                        self.columns[col].name))
+        except TypeError:
+            self.rows = sorted(self.rows,
+                    key=lambda x: getattr(self.corpus[x],
+                                self.coerce_to_float(self.columns[col].name)))
         if order == Qt.DescendingOrder:
             self.rows.reverse()
         self.layoutChanged.emit()
+
+    def coerce_to_float(self, val):
+        try:
+            return float(val)
+        except ValueError:
+            return 0.0
 
     def data(self, index, role=None):
         if not index.isValid():
@@ -133,7 +159,7 @@ class FilterModel(QAbstractTableModel):
             return None
         elif role != Qt.DisplayRole:
             return None
-        f = self.filters[index.row()][index.column()]
+        f = self.filters[index.row()]
         if f[0].att_type == 'numeric':
             return_data = ' '.join([str(f[0]),self.conditionalMapping[f[1]], str(f[2])])
         else:
@@ -281,7 +307,7 @@ class DiscourseModel(BaseCorpusTableModel):
         #    i.setFlags(i.flags() | (not Qt.ItemIsEditable))
         #    self.appendRow(i)
 
-        self.sort(2,Qt.AscendingOrder)
+        #self.sort(2,Qt.AscendingOrder)
 
     def rowsToTimes(self,rows):
         return [self.rows[x] for x in rows]
@@ -301,16 +327,8 @@ class DiscourseModel(BaseCorpusTableModel):
 
 class CorpusModel(BaseCorpusTableModel):
     def __init__(self, corpus, settings, parent=None):
-        QAbstractTableModel.__init__(self, parent)
-        self.settings = settings
-        self.corpus = corpus
+        BaseCorpusTableModel.__init__(self, corpus, settings, parent)
         self.nonLexHidden = False
-
-        self.columns = self.corpus.attributes
-
-        self.rows = self.corpus.words
-
-        self.allData = self.rows
 
     def hideNonLexical(self, b):
         self.nonLexHidden = b
@@ -352,20 +370,27 @@ class CorpusModel(BaseCorpusTableModel):
         else:
             end = False
         self.corpus.add_tier(attribute, segList)
-        self.columns = self.corpus.attributes
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
 
-    def addColumn(self, attribute):
+    def beginAddColumn(self, attribute):
         if attribute not in self.columns:
             end = True
             self.beginInsertColumns(QModelIndex(),self.columnCount(),self.columnCount())
         else:
             end = False
-        self.corpus.add_attribute(attribute,initialize_defaults=True)
-        self.columns = self.corpus.attributes
+        return end
+
+    def endAddColumn(self, end = False):
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
+
+    def addColumn(self, attribute):
+        end = self.beginAddColumn(attribute)
+        self.corpus.add_attribute(attribute,initialize_defaults=True)
+        self.endAddColumn(end)
 
     def addCountColumn(self, attribute, sequenceType, segList):
         if attribute not in self.columns:
@@ -374,7 +399,7 @@ class CorpusModel(BaseCorpusTableModel):
         else:
             end = False
         self.corpus.add_count_attribute(attribute, sequenceType, segList)
-        self.columns = self.corpus.attributes
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
 
@@ -386,7 +411,7 @@ class CorpusModel(BaseCorpusTableModel):
         else:
             end = False
         self.corpus.add_abstract_tier(attribute, segList)
-        self.columns = self.corpus.attributes
+        self.columns = [x for x in self.corpus.attributes]
         if end:
             self.endInsertColumns()
 
@@ -401,7 +426,7 @@ class CorpusModel(BaseCorpusTableModel):
                 return
             self.beginRemoveColumns(QModelIndex(),ind,ind)
             self.corpus.remove_attribute(att)
-            self.columns = self.corpus.attributes
+            self.columns = [x for x in self.corpus.attributes]
             self.endRemoveColumns()
 
 class SegmentPairModel(BaseTableModel):
@@ -409,20 +434,23 @@ class SegmentPairModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = ['Segment 1', 'Segment 2', '']
-        self.rows = list()
+        self.rows = []
 
     def switchRow(self,row):
-        seg1,seg2 = self.rows[row]
+        try: # Only swap rows with 2 elements
+            seg1,seg2 = self.rows[row]
+        except ValueError:
+            return
 
-        self.rows[row] = [seg2, seg1]
+        self.rows[row] = (seg2, seg1)
         self.dataChanged.emit(self.createIndex(row,0), self.createIndex(row,1))
 
 
 class VariantModel(BaseTableModel):
-    def __init__(self, wordtokens, parent=None):
+    def __init__(self, word, parent=None):
         super(VariantModel, self).__init__(parent)
 
-        self.rows = [(k,v) for k,v in Counter(str(x.transcription) for x in wordtokens).items()]
+        self.rows = [(k,v) for k,v in word.variants().items()]
 
         self.columns = ['Variant', 'Count']
 
@@ -435,14 +463,13 @@ class EnvironmentModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
 
         self.columns = ['']
-        self.rows = list()
+        self.rows = []
 
 class ResultsModel(BaseTableModel):
     def __init__(self, header, results, settings, parent=None):
         QAbstractTableModel.__init__(self,parent)
         self.settings = settings
         self.columns = header
-
         self.rows = results
 
 class PhonoSearchResultsModel(BaseTableModel):
@@ -453,8 +480,8 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.summary_header = summary_header
         self.columns = self.header
 
-        self.rows = results
-        self.allData = self.rows
+        self.allData = set(results)
+        self.rows = sorted(self.allData)
         self.summarized = False
 
     def _summarize(self):
@@ -481,13 +508,13 @@ class PhonoSearchResultsModel(BaseTableModel):
         if self.summarized:
             self._summarize()
         else:
-            self.rows = self.allData
+            self.rows = sorted(self.allData)
             self.columns = self.header
         self.layoutChanged.emit()
 
     def addRows(self,rows):
         self.layoutAboutToBeChanged.emit()
-        self.allData += rows
+        self.allData.update(rows)
         if self.summarized:
             self._summarize()
         self.layoutChanged.emit()
@@ -570,7 +597,7 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         if specifier is not None:
             self.segments = [s for s in self.specifier]
         else:
-            self.segments = list()
+            self.segments = []
         self.generateData()
 
     def rowCount(self, parent):
@@ -633,23 +660,23 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         self._rootNode = TreeItem("Segment")
         consItem = TreeItem('Consonants', self._rootNode)
         placeItem = TreeItem('Place',consItem)
-        placeValues = list()
+        placeValues = []
         mannerItem = TreeItem('Manner',consItem)
-        mannerValues = list()
+        mannerValues = []
         voiceItem = TreeItem('Voicing',consItem)
-        voiceValues = list()
+        voiceValues = []
 
         vowItem = TreeItem('Vowels', self._rootNode)
         heightItem = TreeItem('Height',vowItem)
-        heightValues = list()
+        heightValues = []
         backItem = TreeItem('Backness',vowItem)
-        backValues = list()
+        backValues = []
         roundItem = TreeItem('Rounding',vowItem)
-        roundValues = list()
+        roundValues = []
         diphItem = TreeItem('Diphthongs',vowItem)
 
         for s in self.segments:
-            cat = s.category
+            cat = self.specifier.categorize(s)
             if cat is None:
                 continue
             if cat[0] == 'Consonant':

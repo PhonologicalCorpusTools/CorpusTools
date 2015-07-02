@@ -160,11 +160,14 @@ class Settings(object):
     def error_directory(self):
         return os.path.join(self['storage'],'ERRORS')
 
+    def log_directory(self):
+        return os.path.join(self['storage'],'LOG')
+
     def check_storage(self):
         if not os.path.exists(self['storage']):
             os.makedirs(self['storage'])
-        LOG_DIR = os.path.join(self['storage'],'LOG')
-        ERROR_DIR = os.path.join(self['storage'],'ERRORS')
+        LOG_DIR = self.log_directory()
+        ERROR_DIR = self.error_directory()
         TMP_DIR = os.path.join(self['storage'],'TMP')
         CORPUS_DIR = os.path.join(self['storage'],'CORPUS')
         FEATURE_DIR = os.path.join(self['storage'],'FEATURE')
@@ -188,7 +191,13 @@ class Settings(object):
             return tuple(type(d)(self.qs.value(k,d)) for k, d in mapped_key)
         else:
             inikey, default = mapped_key
-            return type(default)(self.qs.value(inikey,default))
+            if key == 'num_cores':
+                if self['use_multi']:
+                    return type(default)(self.qs.value(inikey,default))
+                else:
+                    return -1
+            else:
+                return type(default)(self.qs.value(inikey,default))
 
     def __setitem__(self, key, value):
         mapped_key = self.key_to_ini[key]

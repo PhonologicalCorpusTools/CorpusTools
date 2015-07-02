@@ -3,7 +3,7 @@ from urllib.request import urlretrieve
 
 import pickle
 
-def download_binary(name,path, call_back = None):
+def download_binary(name, path, call_back = None):
     """
     Download a binary file of example corpora and feature matrices.
 
@@ -46,6 +46,8 @@ def download_binary(name,path, call_back = None):
             call_back(blocknum * bs)
     if name == 'example':
         download_link = 'https://www.dropbox.com/s/a0uar9h8wtem8cf/example.corpus?dl=1'
+    elif name == 'lemurian':
+        download_link = 'https://www.dropbox.com/s/v6jwgym7tc98v4c/lemurian.corpus?dl=1'
     elif name == 'iphod':
         download_link = 'https://www.dropbox.com/s/xb16h5ppwmo579s/iphod.corpus?dl=1'
     elif name == 'ipa2spe':
@@ -76,9 +78,13 @@ def download_binary(name,path, call_back = None):
         download_link = 'https://www.dropbox.com/s/4ymm9789xhrvxid/sampa2spe.feature?dl=1'
     elif name == 'sampa2hayes':
         download_link = 'https://www.dropbox.com/s/ch5yzlisoeaz58e/sampa2hayes.feature?dl=1'
+    elif name == 'buckeye2spe':
+        download_link = 'https://www.dropbox.com/s/p8cazx943ky8i3z/buckeye2spe.feature?dl=1'
+    elif name == 'buckeye2hayes':
+        download_link = 'https://www.dropbox.com/s/oi58pqd8dzl7puu/Buckeye2hayes.feature?dl=1'
     else:
         return False
-    filename,headers = urlretrieve(download_link,path, reporthook=report)
+    filename, headers = urlretrieve(download_link, path, reporthook=report)
     return True
 
 def load_binary(path):
@@ -99,7 +105,7 @@ def load_binary(path):
         obj = pickle.load(f)
     return obj
 
-def save_binary(obj,path):
+def save_binary(obj, path):
     """
     Pickle a Corpus or FeatureMatrix object for later loading
 

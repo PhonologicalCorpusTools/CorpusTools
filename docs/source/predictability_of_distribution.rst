@@ -21,8 +21,8 @@ also used for calculating functional load (see :ref:`method_functional_load`), w
 to document the *degree* to which sounds are contrastive in a language.
 This has been shown to be useful in, e.g., documenting sound changes
 [Hall2013b]_, understanding the choice of epenthetic vowel in a languages
-[Hume2013]_, modeling intra-speaker variability (Thakur 2011),
-gaining insight into synchronic phonological patterns (Hall & Hall 2013),
+[Hume2013]_, modeling intra-speaker variability [Thakur2011]_,
+gaining insight into synchronic phonological patterns [Hall2013a]_,
 and understanding the influence of phonological relations on perception
 ([Hall2009]_, [Hall2014a]_). See also the related measure of
 Kullback-Leibler divergence (:ref:`kullback-leibler`), which is used in [Peperkamp2006]_
@@ -362,45 +362,28 @@ the “Summary” information feature (:ref:`corpus_summary`).
 
 .. _pred_dist_gui:
 
-Implementing the predictability of distribution function in the GUI
--------------------------------------------------------------------
+Calculating predictability of distribution in the GUI
+-----------------------------------------------------
 
 Assuming a corpus has been opened or created, predictability of
 distribution is calculated using the following steps.
 
 1. **Getting started**: Choose “Analysis” / “Calculate predictability of
    distribution...” from the top menu bar.
-2. **Sound selection**: On the left-hand side of the “Predictability of
-   distribution” dialogue box, select the two sounds of interest by
-   clicking “Add pair of sounds. The order of the sounds is
-   irrelevant; picking [i] first and [u] second will yield the
-   same results as [u] first and [i] second. Currently, PCT only
-   allows entire segments to be selected; the next release will allow
-   a “sound” to be defined as a collection of feature values. The
-   segment choices that are available will automatically correspond
-   to all of the unique transcribed characters in your corpus. You can
-   select more than one pair of sounds to examine in the same environments;
-   each pair of sounds will be treated individually.
-3. **Environments**: Click on “Add environment” to add an environment in
-   which to calculate predictability of distribution. The left side of
-   the “Create environment” dialogue box allows left-hand environments
-   to be specified (e.g., [+back]___), while the right side allows
-   right-hand environments to be specified (e.g., __#). Both can be used
-   simultaneously to specify environments on both sides (e.g., [+back]__#).
 
-   a. **Basis for building environments (segments vs. features)**: Environments
-      can be selected either as entire segments (including #) or as bundles
-      of features. Select from the drop-down menu which you prefer. Each
-      side of an environment can be specified using either type.
-   b. **Segment selection**: To specify an environment using segments, simply
-      click on the segment desired.
-   c. **Feature selection**: To specify an environment using features, select
-      the first feature from the list (e.g., [voice]), and then specify
-      whether you want it to be [+voice] or [-voice] by selecting “Add
-      [+feature]” or “Add [-feature]” as relevant. To add another feature
-      to this same environment, select another feature and again add
-      either the + or – value.
-   d. **No environments**: Note that if NO environments are added, PCT will
+2. **Segments**: First, select which pairs of sounds you want the predictability
+   of distribution to be calculated for. There are two options for this. First is to add individual pairs of sounds. Do this by clicking on “Add pair of sounds”;
+   the “Select segment pair” dialogue box will open. The order that the sounds are selected in is irrelevant; picking [i] first and [u] second will yield the same
+   results as picking [u] first and [i] second. See more about interacting with the sound selection box (including, e.g., the use of features in selecting sounds and the options for selecting multiple pairs) in :ref:`sound_selection`.
+
+The second alternative is to select pairs of sounds based on shared vs. contrasting features. This option allows you, for example, to test the predictability of distribution of the front/back contrast in vowels, regardless of vowel height. To do this, click on "Add pair of features"; the "Select feature pair" dialogue box will open. See :ref:`feature_selection` for more information on using this interface.
+
+Once sounds have been selected, click “Add.” Pairs will appear in the “Predictability of distribution” dialogue box.
+
+3. **Environments**: Click on “New environment” to add an environment in
+   which to calculate predictability of distribution. See :ref:`environment_selection` for details on how to use this interface. Note that you will not be able to edit the "target" segments in this function, because the targets are automatically populated from the list of pairs selected on the left-hand side.
+
+   .. note:: If NO environments are added, PCT will
       calculate the overall predictability of distribution of the two
       sounds based only on their frequency of occurrence. This will simply
       count the frequency of each sound in the pair and calculate the
@@ -412,19 +395,15 @@ distribution is calculated using the following steps.
    :width: 90%
    :align: center
 
-4. **Environment list**: Once all features / segments for a given environment
-   have been selected, for both the left- and right-hand sides, click on
-   “Add”; it will appear back in the “Predictability of Distribution”
-   dialogue box in the environment list. To automatically return to the
-   environment selection window to select another environment, click on
-   “Add and select another” instead. Individual environments from the
-   list can be selected and removed if it is determined that an environment
+4. **Environment list**: Individual environments from the
+   list can be selected and edited or removed if it is determined that an environment
    needs to be changed. It is this list that PCT will verify as being
    both exhaustive and unique; i.e., the default is that the environments
    on this list will exhaustively cover all instances in your corpus of
    the selected sounds, but will do so in such a way that each instance
    is counted exactly once.
-5. **Analysis tier**: Under “Options,” first pick the tier on which you want
+
+5. **Tier**: Under “Options,” first pick the tier on which you want
    predictability of distribution to be calculated. The default is for
    the entire transcription to be used, such that environments are defined
    on any surrounding segments. If a separate tier has been created as part
@@ -435,16 +414,20 @@ distribution is calculated using the following steps.
    non-adjacent contexts. For instance, if one wanted to investigate the
    extent to which [i] and [u] are predictably distributed before front
    vs. back vowels, it will be much easier to to specify that the relevant
-   environments are __[+back] and __[-back] on the vowel tier than to try
+   environments are _[+back] and _[-back] on the vowel tier than to try
    to account for possible intervening segments on the entire transcription
    tier.
-6. **Type vs. Token Frequency**: Next, pick whether you want the calculation
+
+6. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`.
+
+7. **Type vs. Token Frequency**: Next, pick whether you want the calculation
    to be done on types or tokens, assuming that token frequencies are
    available in your corpus. If they are not, this option will not be
    available. (Note: if you think your corpus does include token frequencies,
    but this option seems to be unavailable, see :ref:`corpus_format` on the required
    format for a corpus.)
-7. **Exhaustivity & Uniqueness**: The default is for PCT to check for both
+
+8. **Exhaustivity & Uniqueness**: The default is for PCT to check for both
    exhaustivity and uniqueness of environments, as described above in
    :ref:`pred_dist_envs`. Un-checking this box will turn off this mechanism. For
    example, if you wanted to compare a series of different possible
@@ -462,12 +445,17 @@ distribution is calculated using the following steps.
       Furthermore, a .txt file is automatically created that lists all
       of the words, so that the environments can be easily adjusted. This
       file is stored in the ERRORS folder within the working directory
-      that contains the PCT software, and can be accessed directly by
+      that contains the PCT software (see also :ref:`preferences`), and can be accessed directly by
       clicking “Open errors directory.” If exhaustivity is not important,
       and only the entropy in individual environments matters, then it is
       safe to not enforce exhaustivity; it should be noted that the
       weighted average entropy across environments will NOT be accurate
       in this scenario, because not all words have been included.
+
+      .. image:: static/proderror.png
+         :width: 90%
+         :align: center
+
 
    b. If you ask PCT to check for uniqueness, and it is not met, an error
       message will appear that indicates that the environments
@@ -478,22 +466,17 @@ distribution is calculated using the following steps.
       PCT software. Clicking “Show details” in the error box also reveals
       this information.
 
-.. image:: static/proderror.png
-   :width: 90%
-   :align: center
+      .. image:: static/proderror2.png
+         :width: 90%
+         :align: center
 
-.. image:: static/proderror2.png
-   :width: 90%
-   :align: center
+   Here’s an example of correctly exhaustive and unique selections for
+   calculating the predictability of distribution based on token frequency
+   for [s] and [ʃ] in the example corpus (note that the environments were selected using features, e.g., _#, _[-voc], _[+voc, -high], _[+voc, +high], even though they appear as sets of segments in the environments):
 
-Here’s an example of correctly exhaustive and unique selections for
-calculating the predictability of distribution based on token frequency
-for [s] and [ʃ] in the sample corpus:
-
-
-.. image:: static/proddialog.png
-   :width: 90%
-   :align: center
+   .. image:: static/proddialog.png
+      :width: 90%
+      :align: center
 
 8. **Entropy calculation / results**: Once all environments have been specified,
    click “Calculate predictability of distribution.” If you want to start
@@ -503,16 +486,23 @@ for [s] and [ʃ] in the sample corpus:
    appear in a pop-up window on screen.  The last row for each pair gives
    the weighted average entropy across all selected environments, with
    the environments being weighted by their own frequency of occurrence.
-   See the following example:
+   See the following example (noting that not all columns in the result file are visible on screen):
 
-.. image:: static/prodresults.png
-   :width: 90%
-   :align: center
+   .. image:: static/prodresults.png
+      :width: 90%
+      :align: center
 
 9. **Output file / Saving results**: If you want to save the table of results,
    click on “Save to file” at the bottom of the table. This opens up a
    system dialogue box where the directory and name can be selected.
 
-To return to the function dialogue box with your most recently used
-selections, click on “Reopen function dialog.” Otherwise, the results
-table can be closed and you will be returned to your corpus view.
+   To return to the function dialogue box with your most recently used
+   selections, click on “Reopen function dialog.” Otherwise, the results
+   table can be closed and you will be returned to your corpus view.
+
+.. _prod_classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`prod_api`.

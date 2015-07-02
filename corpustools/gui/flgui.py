@@ -3,106 +3,97 @@
 from collections import OrderedDict
 
 import corpustools.funcload.functional_load as FL
+from corpustools.funcload.io import save_minimal_pairs
 
 from .imports import *
-from .widgets import SegmentPairSelectWidget, RadioSelectWidget, TierWidget
+from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+                    ContextWidget, SaveFileWidget)
 from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.exceptions import PCTError, PCTPythonError
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 class FLWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
-        if kwargs['pair_behavior'] == 'individual':
-
-            for pair in kwargs['segment_pairs']:
-                if kwargs['func_type'] == 'min_pairs':
-                    try:
-                        res = FL.minpair_fl(kwargs['corpus'], [pair],
-                            frequency_cutoff = kwargs['frequency_cutoff'],
-                            relative_count = kwargs['relative_count'],
-                            distinguish_homophones= kwargs['distinguish_homophones'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                elif kwargs['func_type'] == 'entropy':
-                    try:
-                        res = FL.deltah_fl(kwargs['corpus'], [pair],
-                            frequency_cutoff=kwargs['frequency_cutoff'],
-                            type_or_token=kwargs['type_or_token'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                if self.stopped:
-                    return
-                self.results.append(res)
+        self.results = []
+        context = kwargs.pop('context')
+        if kwargs.pop('algorithm') == 'min_pairs':
+            func = FL.minpair_fl
+            rel_func = FL.relative_minpair_fl
         else:
-            if kwargs['func_type'] == 'min_pairs':
-                try:
-                    res = FL.minpair_fl(kwargs['corpus'],
-                            kwargs['segment_pairs'],
-                            frequency_cutoff=kwargs['frequency_cutoff'],
-                            relative_count = kwargs['relative_count'],
-                            distinguish_homophones= kwargs['distinguish_homophones'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-            elif kwargs['func_type'] == 'entropy':
-                try:
-                    res = FL.deltah_fl(kwargs['corpus'],
-                            kwargs['segment_pairs'],
-                            frequency_cutoff=kwargs['frequency_cutoff'],
-                            type_or_token=kwargs['type_or_token'],
-                            sequence_type = kwargs['sequence_type'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-            if self.stopped:
+            func = FL.deltah_fl
+            rel_func = FL.relative_deltah_fl
+        if context == ContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == ContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        elif context == ContextWidget.separate_value:
+            cm = SeparatedTokensVariantContext
+        elif context == ContextWidget.relative_value:
+            cm = WeightedVariantContext
+        with cm(kwargs.pop('corpus'),
+                kwargs.pop('sequence_type'),
+                kwargs.pop('type_token'),
+                frequency_threshold = kwargs.pop('frequency_cutoff')) as c:
+            try:
+                pairs = kwargs.pop('segment_pairs')
+                output_filename = kwargs.pop('output_filename', None)
+                if output_filename is not None:
+                    to_output = []
+                    outf = open(output_filename, mode='w', encoding='utf-8')
+                    save_minimal_pairs(outf, [], write_header= True)
+                else:
+                    outf = None
+                for pair in pairs:
+                    if len(pair) == 1:
+                        res = rel_func(c, pair[0],
+                            output_filename = outf,**kwargs)
+                    else:
+                        if isinstance(pair[0], (list, tuple)):
+                            in_list = list(zip(pair[0], pair[1]))
+                        else:
+                            in_list = [pair]
+                        res = func(c, in_list, **kwargs)
+                        if self.stopped:
+                            break
+                        if output_filename is not None:
+                            to_output.append((pair, res[1]))
+                    self.results.append(res)
+                if output_filename is not None:
+                    save_minimal_pairs(outf, to_output)
+                    outf.close()
+            except PCTError as e:
+                self.errorEncountered.emit(e)
                 return
-            self.results.append(res)
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 
 
 class FLDialog(FunctionDialog):
-    header = ['Segment 1',
-                'Segment 2',
-                'Transcription tier',
-                'Type of funcational load',
-                'Result',
+    header = ['Corpus',
+                'First segment',
+                'Second segment',
+                'Algorithm',
                 'Distinguished homophones?',
-                'Relative count?',
+                'Relative count',
+                'Transcription tier',
+                'Frequency type',
+                'Pronunication variants',
                 'Minimum word frequency',
-                'Type or token']
+                'Result']
 
     _about = [('This function calculates the functional load of the contrast'
                     ' between any two segments, based on either the number of minimal'
@@ -120,8 +111,8 @@ class FLDialog(FunctionDialog):
 
     name = 'functional load'
 
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, FLWorker())
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, FLWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips
@@ -129,7 +120,7 @@ class FLDialog(FunctionDialog):
         flFrame = QFrame()
         fllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory, single_segment = True)
 
         fllayout.addWidget(self.segPairWidget)
 
@@ -155,11 +146,15 @@ class FLDialog(FunctionDialog):
 
         optionLayout.addWidget(self.tierWidget)
 
-        self.segPairOptionsWidget = RadioSelectWidget('Multiple segment pair behaviour',
-                                                OrderedDict([('All segment pairs together','together'),
-                                                ('Each segment pair individually','individual')]))
 
-        optionLayout.addWidget(self.segPairOptionsWidget)
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
+                                                    OrderedDict([('Type','type'),
+                                                    ('Token','token')]))
+        actions = None
+        self.variantsWidget = ContextWidget(self.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
+        optionLayout.addWidget(self.typeTokenWidget)
 
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
@@ -181,21 +176,20 @@ class FLDialog(FunctionDialog):
         box.addWidget(self.relativeCountWidget)
         box.addWidget(self.homophoneWidget)
 
+        fileFrame = QGroupBox('Output list of minimal pairs to a file')
+
+        self.saveFileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
+
+        vbox = QHBoxLayout()
+        vbox.addWidget(self.saveFileWidget)
+
+        fileFrame.setLayout(vbox)
+
+        box.addWidget(fileFrame)
+
         minPairOptionFrame.setLayout(box)
 
-        optionLayout.addWidget(minPairOptionFrame)
-
-        entropyOptionFrame = QGroupBox('Change in entropy options')
-
-        box = QVBoxLayout()
-
-        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
-                                                    OrderedDict([('Type','type'),
-                                                    ('Token','token')]))
-
-        box.addWidget(self.typeTokenWidget)
-        entropyOptionFrame.setLayout(box)
-        optionLayout.addWidget(entropyOptionFrame)
+        l.addWidget(minPairOptionFrame)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -225,11 +219,6 @@ class FLDialog(FunctionDialog):
                                     ' vs. a tier containing only [+voc] segments).'
                                     ' New tiers can be created from the Corpus menu.'
                                     "</FONT>"))
-            self.segPairOptionsWidget.setToolTip(("<FONT COLOR=black>"
-            'Choose either to calculate the'
-                                ' functional load of a particular contrast among a group of segments'
-                                ' to calculate the functional loads of a series of segment pairs separately.'
-                                "</FONT>"))
             self.segPairWidget.setToolTip(("<FONT COLOR=black>"
             'Add pairs of sounds whose contrast to collapse.'
                                     ' For example, if you\'re interested in the functional load of the [s]'
@@ -245,12 +234,12 @@ class FLDialog(FunctionDialog):
             "</FONT>"))
 
     def minPairsSelected(self):
-        self.typeTokenWidget.disable()
+        self.saveFileWidget.setEnabled(True)
         self.relativeCountWidget.setEnabled(True)
         self.homophoneWidget.setEnabled(True)
 
     def entropySelected(self):
-        self.typeTokenWidget.enable()
+        self.saveFileWidget.setEnabled(False)
         self.relativeCountWidget.setEnabled(False)
         self.homophoneWidget.setEnabled(False)
 
@@ -264,54 +253,46 @@ class FLDialog(FunctionDialog):
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        return {'corpus':self.corpus,
+        alg = self.algorithmWidget.value()
+        kwargs = {'corpus':self.corpus,
                 'segment_pairs':segPairs,
+                'context': self.variantsWidget.value(),
                 'sequence_type': self.tierWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
-                'relative_count':self.relativeCountWidget.isChecked(),
-                'distinguish_homophones':self.homophoneWidget.isChecked(),
-                'pair_behavior':self.segPairOptionsWidget.value(),
-                'type_or_token':self.typeTokenWidget.value(),
-                'func_type':self.algorithmWidget.value()}
+                'type_token':self.typeTokenWidget.value(),
+                'algorithm': alg}
+        if alg == 'min_pairs':
+            out_file = self.saveFileWidget.value()
+            if out_file == '':
+                out_file = None
+            kwargs['relative_count'] = self.relativeCountWidget.isChecked()
+            kwargs['distinguish_homophones'] = self.homophoneWidget.isChecked()
+            kwargs['output_filename'] = out_file
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
+        return kwargs
 
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
-    def setResults(self,results):
-        self.results = list()
+    def setResults(self, results):
+        self.results = []
         seg_pairs = self.segPairWidget.value()
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        if self.segPairOptionsWidget.value() == 'individual':
-            for i, r in enumerate(results):
-                self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                    self.tierWidget.displayValue(),
-                                    self.algorithmWidget.displayValue(),
-                                    r,
-                                    self.homophoneWidget.isChecked(),
-                                    self.relativeCountWidget.isChecked(),
-                                    frequency_cutoff,
-                                    self.typeTokenWidget.value()])
-        else:
-            self.results.append([', '.join(x[0] for x in seg_pairs),
-                                ', '.join(x[1] for x in seg_pairs),
-                                    self.tierWidget.displayValue(),
-                                    self.algorithmWidget.displayValue(),
-                                    results[0],
-                                    self.homophoneWidget.isChecked(),
-                                    self.relativeCountWidget.isChecked(),
-                                    frequency_cutoff,
-                                    self.typeTokenWidget.value()])
+        for i, r in enumerate(results):
+            if isinstance(r, tuple):
+                r = r[0]
+            seg_one = seg_pairs[i][0]
+            try:
+                seg_two = seg_pairs[i][1]
+            except IndexError:
+                seg_two = ''
+            self.results.append([self.corpus.name,
+                                seg_one,seg_two,
+                                self.algorithmWidget.displayValue(),
+                                self.homophoneWidget.isChecked(),
+                                self.relativeCountWidget.isChecked(),
+                                self.tierWidget.displayValue(),
+                                self.typeTokenWidget.value().title(),
+                                self.variantsWidget.value().title(),
+                                frequency_cutoff,
+                                r])

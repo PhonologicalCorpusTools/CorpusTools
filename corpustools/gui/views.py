@@ -58,8 +58,8 @@ class TableWidget(QTableView):
         #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         #except AttributeError:
         #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
-        self.resizeColumnsToContents()
+        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
+        #self.resizeColumnsToContents()
         try:
             self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         except AttributeError:
@@ -77,6 +77,7 @@ class LexiconView(QWidget):
     wordsChanged = Signal()
     wordToBeEdited = Signal(object, object)
     columnRemoved = Signal()
+
     def __init__(self,parent=None):
         super(LexiconView, self).__init__(parent=parent)
         self._parent = parent
@@ -264,17 +265,17 @@ class LexiconView(QWidget):
 
     def showVariants(self, index):
         variantDialog = VariantView(self,
-                self.table.model().wordObject(index.row()).wordtokens)
+                self.table.model().wordObject(index.row()))
         variantDialog.show()
 
 class VariantView(QDialog):
-    def __init__(self, parent, wordtokens):
+    def __init__(self, parent, word):
         QDialog.__init__(self, parent)
         self.setWindowTitle('Pronunciation variants')
         layout = QVBoxLayout()
         self.table = TableWidget()
         layout.addWidget(self.table)
-        self.table.setModel(VariantModel(wordtokens))
+        self.table.setModel(VariantModel(word))
         closeButton = QPushButton('Close')
         closeButton.clicked.connect(self.reject)
         layout.addWidget(closeButton)
@@ -737,6 +738,38 @@ class TreeWidget(SubTreeView):
         lexicon = self.model().createLexicon(index)
         self.newLexicon.emit(lexicon)
 
+class MutualInfoVowelHarmonyWindow(QDialog):
+
+    def __init__(self, title, dialog, parent):
+        self._parent = parent
+        QDialog.__init__(self)
+        self.dialog = dialog
+        dataModel = ResultsModel(self.dialog.header, self.dialog.results, self._parent.settings)
+        layout = QVBoxLayout()
+        self.table = TableWidget()
+        self.table.setModel(dataModel)
+        try:
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            self.table.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
+        except AttributeError:
+            self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+            self.table.horizontalHeader().setResizeMode(0,QHeaderView.Stretch)
+        layout.addWidget(self.table)
+        self.table.resizeColumnsToContents()
+        self.setWindowTitle(title)
+        self.table.adjustSize()
+        self.setLayout(layout)
+
+    def sizeHint(self):
+        sz = QDialog.sizeHint(self)
+        minWidth = self.table.calcWidth()+41
+        if sz.width() < minWidth:
+
+            sz.setWidth(minWidth)
+        if sz.height() < 400:
+            sz.setHeight(400)
+        return sz
+
 class ResultsWindow(QDialog):
     def __init__(self, title, dialog, parent):
         self._parent = parent
@@ -748,10 +781,8 @@ class ResultsWindow(QDialog):
         self.table.setModel(dataModel)
         try:
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-            self.table.horizontalHeader().setSectionResizeMode(0,QHeaderView.Stretch)
         except AttributeError:
             self.table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-            self.table.horizontalHeader().setResizeMode(0,QHeaderView.Stretch)
         layout.addWidget(self.table)
         self.aclayout = QHBoxLayout()
         self.redoButton = QPushButton('Reopen function dialog')
@@ -835,6 +866,7 @@ class PhonoSearchResults(ResultsWindow):
                 self.table.model().addRows(self.dialog.results)
             else:
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
+                        self.dialog.summary_header,
                                 self.dialog.results, self._parent.settings)
                 self.table.setModel(dataModel)
         self.raise_()

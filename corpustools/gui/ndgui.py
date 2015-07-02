@@ -4,95 +4,96 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.neighdens.neighborhood_density import neighborhood_density,find_mutation_minpairs
+from corpustools.neighdens.neighborhood_density import (neighborhood_density,
+                            neighborhood_density_all_words,
+                            find_mutation_minpairs_all_words,
+                            find_mutation_minpairs)
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
+from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget,
+                        RestrictedContextWidget)
 from .corpusgui import AddWordDialog
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 class NDWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
+        self.results = []
+        context = kwargs.pop('context')
+        if context == RestrictedContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == RestrictedContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
         corpus = kwargs['corpusModel'].corpus
-        if 'query' in kwargs:
-            for q in kwargs['query']:
-                try:
+        st = kwargs['sequence_type']
+        tt = kwargs['type_token']
+        att = kwargs.get('attribute', None)
+        with cm(corpus, st, tt, att) as c:
+            try:
+                if 'query' in kwargs:
+                    for q in kwargs['query']:
+                        if kwargs['algorithm'] != 'substitution':
+                            res = neighborhood_density(c, q,
+                                                algorithm = kwargs['algorithm'],
+                                                max_distance = kwargs['max_distance'],
+                                                stop_check = kwargs['stop_check'],
+                                                call_back = kwargs['call_back'])
+                        else:
+                            res = find_mutation_minpairs(c, q,
+                                        stop_check = kwargs['stop_check'],
+                                        call_back = kwargs['call_back'])
+                        if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
+                            print_neighden_results(kwargs['output_filename'],res[1])
+                        if self.stopped:
+                            break
+                        self.results.append([q,res[0]])
+                else:
+                    end = kwargs['corpusModel'].beginAddColumn(att)
                     if kwargs['algorithm'] != 'substitution':
-                        res = neighborhood_density(corpus, q,
-                                            algorithm = kwargs['algorithm'],
-                                            sequence_type = kwargs['sequence_type'],
-                                            count_what = kwargs['count_what'],
-                                            max_distance = kwargs['max_distance'],
-                                            stop_check = kwargs['stop_check'],
-                                            call_back = kwargs['call_back'])
+                        neighborhood_density_all_words(c,
+                                                algorithm = kwargs['algorithm'],
+                                                max_distance = kwargs['max_distance'],
+                                                num_cores = kwargs['num_cores'],
+                                                call_back = kwargs['call_back'],
+                                                stop_check = kwargs['stop_check']
+                                                )
                     else:
-                        res = find_mutation_minpairs(corpus, q,
-                                            sequence_type = kwargs['sequence_type'],
-                                            stop_check = kwargs['stop_check'],
-                                            call_back = kwargs['call_back'])
-
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
-                    print_neighden_results(kwargs['output_filename'],res[1])
-                self.results.append([q,res[0]])
-        else:
-            call_back = kwargs['call_back']
-            call_back('Calculating neighborhood densities...')
-            call_back(0,len(corpus))
-            cur = 0
-            kwargs['corpusModel'].addColumn(kwargs['attribute'])
-            for w in corpus:
-                if self.stopped:
-                    break
-                cur += 1
-                call_back(cur)
-                try:
-                    if kwargs['algorithm'] != 'substitution':
-                        res = neighborhood_density(corpus, w,
-                                            algorithm = kwargs['algorithm'],
-                                            sequence_type = kwargs['sequence_type'],
-                                            count_what = kwargs['count_what'],
-                                            max_distance = kwargs['max_distance'],
-                                            stop_check = kwargs['stop_check'])
-                    else:
-                        res = find_mutation_minpairs(corpus, w,
-                                            sequence_type = kwargs['sequence_type'],
-                                            stop_check = kwargs['stop_check'],
-                                            call_back = kwargs['call_back'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                if self.stopped:
-                    break
-                setattr(w,kwargs['attribute'].name,res[0])
+                        find_mutation_minpairs_all_words(c,
+                                                num_cores = kwargs['num_cores'],
+                                                stop_check = kwargs['stop_check'],
+                                                call_back = kwargs['call_back'])
+                    end = kwargs['corpusModel'].endAddColumn(end)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 
 
 class NDDialog(FunctionDialog):
-    header = ['Word',
-                'Neighborhood density',
+    header = ['Corpus',
+                'Word',
+                'Algorithm',
+                'Threshold',
                 'String type',
-                'Type or token',
-                'Algorithm type',
-                'Threshold']
+                'Frequency type',
+                'Pronunciation variants',
+                'Neighborhood density']
 
     _about = [('This function calculates the neighborhood density (size)'
                     ' of a word. A neighborhood is the set of words sufficiently'
@@ -109,21 +110,24 @@ class NDDialog(FunctionDialog):
 
     name = 'neighborhood density'
 
-    def __init__(self, parent, corpusModel, showToolTips):
-        FunctionDialog.__init__(self, parent, NDWorker())
+    def __init__(self, parent, settings, corpusModel, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, NDWorker())
 
         self.corpusModel = corpusModel
         self.showToolTips = showToolTips
 
         if not self.corpusModel.corpus.has_transcription:
             self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
-
+        elif self.corpusModel.corpus.specifier is None:
+            self.layout().addWidget(QLabel('Corpus does not have a feature system loaded, so not all options are available.'))
         ndlayout = QHBoxLayout()
 
         algEnabled = {'Khorsi':True,
                     'Edit distance':True,
                     'Substitution neighbors only':True,
-                    'Phonological edit distance':self.corpusModel.corpus.has_transcription}
+                    'Phonological edit distance':
+                        (self.corpusModel.corpus.has_transcription and
+                            self.corpusModel.corpus.specifier is not None)}
         self.algorithmWidget = RadioSelectWidget('String similarity algorithm',
                                             OrderedDict([
                                             ('Edit distance','edit_distance'),
@@ -189,6 +193,10 @@ class NDDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+        actions = None
+        self.variantsWidget = RestrictedContextWidget(self.corpusModel.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -301,9 +309,11 @@ class NDDialog(FunctionDialog):
 
         kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': alg,
+                'context': self.variantsWidget.value(),
                 'sequence_type':self.tierWidget.value(),
-                'count_what':typeToken,
-                'max_distance':max_distance}
+                'type_token':typeToken,
+                'max_distance':max_distance,
+                'num_cores':self.settings['num_cores'],}
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
@@ -379,21 +389,16 @@ class NDDialog(FunctionDialog):
             kwargs['attribute'] = attribute
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
+    header = ['Corpus',
+                'Word',
+                'Algorithm',
+                'Threshold',
+                'String type',
+                'Frequency type',
+                'Pronunciation variants',
+                'Neighborhood density']
     def setResults(self, results):
-        self.results = list()
+        self.results = []
         for result in results:
             w, nd = result
             if not isinstance(w,str):
@@ -401,14 +406,16 @@ class NDDialog(FunctionDialog):
             if self.algorithmWidget.value() != 'khorsi':
                 typetoken = 'N/A'
             else:
-                typetoken = self.typeTokenWidget.displayValue()
+                typetoken = self.typeTokenWidget.value().title()
             if self.algorithmWidget.value() == 'substitution':
                 thresh = 'N/A'
             else:
-                thresh = self.maxDistanceEdit.text()
-            self.results.append([w, nd,
+                thresh = float(self.maxDistanceEdit.text())
+            self.results.append([self.corpusModel.corpus.name, w,
+                        self.algorithmWidget.displayValue(), thresh,
                         self.tierWidget.displayValue(), typetoken,
-                        self.algorithmWidget.displayValue(),thresh])
+                        self.variantsWidget.value().title(),
+                        nd])
 
     def substitutionSelected(self):
         self.typeTokenWidget.disable()

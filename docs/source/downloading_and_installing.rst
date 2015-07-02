@@ -4,27 +4,35 @@
 Downloading and installing
 **************************
 
-PCT is currently available in beta form for Mac, PC, and Linux machines.
-It can be downloaded from `SourceForge
-<http://sourceforge.net/projects/phonologicalcorpustools/>`_
+.. _PCT website: http://phonologicalcorpustools.github.io/CorpusTools/
+
+.. _GitHub repository: https://github.com/PhonologicalCorpusTools/CorpusTools/
+
+.. _kathleen.hall@ubc.ca: kathleen.hall@ubc.ca
+
+.. _PCT releases page: https://github.com/PhonologicalCorpusTools/CorpusTools/releases
+
+PCT is currently available for Mac, PC, and Linux machines.
+It can be downloaded from `PCT releases page`_
 using the following steps. Note that there are several dependencies that are
 pre-requisites before PCT can function properly. For Mac and Windows machines,
 we have created executable files that bundle most of the dependencies and the
 PCT software itself into a single package. Using these is the easiest /
 fastest way to get PCT up and running on your machine.
 
-1. Go to the `PCT SourceForge page`_.
-2. Click on the “Files” tab.
-3. Click on the link with the highest number (= most recent version).
-   As of February 2015, that is 1.0.
+Download
+========
 
-Windows Executable
-==================
+#. Go to the `PCT releases page`_.
+#. Click on the link for your operating system with the highest number (= most recent version).
+   As of June 2015, that is 1.1.
+
+Windows Installer
+=================
 
 #. NOTE: This method requires that you are running a 64-bit version of windows.
    You can check this in Control Panel -> System and Security -> System.
-#. Click on “win64.”
-#. Download the file called “corpustools-1.0.0-amd64.msi” (or similar,
+#. Download the file called “corpustools-1.1.0-amd64.msi” (or similar,
    for a more recent version), by clicking or right-clicking on the link.
    This is an installer program.
 #. Run the downloaded installer program by double-clicking on it, wherever
@@ -35,15 +43,12 @@ Windows Executable
 Mac Executable
 ==============
 
-#. Click on “macosx.”
-#. Download the file called “pct.zip” by clicking or ctrl-clicking on
-   the link. This is a zipped file containing the PCT application.
-#. Unzip the downloaded file from its local location (double-clicking
-   it should automatically open your local software for unzipping files,
-   e.g., StuffIt Expander or Archive Utility).
-#. Unzipping the file will give you access to the file “pct.app.” Double
-   click on this file to start PCT. You can drag the application to
-   your toolbar like any other application.
+#. Download the file called 'Phonological.CorpusTools-1.1.0.dmg' by clicking or ctrl-clicking on
+   the link.
+#. Open the dmg file and drag the Phonological CorpusTools app into Applications.
+#. Phonological CorpusTools is now available in your Applications, and can be
+   opened as other applications.  You may have to enable applications from
+   third-party developers in your security settings.
 #. If you run into trouble, try the “Fallback” instructions in below.
 
 Linux / Fallback instructions
@@ -62,10 +67,10 @@ Linux / Fallback instructions
      <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.)
 
 2. Get the source code for PCT. Click on either the .zip or the .gz file
-   on the `PCT SourceForge page
-   <http://sourceforge.net/projects/phonologicalcorpustools/>`_,
+   on the `PCT releases page`_ or the `GitHub repository`_,
    to download the zipped or tarball version of the code, depending
    on your preference.
+
 3. After expanding the file, you will find a file called ``setup.py``
    in the top level directory. Run it in one of the following ways:
 

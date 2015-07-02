@@ -1,0 +1,77 @@
+CorpusTools 1.1.0 Release Notes
+*******************************
+
+This is a major version release for Phonological CorpusTools.
+
+Importing corpora
+=================
+
+* Importing corpora functionality in the GUI received a large overhaul
+* All types of corpora are imported through a single dialog
+* PCT should autodetect many settings based on selected files or directories
+* Autodetected settings can be edited and refined by the user
+* Basic logging support saves parsing details entered by the user (i.e.,
+  multicharacter segments)
+* Numbers in transcriptions can be parsed as stress, tone, or as a normal
+  character (note that tone and stress are currently not supported in functions
+  or phonological search)
+
+Pronunciation variants
+======================
+
+* All algorithms that analyze segments support four strategies for dealing with
+  pronunciation variants: canonical forms, most frequent variants, separated
+  tokens as types, and tokens weighted by their relative frequenies
+* Algorithms that analyze words support two strategies for pronunciation
+  variants: canonical forms and most frequent variants
+* Exporting corpora can now export pronunciation variants (and their frequencies)
+
+Functional load
+===============
+
+* Added support for finding the average functional load of single segments
+
+Phonotactic probability
+=======================
+
+* Fixed an issue where calculating biphone probabilities on single segment
+  words would cause errors; now assigns a probability of 0 to those words
+
+Kullback-Leibler divergence
+===========================
+
+* Added options to bring KL divergence in line with the other functions
+* Added command line script for calculating KL divergence
+
+GUI
+===
+
+* Added a dialog to the "View/change feature system" dialog to edit the
+  categorization of segments into a coherent segment chart via features
+* Features can be used as input to the analysis functions, i.e. functional load
+  of voice in the corpus (segements that are +voice compared to segments that
+  are -voice)
+
+Segment selection
+-----------------
+
+* Segment selection has been redone
+* Segments can be selected via the inventory
+* Features can be typed into the filter field, which will highlight
+  segments that will be included with that feature selection
+* Once a feature specification has been entered, that segment set can
+  be locked in
+
+Environments
+------------
+
+* Environment creation has been revamped
+* Users can select a set of center segments
+* Right hand and left hand can be added, with multiple sets of segments
+  on each side
+
+Known issues
+------------
+
+* Help pages for the Mac binary require internet connection to view, due
+  to issues including .html files in the .app binary

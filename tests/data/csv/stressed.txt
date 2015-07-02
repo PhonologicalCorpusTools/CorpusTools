@@ -1,0 +1,4 @@
+﻿spelling,transcription,frequency
+tusi,t.uw1.s.iy0,13.0
+tuni,t.uw0.n.iy1,33.0
+shashi,sh.ah0.sh.iy1,43.0

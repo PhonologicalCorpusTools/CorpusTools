@@ -1,83 +1,81 @@
-
-from .imports import *
-
 from collections import OrderedDict
 
-from .widgets import EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSelectWidget,TierWidget
-
+from .imports import *
+from .widgets import (EnvironmentSelectWidget,
+                    SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+                    ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
+import itertools
 
-from corpustools.prod.pred_of_dist import calc_prod,calc_prod_all_envs
+from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs)
 
 from corpustools.exceptions import PCTError, PCTPythonError
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 class PDWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
-        if 'envs' in kwargs:
-            if kwargs['pair_behavior'] == 'individual':
-
+        self.results = []
+        context = kwargs.pop('context')
+        if context == ContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == ContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
+        elif context == ContextWidget.separate_value:
+            cm = SeparatedTokensVariantContext
+        elif context == ContextWidget.relative_value:
+            cm = WeightedVariantContext
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
+            try:
+                envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
-                    try:
-                        res = calc_prod(kwargs['corpus'], pair[0],pair[1],
-                            kwargs['envs'],
-                            kwargs['sequence_type'],
-                            kwargs['type_token'],
-                            kwargs['strict'],
-                            True,
+                    if envs is not None:
+                        for env in envs:
+                            env.middle = set(pair)
+                        res = calc_prod(c,
+                                envs,
+                                kwargs['strict'],
+                                all_info = True,
+                                stop_check = kwargs['stop_check'],
+                                call_back = kwargs['call_back'])
+                    else:
+                        res = calc_prod_all_envs(c, pair[0], pair[1],
+                            all_info = True,
                             stop_check = kwargs['stop_check'],
                             call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
                     if self.stopped:
-                        return
+                        break
                     self.results.append(res)
-            else:
-                raise(NotImplementedError)
-                self.results.append(res)
-        else:
-            if kwargs['pair_behavior'] == 'individual':
-
-                for pair in kwargs['segment_pairs']:
-                    try:
-                        res = calc_prod_all_envs(kwargs['corpus'], pair[0],pair[1],
-                            kwargs['sequence_type'],
-                            kwargs['type_token'],
-                            True,
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                    if self.stopped:
-                        return
-                    self.results.append(res)
-            else:
-                raise(NotImplementedError)
-                self.results.append(res)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
+
 class PDDialog(FunctionDialog):
-    header = ['Sound1',
-                'Sound2',
-                'Tier',
+    header = ['Corpus',
+                'First segment',
+                'Second segment',
                 'Environment',
-                'Freq. of Sound1',
-                'Freq. of Sound2',
-                'Freq. of env.',
-                'Entropy',
-                'Type or token']
+                'Transcription tier',
+                'Frequency type',
+                'Pronunciation variants',
+                'Frequency of first segment',
+                'Frequency of second segment',
+                'Frequency of environment',
+                'Entropy']
 
     ABOUT = ['This function calculates'
                 ' the predictability of distribution of two sounds, using the measure of entropy'
@@ -94,9 +92,8 @@ class PDDialog(FunctionDialog):
                 ' The Ohio State University.')]
 
     name = 'predictability of distribution'
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, PDWorker())
-
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, PDWorker())
         self.corpus = corpus
         self.showToolTips = showToolTips
 
@@ -107,7 +104,11 @@ class PDDialog(FunctionDialog):
 
         pdlayout.addWidget(self.segPairWidget)
 
-        self.envWidget = EnvironmentSelectWidget(corpus.inventory)
+        #addSegClassButton = QPushButton('Add a class of sounds')
+        #addSegClassButton.clicked.connect(self.addSegClass)
+        #pdlayout.addWidget(addSegClassButton)
+
+        self.envWidget = EnvironmentSelectWidget(corpus.inventory, middle = False)
         self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
 
@@ -118,12 +119,15 @@ class PDDialog(FunctionDialog):
 
         optionLayout.addWidget(self.tierWidget)
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token',
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+        actions = None
+        self.variantsWidget = ContextWidget(self.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
-
 
         checkFrame = QGroupBox('Exhaustivity and uniqueness')
 
@@ -190,6 +194,26 @@ class PDDialog(FunctionDialog):
                                     ' distribution across all environments based on frequency alone.'
             "</FONT>"))
 
+    def addSegClass(self):
+        self.addSegClassWindow = SegmentClassSelector(self, self.corpus)
+        results = self.addSegClassWindow.exec_()
+        if results:
+            for p in self.addSegClassWindow.pairs:
+                self.segPairWidget.table.model().addRow(p)
+            self.class1name = self.addSegClassWindow.class1features
+            self.class2name = self.addSegClassWindow.class2features
+
+    def typesSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
+
+    def tokensSelected(self):
+        self.typeTokenWidget.setOptions(OrderedDict([
+                    ('Use most frequent pronunciation as the type','most_frequent_type'),
+                    ('Use most frequent pronunciation for all tokens','most_frequent_token'),
+                    ('Use raw counts of each pronunciation (token frequency)','count_token'),
+                    ('Use relative counts of each pronunciation (type frequency)','relative_type')]))
+
     def generateKwargs(self):
         kwargs = {}
         segPairs = self.segPairWidget.value()
@@ -203,48 +227,38 @@ class PDDialog(FunctionDialog):
             kwargs['envs'] = envs
 
         kwargs['corpus'] = self.corpus
+        kwargs['context'] = self.variantsWidget.value()
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
-        kwargs['pair_behavior'] = 'individual'
         kwargs['type_token'] = self.typeTokenWidget.value()
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
-
     def setResults(self,results):
-        self.results = list()
+        self.results = []
         seg_pairs = self.segPairWidget.value()
-        seg_pairs_options = 'individual'
-        if seg_pairs_options == 'individual':
-            for i, r in enumerate(results):
-                if isinstance(r,dict):
-                    for env,v in r.items():
-                        self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                            self.tierWidget.displayValue(),
-                                            env,
-                                            v[2], # freq of seg1
-                                            v[3], #freq of seg2
-                                            v[1], #total_tokens
-                                            v[0], #H
-                                            self.typeTokenWidget.value()])
-                else:
-                    self.results.append([seg_pairs[i][0],seg_pairs[i][1],
-                                            self.tierWidget.displayValue(),
-                                            'FREQ-ONLY',
-                                            r[2], # freq of seg1
-                                            r[3], #freq of seg2
-                                            r[1], #total_tokens
-                                            r[0], #H
-                                            self.typeTokenWidget.value()])
+        for i, r in enumerate(results):
+            if isinstance(r,dict):
+                for env,v in r.items():
+                    self.results.append([self.corpus.name,
+                                        seg_pairs[i][0],seg_pairs[i][1],
+                                        env,
+                                        self.tierWidget.displayValue(),
+                                        self.typeTokenWidget.value().title(),
+                                        self.variantsWidget.value().title(),
+                                        v[2], # freq of seg1
+                                        v[3], #freq of seg2
+                                        v[1], #total_tokens
+                                        v[0]] #H
+                                        )
+            else:
+                self.results.append([self.corpus.name,
+                                        seg_pairs[i][0],seg_pairs[i][1],
+                                        'FREQ-ONLY',
+                                        self.tierWidget.displayValue(),
+                                        self.typeTokenWidget.value().title(),
+                                        self.variantsWidget.value().title(),
+                                        r[2], # freq of seg1
+                                        r[3], #freq of seg2
+                                        r[1], #total_tokens
+                                        r[0]]) #H
+

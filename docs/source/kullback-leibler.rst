@@ -25,8 +25,8 @@ extensive free variation). Higher scores represent higher probabilities
 that the two sounds are actually allophones. Since KL scores have no
 upper bound, it is up to the user to decide what counts as “high enough”
 for two sounds to be allophones (this is unlike the predictability of
-distribution measure described in :ref:`predictability_of_distribution`). See [Peperkamp2006]_
-for a discussion of how to use Z-Scores to make this discrimination.
+distribution measure described in :ref:`predictability_of_distribution`).
+See [Peperkamp2006]_ for a discussion of how to use Z-Scores to make this discrimination.
 
 As with the predictability of distribution measure in :ref:`predictability_of_distribution`, spurious
 allophony is also possible, since many sounds happen to have non-overlapping
@@ -60,7 +60,7 @@ Method of calculation
 ---------------------
 
 All calculations were adopted from [Peperkamp2006]_. The variables
-involves are as follows: s is a segment, *c* is a context, and *C* is the
+involved are as follows: s is a segment, *c* is a context, and *C* is the
 set of all contexts. The Kullback-Leibler measure of dissimilarity between
 the distributions of two segments is the sum for all contexts of the
 entropy of the contexts given the segments:
@@ -121,23 +121,36 @@ sounds can also be conducted using the functions in :ref:`acoustic_similarity`.
 
 .. kl_gui:
 
-Implementing the Kullback-Leibler Divergence function in the GUI
-----------------------------------------------------------------
+Calculating Kullback-Leibler Divergence in the GUI
+--------------------------------------------------
 
 To implement the KL function in the GUI, select “Analysis” / “Calculate
 Kullback-Leibler...” and then follow these steps:
 
-1. Pair of sounds: Click on “Add pair of sounds” to open the “Select
-   segment pair” dialogue box. The segment choices that are available
-   will automatically correspond to all of the unique transcribed
-   characters in your corpus; click on “Consonants” and/or “Vowels”
-   to see the options. You can select more than one pair of sounds to
-   examine in the same environments; each pair of sounds will be treated
-   individually. Selecting more than two sounds at a time will run the
-   analysis on all possible pairs of those sounds (e.g., selecting [t],
-   [s], and [d] will calculate the KL score for [t]~[s], [s]~[d], and
-   [t]~[d]).
-2. Contexts: Using KL requires a notion of “context,” and there are three
+1. **Pair of sounds**: First, select which pairs of sounds you want the functional
+   load to be calculated for. Do this by clicking on either “Add pair of sounds”
+   or "Add pair of features" -- use the former for selecting segments (even if
+   the segments are chosen using features); use the latter for selecting
+   featural differences to calculate KL divergence for (e.g., the KL score
+   for [+/-high]).
+   See :ref:`sound_selection` or :ref:`feature_selection` for more on how to
+   interact with these options.
+
+2. **Tier**: Select which tier the KL-divergence should be calculated from.
+   The default is the “transcription” tier, i.e., looking at the entire
+   word transcriptions. If another tier has been created (see :ref:`create_tiers`),
+   KL can be calculated on the basis of that tier. For example,
+   if a vowel tier has been created, then the sounds will be considered only in
+   terms of their adjacent vowels, ignoring intervening consonants.
+
+3. **Pronunciation variants**: If the corpus contains multiple pronunciation
+   variants for lexical items, select what strategy should be used. For details,
+   see :ref:`pronunciation_variants`.
+
+4. **Type or token frequency**: Select whether probabilities should be
+   based on type or token frequencies.
+
+5. **Contexts**: Using KL requires a notion of “context,” and there are three
    options: left, right, or both. Consider the example word [atema]. If
    using the “both” option, then this word consists of these environments:
    [#\_t], [a\_e], [t\_m], [e\_a], and [m\_#]. If the left-side option is chosen,
@@ -146,25 +159,27 @@ Kullback-Leibler...” and then follow these steps:
    is chosen, then the environments in the word are [\_t], [\_e], [\_m], [\_a],
    and [\_#]. Note that the word boundaries don’t count as elements of words,
    but can count as parts of environments.
-3. Results: Once all selections have been made, click “Calculate
+
+6. **Results**: Once all selections have been made, click “Calculate
    Kullback-Leibler.” If you want to start a new results table, click
    that button; if you’ve already done at least one calculation and
    want to add new calculations to the same table, select the button
    with “add to current results table.” Results will appear in a pop-up
    window on screen. Each member of the pair is listed, along with which
-   context was selected, the entropy of each segment, the KL score, which
+   context was selected, what tier was used, what strategy was used for pronunciation variants, what kind of frequency was used, the entropy of each segment, the KL score, which
    of the two members of the pair is more likely to be the UR (as described
    above), and PCT’s judgment as to whether this is a possible case of
    spurious allophones based on the featural distance.
-4. Output file / Saving results: If you want to save the table of results,
+
+7. **Output file / Saving results**: If you want to save the table of results,
    click on “Save to file” at the bottom of the table. This opens up a
    system dialogue box where the directory and name can be selected.
 
-To return to the function dialogue box with your most recently used
-selections, click on “Reopen function dialog.” Otherwise, the results
-table can be closed and you will be returned to your corpus view.
+   To return to the function dialogue box with your most recently used
+   selections, click on “Reopen function dialog.” Otherwise, the results
+   table can be closed and you will be returned to your corpus view.
 
-An example of calculating the KL scores in the Example corpus, with the
+An example of calculating the KL scores in the Example corpus (which has canonical forms only), with the
 sounds [s], [ʃ], [t], [n], [m], [e], [u] selected (and therefore all
 pairwise comparisons thereof calculated), examining only right-hand side
 contexts:
@@ -188,3 +203,90 @@ The resulting table of results:
 .. image:: static/klresults.png
    :width: 90%
    :align: center
+
+.. kl_cli:
+
+Implementing the KL-divergence function on the command line
+-------------------------------------------------------------
+
+In order to perform this analysis on the command line, you must enter
+a command in the following format into your Terminal::
+
+   pct_funcload CORPUSFILE [additional arguments]
+
+...where CORPUSFILE is the name of your \*.corpus file. If calculating
+FL from a file of segment pairs, it must list the pairs
+of segments whose functional load you wish to calculate with each pair
+separated by a tab (``\t``) and one pair on each line. Note that you must either
+specify a file or segment (using ``-p``) or request the functional loads of all
+segment pairs in the inventory (using ``-l``). You may also use
+command line options to change various parameters of your functional
+load calculations. Descriptions of these arguments can be viewed by
+running ``pct_funcload –h`` or ``pct_funcload --help``. The help text from
+this command is copied below, augmented with specifications of default values:
+
+Positional arguments:
+
+.. cmdoption:: corpus_file_name
+
+   Name of corpus file
+
+.. cmdoption:: seg1
+
+   First segment
+
+.. cmdoption:: seg2
+
+   Second segment
+
+.. cmdoption:: side
+
+   Context to check. Options are 'right', 'left' and
+   'both'. You can enter just the first letter.
+
+
+Optional arguments:
+
+.. cmdoption:: -h
+               --help
+
+   Show help message and exit
+
+.. cmdoption:: -s SEQUENCE_TYPE
+               --sequence_type SEQUENCE_TYPE
+
+   The attribute of Words to calculate KL-divergence over. Normally this will be
+   the transcription, but it can also be the spelling or a user-specified tier.
+
+.. cmdoption:: -t TYPE_OR_TOKEN
+               --type_or_token TYPE_OR_TOKEN
+
+   Specifies whether quantifications are based on type
+   or token frequency.
+
+.. cmdoption:: -c CONTEXT_TYPE
+               --context_type CONTEXT_TYPE
+
+   How to deal with variable pronunciations. Options are
+   'Canonical', 'MostFrequent', 'SeparatedTokens', or
+   'Weighted'. See documentation for details.
+
+.. cmdoption:: -o OUTFILE
+               --outfile OUTFILE
+
+   Name of output file
+
+EXAMPLE 1: If your corpus file is example.corpus (no prounciation variants)
+and you want to calculate the KL-divergence of the segments
+[m] and [n] considering contexts on both sides and using defaults for all
+optional arguments, you would run the following command in your terminal window::
+
+   pct_kl example.corpus m n both
+
+
+.. _kl_classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`kl_api`.

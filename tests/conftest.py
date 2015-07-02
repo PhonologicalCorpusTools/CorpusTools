@@ -1,12 +1,98 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import pytest
-import unittest
 import os
 import sys
 
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
-                                        WordToken, Discourse)
+                                        WordToken, Discourse, Attribute)
+from corpustools.corpus.io.helper import AnnotationType
+
+from corpustools.corpus.io.textgrid import load_discourse_textgrid, inspect_discourse_textgrid
+
+from corpustools.utils import generate_discourse
+
+from corpustools.gui.main import QApplicationMessaging
+#@pytest.fixture(scope='session')
+#def application():
+#    from corpustools.gui.imports import QApplication
+#    return QApplication([])
+
+#Overwrite pytest-qt's qpp fixture
+@pytest.yield_fixture(scope='session')
+def qapp():
+    """
+    fixture that instantiates the QApplication instance that will be used by
+    the tests.
+    """
+    app = QApplicationMessaging.instance()
+    if app is None:
+        app = QApplicationMessaging([])
+        yield app
+        app.exit()
+    else:
+        yield app # pragma: no cover
+
+@pytest.fixture(scope='module')
+def test_dir():
+    test_dir = 'tests/data'
+    return test_dir
+
+@pytest.fixture(scope='module')
+def buckeye_test_dir(test_dir):
+    return os.path.join(test_dir, 'buckeye')
+
+@pytest.fixture(scope='module')
+def timit_test_dir(test_dir):
+    return os.path.join(test_dir, 'timit')
+
+@pytest.fixture(scope='module')
+def textgrid_test_dir(test_dir):
+    return os.path.join(test_dir, 'textgrids')
+
+@pytest.fixture(scope='module')
+def text_test_dir(test_dir):
+    return os.path.join(test_dir, 'text')
+
+@pytest.fixture(scope='module')
+def ilg_test_dir(test_dir):
+    return os.path.join(test_dir, 'ilg')
+
+@pytest.fixture(scope='module')
+def csv_test_dir(test_dir):
+    return os.path.join(test_dir, 'csv')
+
+@pytest.fixture(scope='module')
+def features_test_dir(test_dir):
+    return os.path.join(test_dir, 'features')
+
+@pytest.fixture(scope='module')
+def binary_test_dir(test_dir):
+    path = os.path.join(test_dir, 'binary')
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+@pytest.fixture(scope='module')
+def export_test_dir(test_dir):
+    path = os.path.join(test_dir, 'export')
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+@pytest.fixture(scope='session')
+def settings():
+    from corpustools.gui.config import Settings
+    s = Settings()
+    s['sigfigs'] = 3
+    return Settings()
+
+@pytest.fixture(scope='module')
+def spe_specifier():
+    corpus = specified_test_corpus()
+    return corpus.specifier
 
 @pytest.fixture(scope='module')
 def unspecified_test_corpus():
@@ -32,7 +118,20 @@ def unspecified_test_corpus():
 
 @pytest.fixture(scope='module')
 def specified_test_corpus():
+    fm = spe_specifier()
     corpus = unspecified_test_corpus()
+
+    corpus.set_feature_matrix(fm)
+    return corpus
+
+@pytest.fixture(scope='module')
+def unspecified_discourse_corpus():
+    c = unspecified_test_corpus()
+    d = generate_discourse(c)
+    return d
+
+@pytest.fixture(scope='module')
+def spe_specifier():
     fm_input = [{'symbol':'ɑ','EXTRA':'-','LONG':'-','ant':'-','back':'+','cont':'+','cor':'-',
                 'del_rel':'n','distr':'n','glot_cl':'-','hi_subgl_pr':'-','high':'-',
                 'lat':'n','low':'+','mv_glot_cl':'n','nasal':'-','round':'-','son':'+',
@@ -74,5 +173,41 @@ def specified_test_corpus():
                 'lat':'-','low':'-','mv_glot_cl':'n','nasal':'-','round':'-','son':'-',
                 'strid':'-','tense':'.','voc':'-','voice':'-'}]
     fm = FeatureMatrix('spe',fm_input)
-    corpus.set_feature_matrix(fm)
-    return corpus
+    return fm
+
+@pytest.fixture(scope='module')
+def specified_discourse_corpus():
+    fm = spe_specifier()
+    c = unspecified_test_corpus()
+    d = generate_discourse(c)
+    d.lexicon.set_feature_matrix(fm)
+    return d
+
+@pytest.fixture(scope = 'module')
+def pronunciation_variants_corpus(textgrid_test_dir):
+    path = os.path.join(textgrid_test_dir, 'pronunc_variants_corpus.TextGrid')
+    annotypes = inspect_discourse_textgrid(path)
+    annotypes[0].attribute.name = 'spelling'
+    annotypes[1].attribute.name = 'transcription'
+    annotypes[2].attribute.name = 'transcription'
+    annotypes[2].token = True
+    return load_discourse_textgrid('test', path, annotypes)
+
+@pytest.fixture(scope = 'module')
+def spelling_annotation_type():
+    a = AnnotationType('test', None, None)
+    a.attribute = Attribute('test', 'spelling')
+    return a
+
+@pytest.fixture(scope = 'module')
+def transcription_annotation_type():
+    a = AnnotationType('test', None, None)
+    a.trans_delimiter = '.'
+    a.attribute = Attribute('test', 'tier')
+    return a
+
+@pytest.fixture(scope = 'module')
+def numeric_annotation_type():
+    a = AnnotationType('test', None, None)
+    a.attribute = Attribute('test', 'numeric')
+    return a

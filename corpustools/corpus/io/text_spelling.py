@@ -1,15 +1,174 @@
 import os
 
-from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Discourse, WordToken
 
-from corpustools.exceptions import DelimiterError
+from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
 
-def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
+from .helper import (DiscourseData, Annotation, BaseAnnotation,
+                        data_to_discourse, AnnotationType, text_to_lines)
+
+def inspect_discourse_spelling(path, support_corpus_path = None):
+    """
+    Generate a list of AnnotationTypes for a specified text file for parsing
+    it as an orthographic text
+
+    Parameters
+    ----------
+    path : str
+        Full path to text file
+    support_corpus_path : str, optional
+        Full path to a corpus to look up transcriptions from spellings
+        in the text
+
+    Returns
+    -------
+    list of AnnotationTypes
+        Autodetected AnnotationTypes for the text file
+    """
+    a = AnnotationType('spelling', None, None, anchor = True, token = False)
+    if os.path.isdir(path):
+        for root, subdirs, files in os.walk(path):
+            for filename in files:
+                if not filename.lower().endswith('.txt'):
+                    continue
+                with open(os.path.join(root,filename),
+                            encoding='utf-8-sig', mode='r') as f:
+                    for line in f.readlines():
+                        trial = line.strip().split()
+
+                        a.add(trial, save = False)
+    else:
+        with open(path, encoding='utf-8-sig', mode='r') as f:
+            for line in f.readlines():
+                trial = line.strip().split()
+
+                a.add(trial, save = False)
+    annotation_types = [a]
+    if support_corpus_path is not None:
+        annotation_types += [AnnotationType('transcription', None, None, base = True)]
+    return annotation_types
+
+def spelling_text_to_data(path, annotation_types = None,
+                            support_corpus_path = None, ignore_case = True,
+                            stop_check = None, call_back = None):
+
+    name = os.path.splitext(os.path.split(path)[1])[0]
+    if support_corpus_path is not None:
+        if not os.path.exists(support_corpus_path):
+            raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
+        support = load_binary(support_corpus_path)
+    if annotation_types is None:
+        annotation_types = inspect_discourse_spelling(path, support_corpus_path)
+
+    for a in annotation_types:
+        a.reset()
+    data = DiscourseData(name, annotation_types)
+
+    lines = text_to_lines(path)
+    if call_back is not None:
+        call_back('Processing file...')
+        call_back(0, len(lines))
+        cur = 0
+
+    for line in lines:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 20 == 0:
+                call_back(cur)
+        if not line or line == '\n':
+            continue
+        annotations = {}
+        for word in line:
+            spell = word.strip()
+            spell = ''.join(x for x in spell if not x in data['spelling'].ignored_characters)
+            if spell == '':
+                continue
+            word = Annotation(spell)
+            if support_corpus_path is not None:
+                trans = None
+                try:
+                    trans = support.find(spell, ignore_case = ignore_case).transcription
+                except KeyError:
+                    trans = []
+                n = data.base_levels[0]
+                tier_elements = [BaseAnnotation(x) for x in trans]
+                level_count = data.level_length(n)
+                word.references.append(n)
+                word.begins.append(level_count)
+                word.ends.append(level_count + len(tier_elements))
+                annotations[n] = tier_elements
+            annotations['spelling'] = [word]
+            data.add_annotations(**annotations)
+
+    return data
+
+def load_directory_spelling(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """
-    Load a corpus from a text file containing running text of
+    Loads a directory of orthographic texts
+
+    Parameters
+    ----------
+    corpus_name : str
+        Name of corpus
+    path : str
+        Path to directory of text files
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse text files
+    support_corpus_path : str, optional
+        File path of corpus binary to load transcriptions from
+    ignore_case : bool, optional
+        Specifies whether lookups in the support corpus should ignore case
+    stop_check : callable, optional
+        Optional function to check whether to gracefully terminate early
+    call_back : callable, optional
+        Optional function to supply progress information during the function
+
+    Returns
+    -------
+    SpontaneousSpeechCorpus
+        Corpus containing Discourses corresponding to the text files
+    """
+    if call_back is not None:
+        call_back('Finding  files...')
+        call_back(0, 0)
+    file_tuples = []
+    for root, subdirs, files in os.walk(path):
+        for filename in files:
+            if not filename.lower().endswith('.txt'):
+                continue
+            file_tuples.append((root, filename))
+
+    if call_back is not None:
+        call_back('Parsing files...')
+        call_back(0,len(file_tuples))
+        cur = 0
+    corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    for i, t in enumerate(file_tuples):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            call_back('Parsing file {} of {}...'.format(i+1, len(file_tuples)))
+            call_back(i)
+        root, filename = t
+        name = os.path.splitext(filename)[0]
+        d = load_discourse_spelling(name, os.path.join(root,filename),
+                                    annotation_types, corpus.lexicon,
+                                    support_corpus_path, ignore_case,
+                                    stop_check, call_back)
+        corpus.add_discourse(d)
+    return corpus
+
+def load_discourse_spelling(corpus_name, path, annotation_types = None,
+                            lexicon = None,
+                            support_corpus_path = None, ignore_case = False,
+                            stop_check = None, call_back = None):
+    """
+    Load a discourse from a text file containing running text of
     orthography
 
     Parameters
@@ -19,26 +178,20 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
 
     path : str
         Full path to text file
-
-    delimiter : str
-        Character to use for spliting text into words
-
-    ignore_list : list of strings
-        List of characters to ignore when parsing the text
-
-    support_corpus_path : string
+    annotation_types : list of AnnotationType, optional
+        List of AnnotationType specifying how to parse text files
+    lexicon : Corpus, optional
+        Corpus to store Discourse word information
+    support_corpus_path : str, optional
         Full path to a corpus to look up transcriptions from spellings
         in the text
-
-    ignore_case : bool
+    ignore_case : bool, optional
         Specify whether to ignore case when using spellings in the text
         to look up transcriptions
-
-    stop_check : callable
+    stop_check : callable, optional
         Callable that returns a boolean for whether to exit before
         finishing full calculation
-
-    call_back : callable
+    call_back : callable, optional
         Function that can handle strings (text updates of progress),
         tuples of two integers (0, total number of steps) and an integer
         for updating progress out of the total set by a tuple
@@ -47,67 +200,36 @@ def load_spelling_corpus(corpus_name, path, delimiter, ignore_list,
     -------
     Discourse
         Discourse object generated from the text file
-
     """
 
-    discourse = Discourse(name = corpus_name)
-    if support_corpus_path is not None:
-        if not os.path.exists(support_corpus_path):
-            raise(OSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
-        support = load_binary(support_corpus_path)
-    corpus = Corpus(corpus_name)
-
-    with open(path, encoding='utf-8-sig', mode='r') as f:
-        text = f.read()
-        if delimiter is not None and delimiter not in text:
-            e = DelimiterError('The delimiter specified does not create multiple words. Please specify another delimiter.')
-            raise(e)
-
-        lines = text.splitlines()
-        if call_back is not None:
-            call_back('Processing file...')
-            call_back(0,len(lines))
-            cur = 0
-        begin = 0
-        previous_time = None
-
-        for line in lines:
-            if stop_check is not None and stop_check():
-                return
-            if call_back is not None:
-                cur += 1
-                if cur % 20 == 0:
-                    call_back(cur)
-            if not line or line == '\n':
-                continue
-            line = line.split(delimiter)
-            for word in line:
-                spell = word.strip()
-                spell = ''.join(x for x in spell if not x in ignore_list)
-                if spell == '':
-                    continue
-                trans = None
-                if support_corpus_path is not None:
-                    try:
-                        trans = support.find(spell, ignore_case = ignore_case).transcription
-                    except KeyError:
-                        pass
-                word = corpus.get_or_create_word(spell, trans)
-                word.frequency += 1
-                if previous_time is not None:
-                    wordtoken = WordToken(word=word,
-                                    begin = begin, end = begin + 1,
-                                    previous_token = discourse[previous_time])
-                else:
-                    wordtoken = WordToken(word=word,
-                                    begin = begin, end = begin + 1)
-                word.wordtokens.append(wordtoken)
-                discourse.add_word(wordtoken)
-                if previous_time is not None:
-                    discourse[previous_time].following_token_time = wordtoken.begin
-
-                previous_time = wordtoken.begin
-                begin += 1
-    discourse.lexicon = corpus
-
+    data = spelling_text_to_data(path, annotation_types,
+                support_corpus_path, ignore_case,
+                    stop_check, call_back)
+    discourse = data_to_discourse(data, lexicon)
     return discourse
+
+def export_discourse_spelling(discourse, path, single_line = False):
+    """
+    Export an orthography discourse to a text file
+
+    Parameters
+    ----------
+    discourse : Discourse
+        Discourse object to export
+    path : str
+        Path to export to
+    single_line : bool, optional
+        Flag to enforce all text to be on a single line, defaults to False.
+        If False, lines are 10 words long.
+    """
+    with open(path, encoding='utf-8', mode='w') as f:
+        count = 0
+        for i, wt in enumerate(discourse):
+            count += 1
+            f.write(wt.spelling)
+            if i != len(discourse) -1:
+                if not single_line and count <= 10:
+                    f.write(' ')
+                else:
+                    count = 0
+                    f.write('\n')

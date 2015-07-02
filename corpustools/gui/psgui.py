@@ -3,12 +3,13 @@
 from .imports import *
 
 from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
-                        RadioSelectWidget, InventoryBox, FeatureBox,
-                        TierWidget)
+                        RadioSelectWidget, InventoryBox,
+                        TierWidget, SegmentSelectionWidget)
 
 from .windows import FunctionWorker, FunctionDialog
 
 from corpustools.corpus.classes.lexicon import EnvironmentFilter
+from corpustools.phonosearch import phonological_search
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
@@ -16,9 +17,8 @@ class PSWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        corpus = kwargs.pop('corpus')
         try:
-            self.results = corpus.phonological_search(**kwargs)
+            self.results = phonological_search(**kwargs)
 
         except PCTError as e:
             self.errorEncountered.emit(e)
@@ -28,6 +28,9 @@ class PSWorker(FunctionWorker):
             self.errorEncountered.emit(e)
             return
 
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
         self.dataReady.emit(self.results)
 
 class PhonoSearchDialog(FunctionDialog):
@@ -39,8 +42,8 @@ class PhonoSearchDialog(FunctionDialog):
     _about = ['']
 
     name = 'phonological search'
-    def __init__(self, parent, corpus, showToolTips):
-        FunctionDialog.__init__(self, parent, PSWorker())
+    def __init__(self, parent, settings, corpus, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, PSWorker())
 
         self.corpus = corpus
         self.showToolTips = showToolTips
@@ -48,29 +51,9 @@ class PhonoSearchDialog(FunctionDialog):
         psFrame = QFrame()
         pslayout = QHBoxLayout()
 
+        #self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
 
-        self.targetFrame = QFrame()
-        targetLayout = QVBoxLayout()
-
-        self.targetType = QComboBox()
-        self.targetType.addItem('Segments')
-        if self.corpus.specifier is not None:
-            self.targetType.addItem('Features')
-        else:
-            targetLayout.addWidget(QLabel('Phonological search based on features is not available without a feature system.'))
-
-        self.targetType.currentIndexChanged.connect(self.generateFrames)
-
-        targetLayout.addWidget(QLabel('Basis for search:'))
-        targetLayout.addWidget(self.targetType, alignment = Qt.AlignLeft)
-
-        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
-
-        targetLayout.addWidget(self.targetWidget)
-
-        self.targetFrame.setLayout(targetLayout)
-
-        pslayout.addWidget(self.targetFrame)
+        #pslayout.addWidget(self.targetWidget)
 
         self.envWidget = EnvironmentSelectWidget(self.corpus.inventory)
         pslayout.addWidget(self.envWidget)
@@ -93,64 +76,29 @@ class PhonoSearchDialog(FunctionDialog):
         self.setWindowTitle('Phonological search')
         self.progressDialog.setWindowTitle('Searching')
 
-    def createFeatureFrame(self):
-        self.targetWidget.deleteLater()
-
-        self.targetWidget = FeatureBox('Features of segments to search',self.corpus.inventory)
-        self.targetFrame.layout().addWidget(self.targetWidget)
-
-    def createSegmentFrame(self):
-        self.targetWidget.deleteLater()
-
-        self.targetWidget = InventoryBox('Segments to search',self.corpus.inventory)
-        self.targetFrame.layout().addWidget(self.targetWidget)
-
-    def generateFrames(self,ind=0):
-        if self.targetType.currentText() == 'Segments':
-            self.createSegmentFrame()
-        elif self.targetType.currentText() == 'Features':
-            self.createFeatureFrame()
-
     def generateKwargs(self):
         kwargs = {}
-        targetType = self.targetType.currentText()
-        targetList = self.targetWidget.value()
-        if not targetList:
-            reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one {}.".format(targetType[:-1].lower()))
-            return
-        if targetType == 'Features':
-            targetList = targetList[1:-1]
-            kwargs['seg_list'] = self.corpus.features_to_segments(targetList)
-        else:
-            kwargs['seg_list'] = targetList
-        kwargs['corpus'] = self.corpus
-        kwargs['sequence_type'] = self.tierWidget.value()
         envs = self.envWidget.value()
         if len(envs) > 0:
+            for i, e in enumerate(envs):
+                if len(e.middle) == 0:
+                    reply = QMessageBox.critical(self,
+                            "Missing information",
+    "Please specify at least segment to search for in environment {}.".format(i+1))
+                    return
             kwargs['envs'] = envs
+
+        kwargs['corpus'] = self.corpus
+        kwargs['sequence_type'] = self.tierWidget.value()
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
     def setResults(self,results):
-        self.results = list()
+        self.results = []
         for w,f in results:
-            segs = [x[0] for x in f]
+            segs = tuple(x.middle for x in f)
             try:
-                envs = [str(x[1]) for x in f]
+                envs = tuple(str(x) for x in f)
             except IndexError:
-                envs = []
-            self.results.append([w, str(getattr(w,self.tierWidget.value())),segs,
-                                envs])
+                envs = tuple()
+            self.results.append((w, str(getattr(w,self.tierWidget.value())), segs,
+                                envs))

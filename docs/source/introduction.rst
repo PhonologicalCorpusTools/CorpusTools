@@ -4,6 +4,13 @@
 Introduction
 ************
 
+
+.. _PCT website: http://phonologicalcorpustools.github.io/CorpusTools/
+
+.. _GitHub repository: https://github.com/PhonologicalCorpusTools/CorpusTools/
+
+.. _kathleen.hall@ubc.ca: kathleen.hall@ubc.ca
+
 .. _general_background:
 
 General Background
@@ -11,8 +18,7 @@ General Background
 
 *Phonological CorpusTools* (PCT) is a freely available open-source tool
 for doing phonological analysis on transcribed corpora.
-For the latest information, please refer to the `PCT website
-<http://kchall.github.io/CorpusTools/>`_. PCT is intended to be an
+For the latest information, please refer to the `PCT website`_. PCT is intended to be an
 analysis aid for researchers who are specifically interested in
 investigating the relationships that may hold between individual
 sounds in a language. There is an ever-increasing interest in
@@ -45,7 +51,7 @@ It specifically includes the following capabilities:
   other using either orthographic or phonetic transcription,
   and calculation of **neighbourhood density** (cf. [Frisch2004]_, [Khorsi2012]_;
   [Greenberg1964]_; [Luce1998]_; [Yao2011]_);
-* Calculation of the **frequency with which two sounds alternate** with each other,
+* Approximation of the **frequency with which two sounds alternate** with each other,
   given a measure of morphological relatedness (cf. [Silverman 2006]_,
   [Johnson2010]_, [Lu2012]_);
 * Calculation of the **mutual information** between pairs of segments in the corpus
@@ -56,18 +62,15 @@ It specifically includes the following capabilities:
 
 The software can make use of pre-existing freely available corpora
 (e.g., the IPHOD corpus; [IPHOD]_), which are included with the
-system, or a user may upload his or her own corpus in either of two formats.
+system, or a user may upload his or her own corpus in several formats.
 First, lexical lists with transcription and token frequency information can be
 directly uploaded; such a list is what is deemed a “corpus” by PCT. Second,
 raw running text (orthographically and/or phonetically transcribed) can be
 uploaded and turned into lexical lists in columnar format (corpora) for
 subsequent analysis. Raw sound files accompanied by Praat TextGrids
 [PRAAT]_ may also be uploaded for analyses of acoustic
-similarity. Orthographic corpora can have their transcriptions “looked up”
-in a pre-existing transcribed corpus of the same language. Limited support
-is currently also available for spontaneous speech corpora, where, for example,
-a user can create a corpus from TextGrids and include information about ngram
-word combinations.
+similarity, and certain pre-existing special types of corpora can be uploaded natively (Buckeye [BUCKEYE]_, TIMIT [TIMIT]_). Orthographic corpora can have their transcriptions “looked up”
+in a pre-existing transcribed corpus of the same language.
 
 Phonological analysis can be done using built-in feature charts based on
 Chomsky & Halle [SPE]_ or Hayes [Hayes2009]_, or a user may create his or her
@@ -90,6 +93,22 @@ We will do our best to keep the software up to date and to answer any questions
 you might have about it; questions, comments, and suggestions should be sent to
 `Kathleen Currie Hall <kathleen.hall@ubc.ca>`_.
 
+Version 1.1 (July 2015) differs from version 1.0.1 (March 2015) in three main areas:
+
+1. Loading of corpora -- The interface for corpus loading has been streamlined,
+   and users have more options for adjusting the interpretation of transcriptions
+   and columns as they initiate a corpus. Better support for interlinear glosses
+   and TextGrids is also provided.
+
+2. Specification of inventories, features, and environments -- Inventories
+   can now be displayed in IPA-like charts based on user-specified features.
+   Feature selection in analysis functions has been streamlined and natural
+   class selection is better supported. Environment selection is now iterative
+   and more interactive.
+
+3. Pronunciation variants -- Analysis functions now provide users with
+   options for how to handle pronunciation variants when they occur in a corpus.
+
 Version 1.0 differs from the original release version (0.15, July 2014)
 primarily in its user interface; we switched the GUI from TK to QT and
 tried to reorganize the utility menus to be somewhat more intuitive.
@@ -108,11 +127,9 @@ Code and interfaces
 
 PCT is written in Python 3.4, and users are welcome to add on other
 functionality as needed. The software works on any platform that supports
-Python (Windows, Mac, Linux). All code is available on its `SourceForge page
-<http://sourceforge.net/projects/phonologicalcorpustools>`_; the details for
-getting access are given in :ref:`downloading_and_installing`. The `GitHub repository
-<https://github.com/kchall/CorpusTools/>`_ for PCT is also
-public and open source.
+Python (Windows, Mac, Linux). All code is available on the
+`GitHub repository`_; the details for
+getting access are given in :ref:`downloading_and_installing`.
 
 There is both a graphical user interface (GUI) and a command-line interface
 for PCT. In the following sections, we generally discuss interface-independent
@@ -133,7 +150,7 @@ command_line subdirectory. These can then be run as scripts in Python 3.
 
 The procedure for running command-line analysis scripts is essentially the
 same for any analysis. First, open a Terminal window (on Mac OS X or Linux)
-or a CygWin window (on Windows, can be downloaded `here <https://www.cygwin.com/>`_).
+or a CygWin window (on Windows, can be downloaded at `https://www.cygwin.com/ <https://www.cygwin.com/>`_).
 Using the "cd" command, navigate to the directory containing your corpus file.
 If the analysis you want to perform requires any additional input files, then
 they must also be in this directory. (Instead of running the script from the

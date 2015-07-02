@@ -125,32 +125,44 @@ final pMI values being calculated.
 
 .. _mi_gui:
 
-Implementing the mutual information function in the GUI
--------------------------------------------------------
+Calculating mutual information in the GUI
+-----------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate mutual information...”
 in the main menu, and then follow these steps:
 
 1. **Bigram**: Click on the “Add bigram” button in the “Mutual Information”
-   dialogue box. A new window will open with a phonetic inventory of all
+   dialogue box. A new window will open with an inventory of all
    the segments that occur in your corpus. Select the bigram by clicking
    on one segment from the “left-hand side” and one segment from the
-   “right-hand side.” To add more than one bigram, click “Add and create
+   “right-hand side.” Note that the order of the sounds matters in this function! To add more than one bigram, click “Add and create
    another” to be automatically returned to the selection window. Once
    the last bigram has been selected, simply click “Add” to return to
    the Mutual Information dialogue box. All the selected bigrams will
    appear in a list. To remove one, click on it and select “Remove
    selected bigram.”
+
 2. **Tier**: Mutual information can be calculated on any available tier.
    The default is transcription. If a vowel tier has been created,
    for example, one could calculate the mutual information between
    vowels on that tier, ignoring intervening consonants, to examine
    harmony effects.
-3. **Domain**: Choosing “set domain to word” will change the calculation so
+
+3. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`.
+
+4. **Type vs. Token Frequency**: Next, pick whether you want the calculation
+   to be done on types or tokens, assuming that token frequencies are
+   available in your corpus. If they are not, this option will not be
+   available. (Note: if you think your corpus does include token frequencies,
+   but this option seems to be unavailable, see :ref:`corpus_format` on the required
+   format for a corpus.)
+
+5. **Domain**: Choosing “set domain to word” will change the calculation so
    that the calculation is for word-internal co-occurrence pMI. In this
    case, the order and adjacency  of the bigram does not matter; it is
    simply treated as a pair of segments that could occur anywhere in a word.
-4. **Word boundary count**: A standard word object in PCT contains word
+
+6. **Word boundary count**: A standard word object in PCT contains word
    boundaries on both sides of it (e.g., [#kæt#] ‘cat’). If words were
    concatenated in real running speech, however, one would expect to see
    only one word boundary between each pair of words (e.g., [#mai#kæt#]
@@ -161,7 +173,8 @@ in the main menu, and then follow these steps:
    to compensate for the extra “final” boundary at the end of an utterance.
    (It will make a difference only for calculations that include a boundary
    as one member of the pair.)
-5. **Results**: Once all options have been selected, click “Calculate mutual
+
+7. **Results**: Once all options have been selected, click “Calculate mutual
    information.” If this is not the first calculation, and you want to add
    the results to a pre-existing results table, select the choice that
    says “add to current results table.” Otherwise, select “start new
@@ -195,17 +208,19 @@ closed and you will be returned to your corpus view.
 
 .. _mi_cli:
 
+
 Implementing the mutual information function on the command line
 ----------------------------------------------------------------
 
 In order to perform this analysis on the command line, you must enter a
 command in the following format into your Terminal::
 
-   pct_mutualinfo CORPUSFILE ARG2
+   pct_mutualinfo CORPUSFILE [additional arguments]
 
-...where CORPUSFILE is the name of your \*.corpus file and ARG2 is the
-bigram whose mutual information you wish to calculate. The bigram must
-be in the format 's1,s2' where s1 and s2 are the first and second
+...where CORPUSFILE is the name of your \*.corpus file. If not calculating
+the mutal informations of all bigrams (using ``-l``), the query bigram must
+be specified using ``-q``, as ``-q QUERY``. The bigram QUERY must
+be in the format ``s1,s2`` where ``s1`` and ``s2`` are the first and second
 segments in the bigram. You may also use command line options to
 change the sequency type to use for your calculations, or to specify
 an output file name. Descriptions of these arguments can be viewed by
@@ -219,9 +234,17 @@ Positional arguments:
 
    Name of corpus file
 
-.. cmdoption:: query
+Mandatory argument group (call must have one of these two):
 
-   Bigram, as str separated by comma
+.. cmdoption:: -q QUERY
+               --query QUERY
+
+   Bigram or segment pair, as str separated by comma
+
+.. cmdoption:: -l
+               --all_pairwise_mis
+
+   Flag: calculate MI for all orders of all pairs of segments
 
 Optional arguments:
 
@@ -230,10 +253,17 @@ Optional arguments:
 
    Show help message and exit
 
+.. cmdoption:: -c CONTEXT_TYPE
+               --context_type CONTEXT_TYPE
+
+   How to deal with variable pronunciations. Options are
+   'Canonical', 'MostFrequent', 'SeparatedTokens', or
+   'Weighted'. See documentation for details.
+
 .. cmdoption:: -s SEQUENCE_TYPE
                --sequence_type SEQUENCE_TYPE
 
-   The attribute of Words to calculate FL over. Normally, this will be
+   The attribute of Words to calculate MI over. Normally, this will be
    the transcription, but it can also be the spelling or a user-specified tier.
 
 .. cmdoption:: -o OUTFILE
@@ -241,18 +271,35 @@ Optional arguments:
 
    Name of output file
 
-EXAMPLE 1: If your corpus file is example.corpus and you want to calculate
-the mutual information of the bigram 'si' using defaults for all optional
-arguments, you would run the following command in your terminal window::
+EXAMPLE 1: If your corpus file is example.corpus (no pronunciation variants)
+and you want to calculate the mutual information of the bigram 'si' using
+defaults for all optional arguments, you would run the following command
+in your terminal window::
 
-   pct_mutualinfo example.corpus s,i
+   pct_mutualinfo example.corpus -q s,i
 
 EXAMPLE 2: Suppose you want to calculate the mutual information of the
 bigram 'si' on the spelling tier. In addition, you want the script to
 produce an output file called output.txt. You would need to run the
 following command::
 
-   pct_mutualinfo example.corpus s,i -s spelling -o output.txt
+   pct_mutualinfo example.corpus -q s,i -s spelling -o output.txt
+
+EXAMPLE 3: Suppose you want to calculate the mutual information of all
+bigram types in the corpus. In addition, you want the script to
+produce an output file called output.txt. You would need to run the
+following command::
+
+   pct_mutualinfo example.corpus -l -o output.txt
+
+
+.. _mutual_info_classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`mutual_info_api`.
+
 
 .. [1] The algorithm in PCT calculates what is sometimes referred to
    as the “pointwise” mutual information of a pair of units X and Y,

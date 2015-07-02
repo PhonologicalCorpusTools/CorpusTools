@@ -1,20 +1,26 @@
 import os
 import sys
+import logging
 
 from .imports import *
 
 from .config import Settings, PreferencesDialog
 from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
-                    LexiconView,PhonoSearchResults)
-from .models import CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,DiscourseModel
+                    LexiconView,PhonoSearchResults, MutualInfoVowelHarmonyWindow)
 
-from .corpusgui import (CorpusLoadDialog, AddTierDialog, AddAbstractTierDialog,
-                        RemoveAttributeDialog,SubsetCorpusDialog, AddColumnDialog,
+from .models import (CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,
+                    DiscourseModel)
+
+from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog,
+                    save_binary)
+
+from .corpusgui import (AddTierDialog, AddAbstractTierDialog,
+                        RemoveAttributeDialog,AddColumnDialog,
                         AddCountColumnDialog,
-                        ExportCorpusDialog, AddWordDialog, CorpusSummary, save_binary)
+                        AddWordDialog, CorpusSummary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
-                        ExportFeatureSystemDialog)
+                        ExportFeatureSystemDialog, FeatureClassManager)
 
 from .windows import SelfUpdateWorker
 
@@ -28,6 +34,8 @@ from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
+from .luckygui import LuckyDialog
+from .autogui import AutoDialog
 from .helpgui import AboutDialog, HelpDialog
 
 from . import pct_rc
@@ -87,6 +95,11 @@ class MainWindow(QMainWindow):
         self.unsavedChanges = False
 
         self.settings = Settings()
+        logging.basicConfig(handlers = [logging.FileHandler(os.path.join(
+                                self.settings.log_directory(), 'pct_gui.log'),
+                            encoding = 'utf-8',
+                            mode = 'w')],
+                            level = logging.INFO)
 
         self.showWarnings = True
         self.showToolTips = True
@@ -127,7 +140,6 @@ class MainWindow(QMainWindow):
         self.featureSystemStatus = QLabel()
         self.featureSystemStatus.setText("No feature system selected")
         self.statusBar().addWidget(self.featureSystemStatus)
-
         self.setWindowTitle("Phonological CorpusTools")
         self.createActions()
         self.createMenus()
@@ -143,7 +155,9 @@ class MainWindow(QMainWindow):
         self.MIWindow = None
         self.KLWindow = None
         self.PhonoSearchWindow = None
+        self.AutoWindow = None
         self.setMinimumWidth(self.menuBar().sizeHint().width())
+
 
     def sizeHint(self):
         sz = QMainWindow.sizeHint(self)
@@ -229,7 +243,7 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
-        dialog = CorpusLoadDialog(self)
+        dialog = CorpusLoadDialog(self, self.settings)
         result = dialog.exec_()
         if result:
 
@@ -276,10 +290,18 @@ class MainWindow(QMainWindow):
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)
+            self.exportCorpusAct.setEnabled(True)
+            self.exportFeatureSystemAct.setEnabled(True)
         #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
-        dialog = FeatureMatrixManager(self)
+        dialog = FeatureMatrixManager(self, self.settings)
+        result = dialog.exec_()
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def loadFeatureClasses(self):
+        dialog = FeatureClassManager(self, self.settings, self.corpusModel)
         result = dialog.exec_()
 
     def subsetCorpus(self):
@@ -315,18 +337,14 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def showFeatureSystem(self):
-        dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus)
+        dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
-            if self.settings['autosave']:
-                self.saveCorpus()
-                self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
+            self.saveCorpus()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -392,7 +410,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def stringSim(self):
-        dialog = SSDialog(self, self.corpusModel,self.showToolTips)
+        dialog = SSDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
@@ -408,7 +426,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def freqOfAlt(self):
-        dialog = FADialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = FADialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FAWindow is not None and dialog.update and self.FAWindow.isVisible():
@@ -424,7 +442,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def predOfDist(self):
-        dialog = PDDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = PDDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PDWindow is not None and self.PDWindow.isVisible():
@@ -440,7 +458,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def funcLoad(self):
-        dialog = FLDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = FLDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
@@ -453,8 +471,10 @@ class MainWindow(QMainWindow):
                 self.FLWindow.rejected.connect(lambda: self.showFLResults.setVisible(False))
                 self.showFLResults.setVisible(True)
 
+    @check_for_empty_corpus
+    @check_for_transcription
     def kullbackLeibler(self):
-        dialog = KLDialog(self, self.corpusModel.corpus, self.showToolTips)
+        dialog = KLDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.KLWindow is not None and dialog.update and self.KLWindow.isVisible():
@@ -469,8 +489,23 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     @check_for_transcription
+    def autoAnalysis(self):
+        dialog = AutoDialog(self, self.corpusModel, self.showToolTips)
+        result = dialog.exec_()
+        # if self.AutoWindow is not None and dialog.update and self.AutoWindow.isVisible():
+        #     self.AutoWindow.table.model().addRows(dialog.results)
+        # else:
+        #     self.AutoWindow = MutualInfoVowelHarmonyWindow('Vowel Harmony', dialog, self)
+        #     self.AutoWindow.show()
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.raise_)
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.activateWindow)
+        #     self.AutoWindow.rejected.connect(lambda: self.showAutoResults.setVisible(False))
+        #     self.showAutoResults.setVisible(True)
+
+    @check_for_empty_corpus
+    @check_for_transcription
     def mutualInfo(self):
-        dialog = MIDialog(self, self.corpusModel.corpus,self.showToolTips)
+        dialog = MIDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
@@ -484,7 +519,7 @@ class MainWindow(QMainWindow):
                 self.showMIResults.setVisible(True)
 
     def acousticSim(self):
-        dialog = ASDialog(self,self.showToolTips)
+        dialog = ASDialog(self, self.settings, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.ASWindow is not None and dialog.update and self.ASWindow.isVisible():
@@ -499,7 +534,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def neighDen(self):
-        dialog = NDDialog(self, self.corpusModel,self.showToolTips)
+        dialog = NDDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
@@ -521,7 +556,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def phonoProb(self):
-        dialog = PPDialog(self, self.corpusModel,self.showToolTips)
+        dialog = PPDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
@@ -543,7 +578,7 @@ class MainWindow(QMainWindow):
 
 
     def phonoSearch(self):
-        dialog = PhonoSearchDialog(self,self.corpusModel.corpus,self.showToolTips)
+        dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
@@ -635,8 +670,7 @@ class MainWindow(QMainWindow):
                         "Error encountered", "Something went wrong during the update process.")
             app.cleanup()
 
-
-
+    @check_for_empty_corpus
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpus)
         result = dialog.exec_()
@@ -651,6 +685,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Manage feature systems", triggered=self.loadFeatureMatrices)
 
+        self.manageFeatureClassesAct = QAction( "Manage feature classes...",
+                self,
+                statusTip = "Create/change feature classes", triggered=self.loadFeatureClasses)
+
         self.createSubsetAct = QAction( "Generate a corpus subset",
                 self,
                 statusTip="Create and save a subset of the current corpus", triggered=self.subsetCorpus)
@@ -664,10 +702,12 @@ class MainWindow(QMainWindow):
         self.exportCorpusAct = QAction( "Export corpus as text file (use with spreadsheets etc.)...",
                 self,
                 statusTip="Export corpus", triggered=self.exportCorpus)
+        self.exportCorpusAct.setEnabled(False)
 
         self.exportFeatureSystemAct = QAction( "Export feature system as text file...",
                 self,
                 statusTip="Export feature system", triggered=self.exportFeatureMatrix)
+        self.exportFeatureSystemAct.setEnabled(False)
 
         self.editPreferencesAct = QAction( "Preferences...",
                 self,
@@ -753,6 +793,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate acoustic similarity for corpus")#, triggered=self.acousticSim)
 
+        self.autoAnalysisAct = QAction( "Look for phonological patterns...",
+                self,
+                statusTip = "Look for phonological patterns", triggered = self.autoAnalysis)
+
         self.toggleWarningsAct = QAction( "Show warnings",
                 self,
                 statusTip="Show warnings", triggered=self.toggleWarnings)
@@ -829,6 +873,9 @@ class MainWindow(QMainWindow):
         self.showPPResults = QAction("Phonotactic probability results", self)
         self.showPPResults.setVisible(False)
 
+        self.showAutoResults = QAction("Automatic phonological analysis results", self)
+        self.showAutoResults.setVisible(False)
+
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
         self.fileMenu.addAction(self.loadCorpusAct)
@@ -862,6 +909,7 @@ class MainWindow(QMainWindow):
 
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
+        #self.featureMenu.addAction(self.manageFeatureClassesAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.phonoProbAct)
@@ -873,8 +921,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
-
-        #self.otherMenu = self.menuBar().addMenu("Other a&nalysis")
+        #self.analysisMenu.addAction(self.autoAnalysisAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
         #self.viewMenu.addAction(self.showInventoryAct)
@@ -962,8 +1009,6 @@ class MainWindow(QMainWindow):
         for i in self.__dict__:
             item = self.__dict__[i]
             clean(item)
-     # end cleanUp
-# end class CustomWindow
 
 def clean(item):
     """Clean up the memory by closing and deleting the item if possible."""

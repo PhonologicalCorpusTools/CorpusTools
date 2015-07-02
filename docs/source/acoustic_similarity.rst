@@ -78,6 +78,9 @@ than the number of filters, as the number of coefficents returned by the
 discrete cosine transform is equal to the number of filters in the mel
 filterbank.
 
+Please note that the MFCCs calculated in PCT follow the HTK standard,
+and are not the same as those produced by Praat [PRAAT]_.
+
 Amplitude envelopes
 ```````````````````
 
@@ -127,8 +130,8 @@ file in the first directory to each .wav file in the second directory.
 
 .. _acoustic_similarity_gui:
 
-Implementing the acoustic similarity function in the GUI
---------------------------------------------------------
+Calculating acoustic similarity in the GUI
+------------------------------------------
 
 To start the analysis, click on the “Calculate acoustic similarity...” in
 the Analysis menu and provide the following parameters. Note that unlike
@@ -219,3 +222,10 @@ Here’s an example of the results file:
 To return to the function dialogue box with your most recently used
 selections, click on “Reopen function dialog.” Otherwise, the results
 table can be closed and you will be returned to your corpus view.
+
+.. _acoustic_sim_classes_and_functions:
+
+Classes and functions
+---------------------
+For further details about the relevant classes and functions in PCT's
+source code, please refer to :ref:`api_reference`.

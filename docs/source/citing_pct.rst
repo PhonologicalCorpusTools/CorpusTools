@@ -9,8 +9,8 @@ Please cite PCT as the following (all authors after K. C. Hall are listed
 alphabetically):
 
 Hall, Kathleen Currie, Blake Allen, Michael Fry, Scott Mackie, and
-Michael McAuliffe. (2015). Phonological CorpusTools, Version 1.0.
-[Computer program]. Available from `PCT SourceForge page <http://sourceforge.net/projects/phonologicalcorpustools/>`_.
+Michael McAuliffe. (2015). Phonological CorpusTools, Version 1.1.
+[Computer program]. Available from `PCT GitHub page <http://phonologicalcorpustools.github.io/CorpusTools/>`_.
 
 If you need to cite a more traditional academic source rather than the
 software itself, please use:
@@ -44,10 +44,12 @@ be specified for maximum clarity and replicability. Second, credit for the
 original creation or application of the algorithms should obviously be given
 to the proper sources. We have attempted to make this as easy as possible
 by both giving these sources here in the user’s manual and also embedding
-them in each function in the “About” option for each. Furthermore, if you
-are the author of a function that is currently implemented in PCT and you
-disagree with the way in which it has been implemented, please contact us
-to let us know! We have done our best to faithfully replicate published
+them in each function in the “About” option for each. 
+
+Furthermore, if you are the author of a function that is currently implemented 
+in PCT and you disagree with the way in which it has been implemented, please 
+contact us to let us know! We have done our best to faithfully replicate published
 descriptions, but it is obviously possible that we have made errors.
+
 Finally, if you are the author of a function that you would like to see
 implemented in PCT, please contact us to discuss the possibility.

@@ -14,7 +14,12 @@ Contents:
    introduction.rst
    downloading_and_installing.rst
    loading_corpora.rst
+   examplecorpora.rst
    transcriptions_and_feature_systems.rst
+   sound_selection.rst
+   environment_selection.rst
+   feature_selection.rst
+   pronunciation_variants.rst
    phonotactic_probability.rst
    functional_load.rst
    predictability_of_distribution.rst
@@ -26,8 +31,8 @@ Contents:
    acoustic_similarity.rst
    citing_pct.rst
    references.rst
-   apireference
-   release
+   apireference.rst
+   release.rst
 
 
 

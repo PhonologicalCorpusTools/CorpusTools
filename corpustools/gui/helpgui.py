@@ -10,7 +10,10 @@ class AboutDialog(QDialog):
     def __init__(self, parent):
         QDialog.__init__(self)
 
+        self.help_url = 'http://corpustools.readthedocs.org/en/'
         if hasattr(sys, 'frozen'):
+            import corpustools.__version__ as version
+            self.help_url += version + '/'
             base_dir = os.path.dirname(sys.executable)
             if sys.platform == 'win32':
                 self.help_dir = os.path.join(base_dir, 'html')
@@ -19,7 +22,6 @@ class AboutDialog(QDialog):
         else:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
-        self.help_url = 'http://kchall.github.io/CorpusTools/documentation/'
         use_local = os.path.exists(self.help_dir)
 
         layout = QVBoxLayout()
@@ -44,7 +46,10 @@ class HelpDialog(QDialog):
     def __init__(self, parent, name = None, section = None):
         QDialog.__init__(self)
 
+        self.help_url = 'http://corpustools.readthedocs.org/en/'
         if hasattr(sys, 'frozen'):
+            import corpustools.__version__ as version
+            self.help_url += version + '/'
             base_dir = os.path.dirname(sys.executable)
             if sys.platform == 'win32':
                 self.help_dir = os.path.join(base_dir, 'html')
@@ -54,10 +59,10 @@ class HelpDialog(QDialog):
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
-        self.help_url = 'http://kchall.github.io/CorpusTools/documentation/'
         use_local = os.path.exists(self.help_dir)
 
         layout = QVBoxLayout()
+
 
         self.webView = QWebView(self)
 
@@ -82,8 +87,15 @@ class HelpDialog(QDialog):
             url.setFragment(section)
         self.webView.setUrl(url)
 
+        self.urlLabel = QLabel("<qt>Online documentation available at \
+                        <a href = \"{}\">{}</a>.</qt>".format(url.url(), url.url()))
+        self.urlLabel.setWordWrap(True)
+        self.urlLabel.linkActivated.connect(self.openURL)
+        layout.addWidget(self.urlLabel)
         layout.addWidget(self.webView)
 
         self.setLayout(layout)
 
+    def openURL(self, URL):
+        QDesktopServices().openUrl(QUrl(URL))
 

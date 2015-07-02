@@ -4,79 +4,80 @@ from .imports import *
 
 from collections import OrderedDict
 
-from corpustools.phonoprob.phonotactic_probability import phonotactic_probability_vitevitch
+from corpustools.phonoprob.phonotactic_probability import (phonotactic_probability,
+                                                    phonotactic_probability_all_words)
 from corpustools.neighdens.io import load_words_neighden
 from corpustools.corpus.classes import Attribute
 
 from corpustools.exceptions import PCTError, PCTPythonError
 
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget
+from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget,
+                    TierWidget, RestrictedContextWidget)
 from .corpusgui import AddWordDialog
+
+from corpustools.contextmanagers import (CanonicalVariantContext,
+                                        MostFrequentVariantContext,
+                                        SeparatedTokensVariantContext,
+                                        WeightedVariantContext)
 
 
 class PPWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
-        self.results = list()
+        self.results = []
+        context = kwargs.pop('context')
+        if context == RestrictedContextWidget.canonical_value:
+            cm = CanonicalVariantContext
+        elif context == RestrictedContextWidget.frequent_value:
+            cm = MostFrequentVariantContext
         corpus = kwargs['corpusModel'].corpus
-        if 'query' in kwargs:
-            for q in kwargs['query']:
-                if kwargs['algorithm'] == 'vitevitch':
-                    try:
-                        res = phonotactic_probability_vitevitch(corpus, q,
-                                            sequence_type = kwargs['sequence_type'],
-                                            count_what = kwargs['count_what'],
+        st = kwargs['sequence_type']
+        tt = kwargs['type_token']
+        att = kwargs.get('attribute', None)
+        with cm(corpus, st, tt, att) as c:
+            try:
+                if 'query' in kwargs:
+                    for q in kwargs['query']:
+                        res = phonotactic_probability(c, q,
+                                            algorithm = kwargs['algorithm'],
                                             probability_type = kwargs['probability_type'],
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
-                    except PCTError as e:
-                        self.errorEncountered.emit(e)
-                        return
-                    except Exception as e:
-                        e = PCTPythonError(e)
-                        self.errorEncountered.emit(e)
-                        return
-                self.results.append([q,res])
-        else:
-            call_back = kwargs['call_back']
-            call_back('Calculating phonotactic probabilities...')
-            call_back(0,len(corpus))
-            cur = 0
-            kwargs['corpusModel'].addColumn(kwargs['attribute'])
-            for w in corpus:
-                if self.stopped:
-                    break
-                cur += 1
-                if cur % 20 == 0:
-                    call_back(cur)
-                try:
-                    res = phonotactic_probability_vitevitch(corpus, w,
-                                            sequence_type = kwargs['sequence_type'],
-                                            count_what = kwargs['count_what'],
+                        if self.stopped:
+                            break
+                        self.results.append([q,res])
+                else:
+                    end = kwargs['corpusModel'].beginAddColumn(att)
+                    phonotactic_probability_all_words(c,
+                                            algorithm = kwargs['algorithm'],
                                             probability_type = kwargs['probability_type'],
-                                            stop_check = kwargs['stop_check'])
-                except PCTError as e:
-                    self.errorEncountered.emit(e)
-                    return
-                except Exception as e:
-                    e = PCTPythonError(e)
-                    self.errorEncountered.emit(e)
-                    return
-                setattr(w,kwargs['attribute'].name,res)
+                                            #num_cores = kwargs['num_cores'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
+                    end = kwargs['corpusModel'].endAddColumn(end)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
         if self.stopped:
+            self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
 
-
 class PPDialog(FunctionDialog):
-    header = ['Word',
-                'Tier',
-                'Phonotactic probability',
+    header = ['Corpus',
+                'Word',
                 'Algorithm',
                 'Probability type',
-                'Type or token']
+                'Transcription tier',
+                'Frequency type',
+                'Pronunciation variants',
+                'Phonotactic probability']
 
     _about = [('This function calculates the phonotactic probability '
                     'of a word based on positional probabilities of single '
@@ -93,8 +94,8 @@ class PPDialog(FunctionDialog):
 
     name = 'phonotactic probability'
 
-    def __init__(self, parent, corpusModel, showToolTips):
-        FunctionDialog.__init__(self, parent, PPWorker())
+    def __init__(self, parent, settings, corpusModel, showToolTips):
+        FunctionDialog.__init__(self, parent, settings, PPWorker())
 
         self.corpusModel = corpusModel
         self.showToolTips = showToolTips
@@ -163,6 +164,10 @@ class PPDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+        actions = None
+        self.variantsWidget = RestrictedContextWidget(self.corpusModel.corpus, actions)
+
+        optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
 
@@ -216,8 +221,9 @@ class PPDialog(FunctionDialog):
     def generateKwargs(self):
         kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': self.algorithmWidget.value(),
+                'context': self.variantsWidget.value(),
                 'sequence_type':self.tierWidget.value(),
-                'count_what':self.typeTokenWidget.value(),
+                'type_token':self.typeTokenWidget.value(),
                 'probability_type':self.probabilityTypeWidget.value()}
 
         if self.compType is None:
@@ -288,28 +294,17 @@ class PPDialog(FunctionDialog):
 
         return kwargs
 
-    def calc(self):
-        kwargs = self.generateKwargs()
-        if kwargs is None:
-            return
-        self.thread.setParams(kwargs)
-        self.thread.start()
-
-        result = self.progressDialog.exec_()
-
-        self.progressDialog.reset()
-        if result:
-            self.accept()
-
     def setResults(self, results):
-        self.results = list()
+        self.results = []
         for result in results:
             w, pp = result
-            self.results.append([str(w),
-                        self.tierWidget.displayValue(), pp,
+            self.results.append([self.corpusModel.corpus.name,str(w),
                         self.algorithmWidget.displayValue().replace('&&','&'),
                         self.probabilityTypeWidget.displayValue(),
-                        self.typeTokenWidget.value()])
+                        self.tierWidget.displayValue(),
+                        self.typeTokenWidget.value().title(),
+                        self.variantsWidget.value().title(),
+                        pp])
 
     def vitevitchSelected(self):
         self.probabilityTypeWidget.enable()
