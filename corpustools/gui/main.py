@@ -631,7 +631,7 @@ class MainWindow(QMainWindow):
     def checkForUpdates(self):
         if getattr(sys, "frozen", False):
             import esky
-            app = esky.Esky(sys.executable,"https://github.com/kchall/CorpusTools/releases")
+            app = esky.Esky(sys.executable,"https://github.com/PhonologicalCorpusTools/CorpusTools/releases")
             try:
                 new_version = app.find_update()
                 if(new_version != None):
