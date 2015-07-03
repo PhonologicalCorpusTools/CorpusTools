@@ -9,14 +9,14 @@ from glob import glob
 
 ufuncs_path = scipy.special._ufuncs.__file__
 doc_files = dict()
-for root, dirnames, filenames in os.walk('docs\build'):
+for root, dirnames, filenames in os.walk('docs/build'):
     if os.path.basename(root).startswith('.'):
         continue
     if os.path.basename(root) in ['_images', '_sources']:
         continue
-    hr = root.replace('docs\build', 'html')
+    hr = root.replace('docs/build', 'html')
     if hr not in doc_files:
-        doc_files[hr] = list()
+        doc_files[hr] = []
     for f in filenames:
         if not f.startswith('.'):
             doc_files[hr].append(os.path.join(root,f))
@@ -73,7 +73,7 @@ exe = bdist_esky.Executable('corpustools/command_line/pct.py',
                             gui_only=True,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            #icon='docs/images/icon.ico'
+                            icon='docs/images/logo.ico'
                             )
 
 build_exe_options = {"excludes": [
