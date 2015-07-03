@@ -1,12 +1,37 @@
 import sys
 import subprocess
-
+import traceback
+import os
 
 from .imports import *
 
 from .helpgui import HelpDialog
 
 from corpustools.corpus.io import download_binary
+
+class PCTError(Exception):
+    """
+    Base class for all exceptions explicitly raised in corpustools.
+    """
+    pass
+
+class PCTPythonError(PCTError):
+    """
+    Exception wrapper around unanticipated exceptions to better display
+    them to users.
+
+    Parameters
+    ----------
+    exc : Exception
+        Uncaught exception to be be output in a way that the GUI can interpret
+    """
+    def __init__(self, exc):
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        self.main = 'Something went wrong that wasn\'t handled by PCT.'
+
+        self.information = 'Please forward to the details below to the developers.'
+        self.details = ''.join(traceback.format_exception(exc_type, exc_value,
+                                          exc_traceback))
 
 class FunctionWorker(QThread):
     updateProgress = Signal(int)
@@ -36,8 +61,17 @@ class FunctionWorker(QThread):
         if isinstance(args[0],str):
             self.updateProgressText.emit(args[0])
             return
-        elif isinstance(args[0],dict):
-            self.updateProgressText.emit(args[0]['status'])
+        elif isinstance(args[0], dict):
+            text = args[0]['status']
+            ks = [x for x in args[0].keys() if x != 'status']
+            if ks:
+                text += ': '
+                for k in ks:
+                    text += str(args[0][k])
+                    text += ' '
+            self.updateProgressText.emit(text)
+            if args[0]['status'] == 'error':
+                self.errorEncountered.emit(PCTPythonError(args[0]['exception']))
             return
         else:
             progress = args[0]
@@ -172,7 +206,11 @@ class SelfUpdateWorker(FunctionWorker):
         if self.stopCheck():
             return
         app = self.kwargs['app']
-        app.auto_update(callback = self.kwargs['call_back'])
+        try:
+            app.auto_update(callback = self.kwargs['call_back'])
+        except Exception as e:
+            self.errorEncountered.emit(e)
+            return
         if self.stopCheck():
             return
         self.dataReady.emit('')

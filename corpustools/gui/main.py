@@ -30,6 +30,8 @@ from .migui import MIDialog
 from .klgui import KLDialog
 from .helpgui import AboutDialog, HelpDialog
 
+import logging
+
 class QApplicationMessaging(QApplication):
     messageFromOtherInstance = Signal(bytes)
 
@@ -86,6 +88,11 @@ class MainWindow(QMainWindow):
 
         self.settings = Settings()
 
+        logging.basicConfig(handlers = [logging.FileHandler(os.path.join(
+                                os.path.join(self.settings['storage'], 'log'), 'pct_gui.log'),
+                            encoding = 'utf-8',
+                            mode = 'w')],
+                            level = logging.INFO)
         self.showWarnings = True
         self.showToolTips = True
 
@@ -593,7 +600,7 @@ class MainWindow(QMainWindow):
 
     def checkForUpdates(self):
         if getattr(sys, "frozen", False):
-            release_url = "https://github.com/kchall/CorpusTools/releases"
+            release_url = "https://github.com/PhonologicalCorpusTools/CorpusTools/releases/"
             if sys.platform == 'darwin':
                 from .versioning import VERSION, parse_version, find_versions
                 best_version = VERSION
@@ -620,7 +627,8 @@ class MainWindow(QMainWindow):
                         reply = QMessageBox.question(self,
                                 "Update available", ("Would you like to upgrade "
                                         "from v{} (current) to v{} (latest)?").format(app.active_version,new_version))
-                        if reply != QMessageBox.AcceptRole:
+                        if reply != QMessageBox.Yes:
+                            logging.info('upgrade cancelled')
                             return None
 
                         thread = SelfUpdateWorker()
@@ -631,12 +639,15 @@ class MainWindow(QMainWindow):
                         progressDialog.setLabelText('Updating PCT...')
                         progressDialog.setRange(0,0)
                         progressDialog.setWindowTitle('Updating PCT...')
-                        thread.updateProgressText.connect(lambda x: progressDialog.setLabelText(x))
+                        thread.updateProgressText.connect(lambda x: progressDialog.setLabelText(x.title()))
                         thread.dataReady.connect(progressDialog.accept)
+                        thread.errorEncountered.connect(self.handleError)
                         thread.start()
                         result = progressDialog.exec_()
                         if result:
+                            logging.info(sys.executable)
                             appexe = esky.util.appexe_from_executable(sys.executable)
+                            logging.info(appexe)
                             os.execv(appexe,[appexe] + sys.argv[1:])
                             app.cleanup()
                             reply = QMessageBox.information(self,
@@ -649,10 +660,47 @@ class MainWindow(QMainWindow):
                 except Exception as e:
 
                     reply = QMessageBox.critical(self,
-                            "Error encountered", "Something went wrong during the update process.")
+                            "Error encountered", "Something went wrong during the update process:\n{}".format(str(e)))
                 app.cleanup()
 
+    def handleError(self,error):
 
+        if hasattr(error, 'main'):
+            reply = QMessageBox()
+            reply.setWindowTitle('Error encountered')
+            reply.setIcon(QMessageBox.Critical)
+            reply.setText(error.main)
+            reply.setInformativeText(error.information)
+            reply.setDetailedText(error.details)
+
+            if hasattr(error,'print_to_file'):
+                error.print_to_file(self.settings.error_directory())
+                reply.addButton('Open errors directory',QMessageBox.AcceptRole)
+            reply.setStandardButtons(QMessageBox.Close)
+            ret = reply.exec_()
+            if ret == QMessageBox.AcceptRole:
+                error_dir = self.settings.error_directory()
+                if sys.platform == 'win32':
+                    args = ['{}'.format(error_dir)]
+                    program = 'explorer'
+                    #subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
+                elif sys.platform == 'darwin':
+                    program = 'open'
+                    args = ['{}'.format(error_dir)]
+                else:
+                    program = 'xdg-open'
+                    args = ['{}'.format(error_dir)]
+                #subprocess.call([program]+args,shell=True)
+                proc = QProcess(self)
+                t = proc.startDetached(program,args)
+        else:
+            reply = QMessageBox.critical(self,
+                    "Error encountered", str(error))
+        return None
+
+    def raiseException(self, e):
+        reply = QMessageBox.critical(self,
+                            "Error encountered", "Something went wrong during the update process:\n{}".format(str(e)))
 
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpus)
