@@ -52,9 +52,13 @@
 <h4>
 <a id="please-always-use-the-latest-version-of-pct-you-can-check-for-updates-from-within-pct-help--check-for-updates-andor-subscribe-to-our-e-mail-list-for-notifications" class="anchor" href="#please-always-use-the-latest-version-of-pct-you-can-check-for-updates-from-within-pct-help--check-for-updates-andor-subscribe-to-our-e-mail-list-for-notifications" aria-hidden="true"><span class="octicon octicon-link"></span></a>Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...") and/or <a href="http://eepurl.com/bqLDRD">subscribe to our e-mail list for notifications</a>.</h4>
 
-<p>Version 1.0 was released as of 3 February 2015. Version 1.0 has an improved GUI, more search and edit functions, additional capacities for phonological analysis, and a greater ability to work with running text / spontaneous speech corpora. We are always interested in feedback and suggestions for improvement. You can contact us at kathleen (dot) hall (at) ubc (dot) ca.</p>
+<p>Version 1.1.0 was released as of 6 July 2015. It differs from version 1.0.1 (March 2015) in three main areas:</p>
 
-<p>Version 1.0.1 was released on 3 March 2015, and contains a CRUCIAL bug fix for the calculation of functional load, as well as more minor bug fixes for working with feature files and TextGrids.</p>
+<ol>
+<li><p>Loading of corpora -- The interface for corpus loading has been streamlined, and users have more options for adjusting the interpretation of transcriptions and columns as they initiate a corpus. Better support for interlinear glosses and TextGrids is also provided.</p></li>
+<li><p>Specification of inventories, features, and environments -- Inventories can now be displayed in IPA-like charts based on user-specified features. Feature selection in analysis functions has been streamlined and natural class selection is better supported. Environment selection is now iterative and more interactive.</p></li>
+<li><p>Pronunciation variants -- Analysis functions now provide users with options for how to handle pronunciation variants when they occur in a corpus.</p></li>
+</ol>
 
 <h3>
 <a id="about-us" class="anchor" href="#about-us" aria-hidden="true"><span class="octicon octicon-link"></span></a>About us</h3>
@@ -109,12 +113,12 @@
 
 <p>(NOTE: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -&gt; System and Security -&gt; System.)</p>
 
-<p>Download the latest version's installer from the Phonological CorpusTools page on SourceForge (<a href="http://sourceforge.net/projects/phonologicalcorpustools">http://sourceforge.net/projects/phonologicalcorpustools</a>). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -&gt; Programs.</p>
+<p>Download the latest version's installer (PhonologicalCorpusTools_win64_1.1.0.exe) from the Phonological CorpusTools page on GitHub (<a href="https://github.com/PhonologicalCorpusTools/CorpusTools/releases">https://github.com/PhonologicalCorpusTools/CorpusTools/releases</a>). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -&gt; Programs.</p>
 
 <h3>
 <a id="mac-os-x-requires-108-or-higher" class="anchor" href="#mac-os-x-requires-108-or-higher" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mac OS X (requires 10.8 or higher)</h3>
 
-<p>Download the file 'pct.zip' from the Phonological CorpusTools page on SourceForge (<a href="http://sourceforge.net/projects/phonologicalcorpustools">http://sourceforge.net/projects/phonologicalcorpustools</a>). Unzip this file to access 'pct.app' (most likely by double-clicking it). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application.</p>
+<p>Download the file 'Phonological.CorpusTools-1.1.0.dmg' from the Phonological CorpusTools page on GitHub (<a href="https://github.com/PhonologicalCorpusTools/CorpusTools/releases">https://github.com/PhonologicalCorpusTools/CorpusTools/releases</a>). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application.</p>
 
 <h3>
 <a id="linux" class="anchor" href="#linux" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linux</h3>
@@ -147,7 +151,7 @@
 (If you are on Windows and can't successfully use the acoustic similarity module after installing from the above sources, you may want to try installing from the precompiled binaries here: <a href="http://www.lfd.uci.edu/%7Egohlke/pythonlibs/">http://www.lfd.uci.edu/~gohlke/pythonlibs/</a> .)</li>
 </ul>
 
-<p>Download the latest version of the source code for Phonological CorpusTools from the SourceForge page (<a href="http://sourceforge.net/projects/phonologicalcorpustools">http://sourceforge.net/projects/phonologicalcorpustools</a>). After expanding the file, you will find a file called 'setup.py' in the top level directory. Run it in <em>one</em> of the following ways:</p>
+<p>Download the latest version of the source code for Phonological CorpusTools from the GitHub page (<a href="https://github.com/PhonologicalCorpusTools/CorpusTools/releases">https://github.com/PhonologicalCorpusTools/CorpusTools/releases</a>). After expanding the file, you will find a file called 'setup.py' in the top level directory. Run it in <em>one</em> of the following ways:</p>
 
 <ol>
 <li><p>Double-click it. If this doesn't work, access the file properties and ensure that you have permission to run the file; if not, give them to yourself. In Windows, this may require that you open the file in Administrator mode (also accessible through file properties). If your computer opens the .py file in a text editor rather than running it, you can access the file properties to set Python 3.x as the default program to use with run .py files. If the file is opened in IDLE (a Python editor), you can use the "Run" button in the IDLE interface to run the script instead.</p></li>
