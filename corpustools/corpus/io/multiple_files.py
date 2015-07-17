@@ -9,6 +9,8 @@ FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
 from corpustools.corpus.classes import SpontaneousSpeechCorpus
 from .helper import DiscourseData,data_to_discourse, AnnotationType, Annotation, BaseAnnotation, find_wav_path
 
+from corpustools.corpus.io.binary import load_binary
+
 def phone_match(one,two):
     if one != two and one not in two:
         return False

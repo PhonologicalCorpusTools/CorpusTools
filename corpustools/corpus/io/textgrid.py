@@ -8,6 +8,8 @@ from textgrid.textgrid import readFile, Interval, Point, PointTier
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError, PCTError
 
+from corpustools.corpus.io.binary import load_binary
+
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
                     AnnotationType,data_to_discourse, find_wav_path,
                     Annotation, BaseAnnotation)
