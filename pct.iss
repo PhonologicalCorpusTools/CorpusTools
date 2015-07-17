@@ -1,9 +1,9 @@
 #define MyAppName "Phonological CorpusTools"
 #define MyDistName "PhonologicalCorpusTools"
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "1.1.0"
 #define MyPlatform "win-amd64"
 #define MyAppPublisher "PCT"
-#define MyAppURL "http://kchall.github.io/CorpusTools/"
+#define MyAppURL "http://PhonologicalCorpusTools.github.io/CorpusTools/"
 #define MyAppExeName "pct.exe"
 
 [Setup]
@@ -36,19 +36,23 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; x64 files
-Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\"; Flags: ignoreversion; Check: Is64BitInstallMode     
-Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\esky-files\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\esky-files\"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "dist\platforms\*.dll"; DestDir: "{app}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "dist\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\"; Flags: ignoreversion; Check: Is64BitInstallMode     
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\esky-files\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\esky-files\"; Flags: ignoreversion; Check: Is64BitInstallMode    
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\html\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\html\"; Flags: ignoreversion recursesubdirs; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\imageformats\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\mediaservice\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\*"; DestDir: "{app}\appdata\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\platforms\*.dll"; DestDir: "{app}\platforms"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "dist\{#MyDistName}-{#MyAppVersion}.{#MyPlatform}\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+
+[Dirs]
+name: "{app}\appdata\updates\ready"
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Uninstall Phonological CorpusTools"; Filename: "{uninstallexe}"
-Name: "{group}\Readme"; Filename: "https://github.com/kchall/CorpusTools#phonological-corpustools"
+Name: "{group}\Readme"; Filename: "{#MyAppURL}#phonological-corpustools"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]

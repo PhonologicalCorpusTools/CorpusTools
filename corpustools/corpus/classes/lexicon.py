@@ -1639,7 +1639,23 @@ class Inventory(object):
 
     def __setstate__(self, state):
         if 'stresses' not in state:
-            state['stresses'] = {}
+            state['stresses'] = collections.OrderedDict()
+        if 'places' not in state:
+            state['places'] = collections.OrderedDict()
+        if 'manners' not in state:
+            state['manners'] = collections.OrderedDict()
+        if 'height' not in state:
+            state['height'] = collections.OrderedDict()
+        if 'backness' not in state:
+            state['backness'] = collections.OrderedDict()
+        if 'vowel_feature' not in state:
+            state['vowel_feature'] = None
+        if 'voice_feature' not in state:
+            state['voice_feature'] = None
+        if 'diph_feature' not in state:
+            state['diph_feature'] = None
+        if 'rounded_feature' not in state:
+            state['rounded_feature'] = None
         self.__dict__.update(state)
 
     def __len__(self):

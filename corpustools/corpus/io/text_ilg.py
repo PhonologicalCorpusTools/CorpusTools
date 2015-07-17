@@ -6,6 +6,8 @@ from collections import Counter
 from corpustools.corpus.classes import SpontaneousSpeechCorpus
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attribute
 
+from corpustools.corpus.io.binary import load_binary
+
 from corpustools.exceptions import (DelimiterError, ILGError, ILGLinesMismatchError,
                                 ILGWordMismatchError)
 
