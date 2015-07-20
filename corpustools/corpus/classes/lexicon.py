@@ -953,8 +953,6 @@ class Word(object):
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
-        # pdb.set_trace()
-
     def __hash__(self):
         return hash((self.spelling,str(self.transcription)))
 
