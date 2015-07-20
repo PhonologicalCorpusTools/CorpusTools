@@ -1737,8 +1737,11 @@ class Inventory(object):
             for seg2 in self:
                 if seg == seg2:
                     continue
-                if seg.minimal_difference(seg2, features + redundant):
-                    break
+                try:
+                    if seg.minimal_difference(seg2, features + redundant):
+                        break
+                except KeyError:
+                    continue
             else:
                 continue
             if seg not in output[tuple(seg[f] for f in features)]:
@@ -1783,7 +1786,10 @@ class Inventory(object):
                         continue
                 if seg == '#':
                     continue
-                value = tuple(seg[x] for x in features)
+                try:
+                    value = tuple(seg[x] for x in features)
+                except KeyError:
+                    continue
                 other_value = seg[f]
                 feature_values[value].add(other_value)
                 if any(len(x) > 1 for x in feature_values.values()):
