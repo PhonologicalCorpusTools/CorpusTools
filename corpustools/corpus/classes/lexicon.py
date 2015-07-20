@@ -1930,7 +1930,7 @@ class Inventory(object):
         if seg.feature_match(self.vowel_feature):
             category = ['Vowel']
 
-            if seg.feature_match(self.diph_feature):
+            if self.diph_feature != [] and seg.feature_match(self.diph_feature):
                 category.insert(0,'Diphthong')
                 return category
 
