@@ -8,7 +8,7 @@ from corpustools.corpus.io.binary import save_binary, load_binary
 
 from .helper import parse_transcription, AnnotationType
 
-from corpustools.exceptions import DelimiterError, PCTError
+from corpustools.exceptions import DelimiterError, PCTError, CorpusIntegrityError
 
 import time
 
@@ -127,6 +127,13 @@ def load_corpus_csv(corpus_name, path, delimiter,
 
     if annotation_types is None:
         annotation_types, _ = inspect_csv(path, coldelim = delimiter)
+    else:
+        for a in annotation_types:
+            if a.attribute.name == 'transcription' and a.attribute.att_type != 'tier':
+                raise(CorpusIntegrityError(('The column \'{}\' is currently '
+                                            'not being parsed as transcriptions '
+                                            'despite its name.  Please ensure correct '
+                                            'parsing for this column.').format(a.name)))
     for a in annotation_types:
         a.reset()
 
