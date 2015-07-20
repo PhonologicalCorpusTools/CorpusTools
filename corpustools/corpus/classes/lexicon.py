@@ -1727,7 +1727,10 @@ class Inventory(object):
         output = collections.defaultdict(list)
         redundant = self.get_redundant_features(features, others)
         for seg in self:
-            if any(seg[f] not in set('+-') for f in features):
+            try:
+                if any(seg[f] not in set('+-') for f in features):
+                    continue
+            except KeyError:
                 continue
             if not seg.feature_match(others):
                 continue
