@@ -247,7 +247,7 @@ class MostFrequentVariantContext(BaseCorpusContext):
                         v_longest1 = max(v_candidates, key=len)
                         v_candidates.reverse()
                         v_longest2 = max(v_candidates, key=len)
-                        if v_longest1 == v_longest:
+                        if v_longest1 == v_longest2:
                             setattr(w, self.sequence_type, v_longest1)  # Use longest variant if one exists
                         else:
                             v_candidates = [vv for vv in v_candidates if len(vv) == len(v_longest1)]
