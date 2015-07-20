@@ -133,7 +133,9 @@ def load_corpus_csv(corpus_name, path, delimiter,
                 raise(CorpusIntegrityError(('The column \'{}\' is currently '
                                             'not being parsed as transcriptions '
                                             'despite its name.  Please ensure correct '
-                                            'parsing for this column.').format(a.name)))
+                                            'parsing for this column by changing its '
+                                            '\'Annotation type\' in the parsing '
+                                            'preview to the right.').format(a.name)))
     for a in annotation_types:
         a.reset()
 
