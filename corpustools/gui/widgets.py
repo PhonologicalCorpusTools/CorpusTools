@@ -1645,6 +1645,14 @@ class FeaturePairDialog(AbstractPairDialog):
 
         mainlayout = QFormLayout()
 
+        ## Temporary: Ensure all segments are specified for features
+        #for x in self.inventory:
+        #    if not x.features:
+        #        QMessageBox.critical(self,
+        #                "Incomplete feature specifications",
+        #                "Please ensure all segments are featurally specified.")
+        #        return
+
         self.featureWidget = FeatureEdit(self.inventory, clearOnEnter = False)
         self.featureWidget.valid_strings = self.inventory.features
         self.featureCompleter = FeatureCompleter(self.inventory)
@@ -1813,7 +1821,6 @@ class SegmentPairSelectWidget(QGroupBox):
             dialog.reset()
             result = dialog.exec_()
             addOneMore = dialog.addOneMore
-
 
     def segSetPairPopup(self):
         dialog = SegmentSetPairDialog(self.inventory)

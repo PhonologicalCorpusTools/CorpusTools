@@ -416,6 +416,49 @@ class CorpusSourceWidget(QWidget):
         return self.pathEdit.text()
 
 
+class ColumnFrame(QScrollArea):
+    def __init__(self, parent = None):
+        QScrollArea.__init__(self, parent)
+        self.columnFrame = QWidget()
+        self.columns = list()
+        lay = QBoxLayout(QBoxLayout.TopToBottom)
+        lay.addStretch()
+        self.columnFrame.setLayout(lay)
+        self.setWidgetResizable(True)
+        self.setWidget(self.columnFrame)
+        policy = self.sizePolicy()
+        policy.setVerticalStretch(1)
+        self.setSizePolicy(policy)
+        self.textType = None
+
+    def sizeHint(self):
+        sh = QScrollArea.sizeHint(self)
+        if len(self.columns) > 0:
+            sbsh = self.verticalScrollBar().sizeHint()
+            csh = self.columns.sizeHint()
+            sh.setWidth(csh.width() + sbsh.width())
+            sh.setHeight(csh.height() * len(self.columns))
+        else:
+            sh.setWidth(484)
+            sh.setHeight(484)
+        return sh
+
+
+    def updateColumnFrame(self, atts):
+        for i in reversed(range(self.columnFrame.layout().count()-1)):
+            w = self.columnFrame.layout().itemAt(i).widget()
+            if w is None:
+                del w
+                continue
+            w.setParent(None)
+            w.deleteLater()
+        self.columns = list()
+        for a in reversed(atts):
+            ignorable = self.textType not in ['spelling','transcription']
+            c = AnnotationTypeWidget(a, ignorable = ignorable)
+            self.columns.append(c)
+            self.columnFrame.layout().insertWidget(0, c)
+
 class LoadCorpusDialog(PCTDialog):
     supported_types = [(None, ''),('csv', 'Column-delimited file'),
                         ('running', 'Running text'),
@@ -509,19 +552,9 @@ class LoadCorpusDialog(PCTDialog):
         iolayout.addWidget(self.tabWidget)
         previewlayout = QVBoxLayout()
         previewlayout.addWidget(QLabel('Parsing preview'))
-        scroll = QScrollArea()
-        self.columnFrame = QWidget()
-        self.columns = list()
-        lay = QBoxLayout(QBoxLayout.TopToBottom)
-        lay.addStretch()
-        self.columnFrame.setLayout(lay)
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.columnFrame)
-        scroll.setMinimumWidth(140)
-        policy = scroll.sizePolicy()
-        policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        previewlayout.addWidget(scroll)
+        self.columnFrame = ColumnFrame()
+
+        previewlayout.addWidget(self.columnFrame)
         mainlayout.addLayout(previewlayout)
 
         self.acceptButton = QPushButton('Ok')
@@ -648,6 +681,7 @@ class LoadCorpusDialog(PCTDialog):
             else:
                 type = 'timit'
         self.textType = type
+        self.columnFrame.textType = type
         if self.isDirectory:
             t = 'text'
             if type == 'textgrid':
@@ -677,10 +711,10 @@ class LoadCorpusDialog(PCTDialog):
                 try:
                     atts, coldelim = inspect_csv(self.pathWidget.value())
                 except PCTError:
-                    self.updateColumnFrame([])
+                    self.columnFrame.updateColumnFrame([])
                     return
                 self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
-                self.updateColumnFrame(atts)
+                self.columnFrame.updateColumnFrame(atts)
             else:
                 if self.textType == 'textgrid':
                     anno_types = inspect_discourse_textgrid(self.pathWidget.value())
@@ -694,10 +728,10 @@ class LoadCorpusDialog(PCTDialog):
                 elif self.textType in ['buckeye','timit']:
 
                     anno_types = inspect_discourse_multiple_files(self.pathWidget.value(), self.textType)
-                self.updateColumnFrame(anno_types)
+                self.columnFrame.updateColumnFrame(anno_types)
 
         else:
-            self.updateColumnFrame([])
+            self.columnFrame.updateColumnFrame([])
 
     @check_for_errors
     def forceInspect(self, b):
@@ -719,22 +753,7 @@ class LoadCorpusDialog(PCTDialog):
                     except:
                         number = None
                 annotation_types = inspect_discourse_ilg(self.pathWidget.value(), number = number)
-                self.updateColumnFrame(annotation_types)
-
-    def updateColumnFrame(self, atts):
-        for i in reversed(range(self.columnFrame.layout().count()-1)):
-            w = self.columnFrame.layout().itemAt(i).widget()
-            if w is None:
-                del w
-                continue
-            w.setParent(None)
-            w.deleteLater()
-        self.columns = list()
-        for a in reversed(atts):
-            ignorable = self.textType not in ['spelling','transcription']
-            c = AnnotationTypeWidget(a, ignorable = ignorable)
-            self.columns.append(c)
-            self.columnFrame.layout().insertWidget(0, c)
+                self.columnFrame.updateColumnFrame(annotation_types)
 
     def generateKwargs(self):
         path = self.pathWidget.value()
@@ -755,7 +774,7 @@ class LoadCorpusDialog(PCTDialog):
                     'path': path,
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
-        kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
+        kwargs['annotation_types'] = [x.value() for x in reversed(self.columnFrame.columns)]
         if self.textType == 'csv':
             kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(
                                         self.columnDelimiterEdit.text()

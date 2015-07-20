@@ -630,45 +630,38 @@ class MainWindow(QMainWindow):
 
     def checkForUpdates(self):
         if getattr(sys, "frozen", False):
-            import esky
-            app = esky.Esky(sys.executable,"https://github.com/PhonologicalCorpusTools/CorpusTools/releases")
-            try:
-                new_version = app.find_update()
-                if(new_version != None):
-                    reply = QMessageBox.question(self,
-                            "Update available", ("Would you like to upgrade "
-                                    "from v{} (current) to v{} (latest)?").format(app.active_version,new_version))
-                    if reply != QMessageBox.AcceptRole:
-                        return None
+            release_url = "https://github.com/PhonologicalCorpusTools/CorpusTools/releases"
+            from .versioning import VERSION, parse_version, find_versions
+            best_version = VERSION
+            best_version_p = parse_version(VERSION)
+            for version in find_versions(release_url):
+                version_p = parse_version(version)
+                if version_p > best_version_p:
+                    best_version_p = version_p
+                    best_version = version
+            msgBox = QMessageBox(self)
+            msgBox.setTextFormat(Qt.RichText)
 
-                    thread = SelfUpdateWorker()
-                    thread.setParams({'app':app})
-
-                    progressDialog = QProgressDialog(self)
-
-                    progressDialog.setLabelText('Updating PCT...')
-                    progressDialog.setRange(0,0)
-                    progressDialog.setWindowTitle('Updating PCT...')
-                    thread.updateProgressText.connect(lambda x: progressDialog.setLabelText(x))
-                    thread.dataReady.connect(progressDialog.accept)
-                    thread.start()
-                    result = progressDialog.exec_()
-                    if result:
-                        appexe = esky.util.appexe_from_executable(sys.executable)
-                        os.execv(appexe,[appexe] + sys.argv[1:])
-                        app.cleanup()
-                        reply = QMessageBox.information(self,
-                "Finished updating", "PCT successfully updated to v{}".format(new_version))
-
+            if best_version == VERSION:
+                title = "Up to date"
+                message = "The current version ({}) is the latest released.".format(VERSION)
+            else:
+                if sys.platform == 'darwin':
+                    installer = 'Phonological.CorpusTools-{}.dmg'.format(best_version)
                 else:
+                    installer = 'PhonologicalCorpusTools_win64_{}.exe'.format(best_version)
+                title = "Update available"
+                message = ("A new release (v{}) is available (current is v{}). "
+                        "Please download the {} file from our <a href= '{}'>releases "
+                        "page</a> if you would like to upgrade.").format(best_version,
+                                                                    VERSION,
+                                                                    installer,
+                                                                    release_url)
+            msgBox.setText(message)
+            msgBox.setWindowTitle(title)
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            result = msgBox.exec_()
 
-                    reply = QMessageBox.information(self,
-                            "Up to date", "The current version ({}) is the latest released.".format(app.active_version))
-            except Exception as e:
-
-                reply = QMessageBox.critical(self,
-                        "Error encountered", "Something went wrong during the update process.")
-            app.cleanup()
 
     @check_for_empty_corpus
     def corpusSummary(self):
@@ -940,8 +933,9 @@ class MainWindow(QMainWindow):
         self.viewMenu.addAction(self.showSearchResults)
 
         self.helpMenu = self.menuBar().addMenu("&Help")
-        self.helpMenu.addAction(self.updateAct)
-        self.helpMenu.addSeparator()
+        if getattr(sys, "frozen", False):
+            self.helpMenu.addAction(self.updateAct)
+            self.helpMenu.addSeparator()
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.aboutAct)
 

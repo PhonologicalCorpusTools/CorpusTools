@@ -472,7 +472,27 @@ class EditFeatureMatrixDialog(QDialog):
         self.changeDisplay()
 
     def accept(self):
+
         if self.specifier is not None:
+            corpus_inventory = self.corpus.inventory
+            feature_inventory = self.specifier.segments
+            for seg in corpus_inventory:
+                if seg not in feature_inventory:
+                    missing = True
+                    break
+            else:
+                missing = False
+            if missing:
+                msgBox = QMessageBox(QMessageBox.Warning, "Missing segments",
+                        ("This feature matrix does not fully specify all segments in the corpus. "
+                        "Are you sure you want to use this feature system?\n\nUse the 'Check corpus "
+                        "inventory coverage button' to see which segments are missing."),
+                        QMessageBox.NoButton, self)
+                msgBox.addButton("Yes", QMessageBox.AcceptRole)
+                msgBox.addButton("No", QMessageBox.RejectRole)
+                if msgBox.exec_() != QMessageBox.AcceptRole:
+                    return None
+
             path = system_name_to_path(self.settings['storage'],self.specifier.name)
             save_binary(self.specifier, path)
         QDialog.accept(self)

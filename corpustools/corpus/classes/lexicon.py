@@ -1639,7 +1639,23 @@ class Inventory(object):
 
     def __setstate__(self, state):
         if 'stresses' not in state:
-            state['stresses'] = {}
+            state['stresses'] = collections.OrderedDict()
+        if 'places' not in state:
+            state['places'] = collections.OrderedDict()
+        if 'manners' not in state:
+            state['manners'] = collections.OrderedDict()
+        if 'height' not in state:
+            state['height'] = collections.OrderedDict()
+        if 'backness' not in state:
+            state['backness'] = collections.OrderedDict()
+        if 'vowel_feature' not in state:
+            state['vowel_feature'] = None
+        if 'voice_feature' not in state:
+            state['voice_feature'] = None
+        if 'diph_feature' not in state:
+            state['diph_feature'] = None
+        if 'rounded_feature' not in state:
+            state['rounded_feature'] = None
         self.__dict__.update(state)
 
     def __len__(self):
@@ -1711,15 +1727,21 @@ class Inventory(object):
         output = collections.defaultdict(list)
         redundant = self.get_redundant_features(features, others)
         for seg in self:
-            if any(seg[f] not in set('+-') for f in features):
+            try:
+                if any(seg[f] not in set('+-') for f in features):
+                    continue
+            except KeyError:
                 continue
             if not seg.feature_match(others):
                 continue
             for seg2 in self:
                 if seg == seg2:
                     continue
-                if seg.minimal_difference(seg2, features + redundant):
-                    break
+                try:
+                    if seg.minimal_difference(seg2, features + redundant):
+                        break
+                except KeyError:
+                    continue
             else:
                 continue
             if seg not in output[tuple(seg[f] for f in features)]:
@@ -1764,7 +1786,10 @@ class Inventory(object):
                         continue
                 if seg == '#':
                     continue
-                value = tuple(seg[x] for x in features)
+                try:
+                    value = tuple(seg[x] for x in features)
+                except KeyError:
+                    continue
                 other_value = seg[f]
                 feature_values[value].add(other_value)
                 if any(len(x) > 1 for x in feature_values.values()):
@@ -1905,7 +1930,7 @@ class Inventory(object):
         if seg.feature_match(self.vowel_feature):
             category = ['Vowel']
 
-            if seg.feature_match(self.diph_feature):
+            if self.diph_feature != [] and seg.feature_match(self.diph_feature):
                 category.insert(0,'Diphthong')
                 return category
 

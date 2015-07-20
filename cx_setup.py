@@ -12,7 +12,7 @@ def readme():
 
 
 ufuncs_path = scipy.special._ufuncs.__file__
-incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1]),'html']
+incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1]),('docs/build','html')]
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
@@ -121,7 +121,7 @@ setup(name='Phonological CorpusTools',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            icon='docs/images/icon.icns'
+                            #icon='docs/images/icon.icns'
                             )],
       options={
           'bdist_msi': bdist_msi_options,

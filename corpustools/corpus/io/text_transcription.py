@@ -216,6 +216,7 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
                             stop_check, call_back)
 
     discourse = data_to_discourse(data, lexicon)
+    discourse.name = corpus_name
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
