@@ -1,0 +1,16 @@
+CorpusTools 1.1.1 Release Notes
+*******************************
+
+This is a bugfix release for version 1.1.0.
+
+*  Fixed an issue where inventory charts were not properly generated when
+   a feature specifying diphthongs was not present
+*  Fixed an issue where corpus importing was ignoring user specified corpus names
+*  Fixed an issue with loading TextGrid and running text corpora with feature systems
+*  Fixed an issue where inventory charts were sometimes not properly generated
+   for corpora generated before 1.1.0 sometime
+*  Fixed an issue where feature pairs could not be selected if a segment in the
+   inventory was unspecified or underspecified
+*  Added a check for unspecified segments on associating feature systems with corpora
+*  Added a check for columns named transcription that are not parsed as transcription
+*  Increased initial size of the parsing preview section when importing corpora
