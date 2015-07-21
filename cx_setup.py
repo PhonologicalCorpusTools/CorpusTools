@@ -87,7 +87,7 @@ bdist_mac_options = {'iconfile':'docs/images/icon.icns',
 bdist_dmg_options = {'applications_shortcut':True}
 
 setup(name='Phonological CorpusTools',
-      version='1.1.0',
+      version='1.1.1',
       description='',
       long_description='',
       classifiers=[
