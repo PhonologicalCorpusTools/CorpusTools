@@ -78,8 +78,12 @@ bdist_msi_options = {
         'initial_target_dir': r'[ProgramFiles64Folder]\%s\%s' % (group_name, exe_name),
         'data':msi_data}
 
+menu_nib = '/opt/local/share/qt5/plugins/platforms'
+if not os.path.exists(menu_nib):
+    menu_nib = os.path.expanduser('~/miniconda/envs/pct/lib/qt5/plugins/platforms')
+
 bdist_mac_options = {'iconfile':'docs/images/icon.icns',
-                    'qt_menu_nib':'/opt/local/share/qt5/plugins/platforms',
+                    'qt_menu_nib':menu_nib,
                     'bundle_name':'Phonological CorpusTools',
                     #'include_frameworks':["/Library/Frameworks/Tcl.framework",
                     #                    "/Library/Frameworks/Tk.framework"]
