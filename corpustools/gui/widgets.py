@@ -1,3 +1,4 @@
+from PyQt5.QtWidgets import QTableView, QTableWidget
 
 import sys
 import re
@@ -1024,11 +1025,12 @@ class DirectoryWidget(QFrame):
     def value(self):
         return self.pathEdit.text()
 
-class InventoryTable(QTableWidget):
-    def __init__(self):
-        QTableWidget.__init__(self)
+class InventoryTable(QTableView):
+    def __init__(self, inventory):
+        super().__init__()
         self.horizontalHeader().setMinimumSectionSize(70)
-
+        self.setModel(inventory)
+        self.inventory = inventory
         try:
             self.horizontalHeader().setSectionsClickable(False)
             #self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -1058,11 +1060,13 @@ class InventoryTable(QTableWidget):
         self.setFixedSize(width, height)
 
 
-class EditableInventoryTable(InventoryTable):
+class EditableInventoryTable(QTableView):
 
     def __init__(self, inventory, is_cons_table=True):
         #parent is an InventoryBox
-        InventoryTable.__init__(self)
+        super().__init__()
+        super(QAbstractTableModel, inventory).__init__()
+        self.setModel(inventory)
         self.inventory = inventory
         self.isConsTable = is_cons_table
         self.horizontalHeader().setSectionsClickable(True)
@@ -1655,7 +1659,7 @@ class InventoryBox(QWidget):
         if editable:
             self.consTable = EditableInventoryTable(self.inventory,True)
         else:
-            self.consTable = InventoryTable()
+            self.consTable = InventoryTable(self.inventory)
         consBox.addWidget(self.consTable)
         cons.setLayout(consBox)
 

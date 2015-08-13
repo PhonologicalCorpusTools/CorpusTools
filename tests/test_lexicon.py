@@ -30,7 +30,7 @@ class CorpusTest(unittest.TestCase):
             self.assertEqual(corpus.find(w['spelling']),Word(**w))
             self.assertTrue(w['spelling'] in corpus)
 
-        self.assertEqual(corpus._inventory._data,{'#':Segment('#'),
+        self.assertEqual(corpus._inventory.segs,{'#':Segment('#'),
                                         'a':Segment('a'),
                                         'b':Segment('b'),
                                         'c':Segment('c'),
@@ -435,7 +435,7 @@ def test_no_features():
 
 def test_no_syllabic_feature():
     seg = Segment('')
-    seg.specify({'feature1':'+','feature2':'+'})
+    seg.set_features({'feature1':'+','feature2':'+'})
 
     assert(seg.category is None)
 
@@ -465,7 +465,7 @@ class SegmentTest(unittest.TestCase):
     def test_match_feature(self):
         for s,v in self.basic_info.items():
             seg = Segment(s)
-            seg.specify(v)
+            seg.set_features(v)
             for feature, value in v.items():
                 for fv in ['+','-']:
                     if fv == value:

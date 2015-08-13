@@ -1,3 +1,5 @@
+from corpustools.gui.imports import *
+from PyQt5.QtCore import QVariant
 import re
 import random
 import collections
@@ -18,232 +20,7 @@ class Segment(object):
         self.symbol = symbol
         self.features = dict()
 
-    @property
-    def category(self):
-        if len(self.features) == 0:
-            return None
-        if 'voc' in self.features:
-            feat_type = 'spe'
-        elif 'consonantal' in self.features:
-            feat_type = 'hayes'
-        else:
-            return None
-        category = []
-        if feat_type == 'spe':
-            if self.features['voc'] == '+':
-                if self.features['high'] == '.':
-                    category.append('Diphthong')
-                    if self.features['back'] == '-':
-                        category.append('Front')
-                    else:
-                        category.append('Back')
-                else:
-                    category.append('Vowel')
-                    #Height, backness, roundness
-                    if self.features['low'] == '-' and self.features['high'] == '+':
-                        if self.features['tense'] == '+':
-                            category.append('Close')
-                        else:
-                            category.append('Near close')
-                    elif self.features['low'] == '-' and self.features['high'] == '-':
-                        if self.features['tense'] == '+':
-                            category.append('Close mid')
-                        else:
-                            category.append('Open mid')
-                    elif self.features['low'] == '+' and self.features['high'] == '-':
-                        if self.features['tense'] == '+':
-                            category.append('Open')
-                        else:
-                            category.append('Open')
-                    else:
-                        category.append(None)
-
-                    if self.features['back'] == '+':
-                        if self.features['tense'] == '+':
-                            category.append('Back')
-                        else:
-                            category.append('Near back')
-                    elif self.features['back'] == 'n':
-                        category.append('Central')
-                    elif self.features['back'] == '-':
-                        if self.features['tense'] == '+':
-                            category.append('Front')
-                        else:
-                            category.append('Near front')
-                    else:
-                        category.append(None)
-                    if self.features['round'] == '+':
-                        category.append('Rounded')
-                    else:
-                        category.append('Unrounded')
-            elif self.features['voc'] == '-':
-                category.append('Consonant')
-                #Place, manner, voicing
-                if (self.features['ant'] == '+' and self.features['cor'] == '-' and
-                        self.features['back'] == '-'):
-                            category.append('Labial')
-                elif (self.features['ant'] == '+' and self.features['cor'] == '-' and
-                        self.features['back'] == '+' and self.features['high'] == '+'):
-                            category.append('Labial')
-                elif (self.features['ant'] == '+' and self.features['cor'] == '-' and
-                        self.features['back'] == '-'):
-                            category.append('Labiodental')
-                elif (self.features['ant'] == '+' and self.features['cor'] == '+' and
-                        self.features['back'] == '-'):
-                            category.append('Dental')
-                elif (self.features['ant'] == '-' and self.features['cor'] == '+' and
-                        self.features['back'] == '-' and self.features['high'] == '-'):
-                            category.append('Alveolar')
-                elif (self.features['ant'] == '-' and self.features['cor'] == '+' and
-                        self.features['back'] == '-' and self.features['high'] == '+'):
-                            category.append('Alveopalatal')
-                elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
-                        self.features['back'] == '-'):
-                            category.append('Palatal')
-                elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
-                        self.features['back'] == '+' and self.features['high'] == '+'):
-                            category.append('Velar')
-                elif (self.features['ant'] == '-' and self.features['cor'] == '-' and
-                        self.features['back'] == '+' and self.features['high'] == '-'):
-                            category.append('Uvular')
-                elif (self.features['low'] == '+' and
-                        self.features['back'] == '+'):
-                            category.append('Pharyngeal')
-                elif (self.features['low'] == '+' and self.features['back'] == '-'):
-                            category.append('Glottal')
-                else:
-                    category.append(None)
-                if (self.features['son'] == '-' and self.features['nasal'] == '-' and
-                        self.features['cont'] == '-'):
-                            category.append('Stop')
-                elif (self.features['nasal'] == '+'):
-                            category.append('Nasal')
-                elif (self.features['son'] == '-' and self.features['nasal'] == '-' and
-                        self.features['cont'] == '+'):
-                            category.append('Fricative')
-                elif (self.features['del_rel'] == '+'):
-                            category.append('Affricate')
-                elif (self.features['son'] == '+' and self.features['nasal'] == '-'):
-                            category.append('Approximate')
-                elif (self.features['son'] == '+' and self.features['lat'] == '+'):
-                            category.append('Lateral approximate')
-                else:
-                    category.append(None)
-                if self.features['voice'] == '+':
-                    category.append('Voiced')
-                elif self.features['voice'] == '-':
-                    category.append('Voiceless')
-                else:
-                    category.append(None)
-            else:
-                return None
-        elif feat_type == 'hayes':
-            if 'diphthong' in self.features and self.features['diphthong'] == '+':
-                category.append('Diphthong')
-                if 'front_diphthong' in self.features:
-                    if self.features['front_diphthong'] == '+':
-                        category.append('Front')
-                    else:
-                        category.append('Back')
-                elif 'front-diphthong' in self.features:
-                    if self.features['front-diphthong'] == '+':
-                        category.append('Front')
-                    else:
-                        category.append('Back')
-                else:
-                    category.append('Back')
-
-            elif self.features['syllabic'] == '+':
-                category.append('Vowel')
-                #Height, backness, roundness
-                if self.features['low'] == '-' and self.features['high'] == '+':
-                    if self.features['tense'] == '+':
-                        category.append('Close')
-                    else:
-                        category.append('Near close')
-                elif self.features['low'] == '-' and self.features['high'] == '-':
-                    if self.features['tense'] == '+':
-                        category.append('Close mid')
-                    else:
-                        category.append('Open mid')
-                elif self.features['low'] == '+' and self.features['high'] == '-':
-                    if self.features['tense'] == '+':
-                        category.append('Open')
-                    else:
-                        category.append('Open')
-                else:
-                    category.append(None)
-
-                if self.features['back'] == '+' and self.features['front'] == '-':
-                    if self.features['tense'] == '+':
-                        category.append('Back')
-                    else:
-                        category.append('Near back')
-                elif self.features['back'] == '-' and self.features['front'] == '-':
-                    category.append('Central')
-                elif self.features['back'] == '-' and self.features['front'] == '+':
-                    if self.features['tense'] == '+':
-                        category.append('Front')
-                    else:
-                        category.append('Near front')
-                else:
-                    category.append(None)
-                if self.features['round'] == '+':
-                    category.append('Rounded')
-                else:
-                    category.append('Unrounded')
-
-            elif self.features['syllabic'] == '-':
-                category.append('Consonant')
-                if self.features['labial'] == '+':
-                    category.append('Labial')
-                elif self.features['labiodental'] == '+':
-                    category.append('Labiodental')
-                elif self.features['anterior'] == '+' and self.features['coronal'] == '+':
-                    category.append('Dental')
-                elif self.features['anterior'] == '-' and self.features['coronal'] == '+':
-                    category.append('Alveopalatal')
-                elif self.features['dorsal'] == '+' and self.features['coronal'] == '+':
-                    category.append('Palatal')
-                elif self.features['dorsal'] == '+' and self.features['front'] == '+':
-                    category.append('Palatal')
-                elif self.features['dorsal'] == '+'and self.features['back'] == '+':
-                    category.append('Uvular')
-                elif self.features['dorsal'] == '+':
-                    category.append('Velar')
-                elif (self.features['dorsal'] == '-' and self.features['coronal'] == '-'):
-                    category.append('Glottal')
-                else:
-                    category.append(None)
-                if (self.features['sonorant'] == '-' and self.features['continuant'] == '-'
-                        and self.features['nasal'] == '-' and self.features['delayed_release'] == '-'):
-                    category.append('Stop')
-                elif (self.features['nasal'] == '+'):
-                    category.append('Nasal')
-                elif (self.features['trill'] == '+'):
-                    category.append('Trill')
-                elif (self.features['tap'] == '+'):
-                    category.append('Tap')
-                elif (self.features['sonorant'] == '-' and self.features['continuant'] == '+'):
-                    category.append('Fricative')
-                elif (self.features['sonorant'] == '-' and self.features['continuant'] == '-'
-                        and self.features['delayed_release'] == '+'):
-                    category.append('Affricate')
-                elif (self.features['sonorant'] == '+' and self.features['lateral'] == '-'):
-                    category.append('Approximate')
-                elif (self.features['sonorant'] == '+' and self.features['lateral'] == '+'):
-                    category.append('Lateral approximate')
-                else:
-                    category.append(None)
-                if self.features['voice'] == '+':
-                    category.append('Voiced')
-                else:
-                    category.append('Voiceless')
-            else:
-                return None
-        return category
-
-    def specify(self,feature_dict):
+    def set_features(self,feature_dict):
         self.features = feature_dict
 
     def feature_match(self, specification):
@@ -554,62 +331,13 @@ class FeatureMatrix(object):
             if self._features is None:
                 self._features = {k for k in s.keys() if k != 'symbol'}
             self.matrix[s['symbol']] = Segment(s['symbol'])
-            self.matrix[s['symbol']].specify({k:v for k,v in s.items() if k != 'symbol'})
+            self.matrix[s['symbol']].set_features({k:v for k,v in s.items() if k != 'symbol'})
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
 
         #What are these?
         self.matrix['#'] = Segment('#')
         #self.matrix[''] = {'*':''}
-        self.cons_columns = {}
-        self.cons_rows = {}
-        self.vow_columns = {}
-        self.vow_rows = {}
-        self.generate_generic_names()
 
-    def generate_generic_names(self):
-        if 'consonantal' in self.features:
-            self.generate_generic_hayes()
-            self.vowel_feature = '-consonantal'
-            self.voice_feature = '+voice'
-        elif 'voc' in self.features:
-            self.generate_generic_spe()
-            self.vowel_feature = '+voc'
-            self.voice_feature = '+voice'
-        else:
-            pass
-
-    def generate_generic_spe(self):
-        pass
-
-    def generate_generic_hayes(self):
-        self.cons_columns['Labial'] = [0,{'consonantal':'+', 'labial': '+', 'coronal':'-'}, None]
-        self.cons_columns['Labiodental'] = [1,{'consonantal':'+', 'labiodental': '+',}, None]
-        self.cons_columns['Dental'] = [2,{'consonantal':'+', 'anterior': '+', 'coronal':'+', 'labial':'-'}, None]
-        self.cons_columns['Alveopalatal'] = [3,{'consonantal':'+', 'anterior': '-', 'coronal':'+', 'labial':'-'}, None]
-        self.cons_columns['Palatal'] = [4,{'consonantal':'+', 'dorsal': '+', 'coronal':'+', 'labial':'-'}, None]
-        self.cons_columns['Velar'] = [5,{'consonantal':'+', 'dorsal': '+', 'labial':'-'}, None]
-        self.cons_columns['Uvular'] = [6,{'consonantal':'+', 'dorsal': '+', 'back':'+', 'labial':'-'}, None]
-        self.cons_columns['Glottal'] = [7,{'consonantal':'+', 'dorsal': '-', 'coronal':'-', 'labial':'-', 'nasal': '-'}, None]
-
-        self.cons_rows['Stop'] = [0,{'consonantal':'+', 'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None]
-        self.cons_rows['Nasal'] = [1,{'consonantal':'+', 'nasal': '+'}, None]
-        self.cons_rows['Trill'] = [2,{'consonantal':'+', 'trill': '+'}, None]
-        self.cons_rows['Tap'] = [3,{'consonantal':'+', 'tap': '+'}, None]
-        self.cons_rows['Fricative'] = [4,{'consonantal':'+', 'sonorant': '-','continuant':'+'}, None]
-        self.cons_rows['Affricate'] = [5,{'consonantal':'+', 'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None]
-        self.cons_rows['Approximant'] = [6,{'consonantal':'+', 'sonorant': '+', 'lateral':'-'}, None]
-        self.cons_rows['Lateral approximant'] = [7,{'consonantal':'+', 'sonorant': '+', 'lateral':'+'}, None]
-
-        self.vow_columns['Front'] = [0, {'consonantal': '-', 'front': '+', 'back':'-', 'tense':'+'}, None]
-        self.vow_columns['Near-front'] = [1, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'}, None]
-        self.vow_columns['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
-        self.vow_columns['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense':'-'}, None]
-        self.vow_columns['Back'] = [4, {'consonantal': '-', 'front':'-', 'back':'+', 'tense':'+'}, None]
-
-        self.vow_rows['High'] = [0, {'consonantal':'-', 'high':'+', 'low':'-', 'tense':'+'}, None]
-        self.vow_rows['Mid-high'] = [1,{'consonantal':'-', 'high':'-', 'low':'-', 'tense':'+'}, None]
-        self.vow_rows['Mid-low'] = [2, {'consonantal':'-', 'high':'-', 'low':'-', 'tense':'-'}, None]
-        self.vow_rows['Low'] = [3, {'consonantal':'-', 'high':'-', 'low':'+', 'tense':'+'}, None]
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
@@ -624,7 +352,7 @@ class FeatureMatrix(object):
         for k,v in state['matrix'].items():
             if not isinstance(v,Segment):
                 s = Segment(k)
-                s.specify(v)
+                s.set_features(v)
                 state['matrix'][k] = s
         self.__dict__.update(state)
 
@@ -639,7 +367,7 @@ class FeatureMatrix(object):
             self.vowel_feature = None
             self.voice_feature = None
             self.rounded_feature = None
-            self.generate_generic_names()
+
 
     def __iter__(self):
         for k in sorted(self.matrix.keys()):
@@ -690,7 +418,7 @@ class FeatureMatrix(object):
             if f not in self._features:
                 raise(AttributeError('The segment \'%s\' has a feature \'%s\' that is not defined for this feature matrix' %(seg,f)))
         s = Segment(seg)
-        s.specify(feat_spec)
+        s.set_features(feat_spec)
         self.matrix[seg] = s
 
     def add_feature(self,feature, default = None):
@@ -746,18 +474,6 @@ class FeatureMatrix(object):
         featline = [symbol] + [ self.matrix[symbol][feat]
                             for feat in self.features]
         return featline
-
-    def getConsonantColumns(self):
-        return self.consCols
-
-    def getConsonantRows(self):
-        return self.consRows
-
-    def getVowelColumns(self):
-        return self.vowCols
-
-    def getVowelRows(self):
-        return self.vowRows
 
     def spe_categories(self,seg):
         category = list()
@@ -871,150 +587,12 @@ class FeatureMatrix(object):
 
         return category
 
-    def hayes_categories(self, seg):
-        category = []
-        if 'diphthong' in seg.features and seg.features['diphthong'] == '+':
-            category.append('Diphthong')
-            if 'front_diphthong' in seg.features:
-                if seg.features['front_diphthong'] == '+':
-                    category.append('Front')
-                else:
-                    category.append('Back')
-            elif 'front-diphthong' in seg.features:
-                if seg.features['front-diphthong'] == '+':
-                    category.append('Front')
-                else:
-                    category.append('Back')
-            else:
-                category.append('Back')
-
-        elif seg.features['syllabic'] == '+':
-            category.append('Vowel')
-            #Height, backness, roundness
-            if seg.features['low'] == '-' and seg.features['high'] == '+':
-                if seg.features['tense'] == '+':
-                    category.append('Close')
-                else:
-                    category.append('Near close')
-            elif seg.features['low'] == '-' and seg.features['high'] == '-':
-                if seg.features['tense'] == '+':
-                    category.append('Close mid')
-                else:
-                    category.append('Open mid')
-            elif seg.features['low'] == '+' and seg.features['high'] == '-':
-                if seg.features['tense'] == '+':
-                    category.append('Open')
-                else:
-                    category.append('Open')
-            else:
-                category.append(None)
-
-            if seg.features['back'] == '+' and seg.features['front'] == '-':
-                if seg.features['tense'] == '+':
-                    category.append('Back')
-                else:
-                    category.append('Near back')
-            elif seg.features['back'] == '-' and seg.features['front'] == '-':
-                category.append('Central')
-            elif seg.features['back'] == '-' and seg.features['front'] == '+':
-                if seg.features['tense'] == '+':
-                    category.append('Front')
-                else:
-                    category.append('Near front')
-            else:
-                category.append(None)
-            if seg.features['round'] == '+':
-                category.append('Rounded')
-            else:
-                category.append('Unrounded')
-
-        elif seg.features['syllabic'] == '-':
-            category.append('Consonant')
-            if seg.features['labial'] == '+':
-                category.append('Labial')
-            elif seg.features['labiodental'] == '+':
-                category.append('Labiodental')
-            elif seg.features['anterior'] == '+' and seg.features['coronal'] == '+':
-                category.append('Dental')
-            elif seg.features['anterior'] == '-' and seg.features['coronal'] == '+':
-                category.append('Alveopalatal')
-            elif seg.features['dorsal'] == '+' and seg.features['coronal'] == '+':
-                category.append('Palatal')
-            elif seg.features['dorsal'] == '+' and seg.features['front'] == '+':
-                category.append('Palatal')
-            elif seg.features['dorsal'] == '+'and seg.features['back'] == '+':
-                category.append('Uvular')
-            elif seg.features['dorsal'] == '+':
-                category.append('Velar')
-            elif (seg.features['dorsal'] == '-' and seg.features['coronal'] == '-'):
-                category.append('Glottal')
-            else:
-                category.append(None)
-            if (seg.features['sonorant'] == '-' and seg.features['continuant'] == '-'
-                and seg.features['nasal'] == '-' and seg.features['delayed_release'] == '-'):
-                category.append('Stop')
-            elif (seg.features['nasal'] == '+'):
-                category.append('Nasal')
-            elif (seg.features['trill'] == '+'):
-                category.append('Trill')
-            elif (seg.features['tap'] == '+'):
-                category.append('Tap')
-            elif (seg.features['sonorant'] == '-' and seg.features['continuant'] == '+'):
-                category.append('Fricative')
-            elif (seg.features['sonorant'] == '-' and seg.features['continuant'] == '-'
-                  and seg.features['delayed_release'] == '+'):
-                category.append('Affricate')
-            elif (seg.features['sonorant'] == '+' and seg.features['lateral'] == '-'):
-                category.append('Approximate')
-            elif (seg.features['sonorant'] == '+' and seg.features['lateral'] == '+'):
-                category.append('Lateral approximate')
-            else:
-                category.append(None)
-            if seg.features['voice'] == '+':
-                category.append('Voiced')
-            else:
-                category.append('Voiceless')
+    def specify(self, seg):
+        if instance(seg, Segment):
+            features = self.matrix[seg.symbol]
         else:
-            return None
-        return category
-
-    def isVoiced(self,seg):
-        return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
-
-    def isVowel(self,seg):
-        return seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
-
-    def categorize(self,seg):
-        seg_features = seg.features
-        if self.isVowel(seg):
-            category = ['Vowel']
-            iterRows = self.vowRows
-            iterCols = self.vowCols
-        else:
-            category = ['Consonant']
-            iterRows = self.consRows
-            iterCols = self.consCols
-
-        for row,col in itertools.product(iterRows, iterCols):
-            row_index, row_features, row_segs = iterRows[row]
-            col_index, col_features, col_segs = iterCols[col]
-
-            if (row_segs is not None and seg in row_segs) and (col_segs is not None and seg in col_segs):
-                category.extend([col, row])
-                break
-            elif (all(seg_features[feature]==value for feature,value in row_features.items()) and
-                    all(seg_features[feature]==value for feature,value in col_features.items())):
-                category.extend([col, row])
-                break
-        else:
-            raise KeyError(seg.symbol)
-
-        if self.isVoiced(seg):
-            category.append('Voiced')
-        else:
-            category.append('Voiceless')
-        return category
-
+            features = self.matrix[seg]
+        return features
 
     def __getitem__(self,item):
         if isinstance(item,str):
@@ -1631,12 +1209,19 @@ class Attribute(object):
                 self._range = set(self._range)
             self._range.update([x for x in value])
 
-class Inventory(object):
-    def __init__(self, data = None):
-        if data is None:
-            self._data = {'#' : Segment('#')}
-        else:
-            self._data = data
+class Inventory(QAbstractTableModel):
+    """
+    Contains information about the phonological inventory. The __init__ does not seed with any phonemes because these
+    are inferred during corpus building when words are added.
+    See corpustools.corpus.io.csv.load_corpus_csv()
+    See also corpustools.corpus.classes.lexicon.Corpus.add_word()
+    See also corpustools.corpus.classes.lexicon.Corpus.update_inventory()
+    """
+    def __init__(self):
+        super(QAbstractTableModel, self).__init__()
+        #for some reason, this __init__() has to be called twice:
+        #once here and once again inside inventorygui.InventoryTable2, which is the TableView for this model
+        self.segs = {'#' : Segment('#')}
         self.features = []
         self.possible_values = set()
         self.classes = {}
@@ -1646,11 +1231,137 @@ class Inventory(object):
         self.vow_columns = {}
         self.vow_rows = {}
 
-    def hasClass(self, class_name):
-        if class_name in self.classes.keys():
-            return True
+    def rowCount(self, index):
+        rc = len(self.cons_rows)
+        return rc if rc > 0 else 1
+
+    def columnCount(self, index):
+        cc = len(self.cons_columns)
+        return cc if cc > 0 else 1
+
+    def data(self, index, role):
+        if not index.isValid():
+            return QVariant()
+        elif role != Qt.DisplayRole:
+            return QVariant()
+        try:
+            value = self._data[index.row()][index.column()]
+        except IndexError:
+            value = '?'
+        return value
+
+    def isVoiced(self,seg):
+        return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
+
+    def isVowel(self,seg):
+        return seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
+
+    def setRowColNames(self):
+        self.generate_generic_names()
+        self.consColumns = set()
+        self.consRows = set()
+        self.vowColumns = set()
+        self.vowRows = set()
+        self.consList = []
+        self.vowList = []
+        self.uncategorized = []
+
+        for s in self.segs.values():
+            try:
+                c = self.categorize(s)
+            except KeyError:
+                c = None
+                self.uncategorized.append(s)
+            if c is not None:
+                if c[0] == 'Vowel':
+                    self.vowColumns.add(c[2])
+                    self.vowRows.add(c[1])
+                    self.vowList.append((s,c))
+                elif c[0] == 'Consonant':
+                    self.consColumns.add(c[1])
+                    self.consRows.add(c[2])
+                    self.consList.append((s,c))
+
+        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_columns[x][0])
+        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x:self.cons_rows[x][0])
+
+
+
+        self.cons_columns = {i:name for i,name in enumerate(sorted_cons_col_headers)}
+        self.cons_rows = {i:name for i,name in enumerate(sorted_cons_row_headers)}
+        self._data = [[None for j in range(len(sorted_cons_col_headers))] for k in range(len(sorted_cons_row_headers))]
+        for row,col in itertools.product(self.cons_rows.keys(), self.cons_columns.keys()):
+            row_name = self.cons_rows[row]
+            col_name = self.cons_columns[col]
+            matches = list()
+            for seg,cat in self.consList:
+                if row_name in cat and col_name in cat:
+                    matches.append(seg)
+            self._data[row][col] = ''.join([m.symbol for m in matches])
+
+        for i, header in enumerate(sorted_cons_col_headers):
+            self.setHeaderData(i,1,header)#1 means horizontal orientation
+            self.headerDataChanged.emit(1, i, i)
+
+        for i,header in enumerate(sorted_cons_row_headers):
+            self.setHeaderData(i,2,header)#2 means vertical orientation
+            self.headerDataChanged.emit(2, i, i)
+
+    def headerData(self, row_or_col, orientation, int_role=None):
+        try:
+            if orientation==1:
+                return self.cons_columns[row_or_col]
+            elif orientation==2:
+                return self.cons_rows[row_or_col]
+        except KeyError:
+            return QVariant()
+
+    def generate_generic_names(self):
+        sample = random.choice(list(self.segs.values()))#pick an arbitrary segment and examine its features
+        if 'consonantal' in sample.features:
+            self.generate_generic_hayes()
+            self.vowel_feature = '-consonantal'
+            self.voice_feature = '+voice'
+        elif 'voc' in sample.features:
+            self.generate_generic_spe()
+            self.vowel_feature = '+voc'
+            self.voice_feature = '+voice'
         else:
-            return False
+            pass
+
+    def generate_generic_spe(self):
+        pass
+
+    def generate_generic_hayes(self):
+        self.cons_columns['Labial'] = [0,{'consonantal':'+', 'labial': '+', 'coronal':'-'}, None]
+        self.cons_columns['Labiodental'] = [1,{'consonantal':'+', 'labiodental': '+'}, None]
+        self.cons_columns['Dental'] = [2,{'consonantal':'+', 'anterior': '+', 'coronal':'+', 'labial':'-'}, None]
+        self.cons_columns['Alveopalatal'] = [3,{'consonantal':'+', 'anterior': '-', 'coronal':'+', 'labial':'-'}, None]
+        self.cons_columns['Palatal'] = [4,{'consonantal':'+', 'dorsal': '+', 'coronal':'+', 'labial':'-'}, None]
+        self.cons_columns['Velar'] = [5,{'consonantal':'+', 'dorsal': '+', 'labial':'-'}, None]
+        self.cons_columns['Uvular'] = [6,{'consonantal':'+', 'dorsal': '+', 'back':'+', 'labial':'-'}, None]
+        self.cons_columns['Glottal'] = [7,{'consonantal':'+', 'dorsal': '-', 'coronal':'-', 'labial':'-', 'nasal': '-'}, None]
+
+        self.cons_rows['Stop'] = [0,{'consonantal':'+', 'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}, None]
+        self.cons_rows['Nasal'] = [1,{'consonantal':'+', 'nasal': '+'}, None]
+        self.cons_rows['Trill'] = [2,{'consonantal':'+', 'trill': '+'}, None]
+        self.cons_rows['Tap'] = [3,{'consonantal':'+', 'tap': '+'}, None]
+        self.cons_rows['Fricative'] = [4,{'consonantal':'+', 'sonorant': '-','continuant':'+'}, None]
+        self.cons_rows['Affricate'] = [5,{'consonantal':'+', 'sonorant': '-', 'continuant':'-','delayed_release':'+'}, None]
+        self.cons_rows['Approximant'] = [6,{'consonantal':'+', 'sonorant': '+', 'lateral':'-'}, None]
+        self.cons_rows['Lateral approximant'] = [7,{'consonantal':'+', 'sonorant': '+', 'lateral':'+'}, None]
+
+        self.vow_columns['Front'] = [0, {'consonantal': '-', 'front': '+', 'back':'-', 'tense':'+'}, None]
+        self.vow_columns['Near-front'] = [1, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'}, None]
+        self.vow_columns['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
+        self.vow_columns['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense':'-'}, None]
+        self.vow_columns['Back'] = [4, {'consonantal': '-', 'front':'-', 'back':'+', 'tense':'+'}, None]
+
+        self.vow_rows['High'] = [0, {'consonantal':'-', 'high':'+', 'low':'-', 'tense':'+'}, None]
+        self.vow_rows['Mid-high'] = [1,{'consonantal':'-', 'high':'-', 'low':'-', 'tense':'+'}, None]
+        self.vow_rows['Mid-low'] = [2, {'consonantal':'-', 'high':'-', 'low':'-', 'tense':'-'}, None]
+        self.vow_rows['Low'] = [3, {'consonantal':'-', 'high':'-', 'low':'+', 'tense':'+'}, None]
+
 
     def __setstate__(self, state):
         if 'stresses' not in state:
@@ -1658,34 +1369,34 @@ class Inventory(object):
         self.__dict__.update(state)
 
     def __len__(self):
-        return len(self._data.keys())
+        return len(self.segs.keys())
 
     def keys(self):
-        return self._data.keys()
+        return self.segs.keys()
 
     def values(self):
-        return self._data.values()
+        return self.segs.values()
 
     def items(self):
-        return self._data.items()
+        return self.segs.items()
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            return sorted(self._data.keys())[key]
-        return self._data[key]
+            return sorted(self.segs.keys())[key]
+        return self.segs[key]
 
     def __setitem__(self, key, value):
-        self._data[key] = value
+        self.segs[key] = value
 
     def __iter__(self):
-        for k in sorted(self._data.keys()):
-            yield self._data[k]
+        for k in sorted(self.segs.keys()):
+            yield self.segs[k]
 
     def __contains__(self, item):
         if isinstance(item, str):
-            return item in self._data.keys()
+            return item in self.segs.keys()
         elif isinstance(item, Segment):
-            return item.symbol in self._data.keys()
+            return item.symbol in self.segs.keys()
         return False
 
     def valid_feature_strings(self):
@@ -1718,49 +1429,10 @@ class Inventory(object):
         segments = []
         if isinstance(feature_description, str):
             feature_description = feature_description.split(',')
-        for k,v in self._data.items():
+        for k,v in self.segs.items():
             if v.feature_match(feature_description):
                 segments.append(k)
         return segments
-
-    def specify(self, specifier):
-        if specifier is None:
-            for k in self._data.keys():
-                self._data[k].specify({})
-            self.features = []
-            self.possible_values = set()
-            self.cons_columns = {}
-            self.cons_rows = {}
-            self.vow_columns = {}
-            self.vow_rows = {}
-        else:
-            for k in self._data.keys():
-                try:
-                    self._data[k].specify(specifier[k].features)
-                except KeyError:
-                    self._data[k].specify({})
-            self.features = specifier.features
-            self.possible_values = specifier.possible_values
-
-            self.voice_feature = specifier.voice_feature
-            self.vowel_feature = specifier.vowel_feature
-            self.rounded_feature = specifier.rounded_feature
-
-            self.cons_columns = {}
-            for k,v in specifier.cons_columns.items():
-                self.cons_columns[k] = [v[0], self.features_to_segments(v[1])]
-
-            self.cons_rows = {}
-            for k,v in specifier.cons_rows.items():
-                self.cons_rows[k] = [v[0], self.features_to_segments(v[1])]
-
-            self.vow_columns = {}
-            for k,v in specifier.vow_columns.items():
-                self.vow_columns[k] = [v[0], self.features_to_segments(v[1])]
-
-            self.vow_rows = {}
-            for k,v in specifier.vow_rows.items():
-                self.vow_rows[k] = [v[0], self.features_to_segments(v[1])]
 
     def is_voiced(self, seg):
         return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
@@ -1782,14 +1454,20 @@ class Inventory(object):
             iterCols = self.cons_columns
 
         for row,col in itertools.product(iterRows, iterCols):
-            row_index, row_segs = iterRows[row]
-            col_index, col_segs = iterCols[col]
+            row_index, row_features, row_segs = iterRows[row]
+            col_index, col_features, col_segs = iterCols[col]
 
-            if (row_segs is not None and seg in row_segs) and (col_segs is not None and seg in col_segs):
+            if ((row_segs is not None and seg in row_segs) and
+                        (col_segs is not None and seg in col_segs)):
                 category.extend([col, row])
+                break
+            elif (all(row_features[key]==seg.features[key] for key in row_features) and
+                        all(col_features[key]==seg.features[key] for key in col_features)):
+                category.extend([col,row])
                 break
         else:
             raise KeyError(seg.symbol)
+
         if self.is_vowel(seg):
             if self.is_rounded(seg):
                 category.append('Rounded')
@@ -2202,7 +1880,6 @@ class Corpus(object):
                 except KeyError:
                     pass
             self.__dict__.update(state)
-            self._specify_features()
             #Backwards compatability
             for k,w in self.wordlist.items():
                 w._corpus = self
@@ -2219,10 +1896,6 @@ class Corpus(object):
                             raise(e)
         except Exception as e:
             raise(CorpusIntegrityError("An error occurred while loading the corpus: {}.\nPlease redownload or recreate the corpus.".format(str(e))))
-
-
-    def _specify_features(self):
-        self.inventory.specify(self.specifier)
 
     def check_coverage(self):
         """
@@ -2278,7 +1951,7 @@ class Corpus(object):
             New feature system to use in the corpus
         """
         self.specifier = matrix
-        self._specify_features()
+
 
     @property
     def inventory(self):
@@ -2387,11 +2060,12 @@ class Corpus(object):
         """
         for s in transcription:
             if isinstance(s, str):
-                if s not in self._inventory:
-                    self._inventory[s] = Segment(s)
+                if s not in self._inventory.segs.keys():
+                    self._inventory.segs[s] = self.specifier[s]
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self._inventory.stresses[v].add(transcription[k])
+
 
     def get_or_create_word(self, **kwargs):
         """

@@ -25,7 +25,7 @@ class InventoryManager(QDialog):
                       'highlight the row or column, then drag-and-drop to reorganize the table.')
         layout.addWidget(QLabel(topmessage))
 
-        self.segSelectWidget = InventoryBox(self, self.corpus.inventory, editable=True)
+        self.segSelectWidget = InventoryTable2(self, self.corpus.inventory, editable=True)
         segLayout = QVBoxLayout()
         segLayout.addWidget(self.segSelectWidget)
         layout.addLayout(segLayout)
@@ -61,3 +61,42 @@ class InventoryManager(QDialog):
 
     def reorderTable(self):
         print('reordering')
+
+class InventoryTable2(QTableView):
+
+    def __init__(self, parent, inventory, editable):
+        super().__init__(parent)
+        super(QAbstractTableModel, inventory).__init__(parent)
+        #this super() is also called in the __init__ of Inventory, but for some reason must be called a second time here
+        #if you comment out the line above, then it raises RuntimeError: super() of Inventory was never called
+        self.setModel(inventory)
+        #self.horizontalHeader().setMinimumSectionSize(70)
+        self.inventory = inventory
+        self.editable = editable
+        try:
+            self.horizontalHeader().setSectionsClickable(False)
+            #self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+            self.verticalHeader().setSectionsClickable(False)
+            #self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        except AttributeError:
+            self.horizontalHeader().setClickable(False)
+            #self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+            self.verticalHeader().setClickable(False)
+            #self.verticalHeader().setResizeMode(QHeaderView.Fixed)
+
+        self.setSelectionMode(QAbstractItemView.NoSelection)
+        #self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+    def resize(self):
+        self.resizeRowsToContents()
+        #self.resizeColumnsToContents()
+        hor = self.horizontalHeader()
+        ver = self.verticalHeader()
+        width = ver.sizeHint().width()
+        for i in range(hor.count()):
+            width += hor.sectionSize(i)
+        height = hor.sizeHint().height()
+        for i in range(ver.count()):
+            height += ver.sectionSize(i)
+        self.setFixedSize(width, height)
