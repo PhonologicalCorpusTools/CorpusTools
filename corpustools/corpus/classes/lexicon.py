@@ -1230,6 +1230,7 @@ class Inventory(QAbstractTableModel):
         self.cons_rows = {}
         self.vow_columns = {}
         self.vow_rows = {}
+        self.setRowColNames()
 
     def rowCount(self, index):
         rc = len(self.cons_rows)
@@ -1246,6 +1247,7 @@ class Inventory(QAbstractTableModel):
             return QVariant()
         try:
             value = self._data[index.row()][index.column()]
+            #check if this can return a MultiSegmentButton
         except IndexError:
             value = '?'
         return value
@@ -1285,8 +1287,6 @@ class Inventory(QAbstractTableModel):
         sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_columns[x][0])
         sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x:self.cons_rows[x][0])
 
-
-
         self.cons_columns = {i:name for i,name in enumerate(sorted_cons_col_headers)}
         self.cons_rows = {i:name for i,name in enumerate(sorted_cons_row_headers)}
         self._data = [[None for j in range(len(sorted_cons_col_headers))] for k in range(len(sorted_cons_row_headers))]
@@ -1309,12 +1309,13 @@ class Inventory(QAbstractTableModel):
 
     def headerData(self, row_or_col, orientation, int_role=None):
         try:
-            if orientation==1:
+            if orientation==1:#horizontal
                 return self.cons_columns[row_or_col]
-            elif orientation==2:
+            elif orientation==2:#vertical
                 return self.cons_rows[row_or_col]
         except KeyError:
-            return QVariant()
+            return '?'
+
 
     def generate_generic_names(self):
         sample = random.choice(list(self.segs.values()))#pick an arbitrary segment and examine its features

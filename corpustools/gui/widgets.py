@@ -1315,7 +1315,7 @@ class EditableInventoryTable(QTableView):
         :param event:
         :return:
         (True,index) if it is possible to do a drop, where index is a QModelIndex of where the drop is happening
-        (Fale,None) otherwise
+        (False,None) otherwise
         """
         if event.isAccepted():
             return False, None
