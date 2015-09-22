@@ -1,6 +1,5 @@
 
 from urllib.request import urlretrieve
-
 import pickle
 
 def download_binary(name,path, call_back = None):
@@ -113,4 +112,4 @@ def save_binary(obj,path):
 
     """
     with open(path,'wb') as f:
-        pickle.dump(obj,f)
+        pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)

@@ -151,7 +151,6 @@ def load_corpus_csv(corpus_name, path, delimiter,
         raise(e)
 
     #transcription_errors = corpus.check_coverage() #apparently this variable is not referenced anywhere
-    corpus._inventory.setRowColNames()
     return corpus
 
 def load_feature_matrix_csv(name,path,delimiter):

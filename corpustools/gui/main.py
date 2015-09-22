@@ -9,7 +9,7 @@ from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
                     LexiconView,PhonoSearchResults, MutualInfoVowelHarmonyWindow)
 
 from .models import (CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,
-                    DiscourseModel)
+                    DiscourseModel, InventoryModel)
 
 from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog,
                     save_binary)
@@ -248,7 +248,6 @@ class MainWindow(QMainWindow):
         dialog = CorpusLoadDialog(self, self.settings)
         result = dialog.exec_()
         if result:
-
             self.corpus = dialog.corpus
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
@@ -299,13 +298,16 @@ class MainWindow(QMainWindow):
     def loadFeatureMatrices(self):
         dialog = FeatureMatrixManager(self, self.settings)
         result = dialog.exec_()
+        if result:
+            pass
 
     @check_for_empty_corpus
     @check_for_transcription
     def manageInventoryChart(self):
-        dialog = InventoryManager(self, self.corpusModel.corpus)
-        results = dialog.exec_()
-        if results:
+        model = InventoryModel(self.corpus._inventory)
+        dialog = InventoryManager(self, model)
+        result = dialog.exec_()
+        if result:
             pass
 
     @check_for_empty_corpus

@@ -205,10 +205,9 @@ class CorpusLoadDialog(PCTDialog):
         if selected:
             self.thread.setParams({
                 'path':corpus_name_to_path(
-                            self.settings['storage'],selected[0])})
+                            self.settings['storage'], selected[0])})
 
             self.thread.start()
-
             result = self.progressDialog.exec_()
 
             self.progressDialog.reset()

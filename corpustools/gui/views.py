@@ -869,3 +869,12 @@ class PhonoSearchResults(ResultsWindow):
                 self.table.setModel(dataModel)
         self.raise_()
         self.activateWindow()
+
+class InventoryView(QTableView):
+
+    def __init__(self, inventory, editable=False):
+        super().__init__()
+        self.setModel(inventory)
+        self.horizontalHeader().show()
+        self.verticalHeader().show()
+
