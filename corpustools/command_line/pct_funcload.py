@@ -5,6 +5,7 @@ import csv
 from corpustools.corpus.io import load_binary
 from corpustools.funcload.functional_load import *
 from corpustools.contextmanagers import *
+from corpustools.corpus.classes.lexicon import EnvironmentFilter
 
 #### Script-specific functions
 
@@ -31,6 +32,8 @@ def main():
     parser.add_argument('-t', '--type_or_token', default='token', help='For change in entropy FL: specifies whether entropy is based on type or token frequency.')
     parser.add_argument('-e', '--relative_fl', action='store_true', help="If True, calculate the relative FL of a single segment by averaging across the functional loads of it and all other segments.")
     parser.add_argument('-s', '--sequence_type', default='transcription', help="The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.")
+    parser.add_argument('-q', '--environment_lhs', default=None, help="Left hand side of environment filter. Format: positions separated by commas, groups by slashes, e.g. m/n,i matches mi or ni.")
+    parser.add_argument('-w', '--environment_rhs', default=None, help="Right hand side of environment filter. Format: positions separated by commas, groups by slashes, e.g. m/n,i matches mi or ni.")
     parser.add_argument('-o', '--outfile', help='Name of output file')
 
     args = parser.parse_args()
@@ -47,10 +50,22 @@ def main():
     elif args.context_type == 'Weighted':
         corpus = WeightedVariantContext(corpus, args.sequence_type, args.type_or_token, frequency_threshold=args.frequency_cutoff)
 
+    if not args.environment_lhs and not args.environment_rhs:
+        environment_filter = None
+    else:
+        if args.environment_lhs:
+            split_lhs = [tuple(pos.split('/')) for pos in args.environment_lhs.split(',')]
+        else:
+            split_lhs = None
+        if args.environment_rhs:
+            split_rhs = [tuple(pos.split('/')) for pos in args.environment_rhs.split(',')]
+        else:
+            split_rhs = None
+        environment_filter = EnvironmentFilter([], split_lhs, split_rhs)
 
     if args.all_pairwise_fls:
         result = all_pairwise_fls(corpus, relative_fl=args.relative_fl, algorithm=args.algorithm, relative_count=args.relative_count,
-                     distinguish_homophones=args.distinguish_homophones)
+                     distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
 
     else:
         if args.relative_fl != True:
@@ -64,14 +79,14 @@ def main():
 
         if args.algorithm == 'minpair':
             if args.relative_fl:
-                result = relative_minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones)
+                result = relative_minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
             else:
-                result = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones)
+                result = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
         elif args.algorithm == 'deltah':
             if args.relative_fl:
-                result = relative_deltah_fl(corpus, segpairs_or_segment)
+                result = relative_deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter)
             else:
-                result = deltah_fl(corpus, segpairs_or_segment)
+                result = deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter)
         else:
             raise Exception('-a / --algorithm must be set to either \'minpair\' or \'deltah\'.')
 

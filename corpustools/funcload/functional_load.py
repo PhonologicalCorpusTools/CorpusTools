@@ -9,6 +9,7 @@ import time
 
 from corpustools.exceptions import FuncLoadError
 from .io import save_minimal_pairs
+from corpustools.corpus.classes.lexicon import EnvironmentFilter
 
 
 def matches(first, second):
@@ -37,6 +38,7 @@ def matches(first, second):
 
 def minpair_fl(corpus_context, segment_pairs,
         relative_count = True, distinguish_homophones = False,
+        environment_filter = None,
         stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between two segments
     as a count of minimal pairs.
@@ -55,6 +57,9 @@ def minpair_fl(corpus_context, segment_pairs,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
+    environment_filter : EnvironmentFilter
+        Allows the user to restrict the neutralization process to segments in
+        particular segmental contexts
     stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
     call_back : callable, optional
@@ -71,13 +76,19 @@ def minpair_fl(corpus_context, segment_pairs,
 
     if stop_check is not None and stop_check():
         return
-    all_segments = list(itertools.chain.from_iterable(segment_pairs))
+    all_target_segments = list(itertools.chain.from_iterable(segment_pairs))
 
     neutralized = []
     if call_back is not None:
         call_back('Finding and neutralizing instances of segments...')
         call_back(0, len(corpus_context))
         cur = 0
+
+    if environment_filter:
+        filled_environment = EnvironmentFilter(tuple(all_target_segments),
+                                               environment_filter.lhs,
+                                               environment_filter.rhs)
+
     for w in corpus_context:
         if stop_check is not None and stop_check():
             return
@@ -86,10 +97,11 @@ def minpair_fl(corpus_context, segment_pairs,
             if cur % 100 == 0:
                 call_back(cur)
         tier = getattr(w, corpus_context.sequence_type)
-        if any([s in tier for s in all_segments]):
-            n = [neutralize_segment(seg, segment_pairs)
-                    for seg in tier]
-            neutralized.append(('.'.join(n), w, tier))
+        if any([s in tier for s in all_target_segments]):
+            if not environment_filter or tier.find(filled_environment):
+                n = [neutralize_segment(seg, segment_pairs)
+                        for seg in tier]
+                neutralized.append(('.'.join(n), w, tier))
     if stop_check is not None and stop_check():
         return
 

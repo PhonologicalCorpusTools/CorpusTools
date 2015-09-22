@@ -90,6 +90,7 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     return atts, best
 
 def load_corpus_csv(corpus_name, path, delimiter,
+                    trans_delimiter,
                     annotation_types = None,
                     feature_system_path = None,
                     stop_check = None, call_back = None):
@@ -104,6 +105,8 @@ def load_corpus_csv(corpus_name, path, delimiter,
         Full path to text file
     delimiter : str
         Character to use for spliting lines into columns
+    trans_delimiter : str
+        Character to use for spliting transcriptions into segments
     annotation_types : list of AnnotationType, optional
         List of AnnotationType specifying how to parse text files
     feature_system_path : str
@@ -126,7 +129,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
         corpus.set_feature_matrix(feature_matrix)
 
     if annotation_types is None:
-        annotation_types, _ = inspect_csv(path, coldelim = delimiter)
+        annotation_types, best_delimiter = inspect_csv(path, coldelim = delimiter, transdelim=trans_delimiter)
     else:
         for a in annotation_types:
             if a.attribute.name == 'transcription' and a.attribute.att_type != 'tier':
@@ -141,7 +144,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
 
     with open(path, encoding='utf-8') as f:
         headers = f.readline()
-        headers = headers.split(delimiter)
+        headers = headers.split(best_delimiter)
         if len(headers)==1:
             e = DelimiterError(('Could not parse the corpus.\n\Check '
                                 'that the delimiter you typed in matches '
@@ -157,7 +160,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
             if not line: #blank or just a newline
                 continue
             d = {}
-            for k,v in zip(headers,line.split(delimiter)):
+            for k,v in zip(headers,line.split(best_delimiter)):
                 v = v.strip()
                 if k.attribute.att_type == 'tier':
                     trans = parse_transcription(v, k)
