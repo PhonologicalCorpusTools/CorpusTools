@@ -1233,12 +1233,6 @@ class Inventory(object):
         self.vow_columns = {}
         self.vow_rows = {}
 
-    def is_voiced(self,seg):
-        return self.isVoiced(seg)
-
-    def isVowel(self,seg):
-        return seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
-
     def __getstate__(self):
         state = self.__dict__.copy()
         return state
@@ -1317,14 +1311,14 @@ class Inventory(object):
     def isVoiced(self, seg):
         return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
 
-    def is_vowel(self, seg):
-        return self.isVowel(seg)
+    def isVowel(self,seg):
+        return seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
 
-    def is_rounded(self, seg):
+    def isRounded(self, seg):
         return seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
 
     def categorize(self,seg):
-        if self.is_vowel(seg):
+        if self.isVowel(seg):
             category = ['Vowel']
             iterRows = self.vow_rows
             iterCols = self.cons_rows
@@ -1348,14 +1342,14 @@ class Inventory(object):
         else:
             raise KeyError(seg.symbol)
 
-        if self.is_vowel(seg):
-            if self.is_rounded(seg):
+        if self.isVowel(seg):
+            if self.isRounded(seg):
                 category.append('Rounded')
             else:
                 category.append('Unrounded')
 
         else:
-            if self.is_voiced(seg):
+            if self.isVoiced(seg):
                 category.append('Voiced')
             else:
                 category.append('Voiceless')

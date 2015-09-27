@@ -304,8 +304,8 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def manageInventoryChart(self):
-        model = InventoryModel(self.corpus._inventory)
-        dialog = InventoryManager(self, model)
+        #model = InventoryModel(self.corpus._inventory)
+        dialog = InventoryManager(self.corpus._inventory)
         result = dialog.exec_()
         if result:
             pass

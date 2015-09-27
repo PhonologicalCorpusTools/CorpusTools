@@ -1,12 +1,8 @@
 import csv
-
+from itertools import product
 from .imports import *
-
 from .models import VariantModel, ResultsModel, PhonoSearchResultsModel
-from .windows import FunctionWorker
-
 from .multimedia import AudioPlayer
-
 
 class TableWidget(QTableView):
     def __init__(self,parent=None):
@@ -877,4 +873,53 @@ class InventoryView(QTableView):
         self.setModel(inventory)
         self.horizontalHeader().show()
         self.verticalHeader().show()
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+        self.horizontalHeader().setSectionsClickable(True)
+        self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
+        self.verticalHeader().setSectionsClickable(True)
+        self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
 
+    def editChartRow(self):
+        dialog = QDialog()
+        #dialog = CreateClassWidget(self, self.corpus, class_type='inventory', default_name=old_name, default_specs=default_specs)
+        results = dialog.exec_()
+
+    def editChartCol(self):
+        dialog = QDialog()
+        #dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory', default_name=old_name, default_specs=default_specs)
+        results = dialog.exec_()
+
+    def addSegmentButtons(self):
+        #possibly not a necessary function, since users don't need to click on individual buttons
+        #clicking on headings is probably sufficient
+        #though it would be nice if users could drag-and-drop segments
+        cc = self.model().columnCount()
+        rc = self.model().rowCount()
+        for i, j in product(range(cc+1), range(rc+1)):
+            index = self.model().index(i, j)
+            segs = self.model().data(index, role=Qt.DisplayRole)
+            if segs == QVariant():
+                continue
+            button_list = list()
+            for seg in segs:
+                button_list.append(QPushButton(text=seg))
+            big_one = MultiButtonCell(button_list)
+            self.setIndexWidget(index, big_one)
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+
+class MultiButtonCell(QWidget):
+    #possibly not necessary with model/view set-up; text is probably fine
+    def __init__(self,buttons,parent=None):
+        super().__init__(parent)
+        layout = QHBoxLayout()
+
+        #layout.setContentsMargins(0,0,0,0)
+        #layout.setSpacing(0)
+        self.button_names = list()
+        for b in buttons:
+            layout.addWidget(b)
+            self.button_names.append(b.text())
+
+        self.setLayout(layout)

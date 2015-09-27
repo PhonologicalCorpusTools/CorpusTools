@@ -1,19 +1,10 @@
-import os
-
 from .imports import *
-
 from .views import InventoryView
-#
-# from .models import FeatureSystemTableModel, FeatureSystemTreeModel
-#
-# from .widgets import InventoryTable, InventoryBox
-#
-# from .helpgui import HelpDialog
-
+from .models import ConsonantModel, VowelModel
 
 
 class InventoryManager(QDialog):
-    def __init__(self, parent, model):
+    def __init__(self, inventory):
         super().__init__()
         layout = QVBoxLayout()
 
@@ -23,8 +14,14 @@ class InventoryManager(QDialog):
         topmessage.setWordWrap(True)
         layout.addWidget(topmessage)
 
-        self.segSelectWidget = InventoryView(model)
-        layout.addWidget(self.segSelectWidget)
+        self.consBox = InventoryView(ConsonantModel(inventory))
+        layout.addWidget(self.consBox)
+
+        self.vowelBox = InventoryView(VowelModel(inventory))
+        layout.addWidget(self.vowelBox)
+
+        self.uncategorizedBox = QTableWidget()
+        layout.addWidget(self.uncategorizedBox)
 
         buttonLayout = QHBoxLayout()
         # add = QPushButton('Add row or column')
