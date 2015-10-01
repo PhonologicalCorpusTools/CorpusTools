@@ -4,6 +4,7 @@ from corpustools.exceptions import CorpusIntegrityError
 import os
 import random
 import itertools
+from math import ceil as ceiling
 
 class BaseTableModel(QAbstractTableModel):
     columns = []
@@ -845,17 +846,50 @@ class InventoryModel(QAbstractTableModel):
         self.cons_rows = {}
         self.vowel_columns = {}
         self.vowel_rows = {}
+        self.uncategorized = list()
         self.generate_generic_names()
-        self.setRowColNames()
+        self.initRowColNames()
+        self.sortData()
+
+
+    def columnCount(self, parent):
+        return len(self._data[0]) #any element would do, they should all be the same length
+    def rowCount(self, parent):
+        return len(self._data)
+    def consRowCount(self):
+        return len(self.consRows)
+    def consColumnCount(self):
+        return len(self.consColumns)
+    def vowelRowCount(self):
+        return len(self.vowelRows)
+    def vowelColumnCount(self):
+        return len(self.vowelColumns)
+
+    # def monitorHorizontalSectionOrder(self, logicalIndex, oldVisualIndex, newVisualIndex):
+    #     print(logicalIndex, oldVisualIndex, newVisualIndex)
+    #     print(self.headerData(logicalIndex, 1, role=Qt.DisplayRole))
+    #     print(self.headerData(newVisualIndex, 1, role=Qt.DisplayRole))
+    #
+    # def monitorVerticalSectionOrder(self, logicalIndex, oldVisualIndex, newVisualIndex):
+    #     print(logicalIndex, oldVisualIndex, newVisualIndex)
+    #     print(self.headerData(logicalIndex, 2))
+    #     print(self.headerData(newVisualIndex, 2))
 
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
         elif role != Qt.DisplayRole:
             return QVariant()
-
         segs = self._data[index.row()][index.column()]
         return segs
+
+    def setData(self, QModelIndex, QVariant, role=None):
+        # if not index.isValid() or role != Qt.EditRole:
+        #     return False
+        # self._data[index.row()][index.column()] = value #this probably won't work
+        # self.dataChanged.emit(index, index)
+        # return True
+        print('Hello!')
 
     def isVoiced(self, seg):
         return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
@@ -863,7 +897,10 @@ class InventoryModel(QAbstractTableModel):
     def isVowel(self, seg):
         return seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
 
-    def setRowColNames(self):
+    def isRounded(self, seg):
+        return seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
+
+    def initRowColNames(self):
         self.generate_generic_names()
         self.consColumns = set()
         self.consRows = set()
@@ -874,17 +911,19 @@ class InventoryModel(QAbstractTableModel):
         self.uncategorized = []
 
         for s in self.segs.values():
+            if s.symbol == '#':
+                continue #ignore the word boundary symbol
             try:
                 c = self.categorize(s)
             except KeyError:
                 c = None
                 self.uncategorized.append(s)
             if c is not None:
-                if c[0] == 'Vowel':
+                if c[0] == 'Vowel':# and isinstance(self, VowelModel):
                     self.vowelColumns.add(c[1])
                     self.vowelRows.add(c[2])
                     self.vowelList.append((s, c))
-                elif c[0] == 'Consonant':
+                elif c[0] == 'Consonant':# and isinstance(self, ConsonantModel):
                     self.consColumns.add(c[1])
                     self.consRows.add(c[2])
                     self.consList.append((s, c))
@@ -892,11 +931,25 @@ class InventoryModel(QAbstractTableModel):
     def headerData(self, row_or_col, orientation, role=None):
         try:
             if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-                return self.cons_columns[row_or_col]
+                #return self.cons_columns[row_or_col]
+                return self.all_columns[row_or_col]
             elif orientation == Qt.Vertical and role == Qt.DisplayRole:
-                return self.cons_rows[row_or_col]
+                #return self.cons_rows[row_or_col]
+                return self.all_rows[row_or_col]
         except KeyError:
             return QVariant()
+
+    def insertRows(self, p_int, QModelIndex_parent=None, *args, **kwargs):
+        pass #must emit beginInsertRow(first,last) and endInsertRows()
+
+    def insertColumns(self, p_int, QModelIndex_parent=None, *args, **kwargs):
+        pass #see above, but for Column
+
+    def removeRows(self, p_int, QModelIndex_parent=None, *args, **kwargs):
+        pass #must emit beginRemoveRows(first,last) and endRemoveRows()
+
+    def removeColumns(self, p_int, p_int_1, QModelIndex_parent=None, *args, **kwargs):
+        pass #see above, but for Column
 
     def generateSegmentButton(self,symbol):
         wid = SegmentButton(symbol)#This needs to be a SegmentButton for the i,j segment
@@ -930,6 +983,52 @@ class InventoryModel(QAbstractTableModel):
         self.btnGroup.addButton(wid)
         return wid
 
+
+    def sortData(self):
+
+        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_columns[x][0])
+        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_rows[x][0])
+        sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_columns[x][0])
+        sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_rows[x][0])
+
+        self.cons_columns = {i: name for i, name in enumerate(sorted_cons_col_headers)}
+        self.vowel_column_offset = len(self.cons_columns)
+        self.vowel_columns = {i+self.vowel_column_offset: name for i, name in enumerate(sorted_vowel_col_headers)}
+
+        self.cons_rows = {i: name for i, name in enumerate(sorted_cons_row_headers)}
+        self.vowel_row_offset = len(self.cons_rows)
+        self.vowel_rows = {i+self.vowel_row_offset: name for i, name in enumerate(sorted_vowel_row_headers)}
+
+        col_total = len(sorted_cons_col_headers)+len(sorted_vowel_col_headers)
+        row_total = len(sorted_cons_row_headers)+len(sorted_vowel_col_headers)
+
+        self.all_columns = {}
+        self.all_rows = {}
+        self.all_columns.update(self.cons_columns)
+        self.all_columns.update(self.vowel_columns)
+        self.all_rows.update(self.cons_rows)
+        self.all_rows.update(self.vowel_rows)
+
+        self._data = [[None for j in range(col_total)]
+                            for k in range(row_total)]
+
+        for row, col in itertools.product(self.cons_rows.keys(), self.cons_columns.keys()):
+            row_name = self.cons_rows[row]
+            col_name = self.cons_columns[col]
+            matches = list()
+            for seg, cat in self.consList:
+                if row_name in cat and col_name in cat:
+                    matches.append(seg)
+            self._data[row][col] = ''.join([m.symbol for m in matches])
+
+        for row, col in itertools.product(self.vowel_rows.keys(), self.vowel_columns.keys()):
+            row_name = self.vowel_rows[row]
+            col_name = self.vowel_columns[col]
+            matches = list()
+            for seg, cat in self.vowelList:
+                if row_name in cat and col_name in cat:
+                    matches.append(seg)
+            self._data[row][col] = ''.join([m.symbol for m in matches])
 
     def generate_generic_names(self):
         sample = random.choice(list(self.segs.values()))  # pick an arbitrary segment and examine its features
@@ -1064,10 +1163,8 @@ class InventoryModel(QAbstractTableModel):
                 segments.append(k)
         return segments
 
-    def isRounded(self, seg):
-        return seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
-
     def categorize(self, seg):
+
         if self.isVowel(seg):
             category = ['Vowel']
             iterRows = self.vowel_rows
@@ -1090,7 +1187,7 @@ class InventoryModel(QAbstractTableModel):
                 category.extend([col, row])
                 break
         else:
-            raise KeyError(seg.symbol)
+            raise KeyError(seg.symbol) #this function is wrapped in a try/except that will catch this
 
         if self.isVowel(seg):
             if self.isRounded(seg):
@@ -1105,119 +1202,84 @@ class InventoryModel(QAbstractTableModel):
                 category.append('Voiceless')
         return category
 
-class ConsonantModel(InventoryModel):
+class InventoryDelegate(QItemDelegate):
+
+    def __init__(self):
+        super().__init__()
+
+    def setEditor(self, editor, index):
+        editor.setValue(index.model().data(index, Qt.EditRole))
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.value(), Qt.EditRole)
+
+class ConsonantModel(QSortFilterProxyModel):
 
     def __init__(self, inventory):
-        super().__init__(inventory)
-        self.generateData()
+        super().__init__()
+        self.setSourceModel(inventory)
 
-    def rowCount(self, parent=None):
-        rc = len(self.cons_rows)
-        return rc if rc > 0 else 1
+    def rowCount(self, parent):
+        return self.sourceModel().consRowCount()
 
-    def columnCount(self, parent=None):
-        cc = len(self.cons_columns)
-        return cc if cc > 0 else 1
+    def columnCount(self, parent):
+        return self.sourceModel().consColumnCount()
 
-    def headerData(self, row_or_col, orientation, role=None):
-        try:
-            if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-                return self.cons_columns[row_or_col]
-            elif orientation == Qt.Vertical and role == Qt.DisplayRole:
-                return self.cons_rows[row_or_col]
-        except KeyError:
-            return QVariant()
+    def filterAcceptsColumn(self, column, parent = None):
+        header = self.sourceModel().headerData(column, Qt.Horizontal, Qt.DisplayRole)
+        if header == QVariant():
+            return False
+        if header in self.sourceModel().consColumns:
+            return True
+        else:
+            return False
 
-    def data(self, index, role):
-        if not index.isValid():
-            return QVariant()
-        elif role != Qt.DisplayRole:
-            return QVariant()
+    def filterAcceptsRow(self, row, parent = None):
+        header = self.sourceModel().headerData(row, Qt.Vertical, Qt.DisplayRole)
+        if header == QVariant():
+            return False
+        if header in self.sourceModel().consRows:
+            return True
+        else:
+            return False
 
-        segs = self._data[index.row()][index.column()]
-        return segs
-
-    def generateData(self):
-        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_columns[x][0])
-        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_rows[x][0])
-
-        self.cons_columns = {i: name for i, name in enumerate(sorted_cons_col_headers)}
-        self.cons_rows = {i: name for i, name in enumerate(sorted_cons_row_headers)}
-        self._data = [[None for j in range(len(sorted_cons_col_headers))] for k in
-                      range(len(sorted_cons_row_headers))]
-        for row, col in itertools.product(self.cons_rows.keys(), self.cons_columns.keys()):
-            row_name = self.cons_rows[row]
-            col_name = self.cons_columns[col]
-            matches = list()
-            for seg, cat in self.consList:
-                if row_name in cat and col_name in cat:
-                    matches.append(seg)
-            self._data[row][col] = ''.join([m.symbol for m in matches])
-
-        for i, header in enumerate(sorted_cons_col_headers):
-            self.setHeaderData(i, Qt.Horizontal, header, Qt.DisplayRole)
-            self.headerDataChanged.emit(1, i, i)
-
-        for i, header in enumerate(sorted_cons_row_headers):
-            self.setHeaderData(i, Qt.Vertical, header, Qt.DisplayRole)
-            self.headerDataChanged.emit(2, i, i)
-
-
-class VowelModel(InventoryModel):
+class VowelModel(QSortFilterProxyModel):
 
     def __init__(self, inventory):
-        super().__init__(inventory)
-        self.generateData()
+        super().__init__()
+        self.setSourceModel(inventory)
 
-    def rowCount(self, parent=None):
-        rc = len(self.vowel_rows)
-        return rc if rc > 0 else 1
+    def rowCount(self, parent):
+        return self.sourceModel().vowelRowCount()
 
-    def columnCount(self, parent=None):
-        cc = len(self.vowel_columns)
-        return cc if cc > 0 else 1
+    def columnCount(self, parent):
+        return self.sourceModel().vowelColumnCount()
 
-    def data(self, index, role):
-        if not index.isValid():
-            return QVariant()
-        elif role != Qt.DisplayRole:
-            return QVariant()
+    def filterAcceptsColumn(self, column, parent = None):
+        if column < self.sourceModel().vowel_column_offset:
+            return False
+        else:
+            return True
+        # header = self.sourceModel().headerData(column, Qt.Horizontal, Qt.DisplayRole)
+        # if header == QVariant():
+        #     return False
+        # if header in self.sourceModel().vowelColumns:
+        #     return True
+        # else:
+        #     return False
 
-        segs = self._data[index.row()][index.column()]
-        return segs
+    def filterAcceptsRow(self, row, parent = None):
+        if row < self.sourceModel().vowel_row_offset:
+            return False
+        else:
+            return True
+        # header = self.sourceModel().headerData(row, Qt.Vertical, Qt.DisplayRole)
+        # print('Row: {}'.format(row))
+        # print(header)
+        # if header == QVariant():
+        #     return False
+        # if header in self.sourceModel().vowelRows:
+        #     return True
+        # else:
+        #     return False
 
-    def headerData(self, row_or_col, orientation, role=None):
-        try:
-            if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-                return self.vowel_columns[row_or_col]
-            elif orientation == Qt.Vertical and role == Qt.DisplayRole:
-                return self.vowel_rows[row_or_col]
-        except KeyError:
-            return QVariant()
-
-    def generateData(self):
-        #see also InventoryModel.setRowColNames()
-        sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_columns[x][0])
-        sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_rows[x][0])
-        self.vowel_columns = {i: name for i, name in enumerate(sorted_vowel_col_headers)}
-        self.vowel_rows = {i: name for i, name in enumerate(sorted_vowel_row_headers)}
-
-        self._data = [[None for j in range(len(sorted_vowel_col_headers))] for k in
-                      range(len(sorted_vowel_row_headers))]
-        for row, col in itertools.product(self.vowel_rows.keys(), self.vowel_columns.keys()):
-            row_name = self.vowel_rows[row]
-            col_name = self.vowel_columns[col]
-            matches = list()
-            for seg, cat in self.vowelList:
-                if row_name in cat and col_name in cat:
-                    matches.append(seg)
-            self._data[row][col] = ''.join([m.symbol for m in matches])
-
-
-        for i, header in enumerate(sorted_vowel_col_headers):
-            self.setHeaderData(i, Qt.Horizontal, header, Qt.DisplayRole)
-            self.headerDataChanged.emit(1, i, i)
-
-        for i, header in enumerate(sorted_vowel_row_headers):
-            self.setHeaderData(i, Qt.Vertical, header, Qt.DisplayRole)
-            self.headerDataChanged.emit(2, i, i)

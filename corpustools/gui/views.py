@@ -868,17 +868,35 @@ class PhonoSearchResults(ResultsWindow):
 
 class InventoryView(QTableView):
 
-    def __init__(self, inventory, editable=False):
+    def __init__(self, inventory, delegate, editable=False):
         super().__init__()
         self.setModel(inventory)
+        self.setItemDelegate(delegate)
         self.horizontalHeader().show()
         self.verticalHeader().show()
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
         self.horizontalHeader().setSectionsClickable(True)
         self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
+        self.horizontalHeader().setSectionsMovable(True)
         self.verticalHeader().setSectionsClickable(True)
         self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
+        self.verticalHeader().setSectionsMovable(True)
+
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+
+        # self.horizontalHeader().sectionMoved.connect(self.model().monitorHorizontalSectionOrder)
+        # self.verticalHeader().sectionMoved.connect(self.model().monitorVerticalSectionOrder)
+
+        # self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.verticalHeader().customContextMenuRequested.connect(self.showVerticalHeaderMenu)
+        #
+        # self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.horizontalHeader().customContextMenuRequested.connect(self.showHorizontalHeaderMenu)
+
 
     def editChartRow(self):
         dialog = QDialog()
@@ -923,3 +941,4 @@ class MultiButtonCell(QWidget):
             self.button_names.append(b.text())
 
         self.setLayout(layout)
+
