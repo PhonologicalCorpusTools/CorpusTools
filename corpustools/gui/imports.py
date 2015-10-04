@@ -9,8 +9,8 @@ try:
                                 QSize, QSettings,QPoint, QItemSelectionModel,
                                 QSortFilterProxyModel, QAbstractItemModel,
                             QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
-                            QStringListModel, QVariant)
-    from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
+                            QStringListModel, QVariant, QMimeData, QByteArray)
+    from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen, QDrag,
                             QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,

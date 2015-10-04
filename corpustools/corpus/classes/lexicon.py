@@ -359,7 +359,7 @@ class FeatureMatrix(object):
         #Backwards compatability
         if '_default_value' not in state:
             self._default_value = 'n'
-        if 'cons_columns' not in state:
+        if 'cons_column_data' not in state:
             self.cons_columns = {}
             self.cons_rows = {}
             self.vow_columns = {}

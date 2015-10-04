@@ -868,10 +868,12 @@ class PhonoSearchResults(ResultsWindow):
 
 class InventoryView(QTableView):
 
-    def __init__(self, inventory, delegate, editable=False):
+    dropSuccessful = Signal(str)
+
+    def __init__(self, inventory, editable=False):
         super().__init__()
         self.setModel(inventory)
-        self.setItemDelegate(delegate)
+        # self.setItemDelegate(delegate)
         self.horizontalHeader().show()
         self.verticalHeader().show()
         self.resizeColumnsToContents()
@@ -882,21 +884,27 @@ class InventoryView(QTableView):
         self.verticalHeader().setSectionsClickable(True)
         self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
         self.verticalHeader().setSectionsMovable(True)
-
+        #self.addSegmentButtons()
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
 
-        # self.horizontalHeader().sectionMoved.connect(self.model().monitorHorizontalSectionOrder)
-        # self.verticalHeader().sectionMoved.connect(self.model().monitorVerticalSectionOrder)
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat('DraggableSegmentButton'):
+            event.accept()
+        else:
+            event.reject()
 
-        # self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.verticalHeader().customContextMenuRequested.connect(self.showVerticalHeaderMenu)
-        #
-        # self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.horizontalHeader().customContextMenuRequested.connect(self.showHorizontalHeaderMenu)
+    def dragMoveEvent(self, event):
+        event.accept()
 
+    def dropEvent(self, event):
+        index = self.indexAt(event.pos())
+        self.model().setData(index, event.mimeData().text()) #RETURN TO HERE - POSSIBLY NOT CORRECT
+        self.dropSuccessful.emit(event.mimeData().text())
+        #try to emit a DropSuccessful so that the inventorygui can delete the appropriate button
+        event.accept()
 
     def editChartRow(self):
         dialog = QDialog()
@@ -941,4 +949,3 @@ class MultiButtonCell(QWidget):
             self.button_names.append(b.text())
 
         self.setLayout(layout)
-

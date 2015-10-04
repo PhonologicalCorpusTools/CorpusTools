@@ -2030,6 +2030,36 @@ class SegmentPairDialog(QDialog):
         self.pairs = combinations(selected,2)
         QDialog.accept(self)
 
+class DraggableSegmentButton(QPushButton):
+
+    def __init__(self, title):
+        super().__init__(title)
+        self.title = title
+        self.mime_data = None
+        self.drag = None
+
+    def mouseMoveEvent(self, event):
+
+        if event.buttons() != Qt.LeftButton:
+            return
+        self.mime_data = QMimeData()
+        self.mime_data.setData('DraggableSegmentButton', QByteArray(self.title))
+        self.mime_data.setText(self.title)
+        self.drag = QDrag(self)
+        self.drag.setMimeData(self.mime_data)
+        self.drag.setHotSpot(event.pos() - self.rect().topLeft())
+        #dropAction = self.drag.start(Qt.MoveAction)
+        x = self.drag.exec_(Qt.MoveAction)
+
+
+    def mousePressEvent(self, event):
+        super(DraggableSegmentButton, self).mousePressEvent(event)
+        if event.buttons() == Qt.RightButton:
+            print('press')
+            if self.mime_data:
+                print(self.mime_data.text())
+
+
 class SegPairTableWidget(TableWidget):
     def __init__(self, parent = None):
         TableWidget.__init__(self, parent)

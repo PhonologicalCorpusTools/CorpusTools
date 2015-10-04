@@ -842,10 +842,10 @@ class InventoryModel(QAbstractTableModel):
         self.possible_values = inventory.possible_values
         self.classes = inventory.classes
         self.stresses = inventory.stresses
-        self.cons_columns = {}
-        self.cons_rows = {}
-        self.vowel_columns = {}
-        self.vowel_rows = {}
+        self.cons_column_data = {}
+        self.cons_row_data = {}
+        self.vowel_column_data = {}
+        self.vowel_row_data = {}
         self.uncategorized = list()
         self.generate_generic_names()
         self.initRowColNames()
@@ -853,7 +853,7 @@ class InventoryModel(QAbstractTableModel):
 
 
     def columnCount(self, parent):
-        return len(self._data[0]) #any element would do, they should all be the same length
+        return 0 if parent.isValid() else len(self._data[0]) #any element would do, they should all be the same length
     def rowCount(self, parent):
         return len(self._data)
     def consRowCount(self):
@@ -865,17 +865,8 @@ class InventoryModel(QAbstractTableModel):
     def vowelColumnCount(self):
         return len(self.vowelColumns)
 
-    # def monitorHorizontalSectionOrder(self, logicalIndex, oldVisualIndex, newVisualIndex):
-    #     print(logicalIndex, oldVisualIndex, newVisualIndex)
-    #     print(self.headerData(logicalIndex, 1, role=Qt.DisplayRole))
-    #     print(self.headerData(newVisualIndex, 1, role=Qt.DisplayRole))
-    #
-    # def monitorVerticalSectionOrder(self, logicalIndex, oldVisualIndex, newVisualIndex):
-    #     print(logicalIndex, oldVisualIndex, newVisualIndex)
-    #     print(self.headerData(logicalIndex, 2))
-    #     print(self.headerData(newVisualIndex, 2))
-
     def data(self, index, role):
+        print(index.row(), index.column())
         if not index.isValid():
             return QVariant()
         elif role != Qt.DisplayRole:
@@ -883,13 +874,12 @@ class InventoryModel(QAbstractTableModel):
         segs = self._data[index.row()][index.column()]
         return segs
 
-    def setData(self, QModelIndex, QVariant, role=None):
-        # if not index.isValid() or role != Qt.EditRole:
-        #     return False
-        # self._data[index.row()][index.column()] = value #this probably won't work
-        # self.dataChanged.emit(index, index)
-        # return True
-        print('Hello!')
+    def setData(self, index, value, role=None):
+        if not index.isValid() or role != Qt.EditRole:
+            return False
+        self._data[index.row()][index.column()] = value #this probably won't work
+        self.dataChanged.emit(index, index)
+        return True
 
     def isVoiced(self, seg):
         return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
@@ -919,11 +909,11 @@ class InventoryModel(QAbstractTableModel):
                 c = None
                 self.uncategorized.append(s)
             if c is not None:
-                if c[0] == 'Vowel':# and isinstance(self, VowelModel):
+                if c[0] == 'Vowel':
                     self.vowelColumns.add(c[1])
                     self.vowelRows.add(c[2])
                     self.vowelList.append((s, c))
-                elif c[0] == 'Consonant':# and isinstance(self, ConsonantModel):
+                elif c[0] == 'Consonant':
                     self.consColumns.add(c[1])
                     self.consRows.add(c[2])
                     self.consList.append((s, c))
@@ -931,25 +921,13 @@ class InventoryModel(QAbstractTableModel):
     def headerData(self, row_or_col, orientation, role=None):
         try:
             if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-                #return self.cons_columns[row_or_col]
+                #return self.cons_column_data[row_or_col]
                 return self.all_columns[row_or_col]
             elif orientation == Qt.Vertical and role == Qt.DisplayRole:
-                #return self.cons_rows[row_or_col]
+                #return self.cons_row_data[row_or_col]
                 return self.all_rows[row_or_col]
         except KeyError:
             return QVariant()
-
-    def insertRows(self, p_int, QModelIndex_parent=None, *args, **kwargs):
-        pass #must emit beginInsertRow(first,last) and endInsertRows()
-
-    def insertColumns(self, p_int, QModelIndex_parent=None, *args, **kwargs):
-        pass #see above, but for Column
-
-    def removeRows(self, p_int, QModelIndex_parent=None, *args, **kwargs):
-        pass #must emit beginRemoveRows(first,last) and endRemoveRows()
-
-    def removeColumns(self, p_int, p_int_1, QModelIndex_parent=None, *args, **kwargs):
-        pass #see above, but for Column
 
     def generateSegmentButton(self,symbol):
         wid = SegmentButton(symbol)#This needs to be a SegmentButton for the i,j segment
@@ -983,47 +961,60 @@ class InventoryModel(QAbstractTableModel):
         self.btnGroup.addButton(wid)
         return wid
 
+    def changeColumnOrder(self, map, consonants=True):
+        if consonants:
+            column_data = self.cons_column_data
+        else:
+            column_data = self.vowel_column_data
+
+        print(column_data)
+        for visualIndex,headerName in map.values():
+            column_data[headerName][0] = visualIndex
+
+        print(column_data)
+        self.sortData()
+
 
     def sortData(self):
 
-        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_columns[x][0])
-        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_rows[x][0])
-        sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_columns[x][0])
-        sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_rows[x][0])
+        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
+        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
+        sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
+        sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
 
-        self.cons_columns = {i: name for i, name in enumerate(sorted_cons_col_headers)}
-        self.vowel_column_offset = len(self.cons_columns)
-        self.vowel_columns = {i+self.vowel_column_offset: name for i, name in enumerate(sorted_vowel_col_headers)}
+        self.cons_column_header_order = {i: name for i, name in enumerate(sorted_cons_col_headers)}
+        self.vowel_column_offset = len(self.cons_column_data)
+        self.vowel_column_header_order = {i+self.vowel_column_offset: name for i, name in enumerate(sorted_vowel_col_headers)}
 
-        self.cons_rows = {i: name for i, name in enumerate(sorted_cons_row_headers)}
-        self.vowel_row_offset = len(self.cons_rows)
-        self.vowel_rows = {i+self.vowel_row_offset: name for i, name in enumerate(sorted_vowel_row_headers)}
-
-        col_total = len(sorted_cons_col_headers)+len(sorted_vowel_col_headers)
-        row_total = len(sorted_cons_row_headers)+len(sorted_vowel_col_headers)
+        self.cons_row_header_order = {i: name for i, name in enumerate(sorted_cons_row_headers)}
+        self.vowel_row_offset = len(self.cons_row_data)
+        self.vowel_row_header_order = {i+self.vowel_row_offset: name for i, name in enumerate(sorted_vowel_row_headers)}
 
         self.all_columns = {}
         self.all_rows = {}
-        self.all_columns.update(self.cons_columns)
-        self.all_columns.update(self.vowel_columns)
-        self.all_rows.update(self.cons_rows)
-        self.all_rows.update(self.vowel_rows)
+        self.all_columns.update(self.cons_column_header_order)
+        self.all_columns.update(self.vowel_column_header_order)
+        self.all_rows.update(self.cons_row_header_order)
+        self.all_rows.update(self.vowel_row_header_order)
 
-        self._data = [[None for j in range(col_total)]
-                            for k in range(row_total)]
+        col_total = max(self.all_columns.keys())#len(self.all_columns)#len(sorted_cons_col_headers)+len(sorted_vowel_col_headers)
+        row_total = max(self.all_rows.keys())#len(sorted_cons_row_headers)+len(sorted_vowel_col_headers)
 
-        for row, col in itertools.product(self.cons_rows.keys(), self.cons_columns.keys()):
-            row_name = self.cons_rows[row]
-            col_name = self.cons_columns[col]
+        self._data = [[None for j in range(row_total+1)]
+                            for k in range(col_total+1)]
+
+        for row, col in itertools.product(self.cons_row_header_order.keys(), self.cons_column_header_order.keys()):
+            row_name = self.cons_row_header_order[row]
+            col_name = self.cons_column_header_order[col]
             matches = list()
             for seg, cat in self.consList:
                 if row_name in cat and col_name in cat:
                     matches.append(seg)
             self._data[row][col] = ''.join([m.symbol for m in matches])
 
-        for row, col in itertools.product(self.vowel_rows.keys(), self.vowel_columns.keys()):
-            row_name = self.vowel_rows[row]
-            col_name = self.vowel_columns[col]
+        for row, col in itertools.product(self.vowel_row_header_order.keys(), self.vowel_column_header_order.keys()):
+            row_name = self.vowel_row_header_order[row]
+            col_name = self.vowel_column_header_order[col]
             matches = list()
             for seg, cat in self.vowelList:
                 if row_name in cat and col_name in cat:
@@ -1051,41 +1042,41 @@ class InventoryModel(QAbstractTableModel):
         pass
 
     def generate_generic_hayes(self):
-        self.cons_columns['Labial'] = [0, {'consonantal': '+', 'labial': '+', 'coronal': '-'}, None]
-        self.cons_columns['Labiodental'] = [1, {'consonantal': '+', 'labiodental': '+'}, None]
-        self.cons_columns['Dental'] = [2, {'consonantal': '+', 'anterior': '+', 'coronal': '+', 'labial': '-'},
+        self.cons_column_data['Labial'] = [0, {'consonantal': '+', 'labial': '+', 'coronal': '-'}, None]
+        self.cons_column_data['Labiodental'] = [1, {'consonantal': '+', 'labiodental': '+'}, None]
+        self.cons_column_data['Dental'] = [2, {'consonantal': '+', 'anterior': '+', 'coronal': '+', 'labial': '-'},
                                        None]
-        self.cons_columns['Alveopalatal'] = [3, {'consonantal': '+', 'anterior': '-', 'coronal': '+',
+        self.cons_column_data['Alveopalatal'] = [3, {'consonantal': '+', 'anterior': '-', 'coronal': '+',
                                                  'labial': '-'}, None]
-        self.cons_columns['Palatal'] = [4, {'consonantal': '+', 'dorsal': '+', 'coronal': '+', 'labial': '-'},
+        self.cons_column_data['Palatal'] = [4, {'consonantal': '+', 'dorsal': '+', 'coronal': '+', 'labial': '-'},
                                         None]
-        self.cons_columns['Velar'] = [5, {'consonantal': '+', 'dorsal': '+', 'labial': '-'}, None]
-        self.cons_columns['Uvular'] = [6, {'consonantal': '+', 'dorsal': '+', 'back': '+', 'labial': '-'}, None]
-        self.cons_columns['Glottal'] = [7, {'consonantal': '+', 'dorsal': '-', 'coronal': '-', 'labial': '-',
+        self.cons_column_data['Velar'] = [5, {'consonantal': '+', 'dorsal': '+', 'labial': '-'}, None]
+        self.cons_column_data['Uvular'] = [6, {'consonantal': '+', 'dorsal': '+', 'back': '+', 'labial': '-'}, None]
+        self.cons_column_data['Glottal'] = [7, {'consonantal': '+', 'dorsal': '-', 'coronal': '-', 'labial': '-',
                                             'nasal': '-'}, None]
 
-        self.cons_rows['Stop'] = [0, {'consonantal': '+', 'sonorant': '-', 'continuant': '-', 'nasal': '-',
+        self.cons_row_data['Stop'] = [0, {'consonantal': '+', 'sonorant': '-', 'continuant': '-', 'nasal': '-',
                                       'delayed_release': '-'}, None]
-        self.cons_rows['Nasal'] = [1, {'consonantal': '+', 'nasal': '+'}, None]
-        self.cons_rows['Trill'] = [2, {'consonantal': '+', 'trill': '+'}, None]
-        self.cons_rows['Tap'] = [3, {'consonantal': '+', 'tap': '+'}, None]
-        self.cons_rows['Fricative'] = [4, {'consonantal': '+', 'sonorant': '-', 'continuant': '+'}, None]
-        self.cons_rows['Affricate'] = [5, {'consonantal': '+', 'sonorant': '-', 'continuant': '-',
+        self.cons_row_data['Nasal'] = [1, {'consonantal': '+', 'nasal': '+'}, None]
+        self.cons_row_data['Trill'] = [2, {'consonantal': '+', 'trill': '+'}, None]
+        self.cons_row_data['Tap'] = [3, {'consonantal': '+', 'tap': '+'}, None]
+        self.cons_row_data['Fricative'] = [4, {'consonantal': '+', 'sonorant': '-', 'continuant': '+'}, None]
+        self.cons_row_data['Affricate'] = [5, {'consonantal': '+', 'sonorant': '-', 'continuant': '-',
                                            'delayed_release': '+'}, None]
-        self.cons_rows['Approximant'] = [6, {'consonantal': '+', 'sonorant': '+', 'lateral': '-'}, None]
-        self.cons_rows['Lateral approximant'] = [7, {'consonantal': '+', 'sonorant': '+', 'lateral': '+'}, None]
+        self.cons_row_data['Approximant'] = [6, {'consonantal': '+', 'sonorant': '+', 'lateral': '-'}, None]
+        self.cons_row_data['Lateral approximant'] = [7, {'consonantal': '+', 'sonorant': '+', 'lateral': '+'}, None]
 
-        self.vowel_columns['Front'] = [0, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '+'}, None]
-        self.vowel_columns['Near-front'] = [1, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'},
+        self.vowel_column_data['Front'] = [0, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '+'}, None]
+        self.vowel_column_data['Near-front'] = [1, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'},
                                           None]
-        self.vowel_columns['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
-        self.vowel_columns['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense': '-'}, None]
-        self.vowel_columns['Back'] = [4, {'consonantal': '-', 'front': '-', 'back': '+', 'tense': '+'}, None]
+        self.vowel_column_data['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
+        self.vowel_column_data['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense': '-'}, None]
+        self.vowel_column_data['Back'] = [4, {'consonantal': '-', 'front': '-', 'back': '+', 'tense': '+'}, None]
 
-        self.vowel_rows['High'] = [0, {'consonantal': '-', 'high': '+', 'low': '-', 'tense': '+'}, None]
-        self.vowel_rows['Mid-high'] = [1, {'consonantal': '-', 'high': '-', 'low': '-', 'tense': '+'}, None]
-        self.vowel_rows['Mid-low'] = [2, {'consonantal': '-', 'high': '-', 'low': '-', 'tense': '-'}, None]
-        self.vowel_rows['Low'] = [3, {'consonantal': '-', 'high': '-', 'low': '+', 'tense': '+'}, None]
+        self.vowel_row_data['High'] = [0, {'consonantal': '-', 'high': '+', 'low': '-', 'tense': '+'}, None]
+        self.vowel_row_data['Mid-high'] = [1, {'consonantal': '-', 'high': '-', 'low': '-', 'tense': '+'}, None]
+        self.vowel_row_data['Mid-low'] = [2, {'consonantal': '-', 'high': '-', 'low': '-', 'tense': '-'}, None]
+        self.vowel_row_data['Low'] = [3, {'consonantal': '-', 'high': '-', 'low': '+', 'tense': '+'}, None]
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -1167,12 +1158,12 @@ class InventoryModel(QAbstractTableModel):
 
         if self.isVowel(seg):
             category = ['Vowel']
-            iterRows = self.vowel_rows
-            iterCols = self.vowel_columns
+            iterRows = self.vowel_row_data
+            iterCols = self.vowel_column_data
         else:
             category = ['Consonant']
-            iterRows = self.cons_rows
-            iterCols = self.cons_columns
+            iterRows = self.cons_row_data
+            iterCols = self.cons_column_data
 
         for row, col in itertools.product(iterRows, iterCols):
             row_index, row_features, row_segs = iterRows[row]
@@ -1219,10 +1210,10 @@ class ConsonantModel(QSortFilterProxyModel):
         super().__init__()
         self.setSourceModel(inventory)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=None):
         return self.sourceModel().consRowCount()
 
-    def columnCount(self, parent):
+    def columnCount(self, parent=None):
         return self.sourceModel().consColumnCount()
 
     def filterAcceptsColumn(self, column, parent = None):
