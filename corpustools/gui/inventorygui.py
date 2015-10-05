@@ -18,12 +18,11 @@ class InventoryManager(QDialog):
 
         self.consModel = ConsonantModel(inventory)
         self.consView = InventoryView(self.consModel)
-        self.consView.dropSuccessful.connect(self.monitorDrop)
         layout.addWidget(self.consView)
 
-        # self.vowelModel = VowelModel(inventory)
-        # self.vowelView = InventoryView(self.vowelModel)
-        # layout.addWidget(self.vowelView)
+        self.vowelModel = VowelModel(inventory)
+        self.vowelView = InventoryView(self.vowelModel)
+        layout.addWidget(self.vowelView)
 
         uncTitle = QLabel(text='Uncategorized elements of the inventory')
         layout.addWidget(uncTitle)
@@ -50,53 +49,38 @@ class InventoryManager(QDialog):
 
         self.setLayout(layout)
 
-    def monitorDrop(self, drop_label):
-        for j in range(self.uncategorizedBox.count()):
-            widget = self.uncategorizedBox.itemAt(j).widget()
-            print(widget.text())
-            if widget.text() == drop_label:
-                del widget
-                break
-
-    def addToTable(self):
-        print('adding')
-
-    def removeFromTable(self):
-        print('removing')
-
-    def reorderTable(self):
-        print('reordering')
-
-    def getHeaderText(self):
-        cons_col_headers = list()
-        for index in range(1,4):#range(self.consBox.model().columnCount()):
-            cons_col_headers.append(self.consView.horizontalHeader().data())
-            #headerData(index,1,Qt.DisplayRole))
-        print(cons_col_headers)
-
-    def findColumnFromLabel(self, label):
-        for column in range (self.consModel.columnCount()):
-            if self.consModel.headerData(column, Qt.Horizontal) ==  label:
-                return column
-
     def accept(self):
-        #self.consView.commitData()
-        #check if the visual and logical indices match up
-        #print(self.inventory.cons_column_data)
-        # print([self.consModel.match(,Qt.DisplayRole, 'Velar')])
-        #print([self.consView.i for j in range(self.consModel.columnCount(self.consModel))])
-        # for j in range(self.consModel.columnCount()):
-        #     if self.consView.horizontalHeader().data(j) == self.consModel:
-        #         print('MO')
+
         map = {}
         for j in range(self.consModel.columnCount()):
             visualIndex = self.consView.horizontalHeader().visualIndex(j)
             logicalIndex = self.consView.horizontalHeader().logicalIndex(visualIndex)
             map[logicalIndex] = (visualIndex, self.consModel.headerData(logicalIndex, Qt.Horizontal, Qt.DisplayRole))
-        # print('j : {}, Logical Id: {}, Visual Id: {}, HeaderData: {}'.format(
-        #         j, logicalIndex,visualIndex, self.consModel.headerData(j,Qt.Horizontal,Qt.DisplayRole)))
-        print(map)
         self.inventory.changeColumnOrder(map, consonants=True)
+
+        map = {}
+        for j in range(self.consModel.rowCount()):
+            visualIndex = self.consView.verticalHeader().visualIndex(j)
+            logicalIndex = self.consView.verticalHeader().logicalIndex(visualIndex)
+            map[logicalIndex] = (visualIndex, self.consModel.headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
+        self.inventory.changeRowOrder(map, consonants=True)
+
+        map = {}
+        for j in range(self.vowelModel.columnCount()):
+            visualIndex = self.vowelView.horizontalHeader().visualIndex(j)
+            logicalIndex = self.vowelView.horizontalHeader().logicalIndex(visualIndex)
+            map[logicalIndex] = (visualIndex, self.vowelModel.headerData(logicalIndex, Qt.Horizontal, Qt.DisplayRole))
+        self.inventory.changeColumnOrder(map, consonants=False)
+
+        map = {}
+        for j in range(self.vowelModel.rowCount()):
+            visualIndex = self.vowelView.verticalHeader().visualIndex(j)
+            logicalIndex = self.vowelView.verticalHeader().logicalIndex(visualIndex)
+            map[logicalIndex] = (visualIndex, self.vowelModel.headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
+        self.inventory.changeRowOrder(map, consonants=False)
+
+        self.inventory.sortData()
+
         QDialog.accept(self)
 
     def reject(self):

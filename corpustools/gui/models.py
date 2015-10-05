@@ -866,7 +866,6 @@ class InventoryModel(QAbstractTableModel):
         return len(self.vowelColumns)
 
     def data(self, index, role):
-        print(index.row(), index.column())
         if not index.isValid():
             return QVariant()
         elif role != Qt.DisplayRole:
@@ -967,13 +966,17 @@ class InventoryModel(QAbstractTableModel):
         else:
             column_data = self.vowel_column_data
 
-        print(column_data)
         for visualIndex,headerName in map.values():
             column_data[headerName][0] = visualIndex
 
-        print(column_data)
-        self.sortData()
+    def changeRowOrder(self, map, consonants=True):
+        if consonants:
+            row_data = self.cons_row_data
+        else:
+            row_data = self.vowel_row_data
 
+        for visualIndex, headerName in map.values():
+            row_data[headerName][0] = visualIndex
 
     def sortData(self):
 
@@ -1240,10 +1243,10 @@ class VowelModel(QSortFilterProxyModel):
         super().__init__()
         self.setSourceModel(inventory)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=None):
         return self.sourceModel().vowelRowCount()
 
-    def columnCount(self, parent):
+    def columnCount(self, parent=None):
         return self.sourceModel().vowelColumnCount()
 
     def filterAcceptsColumn(self, column, parent = None):
@@ -1251,26 +1254,12 @@ class VowelModel(QSortFilterProxyModel):
             return False
         else:
             return True
-        # header = self.sourceModel().headerData(column, Qt.Horizontal, Qt.DisplayRole)
-        # if header == QVariant():
-        #     return False
-        # if header in self.sourceModel().vowelColumns:
-        #     return True
-        # else:
-        #     return False
+
 
     def filterAcceptsRow(self, row, parent = None):
         if row < self.sourceModel().vowel_row_offset:
             return False
         else:
             return True
-        # header = self.sourceModel().headerData(row, Qt.Vertical, Qt.DisplayRole)
-        # print('Row: {}'.format(row))
-        # print(header)
-        # if header == QVariant():
-        #     return False
-        # if header in self.sourceModel().vowelRows:
-        #     return True
-        # else:
-        #     return False
+
 
