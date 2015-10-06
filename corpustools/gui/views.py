@@ -873,22 +873,47 @@ class InventoryView(QTableView):
     def __init__(self, inventory, editable=False):
         super().__init__()
         self.setModel(inventory)
-        # self.setItemDelegate(delegate)
-        self.horizontalHeader().show()
-        self.verticalHeader().show()
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
+
         self.horizontalHeader().setSectionsClickable(True)
         self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
         self.horizontalHeader().setSectionsMovable(True)
+        self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.horizontalHeader().customContextMenuRequested.connect(self.showColumnMenu)
+
         self.verticalHeader().setSectionsClickable(True)
         self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
         self.verticalHeader().setSectionsMovable(True)
+        self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.verticalHeader().customContextMenuRequested.connect(self.showRowMenu)
+
         #self.addSegmentButtons()
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
+
+    def showRowMenu(self, pos):
+        menu = QMenu()
+        addRowAction = menu.addAction('Insert Row')
+        removeRowAction = menu.addAction('Remove Row')
+        index = self.indexAt(pos)
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == addRowAction:
+            self.model().insertRow(index)
+        elif action == removeRowAction:
+            print('Remove')
+
+    def showColumnMenu(self, pos):
+        menu = QMenu()
+        addRowAction = menu.addAction('Insert Column')
+        removeRowAction = menu.addAction('Remove Column')
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == addRowAction:
+            print('Add')
+        elif action == removeRowAction:
+            print('Remove')
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasFormat('DraggableSegmentButton'):

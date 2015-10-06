@@ -49,38 +49,40 @@ class InventoryManager(QDialog):
 
         self.setLayout(layout)
 
-    def accept(self):
-
-        map = {}
+    def checkForColumnRowChanges(self):
+        map = {} #update any changes to Consonant Columns
         for j in range(self.consModel.columnCount()):
             visualIndex = self.consView.horizontalHeader().visualIndex(j)
             logicalIndex = self.consView.horizontalHeader().logicalIndex(visualIndex)
             map[logicalIndex] = (visualIndex, self.consModel.headerData(logicalIndex, Qt.Horizontal, Qt.DisplayRole))
         self.inventory.changeColumnOrder(map, consonants=True)
 
-        map = {}
+        map = {} #update any changes to Consonant Rows
         for j in range(self.consModel.rowCount()):
             visualIndex = self.consView.verticalHeader().visualIndex(j)
             logicalIndex = self.consView.verticalHeader().logicalIndex(visualIndex)
             map[logicalIndex] = (visualIndex, self.consModel.headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
         self.inventory.changeRowOrder(map, consonants=True)
 
-        map = {}
+        map = {} #update any changes to Vowel Columns
         for j in range(self.vowelModel.columnCount()):
             visualIndex = self.vowelView.horizontalHeader().visualIndex(j)
             logicalIndex = self.vowelView.horizontalHeader().logicalIndex(visualIndex)
             map[logicalIndex] = (visualIndex, self.vowelModel.headerData(logicalIndex, Qt.Horizontal, Qt.DisplayRole))
         self.inventory.changeColumnOrder(map, consonants=False)
 
-        map = {}
+        map = {} #update any changes to Vowel Rows
         for j in range(self.vowelModel.rowCount()):
             visualIndex = self.vowelView.verticalHeader().visualIndex(j)
             logicalIndex = self.vowelView.verticalHeader().logicalIndex(visualIndex)
+            print(visualIndex, logicalIndex, self.vowelModel.headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
             map[logicalIndex] = (visualIndex, self.vowelModel.headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
         self.inventory.changeRowOrder(map, consonants=False)
 
-        self.inventory.sortData()
+    def accept(self):
 
+        self.checkForColumnRowChanges()
+        self.inventory.sortData()
         QDialog.accept(self)
 
     def reject(self):
