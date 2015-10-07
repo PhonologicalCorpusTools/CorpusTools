@@ -850,6 +850,7 @@ class InventoryModel(QAbstractTableModel):
         self.generate_generic_names()
         self.initRowColNames()
         self.sortData()
+        self.filterGenericNames()
 
 
     def columnCount(self, parent):
@@ -965,33 +966,103 @@ class InventoryModel(QAbstractTableModel):
         self.btnGroup.addButton(wid)
         return wid
 
+    def removeColumn(self, index, consonants=True):
 
-    def insertRow(self, index, consonants=True):
-        self.beginInsertRows(index, index.row(), index.row())
+        if consonants:
+            column_data = self.cons_column_data
+            headers = self.consColumns
+            row_count = self.consRowCount()
+            column_count = self.consColumnCount()
+        else:
+            column_data = self.vowel_column_data
+            headers = self.vowelColumns
+            row_count = self.vowelRowCount()
+            column_count = self.vowelColumnCount()
+
+        for key, value in column_data.items():
+            if value[0] == index.column():
+                target = key
+                continue
+            if value[0] >= index.column():
+                column_data[key][0] -= 1
+
+        column_data.pop(target)
+        self.modelReset()
+        return True
+
+
+    def removeRow(self, index, consonants=True):
+        print(index.row())
         if consonants:
             row_data = self.cons_row_data
-            row_header_order = self.cons_row_header_order
             headers = self.consRows
             row_count = self.consRowCount()
             column_count = self.consColumnCount()
         else:
             row_data = self.vowel_row_data
-            row_header_order = self.vowel_row_header_order
             headers = self.vowelRows
             row_count = self.vowelRowCount()
             column_count = self.vowelColumnCount()
-        for row in row_data:
-            if row_data[row][0] >= index.row():
-                row_data[row][0] += 1
 
-        row_data['Vikings'] = [index.row(), {'sonorant': '+'}, None]
-        headers.add('Vikings')
-        self.sortData()
-        self.dataChanged.emit(self.createIndex(0,0), #topleft
-                              self.createIndex(row_count,column_count))#bottom right
-        self.endInsertRows()
+        for key, value in row_data.items():
+            if value[0] == index.row():
+                target = key
+                continue
+            if value[0] >= index.row():
+                row_data[key][0] -= 1
+        row_data.pop(target)
+        headers.remove(target)
+        self.modelReset()
         return True
 
+    def insertColumn(self, index, consonants=True):
+
+        if consonants:
+            column_data = self.cons_column_data
+            headers = self.consColumns
+            row_count = self.consRowCount()
+            column_count = self.consColumnCount()
+        else:
+            column_data = self.vowel_column_data
+            headers = self.vowelColumns
+            row_count = self.vowelRowCount()
+            column_count = self.vowelColumnCount()
+
+        for key, value in column_data.items():
+            if value[0] >= index.column():
+                column_data[key][0] += 1
+        new_name = str(self.columnCount(self))
+        column_data[new_name] = [index.column(), {'sonorant': '+', 'consonantal': '+'}, None]
+        headers.add(new_name)
+        self.modelReset()
+        return True
+
+
+    def insertRow(self, index, consonants=True):
+
+        if consonants:
+            row_data = self.cons_row_data
+            headers = self.consRows
+            row_count = self.consRowCount()
+            column_count = self.consColumnCount()
+        else:
+            row_data = self.vowel_row_data
+            headers = self.vowelRows
+            row_count = self.vowelRowCount()
+            column_count = self.vowelColumnCount()
+        for key, value in row_data.items():
+            if value[0] >= index.row():
+                row_data[key][0] += 1
+        new_name = str(self.rowCount(self))
+        row_data[new_name] = [index.row(), {'sonorant': '+', 'consonantal': '+'}, None]
+        headers.add(new_name)
+        self.modelReset()
+        return True
+
+    def modelReset(self, *args, **kwargs):
+        self.modelAboutToBeReset.emit()
+        self.sortData()
+        self.endResetModel()
 
     def changeColumnOrder(self, map, consonants=True):
         if consonants:
@@ -1011,6 +1082,16 @@ class InventoryModel(QAbstractTableModel):
         for visualIndex, headerName in map.values():
             row_data[headerName][0] = visualIndex
 
+    def filterGenericNames(self):
+        self.cons_column_data = {key:value for (key,value) in self.cons_column_data.items()
+                                 if key in self.cons_column_header_order.values()}
+        self.cons_row_data = {key: value for (key, value) in self.cons_row_data.items()
+                                 if key in self.cons_row_header_order.values()}
+        self.vowel_column_data = {key: value for (key, value) in self.vowel_column_data.items()
+                                 if key in self.vowel_column_header_order.values()}
+        self.vowel_row_data = {key: value for (key, value) in self.vowel_row_data.items()
+                                 if key in self.vowel_row_header_order.values()}
+
     def sortData(self):
 
         sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
@@ -1024,12 +1105,6 @@ class InventoryModel(QAbstractTableModel):
         self.cons_row_header_order = {i: name for i, name in enumerate(sorted_cons_row_headers)}
         self.vowel_row_offset = len(self.cons_row_header_order)
         self.vowel_row_header_order = {i+self.vowel_row_offset: name for i, name in enumerate(sorted_vowel_row_headers)}
-
-        print(sorted_vowel_row_headers)
-        print(self.vowel_row_header_order)
-        for key,value in self.vowel_row_data.items():
-            print(key, value)
-
         self.all_columns = {}
         self.all_rows = {}
         self.all_columns.update(self.cons_column_header_order)
@@ -1252,6 +1327,15 @@ class ConsonantModel(QSortFilterProxyModel):
     def insertRow(self, index):
         self.sourceModel().insertRow(index)
 
+    def insertColumn(self, index):
+        self.sourceModel().insertColumn(index)
+
+    def removeColumn(self, index):
+        self.sourceModel().removeColumn(index)
+
+    def removeRow(self, index):
+        self.sourceModel().removeRow(index)
+
     def rowCount(self, parent=None):
         return self.sourceModel().consRowCount()
 
@@ -1284,6 +1368,15 @@ class VowelModel(QSortFilterProxyModel):
 
     def insertRow(self, index):
         self.sourceModel().insertRow(index, consonants=False)
+
+    def insertColumn(self,index):
+        self.sourceModel().insertColumn(index, consonants=False)
+
+    def removeRow(self, index):
+        self.sourceModel().removeRow(index, consonants=False)
+
+    def removeColumn(self, index):
+        self.sourceModel().removeColumn(index, consonants=False)
 
     def rowCount(self, parent=None):
         return self.sourceModel().vowelRowCount()

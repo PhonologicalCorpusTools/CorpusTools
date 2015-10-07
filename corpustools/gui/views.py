@@ -903,17 +903,18 @@ class InventoryView(QTableView):
         if action == addRowAction:
             self.model().insertRow(index)
         elif action == removeRowAction:
-            print('Remove')
+            self.model().removeRow(index)
 
     def showColumnMenu(self, pos):
         menu = QMenu()
-        addRowAction = menu.addAction('Insert Column')
-        removeRowAction = menu.addAction('Remove Column')
+        addColumnAction = menu.addAction('Insert Column')
+        removeColumnAction = menu.addAction('Remove Column')
+        index = self.indexAt(pos)
         action = menu.exec_(self.mapToGlobal(pos))
-        if action == addRowAction:
-            print('Add')
-        elif action == removeRowAction:
-            print('Remove')
+        if action == addColumnAction:
+            self.model().insertColumn(index)
+        elif action == removeColumnAction:
+            self.model().removeColumn(index)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasFormat('DraggableSegmentButton'):
