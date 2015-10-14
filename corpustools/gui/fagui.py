@@ -1,22 +1,14 @@
-
-from .imports import *
-
 from collections import OrderedDict
 
+from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget,
-                    FileWidget, SaveFileWidget, TierWidget,
+                      SaveFileWidget, TierWidget,
                     RestrictedContextWidget)
-
 from .windows import FunctionWorker, FunctionDialog
-
 from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
-                                        MostFrequentVariantContext,
-                                        SeparatedTokensVariantContext,
-                                        WeightedVariantContext)
+                                        MostFrequentVariantContext)
 
 class FAWorker(FunctionWorker):
     def run(self):

@@ -1,54 +1,38 @@
 import os
 import codecs
 import logging
-
-from .imports import *
-
+import time
 from collections import OrderedDict
 
+from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
-
-from corpustools.corpus.io import (load_binary, download_binary,
-                                    save_binary)
-
+from corpustools.corpus.io import (load_binary, save_binary)
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
                                     export_corpus_csv)
-
 from corpustools.corpus.io.textgrid import (inspect_discourse_textgrid,
                                             load_discourse_textgrid,
                                             load_directory_textgrid)
-
 from corpustools.corpus.io.text_ilg import (load_discourse_ilg,
                                             inspect_discourse_ilg,
                                             load_directory_ilg)
-
 from corpustools.corpus.io.text_spelling import (load_discourse_spelling,
                                                 inspect_discourse_spelling,
                                                 load_directory_spelling)
-
 from corpustools.corpus.io.text_transcription import (load_discourse_transcription,
                                                         inspect_discourse_transcription,
                                                         load_directory_transcription)
-
 from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
                                                     inspect_discourse_multiple_files,
                                                     load_directory_multiple_files)
-
 from corpustools.corpus.io.helper import (get_corpora_list,
                                         corpus_name_to_path,
                                         inspect_directory,
                                         log_annotation_types)
-
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
-
-from .widgets import (FileWidget, RadioSelectWidget, FeatureBox,
-                    SaveFileWidget, DirectoryWidget, PunctuationWidget,
-                    DigraphWidget, InventoryBox, AttributeFilterWidget,
-                    TranscriptionWidget, SegFeatSelect, TierWidget,
-                    AttributeWidget, AnnotationTypeWidget,
+from .widgets import (RadioSelectWidget, SaveFileWidget, AttributeFilterWidget,
+                      AnnotationTypeWidget,
                     CorpusSelect)
-
 from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
 

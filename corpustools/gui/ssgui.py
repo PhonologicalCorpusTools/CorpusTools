@@ -1,21 +1,15 @@
-
-from .imports import *
-
 from collections import OrderedDict
 
+from .imports import *
 from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.symbolsim.io import read_pairs_file
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from .widgets import (RadioSelectWidget, FileWidget, TierWidget,
                         RestrictedContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 from .corpusgui import AddWordDialog
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
-                                        MostFrequentVariantContext,
-                                        SeparatedTokensVariantContext,
-                                        WeightedVariantContext)
+                                        MostFrequentVariantContext)
 
 class SSWorker(FunctionWorker):
     def run(self):
@@ -293,7 +287,6 @@ class SSDialog(FunctionDialog):
         self.compType = 'file'
 
     def generateKwargs(self):
-        from corpustools.corpus.classes import Word
         min_rel = None
         if self.minEdit.text() != '':
             try:

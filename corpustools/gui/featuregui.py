@@ -1,21 +1,15 @@
 import os
 import copy
-
-from .imports import *
-
 from collections import OrderedDict
 import codecs
 
-from corpustools.corpus.io import (load_binary, download_binary,
-                    load_feature_matrix_csv, save_binary, DelimiterError,
+from .imports import *
+from corpustools.corpus.io import (load_binary, load_feature_matrix_csv, save_binary, DelimiterError,
                     export_feature_matrix_csv)
 
-from .views import TableWidget, SubTreeView
-
+from .views import SubTreeView
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
-
-from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget, InventoryBox, CreateClassWidget
-
+from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget, CreateClassWidget, TableWidget
 from .windows import DownloadWorker
 from .helpgui import HelpDialog
 

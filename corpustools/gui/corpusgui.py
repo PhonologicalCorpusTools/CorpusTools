@@ -1,21 +1,11 @@
-import os
-import sys
-import codecs
-import string
-from collections import OrderedDict
-
 from .imports import *
-from corpustools.exceptions import PCTError, PCTPythonError
-from corpustools.decorators import check_for_errors
 from corpustools.contextmanagers import CanonicalVariantContext
 
 from corpustools.corpus.classes import Word, Attribute
 
-from .widgets import (RadioSelectWidget, FeatureBox,
-                    InventoryBox,
+from .widgets import (InventoryBox,
                     CreateClassWidget, TranscriptionWidget, SegFeatSelect, TierWidget)
-from .featuregui import FeatureSystemSelect
-from .helpgui import HelpDialog
+
 
 class InventorySummary(QWidget):
     def __init__(self, corpus, parent=None):

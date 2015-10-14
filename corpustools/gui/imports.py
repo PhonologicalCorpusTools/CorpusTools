@@ -1,6 +1,3 @@
-
-import time
-
 AUDIO_ENABLED = True
 HELP_ENABLED = True
 try:

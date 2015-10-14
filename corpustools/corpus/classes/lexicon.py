@@ -1219,10 +1219,6 @@ class Inventory(object):
     """
 
     def __init__(self):
-        #for some reason, this __init__() has to be called twice:
-        #once here and once again inside loadCorpus in main.py
-        #the superclass init() is oddly "nullified" when the Corpus is returned from
-        #the DialogBox in main.py, and it) must be called again
         self.segs = {'#' : Segment('#')}
         self.features = []
         self.possible_values = set()
@@ -1232,6 +1228,12 @@ class Inventory(object):
         self.cons_rows = {}
         self.vow_columns = {}
         self.vow_rows = {}
+
+    def setFeatures(self):
+        seg = random.choice([seg for seg in self.segs if not seg=='#'])
+        for feature,value in self.segs[seg].features.items():
+            self.features.append(feature)
+            self.possible_values.add(value)
 
     def __getstate__(self):
         state = self.__dict__.copy()

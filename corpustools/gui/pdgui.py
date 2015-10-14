@@ -1,16 +1,11 @@
 from collections import OrderedDict
 
 from .imports import *
-from .widgets import (EnvironmentSelectWidget, EnvironmentDialog,
-                    SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
-import itertools
-
 from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs)
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,

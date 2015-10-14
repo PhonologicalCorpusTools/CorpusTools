@@ -1,16 +1,11 @@
-
-
 from collections import OrderedDict
 
 import corpustools.funcload.functional_load as FL
-
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,

@@ -1,25 +1,79 @@
-from PyQt5.QtWidgets import QTableView, QTableWidget
-
-import sys
 import re
 import operator
-from collections import OrderedDict, defaultdict
-from itertools import combinations, permutations, chain, product
-from corpustools.gui.views import TableWidget
+from collections import OrderedDict, namedtuple
+from itertools import combinations, product
 
 from .imports import *
-from .views import TableWidget
+
 from .models import SegmentPairModel, EnvironmentModel, FilterModel
 
 #from .corpusgui import AddTierDialog
 from .delegates import SwitchDelegate
 
 from corpustools.corpus.classes import Attribute, EnvironmentFilter
-from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
+from corpustools.corpus.io.helper import get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
 
 
 def truncate_string(string, length = 10):
     return (string[:length] + '...') if len(string) > length + 3 else string
+
+class TableWidget(QTableView):
+    def __init__(self,parent=None):
+        super(TableWidget, self).__init__(parent=parent)
+
+        self.verticalHeader().hide()
+
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+        self.horizontalHeader().setMinimumSectionSize(70)
+        try:
+            self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        except AttributeError:
+            self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+
+        self.setSortingEnabled(True)
+        self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
+
+        self.clip = QApplication.clipboard()
+
+    def keyPressEvent(self, e):
+        if (e.modifiers() & Qt.ControlModifier):
+            selected = self.selectionModel().selectedRows()
+            if e.key() == Qt.Key_C: #copy
+                #s = '\t'+"\t".join([str(self.table.horizontalHeaderItem(i).text()) for i in xrange(selected[0].leftColumn(), selected[0].rightColumn()+1)])
+                #s = s + '\n'
+                s = ''
+
+                for r in selected:
+                    #s += self.table.verticalHeaderItem(r).text() + '\t'
+                    for c in range(self.model().columnCount()):
+                        ind = self.model().index(r.row(),c)
+                        s += self.model().data(ind,Qt.DisplayRole) + "\t"
+                    s = s[:-1] + "\n" #eliminate last '\t'
+                self.clip.setText(s)
+
+
+    def setModel(self,model):
+        super(TableWidget, self).setModel(model)
+        #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
+        #try:
+        #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        #except AttributeError:
+        #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
+        #self.resizeColumnsToContents()
+        try:
+            self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
+        except AttributeError:
+            self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+
+    def calcWidth(self):
+        header = self.horizontalHeader()
+        width = self.horizontalOffset()
+        for i in range(header.count()):
+            width += header.sectionSize(i)
+        return width
 
 class NonScrollingComboBox(QComboBox):
     def __init__(self, parent = None):
@@ -696,6 +750,46 @@ class AttributeFilterWidget(QGroupBox):
 
     def value(self):
         return [x[0] for x in self.table.model().filters]
+
+class EditInventoryWindow(QDialog):
+
+    def __init__(self, inventory, index, orientation, consonants=True):
+        super().__init__()
+        layout = QVBoxLayout()
+        title = QHBoxLayout()
+        title.addWidget(QLabel('You can edit the properties of an inventory row or column in this window'))
+        layout.addLayout(title)
+        inventoryBox = QVBoxLayout()
+        temp_inventory = namedtuple('tempInventory', ['features', 'possible_values'])
+        temp_inventory.features = inventory.features()
+        temp_inventory.possible_values = inventory.possible_values()
+        self.feature_box = FeatureBox('Features', temp_inventory)
+        if orientation == Qt.Vertical:
+            header = inventory.getColumnHeader(index, consonants)
+            specs = inventory.getColumnSpecs(header, consonants)
+        elif orientation == Qt.Horizontal:
+            header = inventory.getRowHeader(index, consonants)
+            specs = inventory.getRowSpecs(header, consonants)
+        for key,value in specs[1].items():
+            self.feature_box.envList.addItem(value+key)
+
+        inventoryBox.addWidget(self.feature_box)
+        ok_button = QPushButton('OK')
+        ok_button.clicked.connect(self.accept)
+        cancel_button = QPushButton('Cancel')
+        cancel_button.clicked.connect(self.reject)
+        layout.addLayout(inventoryBox)
+        layout.addWidget(ok_button)
+        layout.addWidget(cancel_button)
+        self.setLayout(layout)
+
+    def accept(self):
+        self.features = self.feature_box.value()
+        print(len(self.features))
+        QDialog.accept(self)
+
+    def reject(self):
+        QDialog.reject(self)
 
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
@@ -1908,9 +2002,9 @@ class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
         QWidget.__init__(self,parent)
 
-        self.inventory = inventory
-        self.features = self.inventory.features
-        self.values = self.inventory.possible_values
+        #self.inventory = inventory
+        self.features = inventory.features
+        self.values = inventory.possible_values
         layout = QHBoxLayout()
 
         #layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -1977,7 +2071,8 @@ class FeatureBox(QWidget):
         val = self.currentSpecification()
         if not val:
             return ''
-        return '[{}]'.format(','.join(val))
+        #return '[{}]'.format(','.join(val))
+        return val
 
 class SegmentPairDialog(QDialog):
     def __init__(self, corpus, parent=None):

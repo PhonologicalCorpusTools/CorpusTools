@@ -1,7 +1,6 @@
 from .imports import *
 from .views import InventoryView
-from .models import ConsonantModel, VowelModel, InventoryDelegate
-from .widgets import DraggableSegmentButton
+from .models import ConsonantModel, VowelModel, UncategorizedModel
 
 
 class InventoryManager(QDialog):
@@ -16,26 +15,41 @@ class InventoryManager(QDialog):
         topmessage.setWordWrap(True)
         layout.addWidget(topmessage)
 
+        consBox = QVBoxLayout()
+        cons_title = QLabel('Consonant Inventory')
+        consBox.addWidget(cons_title)
         self.consModel = ConsonantModel(inventory)
         self.consView = InventoryView(self.consModel)
-        layout.addWidget(self.consView)
+        consBox.addWidget(self.consView)
+        layout.addLayout(consBox)
 
+        vowelBox = QVBoxLayout()
+        vowel_title = QLabel('Vowel Inventory')
+        vowelBox.addWidget(vowel_title)
         self.vowelModel = VowelModel(inventory)
         self.vowelView = InventoryView(self.vowelModel)
-        layout.addWidget(self.vowelView)
+        vowelBox.addWidget(self.vowelView)
+        layout.addLayout(vowelBox)
 
-        uncTitle = QLabel(text='Uncategorized elements of the inventory')
-        layout.addWidget(uncTitle)
+        uncBox = QVBoxLayout()
+        unc_title = QLabel('Uncategorized Segments')
+        uncBox.addWidget(unc_title)
+        self.uncModel = UncategorizedModel(inventory)
+        self.uncView = InventoryView(self.uncModel)
+        self.uncView.horizontalHeader().hide()
+        self.uncView.verticalHeader().hide()
+        uncBox.addWidget(self.uncView)
+        layout.addLayout(uncBox)
 
-        self.uncategorizedBox = QHBoxLayout()
-        self.uncategorizedBox.setAlignment(Qt.AlignLeft)
-        self.uncategorizedBox.setContentsMargins(0, 0, 0, 0)
-        self.uncategorizedBox.setSpacing(0)
-        for seg in inventory.uncategorized:
-            segButton = DraggableSegmentButton(seg.symbol)
-            segButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            self.uncategorizedBox.addWidget(segButton)
-        layout.addLayout(self.uncategorizedBox)
+        # self.uncategorizedBox = QHBoxLayout()
+        # self.uncategorizedBox.setAlignment(Qt.AlignLeft)
+        # self.uncategorizedBox.setContentsMargins(0, 0, 0, 0)
+        # self.uncategorizedBox.setSpacing(0)
+        # for seg in inventory.uncategorized:
+        #     segButton = DraggableSegmentButton(seg.symbol)
+        #     segButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        #     self.uncategorizedBox.addWidget(segButton)
+        # layout.addLayout(self.uncategorizedBox)
 
         buttonLayout = QHBoxLayout()
         ok_button = QPushButton('OK')
@@ -75,7 +89,6 @@ class InventoryManager(QDialog):
         for j in range(self.vowelModel.rowCount()):
             visualIndex = self.vowelView.verticalHeader().visualIndex(j)
             logicalIndex = self.vowelView.verticalHeader().logicalIndex(visualIndex)
-            print(visualIndex, logicalIndex, self.vowelModel.headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
             map[logicalIndex] = (visualIndex, self.vowelModel.headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
         self.inventory.changeRowOrder(map, consonants=False)
 

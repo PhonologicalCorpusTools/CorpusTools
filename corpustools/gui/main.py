@@ -1,14 +1,14 @@
 import os
-import sys
 import logging
 
 from .imports import *
 
-from .config import Settings, PreferencesDialog
-from .views import (TableWidget, TreeWidget, DiscourseView, ResultsWindow,
-                    LexiconView,PhonoSearchResults, MutualInfoVowelHarmonyWindow)
+from .config import Settings
 
-from .models import (CorpusModel, ResultsModel, SpontaneousSpeechCorpusModel,
+from .views import (TreeWidget, DiscourseView, ResultsWindow,
+                    LexiconView,PhonoSearchResults)
+
+from .models import (CorpusModel, SpontaneousSpeechCorpusModel,
                     DiscourseModel, InventoryModel)
 
 from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog,
@@ -36,11 +36,9 @@ from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
-from .luckygui import LuckyDialog
 from .autogui import AutoDialog
 from .helpgui import AboutDialog, HelpDialog
 
-from . import pct_rc
 
 class QApplicationMessaging(QApplication):
     messageFromOtherInstance = Signal(bytes)
@@ -342,7 +340,7 @@ class MainWindow(QMainWindow):
             pass
 
     def showPreferences(self):
-        dialog = PreferencesDialog(self, self.settings)
+        dialog = PCTWidgets.PreferencesDialog(self, self.settings)
         if dialog.exec_():
             self.settings = dialog.settings
 

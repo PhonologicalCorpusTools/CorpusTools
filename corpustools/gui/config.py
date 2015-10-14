@@ -1,9 +1,8 @@
-
 import os
-import codecs
 
 from .imports import *
-from .widgets import DirectoryWidget
+#from .widgets import DirectoryWidget
+import corpustools.gui.widgets as PCTWidgets
 
 class BasePane(QWidget):
     """Abstract, don't use"""
@@ -26,7 +25,7 @@ class StoragePane(BasePane):
 
         layout = QFormLayout()
 
-        self.storageDirectoryWidget = DirectoryWidget()
+        self.storageDirectoryWidget = PCTWidgets.DirectoryWidget()
 
         layout.addRow(QLabel('Storage directory:'),self.storageDirectoryWidget)
 

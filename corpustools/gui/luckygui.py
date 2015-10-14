@@ -1,5 +1,5 @@
 from .imports import *
-from .windows import FunctionWorker, FunctionDialog
+from .windows import FunctionWorker
 
 from corpustools.symbolsim.string_similarity import string_similarity
 from corpustools.funcload.functional_load import minpair_fl

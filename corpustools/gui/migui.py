@@ -1,15 +1,10 @@
-
-
 from collections import OrderedDict
 
 from corpustools.mutualinfo.mutual_information import pointwise_mi
-
 from .imports import *
 from .widgets import (BigramWidget, RadioSelectWidget, TierWidget, ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,

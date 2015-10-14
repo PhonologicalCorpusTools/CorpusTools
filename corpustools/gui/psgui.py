@@ -2,13 +2,10 @@
 
 from .imports import *
 
-from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
-                        RadioSelectWidget, InventoryBox, FeatureBox,
-                        TierWidget, SegmentSelectionWidget)
+from .widgets import (EnvironmentSelectWidget, TierWidget)
 
 from .windows import FunctionWorker, FunctionDialog
 
-from corpustools.corpus.classes.lexicon import EnvironmentFilter
 from corpustools.phonosearch import phonological_search
 
 from corpustools.exceptions import PCTError, PCTPythonError
