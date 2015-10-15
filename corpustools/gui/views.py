@@ -2,9 +2,9 @@ import csv
 from itertools import product
 
 from .imports import *
-from .models import VariantModel, ResultsModel, PhonoSearchResultsModel
+from .models import VariantModel, ResultsModel, PhonoSearchResultsModel, ConsonantModel, VowelModel
 from .multimedia import AudioPlayer
-import corpustools.gui.widgets as PCTWidgets #EditInventoryWidget, FeatureBox
+import corpustools.gui.widgets as PCTWidgets
 from .widgets import TableWidget
 
 
@@ -810,11 +810,16 @@ class PhonoSearchResults(ResultsWindow):
 class InventoryView(QTableView):
 
     dropSuccessful = Signal(str)
-    columnDataChanged = Signal(int)
+    columnSpecsChanged = Signal(int, list, str, bool)
+    rowSpecsChanged = Signal(int, list, str, bool)
 
     def __init__(self, inventory, editable=False):
         super().__init__()
         self.setModel(inventory)
+        self.columnSpecsChanged.connect(self.model().sourceModel().updateColumn)
+        self.rowSpecsChanged.connect(self.model().sourceModel().updateRow)
+        self.horizontalHeader().sectionMoved.connect(self.moveColumn)
+        self.verticalHeader().sectionMoved.connect(self.moveRow)
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
 
@@ -835,7 +840,6 @@ class InventoryView(QTableView):
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
-
 
 
     def showRowMenu(self, pos):
@@ -876,15 +880,57 @@ class InventoryView(QTableView):
         #try to emit a DropSuccessful so that the inventorygui can delete the appropriate button
         event.accept()
 
-    def editChartRow(self):
-        dialog = PCTWidgets.EditInventoryWindow(self.model())
-        results = dialog.exec_()
+    def moveColumn(self):
+        map = {}
+        for j in range(self.horizontalHeader().length()):
+            visualIndex = self.horizontalHeader().visualIndex(j)
+            logicalIndex = self.horizontalHeader().logicalIndex(visualIndex)
+            map[logicalIndex] = (visualIndex, self.model().sourceModel().headerData(logicalIndex, Qt.Horizontal, Qt.DisplayRole))
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        self.model().sourceModel().changeColumnOrder(map, consonants=consonants)
 
-    def editChartCol(self, index):
-        dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Vertical, consonants=True)
+    def moveRow(self):
+        map = {}
+        for j in range(self.verticalHeader().length()):
+            visualIndex = self.verticalHeader().visualIndex(j)
+            logicalIndex = self.verticalHeader().logicalIndex(visualIndex)
+            map[logicalIndex] = (visualIndex, self.model().sourceModel().headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        self.model().sourceModel().changeRowOrder(map, consonants=consonants)
+
+    def editChartRow(self, index):
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Horizontal, consonants=consonants)
         results = dialog.exec_()
         if results:
-            self.model().updateColumn(index, dialog.features)
+            if isinstance(self.model(), ConsonantModel):
+                consonants = True
+            elif isinstance(self.model(), VowelModel):
+                consonants = False
+            self.rowSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
+
+    def editChartCol(self, index):
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Vertical, consonants=consonants)
+        results = dialog.exec_()
+        if results:
+            if isinstance(self.model(), ConsonantModel):
+                consonants = True
+            elif isinstance(self.model(), VowelModel):
+                consonants = False
+            self.columnSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
 
     def addSegmentButtons(self):
         #possibly not a necessary function, since users don't need to click on individual buttons

@@ -760,6 +760,8 @@ class EditInventoryWindow(QDialog):
         title.addWidget(QLabel('You can edit the properties of an inventory row or column in this window'))
         layout.addLayout(title)
         inventoryBox = QVBoxLayout()
+        self.sectionNameLineEdit = QLineEdit()
+        inventoryBox.addWidget(self.sectionNameLineEdit)
         temp_inventory = namedtuple('tempInventory', ['features', 'possible_values'])
         temp_inventory.features = inventory.features()
         temp_inventory.possible_values = inventory.possible_values()
@@ -770,6 +772,7 @@ class EditInventoryWindow(QDialog):
         elif orientation == Qt.Horizontal:
             header = inventory.getRowHeader(index, consonants)
             specs = inventory.getRowSpecs(header, consonants)
+        self.sectionNameLineEdit.insert(header)
         for key,value in specs[1].items():
             self.feature_box.envList.addItem(value+key)
 
@@ -785,7 +788,7 @@ class EditInventoryWindow(QDialog):
 
     def accept(self):
         self.features = self.feature_box.value()
-        print(len(self.features))
+        self.section_name = self.sectionNameLineEdit.text()
         QDialog.accept(self)
 
     def reject(self):
@@ -2011,7 +2014,7 @@ class FeatureBox(QWidget):
 
         self.featureList = QListWidget()
 
-        for f in self.features:
+        for f in sorted(self.features):
             self.featureList.addItem(f)
         self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
         layout.addWidget(self.featureList)
