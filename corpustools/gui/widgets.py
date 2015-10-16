@@ -755,10 +755,9 @@ class EditInventoryWindow(QDialog):
 
     def __init__(self, inventory, index, orientation, consonants=True):
         super().__init__()
+        row_or_col = 'row' if orientation==Qt.Horizontal else 'column'
+        self.setWindowTitle('Edit {} properties'.format(row_or_col))
         layout = QVBoxLayout()
-        title = QHBoxLayout()
-        title.addWidget(QLabel('You can edit the properties of an inventory row or column in this window'))
-        layout.addLayout(title)
         inventoryBox = QVBoxLayout()
         self.sectionNameLineEdit = QLineEdit()
         inventoryBox.addWidget(self.sectionNameLineEdit)
@@ -2073,8 +2072,7 @@ class FeatureBox(QWidget):
     def value(self):
         val = self.currentSpecification()
         if not val:
-            return ''
-        #return '[{}]'.format(','.join(val))
+            return list()
         return val
 
 class SegmentPairDialog(QDialog):
@@ -2152,10 +2150,6 @@ class DraggableSegmentButton(QPushButton):
 
     def mousePressEvent(self, event):
         super(DraggableSegmentButton, self).mousePressEvent(event)
-        if event.buttons() == Qt.RightButton:
-            print('press')
-            if self.mime_data:
-                print(self.mime_data.text())
 
 
 class SegPairTableWidget(TableWidget):

@@ -6,14 +6,22 @@ from .models import ConsonantModel, VowelModel, UncategorizedModel
 class InventoryManager(QDialog):
     def __init__(self, inventory):
         super().__init__()
+        self.setWindowTitle('Manage inventory')
         self.inventory = inventory
 
         layout = QVBoxLayout()
-        topmessage = QLabel(text=('You can edit your inventory chart from this window. Double-click on a row or column to edit the '
-                      'class of segments which appear in that row or column. You can also single click on a heading to '
-                      'highlight the row or column, then drag-and-drop to reorganize the table.'))
+        topmessage = QLabel(text=('You can edit your inventory chart from this window.\n'
+                                  'Click on a heading to highlight the row or column, then drag-and-drop to reorganize '
+                                    'the table.\n'
+                                    'Right click to insert a new empty row or column.\n'
+                                    'Double-click on a row or column to edit the '
+                                    'class of segments which appear in that row or column.\n'
+
+        ))
         topmessage.setWordWrap(True)
         layout.addWidget(topmessage)
+
+        inventoryLayout = QHBoxLayout()
 
         consBox = QVBoxLayout()
         cons_title = QLabel('Consonant Inventory')
@@ -21,7 +29,7 @@ class InventoryManager(QDialog):
         self.consModel = ConsonantModel(self.inventory)
         self.consView = InventoryView(self.consModel)
         consBox.addWidget(self.consView)
-        layout.addLayout(consBox)
+        inventoryLayout.addLayout(consBox)
 
         vowelBox = QVBoxLayout()
         vowel_title = QLabel('Vowel Inventory')
@@ -29,7 +37,9 @@ class InventoryManager(QDialog):
         self.vowelModel = VowelModel(self.inventory)
         self.vowelView = InventoryView(self.vowelModel)
         vowelBox.addWidget(self.vowelView)
-        layout.addLayout(vowelBox)
+        inventoryLayout.addLayout(vowelBox)
+
+        layout.addLayout(inventoryLayout)
 
         uncBox = QVBoxLayout()
         unc_title = QLabel('Uncategorized Segments')

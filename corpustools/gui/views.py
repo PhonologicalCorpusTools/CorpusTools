@@ -816,8 +816,8 @@ class InventoryView(QTableView):
     def __init__(self, inventory, editable=False):
         super().__init__()
         self.setModel(inventory)
-        self.columnSpecsChanged.connect(self.model().sourceModel().updateColumn)
-        self.rowSpecsChanged.connect(self.model().sourceModel().updateRow)
+        self.columnSpecsChanged.connect(self.model().sourceModel().changeColumnSpecs)
+        self.rowSpecsChanged.connect(self.model().sourceModel().changeRowSpecs)
         self.horizontalHeader().sectionMoved.connect(self.moveColumn)
         self.verticalHeader().sectionMoved.connect(self.moveRow)
         self.resizeColumnsToContents()
@@ -912,10 +912,6 @@ class InventoryView(QTableView):
         dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Horizontal, consonants=consonants)
         results = dialog.exec_()
         if results:
-            if isinstance(self.model(), ConsonantModel):
-                consonants = True
-            elif isinstance(self.model(), VowelModel):
-                consonants = False
             self.rowSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
 
     def editChartCol(self, index):
@@ -926,10 +922,6 @@ class InventoryView(QTableView):
         dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Vertical, consonants=consonants)
         results = dialog.exec_()
         if results:
-            if isinstance(self.model(), ConsonantModel):
-                consonants = True
-            elif isinstance(self.model(), VowelModel):
-                consonants = False
             self.columnSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
 
     def addSegmentButtons(self):

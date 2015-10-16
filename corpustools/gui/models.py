@@ -835,6 +835,7 @@ class InventoryModel(QAbstractTableModel):
                           'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                           'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
                           'vowel_feature', 'voice_feature', 'rounded_feature']
+            modelResetSignal = Signal(bool)
 
             def __init__(self, inventory, copy_mode=False):
                 super().__init__()
@@ -892,35 +893,37 @@ class InventoryModel(QAbstractTableModel):
                 self.setAttributes(copy)
                 self.modelReset()
 
-            def updateColumn(self, index, features, new_section_name, consonants=True):
+            def changeColumnSpecs(self, index, features, new_section_name, consonants=True):
                 if consonants:
                     name = self.cons_column_header_order[index]
                     self.cons_column_data.pop(name)
-                    self.cons_column_data[new_section_name] = [index, {f[0]: f[1:] for f in features}, None]
+                    self.cons_column_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
                     self.consColumns.remove(name)
                     self.consColumns.add(new_section_name)
                 else:
                     name = self.vowel_column_header_order[index]
                     self.cons_column_data.pop(name)
-                    self.vowel_column_data[new_section_name] = [index, {f[0]: f[1:] for f in features}, None]
+                    self.vowel_column_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
                     self.vowelColumns.remove(name)
                     self.vowelColumns.add(new_section_name)
                 self.modelReset()
+                return True
 
-            def updateRow(self, index, features, new_section_name, consonants=True):
+            def changeRowSpecs(self, index, features, new_section_name, consonants=True):
                 if consonants:
                     name = self.cons_row_header_order[index]
                     self.cons_row_data.pop(name)
-                    self.cons_row_data[new_section_name] = [index, {f[0]: f[1:] for f in features}, None]
+                    self.cons_row_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
                     self.consRows.remove(name)
                     self.consRows.add(new_section_name)
                 else:
                     name = self.vowel_row_header_order[index]
                     self.vowel_row_data.pop(name)
-                    self.vowel_row_data[new_section_name] = [index, {f[0]: f[1:] for f in features}, None]
+                    self.vowel_row_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
                     self.vowelRows.remove(name)
                     self.vowelRows.add(new_section_name)
                 self.modelReset()
+                return True
 
 
             def data(self, index, role):
@@ -950,10 +953,6 @@ class InventoryModel(QAbstractTableModel):
             def categorizeInventory(self):
 
                 # initialize some variables to avoid duplication when doing modelReset()
-                self.vowelColumns = set()
-                self.vowelRows = set()
-                self.consColumns = set()
-                self.vowelRows = set()
                 self.vowelList = list()
                 self.consList = list()
                 self.uncategorized = list()
@@ -964,6 +963,7 @@ class InventoryModel(QAbstractTableModel):
                     try:
                         c = self.categorize(s)
                     except KeyError:
+                        #self.categorize will raise a KeyError if no categories are matched
                         c = None
                         self.uncategorized.append(s)
                     if c is not None:
@@ -1063,42 +1063,52 @@ class InventoryModel(QAbstractTableModel):
                 if consonants:
                     column_data = self.cons_column_data
                     headers = self.consColumns
-                    #sign = '+' if self.vowel_feature.startswith('-') else '-'
-                    #basic_features = {self.vowel_feature[1:]: sign}
                     basic_features = {}
                 else:
                     column_data = self.vowel_column_data
                     headers = self.vowelColumns
-                    #basic_features = {self.vowel_feature[1:]: self.vowel_feature[0]}
                     basic_features = {}
 
                 for key, value in column_data.items():
                     if value[0] >= index.column():
                         column_data[key][0] += 1
-                new_name = str(self.columnCount(self))
-                column_data[new_name] = [index.column(), basic_features, None]
-                headers.add(new_name)
+
+                n = 1
+                while True:
+                    new_name = 'New Column {}'.format(n)
+                    if new_name in column_data.keys():
+                        n += 1
+                        continue
+                    else:
+                        column_data[new_name] = [index.column(), basic_features, None]
+                        headers.add(new_name)
+                        break
                 self.modelReset()
                 return True
-
 
             def insertRow(self, index, consonants=True):
 
                 if consonants:
                     row_data = self.cons_row_data
                     headers = self.consRows
-                    sign = '+' if self.vowel_feature.startswith('-') else '-'
-                    basic_features = {self.vowel_feature[1:]: sign}
+                    basic_features = {}
                 else:
                     row_data = self.vowel_row_data
                     headers = self.vowelRows
-                    basic_features = {self.vowel_feature[1:]: self.vowel_feature[0]}
+                    basic_features = {}
                 for key, value in row_data.items():
                     if value[0] >= index.row():
                         row_data[key][0] += 1
-                new_name = str(self.rowCount(self))
-                row_data[new_name] = [index.row(), basic_features, None]
-                headers.add(new_name)
+                n = 1
+                while True:
+                    new_name = 'New Row {}'.format(n)
+                    if new_name in row_data.keys():
+                        n += 1
+                        continue
+                    else:
+                        row_data[new_name] = [index.row(), basic_features, None]
+                        headers.add(new_name)
+                        break
                 self.modelReset()
                 return True
 
@@ -1160,12 +1170,10 @@ class InventoryModel(QAbstractTableModel):
                     self.vowel_row_data[key][0] = i
 
             def sortData(self):
-
                 sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
                 sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
                 sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
                 sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
-
                 self.cons_column_header_order = {i: name for i, name in enumerate(sorted_cons_col_headers)}
                 self.vowel_column_offset = len(self.cons_column_header_order)
                 self.vowel_column_header_order = {i + self.vowel_column_offset: name for i, name in
@@ -1186,13 +1194,15 @@ class InventoryModel(QAbstractTableModel):
                 self._data = [[None for j in range(col_total)]
                               for k in range(row_total)]
 
+                #ADD IN UNCATEGORIZED DATA
                 for j in range(len(self._data[-1])):
                     try:
                         seg = self.uncategorized[j]
                         self._data[-1][j] = seg.symbol
-                    except IndexError:  # out of range
+                    except IndexError:  #out of self.uncategorized range (not self._data)
                         self._data[-1][j] = ''
 
+                #ADD IN CONSONANT DATA
                 for row, col in itertools.product(self.cons_row_header_order.keys(),
                                                   self.cons_column_header_order.keys()):
                     row_name = self.cons_row_header_order[row]
@@ -1203,6 +1213,7 @@ class InventoryModel(QAbstractTableModel):
                             matches.append(seg)
                     self._data[row][col] = ''.join([m.symbol for m in matches])
 
+                #ADD IN VOWEL DATA
                 for row, col in itertools.product(self.vowel_row_header_order.keys(),
                                                   self.vowel_column_header_order.keys()):
                     row_name = self.vowel_row_header_order[row]
@@ -1410,6 +1421,9 @@ class InventoryModel(QAbstractTableModel):
                     row_index, row_features, row_segs = iterRows[row]
                     col_index, col_features, col_segs = iterCols[col]
 
+                    if ((not row_features) or (not col_features)):
+                        continue #should ignore rows or cols without features - they will remain blank
+
                     if ((row_segs is not None and seg in row_segs) and
                             (col_segs is not None and seg in col_segs)):
                         category.extend([col, row])
@@ -1418,6 +1432,7 @@ class InventoryModel(QAbstractTableModel):
                               all(col_features[key] == seg.features[key] for key in col_features)):
                         category.extend([col, row])
                         break
+
                 else:
                     raise KeyError(seg.symbol)  # this function is wrapped in a try/except that will catch this
 
@@ -1488,7 +1503,7 @@ class ConsonantModel(QSortFilterProxyModel):
         return self.sourceModel().consColumnCount()
 
     def updateColumn(self, index, features):
-        self.sourceModel().updateColumn(index, features)
+        self.sourceModel().changeColumnSpecs(index, features)
 
     def filterAcceptsColumn(self, column, parent = None):
         header = self.sourceModel().headerData(column, Qt.Horizontal, Qt.DisplayRole)
