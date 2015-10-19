@@ -247,7 +247,7 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.corpus = dialog.corpus
-            self.corpus.inventoryModel = InventoryModel(self.corpus._inventory)
+            self.inventoryModel = InventoryModel(self.corpus._inventory)
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):
@@ -303,11 +303,11 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def manageInventoryChart(self):
-        copy_model = InventoryModel(self.corpus.inventoryModel, copy_mode=True)
+        copy_model = InventoryModel(self.inventoryModel, copy_mode=True)
         dialog = InventoryManager(copy_model)
         result = dialog.exec_()
         if result:
-            self.corpus.inventoryModel.updateFromCopy(dialog.inventory)
+            self.inventoryModel.updateFromCopy(dialog.inventory)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -351,6 +351,9 @@ class MainWindow(QMainWindow):
         dialog = EditFeatureMatrixDialog(self,self.corpusModel.corpus, self.settings)
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+            self.corpusModel.corpus.update_features()
+            self.inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
+
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))
             else:

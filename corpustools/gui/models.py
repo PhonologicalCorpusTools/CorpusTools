@@ -842,6 +842,7 @@ class InventoryModel(QAbstractTableModel):
                 if copy_mode:
                     self.setAttributes(inventory)
                     return
+
                 # values passed along from the inventory
                 self.segs = inventory.segs
                 self.features = inventory.features
@@ -891,6 +892,11 @@ class InventoryModel(QAbstractTableModel):
 
             def updateFromCopy(self, copy):
                 self.setAttributes(copy)
+                self.modelReset()
+
+            def updateFeatures(self, specifier):
+                for seg in self.segs:
+                    self.segs[seg].features = specifier.specify(seg)
                 self.modelReset()
 
             def changeColumnSpecs(self, index, features, new_section_name, consonants=True):
@@ -1199,7 +1205,7 @@ class InventoryModel(QAbstractTableModel):
                     try:
                         seg = self.uncategorized[j]
                         self._data[-1][j] = seg.symbol
-                    except IndexError:  #out of self.uncategorized range (not self._data)
+                    except IndexError:  #passed the end of self.uncategorized (not self._data)
                         self._data[-1][j] = ''
 
                 #ADD IN CONSONANT DATA
@@ -1225,7 +1231,8 @@ class InventoryModel(QAbstractTableModel):
                     self._data[row][col] = ''.join([m.symbol for m in matches])
 
             def generate_generic_names(self):
-                sample = random.choice(list(self.segs.values()))  # pick an arbitrary segment and examine its features
+                sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
+                # pick an arbitrary segment and examine its features; they all should have the same feature list
                 if not sample:
                     raise CorpusIntegrityError('No segments were found in the inventory')
                 if 'consonantal' in sample.features:

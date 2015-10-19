@@ -490,7 +490,7 @@ class EditFeatureMatrixDialog(QDialog):
                 return
             selected = selected[0]
             seg = self.table.model().data(self.table.model().createIndex(selected.row(),0),Qt.DisplayRole)
-        print(seg)
+
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
