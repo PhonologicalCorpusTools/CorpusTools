@@ -29,7 +29,8 @@ class SSWorker(FunctionWorker):
         corpus = kwargs.pop('corpusModel').corpus
         st = kwargs.pop('sequence_type')
         tt = kwargs.pop('type_token')
-        with cm(corpus, st, tt, None) as c:
+        ft = kwargs.pop('frequency_cutoff')
+        with cm(corpus, st, tt, frequency_threshold = ft) as c:
             try:
                 query = kwargs.pop('query')
                 alg = kwargs.pop('algorithm')
@@ -55,6 +56,7 @@ class SSDialog(FunctionDialog):
                 'String type',
                 'Frequency type',
                 'Pronunciation variants',
+                'Minimum word frequency',
                 'Result']
 
     _about = [('This function calculates the similarity between words in the corpus,'
@@ -184,7 +186,18 @@ class SSDialog(FunctionDialog):
         optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
+    
+        ##----------------------
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+        ##----------------------
+        
         threshFrame = QGroupBox('Return only results between...')
 
         self.minEdit = QLineEdit()
@@ -302,7 +315,12 @@ class SSDialog(FunctionDialog):
                 min_rel = float(self.minEdit.text())
             except ValueError:
                 pass
-
+        ##------------------
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        ##-------------------
         max_rel = None
         if self.maxEdit.text() != '':
             try:
@@ -314,6 +332,7 @@ class SSDialog(FunctionDialog):
                 'algorithm': self.algorithmWidget.value(),
                 'sequence_type':self.tierWidget.value(),
                 'type_token': self.typeTokenWidget.value(),
+                'frequency_cutoff':frequency_cutoff,
                 'min_rel':min_rel,
                 'max_rel':max_rel}
         #Error checking
@@ -400,6 +419,10 @@ class SSDialog(FunctionDialog):
 
     def setResults(self, results):
         self.results = list()
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
         for result in results:
             w1, w2, similarity = result
             if not isinstance(w1,str):
@@ -414,7 +437,7 @@ class SSDialog(FunctionDialog):
                         self.algorithmWidget.displayValue(),
                         self.tierWidget.displayValue(),
                         typetoken,
-                        self.variantsWidget.value().title(),
+                        self.variantsWidget.value().title(), frequency_cutoff,
                          similarity ])
 
     def khorsiSelected(self):

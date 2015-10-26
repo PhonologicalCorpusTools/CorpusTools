@@ -37,7 +37,8 @@ class NDWorker(FunctionWorker):
         st = kwargs['sequence_type']
         tt = kwargs['type_token']
         att = kwargs.get('attribute', None)
-        with cm(corpus, st, tt, att) as c:
+        ft = kwargs['frequency_cutoff']
+        with cm(corpus, st, tt, frequency_threshold = ft) as c:
             try:
                 if 'query' in kwargs:
                     for q in kwargs['query']:
@@ -93,6 +94,7 @@ class NDDialog(FunctionDialog):
                 'String type',
                 'Frequency type',
                 'Pronunciation variants',
+                'Minimum word frequency',
                 'Neighborhood density']
 
     _about = [('This function calculates the neighborhood density (size)'
@@ -211,7 +213,18 @@ class NDDialog(FunctionDialog):
         threshFrame.setLayout(vbox)
 
         optionLayout.addWidget(threshFrame)
+        
+        ##----------------------
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+        ##----------------------
+        
         fileFrame = QGroupBox('Output list of neighbors to a file')
 
         self.saveFileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
@@ -303,7 +316,12 @@ class NDDialog(FunctionDialog):
             max_distance = None
         else:
             max_distance = float(self.maxDistanceEdit.text())
-
+        ##------------------
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        ##-------------------
         alg = self.algorithmWidget.value()
         typeToken = self.typeTokenWidget.value()
 
@@ -313,6 +331,7 @@ class NDDialog(FunctionDialog):
                 'sequence_type':self.tierWidget.value(),
                 'type_token':typeToken,
                 'max_distance':max_distance,
+                'frequency_cutoff':frequency_cutoff,
                 'num_cores':self.settings['num_cores'],}
         out_file = self.saveFileWidget.value()
         if out_file == '':
@@ -396,9 +415,14 @@ class NDDialog(FunctionDialog):
                 'String type',
                 'Frequency type',
                 'Pronunciation variants',
+                'Minimum word frequency',
                 'Neighborhood density']
     def setResults(self, results):
         self.results = []
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
         for result in results:
             w, nd = result
             if not isinstance(w,str):
@@ -414,7 +438,7 @@ class NDDialog(FunctionDialog):
             self.results.append([self.corpusModel.corpus.name, w,
                         self.algorithmWidget.displayValue(), thresh,
                         self.tierWidget.displayValue(), typetoken,
-                        self.variantsWidget.value().title(),
+                        self.variantsWidget.value().title(), frequency_cutoff,
                         nd])
 
     def substitutionSelected(self):

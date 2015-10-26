@@ -36,7 +36,8 @@ class PPWorker(FunctionWorker):
         st = kwargs['sequence_type']
         tt = kwargs['type_token']
         att = kwargs.get('attribute', None)
-        with cm(corpus, st, tt, att) as c:
+        ft = kwargs['frequency_cutoff']
+        with cm(corpus, st, tt, frequency_threshold = ft) as c:
             try:
                 if 'query' in kwargs:
                     for q in kwargs['query']:
@@ -77,6 +78,7 @@ class PPDialog(FunctionDialog):
                 'Transcription tier',
                 'Frequency type',
                 'Pronunciation variants',
+                'Minimum word frequency',
                 'Phonotactic probability']
 
     _about = [('This function calculates the phonotactic probability '
@@ -177,11 +179,24 @@ class PPDialog(FunctionDialog):
                                             ('Single-phone','unigram')]))
 
         optionLayout.addWidget(self.probabilityTypeWidget)
+        
+        ##----------------------
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+        ##----------------------
+        
         optionFrame.setLayout(optionLayout)
 
         pplayout.addWidget(optionFrame)
-
+        
+        
+        
         ppFrame = QFrame()
         ppFrame.setLayout(pplayout)
 
@@ -219,11 +234,19 @@ class PPDialog(FunctionDialog):
         self.compType = 'all'
 
     def generateKwargs(self):
+        ##------------------
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        ##-------------------
+        
         kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': self.algorithmWidget.value(),
                 'context': self.variantsWidget.value(),
                 'sequence_type':self.tierWidget.value(),
                 'type_token':self.typeTokenWidget.value(),
+                'frequency_cutoff':frequency_cutoff,
                 'probability_type':self.probabilityTypeWidget.value()}
 
         if self.compType is None:
@@ -296,6 +319,10 @@ class PPDialog(FunctionDialog):
 
     def setResults(self, results):
         self.results = []
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
         for result in results:
             w, pp = result
             self.results.append([self.corpusModel.corpus.name,str(w),
@@ -304,6 +331,7 @@ class PPDialog(FunctionDialog):
                         self.tierWidget.displayValue(),
                         self.typeTokenWidget.value().title(),
                         self.variantsWidget.value().title(),
+                        frequency_cutoff,
                         pp])
 
     def vitevitchSelected(self):

@@ -31,7 +31,8 @@ class FAWorker(FunctionWorker):
         corpus = kwargs.pop('corpus')
         st = kwargs.pop('sequence_type')
         tt = kwargs.pop('type_token')
-        with cm(corpus, st, tt, None) as c:
+        ft = kwargs.pop('frequency_cutoff')
+        with cm(corpus, st, tt, frequency_threshold = ft) as c:
             try:
                 for pair in kwargs['segment_pairs']:
                     res = calc_freq_of_alt(c, pair[0], pair[1],
@@ -61,11 +62,12 @@ class FADialog(FunctionDialog):
     header = ['Corpus',
                 'First segment',
                 'Second segment',
-                'Algorithm'
+                'Algorithm',
+                'Phonologically aligned',
                 'Transcription tier',
                 'Frequency type',
                 'Pronunication variants',
-                'Phonologically aligned'
+                'Minimum word frequency',
                 'Total words in corpus',
                 'Total words with alternations',
                 'Frequency of alternation']
@@ -176,7 +178,18 @@ class FADialog(FunctionDialog):
         corpusSizeFrame.setLayout(vbox)
 
         optionLayout.addWidget(corpusSizeFrame)
+        
+        ##----------------------
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+        ##----------------------
+        
         fileFrame = QGroupBox('Output file (if desired)')
 
         self.fileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
@@ -296,6 +309,12 @@ class FADialog(FunctionDialog):
                 corpus = self.corpus.get_random_subset(n)
         except ValueError:
             corpus = self.corpus
+        ##------------------
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        ##-------------------
         if self.fileWidget.value() != '':
             out_file = self.fileWidget.value()
         else:
@@ -307,12 +326,17 @@ class FADialog(FunctionDialog):
         kwargs['min_rel'] = min_rel
         kwargs['max_rel'] = max_rel
         kwargs['pair_behavior'] = pairBehaviour
+        kwargs['frequency_cutoff'] = frequency_cutoff
         kwargs['output_filename'] = out_file
         return kwargs
 
     def setResults(self, results):
         self.results = []
         seg_pairs = self.segPairWidget.value()
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
         for i, r in enumerate(results):
             self.results.append([self.corpus.name,
                                 seg_pairs[i][0],seg_pairs[i][1],
@@ -321,6 +345,7 @@ class FADialog(FunctionDialog):
                                 self.tierWidget.displayValue(),
                                 self.typeTokenWidget.value().title(),
                                 self.variantsWidget.value().title(),
+                                frequency_cutoff,
                                 r[0],
                                 r[1],
                                 r[2]])
