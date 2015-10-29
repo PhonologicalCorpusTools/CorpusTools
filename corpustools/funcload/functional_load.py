@@ -216,8 +216,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        if not environment_filter or tier.find(filled_environment):
-            pdb.set_trace()
+        if not environment_filter or k.find(filled_environment):
             n = [neutralize_segment(seg, segment_pairs)
                     for seg in k]
             neutralized_probs['.'.join(n)] += v
@@ -270,8 +269,9 @@ def relative_minpair_fl(corpus_context, segment,
         that include either `s1` or `s2`.
     """
     all_segments = corpus_context.inventory
-    segment_pairs = [(segment,other) for other in all_segments
-                        if other != segment and other != '#']
+    segment_pairs = [(segment,other.symbol) for other in all_segments
+                        if other.symbol != segment and other.symbol != '#']
+
     results = []
     to_output = []
     for sp in segment_pairs:
@@ -315,8 +315,9 @@ def relative_deltah_fl(corpus_context, segment,
         and `s2` and b) the entropy of that choice after the merger.
     """
     all_segments = corpus_context.inventory
-    segment_pairs = [(segment,other) for other in all_segments
-                        if other != segment and other != '#']
+    segment_pairs = [(segment,other.symbol) for other in all_segments
+                        if other.symbol != segment and other.symbol != '#']
+
     results = []
     for sp in segment_pairs:
         results.append(deltah_fl(corpus_context, [sp],

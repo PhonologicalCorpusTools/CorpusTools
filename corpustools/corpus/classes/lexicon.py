@@ -8,6 +8,8 @@ import locale
 
 from corpustools.exceptions import CorpusIntegrityError
 
+import pdb
+
 class Segment(object):
     """
     Class for segment symbols
@@ -2688,5 +2690,3 @@ class Corpus(object):
 
     def __iter__(self):
         return iter(self.wordlist.values())
-
-
