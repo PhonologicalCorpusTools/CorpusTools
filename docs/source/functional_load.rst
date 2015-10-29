@@ -469,7 +469,7 @@ instead of (the default value of) token frequency. In addition, you want
 the script to produce an output file called output.txt.  You would need
 to run the following command::
 
-   pct_funcload example.corpus -p m -a deltah -t type -o output.txt
+   pct_funcload example.corpus -p m -e -a deltah -t type -o output.txt
 
 EXAMPLE 3: Suppose you want to calculate the functional
 loads of all segment pairs. Your corpus file is again example.corpus.
