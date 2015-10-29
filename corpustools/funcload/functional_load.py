@@ -11,6 +11,8 @@ from corpustools.exceptions import FuncLoadError
 from .io import save_minimal_pairs
 from corpustools.corpus.classes.lexicon import EnvironmentFilter
 
+import pdb
+
 
 def matches(first, second):
     """
@@ -215,6 +217,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
             if cur % 100 == 0:
                 call_back(cur)
         if not environment_filter or tier.find(filled_environment):
+            pdb.set_trace()
             n = [neutralize_segment(seg, segment_pairs)
                     for seg in k]
             neutralized_probs['.'.join(n)] += v
@@ -287,6 +290,7 @@ def relative_minpair_fl(corpus_context, segment,
 
 
 def relative_deltah_fl(corpus_context, segment,
+                environment_filter = None,
                 stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as the decrease in corpus entropy
