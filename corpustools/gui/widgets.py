@@ -20,6 +20,9 @@ from corpustools.corpus.classes import Attribute, EnvironmentFilter
 from corpustools.corpus.io.helper import AnnotationType, get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
 
 
+def qt_sanitize(string):
+    return string.replace('&', '')
+
 def truncate_string(string, length = 10):
     return (string[:length] + '...') if len(string) > length + 3 else string
 
@@ -2276,13 +2279,13 @@ class RadioSelectWidget(QGroupBox):
     def value(self):
         for w in self.widgets:
             if w.isChecked():
-                return self.options[w.text()]
+                return self.options[qt_sanitize(w.text())]
         return None
 
     def displayValue(self):
         for w in self.widgets:
             if w.isChecked():
-                return w.text()
+                return qt_sanitize(w.text())
         return ''
 
     def disable(self):
@@ -2397,4 +2400,3 @@ class CreateClassWidget(QDialog):
                 "{} preview".format(self.class_type),
                 "Segments included: {}\nSegments excluded: {}".format(', '.join(inClass),
                                                                       ', '.join(notInClass)))
-
