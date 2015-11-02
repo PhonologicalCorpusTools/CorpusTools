@@ -1768,7 +1768,7 @@ class SegmentPairSelectWidget(QGroupBox):
         self.addButton.clicked.connect(self.segPairPopup)
         #self.addSetButton = QPushButton('Add pair of segment sets')
         #self.addSetButton.clicked.connect(self.segSetPairPopup)
-        self.addFeatButton = QPushButton('Add pair of features')
+        self.addFeatButton = QPushButton('Add sets of segments based on features')
         self.addFeatButton.clicked.connect(self.featurePairPopup)
         self.removeButton = QPushButton('Remove selected segment pair')
         self.removeButton.clicked.connect(self.removePair)
