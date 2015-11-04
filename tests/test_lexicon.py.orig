@@ -30,7 +30,11 @@ class CorpusTest(unittest.TestCase):
             self.assertEqual(corpus.find(w['spelling']),Word(**w))
             self.assertTrue(w['spelling'] in corpus)
 
+<<<<<<< HEAD
         self.assertEqual(corpus.inventory._data,{'#':Segment('#'),
+=======
+        self.assertEqual(corpus._inventory.segs,{'#':Segment('#'),
+>>>>>>> refs/remotes/origin/InventoryTableView
                                         'a':Segment('a'),
                                         'b':Segment('b'),
                                         'c':Segment('c'),

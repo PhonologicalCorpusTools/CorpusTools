@@ -1,18 +1,11 @@
-
-
-from math import log
-from collections import defaultdict, OrderedDict
-import os
-from codecs import open
+from collections import OrderedDict
 
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.kl.kl import KullbackLeibler
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,
@@ -93,7 +86,7 @@ class KLDialog(FunctionDialog):
         klframe = QFrame()
         kllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
         kllayout.addWidget(self.segPairWidget)
         optionLayout = QFormLayout()
 

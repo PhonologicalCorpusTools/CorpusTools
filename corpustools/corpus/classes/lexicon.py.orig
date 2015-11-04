@@ -30,6 +30,7 @@ class Segment(object):
         self.symbol = symbol
         self.features = {}
 
+<<<<<<< HEAD
     def specify(self, feature_dict):
         """
         Specify a segment with a new feature specification
@@ -65,6 +66,10 @@ class Segment(object):
             if v != other[k]:
                 return False
         return True
+=======
+    def set_features(self,feature_dict):
+        self.features = feature_dict
+>>>>>>> refs/remotes/origin/InventoryTableView
 
     def feature_match(self, specification):
         """
@@ -502,6 +507,7 @@ class FeatureMatrix(object):
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
 
         #What are these?
+<<<<<<< HEAD
         self.matrix['#'] = Segment('#')
         self.places = collections.OrderedDict()
         self.manners = collections.OrderedDict()
@@ -627,6 +633,11 @@ class FeatureMatrix(object):
         self.height['Close mid'] = {'high':'-', 'low':'-', 'tense':'+'}
         self.height['Open mid'] = {'high':'-', 'low':'-', 'tense':'-'}
         self.height['Open'] = {'high':'-', 'low':'+'}
+=======
+        #self.matrix['#'] = Segment('#')
+        #self.matrix[''] = {'*':''}
+>>>>>>> refs/remotes/origin/InventoryTableView
+
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
@@ -666,6 +677,7 @@ class FeatureMatrix(object):
     def __setstate__(self,state):
         if '_features' not in state:
             state['_features'] = state['features']
+<<<<<<< HEAD
         for k,v in state['matrix'].items():
             if not isinstance(v,Segment):
                 s = Segment(k)
@@ -673,18 +685,26 @@ class FeatureMatrix(object):
                 state['matrix'][k] = s
             else:
                 v.specify(v.features)
+=======
+        # for k,v in state['matrix'].items():
+        #     if not isinstance(v,Segment):
+        #         s = Segment(k)
+        #         s.set_features(v)
+        #         state['matrix'][k] = s
+>>>>>>> refs/remotes/origin/InventoryTableView
         self.__dict__.update(state)
 
         #Backwards compatability
         if '_default_value' not in state:
             self._default_value = 'n'
+<<<<<<< HEAD
         if 'places' not in state:
             self.places = collections.OrderedDict()
             self.manners = collections.OrderedDict()
             self.backness = collections.OrderedDict()
             self.height = collections.OrderedDict()
             self.generate_generic_names()
-
+=======
         if 'cons_column_data' not in state:
             self.cons_columns = {}
             self.cons_rows = {}
@@ -693,6 +713,8 @@ class FeatureMatrix(object):
             self.vowel_feature = None
             self.voice_feature = None
             self.rounded_feature = None
+
+>>>>>>> refs/remotes/origin/InventoryTableView
 
     def __iter__(self):
         for k in sorted(self.matrix.keys()):
@@ -1616,7 +1638,7 @@ class Attribute(object):
 
 class Inventory(object):
     """
-
+<<<<<<< HEAD
     Inventories contain information about a Corpus' segmental inventory.
     In many cases, they are similar to FeatureMatrices, but more tailored
     to a specific corpus.  Where a FeatureMatrix would deal in feature
@@ -1670,11 +1692,25 @@ class Inventory(object):
         self.voice_feature = None
         self.diph_feature = None
         self.rounded_feature = None
+=======
+    Contains information about the phonological inventory. The __init__ does not seed with any phonemes because these
+    are inferred during corpus building when words are added.
+    See corpustools.corpus.io.csv.load_corpus_csv()
+    See also corpustools.corpus.classes.lexicon.Corpus.add_word()
+    See also corpustools.corpus.classes.lexicon.Corpus.update_inventory()
+    """
+
+    def __init__(self):
+        self.segs = {'#' : Segment('#')}
+        self.features = []
+        self.possible_values = set()
+        self.classes = {}
+        self.stresses = collections.defaultdict(set)
         self.cons_columns = {}
         self.cons_rows = {}
         self.vow_columns = {}
         self.vow_rows = {}
-		
+
     def setFeatures(self):
         seg = random.choice([seg for seg in self.segs if not seg=='#'])
         for feature,value in self.segs[seg].features.items():
@@ -1684,6 +1720,7 @@ class Inventory(object):
     def __getstate__(self):
         state = self.__dict__.copy()
         return state
+>>>>>>> refs/remotes/origin/InventoryTableView
 
     def __setstate__(self, state):
         if 'stresses' not in state:
@@ -1866,6 +1903,7 @@ class Inventory(object):
                 segments.append(k)
         return segments
 
+<<<<<<< HEAD
     def specify(self, specifier):
         """
         Specify segments in the inventory using a FeatureMatrix
@@ -1896,6 +1934,55 @@ class Inventory(object):
                     self._data[k].specify({})
             self.features = specifier.features
             self.possible_values = specifier.possible_values
+=======
+    def isVoiced(self, seg):
+        return seg.features[self.voice_feature[1:]] == self.voice_feature[0]
+
+    def isVowel(self,seg):
+        return seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
+
+    def isRounded(self, seg):
+        return seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
+
+    def categorize(self,seg):
+        if self.isVowel(seg):
+            category = ['Vowel']
+            iterRows = self.vow_rows
+            iterCols = self.cons_rows
+        else:
+            category = ['Consonant']
+            iterRows = self.cons_rows
+            iterCols = self.cons_columns
+
+        for row,col in itertools.product(iterRows, iterCols):
+            row_index, row_features, row_segs = iterRows[row]
+            col_index, col_features, col_segs = iterCols[col]
+
+            if ((row_segs is not None and seg in row_segs) and
+                        (col_segs is not None and seg in col_segs)):
+                category.extend([col, row])
+                break
+            elif (all(row_features[key]==seg.features[key] for key in row_features) and
+                        all(col_features[key]==seg.features[key] for key in col_features)):
+                category.extend([col,row])
+                break
+        else:
+            raise KeyError(seg.symbol)
+
+        if self.isVowel(seg):
+            if self.isRounded(seg):
+                category.append('Rounded')
+            else:
+                category.append('Unrounded')
+
+        else:
+            if self.isVoiced(seg):
+                category.append('Voiced')
+            else:
+                category.append('Voiceless')
+        return category
+
+>>>>>>> refs/remotes/origin/InventoryTableView
 
             self.voice_feature = specifier.voice_feature
             self.vowel_feature = specifier.vowel_feature
@@ -2054,8 +2141,12 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
+<<<<<<< HEAD
+        self.inventory = Inventory()
+=======
         self._inventory = Inventory()
         self.inventoryModel = None
+>>>>>>> refs/remotes/origin/InventoryTableView
         self.has_frequency = True
         self.has_spelling = False
         self.has_wordtokens = False
@@ -2163,14 +2254,6 @@ class Corpus(object):
     @property
     def words(self):
         return sorted(list(self.wordlist.keys()))
-
-    def symbol_to_segment(self, symbol):
-        for seg in self.inventory:
-            if seg.symbol == symbol:
-                return seg
-        else:
-            raise CorpusIntegrityError('Could not find {} in the inventory'.format(symbol))
-
 
     def features_to_segments(self, feature_description):
         """
@@ -2388,10 +2471,17 @@ class Corpus(object):
 
     def __setstate__(self, state):
         try:
+<<<<<<< HEAD
             if 'inventory' not in state:
                 state['inventory'] = state['_inventory']
             if not isinstance(state['inventory'], Inventory):
                 state['inventory'] = Inventory(state['inventory'])
+=======
+            # if '_inventory' not in state:
+            #     state['_inventory'] = state['inventory']
+            # if not isinstance(state['_inventory'], Inventory):
+            #      state['_inventory'] = Inventory(state['_inventory'])
+>>>>>>> refs/remotes/origin/InventoryTableView
             if 'has_spelling' not in state:
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' in state:
@@ -2429,9 +2519,12 @@ class Corpus(object):
             raise(e)
             raise(CorpusIntegrityError("An error occurred while loading the corpus: {}.\nPlease redownload or recreate the corpus.".format(str(e))))
 
+<<<<<<< HEAD
     def _specify_features(self):
         self.inventory.specify(self.specifier)
 
+=======
+>>>>>>> refs/remotes/origin/InventoryTableView
     def check_coverage(self):
         """
         Checks the coverage of the specifier (FeatureMatrix) of the Corpus over the
@@ -2487,18 +2580,6 @@ class Corpus(object):
         """
         self.specifier = matrix
 
-
-    @property
-    def inventory(self):
-        """
-        Returns a sorted list of segments used in transcriptions
-
-        Returns
-        -------
-        list
-            Sorted list of segment symbols used in transcriptions in the corpus
-        """
-        return self._inventory
 
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
@@ -2603,10 +2684,13 @@ class Corpus(object):
         """
         for s in transcription:
             if isinstance(s, str):
+<<<<<<< HEAD
                 if s not in self.inventory:
                     self.inventory[s] = Segment(s)
+=======
                 if s not in self._inventory.segs.keys():
                     self._inventory.segs[s] = self.specifier[s]
+>>>>>>> refs/remotes/origin/InventoryTableView
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])

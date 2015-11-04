@@ -1,76 +1,12 @@
-
 import csv
+from itertools import product
 
 from .imports import *
-
-from .models import VariantModel, ResultsModel, PhonoSearchResultsModel
-from .windows import FunctionWorker
-
+from .models import VariantModel, ResultsModel, PhonoSearchResultsModel, ConsonantModel, VowelModel
 from .multimedia import AudioPlayer
+import corpustools.gui.widgets as PCTWidgets
+from .widgets import TableWidget
 
-
-class TableWidget(QTableView):
-    def __init__(self,parent=None):
-        super(TableWidget, self).__init__(parent=parent)
-
-        self.verticalHeader().hide()
-
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-
-        #self.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.customContextMenuRequested.connect(self.popup)
-        #header = self.horizontalHeader()
-        #header.setContextMenuPolicy(Qt.CustomContextMenu)
-        #header.customContextMenuRequested.connect( self.showHeaderMenu )
-        self.horizontalHeader().setMinimumSectionSize(70)
-        try:
-            self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        except AttributeError:
-            self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
-
-        self.setSortingEnabled(True)
-        self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
-
-        self.clip = QApplication.clipboard()
-
-    def keyPressEvent(self, e):
-        if (e.modifiers() & Qt.ControlModifier):
-            selected = self.selectionModel().selectedRows()
-            if e.key() == Qt.Key_C: #copy
-                #s = '\t'+"\t".join([str(self.table.horizontalHeaderItem(i).text()) for i in xrange(selected[0].leftColumn(), selected[0].rightColumn()+1)])
-                #s = s + '\n'
-                s = ''
-
-                for r in selected:
-                    #s += self.table.verticalHeaderItem(r).text() + '\t'
-                    for c in range(self.model().columnCount()):
-                        ind = self.model().index(r.row(),c)
-                        s += self.model().data(ind,Qt.DisplayRole) + "\t"
-                    s = s[:-1] + "\n" #eliminate last '\t'
-                self.clip.setText(s)
-
-
-    def setModel(self,model):
-        super(TableWidget, self).setModel(model)
-        #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
-        #try:
-        #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        #except AttributeError:
-        #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
-        #self.resizeColumnsToContents()
-        try:
-            self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
-        except AttributeError:
-            self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-
-    def calcWidth(self):
-        header = self.horizontalHeader()
-        width = self.horizontalOffset()
-        for i in range(header.count()):
-            width += header.sectionSize(i)
-        return width
 
 class LexiconView(QWidget):
     selectTokens = Signal(object)
@@ -871,3 +807,262 @@ class PhonoSearchResults(ResultsWindow):
                 self.table.setModel(dataModel)
         self.raise_()
         self.activateWindow()
+
+class InventoryView(QTableView):
+
+    dropSuccessful = Signal(str)
+    columnSpecsChanged = Signal(int, list, str, bool)
+    rowSpecsChanged = Signal(int, list, str, bool)
+
+    def __init__(self, inventory, editable=False):
+        super().__init__()
+        self.setModel(inventory)
+        self.columnSpecsChanged.connect(self.model().sourceModel().changeColumnSpecs)
+        self.rowSpecsChanged.connect(self.model().sourceModel().changeRowSpecs)
+        self.horizontalHeader().sectionMoved.connect(self.moveColumn)
+        self.verticalHeader().sectionMoved.connect(self.moveRow)
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+
+        self.horizontalHeader().setSectionsClickable(True)
+        self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
+        self.horizontalHeader().setSectionsMovable(True)
+        self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.horizontalHeader().customContextMenuRequested.connect(self.showColumnMenu)
+
+        self.verticalHeader().setSectionsClickable(True)
+        self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
+        self.verticalHeader().setSectionsMovable(True)
+        self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.verticalHeader().customContextMenuRequested.connect(self.showRowMenu)
+
+        #self.addSegmentButtons()
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+
+
+    def showRowMenu(self, pos):
+        menu = QMenu()
+        addRowAction = menu.addAction('Insert Row')
+        removeRowAction = menu.addAction('Remove Row')
+        index = self.indexAt(pos)
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == addRowAction:
+            self.model().insertRow(index)
+        elif action == removeRowAction:
+            self.model().removeRow(index)
+
+    def showColumnMenu(self, pos):
+        menu = QMenu()
+        addColumnAction = menu.addAction('Insert Column')
+        removeColumnAction = menu.addAction('Remove Column')
+        index = self.indexAt(pos)
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == addColumnAction:
+            self.model().insertColumn(index)
+        elif action == removeColumnAction:
+            self.model().removeColumn(index)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat('DraggableSegmentButton'):
+            event.accept()
+        else:
+            event.reject()
+
+    def dragMoveEvent(self, event):
+        event.accept()
+
+    def dropEvent(self, event):
+        index = self.indexAt(event.pos())
+        self.model().setData(index, event.mimeData().text()) #RETURN TO HERE - POSSIBLY NOT CORRECT
+        self.dropSuccessful.emit(event.mimeData().text())
+        #try to emit a DropSuccessful so that the inventorygui can delete the appropriate button
+        event.accept()
+
+    def moveColumn(self):
+        map = {}
+        for j in range(self.horizontalHeader().length()):
+            visualIndex = self.horizontalHeader().visualIndex(j)
+            logicalIndex = self.horizontalHeader().logicalIndex(visualIndex)
+            map[logicalIndex] = (visualIndex, self.model().sourceModel().headerData(logicalIndex, Qt.Horizontal, Qt.DisplayRole))
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        self.model().sourceModel().changeColumnOrder(map, consonants=consonants)
+
+    def moveRow(self):
+        map = {}
+        for j in range(self.verticalHeader().length()):
+            visualIndex = self.verticalHeader().visualIndex(j)
+            logicalIndex = self.verticalHeader().logicalIndex(visualIndex)
+            map[logicalIndex] = (visualIndex, self.model().sourceModel().headerData(logicalIndex, Qt.Vertical, Qt.DisplayRole))
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        self.model().sourceModel().changeRowOrder(map, consonants=consonants)
+
+    def editChartRow(self, index):
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Horizontal, consonants=consonants)
+        results = dialog.exec_()
+        if results:
+            self.rowSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
+
+    def editChartCol(self, index):
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Vertical, consonants=consonants)
+        results = dialog.exec_()
+        if results:
+            self.columnSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
+
+    def addSegmentButtons(self):
+        #possibly not a necessary function, since users don't need to click on individual buttons
+        #clicking on headings is probably sufficient
+        #though it would be nice if users could drag-and-drop segments
+        cc = self.model().columnCount()
+        rc = self.model().rowCount()
+        for i, j in product(range(cc+1), range(rc+1)):
+            index = self.model().index(i, j)
+            segs = self.model().data(index, role=Qt.DisplayRole)
+            if segs == QVariant():
+                continue
+            button_list = list()
+            for seg in segs:
+                button_list.append(QPushButton(text=seg))
+            big_one = MultiButtonCell(button_list)
+            self.setIndexWidget(index, big_one)
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+
+class MultiButtonCell(QWidget):
+    #possibly not necessary with model/view set-up; text is probably fine
+    def __init__(self,buttons,parent=None):
+        super().__init__(parent)
+        layout = QHBoxLayout()
+
+        #layout.setContentsMargins(0,0,0,0)
+        #layout.setSpacing(0)
+        self.button_names = list()
+        for b in buttons:
+            layout.addWidget(b)
+            self.button_names.append(b.text())
+
+        self.setLayout(layout)
+
+# class EditInventoryWindow(QDialog):
+#
+#     def __init__(self, inventory):
+#         super().__init__()
+#         layout = QVBoxLayout()
+#         title = QHBoxLayout()
+#         title.addWidget(QLabel('You can edit the properties of an inventory row or column in this window'))
+#         layout.addLayout(title)
+#         inventoryBox = QVBoxLayout()
+#         temp_inventory = namedtuple('tempInventory', ['features', 'possible_values'])
+#         temp_inventory.features = inventory.features()
+#         temp_inventory.possible_values = inventory.possible_values()
+#         self.feature_box = FeatureBox('Features', temp_inventory)
+#         inventoryBox.addWidget(self.feature_box)
+#         ok_button = QPushButton('OK')
+#         ok_button.clicked.connect(self.accept)
+#         cancel_button = QPushButton('Cancel')
+#         cancel_button.clicked.connect(self.reject)
+#         layout.addLayout(inventoryBox)
+#         layout.addWidget(ok_button)
+#         layout.addWidget(cancel_button)
+#         self.setLayout(layout)
+#
+#     def accept(self):
+#         self.features = self.feature_box.value()
+#         print(len(self.features))
+#         QDialog.accept(self)
+#
+#     def reject(self):
+#         QDialog.reject(self)
+
+
+# class FeatureBox(QWidget):
+#     def __init__(self, title,inventory,parent=None):
+#         QWidget.__init__(self,parent)
+#
+#         self.inventory = inventory
+#         self.features = self.inventory.features
+#         self.values = self.inventory.possible_values
+#         layout = QHBoxLayout()
+#
+#         #layout.setSizeConstraint(QLayout.SetFixedSize)
+#
+#         self.featureList = QListWidget()
+#
+#         for f in self.features:
+#             self.featureList.addItem(f)
+#         self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
+#         layout.addWidget(self.featureList)
+#
+#         buttonLayout = QVBoxLayout()
+#         buttonLayout.setSpacing(0)
+#         self.buttons = list()
+#         for v in self.values:
+#             b = QPushButton('Add [{}feature]'.format(v))
+#             b.value = v
+#             b.clicked.connect(self.addFeature)
+#             buttonLayout.addWidget(b, alignment = Qt.AlignCenter)
+#             self.buttons.append(b)
+#
+#         self.clearOneButton = QPushButton('Remove selected')
+#         self.clearOneButton.clicked.connect(self.clearOne)
+#         buttonLayout.addWidget(self.clearOneButton, alignment = Qt.AlignCenter)
+#
+#         self.clearButton = QPushButton('Remove all')
+#         self.clearButton.clicked.connect(self.clearAll)
+#         buttonLayout.addWidget(self.clearButton, alignment = Qt.AlignCenter)
+#
+#         buttonFrame = QFrame()
+#         buttonFrame.setLayout(buttonLayout)
+#         layout.addWidget(buttonFrame, alignment = Qt.AlignCenter)
+#
+#         self.envList = QListWidget()
+#         self.envList.setFixedWidth(self.featureList.minimumSizeHint().width()+25)
+#         self.envList.setSelectionMode(QAbstractItemView.ExtendedSelection)
+#
+#         layout.addWidget(self.envList)
+#
+#         self.setLayout(layout)
+#
+#     def addFeature(self):
+#         curFeature = self.featureList.currentItem()
+#         if curFeature:
+#             val = self.sender().value
+#             feat = curFeature.text()
+#             key = val+feat
+#             if key not in self.currentSpecification():
+#                 self.envList.addItem(key)
+#
+#     def clearOne(self):
+#         items = self.envList.selectedItems()
+#         for i in items:
+#             item = self.envList.takeItem(self.envList.row(i))
+#             #self.sourceWidget.addItem(item)
+#
+#     def clearAll(self):
+#         self.envList.clear()
+#
+#     def currentSpecification(self):
+#         return [self.envList.item(i).text() for i in range(self.envList.count())]
+#
+#     def value(self):
+#         val = self.currentSpecification()
+#         if not val:
+#             return ''
+#         #return '[{}]'.format(','.join(val))
+#         return val

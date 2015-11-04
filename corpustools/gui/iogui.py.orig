@@ -30,12 +30,17 @@ from corpustools.corpus.io.helper import (get_corpora_list,
                                         inspect_directory,
                                         log_annotation_types)
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
+<<<<<<< HEAD
 
 from .widgets import (FileWidget, RadioSelectWidget,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
                     DigraphWidget, InventoryBox, AttributeFilterWidget,
                     TranscriptionWidget, TierWidget,
                     AttributeWidget, AnnotationTypeWidget,
+=======
+from .widgets import (RadioSelectWidget, SaveFileWidget, AttributeFilterWidget,
+                      AnnotationTypeWidget,
+>>>>>>> refs/remotes/origin/InventoryTableView
                     CorpusSelect)
 from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog

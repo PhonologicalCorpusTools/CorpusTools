@@ -1679,9 +1679,21 @@ class SegmentSelectionWidget(QWidget):
         return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
+<<<<<<< HEAD
     def __init__(self, title, inventory,parent=None):
+=======
+
+    def __init__(self, title, inventory, parent = None, editable = False):
+>>>>>>> refs/remotes/origin/InventoryTableView
         QWidget.__init__(self,parent)
         self.inventory = inventory
+<<<<<<< HEAD
+        self.consonantColumns = inventory.places
+        self.consonantRows = inventory.manners
+        self.vowelColumns = inventory.backness
+        self.vowelRows = inventory.height
+        #find cats
+=======
         self.editable = editable
         self.consonantColumns = inventory.cons_columns
         self.consonantRows = inventory.cons_rows
@@ -1700,6 +1712,7 @@ class InventoryBox(QWidget):
 
     def generateInventoryBox(self):
         #find cats (meow)
+>>>>>>> refs/remotes/origin/InventoryTableView
         consColumns = set()
         consRows = set()
         vowColumns = set()
@@ -1726,6 +1739,7 @@ class InventoryBox(QWidget):
 
         self.btnGroup = QButtonGroup()#This has all of the SegmentButtons, see also self.value()
         self.btnGroup.setExclusive(False)
+<<<<<<< HEAD
         if len(consColumns) and len(vowColumns):
             box = QVBoxLayout()
 
@@ -1901,14 +1915,12 @@ class InventoryBox(QWidget):
 
                 elif cat[0] == 'Diphthong':
                     diphBox.addWidget(btn)
+=======
+>>>>>>> refs/remotes/origin/InventoryTableView
 
-            self.consTable.resize()
-            self.vowTable.resize()
-            smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
-			
-			self.vowelTable.setColumnCount(len(needed_cols))
-        	self.vowelTable.setRowCount(len(needed_rows))
-
+        self.smallbox = QVBoxLayout()
+        self.smallbox.setSizeConstraint(QLayout.SetFixedSize)
+        self.smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
         cons = self.makeConsBox(consColumns,consRows,consList,self.editable)
         vow = self.makeVowelBox(vowColumns,vowRows,vowList,self.editable)
@@ -1929,6 +1941,24 @@ class InventoryBox(QWidget):
         if unk is not None:
             self.smallbox.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
 
+<<<<<<< HEAD
+        mainWidget = QWidget()
+        mainWidget.setLayout(box)
+
+        layout = QVBoxLayout()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(mainWidget)
+        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setMinimumHeight(140)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        #self.columnFrame.
+        layout.addWidget(scroll)
+
+        self.setLayout(layout)
+=======
     def makeConsBox(self,consColumns,consRows,consList,editable):
         cons = QFrame()#This widget is what gets returned from this function
         consBox = QVBoxLayout()
@@ -2071,6 +2101,7 @@ class InventoryBox(QWidget):
         wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
         self.btnGroup.addButton(wid)
         return wid
+>>>>>>> refs/remotes/origin/InventoryTableView
 
     def highlightSegments(self, features):
         segs = self.inventory.features_to_segments(features)
@@ -2180,12 +2211,13 @@ class TranscriptionWidget(QGroupBox):
             self.showInv.setText('Show inventory')
         self.updateGeometry()
 
+<<<<<<< HEAD
 class AbstractPairDialog(QDialog):
     rowToAdd = Signal(object)
     def __init__(self, inventory, parent = None):
         QDialog.__init__(self, parent)
         self.inventory = inventory
-
+=======
 class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
         QWidget.__init__(self,parent)
@@ -2264,14 +2296,9 @@ class FeatureBox(QWidget):
 class SegmentPairDialog(QDialog):
     def __init__(self, corpus, parent=None):
         QDialog.__init__(self,parent)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
         layout = QVBoxLayout()
-
-        self.inventoryFrame = SegmentSelectionWidget(inventory)
-
-        layout.addWidget(self.inventoryFrame)
-
-        self.setLayout(layout)
 
         self.oneButton = QPushButton('Add')
         self.anotherButton = QPushButton('Add and create another')
@@ -2414,6 +2441,33 @@ class FeaturePairDialog(AbstractPairDialog):
         self.rowToAdd.emit(combinations(selected,2))
         QDialog.accept(self)
 
+<<<<<<< HEAD
+=======
+class DraggableSegmentButton(QPushButton):
+
+    def __init__(self, title):
+        super().__init__(title)
+        self.title = title
+        self.mime_data = None
+        self.drag = None
+
+    def mouseMoveEvent(self, event):
+
+        if event.buttons() != Qt.LeftButton:
+            return
+        self.mime_data = QMimeData()
+        self.mime_data.setData('DraggableSegmentButton', QByteArray(self.title))
+        self.mime_data.setText(self.title)
+        self.drag = QDrag(self)
+        self.drag.setMimeData(self.mime_data)
+        self.drag.setHotSpot(event.pos() - self.rect().topLeft())
+        #dropAction = self.drag.start(Qt.MoveAction)
+        x = self.drag.exec_(Qt.MoveAction)
+
+
+    def mousePressEvent(self, event):
+        super(DraggableSegmentButton, self).mousePressEvent(event)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
 
 class SegPairTableWidget(TableWidget):
@@ -2450,7 +2504,11 @@ class SegPairTableWidget(TableWidget):
         self.openPersistentEditor(self.model().index(begin, 2))
 
 class SegmentPairSelectWidget(QGroupBox):
+<<<<<<< HEAD
     def __init__(self,inventory, parent = None, features = True, single_segment = False):
+=======
+    def __init__(self,corpus,parent=None):
+>>>>>>> refs/remotes/origin/InventoryTableView
         QGroupBox.__init__(self,'Segments',parent)
 
         self.inventory = corpus.inventory
@@ -2520,8 +2578,12 @@ class SegmentPairSelectWidget(QGroupBox):
             addOneMore = dialog.addOneMore
 
     def segPairPopup(self):
+<<<<<<< HEAD
         dialog = SegmentPairDialog(self.inventory)
         dialog.rowToAdd.connect(self.addPairs)
+=======
+        dialog = SegmentPairDialog(self.corpus)
+>>>>>>> refs/remotes/origin/InventoryTableView
         addOneMore = True
         while addOneMore:
             dialog.reset()
@@ -2541,10 +2603,11 @@ class SegmentPairSelectWidget(QGroupBox):
     def value(self):
         return self.table.model().rows
 
+<<<<<<< HEAD
 class BigramDialog(QDialog):
     rowToAdd = Signal(object)
     def __init__(self, inventory, parent = None):
-
+=======
 class SegFeatSelect(QGroupBox):
     def __init__(self,corpus, title, parent = None, exclusive = False):
         QGroupBox.__init__(self,title,parent)
@@ -2597,6 +2660,7 @@ class SegFeatSelect(QGroupBox):
 class EnvironmentDialog(QDialog):
     rowToAdd = Signal(str)
     def __init__(self, inventory,parent=None):
+>>>>>>> refs/remotes/origin/InventoryTableView
         QDialog.__init__(self,parent)
 
         self.inventory = inventory

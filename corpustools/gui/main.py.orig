@@ -920,8 +920,12 @@ class MainWindow(QMainWindow):
 
         self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
+<<<<<<< HEAD
         #self.featureMenu.addAction(self.manageFeatureClassesAct)
+=======
+        self.featureMenu.addAction(self.manageFeatureClassesAct)
         self.featureMenu.addAction(self.manageInventoryAct)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.phonoProbAct)

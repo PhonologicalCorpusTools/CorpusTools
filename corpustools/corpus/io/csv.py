@@ -170,7 +170,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
                             'in matches the one used in the file.'))
         raise(e)
 
-    transcription_errors = corpus.check_coverage()
+    corpus._inventory.setFeatures()
     return corpus
 
 def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back = None):

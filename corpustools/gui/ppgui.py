@@ -1,25 +1,17 @@
 import os
-
-from .imports import *
-
 from collections import OrderedDict
 
+from .imports import *
 from corpustools.phonoprob.phonotactic_probability import (phonotactic_probability,
                                                     phonotactic_probability_all_words)
 from corpustools.neighdens.io import load_words_neighden
 from corpustools.corpus.classes import Attribute
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget,
-                    TierWidget, RestrictedContextWidget)
+from .widgets import (RadioSelectWidget, FileWidget, TierWidget, RestrictedContextWidget)
 from .corpusgui import AddWordDialog
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
-                                        MostFrequentVariantContext,
-                                        SeparatedTokensVariantContext,
-                                        WeightedVariantContext)
+                                        MostFrequentVariantContext)
 
 
 class PPWorker(FunctionWorker):

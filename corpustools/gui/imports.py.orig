@@ -6,10 +6,16 @@ try:
                                 QSize, QSettings,QPoint, QItemSelectionModel,
                                 QSortFilterProxyModel, QAbstractItemModel,
                             QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
+<<<<<<< HEAD
                             QStringListModel)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap,
                             QDesktopServices)
+=======
+                            QStringListModel, QVariant, QMimeData, QByteArray)
+    from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen, QDrag,
+                            QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap)
+>>>>>>> refs/remotes/origin/InventoryTableView
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,
                                 QDialog, QListWidget, QGroupBox,QVBoxLayout,

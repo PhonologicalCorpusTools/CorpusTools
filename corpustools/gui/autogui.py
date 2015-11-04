@@ -1,12 +1,15 @@
-from .imports import *
-from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget
-from .luckygui import LuckyDialog
-from PyQt5.QtWidgets import QInputDialog
 import itertools
 import random
 from collections import defaultdict, OrderedDict
+
+from PyQt5.QtWidgets import QInputDialog
+
+from .imports import *
+from .windows import FunctionWorker
+from .widgets import RadioSelectWidget
+from .luckygui import LuckyDialog
 from corpustools.mutualinfo import mutual_information
+
 
 class AutoAnalysisError(Exception):
     pass

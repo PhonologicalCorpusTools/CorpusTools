@@ -3,19 +3,29 @@ import copy
 from collections import OrderedDict
 import codecs
 
+<<<<<<< HEAD
 from corpustools.exceptions import PCTError, PCTPythonError
 
 from corpustools.corpus.io import (load_binary, download_binary,
                     load_feature_matrix_csv, save_binary, DelimiterError,
+=======
+from .imports import *
+from corpustools.corpus.io import (load_binary, load_feature_matrix_csv, save_binary, DelimiterError,
+>>>>>>> refs/remotes/origin/InventoryTableView
                     export_feature_matrix_csv)
 
 from .views import SubTreeView
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
+<<<<<<< HEAD
 
 from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
                     InventoryBox, CreateClassWidget, FeatureEdit, FeatureCompleter)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
+=======
+from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget, CreateClassWidget, TableWidget
+from .windows import DownloadWorker
+>>>>>>> refs/remotes/origin/InventoryTableView
 from .helpgui import HelpDialog
 
 class LoadFeatureSystemWorker(FunctionWorker):

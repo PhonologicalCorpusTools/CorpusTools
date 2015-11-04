@@ -2,9 +2,13 @@
 
 from .imports import *
 
+<<<<<<< HEAD
 from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
                         RadioSelectWidget, InventoryBox,
                         TierWidget, SegmentSelectionWidget)
+=======
+from .widgets import (EnvironmentSelectWidget, TierWidget)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
 from .windows import FunctionWorker, FunctionDialog
 

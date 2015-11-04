@@ -1,27 +1,20 @@
 import os
-
-from .imports import *
-
 from collections import OrderedDict
 
+from .imports import *
 from corpustools.neighdens.neighborhood_density import (neighborhood_density,
                             neighborhood_density_all_words,
                             find_mutation_minpairs_all_words,
                             find_mutation_minpairs)
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget,
                         RestrictedContextWidget)
 from .corpusgui import AddWordDialog
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
-                                        MostFrequentVariantContext,
-                                        SeparatedTokensVariantContext,
-                                        WeightedVariantContext)
+                                        MostFrequentVariantContext)
 
 class NDWorker(FunctionWorker):
     def run(self):

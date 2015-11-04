@@ -253,7 +253,11 @@ def test_bigram_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
     # Test without features
     widget = BigramWidget(specified_test_corpus.inventory)
     qtbot.addWidget(widget)
+<<<<<<< HEAD
     dialog = BigramDialog(specified_test_corpus.inventory, widget)
+=======
+    dialog = EnvironmentDialog(specified_test_corpus, widget)
+>>>>>>> refs/remotes/origin/InventoryTableView
     qtbot.addWidget(dialog)
 
     b1 = dialog.lhs.inventoryFrame.btnGroup.buttons()[0]

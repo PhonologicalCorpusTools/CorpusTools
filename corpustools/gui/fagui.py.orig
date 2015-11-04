@@ -95,7 +95,11 @@ class FADialog(FunctionDialog):
 
         falayout = QHBoxLayout()
 
+<<<<<<< HEAD
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory, features = False)
+=======
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
         falayout.addWidget(self.segPairWidget)
 

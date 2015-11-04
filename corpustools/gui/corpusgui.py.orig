@@ -3,11 +3,17 @@ from corpustools.contextmanagers import CanonicalVariantContext
 
 from corpustools.corpus.classes import Word, Attribute
 
+<<<<<<< HEAD
 from .widgets import (RadioSelectWidget, SegmentSelectionWidget,
                     InventoryBox,
                     CreateClassWidget, TranscriptionWidget, TierWidget)
 from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
+=======
+from .widgets import (InventoryBox,
+                    CreateClassWidget, TranscriptionWidget, SegFeatSelect, TierWidget)
+
+>>>>>>> refs/remotes/origin/InventoryTableView
 
 class InventorySummary(QWidget):
     def __init__(self, corpus, parent=None):

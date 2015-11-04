@@ -1,9 +1,9 @@
-
 import os
 from collections import OrderedDict
 
 from corpustools.acousticsim.io import load_path_mapping
-from corpustools.exceptions import PCTError, PCTPythonError
+from corpustools.exceptions import PCTPythonError
+
 try:
     real_acousticsim = True
     from acousticsim.main import(acoustic_similarity_mapping,

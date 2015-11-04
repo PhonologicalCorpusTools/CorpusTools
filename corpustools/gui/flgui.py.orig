@@ -1,8 +1,11 @@
 from collections import OrderedDict
 
 import corpustools.funcload.functional_load as FL
+<<<<<<< HEAD
 from corpustools.funcload.io import save_minimal_pairs
 
+=======
+>>>>>>> refs/remotes/origin/InventoryTableView
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget, SaveFileWidget)
@@ -116,7 +119,11 @@ class FLDialog(FunctionDialog):
         flFrame = QFrame()
         fllayout = QHBoxLayout()
 
+<<<<<<< HEAD
         self.segPairWidget = SegmentPairSelectWidget(corpus.inventory, single_segment = True)
+=======
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
         fllayout.addWidget(self.segPairWidget)
 

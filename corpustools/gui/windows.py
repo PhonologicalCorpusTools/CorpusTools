@@ -1,15 +1,10 @@
-import sys
-import subprocess
-import time
 import datetime
 
 from .imports import *
-
 from .helpgui import HelpDialog
-
 from corpustools.corpus.io import download_binary
+from corpustools.exceptions import PCTError
 
-from corpustools.exceptions import PCTError, PCTPythonError
 
 class ProgressDialog(QProgressDialog):
     beginCancel = Signal()
