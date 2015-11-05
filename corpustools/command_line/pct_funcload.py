@@ -34,6 +34,7 @@ def main():
     parser.add_argument('-s', '--sequence_type', default='transcription', help="The attribute of Words to calculate FL over. Normally this will be the transcription, but it can also be the spelling or a user-specified tier.")
     parser.add_argument('-q', '--environment_lhs', default=None, help="Left hand side of environment filter. Format: positions separated by commas, groups by slashes, e.g. m/n,i matches mi or ni.")
     parser.add_argument('-w', '--environment_rhs', default=None, help="Right hand side of environment filter. Format: positions separated by commas, groups by slashes, e.g. m/n,i matches mi or ni.")
+    parser.add_argument('-x', '--separate_pairs', action='store_true', help="If present, calculate FL for each pair in the pairs file separately.")
     parser.add_argument('-o', '--outfile', help='Name of output file')
 
     args = parser.parse_args()
@@ -81,12 +82,22 @@ def main():
             if args.relative_fl:
                 result = relative_minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
             else:
-                result = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
+                if args.separate_pairs:
+                    result = []
+                    for pair in segpairs_or_segment:
+                        result.append(minpair_fl(corpus, [pair], relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter))
+                else:
+                    result = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
         elif args.algorithm == 'deltah':
             if args.relative_fl:
                 result = relative_deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter)
             else:
-                result = deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter)
+                if args.separate_pairs:
+                    result = []
+                    for pair in segpairs_or_segment:
+                        result.append(deltah_fl(corpus, [pair], environment_filter=environment_filter))
+                else:
+                    result = deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter)
         else:
             raise Exception('-a / --algorithm must be set to either \'minpair\' or \'deltah\'.')
 
