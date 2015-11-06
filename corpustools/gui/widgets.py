@@ -1905,9 +1905,9 @@ class InventoryBox(QWidget):
             self.consTable.resize()
             self.vowTable.resize()
             smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
-			
-			self.vowelTable.setColumnCount(len(needed_cols))
-        	self.vowelTable.setRowCount(len(needed_rows))
+
+            self.vowelTable.setColumnCount(len(needed_cols))
+            self.vowelTable.setRowCount(len(needed_rows))
 
 
         cons = self.makeConsBox(consColumns,consRows,consList,self.editable)
@@ -2544,6 +2544,7 @@ class SegmentPairSelectWidget(QGroupBox):
 class BigramDialog(QDialog):
     rowToAdd = Signal(object)
     def __init__(self, inventory, parent = None):
+        pass
 
 class SegFeatSelect(QGroupBox):
     def __init__(self,corpus, title, parent = None, exclusive = False):
@@ -3089,15 +3090,11 @@ class CreateClassWidget(QDialog):
             'Once created, the Tier will be added as a column in your corpus, and it will be visible in the main window. '
             'You can then select this Tier inside of certain analysis functions.')
         elif self.class_type == 'class':
-<<<<<<< HEAD
             explanation = QLabel(('You can create Classes in this window. A Class is simply a set of segments from the inventory '
-=======
-            explanation = ('You can create Classes in this window. A Class is simply a set of sounds from the inventory '
->>>>>>> refs/remotes/origin/InventoryTableView
             'of your corpus. Classes are normally created on the basis of shared phonological features, in which case they are '
             'usually called  \"natural\" classes. An arbitrary set of segments with no common features may be called \"unnatural\".\n'
             'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
-            'Classes can also be used to organize the inventory chart for your corpus')
+            'Classes can also be used to organize the inventory chart for your corpus'))
         elif self.class_type == 'inventory':
             self.class_type = 'row or column'
             explanation = ('This window allows you to specify the details of the column or row you selected in your '

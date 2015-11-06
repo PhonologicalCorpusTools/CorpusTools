@@ -3,6 +3,7 @@ import copy
 from collections import OrderedDict
 import codecs
 
+from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
 
 from corpustools.corpus.io import (load_binary, download_binary,
