@@ -2544,7 +2544,99 @@ class SegmentPairSelectWidget(QGroupBox):
 class BigramDialog(QDialog):
     rowToAdd = Signal(object)
     def __init__(self, inventory, parent = None):
-        pass
+        QDialog.__init__(self,parent)
+
+        self.inventory = inventory
+
+        layout = QVBoxLayout()
+
+        layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        self.lhsEnvFrame = QGroupBox('Left hand side')
+
+        self.rhsEnvFrame = QGroupBox('Right hand side')
+
+        lhsEnvLayout = QVBoxLayout()
+
+        lhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        rhsEnvLayout = QVBoxLayout()
+
+        rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        self.lhs = SegmentSelectionWidget(self.inventory, exclusive = True)
+
+        self.rhs = SegmentSelectionWidget(self.inventory, exclusive = True)
+
+        lhsEnvLayout.addWidget(self.lhs)
+        rhsEnvLayout.addWidget(self.rhs)
+
+        self.lhsEnvFrame.setLayout(lhsEnvLayout)
+
+        self.rhsEnvFrame.setLayout(rhsEnvLayout)
+        envFrame = QFrame()
+
+        envLayout = QHBoxLayout()
+
+        envLayout.addWidget(self.lhsEnvFrame)
+        envLayout.addWidget(self.rhsEnvFrame)
+
+        envFrame.setLayout(envLayout)
+
+        layout.addWidget(envFrame)
+
+        self.oneButton = QPushButton('Add')
+        self.anotherButton = QPushButton('Add and create another')
+        self.cancelButton = QPushButton('Cancel')
+        self.acLayout = QHBoxLayout()
+        self.acLayout.addWidget(self.oneButton, alignment = Qt.AlignLeft)
+        self.acLayout.addWidget(self.anotherButton, alignment = Qt.AlignLeft)
+        self.acLayout.addWidget(self.cancelButton, alignment = Qt.AlignLeft)
+        self.oneButton.clicked.connect(self.one)
+        self.anotherButton.clicked.connect(self.another)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(self.acLayout)
+
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
+        self.addOneMore = False
+        self.setLayout(layout)
+        #self.setFixedSize(self.sizeHint())
+        self.setWindowTitle('Create bigram')
+
+    def one(self):
+        self.addOneMore = False
+        self.accept()
+
+    def another(self):
+        self.addOneMore = True
+        self.accept()
+
+    def reset(self):
+        self.lhs.clearAll()
+        self.rhs.clearAll()
+
+    def accept(self):
+        lhs = self.lhs.value()
+        rhs = self.rhs.value()
+
+        if lhs == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a left hand of the bigram.")
+            return
+        if rhs == '':
+            reply = QMessageBox.critical(self,
+                    "Missing information", "Please specify a right hand of the bigram.")
+            return
+
+        env = lhs, rhs
+        self.rowToAdd.emit([env])
+        if not self.addOneMore:
+            QDialog.accept(self)
+        else:
+            self.reset()
+
 
 class SegFeatSelect(QGroupBox):
     def __init__(self,corpus, title, parent = None, exclusive = False):
