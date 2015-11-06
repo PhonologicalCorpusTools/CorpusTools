@@ -1655,10 +1655,8 @@ class Inventory(object):
         Feature value (i.e., '+round') that codes rounded vowels
     """
     def __init__(self, data = None):
-        if data is None:
-            self._data = {'#' : Segment('#')}
-        else:
-            self._data = data
+
+        self.segs = {'#' : Segment('#')}
         self.features = []
         self.possible_values = set()
         self.stresses = collections.defaultdict(set)
@@ -1676,7 +1674,7 @@ class Inventory(object):
         self.vow_rows = {}
 		
     def setFeatures(self):
-        seg = random.choice([seg for seg in self.segs if not seg=='#'])
+        seg = random.choice([seg for seg in self.segs.keys() if not seg=='#'])
         for feature,value in self.segs[seg].features.items():
             self.features.append(feature)
             self.possible_values.add(value)
@@ -2582,7 +2580,7 @@ class Corpus(object):
             if not hasattr(word,a.name):
                 word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word,a.name))
-
+        self.update_inventory(word.transcription)
 
     def update_features(self):
         for seg in self.inventory:
@@ -2603,13 +2601,14 @@ class Corpus(object):
         """
         for s in transcription:
             if isinstance(s, str):
-                if s not in self.inventory:
-                    self.inventory[s] = Segment(s)
+                if s not in self._inventory:
+                    self._inventory.segs[s] = Segment(s)
                 if s not in self._inventory.segs.keys():
                     self._inventory.segs[s] = self.specifier[s]
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])
+        self.update_features()
 
 
     def get_or_create_word(self, **kwargs):

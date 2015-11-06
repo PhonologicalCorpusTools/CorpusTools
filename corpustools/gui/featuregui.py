@@ -14,7 +14,7 @@ from .views import SubTreeView
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
 from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
-                    InventoryBox, CreateClassWidget, FeatureEdit, FeatureCompleter)
+                    TableWidget, CreateClassWidget, FeatureEdit, FeatureCompleter)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 from .helpgui import HelpDialog

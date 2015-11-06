@@ -39,7 +39,7 @@ class TableWidget(QTableView):
 
     def keyPressEvent(self, e):
         if (e.modifiers() & Qt.ControlModifier):
-            selected = self.selectionModel().selectedRows()
+            #selected = self.selectionModel().selectedRows()
             if e.key() == Qt.Key_C: #copy
                 #s = '\t'+"\t".join([str(self.table.horizontalHeaderItem(i).text()) for i in xrange(selected[0].leftColumn(), selected[0].rightColumn()+1)])
                 #s = s + '\n'

@@ -1,3 +1,4 @@
+from PyQt5.QtCore import QVariant
 import random
 import itertools
 from copy import deepcopy
@@ -833,7 +834,7 @@ class InventoryModel(QAbstractTableModel):
             See also corpustools.corpus.classes.lexicon.Corpus.update_inventory()
             """
 
-            attributes = ['segs', 'features', 'possible_values', 'classes', 'stresses', 'consColumns', 'consRows',
+            attributes = ['segs', 'features', 'possible_values', 'stresses', 'consColumns', 'consRows',
                           'vowelColumns', 'vowelRows', 'cons_column_data', 'cons_row_data', 'vowel_column_data', 'vowel_row_data',
                           'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                           'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
@@ -850,7 +851,6 @@ class InventoryModel(QAbstractTableModel):
                 self.segs = inventory.segs
                 self.features = inventory.features
                 self.possible_values = inventory.possible_values
-                self.classes = inventory.classes
                 self.stresses = inventory.stresses
                 #values to be set at some later point
                 self.consColumns = set()
@@ -872,7 +872,7 @@ class InventoryModel(QAbstractTableModel):
                 self.filterGenericNames()
 
             def setAttributes(self, source):
-                for attribute in self.attributes:
+                for attribute in InventoryModel.attributes: #self.attributes:
                     setattr(self, attribute, deepcopy(getattr(source, attribute)))
 
             def columnCount(self, parent=None):
