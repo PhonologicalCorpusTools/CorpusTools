@@ -472,7 +472,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def funcLoad(self):
-        dialog = FLDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
+        dialog = FLDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():

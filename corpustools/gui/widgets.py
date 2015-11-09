@@ -1679,7 +1679,7 @@ class SegmentSelectionWidget(QWidget):
         return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
-    def __init__(self, title, inventory,parent=None):
+    def __init__(self, title, inventory,parent=None, editable=False):
         QWidget.__init__(self,parent)
         self.inventory = inventory
         self.editable = editable
@@ -2453,8 +2453,7 @@ class SegmentPairSelectWidget(QGroupBox):
     def __init__(self,inventory, parent = None, features = True, single_segment = False):
         QGroupBox.__init__(self,'Segments',parent)
 
-        self.inventory = corpus.inventory
-        self.corpus = corpus
+        self.inventory = inventory
 
         vbox = QVBoxLayout()
         self.addSingleButton = QPushButton('Add individual segments')
