@@ -834,7 +834,7 @@ class InventoryModel(QAbstractTableModel):
             See also corpustools.corpus.classes.lexicon.Corpus.update_inventory()
             """
 
-            attributes = ['segs', 'features', 'possible_values', 'stresses', 'consColumns', 'consRows',
+            attributes = ['segs', '_features', 'possible_values', 'stresses', 'consColumns', 'consRows',
                           'vowelColumns', 'vowelRows', 'cons_column_data', 'cons_row_data', 'vowel_column_data', 'vowel_row_data',
                           'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                           'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
@@ -849,7 +849,7 @@ class InventoryModel(QAbstractTableModel):
 
                 # values passed along from the inventory
                 self.segs = inventory.segs
-                self.features = inventory.features
+                self._features = inventory.features
                 self.possible_values = inventory.possible_values
                 self.stresses = inventory.stresses
                 #values to be set at some later point
@@ -870,6 +870,10 @@ class InventoryModel(QAbstractTableModel):
                 self.categorizeInventory()
                 self.sortData()
                 self.filterGenericNames()
+
+            @property
+            def features(self):
+                return self._features
 
             def setAttributes(self, source):
                 for attribute in InventoryModel.attributes: #self.attributes:
@@ -1235,7 +1239,7 @@ class InventoryModel(QAbstractTableModel):
 
             def generate_generic_names(self):
                 sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
-                # pick an arbitrary segment and examine its features; they all should have the same feature list
+                # pick an arbitrary segment and examine its _features; they all should have the same feature list
                 if not sample:
                     raise CorpusIntegrityError('No segments were found in the inventory')
                 if 'consonantal' in sample.features:
@@ -1432,7 +1436,7 @@ class InventoryModel(QAbstractTableModel):
                     col_index, col_features, col_segs = iterCols[col]
 
                     if ((not row_features) or (not col_features)):
-                        continue #should ignore rows or cols without features - they will remain blank
+                        continue #should ignore rows or cols without _features - they will remain blank
 
                     if ((row_segs is not None and seg in row_segs) and
                             (col_segs is not None and seg in col_segs)):

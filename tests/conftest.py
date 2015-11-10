@@ -66,7 +66,7 @@ def csv_test_dir(test_dir):
 
 @pytest.fixture(scope='module')
 def features_test_dir(test_dir):
-    return os.path.join(test_dir, 'features')
+    return os.path.join(test_dir, '_features')
 
 @pytest.fixture(scope='module')
 def binary_test_dir(test_dir):

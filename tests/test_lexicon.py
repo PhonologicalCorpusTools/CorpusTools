@@ -208,7 +208,7 @@ class FeatureMatrixTest(unittest.TestCase):
 
         self.assertEqual(fm['b','feature2'],'.')
 
-        #Fails, should be sorted list of features? Or set of features? Would need to be hashed then
+        #Fails, should be sorted list of _features? Or set of _features? Would need to be hashed then
         self.assertEqual(fm['b']['feature2'],'.')
 
     def test_missing(self):
@@ -280,7 +280,7 @@ class CorpusFeatureMatrixTest(unittest.TestCase):
 
         corpus.set_feature_matrix(fm)
 
-        #self.assertEqual(corpus['a'].transcription[0].features,{'feature1':'+','feature2':'+'})
+        #self.assertEqual(corpus['a'].transcription[0]._features,{'feature1':'+','feature2':'+'})
 
 
     def test_coverage(self):

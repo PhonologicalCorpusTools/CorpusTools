@@ -1125,7 +1125,7 @@ class InventoryTable(QTableView):
     def __init__(self, inventory):
         super().__init__()
         self.horizontalHeader().setMinimumSectionSize(70)
-        self.setModel(inventory)
+        #self.setModel(inventory)
         self.inventory = inventory
         try:
             self.horizontalHeader().setSectionsClickable(False)
@@ -2462,7 +2462,7 @@ class SegmentPairSelectWidget(QGroupBox):
         self.addButton.clicked.connect(self.segPairPopup)
         #self.addSetButton = QPushButton('Add pair of segment sets')
         #self.addSetButton.clicked.connect(self.segSetPairPopup)
-        self.addFeatButton = QPushButton('Add pair of features')
+        self.addFeatButton = QPushButton('Add pair of _features')
         self.addFeatButton.clicked.connect(self.featurePairPopup)
         self.removeButton = QPushButton('Remove selected segment pair')
         self.removeButton.clicked.connect(self.removePair)
@@ -3182,8 +3182,8 @@ class CreateClassWidget(QDialog):
             'You can then select this Tier inside of certain analysis functions.')
         elif self.class_type == 'class':
             explanation = QLabel(('You can create Classes in this window. A Class is simply a set of segments from the inventory '
-            'of your corpus. Classes are normally created on the basis of shared phonological features, in which case they are '
-            'usually called  \"natural\" classes. An arbitrary set of segments with no common features may be called \"unnatural\".\n'
+            'of your corpus. Classes are normally created on the basis of shared phonological _features, in which case they are '
+            'usually called  \"natural\" classes. An arbitrary set of segments with no common _features may be called \"unnatural\".\n'
             'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
             'Classes can also be used to organize the inventory chart for your corpus'))
         elif self.class_type == 'inventory':

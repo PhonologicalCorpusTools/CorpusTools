@@ -250,7 +250,7 @@ def test_environment_segment_widget(qtbot, specified_test_corpus):
 
 def test_bigram_dialog(qtbot, specified_test_corpus, unspecified_test_corpus):
 
-    # Test without features
+    # Test without _features
     widget = BigramWidget(specified_test_corpus.inventory)
     qtbot.addWidget(widget)
     dialog = BigramDialog(specified_test_corpus.inventory, widget)

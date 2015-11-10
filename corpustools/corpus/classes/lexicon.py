@@ -21,7 +21,7 @@ class Segment(object):
 
     Attributes
     ----------
-    features : dict
+    _features : dict
         Feature specification for the segment
     """
 
@@ -44,19 +44,19 @@ class Segment(object):
     def minimal_difference(self, other, features):
         """
         Check if this segment is a minimal feature difference with another
-        segment (ignoring some features)
+        segment (ignoring some _features)
 
         Parameters
         ----------
         other : Segment
             Segment to compare with
-        features : list
+        _features : list
             Features that are allowed to vary between the two segments
 
         Returns
         -------
         bool
-            True if all features other than the specified ones match,
+            True if all _features other than the specified ones match,
             False otherwise
         """
         for k, v in self.features.items():
@@ -75,7 +75,7 @@ class Segment(object):
         specification : object
             Specification can be a single feature value '+feature', a list of
             feature values ['+feature1','-feature2'], or a dictionary of
-            features and values {'feature1': '+', 'feature2': '-'}
+            _features and values {'feature1': '+', 'feature2': '-'}
 
         Returns
         -------
@@ -456,12 +456,12 @@ class FeatureMatrix(object):
     ----------
     name : str
         An informative identifier for the feature matrix
-    features : list
+    _features : list
         Sorted list of feature names
     possible_values : set
         Set of values used in the FeatureMatrix
     default_value : str
-        Default feature value, usually corresponding to unspecified features
+        Default feature value, usually corresponding to unspecified _features
     stresses : dict
         Mapping of stress values to segments that bear that stress
     places : dict
@@ -494,12 +494,10 @@ class FeatureMatrix(object):
         self.matrix = {}
         self._default_value = 'n'
         for s in feature_entries:
-            if self._features is None:
-                self._features = {k for k in s.keys() if k != 'symbol'}
-            #self.matrix[s['symbol']] = Segment(s['symbol'])
-            #self.matrix[s['symbol']].set_features({k:v for k,v in s.items() if k != 'symbol'})
             self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
+        if self._features is None:
+            self._features = {k for k in s.keys() if k != 'symbol'}
 
         #What are these?
         self.matrix['#'] = Segment('#')
@@ -665,14 +663,14 @@ class FeatureMatrix(object):
 
     def __setstate__(self,state):
         if '_features' not in state:
-            state['_features'] = state['features']
-        for k,v in state['matrix'].items():
-            if not isinstance(v,Segment):
-                s = Segment(k)
-                s.specify(v)
-                state['matrix'][k] = s
-            else:
-                v.specify(v.features)
+            state['_features'] = state['_features']
+        # for k,v in state['matrix'].items():
+        #     if not isinstance(v,Segment):
+        #         s = Segment(k)
+        #         s.specify(v)
+        #         state['matrix'][k] = s
+        #     else:
+        #         v.specify(v.features)
         self.__dict__.update(state)
 
         #Backwards compatability
@@ -715,12 +713,12 @@ class FeatureMatrix(object):
     @property
     def features(self):
         """
-        Get a list of features that are used in this feature system
+        Get a list of _features that are used in this feature system
 
         Returns
         -------
         list
-            Sorted list of the names of all features in the matrix
+            Sorted list of the names of all _features in the matrix
         """
         return sorted(list(self._features))
 
@@ -733,7 +731,7 @@ class FeatureMatrix(object):
         seg : str
             Segment symbol to add to the feature system
         feat_spec : dictionary
-            Dictionary with features as keys and feature values as values
+            Dictionary with _features as keys and feature values as values
         """
 
         #Validation
@@ -742,7 +740,7 @@ class FeatureMatrix(object):
                 raise(AttributeError('The segment \'%s\' has a feature \'%s\' that is not defined for this feature matrix' %(seg,f)))
         # s = Segment(seg)
         # s.set_features(feat_spec)
-        # self.matrix[seg] = s.features
+        # self.matrix[seg] = s._features
         self.matrix[seg] = feat_spec
 
     def add_feature(self,feature, default = None):
@@ -770,7 +768,7 @@ class FeatureMatrix(object):
 
     def valid_feature_strings(self):
         """
-        Get all combinations of ``possible_values`` and ``features``
+        Get all combinations of ``possible_values`` and ``_features``
 
         Returns
         -------
@@ -779,7 +777,7 @@ class FeatureMatrix(object):
         """
         strings = []
         for v in self.possible_values:
-            for f in self.features:
+            for f in self._features:
                 strings.append(v+f)
         return strings
 
@@ -879,7 +877,7 @@ class FeatureMatrix(object):
     def seg_to_feat_line(self,symbol):
         """
         Get a list of feature values for a given segment in the order
-        that features are return in get_feature_list
+        that _features are return in get_feature_list
 
         Use for display purposes
 
@@ -894,16 +892,16 @@ class FeatureMatrix(object):
             List of feature values for the symbol, as well as the symbol itself
         """
         featline = [symbol] + [ self.matrix[symbol][feat]
-                            for feat in self.features]
+                            for feat in self._features]
         return featline
 
     def specify(self, seg):
+
         if isinstance(seg, Segment):
             features = self.matrix[seg.symbol]
         else:
             features = self.matrix[seg]
         return features
-
 
     def __getitem__(self,item):
         if isinstance(item,str):
@@ -1630,10 +1628,10 @@ class Inventory(object):
 
     Attributes
     ----------
-    features : list
-        List of all features used as specifications for segments
+    _features : list
+        List of all _features used as specifications for segments
     possible_values : set
-        Set of values that segments use for features
+        Set of values that segments use for _features
     stresses : dict
         Mapping of stress values to segments that bear that stress
     places : dict
@@ -1678,6 +1676,14 @@ class Inventory(object):
         for feature,value in self.segs[seg].features.items():
             self.features.append(feature)
             self.possible_values.add(value)
+
+
+    def update_features(self):
+        for seg in self.inventory:
+            if seg.symbol == '#':
+                continue
+            self._inventory[seg.symbol].features = self.specifier.specify(seg)
+        self._inventory.features = [name for name in self._inventory[seg.symbol].features.keys()]
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -1737,7 +1743,7 @@ class Inventory(object):
 
     def valid_feature_strings(self):
         """
-        Get all combinations of ``possible_values`` and ``features``
+        Get all combinations of ``possible_values`` and ``_features``
 
         Returns
         -------
@@ -1752,20 +1758,20 @@ class Inventory(object):
 
     def find_min_feature_pairs(self, features, others = None):
         """
-        Find sets of segments that differ only in certain features,
+        Find sets of segments that differ only in certain _features,
         optionally limited by a feature specification
 
         Parameters
         ----------
-        features : list
-            List of features (i.e. 'back' or 'round')
+        _features : list
+            List of _features (i.e. 'back' or 'round')
         others : list, optional
             Feature specification to limit sets
 
         Returns
         -------
         dict
-            Dictionary with keys that correspond to the values of ``features``
+            Dictionary with keys that correspond to the values of ``_features``
             and values that are the set of segments with those feature values
         """
         plus_segs = []
@@ -1792,13 +1798,13 @@ class Inventory(object):
 
     def get_redundant_features(self, features, others = None):
         """
-        Autodetects redundent features, with the ability to subset
+        Autodetects redundent _features, with the ability to subset
         the segments
 
         Parameters
         ----------
-        features : list
-            List of features to find other features that consistently
+        _features : list
+            List of _features to find other _features that consistently
             covary with them
         others : list, optional
             Feature specification that specifies a subset to look at
@@ -1806,7 +1812,7 @@ class Inventory(object):
         Returns
         -------
         list
-            List of redundant features
+            List of redundant _features
         """
         redundant_features = []
         if isinstance(features, str):
@@ -2200,7 +2206,7 @@ class Corpus(object):
 
     def segment_to_features(self, seg):
         """
-        Given a segment, return the features for that segment.
+        Given a segment, return the _features for that segment.
 
         Parameters
         ----------
@@ -2210,7 +2216,7 @@ class Corpus(object):
         Returns
         -------
         dict
-            Dictionary with keys as features and values as featue values
+            Dictionary with keys as _features and values as featue values
         """
         try:
             features = self.specifier.matrix[seg]
@@ -2586,8 +2592,7 @@ class Corpus(object):
         for seg in self.inventory:
             if seg.symbol == '#':
                 continue
-            self.inventory[seg.symbol].features = self.specifier.specify(seg)
-
+            self._inventory[seg.symbol].features = self.specifier.specify(seg)
 
     def update_inventory(self, transcription):
         """
@@ -2666,7 +2671,7 @@ class Corpus(object):
 
     def get_features(self):
         """
-        Get a list of the features used to describe Segments
+        Get a list of the _features used to describe Segments
 
         Returns
         ----------

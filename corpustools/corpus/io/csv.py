@@ -124,6 +124,9 @@ def load_corpus_csv(corpus_name, path, delimiter,
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
         corpus.set_feature_matrix(feature_matrix)
+        print('After attaching to a corpus')
+        print(corpus.specifier.matrix['e'])
+        print(corpus.specifier.specify('e'))
 
     if annotation_types is None:
         annotation_types, _ = inspect_csv(path, coldelim = delimiter)
@@ -171,8 +174,8 @@ def load_corpus_csv(corpus_name, path, delimiter,
         raise(e)
 
 
-
     corpus.update_features()
+    corpus._inventory.setFeatures()
     return corpus
 
 def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back = None):
@@ -230,6 +233,9 @@ def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back 
 
     feature_matrix = FeatureMatrix(name,text_input)
     feature_matrix.validate()
+    print('After loading feature system from csv')
+    print(feature_matrix.matrix['e'])
+    print(feature_matrix.specify('e'))
     return feature_matrix
 
 def make_safe(value, delimiter):

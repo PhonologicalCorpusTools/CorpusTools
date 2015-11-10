@@ -11,17 +11,17 @@ def xcorr_distance(rep_one,rep_two):
     ----------
     rep_one : 2D array
         First representation to compare. First dimension is time in frames
-        or samples and second dimension is the features.
+        or samples and second dimension is the _features.
     rep_two : 2D array
         Second representation to compare. First dimension is time in frames
-        or samples and second dimension is the features.
+        or samples and second dimension is the _features.
 
     Returns
     -------
     float
         Inverse similarity (distance).  Similarity is the maximum cross-
         correlation value (normalized to be between 0 and 1) averaged
-        across all features of the two representations.
+        across all _features of the two representations.
 
     """
     assert(rep_one.shape[1] == rep_two.shape[1])
@@ -55,10 +55,10 @@ def dtw_distance(rep_one, rep_two,norm=True):
     ----------
     rep_one : 2D array
         First representation to compare. First dimension is time in frames
-        or samples and second dimension is the features.
+        or samples and second dimension is the _features.
     rep_two : 2D array
         Second representation to compare. First dimension is time in frames
-        or samples and second dimension is the features.
+        or samples and second dimension is the _features.
 
     Returns
     -------
@@ -77,9 +77,9 @@ def generate_distance_matrix(source,target):
     Parameters
     ----------
     source : 2D array
-        Source matrix with features in the second dimension.
+        Source matrix with _features in the second dimension.
     target : 2D array
-        Target matrix with features in the second dimension.
+        Target matrix with _features in the second dimension.
 
     Returns
     -------

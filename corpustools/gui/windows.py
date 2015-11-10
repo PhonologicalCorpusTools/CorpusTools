@@ -1,10 +1,9 @@
 import datetime
-
+import time
 from .imports import *
 from .helpgui import HelpDialog
 from corpustools.corpus.io import download_binary
 from corpustools.exceptions import PCTError
-
 
 class ProgressDialog(QProgressDialog):
     beginCancel = Signal()

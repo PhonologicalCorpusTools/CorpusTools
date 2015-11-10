@@ -968,8 +968,8 @@ class MultiButtonCell(QWidget):
 #         title.addWidget(QLabel('You can edit the properties of an inventory row or column in this window'))
 #         layout.addLayout(title)
 #         inventoryBox = QVBoxLayout()
-#         temp_inventory = namedtuple('tempInventory', ['features', 'possible_values'])
-#         temp_inventory.features = inventory.features()
+#         temp_inventory = namedtuple('tempInventory', ['_features', 'possible_values'])
+#         temp_inventory._features = inventory._features()
 #         temp_inventory.possible_values = inventory.possible_values()
 #         self.feature_box = FeatureBox('Features', temp_inventory)
 #         inventoryBox.addWidget(self.feature_box)
@@ -983,8 +983,8 @@ class MultiButtonCell(QWidget):
 #         self.setLayout(layout)
 #
 #     def accept(self):
-#         self.features = self.feature_box.value()
-#         print(len(self.features))
+#         self._features = self.feature_box.value()
+#         print(len(self._features))
 #         QDialog.accept(self)
 #
 #     def reject(self):
@@ -996,7 +996,7 @@ class MultiButtonCell(QWidget):
 #         QWidget.__init__(self,parent)
 #
 #         self.inventory = inventory
-#         self.features = self.inventory.features
+#         self._features = self.inventory._features
 #         self.values = self.inventory.possible_values
 #         layout = QHBoxLayout()
 #
@@ -1004,7 +1004,7 @@ class MultiButtonCell(QWidget):
 #
 #         self.featureList = QListWidget()
 #
-#         for f in self.features:
+#         for f in self._features:
 #             self.featureList.addItem(f)
 #         self.featureList.setFixedWidth(self.featureList.minimumSizeHint().width()+20)
 #         layout.addWidget(self.featureList)

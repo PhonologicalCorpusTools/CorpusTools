@@ -180,7 +180,7 @@ class AutoDialog(QDialog):
     def lookForPatterns(self, seg_list):
 
         #look for a few common patterns
-        #this assumes certain features, but it won't necessarily work across all feature systems
+        #this assumes certain _features, but it won't necessarily work across all feature systems
         text = list()
 
         ########empty list?
@@ -235,7 +235,7 @@ class AutoDialog(QDialog):
                     matches.append(feature)
 
         if matches:
-            text.append('They have these features in common:\n{}'.format(','.join([m for m in matches])))
+            text.append('They have these _features in common:\n{}'.format(','.join([m for m in matches])))
 
         ########nothing found
         if not text:

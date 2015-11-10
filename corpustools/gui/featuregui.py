@@ -2,6 +2,7 @@ import os
 import copy
 from collections import OrderedDict
 import codecs
+import time
 
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -67,7 +68,7 @@ def system_name_to_path(storage_directory,name):
 class FeatureSystemSelect(QGroupBox):
     changed  = Signal()
     def __init__(self,settings,parent=None,default = None, add = False):
-        QGroupBox.__init__(self,'Transcription and features',parent)
+        QGroupBox.__init__(self,'Transcription and _features',parent)
         self.settings = settings
         layout = QFormLayout()
 
@@ -586,13 +587,13 @@ class EditFeatureMatrixDialog(QDialog):
         if missing:
             reply = QMessageBox.warning(self,
                     "Missing segments", ('The following segments are not specified'
-                                        ' for features: '+', '.join(missing) + '\nIf you'
+                                        ' for _features: '+', '.join(missing) + '\nIf you'
                                         ' are shown a \'blank\' segment, please ensure'
                                         ' that your segment delimiters are placed'
                                         ' correctly and are never adjacent to each other.'))
             return
         reply = QMessageBox.information(self,
-                    "Missing segments", 'All segments are specified for features!')
+                    "Missing segments", 'All segments are specified for _features!')
 
 class CategoryWidget(QWidget):
     def __init__(self, category, features, specifier, parent = None):
@@ -989,7 +990,7 @@ class SystemFromCsvDialog(PCTDialog):
         formLayout = QFormLayout()
 
 
-        self.pathWidget = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
+        self.pathWidget = FileWidget('Open feature system csv','Text files (*.txt *.csv)')
 
         formLayout.addRow(QLabel('Path to feature system'),self.pathWidget)
 
@@ -1097,6 +1098,10 @@ class SystemFromCsvDialog(PCTDialog):
             if self.specifier is not None:
                 save_binary(self.specifier,
                     system_name_to_path(self.settings['storage'],self.specifier.name))
+                print('Immediately reloaded after saving binary')
+                fm = load_binary(system_name_to_path(self.settings['storage'],self.specifier.name))
+                print(fm.matrix['e'])
+                print(fm.specify('e'))
             QDialog.accept(self)
 
 

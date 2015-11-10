@@ -74,7 +74,7 @@ class FADialog(FunctionDialog):
                     '',
                     'References',
                     ('Johnson, Keith & Babel, Molly. 2010. On the perceptual'
-                    ' basis of distinctive features: Evidence from the perception'
+                    ' basis of distinctive _features: Evidence from the perception'
                     ' fricatives by Dutch and English Speakers. Journal of'
                     ' Phonetics. 38:127-136'),
                     ('Lu, Yu-an. 2012. The role of alternation in phonological'
