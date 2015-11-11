@@ -14,7 +14,7 @@ from corpustools.corpus.classes.lexicon import EnvironmentFilter
 import pdb
 
 
-def matches(first, second):
+def matches(first, second, environment_filter):
     """
     Determine if two neutralized transcriptions are a minimal pair or not
 
@@ -34,9 +34,35 @@ def matches(first, second):
         neutralized segments, and the spellings and original transcriptions
         are different; otherwise returns False
     """
-    return (first[0] == second[0] and first[1] != second[1]
+
+    def check_environment(first, second, environment_filter):
+        if environment_filter.lhs:
+            re_lhs = '\.'.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.lhs])
+            re_lhs = re_lhs.replace('#', '^')
+        else:
+            re_lhs = ''
+
+        if environment_filter.rhs:
+            re_rhs = '\.'.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.rhs])
+            re_rhs = re_rhs.replace('#', '$')
+        else:
+            re_rhs = ''
+
+        if re_lhs and not re_lhs.endswith('^)'):
+            re_lhs += '\.'
+        if re_rhs and not re_rhs.endswith('($'):
+            re_rhs = '\.' + re_rhs
+        full_re = re_lhs + 'NEUTR:[^.]+' + re_rhs
+        return re.search(full_re, first[0]) # second == first
+
+    if (first[0] == second[0] and first[1] != second[1]
         and 'NEUTR:' in first[0] and 'NEUTR:' in second[0]
-        and first[2] != second[2])
+        and first[2] != second[2]):
+        if (environment_filter == None or
+            check_environment(first, second, environment_filter)):
+            return True
+    return False
+
 
 def minpair_fl(corpus_context, segment_pairs,
         relative_count = True, distinguish_homophones = False,
@@ -120,7 +146,7 @@ def minpair_fl(corpus_context, segment_pairs,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        if not matches(first,second):
+        if not matches(first,second, environment_filter):
             continue
         ordered_pair = sorted([(first[1],first[2]), (second[1], second[2])],
                             key = lambda x: x[1])
