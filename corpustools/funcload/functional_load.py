@@ -14,54 +14,77 @@ from corpustools.corpus.classes.lexicon import EnvironmentFilter
 import pdb
 
 
-def matches(first, second, environment_filter):
+def is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
+    """Return True iff first/second are a minimal pair.
+    Checks that all segments in those words are identical OR a valid segment pair
+    (from segment_pairs) and fit the environment_filter, and that there is at least
+    one difference between first and second.
     """
-    Determine if two neutralized transcriptions are a minimal pair or not
+    first = getattr(first, corpus_context.sequence_type)
+    second = getattr(second, corpus_context.sequence_type)
+    if len(first) != len(second):
+        return False
+    has_difference = False
+    for i in range(len(first)):
+        if first[i] == second[i]:
+            continue
+        elif (conflateable(first[i], second[i], segment_pairs) 
+            and fits_environment(first, second, i, environment_filter)):
+            has_difference = True
+            continue
+        else:
+            return False
+    if has_difference:
+        return True
 
-    Parameters
-    ----------
-    first : tuple
-        Tuple of the neutralized sequence, the spelling of the word,
-        and the unneutralized sequence
-    second : tuple
-        Tuple of the neutralized sequence, the spelling of the word,
-        and the unneutralized sequence
+def conflateable(seg1, seg2, segment_pairs):
+    """Return True iff seg1 and seg2 are exactly one of the segment pairs
+    in segment_pairs (ignoring ordering of either).
 
-    Returns
-    -------
-    bool
-        Returns True if the neutralized sequences match, they both contain
-        neutralized segments, and the spellings and original transcriptions
-        are different; otherwise returns False
+    seg1 and seg2 will never be identical in the input.
     """
-
-    def check_environment(first, second, environment_filter):
-        if environment_filter.lhs:
-            re_lhs = '\.'.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.lhs])
-            re_lhs = re_lhs.replace('#', '^')
-        else:
-            re_lhs = ''
-
-        if environment_filter.rhs:
-            re_rhs = '\.'.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.rhs])
-            re_rhs = re_rhs.replace('#', '$')
-        else:
-            re_rhs = ''
-
-        if re_lhs and not re_lhs.endswith('^)'):
-            re_lhs += '\.'
-        if re_rhs and not re_rhs.endswith('($'):
-            re_rhs = '\.' + re_rhs
-        full_re = re_lhs + 'NEUTR:[^.]+' + re_rhs
-        return re.search(full_re, first[0]) # second == first
-
-    if (first[0] == second[0] and first[1] != second[1]
-        and 'NEUTR:' in first[0] and 'NEUTR:' in second[0]
-        and first[2] != second[2]):
-        if (environment_filter == None or
-            check_environment(first, second, environment_filter)):
+    for segment_pair in segment_pairs:
+        seg_set = set(segment_pair)
+        if seg1 in seg_set and seg2 in seg_set:
             return True
     return False
+
+def fits_environment(w1, w2, index, environment_filter):
+    """Return True iff for both w1 and w2 (tiers), the environment
+    of its i'th element fits passes the environment_filter.
+    """
+    if not environment_filter:
+        return True
+
+    def ready_for_re(word, index):
+        w = [str(seg) for seg in word]
+        w[index] = '_'
+        return ' '.join(w)
+
+    w1 = ready_for_re(w1, index)
+    w2 = ready_for_re(w2, index)
+    env_re = make_environment_re(environment_filter)
+
+    return (bool(re.search(env_re, w1)) and bool(re.search(env_re, w2)))
+
+def make_environment_re(environment_filter):
+    if environment_filter.lhs:
+        re_lhs = ' '.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.lhs])
+        re_lhs = re_lhs.replace('#', '^')
+    else:
+        re_lhs = ''
+
+    if environment_filter.rhs:
+        re_rhs = ' '.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.rhs])
+        re_rhs = re_rhs.replace('#', '$')
+    else:
+        re_rhs = ''
+
+    if re_lhs and not re_lhs.endswith('^)'):
+        re_lhs += ' '
+    if re_rhs and not re_rhs.endswith('($'):
+        re_rhs = ' ' + re_rhs
+    return re_lhs + '_' + re_rhs
 
 
 def minpair_fl(corpus_context, segment_pairs,
@@ -104,19 +127,16 @@ def minpair_fl(corpus_context, segment_pairs,
 
     if stop_check is not None and stop_check():
         return
-    all_target_segments = list(itertools.chain.from_iterable(segment_pairs))
 
-    neutralized = []
+    ## Filter out words that have none of the target segments
+    ## (for relative_count as well as improving runtime)
+    contain_target_segment = []
     if call_back is not None:
-        call_back('Finding and neutralizing instances of segments...')
+        call_back('Finding words with the specified segments...')
         call_back(0, len(corpus_context))
         cur = 0
 
-    if environment_filter:
-        filled_environment = EnvironmentFilter(tuple(all_target_segments),
-                                               environment_filter.lhs,
-                                               environment_filter.rhs)
-
+    all_target_segments = list(itertools.chain.from_iterable(segment_pairs))
     for w in corpus_context:
         if stop_check is not None and stop_check():
             return
@@ -126,36 +146,36 @@ def minpair_fl(corpus_context, segment_pairs,
                 call_back(cur)
         tier = getattr(w, corpus_context.sequence_type)
         if any([s in tier for s in all_target_segments]):
-            if not environment_filter or tier.find(filled_environment):
-                n = [neutralize_segment(seg, segment_pairs)
-                        for seg in tier]
-                neutralized.append(('.'.join(n), w, tier))
+                contain_target_segment.append(w)
     if stop_check is not None and stop_check():
         return
 
+    ## Find minimal pairs
     minpairs = []
     if call_back is not None:
-        call_back('Counting minimal pairs...')
-        if len(neutralized) >= 2:
-            call_back(0,factorial(len(neutralized))/(factorial(len(neutralized)-2)*2))
+        call_back('Finding minimal pairs...')
+        if len(contain_target_segment) >= 2:
+            call_back(0,factorial(len(contain_target_segment))/(factorial(len(contain_target_segment)-2)*2))
         cur = 0
-    for first,second in itertools.combinations(neutralized, 2):
+    for first, second in itertools.combinations(contain_target_segment, 2):
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        if not matches(first,second, environment_filter):
-            continue
-        ordered_pair = sorted([(first[1],first[2]), (second[1], second[2])],
-                            key = lambda x: x[1])
-        minpairs.append(tuple(ordered_pair))
+        if is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
+            ordered_pair = sorted([(first, getattr(first, corpus_context.sequence_type)),
+                                   (second, getattr(second, corpus_context.sequence_type))],
+                                   key = lambda x: x[1]) # sort by tier/transcription
+            minpairs.append(tuple(ordered_pair))
 
+    ## Generate output
     if not distinguish_homophones:
         actual_minpairs = {}
+
         for pair in minpairs:
-            key = (pair[0][1], pair[1][1]) # Keys are tuples of tiers
+            key = (pair[0][1], pair[1][1]) # Keys are tuples of transcriptions
             if key not in actual_minpairs:
                 actual_minpairs[key] = (pair[0][0], pair[1][0]) # Values are words
             else:
@@ -169,8 +189,8 @@ def minpair_fl(corpus_context, segment_pairs,
     else:
         result = sum((x[0][0].frequency + x[1][0].frequency)/2 for x in minpairs)
 
-    if relative_count and len(neutralized) > 0:
-        result /= sum(x[1].frequency for x in neutralized)
+    if relative_count and len(contain_target_segment) > 0:
+        result /= sum(x.frequency for x in contain_target_segment)
     return (result, minpairs)
 
 def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
