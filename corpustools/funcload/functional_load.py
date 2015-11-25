@@ -175,6 +175,8 @@ def minpair_fl(corpus_context, segment_pairs,
         actual_minpairs = {}
 
         for pair in minpairs:
+            if stop_check is not None and stop_check():
+                return
             key = (pair[0][1], pair[1][1]) # Keys are tuples of transcriptions
             if key not in actual_minpairs:
                 actual_minpairs[key] = (pair[0][0], pair[1][0]) # Values are words
