@@ -3,7 +3,7 @@ import logging
 
 from .imports import *
 
-from .config import Settings
+from .config import Settings, PreferencesDialog
 
 from .views import (TreeWidget, DiscourseView, ResultsWindow,
                     LexiconView,PhonoSearchResults)
@@ -247,7 +247,8 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.corpus = dialog.corpus
-            self.inventoryModel = InventoryModel(self.corpus._inventory)
+            copy_mode = False if self.corpus.inventory.isNew else True
+            self.inventoryModel = InventoryModel(self.corpus._inventory, copy_mode=copy_mode)
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):
@@ -308,6 +309,12 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.inventoryModel.updateFromCopy(dialog.inventory)
+            self.corpus._inventory.__dict__.update(self.inventoryModel.__dict__)
+            if self.settings['autosave']:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
+            else:
+                self.enableSave()
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -341,7 +348,7 @@ class MainWindow(QMainWindow):
             pass
 
     def showPreferences(self):
-        dialog = PCTWidgets.PreferencesDialog(self, self.settings)
+        dialog = PreferencesDialog(self, self.settings)
         if dialog.exec_():
             self.settings = dialog.settings
 

@@ -11,7 +11,6 @@ from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
 
 
-
 def organize_data(reader, visualization_method, value_column, segment_column):
     raw_data = {tuple([x[1:-1] for x in re.findall("'.+?'", r[segment_column])]): float(r[value_column]) for r in reader}
     all_segments = list(set([segment for pair in raw_data for segment in pair]))

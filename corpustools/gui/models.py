@@ -834,11 +834,11 @@ class InventoryModel(QAbstractTableModel):
             See also corpustools.corpus.classes.lexicon.Corpus.update_inventory()
             """
 
-            attributes = ['segs', '_features', 'possible_values', 'stresses', 'consColumns', 'consRows',
+            attributes = ['segs', 'features', 'possible_values', 'stresses', 'consColumns', 'consRows',
                           'vowelColumns', 'vowelRows', 'cons_column_data', 'cons_row_data', 'vowel_column_data', 'vowel_row_data',
                           'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                           'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
-                          'vowel_feature', 'voice_feature', 'rounded_feature']
+                          'vowel_feature', 'voice_feature', 'rounded_feature', 'isNew']
             modelResetSignal = Signal(bool)
 
             def __init__(self, inventory, copy_mode=False):
@@ -849,7 +849,7 @@ class InventoryModel(QAbstractTableModel):
 
                 # values passed along from the inventory
                 self.segs = inventory.segs
-                self._features = inventory.features
+                self.features = inventory.features
                 self.possible_values = inventory.possible_values
                 self.stresses = inventory.stresses
                 #values to be set at some later point
@@ -870,14 +870,14 @@ class InventoryModel(QAbstractTableModel):
                 self.categorizeInventory()
                 self.sortData()
                 self.filterGenericNames()
-
-            @property
-            def features(self):
-                return self._features
+                self.isNew = False
 
             def setAttributes(self, source):
                 for attribute in InventoryModel.attributes: #self.attributes:
-                    setattr(self, attribute, deepcopy(getattr(source, attribute)))
+                    try:
+                        setattr(self, attribute, deepcopy(getattr(source, attribute)))
+                    except AttributeError:
+                        print(attribute)
 
             def columnCount(self, parent=None):
                 return len(self._data[0])  # any element would do, they should all be the same length
@@ -914,8 +914,9 @@ class InventoryModel(QAbstractTableModel):
                     self.consColumns.remove(name)
                     self.consColumns.add(new_section_name)
                 else:
+                    index += self.vowel_column_offset
                     name = self.vowel_column_header_order[index]
-                    self.cons_column_data.pop(name)
+                    self.vowel_column_data.pop(name)
                     self.vowel_column_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
                     self.vowelColumns.remove(name)
                     self.vowelColumns.add(new_section_name)
@@ -930,6 +931,7 @@ class InventoryModel(QAbstractTableModel):
                     self.consRows.remove(name)
                     self.consRows.add(new_section_name)
                 else:
+                    index += self.vowel_row_offset
                     name = self.vowel_row_header_order[index]
                     self.vowel_row_data.pop(name)
                     self.vowel_row_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
@@ -1142,6 +1144,8 @@ class InventoryModel(QAbstractTableModel):
                         continue
                     column_data[headerName][0] = visualIndex
 
+
+
             def changeRowOrder(self, map, consonants=True):
                 if consonants:
                     row_data = self.cons_row_data
@@ -1349,6 +1353,7 @@ class InventoryModel(QAbstractTableModel):
             def __setstate__(self, state):
                 if 'stresses' not in state:
                     state['stresses'] = {}
+
                 self.__dict__.update(state)
 
             def __repr__(self):

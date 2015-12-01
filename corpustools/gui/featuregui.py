@@ -631,7 +631,6 @@ class CategoryWidget(QWidget):
             self.previewWidget.setToolTip('No included segments')
         else:
             segments = self.specifier.features_to_segments(features)
-
             self.previewWidget.setToolTip(', '.join(segments))
 
     def features(self):

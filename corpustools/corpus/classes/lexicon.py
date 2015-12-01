@@ -1651,11 +1651,15 @@ class Inventory(object):
         diphthongs from monophthongs
     rounded_feature : str
         Feature value (i.e., '+round') that codes rounded vowels
+
+    Other attributes belong to the InventoryModel which will eventually be created. This is because Qt objects are not
+    compatible with pickle, so we have to "save" all model information in this object here, and then pick it up
+    again after unpickling. see also loadCorpus() in gui\main.py where the Model is instantiated
     """
     def __init__(self, data = None):
 
         self.segs = {'#' : Segment('#')}
-        self.features = []
+        self.features = list()
         self.possible_values = set()
         self.stresses = collections.defaultdict(set)
         self.places = collections.OrderedDict()
@@ -1666,10 +1670,33 @@ class Inventory(object):
         self.voice_feature = None
         self.diph_feature = None
         self.rounded_feature = None
-        self.cons_columns = {}
-        self.cons_rows = {}
-        self.vow_columns = {}
-        self.vow_rows = {}
+        self.cons_columns = dict()
+        self.cons_rows = dict()
+        self.vow_columns = dict()
+        self.vow_rows = dict()
+        self.isNew = True
+
+        #The following attributes are needed for the InventoryModel. See the docstring above for more details.
+        self.consColumns = set()
+        self.consRows = set()
+        self.vowelColumns = set()
+        self.vowelRows = set()
+        self.consList = list()
+        self.vowelList = list()
+        self.uncategorized = list()
+        self._data = dict()
+        self.cons_column_data = dict()
+        self.cons_row_data = dict()
+        self.vowel_column_data = dict()
+        self.vowel_row_data = dict()
+        self.all_rows = dict()
+        self.all_columns = dict()
+        self.vowel_column_offset = int()
+        self.vowel_row_offset = int()
+        self.cons_column_header_order = dict()
+        self.cons_row_header_order = dict()
+        self.vowel_row_header_order = dict()
+        self.vowel_column_header_order = dict()
 		
     def setFeatures(self):
         seg = random.choice([seg for seg in self.segs.keys() if not seg=='#'])
