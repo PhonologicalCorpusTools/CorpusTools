@@ -490,6 +490,8 @@ class FeatureMatrix(object):
         self._features = None
         self.vowel_feature = None
         self.voice_feature = None
+        self.rounded_feature = None
+        self.diph_feature = None
         self.possible_values = set()
         self.matrix = {}
         self._default_value = 'n'
@@ -499,33 +501,15 @@ class FeatureMatrix(object):
         if self._features is None:
             self._features = {k for k in s.keys() if k != 'symbol'}
 
-        #What are these?
-        self.matrix['#'] = Segment('#')
-        self.places = collections.OrderedDict()
-        self.manners = collections.OrderedDict()
-        self.backness = collections.OrderedDict()
-        self.height = collections.OrderedDict()
-        self.generate_generic_names()
-
-    def generate_generic_names(self):
-        if 'consonantal' in self.features:
-            self.generate_generic_hayes()
-            self.vowel_feature = '+syllabic'
-            self.voice_feature = '+voice'
-            self.diph_feature = '+diphthong'
-            self.rounded_feature = '+round'
-        elif 'voc' in self.features:
-            self.generate_generic_spe()
-            self.vowel_feature = '+voc'
-            self.voice_feature = '+voice'
-            self.diph_feature = '.high'
-            self.rounded_feature = '+round'
-        else:
-            self.generate_generic()
-            self.vowel_feature = []
-            self.voice_feature = []
-            self.diph_feature = []
-            self.rounded_feature = []
+        #These should be phased out of here
+        #this information is available from the Inventory, and should not
+        #be duplicated here
+        # self.matrix['#'] = Segment('#')
+        # self.places = collections.OrderedDict()
+        # self.manners = collections.OrderedDict()
+        # self.backness = collections.OrderedDict()
+        # self.height = collections.OrderedDict()
+        # self.generate_generic_names()
 
     def generate_generic(self):
         self.places['Labial'] = {}
@@ -653,13 +637,30 @@ class FeatureMatrix(object):
             Segments that match the feature description
 
         """
-        segments = []
+        segments = list()
         if isinstance(feature_description, str):
             feature_description = feature_description.split(',')
+        #otherwise it's probably a list, leave it be
         for k,v in self.matrix.items():
-            if v.feature_match(feature_description):
+            if self.feature_match(feature_description, v):
                 segments.append(k)
         return segments
+
+    def feature_match(self, features_to_match, segment_description):
+        """
+        :param features_to_match:  a list of strings representing features, e.g. ['+voice','-nasal']
+        :param segment_description:  a dictionary of {feature_name:feature_value}
+        :return: True if features match up with the segment description, e.g. if {'voice':'+', 'nasal':'-'} is in the
+                segment dictionary. Otherwise returns False.
+        """
+        for feature in features_to_match:
+            if segment_description[feature[1:]] == feature[0]:
+                continue
+            else:
+                return False
+        else:
+            return True
+
 
     def __setstate__(self,state):
         if '_features' not in state:
@@ -681,7 +682,7 @@ class FeatureMatrix(object):
             self.manners = collections.OrderedDict()
             self.backness = collections.OrderedDict()
             self.height = collections.OrderedDict()
-            self.generate_generic_names()
+            #self.generate_generic_names()
 
         if 'cons_column_data' not in state:
             self.cons_columns = {}
@@ -705,6 +706,13 @@ class FeatureMatrix(object):
             for f in self._features:
                 if f not in v:
                     self.matrix[k][f] = self._default_value
+
+    def set_major_class_features(self, source):
+        self.vowel_feature = source.vowel_feature
+        self.voice_feature = source.voice_feature
+        self.rounded_feature = source.rounded_feature
+        self.diphthong_feature = source.diph_feature
+
 
     @property
     def default_value(self):
@@ -1656,7 +1664,7 @@ class Inventory(object):
     compatible with pickle, so we have to "save" all model information in this object here, and then pick it up
     again after unpickling. see also loadCorpus() in gui\main.py where the Model is instantiated
     """
-    def __init__(self, data = None):
+    def __init__(self):
 
         self.segs = {'#' : Segment('#')}
         self.features = list()
@@ -1670,6 +1678,7 @@ class Inventory(object):
         self.voice_feature = None
         self.diph_feature = None
         self.rounded_feature = None
+        self.generate_generic_names()
         self.cons_columns = dict()
         self.cons_rows = dict()
         self.vow_columns = dict()
@@ -1704,6 +1713,26 @@ class Inventory(object):
             self.features.append(feature)
             self.possible_values.add(value)
 
+    def set_major_class_features(self, source):
+        self.vowel_feature = source.vowel_feature
+        self.voice_feature = source.voice_feature
+        self.rounded_feature = source.rounded_feature
+        self.diph_feature = source.diph_feature
+
+    def generate_generic_names(self):
+        if 'consonantal' in self.features:
+            self.generate_generic_hayes()
+            self.vowel_feature = '+syllabic'
+            self.voice_feature = '+voice'
+            self.diph_feature = '+diphthong'
+            self.rounded_feature = '+round'
+        elif 'voc' in self.features:
+            self.generate_generic_spe()
+            self.vowel_feature = '+voc'
+            self.voice_feature = '+voice'
+            self.diph_feature = '.high'
+            self.rounded_feature = '+round'
+        #else we can't guess, so leave it at the initialized value of None
 
     def update_features(self):
         for seg in self.inventory:

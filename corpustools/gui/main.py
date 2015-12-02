@@ -247,8 +247,12 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.corpus = dialog.corpus
-            copy_mode = False if self.corpus.inventory.isNew else True
-            self.inventoryModel = InventoryModel(self.corpus._inventory, copy_mode=copy_mode)
+            if self.corpus.inventory.isNew:
+                self.inventoryModel = InventoryModel(self.corpus._inventory, copy_mode=False)
+                self.corpus.inventory.set_major_class_features(self.inventoryModel)
+                self.corpus.specifier.set_major_class_features(self.inventoryModel)
+            else:
+                self.inventoryModel = InventoryModel(self.corpus._inventory, copy_mode=True)
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):
@@ -359,7 +363,8 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
             self.corpusModel.corpus.update_features()
-            self.inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
+            self.corpusModel.corpus.inventory.set_major_class_features(dialog.specifier)
+            self.inventoryModel.updateFeatures(dialog.specifier)
 
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))
@@ -925,9 +930,8 @@ class MainWindow(QMainWindow):
         self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.phonoSearchAct)
 
-        self.featureMenu = self.menuBar().addMenu("&Features")
+        self.featureMenu = self.menuBar().addMenu("F&eatures")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
-        #self.featureMenu.addAction(self.manageFeatureClassesAct)
         self.featureMenu.addAction(self.manageInventoryAct)
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")

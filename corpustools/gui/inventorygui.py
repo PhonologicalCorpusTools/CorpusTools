@@ -16,6 +16,8 @@ class InventoryManager(QDialog):
                                     'Right click to insert a new empty row or column.\n'
                                     'Double-click on a row or column to edit the '
                                     'class of segments which appear in that row or column.\n'
+                                  'You can also change some of the properties of the inventory by going to Features > '
+                                  'Edit/View Feature System... and then clicking on \"Edit Inventory Categories\".'
 
         ))
         topmessage.setWordWrap(True)

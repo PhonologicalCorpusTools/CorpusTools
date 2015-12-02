@@ -230,9 +230,6 @@ def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back 
 
     feature_matrix = FeatureMatrix(name,text_input)
     feature_matrix.validate()
-    print('After loading feature system from csv')
-    print(feature_matrix.matrix['e'])
-    print(feature_matrix.specify('e'))
     return feature_matrix
 
 def make_safe(value, delimiter):

@@ -838,7 +838,7 @@ class InventoryModel(QAbstractTableModel):
                           'vowelColumns', 'vowelRows', 'cons_column_data', 'cons_row_data', 'vowel_column_data', 'vowel_row_data',
                           'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                           'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
-                          'vowel_feature', 'voice_feature', 'rounded_feature', 'isNew']
+                          'vowel_feature', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew']
             modelResetSignal = Signal(bool)
 
             def __init__(self, inventory, copy_mode=False):
@@ -865,6 +865,10 @@ class InventoryModel(QAbstractTableModel):
                 self.cons_row_data = {}
                 self.vowel_column_data = {}
                 self.vowel_row_data = {}
+                self.vowel_feature = None
+                self.voice_feature = None
+                self.rounded_feature = None
+                self.diph_feature = None
                 #functions that fill in the above values
                 self.generate_generic_names()
                 self.categorizeInventory()
@@ -878,6 +882,12 @@ class InventoryModel(QAbstractTableModel):
                         setattr(self, attribute, deepcopy(getattr(source, attribute)))
                     except AttributeError:
                         print(attribute)
+
+            def set_major_class_features(self, source):
+                self.vowel_feature = source.vowel_feature
+                self.voice_feature = source.voice_feature
+                self.rounded_feature = source.round_feature
+                self.diphthong_feature = soure.diph_feature
 
             def columnCount(self, parent=None):
                 return len(self._data[0])  # any element would do, they should all be the same length
@@ -903,7 +913,13 @@ class InventoryModel(QAbstractTableModel):
 
             def updateFeatures(self, specifier):
                 for seg in self.segs:
+                    if seg == '#':
+                        continue
                     self.segs[seg].features = specifier.specify(seg)
+                self.vowel_feature = specifier.vowel_feature
+                self.voice_feature = specifier.voice_feature
+                self.rounded_feature = specifier.rounded_feature
+                self.diphthong_feature = specifier.diph_feature
                 self.modelReset()
 
             def changeColumnSpecs(self, index, features, new_section_name, consonants=True):
@@ -964,6 +980,9 @@ class InventoryModel(QAbstractTableModel):
 
             def isRounded(self, seg):
                 return seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
+
+            def isDiphthong(self, seg):
+                return seg.features[self.diph_feature[1:]]==  self.diph_feature[0]
 
             def categorizeInventory(self):
 
@@ -1251,11 +1270,13 @@ class InventoryModel(QAbstractTableModel):
                     self.vowel_feature = '-consonantal'
                     self.voice_feature = '+voice'
                     self.rounded_feature = '+round'
+                    self.diph_feature = '+diphthong'
                 elif 'voc' in sample.features:
                     self.generate_generic_spe()
                     self.vowel_feature = '+voc'
                     self.voice_feature = '+voice'
                     self.rounded_feature = '+round'
+                    self.diph_feature = None
                 else:
                     pass
 

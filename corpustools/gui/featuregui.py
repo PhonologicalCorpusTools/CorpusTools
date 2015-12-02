@@ -358,11 +358,10 @@ class DownloadFeatureMatrixDialog(QDialog):
 class EditFeatureMatrixDialog(QDialog):
     def __init__(self, parent, corpus, settings):
         QDialog.__init__(self, parent)
-
         self.corpus = corpus
         self.settings = settings
 
-        self.specifier = copy.deepcopy(self.corpus.specifier)
+        self.specifier = self.corpus.specifier
 
         layout = QVBoxLayout()
 
@@ -485,10 +484,10 @@ class EditFeatureMatrixDialog(QDialog):
             return
         dialog = EditCategoriesDialog(self, self.specifier)
         if dialog.exec_():
-            self.specifier.vowel_feature = dialog.vowel()
-            self.specifier.voice_feature = dialog.voiced()
-            self.specifier.diph_feature = dialog.diphthong()
-            self.specifier.rounded_feature = dialog.rounded()
+            self.specifier.vowel_feature = dialog.vowel()[0] if dialog.vowel() else None
+            self.specifier.voice_feature = dialog.voiced()[0] if dialog.voiced() else None
+            self.specifier.diph_feature = dialog.diphthong()[0] if dialog.diphthong() else None
+            self.specifier.rounded_feature = dialog.rounded()[0] if dialog.rounded() else None
             p, m, h, b = dialog.value()
             for k,v in p.items():
                 self.specifier.places[k] = v
