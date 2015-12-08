@@ -44,11 +44,5 @@ after_success:
 
 cache:
   directories:
-<<<<<<< HEAD
-    - $HOME/sip
-    - $HOME/pyqt5
-    - $HOME/miniconda
-=======
     - $HOME/cachedir
   apt: true
->>>>>>> 7b2f222b9b437b1c4bcd2d93e3a2b080f262e006
