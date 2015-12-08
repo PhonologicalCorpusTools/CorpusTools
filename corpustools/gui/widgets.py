@@ -1,6 +1,6 @@
 import re
 import operator
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, namedtuple, defaultdict
 from itertools import combinations, product
 
 from .imports import *
@@ -1121,12 +1121,11 @@ class DirectoryWidget(QFrame):
     def value(self):
         return self.pathEdit.text()
 
-class InventoryTable(QTableView):
-    def __init__(self, inventory):
+class InventoryTable(QTableWidget):
+    def __init__(self):
         super().__init__()
         self.horizontalHeader().setMinimumSectionSize(70)
         #self.setModel(inventory)
-        self.inventory = inventory
         try:
             self.horizontalHeader().setSectionsClickable(False)
             #self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -1155,356 +1154,6 @@ class InventoryTable(QTableView):
             height += ver.sectionSize(i)
         self.setFixedSize(width, height)
 
-
-class EditableInventoryTable(QTableView):
-
-    def __init__(self, inventory, is_cons_table=True):
-        #parent is an InventoryBox
-        super().__init__()
-        super(QAbstractTableModel, inventory).__init__()
-        self.setModel(inventory)
-        self.inventory = inventory
-        self.isConsTable = is_cons_table
-        self.horizontalHeader().setSectionsClickable(True)
-        self.horizontalHeader().sectionClicked.connect(self.highlightColumn)
-        self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
-        self.verticalHeader().setSectionsClickable(True)
-        self.verticalHeader().sectionClicked.connect(self.highlightRow)
-        self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
-
-        self.setDragEnabled(True)
-        self.setAcceptDrops(True)
-        self.viewport().setAcceptDrops(True)
-        self.setDragDropOverwriteMode(False)
-        self.setDropIndicatorShown(True)
-
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
-
-        verticalHeader = self.verticalHeader()
-        verticalHeader.setContextMenuPolicy(Qt.CustomContextMenu)
-        verticalHeader.customContextMenuRequested.connect( self.showVerticalHeaderMenu )
-
-        horizontalHeader = self.horizontalHeader()
-        horizontalHeader.setContextMenuPolicy(Qt.CustomContextMenu)
-        horizontalHeader.customContextMenuRequested.connect( self.showHorizontalHeaderMenu )
-
-    def showVerticalHeaderMenu(self, pos):
-        header = self.verticalHeader()
-        row = header.logicalIndexAt(pos.y())
-
-        deleteRowAct = QAction(self)
-        deleteRowAct.setText("Remove row")
-        deleteRowAct.triggered.connect(lambda : self.userRemoveRow(row))
-        addRowAct = QAction(self)
-        addRowAct.setText("Add row")
-        addRowAct.triggered.connect(self.userAddRow)
-
-        menu = QMenu(self)
-        menu.addAction(deleteRowAct)
-        menu.addAction(addRowAct)
-
-        menu.popup(header.mapToGlobal(pos))
-
-    def showHorizontalHeaderMenu(self, pos):
-        header = self.horizontalHeader()
-        col = header.logicalIndexAt(pos.x())
-
-        deleteColAct = QAction(self)
-        deleteColAct.setText("Remove column")
-        deleteColAct.triggered.connect(lambda : self.userRemoveColumn(col))
-        addColAct = QAction(self)
-        addColAct.setText("Add column")
-        addColAct.triggered.connect(self.userAddColumn)
-
-        menu = QMenu(self)
-        #menu.addAction(editAction)
-        menu.addAction(addColAct)
-        menu.addAction(deleteColAct)
-
-        menu.popup(header.mapToGlobal(pos))
-
-    def userRemoveRow(self, target):
-        self.removeRow(target)
-        targetRows = self.inventory.cons_rows if self.isConsTable else self.inventory.vow_rows
-        for key,value in targetRows.items():
-            if value[0] >= target:
-                targetRows[key][0] -= 1
-
-    def userAddRow(self):
-        dialog = SegmentSelectDialog(self.inventory, parent = self)
-        results = dialog.exec_()
-        if results:
-            targetRows = self.inventory.cons_rows if self.isConsTable else self.inventory.vow_rows
-            target = len(targetRows)
-            self.insertRow(target)
-            for key,value in targetRows.items():
-                if value[0] >= target:
-                    targetRows[key][0] += 1
-            new_name = dialog.name
-            featureList = {f[1:]:f[0] for f in dialog.featureList}
-            segList = [s for s in dialog.selectedSegs]
-            if self.isConsTable:
-                self.inventory.cons_rows[new_name] = [target, featureList, segList]
-            else:
-                self.inventory.vow_rows[new_name] = [target, featureList, segList]
-            self.parent.resetInventoryBox(*self.generateInventoryBoxData())
-
-    def userRemoveColumn(self, target):
-        self.removeColumn(target)
-        targetCols = self.inventory.cons_columns if self.isConsTable else self.inventory.vow_columns
-        for key,value in targetCols.items():
-            if value[0] >= target:
-                targetCols[key][0] -= 1
-
-
-    def userAddColumn(self):
-        dialog = SegmentSelectDialog(self.inventory, parent = self)
-        results = dialog.exec_()
-        if results:
-            target = self.selectionModel().selectedColumns()[0].column()
-            target += 1
-            self.insertColumn(target)
-            targetCols = self.inventory.cons_columns if self.isConsTable else self.inventory.vow_columns
-            for key,value in targetCols.items():
-                if value[0] >= target:
-                    targetCols[key][0] += 1
-            new_name = dialog.name
-            featureList = {f[1:]:f[0] for f in dialog.featureList}
-            segList = [s for s in dialog.selectedSegs]
-            if self.isConsTable:
-                self.inventory.cons_columns[new_name] = [target, featureList, segList]
-            else:
-                self.inventory.vow_columns[new_name] = [target, featureList, segList]
-            self.parent.resetInventoryBox(*self.generateInventoryBoxData())
-
-
-    def allowReordering(self, value):
-        self.setDragEnabled(value)
-        self.setAcceptDrops(value)
-        self.viewport().setAcceptDrops(value)
-        self.setDragDropOverwriteMode(value)
-        self.setDropIndicatorShown(value)
-
-    def dragMoveEvent(self,event):
-        event.accept()
-
-    def highlightRow(self,row_num):
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.selectRow(row_num)
-
-    def highlightColumn(self,col_num):
-        self.setSelectionBehavior(QAbstractItemView.SelectColumns)
-        self.selectColumn(col_num)
-
-    def dropEvent(self, event):
-
-        if event.source() == self and (event.dropAction() == Qt.MoveAction or self.dragDropMode() == QAbstractItemView.InternalMove):
-            success, index = self.dropOn(event)
-            if not success:
-                return
-
-        if self.selectionBehavior() == QAbstractItemView.SelectRows:
-            dropRow = index.row()
-            selRow = self.selectionModel().selectedRows()[0].row()
-
-            if dropRow == -1:
-                insertAt = self.rowCount()#take maximum, user dragged past the bottom
-
-            if selRow < dropRow:
-                insertAt = dropRow+1
-                sourceRow = selRow
-                if insertAt > self.rowCount():
-                    insertAt = self.rowCount()
-
-            elif selRow > dropRow:
-                insertAt = dropRow
-                sourceRow = selRow+1
-                if sourceRow > self.rowCount():
-                    sourceRow = self.rowCount()
-
-            self.insertRow(insertAt)
-            self.setVerticalHeaderItem(insertAt, QTableWidgetItem(self.verticalHeaderItem(sourceRow).text()))
-            for c in range(self.columnCount()):
-                sourceWidget = self.cellWidget(sourceRow,c)
-                self.setCellWidget(insertAt,c,sourceWidget)
-
-            headers = [self.verticalHeaderItem(r).text() for r in range(self.rowCount())]
-            chooseRows = self.parent.corpus.specifier.consRows if self.isConsTable else self.parent.corpus.specifier.vowRows
-            a = self.verticalHeaderItem(sourceRow).text()
-            b = self.verticalHeaderItem(dropRow).text()
-            chooseRows[a][0], chooseRows[b][0] = chooseRows[b][0], chooseRows[a][0]
-
-            if self.isConsTable:
-                self.inventory.cons_rows = {k:v for k,v in self.inventory.cons_rows.items() if k in headers}
-            else:
-                self.inventory.vow_rows = {k:v for k,v in self.inventory.vow_rows.items() if k in headers}
-
-            for r in range(self.rowCount()):
-                chooseRows[self.verticalHeaderItem(r).text()][0] = r
-
-            self.resizeRowsToContents()
-            event.accept()
-
-        elif self.selectionBehavior() == QAbstractItemView.SelectColumns:
-            dropCol = index.column()
-            selCol = self.selectionModel().selectedColumns()[0].column()
-            if dropCol == -1:
-                insertAt = self.columnCount()#take maximum, user dragged past the bottom
-
-            if selCol < dropCol:
-                insertAt = dropCol+1
-                sourceCol = selCol
-                if insertAt > self.columnCount():
-                    insertAt = self.columnCount()
-
-            elif selCol > dropCol:
-                insertAt = dropCol
-                sourceCol = selCol+1
-                if sourceCol > self.columnCount():
-                    sourceCol = self.columnCount()
-
-            self.insertColumn(insertAt)
-            self.setHorizontalHeaderItem(insertAt, QTableWidgetItem(self.horizontalHeaderItem(sourceCol).text()))
-            for r in range(self.rowCount()):
-                sourceWidget = self.cellWidget(r,sourceCol)
-                self.setCellWidget(r,insertAt,sourceWidget)
-
-            self.resizeColumnsToContents()
-            self.removeColumn(sourceCol)
-
-            headers = [self.horizontalHeaderItem(c).text() for c in range(self.columnCount())]
-            chooseCols = self.inventory.cons_columns if self.isConsTable else self.inventory.vow_columns
-            a = self.horizontalHeaderItem(sourceCol).text()
-            b = self.horizontalHeaderItem(dropCol).text()
-            chooseCols[a][0], chooseCols[b][0] = chooseCols[b][0], chooseCols[a][0]
-
-            if self.isConsTable:
-                self.inventory.cons_columns = {k:v for k,v in self.inventory.cons_columns.items() if k in headers}
-            else:
-                self.inventory.vow_columns = {k:v for k,v in self.inventory.vow_columns.items() if k in headers}
-
-            for c in range(self.columnCount()):
-                chooseCols[self.horizontalHeaderItem(c).text()][0] = c
-
-            event.accept()
-
-
-    def droppingOnItself(self, event, index):
-        dropAction = event.dropAction()
-
-        if self.dragDropMode() == QAbstractItemView.InternalMove:
-            dropAction = Qt.MoveAction
-
-        if event.source() == self and event.possibleActions() & Qt.MoveAction and dropAction == Qt.MoveAction:
-            selectedIndexes = self.selectedIndexes()
-            child = index
-            while child.isValid() and child != self.rootIndex():
-                if child in selectedIndexes:
-                    return True
-                child = child.parent()
-
-        return False
-
-    def dropOn(self, event):
-        """
-        :param event:
-        :return:
-        (True,index) if it is possible to do a drop, where index is a QModelIndex of where the drop is happening
-        (False,None) otherwise
-        """
-        if event.isAccepted():
-            return False, None
-
-        index = QModelIndex()
-        #get values with index.row() or index.col()
-        #the value appears to be -1 if the user drags off the table limits
-
-        if self.viewport().rect().contains(event.pos()):
-            index = self.indexAt(event.pos())
-            if not index.isValid() or not self.visualRect(index).contains(event.pos()):
-                index = self.rootIndex()
-
-        if self.model().supportedDropActions() and event.dropAction():
-
-            if not self.droppingOnItself(event, index):
-                # print 'row is %d'%row
-                # print 'col is %d'%col
-                return True, index
-
-        return False, None
-
-    def position(self, pos, rect, index):
-        r = QAbstractItemView.OnViewport
-        margin = 2
-        if pos.y() - rect.top() < margin:
-            r = QAbstractItemView.AboveItem
-        elif rect.bottom() - pos.y() < margin:
-            r = QAbstractItemView.BelowItem
-        elif rect.contains(pos, True):
-            r = QAbstractItemView.OnItem
-
-        if r == QAbstractItemView.OnItem and not (self.model().flags(index) & Qt.ItemIsDropEnabled):
-            r = QAbstractItemView.AboveItem if pos.y() < rect.center().y() else QAbstractItemView.BelowItem
-
-        return r
-
-
-    def editChartRow(self, index):
-        old_name = self.verticalHeaderItem(index).text()
-        targetRows = self.parent.corpus.specifier.consRows if self.isConsTable else self.parent.corpus.specifier.vowRows
-        default_specs = targetRows[old_name]
-        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory',
-                                   default_name=old_name, default_specs=default_specs)
-        results = dialog.exec_()
-        if results:
-            new_name = dialog.name
-            if new_name != old_name:
-                targetRows[new_name] = targetRows.pop(old_name)
-            featureList = dialog.featureList
-            targetRows[new_name][1] = {f[1:]:f[0] for f in featureList}
-            targetRows[new_name][2] = [s for s in dialog.selectedSegs]
-            self.parent.resetInventoryBox(*self.generateInventoryBoxData())
-
-    def saveReordering(self):
-        pass
-
-    def editChartCol(self, index):
-
-        old_name = self.horizontalHeaderItem(index).text()
-        targetCols = self.parent.corpus.specifier.consCols if self.isConsTable else self.parent.corpus.specifier.vowCols
-        default_specs = targetCols[old_name]
-        dialog = CreateClassWidget(self, self.parent.corpus, class_type='inventory', default_name=old_name, default_specs=default_specs)
-        results = dialog.exec_()
-        if results:
-            new_name = dialog.name
-            if new_name != old_name:
-                targetCols[new_name] = targetCols.pop(old_name)
-            featureList = dialog.featureList
-            targetCols[new_name][1] = {f[1:]:f[0] for f in featureList}
-            targetCols[new_name][2] = [s for s in dialog.selectedSegs]
-            self.parent.resetInventoryBox(*self.generateInventoryBoxData())
-
-    def generateInventoryBoxData(self):
-        #see also InventoryBox.generateInventoryBox()
-        consColNames = self.parent.corpus.specifier.consCols.keys()
-        consColumns = sorted(consColNames, key=lambda x:self.parent.corpus.specifier.consCols[x][0])
-        consRowNames = self.parent.corpus.specifier.consRows.keys()
-        consRows = sorted(consRowNames, key=lambda x:self.parent.corpus.specifier.consRows[x][0])
-        # needed_cols = list(set([feature_list[1] for seg,feature_list in consList]))
-        # needed_rows = list(set([feature_list[2] for seg,feature_list in consList]))
-        categorized = list()
-        uncategorized = list()
-        for s in self.parent.corpus.inventory:
-            try:
-                cat = self.parent.corpus.specifier.categorize(s)
-                if 'Consonant' in cat:
-                    categorized.append((s,cat))
-            except KeyError:
-                uncategorized.append(s)
-        segs = (categorized, uncategorized)
-        #segs = [s for s in self.parent.corpus.inventory]
-        return [consColumns, consRows, segs, True]
 
 class SegmentButton(QPushButton):
     def sizeHint(self):
@@ -1679,339 +1328,96 @@ class SegmentSelectionWidget(QWidget):
         return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
-    def __init__(self, title, inventory,parent=None, editable=False):
+    def __init__(self, title, inventory, parent=None):
         QWidget.__init__(self,parent)
-        self.inventory = inventory
-        self.editable = editable
-        self.consonantColumns = inventory.cons_columns
-        self.consonantRows = inventory.cons_rows
-        self.vowelColumns = inventory.vow_columns
-        self.vowelRows = inventory.vow_rows
-        self.generateInventoryBox()
-
-    def resetInventoryBox(self, cols, rows, segs, editable):
-        for i in reversed(range(self.smallbox.count())):
-            self.smallbox.itemAt(i).widget().setParent(None)
-        categorized, uncategorized = segs
-        cons = self.makeConsBox(cols, rows, categorized, editable)
-        vow = self.makeVowelBox(cols, rows, categorized, editable)
-        unk = self.makeUncategorizedBox(uncategorized)
-        self.addTables(cons,vow,unk)
-
-    def generateInventoryBox(self):
-        #find cats (meow)
-        consColumns = set()
-        consRows = set()
-        vowColumns = set()
-        vowRows = set()
-        consList = []
-        vowList = []
-        uncategorized = []
-
-        for s in self.inventory:
-            try:
-                c = self.inventory.categorize(s)
-            except KeyError:
-                c = None
-                uncategorized.append(s)
-            if c is not None:
-                if c[0] == 'Vowel':
-                    vowColumns.add(c[2])
-                    vowRows.add(c[1])
-                    vowList.append((s,c))
-                elif c[0] == 'Consonant':
-                    consColumns.add(c[1])
-                    consRows.add(c[2])
-                    consList.append((s,c))
-
-        self.btnGroup = QButtonGroup()#This has all of the SegmentButtons, see also self.value()
+        self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
-        if len(consColumns) and len(vowColumns):
-            box = QVBoxLayout()
+        self.inventory = inventory
 
-            box.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-            box.setSpacing(0)
-            smallbox = QVBoxLayout()
-            smallbox.setSizeConstraint(QLayout.SetFixedSize)
-            smallbox.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-            cons = QFrame()
-            consBox = QVBoxLayout()
-            self.consTable = InventoryTable()
-            consBox.addWidget(self.consTable)
-            cons.setLayout(consBox)
-
-            consColumns = [ x for x in self.consonantColumns if x in consColumns]
-            consColMapping = {x:i for i,x in enumerate(consColumns)}
-            consRows = [ x for x in self.consonantRows if x in consRows]
-            consRowMapping = {x:i for i,x in enumerate(consRows)}
-
-            self.consTable.setColumnCount(len(consColumns))
-            self.consTable.setRowCount(len(consRows))
-            self.consTable.setHorizontalHeaderLabels(consColumns)
-            self.consTable.resizeColumnsToContents()
-            self.consTable.setVerticalHeaderLabels(consRows)
-
-            for i in range(len(consColumns)):
-                for j in range(len(consRows)):
-                    wid = QWidget()
-                    wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-
-                    b = QGridLayout()
-                    b.setAlignment(Qt.AlignCenter)
-                    b.setContentsMargins(0, 0, 0, 0)
-                    b.setSpacing(0)
-                    l = QWidget()
-                    l.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    lb = QVBoxLayout()
-                    lb.setAlignment(Qt.AlignCenter)
-                    lb.setContentsMargins(0, 0, 0, 0)
-                    lb.setSpacing(0)
-                    l.setLayout(lb)
-                    #l.hide()
-                    b.addWidget(l,0,0)#, alignment = Qt.AlignCenter)
-                    r = QWidget()
-                    r.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    rb = QVBoxLayout()
-                    rb.setAlignment(Qt.AlignCenter)
-                    rb.setContentsMargins(0, 0, 0, 0)
-                    rb.setSpacing(0)
-                    r.setLayout(rb)
-                    #r.hide()
-                    b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
-                    wid.setLayout(b)
-                    self.consTable.setCellWidget(j,i,wid)
-
-            vow = QFrame()
-            vowBox = QGridLayout()
-            vowBox.setAlignment(Qt.AlignTop)
-            self.vowTable = InventoryTable()
-            vowBox.addWidget(self.vowTable,0, Qt.AlignLeft|Qt.AlignTop)
-            vow.setLayout(vowBox)
-            vowColumns = [ x for x in self.vowelColumns if x in vowColumns]
-            vowColMapping = {x:i for i,x in enumerate(vowColumns)}
-            vowRows = [ x for x in self.vowelRows if x in vowRows]
-            vowRowMapping = {x:i for i,x in enumerate(vowRows)}
-
-            self.vowTable.setColumnCount(len(vowColumns))
-            self.vowTable.setRowCount(len(vowRows) + 1)
-            self.vowTable.setHorizontalHeaderLabels(vowColumns)
-            self.vowTable.resizeColumnsToContents()
-            self.vowTable.setVerticalHeaderLabels(vowRows + ['Diphthongs'])
-
-            for i in range(len(vowColumns)):
-                for j in range(len(vowRows)):
-                    wid = QWidget()
-                    wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    b = QGridLayout()
-                    b.setAlignment(Qt.AlignCenter)
-                    b.setContentsMargins(0, 0, 0, 0)
-                    b.setSpacing(0)
-                    l = QWidget()
-                    l.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    lb = QVBoxLayout()
-                    lb.setAlignment(Qt.AlignCenter)
-                    lb.setContentsMargins(0, 0, 0, 0)
-                    lb.setSpacing(0)
-                    l.setLayout(lb)
-                    #l.hide()
-                    b.addWidget(l,0,0)#, alignment = Qt.AlignCenter)
-                    r = QWidget()
-                    r.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                    rb = QVBoxLayout()
-                    rb.setAlignment(Qt.AlignCenter)
-                    rb.setContentsMargins(0, 0, 0, 0)
-                    rb.setSpacing(0)
-                    r.setLayout(rb)
-                    #r.hide()
-                    b.addWidget(r,0,1)#, alignment = Qt.AlignCenter)
-
-                    wid.setLayout(b)
-                    self.vowTable.setCellWidget(j,i,wid)
-
-            self.vowTable.setSpan(len(vowRows),0,1,len(vowColumns))
-            diphWid = QWidget()
-            diphWid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-            diphBox = QHBoxLayout()
-            #diphBox.setAlignment(Qt.AlignCenter)
-            diphBox.setContentsMargins(0, 0, 0, 0)
-            diphBox.setSpacing(0)
-            diphWid.setLayout(diphBox)
-            self.vowTable.setCellWidget(len(vowRows),0,diphWid)
-
-            unk = QGroupBox('Other')
-            unk.setFlat(True)
-            #unk.setCheckable(True)
-            #unk.setChecked(False)
-            #unk.toggled.connect(self.showHideUnk)
-            unkBox = QGridLayout()
-            unk.setLayout(unkBox)
-
-            unkRow = 0
-            unkCol = -1
-            for s in inventory:
-                try:
-                    cat = self.inventory.categorize(s)
-                except KeyError:
-                    cat = None
-                btn = SegmentButton(s.symbol)
-                btn.setCheckable(True)
-                btn.setAutoExclusive(False)
-                btn.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-                #btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
-                #btn.setMaximumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
-                #btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() +7)
-                #btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
-                self.btnGroup.addButton(btn)
-                if cat is None or None in cat:
-                    unkCol += 1
-                    if unkCol > 11:
-                        unkCol = 0
-                        unkRow += 1
-                    unkBox.addWidget(btn,unkRow,unkCol)
-
-                elif cat[0] == 'Vowel':
-                    if cat[1] is None or cat[2] is None:
-                        continue
-                    col = vowColMapping[cat[2]]
-                    row = vowRowMapping[cat[1]]
-                    if cat[3] == 'Unrounded':
-                        colTwo = 0
-                    else:
-                        colTwo = 1
-                    cell = self.vowTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
-
-                    cell.show()
-                    cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
-                    cell.setMinimumHeight(cell.sizeHint().height())
-                    #vowTable.cellWidget(row,col).setMinimumSize(cell.sizeHint())
-
-
-                elif cat[0] == 'Consonant':
-                    col = consColMapping[cat[1]]
-                    row = consRowMapping[cat[2]]
-                    if cat[3] == 'Voiceless':
-                        colTwo = 0
-                    else:
-                        colTwo = 1
-                    cell = self.consTable.cellWidget(row,col).layout().itemAtPosition(0,colTwo).widget()
-
-                    cell.show()
-                    cell.layout().addWidget(btn)#, alignment = Qt.AlignCenter)
-                    #cell.setMinimumHeight(cell.sizeHint().height())
-
-                elif cat[0] == 'Diphthong':
-                    diphBox.addWidget(btn)
-
-            self.consTable.resize()
-            self.vowTable.resize()
-            smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
-
-            self.vowelTable.setColumnCount(len(needed_cols))
-            self.vowelTable.setRowCount(len(needed_rows))
-
-
-        cons = self.makeConsBox(consColumns,consRows,consList,self.editable)
-        vow = self.makeVowelBox(vowColumns,vowRows,vowList,self.editable)
-        unk = self.makeUncategorizedBox(uncategorized)
-
+        self.mainLayout = QHBoxLayout()
+        cons = self.makeConsTable()
+        vow = self.makeVowelTable()
+        unk = self.makeUncategorizedTable()
         self.addTables(cons,vow,unk)
-        self.setLayout(self.smallbox)
+        self.setLayout(self.mainLayout)
 
     def addTables(self,cons,vow,unk):
         if cons is not None:
-            self.smallbox.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
-            self.consTable.resize()
+            self.mainLayout.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
 
         if vow is not None:
-            self.smallbox.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
-            self.vowelTable.resize()
+            self.mainLayout.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
 
         if unk is not None:
-            self.smallbox.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
+            self.mainLayout.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
 
-    def makeConsBox(self,consColumns,consRows,consList,editable):
+    def makeConsTable(self):
         cons = QFrame()#This widget is what gets returned from this function
         consBox = QVBoxLayout()
-        if editable:
-            self.consTable = EditableInventoryTable(self.inventory,True)
-        else:
-            self.consTable = InventoryTable(self.inventory)
+        self.consTable = QTableWidget()
         consBox.addWidget(self.consTable)
         cons.setLayout(consBox)
 
-        needed_cols = list(set([feature_list[1] for seg,feature_list in consList]))
-        needed_rows = list(set([feature_list[2] for seg,feature_list in consList]))
-
-        self.consTable.setColumnCount(len(needed_cols))
-        self.consTable.setRowCount(len(needed_rows))
-
-        horizontalHeaderLabelText = sorted(needed_cols, key=lambda x:self.consonantColumns[x][0])
-        self.consTable.setHorizontalHeaderLabels(horizontalHeaderLabelText)
-        consColMapping = {x:i for i,x in enumerate(horizontalHeaderLabelText)}
-
-        verticalHeaderLabelText = sorted(needed_rows, key=lambda x:self.consonantRows[x][0])
-        self.consTable.setVerticalHeaderLabels(verticalHeaderLabelText)
-        consRowMapping = {x:i for i,x in enumerate(verticalHeaderLabelText)}
-
+        self.consTable.setColumnCount(len(self.inventory.consColumns))
+        self.consTable.setRowCount(len(self.inventory.consRows))
+        horizontal_headers = self.inventory.getSortedHeaders(Qt.Horizontal, 'cons')
+        self.consTable.setHorizontalHeaderLabels(horizontal_headers)
+        vertical_headers = self.inventory.getSortedHeaders(Qt.Vertical, 'cons')
+        self.consTable.setVerticalHeaderLabels(vertical_headers)
         self.consTable.resizeColumnsToContents()
-        button_map = {(h,v): list() for (h,v) in product(horizontalHeaderLabelText, verticalHeaderLabelText)}#defaultdict(list)
 
-        for seg,category in consList:
-            for h,v in product(horizontalHeaderLabelText, verticalHeaderLabelText):
-                if h in category and v in category:
+        button_map = defaultdict(list)
+        for row, col in product(self.inventory.cons_row_header_order.keys(),
+                                        self.inventory.cons_column_header_order.keys()):
+            row_name = self.inventory.cons_row_header_order[row]
+            col_name = self.inventory.cons_column_header_order[col]
+            for seg, cat in self.inventory.consList:
+                if row_name in cat and col_name in cat:
                     btn = self.generateSegmentButton(seg.symbol)
-                    button_map[(h,v)].append(btn)
-                    break
+                    button_map[(row,col)].append(btn)
 
         for key,buttons in button_map.items():
-            c,r = key
-            self.consTable.setCellWidget(consRowMapping[r],consColMapping[c],MultiSegmentCell(buttons))
+            row,col = key
+            self.consTable.setCellWidget(row,col,MultiSegmentCell(buttons))
 
         return cons
 
-    def makeVowelBox(self,vowelColumns,vowelRows,vowelList,editable):
-        vowel = QFrame()
+    def makeVowelTable(self):
+        vowel = QFrame() #This widget gets returned from the function
         vowelBox = QGridLayout()
         vowelBox.setAlignment(Qt.AlignTop)
-        if editable:
-            self.vowelTable = EditableInventoryTable(self.inventory,False)
-        else:
-            self.vowelTable = InventoryTable()
+        self.vowelTable = QTableWidget()
 
         vowelBox.addWidget(self.vowelTable)
         vowel.setLayout(vowelBox)
 
-        needed_cols = list(set([feature_list[1] for seg,feature_list in vowelList]))
-        needed_rows = list(set([feature_list[2] for seg,feature_list in vowelList]))
-
-        self.vowelTable.setColumnCount(len(needed_cols))
-        self.vowelTable.setRowCount(len(needed_rows))
-
-        horizontalHeaderLabelText = sorted(needed_cols, key=lambda x:self.vowelColumns[x][0])
-        self.vowelTable.setHorizontalHeaderLabels(horizontalHeaderLabelText)
-        vowelColMapping = {x:i for i,x in enumerate(horizontalHeaderLabelText)}
-
-        verticalHeaderLabelText = sorted(needed_rows, key=lambda x:self.vowelRows[x][0])
-        self.vowelTable.setVerticalHeaderLabels(verticalHeaderLabelText)
-        vowelRowMapping = {x:i for i,x in enumerate(verticalHeaderLabelText)}
-
+        self.vowelTable.setColumnCount(len(self.inventory.vowelColumns))
+        self.vowelTable.setRowCount(len(self.inventory.vowelRows))
+        horizontal_headers = self.inventory.getSortedHeaders(Qt.Horizontal, 'vowel')
+        self.vowelTable.setHorizontalHeaderLabels(horizontal_headers)
+        vertical_headers = self.inventory.getSortedHeaders(Qt.Vertical, 'vowel')
+        self.vowelTable.setVerticalHeaderLabels(vertical_headers)
         self.vowelTable.resizeColumnsToContents()
-        button_map = {(h,v): list() for (h,v) in product(horizontalHeaderLabelText, verticalHeaderLabelText)}#defaultdict(list)
 
-        for seg,category in vowelList:
-            for h,v in product(horizontalHeaderLabelText, verticalHeaderLabelText):
-                if h in category and v in category:
+        button_map = defaultdict(list)
+        for row, col in product(self.inventory.vowel_row_header_order.keys(),
+                                self.inventory.vowel_column_header_order.keys()):
+            row_name = self.inventory.vowel_row_header_order[row]
+            col_name = self.inventory.vowel_column_header_order[col]
+            row -= self.inventory.vowel_row_offset
+            col -= self.inventory.vowel_column_offset
+            for seg, cat in self.inventory.vowelList:
+                if row_name in cat and col_name in cat:
                     btn = self.generateSegmentButton(seg.symbol)
-                    button_map[(h,v)].append(btn)
-                    break
+                    button_map[(row, col)].append(btn)
 
-        for key,buttons in button_map.items():
-            c,r = key
-            self.vowelTable.setCellWidget(vowelRowMapping[r],vowelColMapping[c],MultiSegmentCell(buttons))
+        for key, buttons in button_map.items():
+            row, col = key
+            self.vowelTable.setCellWidget(row, col, MultiSegmentCell(buttons))
 
         return vowel
 
-    def makeUncategorizedBox(self,uncategorized):
+    def makeUncategorizedTable(self):
         unk = QGroupBox('Uncategorized')
         unk.setFlat(True)
         # unk.setCheckable(True)
@@ -2022,15 +1428,11 @@ class InventoryBox(QWidget):
 
         unkRow = 0
         unkCol = -1
-        for s in uncategorized:
+        for s in self.inventory.uncategorized:
             btn = SegmentButton(s.symbol)
             btn.setCheckable(True)
             btn.setAutoExclusive(False)
             btn.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-            #btn.setMaximumWidth(btn.fontMetrics().boundingRect(s.symbol).width() + 14)
-            #btn.setMaximumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
-            #btn.setMinimumWidth(btn.fontMetrics().boundingRect(s.symbol).width() +7)
-            #btn.setMinimumHeight(btn.fontMetrics().boundingRect(s.symbol).height() + 14)
             self.btnGroup.addButton(btn)
 
             unkCol += 1
@@ -2136,9 +1538,9 @@ class MultiSegmentCell(QWidget):
 
 class TranscriptionWidget(QGroupBox):
     transcriptionChanged = Signal(object)
-    def __init__(self, title,corpus,parent=None):
+    def __init__(self, title,corpus,inventory,parent=None):
         QGroupBox.__init__(self,title,parent)
-        self.inventory = corpus.inventory
+        self.inventory = inventory
         self.corpus = corpus
         layout = QFormLayout()
 
@@ -2149,7 +1551,7 @@ class TranscriptionWidget(QGroupBox):
         self.showInv.clicked.connect(self.showHide)
         layout.addRow(self.transEdit,self.showInv)
 
-        self.segments = InventoryBox('Inventory',self.corpus)
+        self.segments = InventoryBox('Inventory', inventory)
         for btn in self.segments.btnGroup.buttons():
             btn.setCheckable(False)
             btn.setAutoDefault(False)
@@ -2185,6 +1587,7 @@ class AbstractPairDialog(QDialog):
     def __init__(self, inventory, parent = None):
         QDialog.__init__(self, parent)
         self.inventory = inventory
+
 
 class FeatureBox(QWidget):
     def __init__(self, title,inventory,parent=None):
@@ -2305,10 +1708,10 @@ class SegmentPairDialog(QDialog):
 
 class SegmentPairDialog(AbstractPairDialog):
     def __init__(self, inventory, parent = None):
-        AbstractPairDialog.__init__(self, inventory,parent)
-
-        self.inventoryFrame = SegmentSelectionWidget(self.inventory)
-
+        #AbstractPairDialog.__init__(self, inventory, parent)
+        super().__init__(self,inventory,parent)
+        self.inventoryFrame = SegmentSelectionWidget(inventory)
+        self.setLayout(QHBoxLayout())
         self.layout().insertWidget(0, self.inventoryFrame)
 
         self.setWindowTitle('Select segment pair')
@@ -2323,8 +1726,8 @@ class SegmentPairDialog(AbstractPairDialog):
 
 class SingleSegmentDialog(SegmentPairDialog):
     def __init__(self, inventory, parent = None):
-        SegmentPairDialog.__init__(self, inventory, parent)
-
+        #SegmentPairDialog.__init__(self, inventory, parent)
+        super().__init__(self,inventory,parent)
         self.setWindowTitle('Select individual segments')
 
     def accept(self):
@@ -2336,6 +1739,8 @@ class SingleSegmentDialog(SegmentPairDialog):
 class FeaturePairDialog(AbstractPairDialog):
     def __init__(self, inventory, parent = None):
         AbstractPairDialog.__init__(self, inventory,parent)
+
+        self.setLayout(QVBoxLayout())
 
         mainlayout = QFormLayout()
 
@@ -2356,6 +1761,7 @@ class FeaturePairDialog(AbstractPairDialog):
         mainlayout.addRow('Filter pairs', self.searchWidget)
 
         self.layout().insertLayout(0,mainlayout)
+
         seglayout = QHBoxLayout()
         scroll = QScrollArea()
         self.columnFrame = QWidget()
@@ -2462,7 +1868,7 @@ class SegmentPairSelectWidget(QGroupBox):
         self.addButton.clicked.connect(self.segPairPopup)
         #self.addSetButton = QPushButton('Add pair of segment sets')
         #self.addSetButton.clicked.connect(self.segSetPairPopup)
-        self.addFeatButton = QPushButton('Add pair of _features')
+        self.addFeatButton = QPushButton('Add pair of features')
         self.addFeatButton.clicked.connect(self.featurePairPopup)
         self.removeButton = QPushButton('Remove selected segment pair')
         self.removeButton.clicked.connect(self.removePair)
@@ -3165,10 +2571,11 @@ class ContextWidget(RestrictedContextWidget):
                                             typetokenEnabled)
 
 class CreateClassWidget(QDialog):
-    def __init__(self, parent, corpus, class_type=None, default_name=None, default_specs=None):
+    def __init__(self, parent, corpus, inventory, class_type=None, default_name=None):
         QDialog.__init__(self, parent)
 
         self.corpus = corpus
+        self.inventory = inventory
         self.class_type = class_type
 
         self.mainLayout = QVBoxLayout()
@@ -3208,7 +2615,7 @@ class CreateClassWidget(QDialog):
         self.nameFrame.setLayout(nameLayout)
         self.mainLayout.addWidget(self.nameFrame)
 
-        self.defineFrame = SegmentSelectionWidget(self.corpus.inventory)
+        self.defineFrame = SegmentSelectionWidget(inventory)
 
         self.mainLayout.addWidget(self.defineFrame)
 
@@ -3231,7 +2638,7 @@ class CreateClassWidget(QDialog):
 
     def generateClass(self):
         previewList = self.defineFrame.value()
-        notInPreviewList = [x.symbol for x in self.corpus.inventory if x.symbol not in previewList]
+        notInPreviewList = [x for x in self.inventory.segs if x not in previewList]
         return previewList, notInPreviewList
 
     def preview(self):

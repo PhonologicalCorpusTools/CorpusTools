@@ -1706,7 +1706,24 @@ class Inventory(object):
         self.cons_row_header_order = dict()
         self.vowel_row_header_order = dict()
         self.vowel_column_header_order = dict()
-		
+
+
+    def get_sorted_headers(self, orientation, cons_or_vowel):
+        if orientation == Qt.Horizontal:
+            if cons_or_vowel == 'cons':
+                data = self.cons_column_header_order
+            else:
+                data = self.vowel_column_header_order
+        elif orientation == Qt.Vertical:
+            if cons_or_vowel == 'cons':
+                data = self.cons_row_header_order
+            else:
+                data = self.vowel_row_header_order
+        else:
+            raise TypeError('The orientation value passed to Inventory.getHeaderOrder is not valid')
+
+        return [data[header] for header in sorted(list(data.keys()))]
+
     def setFeatures(self):
         seg = random.choice([seg for seg in self.segs.keys() if not seg=='#'])
         for feature,value in self.segs[seg].features.items():
@@ -1721,13 +1738,13 @@ class Inventory(object):
 
     def generate_generic_names(self):
         if 'consonantal' in self.features:
-            self.generate_generic_hayes()
+            #self.generate_generic_hayes()
             self.vowel_feature = '+syllabic'
             self.voice_feature = '+voice'
             self.diph_feature = '+diphthong'
             self.rounded_feature = '+round'
         elif 'voc' in self.features:
-            self.generate_generic_spe()
+            #self.generate_generic_spe()
             self.vowel_feature = '+voc'
             self.voice_feature = '+voice'
             self.diph_feature = '.high'

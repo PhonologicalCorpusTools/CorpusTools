@@ -77,16 +77,17 @@ class KLDialog(FunctionDialog):
 
     name = 'Kullback-Leibler'
 
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, KLWorker())
 
         self.corpus = corpus
+        self.inventory =  inventory
         self.showToolTips = showToolTips
 
         klframe = QFrame()
         kllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus)
+        self.segPairWidget = SegmentPairSelectWidget(self.inventory)
         kllayout.addWidget(self.segPairWidget)
         optionLayout = QFormLayout()
 

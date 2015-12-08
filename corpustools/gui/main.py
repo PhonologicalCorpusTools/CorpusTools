@@ -219,7 +219,7 @@ class MainWindow(QMainWindow):
         self.saveCorpusAct.setEnabled(True)
 
     def editWord(self, row, word):
-        dialog = AddWordDialog(self, self.corpusModel.corpus, word)
+        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel, word)
         if dialog.exec_():
             self.corpusModel.replaceWord(row, dialog.word)
             self.enableSave()
@@ -363,7 +363,7 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
             self.corpusModel.corpus.update_features()
-            self.corpusModel.corpus.inventory.set_major_class_features(dialog.specifier)
+            self.corpus._inventory.set_major_class_features(dialog.specifier)
             self.inventoryModel.updateFeatures(dialog.specifier)
 
             if self.corpusModel.corpus.specifier is not None:
@@ -375,7 +375,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def createTier(self):
-        dialog = AddTierDialog(self, self.corpusModel.corpus)
+        dialog = AddTierDialog(self, self.corpusModel.corpus, self.inventoryModel)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.attribute, dialog.segList)
             if self.settings['autosave']:
@@ -411,7 +411,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def createCountColumn(self):
-        dialog = AddCountColumnDialog(self, self.corpusModel.corpus)
+        dialog = AddCountColumnDialog(self, self.corpusModel.corpus, self.inventoryModel)
         if dialog.exec_():
             self.corpusModel.addCountColumn(dialog.attribute, dialog.sequenceType, dialog.segList)
             if self.settings['autosave']:
@@ -468,7 +468,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def predOfDist(self):
-        dialog = PDDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
+        dialog = PDDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PDWindow is not None and self.PDWindow.isVisible():
@@ -484,7 +484,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def funcLoad(self):
-        dialog = FLDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
+        dialog = FLDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
@@ -500,7 +500,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def kullbackLeibler(self):
-        dialog = KLDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
+        dialog = KLDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.KLWindow is not None and dialog.update and self.KLWindow.isVisible():
@@ -582,7 +582,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def phonoProb(self):
-        dialog = PPDialog(self, self.settings, self.corpusModel,self.showToolTips)
+        dialog = PPDialog(self, self.settings, self.corpusModel, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
@@ -604,7 +604,7 @@ class MainWindow(QMainWindow):
 
 
     def phonoSearch(self):
-        dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
+        dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
@@ -619,7 +619,7 @@ class MainWindow(QMainWindow):
                 self.showSearchResults.setVisible(True)
 
     def createWord(self):
-        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel)
         if dialog.exec_():
             self.corpusModel.addWord(dialog.word)
             self.enableSave()
@@ -691,7 +691,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def corpusSummary(self):
-        dialog = CorpusSummary(self,self.corpus)
+        dialog = CorpusSummary(self,self.corpus, self.inventoryModel)
         result = dialog.exec_()
 
     def createActions(self):

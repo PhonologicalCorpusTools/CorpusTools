@@ -10,18 +10,17 @@ from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
 
 class InventorySummary(QWidget):
-    def __init__(self, corpus, parent=None):
+    def __init__(self, corpus, inventory, parent=None):
         QWidget.__init__(self,parent)
 
-        self.corpus = corpus
-        self.type_context = CanonicalVariantContext(self.corpus, 'transcription', 'type')
-        self.token_context = CanonicalVariantContext(self.corpus, 'transcription', 'token')
+        self.type_context = CanonicalVariantContext(corpus, 'transcription', 'type')
+        self.token_context = CanonicalVariantContext(corpus, 'transcription', 'token')
 
         layout = QHBoxLayout()
 
         layout.setAlignment(Qt.AlignTop)
 
-        self.segments = InventoryBox('Segments',self.corpus)
+        self.segments = InventoryBox('Segments',inventory)
         self.segments.setExclusive(True)
         for b in self.segments.btnGroup.buttons():
             b.clicked.connect(self.summarizeSegment)
@@ -127,7 +126,7 @@ class AttributeSummary(QWidget):
 
 
 class CorpusSummary(QDialog):
-    def __init__(self, parent, corpus):
+    def __init__(self, parent, corpus, inventory):
         QDialog.__init__(self,parent)
 
 
@@ -158,7 +157,7 @@ class CorpusSummary(QDialog):
 
         detailTabs = QTabWidget()
 
-        self.inventorySummary = InventorySummary(c)
+        self.inventorySummary = InventorySummary(corpus, inventory)
 
         detailTabs.addTab(self.inventorySummary,'Inventory')
 
@@ -200,10 +199,10 @@ class CorpusSummary(QDialog):
 
 
 class AddWordDialog(QDialog):
-    def __init__(self, parent, corpus, word = None):
+    def __init__(self, parent, corpus, inventory, word = None):
         QDialog.__init__(self,parent)
         self.corpus = corpus
-
+        self.inventory = inventory
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SetFixedSize)
 
@@ -213,7 +212,7 @@ class AddWordDialog(QDialog):
 
         for a in self.corpus.attributes:
             if a.att_type == 'tier' and a.name == 'transcription':
-                self.edits[a.name] = TranscriptionWidget('Transcription',self.corpus)
+                self.edits[a.name] = TranscriptionWidget('Transcription', corpus, inventory)
                 self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
                 main.addRow(self.edits[a.name])
             elif a.att_type == 'tier':
@@ -290,7 +289,7 @@ class AddWordDialog(QDialog):
                 #    return
 
                 for i in kwargs[a.name]:
-                    if i not in self.corpus.inventory:
+                    if i not in self.inventory.segs:
                         reply = QMessageBox.critical(self,
                             "Invalid information", "The column '{}' must contain only symbols in the corpus' inventory.".format(str(a)))
                         return
@@ -316,8 +315,8 @@ class AddWordDialog(QDialog):
         QDialog.accept(self)
 
 class AddTierDialog(CreateClassWidget):
-    def __init__(self, parent, corpus, class_type='tier'):
-        CreateClassWidget.__init__(self, parent, corpus, class_type)
+    def __init__(self, parent, corpus, inventory, class_type='tier'):
+        CreateClassWidget.__init__(self, parent, corpus, inventory, class_type)
 
     def accept(self):
         tierName = self.nameEdit.text()
@@ -348,7 +347,7 @@ class AddTierDialog(CreateClassWidget):
         QDialog.accept(self)
 
 class AddCountColumnDialog(QDialog):
-    def __init__(self, parent, corpus):
+    def __init__(self, parent, corpus, inventory):
         QDialog.__init__(self,parent)
         self.corpus = corpus
 
@@ -364,7 +363,7 @@ class AddCountColumnDialog(QDialog):
 
         main.addRow('Tier to count on',self.tierWidget)
 
-        self.segmentSelect = SegmentSelectionWidget(self.corpus.inventory)
+        self.segmentSelect = SegmentSelectionWidget(inventory)
 
         main.addRow(self.segmentSelect)
 

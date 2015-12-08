@@ -1,6 +1,7 @@
 
 
 from .imports import *
+import time
 
 from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
                         RadioSelectWidget, InventoryBox,
@@ -41,20 +42,17 @@ class PhonoSearchDialog(FunctionDialog):
     _about = ['']
 
     name = 'phonological search'
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, PSWorker())
 
         self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         psFrame = QFrame()
         pslayout = QHBoxLayout()
 
-        #self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
-
-        #pslayout.addWidget(self.targetWidget)
-
-        self.envWidget = EnvironmentSelectWidget(self.corpus)
+        self.envWidget = EnvironmentSelectWidget(self.inventory)
         pslayout.addWidget(self.envWidget)
 
 

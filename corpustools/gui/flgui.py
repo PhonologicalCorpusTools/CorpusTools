@@ -107,16 +107,17 @@ class FLDialog(FunctionDialog):
 
     name = 'functional load'
 
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, FLWorker())
 
         self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         flFrame = QFrame()
         fllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory, single_segment = True)
+        self.segPairWidget = SegmentPairSelectWidget(self.inventory, single_segment = True)
 
         fllayout.addWidget(self.segPairWidget)
 

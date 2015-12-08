@@ -88,15 +88,16 @@ class PDDialog(FunctionDialog):
                 ' The Ohio State University.')]
 
     name = 'predictability of distribution'
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, PDWorker())
         self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         pdFrame = QFrame()
         pdlayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus)
+        self.segPairWidget = SegmentPairSelectWidget(self.inventory)
 
         pdlayout.addWidget(self.segPairWidget)
 
@@ -104,7 +105,7 @@ class PDDialog(FunctionDialog):
         #addSegClassButton.clicked.connect(self.addSegClass)
         #pdlayout.addWidget(addSegClassButton)
 
-        self.envWidget = EnvironmentSelectWidget(corpus.inventory, middle = False)
+        self.envWidget = EnvironmentSelectWidget(inventory, middle = False)
 
         self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
