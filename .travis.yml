@@ -9,14 +9,14 @@ branches:
 notifications:
   email: false
 
-sudo: required
+sudo: false
 
-#addons:
-  #apt:
-    #sources:
-      #ubuntu-sdk-team
-    #packages:
-      #qtdeclarative5-dev
+addons:
+  apt:
+    sources:
+      debian-sid
+    packages:
+      qt-default
 
 before_install:
   - ls $HOME
