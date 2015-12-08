@@ -663,8 +663,8 @@ class FeatureMatrix(object):
 
 
     def __setstate__(self,state):
-        if '_features' not in state:
-            state['_features'] = state['_features']
+        if 'features' not in state:
+            state['features'] = state['_features']
         # for k,v in state['matrix'].items():
         #     if not isinstance(v,Segment):
         #         s = Segment(k)
@@ -1660,9 +1660,8 @@ class Inventory(object):
     rounded_feature : str
         Feature value (i.e., '+round') that codes rounded vowels
 
-    Other attributes belong to the InventoryModel which will eventually be created. This is because Qt objects are not
-    compatible with pickle, so we have to "save" all model information in this object here, and then pick it up
-    again after unpickling. see also loadCorpus() in gui\main.py where the Model is instantiated
+    Everytime PCT is loaded, this object is used to create an InventoryModel, which is passed around to any
+    analysis functions, or functions related to inventory
     """
     def __init__(self):
 
@@ -1678,7 +1677,6 @@ class Inventory(object):
         self.voice_feature = None
         self.diph_feature = None
         self.rounded_feature = None
-        self.generate_generic_names()
         self.cons_columns = dict()
         self.cons_rows = dict()
         self.vow_columns = dict()
@@ -1720,36 +1718,18 @@ class Inventory(object):
             else:
                 data = self.vowel_row_header_order
         else:
-            raise TypeError('The orientation value passed to Inventory.getHeaderOrder is not valid')
+            raise TypeError('The orientation value passed to Inventory.get_sorted_headers is not valid')
 
         return [data[header] for header in sorted(list(data.keys()))]
 
     def setFeatures(self):
         seg = random.choice([seg for seg in self.segs.keys() if not seg=='#'])
+        print(type(seg), seg)
+        print(type(self.segs[seg]), self.segs[seg])
+        print(type(self.segs[seg].features), self.segs[seg].features)
         for feature,value in self.segs[seg].features.items():
             self.features.append(feature)
             self.possible_values.add(value)
-
-    def set_major_class_features(self, source):
-        self.vowel_feature = source.vowel_feature
-        self.voice_feature = source.voice_feature
-        self.rounded_feature = source.rounded_feature
-        self.diph_feature = source.diph_feature
-
-    def generate_generic_names(self):
-        if 'consonantal' in self.features:
-            #self.generate_generic_hayes()
-            self.vowel_feature = '+syllabic'
-            self.voice_feature = '+voice'
-            self.diph_feature = '+diphthong'
-            self.rounded_feature = '+round'
-        elif 'voc' in self.features:
-            #self.generate_generic_spe()
-            self.vowel_feature = '+voc'
-            self.voice_feature = '+voice'
-            self.diph_feature = '.high'
-            self.rounded_feature = '+round'
-        #else we can't guess, so leave it at the initialized value of None
 
     def update_features(self):
         for seg in self.inventory:
@@ -2466,9 +2446,9 @@ class Corpus(object):
     def __setstate__(self, state):
         try:
             if 'inventory' not in state:
-                state['inventory'] = state['_inventory']
+                state['inventory'] = state['_inventory'] #backcompat
             if not isinstance(state['inventory'], Inventory):
-                state['inventory'] = Inventory(state['inventory'])
+                state['inventory'] = Inventory()
             if 'has_spelling' not in state:
                 state['has_spelling'] = state['has_spelling_value']
             if 'has_transcription' in state:

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+import time
 import corpustools.funcload.functional_load as FL
 from corpustools.funcload.io import save_minimal_pairs
 

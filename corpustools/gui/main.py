@@ -1,5 +1,6 @@
 import os
 import logging
+import corpustools.gui.modernize as modernize
 
 from .imports import *
 
@@ -26,7 +27,6 @@ from .inventorygui import InventoryManager
 
 from .windows import SelfUpdateWorker
 
-from .modernize import modernize_inventory
 
 from corpustools.exceptions import PCTError
 
@@ -254,24 +254,35 @@ class MainWindow(QMainWindow):
 
             if self.corpus.specifier is None:
                 alert = QMessageBox()
+                alert.setWindowTitle('No feature system')
                 alert.setText(('This corpus was loaded without a feature system. It is recommended that you '
                             'immediately associate a feature system by going to the Features menu and clicking on '
                             'View/Edit Feature system. If this is your first time using PCT, you may need instead to '
                             'go to the Corpus menu and select Manage Feature System, then download one.'))
                 alert.exec_()
 
-            if not hasattr(self.corpus.inventory, 'isNew'):
+
+            if not hasattr(self.corpus.inventory, 'isNew') or self.corpus.name=='iphod':
                 #this corpus is from an older version of PCT, we need to check/modify/add attributes
-                self.corpus.inventory = modernize_inventory(self.corpus.inventory)
+                if modernize.isNotSupported(self.corpus):
+                    alert = QMessageBox()
+                    alert.setWindowTitle('File out of date')
+                    alert.setText('This corpus file contains a format no longer supported by PCT. If this is a built-in'
+                    ' corpus, you can download a newer version. If this is your own corpus then you should re-load from'
+                    ' the original text file. Both options can be found under File > Load corpus...')
+                    alert.exec_()
+                    self.corpus = None
+                    return
+                self.corpus.inventory = modernize.modernize_inventory(self.corpus.inventory)
+
 
             if self.corpus.inventory.isNew:
                 #this corpus was just loaded from a text file (or other source)
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
-                if self.corpus.specifier is not None:
-                    self.corpus.update_features()
-                    self.corpus.inventory.setFeatures()
-                    self.corpus.inventory.set_major_class_features(self.inventoryModel)
-                    self.corpus.specifier.set_major_class_features(self.inventoryModel)
+                # if self.corpus.specifier is not None:
+                #     self.corpus.update_features()
+                #     self.corpus.inventory.setFeatures()
+                #     self.corpus.specifier.set_major_class_features(self.inventoryModel)
 
             else:
                 #this corpus was created with an up-to-date copy of PCT
@@ -383,10 +394,10 @@ class MainWindow(QMainWindow):
     def showFeatureSystem(self):
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         if dialog.exec_():
-            self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
-            self.corpusModel.corpus.update_features()
-            self.corpus.inventory.set_major_class_features(dialog.specifier)
-            self.inventoryModel.updateFeatures(dialog.specifier)
+            if dialog.specifier is not None:
+                self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+                self.corpusModel.corpus.update_features()
+                self.inventoryModel.updateFeatures(dialog.specifier)
 
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))

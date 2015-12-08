@@ -1548,9 +1548,42 @@ class TranscriptionWidget(QGroupBox):
 
 class AbstractPairDialog(QDialog):
     rowToAdd = Signal(object)
-    def __init__(self, inventory, parent = None):
+
+    def __init__(self, inventory, parent=None):
         QDialog.__init__(self, parent)
         self.inventory = inventory
+
+        layout = QVBoxLayout()
+
+        self.oneButton = QPushButton('Add')
+        self.anotherButton = QPushButton('Add and create another')
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.oneButton, alignment=Qt.AlignLeft)
+        acLayout.addWidget(self.anotherButton, alignment=Qt.AlignLeft)
+        acLayout.addWidget(self.cancelButton, alignment=Qt.AlignLeft)
+        self.oneButton.clicked.connect(self.one)
+        self.anotherButton.clicked.connect(self.another)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame, alignment=Qt.AlignLeft)
+
+        self.setLayout(layout)
+
+    def one(self):
+        self.addOneMore = False
+        self.accept()
+
+    def another(self):
+        self.addOneMore = True
+        self.accept()
+
+    def reject(self):
+        self.addOneMore = False
+        QDialog.reject(self)
 
 
 class FeatureBox(QWidget):

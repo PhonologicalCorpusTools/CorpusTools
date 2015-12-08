@@ -23,13 +23,15 @@ class InventoryManager(QDialog):
         topmessage.setWordWrap(True)
         layout.addWidget(topmessage)
 
-        inventoryLayout = QHBoxLayout()
+        inventoryLayout = QVBoxLayout()
 
         consBox = QVBoxLayout()
         cons_title = QLabel('Consonant Inventory')
         consBox.addWidget(cons_title)
         self.consModel = ConsonantModel(self.inventory)
         self.consView = InventoryView(self.consModel)
+        self.consView.resizeColumnsToContents()
+        self.consView.resizeRowsToContents()
         consBox.addWidget(self.consView)
         inventoryLayout.addLayout(consBox)
 
@@ -39,6 +41,8 @@ class InventoryManager(QDialog):
         self.vowelModel = VowelModel(self.inventory)
         self.vowelView = InventoryView(self.vowelModel)
         vowelBox.addWidget(self.vowelView)
+        self.vowelView.resizeRowsToContents()
+        self.vowelView.resizeColumnsToContents()
         inventoryLayout.addLayout(vowelBox)
 
         layout.addLayout(inventoryLayout)

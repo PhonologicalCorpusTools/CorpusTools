@@ -1,3 +1,9 @@
+def isNotSupported(corpus):
+    if corpus.name.lower() == 'iphod':
+        return True
+    else:
+        return False
+
 def modernize_inventory(inventory):
     if hasattr(inventory, '_data'):
         setattr(inventory, 'segs', inventory._data)

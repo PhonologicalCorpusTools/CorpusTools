@@ -919,6 +919,8 @@ class InventoryModel(QAbstractTableModel):
         self.voice_feature = specifier.voice_feature
         self.rounded_feature = specifier.rounded_feature
         self.diphthong_feature = specifier.diph_feature
+        self.features = specifier.features
+        self.possible_values = specifier.possible_values
         self.modelReset()
 
     def changeColumnSpecs(self, index, features, new_section_name, consonants=True):
@@ -1008,6 +1010,14 @@ class InventoryModel(QAbstractTableModel):
                     self.consColumns.add(c[1])
                     self.consRows.add(c[2])
                     self.consList.append((s, c))
+        if not self.consColumns:
+            self.consColumns.add('Column 1')
+        if not self.consRows:
+            self.consRows.add('Row 1')
+        if not self.vowelColumns:
+            self.vowelColumns.add('Column 1')
+        if not self.vowelRows:
+            self.vowelRows.add('Row 1')
 
     def headerData(self, row_or_col, orientation, role=None):
         try:
@@ -1161,7 +1171,7 @@ class InventoryModel(QAbstractTableModel):
             if visualIndex == -1:
                 continue
             column_data[headerName][0] = visualIndex
-
+        self.modelReset()
 
 
     def changeRowOrder(self, map, consonants=True):
@@ -1174,8 +1184,12 @@ class InventoryModel(QAbstractTableModel):
             if visualIndex == -1:
                 continue
             row_data[headerName][0] = visualIndex
+        self.modelReset()
 
     def filterGenericNames(self):
+        if not self.filterNames:
+            return
+
         self.cons_column_data = {key: value for (key, value) in self.cons_column_data.items()
                                  if key in self.cons_column_header_order.values()}
         sorted_columns = sorted([(k, v) for k, v in self.cons_column_data.items()], key=lambda x: x[1][0])
@@ -1285,17 +1299,20 @@ class InventoryModel(QAbstractTableModel):
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = '+diphthong'
+            self.filterNames = True
         elif 'voc' in sample.features:
             self.generateGenericSpe()
             self.vowel_feature = '+voc'
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = None
+            self.filterNames = False
         else:
             self.cons_column_data['Column 1'] = [0, {}, None]
             self.cons_row_data['Row 1'] = [0, {}, None]
             self.vowel_column_data['Column 1'] = [0, {}, None]
             self.vowel_row_data['Row 1'] = [0, {}, None]
+            self.filterNames = False
 
     def generateGenericSpe(self):
         #Not yet implemented
