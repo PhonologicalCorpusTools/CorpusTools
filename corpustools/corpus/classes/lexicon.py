@@ -1755,8 +1755,8 @@ class Inventory(object):
         for seg in self.inventory:
             if seg.symbol == '#':
                 continue
-            self._inventory[seg.symbol].features = self.specifier.specify(seg)
-        self._inventory.features = [name for name in self._inventory[seg.symbol].features.keys()]
+            self.inventory[seg.symbol].features = self.specifier.specify(seg)
+        self.inventory.features = [name for name in self.inventory[seg.symbol].features.keys()]
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -2131,7 +2131,7 @@ class Corpus(object):
         self.name = name
         self.wordlist = dict()
         self.specifier = None
-        self._inventory = Inventory()
+        self.inventory = Inventory()
         self.inventoryModel = None
         self.has_frequency = True
         self.has_spelling = False
@@ -2565,18 +2565,6 @@ class Corpus(object):
         self.specifier = matrix
 
 
-    @property
-    def inventory(self):
-        """
-        Returns a sorted list of segments used in transcriptions
-
-        Returns
-        -------
-        list
-            Sorted list of segment symbols used in transcriptions in the corpus
-        """
-        return self._inventory
-
     def get_random_subset(self, size, new_corpus_name='randomly_generated'):
         """Get a new corpus consisting a random selection from the current corpus
 
@@ -2665,7 +2653,7 @@ class Corpus(object):
         for seg in self.inventory:
             if seg.symbol == '#':
                 continue
-            self._inventory[seg.symbol].features = self.specifier.specify(seg)
+            self.inventory[seg.symbol].features = self.specifier.specify(seg)
 
     def update_inventory(self, transcription):
         """
@@ -2679,10 +2667,10 @@ class Corpus(object):
         """
         for s in transcription:
             if isinstance(s, str):
-                if s not in self._inventory:
-                    self._inventory.segs[s] = Segment(s)
-                if s not in self._inventory.segs.keys():
-                    self._inventory.segs[s] = self.specifier[s]
+                if s not in self.inventory:
+                    self.inventory.segs[s] = Segment(s)
+                if s not in self.inventory.segs.keys():
+                    self.inventory.segs[s] = self.specifier[s]
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])

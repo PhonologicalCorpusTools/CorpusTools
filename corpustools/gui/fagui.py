@@ -82,10 +82,11 @@ class FADialog(FunctionDialog):
 
     name = 'frequency of alternation'
 
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, FAWorker())
 
         self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         if not self.corpus.has_transcription:
@@ -95,7 +96,7 @@ class FADialog(FunctionDialog):
 
         falayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory, features = False)
+        self.segPairWidget = SegmentPairSelectWidget(self.inventory, features = False)
 
         falayout.addWidget(self.segPairWidget)
 

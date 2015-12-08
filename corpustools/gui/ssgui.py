@@ -74,10 +74,11 @@ class SSDialog(FunctionDialog):
 
     name = 'string similarity'
 
-    def __init__(self, parent, settings, corpusModel, showToolTips):
+    def __init__(self, parent, settings, corpusModel,inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, SSWorker())
 
         self.corpusModel = corpusModel
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         if not self.corpusModel.corpus.has_transcription:
@@ -165,7 +166,7 @@ class SSDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
-        self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
+        self.tierWidget = TierWidget(self.corpusModel.corpus, include_spelling=True)
 
         optionLayout.addWidget(self.tierWidget)
 
@@ -250,7 +251,7 @@ class SSDialog(FunctionDialog):
 
 
     def createOneNonword(self):
-        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventory)
         if dialog.exec_():
             self.oneNonword = dialog.word
             self.oneNonwordLabel.setText('{} ({})'.format(str(self.oneNonword),
@@ -258,7 +259,7 @@ class SSDialog(FunctionDialog):
             self.oneNonwordRadio.click()
 
     def createNonwordOne(self):
-        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventory)
         if dialog.exec_():
             self.nonwordOne = dialog.word
             self.nonwordOneLabel.setText('{} ({})'.format(str(self.nonwordOne),
@@ -267,7 +268,7 @@ class SSDialog(FunctionDialog):
             self.wordOneEdit.setEnabled(False)
 
     def createNonwordTwo(self):
-        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventory)
         if dialog.exec_():
             self.nonwordTwo = dialog.word
             self.nonwordTwoLabel.setText('{} ({})'.format(str(self.nonwordTwo),

@@ -1121,46 +1121,11 @@ class DirectoryWidget(QFrame):
     def value(self):
         return self.pathEdit.text()
 
-class InventoryTable(QTableWidget):
-    def __init__(self):
-        super().__init__()
-        self.horizontalHeader().setMinimumSectionSize(70)
-        #self.setModel(inventory)
-        try:
-            self.horizontalHeader().setSectionsClickable(False)
-            #self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-            self.verticalHeader().setSectionsClickable(False)
-            #self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        except AttributeError:
-            self.horizontalHeader().setClickable(False)
-            #self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
-            self.verticalHeader().setClickable(False)
-            #self.verticalHeader().setResizeMode(QHeaderView.Fixed)
-
-        self.setSelectionMode(QAbstractItemView.NoSelection)
-        #self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        #self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-    def resize(self):
-        self.resizeRowsToContents()
-        #self.resizeColumnsToContents()
-        hor = self.horizontalHeader()
-        ver = self.verticalHeader()
-        width = ver.sizeHint().width()
-        for i in range(hor.count()):
-            width += hor.sectionSize(i)
-        height = hor.sizeHint().height()
-        for i in range(ver.count()):
-            height += ver.sectionSize(i)
-        self.setFixedSize(width, height)
-
-
 class SegmentButton(QPushButton):
     def sizeHint(self):
         sh = QPushButton.sizeHint(self)
-
         #sh.setHeight(self.fontMetrics().boundingRect(self.text()).height()+14)
-        sh.setHeight(35)
+        sh.setHeight(135)
         sh.setWidth(self.fontMetrics().boundingRect(self.text()).width()+14)
         return sh
 
@@ -1343,7 +1308,7 @@ class InventoryBox(QWidget):
 
     def addTables(self,cons,vow,unk):
         if cons is not None:
-            self.mainLayout.addWidget(cons, alignment = Qt.AlignLeft | Qt.AlignTop)
+            self.mainLayout.addWidget(cons)#, alignment = Qt.AlignLeft | Qt.AlignTop)
 
         if vow is not None:
             self.mainLayout.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
@@ -1523,9 +1488,8 @@ class MultiSegmentCell(QWidget):
     def __init__(self,buttons,parent=None):
         super().__init__(parent)
         layout = QHBoxLayout()
-
-        #layout.setContentsMargins(0,0,0,0)
-        #layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
         self.button_names = list()
         for b in buttons:
             layout.addWidget(b)
@@ -1708,8 +1672,7 @@ class SegmentPairDialog(QDialog):
 
 class SegmentPairDialog(AbstractPairDialog):
     def __init__(self, inventory, parent = None):
-        #AbstractPairDialog.__init__(self, inventory, parent)
-        super().__init__(self,inventory,parent)
+        AbstractPairDialog.__init__(self, inventory, parent)
         self.inventoryFrame = SegmentSelectionWidget(inventory)
         self.setLayout(QHBoxLayout())
         self.layout().insertWidget(0, self.inventoryFrame)
@@ -1726,8 +1689,7 @@ class SegmentPairDialog(AbstractPairDialog):
 
 class SingleSegmentDialog(SegmentPairDialog):
     def __init__(self, inventory, parent = None):
-        #SegmentPairDialog.__init__(self, inventory, parent)
-        super().__init__(self,inventory,parent)
+        SegmentPairDialog.__init__(self, inventory, parent)
         self.setWindowTitle('Select individual segments')
 
     def accept(self):
@@ -2417,8 +2379,7 @@ class BigramWidget(QGroupBox):
     def __init__(self,inventory,parent=None):
         QGroupBox.__init__(self,'Bigrams',parent)
 
-        self.inventory = corpus.inventory
-        self.corpus = corpus
+        self.inventory = inventory
         vbox = QVBoxLayout()
 
         self.addButton = QPushButton('Add bigram')

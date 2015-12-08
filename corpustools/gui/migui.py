@@ -71,16 +71,17 @@ class MIDialog(FunctionDialog):
 
     name = 'mutual information'
 
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, MIWorker())
 
         self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         miFrame = QFrame()
         milayout = QHBoxLayout()
 
-        self.segPairWidget = BigramWidget(self.corpus.inventory)
+        self.segPairWidget = BigramWidget(self.inventory)
 
         milayout.addWidget(self.segPairWidget)
 

@@ -248,7 +248,7 @@ class MainWindow(QMainWindow):
         if result:
             self.corpus = dialog.corpus
             if self.corpus.inventory.isNew:
-                self.inventoryModel = InventoryModel(self.corpus._inventory, copy_mode=False)
+                self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
                 self.corpus.inventory.set_major_class_features(self.inventoryModel)
                 self.corpus.specifier.set_major_class_features(self.inventoryModel)
             else:
@@ -436,7 +436,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def stringSim(self):
-        dialog = SSDialog(self, self.settings, self.corpusModel,self.showToolTips)
+        dialog = SSDialog(self, self.settings, self.corpusModel, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
@@ -452,7 +452,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def freqOfAlt(self):
-        dialog = FADialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
+        dialog = FADialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FAWindow is not None and dialog.update and self.FAWindow.isVisible():
@@ -531,7 +531,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def mutualInfo(self):
-        dialog = MIDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
+        dialog = MIDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
@@ -560,7 +560,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def neighDen(self):
-        dialog = NDDialog(self, self.settings, self.corpusModel,self.showToolTips)
+        dialog = NDDialog(self, self.settings, self.corpusModel, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
