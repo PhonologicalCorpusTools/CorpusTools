@@ -14,7 +14,7 @@ from corpustools.corpus.classes.lexicon import EnvironmentFilter
 import pdb
 
 
-def is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
+def _is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
     """Return True iff first/second are a minimal pair.
     Checks that all segments in those words are identical OR a valid segment pair
     (from segment_pairs) and fit the environment_filter, and that there is at least
@@ -28,8 +28,8 @@ def is_minpair(first, second, corpus_context, segment_pairs, environment_filter)
     for i in range(len(first)):
         if first[i] == second[i]:
             continue
-        elif (conflateable(first[i], second[i], segment_pairs) 
-            and fits_environment(first, second, i, environment_filter)):
+        elif (_conflateable(first[i], second[i], segment_pairs) 
+            and _fits_environment(first, second, i, environment_filter)):
             has_difference = True
             continue
         else:
@@ -37,7 +37,7 @@ def is_minpair(first, second, corpus_context, segment_pairs, environment_filter)
     if has_difference:
         return True
 
-def conflateable(seg1, seg2, segment_pairs):
+def _conflateable(seg1, seg2, segment_pairs):
     """Return True iff seg1 and seg2 are exactly one of the segment pairs
     in segment_pairs (ignoring ordering of either).
 
@@ -49,25 +49,25 @@ def conflateable(seg1, seg2, segment_pairs):
             return True
     return False
 
-def fits_environment(w1, w2, index, environment_filter):
+def _ready_for_re(word, index):
+    w = [str(seg) for seg in word]
+    w[index] = '_'
+    return ' '.join(w)
+
+def _fits_environment(w1, w2, index, environment_filter):
     """Return True iff for both w1 and w2 (tiers), the environment
     of its i'th element fits passes the environment_filter.
     """
     if not environment_filter:
         return True
 
-    def ready_for_re(word, index):
-        w = [str(seg) for seg in word]
-        w[index] = '_'
-        return ' '.join(w)
-
-    w1 = ready_for_re(w1, index)
-    w2 = ready_for_re(w2, index)
-    env_re = make_environment_re(environment_filter)
+    w1 = _ready_for_re(w1, index)
+    w2 = _ready_for_re(w2, index)
+    env_re = _make_environment_re(environment_filter)
 
     return (bool(re.search(env_re, w1)) and bool(re.search(env_re, w2)))
 
-def make_environment_re(environment_filter):
+def _make_environment_re(environment_filter):
     if environment_filter.lhs:
         re_lhs = ' '.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.lhs])
         re_lhs = re_lhs.replace('#', '^')
@@ -85,6 +85,21 @@ def make_environment_re(environment_filter):
     if re_rhs and not re_rhs.endswith('($'):
         re_rhs = ' ' + re_rhs
     return re_lhs + '_' + re_rhs
+
+def _entropy(probabilities):
+    """Calculate the entropy of a choice from the provided probability distribution.
+
+    Parameters
+    ---------
+    probabilities : list of floats
+        Contains the probability of each item in the list.
+
+    Returns
+    -------
+    float
+        Entropy
+    """
+    return -(sum([p*log(p,2) if p > 0 else 0 for p in probabilities]))
 
 
 def minpair_fl(corpus_context, segment_pairs,
@@ -164,7 +179,7 @@ def minpair_fl(corpus_context, segment_pairs,
             cur += 1
             if cur % 100 == 0:
                 call_back(cur)
-        if is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
+        if _is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
             ordered_pair = sorted([(first, getattr(first, corpus_context.sequence_type)),
                                    (second, getattr(second, corpus_context.sequence_type))],
                                    key = lambda x: x[1]) # sort by tier/transcription
@@ -251,7 +266,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
 
     if stop_check is not None and stop_check():
         return
-    preneutr_h = entropy(original_probs.values())
+    preneutr_h = _entropy(original_probs.values())
 
     neutralized_probs = defaultdict(float)
     if call_back is not None:
@@ -269,7 +284,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
             n = [neutralize_segment(seg, segment_pairs)
                     for seg in k]
             neutralized_probs['.'.join(n)] += v
-    postneutr_h = entropy(neutralized_probs.values())
+    postneutr_h = _entropy(neutralized_probs.values())
 
     if stop_check is not None and stop_check():
         return
@@ -407,21 +422,6 @@ def individual_segpairs_fl(corpus_context, **kwargs):
             fl = deltah_fl(corpus_context, [pair],
               environment_filter=environment_filter)
         results.append(fl)
-
-def entropy(probabilities):
-    """Calculate the entropy of a choice from the provided probability distribution.
-
-    Parameters
-    ---------
-    probabilities : list of floats
-        Contains the probability of each item in the list.
-
-    Returns
-    -------
-    float
-        Entropy
-    """
-    return -(sum([p*log(p,2) if p > 0 else 0 for p in probabilities]))
 
 
 def neutralize_segment(segment, segment_pairs):

@@ -10,17 +10,17 @@ from functools import partial
 
 from corpustools.exceptions import NeighDenError
 
-def is_edit_distance_neighbor(w, query, sequence_type, max_distance):
+def _is_edit_distance_neighbor(w, query, sequence_type, max_distance):
     if len(getattr(w, sequence_type)) > len(getattr(query, sequence_type))+max_distance:
         return False
     if len(getattr(w, sequence_type)) < len(getattr(query, sequence_type))-max_distance:
         return False
     return edit_distance(w, query, sequence_type, max_distance) <= max_distance
 
-def is_phono_edit_distance_neighbor(w, query, sequence_type, specifier, max_distance):
+def _is_phono_edit_distance_neighbor(w, query, sequence_type, specifier, max_distance):
     return phono_edit_distance(w, query, sequence_type, specifier) <= max_distance
 
-def is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
+def _is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
     return khorsi(w, query, freq_base, sequence_type, max_distance) >= max_distance
 
 def neighborhood_density_all_words(corpus_context,
@@ -104,17 +104,17 @@ def neighborhood_density(corpus_context, query,
         call_back(0,len(corpus_context))
         cur = 0
     if algorithm == 'edit_distance':
-        is_neighbor = partial(is_edit_distance_neighbor,
+        is_neighbor = partial(_is_edit_distance_neighbor,
                                 sequence_type = corpus_context.sequence_type,
                                 max_distance = max_distance)
     elif algorithm == 'phono_edit_distance':
-        is_neighbor = partial(is_phono_edit_distance_neighbor,
+        is_neighbor = partial(_is_phono_edit_distance_neighbor,
                                 specifier = corpus_context.specifier,
                                 sequence_type = corpus_context.sequence_type,
                                 max_distance = max_distance)
     elif algorithm == 'khorsi':
         freq_base = freq_base = corpus_context.get_frequency_base()
-        is_neighbor = partial(is_khorsi_neighbor,
+        is_neighbor = partial(_is_khorsi_neighbor,
                                 freq_base = freq_base,
                                 sequence_type = corpus_context.sequence_type,
                                 max_distance = max_distance)

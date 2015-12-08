@@ -132,7 +132,7 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
                                 result.seg2/result.sum()),
                         file=f)
 
-    is_spurious = check_spurious(ur, sr, corpus_context)
+    is_spurious = _check_spurious(ur, sr, corpus_context)
 
     if side.startswith('r'):
         retside = 'right'
@@ -143,7 +143,7 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
     return seg1_entropy, seg2_entropy, KL, ur, is_spurious
 
 
-def check_spurious(ur, sr, corpus_context):
+def _check_spurious(ur, sr, corpus_context):
     if len(ur) > 1: #Set of segments, probably supplied from GUI, hack until refactor
         return 'No'
     #returns a string, not a bool, for printing to a results table
