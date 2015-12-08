@@ -3,7 +3,7 @@ import string
 import re
 
 from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import readFile, Interval, Point, PointTier
+from textgrid.textgrid import readFile, Interval, Point, PointTier, _getMark
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError, PCTError
@@ -37,7 +37,7 @@ class PCTTextGrid(TextGrid):
                     source.readline().rstrip().split() # header junk
                     jmin = round(float(source.readline().rstrip().split()[2]), 5)
                     jmax = round(float(source.readline().rstrip().split()[2]), 5)
-                    jmrk = self._getMark(source)
+                    jmrk = _getMark(source)
                     if jmin < jmax: # non-null
                         itie.addInterval(Interval(jmin, jmax, jmrk))
                 self.append(itie)

@@ -9,25 +9,20 @@ branches:
 notifications:
   email: false
 
-sudo: required
+sudo: false
 
-#addons:
-  #apt:
-    #sources:
-      #ubuntu-sdk-team
-    #packages:
-      #qtdeclarative5-dev
+addons:
+  apt:
+    sources:
+      debian-sid
+    packages:
+      qt-default
 
 before_install:
-  - ls $HOME
-  - sudo add-apt-repository --yes ppa:beineri/opt-qt542
-  - sudo apt-get update -qq
-  - sudo apt-get install qt54base
-  - source /opt/qt54/bin/qt54-env.sh
   - bash continuous-integration/travis/install.sh
 
 install:
-  - export PATH="$HOME/miniconda/bin:$PATH"
+  - export PATH="$HOME/cachedir/miniconda/bin:$PATH"
   - source activate test-environment
   - which python
   - conda list
@@ -49,6 +44,11 @@ after_success:
 
 cache:
   directories:
+<<<<<<< HEAD
     - $HOME/sip
     - $HOME/pyqt5
     - $HOME/miniconda
+=======
+    - $HOME/cachedir
+  apt: true
+>>>>>>> 7b2f222b9b437b1c4bcd2d93e3a2b080f262e006
