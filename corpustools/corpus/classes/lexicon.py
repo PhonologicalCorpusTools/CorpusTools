@@ -2674,7 +2674,8 @@ class Corpus(object):
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])
-        self.update_features()
+        if self.specifier is not None:
+            self.update_features()
 
 
     def get_or_create_word(self, **kwargs):

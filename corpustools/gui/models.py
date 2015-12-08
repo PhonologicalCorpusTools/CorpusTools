@@ -839,10 +839,12 @@ class InventoryModel(QAbstractTableModel):
                   'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                   'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
                   'vowel_feature', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew', 'consList', 'vowelList']
+
     modelResetSignal = Signal(bool)
 
     def __init__(self, inventory, copy_mode=False):
         super().__init__()
+
         if copy_mode:
             self.setAttributes(inventory)
             return
@@ -870,24 +872,21 @@ class InventoryModel(QAbstractTableModel):
         self.rounded_feature = None
         self.diph_feature = None
         #functions that fill in the above values
-        self.generate_generic_names()
+        self.generateGenericNames()
         self.categorizeInventory()
         self.sortData()
         self.filterGenericNames()
         self.isNew = False
 
     def setAttributes(self, source):
-        for attribute in InventoryModel.attributes: #self.attributes:
-            try:
-                setattr(self, attribute, deepcopy(getattr(source, attribute)))
-            except AttributeError:
-                print(attribute)
+        for attribute in InventoryModel.attributes:
+            setattr(self, attribute, deepcopy(getattr(source, attribute)))
 
     def set_major_class_features(self, source):
         self.vowel_feature = source.vowel_feature
         self.voice_feature = source.voice_feature
         self.rounded_feature = source.round_feature
-        self.diphthong_feature = soure.diph_feature
+        self.diphthong_feature = source.diph_feature
 
     def columnCount(self, parent=None):
         return len(self._data[0])  # any element would do, they should all be the same length
@@ -1275,30 +1274,37 @@ class InventoryModel(QAbstractTableModel):
                     matches.append(seg)
             self._data[row][col] = ''.join([m.symbol for m in matches])
 
-    def generate_generic_names(self):
+    def generateGenericNames(self):
         sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
-        # pick an arbitrary segment and examine its _features; they all should have the same feature list
+        # pick an arbitrary segment and examine its features; they all should have the same feature list
         if not sample:
             raise CorpusIntegrityError('No segments were found in the inventory')
         if 'consonantal' in sample.features:
-            self.generate_generic_hayes()
+            self.generateGenericHayes()
             self.vowel_feature = '-consonantal'
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = '+diphthong'
         elif 'voc' in sample.features:
-            self.generate_generic_spe()
+            self.generateGenericSpe()
             self.vowel_feature = '+voc'
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = None
         else:
-            pass
+            self.cons_column_data['Column 1'] = [0, {}, None]
+            self.cons_row_data['Row 1'] = [0, {}, None]
+            self.vowel_column_data['Column 1'] = [0, {}, None]
+            self.vowel_row_data['Row 1'] = [0, {}, None]
 
-    def generate_generic_spe(self):
-        pass
+    def generateGenericSpe(self):
+        #Not yet implemented
+        self.cons_column_data['Column 1'] = [0, {}, None]
+        self.cons_row_data['Row 1'] = [0, {}, None]
+        self.vowel_column_data['Column 1'] = [0, {}, None]
+        self.vowel_row_data['Row 1'] = [0, {}, None]
 
-    def generate_generic_hayes(self):
+    def generateGenericHayes(self):
         self.cons_column_data['Labial'] = [0, {'consonantal': '+', 'labial': '+', 'coronal': '-',
                                                'labiodental': '-'}, None]
         self.cons_column_data['Labiodental'] = [1, {'consonantal': '+', 'labiodental': '+'}, None]
@@ -1376,6 +1382,16 @@ class InventoryModel(QAbstractTableModel):
         else:
             row_data = self.vowel_row_data
         return row_data[name]
+
+    def getColumnHeader(self, index, consonants):
+        if consonants:
+            col_data = self.cons_column_data
+            headers = self.consColumns
+        else:
+            col_data = self.vowel_column_data
+            headers = self.vowelColumns
+        sorted_headers = sorted(list(headers), key=lambda x: col_data[x][0])
+        return sorted_headers[index]
 
     def getRowHeader(self, index, consonants):
         if consonants:

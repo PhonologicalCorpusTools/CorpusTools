@@ -26,6 +26,10 @@ from .inventorygui import InventoryManager
 
 from .windows import SelfUpdateWorker
 
+from .modernize import modernize_inventory
+
+from corpustools.exceptions import PCTError
+
 from .ssgui import SSDialog
 from .asgui import ASDialog
 from .flgui import FLDialog
@@ -247,12 +251,32 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.corpus = dialog.corpus
+
+            if self.corpus.specifier is None:
+                alert = QMessageBox()
+                alert.setText(('This corpus was loaded without a feature system. It is recommended that you '
+                            'immediately associate a feature system by going to the Features menu and clicking on '
+                            'View/Edit Feature system. If this is your first time using PCT, you may need instead to '
+                            'go to the Corpus menu and select Manage Feature System, then download one.'))
+                alert.exec_()
+
+            if not hasattr(self.corpus.inventory, 'isNew'):
+                #this corpus is from an older version of PCT, we need to check/modify/add attributes
+                self.corpus.inventory = modernize_inventory(self.corpus.inventory)
+
             if self.corpus.inventory.isNew:
+                #this corpus was just loaded from a text file (or other source)
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
-                self.corpus.inventory.set_major_class_features(self.inventoryModel)
-                self.corpus.specifier.set_major_class_features(self.inventoryModel)
+                if self.corpus.specifier is not None:
+                    self.corpus.update_features()
+                    self.corpus.inventory.setFeatures()
+                    self.corpus.inventory.set_major_class_features(self.inventoryModel)
+                    self.corpus.specifier.set_major_class_features(self.inventoryModel)
+
             else:
-                self.inventoryModel = InventoryModel(self.corpus._inventory, copy_mode=True)
+                #this corpus was created with an up-to-date copy of PCT
+                self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
+
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):
@@ -268,8 +292,6 @@ class MainWindow(QMainWindow):
                     self.discourseTree.hide()
                     self.showDiscoursesAct.setEnabled(False)
                     self.showDiscoursesAct.setChecked(False)
-                #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
-                #self.discourseTree.resizeColumnToContents(0)
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
                 self.textWidget.selectType.connect(self.corpusTable.highlightType)
                 self.textWidget.show()
@@ -313,7 +335,7 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.inventoryModel.updateFromCopy(dialog.inventory)
-            self.corpus._inventory.__dict__.update(self.inventoryModel.__dict__)
+            self.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
             if self.settings['autosave']:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
@@ -363,7 +385,7 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
             self.corpusModel.corpus.update_features()
-            self.corpus._inventory.set_major_class_features(dialog.specifier)
+            self.corpus.inventory.set_major_class_features(dialog.specifier)
             self.inventoryModel.updateFeatures(dialog.specifier)
 
             if self.corpusModel.corpus.specifier is not None:
