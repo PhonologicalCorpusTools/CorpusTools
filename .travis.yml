@@ -9,16 +9,13 @@ branches:
 notifications:
   email: false
 
-sudo: false
-
-addons:
-  apt:
-    sources:
-      debian-sid
-    packages:
-      qt-default
+sudo: required
 
 before_install:
+  - sudo add-apt-repository --yes ppa:beineri/opt-qt542
+  - sudo apt-get update -qq
+  - sudo apt-get install qt54base
+  - source /opt/qt54/bin/qt54-env.sh
   - bash continuous-integration/travis/install.sh
 
 install:
