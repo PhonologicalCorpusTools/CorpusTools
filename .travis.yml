@@ -9,71 +9,35 @@ branches:
 notifications:
   email: false
 
-# Setup anaconda
+sudo: required
+
+#addons:
+  #apt:
+    #sources:
+      #ubuntu-sdk-team
+    #packages:
+      #qtdeclarative5-dev
+
 before_install:
-  #- export DISPLAY=:99.0
-  #- sh -e /etc/init.d/xvfb start
-  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda config --add channels dsdale24
-  - conda update -q conda
-  - conda info -a
-  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
-  - sudo mkdir -p /downloads
-  - sudo chmod a+rw /downloads
-  - if [ ! -f /downloads/sip.tar.gz ]; then curl -L -o /downloads/sip.tar.gz http://sourceforge.net/projects/pyqt/files/sip/sip-4.16.6/sip-4.16.6.tar.gz; fi
-  - if [ ! -f /downloads/pyqt5.tar.gz ]; then curl -L -o /downloads/pyqt5.tar.gz http://sourceforge.net/projects/pyqt/files/PyQt5/PyQt-5.4.1/PyQt-gpl-5.4.1.tar.gz; fi
-  #- echo '6d01ea966a53e4c7ae5c5e48c40e49e5 /downloads/sip.tar.gz' | md5sum -c -
-  #- echo '7f2eb79eaf3d7e5e7df5a4e9c8c9340e /downloads/pyqt5.tar.gz' | md5sum -c -
-  # Builds
-  - sudo mkdir -p /builds
-  - sudo chmod a+rw /builds
-# Install packages
+  - ls $HOME
+  - sudo add-apt-repository --yes ppa:beineri/opt-qt542
+  - sudo apt-get update -qq
+  - sudo apt-get install qt54base
+  - source /opt/qt54/bin/qt54-env.sh
+  - bash continuous-integration/travis/install.sh
+
 install:
-  - sudo add-apt-repository -y ppa:beineri/opt-qt541
-  - sudo apt-get update
-  - sudo apt-get install -y qt54base
-  #qt54multimedia qt54webengine
-  - conda create -q -c https://conda.binstar.org/dsdale24 -n test-environment python=$TRAVIS_PYTHON_VERSION atlas numpy scipy pytest
+  - export PATH="$HOME/miniconda/bin:$PATH"
   - source activate test-environment
   - which python
-  - pushd /builds
-  # SIP
-  - tar xzf /downloads/sip.tar.gz --keep-newer-files
-  - pushd sip-4.16.6
-  - python configure.py
-  - make
-  - sudo make install
-  - popd
-  # PyQt5
-  - source /opt/qt54/bin/qt54-env.sh # switch to Qt5
-  - tar xzf /downloads/pyqt5.tar.gz --keep-newer-files
-  - pushd PyQt-gpl-5.4.1
-  - python configure.py -c --confirm-license --no-designer-plugin
-  - make
-  - sudo make install
-  - popd
-  - git clone https://github.com/mmcauliffe/pytest-qt.git
-  - pushd pytest-qt
+  - conda list
   - python setup.py install
-  - popd
-  # Builds Complete
-  - popd
-  # Coverage packages are on my binstar channel
-  - pip install coveralls pytest-cov
-  - python setup.py install
-
 
 before_script:
- - export DISPLAY=:99.0
- - sh -e /etc/init.d/xvfb start
- - sleep 3
+  - ls $HOME
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - sleep 3
 
 # Run test
 script:
@@ -85,5 +49,6 @@ after_success:
 
 cache:
   directories:
-    - /downloads
-  apt: true
+    - $HOME/sip
+    - $HOME/pyqt5
+    - $HOME/miniconda
