@@ -964,6 +964,7 @@ class InventoryModel(QAbstractTableModel):
         elif role != Qt.DisplayRole:
             return QVariant()
         segs = self._data[index.row()][index.column()]
+        segs = ','.join(segs)
         return segs
 
     def setData(self, index, value, role=None):
