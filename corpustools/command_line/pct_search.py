@@ -4,6 +4,10 @@ import csv
 import re
 import sys
 
+# default to importing from CorpusTools repo
+base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.insert(0,base)
+
 from corpustools.corpus.io import load_binary
 from corpustools.corpus.classes.lexicon import EnvironmentFilter
 from corpustools.phonosearch.phonosearch import phonological_search

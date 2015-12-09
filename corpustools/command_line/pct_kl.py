@@ -2,7 +2,12 @@ import argparse
 from math import log
 from collections import defaultdict
 import os
+import sys
 from codecs import open
+
+# default to importing from CorpusTools repo
+base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.insert(0,base)
 
 from corpustools.corpus.classes import Corpus
 from corpustools.corpus.io import load_binary

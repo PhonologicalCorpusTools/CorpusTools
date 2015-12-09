@@ -1,7 +1,12 @@
 import argparse
 import os
+import sys
 import codecs
 import ntpath
+
+# default to importing from CorpusTools repo
+base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+sys.path.insert(0,base)
 
 from corpustools.corpus.io.csv import inspect_csv
 from corpustools.corpus.io.csv import load_corpus_csv
