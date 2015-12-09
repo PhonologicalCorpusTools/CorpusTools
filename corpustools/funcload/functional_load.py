@@ -96,8 +96,9 @@ def _make_environment_re(environment_filter):
 
     if re_lhs and not re_lhs.endswith('^)'):
         re_lhs += ' '
-    if re_rhs and not re_rhs.endswith('($'):
+    if re_rhs and not re_rhs.startswith('($'):
         re_rhs = ' ' + re_rhs
+
     return re_lhs + '_' + re_rhs
 
 
