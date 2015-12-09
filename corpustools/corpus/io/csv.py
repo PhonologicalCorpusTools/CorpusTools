@@ -126,7 +126,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
         corpus.set_feature_matrix(feature_matrix)
 
     if annotation_types is None:
-        annotation_types, _ = inspect_csv(path, coldelim = delimiter)
+        annotation_types, delimiter = inspect_csv(path, coldelim = delimiter)
     for a in annotation_types:
         a.reset()
 

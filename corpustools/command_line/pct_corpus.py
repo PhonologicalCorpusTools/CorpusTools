@@ -25,7 +25,7 @@ def main():
              'Phonological CorpusTools: corpus object creation CL interface')
     parser.add_argument('csv_file_name', help='Name of input CSV file')
     parser.add_argument('-f', '--feature_file_name', default = '', type=str, help='Name of input feature file')
-    parser.add_argument('-d', '--delimiter', default=',', type=str, help='Character that delimits columns in the input file')
+    parser.add_argument('-d', '--delimiter', default=None, type=str, help='Character that delimits columns in the input file')
     # parser.add_argument('-t', '--trans_delimiter', default=None, type=str, help='Character that delimits segments in the input file')
 
     args = parser.parse_args()
