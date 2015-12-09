@@ -20,8 +20,8 @@ def main():
              'Phonological CorpusTools: corpus object creation CL interface')
     parser.add_argument('csv_file_name', help='Name of input CSV file')
     parser.add_argument('-f', '--feature_file_name', default = '', type=str, help='Name of input feature file')
-    parser.add_argument('-d', '--delimiter', default=None, type=str, help='Character that delimits columns in the input file')
-    parser.add_argument('-t', '--trans_delimiter', default=None, type=str, help='Character that delimits segments in the input file')
+    parser.add_argument('-d', '--delimiter', default=',', type=str, help='Character that delimits columns in the input file')
+    # parser.add_argument('-t', '--trans_delimiter', default=None, type=str, help='Character that delimits segments in the input file')
 
     args = parser.parse_args()
 
@@ -35,19 +35,19 @@ def main():
         filename, extension = os.path.splitext(args.csv_file_name)
         filename = path_leaf(filename)
         corpus = load_corpus_csv(args.csv_file_name, args.csv_file_name,
-                delimiter, args.trans_delimiter, annotation_types=None, feature_system_path=args.feature_file_name)
+                delimiter=delimiter, feature_system_path=args.feature_file_name)
         save_binary(corpus, filename+'.corpus')
     except FileNotFoundError:
         #TO-DO: os.path.join takes care of os specific paths
         try: # Unix filepaths
             filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name)
             corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'/'+args.csv_file_name,
-                    delimiter, args.trans_delimiter, annotation_types=None, feature_system_path=os.path.dirname(os.path.realpath(__file__))+'/'+args.feature_file_name)
+                    delimiter=delimiter, feature_system_path=os.path.dirname(os.path.realpath(__file__))+'/'+args.feature_file_name)
             save_binary(corpus, filename+'.corpus')
         except FileNotFoundError: # Windows filepaths
             filename, extension = os.path.splitext(os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name)
             corpus = load_corpus_csv(args.csv_file_name, os.path.dirname(os.path.realpath(__file__))+'\\'+args.csv_file_name,
-                    delimiter, args.trans_delimiter, annotation_types=None, feature_system_path=os.path.dirname(os.path.realpath(__file__))+'\\'+args.feature_file_name)
+                    delimiter=delimiter, feature_system_path=os.path.dirname(os.path.realpath(__file__))+'\\'+args.feature_file_name)
             save_binary(corpus, filename+'.corpus')
 
 
