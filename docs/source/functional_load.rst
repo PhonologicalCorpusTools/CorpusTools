@@ -399,6 +399,12 @@ Optional arguments:
                --help
 
    Show help message and exit
+   
+.. cmdoption:: -s SEQUENCE_TYPE
+               --sequence_type SEQUENCE_TYPE
+
+   The attribute of Words to calculate FL over. Normally this will be
+   the transcription, but it can also be the spelling or a user-specified tier.
 
 .. cmdoption:: -c CONTEXT_TYPE
                --context_type CONTEXT_TYPE
@@ -419,6 +425,14 @@ Optional arguments:
 
    Minimum frequency of words to consider as possible minimal pairs or
    contributing to lexicon entropy.
+   
+.. cmdoption:: -r True/False
+               --frequency_cutoff True/False
+
+   For minimal pair FL: whether or not to divide the number of minimal 
+   pairs by the number of possible minimal pairs (words with either 
+   segment in the proper environment). Defaults to True; pass 
+   '-r False' to set as False.
 
 .. cmdoption:: -d DISTINGUISH_HOMOPHONES
                --distinguish_homophones DISTINGUISH_HOMOPHONES
@@ -440,12 +454,26 @@ Optional arguments:
 
    If True, calculate the relative FL of a single segment by averaging
    across the functional loads of it and all other segments.
-
-.. cmdoption:: -s SEQUENCE_TYPE
-               --sequence_type SEQUENCE_TYPE
-
-   The attribute of Words to calculate FL over. Normally this will be
-   the transcription, but it can also be the spelling or a user-specified tier.
+   
+.. cmdoption:: -q ENVIRONMENT_LHS
+               --environment_lhs ENVIRONMENT_LHS
+               
+   Left hand side of environment filter. Format:
+   positions separated by commas, groups by slashes, e.g.
+   m/n,i matches mi or ni.
+   
+.. cmdoption:: -w ENVIRONMENT_RHS
+               --environment_rhs ENVIRONMENT_RHS
+               
+   Right hand side of environment filter. Format:
+   positions separated by commas, groups by slashes, e.g.
+   m/n,i matches mi or ni. Use \# for word edges.
+   
+.. cmdoption:: -x
+               --separate_pairs
+               
+   If present, calculate FL for each pair in the pairs
+   file separately.
 
 .. cmdoption:: -o OUTFILE
                --outfile OUTFILE
@@ -469,7 +497,7 @@ instead of (the default value of) token frequency. In addition, you want
 the script to produce an output file called output.txt.  You would need
 to run the following command::
 
-   pct_funcload example.corpus -p m -a deltah -t type -o output.txt
+   pct_funcload example.corpus -p m -e -a deltah -t type -o output.txt
 
 EXAMPLE 3: Suppose you want to calculate the functional
 loads of all segment pairs. Your corpus file is again example.corpus.
@@ -478,6 +506,21 @@ the script to produce an output file called output.txt.  You would need
 to run the following command::
 
    pct_funcload example.corpus -l -o output.txt
+   
+EXAMPLE 4: Suppose you want to calculate the minimal pair functional
+loads of these segment pairs _separately_: i/u, e/o, i/e, and u/o. 
+Your corpus file this time is lemurian.corpus. 
+Specifically, you want to calculate the functional load of these pairs 
+when they occur at the right edge of a word immediately following a 
+nasal (n, m, or N). You want only the raw minimal pair counts, not 
+relative counts. All other parameters are set to defaults. You would 
+need first to create a file (e.g. 'pairs.txt') containing the following 
+text (no quotes):
+i\tu\ne\to\ni\te\nu\to
+...where \t is a tab and \n is a newline (enter/return). You would
+then need to run the following command::
+
+   pct_funcload lemurian.corpus -p pairs.txt -q n/m/N -w \# -x -r False
 
 .. _func_load_classes_and_functions:
 
