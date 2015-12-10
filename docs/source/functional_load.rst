@@ -471,6 +471,7 @@ Optional arguments:
    
 .. cmdoption:: -x
                --separate_pairs
+               
    If present, calculate FL for each pair in the pairs
    file separately.
 
