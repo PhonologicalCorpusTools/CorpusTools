@@ -900,7 +900,7 @@ class MainWindow(QMainWindow):
         self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.phonoSearchAct)
 
-        self.featureMenu = self.menuBar().addMenu("&Features")
+        self.featureMenu = self.menuBar().addMenu("F&eatures")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
         #self.featureMenu.addAction(self.manageFeatureClassesAct)
 
