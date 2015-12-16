@@ -32,7 +32,11 @@ def main():
 
     ####
 
-    corpus = load_binary(args.corpus_file_name)
+    try:
+        home = os.path.expanduser('~')
+        corpus = load_binary(os.path.join(home, 'Documents', 'PCT', 'CorpusTools', 'CORPUS', args.corpus_file_name))
+    except FileNotFoundError:
+        corpus = load_binary(args.corpus_file_name)
 
     split_sequence = [tuple(pos.split('/')) for pos in args.sequence.split(',')]
     middle = split_sequence[0]

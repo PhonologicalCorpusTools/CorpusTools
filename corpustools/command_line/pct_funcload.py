@@ -46,7 +46,12 @@ def main():
 
     ####
 
-    corpus = load_binary(args.corpus_file_name)
+    try:
+        home = os.path.expanduser('~')
+        corpus = load_binary(os.path.join(home, 'Documents', 'PCT', 'CorpusTools', 'CORPUS', args.corpus_file_name))
+    except FileNotFoundError:
+        corpus = load_binary(args.corpus_file_name)
+
     if args.context_type == 'Canonical':
         corpus = CanonicalVariantContext(corpus, args.sequence_type, args.type_or_token, frequency_threshold=args.frequency_cutoff)
     elif args.context_type == 'MostFrequent':

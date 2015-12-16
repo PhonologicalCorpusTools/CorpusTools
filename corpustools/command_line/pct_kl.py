@@ -31,10 +31,14 @@ def main():
 
     ####
 
-    corpus_path = args.corpus_file_name
-    if not os.path.isfile(corpus_path):
-        corpus_path = os.path.join(os.getcwd(), corpus_path)
-    corpus = load_binary(corpus_path)
+    try:
+        home = os.path.expanduser('~')
+        corpus = load_binary(os.path.join(home, 'Documents', 'PCT', 'CorpusTools', 'CORPUS', args.corpus_file_name))
+    except FileNotFoundError:
+        corpus_path = args.corpus_file_name
+        if not os.path.isfile(corpus_path):
+            corpus_path = os.path.join(os.getcwd(), corpus_path)
+        corpus = load_binary(corpus_path)
 
     if args.context_type == 'Canonical':
         corpus = CanonicalVariantContext(corpus, args.sequence_type, args.type_or_token)
