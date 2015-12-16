@@ -3,7 +3,7 @@ import collections
 import re
 import os
 
-from corpustools.corpus.classes import Corpus, FeatureMatrix, Word, Attribute
+from corpustools.corpus.classes.lexicon import Corpus, FeatureMatrix, Word, Attribute
 from corpustools.corpus.io.binary import save_binary, load_binary
 
 from .helper import parse_transcription, AnnotationType
@@ -76,7 +76,10 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
             vals[head[i]].append(l[i])
     atts = list()
     for h in head:
-        cat = Attribute.guess_type(vals[h][:num_lines], trans_delimiters)
+        if h in ['Transcription', 'transcription']:
+            cat = 'tier'
+        else:
+            cat = Attribute.guess_type(vals[h][:num_lines], trans_delimiters)
         att = Attribute(Attribute.sanitize_name(h), cat, h)
         a = AnnotationType(h, None, None, token = False, attribute = att)
         if cat == 'tier':
@@ -84,6 +87,7 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
                 if t in vals[h][0]:
                     a.trans_delimiter = t
                     break
+            a.trans_delimiter = None # otherwise, assume null trans_delimiter
         a.add(vals[h], save = False)
         atts.append(a)
 
