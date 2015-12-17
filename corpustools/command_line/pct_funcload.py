@@ -117,9 +117,9 @@ def main():
                 outstr = 'result\t' + '\t'.join([a for a in vars(args)]) + '\n' + str(result) + '\t' + '\t'.join([str(getattr(args, a)) for a in vars(args)])
                 outfile.write(outstr)
             else:
-                outstr = 'result\tsegment(s)\t' + '\t'.join([a for a in vars(args)]) + '\n'
+                outstr = 'result\tsegment(s)\tminpairs\t' + '\t'.join([a for a in vars(args)]) + '\n'
                 for element in result:
-                    outstr += str(element[1]) + '\t' + str(element[0]) + '\t' + '\t'.join([str(getattr(args,a)) for a in vars(args)]) + '\n'
+                    outstr += str(element[0]) + '\t' + str(element[2]) + '\t' + str(element[1]) + '\t' + '\t'.join([str(getattr(args,a)) for a in vars(args)]) + '\n'
                 outfile.write(outstr)
 
     else:

@@ -182,7 +182,7 @@ def minpair_fl(corpus_context, segment_pairs,
 
     if relative_count and contain_target_segment_count > 0:
         result /= float(contain_target_segment_count)
-    return (result, minpairs)
+    return (result, minpairs, segment_pairs)
 
 
 def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
