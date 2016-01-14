@@ -32,18 +32,21 @@ class PCTPythonError(PCTError):
         self.smtp_report()
 
     def smtp_report(self):
-        fromaddr = "pctbugs@gmail.com"
-        toaddrs = ["pctbugs@gmail.com"]
+        try:
+            fromaddr = "pctbugs@gmail.com"
+            toaddrs = ["pctbugs@gmail.com"]
 
-        msg = "{}\n\n{}\n\n{}".format(self.details, 'PCT version', platform.platform())
+            msg = "{}\n\n{}\n\n{}".format(self.details, 'PCT version', platform.platform())
 
-        server = smtplib.SMTP('smtp.gmail.com', port=587)
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login('pctbugs@gmail.com', 'noexceptions')
-        server.sendmail(fromaddr, toaddrs, msg)
-        server.quit()
+            server = smtplib.SMTP('smtp.gmail.com', port=587)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login('pctbugs@gmail.com', 'noexceptions')
+            server.sendmail(fromaddr, toaddrs, msg)
+            server.quit()
+        except OSError:
+            pass
 
 ## Context Manager exceptions
 

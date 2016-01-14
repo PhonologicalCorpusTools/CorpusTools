@@ -216,7 +216,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
     neutralized_sum = 0
     neutralized_probs = defaultdict(float)
 
-
+    cur = 0
     for w in corpus_context:
         if stop_check is not None and stop_check():
             return
