@@ -1,6 +1,8 @@
 import os
 import sys
 import traceback
+import smtplib
+import platform
 
 ## Base exception classes
 
@@ -27,6 +29,21 @@ class PCTPythonError(PCTError):
         self.information = 'Please forward to the details below to the developers.'
         self.details = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
+        self.smtp_report()
+
+    def smtp_report(self):
+        fromaddr = "pctbugs@gmail.com"
+        toaddrs = ["pctbugs@gmail.com"]
+
+        msg = "{}\n\n{}\n\n{}".format(self.details, 'PCT version', platform.platform())
+
+        server = smtplib.SMTP('smtp.gmail.com', port=587)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login('pctbugs@gmail.com', 'noexceptions')
+        server.sendmail(fromaddr, toaddrs, msg)
+        server.quit()
 
 ## Context Manager exceptions
 
