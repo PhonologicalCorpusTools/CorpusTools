@@ -211,18 +211,11 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
         non-homophonous words in the corpus before a merger of `s1`
         and `s2` and b) the entropy of that choice after the merger.
     """
-    if call_back is not None:
-        call_back('Finding instances of segments...')
-        call_back(0, len(corpus_context))
-        cur = 0
-    freq_sum = 0
+    original_sum = 0
     original_probs = defaultdict(float)
+    neutralized_sum = 0
+    neutralized_probs = defaultdict(float)
 
-    all_target_segments = list(itertools.chain.from_iterable(segment_pairs))
-    if environment_filter:
-        filled_environment = EnvironmentFilter(tuple(all_target_segments),
-                                               environment_filter.lhs,
-                                               environment_filter.rhs)
 
     for w in corpus_context:
         if stop_check is not None and stop_check():
@@ -232,37 +225,28 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
             if cur % 20 == 0:
                 call_back(cur)
 
-        f = w.frequency
+        original_tier = getattr(w, corpus_context.sequence_type)
+        original_probs[original_tier] += w.frequency
+        original_sum += w.frequency
 
-        original_probs[getattr(w, corpus_context.sequence_type)] += f
-        freq_sum += f
+        neutralized_tier = _merge_segment_pairs(original_tier, segment_pairs, 
+                                                environment_filter)
+        neutralized_probs[neutralized_tier] += w.frequency
+        neutralized_sum += w.frequency
 
-    original_probs = {k:v/freq_sum for k,v in original_probs.items()}
 
+    original_probs = {k:v/original_sum for k,v in original_probs.items()}
     if stop_check is not None and stop_check():
         return
+    neutralized_probs = {k:v/neutralized_sum for k,v in neutralized_probs.items()}
+    if stop_check is not None and stop_check():
+        return
+
     preneutr_h = _entropy(original_probs.values())
-
-    neutralized_probs = defaultdict(float)
-    if call_back is not None:
-        call_back('Neutralizing instances of segments...')
-        call_back(0, len(list(original_probs.keys())))
-        cur = 0
-    for k,v in original_probs.items():
-        if stop_check is not None and stop_check():
-            return
-        if call_back is not None:
-            cur += 1
-            if cur % 100 == 0:
-                call_back(cur)
-        if not environment_filter or k.find(filled_environment):
-            n = [neutralize_segment(seg, segment_pairs)
-                    for seg in k]
-            neutralized_probs['.'.join(n)] += v
     postneutr_h = _entropy(neutralized_probs.values())
-
     if stop_check is not None and stop_check():
         return
+        
     result = preneutr_h - postneutr_h
     if result < 1e-10:
         result = 0.0
