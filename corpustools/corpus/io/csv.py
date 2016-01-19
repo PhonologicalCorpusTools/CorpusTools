@@ -164,6 +164,9 @@ def load_corpus_csv(corpus_name, path, delimiter,
                     word.spelling = ''.join(map(str,word.transcription))
 
             corpus.add_word(word)
+
+    corpus.inventory.update_features(corpus.specifier)
+
     if corpus.has_transcription and not trans_check:
         e = DelimiterError(('Could not parse transcriptions with that delimiter. '
                             '\n\Check that the transcription delimiter you typed '

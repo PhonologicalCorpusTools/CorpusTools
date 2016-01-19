@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QVariant
 import random
 import itertools
+import collections
 from copy import deepcopy
 from .widgets import *
 from corpustools.exceptions import CorpusIntegrityError
@@ -871,6 +872,7 @@ class InventoryModel(QAbstractTableModel):
         self.voice_feature = None
         self.rounded_feature = None
         self.diph_feature = None
+        self.non_segment_symbols = ['#']
         #functions that fill in the above values
         self.generateGenericNames()
         self.categorizeInventory()
@@ -1473,6 +1475,89 @@ class InventoryModel(QAbstractTableModel):
                 strings.append(v + f)
         return strings
 
+    def get_segs(self):
+        return [v for v in self.segs.values() if not v in self.non_segment_symbols]
+
+    def find_min_feature_pairs(self, features, others=None):
+        """
+        Find sets of segments that differ only in certain features,
+        optionally limited by a feature specification
+
+        Parameters
+        ----------
+        features : list
+            List of features (i.e. 'back' or 'round')
+        others : list, optional
+            Feature specification to limit sets
+
+        Returns
+        -------
+        dict
+            Dictionary with keys that correspond to the values of ``features``
+            and values that are the set of segments with those feature values
+        """
+        plus_segs = []
+        minus_segs = []
+        output = collections.defaultdict(list)
+        redundant = self.get_redundant_features(features, others)
+        for seg1, seg2 in itertools.combinations(self.get_segs(), 2):
+            if not seg1.feature_match(others):
+                continue
+            if seg1.minimal_difference(seg2, features + redundant):
+                 break
+            seg1_key = tuple(seg1[f] for f in features)
+            seg2_key = tuple(seg2[f] for f in features)
+            if seg1 not in output[seg1_key]: output[seg1_key].append(seg1)
+            if seg2 not in output[seg2_key]: output[seg2_key].append(seg2)
+        return output
+
+    def get_redundant_features(self, features, others=None):
+        """
+        Autodetects redundent _features, with the ability to subset
+        the segments
+
+        Parameters
+        ----------
+        _features : list
+            List of _features to find other _features that consistently
+            covary with them
+        others : list, optional
+            Feature specification that specifies a subset to look at
+
+        Returns
+        -------
+        list
+            List of redundant _features
+        """
+        redundant_features = []
+        if isinstance(features, str):
+            features = [features]
+        if others is None:
+            others = []
+        other_feature_names = [x[1:] for x in others]
+        for f in self.features:
+            if f in features:
+                continue
+            if f in other_feature_names:
+                continue
+            feature_values = collections.defaultdict(set)
+            for seg in self:
+                if others is not None:
+                    if not seg.feature_match(others):
+                        continue
+                if seg == '#':
+                    continue
+                value = tuple(seg[x] for x in features)
+                other_value = seg[f]
+                feature_values[value].add(other_value)
+                if any(len(x) > 1 for x in feature_values.values()):
+                    break
+            if any(len(x) > 1 for x in feature_values.values()):
+                continue
+            redundant_features.append(f)
+        return redundant_features
+
+
     def features_to_segments(self, feature_description):
         """
         Given a feature description, return the segments in the inventory
@@ -1706,5 +1791,3 @@ class VowelModel(QSortFilterProxyModel):
             return False
         else:
             return True
-
-

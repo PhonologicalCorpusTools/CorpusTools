@@ -1097,9 +1097,6 @@ class SystemFromCsvDialog(PCTDialog):
                 save_binary(self.specifier,
                     system_name_to_path(self.settings['storage'],self.specifier.name))
                 print('Immediately reloaded after saving binary')
-                fm = load_binary(system_name_to_path(self.settings['storage'],self.specifier.name))
-                print(fm.matrix['e'])
-                print(fm.specify('e'))
             QDialog.accept(self)
 
 

@@ -1734,7 +1734,6 @@ class SingleSegmentDialog(SegmentPairDialog):
 class FeaturePairDialog(AbstractPairDialog):
     def __init__(self, inventory, parent = None):
         AbstractPairDialog.__init__(self, inventory,parent)
-
         self.setLayout(QVBoxLayout())
 
         mainlayout = QFormLayout()
@@ -1855,6 +1854,7 @@ class SegmentPairSelectWidget(QGroupBox):
         QGroupBox.__init__(self,'Segments',parent)
 
         self.inventory = inventory
+
 
         vbox = QVBoxLayout()
         self.addSingleButton = QPushButton('Add individual segments')

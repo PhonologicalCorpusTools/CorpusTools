@@ -59,6 +59,7 @@ class Segment(object):
             True if all _features other than the specified ones match,
             False otherwise
         """
+
         for k, v in self.features.items():
             if k in features:
                 continue
@@ -500,115 +501,6 @@ class FeatureMatrix(object):
             self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
         if self._features is None:
             self._features = {k for k in s.keys() if k != 'symbol'}
-
-        #These should be phased out of here
-        #this information is available from the Inventory, and should not
-        #be duplicated here
-        # self.matrix['#'] = Segment('#')
-        # self.places = collections.OrderedDict()
-        # self.manners = collections.OrderedDict()
-        # self.backness = collections.OrderedDict()
-        # self.height = collections.OrderedDict()
-        # self.generate_generic_names()
-
-    def generate_generic(self):
-        self.places['Labial'] = {}
-        self.places['Labiodental'] =  {}
-        self.places['Dental'] = {}
-        self.places['Alveolar'] = {}
-        self.places['Alveopalatal'] = {}
-        self.places['Palatal'] = {}
-        self.places['Velar'] = {}
-        self.places['Uvular'] = {}
-        self.places['Pharyngeal'] = {}
-        self.places['Glottal'] = {}
-
-        self.manners['Stop'] = {}
-        self.manners['Nasal'] = {}
-        self.manners['Trill'] = {}
-        self.manners['Tap'] = {}
-        self.manners['Fricative'] = {}
-        self.manners['Affricate'] = {}
-        self.manners['Approximant'] = {}
-        self.manners['Lateral approximant'] = {}
-
-        self.backness['Front'] = {}
-        self.backness['Near front'] = {}
-        self.backness['Central'] = {}
-        self.backness['Near back'] = {}
-        self.backness['Back'] = {}
-
-        self.height['Close'] = {}
-        self.height['Near close'] = {}
-        self.height['Close mid'] = {}
-        self.height['Open mid'] = {}
-        self.height['Open'] = {}
-
-    def generate_generic_spe(self):
-        self.places['Labial'] = {'ant':'+', 'back': '-', 'cor':'-'}
-        self.places['Labiodental'] =  {'ant':'+', 'back': '-', 'cor':'-'}
-        self.places['Dental'] = {'ant':'+', 'back': '-', 'cor':'+'}
-        self.places['Alveolar'] = {'ant':'-', 'back': '-', 'cor':'+', 'high': '-'}
-        self.places['Alveopalatal'] = {'ant':'-', 'back': '-', 'cor':'+', 'high': '+'}
-        self.places['Palatal'] = {'ant':'-', 'back': '-', 'cor':'-'}
-        self.places['Velar'] = {'ant':'-', 'back': '+', 'cor':'-', 'high': '+'}
-        self.places['Uvular'] = {'ant':'-', 'back': '+', 'cor':'-', 'high': '-'}
-        self.places['Pharyngeal'] = {'low':'+', 'back': '+'}
-        self.places['Glottal'] = {'low':'+', 'back': '-'}
-
-        self.manners['Stop'] = {'son': '-','cont':'-','nasal':'-'}
-        self.manners['Nasal'] = {'nasal': '+'}
-        self.manners['Trill'] = {}
-        self.manners['Tap'] = {}
-        self.manners['Fricative'] = {'son': '-','cont':'+','nasal':'-'}
-        self.manners['Affricate'] = {'del_rel':'+'}
-        self.manners['Approximant'] = {'son':'+', 'nasal': '-', 'lat':'-'}
-        self.manners['Lateral approximant'] = {'son':'+', 'nasal': '-', 'lat':'+'}
-
-        self.backness['Front'] = {'back':'-', 'tense':'+'}
-        self.backness['Near front'] = {'back': '-', 'tense': '-'}
-        self.backness['Central'] = {'back': 'n'}
-        self.backness['Near back'] = {'back': '+', 'tense':'-'}
-        self.backness['Back'] = {'back':'+', 'tense':'+'}
-
-        self.height['Close'] = {'high':'+', 'low':'-', 'tense':'+'}
-        self.height['Near close'] = {'high':'+', 'low':'-', 'tense':'-'}
-        self.height['Close mid'] = {'high':'-', 'low':'-', 'tense':'+'}
-        self.height['Open mid'] = {'high':'-', 'low':'-', 'tense':'-'}
-        self.height['Open'] = {'high':'-', 'low':'+'}
-
-    def generate_generic_hayes(self):
-        self.places['Labial'] = {'labial': '+', 'coronal':'-'}
-        self.places['Labiodental'] = {'labiodental': '+',}
-        self.places['Dental'] = {'anterior': '+', 'coronal':'+', 'labial':'-'}
-        self.places['Alveolar'] = {}
-        self.places['Alveopalatal'] = {'anterior': '-', 'coronal':'+', 'labial':'-'}
-        self.places['Palatal'] = {'dorsal': '+', 'coronal':'+', 'labial':'-'}
-        self.places['Velar'] = {'dorsal': '+', 'labial':'-'}
-        self.places['Uvular'] = {'dorsal': '+', 'back':'+', 'labial':'-'}
-        self.places['Pharyngeal'] = {}
-        self.places['Glottal'] = {'dorsal': '-', 'coronal':'-', 'labial':'-', 'nasal': '-'}
-
-        self.manners['Stop'] = {'sonorant': '-','continuant':'-','nasal':'-','delayed_release':'-'}
-        self.manners['Nasal'] = {'nasal': '+'}
-        self.manners['Trill'] = {'trill': '+'}
-        self.manners['Tap'] = {'tap': '+'}
-        self.manners['Fricative'] = {'sonorant': '-','continuant':'+'}
-        self.manners['Affricate'] = {'sonorant': '-', 'continuant':'-','delayed_release':'+'}
-        self.manners['Approximant'] = {'sonorant': '+', 'lateral':'-'}
-        self.manners['Lateral approximant'] = {'sonorant': '+', 'lateral':'+'}
-
-        self.backness['Front'] = {'front': '+', 'back':'-', 'tense':'+'}
-        self.backness['Near front'] = {'front': '+', 'back': '-', 'tense': '-'}
-        self.backness['Central'] = {'front': '-', 'back': '-'}
-        self.backness['Near back'] = {'front': '-', 'back': '-', 'tense':'-'}
-        self.backness['Back'] = {'front':'-', 'back':'+', 'tense':'+'}
-
-        self.height['Close'] = {'high':'+', 'low':'-', 'tense':'+'}
-        self.height['Near close'] = {'high':'+', 'low':'-', 'tense':'-'}
-        self.height['Close mid'] = {'high':'-', 'low':'-', 'tense':'+'}
-        self.height['Open mid'] = {'high':'-', 'low':'-', 'tense':'-'}
-        self.height['Open'] = {'high':'-', 'low':'+'}
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):
@@ -1624,9 +1516,10 @@ class Inventory(object):
     """
 
     Inventories contain information about a Corpus' segmental inventory.
-    In many cases, they are similar to FeatureMatrices, but more tailored
-    to a specific corpus.  Where a FeatureMatrix would deal in feature
-    specifications, inventories will deal primarily in sets of segments.
+    Everytime PCT is loaded, this class is used to create an InventoryModel, which is passed around to any
+    analysis functions. This class is also used for pickling because InventoryModels are QObjects which cannot
+    be pickled properly.
+
 
     Parameters
     ----------
@@ -1660,8 +1553,7 @@ class Inventory(object):
     rounded_feature : str
         Feature value (i.e., '+round') that codes rounded vowels
 
-    Everytime PCT is loaded, this object is used to create an InventoryModel, which is passed around to any
-    analysis functions, or functions related to inventory
+
     """
     def __init__(self):
 
@@ -1705,38 +1597,21 @@ class Inventory(object):
         self.vowel_row_header_order = dict()
         self.vowel_column_header_order = dict()
 
-
-    def get_sorted_headers(self, orientation, cons_or_vowel):
-        if orientation == Qt.Horizontal:
-            if cons_or_vowel == 'cons':
-                data = self.cons_column_header_order
-            else:
-                data = self.vowel_column_header_order
-        elif orientation == Qt.Vertical:
-            if cons_or_vowel == 'cons':
-                data = self.cons_row_header_order
-            else:
-                data = self.vowel_row_header_order
-        else:
-            raise TypeError('The orientation value passed to Inventory.get_sorted_headers is not valid')
-
-        return [data[header] for header in sorted(list(data.keys()))]
-
-    def setFeatures(self):
-        seg = random.choice([seg for seg in self.segs.keys() if not seg=='#'])
-        print(type(seg), seg)
-        print(type(self.segs[seg]), self.segs[seg])
-        print(type(self.segs[seg].features), self.segs[seg].features)
-        for feature,value in self.segs[seg].features.items():
-            self.features.append(feature)
-            self.possible_values.add(value)
-
-    def update_features(self):
-        for seg in self.inventory:
-            if seg.symbol == '#':
-                continue
-            self.inventory[seg.symbol].features = self.specifier.specify(seg)
-        self.inventory.features = [name for name in self.inventory[seg.symbol].features.keys()]
+    # def get_sorted_headers(self, orientation, cons_or_vowel):
+    #     if orientation == Qt.Horizontal:
+    #         if cons_or_vowel == 'cons':
+    #             data = self.cons_column_header_order
+    #         else:
+    #             data = self.vowel_column_header_order
+    #     elif orientation == Qt.Vertical:
+    #         if cons_or_vowel == 'cons':
+    #             data = self.cons_row_header_order
+    #         else:
+    #             data = self.vowel_row_header_order
+    #     else:
+    #         raise TypeError('The orientation value passed to Inventory.get_sorted_headers is not valid')
+    #
+    #     return [data[header] for header in sorted(list(data.keys()))]
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -1809,92 +1684,6 @@ class Inventory(object):
                 strings.append(v+f)
         return strings
 
-    def find_min_feature_pairs(self, features, others = None):
-        """
-        Find sets of segments that differ only in certain _features,
-        optionally limited by a feature specification
-
-        Parameters
-        ----------
-        _features : list
-            List of _features (i.e. 'back' or 'round')
-        others : list, optional
-            Feature specification to limit sets
-
-        Returns
-        -------
-        dict
-            Dictionary with keys that correspond to the values of ``_features``
-            and values that are the set of segments with those feature values
-        """
-        plus_segs = []
-        minus_segs = []
-        output = collections.defaultdict(list)
-        redundant = self.get_redundant_features(features, others)
-        for seg in self:
-            if any(seg[f] not in set('+-') for f in features):
-                continue
-            if not seg.feature_match(others):
-                continue
-            for seg2 in self:
-                if seg == seg2:
-                    continue
-                if seg.minimal_difference(seg2, features + redundant):
-                    break
-            else:
-                continue
-            if seg not in output[tuple(seg[f] for f in features)]:
-                output[tuple(seg[f] for f in features)].append(seg)
-            if seg2 not in output[tuple(seg2[f] for f in features)]:
-                output[tuple(seg2[f] for f in features)].append(seg2)
-        return output
-
-    def get_redundant_features(self, features, others = None):
-        """
-        Autodetects redundent _features, with the ability to subset
-        the segments
-
-        Parameters
-        ----------
-        _features : list
-            List of _features to find other _features that consistently
-            covary with them
-        others : list, optional
-            Feature specification that specifies a subset to look at
-
-        Returns
-        -------
-        list
-            List of redundant _features
-        """
-        redundant_features = []
-        if isinstance(features, str):
-            features = [features]
-        if others is None:
-            others = []
-        other_feature_names = [x[1:] for x in others]
-        for f in self.features:
-            if f in features:
-                continue
-            if f in other_feature_names:
-                continue
-            feature_values = collections.defaultdict(set)
-            for seg in self:
-                if others is not None:
-                    if not seg.feature_match(others):
-                        continue
-                if seg == '#':
-                    continue
-                value = tuple(seg[x] for x in features)
-                other_value = seg[f]
-                feature_values[value].add(other_value)
-                if any(len(x) > 1 for x in feature_values.values()):
-                    break
-            if any(len(x) > 1 for x in feature_values.values()):
-                continue
-            redundant_features.append(f)
-        return redundant_features
-
     def features_to_segments(self, feature_description):
         """
         Given a feature description, return the segments in the inventory
@@ -1923,152 +1712,17 @@ class Inventory(object):
                 segments.append(k)
         return segments
 
-    def specify(self, specifier):
-        """
-        Specify segments in the inventory using a FeatureMatrix
-
-        Parameters
-        ----------
-        specifier : FeatureMatrix
-            Specifier to use for updating feature specifications
-        """
-        if specifier is None:
-            for k in self._data.keys():
-                self._data[k].specify({})
-            self.features = list()
-            self.possible_values = set()
-            self.cons_columns = collections.OrderedDict()
-            self.cons_rows = collections.OrderedDict()
-            self.vow_columns = collections.OrderedDict()
-            self.vow_rows = collections.OrderedDict()
-            self.voice_feature = None
-            self.vowel_feature = None
-            self.diph_feature = None
-            self.rounded_feature = None
-        else:
-            for k in self._data.keys():
-                try:
-                    self._data[k].specify(specifier[k].features)
-                except KeyError:
-                    self._data[k].specify({})
-            self.features = specifier.features
-            self.possible_values = specifier.possible_values
-
-            self.voice_feature = specifier.voice_feature
-            self.vowel_feature = specifier.vowel_feature
-            self.diph_feature = specifier.diph_feature
-            self.rounded_feature = specifier.rounded_feature
-
-            # Calculate which segments are in which dict
-            # (pre calculate feature matches)
-
-            self.places = collections.OrderedDict()
-            for k,v in specifier.places.items():
-                if len(v) == 0:
-                    self.places[k] = set()
-                else:
-                    self.places[k] = set(self.features_to_segments(v))
-
-            self.manners = collections.OrderedDict()
-            for k,v in specifier.manners.items():
-                if len(v) == 0:
-                    self.manners[k] = set()
-                else:
-                    self.manners[k] = set(self.features_to_segments(v))
-
-            self.height = collections.OrderedDict()
-            for k,v in specifier.height.items():
-                if len(v) == 0:
-                    self.height[k] = set()
-                else:
-                    self.height[k] = set(self.features_to_segments(v))
-
-            self.backness = collections.OrderedDict()
-            for k,v in specifier.backness.items():
-                if len(v) == 0:
-                    self.backness[k] = set()
-                else:
-                    self.backness[k] = set(self.features_to_segments(v))
-
-    def categorize(self, seg):
-        """
-        Categorize a segment into consonant/vowel, place of articulation,
-        manner of articulation, voicing, vowel height, vowel backness, and vowel
-        rounding.
-
-        For consonants, the category is of the format:
-
-        ('Consonant', PLACE, MANNER, VOICING)
-
-        For vowels, the category is of the format:
-
-        ('Vowel', HEIGHT, BACKNESS, ROUNDED)
-
-        Diphthongs are categorized differently:
-
-        ('Diphthong', 'Vowel')
-
-        Parameters
-        ----------
-        seg : Segment
-            Segment to categorize
-
-        Returns
-        -------
-        tuple or None
-            Returns categories according to the formats above, if any are
-            unable to be calculated, returns None in those places.
-            Returns None if a category cannot be found.
-        """
-        if seg == '#':
-            return None
-        seg_features = seg.features
-        if seg.feature_match(self.vowel_feature):
-            category = ['Vowel']
-
-            if seg.feature_match(self.diph_feature):
-                category.insert(0,'Diphthong')
-                return category
-
-            for k,v in self.height.items():
-                if seg.symbol in v:
-                    category.append(k)
-                    break
-            else:
-                category.append(None)
-            for k,v in self.backness.items():
-                if seg.symbol in v:
-                    category.append(k)
-                    break
-            else:
-                category.append(None)
-
-            if seg.feature_match(self.rounded_feature):
-                category.append('Rounded')
-            else:
-                category.append('Unrounded')
-        else:
-            category = ['Consonant']
-
-            for k,v in self.places.items():
-                if seg.symbol in v:
-                    category.append(k)
-                    break
-            else:
-                category.append(None)
-
-            for k,v in self.manners.items():
-                if seg.symbol in v:
-                    category.append(k)
-                    break
-            else:
-                category.append(None)
-
-            if seg.feature_match(self.voice_feature):
-                category.append('Voiced')
-            else:
-                category.append('Voiceless')
-        return category
+    def update_features(self, specifier):
+        for seg in self.segs:
+            if seg == '#':
+                continue
+            self.segs[seg].features = specifier.specify(seg)
+        self.vowel_feature = specifier.vowel_feature
+        self.voice_feature = specifier.voice_feature
+        self.rounded_feature = specifier.rounded_feature
+        self.diphthong_feature = specifier.diph_feature
+        self.features = specifier.features
+        self.possible_values = specifier.possible_values
 
 class Corpus(object):
     """

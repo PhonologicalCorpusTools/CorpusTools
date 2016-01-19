@@ -251,7 +251,6 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.corpus = dialog.corpus
-
             if self.corpus.specifier is None:
                 alert = QMessageBox()
                 alert.setWindowTitle('No feature system')
@@ -279,10 +278,7 @@ class MainWindow(QMainWindow):
             if self.corpus.inventory.isNew:
                 #this corpus was just loaded from a text file (or other source)
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
-                # if self.corpus.specifier is not None:
-                #     self.corpus.update_features()
-                #     self.corpus.inventory.setFeatures()
-                #     self.corpus.specifier.set_major_class_features(self.inventoryModel)
+                self.inventoryModel.updateFeatures(self.corpus.specifier)
 
             else:
                 #this corpus was created with an up-to-date copy of PCT
