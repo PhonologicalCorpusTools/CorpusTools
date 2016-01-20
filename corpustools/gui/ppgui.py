@@ -37,7 +37,7 @@ class PPWorker(FunctionWorker):
         tt = kwargs['type_token']
         att = kwargs.get('attribute', None)
         ft = kwargs['frequency_cutoff']
-        with cm(corpus, st, tt, frequency_threshold = ft) as c:
+        with cm(corpus, st, tt, attribute=att, frequency_threshold = ft) as c:
             try:
                 if 'query' in kwargs:
                     for q in kwargs['query']:
