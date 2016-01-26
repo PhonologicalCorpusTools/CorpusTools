@@ -17,11 +17,7 @@ class InventoryManager(QDialog):
                                     'the table.\n'
                                     'Right click to insert a new empty row or column.\n'
                                     'Double-click on a row or column to edit the '
-                                    'class of segments which appear in that row or column.\n'
-                                  'To change what counts as a consonant or vowel, go the menu option Features > '
-                                  'Edit/View Feature System... and then click on \"Edit Inventory Categories\".'
-
-        ))
+                                    'class of segments which appear in that row or column.\n'))
         topmessage.setWordWrap(True)
         layout.addWidget(topmessage)
 
@@ -60,23 +56,24 @@ class InventoryManager(QDialog):
         layout.addLayout(uncBox)
 
         editCategoriesLayout = QVBoxLayout()
-        editTitle = QLabel('Edit Major Category Features')
-        editTitle.setWordWrap(True)
-        editCategoriesLayout.addWidget(editTitle)
 
         editConsLayout = QVBoxLayout()
-        editConsLayout.addWidget(QLabel('Default consonant features'))
+        editConsLayout.addWidget(QLabel('Default consonant features (separate with commas)'))
         self.editCons = FeatureEdit(self.inventory)
         consCompleter = FeatureCompleter(self.inventory)
         self.editCons.setCompleter(consCompleter)
+        if self.inventory.cons_features is not None:
+            self.editCons.setText(','.join(self.inventory.cons_features))
         editConsLayout.addWidget(self.editCons)
         editCategoriesLayout.addLayout(editConsLayout)
 
         editVowelsLayout = QVBoxLayout()
-        editVowelsLayout.addWidget(QLabel('Default vowel features'))
+        editVowelsLayout.addWidget(QLabel('Default vowel features (separate with commas)'))
         self.editVowels = FeatureEdit(self.inventory)
         vowelCompleter = FeatureCompleter(self.inventory)
         self.editVowels.setCompleter(vowelCompleter)
+        if self.inventory.vowel_features is not None:
+            self.editVowels.setText(','.join(self.inventory.vowel_features))
         editVowelsLayout.addWidget(self.editVowels)
         editCategoriesLayout.addLayout(editVowelsLayout)
 
@@ -86,7 +83,6 @@ class InventoryManager(QDialog):
         resetButton.clicked.connect(self.reset)
         layout.addLayout(editCategoriesLayout)
 
-
         buttonLayout = QHBoxLayout()
         ok_button = QPushButton('OK')
         ok_button.clicked.connect(self.accept)
@@ -94,24 +90,25 @@ class InventoryManager(QDialog):
         cancel_button.clicked.connect(self.reject)
         buttonLayout.addWidget(ok_button)
         buttonLayout.addWidget(cancel_button)
-
         layout.addLayout(buttonLayout)
-
-
 
         self.setLayout(layout)
 
     def accept(self):
+        self.reset()
         QDialog.accept(self)
 
     def reject(self):
         QDialog.reject(self)
 
     def reset(self):
-        cons_features = self.editCons.text()
-        vowel_features = self.editVowels.text()
+        cons_features = [item.strip() for item in self.editCons.text().split(',')] if self.editCons.text() else None
+        vowel_features = [item.strip() for item in self.editVowels.text().split(',')] if self.editVowels.text() else None
+        if cons_features is None and vowel_features is None:
+            return
         round_features = None #not yet implemented
         diph_features = None #yet implemented
-        ClassFeatures = namedtuple('ClassFeatures', ['cons_features','vowel_feature','round_feature', 'diph_feature'])
+        ClassFeatures = namedtuple('ClassFeatures', ['cons_features','vowel_features','round_feature', 'diph_feature'])
         class_features = ClassFeatures(cons_features, vowel_features, round_features, diph_features)
         self.inventory.set_major_class_features(class_features)
+        self.inventory.modelReset()

@@ -473,7 +473,7 @@ class FeatureMatrix(object):
         Mapping from vowel height labels to a feature specification
     backness : dict
         Mapping from vowel backness labels to a feature specification
-    vowel_feature : str
+    vowel_features : str
         Feature value (i.e., '+voc') that separates vowels from consonants
     voice_feature : str
         Feature value (i.e., '+voice') that codes voiced obstruents
@@ -490,7 +490,8 @@ class FeatureMatrix(object):
         self.name = name
         self._features = None
         self.vowel_feature = None
-        self.voice_feature = None
+        self.cons_features = None
+        self.voice_features = None
         self.rounded_feature = None
         self.diph_feature = None
         self.possible_values = set()
@@ -557,13 +558,6 @@ class FeatureMatrix(object):
     def __setstate__(self,state):
         if 'features' not in state:
             state['features'] = state['_features']
-        # for k,v in state['matrix'].items():
-        #     if not isinstance(v,Segment):
-        #         s = Segment(k)
-        #         s.specify(v)
-        #         state['matrix'][k] = s
-        #     else:
-        #         v.specify(v.features)
         self.__dict__.update(state)
 
         #Backwards compatability
@@ -1543,7 +1537,7 @@ class Inventory(object):
         Mapping from vowel height labels to sets of segments
     backness : dict
         Mapping from vowel backness labels to sets of segments
-    vowel_feature : str
+    vowel_features : str
         Feature value (i.e., '+voc') that separates vowels from consonants
     voice_feature : str
         Feature value (i.e., '+voice') that codes voiced obstruents
@@ -1566,7 +1560,8 @@ class Inventory(object):
         self.height = collections.OrderedDict()
         self.backness = collections.OrderedDict()
         self.vowel_feature = None
-        self.voice_feature = None
+        self.cons_features = None
+        self.voice_features = None
         self.diph_feature = None
         self.rounded_feature = None
         self.cons_columns = dict()
@@ -1628,8 +1623,8 @@ class Inventory(object):
             state['height'] = collections.OrderedDict()
         if 'backness' not in state:
             state['backness'] = collections.OrderedDict()
-        if 'vowel_feature' not in state:
-            state['vowel_feature'] = None
+        if 'vowel_features' not in state:
+            state['vowel_features'] = None
         if 'voice_feature' not in state:
             state['voice_feature'] = None
         if 'diph_feature' not in state:
@@ -1717,7 +1712,8 @@ class Inventory(object):
             if seg == '#':
                 continue
             self.segs[seg].features = specifier.specify(seg)
-        self.vowel_feature = specifier.vowel_feature
+        self.cons_features = specifier.cons_features
+        self.vowel_features = specifier.vowel_features
         self.voice_feature = specifier.voice_feature
         self.rounded_feature = specifier.rounded_feature
         self.diphthong_feature = specifier.diph_feature

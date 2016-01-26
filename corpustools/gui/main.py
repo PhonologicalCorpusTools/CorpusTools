@@ -262,8 +262,6 @@ class MainWindow(QMainWindow):
                             'go to the Corpus menu and select Manage Feature System, then download one.'))
                 alert.exec_()
 
-
-
             if modernize.isNotSupported(self.corpus):
                 alert = QMessageBox()
                 alert.setWindowTitle('File out of date')
@@ -276,7 +274,9 @@ class MainWindow(QMainWindow):
 
             if modernize.need_update(self.corpus):
                 #self.corpus.inventory = modernize.modernize_inventory(self.corpus.inventory)
-                self.corpus.inventory = modernize.modernize_features(self.corpus.inventory, self.corpus.specifier, )
+                self.corpus.inventory = modernize.modernize_features(
+                                                                self.corpus.inventory, self.corpus.specifier)
+                self.corpus.inventory.isNew = False
 
             if self.corpus.inventory.isNew:
                 #this corpus was just loaded from a text file (or other source)

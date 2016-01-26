@@ -839,7 +839,8 @@ class InventoryModel(QAbstractTableModel):
                   'vowelColumns', 'vowelRows', 'cons_column_data', 'cons_row_data', 'vowel_column_data', 'vowel_row_data',
                   'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                   'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
-                  'vowel_feature', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew', 'consList', 'vowelList']
+                  'vowel_features', 'cons_features', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew',
+                  'consList', 'vowelList']
 
     modelResetSignal = Signal(bool)
 
@@ -868,7 +869,8 @@ class InventoryModel(QAbstractTableModel):
         self.cons_row_data = {}
         self.vowel_column_data = {}
         self.vowel_row_data = {}
-        self.vowel_feature = None
+        self.cons_features = None
+        self.vowel_features = None
         self.voice_feature = None
         self.rounded_feature = None
         self.diph_feature = None
@@ -885,10 +887,11 @@ class InventoryModel(QAbstractTableModel):
             setattr(self, attribute, deepcopy(getattr(source, attribute)))
 
     def set_major_class_features(self, source):
-        self.vowel_feature = source.vowel_feature
-        self.voice_feature = source.voice_feature
-        self.rounded_feature = source.round_feature
-        self.diphthong_feature = source.diph_feature
+        self.cons_features = source.cons_features if hasattr(source, 'cons_features') else None
+        self.vowel_features = source.vowel_features if hasattr(source, 'vowel_features') else None
+        self.voice_feature = source.voice_feature if hasattr(source,'voice_feature') else None
+        self.rounded_feature = source.round_feature if hasattr(source, 'round_feature') else None
+        self.diph_feature = source.diph_feature if hasattr(source, 'diph_feature') else None
 
     def columnCount(self, parent=None):
         return len(self._data[0])  # any element would do, they should all be the same length
@@ -917,10 +920,6 @@ class InventoryModel(QAbstractTableModel):
             if seg == '#':
                 continue
             self.segs[seg].features = specifier.specify(seg)
-        self.vowel_feature = specifier.vowel_feature
-        self.voice_feature = specifier.voice_feature
-        self.rounded_feature = specifier.rounded_feature
-        self.diphthong_feature = specifier.diph_feature
         self.features = specifier.features
         self.possible_values = specifier.possible_values
         self.modelReset()
@@ -980,10 +979,16 @@ class InventoryModel(QAbstractTableModel):
         return False if self.voice_feature is None else seg.features[self.voice_feature[1:]] == self.voice_feature[0]
 
     def isVowel(self, seg):
-        #return False if self.vowel_feature is None else seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
-        if self.vowel_feature is None:
+        #return False if self.vowel_features is None else seg.features[self.vowel_features[1:]] == self.vowel_features[0]
+        if self.vowel_features is None:
             return False
-        return all(seg.features[feature[1:]] == feature[0] for feature in self.vowel_feature)
+        return all(seg.features[feature[1:]] == feature[0] for feature in self.vowel_features)
+
+    def isCons(self, seg):
+        #return False if self.vowel_features is None else seg.features[self.vowel_features[1:]] == self.vowel_features[0]
+        if self.cons_features is None:
+            return False
+        return all(seg.features[feature[1:]] == feature[0] for feature in self.cons_features)
 
     def isRounded(self, seg):
         return False if self.rounded_feature is None else seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
@@ -1309,14 +1314,14 @@ class InventoryModel(QAbstractTableModel):
             raise CorpusIntegrityError('No segments were found in the inventory')
         if 'consonantal' in sample.features:
             self.generateGenericHayes()
-            self.vowel_feature = '-consonantal'
+            self.vowel_features = '-consonantal'
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = '+diphthong'
             self.filterNames = True
         elif 'voc' in sample.features:
             self.generateGenericSpe()
-            self.vowel_feature = '+voc'
+            self.vowel_features = '+voc'
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = None
@@ -1603,10 +1608,12 @@ class InventoryModel(QAbstractTableModel):
             category = ['Vowel']
             iterRows = self.vowel_row_data
             iterCols = self.vowel_column_data
-        else:
+        elif self.isCons(seg):
             category = ['Consonant']
             iterRows = self.cons_row_data
             iterCols = self.cons_column_data
+        else:
+            raise KeyError #function is wrapped in a try/except which will catch this
 
         for row, col in itertools.product(iterRows, iterCols):
             row_index, row_features, row_segs = iterRows[row]
