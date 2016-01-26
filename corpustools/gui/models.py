@@ -980,7 +980,10 @@ class InventoryModel(QAbstractTableModel):
         return False if self.voice_feature is None else seg.features[self.voice_feature[1:]] == self.voice_feature[0]
 
     def isVowel(self, seg):
-        return False if self.vowel_feature is None else seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
+        #return False if self.vowel_feature is None else seg.features[self.vowel_feature[1:]] == self.vowel_feature[0]
+        if self.vowel_feature is None:
+            return False
+        return all(seg.features[feature[1:]] == feature[0] for feature in self.vowel_feature)
 
     def isRounded(self, seg):
         return False if self.rounded_feature is None else seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
@@ -1072,6 +1075,10 @@ class InventoryModel(QAbstractTableModel):
         else:
             column_data = self.vowel_column_data
             headers = self.vowelColumns
+
+        if len(column_data) == 1:
+            return #do not delete the last remaining column
+
         for key, value in column_data.items():
             if value[0] == index.column():
                 target = key
@@ -1093,6 +1100,10 @@ class InventoryModel(QAbstractTableModel):
         else:
             row_data = self.vowel_row_data
             headers = self.vowelRows
+
+        if len(row_data) == 1:
+            return #don't delete the last remaining row
+
         for key, value in row_data.items():
             if value[0] == index.row():
                 target = key

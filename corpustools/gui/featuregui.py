@@ -431,10 +431,10 @@ class EditFeatureMatrixDialog(QDialog):
 
         box.addRow('Display mode:',self.displayWidget)
 
-        self.editCategoriesButton = QPushButton('Edit inventory categories')
-        self.editCategoriesButton.clicked.connect(self.editCategories)
-
-        box.addRow(self.editCategoriesButton)
+        # self.editCategoriesButton = QPushButton('Edit inventory categories')
+        # self.editCategoriesButton.clicked.connect(self.editCategories)
+        #
+        # box.addRow(self.editCategoriesButton)
 
         viewFrame.setLayout(box)
 
@@ -852,39 +852,6 @@ class EditSegmentDialog(QDialog):
                 return
         self.featspec = {f:v.currentText() for f,v in self.featureSelects.items()}
         QDialog.accept(self)
-
-class FeatureClassManager(CreateClassWidget):
-    def __init__(self, parent, settings, corpusModel):
-        self.corpus = corpusModel.corpus
-        super().__init__(parent, self.corpus, class_type='class')
-
-    def accept(self):
-        className = self.nameEdit.text()
-        className = className.strip()
-        className = className.replace(' ', '')
-        if className == '':
-            reply = QMessageBox.critical(self,
-                                         "Missing information", "Please enter a name for the class.")
-            return
-        elif className in self.corpus.inventory.classes.keys():
-
-            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate class names",
-                                 "'{}' is already the name of a class. Please select a new name".format(className))
-                                 #QMessageBox.NoButton, self)
-            msgBox.addButton("OK", QMessageBox.AcceptRole)
-        createType = self.createType.currentText()
-        createList = self.createWidget.value()
-        if not createList:
-            reply = QMessageBox.critical(self,
-                                         "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
-            return
-        if createType == 'Features':
-            createList = createList[1:-1]
-            self.segList = self.corpus.features_to_segments(createList)
-        else:
-            self.segList = createList
-        QDialog.accept(self)
-
 
 class FeatureMatrixManager(QDialog):
     def __init__(self, parent, settings):

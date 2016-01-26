@@ -21,7 +21,7 @@ from .corpusgui import (AddTierDialog, AddAbstractTierDialog,
                         AddWordDialog, CorpusSummary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
-                        ExportFeatureSystemDialog, FeatureClassManager)
+                        ExportFeatureSystemDialog)
 
 from .inventorygui import InventoryManager
 
@@ -249,8 +249,10 @@ class MainWindow(QMainWindow):
     def loadCorpus(self):
         dialog = CorpusLoadDialog(self, self.settings)
         result = dialog.exec_()
+
         if result:
             self.corpus = dialog.corpus
+
             if self.corpus.specifier is None:
                 alert = QMessageBox()
                 alert.setWindowTitle('No feature system')
@@ -261,19 +263,20 @@ class MainWindow(QMainWindow):
                 alert.exec_()
 
 
-            if not hasattr(self.corpus.inventory, 'isNew') or self.corpus.name=='iphod':
-                #this corpus is from an older version of PCT, we need to check/modify/add attributes
-                if modernize.isNotSupported(self.corpus):
-                    alert = QMessageBox()
-                    alert.setWindowTitle('File out of date')
-                    alert.setText('This corpus file contains a format no longer supported by PCT. If this is a built-in'
-                    ' corpus, you can download a newer version. If this is your own corpus then you should re-load from'
-                    ' the original text file. Both options can be found under File > Load corpus...')
-                    alert.exec_()
-                    self.corpus = None
-                    return
-                self.corpus.inventory = modernize.modernize_inventory(self.corpus.inventory)
 
+            if modernize.isNotSupported(self.corpus):
+                alert = QMessageBox()
+                alert.setWindowTitle('File out of date')
+                alert.setText('This corpus file contains a format no longer supported by PCT. If this is a built-in'
+                ' corpus, you can download a newer version. If this is your own corpus then you should re-load from'
+                ' the original text file. Both options can be found under File > Load corpus...')
+                alert.exec_()
+                self.corpus = None
+                return
+
+            if modernize.need_update(self.corpus):
+                #self.corpus.inventory = modernize.modernize_inventory(self.corpus.inventory)
+                self.corpus.inventory = modernize.modernize_features(self.corpus.inventory, self.corpus.specifier, )
 
             if self.corpus.inventory.isNew:
                 #this corpus was just loaded from a text file (or other source)
@@ -348,12 +351,6 @@ class MainWindow(QMainWindow):
                 self.saveCorpusAct.setEnabled(False)
             else:
                 self.enableSave()
-
-    @check_for_empty_corpus
-    @check_for_transcription
-    def loadFeatureClasses(self):
-        dialog = FeatureClassManager(self, self.settings, self.corpusModel)
-        result = dialog.exec_()
 
     def subsetCorpus(self):
         dialog = SubsetCorpusDialog(self,self.corpusModel.corpus)
@@ -736,10 +733,6 @@ class MainWindow(QMainWindow):
         self.manageInventoryAct = QAction ( "Manage inventory chart...",
                 self,
                 statusTip="Manage inventory chart", triggered=self.manageInventoryChart)
-
-        self.manageFeatureClassesAct = QAction( "Manage feature classes...",
-                self,
-                statusTip = "Create/change feature classes", triggered=self.loadFeatureClasses)
 
         self.createSubsetAct = QAction( "Generate a corpus subset",
                 self,

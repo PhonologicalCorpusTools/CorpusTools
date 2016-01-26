@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+import time
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget)

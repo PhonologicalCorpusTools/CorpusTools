@@ -1,6 +1,8 @@
 from .imports import *
 from .views import InventoryView
 from .models import ConsonantModel, VowelModel, UncategorizedModel
+from .widgets import FeatureEdit, FeatureCompleter
+from collections import namedtuple
 
 
 class InventoryManager(QDialog):
@@ -23,8 +25,8 @@ class InventoryManager(QDialog):
         topmessage.setWordWrap(True)
         layout.addWidget(topmessage)
 
-        inventoryLayout = QVBoxLayout()
 
+        inventoryLayout = QVBoxLayout()
         consBox = QVBoxLayout()
         cons_title = QLabel('Consonant Inventory')
         consBox.addWidget(cons_title)
@@ -57,6 +59,34 @@ class InventoryManager(QDialog):
         uncBox.addWidget(self.uncView)
         layout.addLayout(uncBox)
 
+        editCategoriesLayout = QVBoxLayout()
+        editTitle = QLabel('Edit Major Category Features')
+        editTitle.setWordWrap(True)
+        editCategoriesLayout.addWidget(editTitle)
+
+        editConsLayout = QVBoxLayout()
+        editConsLayout.addWidget(QLabel('Default consonant features'))
+        self.editCons = FeatureEdit(self.inventory)
+        consCompleter = FeatureCompleter(self.inventory)
+        self.editCons.setCompleter(consCompleter)
+        editConsLayout.addWidget(self.editCons)
+        editCategoriesLayout.addLayout(editConsLayout)
+
+        editVowelsLayout = QVBoxLayout()
+        editVowelsLayout.addWidget(QLabel('Default vowel features'))
+        self.editVowels = FeatureEdit(self.inventory)
+        vowelCompleter = FeatureCompleter(self.inventory)
+        self.editVowels.setCompleter(vowelCompleter)
+        editVowelsLayout.addWidget(self.editVowels)
+        editCategoriesLayout.addLayout(editVowelsLayout)
+
+        resetButton = QPushButton()
+        editCategoriesLayout.addWidget(resetButton)
+        resetButton.setText('Reset features')
+        resetButton.clicked.connect(self.reset)
+        layout.addLayout(editCategoriesLayout)
+
+
         buttonLayout = QHBoxLayout()
         ok_button = QPushButton('OK')
         ok_button.clicked.connect(self.accept)
@@ -67,6 +97,8 @@ class InventoryManager(QDialog):
 
         layout.addLayout(buttonLayout)
 
+
+
         self.setLayout(layout)
 
     def accept(self):
@@ -74,3 +106,12 @@ class InventoryManager(QDialog):
 
     def reject(self):
         QDialog.reject(self)
+
+    def reset(self):
+        cons_features = self.editCons.text()
+        vowel_features = self.editVowels.text()
+        round_features = None #not yet implemented
+        diph_features = None #yet implemented
+        ClassFeatures = namedtuple('ClassFeatures', ['cons_features','vowel_feature','round_feature', 'diph_feature'])
+        class_features = ClassFeatures(cons_features, vowel_features, round_features, diph_features)
+        self.inventory.set_major_class_features(class_features)
