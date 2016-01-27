@@ -11,30 +11,26 @@ class InventoryManager(QDialog):
         self.setWindowTitle('Manage inventory')
         self.inventory = inventory
 
+        font = QFont('Arial', 10)
+        font.setBold(True)
         layout = QVBoxLayout()
-        topmessage = QLabel(text=('You can edit your inventory chart from this window.\n'
-                                  'Click on a heading to highlight the row or column, then drag-and-drop to reorganize '
-                                    'the table.\n'
-                                    'Right click to insert a new empty row or column.\n'
-                                    'Double-click on a row or column to edit the '
-                                    'class of segments which appear in that row or column.\n'))
-        topmessage.setWordWrap(True)
-        layout.addWidget(topmessage)
 
-
-        inventoryLayout = QVBoxLayout()
+        inventoryLayout = QHBoxLayout()
         consBox = QVBoxLayout()
         cons_title = QLabel('Consonant Inventory')
+        font.setBold(True)
+        cons_title.setFont(font)
         consBox.addWidget(cons_title)
         self.consModel = ConsonantModel(self.inventory)
         self.consView = InventoryView(self.consModel)
-        self.consView.resizeColumnsToContents()
         self.consView.resizeRowsToContents()
+        self.consView.resizeColumnsToContents()
         consBox.addWidget(self.consView)
         inventoryLayout.addLayout(consBox)
 
         vowelBox = QVBoxLayout()
         vowel_title = QLabel('Vowel Inventory')
+        vowel_title.setFont(font)
         vowelBox.addWidget(vowel_title)
         self.vowelModel = VowelModel(self.inventory)
         self.vowelView = InventoryView(self.vowelModel)
@@ -47,6 +43,7 @@ class InventoryManager(QDialog):
 
         uncBox = QVBoxLayout()
         unc_title = QLabel('Uncategorized Segments')
+        unc_title.setFont(font)
         uncBox.addWidget(unc_title)
         self.uncModel = UncategorizedModel(self.inventory)
         self.uncView = InventoryView(self.uncModel)
@@ -77,11 +74,24 @@ class InventoryManager(QDialog):
         editVowelsLayout.addWidget(self.editVowels)
         editCategoriesLayout.addLayout(editVowelsLayout)
 
+        topmessage = QLabel(text=(  'Double-click on a row or column to edit the '
+                                    'class of segments which appear in that row or column.\n'
+                                    'Right click to insert a new empty row or column.\n'
+                                    'Select a heading and drag-and-drop to reorganize the table.\n'
+        ))
+
+        topmessage.setWordWrap(True)
+        font.setBold(False)
+        topmessage.setFont(font)
+        layout.addWidget(topmessage)
+
         resetButton = QPushButton()
         editCategoriesLayout.addWidget(resetButton)
         resetButton.setText('Reset features')
         resetButton.clicked.connect(self.reset)
-        layout.addLayout(editCategoriesLayout)
+        inventoryLayout.addLayout(editCategoriesLayout)
+
+        layout.addSpacing(15)
 
         buttonLayout = QHBoxLayout()
         ok_button = QPushButton('OK')
@@ -104,7 +114,11 @@ class InventoryManager(QDialog):
     def reset(self):
         cons_features = [item.strip() for item in self.editCons.text().split(',')] if self.editCons.text() else None
         vowel_features = [item.strip() for item in self.editVowels.text().split(',')] if self.editVowels.text() else None
-        if cons_features is None and vowel_features is None:
+        if cons_features is None or vowel_features is None:
+            alert = QMessageBox()
+            alert.setText('One of the categories is missing a default feature. Please fill in both.')
+            alert.setWindowTitle('Missing feature value')
+            alert.exec_()
             return
         round_features = None #not yet implemented
         diph_features = None #yet implemented

@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
                 return
 
             if modernize.need_update(self.corpus):
-                #self.corpus.inventory = modernize.modernize_inventory(self.corpus.inventory)
+                self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
                 self.corpus.inventory = modernize.modernize_features(
                                                                 self.corpus.inventory, self.corpus.specifier)
                 self.corpus.inventory.isNew = False
