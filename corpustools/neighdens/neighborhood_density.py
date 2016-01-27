@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from corpustools.corpus.classes import Word
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi
@@ -103,6 +105,10 @@ def neighborhood_density(corpus_context, query,
         call_back('Finding neighbors...')
         call_back(0,len(corpus_context))
         cur = 0
+
+    if algorithm == 'edit_distance' and max_distance == 1:
+        return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type)
+
     if algorithm == 'edit_distance':
         is_neighbor = partial(_is_edit_distance_neighbor,
                                 sequence_type = corpus_context.sequence_type,
@@ -131,6 +137,46 @@ def neighborhood_density(corpus_context, query,
     neighbors = set(matches)-set([query])
 
     return (len(neighbors), neighbors)
+
+
+def fast_neighborhood_density(corpus_context, query, sequence_type):
+    """Generates all neighbors of edit distance <= 1 and searches 
+    for them in corpus_context.
+
+    Will be faster than neighborhood_density when:
+    n > m * (1 + s), where
+    n: number of words in corpus
+    m: length of query
+    s: size of segment inventory
+    """
+    # Create a dict with sequence_type keys for constaint-time lookup
+    tierdict = defaultdict(list)
+    for entry in corpus_context:
+        tierdict[str(getattr(entry, sequence_type))].append(entry)
+
+    neighbors = set()
+    for candidate in generate_neighbor_candidates(corpus_context, query, sequence_type):
+        if candidate in tierdict:
+            for w in tierdict[candidate]:
+                neighbors.add(w)
+
+    return (len(neighbors), neighbors)
+
+def generate_neighbor_candidates(corpus_context, query, sequence_type):
+    sequence = getattr(query, sequence_type)
+    yield str(sequence)
+    for i in range(len(sequence)):
+        yield str(sequence[:i] + sequence[i+1:]) # deletion
+        for char in corpus_context.inventory:
+            if str(char) not in ['#', sequence[i]]:
+                yield str(sequence[:i] + [str(char)] + sequence[i:]) # insertion
+                yield str(sequence[:i] + [str(char)] + sequence[i+1:]) # substitution
+    for char in corpus_context.inventory: # final pass to get insertion at len+1
+        if str(char) not in ['#', sequence[i]]:
+            yield str(sequence[:] + [str(char)]) # insertion
+
+
+
 
 def find_mutation_minpairs_all_words(corpus_context, num_cores = -1,
                     stop_check = None, call_back = None):
