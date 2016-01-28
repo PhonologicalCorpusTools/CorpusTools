@@ -1314,14 +1314,16 @@ class InventoryModel(QAbstractTableModel):
             raise CorpusIntegrityError('No segments were found in the inventory')
         if 'consonantal' in sample.features:
             self.generateGenericHayes()
-            self.vowel_features = '-consonantal'
+            self.cons_features = ['+consonantal']
+            self.vowel_features = ['-consonantal']
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = '+diphthong'
             self.filterNames = True
         elif 'voc' in sample.features:
             self.generateGenericSpe()
-            self.vowel_features = '+voc'
+            self.cons_features = ['-voc']
+            self.vowel_features = ['+voc']
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = None

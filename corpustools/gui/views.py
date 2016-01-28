@@ -829,12 +829,14 @@ class InventoryView(QTableView):
         self.horizontalHeader().setSectionsMovable(True)
         self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.horizontalHeader().customContextMenuRequested.connect(self.showColumnMenu)
+        self.horizontalHeader().stretchLastSection()
 
         self.verticalHeader().setSectionsClickable(True)
         self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
         self.verticalHeader().setSectionsMovable(True)
         self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.verticalHeader().customContextMenuRequested.connect(self.showRowMenu)
+        self.verticalHeader().stretchLastSection()
 
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
@@ -846,23 +848,29 @@ class InventoryView(QTableView):
         menu = QMenu()
         addRowAction = menu.addAction('Insert Row')
         removeRowAction = menu.addAction('Remove Row')
+        editAction = menu.addAction('Edit Row Properties')
         index = self.indexAt(pos)
         action = menu.exec_(self.mapToGlobal(pos))
         if action == addRowAction:
             self.model().insertRow(index)
         elif action == removeRowAction:
             self.model().removeRow(index)
+        elif action == editAction:
+            self.editChartRow(index.row())
 
     def showColumnMenu(self, pos):
         menu = QMenu()
         addColumnAction = menu.addAction('Insert Column')
         removeColumnAction = menu.addAction('Remove Column')
+        editAction = menu.addAction('Edit Column Properties')
         index = self.indexAt(pos)
         action = menu.exec_(self.mapToGlobal(pos))
         if action == addColumnAction:
             self.model().insertColumn(index)
         elif action == removeColumnAction:
             self.model().removeColumn(index)
+        elif action == editAction:
+            self.editChartCol(index.column())
 
     def moveColumn(self):
         map = {}

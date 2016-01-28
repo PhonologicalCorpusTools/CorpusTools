@@ -1,5 +1,4 @@
-from corpustools.gui.imports import *
-from PyQt5.QtCore import QVariant, Qt
+from corpustools import __version__ as currentPCTversion
 import re
 import random
 import collections
@@ -1769,6 +1768,7 @@ class Corpus(object):
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
+        self._version = currentPCTversion
 
     @property
     def has_transcription(self):

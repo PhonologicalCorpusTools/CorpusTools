@@ -277,9 +277,11 @@ class MainWindow(QMainWindow):
                 self.corpus.inventory = modernize.modernize_features(
                                                                 self.corpus.inventory, self.corpus.specifier)
                 self.corpus.inventory.isNew = False
+                self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
+                self.inventoryModel.modelReset()
 
-            if self.corpus.inventory.isNew:
-                #this corpus was just loaded from a text file (or other source)
+            elif self.corpus.inventory.isNew:
+                #this corpus was just loaded from a text file
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
                 self.inventoryModel.updateFeatures(self.corpus.specifier)
 

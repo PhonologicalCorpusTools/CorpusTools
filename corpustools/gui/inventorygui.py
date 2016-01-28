@@ -105,16 +105,16 @@ class InventoryManager(QDialog):
         self.setLayout(layout)
 
     def accept(self):
-        self.reset()
+        self.reset(exiting=True)
         QDialog.accept(self)
 
     def reject(self):
         QDialog.reject(self)
 
-    def reset(self):
+    def reset(self, exiting=False):
         cons_features = [item.strip() for item in self.editCons.text().split(',')] if self.editCons.text() else None
         vowel_features = [item.strip() for item in self.editVowels.text().split(',')] if self.editVowels.text() else None
-        if cons_features is None or vowel_features is None:
+        if (cons_features is None or vowel_features is None) and not exiting:
             alert = QMessageBox()
             alert.setText('One of the categories is missing a default feature. Please fill in both.')
             alert.setWindowTitle('Missing feature value')
