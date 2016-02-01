@@ -108,6 +108,9 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
     +(P(c,'seg2')*log(P(c,'seg2')/P(c,'seg1')))
     for c in allC.values()])
 
+    print('Seg 1  is {}, Seg 2 is {}'.format(seg1, seg2))
+    print([(k,v) for (k,v) in allC.items() if allC[k].seg1 or allC[k].seg2])
+
     seg1_entropy = sum(P(result,'seg1')*log(
                                         P(result,'seg1')/(freq_c[context]/totalC))
                         for (context,result) in allC.items())

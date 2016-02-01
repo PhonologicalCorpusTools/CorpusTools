@@ -118,6 +118,13 @@ class KLDialog(FunctionDialog):
         klframe.setLayout(kllayout)
         self.layout().insertWidget(0, klframe)
 
+        if self.showToolTips:
+            self.contextRadioWidget.setToolTip(("<FONT COLOR=black>"
+                                    'This setting selects the environment to consider when calculating KL '
+                                    'divergence. Note that the \"both\" option considers both sides simultaneously; '
+                                    'it is not a sum of the left and right side scores.'
+                                    "</FONT>"))
+
     def generateKwargs(self):
         kwargs = {}
         segPairs = self.segPairWidget.value()

@@ -840,7 +840,7 @@ class InventoryModel(QAbstractTableModel):
                   'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                   'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
                   'vowel_features', 'cons_features', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew',
-                  'consList', 'vowelList']
+                  'consList', 'vowelList', 'non_segment_symbols']
 
     modelResetSignal = Signal(bool)
 
