@@ -18,7 +18,6 @@ class InventoryManager(QDialog):
         inventoryLayout = QHBoxLayout()
         consBox = QVBoxLayout()
         cons_title = QLabel('Consonant Inventory')
-        font.setBold(True)
         cons_title.setFont(font)
         consBox.addWidget(cons_title)
         self.consModel = ConsonantModel(self.inventory)

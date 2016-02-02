@@ -262,32 +262,37 @@ class MainWindow(QMainWindow):
                             'go to the Corpus menu and select Manage Feature System, then download one.'))
                 alert.exec_()
 
-            if modernize.isNotSupported(self.corpus):
-                alert = QMessageBox()
-                alert.setWindowTitle('File out of date')
-                alert.setText('This corpus file contains a format no longer supported by PCT. If this is a built-in'
-                ' corpus, you can download a newer version. If this is your own corpus then you should re-load from'
-                ' the original text file. Both options can be found under File > Load corpus...')
-                alert.exec_()
-                self.corpus = None
-                return
+            # if modernize.isNotSupported(self.corpus):
+            #     alert = QMessageBox()
+            #     alert.setWindowTitle('File out of date')
+            #     alert.setText('This corpus file contains a format no longer supported by PCT. If this is a built-in'
+            #     ' corpus, you can download a newer version. If this is your own corpus then you should re-load from'
+            #     ' the original text file. Both options can be found under File > Load corpus...')
+            #     alert.exec_()
+            #     self.corpus = None
+            #     return
 
-            if modernize.need_update(self.corpus):
+            try:
+                if self.corpus.inventory.isNew:
+                    # this corpus was just loaded from a text file
+                    self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
+                    self.inventoryModel.updateFeatures(self.corpus.specifier)
+                    self.saveCorpus()
+
+                else:
+                    # this corpus was created with an up-to-date copy of PCT
+                    self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
+
+            except AttributeError:
+                #Missing a necessary attribute - do some updating
                 self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
                 self.corpus.inventory = modernize.modernize_features(
                                                                 self.corpus.inventory, self.corpus.specifier)
                 self.corpus.inventory.isNew = False
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
                 self.inventoryModel.modelReset()
+                self.saveCorpus()
 
-            elif self.corpus.inventory.isNew:
-                #this corpus was just loaded from a text file
-                self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
-                self.inventoryModel.updateFeatures(self.corpus.specifier)
-
-            else:
-                #this corpus was created with an up-to-date copy of PCT
-                self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
 
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
@@ -544,7 +549,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def autoAnalysis(self):
-        dialog = AutoDialog(self, self.corpusModel, self.showToolTips)
+        dialog = AutoDialog(self, self.corpusModel.corpus, self.inventoryModel, self.settings, self.showToolTips)
         result = dialog.exec_()
         # if self.AutoWindow is not None and dialog.update and self.AutoWindow.isVisible():
         #     self.AutoWindow.table.model().addRows(dialog.results)
@@ -968,10 +973,9 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
-        #self.analysisMenu.addAction(self.autoAnalysisAct)
+        self.analysisMenu.addAction(self.autoAnalysisAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
-        #self.viewMenu.addAction(self.showInventoryAct)
         self.viewMenu.addAction(self.showDiscoursesAct)
         self.viewMenu.addAction(self.showTextAct)
         self.viewMenu.addSeparator()

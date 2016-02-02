@@ -877,6 +877,20 @@ class Word(object):
         if self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
+    def get_len(self, tier_name):
+        return len(getattr(self, tier_name))
+
+    def enumerate_symbols(self, tier_name, reversed=False):
+        if reversed:
+            word = [k for k in range(self.get_len(tier_name))]
+            word.reverse()
+            for j in word:
+                yield (j, getattr(self, tier_name)[j])
+
+        else:
+            for j in range(self.get_len(tier_name)):
+                yield (j, getattr(self, tier_name)[j])
+
     def __hash__(self):
         return hash((self.spelling,str(self.transcription)))
 

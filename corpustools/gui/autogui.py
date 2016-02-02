@@ -6,8 +6,8 @@ from PyQt5.QtWidgets import QInputDialog
 
 from .imports import *
 from .windows import FunctionWorker
-from .widgets import RadioSelectWidget
-from .luckygui import LuckyDialog
+from .widgets import RadioSelectWidget, FeatureEdit, FeatureCompleter
+from .tacticsgui import TacticsDialog
 from corpustools.mutualinfo import mutual_information
 
 
@@ -27,21 +27,23 @@ class AutoDialog(QDialog):
 
     name = 'Phonological pattern finding'
 
-    def __init__(self, parent, corpusModel, showToolTips):
-        QDialog.__init__(self, parent)#, AutoWorker())
-        self.corpusModel = corpusModel
+    def __init__(self, parent, corpus, inventory, settings, showToolTips):
+        QDialog.__init__(self, parent)
+        self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
+        self.settings = settings
         self.results = list()
         self.setWindowTitle('Look for phonological patterns')
         self.layout = QVBoxLayout()
 
-        algEnabled = {'Vowel harmony':self.corpusModel.corpus.has_transcription,
-                    'Syllable shape':self.corpusModel.corpus.has_transcription,
-                    'Random analysis':self.corpusModel.corpus.has_transcription}
+        algEnabled = {'Vowel harmony':False,#self.corpus.has_transcription,
+                    'Syllable shape':self.corpus.has_transcription,
+                    'Random analysis':False}#self.corpus.has_transcription}
 
         self.algorithmWidget = RadioSelectWidget('Which pattern do you want to look for?',
-                                            OrderedDict([('Vowel harmony','vowel_harmony'),
-                                            ('Syllable shape','syllables'),
+                                            OrderedDict([('Syllable shape','syllables'),
+                                            ('Vowel harmony','vowel_harmony'),
                                             ('Random analysis','random')]),
                                             enabled=algEnabled)
 
@@ -86,8 +88,20 @@ class AutoDialog(QDialog):
             self.doRandomAnalysis()
 
     def doSyllableShapes(self):
-        nucleus = QInputDialog.getText(self, 'Syllable shapes', 'Which feature represents a syllable nucleus?')
-        nucleus = nucleus[0].lstrip('[').rstrip(']')
+        syllableDialog = TacticsDialog(self,self.corpus,self.inventory,self.settings,self.showToolTips)
+        result = syllableDialog.exec_()
+        if result:
+            print('Accept')
+        else:
+            print('Reject')
+
+    def oldDoSyllableShapes(self):
+        self.nucleusEdit = FeatureEdit(self.inventory)
+        consCompleter = FeatureCompleter(self.inventory)
+        self.nucleusEdit.setCompleter(consCompleter)
+        if self.inventory.cons_features is not None:
+            self.nucleusEdit.setText(','.join(self.inventory.cons_features))
+        nucleus = self.nucleusEdit.text()
         if not self.corpusHasFeature(nucleus):
             return
 
@@ -103,7 +117,7 @@ class AutoDialog(QDialog):
             cur_onset = list()
             cur_coda = list()
             cur_medial = list()
-            for pos,seg in word.enumerate_symbols('transcription'):
+            for pos,seg in word:
                 seg = self.corpusModel.corpus.specifier[seg]
                 if not seg.features[self.name] == self.sign:
                     cur_onset.append(seg)
