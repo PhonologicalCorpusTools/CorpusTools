@@ -9,6 +9,7 @@ from corpustools.freqalt.freq_of_alt import calc_freq_of_alt
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext)
+import time
 
 class FAWorker(FunctionWorker):
     def run(self):

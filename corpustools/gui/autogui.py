@@ -90,106 +90,6 @@ class AutoDialog(QDialog):
     def doSyllableShapes(self):
         syllableDialog = TacticsDialog(self,self.corpus,self.inventory,self.settings,self.showToolTips)
         result = syllableDialog.exec_()
-        if result:
-            print('Accept')
-        else:
-            print('Reject')
-
-    def oldDoSyllableShapes(self):
-        self.nucleusEdit = FeatureEdit(self.inventory)
-        consCompleter = FeatureCompleter(self.inventory)
-        self.nucleusEdit.setCompleter(consCompleter)
-        if self.inventory.cons_features is not None:
-            self.nucleusEdit.setText(','.join(self.inventory.cons_features))
-        nucleus = self.nucleusEdit.text()
-        if not self.corpusHasFeature(nucleus):
-            return
-
-        onsets = list()
-        medials = list()
-        codas = list()
-        self.sign = nucleus[0]
-        self.name = nucleus[1:]
-
-        for word in self.corpusModel.corpus:
-            first_pos = 0
-            last_pos = len(word.transcription)
-            cur_onset = list()
-            cur_coda = list()
-            cur_medial = list()
-            for pos,seg in word:
-                seg = self.corpusModel.corpus.specifier[seg]
-                if not seg.features[self.name] == self.sign:
-                    cur_onset.append(seg)
-                else:
-                    if not cur_onset in onsets:
-                        onsets.append(cur_onset)
-                    first_pos = pos
-                    break
-
-            for pos in reversed(range(len(word.transcription))):
-                seg = self.corpusModel.corpus.specifier[word.transcription[pos]]
-                if not seg.features[self.name] == self.sign:
-                    cur_coda.append(seg)
-                else:
-                    if not cur_coda in codas:
-                        codas.append(cur_coda)
-                    last_pos = pos
-                    break
-
-            for pos in range(first_pos,last_pos):
-                seg = self.corpusModel.corpus.specifier[word.transcription[pos]]
-                if not seg.features[self.name] == self.sign:
-                    cur_medial.append(seg)
-                else:
-                    if not cur_medial in medials:
-                        medials.append(cur_medial)
-                    cur_medial = list()
-
-        # meds = [x for x in medials if x in onsets or x in codas]
-        # for m in meds:
-        #     if len(m) == 1:
-        #         if len(codas)==1 and codas[0]==[]: #no coda
-        #             onsets.append(codas[0])#this must be an onset
-        #
-        #     m = reversed(m)
-        #     cur_string = list()
-        #     for seg in m:
-        #         cur_string.append(seg)
-        #         if cur_string in onsets:
-        #             continue
-
-        self.outputSyllableResults(onsets, medials, codas)
-
-
-    def outputSyllableResults(self,onsets,medials,codas):
-        onset_patterns = self.lookForPatterns(onsets)
-        onset_patterns = '\n'.join(onset_patterns)
-        onsets = [''.join(o.symbol for o in ons) if ons else '\u2205' for ons in onsets]
-        onsets.sort()
-        onsets_label = QLabel('These are possible onsets in your corpus:')
-        onsets_list = ','.join(onsets)
-        onsets_label2 = QLabel(onsets_list)
-        commentary = 'Comments:\n{}'.format(onset_patterns)
-        onset_commentary = QLabel(commentary)
-
-        coda_patterns = self.lookForPatterns(codas)
-        coda_patterns = ','.join(coda_patterns)
-        codas = [''.join(c.symbol for c in coda) if coda else '\u2205' for coda in codas]
-        codas.sort()
-        codas_label = QLabel('\n************\nThese are possible codas in your corpus:')
-        codas_list = ','.join(codas)
-        codas_label2 = QLabel(codas_list)
-        commentary = 'Comments:\n{}'.format(coda_patterns)
-        coda_commentary = QLabel(commentary)
-
-
-        self.resultsLayout.addWidget(onsets_label)
-        self.resultsLayout.addWidget(onsets_label2)
-        self.resultsLayout.addWidget(onset_commentary)
-        self.resultsLayout.addWidget(codas_label)
-        self.resultsLayout.addWidget(codas_label2)
-        self.resultsLayout.addWidget(coda_commentary)
 
     def lookForPatterns(self, seg_list):
 
@@ -201,7 +101,6 @@ class AutoDialog(QDialog):
         if len(seg_list)==1 and seg_list[0] == []:
             text.append('No segments are allowed in this position')
             return text
-
 
         ##########check for obstruents
         for segs in seg_list:

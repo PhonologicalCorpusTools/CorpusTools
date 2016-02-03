@@ -5,105 +5,23 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
                                          MostFrequentVariantContext,
                                          SeparatedTokensVariantContext,
                                          WeightedVariantContext)
+from corpustools.tactics import tactics
+from corpustools.exceptions import PCTError, PCTPythonError
+import time
 
 class TacticsWorker(FunctionWorker):
 
     def __init__(self):
         super().__init__()
 
-class TacticsDialog(QDialog):
-    header = ''
-
-    _about = ''
-
-    name = 'Phonotactic inference'
-
-
-    def __init__(self,parent, corpus, inventory, settings, showToolTips):
-        super().__init__(parent)#, settings, TacticsWorker())
-        self.corpus = corpus
-        self.inventory = inventory
-        self.settings = settings
-        self.showToolTips = showToolTips
-
-        layout = QVBoxLayout()
-
-        nucleusLayout = QHBoxLayout()
-        nucleusLayout.addWidget(QLabel('What feature defines a syllable nucleus?'))
-        self.nucleusEdit = FeatureEdit(self.inventory)
-        consCompleter = FeatureCompleter(self.inventory)
-        self.nucleusEdit.setCompleter(consCompleter)
-        if self.inventory.vowel_features is not None:
-            self.nucleusEdit.setText(self.inventory.vowel_features[0])
-        nucleusLayout.addWidget(self.nucleusEdit)
-        layout.addLayout(nucleusLayout)
-
-        parseTypeLayout = QHBoxLayout()
-        parseTypeLayout.addWidget(QLabel('Select a parsing strategy:'))
-        self.parseTypeRadio = QRadioButton('Onset Maximization')
-        parseTypeLayout.addWidget(self.parseTypeRadio)
-        layout.addLayout(parseTypeLayout)
-
-        self.variantsWidget = ContextWidget(self.corpus, None)
-        layout.addWidget(self.variantsWidget)
-
-        self.tierWidget = TierWidget(corpus, include_spelling=False)
-        layout.addWidget(self.tierWidget)
-
-        buttonLayout = QHBoxLayout()
-        ok = QPushButton('OK')
-        buttonLayout.addWidget(ok)
-        ok.clicked.connect(self.findSyllableShapes)
-        cancel = QPushButton('Cancel')
-        buttonLayout.addWidget(cancel)
-        cancel.clicked.connect(self.reject)
-        layout.addLayout(buttonLayout)
-
-        self.setLayout(layout)
-
-    def generateKwargs(self, *args):
-        kwargs = dict()
-        kwargs['corpus'] = self.corpus
-        nucleus = self.nucleusEdit.text().strip()
-        nucleus_name = nucleus[1:]
-        nucleus_sign = nucleus[0]
-        kwargs['nucleus'] = nucleus
-        kwargs['type_token'] = 'type'
-        kwargs['sequence_type'] = self.tierWidget.value()
-        kwargs['context'] = self.variantsWidget.value()
-        return kwargs
-
-    def findSyllableShapes(self):
-        self.parseCorpus()
-
-        max_onset = max([len(o) for o in self.onsets])
-        max_coda = max([len(c) for c in self.codas])
-        onset_string = 'C'*max_onset
-        coda_string = 'C'*max_coda
-
-        self.onsets = [o if o else ['EMPTY'] for o in self.onsets ]
-        self.codas = [c if c else ['EMPTY'] for c in self.codas]
-
-        print('The biggest possible syllable has the shape {}V{}'.format(onset_string, coda_string))
-        print('Onsets: ')
-        print(','.join([''.join(o) for o in self.onsets]))
-        print('Codas: ')
-        print(','.join([''.join(c) for c in self.codas]))
-
-    def parseCorpus(self):
-
-        kwargs = self.generateKwargs()
-
-        self.onsets = list()
-        self.medials = list()
-        self.codas = list()
-
+    def run(self):
+        time.sleep(0.1)
+        kwargs = self.kwargs
+        self.results = list()
         context = kwargs.pop('context')
         nucleus = kwargs['nucleus']
-        nucleus_name = nucleus[1:]
-        nucleus_sign = nucleus[0]
         tier = kwargs['sequence_type']
-
+        inventory = kwargs['inventory']
         if context == ContextWidget.canonical_value:
             cm = CanonicalVariantContext
         elif context == ContextWidget.frequent_value:
@@ -112,58 +30,77 @@ class TacticsDialog(QDialog):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-
         with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as corpus:
-            for word in corpus:
-                last_pos = word.get_len(tier)
-                first_pos = 0
-                cur_onset = list()
-                cur_coda = list()
-                cur_medial = list()
-                #go left to right, gather onsets
-                for pos, seg in word.enumerate_symbols(tier):
-                    features = self.inventory.segs[seg].features
-                    if not features[nucleus_name] == nucleus_sign:
-                        cur_onset.append(seg)
-                    else:
-                        if not cur_onset in self.onsets:
-                            self.onsets.append(cur_onset)
-                        first_pos = pos
-                        break
+            try:
+                res = tactics.findSyllableShapes(corpus, inventory, nucleus, kwargs['stop_check'], kwargs['call_back'])
+                if not self.stopped:
+                    self.results.append(res)
+            except PCTError as e:
+                self.errorEncountered.emit(e)
+                return
+            except Exception as e:
+                e = PCTPythonError(e)
+                self.errorEncountered.emit(e)
+                return
+        if self.stopped:
+            self.finishedCancelling.emit()
+            return
+        self.dataReady.emit(self.results)
 
-                #go right to left, add remains to codas
-                for pos, seg in word.enumerate_symbols(tier, reversed=True):
-                    features = self.inventory.segs[seg].features
-                    if not features[nucleus_name] == nucleus_sign:
-                        cur_coda.append(seg)
-                    else:
-                        if not cur_coda in self.codas:
-                            self.codas.append(cur_coda)
-                        last_pos = pos
-                        break
+class TacticsDialog(FunctionDialog):
+    header = ''
 
-            # for pos in range(first_pos, last_pos):
-            #     seg = word[pos]
-            #     features = self.inventory.segs[seg].features
-            #     if not seg.features[nucleus_name] == nucleus_sign:
-            #         cur_medial.append(seg)
-            #     else:
-            #         if not cur_medial in self.medials:
-            #             self.medials.append(cur_medial)
-            #         cur_medial = list()
+    _about = ''
 
-        # meds = [x for x in medials if x in onsets or x in codas]
-        # for m in meds:
-        # if len(m) == 1:
-        #         if len(codas)==1 and codas[0]==[]: #no coda
-        #             onsets.append(codas[0])#this must be an onset
-        #
-        #     m = reversed(m)
-        #     cur_string = list()
-        #     for seg in m:
-        #         cur_string.append(seg)
-        #         if cur_string in onsets:
-        #             continue
+    name = 'Phonotactic inference'
+
+
+    def __init__(self,parent, corpus, inventory, settings, showToolTips):
+        super().__init__(parent, settings, TacticsWorker())
+        self.corpus = corpus
+        self.inventory = inventory
+        self.showToolTips = showToolTips
+
+        nucleusFrame = QFrame()
+        nucleusLayout = QHBoxLayout()
+        nucleusLayout.addWidget(QLabel('What feature defines a syllable nucleus?'))
+        self.nucleusEdit = FeatureEdit(self.inventory)
+        consCompleter = FeatureCompleter(self.inventory)
+        self.nucleusEdit.setCompleter(consCompleter)
+        if self.inventory.vowel_features is not None:
+            self.nucleusEdit.setText(self.inventory.vowel_features[0])
+        nucleusLayout.addWidget(self.nucleusEdit)
+        nucleusFrame.setLayout(nucleusLayout)
+        self.layout().insertWidget(0, nucleusFrame)
+
+        parseFrame = QFrame()
+        parseTypeLayout = QHBoxLayout()
+        parseTypeLayout.addWidget(QLabel('Select a parsing strategy:'))
+        self.parseTypeRadio = QRadioButton('Onset Maximization')
+        parseTypeLayout.addWidget(self.parseTypeRadio)
+        parseFrame.setLayout(parseTypeLayout)
+        self.layout().insertWidget(1,parseFrame)
+
+        optionFrame = QFrame()
+        optionFrame.setWindowTitle('THis is a title')
+        optionBox = QVBoxLayout()
+        self.variantsWidget = ContextWidget(self.corpus, None)
+        optionBox.addWidget(self.variantsWidget)
+        self.tierWidget = TierWidget(corpus, include_spelling=False)
+        optionBox.addWidget(self.tierWidget)
+        self.layout().insertWidget(2,optionFrame)
+
+
+    def generateKwargs(self, *args):
+        kwargs = dict()
+        kwargs['corpus'] = self.corpus
+        nucleus = self.nucleusEdit.text().strip()
+        kwargs['nucleus'] = nucleus
+        kwargs['type_token'] = 'type'
+        kwargs['sequence_type'] = self.tierWidget.value()
+        kwargs['context'] = self.variantsWidget.value()
+        kwargs['inventory'] = self.inventory
+        return kwargs
 
 
     def accept(self):
