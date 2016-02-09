@@ -8,6 +8,7 @@ from .imports import *
 from .windows import FunctionWorker
 from .widgets import RadioSelectWidget, FeatureEdit, FeatureCompleter
 from .tacticsgui import TacticsDialog
+from .views import ResultsWindow
 from corpustools.mutualinfo import mutual_information
 
 
@@ -36,6 +37,9 @@ class AutoDialog(QDialog):
         self.results = list()
         self.setWindowTitle('Look for phonological patterns')
         self.layout = QVBoxLayout()
+        self.syllShapeResultsWindow = None
+        self.showSyllShapeResults = QAction("Syllable shape results", self)
+        self.showSyllShapeResults.setVisible(False)
 
         algEnabled = {'Vowel harmony':False,#self.corpus.has_transcription,
                     'Syllable shape':self.corpus.has_transcription,
@@ -88,8 +92,20 @@ class AutoDialog(QDialog):
             self.doRandomAnalysis()
 
     def doSyllableShapes(self):
-        syllableDialog = TacticsDialog(self,self.corpus,self.inventory,self.settings,self.showToolTips)
-        result = syllableDialog.exec_()
+        dialog = TacticsDialog(self,self.corpus,self.inventory,self.settings,self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            if self.syllShapeResultsWindow is not None and dialog.update and self.syllShapeResultsWindow.isVisible():
+                self.syllShapeResultsWindow.table.model().addRows(dialog.results)
+            else:
+                self.syllShapeResultsWindow = ResultsWindow('Syllable shape results', dialog, self)
+                self.syllShapeResultsWindow.show()
+                #self.showSyllShapeResults.triggered.connect(
+                self.syllShapeResultsWindow.raise_
+                #self.showSyllShapeResults.triggered.connect(
+                self.syllShapeResultsWindow.activateWindow()
+                self.syllShapeResultsWindow.rejected.connect(lambda: self.showSyllShapeResults.setVisible(False))
+                self.showSyllShapeResults.setVisible(True)
 
     def lookForPatterns(self, seg_list):
 

@@ -34,7 +34,7 @@ class TacticsWorker(FunctionWorker):
             try:
                 res = tactics.findSyllableShapes(corpus, inventory, nucleus, kwargs['stop_check'], kwargs['call_back'])
                 if not self.stopped:
-                    self.results.append(res)
+                    self.results = res
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return
@@ -48,7 +48,7 @@ class TacticsWorker(FunctionWorker):
         self.dataReady.emit(self.results)
 
 class TacticsDialog(FunctionDialog):
-    header = ''
+    header = ['Onset type', 'Frequency', 'Coda Type', 'Frequency']
 
     _about = ''
 
@@ -71,7 +71,7 @@ class TacticsDialog(FunctionDialog):
             self.nucleusEdit.setText(self.inventory.vowel_features[0])
         nucleusLayout.addWidget(self.nucleusEdit)
         nucleusFrame.setLayout(nucleusLayout)
-        self.layout().insertWidget(0, nucleusFrame)
+
 
         parseFrame = QFrame()
         parseTypeLayout = QHBoxLayout()
@@ -79,15 +79,19 @@ class TacticsDialog(FunctionDialog):
         self.parseTypeRadio = QRadioButton('Onset Maximization')
         parseTypeLayout.addWidget(self.parseTypeRadio)
         parseFrame.setLayout(parseTypeLayout)
-        self.layout().insertWidget(1,parseFrame)
+
 
         optionFrame = QFrame()
-        optionFrame.setWindowTitle('THis is a title')
+        optionFrame.setWindowTitle('Options')
         optionBox = QVBoxLayout()
         self.variantsWidget = ContextWidget(self.corpus, None)
         optionBox.addWidget(self.variantsWidget)
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionBox.addWidget(self.tierWidget)
+
+
+        self.layout().insertWidget(0, nucleusFrame)
+        self.layout().insertWidget(1,parseFrame)
         self.layout().insertWidget(2,optionFrame)
 
 

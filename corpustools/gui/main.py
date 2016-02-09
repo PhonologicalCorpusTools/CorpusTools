@@ -550,16 +550,8 @@ class MainWindow(QMainWindow):
     @check_for_transcription
     def autoAnalysis(self):
         dialog = AutoDialog(self, self.corpusModel.corpus, self.inventoryModel, self.settings, self.showToolTips)
-        result = dialog.exec_()
-        # if self.AutoWindow is not None and dialog.update and self.AutoWindow.isVisible():
-        #     self.AutoWindow.table.model().addRows(dialog.results)
-        # else:
-        #     self.AutoWindow = MutualInfoVowelHarmonyWindow('Vowel Harmony', dialog, self)
-        #     self.AutoWindow.show()
-        #     self.showAutoResults.triggered.connect(self.AutoWindow.raise_)
-        #     self.showAutoResults.triggered.connect(self.AutoWindow.activateWindow)
-        #     self.AutoWindow.rejected.connect(lambda: self.showAutoResults.setVisible(False))
-        #     self.showAutoResults.setVisible(True)
+        dialog.exec_()
+
 
     @check_for_empty_corpus
     @check_for_transcription
