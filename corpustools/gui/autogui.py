@@ -100,10 +100,8 @@ class AutoDialog(QDialog):
             else:
                 self.syllShapeResultsWindow = ResultsWindow('Syllable shape results', dialog, self)
                 self.syllShapeResultsWindow.show()
-                #self.showSyllShapeResults.triggered.connect(
-                self.syllShapeResultsWindow.raise_
-                #self.showSyllShapeResults.triggered.connect(
-                self.syllShapeResultsWindow.activateWindow()
+                self.showSyllShapeResults.triggered.connect(self.syllShapeResultsWindow.raise_)
+                self.showSyllShapeResults.triggered.connect(self.syllShapeResultsWindow.activateWindow)
                 self.syllShapeResultsWindow.rejected.connect(lambda: self.showSyllShapeResults.setVisible(False))
                 self.showSyllShapeResults.setVisible(True)
 

@@ -20,7 +20,6 @@ class TacticsWorker(FunctionWorker):
         self.results = list()
         context = kwargs.pop('context')
         nucleus = kwargs['nucleus']
-        tier = kwargs['sequence_type']
         inventory = kwargs['inventory']
         if context == ContextWidget.canonical_value:
             cm = CanonicalVariantContext
@@ -72,14 +71,12 @@ class TacticsDialog(FunctionDialog):
         nucleusLayout.addWidget(self.nucleusEdit)
         nucleusFrame.setLayout(nucleusLayout)
 
-
         parseFrame = QFrame()
         parseTypeLayout = QHBoxLayout()
         parseTypeLayout.addWidget(QLabel('Select a parsing strategy:'))
         self.parseTypeRadio = QRadioButton('Onset Maximization')
         parseTypeLayout.addWidget(self.parseTypeRadio)
         parseFrame.setLayout(parseTypeLayout)
-
 
         optionFrame = QFrame()
         optionFrame.setWindowTitle('Options')
@@ -88,7 +85,6 @@ class TacticsDialog(FunctionDialog):
         optionBox.addWidget(self.variantsWidget)
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionBox.addWidget(self.tierWidget)
-
 
         self.layout().insertWidget(0, nucleusFrame)
         self.layout().insertWidget(1,parseFrame)
@@ -105,7 +101,6 @@ class TacticsDialog(FunctionDialog):
         kwargs['context'] = self.variantsWidget.value()
         kwargs['inventory'] = self.inventory
         return kwargs
-
 
     def accept(self):
         QDialog.accept(self)
