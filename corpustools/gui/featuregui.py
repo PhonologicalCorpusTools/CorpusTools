@@ -516,14 +516,61 @@ class EditFeatureMatrixDialog(QDialog):
 
     def changeFeatureSystem(self):
         path = self.changeWidget.path()
+
         if path is None:
             self.specifier = None
         else:
             try:
                 self.specifier = load_binary(path)
-            except OSError:
-                return
+            except (OSError, FileNotFoundError):
+                alert = QMessageBox()
+                alert.setWindowTitle('Transcription/Feature mismatch')
+                filename = os.path.split(path)[-1]
+                alert.setText(('There is no file named {}, so PCT doesn\'t know how to match up the transcription '
+                'symbols with appropriate features.\n'
+                'It may be possible to download the feature file you need. Go to File > Manage feature '
+                'systems... and click on "Download". You can also import your own feature files from that menu screen. '
+                '\nAlternatively, PCT can create this file for you and assign default feature values to every '
+                'segment. From there, you can edit the segments from within PCT, or go to File > Export feature system '
+                'as text file..., for editing in another program.'.format(filename)))
+                alert.addButton('Cancel', QMessageBox.RejectRole)
+                alert.addButton('Create system with default feature values', QMessageBox.AcceptRole)
+                result = alert.exec_()
+                if result:
+                    trans_name, feature_name = filename.split('2')
+                    feature_name = feature_name.split('.')[0]
+                    self.createEmptyFeatureSystem(trans_name, feature_name) #self.specifier is set in this function
+                else:
+                    return
         self.changeDisplay()
+
+    def createEmptyFeatureSystem(self, trans_name, feature_name):
+        systems = get_systems_list(self.settings['storage'])
+        for system in systems:
+            if feature_name in system.split('2')[-1]:
+                old_system = load_binary(system_name_to_path(self.settings['storage'], system))
+                if hasattr(old_system, '_default_value'):
+                    default = old_system._default_value
+                else:
+                    default = 'n'
+                break
+
+        featureline = old_system.features
+        for name in ['symbol', 'segment']:
+            try:
+                featureline.remove(name)
+            except ValueError:
+                pass
+        defaultline = '\t'.join([default for feature in featureline])
+        featureline = '\t'.join(featureline)
+        new_system_name = '{}2{}'.format(trans_name, feature_name)
+        new_path = os.path.join(self.settings['storage'],'FEATURE',new_system_name+'.txt')
+        with open(new_path, encoding='utf-8', mode='w') as f:
+            print('symbol\t{}'.format(featureline), file=f)
+            for seg in self.specifier.matrix:
+                print('{}\t{}'.format(seg, defaultline), file=f)
+        matrix = load_feature_matrix_csv(new_system_name, new_path, '\t')
+        self.specifier = matrix
 
     def addSegment(self):
         if self.specifier is None:
@@ -586,7 +633,7 @@ class EditFeatureMatrixDialog(QDialog):
         if missing:
             reply = QMessageBox.warning(self,
                     "Missing segments", ('The following segments are not specified'
-                                        ' for _features: '+', '.join(missing) + '\nIf you'
+                                        ' for features: '+', '.join(missing) + '\nIf you'
                                         ' are shown a \'blank\' segment, please ensure'
                                         ' that your segment delimiters are placed'
                                         ' correctly and are never adjacent to each other.'))
