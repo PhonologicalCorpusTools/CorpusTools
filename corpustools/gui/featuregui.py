@@ -41,7 +41,7 @@ class LoadFeatureSystemWorker(FunctionWorker):
 
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
-    systems = [x.split('.')[0] for x in os.listdir(system_dir)]
+    systems = [x.split('.')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
     return systems
 
 def get_feature_system_styles(storage_directory):
@@ -360,8 +360,10 @@ class EditFeatureMatrixDialog(QDialog):
         QDialog.__init__(self, parent)
         self.corpus = corpus
         self.settings = settings
-
         self.specifier = self.corpus.specifier
+        self.transcription_system, self.feature_system = self.specifier.name.split('2')
+        self.feature_system_changed = False
+        self.transcription_changed = False
 
         layout = QVBoxLayout()
 
@@ -469,6 +471,27 @@ class EditFeatureMatrixDialog(QDialog):
         self.changeDisplay()
 
     def accept(self):
+        selected_transcription, selected_features  = self.changeWidget.value().split('2')
+        if not selected_features == self.feature_system:
+            self.feature_system_changed = True
+            # alert = QMessageBox()
+            # alert.setWindowTitle('Warning!')
+            # alert.setText('Changing your feature system may cause changes to your Inventory chart. Do you want to continue?')
+            # alert.addButton('Continue with changes', QMessageBox.AcceptRole)
+            # alert.addButton('Cancel', QMessageBox.RejectRole)
+            # result = alert.exec_()
+            # if not result:
+            #     return #Cancel changes
+        else:
+            self.feature_system_changed = False
+
+        if not selected_transcription == self.transcription_system:
+            self.transcription_changed = True
+        else:
+            self.transcription_changed = False
+
+        self.feature_system = selected_features
+        self.transcription_system = selected_transcription
         if self.specifier is not None:
             path = system_name_to_path(self.settings['storage'],self.specifier.name)
             save_binary(self.specifier, path)
@@ -515,6 +538,7 @@ class EditFeatureMatrixDialog(QDialog):
             self.layout().insertWidget(0,self.table)
 
     def changeFeatureSystem(self):
+
         path = self.changeWidget.path()
 
         if path is None:
@@ -542,6 +566,7 @@ class EditFeatureMatrixDialog(QDialog):
                     self.createEmptyFeatureSystem(trans_name, feature_name) #self.specifier is set in this function
                 else:
                     return
+        self.featureSystemChanged = True
         self.changeDisplay()
 
     def createEmptyFeatureSystem(self, trans_name, feature_name):
@@ -571,6 +596,21 @@ class EditFeatureMatrixDialog(QDialog):
                 print('{}\t{}'.format(seg, defaultline), file=f)
         matrix = load_feature_matrix_csv(new_system_name, new_path, '\t')
         self.specifier = matrix
+
+    def makeSegMap(self, new_specifier):
+        segmap = dict()
+        unmatched = list()
+        for seg1, features1 in self.specifier.matrix.items():
+            for seg2, features2 in new_specifier.matrix.items():
+                if features1 == features2:
+                    segmap[seg1] = seg2
+                    break
+            else:
+                unmatched.append(seg1)
+        print(segmap)
+        print(unmatched)
+
+        return segmap, unmatched
 
     def addSegment(self):
         if self.specifier is None:

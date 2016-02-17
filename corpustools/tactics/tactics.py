@@ -28,7 +28,10 @@ def parseCorpus(corpus, inventory, nucleus, stop_check, call_back):
     tier = corpus.sequence_type
     nucleus_name = nucleus[1:]
     nucleus_sign = nucleus[0]
+
+    #First grab obvious onsets and codas from word edges
     onsets, codas = lookAtWordEdges(corpus, inventory, nucleus_name, nucleus_sign, tier, stop_check, call_back)
+
 
     if call_back is not None:
         call_back('Looking for phonotactic patterns...')

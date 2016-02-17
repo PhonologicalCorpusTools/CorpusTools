@@ -509,6 +509,10 @@ class FeatureMatrix(object):
             return True
         return False
 
+    def default_fill(self, seg_list):
+        for seg in seg_list:
+            self.matrix[seg] = {feature: self.default_value for feature in self._features}
+
     def features_to_segments(self, feature_description):
         """
         Given a feature description, return the segments in the inventory
@@ -1834,6 +1838,31 @@ class Corpus(object):
     def keys(self):
         for k in sorted(self.wordlist.keys()):
             yield k
+
+
+    def make_seg_map(self, new_specifier):
+        segmap = dict()
+        unmatched = list()
+        for seg1,features1 in self.specifier.matrix.items():
+            for seg2,features2 in new_specifier.matrix.items():
+                if features1 == features2:
+                    segmap[seg1] = seg2
+                    break
+            else:
+                unmatched.append(seg1)
+        print(segmap)
+        print(unmatched)
+
+        return segmap, unmatched
+
+    def retranscribe(self, segmap):
+
+        for word in self.wordlist:
+            print(word)
+            self.wordlist[word].transcription = Transcription([segmap[seg] for seg in self.wordlist[word].transcription])
+            break
+
+
 
     def subset(self, filters):
         """

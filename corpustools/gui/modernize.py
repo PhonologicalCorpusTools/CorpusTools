@@ -42,9 +42,17 @@ def modernize_inventory_attributes(inventory):
     return inventory
 
 def modernize_features(inventory, specifier):
-    #In some older versions of PCT, the FeatureMatrix returns Segments, instead of feature lists
-    seg1 = random.choice([seg for seg in inventory.segs.values() if not seg.symbol=='#'])
+    #In some older versions of PCT, the FeatureMatrix returns Segments, instead of feature dicts
+    seg1 = random.choice([seg for seg in list(specifier.matrix.keys()) if not seg == '#'])
+    if isinstance(specifier[seg1], Segment):
+        for seg in specifier.matrix.keys():
+            if seg == '#':
+                continue
+            specifier.matrix[seg] = specifier.matrix[seg].features
+
+    seg1 = random.choice([seg for seg in inventory.segs.values() if not seg.symbol == '#'])
     if isinstance(seg1.features, Segment):
         for seg in inventory:
             inventory[seg.symbol].features = specifier.matrix[seg.symbol]
-    return inventory
+
+    return inventory,specifier

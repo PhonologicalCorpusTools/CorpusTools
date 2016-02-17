@@ -262,16 +262,6 @@ class MainWindow(QMainWindow):
                             'go to the Corpus menu and select Manage Feature System, then download one.'))
                 alert.exec_()
 
-            # if modernize.isNotSupported(self.corpus):
-            #     alert = QMessageBox()
-            #     alert.setWindowTitle('File out of date')
-            #     alert.setText('This corpus file contains a format no longer supported by PCT. If this is a built-in'
-            #     ' corpus, you can download a newer version. If this is your own corpus then you should re-load from'
-            #     ' the original text file. Both options can be found under File > Load corpus...')
-            #     alert.exec_()
-            #     self.corpus = None
-            #     return
-
             try:
                 if self.corpus.inventory.isNew:
                     # this corpus was just loaded from a text file
@@ -286,13 +276,17 @@ class MainWindow(QMainWindow):
             except AttributeError:
                 #Missing a necessary attribute - do some updating
                 self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
-                self.corpus.inventory = modernize.modernize_features(
+                self.corpus.inventory, specifier = modernize.modernize_features(
                                                                 self.corpus.inventory, self.corpus.specifier)
+                self.corpus.set_feature_matrix(specifier)
                 self.corpus.inventory.isNew = False
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
                 self.inventoryModel.modelReset()
                 self.saveCorpus()
 
+            self.corpus.inventory, specifier = modernize.modernize_features(
+                self.corpus.inventory, self.corpus.specifier)
+            self.corpus.set_feature_matrix(specifier)
 
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
@@ -395,9 +389,31 @@ class MainWindow(QMainWindow):
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         if dialog.exec_():
             if dialog.specifier is not None:
-                self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
-                self.corpusModel.corpus.update_features()
-                self.inventoryModel.updateFeatures(dialog.specifier)
+                if dialog.transcription_changed and not dialog.feature_system_changed:
+                    segmap, unmatched = self.corpusModel.corpus.make_seg_map(dialog.specifier)
+                    if unmatched:
+                        alert = QMessageBox()
+                        alert.setWindowTitle('Warning!')
+                        alert.setText('There are some symbols in your selected transcription system '
+                        'that do not have any matching feature values in your feature file. If you want, PCT can assign '
+                        'default values for every feature, and then you can edit these values later. Keep in mind that '
+                        'transcription files may contain segments that do not appear in your corpus at all, so this may '
+                        'not be a problem for you at all.')
+                        alert.addButton('Cancel', QMessageBox.RejectRole)
+                        alert.addButton('Use default values', QMessageBox.AcceptRole)
+                        response = alert.exec_()
+                        if not response:
+                            return
+                        else:
+                            print(1)
+                            dialog.specifier.default_fill(unmatched)
+                            self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+                            self.corpusModel.corpus.retranscribe(segmap) #TO BE IMPLEMENTED
+                else:
+                    print(2)
+                    self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+                    self.corpusModel.corpus.update_features()
+                    self.inventoryModel.updateFeatures(dialog.specifier)
 
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))

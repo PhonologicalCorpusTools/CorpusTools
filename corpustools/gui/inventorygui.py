@@ -20,7 +20,16 @@ class InventoryManager(QDialog):
         cons_title = QLabel('Consonant Inventory')
         cons_title.setFont(font)
         consBox.addWidget(cons_title)
-        self.consModel = ConsonantModel(self.inventory)
+        try:
+            self.consModel = ConsonantModel(self.inventory)
+        except IndexError:
+            alert = QMessageBox()
+            alert.setWindowTitle('Error!')
+            alert.setText('Something went wrong trying to load your inventory. There is probably a mismatch between '
+            'your inventory and your feature system. Go to Features > View/Change feature system... and verify that '
+            'all of your segments have feature specifications by clicking on "Check corpus coverage".')
+            alert.exec_()
+            return
         self.consView = InventoryView(self.consModel)
         self.consView.resizeRowsToContents()
         self.consView.resizeColumnsToContents()
