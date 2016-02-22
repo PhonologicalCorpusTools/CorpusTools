@@ -13,7 +13,7 @@ inventory_attributes = {'_data':list(), 'segs':dict(), 'features':list(), 'possi
                         'cons_column_header_order':dict(),'cons_row_header_order':dict(),
                         'vowel_row_header_order':dict(),'vowel_column_header_order': dict(),
                         'consList': list(), 'vowelList': list(), 'non_segment_symbols': ['#'],
-                        'vowel_features': None, 'cons_features': None, 'voice_feature': None, 'rounded_feature': None,
+                        'vowel_features': [None], 'cons_features': [None], 'voice_feature': None, 'rounded_feature': None,
                         'diph_feature': None, 'isNew': True}
 
 def isNotSupported(corpus):
@@ -32,7 +32,9 @@ def need_update(corpus):
 def modernize_inventory_attributes(inventory):
     for attribute,default in inventory_attributes.items():
         if not hasattr(inventory, attribute):
-            setattr(inventory,attribute,default)
+            setattr(inventory, attribute, default)
+        elif not getattr(inventory, attribute) and default:
+            setattr(inventory, attribute, default)
     if not inventory.segs and inventory._data:
         inventory.segs = inventory._data.copy()
         inventory._data = list()
@@ -55,4 +57,4 @@ def modernize_features(inventory, specifier):
         for seg in inventory:
             inventory[seg.symbol].features = specifier.matrix[seg.symbol]
 
-    return inventory,specifier
+    return inventory, specifier

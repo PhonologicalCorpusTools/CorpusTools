@@ -147,6 +147,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Phonological CorpusTools")
         self.createActions()
         self.createMenus()
+        self.corpus = None
         self.corpusModel = None
 
         self.FLWindow = None
@@ -247,12 +248,11 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
-        dialog = CorpusLoadDialog(self, self.settings)
+        dialog = CorpusLoadDialog(self, self.corpus, self.settings)
         result = dialog.exec_()
 
         if result:
             self.corpus = dialog.corpus
-
             if self.corpus.specifier is None:
                 alert = QMessageBox()
                 alert.setWindowTitle('No feature system')
@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
                 alert.exec_()
 
             try:
-                if self.corpus.inventory.isNew:
+                if not hasattr(self.corpus.inventory, 'isNew') or self.corpus.inventory.isNew:
                     # this corpus was just loaded from a text file
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
                     self.inventoryModel.updateFeatures(self.corpus.specifier)
@@ -273,20 +273,15 @@ class MainWindow(QMainWindow):
                     # this corpus was created with an up-to-date copy of PCT
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
 
-            except AttributeError:
+            except (AttributeError, KeyError)as e:
                 #Missing a necessary attribute - do some updating
                 self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
                 self.corpus.inventory, specifier = modernize.modernize_features(
                                                                 self.corpus.inventory, self.corpus.specifier)
-                self.corpus.set_feature_matrix(specifier)
                 self.corpus.inventory.isNew = False
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
                 self.inventoryModel.modelReset()
                 self.saveCorpus()
-
-            # self.corpus.inventory, specifier = modernize.modernize_features(
-            #     self.corpus.inventory, self.corpus.specifier)
-            # self.corpus.set_feature_matrix(specifier)
 
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
@@ -342,6 +337,14 @@ class MainWindow(QMainWindow):
     @check_for_transcription
     def manageInventoryChart(self):
         copy_model = InventoryModel(self.inventoryModel, copy_mode=True)
+        if not copy_model._data:
+            alert = QMessageBox()
+            alert.setWindowTitle('Warning!')
+            alert.setText('There was a problem loading your inventory. You can normally fix this problem by going '
+            'to Features > View/Edit feature system... and then simply clicking "Save changes" (you do not actually '
+            'need to make any changes). Sorry about that!')
+            alert.exec_()
+            return
         dialog = InventoryManager(copy_model)
         result = dialog.exec_()
         if result:
@@ -389,29 +392,10 @@ class MainWindow(QMainWindow):
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         if dialog.exec_():
             if dialog.specifier is not None:
-                # if dialog.transcription_changed and not dialog.feature_system_changed:
-                #     segmap, unmatched = self.corpusModel.corpus.make_seg_map(dialog.specifier)
-                #     if unmatched:
-                #         alert = QMessageBox()
-                #         alert.setWindowTitle('Warning!')
-                #         alert.setText('There are some symbols in your selected transcription system '
-                #         'that do not have any matching feature values in your feature file. If you want, PCT can assign '
-                #         'default values for every feature, and then you can edit these values later. Keep in mind that '
-                #         'transcription files may contain segments that do not appear in your corpus at all, so this may '
-                #         'not be a problem for you at all.')
-                #         alert.addButton('Cancel', QMessageBox.RejectRole)
-                #         alert.addButton('Use default values', QMessageBox.AcceptRole)
-                #         response = alert.exec_()
-                #         if not response:
-                #             return
-                #         else:
-                #             print(1)
-                #             dialog.specifier.default_fill(unmatched)
-                #             self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
-                #             self.corpusModel.corpus.retranscribe(segmap) #TO BE IMPLEMENTED
-
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 self.corpusModel.corpus.update_features()
+                self.corpusModel.corpus.retranscribe(dialog.segmap)
+                self.inventoryModel.updateInventory(self.corpusModel.corpus.inventory)
                 self.inventoryModel.updateFeatures(dialog.specifier)
 
             if self.corpusModel.corpus.specifier is not None:

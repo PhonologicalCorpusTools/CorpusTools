@@ -774,7 +774,7 @@ class FeatureMatrix(object):
     def seg_to_feat_line(self,symbol):
         """
         Get a list of feature values for a given segment in the order
-        that _features are return in get_feature_list
+        that features are return in get_feature_list
 
         Use for display purposes
 
@@ -1729,11 +1729,11 @@ class Inventory(object):
             if seg == '#':
                 continue
             self.segs[seg].features = specifier.specify(seg)
-        self.cons_features = specifier.cons_features
-        self.vowel_features = specifier.vowel_features
-        self.voice_feature = specifier.voice_feature
-        self.rounded_feature = specifier.rounded_feature
-        self.diphthong_feature = specifier.diph_feature
+        self.cons_features = specifier.cons_features if hasattr(specifier, 'cons_features') else [None]
+        self.vowel_features = specifier.vowel_features if hasattr(specifier, 'vowel_features') else [None]
+        self.voice_feature = specifier.voice_feature if hasattr(specifier, 'voice_feature') else None
+        self.rounded_feature = specifier.rounded_feature if hasattr(specifier, 'rounded_feature') else None
+        self.diphthong_feature = specifier.diph_feature if hasattr(specifier, 'diph_feature') else None
         self.features = specifier.features
         self.possible_values = specifier.possible_values
 
@@ -1840,29 +1840,13 @@ class Corpus(object):
             yield k
 
 
-    def make_seg_map(self, new_specifier):
-        segmap = dict()
-        unmatched = list()
-        for seg1,features1 in self.specifier.matrix.items():
-            for seg2,features2 in new_specifier.matrix.items():
-                if features1 == features2:
-                    segmap[seg1] = seg2
-                    break
-            else:
-                unmatched.append(seg1)
-        print(segmap)
-        print(unmatched)
-
-        return segmap, unmatched
-
     def retranscribe(self, segmap):
 
+        self.inventory = Inventory()
         for word in self.wordlist:
-            print(word)
-            self.wordlist[word].transcription = Transcription([segmap[seg] for seg in self.wordlist[word].transcription])
-            break
-
-
+            self.wordlist[word].transcription = Transcription(
+                                                    [segmap[seg] for seg in self.wordlist[word].transcription])
+            self.update_inventory(self.wordlist[word].transcription)
 
     def subset(self, filters):
         """

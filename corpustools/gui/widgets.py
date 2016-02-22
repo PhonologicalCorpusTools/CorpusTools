@@ -793,6 +793,82 @@ class EditInventoryWindow(QDialog):
     def reject(self):
         QDialog.reject(self)
 
+
+class RetranscribeWidget(QDialog):
+
+    def __init__(self, old_symbols, new_symbols, old_name, new_name):
+
+        super().__init__()
+        self.setWindowTitle('Create new transcription/feature system')
+
+        self.segmap = {seg: '' for seg in old_symbols}
+
+        mainLayout = QVBoxLayout()
+
+        topLayout = QHBoxLayout()
+        oldSystemLayout = QGridLayout()
+        oldSystemTitle = QLabel('Symbols from the {} system'.format(old_name))
+        oldSystemLayout.addWidget(oldSystemTitle, 0, 0)
+        self.oldSystemComboBox = QComboBox()
+        self.oldSystemComboBox.addItems(sorted(old_symbols))
+        self.oldSystemComboBox.activated.connect(
+            lambda x: self.matchBox.setText(self.segmap[self.oldSystemComboBox.currentText()]))
+        oldSystemLayout.addWidget(self.oldSystemComboBox, 1, 0)
+        self.matchBox = QPushButton()
+        oldSystemLayout.addWidget(self.matchBox, 1, 1)
+        topLayout.addLayout(oldSystemLayout)
+
+        newSystemLayout = QVBoxLayout()
+        newSystemTitle = QLabel('Symbols from the {} system'.format(new_name))
+        newSystemLayout.addWidget(newSystemTitle)
+        self.newSystemComboBox = QComboBox()
+        self.newSystemComboBox.addItems(new_symbols)
+        newSystemLayout.addWidget(self.newSystemComboBox)
+        topLayout.addLayout(newSystemLayout)
+
+        matchButton = QPushButton()
+        matchButton.setText('Match these symbols')
+        matchButton.clicked.connect(self.updateSegMap)
+        topLayout.addWidget(matchButton)
+        mainLayout.addLayout(topLayout)
+
+        bottomLayout = QHBoxLayout()
+        # verifyBox = QLabel('INCOMPLETE')
+        #bottomLayout.addWidget(verifyBox)
+        ok = QPushButton('OK')
+        cancel = QPushButton('Cancel')
+        ok.clicked.connect(self.accept)
+        cancel.clicked.connect(self.reject)
+        bottomLayout.addWidget(ok)
+        bottomLayout.addWidget(cancel)
+        mainLayout.addLayout(bottomLayout)
+
+        self.setLayout(mainLayout)
+
+    def updateSegMap(self):
+        key = self.oldSystemComboBox.currentText()
+        value = self.newSystemComboBox.currentText()
+        self.segmap[key] = value
+        self.matchBox.setText(value)
+
+    def accept(self):
+        if self.verifySegMap():
+            QDialog.accept(self)
+
+    def verifySegMap(self):
+
+        unmatched = [key for (key, value) in self.segmap.items() if not value]
+        if unmatched:
+            alert = QMessageBox()
+            alert.setWindowTitle('Warning!')
+            alert.setText('All of the symbols in your current system must be matched up with symbols in your new '
+                          'system. The following still do not have any matches:\n{}'.format(','.join(unmatched)))
+            alert.exec_()
+            return False
+        else:
+            return True
+
+
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
         QGroupBox.__init__(self,'Tier',parent)

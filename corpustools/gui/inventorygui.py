@@ -20,16 +20,7 @@ class InventoryManager(QDialog):
         cons_title = QLabel('Consonant Inventory')
         cons_title.setFont(font)
         consBox.addWidget(cons_title)
-        try:
-            self.consModel = ConsonantModel(self.inventory)
-        except IndexError:
-            alert = QMessageBox()
-            alert.setWindowTitle('Error!')
-            alert.setText('Something went wrong trying to load your inventory. There is probably a mismatch between '
-            'your inventory and your feature system. Go to Features > View/Change feature system... and verify that '
-            'all of your segments have feature specifications by clicking on "Check corpus coverage".')
-            alert.exec_()
-            return
+        self.consModel = ConsonantModel(self.inventory)
         self.consView = InventoryView(self.consModel)
         self.consView.resizeRowsToContents()
         self.consView.resizeColumnsToContents()
@@ -67,7 +58,7 @@ class InventoryManager(QDialog):
         self.editCons = FeatureEdit(self.inventory)
         consCompleter = FeatureCompleter(self.inventory)
         self.editCons.setCompleter(consCompleter)
-        if self.inventory.cons_features is not None:
+        if self.inventory.cons_features is None or self.inventory.cons_features[0] is not None:
             self.editCons.setText(','.join(self.inventory.cons_features))
         editConsLayout.addWidget(self.editCons)
         editCategoriesLayout.addLayout(editConsLayout)
@@ -77,7 +68,7 @@ class InventoryManager(QDialog):
         self.editVowels = FeatureEdit(self.inventory)
         vowelCompleter = FeatureCompleter(self.inventory)
         self.editVowels.setCompleter(vowelCompleter)
-        if self.inventory.vowel_features is not None:
+        if self.inventory.vowel_features is None or self.inventory.vowel_features[0] is not None:
             self.editVowels.setText(','.join(self.inventory.vowel_features))
         editVowelsLayout.addWidget(self.editVowels)
         editCategoriesLayout.addLayout(editVowelsLayout)

@@ -15,7 +15,7 @@ from .views import SubTreeView
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
 from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
-                    TableWidget, CreateClassWidget, FeatureEdit, FeatureCompleter)
+                    TableWidget, RetranscribeWidget, FeatureEdit, FeatureCompleter)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 from .helpgui import HelpDialog
@@ -364,7 +364,7 @@ class EditFeatureMatrixDialog(QDialog):
         self.transcription_system, self.feature_system = self.specifier.name.split('2')
         self.feature_system_changed = False
         self.transcription_changed = False
-
+        self.segmap = dict()
         layout = QVBoxLayout()
 
         self.table = TableWidget()
@@ -546,39 +546,54 @@ class EditFeatureMatrixDialog(QDialog):
         else:
             try:
                 self.specifier = load_binary(path)
+                self.featureSystemChanged = True
+                self.changeDisplay()
             except (OSError, FileNotFoundError):
+                filename = os.path.split(path)[-1]
+                trans_name, feature_name = filename.split('2')
+                feature_name = feature_name.split('.')[0]
                 alert = QMessageBox()
                 alert.setWindowTitle('Transcription/Feature mismatch')
-                filename = os.path.split(path)[-1]
+
                 alert.setText(('There is no file named {}, so PCT doesn\'t know how to match up the transcription '
                 'symbols with appropriate features.\n'
                 'It may be possible to download the feature file you need. Go to File > Manage feature '
                 'systems... and click on "Download". You can also import your own feature files from that menu screen. '
-                ''.format(filename)))
-                # '\nAlternatively, PCT can create this file for you and assign default feature values to every '
-                # 'segment. From there, you can edit the segments from within PCT, or go to File > Export feature system '
-                # 'as text file..., for editing in another program.'.format(filename)))
+                '\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} system'
+                ''.format(filename, self.specifier.name.split('2')[0], trans_name)))
                 alert.addButton('Cancel', QMessageBox.RejectRole)
-                # alert.addButton('Create system with default feature values', QMessageBox.AcceptRole)
+                alert.addButton('Match transcription symbols now', QMessageBox.AcceptRole)
                 result = alert.exec_()
                 if result:
-                    trans_name, feature_name = filename.split('2')
-                    feature_name = feature_name.split('.')[0]
-                    self.createEmptyFeatureSystem(trans_name, feature_name) #self.specifier is set in this function
+                    self.createNewSystem(trans_name, feature_name)
                 else:
                     return
-        self.featureSystemChanged = True
-        self.changeDisplay()
 
-    def createEmptyFeatureSystem(self, trans_name, feature_name):
+
+    def createNewSystem(self, trans_name, feature_name):
+
         systems = get_systems_list(self.settings['storage'])
         for system in systems:
             if trans_name in system.split('2')[0]:
                 trans_system = load_binary(system_name_to_path(self.settings['storage'], system))
-                symbols = list(trans_system.matrix.keys())
+                new_symbols = list(trans_system.matrix.keys())
+                new_symbols.sort()
                 break
 
-        default = self.specifier._default_value if hasattr(self.specifier, '_default_value') else 'n'
+        dialog = RetranscribeWidget(self.corpus.inventory.segs, new_symbols,
+                                    self.specifier.name.split('2')[0], trans_name)
+        results = dialog.exec_()
+        if results:
+            self.segmap = dialog.segmap
+            self.defaultFeatureFill(trans_name, feature_name, new_symbols)
+            self.changeDisplay()
+        else:
+            self.segmap = dict()
+
+
+    def defaultFeatureFill(self, trans_name, feature_name, new_symbols):
+
+        default = 'n'
         featureline = self.specifier.features
         for name in ['symbol', 'segment']:
             try:
@@ -588,29 +603,20 @@ class EditFeatureMatrixDialog(QDialog):
         defaultline = '\t'.join([default for feature in featureline])
         featureline = '\t'.join(featureline)
         new_system_name = '{}2{}'.format(trans_name, feature_name)
-        new_path = os.path.join(self.settings['storage'],'FEATURE',new_system_name+'.txt')
+        new_path = os.path.join(self.settings['storage'], 'FEATURE', new_system_name + '.txt')
+        inverse_segmap = {v: k for k, v in self.segmap.items()}
+
 
         with open(new_path, encoding='utf-8', mode='w') as f:
             print('symbol\t{}'.format(featureline), file=f)
-            for seg in symbols:
-                print('{}\t{}'.format(seg, defaultline), file=f)
+            for seg in new_symbols:
+                if seg in inverse_segmap:
+                    line = '\t'.join(self.specifier.seg_to_feat_line(inverse_segmap[seg]))
+                    print(line, file=f)
+                else:
+                    print('{}\t{}'.format(seg, defaultline), file=f)
         matrix = load_feature_matrix_csv(new_system_name, new_path, '\t')
         self.specifier = matrix
-
-    def makeSegMap(self, new_specifier):
-        segmap = dict()
-        unmatched = list()
-        for seg1, features1 in self.specifier.matrix.items():
-            for seg2, features2 in new_specifier.matrix.items():
-                if features1 == features2:
-                    segmap[seg1] = seg2
-                    break
-            else:
-                unmatched.append(seg1)
-        print(segmap)
-        print(unmatched)
-
-        return segmap, unmatched
 
     def addSegment(self):
         if self.specifier is None:

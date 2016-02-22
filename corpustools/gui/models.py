@@ -924,6 +924,9 @@ class InventoryModel(QAbstractTableModel):
         self.possible_values = specifier.possible_values
         self.modelReset()
 
+    def updateInventory(self, new_segs):
+        self.segs = {symbol: dict() for symbol in new_segs}
+
     def changeColumnSpecs(self, index, features, new_section_name, consonants=True):
         if consonants:
             name = self.cons_column_header_order[index]
@@ -980,13 +983,13 @@ class InventoryModel(QAbstractTableModel):
 
     def isVowel(self, seg):
         #return False if self.vowel_features is None else seg.features[self.vowel_features[1:]] == self.vowel_features[0]
-        if self.vowel_features is None:
+        if self.vowel_features is None or self.vowel_features[0] is None:
             return False
         return all(seg.features[feature[1:]] == feature[0] for feature in self.vowel_features)
 
     def isCons(self, seg):
         #return False if self.vowel_features is None else seg.features[self.vowel_features[1:]] == self.vowel_features[0]
-        if self.cons_features is None:
+        if self.cons_features is None or self.cons_features[0] is None:
             return False
         return all(seg.features[feature[1:]] == feature[0] for feature in self.cons_features)
 

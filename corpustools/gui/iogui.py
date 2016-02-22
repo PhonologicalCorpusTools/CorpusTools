@@ -114,8 +114,9 @@ class LoadCorpusWorker(FunctionWorker):
 
 
 class CorpusLoadDialog(PCTDialog):
-    def __init__(self, parent, settings):
+    def __init__(self, parent, corpus, settings):
         PCTDialog.__init__(self, parent)
+        self.current_corpus = None if corpus is None else corpus.name
         self.corpus = None
         self.settings = settings
         layout = QVBoxLayout()
@@ -224,6 +225,15 @@ class CorpusLoadDialog(PCTDialog):
 
     def removeCorpus(self):
         corpus = self.corporaList.currentItem().text()
+        if self.current_corpus == corpus:
+            alert = QMessageBox()
+            alert.setWindowTitle('Warning!')
+            alert.setText('You are trying to delete the corpus that is currently open in PCT.'
+                    'Please close the corpus before deleting. You can do this '
+                    'by opening up another corpus first, or else by closing PCT and re-opening with a blank window.')
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.exec_()
+            return
         msgBox = QMessageBox(QMessageBox.Warning, "Remove corpus",
                 "This will permanently remove '{}'.  Are you sure?".format(corpus), QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
@@ -769,10 +779,34 @@ class LoadCorpusDialog(PCTDialog):
                     phone_path = base + '.phn'
                 if not os.path.exists(phone_path):
                     reply = QMessageBox.critical(self,
-                            "Invalid information", "The phone file for the specifie words file does not exist.")
+                            "Invalid information", "The phone file for the specified words file does not exist.")
                     return
                 kwargs['word_path'] = kwargs.pop('path')
                 kwargs['phone_path'] = phone_path
+
+        if kwargs['feature_system_path'] is None or not os.path.exists(kwargs['feature_system_path']):
+            alert = QMessageBox()
+            alert.setWindowTitle('File not found')
+            if kwargs['feature_system_path'] is None:
+                alert.setText('Both a transcription and a feature system must be selected for your corpus to load '
+                'properly in PCT. If there are no options available for you then you will '
+                'need to create a features file. If you have a connection to the internet, you can download a file '
+                'from the menu File > Manage feature systems... It is also possible to create these files by '
+                'hand (consult the PCT documentation), but this is complicated. It is recommended that you download '
+                'one of the pre-made files, and then edit it from the menu Features > View/Edit feature system...')
+            else:
+                filename = os.path.split(kwargs['feature_system_path'])[-1]
+                alert.setText('PCT could not find a feature file named {}, which is required for the transcription and '
+                'feature system that you selected. There are three possible solutions:\n '
+                '1. The file you need might be available for download from within PCT. Go to the menu option '
+                'File > Manage feature systems... and click on "Download" (this requires a connection to the internet).\n'
+                '2. You can pick another transcription/feature combination that does work for now, and change '
+                'it later in PCT by going to Features > View/edit feature system.\n'
+                '3. You can construct a feature file by hand. Consult the PCT documentation for details. This can be '
+                'extremely time consuming, and it is not a recommended option.'.format(filename))
+            alert.exec_()
+            return
+
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
