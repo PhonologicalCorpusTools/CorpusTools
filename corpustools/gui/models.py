@@ -795,6 +795,7 @@ class FeatureSystemTableModel(BaseTableModel):
         self.sort(0,Qt.AscendingOrder)
 
     def generateData(self):
+
         self.rows = list()
         self.columns = ['symbol']
         if self.specifier is None:
@@ -803,7 +804,7 @@ class FeatureSystemTableModel(BaseTableModel):
         for x in self.specifier.segments:
             if x in ['','#']:
                 continue
-            self.rows.append([x]+[self.specifier[x,y] for y in self.specifier.features])
+            self.rows.append([x]+[self.specifier[x][y.lower()] for y in self.specifier.features])
         self.allrows = self.rows
 
     def filter(self,segments):

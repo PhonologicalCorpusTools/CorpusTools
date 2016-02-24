@@ -253,18 +253,13 @@ class MainWindow(QMainWindow):
 
         if result:
             self.corpus = dialog.corpus
-            if self.corpus.specifier is None:
-                alert = QMessageBox()
-                alert.setWindowTitle('No feature system')
-                alert.setText(('This corpus was loaded without a feature system. It is recommended that you '
-                            'immediately associate a feature system by going to the Features menu and clicking on '
-                            'View/Edit Feature system. If this is your first time using PCT, you may need instead to '
-                            'go to the Corpus menu and select Manage Feature System, then download one.'))
-                alert.exec_()
-
             try:
                 if not hasattr(self.corpus.inventory, 'isNew') or self.corpus.inventory.isNew:
                     # this corpus was just loaded from a text file
+                    self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
+                                                    self.corpus.inventory, self.corpus.specifier)
+                    #this modernize function is run because the corpus can be loaded with an older feature file
+                    #such as one downloaded from a previous PCT version
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
                     self.inventoryModel.updateFeatures(self.corpus.specifier)
                     self.saveCorpus()
@@ -276,7 +271,7 @@ class MainWindow(QMainWindow):
             except (AttributeError, KeyError)as e:
                 #Missing a necessary attribute - do some updating
                 self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
-                self.corpus.inventory, specifier = modernize.modernize_features(
+                self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
                                                                 self.corpus.inventory, self.corpus.specifier)
                 self.corpus.inventory.isNew = False
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
@@ -390,12 +385,15 @@ class MainWindow(QMainWindow):
     @check_for_transcription
     def showFeatureSystem(self):
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
-        if dialog.exec_():
+        results = dialog.exec_()
+        if results:
             if dialog.specifier is not None:
+                if dialog.transcription_changed:
+                    print(dialog.segmap)
+                    self.corpusModel.corpus.retranscribe(dialog.segmap)#this also updates the corpus inventory
+                    self.inventoryModel.updateInventory(list(self.corpusModel.corpus.inventory.segs.keys()))
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 self.corpusModel.corpus.update_features()
-                self.corpusModel.corpus.retranscribe(dialog.segmap)
-                self.inventoryModel.updateInventory(self.corpusModel.corpus.inventory)
                 self.inventoryModel.updateFeatures(dialog.specifier)
 
             if self.corpusModel.corpus.specifier is not None:

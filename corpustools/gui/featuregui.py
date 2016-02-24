@@ -3,6 +3,7 @@ import copy
 from collections import OrderedDict
 import codecs
 import time
+import corpustools.gui.modernize as modernize
 
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -84,6 +85,8 @@ class FeatureSystemSelect(QGroupBox):
                 default_feat = 'None'
             else:
                 default_trans,default_feat = default_deets
+
+
 
         for i,s in enumerate(get_transcription_system_styles(self.settings['storage'])):
             self.transSystem.addItem(s)
@@ -471,7 +474,18 @@ class EditFeatureMatrixDialog(QDialog):
         self.changeDisplay()
 
     def accept(self):
-        selected_transcription, selected_features  = self.changeWidget.value().split('2')
+        info = self.changeWidget.value()
+
+        if not info:
+            alert = QMessageBox()
+            alert.setText('You must select both a transcription type and a feature system. If no options are appearing '
+            'for you, then you need to obtain a feature file. Click "Cancel" in the features window to return to your '
+            'corpus. Then go to File > Manage features systems... and click on "Download"\n')
+            alert.addButton('Return', QMessageBox.AcceptRole)
+            alert.exec_()
+            return
+        else:
+            selected_transcription, selected_features  = info.split('2')
         if not selected_features == self.feature_system:
             self.feature_system_changed = True
             # alert = QMessageBox()
@@ -543,34 +557,92 @@ class EditFeatureMatrixDialog(QDialog):
 
         if path is None:
             self.specifier = None
+            return
+
+        if os.path.exists(path):
+            new_specifier = load_binary(path)
+            #even if a file exists, it is still possible that some of the segments in the current corpus have feature
+            #specifications that do not match anything in the new feature system, so we have to check on that
+            # choice = self.mapNewOldSystem(new_specifier)
+            # if choice == 'Return':
+            #     pos = self.changeWidget.transSystem.findText(self.specifier.name.split('2')[0])
+            #     self.changeWidget.transSystem.setCurrentIndex(pos)
+            # else:
+            self.specifier = new_specifier
+            self.changeDisplay()
+
         else:
-            try:
-                self.specifier = load_binary(path)
-                self.featureSystemChanged = True
-                self.changeDisplay()
-            except (OSError, FileNotFoundError):
-                filename = os.path.split(path)[-1]
-                trans_name, feature_name = filename.split('2')
-                feature_name = feature_name.split('.')[0]
-                alert = QMessageBox()
-                alert.setWindowTitle('Transcription/Feature mismatch')
+            #there is no existing feature file with the transcription/features combination that the user requested
+            #so we will offer the choice of creating that new system now
+            filename = os.path.split(path)[-1]
+            trans_name, feature_name = filename.split('2')
+            feature_name = feature_name.split('.')[0]
+            choice = self.createNewSystem(trans_name, feature_name, filename)  # self.specifier is set somewhere in here
+            if choice is None:
+                return
+        return
 
-                alert.setText(('There is no file named {}, so PCT doesn\'t know how to match up the transcription '
-                'symbols with appropriate features.\n'
-                'It may be possible to download the feature file you need. Go to File > Manage feature '
-                'systems... and click on "Download". You can also import your own feature files from that menu screen. '
-                '\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} system'
-                ''.format(filename, self.specifier.name.split('2')[0], trans_name)))
-                alert.addButton('Cancel', QMessageBox.RejectRole)
-                alert.addButton('Match transcription symbols now', QMessageBox.AcceptRole)
-                result = alert.exec_()
-                if result:
-                    self.createNewSystem(trans_name, feature_name)
-                else:
-                    return
+    def mapNewOldSystem(self, new_specifier):
+        #this is called if the user has selected an existing feature/transcription combination.
+        new_specifier = modernize.modernize_specifier(new_specifier)
+        #this is a bit of a hack using the modernize module to update any specifiers that might have
+        #been downloaded from a prior version of PCT
+        unmatched = list()
+        for seg,features in self.specifier.matrix.items():
+            for seg2,features2 in new_specifier.matrix.items():
+                if features == features2:
+                    self.segmap[seg] = seg2
+                    break
+            else:
+                unmatched.append(seg)
+
+        if unmatched:
+            alert = QMessageBox()
+            alert.setWindowTitle('Transcription mismatch')
+            inventory = self.corpus.inventory.segs.keys()
+            inventory_unmatched = list()
+            for pos,seg in enumerate(unmatched):
+                if seg in inventory:
+                    inventory_unmatched.append(seg)
+                    unmatched.pop(pos)
+
+            if inventory_unmatched:
+                text = ('Some of the symbols in your corpus do not match anything in the {} system, so '
+                'it is not possible to automatically retranscribe your corpus. The unmatched symbols are: \n{}'
+                ''.format(new_specifier.name, ','.join(inventory_unmatched)))
+            elif unmatched:
+                text = ('\n\nThe following symbols, which do not appear in your corpus, have no '
+                'feature match in the {} system. These symbols will be given default feature values, and you can '
+                'edit them in the features window immediately.\n{}'.format(new_specifier.name, ','.join(unmatched)))
+            alert.setText(text)
+
+                # alert.addButton('Match up symbols now', QMessageBox.AcceptRole)
+                # alert.addButton('Give default values', QMessageBox.RejectRole)
+                #
+
+            alert.addButton('Return', QMessageBox.AcceptRole)
+            alert.exec_()
+            return alert.clickedButton().text()
+        return None
 
 
-    def createNewSystem(self, trans_name, feature_name):
+    def createNewSystem(self, trans_name, feature_name, filename):
+        #this is called if the user has selected a transcription and feature system for which there is no built-in
+        #feature file. it will create a new one called trans_name2feature_name.feature, based on the function arguments
+
+        alert = QMessageBox()
+        alert.setWindowTitle('Transcription/Feature mismatch')
+        alert.setText(('There is no file named {}, so PCT doesn\'t know how to match up the transcription '
+                       'symbols with appropriate features.\n'
+                       'It may be possible to download the feature file you need. Go to File > Manage feature '
+                       'systems... and click on "Download". You can also import your own feature files from that menu screen. '
+                       '\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} system'
+                       ''.format(filename, self.specifier.name.split('2')[0], trans_name)))
+        alert.addButton('Go back to the previous window', QMessageBox.RejectRole)
+        alert.addButton('Match transcription symbols now', QMessageBox.AcceptRole)
+        alert.exec_()
+        if alert.clickedButton().text().startswith('Go back'):
+            return
 
         systems = get_systems_list(self.settings['storage'])
         for system in systems:
@@ -586,7 +658,6 @@ class EditFeatureMatrixDialog(QDialog):
         if results:
             self.segmap = dialog.segmap
             self.defaultFeatureFill(trans_name, feature_name, new_symbols)
-            self.changeDisplay()
         else:
             self.segmap = dict()
 
@@ -605,7 +676,6 @@ class EditFeatureMatrixDialog(QDialog):
         new_system_name = '{}2{}'.format(trans_name, feature_name)
         new_path = os.path.join(self.settings['storage'], 'FEATURE', new_system_name + '.txt')
         inverse_segmap = {v: k for k, v in self.segmap.items()}
-
 
         with open(new_path, encoding='utf-8', mode='w') as f:
             print('symbol\t{}'.format(featureline), file=f)

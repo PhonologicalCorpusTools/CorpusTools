@@ -43,7 +43,7 @@ def modernize_inventory_attributes(inventory):
         del inventory.vowel_feature
     return inventory
 
-def modernize_features(inventory, specifier):
+def modernize_specifier(specifier):
     #In some older versions of PCT, the FeatureMatrix returns Segments, instead of feature dicts
     seg1 = random.choice([seg for seg in list(specifier.matrix.keys()) if not seg == '#'])
     if isinstance(specifier[seg1], Segment):
@@ -51,6 +51,11 @@ def modernize_features(inventory, specifier):
             if seg == '#':
                 continue
             specifier.matrix[seg] = specifier.matrix[seg].features
+    return specifier
+
+def modernize_features(inventory, specifier):
+
+    specifier = modernize_specifier(specifier)
 
     seg1 = random.choice([seg for seg in inventory.segs.values() if not seg.symbol == '#'])
     if isinstance(seg1.features, Segment):

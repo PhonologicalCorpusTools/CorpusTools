@@ -833,8 +833,6 @@ class RetranscribeWidget(QDialog):
         mainLayout.addLayout(topLayout)
 
         bottomLayout = QHBoxLayout()
-        # verifyBox = QLabel('INCOMPLETE')
-        #bottomLayout.addWidget(verifyBox)
         ok = QPushButton('OK')
         cancel = QPushButton('Cancel')
         ok.clicked.connect(self.accept)

@@ -513,6 +513,14 @@ class FeatureMatrix(object):
         for seg in seg_list:
             self.matrix[seg] = {feature: self.default_value for feature in self._features}
 
+    @property
+    def trans_name(self):
+        return self.name.split('2')[0]
+
+    @property
+    def feature_name(self):
+        return self.name.split('2')[-1]
+
     def features_to_segments(self, feature_description):
         """
         Given a feature description, return the segments in the inventory
@@ -1845,7 +1853,7 @@ class Corpus(object):
         self.inventory = Inventory()
         for word in self.wordlist:
             self.wordlist[word].transcription = Transcription(
-                                                    [segmap[seg] for seg in self.wordlist[word].transcription])
+                [segmap[seg] for seg in self.wordlist[word].transcription])
             self.update_inventory(self.wordlist[word].transcription)
 
     def subset(self, filters):
