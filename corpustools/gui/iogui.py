@@ -552,7 +552,6 @@ class LoadCorpusDialog(PCTDialog):
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
-
         self.typeChanged()
 
     def createWidgets(self):
@@ -785,25 +784,17 @@ class LoadCorpusDialog(PCTDialog):
                 kwargs['phone_path'] = phone_path
 
         if kwargs['feature_system_path'] is None or not os.path.exists(kwargs['feature_system_path']):
+
             alert = QMessageBox()
             alert.setWindowTitle('File not found')
-            if kwargs['feature_system_path'] is None:
-                alert.setText('Both a transcription and a feature system must be selected for your corpus to load '
-                'properly in PCT. If there are no options available for you then you will '
-                'need to create a features file. If you have a connection to the internet, you can download a file '
-                'from the menu File > Manage feature systems... It is also possible to create these files by '
-                'hand (consult the PCT documentation), but this is complicated. It is recommended that you download '
-                'one of the pre-made files, and then edit it from the menu Features > View/Edit feature system...')
-            else:
-                filename = os.path.split(kwargs['feature_system_path'])[-1]
-                alert.setText('PCT could not find a feature file named {}, which is required for the transcription and '
-                'feature system that you selected. There are three possible solutions:\n '
-                '1. The file you need might be available for download from within PCT. Go to the menu option '
-                'File > Manage feature systems... and click on "Download" (this requires a connection to the internet).\n'
-                '2. You can pick another transcription/feature combination that does work for now, and change '
-                'it later in PCT by going to Features > View/edit feature system.\n'
-                '3. You can construct a feature file by hand. Consult the PCT documentation for details. This can be '
-                'extremely time consuming, and it is not a recommended option.'.format(filename))
+            alert.setText('You must select a feature and transcription system before you can load a corpus. If you do '
+            'not see combination of features and transcription that you want, there are three possible solutions:\n\n '
+            '1. The file might be available for download from within PCT. Go to the menu option '
+            'File > Manage feature systems... and click on "Download".\n\n'
+            '2. You can pick another transcription/feature combination for now, and change '
+            'it later in PCT by going to Features > View/edit feature system.\n\n'
+            '3. You can construct a feature file by hand. Consult the PCT documentation for details. This can be '
+            'extremely time consuming, and it is not a recommended option.')
             alert.exec_()
             return
 

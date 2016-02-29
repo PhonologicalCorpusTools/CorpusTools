@@ -162,6 +162,9 @@ class Settings(object):
     def log_directory(self):
         return os.path.join(self['storage'],'LOG')
 
+    def feature_directory(self):
+        return os.path.join(self['storage'], 'FEATURE')
+
     def check_storage(self):
         if not os.path.exists(self['storage']):
             os.makedirs(self['storage'])

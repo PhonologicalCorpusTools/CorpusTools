@@ -4,6 +4,7 @@ import itertools
 import collections
 from copy import deepcopy
 from .widgets import *
+from corpustools.corpus.classes.lexicon import Segment
 from corpustools.exceptions import CorpusIntegrityError
 
 
@@ -921,12 +922,13 @@ class InventoryModel(QAbstractTableModel):
             if seg == '#':
                 continue
             self.segs[seg].features = specifier.specify(seg)
+
         self.features = specifier.features
         self.possible_values = specifier.possible_values
         self.modelReset()
 
     def updateInventory(self, new_segs):
-        self.segs = {symbol: dict() for symbol in new_segs}
+        self.segs = {symbol: Segment(symbol) for symbol in new_segs}
 
     def changeColumnSpecs(self, index, features, new_section_name, consonants=True):
         if consonants:
@@ -961,7 +963,6 @@ class InventoryModel(QAbstractTableModel):
             self.vowelRows.add(new_section_name)
         self.modelReset()
         return True
-
 
     def data(self, index, role):
         if not index.isValid():

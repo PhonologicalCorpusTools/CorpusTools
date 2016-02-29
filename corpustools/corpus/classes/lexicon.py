@@ -1852,9 +1852,14 @@ class Corpus(object):
 
         self.inventory = Inventory()
         for word in self.wordlist:
-            self.wordlist[word].transcription = Transcription(
-                [segmap[seg] for seg in self.wordlist[word].transcription])
-            self.update_inventory(self.wordlist[word].transcription)
+            T = Transcription([segmap[seg] for seg in self.wordlist[word].transcription])
+            self.wordlist[word].transcription = T
+            #self.update_inventory(self.wordlist[word].transcription)
+            for seg in T:
+                if seg not in self.inventory:
+                    self.inventory.segs[seg] = Segment(seg)
+                    self.inventory.segs[seg].features = self.specifier[seg]
+
 
     def subset(self, filters):
         """
@@ -2334,8 +2339,8 @@ class Corpus(object):
             if isinstance(s, str):
                 if s not in self.inventory:
                     self.inventory.segs[s] = Segment(s)
-                if s not in self.inventory.segs.keys():
-                    self.inventory.segs[s] = self.specifier[s]
+                #if s not in self.inventory.segs.keys():
+                    self.inventory.segs[s].features = self.specifier[s]
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])

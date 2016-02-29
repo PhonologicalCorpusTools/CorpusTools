@@ -58,8 +58,8 @@ class InventoryManager(QDialog):
         self.editCons = FeatureEdit(self.inventory)
         consCompleter = FeatureCompleter(self.inventory)
         self.editCons.setCompleter(consCompleter)
-        if self.inventory.cons_features is None or self.inventory.cons_features[0] is not None:
-            self.editCons.setText(','.join(self.inventory.cons_features))
+        #if self.inventory.cons_features is None or self.inventory.cons_features[0] is not None:
+        #    self.editCons.setText(','.join(self.inventory.cons_features[0]))
         editConsLayout.addWidget(self.editCons)
         editCategoriesLayout.addLayout(editConsLayout)
 

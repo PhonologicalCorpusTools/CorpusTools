@@ -563,13 +563,15 @@ class EditFeatureMatrixDialog(QDialog):
             new_specifier = load_binary(path)
             #even if a file exists, it is still possible that some of the segments in the current corpus have feature
             #specifications that do not match anything in the new feature system, so we have to check on that
-            # choice = self.mapNewOldSystem(new_specifier)
-            # if choice == 'Return':
-            #     pos = self.changeWidget.transSystem.findText(self.specifier.name.split('2')[0])
-            #     self.changeWidget.transSystem.setCurrentIndex(pos)
-            # else:
-            self.specifier = new_specifier
-            self.changeDisplay()
+            #for instance, if you're trying to take something with implosives in ipa2spe and turn it into arpbabet
+            #which has no way of representing implosives
+            choice = self.mapNewOldSystem(new_specifier)
+            if choice == 'Return':
+                pos = self.changeWidget.transSystem.findText(self.specifier.name.split('2')[0])
+                self.changeWidget.transSystem.setCurrentIndex(pos)
+            else:
+                self.specifier = new_specifier
+                self.changeDisplay()
 
         else:
             #there is no existing feature file with the transcription/features combination that the user requested
@@ -577,9 +579,13 @@ class EditFeatureMatrixDialog(QDialog):
             filename = os.path.split(path)[-1]
             trans_name, feature_name = filename.split('2')
             feature_name = feature_name.split('.')[0]
-            choice = self.createNewSystem(trans_name, feature_name, filename)  # self.specifier is set somewhere in here
-            if choice is None:
-                return
+            self.createNewSystem(trans_name, feature_name, filename)  # self.specifier is set somewhere in here
+
+            tname,fname = self.specifier.name.split('2')
+            pos = self.changeWidget.transSystem.findText(tname)
+            self.changeWidget.transSystem.setCurrentIndex(pos)
+            pos = self.changeWidget.featureSystem.findText(fname)
+            self.changeWidget.featureSystem.setCurrentIndex(pos)
         return
 
     def mapNewOldSystem(self, new_specifier):
@@ -588,6 +594,7 @@ class EditFeatureMatrixDialog(QDialog):
         #this is a bit of a hack using the modernize module to update any specifiers that might have
         #been downloaded from a prior version of PCT
         unmatched = list()
+
         for seg,features in self.specifier.matrix.items():
             for seg2,features2 in new_specifier.matrix.items():
                 if features == features2:
@@ -626,7 +633,7 @@ class EditFeatureMatrixDialog(QDialog):
         return None
 
 
-    def createNewSystem(self, trans_name, feature_name, filename):
+    def createNewSystem(self, trans_name, feature_name, file_not_found_name):
         #this is called if the user has selected a transcription and feature system for which there is no built-in
         #feature file. it will create a new one called trans_name2feature_name.feature, based on the function arguments
 
@@ -637,7 +644,7 @@ class EditFeatureMatrixDialog(QDialog):
                        'It may be possible to download the feature file you need. Go to File > Manage feature '
                        'systems... and click on "Download". You can also import your own feature files from that menu screen. '
                        '\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} system'
-                       ''.format(filename, self.specifier.name.split('2')[0], trans_name)))
+                       ''.format(file_not_found_name, self.specifier.name.split('2')[0], trans_name)))
         alert.addButton('Go back to the previous window', QMessageBox.RejectRole)
         alert.addButton('Match transcription symbols now', QMessageBox.AcceptRole)
         alert.exec_()
@@ -661,6 +668,7 @@ class EditFeatureMatrixDialog(QDialog):
         else:
             self.segmap = dict()
 
+        return None
 
     def defaultFeatureFill(self, trans_name, feature_name, new_symbols):
 
@@ -680,7 +688,7 @@ class EditFeatureMatrixDialog(QDialog):
         with open(new_path, encoding='utf-8', mode='w') as f:
             print('symbol\t{}'.format(featureline), file=f)
             for seg in new_symbols:
-                if seg in inverse_segmap:
+                if seg in self.segmap:
                     line = '\t'.join(self.specifier.seg_to_feat_line(inverse_segmap[seg]))
                     print(line, file=f)
                 else:

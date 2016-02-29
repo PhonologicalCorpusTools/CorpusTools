@@ -248,11 +248,35 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
+        if not any ([file.endswith('.feature') for file in os.listdir(self.settings.feature_directory())]):
+            alert = QMessageBox()
+            alert.setWindowTitle('Missing transcription/feature information')
+            alert.setText('You do not have any feature files available. These are files that specify the transcription '
+            'and phonological feature information for your corpus.'
+            'You can download one from inside PCT by going to File > Manage feature systems... \n\n'
+            'Don\'t worry if none of the transcription or feature systems available match your data exactly. You can '
+            'change this information from within PCT by going to the Features menu after loading your corpus.\n\n'
+            'If you already have feature files on your computer, and they are not being displayed here, then you should '
+            'go to Options > Preferences and verify your "storage" directory. PCT looks for a subdirectory of storage '
+            'called \\FEATURE and all features files should be placed in there.\n'
+            )
+            alert.exec_()
+            return
         dialog = CorpusLoadDialog(self, self.corpus, self.settings)
         result = dialog.exec_()
 
         if result:
             self.corpus = dialog.corpus
+            if 'None' in self.corpus.specifier.name:
+                alert = QMessageBox()
+                alert.setWindowTitle('Missing corpus information')
+                alert.setText('Your corpus was loaded without a transcription or feature system. '
+                'The majority of PCT\'s analysis functions require this information to work correctly. '
+                'Go to Features > View/Edit feature system... to select one.\n '
+                'If you do not have any feature file available at all, you can '
+                'download one by going to File > Manage feature systems...')
+                alert.addButton('OK', QMessageBox.AcceptRole)
+                alert.exec_()
             try:
                 if not hasattr(self.corpus.inventory, 'isNew') or self.corpus.inventory.isNew:
                     # this corpus was just loaded from a text file
@@ -388,11 +412,11 @@ class MainWindow(QMainWindow):
         results = dialog.exec_()
         if results:
             if dialog.specifier is not None:
+                self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 if dialog.transcription_changed:
-                    print(dialog.segmap)
                     self.corpusModel.corpus.retranscribe(dialog.segmap)#this also updates the corpus inventory
                     self.inventoryModel.updateInventory(list(self.corpusModel.corpus.inventory.segs.keys()))
-                self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+
                 self.corpusModel.corpus.update_features()
                 self.inventoryModel.updateFeatures(dialog.specifier)
 
