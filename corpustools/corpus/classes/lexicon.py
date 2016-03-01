@@ -485,7 +485,7 @@ class FeatureMatrix(object):
 
     """
 
-    def __init__(self, name,feature_entries):
+    def __init__(self, name, feature_entries):
         self.name = name
         self._features = None
         self.vowel_feature = None
@@ -496,11 +496,15 @@ class FeatureMatrix(object):
         self.possible_values = set()
         self.matrix = {}
         self._default_value = 'n'
-        for s in feature_entries:
-            self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
-            self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
-        if self._features is None:
-            self._features = {k for k in s.keys() if k != 'symbol'}
+        if isinstance(feature_entries, FeatureMatrix):
+            self.matrix = feature_entries.matrix
+        else:
+            for s in feature_entries:
+                self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
+                self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
+            if self._features is None:
+                self._features = {k for k in s.keys() if k != 'symbol'}
+
 
     def __eq__(self, other):
         if not isinstance(other,FeatureMatrix):

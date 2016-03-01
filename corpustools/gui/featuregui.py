@@ -364,7 +364,8 @@ class EditFeatureMatrixDialog(QDialog):
         self.corpus = corpus
         self.settings = settings
         self.specifier = self.corpus.specifier
-        self.transcription_system, self.feature_system = self.specifier.name.split('2')
+        self.transcription_system = self.specifier.trans_name
+        self.feature_system = self.specifier.feature_name
         self.feature_system_changed = False
         self.transcription_changed = False
         self.segmap = dict()
@@ -382,7 +383,10 @@ class EditFeatureMatrixDialog(QDialog):
         if self.specifier is not None:
             default = self.specifier.name
         self.changeWidget = FeatureSystemSelect(self.settings,default=default)
-        self.changeWidget.changed.connect(self.changeFeatureSystem)
+        #self.changeWidget.changed.connect(self.changeFeatureSystem)
+        self.changeWidget.transSystem.activated.connect(self.changeFeatureSystem)
+        self.changeWidget.featureSystem.activated.connect(self.changeFeatureSystem)
+
         box.addRow(self.changeWidget)
 
         changeFrame.setLayout(box)
@@ -565,10 +569,9 @@ class EditFeatureMatrixDialog(QDialog):
             #specifications that do not match anything in the new feature system, so we have to check on that
             #for instance, if you're trying to take something with implosives in ipa2spe and turn it into arpbabet
             #which has no way of representing implosives
-            choice = self.mapNewOldSystem(new_specifier)
+            choice = self.mapExistingSystems(new_specifier)
             if choice == 'Return':
-                pos = self.changeWidget.transSystem.findText(self.specifier.name.split('2')[0])
-                self.changeWidget.transSystem.setCurrentIndex(pos)
+                self.resetFeatureWidget()
             else:
                 self.specifier = new_specifier
                 self.changeDisplay()
@@ -579,49 +582,50 @@ class EditFeatureMatrixDialog(QDialog):
             filename = os.path.split(path)[-1]
             trans_name, feature_name = filename.split('2')
             feature_name = feature_name.split('.')[0]
-            self.createNewSystem(trans_name, feature_name, filename)  # self.specifier is set somewhere in here
+            change = self.createNewSystem(trans_name, feature_name, filename)  # self.specifier is set somewhere in here
+            if change:
+                self.changeDisplay()
+            else:
+                self.resetFeatureWidget()
 
-            tname,fname = self.specifier.name.split('2')
-            pos = self.changeWidget.transSystem.findText(tname)
-            self.changeWidget.transSystem.setCurrentIndex(pos)
-            pos = self.changeWidget.featureSystem.findText(fname)
-            self.changeWidget.featureSystem.setCurrentIndex(pos)
         return
 
-    def mapNewOldSystem(self, new_specifier):
-        #this is called if the user has selected an existing feature/transcription combination.
-        new_specifier = modernize.modernize_specifier(new_specifier)
-        #this is a bit of a hack using the modernize module to update any specifiers that might have
-        #been downloaded from a prior version of PCT
+    def resetFeatureWidget(self):
+        pos = self.changeWidget.transSystem.findText(self.specifier.trans_name)
+        self.changeWidget.transSystem.setCurrentIndex(pos)
+        pos = self.changeWidget.featureSystem.findText(self.specifier.feature_name)
+        self.changeWidget.featureSystem.setCurrentIndex(pos)
+
+    def mapExistingSystems(self, new_specifier):
         unmatched = list()
 
-        for seg,features in self.specifier.matrix.items():
-            for seg2,features2 in new_specifier.matrix.items():
-                if features == features2:
-                    self.segmap[seg] = seg2
-                    break
-            else:
-                unmatched.append(seg)
+        #IF THE TRANSCRIPTIONS MATCH, THEN MAP BASED ON SYMBOLS
+        if new_specifier.trans_name == self.specifier.trans_name:
+            print('transcription match')
+            unmatched = [seg for seg in self.specifier.matrix.keys() if not seg in new_specifier.matrix.keys()]
+
+        #IF THE FEATURES MATCH, THEN MAP BASED ON THEM
+        elif new_specifier.feature_name == self.specifier.feature_name:
+            print('feature match')
+            print(self.specifier['B'])
+            print(new_specifier['b'])
+            for seg,features in self.specifier.matrix.items():
+                for seg2,features2 in new_specifier.matrix.items():
+                    if features == features2:
+                        self.segmap[seg] = seg2
+                        break
+                else:
+                    unmatched.append(seg)
+
+        unmatched = [seg for seg in unmatched if seg in self.corpus.inventory]
 
         if unmatched:
             alert = QMessageBox()
             alert.setWindowTitle('Transcription mismatch')
-            inventory = self.corpus.inventory.segs.keys()
-            inventory_unmatched = list()
-            for pos,seg in enumerate(unmatched):
-                if seg in inventory:
-                    inventory_unmatched.append(seg)
-                    unmatched.pop(pos)
 
-            if inventory_unmatched:
-                text = ('Some of the symbols in your corpus do not match anything in the {} system, so '
-                'it is not possible to automatically retranscribe your corpus. The unmatched symbols are: \n{}'
-                ''.format(new_specifier.name, ','.join(inventory_unmatched)))
-            elif unmatched:
-                text = ('\n\nThe following symbols, which do not appear in your corpus, have no '
-                'feature match in the {} system. These symbols will be given default feature values, and you can '
-                'edit them in the features window immediately.\n{}'.format(new_specifier.name, ','.join(unmatched)))
-            alert.setText(text)
+            alert.setText(('Some of the symbols in your corpus do not match anything in the {} system, so '
+                           'it is not possible to automatically retranscribe your corpus. The unmatched symbols are: \n{}'
+                           ''.format(new_specifier.name, ','.join(unmatched))))
 
                 # alert.addButton('Match up symbols now', QMessageBox.AcceptRole)
                 # alert.addButton('Give default values', QMessageBox.RejectRole)
@@ -640,16 +644,17 @@ class EditFeatureMatrixDialog(QDialog):
         alert = QMessageBox()
         alert.setWindowTitle('Transcription/Feature mismatch')
         alert.setText(('There is no file named {}, so PCT doesn\'t know how to match up the transcription '
-                       'symbols with appropriate features.\n'
+                       'symbols with appropriate features.\n\n'
                        'It may be possible to download the feature file you need. Go to File > Manage feature '
                        'systems... and click on "Download". You can also import your own feature files from that menu screen. '
-                       '\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} system'
+                       '\n\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} '
+                       'system, and a new feature file will be generated right now.'
                        ''.format(file_not_found_name, self.specifier.name.split('2')[0], trans_name)))
         alert.addButton('Go back to the previous window', QMessageBox.RejectRole)
         alert.addButton('Match transcription symbols now', QMessageBox.AcceptRole)
         alert.exec_()
         if alert.clickedButton().text().startswith('Go back'):
-            return
+            return False
 
         systems = get_systems_list(self.settings['storage'])
         for system in systems:
@@ -668,7 +673,7 @@ class EditFeatureMatrixDialog(QDialog):
         else:
             self.segmap = dict()
 
-        return None
+        return True
 
     def defaultFeatureFill(self, trans_name, feature_name, new_symbols):
 
@@ -688,8 +693,8 @@ class EditFeatureMatrixDialog(QDialog):
         with open(new_path, encoding='utf-8', mode='w') as f:
             print('symbol\t{}'.format(featureline), file=f)
             for seg in new_symbols:
-                if seg in self.segmap:
-                    line = '\t'.join(self.specifier.seg_to_feat_line(inverse_segmap[seg]))
+                if seg in inverse_segmap:
+                    line = '\t'.join([seg] + self.specifier.seg_to_feat_line(inverse_segmap[seg])[1:])
                     print(line, file=f)
                 else:
                     print('{}\t{}'.format(seg, defaultline), file=f)
@@ -1025,10 +1030,11 @@ class EditSegmentDialog(QDialog):
         QDialog.accept(self)
 
 class FeatureMatrixManager(QDialog):
-    def __init__(self, parent, settings):
+    def __init__(self, parent, settings, current_system):
         QDialog.__init__(self, parent)
         layout = QVBoxLayout()
         self.settings = settings
+        self.current_system = current_system
         formLayout = QHBoxLayout()
         listFrame = QGroupBox('Available feature systems')
         listLayout = QGridLayout()
@@ -1100,8 +1106,15 @@ class FeatureMatrixManager(QDialog):
 
     def removeSystem(self):
         featureSystem = self.systemsList.currentItem().text()
+        if self.current_system == featureSystem:
+            alert = QMessageBox(QMessageBox.Warning, 'Remove system', 'This feature system is being used by your open '
+            'corpus, and you cannot remove it. Please close your corpus first.')
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.exec_()
+            return
         msgBox = QMessageBox(QMessageBox.Warning, "Remove system",
-                "This will permanently remove '{}'.  Are you sure?".format(featureSystem), QMessageBox.NoButton, self)
+                             "This will permanently remove '{}'.  Are you sure?\n\n".format(featureSystem),
+                             QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:

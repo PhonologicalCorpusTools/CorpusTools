@@ -347,7 +347,11 @@ class MainWindow(QMainWindow):
         #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
-        dialog = FeatureMatrixManager(self, self.settings)
+        if self.corpus:
+            current_system = self.corpus.specifier.name
+        else:
+            current_system = None
+        dialog = FeatureMatrixManager(self, self.settings, current_system)
         result = dialog.exec_()
         if result:
             pass

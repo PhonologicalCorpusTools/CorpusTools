@@ -1,5 +1,5 @@
 import random
-from corpustools.corpus.classes.lexicon import Segment
+from corpustools.corpus.classes.lexicon import Segment, FeatureMatrix
 from corpustools import __version__ as currentPCTversion
 
 #it would be better to import these attributes from .models.InventoryModel, but this creates a circular import problem
@@ -51,7 +51,9 @@ def modernize_specifier(specifier):
             if seg == '#':
                 continue
             specifier.matrix[seg] = specifier.matrix[seg].features
-    return specifier
+        return FeatureMatrix(specifier.name, specifier) #this adds new class methods too
+    else:
+        return specifier #no changes made
 
 def modernize_features(inventory, specifier):
 
