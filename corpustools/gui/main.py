@@ -252,14 +252,14 @@ class MainWindow(QMainWindow):
             alert = QMessageBox()
             alert.setWindowTitle('Missing transcription/feature information')
             alert.setText('You do not have any feature files available. These are files that specify the transcription '
-            'and phonological feature information for your corpus.'
+            'and phonological feature information for your corpus. You will have limited access to PCT\'s analysis '
+            'functions without such a file.'
             'You can download one from inside PCT by going to File > Manage feature systems... \n\n'
             'Don\'t worry if none of the transcription or feature systems available match your data exactly. You can '
             'change this information from within PCT by going to the Features menu after loading your corpus.\n\n'
             'If you already have feature files on your computer, and they are not being displayed here, then you should '
             'go to Options > Preferences and verify your "storage" directory. PCT looks for a subdirectory of storage '
-            'called \\FEATURE and all features files should be placed in there.\n'
-            )
+            'called \\FEATURE and all features files should be placed in there.\n')
             alert.exec_()
             return
         dialog = CorpusLoadDialog(self, self.corpus, self.settings)
@@ -278,21 +278,16 @@ class MainWindow(QMainWindow):
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
             try:
-                if not hasattr(self.corpus.inventory, 'isNew') or self.corpus.inventory.isNew:
-                    # this corpus was just loaded from a text file
-                    self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
-                                                    self.corpus.inventory, self.corpus.specifier)
-                    #this modernize function is run because the corpus can be loaded with an older feature file
-                    #such as one downloaded from a previous PCT version
+                if self.corpus.inventory.isNew:
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
                     self.inventoryModel.updateFeatures(self.corpus.specifier)
                     self.saveCorpus()
 
                 else:
-                    # this corpus was created with an up-to-date copy of PCT
+                    # just loaded a .corpus file, not from text
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
 
-            except (AttributeError, KeyError)as e:
+            except AttributeError:
                 #Missing a necessary attribute - do some updating
                 self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
                 self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
@@ -301,6 +296,8 @@ class MainWindow(QMainWindow):
                 self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
                 self.inventoryModel.modelReset()
                 self.saveCorpus()
+
+
 
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
@@ -423,6 +420,11 @@ class MainWindow(QMainWindow):
 
                 self.corpusModel.corpus.update_features()
                 self.inventoryModel.updateFeatures(dialog.specifier)
+
+            if dialog.feature_system_changed:
+                self.inventoryModel.generateGenericNames()
+                self.inventoryModel.filterGenericNames()
+                self.inventoryModel.modelReset()
 
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))

@@ -964,14 +964,50 @@ class InventoryModel(QAbstractTableModel):
         self.modelReset()
         return True
 
+    def getPartialCategorization(self, seg):
+        #This is called by .data() when a user wants a tooltip in the uncategorized box to see if there are any partial
+        #category matches.
+
+        for row, col in itertools.product(self.cons_row_data, self.cons_column_data):
+            row_index, row_features, row_segs = self.cons_row_data[row]
+            col_index, col_features, col_segs = self.cons_column_data[col]
+
+            if (all(row_features[key] == seg.features[key] for key in row_features)):
+                cons_category = row
+                break
+            elif all(col_features[key] == seg.features[key] for key in col_features):
+                cons_category = col
+                break
+        else:
+            cons_category = 'None'
+
+        for row, col in itertools.product(self.vowel_row_data, self.vowel_column_data):
+            row_index, row_features, row_segs = self.vowel_row_data[row]
+            col_index, col_features, col_segs = self.vowel_column_data[col]
+
+            if (all(row_features[key] == seg.features[key] for key in row_features)):
+                vowel_category = row
+                break
+            elif all(col_features[key] == seg.features[key] for key in col_features):
+                vowel_category = col
+                break
+
+        else:
+            vowel_category = 'None'
+
+        return 'Consonant matches:\n{}\nVowel matches:\n{}'.format(cons_category, vowel_category)
+
+
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
-        elif role != Qt.DisplayRole:
+        if role == Qt.DisplayRole:
+            return self._data[index.row()][index.column()]
+        elif role == Qt.ToolTipRole:
+            seg = self.segs[self._data[index.row()][index.column()]]
+            return self.getPartialCategorization(seg)
+        else:
             return QVariant()
-        segs = self._data[index.row()][index.column()]
-        segs = ','.join(segs)
-        return segs
 
     def setData(self, index, value, role=None):
         if not index.isValid() or role != Qt.EditRole:
@@ -1006,6 +1042,10 @@ class InventoryModel(QAbstractTableModel):
         # initialize some variables to avoid duplication when doing modelReset()
         self.vowelList = list()
         self.consList = list()
+        self.consColumns = set()
+        self.vowelColumns = set()
+        self.consRows = set()
+        self.vowelRows = set()
         self.uncategorized = list()
 
         for s in self.segs.values():
@@ -1299,7 +1339,7 @@ class InventoryModel(QAbstractTableModel):
             for seg, cat in self.consList:
                 if row_name in cat and col_name in cat:
                     matches.append(seg)
-            self._data[row][col] = ''.join([m.symbol for m in matches])
+            self._data[row][col] = ','.join([m.symbol for m in matches])
 
         #ADD IN VOWEL DATA
         for row, col in itertools.product(self.vowel_row_header_order.keys(),
@@ -1310,7 +1350,7 @@ class InventoryModel(QAbstractTableModel):
             for seg, cat in self.vowelList:
                 if row_name in cat and col_name in cat:
                     matches.append(seg)
-            self._data[row][col] = ''.join([m.symbol for m in matches])
+            self._data[row][col] = ','.join([m.symbol for m in matches])
 
     def generateGenericNames(self):
         sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
@@ -1332,22 +1372,40 @@ class InventoryModel(QAbstractTableModel):
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = None
-            self.filterNames = False
+            self.filterNames = True
         else:
-            self.cons_column_data['Column 1'] = [0, {}, None]
-            self.cons_row_data['Row 1'] = [0, {}, None]
-            self.vowel_column_data['Column 1'] = [0, {}, None]
-            self.vowel_row_data['Row 1'] = [0, {}, None]
+            self.cons_column_data = {'Column 1' : [0, {}, None]}
+            self.cons_row_data = {'Row 1' : [0, {}, None]}
+            self.vowel_column_data = {'Column 1': [0, {}, None]}
+            self.vowel_row_data = {'Row 1' : [0, {}, None]}
             self.filterNames = False
 
     def generateGenericSpe(self):
-        #Not yet implemented
-        self.cons_column_data['Column 1'] = [0, {}, None]
-        self.cons_row_data['Row 1'] = [0, {}, None]
-        self.vowel_column_data['Column 1'] = [0, {}, None]
-        self.vowel_row_data['Row 1'] = [0, {}, None]
+        self.cons_column_data = {}
+        self.cons_column_data['Labial'] = [0,{'voc':'-','ant':'+','cor':'-','high':'-','low':'-','back':'-'},None]
+        self.cons_column_data['Dental'] = [1,{'voc':'-','ant':'+','cor':'+','high':'-','low':'-','back':'-'},None]
+        self.cons_column_data['Alveolar'] = [2,{'voc':'-','ant':'-','cor':'+','high':'+','low':'-','back':'-'},None]
+        self.cons_column_data['Palatal'] = [3,{'voc':'-','ant':'-','cor':'-','high':'+','low':'-','back':'-'},None]
+        self.cons_column_data['Velar'] = [4,{'voc':'-','ant':'-','cor':'-','high':'+','low':'-','back':'+'},None]
+        self.cons_column_data['Uvular'] = [5,{'voc':'-','ant':'-','cor':'-','high':'-','low':'-','back':'+'},None]
+
+        self.cons_row_data = {}
+        self.cons_row_data['Stop'] = [0,{'voc':'-','cont':'-','nasal':'-','son':'-'},None]
+        self.cons_row_data['Nasal'] = [1,{'voc':'-','nasal':'+'},None]
+        self.cons_row_data['Fricative'] = [2,{'voc':'-','cont':'+','nasal':'-','son':'-'},None]
+        self.cons_row_data['Lateral'] = [3,{'voc':'-','lateral':'+'},None]
+
+        self.vowel_row_data = {}
+        self.vowel_row_data['High'] = [0,{'voc':'+','high':'+','low':'-'},None]
+        self.vowel_row_data['Mid'] = [1,{'voc': '+', 'high': '-', 'low': '-'}, None]
+        self.vowel_row_data['Low'] = [2, {'voc': '+', 'high': '-', 'low': '+'}, None]
+
+        self.vowel_column_data = {}
+        self.vowel_column_data['Front'] = [0,{'voc':'+','back':'-'},None]
+        self.vowel_column_data['Back'] = [1,{'voc':'+','back': '+'}, None]
 
     def generateGenericHayes(self):
+        self.cons_column_data = {}
         self.cons_column_data['Labial'] = [0, {'consonantal': '+', 'labial': '+', 'coronal': '-',
                                                'labiodental': '-'}, None]
         self.cons_column_data['Labiodental'] = [1, {'consonantal': '+', 'labiodental': '+'}, None]
@@ -1367,6 +1425,7 @@ class InventoryModel(QAbstractTableModel):
                                             {'consonantal': '+', 'dorsal': '-', 'coronal': '-', 'labial': '-',
                                              'nasal': '-'}, None]
 
+        self.cons_row_data = {}
         self.cons_row_data['Stop'] = [0, {'consonantal': '+', 'sonorant': '-', 'continuant': '-', 'nasal': '-',
                                           'delayed_release': '-'}, None]
         self.cons_row_data['Nasal'] = [1, {'consonantal': '+', 'nasal': '+'}, None]
@@ -1380,21 +1439,15 @@ class InventoryModel(QAbstractTableModel):
         self.cons_row_data['Lateral approximant'] = [7, {'consonantal': '+', 'sonorant': '+', 'lateral': '+',
                                                          'nasal': '-'}, None]
 
-        self.vowel_column_data['Front'] = [0, {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '+'},
-                                           None]
-        self.vowel_column_data['Near-front'] = [1,
-                                                {'consonantal': '-', 'front': '+', 'back': '-', 'tense': '-'},
-                                                None]
+        self.vowel_column_data = {}
+        self.vowel_column_data['Front'] = [0, {'consonantal': '-', 'front': '+', 'back': '-'}, None]
         self.vowel_column_data['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
-        self.vowel_column_data['Near-back'] = [3, {'consonantal': '-', 'front': '-', 'back': '-', 'tense': '-'},
-                                               None]
-        self.vowel_column_data['Back'] = [4, {'consonantal': '-', 'front': '-', 'back': '+', 'tense': '+'},
-                                          None]
+        self.vowel_column_data['Back'] = [4, {'consonantal': '-', 'front': '-', 'back': '+'}, None]
 
-        self.vowel_row_data['High'] = [0, {'consonantal': '-', 'high': '+', 'low': '-', 'tense': '+'}, None]
-        self.vowel_row_data['Mid-high'] = [1, {'consonantal': '-', 'high': '-', 'low': '-', 'tense': '+'}, None]
-        self.vowel_row_data['Mid-low'] = [2, {'consonantal': '-', 'high': '-', 'low': '-', 'tense': '-'}, None]
-        self.vowel_row_data['Low'] = [3, {'consonantal': '-', 'high': '-', 'low': '+', 'tense': '+'}, None]
+        self.vowel_row_data = {}
+        self.vowel_row_data['High'] = [0, {'consonantal': '-', 'high': '+', 'low': '-'}, None]
+        self.vowel_row_data['Mid'] = [1, {'consonantal': '-', 'high': '-', 'low': '-'}, None]
+        self.vowel_row_data['Low'] = [3, {'consonantal': '-', 'high': '-', 'low': '+',}, None]
 
     def getSortedHeaders(self, orientation, cons_or_vowel):
         if orientation == Qt.Horizontal:
@@ -1627,7 +1680,7 @@ class InventoryModel(QAbstractTableModel):
             col_index, col_features, col_segs = iterCols[col]
 
             if ((not row_features) or (not col_features)):
-                continue #should ignore rows or cols without _features - they will remain blank
+                continue #should ignore rows or cols without features - they will remain blank
 
             if ((row_segs is not None and seg in row_segs) and
                     (col_segs is not None and seg in col_segs)):

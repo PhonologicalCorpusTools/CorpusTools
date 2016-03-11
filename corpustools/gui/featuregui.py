@@ -492,13 +492,14 @@ class EditFeatureMatrixDialog(QDialog):
             selected_transcription, selected_features  = info.split('2')
         if not selected_features == self.feature_system:
             self.feature_system_changed = True
+            #This code should work, but doesn't. Regardless of what the user clicks, the AlertBox is accepted.
             # alert = QMessageBox()
             # alert.setWindowTitle('Warning!')
             # alert.setText('Changing your feature system may cause changes to your Inventory chart. Do you want to continue?')
-            # alert.addButton('Continue with changes', QMessageBox.AcceptRole)
-            # alert.addButton('Cancel', QMessageBox.RejectRole)
+            # alert.addButton('Continue with changes', QMessageBox.YesRole)
+            # alert.addButton('Cancel', QMessageBox.NoRole)
             # result = alert.exec_()
-            # if not result:
+            # if result == QMessageBox.No:
             #     return #Cancel changes
         else:
             self.feature_system_changed = False
@@ -607,8 +608,6 @@ class EditFeatureMatrixDialog(QDialog):
         #IF THE FEATURES MATCH, THEN MAP BASED ON THEM
         elif new_specifier.feature_name == self.specifier.feature_name:
             print('feature match')
-            print(self.specifier['B'])
-            print(new_specifier['b'])
             for seg,features in self.specifier.matrix.items():
                 for seg2,features2 in new_specifier.matrix.items():
                     if features == features2:
@@ -626,7 +625,7 @@ class EditFeatureMatrixDialog(QDialog):
             alert.setText(('Some of the symbols in your corpus do not match anything in the {} system, so '
                            'it is not possible to automatically retranscribe your corpus. The unmatched symbols are: \n{}'
                            ''.format(new_specifier.name, ','.join(unmatched))))
-
+                #
                 # alert.addButton('Match up symbols now', QMessageBox.AcceptRole)
                 # alert.addButton('Give default values', QMessageBox.RejectRole)
                 #

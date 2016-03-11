@@ -58,8 +58,10 @@ class InventoryManager(QDialog):
         self.editCons = FeatureEdit(self.inventory)
         consCompleter = FeatureCompleter(self.inventory)
         self.editCons.setCompleter(consCompleter)
-        #if self.inventory.cons_features is None or self.inventory.cons_features[0] is not None:
-        #    self.editCons.setText(','.join(self.inventory.cons_features[0]))
+        try:
+            self.editCons.setText(','.join(self.inventory.cons_features))
+        except TypeError:
+            pass
         editConsLayout.addWidget(self.editCons)
         editCategoriesLayout.addLayout(editConsLayout)
 
@@ -68,8 +70,10 @@ class InventoryManager(QDialog):
         self.editVowels = FeatureEdit(self.inventory)
         vowelCompleter = FeatureCompleter(self.inventory)
         self.editVowels.setCompleter(vowelCompleter)
-        if self.inventory.vowel_features is None or self.inventory.vowel_features[0] is not None:
+        try:
             self.editVowels.setText(','.join(self.inventory.vowel_features))
+        except TypeError:
+            pass
         editVowelsLayout.addWidget(self.editVowels)
         editCategoriesLayout.addLayout(editVowelsLayout)
 
