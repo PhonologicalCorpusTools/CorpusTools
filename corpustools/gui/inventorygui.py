@@ -81,6 +81,7 @@ class InventoryManager(QDialog):
                                     'class of segments which appear in that row or column.\n'
                                     'Right click to insert a new empty row or column.\n'
                                     'Select a heading and drag-and-drop to reorganize the table.\n'
+                                    'Hover over an uncategorized segment to see any partial matches.'
         ))
 
         topmessage.setWordWrap(True)

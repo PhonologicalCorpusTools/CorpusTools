@@ -1001,10 +1001,13 @@ class InventoryModel(QAbstractTableModel):
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
+        info = self._data[index.row()][index.column()]
+        if not info:
+            return QVariant()
         if role == Qt.DisplayRole:
-            return self._data[index.row()][index.column()]
+            return info
         elif role == Qt.ToolTipRole:
-            seg = self.segs[self._data[index.row()][index.column()]]
+            seg = self.segs[info]
             return self.getPartialCategorization(seg)
         else:
             return QVariant()
@@ -1042,10 +1045,6 @@ class InventoryModel(QAbstractTableModel):
         # initialize some variables to avoid duplication when doing modelReset()
         self.vowelList = list()
         self.consList = list()
-        self.consColumns = set()
-        self.vowelColumns = set()
-        self.consRows = set()
-        self.vowelRows = set()
         self.uncategorized = list()
 
         for s in self.segs.values():
@@ -1078,10 +1077,8 @@ class InventoryModel(QAbstractTableModel):
     def headerData(self, row_or_col, orientation, role=None):
         try:
             if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-                # return self.cons_column_data[row_or_col]
                 return self.all_columns[row_or_col]
             elif orientation == Qt.Vertical and role == Qt.DisplayRole:
-                # return self.cons_row_data[row_or_col]
                 return self.all_rows[row_or_col]
         except KeyError:
             return QVariant()
@@ -1250,6 +1247,14 @@ class InventoryModel(QAbstractTableModel):
             row_data[headerName][0] = visualIndex
         self.modelReset()
 
+    def reGenerateNames(self):
+        self.consRows = set()
+        self.vowelRows = set()
+        self.consColumns = set()
+        self.vowelColumns = set()
+        self.generateGenericNames()
+        self.filterGenericNames()
+
     def filterGenericNames(self):
         if not self.filterNames:
             return
@@ -1381,7 +1386,7 @@ class InventoryModel(QAbstractTableModel):
             self.filterNames = False
 
     def generateGenericSpe(self):
-        self.cons_column_data = {}
+        self.cons_column_data = dict()
         self.cons_column_data['Labial'] = [0,{'voc':'-','ant':'+','cor':'-','high':'-','low':'-','back':'-'},None]
         self.cons_column_data['Dental'] = [1,{'voc':'-','ant':'+','cor':'+','high':'-','low':'-','back':'-'},None]
         self.cons_column_data['Alveolar'] = [2,{'voc':'-','ant':'-','cor':'+','high':'+','low':'-','back':'-'},None]
@@ -1389,62 +1394,49 @@ class InventoryModel(QAbstractTableModel):
         self.cons_column_data['Velar'] = [4,{'voc':'-','ant':'-','cor':'-','high':'+','low':'-','back':'+'},None]
         self.cons_column_data['Uvular'] = [5,{'voc':'-','ant':'-','cor':'-','high':'-','low':'-','back':'+'},None]
 
-        self.cons_row_data = {}
+        self.cons_row_data = dict()
         self.cons_row_data['Stop'] = [0,{'voc':'-','cont':'-','nasal':'-','son':'-'},None]
         self.cons_row_data['Nasal'] = [1,{'voc':'-','nasal':'+'},None]
         self.cons_row_data['Fricative'] = [2,{'voc':'-','cont':'+','nasal':'-','son':'-'},None]
-        self.cons_row_data['Lateral'] = [3,{'voc':'-','lateral':'+'},None]
+        self.cons_row_data['Lateral'] = [3,{'voc':'-','lat':'+'},None]
 
-        self.vowel_row_data = {}
+        self.vowel_row_data = dict()
         self.vowel_row_data['High'] = [0,{'voc':'+','high':'+','low':'-'},None]
         self.vowel_row_data['Mid'] = [1,{'voc': '+', 'high': '-', 'low': '-'}, None]
         self.vowel_row_data['Low'] = [2, {'voc': '+', 'high': '-', 'low': '+'}, None]
 
-        self.vowel_column_data = {}
+        self.vowel_column_data = dict()
         self.vowel_column_data['Front'] = [0,{'voc':'+','back':'-'},None]
         self.vowel_column_data['Back'] = [1,{'voc':'+','back': '+'}, None]
 
     def generateGenericHayes(self):
-        self.cons_column_data = {}
-        self.cons_column_data['Labial'] = [0, {'consonantal': '+', 'labial': '+', 'coronal': '-',
-                                               'labiodental': '-'}, None]
-        self.cons_column_data['Labiodental'] = [1, {'consonantal': '+', 'labiodental': '+'}, None]
-        self.cons_column_data['Dental'] = [2,
-                                           {'consonantal': '+', 'anterior': '+', 'coronal': '+', 'labial': '-',
-                                            'labiodental': '-'},
-                                           None]
-        self.cons_column_data['Alveopalatal'] = [3, {'consonantal': '+', 'anterior': '-', 'coronal': '+',
-                                                     'labial': '-'}, None]
-        self.cons_column_data['Palatal'] = [4,
-                                            {'consonantal': '+', 'dorsal': '+', 'coronal': '+', 'labial': '-'},
-                                            None]
-        self.cons_column_data['Velar'] = [5, {'consonantal': '+', 'dorsal': '+', 'labial': '-'}, None]
-        self.cons_column_data['Uvular'] = [6, {'consonantal': '+', 'dorsal': '+', 'back': '+', 'labial': '-'},
-                                           None]
-        self.cons_column_data['Glottal'] = [7,
-                                            {'consonantal': '+', 'dorsal': '-', 'coronal': '-', 'labial': '-',
-                                             'nasal': '-'}, None]
+        self.cons_column_data = dict()
+        self.cons_column_data['Labial'] = [0,{'consonantal':'+','labial':'+','coronal':'-','labiodental': '-'}, None]
+        self.cons_column_data['Labiodental'] = [1,{'consonantal': '+', 'labiodental': '+'}, None]
+        self.cons_column_data['Dental'] = [2,{'consonantal':'+','anterior':'+','coronal':'+','labial':'-',
+                                              'labiodental': '-'},None]
+        self.cons_column_data['Alveopalatal'] = [3,{'consonantal':'+','anterior':'-','coronal':'+','labial': '-'}, None]
+        self.cons_column_data['Palatal'] = [4,{'consonantal': '+','dorsal': '+','coronal':'+','labial':'-'},None]
+        self.cons_column_data['Velar'] = [5,{'consonantal':'+','dorsal':'+','labial':'-'}, None]
+        self.cons_column_data['Uvular'] = [6, {'consonantal':'+','dorsal':'+','back':'+','labial':'-'},None]
+        self.cons_column_data['Glottal'] = [7,{'consonantal':'+','dorsal':'-','coronal':'-','labial':'-','nasal':'-'},None]
 
-        self.cons_row_data = {}
-        self.cons_row_data['Stop'] = [0, {'consonantal': '+', 'sonorant': '-', 'continuant': '-', 'nasal': '-',
-                                          'delayed_release': '-'}, None]
-        self.cons_row_data['Nasal'] = [1, {'consonantal': '+', 'nasal': '+'}, None]
-        self.cons_row_data['Trill'] = [2, {'consonantal': '+', 'trill': '+'}, None]
-        self.cons_row_data['Tap'] = [3, {'consonantal': '+', 'tap': '+'}, None]
-        self.cons_row_data['Fricative'] = [4, {'consonantal': '+', 'sonorant': '-', 'continuant': '+'}, None]
-        self.cons_row_data['Affricate'] = [5, {'consonantal': '+', 'sonorant': '-', 'continuant': '-',
-                                               'delayed_release': '+'}, None]
-        self.cons_row_data['Approximant'] = [6, {'consonantal': '+', 'sonorant': '+', 'lateral': '-',
-                                                 'nasal': '-'}, None]
-        self.cons_row_data['Lateral approximant'] = [7, {'consonantal': '+', 'sonorant': '+', 'lateral': '+',
-                                                         'nasal': '-'}, None]
+        self.cons_row_data = dict()
+        self.cons_row_data['Stop'] = [0,{'consonantal':'+','sonorant':'-','continuant':'-','delayed_release':'-'}, None]
+        self.cons_row_data['Nasal'] = [1,{'consonantal': '+', 'nasal': '+'}, None]
+        self.cons_row_data['Trill'] = [2,{'consonantal': '+', 'trill': '+'}, None]
+        self.cons_row_data['Tap'] = [3,{'consonantal': '+', 'tap': '+'}, None]
+        self.cons_row_data['Fricative'] = [4,{'consonantal':'+','sonorant':'-','continuant':'+'},None]
+        self.cons_row_data['Affricate'] = [5,{'consonantal':'+','continuant': '-','delayed_release': '+'}, None]
+        self.cons_row_data['Approximant'] = [6, {'consonantal':'+','sonorant':'+','lateral':'-','nasal': '-'},None]
+        self.cons_row_data['Lateral approximant'] = [7,{'consonantal':'+','sonorant':'+','lateral':'+'},None]
 
-        self.vowel_column_data = {}
+        self.vowel_column_data = dict()
         self.vowel_column_data['Front'] = [0, {'consonantal': '-', 'front': '+', 'back': '-'}, None]
         self.vowel_column_data['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
         self.vowel_column_data['Back'] = [4, {'consonantal': '-', 'front': '-', 'back': '+'}, None]
 
-        self.vowel_row_data = {}
+        self.vowel_row_data = dict()
         self.vowel_row_data['High'] = [0, {'consonantal': '-', 'high': '+', 'low': '-'}, None]
         self.vowel_row_data['Mid'] = [1, {'consonantal': '-', 'high': '-', 'low': '-'}, None]
         self.vowel_row_data['Low'] = [3, {'consonantal': '-', 'high': '-', 'low': '+',}, None]
@@ -1663,7 +1655,6 @@ class InventoryModel(QAbstractTableModel):
         return segments
 
     def categorize(self, seg):
-
         if self.isVowel(seg):
             category = ['Vowel']
             iterRows = self.vowel_row_data

@@ -2289,12 +2289,10 @@ class Corpus(object):
                 n = 0
                 while True:
                     n += 1
-                    #key = '{} ({})'.format(word.spelling.lower(),n)
                     key = '{} ({})'.format(word.spelling,n)
                     try:
                         check = self.find(key, keyerror=True)
                     except KeyError:
-                    #if isinstance(check, EmptyWord):
                         self.wordlist[key] = word
                         break
             else:
@@ -2302,7 +2300,6 @@ class Corpus(object):
         except KeyError:
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
-                #self.orthography.update(word.spelling)
                 if not self.has_spelling:
                     self.has_spelling = True
 
@@ -2321,7 +2318,6 @@ class Corpus(object):
             if not hasattr(word,a.name):
                 word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word,a.name))
-        self.update_inventory(word.transcription)
 
     def update_features(self):
         for seg in self.inventory:
@@ -2344,7 +2340,8 @@ class Corpus(object):
                 if s not in self.inventory:
                     self.inventory.segs[s] = Segment(s)
                 #if s not in self.inventory.segs.keys():
-                    self.inventory.segs[s].features = self.specifier[s]
+                    if self.specifier is not None:
+                        self.inventory.segs[s].features = self.specifier[s]
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])

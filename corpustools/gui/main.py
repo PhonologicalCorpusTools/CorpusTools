@@ -219,6 +219,17 @@ class MainWindow(QMainWindow):
                 function(self)
         return do_check
 
+    def check_for_feature_system(func):
+        def do_check(self):
+            if self.corpusModel.corpus.specifier is None:
+                reply = QMessageBox.critical(self, 'Missing information', 'This corpus has no feature file associated, so '
+                'it is not possible to use this menu option.\nPlease associate a feature system with this corpus by going to '
+                'Features > View/change feature system...')
+                return
+            else:
+                func(self)
+        return do_check
+
     def enableSave(self):
         self.unsavedChanges = True
         self.saveCorpusAct.setEnabled(True)
@@ -253,8 +264,8 @@ class MainWindow(QMainWindow):
             alert.setWindowTitle('Missing transcription/feature information')
             alert.setText('You do not have any feature files available. These are files that specify the transcription '
             'and phonological feature information for your corpus. You will have limited access to PCT\'s analysis '
-            'functions without such a file.'
-            'You can download one from inside PCT by going to File > Manage feature systems... \n\n'
+            'functions without a feature file, although you may still load a corpus.'
+            'You can download a feature file from inside PCT by going to File > Manage feature systems... \n\n'
             'Don\'t worry if none of the transcription or feature systems available match your data exactly. You can '
             'change this information from within PCT by going to the Features menu after loading your corpus.\n\n'
             'If you already have feature files on your computer, and they are not being displayed here, then you should '
@@ -267,7 +278,7 @@ class MainWindow(QMainWindow):
 
         if result:
             self.corpus = dialog.corpus
-            if 'None' in self.corpus.specifier.name:
+            if self.corpus.specifier is None:
                 alert = QMessageBox()
                 alert.setWindowTitle('Missing corpus information')
                 alert.setText('Your corpus was loaded without a transcription or feature system. '
@@ -277,25 +288,26 @@ class MainWindow(QMainWindow):
                 'download one by going to File > Manage feature systems...')
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
-            try:
-                if self.corpus.inventory.isNew:
-                    self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
-                    self.inventoryModel.updateFeatures(self.corpus.specifier)
-                    self.saveCorpus()
+            else:
+                try:
+                    if self.corpus.inventory.isNew:
+                        self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
+                        self.inventoryModel.updateFeatures(self.corpus.specifier)
+                        self.saveCorpus()
 
-                else:
-                    # just loaded a .corpus file, not from text
+                    else:
+                        # just loaded a .corpus file, not from text
+                        self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
+
+                except AttributeError:
+                    #Missing a necessary attribute - do some updating
+                    self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
+                    self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
+                                                                    self.corpus.inventory, self.corpus.specifier)
+                    self.corpus.inventory.isNew = False
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
-
-            except AttributeError:
-                #Missing a necessary attribute - do some updating
-                self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
-                self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
-                                                                self.corpus.inventory, self.corpus.specifier)
-                self.corpus.inventory.isNew = False
-                self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
-                self.inventoryModel.modelReset()
-                self.saveCorpus()
+                    self.inventoryModel.modelReset()
+                    self.saveCorpus()
 
 
 
@@ -354,7 +366,7 @@ class MainWindow(QMainWindow):
             pass
 
     @check_for_empty_corpus
-    @check_for_transcription
+    @check_for_feature_system
     def manageInventoryChart(self):
         copy_model = InventoryModel(self.inventoryModel, copy_mode=True)
         if not copy_model._data:
@@ -407,11 +419,21 @@ class MainWindow(QMainWindow):
             self.settings = dialog.settings
 
     @check_for_empty_corpus
-    @check_for_transcription
     def showFeatureSystem(self):
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         results = dialog.exec_()
         if results:
+            if self.corpusModel.corpus.specifier is None and dialog.specifier is not None:
+                self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+                self.corpusModel.corpus.update_features()
+                self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory)
+                return
+
+            if dialog.specifier is None:
+                self.corpusModel.corpus.specifier = None
+                self.inventoryModel = None
+                return
+
             if dialog.specifier is not None:
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 if dialog.transcription_changed:
@@ -422,8 +444,7 @@ class MainWindow(QMainWindow):
                 self.inventoryModel.updateFeatures(dialog.specifier)
 
             if dialog.feature_system_changed:
-                self.inventoryModel.generateGenericNames()
-                self.inventoryModel.filterGenericNames()
+                self.inventoryModel.reGenerateNames()
                 self.inventoryModel.modelReset()
 
             if self.corpusModel.corpus.specifier is not None:

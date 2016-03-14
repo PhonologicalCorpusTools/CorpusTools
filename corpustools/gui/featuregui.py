@@ -364,8 +364,8 @@ class EditFeatureMatrixDialog(QDialog):
         self.corpus = corpus
         self.settings = settings
         self.specifier = self.corpus.specifier
-        self.transcription_system = self.specifier.trans_name
-        self.feature_system = self.specifier.feature_name
+        self.transcription_system = self.specifier.trans_name if self.specifier is not None else 'None'
+        self.feature_system = self.specifier.feature_name if self.specifier is not None else 'None'
         self.feature_system_changed = False
         self.transcription_changed = False
         self.segmap = dict()
@@ -563,6 +563,18 @@ class EditFeatureMatrixDialog(QDialog):
         if path is None:
             self.specifier = None
             return
+
+        if self.specifier is None:
+            if os.path.exists(path):
+                new_specifier = load_binary(path)
+                self.specifier = new_specifier
+                self.changeDisplay()
+            else:
+                reply = QMessageBox.critical(self, 'File not found', 'PCT could not find a feature file with the '
+                'transcription and feature systems that you selected. Please select a different combination.\n\n'
+                'You might be able to download the file you want by going to File > Manage feature systems...')
+                self.resetFeatureWidget()
+                return
 
         if os.path.exists(path):
             new_specifier = load_binary(path)
