@@ -24,7 +24,7 @@ def main():
     parser = argparse.ArgumentParser(description = \
              'Phonological CorpusTools: visualization of segment inventory')
     parser.add_argument('distance_file_name', help='Name of input distance file')
-    parser.add_argument('-m', '--visualization_method', default='hc', help="Method of visualization: either hierarchical clustering ('hc') or multi-dimensional scaling ('mds')")
+    parser.add_argument('-m', '--visualization_method', default='pca', help="Method of visualization: any of principal components analysis ('pca'), hierarchical clustering ('hc'), or a heatmap ('hm')")
     parser.add_argument('-v', '--value_column', default='result', type=str, help='header for column containing distance values')
     parser.add_argument('-s', '--segment_column', default='segment(s)', type=str, help='header for column containing segment pairs')
     parser.add_argument('-d', '--column_delimiter', default='\t', type=str, help='header for column containing segment pairs')
