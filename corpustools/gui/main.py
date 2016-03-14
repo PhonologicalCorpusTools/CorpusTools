@@ -149,6 +149,7 @@ class MainWindow(QMainWindow):
         self.createMenus()
         self.corpus = None
         self.corpusModel = None
+        self.inventoryModel = None
 
         self.FLWindow = None
         self.PDWindow = None
@@ -214,6 +215,11 @@ class MainWindow(QMainWindow):
             if not self.corpusModel.corpus.has_transcription:
                 reply = QMessageBox.critical(self,
                         "Missing transcription", "This corpus has no transcriptions, so the requested action cannot be performed.")
+                return
+            if self.inventoryModel is None:
+                reply = QMessageBox.critical(self,
+                        'Missing information', 'This menu option is not available without a feature system. Please go to '
+                        'Features>View/Change feature system...')
                 return
             else:
                 function(self)

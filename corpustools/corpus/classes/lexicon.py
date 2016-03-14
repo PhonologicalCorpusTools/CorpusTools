@@ -2341,7 +2341,10 @@ class Corpus(object):
                     self.inventory.segs[s] = Segment(s)
                 #if s not in self.inventory.segs.keys():
                     if self.specifier is not None:
+                        # try:
                         self.inventory.segs[s].features = self.specifier[s]
+                        # except KeyError:
+                        #     pass
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])
