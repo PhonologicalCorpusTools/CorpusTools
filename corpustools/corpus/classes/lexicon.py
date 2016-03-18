@@ -456,7 +456,7 @@ class FeatureMatrix(object):
     ----------
     name : str
         An informative identifier for the feature matrix
-    _features : list
+    features : list
         Sorted list of feature names
     possible_values : set
         Set of values used in the FeatureMatrix
@@ -498,6 +498,7 @@ class FeatureMatrix(object):
         self._default_value = 'n'
         if isinstance(feature_entries, FeatureMatrix):
             self.matrix = feature_entries.matrix
+            self._features = feature_entries._features
         else:
             for s in feature_entries:
                 self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
@@ -1621,21 +1622,6 @@ class Inventory(object):
         self.vowel_row_header_order = dict()
         self.vowel_column_header_order = dict()
 
-    # def get_sorted_headers(self, orientation, cons_or_vowel):
-    #     if orientation == Qt.Horizontal:
-    #         if cons_or_vowel == 'cons':
-    #             data = self.cons_column_header_order
-    #         else:
-    #             data = self.vowel_column_header_order
-    #     elif orientation == Qt.Vertical:
-    #         if cons_or_vowel == 'cons':
-    #             data = self.cons_row_header_order
-    #         else:
-    #             data = self.vowel_row_header_order
-    #     else:
-    #         raise TypeError('The orientation value passed to Inventory.get_sorted_headers is not valid')
-    #
-    #     return [data[header] for header in sorted(list(data.keys()))]
 
     def __getstate__(self):
         state = self.__dict__.copy()

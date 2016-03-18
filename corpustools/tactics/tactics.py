@@ -2,8 +2,8 @@ import collections
 
 def findSyllableShapes(corpus, inventory, nucleus, stop_check=None, call_back=None):
 
-    onsets, codas = parseCorpus(corpus, inventory, nucleus, stop_check, call_back)
-
+    onsets, codas, syllables = parseCorpus(corpus, inventory, nucleus, stop_check, call_back)
+    print(syllables)
     onset_strings = collections.defaultdict(int)
     for onset,freq in onsets.items():
         string = 'C'*len(onset)
@@ -31,7 +31,7 @@ def parseCorpus(corpus, inventory, nucleus, stop_check, call_back):
 
     #First grab obvious onsets and codas from word edges
     onsets, codas = lookAtWordEdges(corpus, inventory, nucleus_name, nucleus_sign, tier, stop_check, call_back)
-
+    syllables = collections.defaultdict(int)
 
     if call_back is not None:
         call_back('Looking for phonotactic patterns...')
@@ -57,15 +57,20 @@ def parseCorpus(corpus, inventory, nucleus, stop_check, call_back):
                 for n in reversed(range(len(cur_onset))):
                     #check if this onset contains a known coda from the search above
                     if cur_onset[:n+1] in codas:
-                        codas[cur_onset[:n+1]] += 1
-                        onsets[cur_onset[n+1:]] += 1
+                        onset = cur_onset[n+1:]
+                        coda = cur_onset[:n+1]
+                        onsets[onset] += 1
+                        codas[coda] += 1
                         cur_onset = list()
+                        syllables[onset+seg+coda] += 1
                         break
                 else:
                     onsets[cur_onset] += 1
+                    syllables[cur_onset + seg] += 1
                     cur_onset = list()
 
-    return onsets, codas
+
+    return onsets, codas, syllables
 
 
 def lookAtWordEdges(corpus, inventory, nucleus_name, nucleus_sign, tier, stop_check, call_back):

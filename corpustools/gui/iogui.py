@@ -228,7 +228,7 @@ class CorpusLoadDialog(PCTDialog):
         if self.current_corpus == corpus:
             alert = QMessageBox()
             alert.setWindowTitle('Warning!')
-            alert.setText('You are trying to delete the corpus that is currently open in PCT.'
+            alert.setText('You are trying to delete the corpus that is currently open in PCT. '
                     'Please close the corpus before deleting. You can do this '
                     'by opening up another corpus first, or else by closing PCT and re-opening with a blank window.')
             alert.addButton('OK', QMessageBox.AcceptRole)
@@ -782,21 +782,6 @@ class LoadCorpusDialog(PCTDialog):
                     return
                 kwargs['word_path'] = kwargs.pop('path')
                 kwargs['phone_path'] = phone_path
-
-        # if kwargs['feature_system_path'] is None or not os.path.exists(kwargs['feature_system_path']):
-        #
-        #     alert = QMessageBox()
-        #     alert.setWindowTitle('File not found')
-        #     alert.setText('You must select a feature and transcription system before you can load a corpus. If you do '
-        #     'not see combination of features and transcription that you want, there are three possible solutions:\n\n '
-        #     '1. The file might be available for download from within PCT. Go to the menu option '
-        #     'File > Manage feature systems... and click on "Download".\n\n'
-        #     '2. You can pick another transcription/feature combination for now, and change '
-        #     'it later in PCT by going to Features > View/edit feature system.\n\n'
-        #     '3. You can construct a feature file by hand. Consult the PCT documentation for details. This can be '
-        #     'extremely time consuming, and it is not a recommended option.')
-        #     alert.exec_()
-        #     return
 
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",

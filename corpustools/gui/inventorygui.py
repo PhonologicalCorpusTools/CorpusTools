@@ -49,7 +49,8 @@ class InventoryManager(QDialog):
         self.uncView.horizontalHeader().hide()
         self.uncView.verticalHeader().hide()
         uncBox.addWidget(self.uncView)
-        layout.addLayout(uncBox)
+        #layout.addLayout(uncBox)
+        inventoryLayout.addLayout(uncBox)
 
         editCategoriesLayout = QVBoxLayout()
 
@@ -89,10 +90,12 @@ class InventoryManager(QDialog):
         topmessage.setFont(font)
         layout.addWidget(topmessage)
 
-        resetButton = QPushButton()
-        editCategoriesLayout.addWidget(resetButton)
-        resetButton.setText('Reset features')
+        resetButton = QPushButton('Recategorize segments')
         resetButton.clicked.connect(self.reset)
+        autoResetButton = QPushButton('Autocategorize')
+        autoResetButton.clicked.connect(self.autoCategorize)
+        editCategoriesLayout.addWidget(resetButton)
+        editCategoriesLayout.addWidget(autoResetButton)
         inventoryLayout.addLayout(editCategoriesLayout)
 
         layout.addSpacing(15)
@@ -115,6 +118,9 @@ class InventoryManager(QDialog):
     def reject(self):
         QDialog.reject(self)
 
+    def autoCategorize(self):
+        self.inventory.reGenerateNames()
+
     def reset(self, exiting=False):
         cons_features = [item.strip() for item in self.editCons.text().split(',')] if self.editCons.text() else None
         vowel_features = [item.strip() for item in self.editVowels.text().split(',')] if self.editVowels.text() else None
@@ -125,7 +131,7 @@ class InventoryManager(QDialog):
             alert.exec_()
             return
         round_features = None #not yet implemented
-        diph_features = None #yet implemented
+        diph_features = None #not yet implemented
         ClassFeatures = namedtuple('ClassFeatures', ['cons_features','vowel_features','round_feature', 'diph_feature'])
         class_features = ClassFeatures(cons_features, vowel_features, round_features, diph_features)
         self.inventory.set_major_class_features(class_features)

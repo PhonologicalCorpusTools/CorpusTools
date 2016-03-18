@@ -14,7 +14,7 @@ inventory_attributes = {'_data':list(), 'segs':dict(), 'features':list(), 'possi
                         'vowel_row_header_order':dict(),'vowel_column_header_order': dict(),
                         'consList': list(), 'vowelList': list(), 'non_segment_symbols': ['#'],
                         'vowel_features': [None], 'cons_features': [None], 'voice_feature': None, 'rounded_feature': None,
-                        'diph_feature': None, 'isNew': True}
+                        'diph_feature': None, 'isNew': True, 'filterNames': False}
 
 def isNotSupported(corpus):
     if corpus.name.lower() == 'iphod':

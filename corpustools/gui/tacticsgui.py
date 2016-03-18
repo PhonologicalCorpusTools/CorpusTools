@@ -34,6 +34,7 @@ class TacticsWorker(FunctionWorker):
                 res = tactics.findSyllableShapes(corpus, inventory, nucleus, kwargs['stop_check'], kwargs['call_back'])
                 if not self.stopped:
                     self.results = res
+                    print(self.results)
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return
@@ -86,7 +87,7 @@ class TacticsDialog(FunctionDialog):
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionBox.addWidget(self.tierWidget)
 
-        self.layout().insertWidget(0, nucleusFrame)
+        self.layout().insertWidget(0,nucleusFrame)
         self.layout().insertWidget(1,parseFrame)
         self.layout().insertWidget(2,optionFrame)
 

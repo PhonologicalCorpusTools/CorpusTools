@@ -842,7 +842,7 @@ class InventoryModel(QAbstractTableModel):
                   'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
                   'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
                   'vowel_features', 'cons_features', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew',
-                  'consList', 'vowelList', 'non_segment_symbols']
+                  'consList', 'vowelList', 'non_segment_symbols', 'filterNames']
 
     modelResetSignal = Signal(bool)
 
@@ -877,6 +877,7 @@ class InventoryModel(QAbstractTableModel):
         self.rounded_feature = None
         self.diph_feature = None
         self.non_segment_symbols = ['#']
+        self.filterNames = False
         #functions that fill in the above values
         self.generateGenericNames()
         self.categorizeInventory()
@@ -968,33 +969,37 @@ class InventoryModel(QAbstractTableModel):
         #This is called by .data() when a user wants a tooltip in the uncategorized box to see if there are any partial
         #category matches.
 
+        cons_category = list()
         for row, col in itertools.product(self.cons_row_data, self.cons_column_data):
             row_index, row_features, row_segs = self.cons_row_data[row]
             col_index, col_features, col_segs = self.cons_column_data[col]
 
             if (all(row_features[key] == seg.features[key] for key in row_features)):
-                cons_category = row
+                cons_category.append(row)
                 break
             elif all(col_features[key] == seg.features[key] for key in col_features):
-                cons_category = col
+                cons_category.append(col)
                 break
         else:
-            cons_category = 'None'
+            cons_category.append('None')
 
+        vowel_category = list()
         for row, col in itertools.product(self.vowel_row_data, self.vowel_column_data):
             row_index, row_features, row_segs = self.vowel_row_data[row]
             col_index, col_features, col_segs = self.vowel_column_data[col]
 
             if (all(row_features[key] == seg.features[key] for key in row_features)):
-                vowel_category = row
+                vowel_category.append(row)
                 break
             elif all(col_features[key] == seg.features[key] for key in col_features):
-                vowel_category = col
+                vowel_category.append(col)
                 break
 
         else:
-            vowel_category = 'None'
+            vowel_category.append('None')
 
+        cons_category = ','.join(cons_category)
+        vowel_category = ','.join(vowel_category)
         return 'Consonant matches:\n{}\nVowel matches:\n{}'.format(cons_category, vowel_category)
 
 
@@ -1007,8 +1012,12 @@ class InventoryModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return info
         elif role == Qt.ToolTipRole:
-            seg = self.segs[info]
-            return self.getPartialCategorization(seg)
+            try:
+                seg = self.segs[info]
+                return self.getPartialCategorization(seg)
+            except KeyError:
+                #this occurs with correctly categorized segments that are comma-separated in the chart
+                return QVariant()
         else:
             return QVariant()
 
@@ -1220,6 +1229,7 @@ class InventoryModel(QAbstractTableModel):
         self.modelAboutToBeReset.emit()
         self.categorizeInventory()
         self.sortData()
+        self.filterGenericNames()
         self.endResetModel()
 
     def changeColumnOrder(self, map, consonants=True):
@@ -1253,7 +1263,7 @@ class InventoryModel(QAbstractTableModel):
         self.consColumns = set()
         self.vowelColumns = set()
         self.generateGenericNames()
-        self.filterGenericNames()
+        self.modelReset()
 
     def filterGenericNames(self):
         if not self.filterNames:

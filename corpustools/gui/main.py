@@ -297,22 +297,27 @@ class MainWindow(QMainWindow):
             else:
                 try:
                     if self.corpus.inventory.isNew:
+                        print(1)
                         self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
                         self.inventoryModel.updateFeatures(self.corpus.specifier)
                         self.saveCorpus()
 
                     else:
                         # just loaded a .corpus file, not from text
+                        print(2)
                         self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
 
                 except AttributeError:
+                    print(3)
                     #Missing a necessary attribute - do some updating
+                    print(self.corpus.specifier.features)
                     self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
                     self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
                                                                     self.corpus.inventory, self.corpus.specifier)
                     self.corpus.inventory.isNew = False
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
                     self.inventoryModel.modelReset()
+                    print(self.corpus.specifier.features)
                     self.saveCorpus()
 
 
@@ -381,6 +386,7 @@ class MainWindow(QMainWindow):
             alert.setText('There was a problem loading your inventory. You can normally fix this problem by going '
             'to Features > View/Edit feature system... and then simply clicking "Save changes" (you do not actually '
             'need to make any changes). Sorry about that!')
+            alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return
         dialog = InventoryManager(copy_model)
@@ -433,11 +439,13 @@ class MainWindow(QMainWindow):
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 self.corpusModel.corpus.update_features()
                 self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory)
+                self.saveCorpus()
                 return
 
             if dialog.specifier is None:
                 self.corpusModel.corpus.specifier = None
                 self.inventoryModel = None
+                self.saveCorpus()
                 return
 
             if dialog.specifier is not None:
@@ -451,7 +459,6 @@ class MainWindow(QMainWindow):
 
             if dialog.feature_system_changed:
                 self.inventoryModel.reGenerateNames()
-                self.inventoryModel.modelReset()
 
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))
