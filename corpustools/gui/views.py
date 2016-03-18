@@ -838,10 +838,27 @@ class InventoryView(QTableView):
         self.verticalHeader().customContextMenuRequested.connect(self.showRowMenu)
         self.verticalHeader().stretchLastSection()
 
+        self.doubleClicked.connect(self.showFeatures)
+
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
+
+    def showFeatures(self, index):
+        if not self.model().__class__.__name__ == 'UncategorizedModel':
+            return
+        seg = self.model().sourceModel().uncategorized[index.column()]
+        features = [value+key for (key,value) in seg.features.items()]
+        features.sort(key=lambda x:x[1])
+        features = '\n'.join(features)
+        partials = self.model().sourceModel().getPartialCategorization(seg)
+        alert = QMessageBox()
+        alert.setWindowTitle('Feature matches')
+        alert.setText(('The segment /{}/ has these features:\n\n{}\n\n{}'.format(seg.symbol, features, partials)))
+        alert.addButton('Return', QMessageBox.AcceptRole)
+        alert.exec_()
+        return
 
 
     def showRowMenu(self, pos):

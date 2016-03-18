@@ -483,24 +483,26 @@ class EditFeatureMatrixDialog(QDialog):
         if not info:
             alert = QMessageBox()
             alert.setText('You must select both a transcription type and a feature system. If no options are appearing '
-            'for you, then you need to obtain a feature file. Click "Cancel" in the features window to return to your '
-            'corpus. Then go to File > Manage features systems... and click on "Download"\n')
+            'for you, then you need to obtain a feature file. Click \"Cancel\" in the features window to return to your '
+            'corpus. Then go to File > Manage features systems... and click on \"Download\"\n\n')
             alert.addButton('Return', QMessageBox.AcceptRole)
             alert.exec_()
             return
+
         else:
             selected_transcription, selected_features  = info.split('2')
         if not selected_features == self.feature_system:
             self.feature_system_changed = True
-            #This code should work, but doesn't. Regardless of what the user clicks, the AlertBox is accepted.
-            # alert = QMessageBox()
-            # alert.setWindowTitle('Warning!')
-            # alert.setText('Changing your feature system may cause changes to your Inventory chart. Do you want to continue?')
-            # alert.addButton('Continue with changes', QMessageBox.YesRole)
-            # alert.addButton('Cancel', QMessageBox.NoRole)
-            # result = alert.exec_()
-            # if result == QMessageBox.No:
-            #     return #Cancel changes
+            alert = QMessageBox()
+            alert.setWindowTitle('Warning!')
+            alert.setText('Changing your feature system may cause changes to the way your Inventory chart is organized.')
+            alert.setInformativeText('Do you want to continue?')
+            alert.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            alert.setDefaultButton(QMessageBox.No)
+            result = alert.exec_()
+            if result == QMessageBox.No:
+                self.resetFeatureWidget()
+                return #Cancel changes
         else:
             self.feature_system_changed = False
 
@@ -614,12 +616,10 @@ class EditFeatureMatrixDialog(QDialog):
 
         #IF THE TRANSCRIPTIONS MATCH, THEN MAP BASED ON SYMBOLS
         if new_specifier.trans_name == self.specifier.trans_name:
-            print('transcription match')
             unmatched = [seg for seg in self.specifier.matrix.keys() if not seg in new_specifier.matrix.keys()]
 
         #IF THE FEATURES MATCH, THEN MAP BASED ON THEM
         elif new_specifier.feature_name == self.specifier.feature_name:
-            print('feature match')
             for seg,features in self.specifier.matrix.items():
                 for seg2,features2 in new_specifier.matrix.items():
                     if features == features2:

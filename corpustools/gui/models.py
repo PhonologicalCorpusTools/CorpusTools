@@ -976,12 +976,13 @@ class InventoryModel(QAbstractTableModel):
 
             if (all(row_features[key] == seg.features[key] for key in row_features)):
                 cons_category.append(row)
-                break
             elif all(col_features[key] == seg.features[key] for key in col_features):
                 cons_category.append(col)
-                break
-        else:
+
+        if not cons_category:
             cons_category.append('None')
+        else:
+            cons_category = list(set(cons_category))
 
         vowel_category = list()
         for row, col in itertools.product(self.vowel_row_data, self.vowel_column_data):
@@ -990,13 +991,13 @@ class InventoryModel(QAbstractTableModel):
 
             if (all(row_features[key] == seg.features[key] for key in row_features)):
                 vowel_category.append(row)
-                break
             elif all(col_features[key] == seg.features[key] for key in col_features):
                 vowel_category.append(col)
-                break
 
-        else:
+        if not vowel_category:
             vowel_category.append('None')
+        else:
+            vowel_category = list(set(vowel_category))
 
         cons_category = ','.join(cons_category)
         vowel_category = ','.join(vowel_category)
@@ -1366,6 +1367,18 @@ class InventoryModel(QAbstractTableModel):
                 if row_name in cat and col_name in cat:
                     matches.append(seg)
             self._data[row][col] = ','.join([m.symbol for m in matches])
+
+    def resetCategories(self):
+        self.cons_column_data = {'Column 1': [0, {}, None]}
+        self.cons_row_data = {'Row 1': [0, {}, None]}
+        self.vowel_column_data = {'Column 1': [0, {}, None]}
+        self.vowel_row_data = {'Row 1': [0, {}, None]}
+        self.consRows = set()
+        self.vowelRows = set()
+        self.consColumns = set()
+        self.vowelColumns = set()
+        self.filterNames = False
+        self.modelReset()
 
     def generateGenericNames(self):
         sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])

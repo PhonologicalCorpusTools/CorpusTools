@@ -78,11 +78,17 @@ class InventoryManager(QDialog):
         editVowelsLayout.addWidget(self.editVowels)
         editCategoriesLayout.addLayout(editVowelsLayout)
 
-        topmessage = QLabel(text=(  'Double-click on a row or column to edit the '
-                                    'class of segments which appear in that row or column.\n'
-                                    'Right click to insert a new empty row or column.\n'
-                                    'Select a heading and drag-and-drop to reorganize the table.\n'
-                                    'Hover over an uncategorized segment to see any partial matches.'
+        topmessage = QLabel(text=('Tips for using the inventory manager: '
+            '* Double-click on a row or column to edit the class of segments which appear in that row or column.\n'
+            '* Right click to insert a new empty row or column.\n'
+            '* Select a heading and drag-and-drop to reorganize the table.\n'
+            '* Hover over an uncategorized segment to see any partial matches, or double-click the segment to see a '
+                'full feature specification and partial matches.\n'
+            '* Default features are required, and they apply automatically to every column and row in the relevant '
+                'table.\n'
+            '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
+                'default features.\n'
+            '* Auto-categorization currently only works with SPE or Hayes feature systems.'
         ))
 
         topmessage.setWordWrap(True)
@@ -90,12 +96,15 @@ class InventoryManager(QDialog):
         topmessage.setFont(font)
         layout.addWidget(topmessage)
 
-        resetButton = QPushButton('Recategorize segments')
-        resetButton.clicked.connect(self.reset)
-        autoResetButton = QPushButton('Autocategorize')
-        autoResetButton.clicked.connect(self.autoCategorize)
-        editCategoriesLayout.addWidget(resetButton)
-        editCategoriesLayout.addWidget(autoResetButton)
+        recatButton = QPushButton('Recategorize segments')
+        recatButton.clicked.connect(self.recategorize)
+        autoRecatButton = QPushButton('Autocategorize')
+        autoRecatButton.clicked.connect(self.autoCategorize)
+        blankButton = QPushButton('Remove all categories')
+        blankButton.clicked.connect(self.reset)
+        editCategoriesLayout.addWidget(recatButton)
+        editCategoriesLayout.addWidget(autoRecatButton)
+        editCategoriesLayout.addWidget(blankButton)
         inventoryLayout.addLayout(editCategoriesLayout)
 
         layout.addSpacing(15)
@@ -112,16 +121,38 @@ class InventoryManager(QDialog):
         self.setLayout(layout)
 
     def accept(self):
-        self.reset(exiting=True)
+        self.recategorize(exiting=True)
         QDialog.accept(self)
 
     def reject(self):
         QDialog.reject(self)
 
-    def autoCategorize(self):
-        self.inventory.reGenerateNames()
+    def reset(self):
+        alert = QMessageBox()
+        alert.setWindowTitle('Warning!')
+        alert.setText(('This will remove all the categories from your inventory, and put all of the segments in the '
+            '\"Uncategorized\" table.'))
+        alert.setInformativeText('Are you sure you want to do this?')
+        alert.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        alert.setDefaultButton(QMessageBox.Yes)
+        choice = alert.exec_()
+        if choice == QMessageBox.Yes:
+            self.inventory.resetCategories()
 
-    def reset(self, exiting=False):
+    def autoCategorize(self):
+        if not any([x in self.inventory.features for x in ['voc', 'consonantal']]):
+            alert = QMessageBox()
+            alert.setWindowTitle('Warning')
+            alert.setText(('Your feature system is not compatible with auto-categorization. Sorry about that!'))
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.exec_()
+            return
+
+        self.inventory.reGenerateNames()
+        self.editCons.setText(','.join(self.inventory.cons_features))
+        self.editVowels.setText(','.join(self.inventory.vowel_features))
+
+    def recategorize(self, exiting=False):
         cons_features = [item.strip() for item in self.editCons.text().split(',')] if self.editCons.text() else None
         vowel_features = [item.strip() for item in self.editVowels.text().split(',')] if self.editVowels.text() else None
         if (cons_features is None or vowel_features is None) and not exiting:
