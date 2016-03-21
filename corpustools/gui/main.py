@@ -265,20 +265,7 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
-        if not any ([file.endswith('.feature') for file in os.listdir(self.settings.feature_directory())]):
-            alert = QMessageBox()
-            alert.setWindowTitle('Missing transcription/feature information')
-            alert.setText('You do not have any feature files available. These are files that specify the transcription '
-            'and phonological feature information for your corpus. You will have limited access to PCT\'s analysis '
-            'functions without a feature file, although you may still load a corpus.'
-            'You can download a feature file from inside PCT by going to File > Manage feature systems... \n\n'
-            'Don\'t worry if none of the transcription or feature systems available match your data exactly. You can '
-            'change this information from within PCT by going to the Features menu after loading your corpus.\n\n'
-            'If you already have feature files on your computer, and they are not being displayed here, then you should '
-            'go to Options > Preferences and verify your "storage" directory. PCT looks for a subdirectory of storage '
-            'called \\FEATURE and all features files should be placed in there.\n')
-            alert.exec_()
-            return
+
         dialog = CorpusLoadDialog(self, self.corpus, self.settings)
         result = dialog.exec_()
 
@@ -310,14 +297,12 @@ class MainWindow(QMainWindow):
                 except AttributeError:
                     print(3)
                     #Missing a necessary attribute - do some updating
-                    print(self.corpus.specifier.features)
                     self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
                     self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
                                                                     self.corpus.inventory, self.corpus.specifier)
                     self.corpus.inventory.isNew = False
                     self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
                     self.inventoryModel.modelReset()
-                    print(self.corpus.specifier.features)
                     self.saveCorpus()
 
 

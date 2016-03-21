@@ -78,7 +78,7 @@ class InventoryManager(QDialog):
         editVowelsLayout.addWidget(self.editVowels)
         editCategoriesLayout.addLayout(editVowelsLayout)
 
-        topmessage = QLabel(text=('Tips for using the inventory manager: '
+        topmessage = QLabel(text=('Tips for using the inventory manager:\n\n'
             '* Double-click on a row or column to edit the class of segments which appear in that row or column.\n'
             '* Right click to insert a new empty row or column.\n'
             '* Select a heading and drag-and-drop to reorganize the table.\n'
