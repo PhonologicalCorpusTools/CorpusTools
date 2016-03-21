@@ -271,41 +271,6 @@ class MainWindow(QMainWindow):
 
         if result:
             self.corpus = dialog.corpus
-            if self.corpus.specifier is None:
-                alert = QMessageBox()
-                alert.setWindowTitle('Missing corpus information')
-                alert.setText('Your corpus was loaded without a transcription or feature system. '
-                'The majority of PCT\'s analysis functions require this information to work correctly. '
-                'Go to Features > View/Edit feature system... to select one.\n '
-                'If you do not have any feature file available at all, you can '
-                'download one by going to File > Manage feature systems...')
-                alert.addButton('OK', QMessageBox.AcceptRole)
-                alert.exec_()
-            else:
-                try:
-                    if self.corpus.inventory.isNew:
-                        print(1)
-                        self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=False)
-                        self.inventoryModel.updateFeatures(self.corpus.specifier)
-                        self.saveCorpus()
-
-                    else:
-                        # just loaded a .corpus file, not from text
-                        print(2)
-                        self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
-
-                except AttributeError:
-                    print(3)
-                    #Missing a necessary attribute - do some updating
-                    self.corpus.inventory = modernize.modernize_inventory_attributes(self.corpus.inventory)
-                    self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(
-                                                                    self.corpus.inventory, self.corpus.specifier)
-                    self.corpus.inventory.isNew = False
-                    self.inventoryModel = InventoryModel(self.corpus.inventory, copy_mode=True)
-                    self.inventoryModel.modelReset()
-                    self.saveCorpus()
-
-
 
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
@@ -344,6 +309,41 @@ class MainWindow(QMainWindow):
                 self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
+
+            if c.specifier is None:
+                alert = QMessageBox()
+                alert.setWindowTitle('Missing corpus information')
+                alert.setText('Your corpus was loaded without a transcription or feature system. '
+                              'The majority of PCT\'s analysis functions require this information to work correctly. '
+                              'Go to Features > View/Edit feature system... to select one.\n '
+                              'If you do not have any feature file available at all, you can '
+                              'download one by going to File > Manage feature systems...')
+                alert.addButton('OK', QMessageBox.AcceptRole)
+                alert.exec_()
+            else:
+                try:
+                    if c.inventory.isNew:
+                        print(1)
+                        self.inventoryModel = InventoryModel(c.inventory, copy_mode=False)
+                        self.inventoryModel.updateFeatures(c.specifier)
+                        self.saveCorpus()
+
+                    else:
+                        # just loaded a .corpus file, not from text
+                        print(2)
+                        self.inventoryModel = InventoryModel(c.inventory, copy_mode=True)
+
+                except AttributeError:
+                    print(3)
+                    # Missing a necessary attribute - do some updating
+                    self.corpus.inventory = modernize.modernize_inventory_attributes(c.inventory)
+                    self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(c.inventory, c.specifier)
+                    self.corpus.inventory.isNew = False
+                    self.inventoryModel = InventoryModel(c.inventory, copy_mode=True)
+                    self.inventoryModel.modelReset()
+                    self.saveCorpus()
+
+
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)
@@ -378,7 +378,7 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.inventoryModel.updateFromCopy(dialog.inventory)
-            self.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
+            self.corpusModel.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
             if self.settings['autosave']:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
