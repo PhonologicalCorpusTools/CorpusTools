@@ -321,27 +321,43 @@ class MainWindow(QMainWindow):
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
             else:
+
                 try:
-                    if c.inventory.isNew:
+                    if self.corpusModel.corpus.inventory.isNew:
                         print(1)
-                        self.inventoryModel = InventoryModel(c.inventory, copy_mode=False)
-                        self.inventoryModel.updateFeatures(c.specifier)
+                        self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
+                        self.inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
                         self.saveCorpus()
 
                     else:
                         # just loaded a .corpus file, not from text
                         print(2)
-                        self.inventoryModel = InventoryModel(c.inventory, copy_mode=True)
+                        self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
                 except AttributeError:
                     print(3)
                     # Missing a necessary attribute - do some updating
-                    self.corpus.inventory = modernize.modernize_inventory_attributes(c.inventory)
-                    self.corpus.inventory, self.corpus.specifier = modernize.modernize_features(c.inventory, c.specifier)
-                    self.corpus.inventory.isNew = False
-                    self.inventoryModel = InventoryModel(c.inventory, copy_mode=True)
+                    self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
+                                                                                    self.corpusModel.corpus.inventory)
+                    self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
+                                                self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
+                    self.corpusModel.corpus.inventory.isNew = False
+                    self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
                     self.inventoryModel.modelReset()
                     self.saveCorpus()
+
+                for seg,features in self.corpusModel.corpus.specifier.matrix.items():
+                    if seg == '#':
+                        continue
+                    if all(v == 'n' for v in features.values()):
+                        alert = QMessageBox()
+                        alert.setWindowTitle('Segment mismatch')
+                        alert.setText('Some symbols in your corpus have no match to any symbols in your feature file. '
+                                      'These symbols were given default values of "n" for every feature. You can go to '
+                                      'Features>View/Change feature system... to edit the feature values.')
+                        alert.addButton('OK', QMessageBox.AcceptRole)
+                        alert.exec_()
+                        break
 
 
             self.unsavedChanges = False

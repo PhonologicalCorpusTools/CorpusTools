@@ -3,7 +3,6 @@ import copy
 from collections import OrderedDict
 import codecs
 import time
-import corpustools.gui.modernize as modernize
 
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -1258,7 +1257,6 @@ class SystemFromCsvDialog(PCTDialog):
             if self.specifier is not None:
                 save_binary(self.specifier,
                     system_name_to_path(self.settings['storage'],self.specifier.name))
-                print('Immediately reloaded after saving binary')
             QDialog.accept(self)
 
 

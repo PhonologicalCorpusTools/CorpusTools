@@ -2322,21 +2322,18 @@ class Corpus(object):
             Segment symbols to add to the inventory if needed
         """
         for s in transcription:
-            if isinstance(s, str):
-                if s not in self.inventory:
-                    self.inventory.segs[s] = Segment(s)
-                #if s not in self.inventory.segs.keys():
-                    if self.specifier is not None:
-                        # try:
-                        self.inventory.segs[s].features = self.specifier[s]
-                        # except KeyError:
-                        #     pass
+            if isinstance(s, Segment):
+                s = s.symbol
+            if s not in self.inventory:
+                self.inventory.segs[s] = Segment(s)
+                if self.specifier is not None:
+                    if not s in self.specifier:
+                        self.specifier[s] = {feature.lower(): 'n' for feature in self.specifier.features}
+                    self.inventory.segs[s].features = self.specifier[s]
+
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])
-        if self.specifier is not None:
-            self.update_features()
-
 
     def get_or_create_word(self, **kwargs):
         """

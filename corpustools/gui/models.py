@@ -922,6 +922,8 @@ class InventoryModel(QAbstractTableModel):
         for seg in self.segs:
             if seg == '#':
                 continue
+            if seg not in specifier:
+                specifier[seg] = {feature.lower():'n' for feature in specifier.features}
             self.segs[seg].features = specifier.specify(seg)
 
         self.features = specifier.features

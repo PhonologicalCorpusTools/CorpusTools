@@ -163,15 +163,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
                 if not word.spelling:
                     word.spelling = ''.join(map(str,word.transcription))
 
-            try:
-                corpus.add_word(word)
-            except KeyError as e:
-                #This is re-raised as a DelimiterError because this is neatly handled by other code already
-                #and I'm just piggy backing on it
-                raise DelimiterError('The symbol {} appears in your corpus, but not in the transcription system you '
-                'selected. All of the symbols in your corpus must have a match in your feature file. If no available '
-                'transcription systems work for your corpus, you may select None for now, and later edit one of your '
-                'systems from the option menu Features>View/change feature system...'.format(e))
+            corpus.add_word(word)
 
     if corpus.specifier is not None:
         corpus.inventory.update_features(corpus.specifier)
