@@ -324,19 +324,24 @@ class MainWindow(QMainWindow):
 
                 try:
                     if self.corpusModel.corpus.inventory.isNew:
+                        #just loaded from a text file
                         print(1)
                         self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
                         self.inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
-                        self.saveCorpus()
 
                     else:
                         # just loaded a .corpus file, not from text
                         print(2)
                         self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
+                    #If the user loaded a new corpus using a feature file from an older version of PCT
+                    self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
+                        self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
+                    self.saveCorpus()
+
                 except AttributeError:
                     print(3)
-                    # Missing a necessary attribute - do some updating
+                    # Loading a .corpus from a previous version of PCT - update some attributes
                     self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
                                                                                     self.corpusModel.corpus.inventory)
                     self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
@@ -346,31 +351,29 @@ class MainWindow(QMainWindow):
                     self.inventoryModel.modelReset()
                     self.saveCorpus()
 
-                for seg,features in self.corpusModel.corpus.specifier.matrix.items():
-                    if seg == '#':
-                        continue
-                    if all(v == 'n' for v in features.values()):
-                        alert = QMessageBox()
-                        alert.setWindowTitle('Segment mismatch')
-                        alert.setText('Some symbols in your corpus have no match to any symbols in your feature file. '
-                                      'These symbols were given default values of "n" for every feature. You can go to '
-                                      'Features>View/Change feature system... to edit the feature values.')
-                        alert.addButton('OK', QMessageBox.AcceptRole)
-                        alert.exec_()
-                        break
-
+            for seg,features in self.corpusModel.corpus.specifier.matrix.items():
+                if seg == '#':
+                    continue
+                if all(v == 'n' for v in features.values()):
+                    alert = QMessageBox()
+                    alert.setWindowTitle('Segment mismatch')
+                    alert.setText('Some symbols in your corpus have no match in the transcription system you selected. '
+                                  'These symbols were given default values of "n" for every feature. You can go to '
+                                  'Features>View/Change feature system... to edit the feature values.')
+                    alert.addButton('OK', QMessageBox.AcceptRole)
+                    alert.exec_()
+                    break
 
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)
             self.exportCorpusAct.setEnabled(True)
             self.exportFeatureSystemAct.setEnabled(True)
-        #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
-        if self.corpus:
-            current_system = self.corpus.specifier.name
-        else:
+        try:
+            current_system = self.corpusModel.corpus.specifier.name
+        except AttributeError:
             current_system = None
         dialog = FeatureMatrixManager(self, self.settings, current_system)
         result = dialog.exec_()

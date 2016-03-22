@@ -806,7 +806,6 @@ class FeatureMatrix(object):
         return featline
 
     def specify(self, seg):
-
         if isinstance(seg, Segment):
             features = self.matrix[seg.symbol]
         else:
@@ -2290,7 +2289,7 @@ class Corpus(object):
                     self.has_spelling = True
 
         if word.transcription is not None:
-            self.update_inventory(word.transcription)
+            add_default = self.update_inventory(word.transcription)
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
         for d in word.descriptors:
             if d not in self.attributes:
@@ -2304,6 +2303,8 @@ class Corpus(object):
             if not hasattr(word,a.name):
                 word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word,a.name))
+
+        return add_default
 
     def update_features(self):
         for seg in self.inventory:
@@ -2321,6 +2322,7 @@ class Corpus(object):
         transcription : list
             Segment symbols to add to the inventory if needed
         """
+        add_default = False
         for s in transcription:
             if isinstance(s, Segment):
                 s = s.symbol
@@ -2329,11 +2331,14 @@ class Corpus(object):
                 if self.specifier is not None:
                     if not s in self.specifier:
                         self.specifier[s] = {feature.lower(): 'n' for feature in self.specifier.features}
+                        add_default = True
                     self.inventory.segs[s].features = self.specifier[s]
 
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])
+
+        return add_default
 
     def get_or_create_word(self, **kwargs):
         """

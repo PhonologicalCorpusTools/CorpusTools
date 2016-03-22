@@ -740,13 +740,21 @@ class LoadCorpusDialog(PCTDialog):
             return
         if not os.path.exists(path):
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The specified path does not exist.")
+                    "Invalid information", "The specified path to the corpus file does not exist.")
             return
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a name for the corpus.")
             return
+
+
+        if not os.path.exists(self.csvFeatureSystem.path()):
+            featurename = os.path.split(self.csvFeatureSystem.path())[-1].split('.')[0]
+            reply = QMessageBox.critical(self, 'Missing information',
+                    'No feature file called {} could be found'.format(featurename))
+            return
+
         kwargs = {'corpus_name': name,
                     'path': path,
                     'isDirectory':self.isDirectory,

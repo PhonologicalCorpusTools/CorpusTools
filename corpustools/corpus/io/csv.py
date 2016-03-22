@@ -159,7 +159,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
                     d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
             if word.transcription:
-                #transcriptions can have phonetic symbol delimiters which is a period
+                #transcriptions can have phonetic symbol delimiters
                 if not word.spelling:
                     word.spelling = ''.join(map(str,word.transcription))
 

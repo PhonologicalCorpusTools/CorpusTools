@@ -867,10 +867,10 @@ class InventoryModel(QAbstractTableModel):
         self.vowelList = []
         self.uncategorized = []
         self._data = {}
-        self.cons_column_data = {}
-        self.cons_row_data = {}
-        self.vowel_column_data = {}
-        self.vowel_row_data = {}
+        self.cons_column_data = {'Column 1': [0,{},None]}
+        self.cons_row_data = {'Row 1': [0,{},None]}
+        self.vowel_column_data = {'Column 1': [0,{},None]}
+        self.vowel_row_data = {'Row 1': [0,{},None]}
         self.cons_features = None
         self.vowel_features = None
         self.voice_feature = None
@@ -1079,12 +1079,16 @@ class InventoryModel(QAbstractTableModel):
                     self.consList.append((s, c))
         if not self.consColumns:
             self.consColumns.add('Column 1')
+            self.cons_column_data = {'Column 1': [0, {}, None]}
         if not self.consRows:
             self.consRows.add('Row 1')
+            self.cons_row_data = {'Row 1': [0,{},None]}
         if not self.vowelColumns:
             self.vowelColumns.add('Column 1')
+            self.vowel_column_data = {'Column 1': [0, {}, None]}
         if not self.vowelRows:
             self.vowelRows.add('Row 1')
+            self.vowel_row_data = {'Row 1': [0,{},None]}
 
     def headerData(self, row_or_col, orientation, role=None):
         try:

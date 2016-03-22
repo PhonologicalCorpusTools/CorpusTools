@@ -439,11 +439,6 @@ class EditFeatureMatrixDialog(QDialog):
 
         box.addRow('Display mode:',self.displayWidget)
 
-        # self.editCategoriesButton = QPushButton('Edit inventory categories')
-        # self.editCategoriesButton.clicked.connect(self.editCategories)
-        #
-        # box.addRow(self.editCategoriesButton)
-
         viewFrame.setLayout(box)
 
         optionLayout.addWidget(viewFrame)
@@ -487,9 +482,9 @@ class EditFeatureMatrixDialog(QDialog):
             alert.addButton('Return', QMessageBox.AcceptRole)
             alert.exec_()
             return
-
         else:
             selected_transcription, selected_features  = info.split('2')
+
         if not selected_features == self.feature_system:
             self.feature_system_changed = True
             alert = QMessageBox()
@@ -522,25 +517,6 @@ class EditFeatureMatrixDialog(QDialog):
                                     section = 'applying-editing-feature-systems')
         self.helpDialog.exec_()
 
-    def editCategories(self):
-        if self.specifier is None:
-            return
-        dialog = EditCategoriesDialog(self, self.specifier)
-        if dialog.exec_():
-            self.specifier.vowel_feature = dialog.vowel()[0] if dialog.vowel() else None
-            self.specifier.voice_feature = dialog.voiced()[0] if dialog.voiced() else None
-            self.specifier.diph_feature = dialog.diphthong()[0] if dialog.diphthong() else None
-            self.specifier.rounded_feature = dialog.rounded()[0] if dialog.rounded() else None
-            p, m, h, b = dialog.value()
-            for k,v in p.items():
-                self.specifier.places[k] = v
-            for k,v in m.items():
-                self.specifier.manners[k] = v
-            for k,v in h.items():
-                self.specifier.height[k] = v
-            for k,v in b.items():
-                self.specifier.backness[k] = v
-
 
     def changeDisplay(self):
         if self.specifier is None:
@@ -565,34 +541,39 @@ class EditFeatureMatrixDialog(QDialog):
             self.specifier = None
             return
 
+        #Special case for when user has loaded corpus without a feature file
         if self.specifier is None:
             if os.path.exists(path):
                 new_specifier = load_binary(path)
                 self.specifier = new_specifier
                 self.changeDisplay()
+                return
             else:
-                reply = QMessageBox.critical(self, 'File not found', 'PCT could not find a feature file with the '
+                QMessageBox.critical(self, 'File not found', 'PCT could not find a feature file with the '
                 'transcription and feature systems that you selected. Please select a different combination.\n\n'
                 'You might be able to download the file you want by going to File > Manage feature systems...')
                 self.resetFeatureWidget()
                 return
 
+        unmatched = list()
         if os.path.exists(path):
             new_specifier = load_binary(path)
-            #even if a file exists, it is still possible that some of the segments in the current corpus have feature
-            #specifications that do not match anything in the new feature system, so we have to check on that
-            #for instance, if you're trying to take something with implosives in ipa2spe and turn it into arpbabet
-            #which has no way of representing implosives
-            choice = self.mapExistingSystems(new_specifier)
-            if choice == 'Return':
-                self.resetFeatureWidget()
-            else:
+            if new_specifier.name == self.specifier.name:
+                return
+            # even if a file exists, it is still possible that some of the segments in the current corpus have feature
+            # specifications that do not match anything in the new feature system, so we have to check on that
+            # for instance, if you're trying to take something with implosives in ipa2spe and turn it into arpbabet
+            # which has no way of representing implosives
+            unmatched = self.mapExistingSystems(new_specifier)
+            if not unmatched:
                 self.specifier = new_specifier
                 self.changeDisplay()
 
-        else:
+
+        if not os.path.exists(path) or unmatched:
             #there is no existing feature file with the transcription/features combination that the user requested
             #so we will offer the choice of creating that new system now
+            #or else the previous step of looking up a transcription failed for some segments
             filename = os.path.split(path)[-1]
             trans_name, feature_name = filename.split('2')
             feature_name = feature_name.split('.')[0]
@@ -617,7 +598,7 @@ class EditFeatureMatrixDialog(QDialog):
         if new_specifier.trans_name == self.specifier.trans_name:
             unmatched = [seg for seg in self.specifier.matrix.keys() if not seg in new_specifier.matrix.keys()]
 
-        #IF THE FEATURES MATCH, THEN MAP BASED ON THEM
+        #IF THE FEATURES MATCH, THEN MAP BASED ON FEATURES
         elif new_specifier.feature_name == self.specifier.feature_name:
             for seg,features in self.specifier.matrix.items():
                 for seg2,features2 in new_specifier.matrix.items():
@@ -629,22 +610,7 @@ class EditFeatureMatrixDialog(QDialog):
 
         unmatched = [seg for seg in unmatched if seg in self.corpus.inventory]
 
-        if unmatched:
-            alert = QMessageBox()
-            alert.setWindowTitle('Transcription mismatch')
-
-            alert.setText(('Some of the symbols in your corpus do not match anything in the {} system, so '
-                           'it is not possible to automatically retranscribe your corpus. The unmatched symbols are: \n{}'
-                           ''.format(new_specifier.name, ','.join(unmatched))))
-                #
-                # alert.addButton('Match up symbols now', QMessageBox.AcceptRole)
-                # alert.addButton('Give default values', QMessageBox.RejectRole)
-                #
-
-            alert.addButton('Return', QMessageBox.AcceptRole)
-            alert.exec_()
-            return alert.clickedButton().text()
-        return None
+        return unmatched
 
 
     def createNewSystem(self, trans_name, feature_name, file_not_found_name):
@@ -653,19 +619,20 @@ class EditFeatureMatrixDialog(QDialog):
 
         alert = QMessageBox()
         alert.setWindowTitle('Transcription/Feature mismatch')
-        alert.setText(('There is no file named {}, so PCT doesn\'t know how to match up the transcription '
-                       'symbols with appropriate features.\n\n'
+        alert.setText(('PCT doesn\'t know how to match up the transcription symbols of your current corpus with '
+                       'with appropriate symbols or features in {}.\n\n'
                        'It may be possible to download the feature file you need. Go to File > Manage feature '
                        'systems... and click on "Download". You can also import your own feature files from that menu screen. '
                        '\n\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} '
                        'system, and a new feature file will be generated right now.'
-                       ''.format(file_not_found_name, self.specifier.name.split('2')[0], trans_name)))
-        alert.addButton('Go back to the previous window', QMessageBox.RejectRole)
+                       ''.format(trans_name, self.specifier.name.split('2')[0], trans_name)))
+        reject_button = alert.addButton('Go back to the previous window', QMessageBox.RejectRole)
         alert.addButton('Match transcription symbols now', QMessageBox.AcceptRole)
         alert.exec_()
-        if alert.clickedButton().text().startswith('Go back'):
+        if alert.clickedButton() == reject_button:
             return False
 
+        #User wants to map to new symbols
         systems = get_systems_list(self.settings['storage'])
         for system in systems:
             if trans_name in system.split('2')[0]:
