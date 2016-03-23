@@ -69,7 +69,7 @@ class KLDialog(FunctionDialog):
                 'Second segment entropy',
                 'Kullback-Leibler divergence',
                 'Possible UR',
-                'Spurious allophones?'
+                'Spurious allophones'
                 ]
 
     _about = [('This function calculates a difference in distribution of two segments'
@@ -167,9 +167,16 @@ class KLDialog(FunctionDialog):
         except ValueError:
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
-            self.results.append([self.corpus.name,
-                                seg_pairs[i][0],seg_pairs[i][1],
-                                context, frequency_cutoff,
-                                self.tierWidget.displayValue(),
-                                self.typeTokenWidget.value().title(),
-                                self.variantsWidget.value().title()]+list(r))
+            self.results.append({'Corpus': self.corpus.name,
+                                'First segment': seg_pairs[i][0],
+                                'Second segment': seg_pairs[i][1],
+                                'Context': context,
+                                'Minimum word frequency': frequency_cutoff,
+                                'Transcription tier': self.tierWidget.displayValue(),
+                                'Frequency type': self.typeTokenWidget.value().title(),
+                                'Pronunciation variants': self.variantsWidget.value().title(),
+                                'First segment entropy': r[0],
+                                'Second segment entropy': r[1],
+                                'Kullback-Leibler divergence': r[2],
+                                'Possible UR': r[3],
+                                'Spurious allophones': r[4]})

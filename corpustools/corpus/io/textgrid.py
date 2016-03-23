@@ -3,7 +3,7 @@ import string
 import re
 
 from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import readFile, Interval, Point, PointTier, _getMark
+from textgrid.textgrid import readFile, Interval, Point, PointTier #, _getMark
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError, PCTError

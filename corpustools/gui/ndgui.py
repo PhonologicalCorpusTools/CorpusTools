@@ -408,15 +408,6 @@ class NDDialog(FunctionDialog):
             kwargs['attribute'] = attribute
         return kwargs
 
-    header = ['Corpus',
-                'Word',
-                'Algorithm',
-                'Threshold',
-                'String type',
-                'Frequency type',
-                'Pronunciation variants',
-                'Minimum word frequency',
-                'Neighborhood density']
     def setResults(self, results):
         self.results = []
         try:
@@ -435,11 +426,15 @@ class NDDialog(FunctionDialog):
                 thresh = 'N/A'
             else:
                 thresh = float(self.maxDistanceEdit.text())
-            self.results.append([self.corpusModel.corpus.name, w,
-                        self.algorithmWidget.displayValue(), thresh,
-                        self.tierWidget.displayValue(), typetoken,
-                        self.variantsWidget.value().title(), frequency_cutoff,
-                        nd])
+            self.results.append({'Corpus': self.corpusModel.corpus.name, 
+                                'Word': w,
+                                'Algorithm': self.algorithmWidget.displayValue(),
+                                'Threshold': thresh,
+                                'String type': self.tierWidget.displayValue(),
+                                'Frequency type': typetoken,
+                                'Pronunciation variants': self.variantsWidget.value().title(),
+                                'Minimum word frequency': frequency_cutoff,
+                                'Neighborhood density': nd})
 
     def substitutionSelected(self):
         self.typeTokenWidget.disable()

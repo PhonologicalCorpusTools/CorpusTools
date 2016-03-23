@@ -1,4 +1,4 @@
-
+import time
 from .imports import *
 
 from collections import OrderedDict
@@ -433,12 +433,15 @@ class SSDialog(FunctionDialog):
                 typetoken = 'N/A'
             else:
                 typetoken = self.typeTokenWidget.value().title()
-            self.results.append([self.corpusModel.corpus.name, w1, w2,
-                        self.algorithmWidget.displayValue(),
-                        self.tierWidget.displayValue(),
-                        typetoken,
-                        self.variantsWidget.value().title(), frequency_cutoff,
-                         similarity ])
+            self.results.append({'Corpus': self.corpusModel.corpus.name, 
+                                'First word': w1, 
+                                'Second word': w2,
+                                'Algorithm': self.algorithmWidget.displayValue(),
+                                'String type': self.tierWidget.displayValue(),
+                                'Frequency type': typetoken,
+                                'Pronunciation variants': self.variantsWidget.value().title(), 
+                                'Minimum word frequency': frequency_cutoff,
+                                'Result': similarity})
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()

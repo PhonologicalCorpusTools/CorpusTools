@@ -66,7 +66,7 @@ class FADialog(FunctionDialog):
                 'Phonologically aligned',
                 'Transcription tier',
                 'Frequency type',
-                'Pronunication variants',
+                'Pronunciation variants',
                 'Minimum word frequency',
                 'Total words in corpus',
                 'Total words with alternations',
@@ -338,17 +338,18 @@ class FADialog(FunctionDialog):
         except ValueError:
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
-            self.results.append([self.corpus.name,
-                                seg_pairs[i][0],seg_pairs[i][1],
-                                self.algorithmWidget.displayValue(),
-                                self.alignCheck.isChecked(),
-                                self.tierWidget.displayValue(),
-                                self.typeTokenWidget.value().title(),
-                                self.variantsWidget.value().title(),
-                                frequency_cutoff,
-                                r[0],
-                                r[1],
-                                r[2]])
+            self.results.append({'Corpus': self.corpus.name,
+                                'First segment': seg_pairs[i][0],
+                                'Second segment': seg_pairs[i][1],
+                                'Algorithm': self.algorithmWidget.displayValue(),
+                                'Phonologically aligned': self.alignCheck.isChecked(),
+                                'Transcription tier': self.tierWidget.displayValue(),
+                                'Frequency type': self.typeTokenWidget.value().title(),
+                                'Pronunciation variants': self.variantsWidget.value().title(),
+                                'Minimum word frequency': frequency_cutoff,
+                                'Total words in corpus': r[0],
+                                'Total words with alternations': r[1],
+                                'Frequency of alternation': r[2]})
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()
