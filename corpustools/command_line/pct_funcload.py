@@ -116,6 +116,11 @@ def main():
             if type(result) != list:
                 outstr = 'result\t' + '\t'.join([a for a in vars(args)]) + '\n' + str(result) + '\t' + '\t'.join([str(getattr(args, a)) for a in vars(args)])
                 outfile.write(outstr)
+            elif len(result[0]) == 2: # format for all segment pairs comparison
+                outstr = 'result\tsegment(s)\n'
+                for pairs, value in result:
+                    outstr += '{}\t{}\n'.format(value, pairs)
+                outfile.write(outstr)
             else:
                 outstr = 'result\tsegment(s)\tminpairs\t' + '\t'.join([a for a in vars(args)]) + '\n'
                 for element in result:
