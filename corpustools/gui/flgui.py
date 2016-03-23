@@ -87,11 +87,11 @@ class FLDialog(FunctionDialog):
                 'First segment',
                 'Second segment',
                 'Algorithm',
-                'Distinguished homophones?',
+                'Distinguished homophones',
                 'Relative count',
                 'Transcription tier',
                 'Frequency type',
-                'Pronunication variants',
+                'Pronunciation variants',
                 'Minimum word frequency',
                 'Result']
 
@@ -286,13 +286,14 @@ class FLDialog(FunctionDialog):
                 seg_two = seg_pairs[i][1]
             except IndexError:
                 seg_two = ''
-            self.results.append([self.corpus.name,
-                                seg_one,seg_two,
-                                self.algorithmWidget.displayValue(),
-                                self.homophoneWidget.isChecked(),
-                                self.relativeCountWidget.isChecked(),
-                                self.tierWidget.displayValue(),
-                                self.typeTokenWidget.value().title(),
-                                self.variantsWidget.value().title(),
-                                frequency_cutoff,
-                                r])
+            self.results.append({'Corpus': self.corpus.name,
+                                'First segment': seg_one,
+                                'Second segment': seg_two,
+                                'Algorithm': self.algorithmWidget.displayValue(),
+                                'Distinguished homophones': self.homophoneWidget.isChecked(),
+                                'Relative count': self.relativeCountWidget.isChecked(),
+                                'Transcription tier': self.tierWidget.displayValue(),
+                                'Frequency type': self.typeTokenWidget.value().title(),
+                                'Pronunciation variants': self.variantsWidget.value().title(),
+                                'Minimum word frequency': frequency_cutoff,
+                                'Result': r})

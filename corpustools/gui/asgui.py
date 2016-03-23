@@ -82,7 +82,7 @@ class ASDialog(FunctionDialog):
             'Number of filters',
             'Number of coefficients',
             'Result',
-            'Is similarity?']
+            'Is similarity']
 
     _about = [('This function calculates the acoustic similarity of sound files in two'
                 ' directories by generating either MFCCs or amplitude envelopes for each'
@@ -368,15 +368,15 @@ class ASDialog(FunctionDialog):
     def setResults(self,results):
         self.results = list()
 
-        for r in results:
-            self.results.append([r[0],
-                            r[1],
-                            self.representationWidget.displayValue(),
-                            self.distAlgWidget.displayValue(),
-                            float(self.minFreqEdit.text()),
-                            float(self.maxFreqEdit.text()),
-                            int(self.filterEdit.text()),
-                            int(self.coeffEdit.text()),
-                            r[2],
-                            self.outputSimWidget.isChecked()])
+        for r in results:            
+            self.results.append({'File 1': r[0],
+                                'File 2': r[1],
+                                'Representation': self.representationWidget.displayValue(),
+                                'Match function': self.distAlgWidget.displayValue(),
+                                'Minimum frequency': float(self.minFreqEdit.text()),
+                                'Maximum frequency': float(self.maxFreqEdit.text()),
+                                'Number of filters': int(self.filterEdit.text()),
+                                'Number of coefficients': int(self.coeffEdit.text()),
+                                'Result': r[2],
+                                'Is similarity': self.outputSimWidget.isChecked()})
 

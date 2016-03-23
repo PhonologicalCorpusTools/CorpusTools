@@ -191,11 +191,13 @@ class MIDialog(FunctionDialog):
         except ValueError:
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
-            self.results.append([self.corpus.name,
-                                seg_pairs[i][0],seg_pairs[i][1],
-                                dom, self.halveEdgesCheck.isChecked(),
-                                self.tierWidget.displayValue(),
-                                self.typeTokenWidget.value().title(),
-                                self.variantsWidget.value().title(),
-                                frequency_cutoff,
-                                r])
+            self.results.append({'Corpus': self.corpus.name,
+                                'First segment': seg_pairs[i][0],
+                                'Second segment': seg_pairs[i][1],
+                                'Domain': dom,
+                                'Halved edges': self.halveEdgesCheck.isChecked(),
+                                'Transcription tier': self.tierWidget.displayValue(),
+                                'Frequency type': self.typeTokenWidget.value().title(),
+                                'Pronunciation variants': self.variantsWidget.value().title(),
+                                'Minimum word frequency': frequency_cutoff,
+                                'Mutual information': r})

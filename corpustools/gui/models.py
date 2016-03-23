@@ -1,4 +1,5 @@
 import os
+
 from collections import Counter, defaultdict
 
 from .imports import *
@@ -470,7 +471,13 @@ class ResultsModel(BaseTableModel):
         QAbstractTableModel.__init__(self,parent)
         self.settings = settings
         self.columns = header
-        self.rows = results
+        results_dict2list = list()
+        for row in results:
+            tmp = list()
+            for col in header:
+                tmp.append(row[col])
+            results_dict2list.append(tmp)
+        self.rows = results_dict2list
 
 class PhonoSearchResultsModel(BaseTableModel):
     def __init__(self, header, summary_header, results, settings, parent=None):

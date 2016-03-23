@@ -260,29 +260,43 @@ class PDDialog(FunctionDialog):
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
             if isinstance(r,dict):
+                'Corpus',
+                'First segment',
+                'Second segment',
+                'Environment',
+                'Transcription tier',
+                'Frequency type',
+                'Pronunciation variants',
+                'Frequency of first segment',
+                'Frequency of second segment',
+                'Frequency of environment',
+                'Minimum word frequency',
+                'Entropy'
                 for env,v in r.items():
-                    self.results.append([self.corpus.name,
-                                        seg_pairs[i][0],seg_pairs[i][1],
-                                        env,
-                                        self.tierWidget.displayValue(),
-                                        self.typeTokenWidget.value().title(),
-                                        self.variantsWidget.value().title(),
-                                        v[2], # freq of seg1
-                                        v[3], #freq of seg2
-                                        v[1], #total_tokens,
-                                        frequency_cutoff,
-                                        v[0]] #H
+                    self.results.append({'Corpus': self.corpus.name,
+                                        'First segment': seg_pairs[i][0],
+                                        'Second segment': seg_pairs[i][1],
+                                        'Environment': env,
+                                        'Transcription tier': self.tierWidget.displayValue(),
+                                        'Frequency type': self.typeTokenWidget.value().title(),
+                                        'Pronunciation variants': self.variantsWidget.value().title(),
+                                        'Frequency of first segment': v[2], # freq of seg1
+                                        'Frequency of second segment': v[3], #freq of seg2
+                                        'Frequency of environment': v[1], #total_tokens,
+                                        'Minimum word frequency': frequency_cutoff,
+                                        'Entropy': v[0]} #H
                                         )
             else:
-                self.results.append([self.corpus.name,
-                                        seg_pairs[i][0],seg_pairs[i][1],
-                                        'FREQ-ONLY',
-                                        self.tierWidget.displayValue(),
-                                        self.typeTokenWidget.value().title(),
-                                        self.variantsWidget.value().title(),
-                                        r[2], # freq of seg1
-                                        r[3], #freq of seg2
-                                        r[1], #total_tokens
-                                        frequency_cutoff,
-                                        r[0]]) #H
-
+                self.results.append({'Corpus': self.corpus.name,
+                                        'First segment': seg_pairs[i][0],
+                                        'Second segment': seg_pairs[i][1],
+                                        'Environment': 'FREQ-ONLY',
+                                        'Transcription tier': self.tierWidget.displayValue(),
+                                        'Frequency type': self.typeTokenWidget.value().title(),
+                                        'Pronunciation variants': self.variantsWidget.value().title(),
+                                        'Frequency of first segment': r[2], # freq of seg1
+                                        'Frequency of second segment': r[3], #freq of seg2
+                                        'Frequency of environment': r[1], #total_tokens,
+                                        'Minimum word frequency': frequency_cutoff,
+                                        'Entropy': r[0]} #H
+                                        )

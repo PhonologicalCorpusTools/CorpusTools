@@ -100,5 +100,7 @@ class PhonoSearchDialog(FunctionDialog):
                 envs = tuple(str(x) for x in f)
             except IndexError:
                 envs = tuple()
-            self.results.append((w, str(getattr(w,self.tierWidget.value())), segs,
-                                envs))
+            self.results.append({'Word': w, 
+                                'Transcription': str(getattr(w,self.tierWidget.value())),
+                                'Segment': segs,
+                                'Environment': envs})

@@ -414,6 +414,8 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
+                print('hello again')
+                time.sleep(5)
                 self.SSWindow.table.model().addData(dialog.results)
             else:
                 self.SSWindow = ResultsWindow('String similarity results',dialog,self)

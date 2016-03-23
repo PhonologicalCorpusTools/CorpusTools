@@ -325,14 +325,15 @@ class PPDialog(FunctionDialog):
             frequency_cutoff = 0.0
         for result in results:
             w, pp = result
-            self.results.append([self.corpusModel.corpus.name,str(w),
-                        self.algorithmWidget.displayValue().replace('&&','&'),
-                        self.probabilityTypeWidget.displayValue(),
-                        self.tierWidget.displayValue(),
-                        self.typeTokenWidget.value().title(),
-                        self.variantsWidget.value().title(),
-                        frequency_cutoff,
-                        pp])
+            self.results.append({'Corpus': self.corpusModel.corpus.name,
+                                'Word': str(w),
+                                'Algorithm': self.algorithmWidget.displayValue().replace('&&','&'),
+                                'Probability type': self.probabilityTypeWidget.displayValue(),
+                                'Transcription tier': self.tierWidget.displayValue(),
+                                'Frequency type': self.typeTokenWidget.value().title(),
+                                'Pronunciation variants': self.variantsWidget.value().title(),
+                                'Minimum word frequency': frequency_cutoff,
+                                'Phonotactic probability': pp})
 
     def vitevitchSelected(self):
         self.probabilityTypeWidget.enable()
