@@ -232,6 +232,10 @@ class FLDialog(FunctionDialog):
                             ' or using the decrease in corpus'
                             ' entropy caused by a merger of paired segments in the set.'
             "</FONT>"))
+            self.saveFileWidget.setToolTip(("<FONT COLOR=black>"
+            'Note that whether "Distinguish homophones" is checked or not, this file will'
+            ' include all minimal pairs with unique spellings.'
+            "</FONT>"))
 
     def minPairsSelected(self):
         self.saveFileWidget.setEnabled(True)
