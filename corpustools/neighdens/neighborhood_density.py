@@ -169,11 +169,11 @@ def generate_neighbor_candidates(corpus_context, query, sequence_type):
         yield str(sequence[:i] + sequence[i+1:]) # deletion
         for char in corpus_context.inventory:
             if str(char) not in ['#', sequence[i]]:
-                yield str(sequence[:i] + [str(char)] + sequence[i:]) # insertion
-                yield str(sequence[:i] + [str(char)] + sequence[i+1:]) # substitution
+                yield str(sequence[:i] + str(char) + sequence[i:]) # insertion
+                yield str(sequence[:i] + str(char) + sequence[i+1:]) # substitution
     for char in corpus_context.inventory: # final pass to get insertion at len+1
         if str(char) not in ['#', sequence[i]]:
-            yield str(sequence[:] + [str(char)]) # insertion
+            yield str(sequence[:] + str(char)) # insertion
 
 
 
