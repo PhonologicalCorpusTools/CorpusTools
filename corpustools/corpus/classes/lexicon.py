@@ -816,7 +816,9 @@ class FeatureMatrix(object):
         if isinstance(item,str):
             #get full feature list for a given segment
             return self.matrix[item]
-        elif isinstance(item,tuple):
+        if isinstance(item, Segment):
+            return self.matrix[item.symbol]
+        if isinstance(item,tuple):
             #tuple should be (symbol,feature_name) to get only that feature's value
             return self.matrix[item[0]][item[1]]
 
@@ -827,7 +829,10 @@ class FeatureMatrix(object):
         return item in list(self.matrix.keys())
 
     def __setitem__(self,key,value):
-        self.matrix[key] = value
+        if isinstance(key, str):
+            self.matrix[key] = value
+        if isinstance(key, Segment):
+            self.matrix[key.symbol] = value
 
     def __len__(self):
         return len(self.matrix)
@@ -1662,7 +1667,10 @@ class Inventory(object):
     def __getitem__(self, key):
         if isinstance(key, slice):
             return sorted(self.segs.keys())[key]
-        return self.segs[key]
+        if isinstance(key, str):
+            return self.segs[key]
+        if isinstance(key, Segment):
+            return self.segs[key.symbol]
 
     def __setitem__(self, key, value):
         self.segs[key] = value

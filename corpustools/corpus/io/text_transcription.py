@@ -1,6 +1,7 @@
 import os
 import re
 
+import corpustools.gui.modernize as modernize
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Discourse, WordToken, Attribute
 
 from corpustools.exceptions import DelimiterError, PCTOSError
@@ -220,6 +221,7 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
+        discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
 
     return discourse
 

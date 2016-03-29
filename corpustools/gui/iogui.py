@@ -37,7 +37,7 @@ from .widgets import (FileWidget, RadioSelectWidget,
                     TranscriptionWidget, TierWidget,
                     AttributeWidget, AnnotationTypeWidget,
                     CorpusSelect)
-from .featuregui import FeatureSystemSelect
+from .featuregui import FeatureSystemSelect, RestrictedFeatureSystemSelect
 from .helpgui import HelpDialog
 
 
@@ -110,6 +110,17 @@ class LoadCorpusWorker(FunctionWorker):
             time.sleep(0.1)
             self.finishedCancelling.emit()
             return
+
+        #If a Discourse object was just loaded, it needs to have its features specified
+        #A Corpus object doesn't
+        if hasattr(corpus, 'lexicon'):
+            for seg in corpus.lexicon.inventory:
+                try:
+                    corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
+                except KeyError:
+                    corpus.lexicon.specifier[seg] = {feature:'n' for feature in corpus.lexicon.specifier.features}
+                    corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
+
         self.dataReady.emit(corpus)
 
 
@@ -558,11 +569,11 @@ class LoadCorpusDialog(PCTDialog):
         self.columnDelimiterEdit = QLineEdit()
 
         self.lineNumberEdit = QLineEdit()
-        self.csvFeatureSystem = FeatureSystemSelect(self.settings)
-        self.runningFeatureSystem = FeatureSystemSelect(self.settings)
-        self.ilgFeatureSystem = FeatureSystemSelect(self.settings)
-        self.tgFeatureSystem = FeatureSystemSelect(self.settings)
-        self.multFeatureSystem = FeatureSystemSelect(self.settings)
+        self.csvFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
+        self.runningFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
+        self.ilgFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
+        self.tgFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
+        self.multFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
 
         self.csvForceInspectButton = QPushButton('Reinspect')
         self.csvForceInspectButton.clicked.connect(self.forceInspect)
@@ -748,7 +759,6 @@ class LoadCorpusDialog(PCTDialog):
                     "Missing information", "Please specify a name for the corpus.")
             return
 
-
         if not os.path.exists(self.csvFeatureSystem.path()):
             featurename = os.path.split(self.csvFeatureSystem.path())[-1].split('.')[0]
             reply = QMessageBox.critical(self, 'Missing information',
@@ -815,8 +825,41 @@ class LoadCorpusDialog(PCTDialog):
         self.progressDialog.reset()
         if result:
             if self.corpus is not None:
-                save_binary(self.corpus,
-                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
+                try:
+                    #it's a Corpus object
+                    iterable = self.corpus.inventory.values()
+                except AttributeError:
+                    #It's a Discourse object
+                    iterable = self.corpus.lexicon.inventory.values()
+                unmatched = list()
+                for seg in iterable:
+                    if seg.symbol == '#':
+                        continue
+                    if all(f=='n' for f in seg.features.values()):
+                        if seg.symbol == '\'':
+                            unmatched.append('\' (apostrophe)')
+                        else:
+                            unmatched.append(seg.symbol)
+                if not unmatched:
+                    save_binary(self.corpus,
+                                corpus_name_to_path(self.settings['storage'], self.corpus.name))
+                else:
+                    unmatched = ','.join(sorted(unmatched))
+                    alert = QMessageBox()
+                    alert.setWindowTitle('Warning')
+                    alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
+                    'selected feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
+                    'feature. You can change these feature values in PCT by going to Features>View/Change feature '
+                    'features system...'.format(unmatched)))
+                    alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
+                    alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
+                    choice = alert.exec_()
+                    if choice == QMessageBox.AcceptRole:
+                        save_binary(self.corpus,
+                                    corpus_name_to_path(self.settings['storage'], self.corpus.name))
+                    else:
+                        return
+
             QDialog.accept(self)
 
     def updateName(self):

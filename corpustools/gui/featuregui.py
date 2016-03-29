@@ -19,6 +19,7 @@ from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 from .helpgui import HelpDialog
+import corpustools.gui.modernize as modernize
 
 class LoadFeatureSystemWorker(FunctionWorker):
     def run(self):
@@ -84,8 +85,6 @@ class FeatureSystemSelect(QGroupBox):
                 default_feat = 'None'
             else:
                 default_trans,default_feat = default_deets
-
-
 
         for i,s in enumerate(get_transcription_system_styles(self.settings['storage'])):
             self.transSystem.addItem(s)
@@ -209,6 +208,30 @@ class ExportFeatureSystemDialog(QDialog):
         export_feature_matrix_csv(self.specifier,filename,colDelim)
 
         QDialog.accept(self)
+
+class RestrictedFeatureSystemSelect(QGroupBox):
+
+    def __init__(self, settings, specifier, parent=None):
+        QGroupBox.__init__(self, 'Transcription and feature file', parent)
+        self.settings = settings
+        layout = QFormLayout()
+
+        self.systems = QComboBox()
+
+        self.systems.addItems(get_systems_list(settings['storage']))
+        self.systems.addItem('None')
+        if specifier is not None:
+            self.systems.setCurrentText(specifier.name)
+
+        layout.addWidget(self.systems)
+
+        self.setLayout(layout)
+
+    def path(self):
+        name = self.systems.currentText()
+        if name == 'None':
+            return None
+        return system_name_to_path(self.settings['storage'], name)
 
 class AddFeatureDialog(QDialog):
     def __init__(self, parent, specifier):
@@ -381,10 +404,11 @@ class EditFeatureMatrixDialog(QDialog):
         default = None
         if self.specifier is not None:
             default = self.specifier.name
-        self.changeWidget = FeatureSystemSelect(self.settings,default=default)
-        #self.changeWidget.changed.connect(self.changeFeatureSystem)
-        self.changeWidget.transSystem.activated.connect(self.changeFeatureSystem)
-        self.changeWidget.featureSystem.activated.connect(self.changeFeatureSystem)
+        #self.changeWidget = FeatureSystemSelect(self.settings,default=default)
+        self.changeWidget = RestrictedFeatureSystemSelect(self.settings, self.specifier)
+        self.changeWidget.systems.currentIndexChanged.connect(self.changeRestrictedFeatureSystem)
+        #self.changeWidget.transSystem.activated.connect(self.changeFeatureSystem)
+        #self.changeWidget.featureSystem.activated.connect(self.changeFeatureSystem)
 
         box.addRow(self.changeWidget)
 
@@ -456,7 +480,8 @@ class EditFeatureMatrixDialog(QDialog):
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
         acLayout.addWidget(self.helpButton)
-        self.acceptButton.clicked.connect(self.accept)
+        #self.acceptButton.clicked.connect(self.accept)
+        self.acceptButton.clicked.connect(self.acceptRestricted)
         self.cancelButton.clicked.connect(self.reject)
         self.helpButton.clicked.connect(self.help)
 
@@ -470,6 +495,37 @@ class EditFeatureMatrixDialog(QDialog):
         self.setWindowTitle('Edit feature system')
 
         self.changeDisplay()
+
+    def acceptRestricted(self):
+        if self.specifier is None:
+            QDialog.accept(self)
+            return
+
+        missing = []
+        feature_inventory = self.specifier.segments
+        for seg in self.corpus.inventory:
+            if seg not in feature_inventory:
+                if seg == '\'':
+                    missing.append('\' (apostrophe)')
+                else:
+                    missing.append(str(seg))
+        if missing:
+            missing = ','.join(missing)
+            alert = QMessageBox()
+            alert.setWindowTitle('Warning')
+            alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
+                    'selected feature system:\n{}\n\n'
+                'You should select a different feature system, or else use the "Add Segment" button to add these '
+                'symbols to the current feature system'.format(missing)))
+            alert.exec_()
+            return
+        else:
+            self.transcription_changed = False
+            self.feature_system_changed = True
+            path = system_name_to_path(self.settings['storage'], self.specifier.name)
+            save_binary(self.specifier, path)
+            QDialog.accept(self)
+
 
     def accept(self):
         info = self.changeWidget.value()
@@ -533,6 +589,15 @@ class EditFeatureMatrixDialog(QDialog):
             self.table.resizeColumnsToContents()
             self.layout().insertWidget(0,self.table)
 
+    def changeRestrictedFeatureSystem(self):
+        path = self.changeWidget.path()
+        if path is None:
+            self.specifier = None
+        else:
+            self.specifier = load_binary(path)
+            self.specifier = modernize.modernize_specifier(self.specifier)
+        self.changeDisplay()
+
     def changeFeatureSystem(self):
 
         path = self.changeWidget.path()
@@ -546,6 +611,7 @@ class EditFeatureMatrixDialog(QDialog):
             if os.path.exists(path):
                 new_specifier = load_binary(path)
                 self.specifier = new_specifier
+                self.specifier = modernize.modernize_specifier(self.specifier)
                 self.changeDisplay()
                 return
             else:
@@ -567,6 +633,7 @@ class EditFeatureMatrixDialog(QDialog):
             unmatched = self.mapExistingSystems(new_specifier)
             if not unmatched:
                 self.specifier = new_specifier
+                self.specifier = modernize.modernize_specifier(self.specifier)
                 self.changeDisplay()
 
 

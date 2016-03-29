@@ -9,6 +9,7 @@ from corpustools.corpus.io.binary import save_binary, load_binary
 from .helper import parse_transcription, AnnotationType
 
 from corpustools.exceptions import DelimiterError, PCTError
+import corpustools.gui.modernize as modernize
 
 import time
 
@@ -123,6 +124,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
     corpus = Corpus(corpus_name)
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
+        feature_matrix = modernize.modernize_specifier(feature_matrix)
         corpus.set_feature_matrix(feature_matrix)
 
     if annotation_types is None:

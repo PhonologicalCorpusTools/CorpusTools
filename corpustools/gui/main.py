@@ -334,9 +334,6 @@ class MainWindow(QMainWindow):
                         print(2)
                         self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
-                    #If the user loaded a new corpus using a feature file from an older version of PCT
-                    self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
-                        self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
                     self.saveCorpus()
 
                 except AttributeError:
@@ -350,19 +347,6 @@ class MainWindow(QMainWindow):
                     self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
                     self.inventoryModel.modelReset()
                     self.saveCorpus()
-
-            for seg,features in self.corpusModel.corpus.specifier.matrix.items():
-                if seg == '#':
-                    continue
-                if all(v == 'n' for v in features.values()):
-                    alert = QMessageBox()
-                    alert.setWindowTitle('Segment mismatch')
-                    alert.setText('Some symbols in your corpus have no match in the transcription system you selected. '
-                                  'These symbols were given default values of "n" for every feature. You can go to '
-                                  'Features>View/Change feature system... to edit the feature values.')
-                    alert.addButton('OK', QMessageBox.AcceptRole)
-                    alert.exec_()
-                    break
 
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
@@ -455,6 +439,8 @@ class MainWindow(QMainWindow):
             if dialog.specifier is not None:
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 if dialog.transcription_changed:
+                    #This block currently does nothing, due to the RestrictedFeatureSelectSystem in use
+                    #the code should be left alone in case we later choose to move back to the non-Restricted type
                     self.corpusModel.corpus.retranscribe(dialog.segmap)#this also updates the corpus inventory
                     self.inventoryModel.updateInventory(list(self.corpusModel.corpus.inventory.segs.keys()))
 

@@ -9,6 +9,7 @@ from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribu
 from corpustools.exceptions import TextGridTierError, PCTError
 
 from corpustools.corpus.io.binary import load_binary
+import corpustools.gui.modernize as modernize
 
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
                     AnnotationType,data_to_discourse, find_wav_path,
@@ -281,6 +282,8 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
+        discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
+
     return discourse
 
 def load_directory_textgrid(corpus_name, path, annotation_types,
@@ -343,4 +346,5 @@ def load_directory_textgrid(corpus_name, path, annotation_types,
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         corpus.lexicon.set_feature_matrix(feature_matrix)
+        corpus.lexicon.specifier = modernize.modernize_specifier(corpus.lexicon.specifier)
     return corpus
