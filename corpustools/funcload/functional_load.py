@@ -304,11 +304,13 @@ def relative_minpair_fl(corpus_context, segment,
             environment_filter = environment_filter,
             stop_check = stop_check, call_back = call_back)
         results.append(res[0])
+        print('Functional load of {}: {}'.format(sp, res[0]))
 
         if output_filename is not None:
             to_output.append((sp, res[1]))
     if output_filename is not None:
         save_minimal_pairs(output_filename, to_output)
+
     return sum(results)/len(segment_pairs)
 
 
@@ -343,9 +345,12 @@ def relative_deltah_fl(corpus_context, segment,
 
     results = []
     for sp in segment_pairs:
-        results.append(deltah_fl(corpus_context, [sp],
+        res = deltah_fl(corpus_context, [sp],
                 environment_filter=environment_filter,
-                stop_check = stop_check, call_back = call_back))
+                stop_check = stop_check, call_back = call_back)
+        results.append(res)
+        print('Functional load of {}: {}'.format(sp, res))
+
     return sum(results)/len(segment_pairs)
 
 
