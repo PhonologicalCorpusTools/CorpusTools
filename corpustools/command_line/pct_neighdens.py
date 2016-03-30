@@ -42,6 +42,7 @@ def main():
     parser.add_argument('-w', '--count_what', default ='type', help="If 'type', count neighbors in terms of their type frequency. If 'token', count neighbors in terms of their token frequency.")
     parser.add_argument('-e', '--trans_delimiter', default='', help="If not empty string, splits the query by this str to make a transcription/spelling list for the query's Word object.")
     parser.add_argument('-m', '--find_mutation_minpairs', action='store_true', help='This flag causes the script not to calculate neighborhood density, but rather to find minimal pairs---see documentation.')
+    parser.add_argument('-q', '--force_quadratic_algorithm', action='store_true', help='This flag prevents PCT from using the more efficient linear-time algorithm for edit distance of 1 neighborhoods.')
     parser.add_argument('-o', '--outfile', help='Name of output file')
 
     args = parser.parse_args()
@@ -75,7 +76,8 @@ def main():
                 queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
 
                 queries = [ensure_query_is_word(q, corpus, args.sequence_type, args.trans_delimiter) for q in queries]
-            results = [neighborhood_density(corpus, q, algorithm = args.algorithm, max_distance = args.max_distance) for q in queries]
+            results = [neighborhood_density(corpus, q, algorithm = args.algorithm, max_distance = args.max_distance,
+                                            force_quadratic=args.force_quadratic_algorithm) for q in queries]
             if args.outfile:
                 with open(args.outfile, 'w') as outfile:
                     for q, r in zip(queries, results):
@@ -86,7 +88,8 @@ def main():
 
         except FileNotFoundError: # read query as a single word
             query = ensure_query_is_word(args.query, corpus, args.sequence_type, args.trans_delimiter)
-            result = neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance)
+            result = neighborhood_density(corpus, query, algorithm = args.algorithm, max_distance = args.max_distance,
+                                          force_quadratic=args.force_quadratic_algorithm)
 
             if args.outfile:
                 with open(args.outfile, 'w') as outfile:

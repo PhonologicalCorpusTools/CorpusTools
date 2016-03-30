@@ -77,6 +77,7 @@ def neighborhood_density_all_words(corpus_context,
 
 def neighborhood_density(corpus_context, query,
             algorithm = 'edit_distance', max_distance = 1,
+            force_quadratic = False,
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of a particular word in the corpus.
 
@@ -89,7 +90,10 @@ def neighborhood_density(corpus_context, query,
     algorithm : str
         The algorithm used to determine distance
     max_distance : float, optional
-        Maximum edit distance from the queried word to consider a word a neighbor.
+        Maximum edit distance from the queried word to consider a word a neighbor
+    force_quadratic : bool
+        Force use of the less efficient quadratic algorithm even when finding edit 
+        distance of 1 neighborhoods
     stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
     call_back : callable, optional
@@ -106,7 +110,9 @@ def neighborhood_density(corpus_context, query,
         call_back(0,len(corpus_context))
         cur = 0
 
-    if algorithm == 'edit_distance' and max_distance == 1:
+    print(force_quadratic)
+
+    if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type)
 
     if algorithm == 'edit_distance':
@@ -156,24 +162,24 @@ def fast_neighborhood_density(corpus_context, query, sequence_type):
 
     neighbors = set()
     for candidate in generate_neighbor_candidates(corpus_context, query, sequence_type):
-        if candidate in tierdict:
-            for w in tierdict[candidate]:
+        cand_str = '.'.join(candidate)
+        if cand_str in tierdict:
+            for w in tierdict[cand_str]:
                 neighbors.add(w)
 
     return (len(neighbors), neighbors)
 
 def generate_neighbor_candidates(corpus_context, query, sequence_type):
     sequence = getattr(query, sequence_type)
-    yield str(sequence)
     for i in range(len(sequence)):
-        yield str(sequence[:i] + sequence[i+1:]) # deletion
+        yield [str(c) for c in sequence[:i]] + [str(c) for c in sequence[i+1:]] # deletion
         for char in corpus_context.inventory:
             if str(char) not in ['#', sequence[i]]:
-                yield str(sequence[:i] + str(char) + sequence[i:]) # insertion
-                yield str(sequence[:i] + str(char) + sequence[i+1:]) # substitution
+                yield [str(c) for c in sequence[:i]] + [str(char)] + [str(c) for c in sequence[i:]] # insertion
+                yield [str(c) for c in sequence[:i]] + [str(char)] + [str(c) for c in sequence[i+1:]] # substitution
     for char in corpus_context.inventory: # final pass to get insertion at len+1
         if str(char) not in ['#', sequence[i]]:
-            yield str(sequence[:] + str(char)) # insertion
+            yield [str(c) for c in sequence[:]] + [str(char)] # insertion
 
 
 
