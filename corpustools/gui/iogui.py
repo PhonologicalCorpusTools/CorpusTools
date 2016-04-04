@@ -29,6 +29,7 @@ from corpustools.corpus.io.helper import (get_corpora_list,
                                         corpus_name_to_path,
                                         inspect_directory,
                                         log_annotation_types)
+import corpustools.gui.modernize as modernize
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import (FileWidget, RadioSelectWidget,
@@ -112,7 +113,7 @@ class LoadCorpusWorker(FunctionWorker):
             return
 
         #If a Discourse object was just loaded, it needs to have its features specified
-        #A Corpus object doesn't
+        #A Corpus has its features specified already at this point
         if hasattr(corpus, 'lexicon'):
             for seg in corpus.lexicon.inventory:
                 try:
@@ -171,16 +172,23 @@ class CorpusLoadDialog(PCTDialog):
 
         self.acceptButton = QPushButton('Load selected corpus')
         self.acceptButton.setDefault(True)
+        self.forceUpdateButton = QPushButton('Load corpus with forced update')
+        self.forceUpdateButton.setAutoDefault(False)
         self.cancelButton = QPushButton('Cancel')
         self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
+        acLayout.addWidget(self.forceUpdateButton)
         acLayout.addWidget(self.cancelButton)
         acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
         self.helpButton.clicked.connect(self.help)
-
+        self.forceUpdateButton.clicked.connect(self.forceUpdate)
+        self.forceUpdateButton.setToolTip(
+            ('<span>This loads a corpus file, and reformats it to ensure it has all of the '
+             'required attributes for the current version PCT. Try this option if you are having trouble getting a '
+             'corpus to load properly.</span>'))
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
@@ -208,19 +216,30 @@ class CorpusLoadDialog(PCTDialog):
     def setResults(self, results):
         self.corpus = results
 
-    def accept(self):
+    def forceUpdate(self):
+        result = self.loadCorpus()
+        if result:
+            self.corpus = modernize.force_update(self.corpus)
+            QDialog.accept(self)
+
+    def loadCorpus(self):
+
         selected = [x.text() for x in self.corporaList.selectedItems()]
         if selected:
             self.thread.setParams({
-                'path':corpus_name_to_path(
-                            self.settings['storage'], selected[0])})
+                'path': corpus_name_to_path(
+                    self.settings['storage'], selected[0])})
 
             self.thread.start()
             result = self.progressDialog.exec_()
 
             self.progressDialog.reset()
-            if result:
-                QDialog.accept(self)
+        return result
+
+    def accept(self):
+        result = self.loadCorpus()
+        if result:
+            QDialog.accept(self)
 
     def openLoadWindow(self):
         dialog = LoadCorpusDialog(self, self.settings)
@@ -850,7 +869,7 @@ class LoadCorpusDialog(PCTDialog):
                     alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
                     'selected feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
                     'feature. You can change these feature values in PCT by going to Features>View/Change feature '
-                    'features system...'.format(unmatched)))
+                    'system...'.format(unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()

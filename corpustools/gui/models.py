@@ -7,7 +7,6 @@ from .widgets import *
 from corpustools.corpus.classes.lexicon import Segment
 from corpustools.exceptions import CorpusIntegrityError
 
-
 class BaseTableModel(QAbstractTableModel):
 
     def __init__(self, settings, parent = None):
@@ -786,8 +785,6 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         #self.generateData()
         #self.layoutChanged.emit()
 
-
-
 class FeatureSystemTableModel(BaseTableModel):
     def __init__(self, specifier, parent=None):
         QAbstractTableModel.__init__(self,parent)
@@ -1387,9 +1384,11 @@ class InventoryModel(QAbstractTableModel):
         self.modelReset()
 
     def generateGenericNames(self):
-        sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
-        # pick an arbitrary segment and examine its features; they all should have the same feature list
-        if not sample:
+        try:
+            sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
+            # pick an arbitrary segment and examine its features; they all should have the same feature list
+        except IndexError:
+            print(vars(self))
             raise CorpusIntegrityError('No segments were found in the inventory')
         if 'consonantal' in sample.features:
             self.generateGenericHayes()

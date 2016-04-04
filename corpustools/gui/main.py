@@ -271,7 +271,6 @@ class MainWindow(QMainWindow):
 
         if result:
             self.corpus = dialog.corpus
-
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):

@@ -217,7 +217,6 @@ class RestrictedFeatureSystemSelect(QGroupBox):
         layout = QFormLayout()
 
         self.systems = QComboBox()
-
         self.systems.addItems(get_systems_list(settings['storage']))
         self.systems.addItem('None')
         if specifier is not None:
@@ -232,6 +231,9 @@ class RestrictedFeatureSystemSelect(QGroupBox):
         if name == 'None':
             return None
         return system_name_to_path(self.settings['storage'], name)
+
+    def value(self):
+        return self.systems.currentText()
 
 class AddFeatureDialog(QDialog):
     def __init__(self, parent, specifier):
@@ -406,6 +408,8 @@ class EditFeatureMatrixDialog(QDialog):
             default = self.specifier.name
         #self.changeWidget = FeatureSystemSelect(self.settings,default=default)
         self.changeWidget = RestrictedFeatureSystemSelect(self.settings, self.specifier)
+        pos = self.changeWidget.systems.findText(self.specifier.name)
+        self.changeWidget.systems.setCurrentIndex(pos)
         self.changeWidget.systems.currentIndexChanged.connect(self.changeRestrictedFeatureSystem)
         #self.changeWidget.transSystem.activated.connect(self.changeFeatureSystem)
         #self.changeWidget.featureSystem.activated.connect(self.changeFeatureSystem)
@@ -529,19 +533,8 @@ class EditFeatureMatrixDialog(QDialog):
 
     def accept(self):
         info = self.changeWidget.value()
-
-        if not info:
-            alert = QMessageBox()
-            alert.setText('You must select both a transcription type and a feature system. If no options are appearing '
-            'for you, then you need to obtain a feature file. Click \"Cancel\" in the features window to return to your '
-            'corpus. Then go to File > Manage features systems... and click on \"Download\"\n\n')
-            alert.addButton('Return', QMessageBox.AcceptRole)
-            alert.exec_()
-            return
-        else:
-            selected_transcription, selected_features  = info.split('2')
-
-        if not selected_features == self.feature_system:
+        print(info)
+        if not info == self.specifier.name:
             self.feature_system_changed = True
             alert = QMessageBox()
             alert.setWindowTitle('Warning!')
@@ -556,13 +549,6 @@ class EditFeatureMatrixDialog(QDialog):
         else:
             self.feature_system_changed = False
 
-        if not selected_transcription == self.transcription_system:
-            self.transcription_changed = True
-        else:
-            self.transcription_changed = False
-
-        self.feature_system = selected_features
-        self.transcription_system = selected_transcription
         if self.specifier is not None:
             path = system_name_to_path(self.settings['storage'],self.specifier.name)
             save_binary(self.specifier, path)
@@ -800,19 +786,36 @@ class EditFeatureMatrixDialog(QDialog):
             reply = QMessageBox.warning(self,
                     "Missing feature system", "No feature system has been specified.")
         missing = []
+        neutralized = []
         for seg in corpus_inventory:
             if seg not in feature_inventory:
-                missing.append(str(seg))
+                if str(seg) == '\'':
+                    missing.append('\' (apostrophe)')
+                else:
+                    missing.append(str(seg))
+            elif all([f=='n' for f in corpus_inventory[seg.symbol].features.values()]):
+                if str(seg) == '\'':
+                    neutralized.append('\' (apostrophe)')
+                else:
+                    neutralized.append(str(seg))
+
+        message = ['Some segments in your corpus are not fully specified.']
         if missing:
-            reply = QMessageBox.warning(self,
-                    "Missing segments", ('The following segments are not specified'
-                                        ' for features: '+', '.join(missing) + '\nIf you'
-                                        ' are shown a \'blank\' segment, please ensure'
-                                        ' that your segment delimiters are placed'
-                                        ' correctly and are never adjacent to each other.'))
-            return
-        reply = QMessageBox.information(self,
-                    "Missing segments", 'All segments are specified for _features!')
+            message.append('\nThe following segments have not been specified for at least one feature:')
+            message.append(','.join(missing))
+        if neutralized:
+            message.append('\nThe following segments have a value of "n" for all features:')
+            message.append(','.join(neutralized))
+
+        if missing or neutralized:
+            reply = QMessageBox()
+            reply.setWindowTitle('Missing segment information')
+            reply.setText('\n'.join(message))
+        else:
+            reply = QMessageBox.information(self,
+                    "Complete", 'All segments are specified for all features!')
+        reply.exec_()
+
 
 class CategoryWidget(QWidget):
     def __init__(self, category, features, specifier, parent = None):
@@ -1009,6 +1012,7 @@ class EditSegmentDialog(QDialog):
             lay = QVBoxLayout()
 
             featSel = QComboBox()
+
             featSel.addItem(specifier.default_value)
             for i,v in enumerate(specifier.possible_values):
                 if v == specifier.default_value:

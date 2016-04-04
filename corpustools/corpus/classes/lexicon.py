@@ -24,10 +24,13 @@ class Segment(object):
         Feature specification for the segment
     """
 
-    def __init__(self, symbol):
+    def __init__(self, symbol, features=None):
         #None defaults are for word-boundary symbols
         self.symbol = symbol
-        self.features = {}
+        if features is None:
+            self.features = {}
+        else:
+            self.features = features
 
     def specify(self, feature_dict):
         """
@@ -484,6 +487,8 @@ class FeatureMatrix(object):
 
 
     """
+    attributes = ['name', '_features', 'vowel_features', 'cons_features', 'voice_features', 'rounded_feature',
+                  'diph_feature', 'possible_values', 'matrix', '_default_value']
 
     def __init__(self, name, feature_entries):
         self.name = name
@@ -497,8 +502,10 @@ class FeatureMatrix(object):
         self.matrix = {}
         self._default_value = 'n'
         if isinstance(feature_entries, FeatureMatrix):
-            self.matrix = feature_entries.matrix
-            self._features = feature_entries._features
+            for attr in self.attributes:
+                if hasattr(feature_entries, attr):
+                    setattr(self, attr, getattr(feature_entries, attr))
+
         else:
             for s in feature_entries:
                 self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
