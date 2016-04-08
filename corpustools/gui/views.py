@@ -829,14 +829,14 @@ class InventoryView(QTableView):
         self.horizontalHeader().setSectionsMovable(True)
         self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.horizontalHeader().customContextMenuRequested.connect(self.showColumnMenu)
-        self.horizontalHeader().stretchLastSection()
+        #self.horizontalHeader().setStretchLastSection(True)
 
         self.verticalHeader().setSectionsClickable(True)
         self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
         self.verticalHeader().setSectionsMovable(True)
         self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.verticalHeader().customContextMenuRequested.connect(self.showRowMenu)
-        self.verticalHeader().stretchLastSection()
+        #self.verticalHeader().setStretchLastSection(True)
 
         self.doubleClicked.connect(self.showFeatures)
 
@@ -844,6 +844,12 @@ class InventoryView(QTableView):
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
+
+    def checkSize(self):
+        if self.model().columnCount() == 0:
+            self.hide()
+        else:
+            self.show()
 
     def showFeatures(self, index):
         model_name = self.model().__class__.__name__

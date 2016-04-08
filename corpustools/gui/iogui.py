@@ -219,7 +219,10 @@ class CorpusLoadDialog(PCTDialog):
     def forceUpdate(self):
         result = self.loadCorpus()
         if result:
-            self.corpus = modernize.force_update(self.corpus)
+            if hasattr(self.corpus, 'lexicon'):
+                self.corpus.lexicon = modernize.force_update(self.corpus.lexicon)
+            else:
+                self.corpus = modernize.force_update(self.corpus)
             QDialog.accept(self)
 
     def loadCorpus(self):

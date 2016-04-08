@@ -24,6 +24,8 @@ class InventoryManager(QDialog):
         self.consView = InventoryView(self.consModel)
         self.consView.resizeRowsToContents()
         self.consView.resizeColumnsToContents()
+        # self.consView.horizontalHeader().setStretchLastSection(True)
+        # self.consView.verticalHeader().setStretchLastSection(True)
         consBox.addWidget(self.consView)
         inventoryLayout.addLayout(consBox)
 
@@ -36,9 +38,9 @@ class InventoryManager(QDialog):
         vowelBox.addWidget(self.vowelView)
         self.vowelView.resizeRowsToContents()
         self.vowelView.resizeColumnsToContents()
+        # self.vowelView.horizontalHeader().setStretchLastSection(True)
+        # self.vowelView.verticalHeader().setStretchLastSection(True)
         inventoryLayout.addLayout(vowelBox)
-
-        layout.addLayout(inventoryLayout)
 
         uncBox = QVBoxLayout()
         unc_title = QLabel('Uncategorized Segments')
@@ -51,6 +53,8 @@ class InventoryManager(QDialog):
         uncBox.addWidget(self.uncView)
         #layout.addLayout(uncBox)
         inventoryLayout.addLayout(uncBox)
+
+        layout.addLayout(inventoryLayout)
 
         editCategoriesLayout = QVBoxLayout()
 

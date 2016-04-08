@@ -403,14 +403,12 @@ class EditFeatureMatrixDialog(QDialog):
 
         changeFrame = QGroupBox('Change feature systems')
         box = QFormLayout()
-        default = None
-        if self.specifier is not None:
-            default = self.specifier.name
         #self.changeWidget = FeatureSystemSelect(self.settings,default=default)
         self.changeWidget = RestrictedFeatureSystemSelect(self.settings, self.specifier)
-        pos = self.changeWidget.systems.findText(self.specifier.name)
-        self.changeWidget.systems.setCurrentIndex(pos)
-        self.changeWidget.systems.currentIndexChanged.connect(self.changeRestrictedFeatureSystem)
+        if self.specifier is not None:
+            pos = self.changeWidget.systems.findText(self.specifier.name)
+            self.changeWidget.systems.setCurrentIndex(pos)
+            self.changeWidget.systems.currentIndexChanged.connect(self.changeRestrictedFeatureSystem)
         #self.changeWidget.transSystem.activated.connect(self.changeFeatureSystem)
         #self.changeWidget.featureSystem.activated.connect(self.changeFeatureSystem)
 
