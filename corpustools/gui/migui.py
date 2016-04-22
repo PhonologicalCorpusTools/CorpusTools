@@ -12,7 +12,6 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
 
 class MIWorker(FunctionWorker):
     def run(self):
-        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = []
         context = kwargs.pop('context')
