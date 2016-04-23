@@ -1,13 +1,12 @@
 
 from urllib.request import urlretrieve
-
 import pickle
 
 def download_binary(name, path, call_back = None):
     """
     Download a binary file of example corpora and feature matrices.
 
-    Names of available corpora: 'example' and 'iphod'
+    Names of available corpora: 'example', 'iphod', 'lemurian'
 
     Names of available feature matrices: 'ipa2spe', 'ipa2hayes',
     'celex2spe', 'celex2hayes', 'arpabet2spe', 'arpabet2hayes',
@@ -119,4 +118,4 @@ def save_binary(obj, path):
 
     """
     with open(path,'wb') as f:
-        pickle.dump(obj,f)
+        pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)

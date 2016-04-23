@@ -9,6 +9,7 @@ from corpustools.corpus.io.binary import save_binary, load_binary
 from .helper import parse_transcription, AnnotationType
 
 from corpustools.exceptions import DelimiterError, PCTError
+import corpustools.gui.modernize as modernize
 
 import time
 
@@ -127,6 +128,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
     corpus = Corpus(corpus_name)
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
+        feature_matrix = modernize.modernize_specifier(feature_matrix)
         corpus.set_feature_matrix(feature_matrix)
 
     if annotation_types is None:
@@ -163,18 +165,21 @@ def load_corpus_csv(corpus_name, path, delimiter,
                     d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
             if word.transcription:
-                #transcriptions can have phonetic symbol delimiters which is a period
+                #transcriptions can have phonetic symbol delimiters
                 if not word.spelling:
                     word.spelling = ''.join(map(str,word.transcription))
 
             corpus.add_word(word)
+
+    if corpus.specifier is not None:
+        corpus.inventory.update_features(corpus.specifier)
+
     if corpus.has_transcription and not trans_check:
         e = DelimiterError(('Could not parse transcriptions with that delimiter. '
                             '\n\Check that the transcription delimiter you typed '
                             'in matches the one used in the file.'))
         raise(e)
 
-    transcription_errors = corpus.check_coverage()
     return corpus
 
 def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back = None):

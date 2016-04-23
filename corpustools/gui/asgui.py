@@ -1,9 +1,9 @@
-
 import os
 from collections import OrderedDict
 
 from corpustools.acousticsim.io import load_path_mapping
-from corpustools.exceptions import PCTError, PCTPythonError
+from corpustools.exceptions import PCTPythonError
+
 try:
     real_acousticsim = True
     from acousticsim.main import(acoustic_similarity_mapping,
@@ -196,7 +196,7 @@ class ASDialog(FunctionDialog):
             optionLayout.addWidget(QLabel('Multiprocessing can be enabled in Preferences.'))
         else:
             optionLayout.addWidget(QLabel('The acoustic similarity module loaded\ndoes not support multiprocessing.'))
-            optionLayout.addWidget(QLabel('Install python-acoustic-similarity\nto access multiprocessing and additional features.'))
+            optionLayout.addWidget(QLabel('Install python-acoustic-similarity\nto access multiprocessing and additional _features.'))
 
         optionFrame = QFrame()
 

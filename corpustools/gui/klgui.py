@@ -1,18 +1,11 @@
-
-
-from math import log
-from collections import defaultdict, OrderedDict
-import os
-from codecs import open
-
+from collections import OrderedDict
+import time
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.kl.kl import KullbackLeibler
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,
@@ -85,16 +78,17 @@ class KLDialog(FunctionDialog):
 
     name = 'Kullback-Leibler'
 
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, KLWorker())
 
         self.corpus = corpus
+        self.inventory =  inventory
         self.showToolTips = showToolTips
 
         klframe = QFrame()
         kllayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(corpus.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(self.inventory)
         kllayout.addWidget(self.segPairWidget)
         optionLayout = QFormLayout()
 
@@ -135,6 +129,13 @@ class KLDialog(FunctionDialog):
         kllayout.addLayout(optionLayout)
         klframe.setLayout(kllayout)
         self.layout().insertWidget(0, klframe)
+
+        if self.showToolTips:
+            self.contextRadioWidget.setToolTip(("<FONT COLOR=black>"
+                                    'This setting selects the environment to consider when calculating KL '
+                                    'divergence. Note that the \"both\" option considers both sides simultaneously; '
+                                    'it is not a sum of the left and right side scores.'
+                                    "</FONT>"))
 
     def generateKwargs(self):
         kwargs = {}

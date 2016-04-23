@@ -2,24 +2,31 @@ import os
 import copy
 from collections import OrderedDict
 import codecs
-import time
 
-from .imports import *
+<<<<<<< HEAD
 from corpustools.exceptions import PCTError, PCTPythonError
 
 from corpustools.corpus.io import (load_binary, download_binary,
                     load_feature_matrix_csv, save_binary, DelimiterError,
+=======
+from .imports import *
+from corpustools.corpus.io import (load_binary, load_feature_matrix_csv, save_binary, DelimiterError,
+>>>>>>> refs/remotes/origin/InventoryTableView
                     export_feature_matrix_csv)
 
 from .views import SubTreeView
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
+<<<<<<< HEAD
 
 from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
-                    TableWidget, RetranscribeWidget, FeatureEdit, FeatureCompleter)
+                    InventoryBox, CreateClassWidget, FeatureEdit, FeatureCompleter)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
+=======
+from .widgets import FileWidget, RadioSelectWidget,SaveFileWidget, CreateClassWidget, TableWidget
+from .windows import DownloadWorker
+>>>>>>> refs/remotes/origin/InventoryTableView
 from .helpgui import HelpDialog
-import corpustools.gui.modernize as modernize
 
 class LoadFeatureSystemWorker(FunctionWorker):
     def run(self):
@@ -42,7 +49,7 @@ class LoadFeatureSystemWorker(FunctionWorker):
 
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
-    systems = [x.split('.')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
+    systems = [x.split('.')[0] for x in os.listdir(system_dir)]
     return systems
 
 def get_feature_system_styles(storage_directory):
@@ -209,32 +216,6 @@ class ExportFeatureSystemDialog(QDialog):
 
         QDialog.accept(self)
 
-class RestrictedFeatureSystemSelect(QGroupBox):
-
-    def __init__(self, settings, specifier, parent=None):
-        QGroupBox.__init__(self, 'Transcription and feature file', parent)
-        self.settings = settings
-        layout = QFormLayout()
-
-        self.systems = QComboBox()
-        self.systems.addItems(get_systems_list(settings['storage']))
-        self.systems.addItem('None')
-        if specifier is not None:
-            self.systems.setCurrentText(specifier.name)
-
-        layout.addWidget(self.systems)
-
-        self.setLayout(layout)
-
-    def path(self):
-        name = self.systems.currentText()
-        if name == 'None':
-            return None
-        return system_name_to_path(self.settings['storage'], name)
-
-    def value(self):
-        return self.systems.currentText()
-
 class AddFeatureDialog(QDialog):
     def __init__(self, parent, specifier):
         QDialog.__init__(self, parent)
@@ -385,14 +366,12 @@ class DownloadFeatureMatrixDialog(QDialog):
 class EditFeatureMatrixDialog(QDialog):
     def __init__(self, parent, corpus, settings):
         QDialog.__init__(self, parent)
+
         self.corpus = corpus
         self.settings = settings
-        self.specifier = self.corpus.specifier
-        self.transcription_system = self.specifier.trans_name if self.specifier is not None else 'None'
-        self.feature_system = self.specifier.feature_name if self.specifier is not None else 'None'
-        self.feature_system_changed = False
-        self.transcription_changed = False
-        self.segmap = dict()
+
+        self.specifier = copy.deepcopy(self.corpus.specifier)
+
         layout = QVBoxLayout()
 
         self.table = TableWidget()
@@ -403,15 +382,11 @@ class EditFeatureMatrixDialog(QDialog):
 
         changeFrame = QGroupBox('Change feature systems')
         box = QFormLayout()
-        #self.changeWidget = FeatureSystemSelect(self.settings,default=default)
-        self.changeWidget = RestrictedFeatureSystemSelect(self.settings, self.specifier)
+        default = None
         if self.specifier is not None:
-            pos = self.changeWidget.systems.findText(self.specifier.name)
-            self.changeWidget.systems.setCurrentIndex(pos)
-            self.changeWidget.systems.currentIndexChanged.connect(self.changeRestrictedFeatureSystem)
-        #self.changeWidget.transSystem.activated.connect(self.changeFeatureSystem)
-        #self.changeWidget.featureSystem.activated.connect(self.changeFeatureSystem)
-
+            default = self.specifier.name
+        self.changeWidget = FeatureSystemSelect(self.settings,default=default)
+        self.changeWidget.changed.connect(self.changeFeatureSystem)
         box.addRow(self.changeWidget)
 
         changeFrame.setLayout(box)
@@ -465,6 +440,11 @@ class EditFeatureMatrixDialog(QDialog):
 
         box.addRow('Display mode:',self.displayWidget)
 
+        self.editCategoriesButton = QPushButton('Edit inventory categories')
+        self.editCategoriesButton.clicked.connect(self.editCategories)
+
+        box.addRow(self.editCategoriesButton)
+
         viewFrame.setLayout(box)
 
         optionLayout.addWidget(viewFrame)
@@ -482,8 +462,7 @@ class EditFeatureMatrixDialog(QDialog):
         acLayout.addWidget(self.acceptButton)
         acLayout.addWidget(self.cancelButton)
         acLayout.addWidget(self.helpButton)
-        #self.acceptButton.clicked.connect(self.accept)
-        self.acceptButton.clicked.connect(self.acceptRestricted)
+        self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
         self.helpButton.clicked.connect(self.help)
 
@@ -498,55 +477,7 @@ class EditFeatureMatrixDialog(QDialog):
 
         self.changeDisplay()
 
-    def acceptRestricted(self):
-        if self.specifier is None:
-            QDialog.accept(self)
-            return
-
-        missing = []
-        feature_inventory = self.specifier.segments
-        for seg in self.corpus.inventory:
-            if seg not in feature_inventory:
-                if seg == '\'':
-                    missing.append('\' (apostrophe)')
-                else:
-                    missing.append(str(seg))
-        if missing:
-            missing = ','.join(missing)
-            alert = QMessageBox()
-            alert.setWindowTitle('Warning')
-            alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
-                    'selected feature system:\n{}\n\n'
-                'You should select a different feature system, or else use the "Add Segment" button to add these '
-                'symbols to the current feature system'.format(missing)))
-            alert.exec_()
-            return
-        else:
-            self.transcription_changed = False
-            self.feature_system_changed = True
-            path = system_name_to_path(self.settings['storage'], self.specifier.name)
-            save_binary(self.specifier, path)
-            QDialog.accept(self)
-
-
     def accept(self):
-        info = self.changeWidget.value()
-        print(info)
-        if not info == self.specifier.name:
-            self.feature_system_changed = True
-            alert = QMessageBox()
-            alert.setWindowTitle('Warning!')
-            alert.setText('Changing your feature system may cause changes to the way your Inventory chart is organized.')
-            alert.setInformativeText('Do you want to continue?')
-            alert.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            alert.setDefaultButton(QMessageBox.No)
-            result = alert.exec_()
-            if result == QMessageBox.No:
-                self.resetFeatureWidget()
-                return #Cancel changes
-        else:
-            self.feature_system_changed = False
-
         if self.specifier is not None:
             path = system_name_to_path(self.settings['storage'],self.specifier.name)
             save_binary(self.specifier, path)
@@ -556,6 +487,25 @@ class EditFeatureMatrixDialog(QDialog):
         self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
                                     section = 'applying-editing-feature-systems')
         self.helpDialog.exec_()
+
+    def editCategories(self):
+        if self.specifier is None:
+            return
+        dialog = EditCategoriesDialog(self, self.specifier)
+        if dialog.exec_():
+            self.specifier.vowel_feature = dialog.vowel()
+            self.specifier.voice_feature = dialog.voiced()
+            self.specifier.diph_feature = dialog.diphthong()
+            self.specifier.rounded_feature = dialog.rounded()
+            p, m, h, b = dialog.value()
+            for k,v in p.items():
+                self.specifier.places[k] = v
+            for k,v in m.items():
+                self.specifier.manners[k] = v
+            for k,v in h.items():
+                self.specifier.height[k] = v
+            for k,v in b.items():
+                self.specifier.backness[k] = v
 
 
     def changeDisplay(self):
@@ -573,161 +523,16 @@ class EditFeatureMatrixDialog(QDialog):
             self.table.resizeColumnsToContents()
             self.layout().insertWidget(0,self.table)
 
-    def changeRestrictedFeatureSystem(self):
-        path = self.changeWidget.path()
-        if path is None:
-            self.specifier = None
-        else:
-            self.specifier = load_binary(path)
-            self.specifier = modernize.modernize_specifier(self.specifier)
-        self.changeDisplay()
-
     def changeFeatureSystem(self):
-
         path = self.changeWidget.path()
-
         if path is None:
             self.specifier = None
-            return
-
-        #Special case for when user has loaded corpus without a feature file
-        if self.specifier is None:
-            if os.path.exists(path):
-                new_specifier = load_binary(path)
-                self.specifier = new_specifier
-                self.specifier = modernize.modernize_specifier(self.specifier)
-                self.changeDisplay()
-                return
-            else:
-                QMessageBox.critical(self, 'File not found', 'PCT could not find a feature file with the '
-                'transcription and feature systems that you selected. Please select a different combination.\n\n'
-                'You might be able to download the file you want by going to File > Manage feature systems...')
-                self.resetFeatureWidget()
-                return
-
-        unmatched = list()
-        if os.path.exists(path):
-            new_specifier = load_binary(path)
-            if new_specifier.name == self.specifier.name:
-                return
-            # even if a file exists, it is still possible that some of the segments in the current corpus have feature
-            # specifications that do not match anything in the new feature system, so we have to check on that
-            # for instance, if you're trying to take something with implosives in ipa2spe and turn it into arpbabet
-            # which has no way of representing implosives
-            unmatched = self.mapExistingSystems(new_specifier)
-            if not unmatched:
-                self.specifier = new_specifier
-                self.specifier = modernize.modernize_specifier(self.specifier)
-                self.changeDisplay()
-
-
-        if not os.path.exists(path) or unmatched:
-            #there is no existing feature file with the transcription/features combination that the user requested
-            #so we will offer the choice of creating that new system now
-            #or else the previous step of looking up a transcription failed for some segments
-            filename = os.path.split(path)[-1]
-            trans_name, feature_name = filename.split('2')
-            feature_name = feature_name.split('.')[0]
-            change = self.createNewSystem(trans_name, feature_name, filename)  # self.specifier is set somewhere in here
-            if change:
-                self.changeDisplay()
-            else:
-                self.resetFeatureWidget()
-
-        return
-
-    def resetFeatureWidget(self):
-        pos = self.changeWidget.transSystem.findText(self.specifier.trans_name)
-        self.changeWidget.transSystem.setCurrentIndex(pos)
-        pos = self.changeWidget.featureSystem.findText(self.specifier.feature_name)
-        self.changeWidget.featureSystem.setCurrentIndex(pos)
-
-    def mapExistingSystems(self, new_specifier):
-        unmatched = list()
-
-        #IF THE TRANSCRIPTIONS MATCH, THEN MAP BASED ON SYMBOLS
-        if new_specifier.trans_name == self.specifier.trans_name:
-            unmatched = [seg for seg in self.specifier.matrix.keys() if not seg in new_specifier.matrix.keys()]
-
-        #IF THE FEATURES MATCH, THEN MAP BASED ON FEATURES
-        elif new_specifier.feature_name == self.specifier.feature_name:
-            for seg,features in self.specifier.matrix.items():
-                for seg2,features2 in new_specifier.matrix.items():
-                    if features == features2:
-                        self.segmap[seg] = seg2
-                        break
-                else:
-                    unmatched.append(seg)
-
-        unmatched = [seg for seg in unmatched if seg in self.corpus.inventory]
-
-        return unmatched
-
-
-    def createNewSystem(self, trans_name, feature_name, file_not_found_name):
-        #this is called if the user has selected a transcription and feature system for which there is no built-in
-        #feature file. it will create a new one called trans_name2feature_name.feature, based on the function arguments
-
-        alert = QMessageBox()
-        alert.setWindowTitle('Transcription/Feature mismatch')
-        alert.setText(('PCT doesn\'t know how to match up the transcription symbols of your current corpus with '
-                       'with appropriate symbols or features in {}.\n\n'
-                       'It may be possible to download the feature file you need. Go to File > Manage feature '
-                       'systems... and click on "Download". You can also import your own feature files from that menu screen. '
-                       '\n\nAlternatively, you can tell PCT which symbols in the current {} system match the new {} '
-                       'system, and a new feature file will be generated right now.'
-                       ''.format(trans_name, self.specifier.name.split('2')[0], trans_name)))
-        reject_button = alert.addButton('Go back to the previous window', QMessageBox.RejectRole)
-        alert.addButton('Match transcription symbols now', QMessageBox.AcceptRole)
-        alert.exec_()
-        if alert.clickedButton() == reject_button:
-            return False
-
-        #User wants to map to new symbols
-        systems = get_systems_list(self.settings['storage'])
-        for system in systems:
-            if trans_name in system.split('2')[0]:
-                trans_system = load_binary(system_name_to_path(self.settings['storage'], system))
-                new_symbols = list(trans_system.matrix.keys())
-                new_symbols.sort()
-                break
-
-        dialog = RetranscribeWidget(self.corpus.inventory.segs, new_symbols,
-                                    self.specifier.name.split('2')[0], trans_name)
-        results = dialog.exec_()
-        if results:
-            self.segmap = dialog.segmap
-            self.defaultFeatureFill(trans_name, feature_name, new_symbols)
         else:
-            self.segmap = dict()
-
-        return True
-
-    def defaultFeatureFill(self, trans_name, feature_name, new_symbols):
-
-        default = 'n'
-        featureline = self.specifier.features
-        for name in ['symbol', 'segment']:
             try:
-                featureline.remove(name)
-            except ValueError:
-                pass
-        defaultline = '\t'.join([default for feature in featureline])
-        featureline = '\t'.join(featureline)
-        new_system_name = '{}2{}'.format(trans_name, feature_name)
-        new_path = os.path.join(self.settings['storage'], 'FEATURE', new_system_name + '.txt')
-        inverse_segmap = {v: k for k, v in self.segmap.items()}
-
-        with open(new_path, encoding='utf-8', mode='w') as f:
-            print('symbol\t{}'.format(featureline), file=f)
-            for seg in new_symbols:
-                if seg in inverse_segmap:
-                    line = '\t'.join([seg] + self.specifier.seg_to_feat_line(inverse_segmap[seg])[1:])
-                    print(line, file=f)
-                else:
-                    print('{}\t{}'.format(seg, defaultline), file=f)
-        matrix = load_feature_matrix_csv(new_system_name, new_path, '\t')
-        self.specifier = matrix
+                self.specifier = load_binary(path)
+            except OSError:
+                return
+        self.changeDisplay()
 
     def addSegment(self):
         if self.specifier is None:
@@ -784,36 +589,19 @@ class EditFeatureMatrixDialog(QDialog):
             reply = QMessageBox.warning(self,
                     "Missing feature system", "No feature system has been specified.")
         missing = []
-        neutralized = []
         for seg in corpus_inventory:
             if seg not in feature_inventory:
-                if str(seg) == '\'':
-                    missing.append('\' (apostrophe)')
-                else:
-                    missing.append(str(seg))
-            elif all([f=='n' for f in corpus_inventory[seg.symbol].features.values()]):
-                if str(seg) == '\'':
-                    neutralized.append('\' (apostrophe)')
-                else:
-                    neutralized.append(str(seg))
-
-        message = ['Some segments in your corpus are not fully specified.']
+                missing.append(str(seg))
         if missing:
-            message.append('\nThe following segments have not been specified for at least one feature:')
-            message.append(','.join(missing))
-        if neutralized:
-            message.append('\nThe following segments have a value of "n" for all features:')
-            message.append(','.join(neutralized))
-
-        if missing or neutralized:
-            reply = QMessageBox()
-            reply.setWindowTitle('Missing segment information')
-            reply.setText('\n'.join(message))
-        else:
-            reply = QMessageBox.information(self,
-                    "Complete", 'All segments are specified for all features!')
-        reply.exec_()
-
+            reply = QMessageBox.warning(self,
+                    "Missing segments", ('The following segments are not specified'
+                                        ' for features: '+', '.join(missing) + '\nIf you'
+                                        ' are shown a \'blank\' segment, please ensure'
+                                        ' that your segment delimiters are placed'
+                                        ' correctly and are never adjacent to each other.'))
+            return
+        reply = QMessageBox.information(self,
+                    "Missing segments", 'All segments are specified for features!')
 
 class CategoryWidget(QWidget):
     def __init__(self, category, features, specifier, parent = None):
@@ -851,6 +639,7 @@ class CategoryWidget(QWidget):
             self.previewWidget.setToolTip('No included segments')
         else:
             segments = self.specifier.features_to_segments(features)
+
             self.previewWidget.setToolTip(', '.join(segments))
 
     def features(self):
@@ -1010,7 +799,6 @@ class EditSegmentDialog(QDialog):
             lay = QVBoxLayout()
 
             featSel = QComboBox()
-
             featSel.addItem(specifier.default_value)
             for i,v in enumerate(specifier.possible_values):
                 if v == specifier.default_value:
@@ -1075,12 +863,44 @@ class EditSegmentDialog(QDialog):
         self.featspec = {f:v.currentText() for f,v in self.featureSelects.items()}
         QDialog.accept(self)
 
+class FeatureClassManager(CreateClassWidget):
+    def __init__(self, parent, settings, corpusModel):
+        self.corpus = corpusModel.corpus
+        super().__init__(parent, self.corpus, class_type='class')
+
+    def accept(self):
+        className = self.nameEdit.text()
+        className = className.strip()
+        className = className.replace(' ', '')
+        if className == '':
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please enter a name for the class.")
+            return
+        elif className in self.corpus.inventory.classes.keys():
+
+            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate class names",
+                                 "'{}' is already the name of a class. Please select a new name".format(className))
+                                 #QMessageBox.NoButton, self)
+            msgBox.addButton("OK", QMessageBox.AcceptRole)
+        createType = self.createType.currentText()
+        createList = self.createWidget.value()
+        if not createList:
+            reply = QMessageBox.critical(self,
+                                         "Missing information", "Please specify at least one {}.".format(createType[:-1].lower()))
+            return
+        if createType == 'Features':
+            createList = createList[1:-1]
+            self.segList = self.corpus.features_to_segments(createList)
+        else:
+            self.segList = createList
+        QDialog.accept(self)
+
+
 class FeatureMatrixManager(QDialog):
-    def __init__(self, parent, settings, current_system):
+    def __init__(self, parent, settings):
         QDialog.__init__(self, parent)
         layout = QVBoxLayout()
         self.settings = settings
-        self.current_system = current_system
         formLayout = QHBoxLayout()
         listFrame = QGroupBox('Available feature systems')
         listLayout = QGridLayout()
@@ -1152,15 +972,8 @@ class FeatureMatrixManager(QDialog):
 
     def removeSystem(self):
         featureSystem = self.systemsList.currentItem().text()
-        if self.current_system == featureSystem:
-            alert = QMessageBox(QMessageBox.Warning, 'Remove system', 'This feature system is being used by your open '
-            'corpus, and you cannot remove it. Please close your corpus first.')
-            alert.addButton('OK', QMessageBox.AcceptRole)
-            alert.exec_()
-            return
         msgBox = QMessageBox(QMessageBox.Warning, "Remove system",
-                             "This will permanently remove '{}'.  Are you sure?\n\n".format(featureSystem),
-                             QMessageBox.NoButton, self)
+                "This will permanently remove '{}'.  Are you sure?".format(featureSystem), QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -1185,7 +998,7 @@ class SystemFromCsvDialog(PCTDialog):
         formLayout = QFormLayout()
 
 
-        self.pathWidget = FileWidget('Open feature system csv','Text files (*.txt *.csv)')
+        self.pathWidget = FileWidget('Open corpus csv','Text files (*.txt *.csv)')
 
         formLayout.addRow(QLabel('Path to feature system'),self.pathWidget)
 

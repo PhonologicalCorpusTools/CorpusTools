@@ -1,16 +1,16 @@
 from collections import OrderedDict
 
 from .imports import *
+<<<<<<< HEAD
 from .widgets import (EnvironmentSelectWidget,
                     SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+=======
+from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
+>>>>>>> refs/remotes/origin/InventoryTableView
                     ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
-import itertools
-
 from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs)
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,
@@ -30,7 +30,7 @@ class PDWorker(FunctionWorker):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'], frequency_threshold = kwargs['frequency_cutoff']) as c:
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
             try:
                 envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
@@ -75,7 +75,6 @@ class PDDialog(FunctionDialog):
                 'Frequency of first segment',
                 'Frequency of second segment',
                 'Frequency of environment',
-                'Minimum word frequency',
                 'Entropy']
 
     ABOUT = ['This function calculates'
@@ -93,16 +92,15 @@ class PDDialog(FunctionDialog):
                 ' The Ohio State University.')]
 
     name = 'predictability of distribution'
-    def __init__(self, parent, settings, corpus, inventory, showToolTips):
+    def __init__(self, parent, settings, corpus, showToolTips):
         FunctionDialog.__init__(self, parent, settings, PDWorker())
         self.corpus = corpus
-        self.inventory = inventory
         self.showToolTips = showToolTips
 
         pdFrame = QFrame()
         pdlayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(self.inventory)
+        self.segPairWidget = SegmentPairSelectWidget(corpus)
 
         pdlayout.addWidget(self.segPairWidget)
 
@@ -110,7 +108,7 @@ class PDDialog(FunctionDialog):
         #addSegClassButton.clicked.connect(self.addSegClass)
         #pdlayout.addWidget(addSegClassButton)
 
-        self.envWidget = EnvironmentSelectWidget(inventory, middle = False)
+        self.envWidget = EnvironmentSelectWidget(corpus.inventory, middle = False)
 
         self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
@@ -144,18 +142,7 @@ class PDDialog(FunctionDialog):
         checkFrame.setLayout(checkLayout)
 
         optionLayout.addWidget(checkFrame)
-        
-        ##----------------------
-        minFreqFrame = QGroupBox('Minimum frequency')
-        box = QFormLayout()
-        self.minFreqEdit = QLineEdit()
-        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
-        minFreqFrame.setLayout(box)
-
-        optionLayout.addWidget(minFreqFrame)
-        ##----------------------
-        
         optionFrame = QGroupBox('Options')
 
         optionFrame.setLayout(optionLayout)
@@ -203,7 +190,7 @@ class PDDialog(FunctionDialog):
                                     ' environments in which to calculate predictability'
                                     ' of distribution. For each environment, you can specify'
                                     ' either the left-hand side or the right-hand side, or'
-                                    ' both. Each of these can be specified using either _features or segments.'
+                                    ' both. Each of these can be specified using either features or segments.'
                                     ' Not specifying any environments will calculate the predictability of'
                                     ' distribution across all environments based on frequency alone.'
             "</FONT>"))
@@ -239,54 +226,41 @@ class PDDialog(FunctionDialog):
         envs = self.envWidget.value()
         if len(envs) > 0:
             kwargs['envs'] = envs
-        ##------------------
-        try:
-            frequency_cutoff = float(self.minFreqEdit.text())
-        except ValueError:
-            frequency_cutoff = 0.0
-        ##-------------------
+
         kwargs['corpus'] = self.corpus
         kwargs['context'] = self.variantsWidget.value()
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
         kwargs['type_token'] = self.typeTokenWidget.value()
-        kwargs['frequency_cutoff'] = frequency_cutoff
         return kwargs
 
     def setResults(self,results):
         self.results = []
         seg_pairs = self.segPairWidget.value()
-        try:
-            frequency_cutoff = float(self.minFreqEdit.text())
-        except ValueError:
-            frequency_cutoff = 0.0
         for i, r in enumerate(results):
             if isinstance(r,dict):
                 for env,v in r.items():
-                    self.results.append({'Corpus': self.corpus.name,
-                                        'First segment': seg_pairs[i][0],
-                                        'Second segment': seg_pairs[i][1],
-                                        'Environment': env,
-                                        'Transcription tier': self.tierWidget.displayValue(),
-                                        'Frequency type': self.typeTokenWidget.value().title(),
-                                        'Pronunciation variants': self.variantsWidget.value().title(),
-                                        'Frequency of first segment': v[2], # freq of seg1
-                                        'Frequency of second segment': v[3], #freq of seg2
-                                        'Frequency of environment': v[1], #total_tokens,
-                                        'Minimum word frequency': frequency_cutoff,
-                                        'Entropy': v[0]} #H
+                    self.results.append([self.corpus.name,
+                                        seg_pairs[i][0],seg_pairs[i][1],
+                                        env,
+                                        self.tierWidget.displayValue(),
+                                        self.typeTokenWidget.value().title(),
+                                        self.variantsWidget.value().title(),
+                                        v[2], # freq of seg1
+                                        v[3], #freq of seg2
+                                        v[1], #total_tokens
+                                        v[0]] #H
                                         )
             else:
-                self.results.append({'Corpus': self.corpus.name,
-                                        'First segment': seg_pairs[i][0],
-                                        'Second segment': seg_pairs[i][1],
-                                        'Environment': 'FREQ-ONLY',
-                                        'Transcription tier': self.tierWidget.displayValue(),
-                                        'Frequency type': self.typeTokenWidget.value().title(),
-                                        'Pronunciation variants': self.variantsWidget.value().title(),
-                                        'Frequency of first segment': r[2], # freq of seg1
-                                        'Frequency of second segment': r[3], #freq of seg2
-                                        'Frequency of environment': r[1], #total_tokens,
-                                        'Minimum word frequency': frequency_cutoff,
-                                        'Entropy': r[0]} #H
-                                        )
+                self.results.append([self.corpus.name,
+                                        seg_pairs[i][0],seg_pairs[i][1],
+                                        'FREQ-ONLY',
+                                        self.tierWidget.displayValue(),
+                                        self.typeTokenWidget.value().title(),
+                                        self.variantsWidget.value().title(),
+                                        r[2], # freq of seg1
+                                        r[3], #freq of seg2
+                                        r[1], #total_tokens
+                                        r[0]]) #H
+
+

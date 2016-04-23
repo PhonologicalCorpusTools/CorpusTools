@@ -29,16 +29,20 @@ from corpustools.corpus.io.helper import (get_corpora_list,
                                         corpus_name_to_path,
                                         inspect_directory,
                                         log_annotation_types)
-import corpustools.gui.modernize as modernize
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
+<<<<<<< HEAD
 
 from .widgets import (FileWidget, RadioSelectWidget,
                     SaveFileWidget, DirectoryWidget, PunctuationWidget,
                     DigraphWidget, InventoryBox, AttributeFilterWidget,
                     TranscriptionWidget, TierWidget,
                     AttributeWidget, AnnotationTypeWidget,
+=======
+from .widgets import (RadioSelectWidget, SaveFileWidget, AttributeFilterWidget,
+                      AnnotationTypeWidget,
+>>>>>>> refs/remotes/origin/InventoryTableView
                     CorpusSelect)
-from .featuregui import FeatureSystemSelect, RestrictedFeatureSystemSelect
+from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
 
 
@@ -111,24 +115,12 @@ class LoadCorpusWorker(FunctionWorker):
             time.sleep(0.1)
             self.finishedCancelling.emit()
             return
-
-        #If a Discourse object was just loaded, it needs to have its features specified
-        #A Corpus has its features specified already at this point
-        if hasattr(corpus, 'lexicon'):
-            for seg in corpus.lexicon.inventory:
-                try:
-                    corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
-                except KeyError:
-                    corpus.lexicon.specifier[seg] = {feature:'n' for feature in corpus.lexicon.specifier.features}
-                    corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
-
         self.dataReady.emit(corpus)
 
 
 class CorpusLoadDialog(PCTDialog):
-    def __init__(self, parent, corpus, settings):
+    def __init__(self, parent, settings):
         PCTDialog.__init__(self, parent)
-        self.current_corpus = None if corpus is None else corpus.name
         self.corpus = None
         self.settings = settings
         layout = QVBoxLayout()
@@ -172,23 +164,16 @@ class CorpusLoadDialog(PCTDialog):
 
         self.acceptButton = QPushButton('Load selected corpus')
         self.acceptButton.setDefault(True)
-        self.forceUpdateButton = QPushButton('Load corpus with forced update')
-        self.forceUpdateButton.setAutoDefault(False)
         self.cancelButton = QPushButton('Cancel')
         self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.forceUpdateButton)
         acLayout.addWidget(self.cancelButton)
         acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
         self.helpButton.clicked.connect(self.help)
-        self.forceUpdateButton.clicked.connect(self.forceUpdate)
-        self.forceUpdateButton.setToolTip(
-            ('<span>This loads a corpus file, and reformats it to ensure it has all of the '
-             'required attributes for the current version PCT. Try this option if you are having trouble getting a '
-             'corpus to load properly.</span>'))
+
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 
@@ -216,33 +201,19 @@ class CorpusLoadDialog(PCTDialog):
     def setResults(self, results):
         self.corpus = results
 
-    def forceUpdate(self):
-        result = self.loadCorpus()
-        if result:
-            if hasattr(self.corpus, 'lexicon'):
-                self.corpus.lexicon = modernize.force_update(self.corpus.lexicon)
-            else:
-                self.corpus = modernize.force_update(self.corpus)
-            QDialog.accept(self)
-
-    def loadCorpus(self):
-
+    def accept(self):
         selected = [x.text() for x in self.corporaList.selectedItems()]
         if selected:
             self.thread.setParams({
-                'path': corpus_name_to_path(
-                    self.settings['storage'], selected[0])})
+                'path':corpus_name_to_path(
+                            self.settings['storage'], selected[0])})
 
             self.thread.start()
             result = self.progressDialog.exec_()
 
             self.progressDialog.reset()
-        return result
-
-    def accept(self):
-        result = self.loadCorpus()
-        if result:
-            QDialog.accept(self)
+            if result:
+                QDialog.accept(self)
 
     def openLoadWindow(self):
         dialog = LoadCorpusDialog(self, self.settings)
@@ -258,15 +229,6 @@ class CorpusLoadDialog(PCTDialog):
 
     def removeCorpus(self):
         corpus = self.corporaList.currentItem().text()
-        if self.current_corpus == corpus:
-            alert = QMessageBox()
-            alert.setWindowTitle('Warning!')
-            alert.setText('You are trying to delete the corpus that is currently open in PCT. '
-                    'Please close the corpus before deleting. You can do this '
-                    'by opening up another corpus first, or else by closing PCT and re-opening with a blank window.')
-            alert.addButton('OK', QMessageBox.AcceptRole)
-            alert.exec_()
-            return
         msgBox = QMessageBox(QMessageBox.Warning, "Remove corpus",
                 "This will permanently remove '{}'.  Are you sure?".format(corpus), QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
@@ -585,17 +547,18 @@ class LoadCorpusDialog(PCTDialog):
         self.thread.dataReady.connect(self.setResults)
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
+
         self.typeChanged()
 
     def createWidgets(self):
         self.columnDelimiterEdit = QLineEdit()
 
         self.lineNumberEdit = QLineEdit()
-        self.csvFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
-        self.runningFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
-        self.ilgFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
-        self.tgFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
-        self.multFeatureSystem = RestrictedFeatureSystemSelect(self.settings, None)
+        self.csvFeatureSystem = FeatureSystemSelect(self.settings)
+        self.runningFeatureSystem = FeatureSystemSelect(self.settings)
+        self.ilgFeatureSystem = FeatureSystemSelect(self.settings)
+        self.tgFeatureSystem = FeatureSystemSelect(self.settings)
+        self.multFeatureSystem = FeatureSystemSelect(self.settings)
 
         self.csvForceInspectButton = QPushButton('Reinspect')
         self.csvForceInspectButton.clicked.connect(self.forceInspect)
@@ -773,20 +736,13 @@ class LoadCorpusDialog(PCTDialog):
             return
         if not os.path.exists(path):
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The specified path to the corpus file does not exist.")
+                    "Invalid information", "The specified path does not exist.")
             return
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify a name for the corpus.")
             return
-
-        if not os.path.exists(self.csvFeatureSystem.path()):
-            featurename = os.path.split(self.csvFeatureSystem.path())[-1].split('.')[0]
-            reply = QMessageBox.critical(self, 'Missing information',
-                    'No feature file called {} could be found'.format(featurename))
-            return
-
         kwargs = {'corpus_name': name,
                     'path': path,
                     'isDirectory':self.isDirectory,
@@ -818,11 +774,10 @@ class LoadCorpusDialog(PCTDialog):
                     phone_path = base + '.phn'
                 if not os.path.exists(phone_path):
                     reply = QMessageBox.critical(self,
-                            "Invalid information", "The phone file for the specified words file does not exist.")
+                            "Invalid information", "The phone file for the specifie words file does not exist.")
                     return
                 kwargs['word_path'] = kwargs.pop('path')
                 kwargs['phone_path'] = phone_path
-
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
@@ -847,41 +802,8 @@ class LoadCorpusDialog(PCTDialog):
         self.progressDialog.reset()
         if result:
             if self.corpus is not None:
-                try:
-                    #it's a Corpus object
-                    iterable = self.corpus.inventory.values()
-                except AttributeError:
-                    #It's a Discourse object
-                    iterable = self.corpus.lexicon.inventory.values()
-                unmatched = list()
-                for seg in iterable:
-                    if seg.symbol == '#':
-                        continue
-                    if all(f=='n' for f in seg.features.values()):
-                        if seg.symbol == '\'':
-                            unmatched.append('\' (apostrophe)')
-                        else:
-                            unmatched.append(seg.symbol)
-                if not unmatched:
-                    save_binary(self.corpus,
-                                corpus_name_to_path(self.settings['storage'], self.corpus.name))
-                else:
-                    unmatched = ','.join(sorted(unmatched))
-                    alert = QMessageBox()
-                    alert.setWindowTitle('Warning')
-                    alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
-                    'selected feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
-                    'feature. You can change these feature values in PCT by going to Features>View/Change feature '
-                    'system...'.format(unmatched)))
-                    alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
-                    alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
-                    choice = alert.exec_()
-                    if choice == QMessageBox.AcceptRole:
-                        save_binary(self.corpus,
-                                    corpus_name_to_path(self.settings['storage'], self.corpus.name))
-                    else:
-                        return
-
+                save_binary(self.corpus,
+                    corpus_name_to_path(self.settings['storage'],self.corpus.name))
             QDialog.accept(self)
 
     def updateName(self):

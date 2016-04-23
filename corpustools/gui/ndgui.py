@@ -1,27 +1,20 @@
 import os
-
-from .imports import *
-
 from collections import OrderedDict
 
+from .imports import *
 from corpustools.neighdens.neighborhood_density import (neighborhood_density,
                             neighborhood_density_all_words,
                             find_mutation_minpairs_all_words,
                             find_mutation_minpairs)
 from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget,
                         RestrictedContextWidget)
 from .corpusgui import AddWordDialog
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
-                                        MostFrequentVariantContext,
-                                        SeparatedTokensVariantContext,
-                                        WeightedVariantContext)
+                                        MostFrequentVariantContext)
 
 class NDWorker(FunctionWorker):
     def run(self):
@@ -112,10 +105,11 @@ class NDDialog(FunctionDialog):
 
     name = 'neighborhood density'
 
-    def __init__(self, parent, settings, corpusModel, showToolTips):
+    def __init__(self, parent, settings, corpusModel, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, NDWorker())
 
         self.corpusModel = corpusModel
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         if not self.corpusModel.corpus.has_transcription:
@@ -288,7 +282,7 @@ class NDDialog(FunctionDialog):
             "</FONT>"))
 
     def createNonword(self):
-        dialog = AddWordDialog(self, self.corpusModel.corpus)
+        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventory)
         if dialog.exec_():
             self.oneNonword = dialog.word
             self.oneNonwordLabel.setText('{} ({})'.format(str(self.oneNonword),

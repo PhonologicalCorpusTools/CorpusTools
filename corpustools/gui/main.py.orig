@@ -1,10 +1,9 @@
 import os
 import logging
-import corpustools.gui.modernize as modernize
 
 from .imports import *
 
-from .config import Settings, PreferencesDialog
+from .config import Settings
 
 from .views import (TreeWidget, DiscourseView, ResultsWindow,
                     LexiconView,PhonoSearchResults)
@@ -21,14 +20,11 @@ from .corpusgui import (AddTierDialog, AddAbstractTierDialog,
                         AddWordDialog, CorpusSummary)
 
 from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
-                        ExportFeatureSystemDialog)
+                        ExportFeatureSystemDialog, FeatureClassManager)
 
 from .inventorygui import InventoryManager
 
 from .windows import SelfUpdateWorker
-
-
-from corpustools.exceptions import PCTError
 
 from .ssgui import SSDialog
 from .asgui import ASDialog
@@ -147,9 +143,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Phonological CorpusTools")
         self.createActions()
         self.createMenus()
-        self.corpus = None
         self.corpusModel = None
-        self.inventoryModel = None
 
         self.FLWindow = None
         self.PDWindow = None
@@ -216,24 +210,8 @@ class MainWindow(QMainWindow):
                 reply = QMessageBox.critical(self,
                         "Missing transcription", "This corpus has no transcriptions, so the requested action cannot be performed.")
                 return
-            if self.inventoryModel is None:
-                reply = QMessageBox.critical(self,
-                        'Missing information', 'This menu option is not available without a feature system. Please go to '
-                        'Features>View/Change feature system...')
-                return
             else:
                 function(self)
-        return do_check
-
-    def check_for_feature_system(func):
-        def do_check(self):
-            if self.corpusModel.corpus.specifier is None:
-                reply = QMessageBox.critical(self, 'Missing information', 'This corpus has no feature file associated, so '
-                'it is not possible to use this menu option.\nPlease associate a feature system with this corpus by going to '
-                'Features > View/change feature system...')
-                return
-            else:
-                func(self)
         return do_check
 
     def enableSave(self):
@@ -241,7 +219,7 @@ class MainWindow(QMainWindow):
         self.saveCorpusAct.setEnabled(True)
 
     def editWord(self, row, word):
-        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel, word)
+        dialog = AddWordDialog(self, self.corpusModel.corpus, word)
         if dialog.exec_():
             self.corpusModel.replaceWord(row, dialog.word)
             self.enableSave()
@@ -265,12 +243,11 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
-
-        dialog = CorpusLoadDialog(self, self.corpus, self.settings)
+        dialog = CorpusLoadDialog(self, self.settings)
         result = dialog.exec_()
-
         if result:
             self.corpus = dialog.corpus
+            self.inventoryModel = InventoryModel(self.corpus._inventory)
             if hasattr(self.corpus,'lexicon'):
                 c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):
@@ -286,6 +263,8 @@ class MainWindow(QMainWindow):
                     self.discourseTree.hide()
                     self.showDiscoursesAct.setEnabled(False)
                     self.showDiscoursesAct.setChecked(False)
+                #self.discourseTree.selectionModel().select(self.discourseTree.model().createIndex(0,0))
+                #self.discourseTree.resizeColumnToContents(0)
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
                 self.textWidget.selectType.connect(self.corpusTable.highlightType)
                 self.textWidget.show()
@@ -308,84 +287,33 @@ class MainWindow(QMainWindow):
                 self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
-
-            if c.specifier is None:
-                alert = QMessageBox()
-                alert.setWindowTitle('Missing corpus information')
-                alert.setText('Your corpus was loaded without a transcription or feature system. '
-                              'The majority of PCT\'s analysis functions require this information to work correctly. '
-                              'Go to Features > View/Edit feature system... to select one.\n '
-                              'If you do not have any feature file available at all, you can '
-                              'download one by going to File > Manage feature systems...')
-                alert.addButton('OK', QMessageBox.AcceptRole)
-                alert.exec_()
-            else:
-
-                try:
-                    if self.corpusModel.corpus.inventory.isNew:
-                        #just loaded from a text file
-                        print(1)
-                        self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
-                        self.inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
-
-                    else:
-                        # just loaded a .corpus file, not from text
-                        print(2)
-                        self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-
-                    self.saveCorpus()
-
-                except AttributeError:
-                    print(3)
-                    # Loading a .corpus from a previous version of PCT - update some attributes
-                    self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
-                                                                                    self.corpusModel.corpus.inventory)
-                    self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
-                                                self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
-                    self.corpusModel.corpus.inventory.isNew = False
-                    self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-                    self.inventoryModel.modelReset()
-                    self.saveCorpus()
-
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)
             self.exportCorpusAct.setEnabled(True)
             self.exportFeatureSystemAct.setEnabled(True)
+        #dialog.deleteLater()
 
     def loadFeatureMatrices(self):
-        try:
-            current_system = self.corpusModel.corpus.specifier.name
-        except AttributeError:
-            current_system = None
-        dialog = FeatureMatrixManager(self, self.settings, current_system)
+        dialog = FeatureMatrixManager(self, self.settings)
         result = dialog.exec_()
         if result:
             pass
 
     @check_for_empty_corpus
-    @check_for_feature_system
+    @check_for_transcription
     def manageInventoryChart(self):
         copy_model = InventoryModel(self.inventoryModel, copy_mode=True)
-        if not copy_model._data:
-            alert = QMessageBox()
-            alert.setWindowTitle('Warning!')
-            alert.setText('There was a problem loading your inventory. You can normally fix this problem by going '
-            'to Features > View/Edit feature system... and then simply clicking "Save changes" (you do not actually '
-            'need to make any changes). Sorry about that!')
-            alert.addButton('OK', QMessageBox.AcceptRole)
-            alert.exec_()
-            return
         dialog = InventoryManager(copy_model)
         result = dialog.exec_()
         if result:
             self.inventoryModel.updateFromCopy(dialog.inventory)
-            self.corpusModel.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
-            if self.settings['autosave']:
-                self.saveCorpus()
-                self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
+
+    @check_for_empty_corpus
+    @check_for_transcription
+    def loadFeatureClasses(self):
+        dialog = FeatureClassManager(self, self.settings, self.corpusModel)
+        result = dialog.exec_()
 
     def subsetCorpus(self):
         dialog = SubsetCorpusDialog(self,self.corpusModel.corpus)
@@ -413,41 +341,18 @@ class MainWindow(QMainWindow):
             pass
 
     def showPreferences(self):
-        dialog = PreferencesDialog(self, self.settings)
+        dialog = PCTWidgets.PreferencesDialog(self, self.settings)
         if dialog.exec_():
             self.settings = dialog.settings
 
     @check_for_empty_corpus
+    @check_for_transcription
     def showFeatureSystem(self):
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
-        results = dialog.exec_()
-        if results:
-            if self.corpusModel.corpus.specifier is None and dialog.specifier is not None:
-                self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
-                self.corpusModel.corpus.update_features()
-                self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory)
-                self.saveCorpus()
-                return
-
-            if dialog.specifier is None:
-                self.corpusModel.corpus.specifier = None
-                self.inventoryModel = None
-                self.saveCorpus()
-                return
-
-            if dialog.specifier is not None:
-                self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
-                if dialog.transcription_changed:
-                    #This block currently does nothing, due to the RestrictedFeatureSelectSystem in use
-                    #the code should be left alone in case we later choose to move back to the non-Restricted type
-                    self.corpusModel.corpus.retranscribe(dialog.segmap)#this also updates the corpus inventory
-                    self.inventoryModel.updateInventory(list(self.corpusModel.corpus.inventory.segs.keys()))
-
-                self.corpusModel.corpus.update_features()
-                self.inventoryModel.updateFeatures(dialog.specifier)
-
-            if dialog.feature_system_changed:
-                self.inventoryModel.reGenerateNames()
+        if dialog.exec_():
+            self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
+            self.corpusModel.corpus.update_features()
+            self.inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
 
             if self.corpusModel.corpus.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(self.corpusModel.corpus.specifier.name))
@@ -458,7 +363,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def createTier(self):
-        dialog = AddTierDialog(self, self.corpusModel.corpus, self.inventoryModel)
+        dialog = AddTierDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addTier(dialog.attribute, dialog.segList)
             if self.settings['autosave']:
@@ -494,7 +399,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def createCountColumn(self):
-        dialog = AddCountColumnDialog(self, self.corpusModel.corpus, self.inventoryModel)
+        dialog = AddCountColumnDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addCountColumn(dialog.attribute, dialog.sequenceType, dialog.segList)
             if self.settings['autosave']:
@@ -519,12 +424,10 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def stringSim(self):
-        dialog = SSDialog(self, self.settings, self.corpusModel, self.inventoryModel, self.showToolTips)
+        dialog = SSDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.SSWindow is not None and dialog.update and self.SSWindow.isVisible():
-                print('hello again')
-                time.sleep(5)
                 self.SSWindow.table.model().addData(dialog.results)
             else:
                 self.SSWindow = ResultsWindow('String similarity results',dialog,self)
@@ -537,7 +440,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def freqOfAlt(self):
-        dialog = FADialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        dialog = FADialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FAWindow is not None and dialog.update and self.FAWindow.isVisible():
@@ -553,7 +456,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def predOfDist(self):
-        dialog = PDDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        dialog = PDDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PDWindow is not None and self.PDWindow.isVisible():
@@ -569,7 +472,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def funcLoad(self):
-        dialog = FLDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        dialog = FLDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
@@ -585,7 +488,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def kullbackLeibler(self):
-        dialog = KLDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        dialog = KLDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.KLWindow is not None and dialog.update and self.KLWindow.isVisible():
@@ -601,14 +504,22 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def autoAnalysis(self):
-        dialog = AutoDialog(self, self.corpusModel.corpus, self.inventoryModel, self.settings, self.showToolTips)
-        dialog.exec_()
-
+        dialog = AutoDialog(self, self.corpusModel, self.showToolTips)
+        result = dialog.exec_()
+        # if self.AutoWindow is not None and dialog.update and self.AutoWindow.isVisible():
+        #     self.AutoWindow.table.model().addRows(dialog.results)
+        # else:
+        #     self.AutoWindow = MutualInfoVowelHarmonyWindow('Vowel Harmony', dialog, self)
+        #     self.AutoWindow.show()
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.raise_)
+        #     self.showAutoResults.triggered.connect(self.AutoWindow.activateWindow)
+        #     self.AutoWindow.rejected.connect(lambda: self.showAutoResults.setVisible(False))
+        #     self.showAutoResults.setVisible(True)
 
     @check_for_empty_corpus
     @check_for_transcription
     def mutualInfo(self):
-        dialog = MIDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        dialog = MIDialog(self, self.settings, self.corpusModel.corpus,self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
@@ -637,7 +548,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def neighDen(self):
-        dialog = NDDialog(self, self.settings, self.corpusModel, self.inventoryModel, self.showToolTips)
+        dialog = NDDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.NDWindow is not None and dialog.update and self.NDWindow.isVisible():
@@ -659,7 +570,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def phonoProb(self):
-        dialog = PPDialog(self, self.settings, self.corpusModel, self.inventoryModel, self.showToolTips)
+        dialog = PPDialog(self, self.settings, self.corpusModel,self.showToolTips)
         result = dialog.exec_()
         if result and dialog.results:
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
@@ -681,7 +592,7 @@ class MainWindow(QMainWindow):
 
 
     def phonoSearch(self):
-        dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
@@ -696,7 +607,7 @@ class MainWindow(QMainWindow):
                 self.showSearchResults.setVisible(True)
 
     def createWord(self):
-        dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel)
+        dialog = AddWordDialog(self, self.corpusModel.corpus)
         if dialog.exec_():
             self.corpusModel.addWord(dialog.word)
             self.enableSave()
@@ -768,7 +679,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def corpusSummary(self):
-        dialog = CorpusSummary(self,self.corpus, self.inventoryModel)
+        dialog = CorpusSummary(self,self.corpus)
         result = dialog.exec_()
 
     def createActions(self):
@@ -784,6 +695,10 @@ class MainWindow(QMainWindow):
         self.manageInventoryAct = QAction ( "Manage inventory chart...",
                 self,
                 statusTip="Manage inventory chart", triggered=self.manageInventoryChart)
+
+        self.manageFeatureClassesAct = QAction( "Manage feature classes...",
+                self,
+                statusTip = "Create/change feature classes", triggered=self.loadFeatureClasses)
 
         self.createSubsetAct = QAction( "Generate a corpus subset",
                 self,
@@ -1003,9 +918,14 @@ class MainWindow(QMainWindow):
         self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.phonoSearchAct)
 
-        self.featureMenu = self.menuBar().addMenu("F&eatures")
+        self.featureMenu = self.menuBar().addMenu("&Features")
         self.featureMenu.addAction(self.viewFeatureSystemAct)
+<<<<<<< HEAD
+        #self.featureMenu.addAction(self.manageFeatureClassesAct)
+=======
+        self.featureMenu.addAction(self.manageFeatureClassesAct)
         self.featureMenu.addAction(self.manageInventoryAct)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
         self.analysisMenu = self.menuBar().addMenu("&Analysis")
         self.analysisMenu.addAction(self.phonoProbAct)
@@ -1017,9 +937,10 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
-        self.analysisMenu.addAction(self.autoAnalysisAct)
+        #self.analysisMenu.addAction(self.autoAnalysisAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
+        #self.viewMenu.addAction(self.showInventoryAct)
         self.viewMenu.addAction(self.showDiscoursesAct)
         self.viewMenu.addAction(self.showTextAct)
         self.viewMenu.addSeparator()

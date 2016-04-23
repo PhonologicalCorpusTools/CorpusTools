@@ -149,8 +149,8 @@ def _check_spurious(ur, sr, corpus_context):
     #returns a string, not a bool, for printing to a results table
     if corpus_context.specifier is None:
         return 'Maybe'
-    ur = corpus_context.corpus.segment_to_features(ur[0]).features
-    sr = corpus_context.corpus.segment_to_features(sr[0]).features
+    ur = corpus_context.corpus.segment_to_features(ur[0])#.features
+    sr = corpus_context.corpus.segment_to_features(sr[0])#.features
     diff = lambda flist1,flist2: len([f1 for f1,f2 in zip(sorted(flist1.values()),
                                                           sorted(flist2.values()))
                                       if not f1==f2])

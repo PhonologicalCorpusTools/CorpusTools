@@ -2,6 +2,7 @@
 import os
 import re
 import sys
+import corpustools.gui.modernize as modernize
 
 FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
@@ -209,6 +210,8 @@ def load_directory_multiple_files(corpus_name, path, dialect,
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         corpus.lexicon.set_feature_matrix(feature_matrix)
+        corpus.lexicon.specifier = modernize.modernize_specifier(corpus.lexicon.specifier)
+
     return corpus
 
 def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
@@ -256,6 +259,8 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
+        discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
+
     return discourse
 
 def read_phones(path, dialect, sr = None):

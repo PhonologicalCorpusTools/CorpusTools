@@ -1,3 +1,11 @@
+from PyQt5.QtCore import QVariant
+import random
+import itertools
+import collections
+from copy import deepcopy
+from .widgets import *
+from corpustools.corpus.classes.lexicon import Segment
+from corpustools.exceptions import CorpusIntegrityError
 import os
 
 from collections import Counter, defaultdict
@@ -788,8 +796,6 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         #self.generateData()
         #self.layoutChanged.emit()
 
-
-
 class FeatureSystemTableModel(BaseTableModel):
     def __init__(self, specifier, parent=None):
         QAbstractTableModel.__init__(self,parent)
@@ -830,3 +836,1065 @@ class FeatureSystemTableModel(BaseTableModel):
         self.specifier.add_feature(feat,default=default)
         self.generateData()
         self.layoutChanged.emit()
+
+class InventoryModel(QAbstractTableModel):
+    """
+    See corpustools.corpus.io.csv.load_corpus_csv()
+    See also corpustools.corpus.classes.lexicon.Corpus.add_word()
+    See also corpustools.corpus.classes.lexicon.Corpus.update_inventory()
+    """
+
+    attributes = ['segs', 'features', 'possible_values', 'stresses', 'consColumns', 'consRows',
+                  'vowelColumns', 'vowelRows', 'cons_column_data', 'cons_row_data', 'vowel_column_data', 'vowel_row_data',
+                  'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
+                  'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
+                  'vowel_features', 'cons_features', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew',
+                  'consList', 'vowelList', 'non_segment_symbols', 'filterNames']
+
+    modelResetSignal = Signal(bool)
+
+    def __init__(self, inventory, copy_mode=False):
+        super().__init__()
+
+        if copy_mode:
+            self.setAttributes(inventory)
+            return
+
+        # values passed along from the inventory
+        self.segs = inventory.segs
+        self.features = inventory.features
+        self.possible_values = inventory.possible_values
+        self.stresses = inventory.stresses
+        #values to be set at some later point
+        self.consColumns = set()
+        self.consRows = set()
+        self.vowelColumns = set()
+        self.vowelRows = set()
+        self.consList = []
+        self.vowelList = []
+        self.uncategorized = []
+        self._data = {}
+        self.cons_column_data = {'Column 1': [0,{},None]}
+        self.cons_row_data = {'Row 1': [0,{},None]}
+        self.vowel_column_data = {'Column 1': [0,{},None]}
+        self.vowel_row_data = {'Row 1': [0,{},None]}
+        self.cons_features = None
+        self.vowel_features = None
+        self.voice_feature = None
+        self.rounded_feature = None
+        self.diph_feature = None
+        self.non_segment_symbols = ['#']
+        self.filterNames = False
+        #functions that fill in the above values
+        self.generateGenericNames()
+        self.categorizeInventory()
+        self.sortData()
+        self.filterGenericNames()
+        self.isNew = False
+
+    def setAttributes(self, source):
+        for attribute in InventoryModel.attributes:
+            setattr(self, attribute, deepcopy(getattr(source, attribute)))
+
+    def set_major_class_features(self, source):
+        self.cons_features = source.cons_features if hasattr(source, 'cons_features') else None
+        self.vowel_features = source.vowel_features if hasattr(source, 'vowel_features') else None
+        self.voice_feature = source.voice_feature if hasattr(source,'voice_feature') else None
+        self.rounded_feature = source.round_feature if hasattr(source, 'round_feature') else None
+        self.diph_feature = source.diph_feature if hasattr(source, 'diph_feature') else None
+
+    def columnCount(self, parent=None):
+        return len(self._data[0])  # any element would do, they should all be the same length
+
+    def rowCount(self, parent=None):
+        return len(self._data)
+
+    def consRowCount(self):
+        return len(self.consRows)
+
+    def consColumnCount(self):
+        return len(self.consColumns)
+
+    def vowelRowCount(self):
+        return len(self.vowelRows)
+
+    def vowelColumnCount(self):
+        return len(self.vowelColumns)
+
+    def updateFromCopy(self, copy):
+        self.setAttributes(copy)
+        self.modelReset()
+
+    def updateFeatures(self, specifier):
+        for seg in self.segs:
+            if seg == '#':
+                continue
+            if seg not in specifier:
+                specifier[seg] = {feature.lower():'n' for feature in specifier.features}
+            self.segs[seg].features = specifier.specify(seg)
+
+        self.features = specifier.features
+        self.possible_values = specifier.possible_values
+        self.modelReset()
+
+    def updateInventory(self, new_segs):
+        self.segs = {symbol: Segment(symbol) for symbol in new_segs}
+
+    def changeColumnSpecs(self, index, features, new_section_name, consonants=True):
+        if consonants:
+            name = self.cons_column_header_order[index]
+            self.cons_column_data.pop(name)
+            self.cons_column_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
+            self.consColumns.remove(name)
+            self.consColumns.add(new_section_name)
+        else:
+            index += self.vowel_column_offset
+            name = self.vowel_column_header_order[index]
+            self.vowel_column_data.pop(name)
+            self.vowel_column_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
+            self.vowelColumns.remove(name)
+            self.vowelColumns.add(new_section_name)
+        self.modelReset()
+        return True
+
+    def changeRowSpecs(self, index, features, new_section_name, consonants=True):
+        if consonants:
+            name = self.cons_row_header_order[index]
+            self.cons_row_data.pop(name)
+            self.cons_row_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
+            self.consRows.remove(name)
+            self.consRows.add(new_section_name)
+        else:
+            index += self.vowel_row_offset
+            name = self.vowel_row_header_order[index]
+            self.vowel_row_data.pop(name)
+            self.vowel_row_data[new_section_name] = [index, {f[1:]: f[0] for f in features}, None]
+            self.vowelRows.remove(name)
+            self.vowelRows.add(new_section_name)
+        self.modelReset()
+        return True
+
+    def getPartialCategorization(self, seg):
+        #This is called by .data() when a user wants a tooltip in the uncategorized box to see if there are any partial
+        #category matches.
+
+        cons_category = list()
+        for row, col in itertools.product(self.cons_row_data, self.cons_column_data):
+            row_index, row_features, row_segs = self.cons_row_data[row]
+            col_index, col_features, col_segs = self.cons_column_data[col]
+
+            if (all(row_features[key] == seg.features[key] for key in row_features)):
+                cons_category.append(row)
+            elif all(col_features[key] == seg.features[key] for key in col_features):
+                cons_category.append(col)
+
+        if not cons_category:
+            cons_category.append('None')
+        else:
+            cons_category = list(set(cons_category))
+
+        vowel_category = list()
+        for row, col in itertools.product(self.vowel_row_data, self.vowel_column_data):
+            row_index, row_features, row_segs = self.vowel_row_data[row]
+            col_index, col_features, col_segs = self.vowel_column_data[col]
+
+            if (all(row_features[key] == seg.features[key] for key in row_features)):
+                vowel_category.append(row)
+            elif all(col_features[key] == seg.features[key] for key in col_features):
+                vowel_category.append(col)
+
+        if not vowel_category:
+            vowel_category.append('None')
+        else:
+            vowel_category = list(set(vowel_category))
+
+        cons_category = ','.join(cons_category)
+        vowel_category = ','.join(vowel_category)
+        return 'Consonant matches:\n{}\nVowel matches:\n{}'.format(cons_category, vowel_category)
+
+
+    def data(self, index, role):
+        if not index.isValid():
+            return QVariant()
+        info = self._data[index.row()][index.column()]
+        if not info:
+            return QVariant()
+        if role == Qt.DisplayRole:
+            return info
+        elif role == Qt.ToolTipRole:
+            try:
+                seg = self.segs[info]
+                return self.getPartialCategorization(seg)
+            except KeyError:
+                #this occurs with correctly categorized segments that are comma-separated in the chart
+                return QVariant()
+        else:
+            return QVariant()
+
+    def setData(self, index, value, role=None):
+        if not index.isValid() or role != Qt.EditRole:
+            return False
+        self._data[index.row()][index.column()] = value  # this probably won't work
+        self.dataChanged.emit(index, index)
+        return True
+
+    def isVoiced(self, seg):
+        return False if self.voice_feature is None else seg.features[self.voice_feature[1:]] == self.voice_feature[0]
+
+    def isVowel(self, seg):
+        #return False if self.vowel_features is None else seg.features[self.vowel_features[1:]] == self.vowel_features[0]
+        if self.vowel_features is None or self.vowel_features[0] is None:
+            return False
+        return all(seg.features[feature[1:]] == feature[0] for feature in self.vowel_features)
+
+    def isCons(self, seg):
+        #return False if self.vowel_features is None else seg.features[self.vowel_features[1:]] == self.vowel_features[0]
+        if self.cons_features is None or self.cons_features[0] is None:
+            return False
+        return all(seg.features[feature[1:]] == feature[0] for feature in self.cons_features)
+
+    def isRounded(self, seg):
+        return False if self.rounded_feature is None else seg.features[self.rounded_feature[1:]] == self.rounded_feature[0]
+
+    def isDiphthong(self, seg):
+        return False if self.diph_feature is None else seg.features[self.diph_feature[1:]] == self.diph_feature[0]
+
+    def categorizeInventory(self):
+
+        # initialize some variables to avoid duplication when doing modelReset()
+        self.vowelList = list()
+        self.consList = list()
+        self.uncategorized = list()
+
+        for s in self.segs.values():
+            if s.symbol == '#':
+                continue  #ignore the word boundary symbol
+            try:
+                c = self.categorize(s)
+            except KeyError:
+                #self.categorize will raise a KeyError if no categories are matched
+                c = None
+                self.uncategorized.append(s)
+            if c is not None:
+                if c[0] == 'Vowel':
+                    self.vowelColumns.add(c[1])
+                    self.vowelRows.add(c[2])
+                    self.vowelList.append((s, c))
+                elif c[0] == 'Consonant':
+                    self.consColumns.add(c[1])
+                    self.consRows.add(c[2])
+                    self.consList.append((s, c))
+        if not self.consColumns:
+            self.consColumns.add('Column 1')
+            self.cons_column_data = {'Column 1': [0, {}, None]}
+        if not self.consRows:
+            self.consRows.add('Row 1')
+            self.cons_row_data = {'Row 1': [0,{},None]}
+        if not self.vowelColumns:
+            self.vowelColumns.add('Column 1')
+            self.vowel_column_data = {'Column 1': [0, {}, None]}
+        if not self.vowelRows:
+            self.vowelRows.add('Row 1')
+            self.vowel_row_data = {'Row 1': [0,{},None]}
+
+    def headerData(self, row_or_col, orientation, role=None):
+        try:
+            if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+                return self.all_columns[row_or_col]
+            elif orientation == Qt.Vertical and role == Qt.DisplayRole:
+                return self.all_rows[row_or_col]
+        except KeyError:
+            return QVariant()
+
+    def generateSegmentButton(self, symbol):
+        wid = SegmentButton(symbol)  # This needs to be a SegmentButton for the i,j segment
+        wid.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        b = QGridLayout()
+        b.setAlignment(Qt.AlignCenter)
+        b.setContentsMargins(0, 0, 0, 0)
+        b.setSpacing(0)
+        l = QWidget()
+        l.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        lb = QVBoxLayout()
+        lb.setAlignment(Qt.AlignCenter)
+        lb.setContentsMargins(0, 0, 0, 0)
+        lb.setSpacing(0)
+        l.setLayout(lb)
+        # l.hide()
+        b.addWidget(l, 0, 0)  #, alignment = Qt.AlignCenter)
+        r = QWidget()
+        r.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        rb = QVBoxLayout()
+        rb.setAlignment(Qt.AlignCenter)
+        rb.setContentsMargins(0, 0, 0, 0)
+        rb.setSpacing(0)
+        r.setLayout(rb)
+        #r.hide()
+        b.addWidget(r, 0, 1)  #, alignment = Qt.AlignCenter)
+        wid.setLayout(b)
+        wid.setCheckable(True)
+        wid.setAutoExclusive(False)
+        wid.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.btnGroup.addButton(wid)
+        return wid
+
+    def removeColumn(self, index, consonants=True):
+        if consonants:
+            column_data = self.cons_column_data
+            headers = self.consColumns
+        else:
+            column_data = self.vowel_column_data
+            headers = self.vowelColumns
+
+        if len(column_data) == 1:
+            return #do not delete the last remaining column
+
+        for key, value in column_data.items():
+            if value[0] == index.column():
+                target = key
+                continue
+            if value[0] >= index.column():
+                column_data[key][0] -= 1
+
+        column_data.pop(target)
+        headers.remove(target)
+        self.modelReset()
+        return True
+
+
+    def removeRow(self, index, consonants=True):
+
+        if consonants:
+            row_data = self.cons_row_data
+            headers = self.consRows
+        else:
+            row_data = self.vowel_row_data
+            headers = self.vowelRows
+
+        if len(row_data) == 1:
+            return #don't delete the last remaining row
+
+        for key, value in row_data.items():
+            if value[0] == index.row():
+                target = key
+                continue
+            if value[0] >= index.row():
+                row_data[key][0] -= 1
+        row_data.pop(target)
+        headers.remove(target)
+        self.modelReset()
+        return True
+
+    def insertColumn(self, index, consonants=True):
+
+        if consonants:
+            column_data = self.cons_column_data
+            headers = self.consColumns
+            basic_features = {}
+        else:
+            column_data = self.vowel_column_data
+            headers = self.vowelColumns
+            basic_features = {}
+
+        for key, value in column_data.items():
+            if value[0] >= index.column():
+                column_data[key][0] += 1
+
+        n = 1
+        while True:
+            new_name = 'New Column {}'.format(n)
+            if new_name in column_data.keys():
+                n += 1
+                continue
+            else:
+                column_data[new_name] = [index.column(), basic_features, None]
+                headers.add(new_name)
+                break
+        self.modelReset()
+        return True
+
+    def insertRow(self, index, consonants=True):
+
+        if consonants:
+            row_data = self.cons_row_data
+            headers = self.consRows
+            basic_features = {}
+        else:
+            row_data = self.vowel_row_data
+            headers = self.vowelRows
+            basic_features = {}
+        for key, value in row_data.items():
+            if value[0] >= index.row():
+                row_data[key][0] += 1
+        n = 1
+        while True:
+            new_name = 'New Row {}'.format(n)
+            if new_name in row_data.keys():
+                n += 1
+                continue
+            else:
+                row_data[new_name] = [index.row(), basic_features, None]
+                headers.add(new_name)
+                break
+        self.modelReset()
+        return True
+
+    def modelReset(self, *args, **kwargs):
+        self.modelAboutToBeReset.emit()
+        self.categorizeInventory()
+        self.sortData()
+        self.filterGenericNames()
+        self.endResetModel()
+
+    def changeColumnOrder(self, map, consonants=True):
+        if consonants:
+            column_data = self.cons_column_data
+        else:
+            column_data = self.vowel_column_data
+
+        for visualIndex, headerName in map.values():
+            if visualIndex == -1:
+                continue
+            column_data[headerName][0] = visualIndex
+        self.modelReset()
+
+
+    def changeRowOrder(self, map, consonants=True):
+        if consonants:
+            row_data = self.cons_row_data
+        else:
+            row_data = self.vowel_row_data
+
+        for visualIndex, headerName in map.values():
+            if visualIndex == -1:
+                continue
+            row_data[headerName][0] = visualIndex
+        self.modelReset()
+
+    def reGenerateNames(self):
+        self.consRows = set()
+        self.vowelRows = set()
+        self.consColumns = set()
+        self.vowelColumns = set()
+        self.generateGenericNames()
+        self.modelReset()
+
+    def filterGenericNames(self):
+        if not self.filterNames:
+            return
+
+        self.cons_column_data = {key: value for (key, value) in self.cons_column_data.items()
+                                 if key in self.cons_column_header_order.values()}
+        sorted_columns = sorted([(k, v) for k, v in self.cons_column_data.items()], key=lambda x: x[1][0])
+        for i, key_value in enumerate(sorted_columns):
+            key, value = key_value
+            self.cons_column_data[key][0] = i
+
+        self.vowel_column_data = {key: value for (key, value) in self.vowel_column_data.items()
+                                  if key in self.vowel_column_header_order.values()}
+        sorted_columns = sorted([(k, v) for k, v in self.vowel_column_data.items()], key=lambda x: x[1][0])
+        for i, key_value in enumerate(sorted_columns):
+            key, value = key_value
+            self.vowel_column_data[key][0] = i
+
+        self.cons_row_data = {key: value for (key, value) in self.cons_row_data.items()
+                              if key in self.cons_row_header_order.values()}
+        sorted_rows = sorted([(k, v) for k, v in self.cons_row_data.items()], key=lambda x: x[1][0])
+        for i, key_value in enumerate(sorted_rows):
+            key, value = key_value
+            self.cons_row_data[key][0] = i
+
+        self.vowel_row_data = {key: value for (key, value) in self.vowel_row_data.items()
+                               if key in self.vowel_row_header_order.values()}
+        sorted_rows = sorted([(k, v) for k, v in self.vowel_row_data.items()], key=lambda x: x[1][0])
+        for i, key_value in enumerate(sorted_rows):
+            key, value = key_value
+            self.vowel_row_data[key][0] = i
+
+    def getHeaderOrder(self, orientation, cons_or_vowel):
+        if orientation == Qt.Horizontal:
+            if cons_or_vowel == 'cons':
+                data = self.consColumns
+            else:
+                data = self.VowelColumns
+        elif orientation == Qt.Vertical:
+            if cons_or_vowel == 'cons':
+                data = self.consRows
+            else:
+                data = self.vowelRows
+        else:
+            raise TypeError('The orientation value passed to Inventory.getHeaderOrder is not valid')
+        return sorted(data)
+
+    def sortData(self):
+        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
+        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
+        sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
+        sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
+        self.cons_column_header_order = {i: name for i, name in enumerate(sorted_cons_col_headers)}
+        self.vowel_column_offset = len(self.cons_column_header_order)
+        self.vowel_column_header_order = {i + self.vowel_column_offset: name for i, name in
+                                          enumerate(sorted_vowel_col_headers)}
+        self.cons_row_header_order = {i: name for i, name in enumerate(sorted_cons_row_headers)}
+        self.vowel_row_offset = len(self.cons_row_header_order)
+        self.vowel_row_header_order = {i + self.vowel_row_offset: name for i, name in
+                                       enumerate(sorted_vowel_row_headers)}
+        self.all_columns = {}
+        self.all_rows = {}
+        self.all_columns.update(self.cons_column_header_order)
+        self.all_columns.update(self.vowel_column_header_order)
+        self.all_rows.update(self.cons_row_header_order)
+        self.all_rows.update(self.vowel_row_header_order)
+        col_total = max(len(self.all_columns), len(self.uncategorized))
+        row_total = len(self.all_rows) + 1  # add one row for uncategorized
+
+        self._data = [[None for j in range(col_total)]
+                      for k in range(row_total)]
+
+        #ADD IN UNCATEGORIZED DATA
+        for j in range(len(self._data[-1])):
+            try:
+                seg = self.uncategorized[j]
+                self._data[-1][j] = seg.symbol
+            except IndexError:  #passed the end of self.uncategorized (not self._data)
+                self._data[-1][j] = ''
+
+        #ADD IN CONSONANT DATA
+        for row, col in itertools.product(self.cons_row_header_order.keys(),
+                                          self.cons_column_header_order.keys()):
+            row_name = self.cons_row_header_order[row]
+            col_name = self.cons_column_header_order[col]
+            matches = list()
+            for seg, cat in self.consList:
+                if row_name in cat and col_name in cat:
+                    matches.append(seg)
+            self._data[row][col] = ','.join([m.symbol for m in matches])
+
+        #ADD IN VOWEL DATA
+        for row, col in itertools.product(self.vowel_row_header_order.keys(),
+                                          self.vowel_column_header_order.keys()):
+            row_name = self.vowel_row_header_order[row]
+            col_name = self.vowel_column_header_order[col]
+            matches = list()
+            for seg, cat in self.vowelList:
+                if row_name in cat and col_name in cat:
+                    matches.append(seg)
+            self._data[row][col] = ','.join([m.symbol for m in matches])
+
+    def resetCategories(self):
+        self.cons_column_data = {'Column 1': [0, {}, None]}
+        self.cons_row_data = {'Row 1': [0, {}, None]}
+        self.vowel_column_data = {'Column 1': [0, {}, None]}
+        self.vowel_row_data = {'Row 1': [0, {}, None]}
+        self.consRows = set()
+        self.vowelRows = set()
+        self.consColumns = set()
+        self.vowelColumns = set()
+        self.filterNames = False
+        self.modelReset()
+
+    def generateGenericNames(self):
+        try:
+            sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
+            # pick an arbitrary segment and examine its features; they all should have the same feature list
+        except IndexError:
+            print(vars(self))
+            raise CorpusIntegrityError('No segments were found in the inventory')
+        if 'consonantal' in sample.features:
+            self.generateGenericHayes()
+            self.cons_features = ['+consonantal']
+            self.vowel_features = ['-consonantal']
+            self.voice_feature = '+voice'
+            self.rounded_feature = '+round'
+            self.diph_feature = '+diphthong'
+            self.filterNames = True
+        elif 'voc' in sample.features:
+            self.generateGenericSpe()
+            self.cons_features = ['-voc']
+            self.vowel_features = ['+voc']
+            self.voice_feature = '+voice'
+            self.rounded_feature = '+round'
+            self.diph_feature = None
+            self.filterNames = True
+        else:
+            self.cons_column_data = {'Column 1' : [0, {}, None]}
+            self.cons_row_data = {'Row 1' : [0, {}, None]}
+            self.vowel_column_data = {'Column 1': [0, {}, None]}
+            self.vowel_row_data = {'Row 1' : [0, {}, None]}
+            self.filterNames = False
+
+    def generateGenericSpe(self):
+        self.cons_column_data = dict()
+        self.cons_column_data['Labial'] = [0,{'voc':'-','ant':'+','cor':'-','high':'-','low':'-','back':'-'},None]
+        self.cons_column_data['Dental'] = [1,{'voc':'-','ant':'+','cor':'+','high':'-','low':'-','back':'-'},None]
+        self.cons_column_data['Alveolar'] = [2,{'voc':'-','ant':'-','cor':'+','high':'+','low':'-','back':'-'},None]
+        self.cons_column_data['Palatal'] = [3,{'voc':'-','ant':'-','cor':'-','high':'+','low':'-','back':'-'},None]
+        self.cons_column_data['Velar'] = [4,{'voc':'-','ant':'-','cor':'-','high':'+','low':'-','back':'+'},None]
+        self.cons_column_data['Uvular'] = [5,{'voc':'-','ant':'-','cor':'-','high':'-','low':'-','back':'+'},None]
+
+        self.cons_row_data = dict()
+        self.cons_row_data['Stop'] = [0,{'voc':'-','cont':'-','nasal':'-','son':'-'},None]
+        self.cons_row_data['Nasal'] = [1,{'voc':'-','nasal':'+'},None]
+        self.cons_row_data['Fricative'] = [2,{'voc':'-','cont':'+','nasal':'-','son':'-'},None]
+        self.cons_row_data['Lateral'] = [3,{'voc':'-','lat':'+'},None]
+
+        self.vowel_row_data = dict()
+        self.vowel_row_data['High'] = [0,{'voc':'+','high':'+','low':'-'},None]
+        self.vowel_row_data['Mid'] = [1,{'voc': '+', 'high': '-', 'low': '-'}, None]
+        self.vowel_row_data['Low'] = [2, {'voc': '+', 'high': '-', 'low': '+'}, None]
+
+        self.vowel_column_data = dict()
+        self.vowel_column_data['Front'] = [0,{'voc':'+','back':'-'},None]
+        self.vowel_column_data['Back'] = [1,{'voc':'+','back': '+'}, None]
+
+    def generateGenericHayes(self):
+        self.cons_column_data = dict()
+        self.cons_column_data['Labial'] = [0,{'consonantal':'+','labial':'+','coronal':'-','labiodental': '-'}, None]
+        self.cons_column_data['Labiodental'] = [1,{'consonantal': '+', 'labiodental': '+'}, None]
+        self.cons_column_data['Dental'] = [2,{'consonantal':'+','anterior':'+','coronal':'+','labial':'-',
+                                              'labiodental': '-'},None]
+        self.cons_column_data['Alveopalatal'] = [3,{'consonantal':'+','anterior':'-','coronal':'+','labial': '-'}, None]
+        self.cons_column_data['Palatal'] = [4,{'consonantal': '+','dorsal': '+','coronal':'+','labial':'-'},None]
+        self.cons_column_data['Velar'] = [5,{'consonantal':'+','dorsal':'+','labial':'-'}, None]
+        self.cons_column_data['Uvular'] = [6, {'consonantal':'+','dorsal':'+','back':'+','labial':'-'},None]
+        self.cons_column_data['Glottal'] = [7,{'consonantal':'+','dorsal':'-','coronal':'-','labial':'-','nasal':'-'},None]
+
+        self.cons_row_data = dict()
+        self.cons_row_data['Stop'] = [0,{'consonantal':'+','sonorant':'-','continuant':'-','delayed_release':'-'}, None]
+        self.cons_row_data['Nasal'] = [1,{'consonantal': '+', 'nasal': '+'}, None]
+        self.cons_row_data['Trill'] = [2,{'consonantal': '+', 'trill': '+'}, None]
+        self.cons_row_data['Tap'] = [3,{'consonantal': '+', 'tap': '+'}, None]
+        self.cons_row_data['Fricative'] = [4,{'consonantal':'+','sonorant':'-','continuant':'+'},None]
+        self.cons_row_data['Affricate'] = [5,{'consonantal':'+','continuant': '-','delayed_release': '+'}, None]
+        self.cons_row_data['Approximant'] = [6, {'consonantal':'+','sonorant':'+','lateral':'-','nasal': '-'},None]
+        self.cons_row_data['Lateral approximant'] = [7,{'consonantal':'+','sonorant':'+','lateral':'+'},None]
+
+        self.vowel_column_data = dict()
+        self.vowel_column_data['Front'] = [0, {'consonantal': '-', 'front': '+', 'back': '-'}, None]
+        self.vowel_column_data['Central'] = [2, {'consonantal': '-', 'front': '-', 'back': '-'}, None]
+        self.vowel_column_data['Back'] = [4, {'consonantal': '-', 'front': '-', 'back': '+'}, None]
+
+        self.vowel_row_data = dict()
+        self.vowel_row_data['High'] = [0, {'consonantal': '-', 'high': '+', 'low': '-'}, None]
+        self.vowel_row_data['Mid'] = [1, {'consonantal': '-', 'high': '-', 'low': '-'}, None]
+        self.vowel_row_data['Low'] = [3, {'consonantal': '-', 'high': '-', 'low': '+',}, None]
+
+    def getSortedHeaders(self, orientation, cons_or_vowel):
+        if orientation == Qt.Horizontal:
+            if cons_or_vowel == 'cons':
+                data = self.cons_column_header_order
+            else:
+                data = self.vowel_column_header_order
+        elif orientation == Qt.Vertical:
+            if cons_or_vowel == 'cons':
+                data = self.cons_row_header_order
+            else:
+                data = self.vowel_row_header_order
+        else:
+            raise TypeError('The orientation value passed to Inventory.getHeaderOrder is not valid')
+
+        return [data[header] for header in sorted(list(data.keys()))]
+
+    def getColumnSpecs(self, name, consonants):
+        if consonants:
+            column_data = self.cons_column_data
+        else:
+            column_data = self.vowel_column_data
+        return column_data[name]
+
+    def getRowSpecs(self, name, consonants):
+        if consonants:
+            row_data = self.cons_row_data
+        else:
+            row_data = self.vowel_row_data
+        return row_data[name]
+
+    def getColumnHeader(self, index, consonants):
+        if consonants:
+            col_data = self.cons_column_data
+            headers = self.consColumns
+        else:
+            col_data = self.vowel_column_data
+            headers = self.vowelColumns
+        sorted_headers = sorted(list(headers), key=lambda x: col_data[x][0])
+        return sorted_headers[index]
+
+    def getRowHeader(self, index, consonants):
+        if consonants:
+            row_data = self.cons_row_data
+            headers = self.consRows
+        else:
+            row_data = self.vowel_row_data
+            headers = self.vowelRows
+        sorted_headers = sorted(list(headers), key=lambda x: row_data[x][0])
+        return sorted_headers[index]
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.update(super().__dict__.copy())
+        return state
+
+    def __setstate__(self, state):
+        if 'stresses' not in state:
+            state['stresses'] = {}
+
+        self.__dict__.update(state)
+
+    def __repr__(self):
+        return '\n'.join([','.join([str(item) for item in row]) for row in self._data])
+
+    def __len__(self):
+        return len(self.segs.keys())
+
+    def keys(self):
+        return self.segs.keys()
+
+    def values(self):
+        return self.segs.values()
+
+    def items(self):
+        return self.segs.items()
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return sorted(self.segs.keys())[key]
+        return self.segs[key]
+
+    def __setitem__(self, key, value):
+        self.segs[key] = value
+
+    def __iter__(self):
+        for k in sorted(self.segs.keys()):
+            yield self.segs[k]
+
+    def __contains__(self, item):
+        if isinstance(item, str):
+            return item in self.segs.keys()
+        elif isinstance(item, Segment):
+            return item.symbol in self.segs.keys()
+        return False
+
+    def valid_feature_strings(self):
+        strings = list()
+        for v in self.possible_values:
+            for f in self.features:
+                strings.append(v + f)
+        return strings
+
+    def get_segs(self):
+        return [v for v in self.segs.values() if not v in self.non_segment_symbols]
+
+    def find_min_feature_pairs(self, features, others=None):
+        """
+        Find sets of segments that differ only in certain features,
+        optionally limited by a feature specification
+
+        Parameters
+        ----------
+        features : list
+            List of features (i.e. 'back' or 'round')
+        others : list, optional
+            Feature specification to limit sets
+
+        Returns
+        -------
+        dict
+            Dictionary with keys that correspond to the values of ``features``
+            and values that are the set of segments with those feature values
+        """
+        plus_segs = []
+        minus_segs = []
+        output = collections.defaultdict(list)
+        redundant = self.get_redundant_features(features, others)
+        for seg1, seg2 in itertools.combinations(self.get_segs(), 2):
+            if not seg1.feature_match(others):
+                continue
+            if seg1.minimal_difference(seg2, features + redundant):
+                 break
+            seg1_key = tuple(seg1[f] for f in features)
+            seg2_key = tuple(seg2[f] for f in features)
+            if seg1 not in output[seg1_key]: output[seg1_key].append(seg1)
+            if seg2 not in output[seg2_key]: output[seg2_key].append(seg2)
+        return output
+
+    def get_redundant_features(self, features, others=None):
+        """
+        Autodetects redundent _features, with the ability to subset
+        the segments
+
+        Parameters
+        ----------
+        _features : list
+            List of _features to find other _features that consistently
+            covary with them
+        others : list, optional
+            Feature specification that specifies a subset to look at
+
+        Returns
+        -------
+        list
+            List of redundant _features
+        """
+        redundant_features = []
+        if isinstance(features, str):
+            features = [features]
+        if others is None:
+            others = []
+        other_feature_names = [x[1:] for x in others]
+        for f in self.features:
+            if f in features:
+                continue
+            if f in other_feature_names:
+                continue
+            feature_values = collections.defaultdict(set)
+            for seg in self:
+                if others is not None:
+                    if not seg.feature_match(others):
+                        continue
+                if seg == '#':
+                    continue
+                value = tuple(seg[x] for x in features)
+                other_value = seg[f]
+                feature_values[value].add(other_value)
+                if any(len(x) > 1 for x in feature_values.values()):
+                    break
+            if any(len(x) > 1 for x in feature_values.values()):
+                continue
+            redundant_features.append(f)
+        return redundant_features
+
+
+    def features_to_segments(self, feature_description):
+        """
+        Given a feature description, return the segments in the inventory
+        that match that feature description
+
+        Feature descriptions should be either lists, such as
+        ['+feature1', '-feature2'] or strings that can be separated into
+        lists by ',', such as '+feature1,-feature2'.
+
+        Parameters
+        ----------
+        feature_description : string or list
+            Feature values that specify the segments, see above for format
+
+        Returns
+        -------
+        list of Segments
+            Segments that match the feature description
+
+        """
+        segments = []
+        if isinstance(feature_description, str):
+            feature_description = feature_description.split(',')
+        for k, v in self.segs.items():
+            if v.feature_match(feature_description):
+                segments.append(k)
+        return segments
+
+    def categorize(self, seg):
+        if self.isVowel(seg):
+            category = ['Vowel']
+            iterRows = self.vowel_row_data
+            iterCols = self.vowel_column_data
+        elif self.isCons(seg):
+            category = ['Consonant']
+            iterRows = self.cons_row_data
+            iterCols = self.cons_column_data
+        else:
+            raise KeyError #function is wrapped in a try/except which will catch this
+
+        for row, col in itertools.product(iterRows, iterCols):
+            row_index, row_features, row_segs = iterRows[row]
+            col_index, col_features, col_segs = iterCols[col]
+
+            if ((not row_features) or (not col_features)):
+                continue #should ignore rows or cols without features - they will remain blank
+
+            if ((row_segs is not None and seg in row_segs) and
+                    (col_segs is not None and seg in col_segs)):
+                category.extend([col, row])
+                break
+            elif (all(row_features[key] == seg.features[key] for key in row_features) and
+                      all(col_features[key] == seg.features[key] for key in col_features)):
+                category.extend([col, row])
+                break
+
+        else:
+            raise KeyError(seg.symbol)  # this function is wrapped in a try/except that will catch this
+
+        if self.isVowel(seg):
+            if self.isRounded(seg):
+                category.append('Rounded')
+            else:
+                category.append('Unrounded')
+
+        else:
+            if self.isVoiced(seg):
+                category.append('Voiced')
+            else:
+                category.append('Voiceless')
+        return category
+
+class InventoryDelegate(QItemDelegate):
+
+    def __init__(self):
+        super().__init__()
+
+    def setEditor(self, editor, index):
+        editor.setValue(index.model().data(index, Qt.EditRole))
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.value(), Qt.EditRole)
+
+class ConsonantModel(QSortFilterProxyModel):
+
+    def __init__(self, inventory):
+        super().__init__()
+        self.setSourceModel(inventory)
+
+    def getColumnHeader(self, index, consonants):
+        return self.sourceModel().getColumnHeader(index, consonants=consonants)
+
+    def getColumnSpecs(self, name, consonants):
+        return self.sourceModel().getColumnSpecs(name, consonants=consonants)
+
+    def getRowHeader(self, index, consonants):
+        return self.sourceModel().getRowHeader(index, consonants=consonants)
+
+    def getRowSpecs(self, name, consonants):
+        return self.sourceModel().getRowSpecs(name, consonants=consonants)
+
+    def features(self):
+        return self.sourceModel().features
+
+    def possible_values(self):
+        return self.sourceModel().possible_values
+
+    def insertRow(self, index):
+        self.sourceModel().insertRow(index)
+
+    def insertColumn(self, index):
+        self.sourceModel().insertColumn(index)
+
+    def removeColumn(self, index):
+        self.sourceModel().removeColumn(index)
+
+    def removeRow(self, index):
+        self.sourceModel().removeRow(index)
+
+    def rowCount(self, parent=None):
+        return self.sourceModel().consRowCount()
+
+    def columnCount(self, parent=None):
+        return self.sourceModel().consColumnCount()
+
+    def updateColumn(self, index, features):
+        self.sourceModel().changeColumnSpecs(index, features)
+
+    def filterAcceptsColumn(self, column, parent = None):
+        header = self.sourceModel().headerData(column, Qt.Horizontal, Qt.DisplayRole)
+        if header == QVariant():
+            return False
+        if header in self.sourceModel().consColumns:
+            return True
+        else:
+            return False
+
+    def filterAcceptsRow(self, row, parent = None):
+        header = self.sourceModel().headerData(row, Qt.Vertical, Qt.DisplayRole)
+        if header == QVariant():
+            return False
+        if header in self.sourceModel().consRows:
+            return True
+        else:
+            return False
+
+class UncategorizedModel(QSortFilterProxyModel):
+
+    def __init__(self, inventory):
+        super().__init__()
+        self.setSourceModel(inventory)
+
+    def filterAcceptsRow(self, row, parent=None):
+        if row == self.sourceModel().rowCount()-1:
+            return True
+        else:
+            return False
+
+    def filterAcceptsColumn(self, column, parent=None):
+        if column <= len(self.sourceModel().uncategorized):
+            return True
+        else:
+            return False
+
+    def features(self):
+        return self.sourceModel().features
+
+    def possible_values(self):
+        return self.sourceModel().possible_values
+
+    def rowCount(self, parent=None):
+        return 1
+
+    def columnCount(self, parent=None):
+        return len(self.sourceModel().uncategorized)
+
+
+class VowelModel(QSortFilterProxyModel):
+
+    def __init__(self, inventory):
+        super().__init__()
+        self.setSourceModel(inventory)
+
+    def features(self):
+        return self.sourceModel().features
+
+    def possible_values(self):
+        return self.sourceModel().possible_values
+
+
+    def getColumnHeader(self, index, consonants):
+        return self.sourceModel().getColumnHeader(index, consonants=consonants)
+
+
+    def getColumnSpecs(self, name, consonants):
+        return self.sourceModel().getColumnSpecs(name, consonants=consonants)
+
+
+    def getRowHeader(self, index, consonants):
+        return self.sourceModel().getRowHeader(index, consonants=consonants)
+
+
+    def getRowSpecs(self, name, consonants):
+        return self.sourceModel().getRowSpecs(name, consonants=consonants)
+
+    def insertRow(self, index):
+        self.sourceModel().insertRow(index, consonants=False)
+
+    def insertColumn(self,index):
+        self.sourceModel().insertColumn(index, consonants=False)
+
+    def removeRow(self, index):
+        self.sourceModel().removeRow(index, consonants=False)
+
+    def removeColumn(self, index):
+        self.sourceModel().removeColumn(index, consonants=False)
+
+    def rowCount(self, parent=None):
+        return self.sourceModel().vowelRowCount()
+
+    def columnCount(self, parent=None):
+        return self.sourceModel().vowelColumnCount()
+
+    def filterAcceptsColumn(self, column, parent = None):
+        if column < self.sourceModel().vowel_column_offset:
+            return False
+        else:
+            return True
+
+    def filterAcceptsRow(self, row, parent = None):
+        if row < self.sourceModel().vowel_row_offset:
+            return False
+        else:
+            return True

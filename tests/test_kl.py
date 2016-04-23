@@ -31,7 +31,7 @@ def test_pseudo_allophones(specified_test_corpus):
     assert(abs(distance - 0.23231302100802534) < 0.001)
     assert(abs(seg1_entropy - 0.03500014009670246) < 0.001)
     assert(abs(seg2_entropy - 0.07314589775440267) < 0.001)
-    #assertEqual(ur,sr)#both should be None, to be fixed with features
+    #assertEqual(ur,sr)#both should be None, to be fixed with _features
 
 def test_default(specified_test_corpus):
     #Test 4, things that have no assumed relationship

@@ -1,12 +1,16 @@
-from .imports import *
-from .windows import FunctionWorker, FunctionDialog
-from .widgets import RadioSelectWidget
-from .luckygui import LuckyDialog
-from PyQt5.QtWidgets import QInputDialog
 import itertools
 import random
 from collections import defaultdict, OrderedDict
+
+from PyQt5.QtWidgets import QInputDialog
+
+from .imports import *
+from .windows import FunctionWorker
+from .widgets import RadioSelectWidget, FeatureEdit, FeatureCompleter
+from .tacticsgui import TacticsDialog
+from .views import ResultsWindow
 from corpustools.mutualinfo import mutual_information
+
 
 class AutoAnalysisError(Exception):
     pass
@@ -24,21 +28,26 @@ class AutoDialog(QDialog):
 
     name = 'Phonological pattern finding'
 
-    def __init__(self, parent, corpusModel, showToolTips):
-        QDialog.__init__(self, parent)#, AutoWorker())
-        self.corpusModel = corpusModel
+    def __init__(self, parent, corpus, inventory, settings, showToolTips):
+        QDialog.__init__(self, parent)
+        self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
+        self.settings = settings
         self.results = list()
         self.setWindowTitle('Look for phonological patterns')
         self.layout = QVBoxLayout()
+        self.syllShapeResultsWindow = None
+        self.showSyllShapeResults = QAction("Syllable shape results", self)
+        self.showSyllShapeResults.setVisible(False)
 
-        algEnabled = {'Vowel harmony':self.corpusModel.corpus.has_transcription,
-                    'Syllable shape':self.corpusModel.corpus.has_transcription,
-                    'Random analysis':self.corpusModel.corpus.has_transcription}
+        algEnabled = {'Vowel harmony':False,#self.corpus.has_transcription,
+                    'Syllable shape':self.corpus.has_transcription,
+                    'Random analysis':False}#self.corpus.has_transcription}
 
         self.algorithmWidget = RadioSelectWidget('Which pattern do you want to look for?',
-                                            OrderedDict([('Vowel harmony','vowel_harmony'),
-                                            ('Syllable shape','syllables'),
+                                            OrderedDict([('Syllable shape','syllables'),
+                                            ('Vowel harmony','vowel_harmony'),
                                             ('Random analysis','random')]),
                                             enabled=algEnabled)
 
@@ -83,108 +92,29 @@ class AutoDialog(QDialog):
             self.doRandomAnalysis()
 
     def doSyllableShapes(self):
-        nucleus = QInputDialog.getText(self, 'Syllable shapes', 'Which feature represents a syllable nucleus?')
-        nucleus = nucleus[0].lstrip('[').rstrip(']')
-        if not self.corpusHasFeature(nucleus):
-            return
-
-        onsets = list()
-        medials = list()
-        codas = list()
-        self.sign = nucleus[0]
-        self.name = nucleus[1:]
-
-        for word in self.corpusModel.corpus:
-            first_pos = 0
-            last_pos = len(word.transcription)
-            cur_onset = list()
-            cur_coda = list()
-            cur_medial = list()
-            for pos,seg in word.enumerate_symbols('transcription'):
-                seg = self.corpusModel.corpus.specifier[seg]
-                if not seg.features[self.name] == self.sign:
-                    cur_onset.append(seg)
-                else:
-                    if not cur_onset in onsets:
-                        onsets.append(cur_onset)
-                    first_pos = pos
-                    break
-
-            for pos in reversed(range(len(word.transcription))):
-                seg = self.corpusModel.corpus.specifier[word.transcription[pos]]
-                if not seg.features[self.name] == self.sign:
-                    cur_coda.append(seg)
-                else:
-                    if not cur_coda in codas:
-                        codas.append(cur_coda)
-                    last_pos = pos
-                    break
-
-            for pos in range(first_pos,last_pos):
-                seg = self.corpusModel.corpus.specifier[word.transcription[pos]]
-                if not seg.features[self.name] == self.sign:
-                    cur_medial.append(seg)
-                else:
-                    if not cur_medial in medials:
-                        medials.append(cur_medial)
-                    cur_medial = list()
-
-        # meds = [x for x in medials if x in onsets or x in codas]
-        # for m in meds:
-        #     if len(m) == 1:
-        #         if len(codas)==1 and codas[0]==[]: #no coda
-        #             onsets.append(codas[0])#this must be an onset
-        #
-        #     m = reversed(m)
-        #     cur_string = list()
-        #     for seg in m:
-        #         cur_string.append(seg)
-        #         if cur_string in onsets:
-        #             continue
-
-        self.outputSyllableResults(onsets, medials, codas)
-
-
-    def outputSyllableResults(self,onsets,medials,codas):
-        onset_patterns = self.lookForPatterns(onsets)
-        onset_patterns = '\n'.join(onset_patterns)
-        onsets = [''.join(o.symbol for o in ons) if ons else '\u2205' for ons in onsets]
-        onsets.sort()
-        onsets_label = QLabel('These are possible onsets in your corpus:')
-        onsets_list = ','.join(onsets)
-        onsets_label2 = QLabel(onsets_list)
-        commentary = 'Comments:\n{}'.format(onset_patterns)
-        onset_commentary = QLabel(commentary)
-
-        coda_patterns = self.lookForPatterns(codas)
-        coda_patterns = ','.join(coda_patterns)
-        codas = [''.join(c.symbol for c in coda) if coda else '\u2205' for coda in codas]
-        codas.sort()
-        codas_label = QLabel('\n************\nThese are possible codas in your corpus:')
-        codas_list = ','.join(codas)
-        codas_label2 = QLabel(codas_list)
-        commentary = 'Comments:\n{}'.format(coda_patterns)
-        coda_commentary = QLabel(commentary)
-
-
-        self.resultsLayout.addWidget(onsets_label)
-        self.resultsLayout.addWidget(onsets_label2)
-        self.resultsLayout.addWidget(onset_commentary)
-        self.resultsLayout.addWidget(codas_label)
-        self.resultsLayout.addWidget(codas_label2)
-        self.resultsLayout.addWidget(coda_commentary)
+        dialog = TacticsDialog(self,self.corpus,self.inventory,self.settings,self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            if self.syllShapeResultsWindow is not None and dialog.update and self.syllShapeResultsWindow.isVisible():
+                self.syllShapeResultsWindow.table.model().addRows(dialog.results)
+            else:
+                self.syllShapeResultsWindow = ResultsWindow('Syllable shape results', dialog, self)
+                self.syllShapeResultsWindow.show()
+                self.showSyllShapeResults.triggered.connect(self.syllShapeResultsWindow.raise_)
+                self.showSyllShapeResults.triggered.connect(self.syllShapeResultsWindow.activateWindow)
+                self.syllShapeResultsWindow.rejected.connect(lambda: self.showSyllShapeResults.setVisible(False))
+                self.showSyllShapeResults.setVisible(True)
 
     def lookForPatterns(self, seg_list):
 
         #look for a few common patterns
-        #this assumes certain features, but it won't necessarily work across all feature systems
+        #this assumes certain _features, but it won't necessarily work across all feature systems
         text = list()
 
         ########empty list?
         if len(seg_list)==1 and seg_list[0] == []:
             text.append('No segments are allowed in this position')
             return text
-
 
         ##########check for obstruents
         for segs in seg_list:
@@ -232,7 +162,7 @@ class AutoDialog(QDialog):
                     matches.append(feature)
 
         if matches:
-            text.append('They have these features in common:\n{}'.format(','.join([m for m in matches])))
+            text.append('They have these _features in common:\n{}'.format(','.join([m for m in matches])))
 
         ########nothing found
         if not text:

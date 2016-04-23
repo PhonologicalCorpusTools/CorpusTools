@@ -1,15 +1,10 @@
-
-
 from collections import OrderedDict
 
 from corpustools.mutualinfo.mutual_information import pointwise_mi
-
 from .imports import *
 from .widgets import (BigramWidget, RadioSelectWidget, TierWidget, ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
-
 from corpustools.exceptions import PCTError, PCTPythonError
-
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,
@@ -17,7 +12,6 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
 
 class MIWorker(FunctionWorker):
     def run(self):
-        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = []
         context = kwargs.pop('context')
@@ -77,16 +71,17 @@ class MIDialog(FunctionDialog):
 
     name = 'mutual information'
 
-    def __init__(self, parent, settings, corpus, showToolTips):
+    def __init__(self, parent, settings, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, MIWorker())
 
         self.corpus = corpus
+        self.inventory = inventory
         self.showToolTips = showToolTips
 
         miFrame = QFrame()
         milayout = QHBoxLayout()
 
-        self.segPairWidget = BigramWidget(self.corpus.inventory)
+        self.segPairWidget = BigramWidget(self.inventory)
 
         milayout.addWidget(self.segPairWidget)
 

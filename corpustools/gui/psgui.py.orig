@@ -1,11 +1,14 @@
 
 
 from .imports import *
-import time
 
+<<<<<<< HEAD
 from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
                         RadioSelectWidget, InventoryBox,
                         TierWidget, SegmentSelectionWidget)
+=======
+from .widgets import (EnvironmentSelectWidget, TierWidget)
+>>>>>>> refs/remotes/origin/InventoryTableView
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -42,17 +45,20 @@ class PhonoSearchDialog(FunctionDialog):
     _about = ['']
 
     name = 'phonological search'
-    def __init__(self, parent, settings, corpus, inventory, showToolTips):
+    def __init__(self, parent, settings, corpus, showToolTips):
         FunctionDialog.__init__(self, parent, settings, PSWorker())
 
         self.corpus = corpus
-        self.inventory = inventory
         self.showToolTips = showToolTips
 
         psFrame = QFrame()
         pslayout = QHBoxLayout()
 
-        self.envWidget = EnvironmentSelectWidget(self.inventory)
+        #self.targetWidget = SegmentSelectionWidget(self.corpus.inventory)
+
+        #pslayout.addWidget(self.targetWidget)
+
+        self.envWidget = EnvironmentSelectWidget(self.corpus)
         pslayout.addWidget(self.envWidget)
 
 
@@ -97,7 +103,5 @@ class PhonoSearchDialog(FunctionDialog):
                 envs = tuple(str(x) for x in f)
             except IndexError:
                 envs = tuple()
-            self.results.append({'Word': w, 
-                                'Transcription': str(getattr(w,self.tierWidget.value())),
-                                'Segment': segs,
-                                'Environment': envs})
+            self.results.append((w, str(getattr(w,self.tierWidget.value())), segs,
+                                envs))

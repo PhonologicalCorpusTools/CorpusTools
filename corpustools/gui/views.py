@@ -1,76 +1,12 @@
-
 import csv
+from itertools import product
 
 from .imports import *
-
-from .models import VariantModel, ResultsModel, PhonoSearchResultsModel
-from .windows import FunctionWorker
-
+from .models import VariantModel, ResultsModel, PhonoSearchResultsModel, ConsonantModel, VowelModel
 from .multimedia import AudioPlayer
+import corpustools.gui.widgets as PCTWidgets
+from .widgets import TableWidget
 
-
-class TableWidget(QTableView):
-    def __init__(self,parent=None):
-        super(TableWidget, self).__init__(parent=parent)
-
-        self.verticalHeader().hide()
-
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-
-        #self.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.customContextMenuRequested.connect(self.popup)
-        #header = self.horizontalHeader()
-        #header.setContextMenuPolicy(Qt.CustomContextMenu)
-        #header.customContextMenuRequested.connect( self.showHeaderMenu )
-        self.horizontalHeader().setMinimumSectionSize(70)
-        try:
-            self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        except AttributeError:
-            self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
-
-        self.setSortingEnabled(True)
-        self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
-
-        self.clip = QApplication.clipboard()
-
-    def keyPressEvent(self, e):
-        if (e.modifiers() & Qt.ControlModifier):
-            selected = self.selectionModel().selectedRows()
-            if e.key() == Qt.Key_C: #copy
-                #s = '\t'+"\t".join([str(self.table.horizontalHeaderItem(i).text()) for i in xrange(selected[0].leftColumn(), selected[0].rightColumn()+1)])
-                #s = s + '\n'
-                s = ''
-
-                for r in selected:
-                    #s += self.table.verticalHeaderItem(r).text() + '\t'
-                    for c in range(self.model().columnCount()):
-                        ind = self.model().index(r.row(),c)
-                        s += self.model().data(ind,Qt.DisplayRole) + "\t"
-                    s = s[:-1] + "\n" #eliminate last '\t'
-                self.clip.setText(s)
-
-
-    def setModel(self,model):
-        super(TableWidget, self).setModel(model)
-        #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
-        #try:
-        #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        #except AttributeError:
-        #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
-        #self.resizeColumnsToContents()
-        try:
-            self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
-        except AttributeError:
-            self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-
-    def calcWidth(self):
-        header = self.horizontalHeader()
-        width = self.horizontalOffset()
-        for i in range(header.count()):
-            width += header.sectionSize(i)
-        return width
 
 class LexiconView(QWidget):
     selectTokens = Signal(object)
@@ -871,3 +807,142 @@ class PhonoSearchResults(ResultsWindow):
                 self.table.setModel(dataModel)
         self.raise_()
         self.activateWindow()
+
+class InventoryView(QTableView):
+
+    dropSuccessful = Signal(str)
+    columnSpecsChanged = Signal(int, list, str, bool)
+    rowSpecsChanged = Signal(int, list, str, bool)
+
+    def __init__(self, inventory):
+        super().__init__()
+        self.setModel(inventory)
+        self.columnSpecsChanged.connect(self.model().sourceModel().changeColumnSpecs)
+        self.rowSpecsChanged.connect(self.model().sourceModel().changeRowSpecs)
+        self.horizontalHeader().sectionMoved.connect(self.moveColumn)
+        self.verticalHeader().sectionMoved.connect(self.moveRow)
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+
+        self.horizontalHeader().setSectionsClickable(True)
+        self.horizontalHeader().sectionDoubleClicked.connect(self.editChartCol)
+        self.horizontalHeader().setSectionsMovable(True)
+        self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.horizontalHeader().customContextMenuRequested.connect(self.showColumnMenu)
+        #self.horizontalHeader().setStretchLastSection(True)
+
+        self.verticalHeader().setSectionsClickable(True)
+        self.verticalHeader().sectionDoubleClicked.connect(self.editChartRow)
+        self.verticalHeader().setSectionsMovable(True)
+        self.verticalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.verticalHeader().customContextMenuRequested.connect(self.showRowMenu)
+        #self.verticalHeader().setStretchLastSection(True)
+
+        self.doubleClicked.connect(self.showFeatures)
+
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+
+    def checkSize(self):
+        if self.model().columnCount() == 0:
+            self.hide()
+        else:
+            self.show()
+
+    def showFeatures(self, index):
+        model_name = self.model().__class__.__name__
+        if not model_name == 'UncategorizedModel':
+            return
+        seg = self.model().sourceModel().uncategorized[index.column()]
+        # elif model_name == 'ConsonantModel':
+        #     seg = self.model().sourceModel()._data[index.row()][index.column()]
+        # elif model_name == 'VowelModel':
+        #     row_offset = self.model().sourceModel().vowel_row_offset
+        #     column_offset = self.mode().sourceModel().vowel_column_offset
+        #     seg = self.model().sourceModel()._data[index.row()+row_offset][index.colum()+column_offset]
+
+        features = [value+key for (key,value) in seg.features.items()]
+        features.sort(key=lambda x:x[1])
+        features = '\n'.join(features)
+        partials = self.model().sourceModel().getPartialCategorization(seg)
+        alert = QMessageBox()
+        alert.setWindowTitle('Feature matches')
+        alert.setText(('The segment /{}/ has these features:\n\n{}\n\n{}'.format(seg.symbol, features, partials)))
+        alert.addButton('Return', QMessageBox.AcceptRole)
+        alert.exec_()
+        return
+
+
+    def showRowMenu(self, pos):
+        menu = QMenu()
+        addRowAction = menu.addAction('Insert Row')
+        removeRowAction = menu.addAction('Remove Row')
+        editAction = menu.addAction('Edit Row Properties')
+        index = self.indexAt(pos)
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == addRowAction:
+            self.model().insertRow(index)
+        elif action == removeRowAction:
+            self.model().removeRow(index)
+        elif action == editAction:
+            self.editChartRow(index.row())
+
+    def showColumnMenu(self, pos):
+        menu = QMenu()
+        addColumnAction = menu.addAction('Insert Column')
+        removeColumnAction = menu.addAction('Remove Column')
+        editAction = menu.addAction('Edit Column Properties')
+        index = self.indexAt(pos)
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == addColumnAction:
+            self.model().insertColumn(index)
+        elif action == removeColumnAction:
+            self.model().removeColumn(index)
+        elif action == editAction:
+            self.editChartCol(index.column())
+
+    def moveColumn(self):
+        map = {}
+        consonants = True if isinstance(self.model(), ConsonantModel) else False
+        offset = 0 if consonants else self.model().sourceModel().vowel_column_offset
+        for j in range(self.horizontalHeader().length()):
+            visualIndex = self.horizontalHeader().visualIndex(j)
+            logicalIndex = self.horizontalHeader().logicalIndex(visualIndex)
+            if logicalIndex == -1:
+                continue
+            map[logicalIndex] = (visualIndex, self.model().sourceModel().headerData(logicalIndex+offset, Qt.Horizontal, Qt.DisplayRole))
+        self.model().sourceModel().changeColumnOrder(map, consonants=consonants)
+
+    def moveRow(self):
+        map = {}
+        consonants = True if isinstance(self.model(), ConsonantModel) else False
+        offset = 0 if consonants else self.model().sourceModel().vowel_row_offset
+        for j in range(self.verticalHeader().length()):
+            visualIndex = self.verticalHeader().visualIndex(j)
+            logicalIndex = self.verticalHeader().logicalIndex(visualIndex)
+            if logicalIndex == -1:
+                continue
+            map[logicalIndex] = (visualIndex, self.model().sourceModel().headerData(logicalIndex+offset, Qt.Vertical, Qt.DisplayRole))
+        self.model().sourceModel().changeRowOrder(map, consonants=consonants)
+
+    def editChartRow(self, index):
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Horizontal, consonants=consonants)
+        results = dialog.exec_()
+        if results:
+            self.rowSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
+
+    def editChartCol(self, index):
+        if isinstance(self.model(), ConsonantModel):
+            consonants=True
+        elif isinstance(self.model(), VowelModel):
+            consonants=False
+        dialog = PCTWidgets.EditInventoryWindow(self.model(), index, Qt.Vertical, consonants=consonants)
+        results = dialog.exec_()
+        if results:
+            self.columnSpecsChanged.emit(index, dialog.features, dialog.section_name, consonants)
