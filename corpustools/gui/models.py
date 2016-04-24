@@ -1067,7 +1067,8 @@ class InventoryModel(QAbstractTableModel):
         self.uncategorized = list()
 
         for s in self.segs.values():
-            if s.symbol == '#':
+            if s.symbol in self.non_segment_symbols:
+                self.uncategorized.append(s)
                 continue  #ignore the word boundary symbol
             try:
                 c = self.categorize(s)
@@ -1096,6 +1097,8 @@ class InventoryModel(QAbstractTableModel):
         if not self.vowelRows:
             self.vowelRows.add('Row 1')
             self.vowel_row_data = {'Row 1': [0,{},None]}
+
+
 
     def headerData(self, row_or_col, orientation, role=None):
         try:

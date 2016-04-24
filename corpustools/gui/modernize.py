@@ -22,16 +22,16 @@ def force_update(corpus):
     corpus.inventory = modernize_inventory_attributes(corpus.inventory)
     corpus.inventory,corpus.specifier = modernize_features(corpus.inventory, corpus.specifier)
     corpus.inventory.isNew = False
-    if corpus.has_transcription:
-        if not [seg for seg in corpus.inventory if not seg=='#']:
-            #for some reason, the segment inventory is an empty list in the old IPHOD corpus, and potentially other
-            #old PCT files too
-            segs = set()
-            for word in corpus:
-                for seg in word.transcription:
-                    segs.add(seg)
-            for seg in segs:
-                corpus.inventory.segs[seg] = Segment(seg,corpus.specifier.specify(seg))
+
+    if not hasattr(corpus.inventory, 'segs') or not corpus.inventory.segs:
+        #for some reason, the segment inventory is an empty list in the old IPHOD corpus, and potentially other
+        #old PCT files too
+        segs = set()
+        for word in corpus:
+            for seg in word.transcription:
+                segs.add(seg)
+        for seg in segs:
+            corpus.inventory.segs[seg] = Segment(seg,corpus.specifier.specify(seg))
 
     if not corpus.specifier.possible_values or len(corpus.specifier.possible_values) < 2:
         f_values = set()
@@ -76,7 +76,7 @@ def modernize_specifier(specifier):
         if seg == '#':
             continue
         if isinstance(specifier.matrix[seg], Segment):
-            specifier.matrix[seg.symbol] = specifier.matrix[seg.symbol].features
+            specifier.matrix[seg] = specifier.matrix[seg].features
 
     #In some SPE matrices, uppercase [EXTRA] and [LONG] appear in specifier.features, but lower case [extra] and [long]
     #are used in the actual feature specifications. This next step forces the .features list to match the specifications

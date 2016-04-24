@@ -2337,7 +2337,7 @@ class Corpus(object):
         transcription : list
             Segment symbols to add to the inventory if needed
         """
-        add_default = False
+        added_default = False
         for s in transcription:
             if isinstance(s, Segment):
                 s = s.symbol
@@ -2346,14 +2346,14 @@ class Corpus(object):
                 if self.specifier is not None:
                     if not s in self.specifier:
                         self.specifier[s] = {feature.lower(): 'n' for feature in self.specifier.features}
-                        add_default = True
+                        added_default = True
                     self.inventory.segs[s].features = self.specifier[s]
 
         if transcription.stress_pattern:
             for k,v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])
 
-        return add_default
+        return added_default
 
     def get_or_create_word(self, **kwargs):
         """

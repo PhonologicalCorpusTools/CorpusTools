@@ -721,7 +721,6 @@ class LoadCorpusDialog(PCTDialog):
                 elif self.textType == 'spelling':
                     anno_types = inspect_discourse_spelling(self.pathWidget.value())
                 elif self.textType in ['buckeye','timit']:
-
                     anno_types = inspect_discourse_multiple_files(self.pathWidget.value(), self.textType)
                 self.updateColumnFrame(anno_types)
 
@@ -792,6 +791,7 @@ class LoadCorpusDialog(PCTDialog):
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
+        print(kwargs['annotation_types'])
         if self.textType == 'csv':
             kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(
                                         self.columnDelimiterEdit.text()
