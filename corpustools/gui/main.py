@@ -150,18 +150,10 @@ class MainWindow(QMainWindow):
         self.corpus = None
         self.corpusModel = None
         self.inventoryModel = None
-
-        self.FLWindow = None
-        self.PDWindow = None
-        self.FAWindow = None
-        self.SSWindow = None
-        self.ASWindow = None
-        self.NDWindow = None
-        self.PPWindow = None
-        self.MIWindow = None
-        self.KLWindow = None
-        self.PhonoSearchWindow = None
-        self.AutoWindow = None
+        self.resultsCodes = ['FL', 'PD', 'FA', 'SS', 'AS', 'ND', 'PP', 'MI', 'KL', 'PhonoSearch', 'Auto']
+        for abbrv in self.resultsCodes:
+            window_name = abbrv+'Window'
+            setattr(self, window_name, None)
         self.setMinimumWidth(self.menuBar().sizeHint().width())
 
 
@@ -314,7 +306,7 @@ class MainWindow(QMainWindow):
                 alert.setWindowTitle('Missing corpus information')
                 alert.setText('Your corpus was loaded without a transcription or feature system. '
                               'The majority of PCT\'s analysis functions require this information to work correctly. '
-                              'Go to Features > View/Edit feature system... to select one.\n '
+                              'Go to Features > View/Change feature system... to select one.\n '
                               'If you do not have any feature file available at all, you can '
                               'download one by going to File > Manage feature systems...')
                 alert.addButton('OK', QMessageBox.AcceptRole)
@@ -972,6 +964,12 @@ class MainWindow(QMainWindow):
         self.showAutoResults = QAction("Automatic phonological analysis results", self)
         self.showAutoResults.setVisible(False)
 
+        self.closeResultsWindowsAct = QAction("Close all open results windows", self,
+                                           triggered=self.closeResultsWindows)
+
+        self.goToMainWindowAct = QAction("Bring the main window to the front", self,
+                                         triggered=self.raise_)
+
     def createMenus(self):
         self.fileMenu = self.menuBar().addMenu("&File")
         self.fileMenu.addAction(self.loadCorpusAct)
@@ -1020,8 +1018,11 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.autoAnalysisAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
+        self.viewMenu.addAction(self.goToMainWindowAct)
+        self.viewMenu.addAction(self.closeResultsWindowsAct)
         self.viewMenu.addAction(self.showDiscoursesAct)
         self.viewMenu.addAction(self.showTextAct)
+
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(self.showPPResults)
         self.viewMenu.addAction(self.showFLResults)
@@ -1044,6 +1045,15 @@ class MainWindow(QMainWindow):
     #@check_for_unsaved_changes
     #def close(self):
     #    QMainWindow.close(self)
+
+    def goToMainWindow(self):
+        self.raise_()
+
+    def closeResultsWindows(self):
+        for abbrv in self.resultsCodes:
+            window = getattr(self, abbrv+'Window')
+            if window is not None and window.isVisible():
+                window.close()
 
     def closeEvent(self, event):
 

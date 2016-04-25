@@ -2303,8 +2303,9 @@ class Corpus(object):
                 if not self.has_spelling:
                     self.has_spelling = True
 
+        added_default = False
         if word.transcription is not None:
-            add_default = self.update_inventory(word.transcription)
+            added_default = self.update_inventory(word.transcription)
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
         for d in word.descriptors:
             if d not in self.attributes:
@@ -2319,7 +2320,7 @@ class Corpus(object):
                 word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word,a.name))
 
-        return add_default
+        return added_default
 
     def update_features(self):
         for seg in self.inventory:

@@ -121,6 +121,8 @@ class LoadCorpusWorker(FunctionWorker):
                 except KeyError:
                     corpus.lexicon.specifier[seg] = {feature:'n' for feature in corpus.lexicon.specifier.features}
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
+                except AttributeError:
+                    pass #This only has spelling, no transcription
 
         self.dataReady.emit(corpus)
 
