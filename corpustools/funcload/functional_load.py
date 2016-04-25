@@ -255,9 +255,6 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
     if not prevent_normalization and preneutr_h > 0.0:
         result = result / preneutr_h
 
-    print(preneutr_h)
-    print(postneutr_h)
-
     return result
 
 
@@ -303,6 +300,7 @@ def relative_minpair_fl(corpus_context, segment,
                         if other.symbol != segment and other.symbol != '#']
 
     results = []
+    results_dict = {}
     to_output = []
     for sp in segment_pairs:
         res = minpair_fl(corpus_context, [sp],
@@ -310,6 +308,7 @@ def relative_minpair_fl(corpus_context, segment,
             distinguish_homophones = distinguish_homophones,
             environment_filter = environment_filter,
             stop_check = stop_check, call_back = call_back)
+        results_dict[sp] = res[0]
         results.append(res[0])
         print('Functional load of {}: {}'.format(sp, res[0]))
 
@@ -318,7 +317,8 @@ def relative_minpair_fl(corpus_context, segment,
     if output_filename is not None:
         save_minimal_pairs(output_filename, to_output)
 
-    return sum(results)/len(segment_pairs)
+    result = sum(results)/len(segment_pairs)
+    return (result, results_dict)
 
 
 def relative_deltah_fl(corpus_context, segment,
@@ -351,14 +351,17 @@ def relative_deltah_fl(corpus_context, segment,
                         if other.symbol != segment and other.symbol != '#']
 
     results = []
+    results_dict = {}
     for sp in segment_pairs:
         res = deltah_fl(corpus_context, [sp],
                 environment_filter=environment_filter,
                 stop_check = stop_check, call_back = call_back)
         results.append(res)
+        results_dict[sp] = res
         print('Functional load of {}: {}'.format(sp, res))
 
-    return sum(results)/len(segment_pairs)
+    result = sum(results)/len(segment_pairs)
+    return (result, results_dict)
 
 
 

@@ -47,11 +47,15 @@ def main():
 
     ####
 
+    # Parse paths
+
     try:
         home = os.path.expanduser('~')
         corpus = load_binary(os.path.join(home, 'Documents', 'PCT', 'CorpusTools', 'CORPUS', args.corpus_file_name))
     except FileNotFoundError:
         corpus = load_binary(args.corpus_file_name)
+
+    # Create corpus context
 
     if args.context_type == 'Canonical':
         corpus = CanonicalVariantContext(corpus, args.sequence_type, args.type_or_token, frequency_threshold=args.frequency_cutoff)
@@ -61,6 +65,8 @@ def main():
         corpus = SeparatedTokensVariantContext(corpus, args.sequence_type, args.type_or_token, frequency_threshold=args.frequency_cutoff)
     elif args.context_type == 'Weighted':
         corpus = WeightedVariantContext(corpus, args.sequence_type, args.type_or_token, frequency_threshold=args.frequency_cutoff)
+
+    # Create environment filters
 
     if not args.environment_lhs and not args.environment_rhs:
         environment_filter = None
@@ -75,9 +81,22 @@ def main():
             split_rhs = None
         environment_filter = EnvironmentFilter([], split_lhs, split_rhs)
 
+    # Initialize results
+
+    overall_result = None
+    detailed_results = {}
+    keys_label = ''
+    values_label = 'functional load'
+
+    # Determine which function to call
+
     if args.all_pairwise_fls:
-        result = all_pairwise_fls(corpus, relative_fl=args.relative_fl, algorithm=args.algorithm, relative_count=args.relative_count,
+        results = all_pairwise_fls(corpus, relative_fl=args.relative_fl, algorithm=args.algorithm, relative_count=args.relative_count,
                      distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+        for pair, fl in results:
+            detailed_results[pair] = fl
+        keys_label = 'segment pair'
+        values_label = 'functional load'
 
     else:
         if args.relative_fl != True:
@@ -91,46 +110,69 @@ def main():
 
         if args.algorithm == 'minpair':
             if args.relative_fl:
-                result = relative_minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
+                results = relative_minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
+                overall_result = results[0]
+                detailed_results = results[1]
+                keys_label = 'segment pair'
             else:
                 if args.separate_pairs:
-                    result = []
                     for pair in segpairs_or_segment:
-                        result.append(minpair_fl(corpus, [pair], relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter))
+                        pair = tuple(pair)
+                        detailed_results[pair] = minpair_fl(corpus, [pair], relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)[0]
+                    keys_label = 'segment pair'
                 else:
-                    result = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+                    results = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
+                    overall_result = results[0]
+                    detailed_results = {mp: '' for mp in results[1]}
+                    keys_label = 'minimal pair'
         elif args.algorithm == 'deltah':
             if args.relative_fl:
-                result = relative_deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+                results = relative_deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+                overall_result = results[0]
+                detailed_results = results[1]
+                keys_label = 'segment pair'
             else:
                 if args.separate_pairs:
-                    result = []
                     for pair in segpairs_or_segment:
-                        result.append(deltah_fl(corpus, [pair], environment_filter=environment_filter, prevent_normalization=args.prevent_normalization))
+                        pair = tuple(pair)
+                        detailed_results[pair] = (deltah_fl(corpus, [pair], environment_filter=environment_filter, prevent_normalization=args.prevent_normalization))
+                    keys_label = 'segment pair'
                 else:
-                    result = deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+                    overall_result = deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
         else:
             raise Exception('-a / --algorithm must be set to either \'minpair\' or \'deltah\'.')
 
     if args.outfile:
         with open(args.outfile, 'w') as outfile:
-            if type(result) != list:
-                outstr = 'result\t' + '\t'.join([a for a in vars(args)]) + '\n' + str(result) + '\t' + '\t'.join([str(getattr(args, a)) for a in vars(args)])
-                outfile.write(outstr)
-            elif len(result[0]) == 2: # format for all segment pairs comparison
-                outstr = 'result\tsegment(s)\n'
-                for pairs, value in result:
-                    outstr += '{}\t{}\n'.format(value, pairs)
-                outfile.write(outstr)
-            else:
-                outstr = 'result\tsegment(s)\tminpairs\t' + '\t'.join([a for a in vars(args)]) + '\n'
-                for element in result:
-                    outstr += str(element[0]) + '\t' + str(element[2]) + '\t' + str(element[1]) + '\t' + '\t'.join([str(getattr(args,a)) for a in vars(args)]) + '\n'
-                outfile.write(outstr)
+            outstr = '{}\t{}\n'.format(keys_label, values_label)
+            if overall_result:
+                outstr += 'OVERALL\t{}\n'.format(overall_result)
+            for key in detailed_results:
+                outstr += '{}\t{}\n'.format(key, detailed_results[key])
+            outfile.write(outstr)
+
+
+            # if type(result) != list:
+            #     outstr = 'result\t' + '\t'.join([a for a in vars(args)]) + '\n' + str(result) + '\t' + '\t'.join([str(getattr(args, a)) for a in vars(args)])
+            #     outfile.write(outstr)
+            # elif len(result[0]) == 2: # format for all segment pairs comparison
+            #     outstr = 'result\tsegment(s)\n'
+            #     for pairs, value in result:
+            #         outstr += '{}\t{}\n'.format(value, pairs)
+            #     outfile.write(outstr)
+            # else:
+            #     outstr = 'result\tsegment(s)\tminpairs\t' + '\t'.join([a for a in vars(args)]) + '\n'
+            #     for element in result:
+            #         outstr += str(element[0]) + '\t' + str(element[2]) + '\t' + str(element[1]) + '\t' + '\t'.join([str(getattr(args,a)) for a in vars(args)]) + '\n'
+            #     outfile.write(outstr)
 
     else:
+        if overall_result:
+            easy_result = overall_result
+        else:
+            easy_result = detailed_results
         print('No output file name provided.')
-        print('The functional load of the given inputs is {}.'.format(str(result)))
+        print('The functional load of the given inputs is {}.'.format(str(easy_result)))
 
 
 if __name__ == '__main__':
