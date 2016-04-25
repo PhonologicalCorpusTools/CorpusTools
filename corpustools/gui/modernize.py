@@ -2,8 +2,9 @@ import random
 from corpustools.corpus.classes.lexicon import Segment, FeatureMatrix
 from corpustools import __version__ as currentPCTversion
 
-#it would be better to import these attributes from .models.InventoryModel, but this creates a circular import problem
-inventory_attributes = {'_data':list(), 'segs':dict(), 'features':list(), 'possible_values':list(), 'stresses':list(),
+#it would be better to import these attributes from models.InventoryModel, but this creates a circular import problem
+inventory_attributes = {'_data':list(), 'segs':{'#': Segment('#')}, 'features':list(), 'possible_values':list(),
+                        'stresses':list(),
                         'consColumns': set(['Column 1']), 'vowelColumns': set(['Column 1']),
                         'vowelRows': set(['Row 1']), 'consRows':set(['Row 1']),
                         'cons_column_data': {'Column 1': [0,{},None]}, 'cons_row_data': {'Row 1': [0,{},None]},
@@ -19,11 +20,11 @@ inventory_attributes = {'_data':list(), 'segs':dict(), 'features':list(), 'possi
 def force_update(corpus):
     #This runs through known incompatibilities with previous version of PCT and tries to patch them all up. This gets
     #called from the LoadCorpusDialog.forceUpdate() in iogui.py
-    corpus.inventory = modernize_inventory_attributes(corpus.inventory)
-    corpus.inventory,corpus.specifier = modernize_features(corpus.inventory, corpus.specifier)
-    corpus.inventory.isNew = False
+    if not hasattr(corpus.inventory, 'segs'):
+        setattr(corpus.inventory, 'segs', {'#': Segment('#')})
+    has_segs = [seg for seg in corpus.inventory.segs if not seg in inventory_attributes['non_segment_symbols']]
 
-    if not hasattr(corpus.inventory, 'segs') or not corpus.inventory.segs:
+    if not has_segs:
         #for some reason, the segment inventory is an empty list in the old IPHOD corpus, and potentially other
         #old PCT files too
         segs = set()
@@ -32,7 +33,9 @@ def force_update(corpus):
                 segs.add(seg)
         for seg in segs:
             corpus.inventory.segs[seg] = Segment(seg,corpus.specifier.specify(seg))
-
+    corpus.inventory = modernize_inventory_attributes(corpus.inventory)
+    corpus.inventory, corpus.specifier = modernize_features(corpus.inventory, corpus.specifier)
+    corpus.inventory.isNew = False
     if not corpus.specifier.possible_values or len(corpus.specifier.possible_values) < 2:
         f_values = set()
         for seg in corpus.inventory:

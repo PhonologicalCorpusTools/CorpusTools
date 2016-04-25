@@ -87,7 +87,7 @@ class AnnotationType(object):
         self._list = []
 
     def __repr__(self):
-        return '<AnnotationType "{}" with Attribute "{}"'.format(self.name,
+        return '<AnnotationType "{}" with Attribute "{}">'.format(self.name,
                                                         self.attribute.name)
 
     def __str__(self):

@@ -1401,7 +1401,6 @@ class InventoryModel(QAbstractTableModel):
             sample = random.choice([seg for seg in self.segs.values() if not seg.symbol == '#'])
             # pick an arbitrary segment and examine its features; they all should have the same feature list
         except IndexError:
-            print(vars(self))
             raise CorpusIntegrityError('No segments were found in the inventory')
         if 'consonantal' in sample.features:
             self.generateGenericHayes()

@@ -791,7 +791,13 @@ class LoadCorpusDialog(PCTDialog):
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
-        print(kwargs['annotation_types'])
+        if (not any([x.base for x in kwargs['annotation_types']])
+            and not any([x.anchor for x in kwargs['annotation_types']])):
+            QMessageBox.critical(self, 'Missing information',
+                                 ('No spelling or transcription was selected for the corpus. Please check the '
+                                 '"Parsing Preview" section and ensure that there is an Annotation Type is set to '
+                                 'either Transcription or Orthography'))
+            return
         if self.textType == 'csv':
             kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(
                                         self.columnDelimiterEdit.text()
@@ -860,6 +866,10 @@ class LoadCorpusDialog(PCTDialog):
                     if all(f=='n' for f in seg.features.values()):
                         if seg.symbol == '\'':
                             unmatched.append('\' (apostrophe)')
+                        elif seg.symbol == '.':
+                            unmatched.append('. (period)')
+                        elif seg.symbol == ',':
+                            unmatched.append(', (comma)')
                         else:
                             unmatched.append(seg.symbol)
                 if not unmatched:
@@ -872,7 +882,9 @@ class LoadCorpusDialog(PCTDialog):
                     alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
                     'selected feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
                     'feature. You can change these feature values in PCT by going to Features>View/Change feature '
-                    'system...'.format(unmatched)))
+                    'system...\n\nIf your transcription delimiter symbol appears in the list above, it means that your '
+                    'parsing settings are incorrect. You can change these settings in the "Parsing Preview" pane on '
+                    'right-hand side.'.format(unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()
