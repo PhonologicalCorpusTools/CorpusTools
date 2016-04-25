@@ -186,7 +186,7 @@ def minpair_fl(corpus_context, segment_pairs,
 
 
 def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
-            stop_check = None, call_back = None):
+              prevent_normalization = False, stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between between two
     segments as the decrease in corpus entropy caused by a merger.
 
@@ -198,7 +198,8 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
         The pairs of segments to be conflated.
     environment_filter : EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
-        particular segmental contexts
+    prevent_normalization : bool
+        Prevents division of the entropy difference by the pre-merger entropy
     stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
     call_back : callable, optional
@@ -250,6 +251,12 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
     result = preneutr_h - postneutr_h
     if result < 1e-10:
         result = 0.0
+
+    if not prevent_normalization and preneutr_h > 0.0:
+        result = result / preneutr_h
+
+    print(preneutr_h)
+    print(postneutr_h)
 
     return result
 
