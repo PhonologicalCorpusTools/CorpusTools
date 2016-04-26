@@ -212,9 +212,12 @@ class AddWordDialog(QDialog):
 
         for a in self.corpus.attributes:
             if a.att_type == 'tier' and a.name == 'transcription':
-                self.edits[a.name] = TranscriptionWidget('Transcription', corpus, inventory)
-                self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
-                main.addRow(self.edits[a.name])
+                if not self.corpus.has_transcription:
+                    pass
+                else:
+                    self.edits[a.name] = TranscriptionWidget('Transcription', corpus, inventory)
+                    self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
+                    main.addRow(self.edits[a.name])
             elif a.att_type == 'tier':
                 self.edits[a.name] = QLabel('Empty')
                 main.addRow(QLabel(str(a)),self.edits[a.name])
@@ -232,7 +235,10 @@ class AddWordDialog(QDialog):
                 print(a.name)
                 print(str(a))
             if word is not None:
-                self.edits[a.name].setText(str(getattr(word,a.name)))
+                if a.name == 'transcription' and not self.corpus.has_transcription:
+                    pass
+                else:
+                    self.edits[a.name].setText(str(getattr(word,a.name)))
 
         mainFrame = QFrame()
         mainFrame.setLayout(main)

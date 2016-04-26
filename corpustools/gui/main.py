@@ -1042,13 +1042,6 @@ class MainWindow(QMainWindow):
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.aboutAct)
 
-    #@check_for_unsaved_changes
-    #def close(self):
-    #    QMainWindow.close(self)
-
-    def goToMainWindow(self):
-        self.raise_()
-
     def closeResultsWindows(self):
         for abbrv in self.resultsCodes:
             window = getattr(self, abbrv+'Window')

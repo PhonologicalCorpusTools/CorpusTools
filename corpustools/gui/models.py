@@ -342,7 +342,7 @@ class CorpusModel(BaseCorpusTableModel):
     def hideNonLexical(self, b):
         self.nonLexHidden = b
         self.layoutAboutToBeChanged.emit()
-        self.rows = self.allData
+        #self.rows = self.allData
         if b:
             self.rows = [x for x in self.rows if str(self.corpus[x].transcription) != '']
         self.layoutChanged.emit()
@@ -1737,17 +1737,6 @@ class InventoryModel(QAbstractTableModel):
             else:
                 category.append('Voiceless')
         return category
-
-class InventoryDelegate(QItemDelegate):
-
-    def __init__(self):
-        super().__init__()
-
-    def setEditor(self, editor, index):
-        editor.setValue(index.model().data(index, Qt.EditRole))
-
-    def setModelData(self, editor, model, index):
-        model.setData(index, editor.value(), Qt.EditRole)
 
 class ConsonantModel(QSortFilterProxyModel):
 
