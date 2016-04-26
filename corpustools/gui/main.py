@@ -671,7 +671,8 @@ class MainWindow(QMainWindow):
             else:
                 self.enableSave()
 
-
+    @check_for_empty_corpus
+    @check_for_transcription
     def phonoSearch(self):
         dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
