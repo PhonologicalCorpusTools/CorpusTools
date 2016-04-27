@@ -12,6 +12,7 @@ from corpustools.exceptions import DelimiterError, PCTError
 import corpustools.gui.modernize as modernize
 
 import time
+import pdb
 
 def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     """
@@ -85,10 +86,9 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
         a = AnnotationType(h, None, None, token = False, attribute = att)
         if cat == 'tier':
             for t in trans_delimiters:
-                if t in vals[h][0]:
+                if t in vals[h][0] or t in vals[h][-1]:
                     a.trans_delimiter = t
                     break
-            a.trans_delimiter = None # otherwise, assume null trans_delimiter
         a.add(vals[h], save = False)
         atts.append(a)
 
