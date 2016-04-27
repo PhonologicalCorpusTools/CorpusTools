@@ -124,7 +124,7 @@ def main():
                     results = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
                     overall_result = results[0]
                     detailed_results = {mp: '' for mp in results[1]}
-                    keys_label = 'minimal pair'
+                    keys_label = 'minimal pair (all listed regardless of distinguish_homophones value)'
         elif args.algorithm == 'deltah':
             if args.relative_fl:
                 results = relative_deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
@@ -151,20 +151,6 @@ def main():
                 outstr += '{}\t{}\n'.format(key, detailed_results[key])
             outfile.write(outstr)
 
-
-            # if type(result) != list:
-            #     outstr = 'result\t' + '\t'.join([a for a in vars(args)]) + '\n' + str(result) + '\t' + '\t'.join([str(getattr(args, a)) for a in vars(args)])
-            #     outfile.write(outstr)
-            # elif len(result[0]) == 2: # format for all segment pairs comparison
-            #     outstr = 'result\tsegment(s)\n'
-            #     for pairs, value in result:
-            #         outstr += '{}\t{}\n'.format(value, pairs)
-            #     outfile.write(outstr)
-            # else:
-            #     outstr = 'result\tsegment(s)\tminpairs\t' + '\t'.join([a for a in vars(args)]) + '\n'
-            #     for element in result:
-            #         outstr += str(element[0]) + '\t' + str(element[2]) + '\t' + str(element[1]) + '\t' + '\t'.join([str(getattr(args,a)) for a in vars(args)]) + '\n'
-            #     outfile.write(outstr)
 
     else:
         if overall_result:

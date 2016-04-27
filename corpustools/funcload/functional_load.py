@@ -161,24 +161,23 @@ def minpair_fl(corpus_context, segment_pairs,
         if len(merged_dict[entry]) == 1: # can't contain a pair
             continue
 
-        if not distinguish_homophones:
-            ## Choose only one word with each transcription
-            unique_words = []
-            seen_transcriptions = []
-            for word in merged_dict[entry]:
-                transcription = getattr(word, corpus_context.sequence_type)
-                if transcription not in seen_transcriptions:
-                    seen_transcriptions.append(transcription)
-                    unique_words.append(word)
-            merged_dict[entry] = unique_words
-
         pairs = itertools.combinations(merged_dict[entry], 2)
+        minpair_transcriptions = set()
         for w1, w2 in pairs:
-            ordered_pair = sorted([(w1, getattr(w1, corpus_context.sequence_type)),
-                            (w2, getattr(w2, corpus_context.sequence_type))],
-                            key = lambda x: x[1]) # sort by tier/transcription
-            minpairs.append(tuple(ordered_pair))
-            result += 1
+            if (getattr(w1, corpus_context.sequence_type) 
+                != getattr(w2, corpus_context.sequence_type)): # avoids counting homophones
+                if w1.spelling != w2.spelling: # avoids pronunc. variants
+                    ordered_pair = sorted([(w1, getattr(w1, corpus_context.sequence_type)),
+                                    (w2, getattr(w2, corpus_context.sequence_type))],
+                                    key = lambda x: x[1]) # sort by tier/transcription
+                    trans_pair = tuple([transcription for _, transcription in ordered_pair])
+                    if distinguish_homophones:
+                        result += 1
+                    else:
+                        if trans_pair not in minpair_transcriptions:
+                            result += 1
+                    minpair_transcriptions.add(trans_pair)
+                    minpairs.append(tuple(ordered_pair))
 
     if relative_count and contain_target_segment_count > 0:
         result /= float(contain_target_segment_count)
