@@ -1,6 +1,4 @@
 from csv import DictReader, DictWriter
-import collections
-import re
 import os
 
 from corpustools.corpus.classes.lexicon import Corpus, FeatureMatrix, Word, Attribute

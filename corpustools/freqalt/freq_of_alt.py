@@ -1,15 +1,8 @@
 #fun times with morphological relatedness
-import time
-import os
-from codecs import open
-
 import corpustools.symbolsim.phono_align as pam
-from corpustools.symbolsim.string_similarity import (string_similarity,
-                                                    )
-
+from corpustools.symbolsim.string_similarity import string_similarity
 from .io import print_freqalt_results
 
-from corpustools.exceptions import FreqAltError
 
 def calc_freq_of_alt(corpus_context, seg1, seg2, algorithm, output_filename = None,
                     min_rel = None, max_rel = None, phono_align = False,

@@ -1,5 +1,4 @@
 import os
-import copy
 from collections import OrderedDict
 import codecs
 import time

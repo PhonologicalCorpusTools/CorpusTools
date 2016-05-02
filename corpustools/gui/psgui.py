@@ -3,9 +3,7 @@
 from .imports import *
 import time
 
-from .widgets import (EnvironmentSelectWidget, SegmentPairSelectWidget,
-                        RadioSelectWidget, InventoryBox,
-                        TierWidget, SegmentSelectionWidget)
+from .widgets import (EnvironmentSelectWidget, TierWidget)
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -79,9 +77,8 @@ class PhonoSearchDialog(FunctionDialog):
         if len(envs) > 0:
             for i, e in enumerate(envs):
                 if len(e.middle) == 0:
-                    reply = QMessageBox.critical(self,
-                            "Missing information",
-    "Please specify at least segment to search for in environment {}.".format(i+1))
+                    reply = QMessageBox.critical(self, "Missing information",
+                            "Please specify at least segment to search for in environment {}.".format(i+1))
                     return
             kwargs['envs'] = envs
 

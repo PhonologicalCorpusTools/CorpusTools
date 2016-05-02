@@ -1,5 +1,4 @@
 import os
-import time
 from collections import OrderedDict
 
 from .imports import *
@@ -14,10 +13,8 @@ from .corpusgui import AddWordDialog
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext)
 
-
 class PPWorker(FunctionWorker):
     def run(self):
-        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = []
         context = kwargs.pop('context')

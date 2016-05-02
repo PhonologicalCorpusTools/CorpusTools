@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import sys
-import math
-from collections import defaultdict
-from corpustools.corpus.classes.lexicon import CorpusIntegrityError
 
+import math
 import time
 
 from corpustools.exceptions import MutualInfoError

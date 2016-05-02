@@ -4,7 +4,6 @@ from queue import Empty, Full
 
 import time
 
-from corpustools.exceptions import PCTMultiprocessingError
 
 def pool_filter(func, candidates, num_cores):
     pool = Pool(num_cores)

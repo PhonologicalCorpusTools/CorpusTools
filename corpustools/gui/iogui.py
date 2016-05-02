@@ -313,7 +313,8 @@ class DownloadCorpusDialog(QDialog):
 
         layout.addWidget(acFrame)
 
-        layout.addWidget(QLabel("Please be patient. It can take up to 30 seconds to download a corpus.\nThis window will close when finished."))
+        layout.addWidget(QLabel("Please be patient. It can take up to 30 seconds to download a corpus.\n"
+                                "This window will close when finished."))
 
         self.setLayout(layout)
 
@@ -347,7 +348,8 @@ class DownloadCorpusDialog(QDialog):
         name = self.corporaWidget.value()
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Overwrite corpus",
-                    "The corpus '{}' is already available.  Would you like to overwrite it?".format(name), QMessageBox.NoButton, self)
+                    "The corpus '{}' is already available.  Would you like to overwrite it?".format(name),
+                    QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:

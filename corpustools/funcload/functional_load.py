@@ -2,16 +2,9 @@ import re
 from collections import defaultdict
 from math import *
 import itertools
-import queue
-import copy
-from math import factorial
 import time
 
-from corpustools.exceptions import FuncLoadError
 from .io import save_minimal_pairs
-from corpustools.corpus.classes.lexicon import EnvironmentFilter
-
-import pdb
 
 
 def _merge_segment_pairs(tier, segment_pairs, environment_filter):

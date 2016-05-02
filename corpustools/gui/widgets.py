@@ -1736,13 +1736,12 @@ class FeatureBox(QWidget):
         return val
 
 class SegmentPairDialog(QDialog):
-    def __init__(self, corpus, parent=None):
+    def __init__(self, inventory, parent=None):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
 
         self.inventoryFrame = SegmentSelectionWidget(inventory)
-
         layout.addWidget(self.inventoryFrame)
 
         self.setLayout(layout)
