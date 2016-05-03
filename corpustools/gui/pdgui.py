@@ -5,7 +5,6 @@ from .widgets import (EnvironmentSelectWidget,
                     SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
                     ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
-import itertools
 
 from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs)
 
@@ -18,7 +17,6 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
 
 class PDWorker(FunctionWorker):
     def run(self):
-        time.sleep(0.1)
         kwargs = self.kwargs
         self.results = []
         context = kwargs.pop('context')

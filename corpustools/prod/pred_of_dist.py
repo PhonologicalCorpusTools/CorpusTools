@@ -10,7 +10,6 @@ def check_envs(corpus_context, envs, stop_check, call_back):
     Search for the specified segments in the specified environments in
     the corpus.
 """
-
     env_matches = {env: {seg: 0 for seg in env.middle} for env in envs}
     is_sets = not all(isinstance(x, str) for x in envs[0].middle)
     missing_envs = defaultdict(set)
@@ -47,10 +46,19 @@ def check_envs(corpus_context, envs, stop_check, call_back):
                         env_matches[env][e.middle] += word.frequency
                     overlaps[e].append(env)
 
+        has_sounds = False
+        if is_sets:
+            for mid in envs[0].middle:
+                has_sounds = any(m in tier for m in mid)
+                if has_sounds:
+                    break
+        else:
+            has_sounds = any(m in tier for m in envs[0].middle)
 
-        if not found_env and any(m in tier for m in envs[0].middle):
-            actual_env = tier.find_nonmatch(envs[0])
+        if not found_env and has_sounds:
+            actual_env = tier.find_nonmatch(envs[0], is_sets=is_sets)
             missing_envs[str(actual_env)].update([str(word)])
+
 
         for k,v in overlaps.items():
             if len(v) > 1:

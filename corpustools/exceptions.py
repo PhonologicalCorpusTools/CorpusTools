@@ -218,7 +218,12 @@ class ProdError(PCTError):
         Dictionary of the specified environments that are overlapping
     """
     def __init__(self, envs, missing, overlapping):
-        self.segs = tuple(envs[0].middle)
+
+        self.segs = list(envs[0].middle)
+        for j in range(len(self.segs)):
+            if not isinstance(self.segs[j], str):
+                self.segs[j] = ','.join(self.segs[j])
+        self.segs = tuple(self.segs)
         self.envs = envs
         self.missing = missing
         self.overlapping = overlapping

@@ -277,7 +277,7 @@ class Transcription(object):
             return None
         return envs
 
-    def find_nonmatch(self, environment):
+    def find_nonmatch(self, environment, is_sets=False):
         """
         Find all instances of an EnvironmentFilter in the Transcription
         that match in the middle segments, but don't match on the sides
@@ -295,8 +295,23 @@ class Transcription(object):
         """
         if not isinstance(environment, EnvironmentFilter):
             return None
-        if all(m not in self for m in environment.middle):
-            return None
+        print(self)
+        if is_sets:
+            #I'm sure this entire block can be reduce to a list comprehension plus any() or all(), but I just
+            #can't figure it out right now. Something like:
+            #if not any([[m in self for m in mid] for mid in environment.middle]): return None
+
+            found = False
+            for mid in environment.middle:
+                for m in mid:
+                    if m in self:
+                        found = True
+                        break
+            if not found:
+                return None
+        else:
+            if all(m not in self for m in environment.middle):
+                return None
         num_segs = len(environment)
 
         possibles = zip(*[self.with_word_boundaries()[i:]
@@ -306,7 +321,14 @@ class Transcription(object):
         middle_num = lhs_num
         rhs_num = middle_num + 1
         for i, p in enumerate(possibles):
-            if p not in environment and p[middle_num] in environment.middle:
+            has_segs = False
+            if is_sets:
+                for mid in environment.middle:
+                    if p[middle_num] in mid:
+                        has_segs = True
+            else:
+                has_segs = p[middle_num] in environment.middle
+            if p not in environment and has_segs:
                 lhs = p[:lhs_num]
                 middle = p[middle_num]
                 rhs = p[rhs_num:]
