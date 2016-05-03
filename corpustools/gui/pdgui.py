@@ -104,15 +104,10 @@ class PDDialog(FunctionDialog):
 
         pdlayout.addWidget(self.segPairWidget)
 
-        #addSegClassButton = QPushButton('Add a class of sounds')
-        #addSegClassButton.clicked.connect(self.addSegClass)
-        #pdlayout.addWidget(addSegClassButton)
-
         self.envWidget = EnvironmentSelectWidget(inventory, middle = False)
 
         self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
-
 
         optionLayout = QVBoxLayout()
 
@@ -205,15 +200,6 @@ class PDDialog(FunctionDialog):
                                     ' Not specifying any environments will calculate the predictability of'
                                     ' distribution across all environments based on frequency alone.'
             "</FONT>"))
-
-    def addSegClass(self):
-        self.addSegClassWindow = SegmentClassSelector(self, self.corpus)
-        results = self.addSegClassWindow.exec_()
-        if results:
-            for p in self.addSegClassWindow.pairs:
-                self.segPairWidget.table.model().addRow(p)
-            self.class1name = self.addSegClassWindow.class1features
-            self.class2name = self.addSegClassWindow.class2features
 
     def typesSelected(self):
         self.typeTokenWidget.setOptions(OrderedDict([('Count types','type'),

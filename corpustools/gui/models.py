@@ -1588,6 +1588,29 @@ class InventoryModel(QAbstractTableModel):
     def get_segs(self):
         return [v for v in self.segs.values() if not v in self.non_segment_symbols]
 
+    def partition_by_feature(self, features, others=None):
+
+        partitions = dict()
+        for signs in itertools.product(self.possible_values, repeat=len(features)):
+            partitions[signs] = list()
+
+        for signs in partitions:
+            matches = [s+f for (s,f) in zip(signs, features)]
+            for symbol,seg in self.segs.items():
+                for match in matches:
+                    if seg.features[match[1:]] == match[0]:
+                        if not others:
+                            partitions[signs].append(symbol)
+                        else:
+                            for other in others:
+                                if seg.features[other[1:]] != other[0]:
+                                    break
+                            else:
+                                partitions[signs].append(symbol)
+
+        return {k:v for (k,v) in partitions.items() if v}
+
+
     def find_min_feature_pairs(self, features, others=None):
         """
         Find sets of segments that differ only in certain features,
@@ -1606,15 +1629,13 @@ class InventoryModel(QAbstractTableModel):
             Dictionary with keys that correspond to the values of ``features``
             and values that are the set of segments with those feature values
         """
-        plus_segs = []
-        minus_segs = []
         output = collections.defaultdict(list)
         redundant = self.get_redundant_features(features, others)
         for seg1, seg2 in itertools.combinations(self.get_segs(), 2):
             if not seg1.feature_match(others):
                 continue
             if seg1.minimal_difference(seg2, features + redundant):
-                 break
+                break
             seg1_key = tuple(seg1[f] for f in features)
             seg2_key = tuple(seg2[f] for f in features)
             if seg1 not in output[seg1_key]: output[seg1_key].append(seg1)
@@ -1628,16 +1649,16 @@ class InventoryModel(QAbstractTableModel):
 
         Parameters
         ----------
-        _features : list
-            List of _features to find other _features that consistently
-            covary with them
+        features : list
+            List of features to find other features that consistently
+            co-vary with them
         others : list, optional
             Feature specification that specifies a subset to look at
 
         Returns
         -------
         list
-            List of redundant _features
+            List of redundant features
         """
         redundant_features = []
         if isinstance(features, str):

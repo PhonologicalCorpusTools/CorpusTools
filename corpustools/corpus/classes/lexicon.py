@@ -295,12 +295,10 @@ class Transcription(object):
         """
         if not isinstance(environment, EnvironmentFilter):
             return None
-        print(self)
         if is_sets:
-            #I'm sure this entire block can be reduce to a list comprehension plus any() or all(), but I just
+            #I'm sure this entire block can be reduced to a list comprehension plus any() or all(), but I just
             #can't figure it out right now. Something like:
             #if not any([[m in self for m in mid] for mid in environment.middle]): return None
-
             found = False
             for mid in environment.middle:
                 for m in mid:

@@ -1862,7 +1862,8 @@ class FeaturePairDialog(AbstractPairDialog):
         if len(features) == 0:
             return
         others = self.searchWidget.features()
-        feature_values = self.inventory.find_min_feature_pairs(features, others)
+        #feature_values = self.inventory.find_min_feature_pairs(features, others)
+        feature_values = self.inventory.partition_by_feature(features, others)
         values = sorted(feature_values.keys())
         if len(values) == 0:
             return
