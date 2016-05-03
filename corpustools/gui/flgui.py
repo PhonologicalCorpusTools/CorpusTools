@@ -188,6 +188,16 @@ class FLDialog(FunctionDialog):
 
         l.addWidget(minPairOptionFrame)
 
+        entropyOptionFrame = QGroupBox('Entropy options')
+
+        box2 = QVBoxLayout()
+        entropyOptionFrame.setLayout(box2)
+        self.preventNormalizationWidget = QCheckBox('Do not normalize results')
+        self.preventNormalizationWidget.setChecked(False)
+        box2.addWidget(self.preventNormalizationWidget)
+
+        l.addWidget(entropyOptionFrame)
+
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
 
@@ -198,6 +208,13 @@ class FLDialog(FunctionDialog):
 
         self.algorithmWidget.initialClick()
         if self.showToolTips:
+
+            self.preventNormalizationWidget.setToolTip(('<FONT COLOR=black>'
+            'When calculating change in entropy, this option prevents normalization of the entropy difference by '
+                        'the pre-neutralization entropy. To replicate the Surendran and Niyogi metric, '
+                        'turn this option OFF.'
+            '</FONT>'))
+
             self.homophoneWidget.setToolTip(("<FONT COLOR=black>"
             'This setting will overcount alternative'
                             ' spellings of the same word, e.g. axel~actual and axle~actual,'
@@ -238,11 +255,15 @@ class FLDialog(FunctionDialog):
         self.saveFileWidget.setEnabled(True)
         self.relativeCountWidget.setEnabled(True)
         self.homophoneWidget.setEnabled(True)
+        self.preventNormalizationWidget.setEnabled(False)
+        self.typeTokenWidget.widgets[0].setChecked(True)
 
     def entropySelected(self):
         self.saveFileWidget.setEnabled(False)
         self.relativeCountWidget.setEnabled(False)
         self.homophoneWidget.setEnabled(False)
+        self.preventNormalizationWidget.setEnabled(True)
+        self.typeTokenWidget.widgets[1].setChecked(True)
 
     def generateKwargs(self):
         segPairs = self.segPairWidget.value()
@@ -261,7 +282,8 @@ class FLDialog(FunctionDialog):
                 'sequence_type': self.tierWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
                 'type_token':self.typeTokenWidget.value(),
-                'algorithm': alg}
+                'algorithm': alg,
+                'prevent_normalization': self.preventNormalizationWidget.isChecked()}
         if alg == 'min_pairs':
             out_file = self.saveFileWidget.value()
             if out_file == '':
