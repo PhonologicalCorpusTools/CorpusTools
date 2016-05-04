@@ -7,12 +7,16 @@ from corpustools.exceptions import PCTError
 
 class ProgressDialog(QProgressDialog):
     beginCancel = Signal()
-    def __init__(self, parent):
+    def __init__(self, parent, infinite=False):
         QProgressDialog.__init__(self, parent)
         self.cancelButton = QPushButton('Cancel')
         self.setAutoClose(False)
         self.setAutoReset(False)
         self.setCancelButton(self.cancelButton)
+        self.infinite = infinite
+        if self.infinite:
+            self.setMaximum(0)
+            self.setMinimum(0)
 
         self.information = ''
         self.startTime = None
@@ -48,6 +52,8 @@ class ProgressDialog(QProgressDialog):
 
     def updateProgress(self, progress):
         if self.wasCanceled():
+            return
+        if self.infinite:
             return
         if progress == 0:
             self.setMaximum(100)
@@ -119,10 +125,10 @@ class FunctionWorker(QThread):
 
 class PCTDialog(QDialog):
 
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, infinite_progress=False):
         QDialog.__init__(self, parent)
 
-        self.progressDialog = ProgressDialog(self)
+        self.progressDialog = ProgressDialog(self, infinite_progress)
 
 
     def handleError(self,error):

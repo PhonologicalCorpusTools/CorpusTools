@@ -1,7 +1,6 @@
 import os
 import codecs
 import logging
-import time
 from collections import OrderedDict
 
 from .imports import *
@@ -44,7 +43,6 @@ from .helpgui import HelpDialog
 
 class LoadWorker(FunctionWorker):
     def run(self):
-        time.sleep(0.1)
         if self.stopCheck():
             return
         try:
@@ -62,7 +60,6 @@ class LoadWorker(FunctionWorker):
 
 class LoadCorpusWorker(FunctionWorker):
     def run(self):
-        time.sleep(0.1)
         textType = self.kwargs.pop('text_type')
         isDirectory = self.kwargs.pop('isDirectory')
         logging.info('Importing {} corpus named {}'.format(textType, self.kwargs['corpus_name']))
@@ -108,7 +105,6 @@ class LoadCorpusWorker(FunctionWorker):
             self.errorEncountered.emit(e)
             return
         if self.stopped:
-            time.sleep(0.1)
             self.finishedCancelling.emit()
             return
 
@@ -119,6 +115,7 @@ class LoadCorpusWorker(FunctionWorker):
                 try:
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
                 except KeyError:
+                    #Occurs if a user selected a feature/transcription system that doesn't match the corpus
                     corpus.lexicon.specifier[seg] = {feature:'n' for feature in corpus.lexicon.specifier.features}
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
                 except AttributeError:
@@ -129,7 +126,7 @@ class LoadCorpusWorker(FunctionWorker):
 
 class CorpusLoadDialog(PCTDialog):
     def __init__(self, parent, corpus, settings):
-        PCTDialog.__init__(self, parent)
+        PCTDialog.__init__(self, parent, infinite_progress=True)
         self.current_corpus = None if corpus is None else corpus.name
         self.corpus = None
         self.settings = settings
@@ -457,7 +454,7 @@ class LoadCorpusDialog(PCTDialog):
                         ('textgrid', 'TextGrid'),
                         ('multiple', 'Other standards'),]
     def __init__(self, parent, settings):
-        PCTDialog.__init__(self, parent)
+        PCTDialog.__init__(self, parent, infinite_progress=True)
         self.settings = settings
         self.textType = None
         self.isDirectory = False
@@ -802,6 +799,30 @@ class LoadCorpusDialog(PCTDialog):
                                  '"Parsing Preview" section and ensure that there is an Annotation Type is set to '
                                  'either Transcription or Orthography'))
             return
+
+        atts = [x.attribute.display_name for x in kwargs['annotation_types']]
+        duplicates = list(set([x for x in atts if atts.count(x)>1]))
+        if duplicates:
+            duplicates = ' and '.join(duplicates)
+            QMessageBox.critical(self, 'Duplicate information',
+                        'You have more than one column named {} in your corpus. Please go to the '
+                        '"Parsing Preview" window and ensure that all columns have unique names.'.format(duplicates))
+            return
+
+        duplicates = False
+        names = [x.name for x in kwargs['annotation_types']]
+        if names.count('Transcription') > 1:
+            duplicates = 'Transcription'
+        elif names.count('Orthography') > 1:
+            duplicates = 'Orthography'
+        if duplicates:
+            QMessageBox.critical(self, 'Duplicate information',
+            ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
+            'window to change this.\n '
+            'A corpus can only have one Transcription type and one Orthography type. You may have as many Other types '
+            'as you need.'.format(duplicates)))
+            return
+
         if self.textType == 'csv':
             kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(
                                         self.columnDelimiterEdit.text()

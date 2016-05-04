@@ -213,7 +213,6 @@ class AnnotationTypeWidget(QGroupBox):
         main = QHBoxLayout()
 
         #main.addWidget(QLabel(annotation_type.name))
-
         self.annotation_type = annotation_type
 
         proplayout = QFormLayout()
@@ -295,6 +294,8 @@ class AnnotationTypeWidget(QGroupBox):
         else:
             self.editButton.setEnabled(False)
         self.suggestName()
+        print(self.typeWidget.currentText())
+        self.annotation_type.name = self.typeWidget.currentText()
 
     def suggestName(self):
         if self.typeWidget.currentText() == 'Orthography':
