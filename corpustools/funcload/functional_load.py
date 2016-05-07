@@ -77,7 +77,7 @@ def _entropy(probabilities):
 
 def minpair_fl(corpus_context, segment_pairs,
         relative_count = True, distinguish_homophones = False,
-        environment_filter = None,
+        environment_filter = None, prevent_normalization = False,
         stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between two segments
     as a count of minimal pairs.
@@ -252,7 +252,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
 
 def relative_minpair_fl(corpus_context, segment,
             relative_count = True, distinguish_homophones = False,
-            output_filename = None, environment_filter = None,
+            output_filename = None, environment_filter = None, prevent_normalization = False,
             stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as a count of minimal pairs.

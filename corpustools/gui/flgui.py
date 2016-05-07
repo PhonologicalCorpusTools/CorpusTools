@@ -4,7 +4,7 @@ from corpustools.funcload.io import save_minimal_pairs
 
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
-                    ContextWidget, SaveFileWidget)
+                    ContextWidget, SaveFileWidget, EnvironmentSelectWidget)
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.contextmanagers import (CanonicalVariantContext,
@@ -198,9 +198,13 @@ class FLDialog(FunctionDialog):
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
-
         fllayout.addWidget(optionFrame)
+
+        self.envWidget = EnvironmentSelectWidget(self.inventory)
+        fllayout.addWidget(self.envWidget)
+
         flFrame.setLayout(fllayout)
+
 
         self.layout().insertWidget(0,flFrame)
 
@@ -281,7 +285,8 @@ class FLDialog(FunctionDialog):
                 'frequency_cutoff':frequency_cutoff,
                 'type_token':self.typeTokenWidget.value(),
                 'algorithm': alg,
-                'prevent_normalization': self.preventNormalizationWidget.isChecked()}
+                'prevent_normalization': self.preventNormalizationWidget.isChecked(),
+                'environment_filter': self.envWidget.value()}
         if alg == 'min_pairs':
             out_file = self.saveFileWidget.value()
             if out_file == '':

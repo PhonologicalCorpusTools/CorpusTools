@@ -183,7 +183,7 @@ class NDDialog(FunctionDialog):
         optionFrame = QGroupBox('Options')
 
         optionLayout = QVBoxLayout()
-        self.useQuadratic = QCheckBox('Use quadratic-time algorithm')
+        self.useQuadratic = QCheckBox('Use alternative algorithm')
         self.useQuadratic.setChecked(False)
         optionLayout.addWidget(self.useQuadratic)
 
@@ -247,9 +247,10 @@ class NDDialog(FunctionDialog):
         self.algorithmWidget.initialClick()
         if self.showToolTips:
 
-            self.useQuadratic.setToolTip(('<FONT COLOR=black>Selecting this option will run a different '
-                                        'version of the neighbourhood density algorithm. This option only works when '
-                                        'using the "Edit distance" option, with a maximum distance of 1. </FONT>'))
+            self.useQuadratic.setToolTip(('<FONT COLOR=black>If this box is checked, PCT will use an algorithm '
+            'specific to calculating neighborhood density based on a maximum edit distance of 1. '
+            'This algorithm may be faster than the general-purpose algorithm, '
+            'especially on very large corpora.</FONT>'))
 
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Select which algorithm'
