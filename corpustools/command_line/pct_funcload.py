@@ -69,7 +69,7 @@ def main():
     # Create environment filters
 
     if not args.environment_lhs and not args.environment_rhs:
-        environment_filter = None
+        environment_filters = []
     else:
         if args.environment_lhs:
             split_lhs = [tuple(pos.split('/')) for pos in args.environment_lhs.split(',')]
@@ -79,7 +79,7 @@ def main():
             split_rhs = [tuple(pos.split('/')) for pos in args.environment_rhs.split(',')]
         else:
             split_rhs = None
-        environment_filter = EnvironmentFilter([], split_lhs, split_rhs)
+        environment_filters = [EnvironmentFilter([], split_lhs, split_rhs)]
 
     # Initialize results
 
@@ -92,7 +92,7 @@ def main():
 
     if args.all_pairwise_fls:
         results = all_pairwise_fls(corpus, relative_fl=args.relative_fl, algorithm=args.algorithm, relative_count=args.relative_count,
-                     distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+                     distinguish_homophones=args.distinguish_homophones, environment_filters=environment_filters, prevent_normalization=args.prevent_normalization)
         for pair, fl in results:
             detailed_results[pair] = fl
         keys_label = 'segment pair'
@@ -110,7 +110,7 @@ def main():
 
         if args.algorithm == 'minpair':
             if args.relative_fl:
-                results = relative_minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
+                results = relative_minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filters=environment_filters)
                 overall_result = results[0]
                 detailed_results = results[1]
                 keys_label = 'segment pair'
@@ -118,16 +118,16 @@ def main():
                 if args.separate_pairs:
                     for pair in segpairs_or_segment:
                         pair = tuple(pair)
-                        detailed_results[pair] = minpair_fl(corpus, [pair], relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)[0]
+                        detailed_results[pair] = minpair_fl(corpus, [pair], relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filters=environment_filters)[0]
                     keys_label = 'segment pair'
                 else:
-                    results = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filter=environment_filter)
+                    results = minpair_fl(corpus, segpairs_or_segment, relative_count=bool(args.relative_count), distinguish_homophones=args.distinguish_homophones, environment_filters=environment_filters)
                     overall_result = results[0]
                     detailed_results = {mp: '' for mp in results[1]}
                     keys_label = 'minimal pair (all listed regardless of distinguish_homophones value)'
         elif args.algorithm == 'deltah':
             if args.relative_fl:
-                results = relative_deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+                results = relative_deltah_fl(corpus, segpairs_or_segment, environment_filters=environment_filters, prevent_normalization=args.prevent_normalization)
                 overall_result = results[0]
                 detailed_results = results[1]
                 keys_label = 'segment pair'
@@ -135,10 +135,10 @@ def main():
                 if args.separate_pairs:
                     for pair in segpairs_or_segment:
                         pair = tuple(pair)
-                        detailed_results[pair] = (deltah_fl(corpus, [pair], environment_filter=environment_filter, prevent_normalization=args.prevent_normalization))
+                        detailed_results[pair] = (deltah_fl(corpus, [pair], environment_filters=environment_filters, prevent_normalization=args.prevent_normalization))
                     keys_label = 'segment pair'
                 else:
-                    overall_result = deltah_fl(corpus, segpairs_or_segment, environment_filter=environment_filter, prevent_normalization=args.prevent_normalization)
+                    overall_result = deltah_fl(corpus, segpairs_or_segment, environment_filters=environment_filters, prevent_normalization=args.prevent_normalization)
         else:
             raise Exception('-a / --algorithm must be set to either \'minpair\' or \'deltah\'.')
 

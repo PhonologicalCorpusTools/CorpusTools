@@ -74,7 +74,6 @@ def main():
         try: # read query as a file name
             with open(args.query) as queryfile:
                 queries = [line[0] for line in csv.reader(queryfile, delimiter='\t') if len(line) > 0]
-
                 queries = [ensure_query_is_word(q, corpus, args.sequence_type, args.trans_delimiter) for q in queries]
             results = [neighborhood_density(corpus, q, algorithm = args.algorithm, max_distance = args.max_distance,
                                             force_quadratic=args.force_quadratic_algorithm) for q in queries]

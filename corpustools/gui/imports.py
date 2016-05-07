@@ -41,3 +41,5 @@ if sys.platform.startswith('win'):
 else:
     locale_string = 'en_US.UTF-8'
 locale.setlocale(locale.LC_ALL, locale_string)
+
+import time

@@ -7,18 +7,18 @@ import time
 from .io import save_minimal_pairs
 
 
-def _merge_segment_pairs(tier, segment_pairs, environment_filter):
+def _merge_segment_pairs(tier, segment_pairs, environment_filters):
     """Merge the specified segment pairs for the given tier of segments if 
-    its position fits the environment filter. Return a string.
+    its position fits one of the environment filters. Return a string.
     """
     merged = []
     for i in range(len(tier)):
-        merged.append(_check_to_add_merged(tier, i, segment_pairs, environment_filter))
+        merged.append(_check_to_add_merged(tier, i, segment_pairs, environment_filters))
     return ' '.join(merged)
 
-def _check_to_add_merged(tier, i, segment_pairs, environment_filter):
+def _check_to_add_merged(tier, i, segment_pairs, environment_filters):
     for sp in segment_pairs:
-        if tier[i] in sp and _fits_environment(tier, i, environment_filter):
+        if tier[i] in sp and _fits_environment(tier, i, environment_filters):
             return 'NEUTR:'+str(sp[0])+'/'+str(sp[1])
     return tier[i]
 
@@ -27,16 +27,18 @@ def _ready_for_re(word, index):
     w[index] = '_'
     return ' '.join(w)
 
-def _fits_environment(tier, index, environment_filter):
+def _fits_environment(tier, index, environment_filters):
     """Return True iff for tier, the environment
-    of its index'th element fits passes the environment_filter.
+    of its index'th element fits passes one of the environment_filters.
     """
-    if not environment_filter:
+    if not environment_filters:
         return True
-    tier_re = _ready_for_re(tier, index)
-    env_re = _make_environment_re(environment_filter)
+    ef_res = []
+    for ef in environment_filters:
+        tier_re = _ready_for_re(tier, index)
+        ef_res.append(_make_environment_re(ef))
 
-    return (bool(re.search(env_re, tier_re)))
+    return any([bool(re.search(env_re, tier_re)) for env_re in ef_res])
 
 def _make_environment_re(environment_filter):
     if environment_filter.lhs:
@@ -77,7 +79,7 @@ def _entropy(probabilities):
 
 def minpair_fl(corpus_context, segment_pairs,
         relative_count = True, distinguish_homophones = False,
-        environment_filter = None, prevent_normalization = False,
+        environment_filters = None,
         stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between two segments
     as a count of minimal pairs.
@@ -102,7 +104,7 @@ def minpair_fl(corpus_context, segment_pairs,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    environment_filter : EnvironmentFilter
+    environment_filters : list of EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
         particular segmental contexts
     stop_check : callable, optional
@@ -121,6 +123,9 @@ def minpair_fl(corpus_context, segment_pairs,
     if stop_check is not None and stop_check():
         return
 
+    if not environment_filters:
+        environment_filters = []
+
     all_target_segments = list(itertools.chain.from_iterable(segment_pairs))
     merged_dict = defaultdict(list)
     contain_target_segment_count = 0
@@ -137,11 +142,11 @@ def minpair_fl(corpus_context, segment_pairs,
         tier = getattr(w, corpus_context.sequence_type)
         ## Only add words with at least one of the target segments in the right
         ## environment (for relative_count, and to improve time/space efficiency)
-        if any([s in all_target_segments and _fits_environment(tier, i, environment_filter) 
+        if any([s in all_target_segments and _fits_environment(tier, i, environment_filters) 
                 for i, s in enumerate(tier)]):
             contain_target_segment_count += 1
             ## Create segment-pair-merged (neutralized) representations
-            merged = _merge_segment_pairs(tier, segment_pairs, environment_filter)
+            merged = _merge_segment_pairs(tier, segment_pairs, environment_filters)
             if 'NEUTR' in merged:
                 merged_dict[merged].append(w)
     if stop_check is not None and stop_check():
@@ -177,7 +182,7 @@ def minpair_fl(corpus_context, segment_pairs,
     return (result, minpairs, segment_pairs)
 
 
-def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
+def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
               prevent_normalization = False, stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between between two
     segments as the decrease in corpus entropy caused by a merger.
@@ -188,7 +193,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
         Context manager for a corpus
     segment_pairs : list of length-2 tuples of str
         The pairs of segments to be conflated.
-    environment_filter : EnvironmentFilter
+    environment_filters : list of EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
     prevent_normalization : bool
         Prevents division of the entropy difference by the pre-merger entropy
@@ -204,6 +209,9 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
         non-homophonous words in the corpus before a merger of `s1`
         and `s2` and b) the entropy of that choice after the merger.
     """
+    if not environment_filters:
+        environment_filters = []
+
     original_sum = 0
     original_probs = defaultdict(float)
     neutralized_sum = 0
@@ -223,7 +231,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
         original_sum += w.frequency
 
         neutralized_tier = _merge_segment_pairs(original_tier, segment_pairs, 
-                                                environment_filter)
+                                                environment_filters)
         neutralized_probs[neutralized_tier] += w.frequency
         neutralized_sum += w.frequency
 
@@ -252,7 +260,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None,
 
 def relative_minpair_fl(corpus_context, segment,
             relative_count = True, distinguish_homophones = False,
-            output_filename = None, environment_filter = None, prevent_normalization = False,
+            output_filename = None, environment_filters = None,
             stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as a count of minimal pairs.
@@ -271,7 +279,7 @@ def relative_minpair_fl(corpus_context, segment,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    environment_filter : EnvironmentFilter
+    environment_filters : list of EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
         particular segmental contexts
     stop_check : callable, optional
@@ -287,6 +295,9 @@ def relative_minpair_fl(corpus_context, segment,
         that count divided by the total number of words in the corpus
         that include either `s1` or `s2`.
     """
+    if not environment_filters:
+        environment_filters = []
+
     all_segments = corpus_context.inventory
     segment_pairs = [(segment,other.symbol) for other in all_segments
                         if other.symbol != segment and other.symbol != '#']
@@ -298,7 +309,7 @@ def relative_minpair_fl(corpus_context, segment,
         res = minpair_fl(corpus_context, [sp],
             relative_count = relative_count,
             distinguish_homophones = distinguish_homophones,
-            environment_filter = environment_filter,
+            environment_filters = environment_filters,
             stop_check = stop_check, call_back = call_back)
         results_dict[sp] = res[0]
         results.append(res[0])
@@ -314,7 +325,7 @@ def relative_minpair_fl(corpus_context, segment,
 
 
 def relative_deltah_fl(corpus_context, segment,
-                environment_filter = None,
+                environment_filters = None,
                 stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as the decrease in corpus entropy
@@ -338,6 +349,9 @@ def relative_deltah_fl(corpus_context, segment,
         non-homophonous words in the corpus before a merger of `s1`
         and `s2` and b) the entropy of that choice after the merger.
     """
+    if not environment_filters:
+        environment_filters = []
+
     all_segments = corpus_context.inventory
     segment_pairs = [(segment,other.symbol) for other in all_segments
                         if other.symbol != segment and other.symbol != '#']
@@ -346,7 +360,7 @@ def relative_deltah_fl(corpus_context, segment,
     results_dict = {}
     for sp in segment_pairs:
         res = deltah_fl(corpus_context, [sp],
-                environment_filter=environment_filter,
+                environment_filters=environment_filters,
                 stop_check = stop_check, call_back = call_back)
         results.append(res)
         results_dict[sp] = res
@@ -365,10 +379,10 @@ def collapse_segpairs_fl(corpus_context, **kwargs):
     if func_type == 'min_pairs':
         fl = minpair_fl(corpus_context, segment_pairs,
                         relative_count, distinguish_homophones,
-                          environment_filter=environment_filter)
+                          environment_filters=environment_filters)
     elif func_type == 'entropy':
         fl = deltah_fl(corpus_context, segment_pairs,
-          environment_filter=environment_filter)
+          environment_filters=environment_filters)
 
 
 
@@ -383,10 +397,10 @@ def individual_segpairs_fl(corpus_context, **kwargs):
         if func_type == 'min_pairs':
             fl = minpair_fl(corpus_context, [pair],
                             relative_count, distinguish_homophones,
-                              environment_filter=environment_filter)
+                              environment_filters=environment_filters)
         elif func_type == 'entropy':
             fl = deltah_fl(corpus_context, [pair],
-              environment_filter=environment_filter)
+              environment_filters=environment_filters)
         results.append(fl)
 
 
@@ -404,7 +418,7 @@ def neutralize_segment(segment, segment_pairs):
 def all_pairwise_fls(corpus_context, relative_fl = False,
                     algorithm = 'minpair',
                     relative_count = True, distinguish_homophones = False,
-                    environment_filter = None):
+                    environment_filters = None):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
 
     Parameters
@@ -425,7 +439,7 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    environment_filter : EnvironmentFilter
+    environment_filters : list of EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
         particular segmental contexts
 
@@ -437,6 +451,9 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
         Normally returns a list of all Segment pairs and their respective functional load values, as length-2 tuples ordered by FL.
         If calculating relative FL, returns a dictionary of each segment and its relative (average) FL, with entries ordered by FL.
     """
+    if not environment_filters:
+        environment_filters = []
+
     fls = {}
     total_calculations = ((((len(corpus_context.inventory)-1)**2)-len(corpus_context.inventory)-1)/2)+1
     ct = 1
@@ -458,10 +475,10 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
                     fl = minpair_fl(corpus_context, [(s1, s2)],
                             relative_count=relative_count,
                             distinguish_homophones=distinguish_homophones,
-                            environment_filter=environment_filter)[0]
+                            environment_filters=environment_filters)[0]
                 elif algorithm == 'deltah':
                     fl = deltah_fl(corpus_context, [(s1, s2)],
-                    environment_filter=environment_filter)
+                    environment_filters=environment_filters)
                 fls[(s1, s2)] = fl
     if not relative_fl:
         ordered_fls = sorted([(pair, fls[pair]) for pair in fls], key=lambda p: p[1], reverse=True)
