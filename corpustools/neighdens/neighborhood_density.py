@@ -110,12 +110,12 @@ def neighborhood_density(corpus_context, query,
         call_back(0,len(corpus_context))
         cur = 0
 
-    print(force_quadratic)
-
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
+        print('upper option')
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type)
 
     if algorithm == 'edit_distance':
+        print('lower option')
         is_neighbor = partial(_is_edit_distance_neighbor,
                                 sequence_type = corpus_context.sequence_type,
                                 max_distance = max_distance)

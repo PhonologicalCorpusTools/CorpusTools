@@ -38,6 +38,7 @@ class NDWorker(FunctionWorker):
                             res = neighborhood_density(c, q,
                                                 algorithm = kwargs['algorithm'],
                                                 max_distance = kwargs['max_distance'],
+                                                force_quadratic=kwargs['force_quadratic'],
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
                         else:
@@ -117,6 +118,7 @@ class NDDialog(FunctionDialog):
             self.layout().addWidget(QLabel('Corpus does not have a feature system loaded, so not all options are available.'))
         ndlayout = QHBoxLayout()
 
+        algLayout = QVBoxLayout()
         algEnabled = {'Khorsi':True,
                     'Edit distance':True,
                     'Substitution neighbors only':True,
@@ -136,10 +138,11 @@ class NDDialog(FunctionDialog):
                                             algEnabled)
 
 
-        ndlayout.addWidget(self.algorithmWidget)
+        algLayout.addWidget(self.algorithmWidget)
+        ndlayout.addLayout(algLayout)
+
 
         queryFrame = QGroupBox('Query')
-
         vbox = QFormLayout()
         self.compType = None
         self.oneWordRadio = QRadioButton('Calculate for one word in the corpus')
@@ -180,6 +183,9 @@ class NDDialog(FunctionDialog):
         optionFrame = QGroupBox('Options')
 
         optionLayout = QVBoxLayout()
+        self.useQuadratic = QCheckBox('Use quadratic-time algorithm')
+        self.useQuadratic.setChecked(False)
+        optionLayout.addWidget(self.useQuadratic)
 
         self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
 
@@ -240,6 +246,11 @@ class NDDialog(FunctionDialog):
 
         self.algorithmWidget.initialClick()
         if self.showToolTips:
+
+            self.useQuadratic.setToolTip(('<FONT COLOR=black>Selecting this option will run a different '
+                                        'version of the neighbourhood density algorithm. This option only works when '
+                                        'using the "Edit distance" option, with a maximum distance of 1. </FONT>'))
+
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Select which algorithm'
                                         ' to use for calculating similarity. For Khorsi,'
@@ -305,6 +316,10 @@ class NDDialog(FunctionDialog):
         self.saveFileWidget.setEnabled(False)
 
     def generateKwargs(self):
+
+        if self.useQuadratic.isChecked() and int(self.maxDistanceEdit.text()) != 1:
+            self.useQuadratic.setChecked(False)
+
         if self.maxDistanceEdit.text() == '':
             max_distance = None
         else:
@@ -325,14 +340,15 @@ class NDDialog(FunctionDialog):
                 'type_token':typeToken,
                 'max_distance':max_distance,
                 'frequency_cutoff':frequency_cutoff,
-                'num_cores':self.settings['num_cores'],}
+                'num_cores':self.settings['num_cores'],
+                'force_quadratic': self.useQuadratic.isChecked()}
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
 
         if self.compType is None:
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a comparison type.")
+                "Missing information", 'Please select an option from the "Query" section in the middle of the window.')
             return
         elif self.compType == 'one':
             text = self.oneWordEdit.text()
@@ -355,7 +371,8 @@ class NDDialog(FunctionDialog):
                 return
             if not getattr(self.oneNonword,kwargs['sequence_type']):
                 reply = QMessageBox.critical(self,
-                        "Missing information", "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
+                        "Missing information",
+                        "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
                 return
             kwargs['query'] = [self.oneNonword]
             kwargs['output_filename'] = out_file
@@ -432,19 +449,23 @@ class NDDialog(FunctionDialog):
     def substitutionSelected(self):
         self.typeTokenWidget.disable()
         self.maxDistanceEdit.setEnabled(False)
+        self.useQuadratic.setEnabled(False)
 
     def khorsiSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.enable()
         self.tierWidget.setSpellingEnabled(True)
+        self.useQuadratic.setEnabled(False)
 
     def editDistSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.disable()
-        self.maxDistanceEdit.setText('1')
         self.tierWidget.setSpellingEnabled(True)
+        self.useQuadratic.setEnabled(True)
+        #self.maxDistanceEdit.setText('1')
 
     def phonoEditDistSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.disable()
         self.tierWidget.setSpellingEnabled(False)
+        self.useQuadratic.setEnabled(False)
