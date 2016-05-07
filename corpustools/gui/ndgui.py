@@ -390,16 +390,16 @@ class NDDialog(FunctionDialog):
             kwargs['query'] = list()
             text = load_words_neighden(path)
             for t in text:
-                if isinstance(t,str):
-                    try:
-                        w = self.corpusModel.corpus.find(t)
-                    except KeyError:
-                        reply = QMessageBox.critical(self,
-                                "Invalid information", "The spelling '{}' was not found in the corpus.".format(t))
-                        return
-                else:
-                    w = t
-                kwargs['query'].append(w)
+                # if isinstance(t,str):
+                #     try:
+                #         w = self.corpusModel.corpus.find(t)
+                #     except KeyError:
+                #         reply = QMessageBox.critical(self,
+                #                 "Invalid information", "The spelling '{}' was not found in the corpus.".format(t))
+                #         return
+                # else:
+                #     w = t
+                kwargs['query'].append(t)
         elif self.compType == 'all':
             column = self.columnEdit.text()
             if column == '':

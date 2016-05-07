@@ -161,6 +161,7 @@ def fast_neighborhood_density(corpus_context, query, sequence_type):
         tierdict[str(getattr(entry, sequence_type))].append(entry)
 
     neighbors = set()
+    query = ensure_query_is_word(query, corpus_context, sequence_type)
     for candidate in generate_neighbor_candidates(corpus_context, query, sequence_type):
         cand_str = '.'.join(candidate)
         if cand_str in tierdict:
@@ -257,3 +258,15 @@ def find_mutation_minpairs(corpus_context, query,
     neighbors = list(set(matches)-set([str(getattr(query, sequence_type))]))
     return (len(neighbors), neighbors)
 
+def ensure_query_is_word(query, corpus, sequence_type, trans_delimiter=''):
+    if isinstance(query, Word):
+        query_word = query
+    else:
+        try:
+            query_word = corpus.corpus.find(query)
+        except KeyError:
+            if trans_delimiter == '':
+                query_word = Word(**{sequence_type: list(query)})
+            else:
+                query_word = Word(**{sequence_type: query.split(trans_delimiter)})
+    return query_word

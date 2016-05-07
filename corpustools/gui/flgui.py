@@ -258,7 +258,8 @@ class FLDialog(FunctionDialog):
         self.relativeCountWidget.setEnabled(True)
         self.homophoneWidget.setEnabled(True)
         self.preventNormalizationWidget.setEnabled(False)
-        self.typeTokenWidget.widgets[0].setChecked(True)
+        #self.typeTokenWidget.widgets[0].setChecked(True)
+        self.typeTokenWidget.setEnabled(False)
 
     def entropySelected(self):
         self.saveFileWidget.setEnabled(False)
