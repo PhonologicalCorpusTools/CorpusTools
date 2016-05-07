@@ -111,11 +111,9 @@ def neighborhood_density(corpus_context, query,
         cur = 0
 
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
-        print('upper option')
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type)
 
     if algorithm == 'edit_distance':
-        print('lower option')
         is_neighbor = partial(_is_edit_distance_neighbor,
                                 sequence_type = corpus_context.sequence_type,
                                 max_distance = max_distance)
@@ -265,8 +263,9 @@ def ensure_query_is_word(query, corpus, sequence_type, trans_delimiter=''):
         try:
             query_word = corpus.corpus.find(query)
         except KeyError:
-            if trans_delimiter == '':
+            split_word = query.split('.')
+            if len(split_word) == 1:
                 query_word = Word(**{sequence_type: list(query)})
             else:
-                query_word = Word(**{sequence_type: query.split(trans_delimiter)})
+                query_word = Word(**{sequence_type: split_word})
     return query_word

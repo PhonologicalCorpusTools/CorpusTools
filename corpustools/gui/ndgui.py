@@ -247,6 +247,19 @@ class NDDialog(FunctionDialog):
         self.algorithmWidget.initialClick()
         if self.showToolTips:
 
+            loadFromFileTip = ('<FONT COLOR=black>There must be one word per line in the file that you load. '
+                               'Your file can include words that are not actually in your corpus, however all of the symbols '
+                               'used in your file must be symbols from your inventory. For example, assuming an English '
+                               'corpus you could supply the word "bnick" but not "spe7ec".\nIf a word in your file contains '
+                               'multi-character symbols, then you should use a period as a delimiter for that word. Otherwise '
+                               'no delimiter is necessary. For example, if /ts/ is an affricate in your corpus, then the word '
+                               '/atsa/ should be written as "a.ts.a" in your file, but the word /blat/ can be written simply '
+                               'as "blat" in your file.'
+                               '</FONT>')
+
+            self.fileWidget.setToolTip(loadFromFileTip)
+            self.fileRadio.setToolTip(loadFromFileTip)
+
             self.useQuadratic.setToolTip(('<FONT COLOR=black>If this box is checked, PCT will use an algorithm '
             'specific to calculating neighborhood density based on a maximum edit distance of 1. '
             'This algorithm may be faster than the general-purpose algorithm, '
@@ -390,15 +403,6 @@ class NDDialog(FunctionDialog):
             kwargs['query'] = list()
             text = load_words_neighden(path)
             for t in text:
-                # if isinstance(t,str):
-                #     try:
-                #         w = self.corpusModel.corpus.find(t)
-                #     except KeyError:
-                #         reply = QMessageBox.critical(self,
-                #                 "Invalid information", "The spelling '{}' was not found in the corpus.".format(t))
-                #         return
-                # else:
-                #     w = t
                 kwargs['query'].append(t)
         elif self.compType == 'all':
             column = self.columnEdit.text()

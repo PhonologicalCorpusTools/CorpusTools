@@ -1123,15 +1123,19 @@ class FileWidget(QFrame):
 
         pathLayout = QHBoxLayout()
         self.pathEdit = QLineEdit()
-        pathButton = QPushButton('Choose file...')
-        pathButton.setAutoDefault(False)
-        pathButton.setDefault(False)
-        pathButton.clicked.connect(self.pathSet)
+        self.pathButton = QPushButton('Choose file...')
+        self.pathButton.setAutoDefault(False)
+        self.pathButton.setDefault(False)
+        self.pathButton.clicked.connect(self.pathSet)
         pathLayout.addWidget(self.pathEdit)
-        pathLayout.addWidget(pathButton)
+        pathLayout.addWidget(self.pathButton)
         self.setLayout(pathLayout)
 
         self.textChanged = self.pathEdit.textChanged
+
+    def setToolTip(self, tip):
+        self.pathEdit.setToolTip(tip)
+        self.pathButton.setToolTip(tip)
 
     def pathSet(self):
         filename = QFileDialog.getOpenFileName(self,self.title, filter=self.filefilter)
