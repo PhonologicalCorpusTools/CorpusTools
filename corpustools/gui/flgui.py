@@ -286,7 +286,7 @@ class FLDialog(FunctionDialog):
                 'type_token':self.typeTokenWidget.value(),
                 'algorithm': alg,
                 'prevent_normalization': self.preventNormalizationWidget.isChecked(),
-                'environment_filter': self.envWidget.value()}
+                'environment_filters': self.envWidget.value()}
         if alg == 'min_pairs':
             out_file = self.saveFileWidget.value()
             if out_file == '':
