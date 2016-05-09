@@ -38,6 +38,8 @@ class InventoryManager(QDialog):
         self.uncView.verticalHeader().hide()
         inventoryTabs.addTab(self.uncView, 'Uncategorized segments')
 
+        self.inventory.modelResetSignal.connect(self.uncModel.modelReset)
+
         layout.addLayout(inventoryLayout)
 
         editCategoriesLayout = QVBoxLayout()
@@ -107,7 +109,7 @@ class InventoryManager(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
-        self.resize(800,400)
+        self.adjustSize()
 
     def accept(self):
         self.recategorize(exiting=True)

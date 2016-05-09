@@ -2,9 +2,10 @@ AUDIO_ENABLED = True
 HELP_ENABLED = True
 try:
     from PyQt5.QtCore import (QRectF, Qt, QModelIndex, QItemSelection,
-                                pyqtSignal as Signal,QThread,QAbstractTableModel,
+                                pyqtSignal as Signal, pyqtSlot as Slot,
+                                QThread,QAbstractTableModel,
                                 QSize, QSettings,QPoint, QItemSelectionModel,
-                                QSortFilterProxyModel, QAbstractItemModel,
+                                QSortFilterProxyModel, QAbstractProxyModel, QAbstractItemModel,
                             QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
                             QStringListModel)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,

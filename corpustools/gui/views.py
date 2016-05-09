@@ -855,13 +855,10 @@ class InventoryView(QTableView):
         model_name = self.model().__class__.__name__
         if not model_name == 'UncategorizedModel':
             return
-        seg = self.model().sourceModel().uncategorized[index.column()]
-        # elif model_name == 'ConsonantModel':
-        #     seg = self.model().sourceModel()._data[index.row()][index.column()]
-        # elif model_name == 'VowelModel':
-        #     row_offset = self.model().sourceModel().vowel_row_offset
-        #     column_offset = self.mode().sourceModel().vowel_column_offset
-        #     seg = self.model().sourceModel()._data[index.row()+row_offset][index.colum()+column_offset]
+        try:
+            seg = self.model().sourceModel().uncategorized[index.column()]
+        except IndexError:
+            return
 
         alert = QMessageBox()
         if seg.symbol in self.model().sourceModel().non_segment_symbols:

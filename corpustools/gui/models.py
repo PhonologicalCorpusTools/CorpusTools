@@ -6,7 +6,6 @@ from copy import deepcopy
 from .widgets import *
 from corpustools.corpus.classes.lexicon import Segment
 from corpustools.exceptions import CorpusIntegrityError
-import os
 
 from collections import Counter, defaultdict
 
@@ -1023,13 +1022,6 @@ class InventoryModel(QAbstractTableModel):
             return QVariant()
         if role == Qt.DisplayRole:
             return info
-        elif role == Qt.ToolTipRole:
-            try:
-                seg = self.segs[info]
-                return self.getPartialCategorization(seg)
-            except KeyError:
-                #this occurs with correctly categorized segments that are comma-separated in the chart
-                return QVariant()
         else:
             return QVariant()
 
@@ -1250,6 +1242,7 @@ class InventoryModel(QAbstractTableModel):
         self.sortData()
         self.filterGenericNames()
         self.endResetModel()
+        self.modelResetSignal.emit(True)
 
     def changeColumnOrder(self, map, consonants=True):
         if consonants:
@@ -1826,21 +1819,67 @@ class ConsonantModel(QSortFilterProxyModel):
 
 class UncategorizedModel(QSortFilterProxyModel):
 
-    def __init__(self, inventory):
+    def __init__(self, inventory, col_max = 5):
         super().__init__()
         self.setSourceModel(inventory)
+        self._data = list()
+        self.col_max = col_max
+        self.organizeData()
 
-    def filterAcceptsRow(self, row, parent=None):
-        if row == self.sourceModel().rowCount()-1:
-            return True
-        else:
-            return False
+    # def filterAcceptsRow(self, row, parent=None):
+    #     if row == self.sourceModel().rowCount()-1:
+    #         return True
+    #     else:
+    #         return False
+    #
+    # def filterAcceptsColumn(self, column, parent=None):
+    #     if column <= len(self.sourceModel().uncategorized):
+    #         return True
+    #     else:
+    #         return False
 
-    def filterAcceptsColumn(self, column, parent=None):
-        if column <= len(self.sourceModel().uncategorized):
-            return True
+    def mapFromSource(self, index):
+        if not index.isValid():
+            return QModelIndex()
+        row = index.column()%self.col_max
+        column = int(index.column()/self.col_max)
+        return self.index(row, column)
+
+    def mapToSource(self, index):
+        if not index.isValid():
+            return QModelIndex()
+        row = self.sourceModel().rowCount()-1
+        column = (index.row()*self.col_max)+index.column()
+        return self.sourceModel().index(row, column)
+
+    def organizeData(self):
+        self._data = list()
+        info = self.sourceModel()._data[self.sourceModel().rowCount()-1]
+        info = [i for i in info if i]
+        row = list()
+        for i in info:
+            row.append(i)
+            if len(row) == self.col_max:
+                self._data.append(row)
+                row = list()
+        if row: #might be a leftover if len(row)<self.col_max on last loop
+            while len(row) < self.col_max:
+                row.append('')#make every row of equal length
+            self._data.append(row)
+
+    @Slot(bool)
+    def modelReset(self):
+        self.modelAboutToBeReset.emit()
+        self.organizeData()
+        self.endResetModel()
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return QVariant()
+        if role == Qt.DisplayRole:
+            return self._data[index.row()][index.column()]
         else:
-            return False
+            return QVariant()
 
     def features(self):
         return self.sourceModel().features
@@ -1849,10 +1888,10 @@ class UncategorizedModel(QSortFilterProxyModel):
         return self.sourceModel().possible_values
 
     def rowCount(self, parent=None):
-        return 1
+        return len(self._data)
 
     def columnCount(self, parent=None):
-        return len(self.sourceModel().uncategorized)
+        return self.col_max
 
 
 class VowelModel(QSortFilterProxyModel):
