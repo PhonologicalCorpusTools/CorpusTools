@@ -863,13 +863,19 @@ class InventoryView(QTableView):
         #     column_offset = self.mode().sourceModel().vowel_column_offset
         #     seg = self.model().sourceModel()._data[index.row()+row_offset][index.colum()+column_offset]
 
-        features = [value+key for (key,value) in seg.features.items()]
-        features.sort(key=lambda x:x[1])
-        features = '\n'.join(features)
-        partials = self.model().sourceModel().getPartialCategorization(seg)
         alert = QMessageBox()
-        alert.setWindowTitle('Feature matches')
-        alert.setText(('The segment /{}/ has these features:\n\n{}\n\n{}'.format(seg.symbol, features, partials)))
+        if seg.symbol in self.model().sourceModel().non_segment_symbols:
+            alert.setWindowTitle('Non-segment symbol')
+            alert.setText(('This is a non-segment symbol (probably a boundary symbol). As such, it has no phonological '
+            'features and cannot be sorted into a chart.'))
+        else:
+            features = [value+key for (key,value) in seg.features.items()]
+            features.sort(key=lambda x:x[1])
+            features = '\n'.join(features)
+            partials = self.model().sourceModel().getPartialCategorization(seg)
+            alert.setWindowTitle('Feature matches')
+            alert.setText(('The segment /{}/ has these features:\n\n{}\n\n{}'.format(seg.symbol, features, partials)))
+
         alert.addButton('Return', QMessageBox.AcceptRole)
         alert.exec_()
         return

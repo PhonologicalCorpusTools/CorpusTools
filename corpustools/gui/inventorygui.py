@@ -16,43 +16,27 @@ class InventoryManager(QDialog):
         layout = QVBoxLayout()
 
         inventoryLayout = QHBoxLayout()
-        consBox = QVBoxLayout()
-        cons_title = QLabel('Consonant Inventory')
-        cons_title.setFont(font)
-        consBox.addWidget(cons_title)
+        inventoryTabs = QTabWidget()
+        inventoryLayout.addWidget(inventoryTabs)
+
         self.consModel = ConsonantModel(self.inventory)
         self.consView = InventoryView(self.consModel)
         self.consView.resizeRowsToContents()
         self.consView.resizeColumnsToContents()
-        # self.consView.horizontalHeader().setStretchLastSection(True)
-        # self.consView.verticalHeader().setStretchLastSection(True)
-        consBox.addWidget(self.consView)
-        inventoryLayout.addLayout(consBox)
+        inventoryTabs.addTab(self.consView, 'Consonants')
 
-        vowelBox = QVBoxLayout()
-        vowel_title = QLabel('Vowel Inventory')
-        vowel_title.setFont(font)
-        vowelBox.addWidget(vowel_title)
         self.vowelModel = VowelModel(self.inventory)
         self.vowelView = InventoryView(self.vowelModel)
-        vowelBox.addWidget(self.vowelView)
+
         self.vowelView.resizeRowsToContents()
         self.vowelView.resizeColumnsToContents()
-        # self.vowelView.horizontalHeader().setStretchLastSection(True)
-        # self.vowelView.verticalHeader().setStretchLastSection(True)
-        inventoryLayout.addLayout(vowelBox)
+        inventoryTabs.addTab(self.vowelView, 'Vowels')
 
-        uncBox = QVBoxLayout()
-        unc_title = QLabel('Uncategorized Segments')
-        unc_title.setFont(font)
-        uncBox.addWidget(unc_title)
         self.uncModel = UncategorizedModel(self.inventory)
         self.uncView = InventoryView(self.uncModel)
         self.uncView.horizontalHeader().hide()
         self.uncView.verticalHeader().hide()
-        uncBox.addWidget(self.uncView)
-        #layout.addLayout(uncBox)
-        inventoryLayout.addLayout(uncBox)
+        inventoryTabs.addTab(self.uncView, 'Uncategorized segments')
 
         layout.addLayout(inventoryLayout)
 
@@ -83,16 +67,16 @@ class InventoryManager(QDialog):
         editCategoriesLayout.addLayout(editVowelsLayout)
 
         topmessage = QLabel(text=('Tips for using the inventory manager:\n\n'
-            '* Double-click on a row or column to edit the class of segments which appear in that row or column.\n'
-            '* Right click to insert a new empty row or column.\n'
-            '* Select a heading and drag-and-drop to reorganize the table.\n'
-            '* Hover over an uncategorized segment to see any partial matches, or double-click the segment to see a '
-                'full feature specification and partial matches.\n'
-            '* Default features are required, and they apply automatically to every column and row in the relevant '
-                'table.\n'
-            '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
-                'default features.\n'
-            '* Auto-categorization currently only works with SPE or Hayes feature systems.'
+        '* Double-click on a row or column heading to edit the class of segments which appear in that row or column.\n'
+        '* Right click to insert a new empty row or column.\n'
+        '* Select a heading and drag-and-drop to reorganize the table.\n'
+        '* Hover over an uncategorized segment to see any partial matches, or double-click the segment to see a '
+            'full feature specification and partial matches.\n'
+        '* Default features are required, and they apply automatically to every column and row in the relevant '
+            'table.\n'
+        '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
+            'default features.\n'
+        '* Auto-categorization currently only works with SPE or Hayes feature systems.'
         ))
 
         topmessage.setWordWrap(True)
@@ -123,6 +107,7 @@ class InventoryManager(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
+        self.resize(800,400)
 
     def accept(self):
         self.recategorize(exiting=True)

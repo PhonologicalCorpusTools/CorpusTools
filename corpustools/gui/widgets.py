@@ -1372,28 +1372,30 @@ class SegmentSelectionWidget(QWidget):
         return self.inventoryFrame.value()
 
 class InventoryBox(QWidget):
+    """
+    This is as an alternative to the InventoryView in cases where the user needs to be able to select segments
+    by clicking on them. This is because it is difficult to add multiple buttons per cell to the QTableView, so we
+    use a QTableWidget here instead.
+    """
+
     def __init__(self, title, inventory, parent=None):
         QWidget.__init__(self,parent)
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         self.inventory = inventory
+        self.setWindowTitle(title)
 
-        self.mainLayout = QHBoxLayout()
+
+        mainLayout = QHBoxLayout()
+        inventoryTabs = QTabWidget()
         cons = self.makeConsTable()
+        inventoryTabs.addTab(cons, 'Consonants')
         vow = self.makeVowelTable()
+        inventoryTabs.addTab(vow, 'Vowels')
         unk = self.makeUncategorizedTable()
-        self.addTables(cons,vow,unk)
-        self.setLayout(self.mainLayout)
-
-    def addTables(self,cons,vow,unk):
-        if cons is not None:
-            self.mainLayout.addWidget(cons)#, alignment = Qt.AlignLeft | Qt.AlignTop)
-
-        if vow is not None:
-            self.mainLayout.addWidget(vow, alignment = Qt.AlignLeft | Qt.AlignTop)
-
-        if unk is not None:
-            self.mainLayout.addWidget(unk, alignment = Qt.AlignLeft | Qt.AlignTop)
+        inventoryTabs.addTab(unk, 'Uncategorized')
+        mainLayout.addWidget(inventoryTabs)
+        self.setLayout(mainLayout)
 
     def makeConsTable(self):
         cons = QFrame()#This widget is what gets returned from this function
@@ -1564,15 +1566,22 @@ class InventoryBox(QWidget):
 
 class MultiSegmentCell(QWidget):
 
-    def __init__(self,buttons,parent=None):
+    def __init__(self,buttons, parent=None, col_max=3):
         super().__init__(parent)
-        layout = QHBoxLayout()
+        layout = QGridLayout()
         layout.setContentsMargins(0,0,0,0)
         layout.setSpacing(0)
         self.button_names = list()
+        row = 0
+        col = 0
         for b in buttons:
-            layout.addWidget(b)
+            layout.addWidget(b,row,col)
             self.button_names.append(b.text())
+            col += 1
+            if col > col_max:
+                print('col rolled over')
+                col = 0
+                row += 1
 
         self.setLayout(layout)
 
