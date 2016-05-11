@@ -261,6 +261,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
 def relative_minpair_fl(corpus_context, segment,
             relative_count = True, distinguish_homophones = False,
             output_filename = None, environment_filters = None,
+            prevent_normalization = False,
             stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as a count of minimal pairs.
@@ -310,6 +311,7 @@ def relative_minpair_fl(corpus_context, segment,
             relative_count = relative_count,
             distinguish_homophones = distinguish_homophones,
             environment_filters = environment_filters,
+            prevent_normalization = prevent_normalization,
             stop_check = stop_check, call_back = call_back)
         results_dict[sp] = res[0]
         results.append(res[0])
@@ -326,6 +328,7 @@ def relative_minpair_fl(corpus_context, segment,
 
 def relative_deltah_fl(corpus_context, segment,
                 environment_filters = None,
+                prevent_normalization = False,
                 stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as the decrease in corpus entropy
@@ -361,6 +364,7 @@ def relative_deltah_fl(corpus_context, segment,
     for sp in segment_pairs:
         res = deltah_fl(corpus_context, [sp],
                 environment_filters=environment_filters,
+                prevent_normalization = False,
                 stop_check = stop_check, call_back = call_back)
         results.append(res)
         results_dict[sp] = res
@@ -417,6 +421,7 @@ def neutralize_segment(segment, segment_pairs):
 
 def all_pairwise_fls(corpus_context, relative_fl = False,
                     algorithm = 'minpair',
+                    prevent_normalization = False,
                     relative_count = True, distinguish_homophones = False,
                     environment_filters = None):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.

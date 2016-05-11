@@ -976,8 +976,6 @@ class InventoryModel(QAbstractTableModel):
         return True
 
     def getPartialCategorization(self, seg):
-        #This is called by .data() when a user wants a tooltip in the uncategorized box to see if there are any partial
-        #category matches.
 
         cons_category = list()
         for row, col in itertools.product(self.cons_row_data, self.cons_column_data):
@@ -1014,12 +1012,15 @@ class InventoryModel(QAbstractTableModel):
         return 'Consonant matches:\n{}\nVowel matches:\n{}'.format(cons_category, vowel_category)
 
 
-    def data(self, index, role):
+    def data(self, index, role=None):
         if not index.isValid():
             return QVariant()
         info = self._data[index.row()][index.column()]
-        if not info:
-            return QVariant()
+        #checking for "if not info" might be causing problems because info can return an empty string
+        #empty strings are used as padding to make every row in the model the same length
+        # if not info:
+        #     print('no info')
+        #     return QVariant()
         if role == Qt.DisplayRole:
             return info
         else:
@@ -1822,21 +1823,11 @@ class UncategorizedModel(QSortFilterProxyModel):
     def __init__(self, inventory, col_max = 5):
         super().__init__()
         self.setSourceModel(inventory)
+        self.segs = self.sourceModel().segs
+        self.non_segment_symbols = self.sourceModel().non_segment_symbols
         self._data = list()
         self.col_max = col_max
         self.organizeData()
-
-    # def filterAcceptsRow(self, row, parent=None):
-    #     if row == self.sourceModel().rowCount()-1:
-    #         return True
-    #     else:
-    #         return False
-    #
-    # def filterAcceptsColumn(self, column, parent=None):
-    #     if column <= len(self.sourceModel().uncategorized):
-    #         return True
-    #     else:
-    #         return False
 
     def mapFromSource(self, index):
         if not index.isValid():
@@ -1880,6 +1871,23 @@ class UncategorizedModel(QSortFilterProxyModel):
             return self._data[index.row()][index.column()]
         else:
             return QVariant()
+
+    def getPartialCategorization(self, seg):
+
+        if seg in self.non_segment_symbols:
+            windowTitle = 'Non-segment symbol'
+            text= ('This is a non-segment symbol (probably a boundary symbol). As such, it has no phonological '
+                           'features and cannot be sorted into a chart.')
+        else:
+            seg = self.segs[seg]
+            features = [value + key for (key, value) in seg.features.items()]
+            features.sort(key=lambda x: x[1])
+            features = '\n'.join(features)
+            partials = self.sourceModel().getPartialCategorization(seg)
+            windowTitle = 'Feature matches'
+            text = '{}\n\nThe segment /{}/ has these features:\n\n{}'.format(partials, seg.symbol, features)
+
+        return windowTitle, text
 
     def features(self):
         return self.sourceModel().features

@@ -845,34 +845,23 @@ class InventoryView(QTableView):
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
 
-    def checkSize(self):
-        if self.model().columnCount() == 0:
-            self.hide()
-        else:
-            self.show()
-
     def showFeatures(self, index):
         model_name = self.model().__class__.__name__
         if not model_name == 'UncategorizedModel':
             return
+
         try:
-            seg = self.model().sourceModel().uncategorized[index.column()]
+            seg = self.model().data(index, role=Qt.DisplayRole)
         except IndexError:
             return
 
-        alert = QMessageBox()
-        if seg.symbol in self.model().sourceModel().non_segment_symbols:
-            alert.setWindowTitle('Non-segment symbol')
-            alert.setText(('This is a non-segment symbol (probably a boundary symbol). As such, it has no phonological '
-            'features and cannot be sorted into a chart.'))
-        else:
-            features = [value+key for (key,value) in seg.features.items()]
-            features.sort(key=lambda x:x[1])
-            features = '\n'.join(features)
-            partials = self.model().sourceModel().getPartialCategorization(seg)
-            alert.setWindowTitle('Feature matches')
-            alert.setText(('The segment /{}/ has these features:\n\n{}\n\n{}'.format(seg.symbol, features, partials)))
+        if not seg:
+            return #emtpy cells in an UncategorizedModel have empty strings
 
+        alert = QMessageBox()
+        windowTitle, text = self.model().getPartialCategorization(seg)
+        alert.setWindowTitle(windowTitle)
+        alert.setText(text)
         alert.addButton('Return', QMessageBox.AcceptRole)
         alert.exec_()
         return

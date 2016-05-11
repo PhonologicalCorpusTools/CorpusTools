@@ -1385,15 +1385,14 @@ class InventoryBox(QWidget):
         self.inventory = inventory
         self.setWindowTitle(title)
 
-
         mainLayout = QHBoxLayout()
         inventoryTabs = QTabWidget()
         cons = self.makeConsTable()
         inventoryTabs.addTab(cons, 'Consonants')
         vow = self.makeVowelTable()
         inventoryTabs.addTab(vow, 'Vowels')
-        unk = self.makeUncategorizedTable()
-        inventoryTabs.addTab(unk, 'Uncategorized')
+        unc = self.makeUncategorizedTable()
+        inventoryTabs.addTab(unc, 'Uncategorized')
         mainLayout.addWidget(inventoryTabs)
         self.setLayout(mainLayout)
 
@@ -1430,10 +1429,8 @@ class InventoryBox(QWidget):
 
     def makeVowelTable(self):
         vowel = QFrame() #This widget gets returned from the function
-        vowelBox = QGridLayout()
-        vowelBox.setAlignment(Qt.AlignTop)
+        vowelBox = QVBoxLayout()
         self.vowelTable = QTableWidget()
-
         vowelBox.addWidget(self.vowelTable)
         vowel.setLayout(vowelBox)
 
@@ -1463,30 +1460,37 @@ class InventoryBox(QWidget):
 
         return vowel
 
-    def makeUncategorizedTable(self):
-        unk = QGroupBox('Uncategorized')
-        unk.setFlat(True)
-        # unk.setCheckable(True)
-        # unk.setChecked(False)
-        # unk.toggled.connect(self.showHideUnk)
-        self.unkTable = QGridLayout()
-        unk.setLayout(self.unkTable)
+    def makeUncategorizedTable(self, col_max = 3):
+        unc = QFrame() #this widget is returned from the function
+        uncLayout = QVBoxLayout()
+        self.uncTable = QTableWidget()
+        self.uncTable.setColumnCount(0)
+        self.uncTable.setRowCount(1)
+        self.uncTable.horizontalHeader().hide()
+        self.uncTable.verticalHeader().hide()
+        uncLayout.addWidget(self.uncTable)
+        unc.setLayout(uncLayout)
 
-        unkRow = 0
-        unkCol = -1
+        row = 0
+        col = 0
+        table = [[]]
         for s in self.inventory.uncategorized:
-            btn = SegmentButton(s.symbol)
+            btn = self.generateSegmentButton(s.symbol)
             btn.setCheckable(True)
-            btn.setAutoExclusive(False)
-            btn.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
-            self.btnGroup.addButton(btn)
+            table[row].append(btn)
+            col += 1
+            if col > col_max:
+                col = 0
+                row += 1
+                table.append([])
 
-            unkCol += 1
-            if unkCol > 11:
-                unkCol = 0
-                unkRow += 1
-            self.unkTable.addWidget(btn,unkRow,unkCol)
-        return unk
+        self.uncTable.setRowCount(len(table))
+        self.uncTable.setColumnCount(col_max)
+        for row in range(len(table)):
+            for col in range(len(table[row])):
+                self.uncTable.setCellWidget(row, col, table[row][col])
+
+        return unc
 
     def generateSegmentButton(self,symbol):
         wid = SegmentButton(symbol)#This needs to be a SegmentButton for the i,j segment

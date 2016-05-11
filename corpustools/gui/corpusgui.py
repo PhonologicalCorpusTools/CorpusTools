@@ -142,7 +142,7 @@ class CorpusSummary(QDialog):
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
-        layout.setSizeConstraint(QLayout.SetFixedSize)
+        #layout.setSizeConstraint(QLayout.SetFixedSize)
 
         main = QFormLayout()
 
