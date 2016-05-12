@@ -893,6 +893,18 @@ class InventoryModel(QAbstractTableModel):
         self.filterGenericNames()
         self.isNew = False
 
+    def __eq__(self, other):
+        if not isinstance(other, InventoryModel):
+            return False
+        for attr in InventoryModel.attributes:
+            try:
+                if not getattr(self, attr) == getattr(other, attr):
+                    return False
+            except AttributeError:
+                return False
+        else:
+            return True
+
     def setAttributes(self, source):
         for attribute in InventoryModel.attributes:
             setattr(self, attribute, deepcopy(getattr(source, attribute)))

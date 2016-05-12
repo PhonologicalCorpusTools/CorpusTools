@@ -279,7 +279,7 @@ class FLDialog(FunctionDialog):
         except ValueError:
             frequency_cutoff = 0.0
         alg = self.algorithmWidget.value()
-        kwargs = {'corpus':self.corpus,
+        self.kwargs = {'corpus':self.corpus,
                 'segment_pairs':segPairs,
                 'context': self.variantsWidget.value(),
                 'sequence_type': self.tierWidget.value(),
@@ -292,11 +292,11 @@ class FLDialog(FunctionDialog):
             out_file = self.saveFileWidget.value()
             if out_file == '':
                 out_file = None
-            kwargs['relative_count'] = self.relativeCountWidget.isChecked()
-            kwargs['distinguish_homophones'] = self.homophoneWidget.isChecked()
-            kwargs['output_filename'] = out_file
+            self.kwargs['relative_count'] = self.relativeCountWidget.isChecked()
+            self.kwargs['distinguish_homophones'] = self.homophoneWidget.isChecked()
+            self.kwargs['output_filename'] = out_file
 
-        return kwargs
+        return self.kwargs
 
     def setResults(self, results):
         self.results = []
