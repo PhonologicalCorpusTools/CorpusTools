@@ -187,12 +187,23 @@ And the entropy after a [t] / [d] merger, assuming word tokens, is:
 + (\frac{4}{70} log_{2}(\frac{4}{70})) + (\frac{7}{70} log_{2}(\frac{7}{70}))]
 = 3.466`
 
+Then, the functional load of [t] / [d] based on word types is:
 
 :math:`\Delta H = H_{1-types} - H_{2-types} = 4.087– 3.700 = 0.387`
 
 And the functional load of [t] / [d] based on word tokens is:
 
 :math:`\Delta H = H_{1-tokens} - H_{2-tokens} = 3.924– 3.466 = 0.458`
+
+Rather than taking the difference directly, however, [Surendran2003]_ normalizes the difference by dividing it by the entropy of the corpus before the merger. PCT defaults to normalizing the difference, but clicking "Do not normalize results" will turn the normalization off and return just the difference in entropies.
+
+Returning to the above examples, we would normalize the functional load of [t] / [d] based on word types by dividing the difference given above, 0.387, by the entropy pre-merger, 4.087, and see that the normalized version is:
+
+:math:`\Delta H 0.387 / 4.087 = 0.0947
+
+And analogously, for the normalized functional load of [t] / [d] based on word tokens, we get:
+
+:math:`\Delta H 0.458 / 4.087 = 0.1121
 
 .. _method_change_minimal_pairs:
 
