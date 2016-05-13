@@ -920,7 +920,7 @@ class InventoryModel(QAbstractTableModel):
         self.consList = []
         self.vowelList = []
         self.uncategorized = []
-        self._data = {}
+        self._data = []
         self.cons_column_data = {'Column 1': [0,{},None]}
         self.cons_row_data = {'Row 1': [0,{},None]}
         self.vowel_column_data = {'Column 1': [0,{},None]}
@@ -1902,7 +1902,6 @@ class UncategorizedModel(QSortFilterProxyModel):
         return self.sourceModel().index(row, column)
 
     def organizeData(self):
-        self._data = list()
         info = self.sourceModel()._data[self.sourceModel().rowCount()-1]
         info = [i for i in info if i]
         row = list()
@@ -1919,6 +1918,7 @@ class UncategorizedModel(QSortFilterProxyModel):
     @Slot(bool)
     def modelReset(self):
         self.modelAboutToBeReset.emit()
+        self._data = list()
         self.organizeData()
         self.endResetModel()
 
