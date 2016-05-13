@@ -236,15 +236,18 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
         neutralized_sum += w.frequency
 
 
-    original_probs = {k:v/original_sum for k,v in original_probs.items()}
-    if stop_check is not None and stop_check():
-        return
-    neutralized_probs = {k:v/neutralized_sum for k,v in neutralized_probs.items()}
-    if stop_check is not None and stop_check():
-        return
+    if corpus_context.type_or_token == 'type':
+        preneutr_h = log(len(original_probs), 2)
+    else:
+        original_probs = {k:v/original_sum for k,v in original_probs.items()}
+        preneutr_h = _entropy(original_probs.values())
 
-    preneutr_h = _entropy(original_probs.values())
-    postneutr_h = _entropy(neutralized_probs.values())
+    if corpus_context.type_or_token == 'type':
+        postneutr_h = log(len(neutralized_probs), 2)
+    else:
+        neutralized_probs = {k:v/neutralized_sum for k,v in neutralized_probs.items()}
+        postneutr_h = _entropy(neutralized_probs.values())
+
     if stop_check is not None and stop_check():
         return
         

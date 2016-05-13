@@ -75,16 +75,28 @@ def test_minpair(unspecified_test_corpus):
             assert(abs(minpair_fl(c, **kwargs)[0]-v) < 0.0001)
 
 def test_deltah(unspecified_test_corpus):
-    type_calls = [({'segment_pairs':[('s','ʃ')]},0.13333),
-            ({'segment_pairs':[('m','n')]},0.13333),
+    type_calls = [({'segment_pairs':[('s','ʃ')]},0.02547695),
+            ({'segment_pairs':[('m','n')]},0.02547695),
             ({'segment_pairs':[('e','o')]},0),
             ({'segment_pairs':[('s','ʃ'),
                                 ('m','n'),
-                                ('e','o')]},0.26667),]
+                                ('e','o')]},0.05284),]
 
     with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
         for kwargs, v in type_calls:
             assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
+    type_calls = [({'segment_pairs':[('s','ʃ')], 'prevent_normalization':True},0.09953567),
+            ({'segment_pairs':[('m','n')], 'prevent_normalization':True},0.09953567),
+            ({'segment_pairs':[('e','o')], 'prevent_normalization':True},0),
+            ({'segment_pairs':[('s','ʃ'),
+                                ('m','n'),
+                                ('e','o')], 'prevent_normalization':True},0.206450877),]
+
+    with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
+        for kwargs, v in type_calls:
+            assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
+
 
     type_calls = [({'segment_pairs':[('s','ʃ')]},0.16667),
             ({'segment_pairs':[('m','n')]},0),
