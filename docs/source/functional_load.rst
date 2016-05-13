@@ -187,12 +187,23 @@ And the entropy after a [t] / [d] merger, assuming word tokens, is:
 + (\frac{4}{70} log_{2}(\frac{4}{70})) + (\frac{7}{70} log_{2}(\frac{7}{70}))]
 = 3.466`
 
+Then, the functional load of [t] / [d] based on word types is:
 
 :math:`\Delta H = H_{1-types} - H_{2-types} = 4.087– 3.700 = 0.387`
 
 And the functional load of [t] / [d] based on word tokens is:
 
 :math:`\Delta H = H_{1-tokens} - H_{2-tokens} = 3.924– 3.466 = 0.458`
+
+Rather than taking the difference directly, however, [Surendran2003]_ normalizes the difference by dividing it by the entropy of the corpus before the merger. PCT defaults to normalizing the difference, but clicking "Do not normalize results" will turn the normalization off and return just the difference in entropies.
+
+Returning to the above examples, we would normalize the functional load of [t] / [d] based on word types by dividing the difference given above, 0.387, by the entropy pre-merger, 4.087, and see that the normalized version is:
+
+:math:`\Delta H 0.387 / 4.087 = 0.0947`
+
+And analogously, for the normalized functional load of [t] / [d] based on word tokens, we get:
+
+:math:`\Delta H 0.458 / 4.087 = 0.1121`
 
 .. _method_change_minimal_pairs:
 
@@ -282,11 +293,11 @@ Once a corpus is loaded, use the following steps.
       but the overall output will still be provided (and can be saved independently).
 
 5. **Change in entropy options**: If you are calculating
-   functional load using change in entropy, one additional parameter can be set.
+   functional load using change in entropy, one parameter can be set.
 
-   a. **Type or token frequency**: As described in :ref:`method_change_entropy`, entropy can be
-      calculated using either type or token frequencies. This option
-      determines which to use.
+   a. **Normalize results**: As described in :ref:`method_change_entropy`, entropy can be
+      calculated using just a difference in entropies, or by normalizing that difference by the entropy of the corpus before the merger. The default is to normalize; clicking "Do not normalize results" removes this normalization and returns just the difference in entropies.
+
 
 6. **Tier**: Select which tier the functional load should be calculated from.
    The default is the “transcription” tier, i.e., looking at the entire
@@ -302,14 +313,18 @@ Once a corpus is loaded, use the following steps.
    variants for lexical items, select what strategy should be used. For details,
    see :ref:`pronunciation_variants`.
 
-8. **Minimum frequency**: It is possible to set a minimum token frequency
+8.    **Type or token frequency**: As described in :ref:`method_change_entropy`, \Delta H entropy can be
+      calculated using either type or token frequencies. This option
+      determines which to use. The default is to use token frequencies, as this is what [Surendran2003]_ do. Note that for minimal pairs, only type frequency is used.
+
+9. **Minimum frequency**: It is possible to set a minimum token frequency
    for words in the corpus in order to be included in the calculation.
    This allows easy exclusion of rare words; for example, if one were
    calculating the functional load of [s] vs. [ʃ] in English and didn’t
    set a minimum frequency, words such as *santy* (vs. *shanty*) might be
    included, which might not be a particularly accurate reflection of
    the phonological knowledge of speakers. To include all words in the
-   corpus, regardless of their token frequency, set the the minimum frequency to 0.
+   corpus, regardless of their token frequency, set the the minimum frequency to 0. Note that if a minimum frequency set, all words below that frequency are simply ignored entirely for the purposes of the entire calculation (e.g., they are not included in the total entropy of the corpus).
 
    Here is an example of selecting [m] and [n], with functional load to be
    calculated on the basis of minimal pairs, only including words with a

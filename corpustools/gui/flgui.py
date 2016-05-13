@@ -270,7 +270,6 @@ class FLDialog(FunctionDialog):
         self.typeTokenWidget.widgets[1].setChecked(True)
         self.typeTokenWidget.setEnabled(True)
 
-
     def generateKwargs(self):
         segPairs = self.segPairWidget.value()
         if len(segPairs) == 0:

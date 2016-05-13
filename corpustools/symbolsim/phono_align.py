@@ -120,7 +120,7 @@ class Aligner(object):
                 fs2 = self.features[segment2symbol]
                 if self.ins_del_basis == 'empty':
                     distance = (sum(check_feature_difference('0',
-                            sign, underspec_cost) for sign in fs2.features.values()))
+                            sign, underspec_cost) for sign in fs2.values()))
                 elif self.ins_del_basis == 'average':
                     distance = ins_del_difference
                 return distance * self.ins_penalty
@@ -129,14 +129,14 @@ class Aligner(object):
                 fs1 = self.features[segment1symbol]
                 if self.ins_del_basis == 'empty':
                     distance = (sum(check_feature_difference(sign,
-                        '0', underspec_cost) for sign in fs1.features.values()))
+                        '0', underspec_cost) for sign in fs1.values()))
                 elif self.ins_del_basis == 'average':
                     distance = ins_del_difference
                 return distance * self.del_penalty
             else:
                 fs1 = self.features[segment1symbol]
                 fs2 = self.features[segment2symbol]
-                return (sum(check_feature_difference(fs1[k], fs2[k], underspec_cost) for k in fs1.features.keys()) * self.sub_penalty)
+                return (sum(check_feature_difference(fs1[k], fs2[k], underspec_cost) for k in fs1.keys()) * self.sub_penalty)
         else:
             if segment1 == 'empty':
                 return self.ins_penalty

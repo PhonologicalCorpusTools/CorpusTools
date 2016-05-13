@@ -67,12 +67,21 @@ class BaseTableModel(QAbstractTableModel):
 
     def addRow(self,row):
         self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
-        self.rows.append(row)
+        currRow = []
+        for header in self.columns:
+            currRow.append(row[header])
+        self.rows.append(currRow)
         self.endInsertRows()
 
     def addRows(self,rows):
         self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount() + len(rows)-1)
-        self.rows += rows
+        currRows = []
+        for row in rows:
+            currRow = []
+            for header in self.columns:
+                currRow.append(row[header])
+            currRows.append(currRow)
+        self.rows += currRows
         self.endInsertRows()
 
     def removeRow(self,ind):
