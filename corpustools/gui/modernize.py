@@ -25,14 +25,14 @@ def force_update(corpus):
     has_segs = [seg for seg in corpus.inventory.segs if not seg in inventory_attributes['non_segment_symbols']]
 
     if not has_segs:
-        #for some reason, the segment inventory is an empty list in the old IPHOD corpus, and potentially other
-        #old PCT files too
+        #for some reason, the segment inventory is an empty list on some older PCT files
         segs = set()
         for word in corpus:
             for seg in word.transcription:
                 segs.add(seg)
         for seg in segs:
             corpus.inventory.segs[seg] = Segment(seg,corpus.specifier.specify(seg))
+
     corpus.inventory = modernize_inventory_attributes(corpus.inventory)
     corpus.inventory, corpus.specifier = modernize_features(corpus.inventory, corpus.specifier)
     corpus.inventory.isNew = False
@@ -61,7 +61,8 @@ def modernize_inventory_attributes(inventory):
             setattr(inventory, attribute, default)
         elif not getattr(inventory, attribute) and default:
             setattr(inventory, attribute, default)
-    if not inventory.segs and inventory._data:
+    has_segs = [s for s in inventory.segs if not s in inventory_attributes['non_segment_symbols']]
+    if not has_segs and inventory._data:
         #in an older version, inventory._data was a list of segs, but with the model/view set up,
         #this is changed
         inventory.segs = inventory._data.copy()

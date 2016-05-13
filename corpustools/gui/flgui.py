@@ -268,6 +268,8 @@ class FLDialog(FunctionDialog):
         self.homophoneWidget.setEnabled(False)
         self.preventNormalizationWidget.setEnabled(True)
         self.typeTokenWidget.widgets[1].setChecked(True)
+        self.typeTokenWidget.setEnabled(True)
+
 
     def generateKwargs(self):
         segPairs = self.segPairWidget.value()
