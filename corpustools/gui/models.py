@@ -67,21 +67,27 @@ class BaseTableModel(QAbstractTableModel):
 
     def addRow(self,row):
         self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
-        currRow = []
-        for header in self.columns:
-            currRow.append(row[header])
-        self.rows.append(currRow)
+        if type(row) is dict:    
+            currRow = []
+            for header in self.columns:
+                currRow.append(row[header])
+            self.rows.append(currRow)
+        else:
+            self.rows.append(row)
         self.endInsertRows()
 
     def addRows(self,rows):
         self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount() + len(rows)-1)
-        currRows = []
-        for row in rows:
-            currRow = []
-            for header in self.columns:
-                currRow.append(row[header])
-            currRows.append(currRow)
-        self.rows += currRows
+        if type(rows) is dict:
+            currRows = []
+            for row in rows:
+                currRow = []
+                for header in self.columns:
+                    currRow.append(row[header])
+                currRows.append(currRow)
+            self.rows += currRows
+        else:
+            self.rows += rows
         self.endInsertRows()
 
     def removeRow(self,ind):
@@ -486,14 +492,45 @@ class ResultsModel(BaseTableModel):
     def __init__(self, header, results, settings, parent=None):
         QAbstractTableModel.__init__(self,parent)
         self.settings = settings
-        self.columns = header
-        results_dict2list = list()
+        headerDynamic = []
+        headerStatic = []
+        headerIdx = -1
+        for currHeader in header:
+            headerIdx += 1
+            currRow = 0
+            stop = 0
+            while stop is not 1 and currRow+1 < len(results):
+                cv = results[currRow][currHeader]
+                nv = results[currRow+1][currHeader]
+                if type(cv) is str:
+                    cv.strip()
+                    nv.strip()
+                print(results[currRow][currHeader])
+                print(results[currRow+1][currHeader])
+                print(results[currRow][currHeader] is results[currRow+1][currHeader])
+                if results[currRow][currHeader] is not results[currRow+1][currHeader]:
+                    stop = 1
+                currRow +=1
+            if stop == 0:
+                headerStatic.append(headerIdx)
+            else:
+                headerDynamic.append(headerIdx)
+
+        newHeader = []
+        for headerIdx in (headerDynamic + headerStatic):
+            newHeader.append(header[headerIdx])
+
+        print(header)
+        print(newHeader)
+        self.columns = newHeader
+        currRows = []
         for row in results:
-            tmp = list()
-            for col in header:
-                tmp.append(row[col])
-            results_dict2list.append(tmp)
-        self.rows = results_dict2list
+            currRow = []
+            for currHeader in self.columns:
+                currRow.append(row[currHeader])
+            currRows.append(currRow)
+
+        self.rows = currRows
 
 class PhonoSearchResultsModel(BaseTableModel):
     def __init__(self, header, summary_header, results, settings, parent=None):
