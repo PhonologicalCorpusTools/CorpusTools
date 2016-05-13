@@ -237,7 +237,6 @@ def test_deltah(unspecified_test_corpus):
 #         for kwargs, v in relative_type_calls:
 #             assert(abs(deltah_fl(c, **kwargs)-v) < 0.0001)
 
-
 def test_relative_minpair(unspecified_test_corpus):
     calls = [({'segment':'s',
                     'relative_count':True},0.013888),
@@ -256,8 +255,18 @@ def test_relative_minpair(unspecified_test_corpus):
         for kwargs, v in calls:
             assert(abs(relative_minpair_fl(c, **kwargs)[0]-v) < 0.0001)
 
-    calls = [({'segment':'s'},0.01587),
-            ({'segment':'n'},0)]
+    calls = [({'segment':'s',
+                    'relative_count':True},0.01587),
+            ({'segment':'s',
+                    'relative_count':False},0.11111),
+            ({'segment':'n',
+                    'relative_count':True},0),
+            ({'segment':'n',
+                    'relative_count':False},0),
+            ({'segment':'o',
+                    'relative_count':True},0),
+            ({'segment':'o',
+                    'relative_count':False},0)]
 
 
     with CanonicalVariantContext(unspecified_test_corpus,
@@ -267,35 +276,29 @@ def test_relative_minpair(unspecified_test_corpus):
 
 
 def test_relative_deltah(unspecified_test_corpus):
-    type_calls = [({'segment':'s'},0.014814),
-            ({'segment':'n'},0.014814),
+    type_calls = [({'segment':'s'},0.00283),
+            ({'segment':'n'},0.00283),
             ({'segment':'o'},0),]
     with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'type') as c:
         for kwargs, v in type_calls:
-            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
+            assert(abs(relative_deltah_fl(c, **kwargs)[0]-v) < 0.0001)
 
-    type_calls = [({'segment':'s'}, 0.0185185),
+    type_calls = [({'segment':'s'}, 0.00389),
             ({'segment':'n'},0),
             ({'segment':'o'},0),]
     with CanonicalVariantContext(unspecified_test_corpus,
                         'transcription', 'type', frequency_threshold = 3) as c:
         for kwargs, v in type_calls:
-            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
+            assert(abs(relative_deltah_fl(c, **kwargs)[0]-v) < 0.0001)
 
-    token_calls = [({'segment':'s'},0.0275487),
-            ({'segment':'n'},0.000767),
+
+    token_calls = [({'segment':'s'},0.009227777),
+            ({'segment':'n'},0.0002571111),
             ({'segment':'o'},0),]
     with CanonicalVariantContext(unspecified_test_corpus, 'transcription', 'token') as c:
         for kwargs, v in token_calls:
-            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
+            assert(abs(relative_deltah_fl(c, **kwargs)[0]-v) < 0.0001)
 
-    token_calls = [({'segment':'s'}, 0.027837),
-            ({'segment':'n'},0),
-            ({'segment':'o'},0)]
-    with CanonicalVariantContext(unspecified_test_corpus,
-                        'transcription', 'token', frequency_threshold = 3) as c:
-        for kwargs, v in token_calls:
-            assert(abs(relative_deltah_fl(c, **kwargs)-v) < 0.0001)
 
 @pytest.mark.xfail
 def test_mass_fl(unspecified_test_corpus):

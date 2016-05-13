@@ -96,6 +96,7 @@ def spe_specifier():
 
 @pytest.fixture(scope='module')
 def unspecified_test_corpus():
+    # Segments: ɑ, i, u, e, o, ʃ, t, m, n, s (10 segments)
     corpus_data = [{'spelling':'atema','transcription':['ɑ','t','e','m','ɑ'],'frequency':11.0},
                     {'spelling':'enuta','transcription':['e','n','u','t','ɑ'],'frequency':11.0},
                     {'spelling':'mashomisi','transcription':['m','ɑ','ʃ','o','m','i','s','i'],'frequency':5.0},
