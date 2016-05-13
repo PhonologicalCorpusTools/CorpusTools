@@ -1947,7 +1947,6 @@ class SegmentPairSelectWidget(QGroupBox):
 
         self.inventory = inventory
 
-
         vbox = QVBoxLayout()
         self.addSingleButton = QPushButton('Add individual segments')
         self.addSingleButton.clicked.connect(self.singleSegPopup)

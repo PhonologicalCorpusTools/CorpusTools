@@ -111,6 +111,7 @@ class FLDialog(FunctionDialog):
         self.corpus = corpus
         self.inventory = inventory
         self.showToolTips = showToolTips
+        self.kwargs = dict()
 
         flFrame = QFrame()
         fllayout = QHBoxLayout()
