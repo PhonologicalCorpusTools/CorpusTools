@@ -36,8 +36,6 @@ class FLTester(unittest.TestCase):
          QTest.mouseClick(self.dialog.newTableButton, Qt.LeftButton)
          self.assertEqual(self.dialog.kwargs['frequency_cutoff'], '2')
 
-
-
 if __name__ == '__main__':
     unittest.main()
 

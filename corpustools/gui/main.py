@@ -330,6 +330,7 @@ class MainWindow(QMainWindow):
                 except AttributeError:
                     print(3)
                     # Loading a .corpus from a previous version of PCT - update some attributes
+
                     self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
                                                                                     self.corpusModel.corpus.inventory)
                     self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
