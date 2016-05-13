@@ -6,6 +6,8 @@ import time
 
 from .io import save_minimal_pairs
 
+import pdb
+
 
 def _merge_segment_pairs(tier, segment_pairs, environment_filters):
     """Merge the specified segment pairs for the given tier of segments if 
