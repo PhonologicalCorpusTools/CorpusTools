@@ -502,13 +502,17 @@ class ResultsModel(BaseTableModel):
             while stop is not 1 and currRow+1 < len(results):
                 cv = results[currRow][currHeader]
                 nv = results[currRow+1][currHeader]
+                print(type(cv))
                 if type(cv) is str:
-                    cv.strip()
-                    nv.strip()
-                print(results[currRow][currHeader])
-                print(results[currRow+1][currHeader])
-                print(results[currRow][currHeader] is results[currRow+1][currHeader])
-                if results[currRow][currHeader] is not results[currRow+1][currHeader]:
+                    nch =min(len(cv), len(nv))
+                    cv = cv[0:nch]
+                    nv = nv[0:nch]
+                    cv = str(list(cv))
+                    nv = str(list(nv))
+                    print(cv)
+                    print(nv)
+                    print(cv is nv)
+                if cv is not nv:
                     stop = 1
                 currRow +=1
             if stop == 0:
