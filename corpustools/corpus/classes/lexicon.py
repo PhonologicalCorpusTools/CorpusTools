@@ -7,6 +7,8 @@ import operator
 import math
 import locale
 
+import pdb
+
 from corpustools.exceptions import CorpusIntegrityError
 
 class Segment(object):

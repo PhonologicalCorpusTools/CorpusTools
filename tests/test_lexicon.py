@@ -3,6 +3,8 @@ import unittest
 import os
 import sys
 
+import pdb
+
 from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         Environment, EnvironmentFilter, Transcription,
                                         WordToken, Discourse)
@@ -379,6 +381,7 @@ class EnvironmentFilterTest(unittest.TestCase):
         fm = FeatureMatrix('test',self.feature_info)
 
         self.corpus.set_feature_matrix(fm)
+        self.corpus.inventory.update_features(self.corpus.specifier)
 
     def test_init(self):
         segs = self.corpus.features_to_segments('+feature1')
