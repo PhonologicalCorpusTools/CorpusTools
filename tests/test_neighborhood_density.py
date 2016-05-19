@@ -23,10 +23,6 @@ def test_basic_corpus_nd(specified_test_corpus):
         for kwargs,v in calls:
             result = neighborhood_density(c, **kwargs)
             assert(abs(result[0]-v) < 0.0001)
-    with CanonicalVariantContext(specified_test_corpus, 'spelling', 'type') as c:
-        result = neighborhood_density(c, **{'query':specified_test_corpus.find('mata'),
-                    'max_distance':1})
-        assert(abs(result[0]-1.0) < 0.0001)
 
 
 def test_basic_corpus_mutation_minpairs(specified_test_corpus):
