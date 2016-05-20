@@ -201,7 +201,7 @@ class FLDialog(FunctionDialog):
         optionFrame.setLayout(optionLayout)
         fllayout.addWidget(optionFrame)
 
-        self.envWidget = EnvironmentSelectWidget(self.inventory)
+        self.envWidget = EnvironmentSelectWidget(self.inventory, middle = False)
         fllayout.addWidget(self.envWidget)
 
         flFrame.setLayout(fllayout)
