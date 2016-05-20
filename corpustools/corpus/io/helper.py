@@ -240,8 +240,16 @@ class DiscourseData(object):
 
 def get_corpora_list(storage_directory):
     corpus_dir = os.path.join(storage_directory,'CORPUS')
-    corpora = [x.split('.')[0] for x in os.listdir(corpus_dir)]
+    corpora = [parse_filename(x) for x in os.listdir(corpus_dir)]
     return corpora
+
+def parse_filename(filename):
+    filename = filename.split('.')
+    if len(filename) > 2:
+        filename = '.'.join(filename[:-1])
+    else:
+        filename = filename[0]
+    return filename
 
 def corpus_name_to_path(storage_directory,name):
     return os.path.join(storage_directory,'CORPUS',name+'.corpus')
