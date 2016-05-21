@@ -10,7 +10,7 @@ try:
                             QStringListModel)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap,
-                            QDesktopServices)
+                            QDesktopServices, QCursor)
     from PyQt5.QtWidgets import (QMainWindow, QLayout, QHBoxLayout, QLabel, QAction,
                                 QApplication, QWidget, QMessageBox,QSplitter,
                                 QDialog, QListWidget, QGroupBox,QVBoxLayout,

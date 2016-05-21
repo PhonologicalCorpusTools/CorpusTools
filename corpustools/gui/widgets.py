@@ -1314,7 +1314,7 @@ class SegmentSelectionWidget(QWidget):
     def __init__(self, inventory, parent = None, exclusive = False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
-
+        self.features = list()
         self.searchWidget = FeatureEdit(self.inventory)
         self.completer = FeatureCompleter(self.inventory)
         self.searchWidget.setCompleter(self.completer)
@@ -1363,6 +1363,7 @@ class SegmentSelectionWidget(QWidget):
         self.inventoryFrame.setExclusive(b)
 
     def select(self, segments):
+
         self.inventoryFrame.selectSegments(segments)
 
     def clearAll(self):
@@ -2324,6 +2325,9 @@ class SegmentSelectDialog(QDialog):
     def value(self):
         return self.segFrame.value()
 
+    def featureValue(self):
+        return self.features
+
     def reset(self):
         self.segFrame.clearAll()
 
@@ -2333,6 +2337,7 @@ class EnvironmentSegmentWidget(QWidget):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
+        self.features = set()
         self.enabled = enabled
 
         self.middle = middle
@@ -2342,25 +2347,28 @@ class EnvironmentSegmentWidget(QWidget):
             lab = '_\n\n{}'
         else:
             lab = '{}'
-        self.mainLabel = QLabel(lab)
-        self.mainLabel.setMargin(4)
-        self.mainLabel.setFrameShape(QFrame.Box)
-        self.mainLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.mainLabel = QPushButton(lab)
+        self.mainLabel.setStyleSheet("padding: 4px")
+        #self.mainLabel.setMargin(4)
+        #self.mainLabel.setFrameShape(QFrame.Box)
+        #self.mainLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
         layout.addWidget(self.mainLabel)
 
         self.setLayout(layout)
 
         self.mainLabel.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.mainLabel.customContextMenuRequested.connect(self.showMenu)
+        self.mainLabel.customContextMenuRequested.connect(self.showDeleteOption)
 
-    def mouseReleaseEvent(self, ev):
-        if not self.enabled:
-            ev.ignore()
-            return
-        if ev.button() == Qt.LeftButton:
-            self.selectSegments()
-            ev.accept()
+        if self.enabled:
+            self.menu = QMenu(self)
+            segmentAct = QAction("Add segments", self, triggered=self.selectSegments)
+            featureAct = QAction("Add features", self, triggered=self.selectFeatures)
+            self.menu.addAction(segmentAct)
+            self.menu.addAction(featureAct)
+            self.mainLabel.setMenu(self.menu)
+        else:
+            self.mainLabel.setEnabled(False)
 
     def updateLabel(self):
         if self.middle:
@@ -2376,7 +2384,13 @@ class EnvironmentSegmentWidget(QWidget):
             self.segments = dialog.value()
             self.updateLabel()
 
-    def showMenu(self, pos):
+    def selectFeatures(self):
+        dialog = SegmentSelectDialog(self.inventory, self.segments, self)
+        if dialog.exec_():
+            self.features = dialog.value()
+            self.updateLabel()
+
+    def showDeleteOption(self, pos):
         if self.middle:
             return
         removeAction = QAction(self)
