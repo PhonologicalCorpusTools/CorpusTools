@@ -65,13 +65,15 @@ is followed by voiceless stop, one could do the following:
    :align: center
 
 
-3. Click the central "target" rectangle.
+3. Click the central "target" rectangle. A dropdown menu will offer the options of "Add segments" or "Add features". These options have no effect on the way that any analysis functions work, but they do change the way information is displayed to you in PCT. If you select "Add features", then you will be presented with an inventory window where you can search for segments by entering a list of features, but you cannot select any individual segments. However, the names of the features you choose will appear in the environment window. If you select "Add segments", then you will be able to choose individual segments, as well as searching by feature, but the environment window will display a list of segments either way, and not the names of features.
 
-4. Select [m], [n], and [ŋ] either by hand or through their features
+   For example, If you choose "Add segment", then search for "+nasal", and then click on [t] and [k], the environment window will display the set "{m,n,ŋ,t,k}". If you choose "Add feature" and search for "+nasal", then go to "Add segment" and click on [t] and [k], the environment window will display "{+nasal},{t,k}". Both methods will lead to exactly the same results, but one way may make it easier for you to read and interpret your results.
+   
+4. Now select all the nasals in your corpus, either by hand or through their features
    (e.g., [+nasal, -vocalic] or whatever combination of features is
-   relevant for the corpus). (Be sure to fully select the segments if
+   relevant for the corpus). Be to fully select the segments if
    you're using features; don't just have them highlighted, or they
-   won't get added to the environment. See :ref:`sound_selection` for details.)
+   won't get added to the environment. If a sound is red, then it is only highlighted, not selected. Sounds that are selected have a blue background. See :ref:`sound_selection` for details.
 
 5. Click the leftmost empty set.
 
@@ -95,6 +97,6 @@ corpus; this example is from the IPHOD corpus):
    :align: center
 
 To add additional environments, simply click "New environment." To edit
-a current environment, simply click on the rectangle containing the part
+a current environment, click on the rectangle containing the part
 of the environment you want to edit and re-select the sounds. To remove
-an environment entirely, click on the "Remove environment" button to the right.
+an environment entirely, click on the "Remove environment" button to the right. To remove individual segments or feature sets, right-click them and choose "Delete".
