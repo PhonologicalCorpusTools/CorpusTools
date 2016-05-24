@@ -80,7 +80,7 @@ class Segment(object):
         specification : object
             Specification can be a single feature value '+feature', a list of
             feature values ['+feature1','-feature2'], or a dictionary of
-            _features and values {'feature1': '+', 'feature2': '-'}
+            features and values {'feature1': '+', 'feature2': '-'}
 
         Returns
         -------
@@ -106,14 +106,7 @@ class Segment(object):
                     if self[f] != v:
                         return False
                 except KeyError:
-                    return False
-        elif isinstance(specification, dict):
-            for f,v in specification.items():
-                try:
-                    if self.features[f] != v:
-                        return False
-                except KeyError:
-                    return False
+                    return False,
         return True
 
     def __contains__(self, item):

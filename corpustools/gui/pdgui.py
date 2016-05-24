@@ -213,29 +213,30 @@ class PDDialog(FunctionDialog):
                     ('Use relative counts of each pronunciation (type frequency)','relative_type')]))
 
     def generateKwargs(self):
-        kwargs = {}
+        self.kwargs = {}
         segPairs = self.segPairWidget.value()
         if len(segPairs) == 0:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one segment pair.")
             return None
-        kwargs['segment_pairs'] = segPairs
+        self.kwargs['segment_pairs'] = segPairs
         envs = self.envWidget.value()
         if len(envs) > 0:
-            kwargs['envs'] = envs
+            self.kwargs['envs'] = envs
+            self.kwargs['display_envs'] = {e:d for (e,d) in zip(envs,self.envWidget.displayValue())}
         ##------------------
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
         ##-------------------
-        kwargs['corpus'] = self.corpus
-        kwargs['context'] = self.variantsWidget.value()
-        kwargs['sequence_type'] = self.tierWidget.value()
-        kwargs['strict'] = self.enforceCheck.isChecked()
-        kwargs['type_token'] = self.typeTokenWidget.value()
-        kwargs['frequency_cutoff'] = frequency_cutoff
-        return kwargs
+        self.kwargs['corpus'] = self.corpus
+        self.kwargs['context'] = self.variantsWidget.value()
+        self.kwargs['sequence_type'] = self.tierWidget.value()
+        self.kwargs['strict'] = self.enforceCheck.isChecked()
+        self.kwargs['type_token'] = self.typeTokenWidget.value()
+        self.kwargs['frequency_cutoff'] = frequency_cutoff
+        return self.kwargs
 
     def setResults(self,results):
         self.results = []
@@ -247,6 +248,10 @@ class PDDialog(FunctionDialog):
         for i, r in enumerate(results):
             if isinstance(r,dict):
                 for env,v in r.items():
+                    try:
+                        env = self.kwargs['display_envs'][env]
+                    except KeyError:
+                        pass #a few things, like "AVG", don't have a special display name
                     self.results.append({'Corpus': self.corpus.name,
                                         'First segment': seg_pairs[i][0],
                                         'Second segment': seg_pairs[i][1],

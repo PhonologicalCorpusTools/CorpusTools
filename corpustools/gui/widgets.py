@@ -294,7 +294,6 @@ class AnnotationTypeWidget(QGroupBox):
         else:
             self.editButton.setEnabled(False)
         self.suggestName()
-        print(self.typeWidget.currentText())
         self.annotation_type.name = self.typeWidget.currentText()
 
     def suggestName(self):
@@ -1253,6 +1252,8 @@ class FeatureEdit(QLineEdit):
             if self.clearOnEnter:
                 self.setText('')
                 self.featureEntered.emit([])
+        else:
+            self.featuresFinalized.emit([])
 
     def insertCompletion(self, string):
         d, text = self.parseText()
@@ -1311,6 +1312,7 @@ class FeatureCompleter(QCompleter):
         self.popup().setCurrentIndex(self.model().index(0, 0))
 
 class SegmentSelectionWidget(QWidget):
+    segsCleared = Signal()
     def __init__(self, inventory, parent = None, exclusive = False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
@@ -1348,6 +1350,7 @@ class SegmentSelectionWidget(QWidget):
             headframe.setLayout(headlayout)
             self.commitButton.clicked.connect(self.searchWidget.finalize)
             self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
+            self.clearAllButton.clicked.connect(self.segsCleared.emit)
 
         else:
             headframe = QLabel('No feature matrix associated with this corpus.')
@@ -1371,6 +1374,30 @@ class SegmentSelectionWidget(QWidget):
 
     def value(self):
         return self.inventoryFrame.value()
+
+class FeatureSelectionWidget(SegmentSelectionWidget):
+
+    def __init__(self, inventory, parent = None, exclusive = False):
+        super().__init__(inventory, parent, exclusive)
+        self.inventoryFrame.disableAll()
+        self.feature_list = set()
+        self.searchWidget.clearOnEnter = False
+        self.commitButton.setText('Add feature(s)')
+        self.searchWidget.featuresFinalized.connect(self.update_features)
+        self.segsCleared.connect(self.clear_features)
+
+    def update_features(self, features):
+        print(features)
+        if not features:
+            self.features = set()
+        else:
+            self.feature_list.add(*features)
+
+    def clear_features(self):
+        self.feature_list = set()
+
+    def value(self):
+        return sorted(list(self.feature_list))
 
 class InventoryBox(QWidget):
     """
@@ -1551,6 +1578,10 @@ class InventoryBox(QWidget):
         if reexc:
             self.setExclusive(True)
 
+    def disableAll(self):
+        for btn in self.btnGroup.buttons():
+            btn.setEnabled(False)
+
     def setExclusive(self, b):
         self.btnGroup.setExclusive(b)
         for btn in self.btnGroup.buttons():
@@ -1584,7 +1615,6 @@ class MultiSegmentCell(QWidget):
             self.button_names.append(b.text())
             col += 1
             if col > col_max:
-                print('col rolled over')
                 col = 0
                 row += 1
 
@@ -2285,7 +2315,7 @@ class SegmentSetPairDialog(BigramDialog):
         self.rhs.setExclusive(False)
 
 class SegmentSelectDialog(QDialog):
-    def __init__(self, inventory, selected = None, parent=None):
+    def __init__(self, inventory, selected = None, parent = None, use_features=False):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
@@ -2294,7 +2324,10 @@ class SegmentSelectDialog(QDialog):
 
         segLayout = QHBoxLayout()
 
-        self.segFrame = SegmentSelectionWidget(inventory)
+        if use_features:
+            self.segFrame = FeatureSelectionWidget(inventory)
+        else:
+            self.segFrame = SegmentSelectionWidget(inventory)
 
         if selected is not None:
             self.segFrame.select(selected)
@@ -2331,7 +2364,6 @@ class SegmentSelectDialog(QDialog):
     def reset(self):
         self.segFrame.clearAll()
 
-
 class EnvironmentSegmentWidget(QWidget):
     def __init__(self, inventory, parent = None, middle = False, enabled = True):
         QWidget.__init__(self, parent)
@@ -2349,9 +2381,6 @@ class EnvironmentSegmentWidget(QWidget):
             lab = '{}'
         self.mainLabel = QPushButton(lab)
         self.mainLabel.setStyleSheet("padding: 4px")
-        #self.mainLabel.setMargin(4)
-        #self.mainLabel.setFrameShape(QFrame.Box)
-        #self.mainLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
         layout.addWidget(self.mainLabel)
 
@@ -2371,12 +2400,32 @@ class EnvironmentSegmentWidget(QWidget):
             self.mainLabel.setEnabled(False)
 
     def updateLabel(self):
+        labelText = self.generateDisplayText()
+        if not labelText:
+            return
         if self.middle:
-            lab = '_\n\n{%s}'
+            labelText = '_\n\n{}'.format(labelText)
+        self.mainLabel.setText(labelText)
+
+    def generateDisplayText(self):
+        if self.segments:
+            segDisplay = '{{{}}}'.format(','.join(self.segments))
         else:
-            lab = '{%s}'
-        lab = lab % ', '.join(self.segments)
-        self.mainLabel.setText(lab)
+            segDisplay = ''
+
+        if self.features:
+            featureDisplay = '{{{}}}'.format(','.join(self.features))
+        else:
+            featureDisplay = ''
+
+        if not segDisplay and not featureDisplay:
+            return False
+        elif segDisplay and featureDisplay:
+            return ','.join([featureDisplay, segDisplay])
+        elif featureDisplay:
+            return featureDisplay
+        else:
+            return segDisplay
 
     def selectSegments(self):
         dialog = SegmentSelectDialog(self.inventory, self.segments, self)
@@ -2385,7 +2434,7 @@ class EnvironmentSegmentWidget(QWidget):
             self.updateLabel()
 
     def selectFeatures(self):
-        dialog = SegmentSelectDialog(self.inventory, self.segments, self)
+        dialog = SegmentSelectDialog(self.inventory, self.segments, self, use_features=True)
         if dialog.exec_():
             self.features = dialog.value()
             self.updateLabel()
@@ -2403,7 +2452,15 @@ class EnvironmentSegmentWidget(QWidget):
         menu.popup(self.mapToGlobal(pos))
 
     def value(self):
-        return self.segments
+        segs = [s for s in self.segments]
+        if self.features:
+            more_segs = self.inventory.features_to_segments(self.features)
+            segs.extend(more_segs)
+            segs = list(set(segs))
+        return segs
+
+    def displayValue(self):
+        return self.generateDisplayText()
 
 class EnvironmentWidget(QWidget):
     def __init__(self, inventory, parent = None, middle = True):
@@ -2472,6 +2529,26 @@ class EnvironmentWidget(QWidget):
 
         return EnvironmentFilter(middle, lhs, rhs)
 
+    def displayValue(self):
+
+        lhs = None
+        rhs = None
+
+        for ind in range(self.lhsWidget.layout().count()):
+            wid = self.lhsWidget.layout().itemAt(ind).widget()
+            lhs = wid.displayValue()
+
+        for ind in range(self.rhsWidget.layout().count()):
+            wid = self.rhsWidget.layout().itemAt(ind).widget()
+            rhs = wid.displayValue()
+
+        if lhs is None:
+            lhs = ''
+        if rhs is None:
+            rhs = ''
+
+        return '{}_{}'.format(lhs, rhs)
+
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self, inventory, parent = None, middle = True):
         QGroupBox.__init__(self,'Environments',parent)
@@ -2510,6 +2587,13 @@ class EnvironmentSelectWidget(QGroupBox):
         for ind in range(self.environmentFrame.layout().count() - 2):
             wid = self.environmentFrame.layout().itemAt(ind).widget()
             envs.append(wid.value())
+        return envs
+
+    def displayValue(self):
+        envs = []
+        for ind in range(self.environmentFrame.layout().count() - 2):
+            wid = self.environmentFrame.layout().itemAt(ind).widget()
+            envs.append(wid.displayValue())
         return envs
 
 
