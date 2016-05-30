@@ -1387,11 +1387,11 @@ class FeatureSelectionWidget(SegmentSelectionWidget):
         self.segsCleared.connect(self.clear_features)
 
     def update_features(self, features):
-        print(features)
         if not features:
             self.features = set()
         else:
-            self.feature_list.add(*features)
+            for f in features:
+                self.feature_list.add(f)
 
     def clear_features(self):
         self.feature_list = set()
@@ -2365,7 +2365,7 @@ class SegmentSelectDialog(QDialog):
         self.segFrame.clearAll()
 
 class EnvironmentSegmentWidget(QWidget):
-    def __init__(self, inventory, parent = None, middle = False, enabled = True):
+    def __init__(self, inventory, parent = None, middle = False, enabled = True, preset_label = False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
@@ -2398,6 +2398,11 @@ class EnvironmentSegmentWidget(QWidget):
             self.mainLabel.setMenu(self.menu)
         else:
             self.mainLabel.setEnabled(False)
+
+        if preset_label:
+            self.segments = preset_label.segments
+            self.features = preset_label.features
+            self.updateLabel()
 
     def updateLabel(self):
         labelText = self.generateDisplayText()
@@ -2463,9 +2468,13 @@ class EnvironmentSegmentWidget(QWidget):
         return self.generateDisplayText()
 
 class EnvironmentWidget(QWidget):
-    def __init__(self, inventory, parent = None, middle = True):
-        QWidget.__init__(self, parent)
+    envCopied = Signal(list)
+    def __init__(self, inventory, parent = None, middle = True, copy_data = None):
+        QWidget.__init__(self)#, parent)
         self.inventory = inventory
+        self.parent = parent
+        self.middle = middle
+        self.envCopied.connect(self.parent.addCopiedEnvironment)
         layout = QHBoxLayout()
 
         self.lhsAddNew = QPushButton('+')
@@ -2489,8 +2498,9 @@ class EnvironmentWidget(QWidget):
         self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True, enabled = middle)
 
         self.removeButton = QPushButton('Remove environment')
-
         self.removeButton.clicked.connect(self.deleteLater)
+        self.copyButton = QPushButton('Copy environment')
+        self.copyButton.clicked.connect(self.copyEnvironment)
 
         layout.addWidget(self.lhsAddNew)
         layout.addWidget(self.lhsWidget)
@@ -2503,10 +2513,30 @@ class EnvironmentWidget(QWidget):
         optionlayout = QVBoxLayout()
 
         optionlayout.addWidget(self.removeButton)
+        optionlayout.addWidget(self.copyButton)
 
         layout.addLayout(optionlayout)
 
         self.setLayout(layout)
+        if copy_data:
+            self.loadfromCopy(copy_data)
+
+    def loadfromCopy(self, copy_data):
+        for ind in range(copy_data.lhsWidget.layout().count()):
+            copy_wid = copy_data.lhsWidget.layout().itemAt(ind).widget()
+            wid = EnvironmentSegmentWidget(self.inventory, preset_label=copy_wid)
+            self.lhsWidget.layout().insertWidget(ind, wid)
+        for ind in range(copy_data.rhsWidget.layout().count()):
+            copy_wid = copy_data.rhsWidget.layout().itemAt(ind).widget()
+            wid = EnvironmentSegmentWidget(self.inventory, preset_label=copy_wid)
+            self.rhsWidget.layout().insertWidget(ind, wid)
+        if self.middle:
+            copy_wid = copy_data.middleWidget
+            self.middleWidget.mainLabel.setText(copy_wid.mainLabel.text())
+
+
+    def copyEnvironment(self):
+        self.envCopied.emit([self])
 
     def addLhs(self):
         segWidget = EnvironmentSegmentWidget(self.inventory)
@@ -2542,16 +2572,18 @@ class EnvironmentWidget(QWidget):
             wid = self.rhsWidget.layout().itemAt(ind).widget()
             rhs = wid.displayValue()
 
-        if lhs is None:
+        if not lhs:
             lhs = ''
-        if rhs is None:
+        if not rhs:
             rhs = ''
 
         return '{}_{}'.format(lhs, rhs)
 
+
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self, inventory, parent = None, middle = True):
         QGroupBox.__init__(self,'Environments',parent)
+        self.parent = parent
         self.middle = middle
         self.inventory = inventory
 
@@ -2578,9 +2610,16 @@ class EnvironmentSelectWidget(QGroupBox):
         self.setLayout(layout)
 
     def addNewEnvironment(self):
-        envWidget = EnvironmentWidget(self.inventory, middle = self.middle)
+        envWidget = EnvironmentWidget(self.inventory, middle = self.middle, parent = self)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos,envWidget)
+
+    @Slot(list)
+    def addCopiedEnvironment(self, args):
+        copy_data = args[0] if args else None
+        envWidget = EnvironmentWidget(self.inventory, middle=self.middle, parent=self, copy_data=copy_data)
+        pos = self.environmentFrame.layout().count() - 2
+        self.environmentFrame.layout().insertWidget(pos, envWidget)
 
     def value(self):
         envs = []
