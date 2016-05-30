@@ -4,7 +4,7 @@ import itertools
 import collections
 from copy import deepcopy
 from .widgets import *
-from corpustools.corpus.classes.lexicon import Segment
+from corpustools.corpus.classes.lexicon import Segment, Inventory
 from corpustools.exceptions import CorpusIntegrityError
 
 from collections import Counter, defaultdict
@@ -895,13 +895,6 @@ class InventoryModel(QAbstractTableModel):
     See also corpustools.corpus.classes.lexicon.Corpus.update_inventory()
     """
 
-    attributes = ['segs', 'features', 'possible_values', 'stresses', 'consColumns', 'consRows',
-                  'vowelColumns', 'vowelRows', 'cons_column_data', 'cons_row_data', 'vowel_column_data', 'vowel_row_data',
-                  'uncategorized', '_data', 'all_rows', 'all_columns', 'vowel_column_offset', 'vowel_row_offset',
-                  'cons_column_header_order', 'cons_row_header_order', 'vowel_row_header_order', 'vowel_column_header_order',
-                  'vowel_features', 'cons_features', 'voice_feature', 'rounded_feature', 'diph_feature', 'isNew',
-                  'consList', 'vowelList', 'non_segment_symbols', 'filterNames']
-
     modelResetSignal = Signal(bool)
 
     def __init__(self, inventory, copy_mode=False):
@@ -911,42 +904,28 @@ class InventoryModel(QAbstractTableModel):
             self.setAttributes(inventory)
             return
 
-        # values passed along from the inventory
+        self.initDefaults()
+
         self.segs = inventory.segs
         self.features = inventory.features
         self.possible_values = inventory.possible_values
         self.stresses = inventory.stresses
-        #values to be set at some later point
-        self.consColumns = set()
-        self.consRows = set()
-        self.vowelColumns = set()
-        self.vowelRows = set()
-        self.consList = []
-        self.vowelList = []
-        self.uncategorized = []
-        self._data = []
-        self.cons_column_data = {'Column 1': [0,{},None]}
-        self.cons_row_data = {'Row 1': [0,{},None]}
-        self.vowel_column_data = {'Column 1': [0,{},None]}
-        self.vowel_row_data = {'Row 1': [0,{},None]}
-        self.cons_features = None
-        self.vowel_features = None
-        self.voice_feature = None
-        self.rounded_feature = None
-        self.diph_feature = None
-        self.non_segment_symbols = ['#']
-        self.filterNames = False
-        #functions that fill in the above values
+
         self.generateGenericNames()
         self.categorizeInventory()
         self.sortData()
         self.filterGenericNames()
         self.isNew = False
 
+    def initDefaults(self):
+        for attribute, default_value in Inventory.inventory_attributes.items():
+            setattr(self, attribute, default_value)
+
+
     def __eq__(self, other):
         if not isinstance(other, InventoryModel):
             return False
-        for attr in InventoryModel.attributes:
+        for attr in Inventory.inventory_attributes:
             try:
                 if not getattr(self, attr) == getattr(other, attr):
                     return False
@@ -956,8 +935,12 @@ class InventoryModel(QAbstractTableModel):
             return True
 
     def setAttributes(self, source):
-        for attribute in InventoryModel.attributes:
-            setattr(self, attribute, deepcopy(getattr(source, attribute)))
+        for attribute, default_value in Inventory.inventory_attributes.items():
+            try:
+                setattr(self, attribute, deepcopy(getattr(source, attribute)))
+            except AttributeError:
+                setattr(self, attribute, default_value)
+        self.isNew = False
 
     def set_major_class_features(self, source):
         self.cons_features = source.cons_features if hasattr(source, 'cons_features') else None
@@ -1154,7 +1137,6 @@ class InventoryModel(QAbstractTableModel):
         if not self.vowelRows:
             self.vowelRows.add('Row 1')
             self.vowel_row_data = {'Row 1': [0,{},None]}
-
 
 
     def headerData(self, row_or_col, orientation, role=None):

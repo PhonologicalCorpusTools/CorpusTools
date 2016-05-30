@@ -1565,10 +1565,15 @@ class Attribute(object):
 class Inventory(object):
     """
 
-    Inventories contain information about a Corpus' segmental inventory.
-    Everytime PCT is loaded, this class is used to create an InventoryModel, which is passed around to any
-    analysis functions. This class is also used for pickling because InventoryModels are QObjects which cannot
-    be pickled properly.
+    Inventories contain information about a Corpus' segmental inventory. This class exists mainly for the purposes
+    of saving and loading user data. When a user loads a corpus into PCT, the Inventory is passed to the constructor of
+    an InventoryModel (corpustools\gui\models). The InventoryModel is what the user will interact with, and it has
+    several useful functions for analyzing, modifying and sorting the contents of an inventory. The InventoryModel is
+    also connected with an InventoryView (corpustools\gui\views) for the purposes of displaying inventory charts in PCT.
+
+    User data is saved using Python's built-in pickle module. However, Qt objects (like the InventoryModel) cannot be
+    pickled. Instead, the data from the model is copied to this Inventory class, which is a native Python object and
+    can be properly pickled.
 
 
     Parameters
@@ -1605,49 +1610,72 @@ class Inventory(object):
 
 
     """
+    inventory_attributes = {'_data': list(), 'segs': {'#': Segment('#')}, 'features': list(), 'possible_values': list(),
+                            'stresses': list(),
+                            #'consColumns': set(['Column 1']), 'vowelColumns': set(['Column 1']),
+                            #'vowelRows': set(['Row 1']), 'consRows': set(['Row 1']),
+                            #'cons_column_data': {'Column 1': [0, {}, None]}, 'cons_row_data': {'Row 1': [0, {}, None]},
+                            #'vowel_column_data': {'Column 1': [0, {}, None]},
+                            #'vowel_row_data': {'Row 1': [0, {}, None]},
+                            'consColumns': set(), 'vowelColumns': set(),
+                            'vowelRows': set(), 'consRows': set(),
+                            'cons_column_data': {}, 'cons_row_data': {},
+                            'vowel_column_data': {}, 'vowel_row_data': {},
+                            'uncategorized': list(), 'all_rows': dict(),
+                            'all_columns': dict(), 'vowel_column_offset': int(), 'vowel_row_offset': int(),
+                            'cons_column_header_order': dict(), 'cons_row_header_order': dict(),
+                            'vowel_row_header_order': dict(), 'vowel_column_header_order': dict(),
+                            'consList': list(), 'vowelList': list(), 'non_segment_symbols': ['#'],
+                            'vowel_features': [None], 'cons_features': [None], 'voice_feature': None,
+                            'rounded_feature': None,
+                            'diph_feature': None, 'isNew': True, 'filterNames': False}
+
     def __init__(self):
+        for attribute, default_value in Inventory.inventory_attributes.items():
+            setattr(self, attribute, default_value)
 
-        self.segs = {'#' : Segment('#')}
-        self.features = list()
-        self.possible_values = set()
-        self.stresses = collections.defaultdict(set)
-        self.places = collections.OrderedDict()
-        self.manners = collections.OrderedDict()
-        self.height = collections.OrderedDict()
-        self.backness = collections.OrderedDict()
-        self.vowel_feature = None
-        self.cons_features = None
-        self.voice_features = None
-        self.diph_feature = None
-        self.rounded_feature = None
-        self.cons_columns = dict()
-        self.cons_rows = dict()
-        self.vow_columns = dict()
-        self.vow_rows = dict()
-        self.isNew = True
+        # self.segs = {'#' : Segment('#')}
+        # self.features = list()
+        # self.possible_values = set()
+        # self.stresses = collections.defaultdict(set)
+        # self.places = collections.OrderedDict()
+        # self.manners = collections.OrderedDict()
+        # self.height = collections.OrderedDict()
+        # self.backness = collections.OrderedDict()
+        # self.vowel_feature = None
+        # self.cons_features = None
+        # self.voice_features = None
+        # self.diph_feature = None
+        # self.rounded_feature = None
+        # self.cons_columns = dict()
+        # self.cons_rows = dict()
+        # self.vow_columns = dict()
+        # self.vow_rows = dict()
+        # self.isNew = True
+        # self.consColumns = set()
+        # self.consRows = set()
+        # self.vowelColumns = set()
+        # self.vowelRows = set()
+        # self.consList = list()
+        # self.vowelList = list()
+        # self.uncategorized = list()
+        # self._data = dict()
+        # self.cons_column_data = dict()
+        # self.cons_row_data = dict()
+        # self.vowel_column_data = dict()
+        # self.vowel_row_data = dict()
+        # self.all_rows = dict()
+        # self.all_columns = dict()
+        # self.vowel_column_offset = int()
+        # self.vowel_row_offset = int()
+        # self.cons_column_header_order = dict()
+        # self.cons_row_header_order = dict()
+        # self.vowel_row_header_order = dict()
+        # self.vowel_column_header_order = dict()
 
-        #The following attributes are needed for the InventoryModel. See the docstring above for more details.
-        self.consColumns = set()
-        self.consRows = set()
-        self.vowelColumns = set()
-        self.vowelRows = set()
-        self.consList = list()
-        self.vowelList = list()
-        self.uncategorized = list()
-        self._data = dict()
-        self.cons_column_data = dict()
-        self.cons_row_data = dict()
-        self.vowel_column_data = dict()
-        self.vowel_row_data = dict()
-        self.all_rows = dict()
-        self.all_columns = dict()
-        self.vowel_column_offset = int()
-        self.vowel_row_offset = int()
-        self.cons_column_header_order = dict()
-        self.cons_row_header_order = dict()
-        self.vowel_row_header_order = dict()
-        self.vowel_column_header_order = dict()
-
+    def updateAttributes(self, data):
+        for attribute in Inventory.inventory_attributes:
+            setattr(self, attribute, data['attribute'])
 
     def __getstate__(self):
         state = self.__dict__.copy()

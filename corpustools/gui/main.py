@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
                 reply = QMessageBox()
                 reply.setWindowTitle("Unsaved changes")
                 reply.setIcon(QMessageBox.Warning)
-                reply.setText("The currently loaded corpus ('{}') has unsaved changes.".format(self.corpus.name))
+                reply.setText("The currently loaded corpus ('{}') has unsaved changes.".format(self.corpusModel.corpus.name))
                 reply.setInformativeText("Do you want to save your changes?")
 
                 reply.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
         name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(),Qt.DisplayRole)
         if hasattr(self.corpus, 'lexicon'):
             try:
-                discourse = self.corpus.discourses[name]
+                discourse = self.corpusModel.corpus.discourses[name]
             except KeyError:
                 return
             self.textWidget.setModel(DiscourseModel(discourse, self.settings))
@@ -387,9 +387,9 @@ class MainWindow(QMainWindow):
             pass
 
     def saveCorpus(self):
-        save_binary(self.corpus,os.path.join(
+        save_binary(self.corpusModel.corpus,os.path.join(
                         self.settings['storage'],'CORPUS',
-                        self.corpus.name+'.corpus'))
+                        self.corpusModel.corpus.name+'.corpus'))
         self.saveCorpusAct.setEnabled(False)
         self.unsavedChanges = False
 
@@ -760,7 +760,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def corpusSummary(self):
-        dialog = CorpusSummary(self,self.corpus, self.inventoryModel)
+        dialog = CorpusSummary(self,self.corpusModel.corpus, self.inventoryModel)
         result = dialog.exec_()
 
     def createActions(self):
@@ -1015,7 +1015,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
-        self.analysisMenu.addAction(self.autoAnalysisAct)
+        #self.analysisMenu.addAction(self.autoAnalysisAct)
 
         self.viewMenu = self.menuBar().addMenu("&Windows")
         self.viewMenu.addAction(self.goToMainWindowAct)
@@ -1054,7 +1054,7 @@ class MainWindow(QMainWindow):
             reply = QMessageBox()
             reply.setWindowTitle("Unsaved changes")
             reply.setIcon(QMessageBox.Warning)
-            reply.setText("The currently loaded corpus ('{}') has unsaved changes.".format(self.corpus.name))
+            reply.setText("The currently loaded corpus ('{}') has unsaved changes.".format(self.corpusModel.corpus.name))
             reply.setInformativeText("Do you want to save your changes?")
 
             reply.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)

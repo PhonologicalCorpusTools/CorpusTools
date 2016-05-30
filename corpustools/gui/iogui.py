@@ -148,7 +148,7 @@ class CorpusLoadDialog(PCTDialog):
         buttonLayout = QVBoxLayout()
         self.downloadButton = QPushButton('Download example corpora')
         self.downloadButton.setAutoDefault(False)
-        self.loadCorpusButton = QPushButton('Import corpus')
+        self.loadCorpusButton = QPushButton('Create corpus from text file')
         self.loadCorpusButton.setAutoDefault(False)
         self.removeButton = QPushButton('Remove selected corpus')
         self.removeButton.setAutoDefault(False)
