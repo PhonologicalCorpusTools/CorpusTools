@@ -14,7 +14,7 @@ from .views import SubTreeView
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
 
 from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
-                    TableWidget, RetranscribeWidget, FeatureEdit, FeatureCompleter)
+                    TableWidget, RetranscribeWidget, FeatureEdit, FeatureCompleter, FileNameDialog)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 from .helpgui import HelpDialog
@@ -391,6 +391,7 @@ class EditFeatureMatrixDialog(QDialog):
         self.feature_system = self.specifier.feature_name if self.specifier is not None else 'None'
         self.feature_system_changed = False
         self.transcription_changed = False
+        self.specs_changed = False
         self.segmap = dict()
         layout = QVBoxLayout()
 
@@ -520,12 +521,29 @@ class EditFeatureMatrixDialog(QDialog):
                 'symbols to the current feature system'.format(missing)))
             alert.exec_()
             return
-        else:
-            self.transcription_changed = False
-            self.feature_system_changed = True
-            path = system_name_to_path(self.settings['storage'], self.specifier.name)
-            save_binary(self.specifier, path)
-            QDialog.accept(self)
+
+        if self.specs_changed:
+            alert = QMessageBox()
+            alert.setWindowTitle('Overwrite feature system?')
+            alert.setText(('You have made changes to the {} system. This might affect other corpora that you have '
+                           'which depend on the same feature system. It is advisable to save your changes under '
+                           'a different name.\n\nWhat do you want to do?'.format(self.specifier.name)))
+            alert.addButton('Overwrite the old file', QMessageBox.YesRole)
+            new_file = alert.addButton('Make a new file', QMessageBox.NoRole)
+            alert.exec_()
+            if alert.clickedButton() == new_file:
+                fileNameDialog = FileNameDialog()
+                result = fileNameDialog.exec_()
+                if result:
+                    print(fileNameDialog.getFilename())
+                else:
+                    return
+
+        self.transcription_changed = False
+        self.feature_system_changed = True
+        path = system_name_to_path(self.settings['storage'], self.specifier.name)
+        save_binary(self.specifier, path)
+        QDialog.accept(self)
 
 
     def accept(self):
@@ -573,12 +591,29 @@ class EditFeatureMatrixDialog(QDialog):
             self.layout().insertWidget(0,self.table)
 
     def changeRestrictedFeatureSystem(self):
+        if self.changeWidget.systems.currentText() == self.specifier.name:
+            return
+
         path = self.changeWidget.path()
+
+        if self.specs_changed:
+            alert = QMessageBox()
+            alert.setWindowTitle('Feature system changed')
+            alert.setText(('You have made some changes to the current feature system. If you swap systems now, '
+            'you will lose those changes. What do you want to do?'))
+            alert.addButton('Swap systems, lose changes', QMessageBox.YesRole)
+            cancel = alert.addButton('Cancel, go back and save changes', QMessageBox.NoRole)
+            alert.exec_()
+            if alert.clickedButton() == cancel:
+                self.resetRestrictedFeatureWidget()
+                return
+
         if path is None:
             self.specifier = None
         else:
             self.specifier = load_binary(path)
             self.specifier = modernize.modernize_specifier(self.specifier)
+        self.specs_changed = False
         self.changeDisplay()
 
     def changeFeatureSystem(self):
@@ -640,6 +675,10 @@ class EditFeatureMatrixDialog(QDialog):
         self.changeWidget.transSystem.setCurrentIndex(pos)
         pos = self.changeWidget.featureSystem.findText(self.specifier.feature_name)
         self.changeWidget.featureSystem.setCurrentIndex(pos)
+
+    def resetRestrictedFeatureWidget(self):
+        pos = self.changeWidget.systems.findText(self.specifier.name)
+        self.changeWidget.systems.setCurrentIndex(pos)
 
     def mapExistingSystems(self, new_specifier):
         unmatched = list()
@@ -734,6 +773,7 @@ class EditFeatureMatrixDialog(QDialog):
         dialog = EditSegmentDialog(self,self.table.model().specifier)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
+            self.specs_changed = True
 
     def editSegment(self):
         if self.specifier is None:
@@ -755,6 +795,7 @@ class EditFeatureMatrixDialog(QDialog):
         dialog = EditSegmentDialog(self,self.table.model().specifier,seg)
         if dialog.exec_():
             self.table.model().addSegment(dialog.seg,dialog.featspec)
+            self.specs_changed = True
 
     def addFeature(self):
         if self.specifier is None:
@@ -762,6 +803,7 @@ class EditFeatureMatrixDialog(QDialog):
         dialog = AddFeatureDialog(self,self.table.model().specifier)
         if dialog.exec_():
             self.table.model().addFeature(dialog.featureName, dialog.defaultValue)
+            self.specs_changed = True
 
     def hide(self):
         if self.specifier is None:

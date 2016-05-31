@@ -1634,48 +1634,9 @@ class Inventory(object):
         for attribute, default_value in Inventory.inventory_attributes.items():
             setattr(self, attribute, default_value)
 
-        # self.segs = {'#' : Segment('#')}
-        # self.features = list()
-        # self.possible_values = set()
-        # self.stresses = collections.defaultdict(set)
-        # self.places = collections.OrderedDict()
-        # self.manners = collections.OrderedDict()
-        # self.height = collections.OrderedDict()
-        # self.backness = collections.OrderedDict()
-        # self.vowel_feature = None
-        # self.cons_features = None
-        # self.voice_features = None
-        # self.diph_feature = None
-        # self.rounded_feature = None
-        # self.cons_columns = dict()
-        # self.cons_rows = dict()
-        # self.vow_columns = dict()
-        # self.vow_rows = dict()
-        # self.isNew = True
-        # self.consColumns = set()
-        # self.consRows = set()
-        # self.vowelColumns = set()
-        # self.vowelRows = set()
-        # self.consList = list()
-        # self.vowelList = list()
-        # self.uncategorized = list()
-        # self._data = dict()
-        # self.cons_column_data = dict()
-        # self.cons_row_data = dict()
-        # self.vowel_column_data = dict()
-        # self.vowel_row_data = dict()
-        # self.all_rows = dict()
-        # self.all_columns = dict()
-        # self.vowel_column_offset = int()
-        # self.vowel_row_offset = int()
-        # self.cons_column_header_order = dict()
-        # self.cons_row_header_order = dict()
-        # self.vowel_row_header_order = dict()
-        # self.vowel_column_header_order = dict()
-
-    def updateAttributes(self, data):
+    def updateAttributes(self, source):
         for attribute in Inventory.inventory_attributes:
-            setattr(self, attribute, data['attribute'])
+            setattr(self, attribute, source['attribute'])
 
     def __getstate__(self):
         state = self.__dict__.copy()

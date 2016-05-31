@@ -2869,4 +2869,27 @@ class CreateClassWidget(QDialog):
                 "{} preview".format(self.class_type),
                 "Segments included: {}\nSegments excluded: {}".format(', '.join(inClass),
                                                                       ', '.join(notInClass)))
+class FileNameDialog(QDialog):
 
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        button_layout = QHBoxLayout()
+
+        explain = QLabel('Enter the name for this feature system. A new file will be saved in your user '
+                         'folder. ')
+        self.newNameEdit = QLineEdit()
+        ok = QPushButton('OK')
+        ok.clicked.connect(self.accept)
+        cancel = QPushButton('Cancel')
+        cancel.clicked.connect(self.reject)
+
+        layout.addWidget(explain)
+        layout.addWidget(self.newNameEdit)
+        button_layout.addWidget(ok)
+        button_layout.addWidget(cancel)
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+    def getFilename(self):
+        return self.newNameEdit.text()

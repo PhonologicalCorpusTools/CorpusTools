@@ -25,6 +25,7 @@ from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
 
 from .inventorygui import InventoryManager
 
+
 from .windows import SelfUpdateWorker
 
 
@@ -415,6 +416,7 @@ class MainWindow(QMainWindow):
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         results = dialog.exec_()
         if results:
+            #if going from None to a feature system
             if self.corpusModel.corpus.specifier is None and dialog.specifier is not None:
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 self.corpusModel.corpus.update_features()
@@ -422,17 +424,23 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 return
 
+            #if going from a feature system to None
             if dialog.specifier is None:
                 self.corpusModel.corpus.specifier = None
                 self.inventoryModel = None
                 self.saveCorpus()
                 return
 
+            #if changing feature systems
             if dialog.specifier is not None:
+
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 if dialog.transcription_changed:
                     #This block currently does nothing, due to the RestrictedFeatureSelectSystem in use
                     #the code should be left alone in case we later choose to move back to the non-Restricted type
+                    #RestrictedFeatureSystems are those where the transcription and features are necessarily linked
+                    #In a non-Restricted system the transcription and features can be independantly selected and
+                    #the corpus will get automatically retranscribed
                     self.corpusModel.corpus.retranscribe(dialog.segmap)#this also updates the corpus inventory
                     self.inventoryModel.updateInventory(list(self.corpusModel.corpus.inventory.segs.keys()))
 
