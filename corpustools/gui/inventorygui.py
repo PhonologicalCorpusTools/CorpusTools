@@ -75,12 +75,13 @@ class InventoryManager(QDialog):
         '* Double-click an uncategorized segment to see partial matches and a full feature specification.\n'
         '* Default features are required, and they apply automatically to every column and row in the relevant '
             'table.\n'
+        '* After changing a default feature, click "Recategorize" to have the change come into effect.\n'
         '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
             'default features.\n'
         '* Auto-categorization currently only works with SPE or Hayes feature systems.'
         ))
 
-        topmessage.setWordWrap(True)
+        #topmessage.setWordWrap(True)
         font.setBold(False)
         topmessage.setFont(font)
         layout.addWidget(topmessage)
@@ -108,7 +109,8 @@ class InventoryManager(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
-        self.adjustSize()
+        #self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #self.adjustSize()
 
     def accept(self):
         self.recategorize(exiting=True)

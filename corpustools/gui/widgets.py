@@ -2871,13 +2871,13 @@ class CreateClassWidget(QDialog):
                                                                       ', '.join(notInClass)))
 class FileNameDialog(QDialog):
 
-    def __init__(self):
+    def __init__(self, hint=None):
         super().__init__()
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
 
         explain = QLabel('Enter the name for this feature system. A new file will be saved in your user '
-                         'folder. ')
+                         'folder. If you want to change your user folder, go Options > Preferences...')
         self.newNameEdit = QLineEdit()
         ok = QPushButton('OK')
         ok.clicked.connect(self.accept)
@@ -2890,6 +2890,9 @@ class FileNameDialog(QDialog):
         button_layout.addWidget(cancel)
         layout.addLayout(button_layout)
         self.setLayout(layout)
+
+        if hint:
+            self.newNameEdit.setText(hint)
 
     def getFilename(self):
         return self.newNameEdit.text()

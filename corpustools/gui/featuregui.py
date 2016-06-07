@@ -532,10 +532,11 @@ class EditFeatureMatrixDialog(QDialog):
             new_file = alert.addButton('Make a new file', QMessageBox.NoRole)
             alert.exec_()
             if alert.clickedButton() == new_file:
-                fileNameDialog = FileNameDialog()
+                fileNameDialog = FileNameDialog('_'.join([self.specifier.name,self.corpus.name]))
                 result = fileNameDialog.exec_()
                 if result:
-                    print(fileNameDialog.getFilename())
+                    save_binary(self.specifier,
+                        os.path.join(self.settings['storage'], 'FEATURE', result+'.feature'))
                 else:
                     return
 
