@@ -524,24 +524,21 @@ class EditFeatureMatrixDialog(QDialog):
 
         if self.specs_changed and not self.settings['overwrite_feature_files']:
             systems = get_systems_list(self.settings['storage'])
-            check_name = self.specifier.name.split('_')[-1]
-            if self.corpus.name in check_name:
-                name = check_name.split('-')[0]
-                name_hint = '_'.join([name, self.corpus.name])
-            else:
-                name_hint = '_'.join([self.specifier.name,self.corpus.name])
+            if self.specifier.name in systems:
+                try:
+                    if self.corpus.name in self.specifier.name:
+                        if len(self.specifier.name.split('-'))==1:
+                            name_hint = self.specifier.name+'-2'
+                        else:
+                            name_hint = self.specifier.name[:-1]
+                            name_hint += str(int(self.specifier.name[-1])+1)
+                    else:
+                        name_hint = '_'.join([self.specifier.name, self.corpus.name])
+                except:
+                    name_hint = self.specifier.name+'-new'
 
-            if name_hint in systems:
-                n = 2
-                while True:
-                    new_hint = '-'.join([name_hint,str(n)])
-                    if new_hint not in systems:
-                        name_hint = new_hint
-                        break
-                    n += 1
-
-            fileNameDialog = FileNameDialog(self.specifier.name, name_hint)
-            result = fileNameDialog.exec_()
+            fileNameDialog = FileNameDialog(self.specifier.name, name_hint, get_systems_list(self.settings['storage']))
+            fileNameDialog.exec_()
             if fileNameDialog.choice == 'cancel':
                 return
             elif fileNameDialog.choice == 'saveas':
@@ -1217,10 +1214,13 @@ class FeatureMatrixManager(QDialog):
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return
-        msgBox = QMessageBox(QMessageBox.Warning, "Remove system",
-                             "This will permanently remove '{}'.  Are you sure?\n\n".format(featureSystem),
+        msgBox = QMessageBox(QMessageBox.Warning, "Delete feature file",
+                "This will permanently remove '{}'.\n\n"
+                "Unfortunately, PCT cannot automatically verify if you have any corpora "
+                "that depend on these features, so you should only delete this if you are "
+                "absolutely certain".format(featureSystem),
                              QMessageBox.NoButton, self)
-        msgBox.addButton("Remove", QMessageBox.AcceptRole)
+        msgBox.addButton("Delete this file", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return

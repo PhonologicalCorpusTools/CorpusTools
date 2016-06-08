@@ -13,7 +13,6 @@ from .delegates import SwitchDelegate
 from corpustools.corpus.classes import Attribute, EnvironmentFilter
 from corpustools.corpus.io.helper import get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
 
-
 def truncate_string(string, length = 10):
     return (string[:length] + '...') if len(string) > length + 3 else string
 
@@ -2871,16 +2870,22 @@ class CreateClassWidget(QDialog):
                                                                       ', '.join(notInClass)))
 class FileNameDialog(QDialog):
 
-    def __init__(self, name, hint=None):
+    def __init__(self, name, hint=None, systems_list=None):
         super().__init__()
         self.setWindowTitle('Overwrite feature system?')
         self.choice = None
+        if systems_list is None:
+            self.systems_list = list()
+        else:
+            self.systems_list = systems_list
+
         layout = QVBoxLayout()
 
         explain = QLabel()
-        explain.setText(('You have made changes to the {} system. This might affect other corpora '
-                       'which depend on the same feature system. It is advisable to save your changes under '
-                       'a different name.\n\nWhat do you want to do?'.format(name)))
+        explain.setText(('You have made changes to the {} feature system. This might affect other corpora '
+                       'which depend on the same features. It is recommended that save your changes under '
+                       'a different name, unless you are absolutely sure that no other corpora need these features.'
+                       '\n\nWhat do you want to do?'.format(name)))
         explain.setWordWrap(True)
         layout.addWidget(explain)
 
@@ -2929,21 +2934,36 @@ class FileNameDialog(QDialog):
 
     def accept(self):
         if self.saveAsOption.isChecked():
-            self.saveAs()
+            if not self.saveAs():
+                return
         elif self.overwriteOption.isChecked():
             self.overwrite()
         QDialog.accept(self)
 
     def saveAs(self):
-        if not self.getFilename().strip():
+        name = self.getFilename()
+        name = name.strip()
+        if not name:
             alert = QMessageBox()
             alert.setWindowTitle('Error')
             alert.setText(('If you want to save the file under a new name, '
                             'then you must enter that name in the text box.'))
             alert.exec_()
-            return
+            return False
+
+        if name in self.systems_list:
+            alert = QMessageBox()
+            alert.setWindowTitle('File already exists')
+            alert.setText(('There is already a feature file with this name. Do you want to overwrite it?'))
+            alert.addButton('Yes', QMessageBox.YesRole)
+            no = alert.addButton('No', QMessageBox.NoRole)
+            alert.exec_()
+            if alert.clickedButton() == no:
+                return False
+
 
         self.choice = 'saveas'
+        return True
 
     def overwrite(self):
         self.choice = 'overwrite'
