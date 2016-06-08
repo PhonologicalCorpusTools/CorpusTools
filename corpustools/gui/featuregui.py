@@ -535,8 +535,12 @@ class EditFeatureMatrixDialog(QDialog):
                 fileNameDialog = FileNameDialog('_'.join([self.specifier.name,self.corpus.name]))
                 result = fileNameDialog.exec_()
                 if result:
+                    name = fileNameDialog.getFilename()
+                    if not name.endswith('.feature'):
+                        name += '.feature'
+                    self.specifier.name = fileNameDialog.getFilename()
                     save_binary(self.specifier,
-                        os.path.join(self.settings['storage'], 'FEATURE', result+'.feature'))
+                        os.path.join(self.settings['storage'], 'FEATURE', name))
                 else:
                     return
 

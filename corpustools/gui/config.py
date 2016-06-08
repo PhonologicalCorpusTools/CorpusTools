@@ -61,7 +61,25 @@ class StoragePane(BasePane):
 
         return setting_dict
 
+class ReminderPane(BasePane):
 
+    def __init__(self, setting_dict):
+        BasePane.__init__(self)
+
+        layout = QFormLayout()
+
+        self.remindFeatureFileName = QCheckBox()
+
+        layout.addRow(QLabel('Always overwrite old feature files'), self.remindFeatureFileName)
+
+        self.setLayout(layout)
+
+        self.remindFeatureFileName.setChecked(setting_dict['overwrite_feature_files'])
+
+    def get_current_state(self):
+        settings_dict = {}
+        settings_dict['overwrite_feature_files'] = int(self.remindFeatureFileName.isChecked())
+        return settings_dict
 
 class DisplayPane(BasePane):
     def __init__(self, setting_dict):
@@ -143,13 +161,16 @@ class Settings(object):
                     'warnings': ('display/warnings',1),
                     'tooltips': ('display/tooltips',1),
                     'use_multi': ('multiprocessing/enabled',0),
-                    'num_cores': ('multiprocessing/numcores',1)}
+                    'num_cores': ('multiprocessing/numcores',1),
+                    'overwrite_feature_files': ('display/reminders', 0)}
 
     storage_setting_keys = ['storage','autosave']
 
     display_setting_keys = ['sigfigs', 'warnings','tooltips']
 
     processing_setting_keys = ['use_multi','num_cores']
+
+    reminder_setting_keys = ['overwrite_feature_files']
 
     def __init__(self):
         self.qs = QSettings("PCT","Phonological CorpusTools")
@@ -189,6 +210,7 @@ class Settings(object):
     def __getitem__(self, key):
 
         mapped_key = self.key_to_ini[key]
+        print(mapped_key)
         if isinstance(mapped_key, list):
             return tuple(type(d)(self.qs.value(k,d)) for k, d in mapped_key)
         else:
@@ -233,6 +255,10 @@ class Settings(object):
         out = {x: self[x] for x in self.processing_setting_keys}
         return out
 
+    def get_reminder_settings(self):
+        out = {x: self[x] for x in self.processing_setting_keys}
+        return out
+
 class PreferencesDialog(QDialog):
 
     def __init__(self, parent, settings):
@@ -256,6 +282,11 @@ class PreferencesDialog(QDialog):
         self.processingWidget = ProcessingPane(self.settings.get_processing_settings())
 
         tabWidget.addTab(self.processingWidget,'Processing')
+
+        #Reminders
+        self.reminderWidget = ReminderPane(self.settings)
+
+        tabWidget.addTab(self.reminderWidget, 'Reminders')
 
         layout = QVBoxLayout()
         layout.addWidget(tabWidget)
@@ -290,5 +321,6 @@ class PreferencesDialog(QDialog):
         self.settings.update(self.storeWidget.get_current_state())
         self.settings.update(self.displayWidget.get_current_state())
         self.settings.update(self.processingWidget.get_current_state())
+        self.settings.update(self.reminderWidget.get_current_state())
         self.settings.check_storage()
         QDialog.accept(self)

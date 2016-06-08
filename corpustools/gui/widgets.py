@@ -2873,11 +2873,13 @@ class FileNameDialog(QDialog):
 
     def __init__(self, hint=None):
         super().__init__()
+        self.setWindowTitle('Enter new file name')
         layout = QVBoxLayout()
         button_layout = QHBoxLayout()
 
         explain = QLabel('Enter the name for this feature system. A new file will be saved in your user '
                          'folder. If you want to change your user folder, go Options > Preferences...')
+        explain.setWordWrap(True)
         self.newNameEdit = QLineEdit()
         ok = QPushButton('OK')
         ok.clicked.connect(self.accept)

@@ -406,6 +406,7 @@ class MainWindow(QMainWindow):
         if result:
             pass
 
+    @check_for_empty_corpus
     def showPreferences(self):
         dialog = PreferencesDialog(self, self.settings)
         if dialog.exec_():
