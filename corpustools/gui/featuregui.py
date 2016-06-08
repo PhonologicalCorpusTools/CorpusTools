@@ -522,32 +522,45 @@ class EditFeatureMatrixDialog(QDialog):
             alert.exec_()
             return
 
-        if self.specs_changed:
-            alert = QMessageBox()
-            alert.setWindowTitle('Overwrite feature system?')
-            alert.setText(('You have made changes to the {} system. This might affect other corpora that you have '
-                           'which depend on the same feature system. It is advisable to save your changes under '
-                           'a different name.\n\nWhat do you want to do?'.format(self.specifier.name)))
-            alert.addButton('Overwrite the old file', QMessageBox.YesRole)
-            new_file = alert.addButton('Make a new file', QMessageBox.NoRole)
-            alert.exec_()
-            if alert.clickedButton() == new_file:
-                fileNameDialog = FileNameDialog('_'.join([self.specifier.name,self.corpus.name]))
-                result = fileNameDialog.exec_()
-                if result:
-                    name = fileNameDialog.getFilename()
-                    if not name.endswith('.feature'):
-                        name += '.feature'
-                    self.specifier.name = fileNameDialog.getFilename()
-                    save_binary(self.specifier,
-                        os.path.join(self.settings['storage'], 'FEATURE', name))
-                else:
-                    return
+        if self.specs_changed and not self.settings['overwrite_feature_files']:
+            systems = get_systems_list(self.settings['storage'])
+            check_name = self.specifier.name.split('_')[-1]
+            if self.corpus.name in check_name:
+                name = check_name.split('-')[0]
+                name_hint = '_'.join([name, self.corpus.name])
+            else:
+                name_hint = '_'.join([self.specifier.name,self.corpus.name])
+
+            if name_hint in systems:
+                n = 2
+                while True:
+                    new_hint = '-'.join([name_hint,str(n)])
+                    if new_hint not in systems:
+                        name_hint = new_hint
+                        break
+                    n += 1
+
+            fileNameDialog = FileNameDialog(self.specifier.name, name_hint)
+            result = fileNameDialog.exec_()
+            if fileNameDialog.choice == 'cancel':
+                return
+            elif fileNameDialog.choice == 'saveas':
+                name = fileNameDialog.getFilename()
+                if name.endswith('.feature'):
+                    name.rstrip('.feature')
+                self.specifier.name = name
+            elif fileNameDialog.choice == 'overwrite':
+                pass
+
+            self.settings['overwrite_feature_files'] = int(fileNameDialog.stopShowing.isChecked())
+
 
         self.transcription_changed = False
         self.feature_system_changed = True
-        path = system_name_to_path(self.settings['storage'], self.specifier.name)
-        save_binary(self.specifier, path)
+        filename = os.path.join(self.settings['storage'], 'FEATURE', self.specifier.name)
+        if not filename.endswith('.feature'):
+            filename += '.feature'
+        save_binary(self.specifier, filename)
         QDialog.accept(self)
 
 

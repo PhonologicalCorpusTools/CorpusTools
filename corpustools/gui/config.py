@@ -162,7 +162,7 @@ class Settings(object):
                     'tooltips': ('display/tooltips',1),
                     'use_multi': ('multiprocessing/enabled',0),
                     'num_cores': ('multiprocessing/numcores',1),
-                    'overwrite_feature_files': ('display/reminders', 0)}
+                    'overwrite_feature_files': ('reminders', 0)}
 
     storage_setting_keys = ['storage','autosave']
 
@@ -210,7 +210,6 @@ class Settings(object):
     def __getitem__(self, key):
 
         mapped_key = self.key_to_ini[key]
-        print(mapped_key)
         if isinstance(mapped_key, list):
             return tuple(type(d)(self.qs.value(k,d)) for k, d in mapped_key)
         else:
@@ -221,7 +220,7 @@ class Settings(object):
                 else:
                     return -1
             else:
-                return type(default)(self.qs.value(inikey,default))
+                return type(default)(self.qs.value(inikey, default))
 
     def __setitem__(self, key, value):
         mapped_key = self.key_to_ini[key]

@@ -2871,30 +2871,83 @@ class CreateClassWidget(QDialog):
                                                                       ', '.join(notInClass)))
 class FileNameDialog(QDialog):
 
-    def __init__(self, hint=None):
+    def __init__(self, name, hint=None):
         super().__init__()
-        self.setWindowTitle('Enter new file name')
+        self.setWindowTitle('Overwrite feature system?')
+        self.choice = None
         layout = QVBoxLayout()
-        button_layout = QHBoxLayout()
 
-        explain = QLabel('Enter the name for this feature system. A new file will be saved in your user '
-                         'folder. If you want to change your user folder, go Options > Preferences...')
+        explain = QLabel()
+        explain.setText(('You have made changes to the {} system. This might affect other corpora '
+                       'which depend on the same feature system. It is advisable to save your changes under '
+                       'a different name.\n\nWhat do you want to do?'.format(name)))
         explain.setWordWrap(True)
-        self.newNameEdit = QLineEdit()
-        ok = QPushButton('OK')
-        ok.clicked.connect(self.accept)
-        cancel = QPushButton('Cancel')
-        cancel.clicked.connect(self.reject)
-
         layout.addWidget(explain)
-        layout.addWidget(self.newNameEdit)
-        button_layout.addWidget(ok)
-        button_layout.addWidget(cancel)
-        layout.addLayout(button_layout)
+
+        options = QGroupBox()
+        self.saveAsOption = QRadioButton('Save changes to a new file')
+        self.overwriteOption = QRadioButton('Overwrite existing file')
+        self.saveAsOption.setChecked(True)
+        self.saveAsOption.clicked.connect(lambda x:self.newFilename.setEnabled(True))
+        self.overwriteOption.clicked.connect(lambda x:self.newFilename.setEnabled(False))
+
+        option_layout = QVBoxLayout()
+        option_layout.addWidget(self.saveAsOption)
+        option_layout.addWidget(self.overwriteOption)
+        options.setLayout(option_layout)
+        layout.addWidget(options)
+
+        newNameLayout = QHBoxLayout()
+        newFileNameLabel = QLabel('Name for new file: ')
+        self.newFilename = QLineEdit()
+        if hint:
+            self.newFilename.setText(hint)
+        self.newFilename.setEnabled(True)
+        newNameLayout.addWidget(newFileNameLabel)
+        newNameLayout.addWidget(self.newFilename)
+        layout.addLayout(newNameLayout)
+
+        stopShowingLayout = QVBoxLayout()
+        self.stopShowing = QCheckBox('Don\'t ask again and always overwrite old files')
+        stopShowingLayout.addWidget(self.stopShowing)
+        stopShowingText = QLabel('(You can turn this reminder back on later by going to Preferences > Options... '
+                                 'and clicking on the "Reminders" tab)')
+        stopShowingLayout.addWidget(stopShowingText)
+        layout.addLayout(stopShowingLayout)
+
+        okButton = QPushButton('OK')
+        cancelButton = QPushButton('Cancel')
+        okButton.clicked.connect(self.accept)
+        cancelButton.clicked.connect(self.cancel)
+        layout.addWidget(okButton)
+        layout.addWidget(cancelButton)
+
         self.setLayout(layout)
 
-        if hint:
-            self.newNameEdit.setText(hint)
-
     def getFilename(self):
-        return self.newNameEdit.text()
+        return self.newFilename.text()
+
+    def accept(self):
+        if self.saveAsOption.isChecked():
+            self.saveAs()
+        elif self.overwriteOption.isChecked():
+            self.overwrite()
+        QDialog.accept(self)
+
+    def saveAs(self):
+        if not self.getFilename().strip():
+            alert = QMessageBox()
+            alert.setWindowTitle('Error')
+            alert.setText(('If you want to save the file under a new name, '
+                            'then you must enter that name in the text box.'))
+            alert.exec_()
+            return
+
+        self.choice = 'saveas'
+
+    def overwrite(self):
+        self.choice = 'overwrite'
+
+    def cancel(self):
+        self.choice = 'cancel'
+        QDialog.reject(self)
