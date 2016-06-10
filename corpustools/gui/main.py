@@ -174,16 +174,9 @@ class MainWindow(QMainWindow):
 
     def check_for_unsaved_changes(function):
         def do_check(self):
-
             if self.unsavedChanges:
                 if self.settings['ask_overwrite_corpus']:
-                    name_list = get_corpora_list(self.settings['storage'])
-                    n = 2
-                    while True:
-                        name_hint = self.corpusModel.corpus.name + '-' + str(n)
-                        if name_hint not in name_list:
-                            break
-                        n += 1
+                    name_hint = self.generate_corpus_name_hint()
                     reply = FileNameDialog(self.corpusModel.corpus.name, 'corpus', self.settings, hint=name_hint)
                     reply.exec_()
 
@@ -194,11 +187,24 @@ class MainWindow(QMainWindow):
 
                     elif reply.choice == 'overwrite':
                         self.saveCorpus()
-
-
             function(self)
-
         return do_check
+
+    def generate_corpus_name_hint(self):
+        name_list = get_corpora_list(self.settings['storage'])
+        name_hint = self.corpusModel.corpus.name.split('-')
+
+        if len(name_hint) == 1 or not name_hint[-1].isdigit():
+            name_hint = self.corpusModel.corpus.name + '-2'
+        else:
+            n = 2
+            name = name_hint[0]
+            while True:
+                name_hint = '-'.join([name,str(n)])
+                if name_hint not in name_list:
+                    break
+                n += 1
+        return name_hint
 
     def check_for_empty_corpus(function):
         def do_check(self):
@@ -265,7 +271,6 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
-
         dialog = CorpusLoadDialog(self, self.corpus, self.settings)
         result = dialog.exec_()
 
@@ -383,10 +388,11 @@ class MainWindow(QMainWindow):
             self.inventoryModel.updateFromCopy(dialog.inventory)
             self.corpusModel.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
+
 
     def subsetCorpus(self):
         dialog = SubsetCorpusDialog(self,self.corpusModel.corpus)
@@ -471,10 +477,10 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.corpusModel.addTier(dialog.attribute, dialog.segList)
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
             self.adjustSize()
 
     @check_for_empty_corpus
@@ -484,10 +490,10 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.corpusModel.addAbstractTier(dialog.attribute, dialog.segList)
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
             self.adjustSize()
 
     @check_for_empty_corpus
@@ -496,10 +502,10 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.corpusModel.addColumn(dialog.attribute)
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
 
     @check_for_empty_corpus
     def createCountColumn(self):
@@ -507,10 +513,11 @@ class MainWindow(QMainWindow):
         if dialog.exec_():
             self.corpusModel.addCountColumn(dialog.attribute, dialog.sequenceType, dialog.segList)
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
+
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -521,10 +528,11 @@ class MainWindow(QMainWindow):
             self.adjustSize()
 
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
+
 
     @check_for_empty_corpus
     def stringSim(self):
@@ -658,10 +666,11 @@ class MainWindow(QMainWindow):
                 self.showNDResults.setVisible(True)
         elif result:
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
+
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -681,10 +690,11 @@ class MainWindow(QMainWindow):
                 self.showPPResults.setVisible(True)
         elif result:
             if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
-            else:
-                self.enableSave()
+
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -1000,7 +1010,7 @@ class MainWindow(QMainWindow):
 
         self.editMenu = self.menuBar().addMenu("&Options")
         self.editMenu.addAction(self.editPreferencesAct)
-        self.editMenu.addAction(self.toggleWarningsAct)
+        #self.editMenu.addAction(self.toggleWarningsAct)
         self.editMenu.addAction(self.toggleToolTipsAct)
 
         self.corpusMenu = self.menuBar().addMenu("&Corpus")
@@ -1065,22 +1075,20 @@ class MainWindow(QMainWindow):
                 window.close()
 
     def closeEvent(self, event):
-
         if self.unsavedChanges:
-            reply = QMessageBox()
-            reply.setWindowTitle("Unsaved changes")
-            reply.setIcon(QMessageBox.Warning)
-            reply.setText("The currently loaded corpus ('{}') has unsaved changes.".format(self.corpusModel.corpus.name))
-            reply.setInformativeText("Do you want to save your changes?")
+            if self.settings['ask_overwrite_corpus']:
+                name_hint = self.generate_corpus_name_hint()
+                reply = FileNameDialog(self.corpusModel.corpus.name, 'corpus', self.settings, hint=name_hint)
+                reply.exec_()
+                if reply.choice == 'saveas':
+                    self.corpus.name = reply.getFilename()
+                    self.corpusModel.corpus.name = reply.getFilename()
+                    self.saveCorpus()
+                elif reply.choice == 'overwrite':
+                    self.saveCorpus()
+                elif reply.choice == 'cancel':
+                    return
 
-            reply.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-            reply.setDefaultButton(QMessageBox.Save)
-            ret = reply.exec_()
-            if ret == QMessageBox.Save:
-                self.saveCorpus()
-            elif ret == QMessageBox.Cancel:
-                event.ignore()
-                return
         self.corpusModel = None
         if self.FLWindow is not None:
             self.FLWindow.reject()

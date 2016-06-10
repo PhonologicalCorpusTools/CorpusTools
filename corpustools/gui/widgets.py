@@ -1328,12 +1328,12 @@ class SegmentSelectionWidget(QWidget):
         layout = QVBoxLayout()
 
         if len(inventory.features) > 0:
-            headlayout = QHBoxLayout()
+            headlayout = QVBoxLayout()
             formlay = QFormLayout()
 
             formlay.addRow('Select by feature',self.searchWidget)
-            note = QLabel('Press "Enter" to auto-complete the feature names. Press "Enter" again to auto-select all of '
-                          'the highlighted features.')
+            note = QLabel('Press "Enter" to auto-complete the feature names. Press "Enter" again to select all of '
+                          'the highlighted features (or click the button below).')
             note.setWordWrap(True)
             formlay.addRow(note)
 
@@ -1417,9 +1417,10 @@ class InventoryBox(QWidget):
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         self.inventory = inventory
+        self.selectedSegList = list()
         self.setWindowTitle(title)
 
-        mainLayout = QHBoxLayout()
+        mainLayout = QVBoxLayout()
         inventoryTabs = QTabWidget()
         cons = self.makeConsTable()
         inventoryTabs.addTab(cons, 'Consonants')
@@ -1428,8 +1429,19 @@ class InventoryBox(QWidget):
         unc = self.makeUncategorizedTable()
         inventoryTabs.addTab(unc, 'Uncategorized')
         mainLayout.addWidget(inventoryTabs)
-        self.selectedSegList = QLabel()
-        mainLayout.addWidget(self.selectedSegList)
+
+        selectedSegLayout = QHBoxLayout()
+        titleLabel = QLabel('Selected segments: ')
+        titleLabel.setContentsMargins(0,0,0,0)
+        selectedSegLayout.addWidget(titleLabel)
+        self.selectedSegListLabel = QLabel()
+        selectedSegLayout.addWidget(self.selectedSegListLabel)
+        self.selectedSegListLabel.setWordWrap(True)
+        self.selectedSegListLabel.setContentsMargins(0,0,0,0)
+        selectedSegLayout.setSpacing(0)
+        selectedSegLayout.setContentsMargins(0,0,0,0)
+        mainLayout.addLayout(selectedSegLayout)
+
         self.setLayout(mainLayout)
 
     def makeConsTable(self):
@@ -1455,7 +1467,6 @@ class InventoryBox(QWidget):
             for seg, cat in self.inventory.consList:
                 if row_name in cat and col_name in cat:
                     btn = self.generateSegmentButton(seg.symbol)
-                    btn.clicked.connect(self.addToSegList)
                     button_map[(row,col)].append(btn)
 
         for key,buttons in button_map.items():
@@ -1463,9 +1474,6 @@ class InventoryBox(QWidget):
             self.consTable.setCellWidget(row,col,MultiSegmentCell(buttons))
 
         return cons
-
-    def addToSegList(self):
-        pass
 
     def makeVowelTable(self):
         vowel = QFrame() #This widget gets returned from the function
@@ -1562,6 +1570,7 @@ class InventoryBox(QWidget):
         wid.setAutoExclusive(False)
         wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
         self.btnGroup.addButton(wid)
+        wid.clicked.connect(self.addToSegList)
         return wid
 
     def highlightSegments(self, features):
@@ -1577,12 +1586,18 @@ class InventoryBox(QWidget):
 
     def selectSegments(self, segs):
         if len(segs) > 0:
-            seglist = list()
             for btn in self.btnGroup.buttons():
                 if btn.text() in segs:
-                    btn.setChecked(True)
-                    seglist.append(btn.text())
-            self.selectedSegList.setText(','.join(seglist))
+                    #btn.setChecked(True)
+                    btn.click()
+
+    def addToSegList(self):
+        seg = self.sender().text()
+        if seg in self.selectedSegList:
+            self.selectedSegList.remove(seg)
+        else:
+            self.selectedSegList.append(seg)
+        self.selectedSegListLabel.setText(','.join(self.selectedSegList))
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
@@ -1592,7 +1607,8 @@ class InventoryBox(QWidget):
             btn.setChecked(False)
         if reexc:
             self.setExclusive(True)
-        self.selectedSegList.setText('')
+        self.selectedSegList = list()
+        self.selectedSegListLabel.setText('')
 
     def disableAll(self):
         for btn in self.btnGroup.buttons():
@@ -2902,7 +2918,7 @@ class FileNameDialog(QDialog):
             text = ('You have made changes to the {} corpus, and those changes have not been saved yet.'
             '\n\nWhat do you want to do?'.format(name))
             self.filename_list = get_corpora_list(settings['storage'])
-
+        self.file_type = file_type
         self.setWindowTitle('Overwrite {}?'.format(window_title))
         self.choice = None
 
@@ -2934,6 +2950,10 @@ class FileNameDialog(QDialog):
         self.newFilename.setEnabled(True)
         newNameLayout.addWidget(newFileNameLabel)
         newNameLayout.addWidget(self.newFilename)
+        newNameNote = QLabel('This file will be saved into your storage directory. You can change this directory by '
+        'going to Options > Preferences...\nYou do not need to add a file extension to this name.')
+        newNameNote.setWordWrap(True)
+        newNameLayout.addWidget(newNameNote)
         layout.addLayout(newNameLayout)
 
         stopShowingLayout = QVBoxLayout()
@@ -2978,7 +2998,8 @@ class FileNameDialog(QDialog):
         if name in self.filename_list:
             alert = QMessageBox()
             alert.setWindowTitle('File already exists')
-            alert.setText(('There is already a feature file with this name. Do you want to overwrite it?'))
+            alert.setText(('There is already a {} file with this name. Do you want to overwrite it?'.format(
+                            self.file_type)))
             alert.addButton('Yes', QMessageBox.YesRole)
             no = alert.addButton('No', QMessageBox.NoRole)
             alert.exec_()
