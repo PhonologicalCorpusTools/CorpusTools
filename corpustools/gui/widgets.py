@@ -1247,6 +1247,7 @@ class FeatureEdit(QLineEdit):
         return d, text
 
     def finalize(self):
+        print(self.features())
         if self.text() != '':
             self.featuresFinalized.emit(self.features())
             if self.clearOnEnter:
@@ -1321,7 +1322,7 @@ class SegmentSelectionWidget(QWidget):
         self.completer = FeatureCompleter(self.inventory)
         self.searchWidget.setCompleter(self.completer)
 
-        self.inventoryFrame = InventoryBox('', self.inventory)
+        self.inventoryFrame = InventoryBox('Inventory', self.inventory)
         if exclusive:
             self.inventoryFrame.setExclusive(True)
 
@@ -1388,21 +1389,28 @@ class FeatureSelectionWidget(SegmentSelectionWidget):
         self.setWindowTitle('Select features')
         self.feature_list = set()
         self.searchWidget.clearOnEnter = False
+        #self.searchWidget.featuresFinalized.connect(self.update_features)#inventoryFrame.selectSegmentFeatures)
         self.commitButton.setText('Add feature(s)')
         self.searchWidget.featuresFinalized.connect(self.update_features)
         self.segsCleared.connect(self.clear_features)
+        self.inventoryFrame.highlight_colour = 'blue'
 
+    @Slot(list)
     def update_features(self, features):
         if not features:
             self.features = set()
         else:
             for f in features:
                 self.feature_list.add(f)
+        self.inventoryFrame.selectSegmentFeatures(features)
 
     def clear_features(self):
         self.feature_list = set()
 
     def value(self):
+        features = [f for f in self.searchWidget.text().split(',')]
+        for f in features:
+            self.feature_list.add(f)
         return sorted(list(self.feature_list))
 
 class InventoryBox(QWidget):
@@ -1412,11 +1420,12 @@ class InventoryBox(QWidget):
     use a QTableWidget here instead.
     """
 
-    def __init__(self, title, inventory, show_seglist=True, parent=None):
+    def __init__(self, title, inventory, show_seglist=True, parent=None, highlight_colour='red'):
         QWidget.__init__(self,parent)
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         self.inventory = inventory
+        self.highlight_colour = highlight_colour
         self.show_seglist = show_seglist
         self.selectedSegList = list()
         self.setWindowTitle(title)
@@ -1575,12 +1584,13 @@ class InventoryBox(QWidget):
             wid.clicked.connect(self.addToSegList)
         return wid
 
+
     def highlightSegments(self, features):
         segs = self.inventory.features_to_segments(features)
         for btn in self.btnGroup.buttons():
             btn.setStyleSheet("QPushButton{}")
             if features and btn.text() in segs:
-                btn.setStyleSheet("QPushButton{background-color: red;}")
+                btn.setStyleSheet('QPushButton{{background-color: {};}}'.format(self.highlight_colour))
 
     def selectSegmentFeatures(self, features):
         segs = self.inventory.features_to_segments(features)
@@ -1590,8 +1600,13 @@ class InventoryBox(QWidget):
         if len(segs) > 0:
             for btn in self.btnGroup.buttons():
                 if btn.text() in segs:
-                    #btn.setChecked(True)
-                    btn.click()
+                    btn.setChecked(True)
+                    if not btn.isEnabled():
+                        btn.setEnabled(True)
+                        btn.click()
+                        btn.setEnabled(False)
+                    else:
+                        btn.click()
 
     def addToSegList(self):
         seg = self.sender().text()
@@ -2420,9 +2435,6 @@ class EnvironmentSegmentWidget(QWidget):
 
         self.setLayout(layout)
 
-        self.mainLabel.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.mainLabel.customContextMenuRequested.connect(self.showDeleteOption)
-
         if self.enabled:
             self.menu = QMenu(self)
             segmentAct = QAction("Add segments", self, triggered=self.selectSegments)
@@ -2490,18 +2502,6 @@ class EnvironmentSegmentWidget(QWidget):
         if dialog.exec_():
             self.features = dialog.value()
             self.updateLabel()
-
-    def showDeleteOption(self, pos):
-        if self.middle:
-            return
-        removeAction = QAction(self)
-        removeAction.setText('Delete')
-        removeAction.triggered.connect(self.deleteLater)
-
-        menu = QMenu(self)
-        menu.addAction(removeAction)
-
-        menu.popup(self.mapToGlobal(pos))
 
     def value(self):
         segs = [s for s in self.segments]
