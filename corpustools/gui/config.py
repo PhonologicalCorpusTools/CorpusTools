@@ -29,9 +29,9 @@ class StoragePane(BasePane):
 
         layout.addRow(QLabel('Storage directory:'),self.storageDirectoryWidget)
 
-        self.autosaveCheck = QCheckBox()
+        #self.autosaveCheck = QCheckBox()
 
-        layout.addRow(QLabel('Auto save:'),self.autosaveCheck)
+        #layout.addRow(QLabel('Auto save:'),self.autosaveCheck)
 
         self.setLayout(layout)
 
@@ -40,11 +40,11 @@ class StoragePane(BasePane):
         #storageDirectory = codecs.getdecoder("unicode_escape")(setting_dict['storage'])[0]
         storageDirectory = setting_dict['storage']
 
-        autosave = setting_dict['autosave']
+        #autosave = setting_dict['autosave']
 
         self.storageDirectoryWidget.setPath(storageDirectory)
 
-        self.autosaveCheck.setChecked(autosave)
+        #self.autosaveCheck.setChecked(autosave)
 
         self.prev_state = setting_dict
 
@@ -57,7 +57,7 @@ class StoragePane(BasePane):
         setting_dict = {}
 
         setting_dict['storage'] = self.storageDirectoryWidget.value()
-        setting_dict['autosave'] = int(self.autosaveCheck.isChecked())
+        #setting_dict['autosave'] = int(self.autosaveCheck.isChecked())
 
         return setting_dict
 
@@ -69,16 +69,21 @@ class ReminderPane(BasePane):
         layout = QFormLayout()
 
         self.remindFeatureFileName = QCheckBox()
+        self.remindCorpusFileName = QCheckBox()
 
-        layout.addRow(QLabel('Always overwrite old feature files'), self.remindFeatureFileName)
+        layout.addRow(QLabel('Always ask before overwriting a feature files'), self.remindFeatureFileName)
+        layout.addRow(QLabel('Always ask before overwriting a corpus'), self.remindCorpusFileName)
 
         self.setLayout(layout)
 
-        self.remindFeatureFileName.setChecked(setting_dict['overwrite_feature_files'])
+        self.remindFeatureFileName.setChecked(setting_dict['ask_overwrite_features'])
+        self.remindFeatureFileName.setChecked(setting_dict['ask_overwrite_features'])
+        self.remindCorpusFileName.setChecked(setting_dict['ask_overwrite_corpus'])
 
     def get_current_state(self):
         settings_dict = {}
-        settings_dict['overwrite_feature_files'] = int(self.remindFeatureFileName.isChecked())
+        settings_dict['ask_overwrite_features'] = int(self.remindFeatureFileName.isChecked())
+        settings_dict['ask_overwrite_corpus'] = int(self.remindCorpusFileName.isChecked())
         return settings_dict
 
 class DisplayPane(BasePane):
@@ -153,7 +158,7 @@ class Settings(object):
 
     key_to_ini = {'storage': ('storage/directory',os.path.normpath(os.path.join(
                                             os.path.expanduser('~/Documents'),'PCT','CorpusTools'))),
-                    'autosave': ('storage/autosave',1),
+                    #'autosave': ('storage/autosave',1),
                     'praatpath': ('storage/praat',''),
                     'size':('display/size', QSize(270, 225)),
                     'pos': ('display/pos', QPoint(50, 50)),
@@ -162,15 +167,16 @@ class Settings(object):
                     'tooltips': ('display/tooltips',1),
                     'use_multi': ('multiprocessing/enabled',0),
                     'num_cores': ('multiprocessing/numcores',1),
-                    'overwrite_feature_files': ('reminders', 0)}
+                    'ask_overwrite_features': ('reminders', 1),
+                    'ask_overwrite_corpus': ('reminders', 1)}
 
-    storage_setting_keys = ['storage','autosave']
+    storage_setting_keys = ['storage']#,'autosave']
 
     display_setting_keys = ['sigfigs', 'warnings','tooltips']
 
     processing_setting_keys = ['use_multi','num_cores']
 
-    reminder_setting_keys = ['overwrite_feature_files']
+    reminder_setting_keys = ['ask_overwrite_features', 'ask_overwrite_corpus']
 
     def __init__(self):
         self.qs = QSettings("PCT","Phonological CorpusTools")

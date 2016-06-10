@@ -243,6 +243,11 @@ def get_corpora_list(storage_directory):
     corpora = [parse_filename(x) for x in os.listdir(corpus_dir)]
     return corpora
 
+def get_systems_list(storage_directory):
+    system_dir = os.path.join(storage_directory,'FEATURE')
+    systems = [x.split('.')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
+    return systems
+
 def parse_filename(filename):
     filename = filename.split('.')
     if len(filename) > 2:

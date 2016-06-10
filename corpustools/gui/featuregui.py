@@ -522,7 +522,7 @@ class EditFeatureMatrixDialog(QDialog):
             alert.exec_()
             return
 
-        if self.specs_changed and not self.settings['overwrite_feature_files']:
+        if self.specs_changed and self.settings['ask_overwrite_features']:
             systems = get_systems_list(self.settings['storage'])
             if self.specifier.name in systems:
                 try:
@@ -537,7 +537,7 @@ class EditFeatureMatrixDialog(QDialog):
                 except:
                     name_hint = self.specifier.name+'-new'
 
-            fileNameDialog = FileNameDialog(self.specifier.name, name_hint, get_systems_list(self.settings['storage']))
+            fileNameDialog = FileNameDialog(self.specifier.name, 'features', self.settings, hint=name_hint)
             fileNameDialog.exec_()
             if fileNameDialog.choice == 'cancel':
                 return
@@ -549,7 +549,7 @@ class EditFeatureMatrixDialog(QDialog):
             elif fileNameDialog.choice == 'overwrite':
                 pass
 
-            self.settings['overwrite_feature_files'] = int(fileNameDialog.stopShowing.isChecked())
+            self.settings['ask_overwrite_features'] = int(not fileNameDialog.stopShowing.isChecked())
 
 
         self.transcription_changed = False
@@ -1218,7 +1218,7 @@ class FeatureMatrixManager(QDialog):
                 "This will permanently remove '{}'.\n\n"
                 "Unfortunately, PCT cannot automatically verify if you have any corpora "
                 "that depend on these features, so you should only delete this if you are "
-                "absolutely certain".format(featureSystem),
+                "absolutely certain.".format(featureSystem),
                              QMessageBox.NoButton, self)
         msgBox.addButton("Delete this file", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)

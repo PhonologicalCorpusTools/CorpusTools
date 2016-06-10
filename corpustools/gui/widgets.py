@@ -7,8 +7,9 @@ from .imports import *
 
 from .models import SegmentPairModel, EnvironmentModel, FilterModel
 
-#from .corpusgui import AddTierDialog
 from .delegates import SwitchDelegate
+
+from corpustools.corpus.io.helper import get_systems_list, get_corpora_list
 
 from corpustools.corpus.classes import Attribute, EnvironmentFilter
 from corpustools.corpus.io.helper import get_corpora_list, corpus_name_to_path, NUMBER_CHARACTERS
@@ -1331,6 +1332,10 @@ class SegmentSelectionWidget(QWidget):
             formlay = QFormLayout()
 
             formlay.addRow('Select by feature',self.searchWidget)
+            note = QLabel('Press "Enter" to auto-complete the feature names. Press "Enter" again to auto-select all of '
+                          'the highlighted features.')
+            note.setWordWrap(True)
+            formlay.addRow(note)
 
             formframe = QFrame()
 
@@ -1344,6 +1349,8 @@ class SegmentSelectionWidget(QWidget):
             self.clearAllButton = QPushButton('Clear selections')
 
             headlayout.addWidget(self.clearAllButton)
+
+
             headframe = QFrame()
 
             headframe.setLayout(headlayout)
@@ -1365,7 +1372,6 @@ class SegmentSelectionWidget(QWidget):
         self.inventoryFrame.setExclusive(b)
 
     def select(self, segments):
-
         self.inventoryFrame.selectSegments(segments)
 
     def clearAll(self):
@@ -1379,6 +1385,7 @@ class FeatureSelectionWidget(SegmentSelectionWidget):
     def __init__(self, inventory, parent = None, exclusive = False):
         super().__init__(inventory, parent, exclusive)
         self.inventoryFrame.disableAll()
+        self.setWindowTitle('Select features')
         self.feature_list = set()
         self.searchWidget.clearOnEnter = False
         self.commitButton.setText('Add feature(s)')
@@ -1421,6 +1428,8 @@ class InventoryBox(QWidget):
         unc = self.makeUncategorizedTable()
         inventoryTabs.addTab(unc, 'Uncategorized')
         mainLayout.addWidget(inventoryTabs)
+        self.selectedSegList = QLabel()
+        mainLayout.addWidget(self.selectedSegList)
         self.setLayout(mainLayout)
 
     def makeConsTable(self):
@@ -1446,6 +1455,7 @@ class InventoryBox(QWidget):
             for seg, cat in self.inventory.consList:
                 if row_name in cat and col_name in cat:
                     btn = self.generateSegmentButton(seg.symbol)
+                    btn.clicked.connect(self.addToSegList)
                     button_map[(row,col)].append(btn)
 
         for key,buttons in button_map.items():
@@ -1453,6 +1463,9 @@ class InventoryBox(QWidget):
             self.consTable.setCellWidget(row,col,MultiSegmentCell(buttons))
 
         return cons
+
+    def addToSegList(self):
+        pass
 
     def makeVowelTable(self):
         vowel = QFrame() #This widget gets returned from the function
@@ -1564,9 +1577,12 @@ class InventoryBox(QWidget):
 
     def selectSegments(self, segs):
         if len(segs) > 0:
+            seglist = list()
             for btn in self.btnGroup.buttons():
                 if btn.text() in segs:
                     btn.setChecked(True)
+                    seglist.append(btn.text())
+            self.selectedSegList.setText(','.join(seglist))
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
@@ -1576,6 +1592,7 @@ class InventoryBox(QWidget):
             btn.setChecked(False)
         if reexc:
             self.setExclusive(True)
+        self.selectedSegList.setText('')
 
     def disableAll(self):
         for btn in self.btnGroup.buttons():
@@ -2870,22 +2887,29 @@ class CreateClassWidget(QDialog):
                                                                       ', '.join(notInClass)))
 class FileNameDialog(QDialog):
 
-    def __init__(self, name, hint=None, systems_list=None):
+    def __init__(self, name, file_type, settings, hint=None):
         super().__init__()
-        self.setWindowTitle('Overwrite feature system?')
+
+        if file_type == 'features':
+            window_title = 'feature system'
+            text = ('You have made changes to the {} feature system. This might affect other corpora '
+            'which depend on the same features. It is recommended that save your changes under '
+            'a different name, unless you are absolutely sure that no other corpora need these features.'
+            '\n\nWhat do you want to do?'.format(name))
+            self.filename_list = get_systems_list(settings['storage'])
+        elif file_type == 'corpus':
+            window_title = 'corpus'
+            text = ('You have made changes to the {} corpus, and those changes have not been saved yet.'
+            '\n\nWhat do you want to do?'.format(name))
+            self.filename_list = get_corpora_list(settings['storage'])
+
+        self.setWindowTitle('Overwrite {}?'.format(window_title))
         self.choice = None
-        if systems_list is None:
-            self.systems_list = list()
-        else:
-            self.systems_list = systems_list
 
         layout = QVBoxLayout()
 
         explain = QLabel()
-        explain.setText(('You have made changes to the {} feature system. This might affect other corpora '
-                       'which depend on the same features. It is recommended that save your changes under '
-                       'a different name, unless you are absolutely sure that no other corpora need these features.'
-                       '\n\nWhat do you want to do?'.format(name)))
+        explain.setText(text)
         explain.setWordWrap(True)
         layout.addWidget(explain)
 
@@ -2951,7 +2975,7 @@ class FileNameDialog(QDialog):
             alert.exec_()
             return False
 
-        if name in self.systems_list:
+        if name in self.filename_list:
             alert = QMessageBox()
             alert.setWindowTitle('File already exists')
             alert.setText(('There is already a feature file with this name. Do you want to overwrite it?'))
