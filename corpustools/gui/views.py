@@ -184,7 +184,8 @@ class LexiconView(QWidget):
         word_key = self.table.model().rows[index.row()]
 
         msgBox = QMessageBox(QMessageBox.Warning, "Remove word",
-                "Are you sure you want to remove '{}'?".format(str(self.table.model().corpus[word_key])), QMessageBox.NoButton, self)
+                "Are you sure you want to remove '{}'?".format(str(self.table.model().corpus[word_key])),
+                QMessageBox.NoButton, self)
         msgBox.addButton("Continue", QMessageBox.AcceptRole)
         msgBox.addButton("Abort", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:

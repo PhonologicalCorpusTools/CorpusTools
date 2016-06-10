@@ -1332,10 +1332,6 @@ class SegmentSelectionWidget(QWidget):
             formlay = QFormLayout()
 
             formlay.addRow('Select by feature',self.searchWidget)
-            note = QLabel('Press "Enter" to auto-complete the feature names. Press "Enter" again to select all of '
-                          'the highlighted features (or click the button below).')
-            note.setWordWrap(True)
-            formlay.addRow(note)
 
             formframe = QFrame()
 
@@ -1350,6 +1346,10 @@ class SegmentSelectionWidget(QWidget):
 
             headlayout.addWidget(self.clearAllButton)
 
+            note = QLabel('Press "Enter" to auto-complete the feature names.\nPress "Enter" again to select all of '
+                          'the highlighted features.')
+            note.setWordWrap(True)
+            headlayout.addWidget(note)
 
             headframe = QFrame()
 
@@ -1412,11 +1412,12 @@ class InventoryBox(QWidget):
     use a QTableWidget here instead.
     """
 
-    def __init__(self, title, inventory, parent=None):
+    def __init__(self, title, inventory, show_seglist=True, parent=None):
         QWidget.__init__(self,parent)
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         self.inventory = inventory
+        self.show_seglist = show_seglist
         self.selectedSegList = list()
         self.setWindowTitle(title)
 
@@ -1431,7 +1432,7 @@ class InventoryBox(QWidget):
         mainLayout.addWidget(inventoryTabs)
 
         selectedSegLayout = QHBoxLayout()
-        titleLabel = QLabel('Selected segments: ')
+        titleLabel = QLabel('Selected segments: ') if self.show_seglist else QLabel()
         titleLabel.setContentsMargins(0,0,0,0)
         selectedSegLayout.addWidget(titleLabel)
         self.selectedSegListLabel = QLabel()
@@ -1570,7 +1571,8 @@ class InventoryBox(QWidget):
         wid.setAutoExclusive(False)
         wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
         self.btnGroup.addButton(wid)
-        wid.clicked.connect(self.addToSegList)
+        if self.show_seglist:
+            wid.clicked.connect(self.addToSegList)
         return wid
 
     def highlightSegments(self, features):
@@ -1670,7 +1672,7 @@ class TranscriptionWidget(QGroupBox):
         self.showInv.clicked.connect(self.showHide)
         layout.addRow(self.transEdit,self.showInv)
 
-        self.segments = InventoryBox('Inventory', inventory)
+        self.segments = InventoryBox('Inventory', inventory, show_seglist=False)
         for btn in self.segments.btnGroup.buttons():
             btn.setCheckable(False)
             btn.setAutoDefault(False)
@@ -2425,8 +2427,13 @@ class EnvironmentSegmentWidget(QWidget):
             self.menu = QMenu(self)
             segmentAct = QAction("Add segments", self, triggered=self.selectSegments)
             featureAct = QAction("Add features", self, triggered=self.selectFeatures)
+            clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
             self.menu.addAction(segmentAct)
             self.menu.addAction(featureAct)
+            self.menu.addAction(clearAct)
+            if not self.middle:
+                deleteAct = QAction("Delete", self, triggered=self.deleteSelection)
+                self.menu.addAction(deleteAct)
             self.mainLabel.setMenu(self.menu)
         else:
             self.mainLabel.setEnabled(False)
@@ -2436,10 +2443,18 @@ class EnvironmentSegmentWidget(QWidget):
             self.features = preset_label.features
             self.updateLabel()
 
+    def clearSelection(self):
+        self.segments = set()
+        self.features = set()
+        self.updateLabel()
+
+    def deleteSelection(self):
+        self.deleteLater()
+
     def updateLabel(self):
         labelText = self.generateDisplayText()
         if not labelText:
-            return
+             labelText = '{}'
         if self.middle:
             labelText = '_\n\n{}'.format(labelText)
         self.mainLabel.setText(labelText)
