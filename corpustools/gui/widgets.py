@@ -1200,6 +1200,22 @@ class DirectoryWidget(QFrame):
         return self.pathEdit.text()
 
 class SegmentButton(QPushButton):
+
+    def __init__(self, text):
+        QPushButton.__init__(self)
+        self.setText(text)
+        self.setStyleSheet('QPushButton:checked{background-color:rgb(28,162,86);}')
+        self._isHighlighted = False
+
+    def isHighlighted(self):
+        return self._isHighlighted
+
+    def setHighlighted(self, value):
+        if not isinstance(value, bool):
+            raise ValueError('setHighlighted requires a boolean argument')
+        self._isHighlighted = value
+
+
     def sizeHint(self):
         sh = QPushButton.sizeHint(self)
         #sh.setHeight(self.fontMetrics().boundingRect(self.text()).height()+14)
@@ -1253,8 +1269,6 @@ class FeatureEdit(QLineEdit):
             if self.clearOnEnter:
                 self.setText('')
                 self.featureEntered.emit([])
-        else:
-            self.featuresFinalized.emit([])
 
     def insertCompletion(self, string):
         d, text = self.parseText()
@@ -1321,6 +1335,10 @@ class SegmentSelectionWidget(QWidget):
         self.searchWidget = FeatureEdit(self.inventory)
         self.completer = FeatureCompleter(self.inventory)
         self.searchWidget.setCompleter(self.completer)
+        self.searchWidget.setToolTip( ('<FONT COLOR="black">Enter the name of a feature, plus a prefix (e.g. -nasal). '
+                        'Put commas between features. PCT will highlight everything that matches. Press "Enter" to '
+                        'auto-fill names. Press "Enter" again to select highlighted segments, or click the button '
+                        'below.</FONT>'))
 
         self.inventoryFrame = InventoryBox('Inventory', self.inventory)
         if exclusive:
@@ -1332,14 +1350,13 @@ class SegmentSelectionWidget(QWidget):
             headlayout = QVBoxLayout()
             formlay = QFormLayout()
 
-            formlay.addRow('Select by feature',self.searchWidget)
-
+            formlay.addRow('Select by feature', self.searchWidget)
             formframe = QFrame()
 
             formframe.setLayout(formlay)
             headlayout.addWidget(formframe)
 
-            self.commitButton = QPushButton('Select highlighted')
+            self.commitButton = QPushButton('Add highlighted segments')
 
             headlayout.addWidget(self.commitButton)
 
@@ -1347,16 +1364,11 @@ class SegmentSelectionWidget(QWidget):
 
             headlayout.addWidget(self.clearAllButton)
 
-            note = QLabel('Press "Enter" to auto-complete the feature names.\nPress "Enter" again to select all of '
-                          'the highlighted features.')
-            note.setWordWrap(True)
-            headlayout.addWidget(note)
-
             headframe = QFrame()
 
             headframe.setLayout(headlayout)
             self.commitButton.clicked.connect(self.searchWidget.finalize)
-            self.clearAllButton.clicked.connect(self.inventoryFrame.clearAll)
+            self.clearAllButton.clicked.connect(self.clearAll)
             self.clearAllButton.clicked.connect(self.segsCleared.emit)
 
         else:
@@ -1369,14 +1381,15 @@ class SegmentSelectionWidget(QWidget):
         self.searchWidget.featureEntered.connect(self.inventoryFrame.highlightSegments)
         self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegmentFeatures)
 
+    def clearAll(self):
+        self.searchWidget.setText('')
+        self.inventoryFrame.clearAll()
+
     def setExclusive(self, b):
         self.inventoryFrame.setExclusive(b)
 
     def select(self, segments):
         self.inventoryFrame.selectSegments(segments)
-
-    def clearAll(self):
-        self.inventoryFrame.clearAll()
 
     def value(self):
         return self.inventoryFrame.value()
@@ -1389,11 +1402,13 @@ class FeatureSelectionWidget(SegmentSelectionWidget):
         self.setWindowTitle('Select features')
         self.feature_list = set()
         self.searchWidget.clearOnEnter = False
-        #self.searchWidget.featuresFinalized.connect(self.update_features)#inventoryFrame.selectSegmentFeatures)
-        self.commitButton.setText('Add feature(s)')
+        self.commitButton.setText('Update feature selection')
+
+        self.searchWidget.featuresFinalized.connect(self.inventoryFrame.selectSegmentFeatures)
         self.searchWidget.featuresFinalized.connect(self.update_features)
         self.segsCleared.connect(self.clear_features)
         self.inventoryFrame.highlight_colour = 'blue'
+        self.inventoryFrame.parent_type = 'feature_select'
 
     @Slot(list)
     def update_features(self, features):
@@ -1420,13 +1435,14 @@ class InventoryBox(QWidget):
     use a QTableWidget here instead.
     """
 
-    def __init__(self, title, inventory, show_seglist=True, parent=None, highlight_colour='red'):
+    def __init__(self, title, inventory, show_seglist=True, parent=None, parent_type='seg_select', highlight_colour='red'):
         QWidget.__init__(self,parent)
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
         self.inventory = inventory
         self.highlight_colour = highlight_colour
         self.show_seglist = show_seglist
+        self.parent_type = parent_type
         self.selectedSegList = list()
         self.setWindowTitle(title)
 
@@ -1581,39 +1597,75 @@ class InventoryBox(QWidget):
         wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
         self.btnGroup.addButton(wid)
         if self.show_seglist:
-            wid.clicked.connect(self.addToSegList)
+            wid.clicked.connect(self.updateSegList)
         return wid
 
 
     def highlightSegments(self, features):
         segs = self.inventory.features_to_segments(features)
         for btn in self.btnGroup.buttons():
-            btn.setStyleSheet("QPushButton{}")
+
             if features and btn.text() in segs:
-                btn.setStyleSheet('QPushButton{{background-color: {};}}'.format(self.highlight_colour))
+                btn.setHighlighted(True)
+                if btn.isChecked():
+                    continue
+                if self.highlight_colour == 'blue':
+                    btn.setStyleSheet("QPushButton{background-color:rgb(124,238,255);}")
+                elif self.highlight_colour == 'red':
+                    btn.setStyleSheet("QPushButton{background-color:rgb(247,92,60);}")
+
+            else:
+                btn.setHighlighted(False)
+                if self.parent_type == 'feature_select':
+                    btn.setEnabled(True)
+                    btn.setChecked(False)
+                    btn.setEnabled(False)
+                btn.setStyleSheet('QPushButton{}')
+                btn.setStyleSheet('QPushButton:checked{background-color:rgb(28,162,86);}')#greenish colour
 
     def selectSegmentFeatures(self, features):
+        #called when a user clicks "select highlighted" or "update feature list"
         segs = self.inventory.features_to_segments(features)
+        if self.parent_type == 'feature_select':
+            self.selectedSegList = list()
+            self.selectedSegListLabel.setText('')
+            for btn in self.btnGroup.buttons():
+                btn.setEnabled(True)
+                btn.setChecked(False)
+                btn.setEnabled(False)
         self.selectSegments(segs)
 
     def selectSegments(self, segs):
+        #called at the end of selectSegmentFeatures
         if len(segs) > 0:
-            for btn in self.btnGroup.buttons():
-                if btn.text() in segs:
+            selected_buttons = [btn for btn in self.btnGroup.buttons() if btn.text() in segs and btn.isHighlighted()]
+            for btn in selected_buttons:
+                if not btn.text() in self.selectedSegList:
+                    self.selectedSegList.append(btn.text())
+                if not btn.isEnabled():
+                    btn.setEnabled(True)
                     btn.setChecked(True)
-                    if not btn.isEnabled():
-                        btn.setEnabled(True)
-                        btn.click()
-                        btn.setEnabled(False)
-                    else:
-                        btn.click()
+                    btn.setEnabled(False)
+                else:
+                    btn.setChecked(True)
+            self.selectedSegListLabel.setText(','.join(self.selectedSegList))
 
-    def addToSegList(self):
-        seg = self.sender().text()
-        if seg in self.selectedSegList:
-            self.selectedSegList.remove(seg)
+    def updateSegList(self):
+        #called whenever a user clicks on a button
+
+        if self.sender().isHighlighted():
+            self.sender().setChecked(False)
+            self.sender().setHighlighted(False)
+            if self.sender().text() in self.selectedSegList:
+                self.selectedSegList.remove(self.sender().text())
+            self.sender().setStyleSheet('QPushButton{}')
+            self.sender().setStyleSheet('QPushButton:checked{background-color:rgb(28,162,86);}')  # greenish colour
         else:
-            self.selectedSegList.append(seg)
+            seg = self.sender().text()
+            if seg in self.selectedSegList:
+                self.selectedSegList.remove(seg)
+            else:
+                self.selectedSegList.append(seg)
         self.selectedSegListLabel.setText(','.join(self.selectedSegList))
 
     def clearAll(self):
@@ -1621,7 +1673,15 @@ class InventoryBox(QWidget):
         if reexc:
             self.setExclusive(False)
         for btn in self.btnGroup.buttons():
-            btn.setChecked(False)
+            btn.setHighlighted(False)
+            if self.parent_type == 'feature_select':
+                btn.setEnabled(True)
+                btn.setChecked(False)
+                btn.setEnabled(False)
+            else:
+                btn.setChecked(False)
+            btn.setStyleSheet('QPushButton{}')
+            btn.setStyleSheet('QPushButton:checked{background-color:rgb(28,162,86);}')  # greenish colour)
         if reexc:
             self.setExclusive(True)
         self.selectedSegList = list()
@@ -2402,7 +2462,11 @@ class SegmentSelectDialog(QDialog):
         layout.addWidget(acFrame, alignment = Qt.AlignLeft)
 
         self.setLayout(layout)
-        self.setWindowTitle('Select segments')
+
+        if use_features:
+            self.setWindowTitle('Select features')
+        else:
+            self.setWindowTitle('Select segments')
 
     def value(self):
         return self.segFrame.value()
