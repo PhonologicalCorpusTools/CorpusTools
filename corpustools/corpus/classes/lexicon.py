@@ -261,9 +261,7 @@ class Transcription(object):
         middle_num = lhs_num
         rhs_num = middle_num + 1
         envs = []
-        print(environment)
         for i, p in enumerate(possibles):
-            print(p)
             if p in environment:
                 lhs = p[:lhs_num]
                 middle = p[middle_num]
@@ -1339,11 +1337,10 @@ class EnvironmentFilter(object):
 
     def __contains__(self, sequence):
         for i, s in enumerate(self):
-            if s == self.special_match_symbol:
+            if self.special_match_symbol in s:
                 continue
             if sequence[i] not in s:
                 return False
-        print('Match! ', self, sequence)
         return True
 
 class Attribute(object):

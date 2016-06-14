@@ -1263,7 +1263,6 @@ class FeatureEdit(QLineEdit):
         return d, text
 
     def finalize(self):
-        print(self.features())
         if self.text() != '':
             self.featuresFinalized.emit(self.features())
             if self.clearOnEnter:
@@ -2523,10 +2522,7 @@ class EnvironmentSegmentWidget(QWidget):
 
     def addArbitrary(self):
         self.segments = self.inventory.segs
-        if self.middle:
-            self.mainLabel.setText('_\n\n{*}')
-        else:
-            self.mainLabel.setText('{*}')
+        self.updateLabel()
 
     def clearSelection(self):
         self.segments = set()
@@ -2545,24 +2541,17 @@ class EnvironmentSegmentWidget(QWidget):
         self.mainLabel.setText(labelText)
 
     def generateDisplayText(self):
-        if self.segments:
-            segDisplay = '{{{}}}'.format(','.join(self.segments))
-        else:
-            segDisplay = ''
 
-        if self.features:
-            featureDisplay = '{{{}}}'.format(','.join(self.features))
+        displayList = list()
+        if len(self.segments) == len(self.inventory.segs):
+            displayList = '{*}'
         else:
-            featureDisplay = ''
+            displayList.extend(self.segments)
+            displayList.extend(self.features)
+            displayList = ','.join(displayList)
+            displayList = '{{{}}}'.format(displayList)
 
-        if not segDisplay and not featureDisplay:
-            return False
-        elif segDisplay and featureDisplay:
-            return ','.join([featureDisplay, segDisplay])
-        elif featureDisplay:
-            return featureDisplay
-        else:
-            return segDisplay
+        return displayList
 
     def selectSegments(self):
         dialog = SegmentSelectDialog(self.inventory, self.segments, self)
@@ -2577,6 +2566,9 @@ class EnvironmentSegmentWidget(QWidget):
             self.updateLabel()
 
     def value(self):
+        # if '*' in self.mainLabel.text():
+        #     return ['*']
+
         segs = [s for s in self.segments]
         if self.features:
             more_segs = self.inventory.features_to_segments(self.features)
@@ -2681,21 +2673,18 @@ class EnvironmentWidget(QWidget):
 
     def displayValue(self):
 
-        lhs = None
-        rhs = None
+        lhs = list()
+        rhs = list()
 
         for ind in range(self.lhsWidget.layout().count()):
             wid = self.lhsWidget.layout().itemAt(ind).widget()
-            lhs = wid.displayValue()
+            lhs.append(wid.displayValue())
+        lhs = ','.join(lhs) if lhs else ''
 
         for ind in range(self.rhsWidget.layout().count()):
             wid = self.rhsWidget.layout().itemAt(ind).widget()
-            rhs = wid.displayValue()
-
-        if not lhs:
-            lhs = ''
-        if not rhs:
-            rhs = ''
+            rhs.append(wid.displayValue())
+        rhs = ','.join(rhs) if rhs else ''
 
         return '{}_{}'.format(lhs, rhs)
 

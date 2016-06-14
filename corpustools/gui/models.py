@@ -491,6 +491,8 @@ class EnvironmentModel(BaseTableModel):
 class ResultsModel(BaseTableModel):
     def __init__(self, header, results, settings, parent=None):
         QAbstractTableModel.__init__(self,parent)
+        print('Inside ResultsModel')
+        print(results)
         self.settings = settings
         headerDynamic = []
         headerStatic = []
@@ -502,16 +504,12 @@ class ResultsModel(BaseTableModel):
             while stop is not 1 and currRow+1 < len(results):
                 cv = results[currRow][currHeader]
                 nv = results[currRow+1][currHeader]
-                print(type(cv))
                 if type(cv) is str:
                     nch =min(len(cv), len(nv))
                     cv = cv[0:nch]
                     nv = nv[0:nch]
                     cv = str(list(cv))
                     nv = str(list(nv))
-                    print(cv)
-                    print(nv)
-                    print(cv is nv)
                 if cv is not nv:
                     stop = 1
                 currRow +=1
@@ -524,8 +522,6 @@ class ResultsModel(BaseTableModel):
         for headerIdx in (headerDynamic + headerStatic):
             newHeader.append(header[headerIdx])
 
-        print(header)
-        print(newHeader)
         self.columns = newHeader
         currRows = []
         for row in results:

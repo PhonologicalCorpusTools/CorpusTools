@@ -28,19 +28,24 @@ class PDWorker(FunctionWorker):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'], frequency_threshold = kwargs['frequency_cutoff']) as c:
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'],
+                frequency_threshold = kwargs['frequency_cutoff']) as c:
             try:
                 envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
                     if envs is not None:
                         for env in envs:
                             env.middle = set(pair)
+                        print('In PDWorker before call')
+                        print([str(e) for e in envs])
                         res = calc_prod(c,
                                 envs,
                                 kwargs['strict'],
                                 all_info = True,
                                 stop_check = kwargs['stop_check'],
                                 call_back = kwargs['call_back'])
+                        print('In PDWorker after the call')
+                        print([str(e) for e in envs])
                     else:
                         res = calc_prod_all_envs(c, pair[0], pair[1],
                             all_info = True,
@@ -221,9 +226,12 @@ class PDDialog(FunctionDialog):
             return None
         self.kwargs['segment_pairs'] = segPairs
         envs = self.envWidget.value()
+        print('In pdgui.generateKwargs')
+        print([str(e) for e in envs])
         if len(envs) > 0:
             self.kwargs['envs'] = envs
             self.kwargs['display_envs'] = {e:d for (e,d) in zip(envs,self.envWidget.displayValue())}
+            print('kwargs[display_envs] = {}'.format(self.kwargs['display_envs']))
         ##------------------
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
@@ -250,8 +258,11 @@ class PDDialog(FunctionDialog):
                 for env,v in r.items():
                     try:
                         env = self.kwargs['display_envs'][env]
-                    except KeyError:
+                    except KeyError as e:
+                        print('KeyError', e)
                         pass #a few things, like "AVG", don't have a special display name
+                    print('In pdgui.setResults')
+                    print(str(env))
                     self.results.append({'Corpus': self.corpus.name,
                                         'First segment': seg_pairs[i][0],
                                         'Second segment': seg_pairs[i][1],
