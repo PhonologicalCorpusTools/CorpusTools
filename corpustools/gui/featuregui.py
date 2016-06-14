@@ -455,12 +455,15 @@ class EditFeatureMatrixDialog(QDialog):
 
         optionLayout.addWidget(coverageFrame)
 
+
         viewFrame = QGroupBox('Display options')
         box = QFormLayout()
 
         self.displayWidget = QComboBox()
         self.displayWidget.addItem('Matrix')
-        self.displayWidget.addItem('Tree')
+        # THE TREE VIEW DOES NOT WORK (AS OF PCT v.1.2) SO IT IS BEING COMMENTED OUT, WITH THE HOPE OF REVIVING IT
+        # SOME DAY IN THE FUTURE
+        #self.displayWidget.addItem('Tree')
         self.displayWidget.currentIndexChanged.connect(self.changeDisplay)
 
         box.addRow('Display mode:',self.displayWidget)
@@ -475,7 +478,7 @@ class EditFeatureMatrixDialog(QDialog):
 
         layout.addWidget(optionFrame)
 
-        self.acceptButton = QPushButton('Save changes to this corpus\'s feature system')
+        self.acceptButton = QPushButton('Save changes to this feature system')
         self.cancelButton = QPushButton('Cancel')
         self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()

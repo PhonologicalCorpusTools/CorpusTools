@@ -256,13 +256,14 @@ class Transcription(object):
             return None
         num_segs = len(environment)
 
-        possibles = zip(*[self.with_word_boundaries()[i:]
-                                for i in range(num_segs)])
+        possibles = zip(*[self.with_word_boundaries()[i:] for i in range(num_segs)])
         lhs_num = environment.lhs_count()
         middle_num = lhs_num
         rhs_num = middle_num + 1
         envs = []
+        print(environment)
         for i, p in enumerate(possibles):
+            print(p)
             if p in environment:
                 lhs = p[:lhs_num]
                 middle = p[middle_num]
@@ -1184,6 +1185,7 @@ class EnvironmentFilter(object):
     """
     def __init__(self, middle_segments, lhs = None, rhs = None):
         self.original_middle = middle_segments
+        self.special_match_symbol = '*'
         if lhs is not None:
             lhs = tuple(lhs)
         self.lhs = lhs
@@ -1337,8 +1339,11 @@ class EnvironmentFilter(object):
 
     def __contains__(self, sequence):
         for i, s in enumerate(self):
+            if s == self.special_match_symbol:
+                continue
             if sequence[i] not in s:
                 return False
+        print('Match! ', self, sequence)
         return True
 
 class Attribute(object):

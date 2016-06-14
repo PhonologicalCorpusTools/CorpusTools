@@ -2503,9 +2503,11 @@ class EnvironmentSegmentWidget(QWidget):
             self.menu = QMenu(self)
             segmentAct = QAction("Add segments", self, triggered=self.selectSegments)
             featureAct = QAction("Add features", self, triggered=self.selectFeatures)
+            arbitraryAct = QAction("Match anything here", self, triggered=self.addArbitrary)
             clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
             self.menu.addAction(segmentAct)
             self.menu.addAction(featureAct)
+            self.menu.addAction(arbitraryAct)
             self.menu.addAction(clearAct)
             if not self.middle:
                 deleteAct = QAction("Delete", self, triggered=self.deleteSelection)
@@ -2518,6 +2520,13 @@ class EnvironmentSegmentWidget(QWidget):
             self.segments = preset_label.segments
             self.features = preset_label.features
             self.updateLabel()
+
+    def addArbitrary(self):
+        self.segments = self.inventory.segs
+        if self.middle:
+            self.mainLabel.setText('_\n\n{*}')
+        else:
+            self.mainLabel.setText('{*}')
 
     def clearSelection(self):
         self.segments = set()

@@ -46,11 +46,11 @@ def phonological_search(corpus, envs, sequence_type = 'transcription',
             if cur % 20 == 0:
                 call_back(cur)
         tier = getattr(word, sequence_type)
-        founds = []
+        found = []
         for env in envs:
             es = tier.find(env)
             if es is not None:
-                founds.extend(es)
-        if founds:
-            results.append((word, founds))
+                found.extend(es)
+        if found:
+            results.append((word, found))
     return results
