@@ -49,8 +49,8 @@ class PhonoSearchDialog(FunctionDialog):
 
         psFrame = QFrame()
         pslayout = QHBoxLayout()
-
-        self.envWidget = EnvironmentSelectWidget(self.inventory)
+        self.envWidget = EnvironmentSelectWidget(self.inventory,
+                                                 show_full_inventory=bool(settings['show_full_inventory']))
         pslayout.addWidget(self.envWidget)
 
 

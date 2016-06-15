@@ -491,8 +491,6 @@ class EnvironmentModel(BaseTableModel):
 class ResultsModel(BaseTableModel):
     def __init__(self, header, results, settings, parent=None):
         QAbstractTableModel.__init__(self,parent)
-        print('Inside ResultsModel')
-        print(results)
         self.settings = settings
         headerDynamic = []
         headerStatic = []

@@ -1327,7 +1327,7 @@ class FeatureCompleter(QCompleter):
 
 class SegmentSelectionWidget(QWidget):
     segsCleared = Signal()
-    def __init__(self, inventory, parent = None, exclusive = False):
+    def __init__(self, inventory, parent = None, exclusive = False, start_pressed = None):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.features = list()
@@ -1339,7 +1339,7 @@ class SegmentSelectionWidget(QWidget):
                         'auto-fill names. Press "Enter" again to select highlighted segments, or click the button '
                         'below.</FONT>'))
 
-        self.inventoryFrame = InventoryBox('Inventory', self.inventory)
+        self.inventoryFrame = InventoryBox('Inventory', self.inventory, start_pressed=start_pressed)
         if exclusive:
             self.inventoryFrame.setExclusive(True)
 
@@ -1434,7 +1434,8 @@ class InventoryBox(QWidget):
     use a QTableWidget here instead.
     """
 
-    def __init__(self, title, inventory, show_seglist=True, parent=None, parent_type='seg_select', highlight_colour='red'):
+    def __init__(self, title, inventory, show_seglist=True, parent=None,
+                 parent_type='seg_select', highlight_colour='red', start_pressed = None):
         QWidget.__init__(self,parent)
         self.btnGroup = QButtonGroup()
         self.btnGroup.setExclusive(False)
@@ -1468,6 +1469,11 @@ class InventoryBox(QWidget):
         mainLayout.addLayout(selectedSegLayout)
 
         self.setLayout(mainLayout)
+
+        if start_pressed is not None:
+            for btn in self.btnGroup.buttons():
+                if btn.text() in start_pressed:
+                    btn.click()
 
     def makeConsTable(self):
         cons = QFrame()#This widget is what gets returned from this function
@@ -1706,7 +1712,7 @@ class InventoryBox(QWidget):
             for b in self.btnGroup.buttons():
                 if b.isChecked():
                     value.append(b.text())
-            return tuple(value)
+            return value
 
 class MultiSegmentCell(QWidget):
 
@@ -2423,7 +2429,7 @@ class SegmentSetPairDialog(BigramDialog):
         self.rhs.setExclusive(False)
 
 class SegmentSelectDialog(QDialog):
-    def __init__(self, inventory, selected = None, parent = None, use_features=False):
+    def __init__(self, inventory, selected = None, parent = None, use_features=False, start_pressed=None):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
@@ -2435,7 +2441,7 @@ class SegmentSelectDialog(QDialog):
         if use_features:
             self.segFrame = FeatureSelectionWidget(inventory)
         else:
-            self.segFrame = SegmentSelectionWidget(inventory)
+            self.segFrame = SegmentSelectionWidget(inventory, start_pressed=start_pressed)
 
         if selected is not None:
             self.segFrame.select(selected)
@@ -2477,12 +2483,13 @@ class SegmentSelectDialog(QDialog):
         self.segFrame.clearAll()
 
 class EnvironmentSegmentWidget(QWidget):
-    def __init__(self, inventory, parent = None, middle = False, enabled = True, preset_label = False):
+    def __init__(self, inventory, parent = None, middle = False, enabled = True, preset_label = False, show_full_inventory=False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
         self.features = set()
         self.enabled = enabled
+        self.show_full_inventory = show_full_inventory
 
         self.middle = middle
 
@@ -2506,6 +2513,10 @@ class EnvironmentSegmentWidget(QWidget):
             clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
             self.menu.addAction(segmentAct)
             self.menu.addAction(featureAct)
+            if not self.middle:
+                nonSegSelectMenu = self.menu.addMenu('Add non-segment symbol')
+                for symbol in self.inventory.non_segment_symbols:
+                    nonSegSelectMenu.addAction(QAction(symbol, self, triggered=self.addNonSegSymbol))
             self.menu.addAction(arbitraryAct)
             self.menu.addAction(clearAct)
             if not self.middle:
@@ -2520,8 +2531,12 @@ class EnvironmentSegmentWidget(QWidget):
             self.features = preset_label.features
             self.updateLabel()
 
+    def addNonSegSymbol(self):
+        self.segments.add(self.sender().text())
+        self.updateLabel()
+
     def addArbitrary(self):
-        self.segments = self.inventory.segs
+        self.segments = set(self.inventory.segs)
         self.updateLabel()
 
     def clearSelection(self):
@@ -2544,7 +2559,10 @@ class EnvironmentSegmentWidget(QWidget):
 
         displayList = list()
         if len(self.segments) == len(self.inventory.segs):
-            displayList = '{*}'
+            if self.show_full_inventory:
+                displayList = ','.join(self.segments)
+            else:
+                displayList = '{*}'
         else:
             displayList.extend(self.segments)
             displayList.extend(self.features)
@@ -2554,15 +2572,15 @@ class EnvironmentSegmentWidget(QWidget):
         return displayList
 
     def selectSegments(self):
-        dialog = SegmentSelectDialog(self.inventory, self.segments, self)
+        dialog = SegmentSelectDialog(self.inventory, self.segments, self, start_pressed=self.segments)
         if dialog.exec_():
-            self.segments = dialog.value()
+            self.segments = set(dialog.value())
             self.updateLabel()
 
     def selectFeatures(self):
         dialog = SegmentSelectDialog(self.inventory, self.segments, self, use_features=True)
         if dialog.exec_():
-            self.features = dialog.value()
+            self.features = set(dialog.value())
             self.updateLabel()
 
     def value(self):
@@ -2581,11 +2599,12 @@ class EnvironmentSegmentWidget(QWidget):
 
 class EnvironmentWidget(QWidget):
     envCopied = Signal(list)
-    def __init__(self, inventory, parent = None, middle = True, copy_data = None):
+    def __init__(self, inventory, parent = None, middle = True, copy_data = None, show_full_inventory = False):
         QWidget.__init__(self)#, parent)
         self.inventory = inventory
         self.parent = parent
         self.middle = middle
+        self.show_full_inventory = show_full_inventory
         self.envCopied.connect(self.parent.addCopiedEnvironment)
         layout = QHBoxLayout()
 
@@ -2607,7 +2626,8 @@ class EnvironmentWidget(QWidget):
         rhslayout = QHBoxLayout()
         self.rhsWidget.setLayout(rhslayout)
 
-        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True, enabled = middle)
+        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True, enabled = middle,
+                                                     show_full_inventory=show_full_inventory)
 
         self.removeButton = QPushButton('Remove environment')
         self.removeButton.clicked.connect(self.deleteLater)
@@ -2651,11 +2671,11 @@ class EnvironmentWidget(QWidget):
         self.envCopied.emit([self])
 
     def addLhs(self):
-        segWidget = EnvironmentSegmentWidget(self.inventory)
+        segWidget = EnvironmentSegmentWidget(self.inventory, show_full_inventory=self.show_full_inventory)
         self.lhsWidget.layout().insertWidget(0,segWidget)
 
     def addRhs(self):
-        segWidget = EnvironmentSegmentWidget(self.inventory)
+        segWidget = EnvironmentSegmentWidget(self.inventory, show_full_inventory=self.show_full_inventory)
         self.rhsWidget.layout().addWidget(segWidget)
 
     def value(self):
@@ -2690,11 +2710,12 @@ class EnvironmentWidget(QWidget):
 
 
 class EnvironmentSelectWidget(QGroupBox):
-    def __init__(self, inventory, parent = None, middle = True):
+    def __init__(self, inventory, parent = None, middle = True, show_full_inventory=False):
         QGroupBox.__init__(self,'Environments',parent)
         self.parent = parent
         self.middle = middle
         self.inventory = inventory
+        self.show_full_inventory = show_full_inventory
 
         layout = QVBoxLayout()
 
@@ -2719,7 +2740,8 @@ class EnvironmentSelectWidget(QGroupBox):
         self.setLayout(layout)
 
     def addNewEnvironment(self):
-        envWidget = EnvironmentWidget(self.inventory, middle = self.middle, parent = self)
+        envWidget = EnvironmentWidget(self.inventory, middle = self.middle, parent = self,
+                                      show_full_inventory=self.show_full_inventory)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos,envWidget)
 

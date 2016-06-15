@@ -84,16 +84,21 @@ class DisplayPane(BasePane):
         layout = QFormLayout()
 
         self.sigfigWidget = QLineEdit()
+        self.displayAllWidget = QCheckBox()
+        displayAllLabel = QLabel('Display entire inventory in results when "Match any segment" is selected')
+        displayAllLabel.setWordWrap(True)
 
         layout.addRow(QLabel('Number of displayed decimal places:'),self.sigfigWidget)
+        layout.addRow(displayAllLabel, self.displayAllWidget)
 
         self.setLayout(layout)
 
         #set up defaults
 
         sigfigs = setting_dict['sigfigs']
-
         self.sigfigWidget.setText(str(sigfigs))
+
+        self.displayAllWidget.setChecked(bool(setting_dict['show_full_inventory']))
 
         self.prev_state = setting_dict
 
@@ -105,9 +110,8 @@ class DisplayPane(BasePane):
 
     def get_current_state(self):
         setting_dict = {}
-
         setting_dict['sigfigs'] = int(self.sigfigWidget.text())
-
+        setting_dict['show_full_inventory'] = int(self.displayAllWidget.isChecked())
         return setting_dict
 
 class ProcessingPane(BasePane):
@@ -155,14 +159,15 @@ class Settings(object):
                     'sigfigs': ('display/sigfigs',3),
                     'warnings': ('display/warnings',1),
                     'tooltips': ('display/tooltips',1),
+                    'show_full_inventory': ('display/searchResults', 0),
                     'use_multi': ('multiprocessing/enabled',0),
                     'num_cores': ('multiprocessing/numcores',1),
                     'ask_overwrite_features': ('reminders', 1),
                     'ask_overwrite_corpus': ('reminders', 1)}
 
-    storage_setting_keys = ['storage']#,'autosave']
+    storage_setting_keys = ['storage']
 
-    display_setting_keys = ['sigfigs', 'warnings','tooltips']
+    display_setting_keys = ['sigfigs', 'warnings', 'tooltips', 'show_full_inventory']
 
     processing_setting_keys = ['use_multi','num_cores']
 
@@ -317,4 +322,6 @@ class PreferencesDialog(QDialog):
         self.settings.update(self.processingWidget.get_current_state())
         self.settings.update(self.reminderWidget.get_current_state())
         self.settings.check_storage()
+        print(self.displayWidget.displayAllWidget.isChecked())
+        print(self.settings['show_full_inventory'])
         QDialog.accept(self)

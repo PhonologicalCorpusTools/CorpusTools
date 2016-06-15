@@ -120,7 +120,7 @@ class LexiconView(QWidget):
 
         menu.popup(header.mapToGlobal(pos))
 
-    def editColumn(self, column):
+    def editColumn(self, index):
         print(index.column())
         pass
 
@@ -712,8 +712,6 @@ class ResultsWindow(QDialog):
         self._parent = parent
         QDialog.__init__(self)
         self.dialog = dialog
-        print('Inside ResultsWindow')
-        print(dialog.results)
         dataModel = ResultsModel(self.dialog.header,self.dialog.results, self._parent.settings)
         layout = QVBoxLayout()
         self.table = TableWidget()

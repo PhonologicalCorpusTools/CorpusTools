@@ -1614,11 +1614,6 @@ class Inventory(object):
     """
     inventory_attributes = {'_data': list(), 'segs': {'#': Segment('#')}, 'features': list(), 'possible_values': list(),
                             'stresses': list(),
-                            #'consColumns': set(['Column 1']), 'vowelColumns': set(['Column 1']),
-                            #'vowelRows': set(['Row 1']), 'consRows': set(['Row 1']),
-                            #'cons_column_data': {'Column 1': [0, {}, None]}, 'cons_row_data': {'Row 1': [0, {}, None]},
-                            #'vowel_column_data': {'Column 1': [0, {}, None]},
-                            #'vowel_row_data': {'Row 1': [0, {}, None]},
                             'consColumns': set(), 'vowelColumns': set(),
                             'vowelRows': set(), 'consRows': set(),
                             'cons_column_data': {}, 'cons_row_data': {},
