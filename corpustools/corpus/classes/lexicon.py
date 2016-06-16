@@ -93,7 +93,7 @@ class Segment(object):
                     return False
             except KeyError:
                 return False
-        elif isinstance(specification,list):
+        elif isinstance(specification,list) or isinstance(specification, set):
             for f in specification:
                 try:
                     if self[f[1:]]!=f[0]:
