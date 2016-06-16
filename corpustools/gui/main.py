@@ -571,8 +571,6 @@ class MainWindow(QMainWindow):
         dialog = PDDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
-            print('in main.py\\predOfDist')
-            print(dialog.results)
             if self.PDWindow is not None and self.PDWindow.isVisible():
                 self.PDWindow.table.model().addRows(dialog.results)
             else:

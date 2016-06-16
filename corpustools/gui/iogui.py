@@ -232,6 +232,7 @@ class CorpusLoadDialog(PCTDialog):
                 'path': corpus_name_to_path(
                     self.settings['storage'], selected[0])})
 
+            self.progressDialog.setWindowTitle('Loading {}...'.format(selected[0]))
             self.thread.start()
             result = self.progressDialog.exec_()
 
@@ -818,9 +819,10 @@ class LoadCorpusDialog(PCTDialog):
         if duplicates:
             QMessageBox.critical(self, 'Duplicate information',
             ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
-            'window to change this.\n '
+            'window to change this.\n\n'
             'A corpus can only have one Transcription type and one Orthography type. You may have as many Other types '
-            'as you need.'.format(duplicates)))
+            'as you need. If you have more than one set of transcriptions, select one as your "default" and set its '
+            'type to "Transcription". The others should be set to "Other (character)". '.format(duplicates)))
             return
 
         if self.textType == 'csv':

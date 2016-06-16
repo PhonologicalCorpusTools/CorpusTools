@@ -3,7 +3,7 @@ import string
 import re
 
 from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import readFile, Interval, Point, PointTier #, _getMark
+from textgrid.textgrid import readFile, Interval, Point, PointTier , _getMark
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.exceptions import TextGridTierError, PCTError
@@ -154,8 +154,6 @@ def guess_tiers(tg):
 
     for k in tier_properties.keys():
         if k in segment_tiers:
-            continue
-        if k in spelling_tiers:
             continue
         attribute_tiers.append(k)
 

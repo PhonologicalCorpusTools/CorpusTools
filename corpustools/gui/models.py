@@ -1629,6 +1629,8 @@ class InventoryModel(QAbstractTableModel):
         for signs in partitions:
             matches = [s+f for (s,f) in zip(signs, features)]
             for symbol,seg in self.segs.items():
+                if symbol in self.non_segment_symbols:
+                    continue
                 for match in matches:
                     if seg.features[match[1:]] == match[0]:
                         if not others:

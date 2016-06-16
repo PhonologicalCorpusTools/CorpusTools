@@ -241,10 +241,7 @@ class FunctionDialog(PCTDialog):
 
         self.aboutWindow = HelpDialog(self, self.name)
         self.aboutWindow.exec_()
-        #self.aboutWindow.raise_()
-        #self.aboutWindow.activateWindow()
-        #reply = QMessageBox.information(self,
-        #        "About {}".format(self.name), '\n'.join(self._about))
+
 
 class DownloadWorker(FunctionWorker):
     def run(self):
