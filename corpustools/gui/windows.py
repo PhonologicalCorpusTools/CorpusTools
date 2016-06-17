@@ -216,6 +216,9 @@ class FunctionDialog(PCTDialog):
     def setResults(self, results):
         self.results = results
 
+    def generateKwargs(self):
+        pass  # Implemented by subclasses
+
     def calc(self):
         kwargs = self.generateKwargs()
         if kwargs is None:
@@ -238,7 +241,6 @@ class FunctionDialog(PCTDialog):
         self.calc()
 
     def about(self):
-
         self.aboutWindow = HelpDialog(self, self.name)
         self.aboutWindow.exec_()
 
@@ -261,3 +263,8 @@ class SelfUpdateWorker(FunctionWorker):
         if self.stopCheck():
             return
         self.dataReady.emit('')
+
+class EnvironmentDialog(QDialog):
+
+    def __init__(self):
+        QDialog.__init__(self)

@@ -4,7 +4,8 @@ from corpustools.funcload.io import save_minimal_pairs
 
 from .imports import *
 from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
-                    ContextWidget, SaveFileWidget, EnvironmentSelectWidget)
+                    ContextWidget, SaveFileWidget)
+from .environments import EnvironmentSelectWidget
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.contextmanagers import (CanonicalVariantContext,

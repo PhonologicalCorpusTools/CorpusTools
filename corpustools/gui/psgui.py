@@ -1,11 +1,11 @@
-
-
 from .imports import *
 import time
 
-from .widgets import (EnvironmentSelectWidget, TierWidget)
+from .widgets import TierWidget
 
 from .windows import FunctionWorker, FunctionDialog
+
+from .environments import EnvironmentSelectWidget
 
 from corpustools.phonosearch import phonological_search
 

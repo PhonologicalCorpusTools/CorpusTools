@@ -1,10 +1,10 @@
 from collections import OrderedDict
 
 from .imports import *
-from .widgets import (EnvironmentSelectWidget,
-                    SegmentPairSelectWidget, RadioSelectWidget, TierWidget,
-                    ContextWidget)
+from .environments import EnvironmentSelectWidget
+from .widgets import (SegmentPairSelectWidget, RadioSelectWidget, TierWidget, ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
+
 
 from corpustools.prod.pred_of_dist import (calc_prod, calc_prod_all_envs)
 

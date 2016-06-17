@@ -67,27 +67,13 @@ class BaseTableModel(QAbstractTableModel):
 
     def addRow(self,row):
         self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
-        if type(row) is dict:    
-            currRow = []
-            for header in self.columns:
-                currRow.append(row[header])
-            self.rows.append(currRow)
-        else:
-            self.rows.append(row)
+        self.rows.append([row[header] for header in self.columns])
         self.endInsertRows()
 
     def addRows(self,rows):
         self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount() + len(rows)-1)
-        if type(rows) is dict:
-            currRows = []
-            for row in rows:
-                currRow = []
-                for header in self.columns:
-                    currRow.append(row[header])
-                currRows.append(currRow)
-            self.rows += currRows
-        else:
-            self.rows += rows
+        for row in rows:
+            self.rows.append([row[header] for header in self.columns])
         self.endInsertRows()
 
     def removeRow(self,ind):
@@ -574,7 +560,7 @@ class PhonoSearchResultsModel(BaseTableModel):
 
     def addRows(self,rows):
         self.layoutAboutToBeChanged.emit()
-        self.allData.update(rows)
+        self.allData.extend(rows)
         if self.summarized:
             self._summarize()
         self.layoutChanged.emit()
