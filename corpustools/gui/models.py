@@ -66,14 +66,20 @@ class BaseTableModel(QAbstractTableModel):
         return None
 
     def addRow(self,row):
-        self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount())
-        self.rows.append([row[header] for header in self.columns])
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
+        if isinstance(row[0], dict):
+            self.rows.append([row[header] for header in self.columns])
+        else:
+            self.rows.append(row)
         self.endInsertRows()
 
     def addRows(self,rows):
         self.beginInsertRows(QModelIndex(),self.rowCount(),self.rowCount() + len(rows)-1)
         for row in rows:
-            self.rows.append([row[header] for header in self.columns])
+            if isinstance(row, dict):
+                self.rows.append([row[header] for header in self.columns])
+            else:
+                self.rows.append(row)
         self.endInsertRows()
 
     def removeRow(self,ind):
