@@ -167,15 +167,22 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
     for a in annotation_types:
         a.reset()
     data = DiscourseData(name, annotation_types)
+    if call_back is not None:
+        call_back('Loading...')
+        cur = 0
     for word_name in data.word_levels:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         spelling_tier = tg.getFirst(word_name)
 
         for si in spelling_tier:
             annotations = dict()
             word = Annotation(si.mark)
             for n in data.base_levels:
-                if data[word_name].speaker != data[n].speaker \
-                            and data[n].speaker is not None:
+                if data[word_name].speaker != data[n].speaker and data[n].speaker is not None:
                     continue
                 t = tg.getFirst(n)
                 tier_elements = list()
@@ -272,11 +279,14 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     Discourse
         Discourse object generated from the TextGrid file
     """
-    data = textgrid_to_data(path, annotation_types, call_back, stop_check)
+    data = textgrid_to_data(path, annotation_types, call_back=call_back, stop_check=stop_check)
+    if data is None:
+        return
     data.name = corpus_name
     data.wav_path = find_wav_path(path)
-    discourse = data_to_discourse(data, lexicon)
-
+    discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    if discourse is None:
+        return
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)

@@ -106,6 +106,8 @@ class LoadCorpusWorker(FunctionWorker):
         if self.stopped:
             self.finishedCancelling.emit()
             return
+        if corpus is None:
+            return
 
         #If a Discourse object was just loaded, it needs to have its features specified
         #A Corpus has its features specified already at this point
@@ -235,12 +237,9 @@ class CorpusLoadDialog(PCTDialog):
                     self.settings['storage'], selected[0])})
 
             self.progressDialog.setWindowTitle('Loading {}...'.format(selected[0]))
-            start_time = time.time()
             self.thread.start()
             result = self.progressDialog.exec_()
             self.progressDialog.reset()
-            end_time = time.time()
-            print('Loading took {} seconds'.format(abs(start_time-end_time)))
         return result
 
     def accept(self):
@@ -882,12 +881,16 @@ class LoadCorpusDialog(PCTDialog):
         if kwargs is None:
             return
         self.thread.setParams(kwargs)
-
         self.thread.start()
 
         result = self.progressDialog.exec_()
-
         self.progressDialog.reset()
+
+        if not result:
+            self.progressDialog.cancelButton.setEnabled(True)
+            self.progressDialog.cancelButton.setText('Cancel')
+            return
+
         if result:
             if self.corpus is not None:
                 try:

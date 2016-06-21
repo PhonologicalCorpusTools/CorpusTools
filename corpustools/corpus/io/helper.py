@@ -361,7 +361,7 @@ def log_annotation_types(annotation_types):
     for a in annotation_types:
         logging.info(a.pretty_print())
 
-def data_to_discourse(data, lexicon = None):
+def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
     attribute_mapping = data.mapping()
     d = Discourse(name = data.name, wav_path = data.wav_path)
     ind = 0
@@ -377,7 +377,16 @@ def data_to_discourse(data, lexicon = None):
         if not a.token and v not in d.lexicon.attributes:
             lexicon.add_attribute(v, initialize_defaults = True)
 
+
+    if call_back is not None:
+        call_back('Processing data...')
+        cur = 0
     for level in data.word_levels:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         for i, s in enumerate(data[level]):
             word_kwargs = {'spelling':(attribute_mapping[level], s.label)}
             word_token_kwargs = {}

@@ -161,7 +161,8 @@ class PCTUnpickler(pickle._Unpickler):
         try:
             while True:
                 n+=1
-                if n % 1024 == 0:
+                if n == 1024:
+                    n = 0
                     if self.stop_check is not None and self.stop_check():
                         self.file.close()
                         raise pickle._Stop(None)

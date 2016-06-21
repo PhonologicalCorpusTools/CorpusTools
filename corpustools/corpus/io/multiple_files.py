@@ -251,11 +251,14 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
     """
     data = multiple_files_to_data(word_path,phone_path, dialect,
                                     annotation_types,
-                                    call_back, stop_check)
+                                    call_back=call_back, stop_check=stop_check)
+    if data is None:
+        return
     data.name = corpus_name
     data.wav_path = find_wav_path(word_path)
-    discourse = data_to_discourse(data, lexicon)
-
+    discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    if discourse is None:
+        return
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)

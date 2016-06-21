@@ -232,7 +232,9 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
     """
     data = ilg_to_data(path, annotation_types,
                     stop_check, call_back)
-    discourse = data_to_discourse(data, lexicon)
+    discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    if discourse is None:
+        return
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)

@@ -205,7 +205,9 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
     data = spelling_text_to_data(path, annotation_types,
                 support_corpus_path, ignore_case,
                     stop_check, call_back)
-    discourse = data_to_discourse(data, lexicon)
+    if data is None:
+        return
+    discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
     return discourse
 
 def export_discourse_spelling(discourse, path, single_line = False):

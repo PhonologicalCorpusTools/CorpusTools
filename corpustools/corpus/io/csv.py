@@ -134,6 +134,10 @@ def load_corpus_csv(corpus_name, path, delimiter,
     for a in annotation_types:
         a.reset()
 
+    if call_back is not None:
+        call_back('Loading...')
+        call_back(0, 0)
+        cur = 0
     with open(path, encoding='utf-8') as f:
         headers = f.readline()
         headers = headers.split(delimiter)
@@ -148,6 +152,11 @@ def load_corpus_csv(corpus_name, path, delimiter,
         trans_check = False
 
         for line in f.readlines():
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                call_back(cur)
             line = line.strip()
             if not line: #blank or just a newline
                 continue
@@ -177,6 +186,9 @@ def load_corpus_csv(corpus_name, path, delimiter,
                             '\n\Check that the transcription delimiter you typed '
                             'in matches the one used in the file.'))
         raise(e)
+
+    if stop_check is not None and stop_check():
+        return
 
     return corpus
 
