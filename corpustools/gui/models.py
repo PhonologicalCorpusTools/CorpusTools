@@ -519,8 +519,8 @@ class ResultsModel(BaseTableModel):
             for currHeader in self.columns:
                 currRow.append(row[currHeader])
             currRows.append(currRow)
-
         self.rows = currRows
+
 
 class PhonoSearchResultsModel(BaseTableModel):
     def __init__(self, header, summary_header, results, settings, parent=None):
@@ -529,9 +529,10 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.header = header
         self.summary_header = summary_header
         self.columns = self.header
-
         self.allData = results
-        self.rows = [list(x.values()) for x in self.allData]
+        # self.summarizedAllData = list()
+        # self.setSummarizedData()
+        self.rows = [[data[h] for h in self.header] for data in self.allData]
         self.summarized = False
 
     def _summarize(self):
@@ -549,7 +550,24 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.rows = list()
         for k,v in sorted(typefreq.items()):
             self.rows.append([k[0],k[1],v, tokenfreq[k]])
+            #this row formatting doesn't match the dictionary-style results used elsewhere, which might be a problem,
+            #but the results are fixed in the right order currently
         self.columns = self.summary_header
+
+    def _summarize2(self):
+
+        self.rows = [[data[h] for h in self.summary_header] for data in self.summarizedAllData]
+        self.columns = self.summary_header
+
+    def setSummarizedData(self):
+        self.summarizedAllData = list()
+        for line in self.allData:
+            mini_dict = dict()
+            mini_dict['Segment'] = line['Segment']
+            mini_dict['Environment'] = line['Environment']
+            mini_dict['Type frequency'] = len(line['Segment'])
+            mini_dict['Token frequency'] = sum([line['Word'].frequency for s in line['Segment']])
+            self.summarizedAllData.append(mini_dict)
 
     def setSummarized(self, b):
         if self.summarized == b:
@@ -559,9 +577,9 @@ class PhonoSearchResultsModel(BaseTableModel):
         if self.summarized:
             self._summarize()
         else:
-            #self.rows = sorted(self.allData)
-            self.rows = [list(x.values()) for x in self.allData]
+            self.rows = [[data[h] for h in self.header] for data in self.allData]
             self.columns = self.header
+
         self.layoutChanged.emit()
 
     def addRows(self,rows):

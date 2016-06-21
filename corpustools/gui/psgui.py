@@ -17,7 +17,6 @@ class PSWorker(FunctionWorker):
         kwargs = self.kwargs
         try:
             self.results = phonological_search(**kwargs)
-
         except PCTError as e:
             self.errorEncountered.emit(e)
             return
@@ -35,8 +34,9 @@ class PhonoSearchDialog(FunctionDialog):
     header = ['Word',
                 'Transcription',
                 'Segment',
-                'Environment']
-    summary_header = ['Segment', ' Environment', 'Type frequency', 'Token frequency']
+                'Environment',
+                'Token frequency']
+    summary_header = ['Segment', 'Environment', 'Type frequency', 'Token frequency']
     _about = ['']
 
     name = 'phonological search'
@@ -97,4 +97,5 @@ class PhonoSearchDialog(FunctionDialog):
             self.results.append({'Word': w, 
                                 'Transcription': str(getattr(w,self.tierWidget.value())),
                                 'Segment': segs,
-                                'Environment': envs})
+                                'Environment': envs,
+                                'Token frequency':w.frequency})

@@ -25,10 +25,10 @@ class TableWidget(QTableView):
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         self.horizontalHeader().setMinimumSectionSize(70)
-        try:
-            self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        except AttributeError:
-            self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+        # try:
+        #     self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        # except AttributeError:
+        #     self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
 
         self.setSortingEnabled(True)
         self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
@@ -60,7 +60,7 @@ class TableWidget(QTableView):
         #except AttributeError:
         #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
-        #self.resizeColumnsToContents()
+        self.resizeColumnsToContents()
         try:
             self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         except AttributeError:

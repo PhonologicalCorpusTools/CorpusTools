@@ -740,8 +740,12 @@ class ResultsWindow(QDialog):
         self.setLayout(layout)
         #self.setWidget(frame)
         self.table.resizeColumnsToContents()
+        self.table.resizeRowsToContents()
         self.setWindowTitle(title)
-        self.table.adjustSize()
+        dialogWidth = self.table.horizontalHeader().length() + 50
+        dialogHeight = self.table.verticalHeader().length() + 50
+        self.resize(dialogWidth, dialogHeight)
+        #self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def sizeHint(self):
         sz = QDialog.sizeHint(self)
