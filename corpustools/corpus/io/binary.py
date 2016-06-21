@@ -1,6 +1,7 @@
 
 from urllib.request import urlretrieve
 import pickle
+import os
 
 def download_binary(name, path, call_back = None):
     """
@@ -119,3 +120,58 @@ def save_binary(obj, path):
     """
     with open(path,'wb') as f:
         pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+class PCTUnpickler(pickle._Unpickler):
+
+    def __init__(self, path, call_back = None, stop_check = None):
+        self.path = path
+        self.file = open(path, mode='rb')
+        self.call_back = call_back
+        self.stop_check = stop_check
+        super().__init__(self.file)
+
+    def __del__(self):
+        self.file.close()
+
+    def load(self):
+        """Read a pickled object representation from the open file.
+
+        Return the reconstituted object hierarchy specified in the file.
+        """
+        # Check whether Unpickler was initialized correctly. This is
+        # only needed to mimic the behavior of _pickle.Unpickler.dump().
+        if not hasattr(self, "_file_read"):
+            raise pickle.UnpicklingError("Unpickler.__init__() was not called by "
+                                  "%s.__init__()" % (self.__class__.__name__,))
+        self._unframer = pickle._Unframer(self._file_read, self._file_readline)
+        self.read = self._unframer.read
+        self.readline = self._unframer.readline
+        self.mark = object()  # any new unique object
+        self.stack = []
+        self.append = self.stack.append
+        self.proto = 0
+        read = self.read
+        dispatch = self.dispatch
+        if self.call_back is not None:
+            self.call_back('Loading...')
+            self.call_back(0, os.path.getsize(self.path))
+            cur = 0
+        n = 0
+        try:
+            while True:
+                n+=1
+                if n % 1024 == 0:
+                    if self.stop_check is not None and self.stop_check():
+                        self.file.close()
+                        raise pickle._Stop(None)
+                    if self.call_back is not None:
+                        cur += 1
+                        self.call_back(cur)
+                key = read(1)
+                if not key:
+                    raise EOFError
+                assert isinstance(key, (bytes, bytearray))
+                dispatch[key[0]](self)
+        except pickle._Stop as stopinst:
+            return stopinst.value

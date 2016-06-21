@@ -29,8 +29,17 @@ class ProgressDialog(QProgressDialog):
         b.clicked.disconnect()
         b.clicked.connect(self.cancel)
 
+    def accept(self, results):
+        if results is None:
+            QProgressDialog.reject(self)
+        else:
+            QProgressDialog.accept(self)
+
     def cancel(self):
         self.beginCancel.emit()
+
+    def closeEvent(self, event):
+        self.cancel()
 
     def updateForCancel(self):
         self.show()
@@ -103,6 +112,9 @@ class FunctionWorker(QThread):
         self.stopped = False
         self.total = None
 
+    def closeEvent(self, event):
+        self.stop()
+
     def stop(self):
         self.stopped = True
 
@@ -129,7 +141,6 @@ class PCTDialog(QDialog):
         QDialog.__init__(self, parent)
 
         self.progressDialog = ProgressDialog(self, infinite_progress)
-
 
     def handleError(self,error):
         if isinstance(error, PCTError):

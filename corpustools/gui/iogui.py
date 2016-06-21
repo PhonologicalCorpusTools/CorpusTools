@@ -6,7 +6,7 @@ from collections import OrderedDict
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.decorators import check_for_errors
-from corpustools.corpus.io import (load_binary, save_binary)
+from corpustools.corpus.io.binary import load_binary, save_binary, PCTUnpickler
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
                                     export_corpus_csv)
 from corpustools.corpus.io.textgrid import (inspect_discourse_textgrid,
@@ -31,22 +31,18 @@ from corpustools.corpus.io.helper import (get_corpora_list,
 import corpustools.gui.modernize as modernize
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
-from .widgets import (FileWidget, RadioSelectWidget,
-                    SaveFileWidget, DirectoryWidget, PunctuationWidget,
-                    DigraphWidget, InventoryBox, AttributeFilterWidget,
-                    TranscriptionWidget, TierWidget,
-                    AttributeWidget, AnnotationTypeWidget,
-                    CorpusSelect)
+from .widgets import  (RadioSelectWidget,SaveFileWidget,AttributeFilterWidget, AnnotationTypeWidget,CorpusSelect)
 from .featuregui import FeatureSystemSelect, RestrictedFeatureSystemSelect
 from .helpgui import HelpDialog
 
 
-class LoadWorker(FunctionWorker):
+class LoadBinaryWorker(FunctionWorker):
     def run(self):
         if self.stopCheck():
             return
         try:
-            self.results = load_binary(self.kwargs['path'])
+            unpickler = PCTUnpickler(self.kwargs['path'], self.kwargs['call_back'], self.kwargs['stop_check'])
+            results = unpickler.load()
         except PCTError as e:
             self.errorEncountered.emit(e)
             return
@@ -54,11 +50,14 @@ class LoadWorker(FunctionWorker):
             e = PCTPythonError(e)
             self.errorEncountered.emit(e)
             return
-        if self.stopCheck():
+        if self.stopped:
+            self.finishedCancelling.emit()
             return
-        self.dataReady.emit(self.results)
+        self.dataReady.emit(results)
 
 class LoadCorpusWorker(FunctionWorker):
+
+
     def run(self):
         textType = self.kwargs.pop('text_type')
         isDirectory = self.kwargs.pop('isDirectory')
@@ -197,7 +196,7 @@ class CorpusLoadDialog(PCTDialog):
 
         self.setWindowTitle('Load corpora')
 
-        self.thread = LoadWorker()
+        self.thread = LoadBinaryWorker()
         self.thread.errorEncountered.connect(self.handleError)
 
         self.progressDialog.setWindowTitle('Loading...')
@@ -208,11 +207,14 @@ class CorpusLoadDialog(PCTDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
 
+
     def help(self):
         self.helpDialog = HelpDialog(self, name = 'loading corpora')
         self.helpDialog.exec_()
 
     def setResults(self, results):
+        if results is None:
+            return
         self.corpus = results
 
     def forceUpdate(self):
@@ -233,16 +235,24 @@ class CorpusLoadDialog(PCTDialog):
                     self.settings['storage'], selected[0])})
 
             self.progressDialog.setWindowTitle('Loading {}...'.format(selected[0]))
+            start_time = time.time()
             self.thread.start()
             result = self.progressDialog.exec_()
-
             self.progressDialog.reset()
+            end_time = time.time()
+            print('Loading took {} seconds'.format(abs(start_time-end_time)))
         return result
 
     def accept(self):
         result = self.loadCorpus()
+        #returns whether user clicked cancel, or whether the progress bar completed
+        #it does not return anything about the corpus itself
         if result:
             QDialog.accept(self)
+        else:
+            self.progressDialog.cancelButton.setEnabled(True)
+            self.progressDialog.cancelButton.setText('Cancel')
+            self.progressDialog.setLabelText('')
 
     def openLoadWindow(self):
         dialog = LoadCorpusDialog(self, self.settings)
