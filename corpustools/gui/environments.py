@@ -99,13 +99,16 @@ class EnvironmentDialog(QDialog):
             self.reset()
 
 class EnvironmentSegmentWidget(QWidget):
-    def __init__(self, inventory, parent = None, middle = False, enabled = True, preset_label = False, show_full_inventory=False):
+    def __init__(self, inventory, parent = None, middle = False, enabled = True,
+                 preset_label = False, show_full_inventory=False, side=None):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
         self.features = set()
+        self.parent_ = parent
         self.enabled = enabled
         self.show_full_inventory = show_full_inventory
+        self.side = side
 
         self.middle = middle
 
@@ -139,6 +142,11 @@ class EnvironmentSegmentWidget(QWidget):
                 deleteAct = QAction("Delete", self, triggered=self.deleteSelection)
                 self.menu.addAction(deleteAct)
             self.mainLabel.setMenu(self.menu)
+            addNewPosMenu = self.menu.addMenu("Add new environment position")
+            addToLeftAct = QAction("To the left", self, triggered=self.addToLeft)
+            addToRightAct = QAction("To the right", self, triggered=self.addToRight)
+            addNewPosMenu.addAction(addToLeftAct)
+            addNewPosMenu.addAction(addToRightAct)
         else:
             self.mainLabel.setEnabled(False)
 
@@ -146,6 +154,12 @@ class EnvironmentSegmentWidget(QWidget):
             self.segments = preset_label.segments
             self.features = preset_label.features
             self.updateLabel()
+
+    def addToLeft(self):
+        self.parent_.insertSegWidget(self, self.side, 'l')
+
+    def addToRight(self):
+        self.parent_.insertSegWidget(self, self.side, 'r')
 
     def addNonSegSymbol(self):
         self.segments.add(self.sender().text())
@@ -331,7 +345,7 @@ class EnvironmentSelectWidget(QGroupBox):
 class EnvironmentWidget(QWidget):
     envCopied = Signal(list)
     def __init__(self, inventory, parent = None, middle = True, copy_data = None, show_full_inventory = False):
-        QWidget.__init__(self)#, parent)
+        QWidget.__init__(self)
         self.inventory = inventory
         self.parent = parent
         self.middle = middle
@@ -357,7 +371,7 @@ class EnvironmentWidget(QWidget):
         rhslayout = QHBoxLayout()
         self.rhsWidget.setLayout(rhslayout)
 
-        self.middleWidget = EnvironmentSegmentWidget(self.inventory, middle = True, enabled = middle,
+        self.middleWidget = EnvironmentSegmentWidget(self.inventory, parent=self, middle = True, enabled = middle,
                                                      show_full_inventory=show_full_inventory)
 
         self.removeButton = QPushButton('Remove environment')
@@ -387,11 +401,11 @@ class EnvironmentWidget(QWidget):
     def loadfromCopy(self, copy_data):
         for ind in range(copy_data.lhsWidget.layout().count()):
             copy_wid = copy_data.lhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, preset_label=copy_wid)
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid)
             self.lhsWidget.layout().insertWidget(ind, wid)
         for ind in range(copy_data.rhsWidget.layout().count()):
             copy_wid = copy_data.rhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, preset_label=copy_wid)
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid)
             self.rhsWidget.layout().insertWidget(ind, wid)
         if self.middle:
             copy_wid = copy_data.middleWidget
@@ -401,12 +415,44 @@ class EnvironmentWidget(QWidget):
     def copyEnvironment(self):
         self.envCopied.emit([self])
 
+    def insertSegWidget(self, match_widget, current_side, add_to_side):
+
+        if current_side is None:#middle widget
+            if add_to_side == 'r':
+                self.addRhs()
+            elif add_to_side == 'l':
+                self.addLhs()
+            return
+
+        segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
+                                             show_full_inventory=self.show_full_inventory)
+        if current_side == 'r':
+            layout = self.rhsWidget.layout()
+        elif current_side == 'l':
+            layout = self.lhsWidget.layout()
+
+        widgets = list()
+        for ind in range(layout.count()):
+            if layout.itemAt(ind).widget() == match_widget:
+                if add_to_side == current_side:
+                    widgets.append(segWidget)
+                    widgets.append(layout.itemAt(ind).widget())
+                else:
+                    widgets.append(layout.itemAt(ind).widget())
+                    widgets.append(segWidget)
+            else:
+                widgets.append(segWidget)
+
+        for i, widget in enumerate(widgets):
+            layout.insertWidget(i, widget)
+
+
     def addLhs(self):
-        segWidget = EnvironmentSegmentWidget(self.inventory, show_full_inventory=self.show_full_inventory)
-        self.lhsWidget.layout().insertWidget(0,segWidget)
+        segWidget = EnvironmentSegmentWidget(self.inventory, parent=self, show_full_inventory=self.show_full_inventory, side='l')
+        self.lhsWidget.layout().addWidget(segWidget)
 
     def addRhs(self):
-        segWidget = EnvironmentSegmentWidget(self.inventory, show_full_inventory=self.show_full_inventory)
+        segWidget = EnvironmentSegmentWidget(self.inventory, parent=self, show_full_inventory=self.show_full_inventory, side='r')
         self.rhsWidget.layout().addWidget(segWidget)
 
     def value(self):
