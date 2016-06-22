@@ -1,6 +1,7 @@
 from .imports import *
 from .widgets import SegmentSelectionWidget, SegmentSelectDialog
 from corpustools.corpus.classes.lexicon import EnvironmentFilter
+import sip
 
 class EnvironmentDialog(QDialog):
     rowToAdd = Signal(str)
@@ -99,7 +100,7 @@ class EnvironmentDialog(QDialog):
             self.reset()
 
 class EnvironmentSegmentWidget(QWidget):
-    segDeleted = Signal(object)
+    segDeleted = Signal(list)
     def __init__(self, inventory, parent = None, middle = False, enabled = True,
                  preset_label = False, show_full_inventory=False, side=None):
         QWidget.__init__(self, parent)
@@ -176,7 +177,7 @@ class EnvironmentSegmentWidget(QWidget):
         self.updateLabel()
 
     def deleteSelection(self):
-        self.segDeleted.emit(self) #connected to EnvironmentSegmentWidget.deleteSeg()
+        self.segDeleted.emit([self]) #connected to EnvironmentSegmentWidget.deleteSeg()
 
     def updateLabel(self):
         labelText = self.generateDisplayText()
@@ -402,11 +403,11 @@ class EnvironmentWidget(QWidget):
     def loadfromCopy(self, copy_data):
         for ind in range(copy_data.lhsWidget.layout().count()):
             copy_wid = copy_data.lhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid)
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='l')
             self.lhsWidget.layout().insertWidget(ind, wid)
         for ind in range(copy_data.rhsWidget.layout().count()):
             copy_wid = copy_data.rhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid)
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='r')
             self.rhsWidget.layout().insertWidget(ind, wid)
         if self.middle:
             copy_wid = copy_data.middleWidget
@@ -426,7 +427,7 @@ class EnvironmentWidget(QWidget):
             return
 
         segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
-                                             show_full_inventory=self.show_full_inventory)
+                                             show_full_inventory=self.show_full_inventory, side=match_widget.side,)
         segWidget.segDeleted.connect(self.deleteSeg)
         if match_widget.side == 'r':
             layout = self.rhsWidget.layout()
@@ -435,30 +436,36 @@ class EnvironmentWidget(QWidget):
 
         widgets = list()
         for ind in range(layout.count()):
+            #take = layout.takeAt(ind).widget()
             if layout.itemAt(ind).widget() == match_widget:
+            #if take == match_widget:
                 if add_to_side == 'l':
                     widgets.append(segWidget)
                     widgets.append(layout.itemAt(ind).widget())
+                    #widgets.append(take)
                 elif add_to_side == 'r':
                     widgets.append(layout.itemAt(ind).widget())
+                    #widgets.append(take)
                     widgets.append(segWidget)
             else:
+                #widgets.append(take)
                 widgets.append(layout.itemAt(ind).widget())
 
         for i, widget in enumerate(widgets):
             layout.insertWidget(i, widget)
+        layout.update()
 
-    def deleteSeg(self, segWidget):
+    def deleteSeg(self, arg):
+        segWidget = arg[0]
         if segWidget.side == 'r':
             layout = self.rhsWidget.layout()
         elif segWidget.side == 'l':
             layout = self.lhsWidget.layout()
         for ind in reversed(range(layout.count())):
             if layout.itemAt(ind) == segWidget:
-                layout.takeAt(ind)
+                layout.removeAt(ind)
                 break
         segWidget.deleteLater()
-
 
     def addLhs(self):
         segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
