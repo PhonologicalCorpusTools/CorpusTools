@@ -99,6 +99,7 @@ class EnvironmentDialog(QDialog):
             self.reset()
 
 class EnvironmentSegmentWidget(QWidget):
+    segDeleted = Signal(object)
     def __init__(self, inventory, parent = None, middle = False, enabled = True,
                  preset_label = False, show_full_inventory=False, side=None):
         QWidget.__init__(self, parent)
@@ -156,10 +157,10 @@ class EnvironmentSegmentWidget(QWidget):
             self.updateLabel()
 
     def addToLeft(self):
-        self.parent_.insertSegWidget(self, self.side, 'l')
+        self.parent_.insertSegWidget(self, 'l')
 
     def addToRight(self):
-        self.parent_.insertSegWidget(self, self.side, 'r')
+        self.parent_.insertSegWidget(self, 'r')
 
     def addNonSegSymbol(self):
         self.segments.add(self.sender().text())
@@ -175,7 +176,7 @@ class EnvironmentSegmentWidget(QWidget):
         self.updateLabel()
 
     def deleteSelection(self):
-        self.deleteLater()
+        self.segDeleted.emit(self) #connected to EnvironmentSegmentWidget.deleteSeg()
 
     def updateLabel(self):
         labelText = self.generateDisplayText()
@@ -415,9 +416,9 @@ class EnvironmentWidget(QWidget):
     def copyEnvironment(self):
         self.envCopied.emit([self])
 
-    def insertSegWidget(self, match_widget, current_side, add_to_side):
+    def insertSegWidget(self, match_widget, add_to_side):
 
-        if current_side is None:#middle widget
+        if match_widget.side is None:#middle widget
             if add_to_side == 'r':
                 self.addRhs()
             elif add_to_side == 'l':
@@ -426,34 +427,50 @@ class EnvironmentWidget(QWidget):
 
         segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
                                              show_full_inventory=self.show_full_inventory)
-        if current_side == 'r':
+        segWidget.segDeleted.connect(self.deleteSeg)
+        if match_widget.side == 'r':
             layout = self.rhsWidget.layout()
-        elif current_side == 'l':
+        elif match_widget.side == 'l':
             layout = self.lhsWidget.layout()
 
         widgets = list()
         for ind in range(layout.count()):
             if layout.itemAt(ind).widget() == match_widget:
-                if add_to_side == current_side:
+                if add_to_side == 'l':
                     widgets.append(segWidget)
                     widgets.append(layout.itemAt(ind).widget())
-                else:
+                elif add_to_side == 'r':
                     widgets.append(layout.itemAt(ind).widget())
                     widgets.append(segWidget)
             else:
-                widgets.append(segWidget)
+                widgets.append(layout.itemAt(ind).widget())
 
         for i, widget in enumerate(widgets):
             layout.insertWidget(i, widget)
 
+    def deleteSeg(self, segWidget):
+        if segWidget.side == 'r':
+            layout = self.rhsWidget.layout()
+        elif segWidget.side == 'l':
+            layout = self.lhsWidget.layout()
+        for ind in reversed(range(layout.count())):
+            if layout.itemAt(ind) == segWidget:
+                layout.takeAt(ind)
+                break
+        segWidget.deleteLater()
+
 
     def addLhs(self):
-        segWidget = EnvironmentSegmentWidget(self.inventory, parent=self, show_full_inventory=self.show_full_inventory, side='l')
-        self.lhsWidget.layout().addWidget(segWidget)
+        segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
+                                             show_full_inventory=self.show_full_inventory, side='l')
+        self.lhsWidget.layout().insertWidget(0,segWidget)
+        segWidget.segDeleted.connect(self.deleteSeg)
 
     def addRhs(self):
-        segWidget = EnvironmentSegmentWidget(self.inventory, parent=self, show_full_inventory=self.show_full_inventory, side='r')
+        segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
+                                             show_full_inventory=self.show_full_inventory, side='r')
         self.rhsWidget.layout().addWidget(segWidget)
+        segWidget.segDeleted.connect(self.deleteSeg)
 
     def value(self):
         lhs = []
