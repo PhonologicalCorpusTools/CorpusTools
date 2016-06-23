@@ -187,6 +187,8 @@ class MainWindow(QMainWindow):
 
                     elif reply.choice == 'overwrite':
                         self.saveCorpus()
+
+                    self.settings['ask_overwrite_corpus'] = 0 if reply.stopShowing.isChecked() else 1
             function(self)
         return do_check
 
@@ -320,7 +322,7 @@ class MainWindow(QMainWindow):
                 alert.setText('Your corpus was loaded without a transcription or feature system. '
                               'The majority of PCT\'s analysis functions require this information to work correctly. '
                               'Go to Features > View/Change feature system... to select one.\n '
-                              'If you do not have any feature file available at all, you can '
+                              'If you do not have any feature files available at all, you can '
                               'download one by going to File > Manage feature systems...')
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()

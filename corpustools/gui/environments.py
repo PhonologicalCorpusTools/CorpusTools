@@ -436,19 +436,14 @@ class EnvironmentWidget(QWidget):
 
         widgets = list()
         for ind in range(layout.count()):
-            #take = layout.takeAt(ind).widget()
             if layout.itemAt(ind).widget() == match_widget:
-            #if take == match_widget:
                 if add_to_side == 'l':
                     widgets.append(segWidget)
                     widgets.append(layout.itemAt(ind).widget())
-                    #widgets.append(take)
                 elif add_to_side == 'r':
                     widgets.append(layout.itemAt(ind).widget())
-                    #widgets.append(take)
                     widgets.append(segWidget)
             else:
-                #widgets.append(take)
                 widgets.append(layout.itemAt(ind).widget())
 
         for i, widget in enumerate(widgets):

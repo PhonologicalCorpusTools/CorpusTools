@@ -112,11 +112,13 @@ class PPDialog(FunctionDialog):
         self.compType = None
         self.oneWordRadio = QRadioButton('Calculate for one word')
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
+        self.oneWordRadio.setAutoExclusive(True)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
 
         self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
+        self.oneNonwordRadio.setAutoExclusive(True)
         self.oneNonwordLabel = QLabel('None created')
         self.oneNonword = None
         self.oneNonwordButton = QPushButton('Create word/nonword')
@@ -124,15 +126,16 @@ class PPDialog(FunctionDialog):
 
         self.fileRadio = QRadioButton('Calculate for list of words')
         self.fileRadio.clicked.connect(self.fileSelected)
+        self.fileRadio.setAutoExclusive(True)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
 
         self.allwordsRadio = QRadioButton('Calculate for all words in the corpus')
         self.allwordsRadio.clicked.connect(self.allwordsSelected)
+        self.allwordsRadio.setAutoExclusive(True)
         self.columnEdit = QLineEdit()
         self.columnEdit.setText('Phonotactic probability')
         self.columnEdit.textChanged.connect(self.allwordsRadio.click)
-
 
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
@@ -142,6 +145,10 @@ class PPDialog(FunctionDialog):
         vbox.addRow(self.fileWidget)
         vbox.addRow(self.allwordsRadio)
         vbox.addRow(QLabel('Column name:'),self.columnEdit)
+        note = QLabel(('(Selecting this option will add a new column containing the results to your corpus. '
+                       'No results window will be displayed.)'))
+        note.setWordWrap(True)
+        vbox.addRow(note)
 
         queryFrame.setLayout(vbox)
 

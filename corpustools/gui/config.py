@@ -162,8 +162,8 @@ class Settings(object):
                     'show_full_inventory': ('display/searchResults', 0),
                     'use_multi': ('multiprocessing/enabled',0),
                     'num_cores': ('multiprocessing/numcores',1),
-                    'ask_overwrite_features': ('reminders', 1),
-                    'ask_overwrite_corpus': ('reminders', 1)}
+                    'ask_overwrite_features': ('reminders/features', 1),
+                    'ask_overwrite_corpus': ('reminders/corpus', 1)}
 
     storage_setting_keys = ['storage']
 

@@ -830,8 +830,9 @@ class LoadCorpusDialog(PCTDialog):
             ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
             'window to change this.\n\n'
             'A corpus can only have one Transcription type and one Orthography type. You may have as many Other types '
-            'as you need. If you have more than one set of transcriptions, select one as your "default" and set its '
-            'type to "Transcription". The others should be set to "Other (character)". '.format(duplicates)))
+            'as you need. If you have more than one set of transcriptions or spellings, choose one to act as the '
+            '"default" and set its type to "Transcription" or "Orthography". The others should be set to "Other '
+            '(character)". '.format(duplicates)))
             return
 
         if self.textType == 'csv':
