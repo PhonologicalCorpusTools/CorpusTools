@@ -240,7 +240,7 @@ class CorpusLoadDialog(PCTDialog):
             self.thread.start()
             result = self.progressDialog.exec_()
             self.progressDialog.reset()
-        return result
+            return result
 
     def accept(self):
         result = self.loadCorpus()

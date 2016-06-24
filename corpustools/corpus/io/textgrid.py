@@ -172,13 +172,14 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
         cur = 0
 
     for word_name in data.word_levels:
+        print(word_name)
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
             cur += 1
             call_back(cur)
         spelling_tier = tg.getFirst(word_name)
-
+        print(spelling_tier)
         for si in spelling_tier:
             annotations = dict()
             word = Annotation(si.mark)

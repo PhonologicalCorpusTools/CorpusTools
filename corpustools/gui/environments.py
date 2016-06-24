@@ -266,7 +266,7 @@ class EnvironmentSelectWidget(QGroupBox):
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos,envWidget)
 
-    @Slot(list)
+    @Slot(list) #connected to EnvironmentWidget.copyEnvironment()
     def addCopiedEnvironment(self, args):
         copy_data = args[0] if args else None
         envWidget = EnvironmentWidget(self.inventory, middle=self.middle, parent=self, copy_data=copy_data)
@@ -288,7 +288,7 @@ class EnvironmentSelectWidget(QGroupBox):
         return envs
 
 class EnvironmentSelectWidget(QGroupBox):
-    def __init__(self, inventory, parent = None, middle = True, show_full_inventory=False):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False):
         QGroupBox.__init__(self,'Environments',parent)
         self.parent = parent
         self.middle = middle
@@ -321,12 +321,12 @@ class EnvironmentSelectWidget(QGroupBox):
         envWidget = EnvironmentWidget(self.inventory, middle = self.middle, parent = self,
                                       show_full_inventory=self.show_full_inventory)
         pos = self.environmentFrame.layout().count() - 2
-        self.environmentFrame.layout().insertWidget(pos,envWidget)
+        self.environmentFrame.layout().insertWidget(pos, envWidget)
 
-    @Slot(list)
+    @Slot(list) #connected to EnvironmentWidget.envCopied()
     def addCopiedEnvironment(self, args):
         copy_data = args[0] if args else None
-        envWidget = EnvironmentWidget(self.inventory, middle=self.middle, parent=self, copy_data=copy_data)
+        envWidget = EnvironmentWidget(self.inventory, middle=copy_data.middle, parent=self, copy_data=copy_data)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos, envWidget)
 
@@ -401,21 +401,28 @@ class EnvironmentWidget(QWidget):
             self.loadfromCopy(copy_data)
 
     def loadfromCopy(self, copy_data):
+
+        self.middleWidget.segments = copy_data.middleWidget.segments
+        self.middleWidget.features = copy_data.middleWidget.features
+        self.middleWidget.mainLabel.setText(copy_data.middleWidget.mainLabel.text())
+
         for ind in range(copy_data.lhsWidget.layout().count()):
             copy_wid = copy_data.lhsWidget.layout().itemAt(ind).widget()
             wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='l')
             self.lhsWidget.layout().insertWidget(ind, wid)
+            wid.segDeleted.connect(self.deleteSeg)
         for ind in range(copy_data.rhsWidget.layout().count()):
             copy_wid = copy_data.rhsWidget.layout().itemAt(ind).widget()
             wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='r')
             self.rhsWidget.layout().insertWidget(ind, wid)
-        if self.middle:
-            copy_wid = copy_data.middleWidget
-            self.middleWidget.mainLabel.setText(copy_wid.mainLabel.text())
+            wid.segDeleted.connect(self.deleteSeg)
+
+
+
 
 
     def copyEnvironment(self):
-        self.envCopied.emit([self])
+        self.envCopied.emit([self]) #connected to EnvironmentSelectWidget.addCopiedEnvironment()
 
     def insertSegWidget(self, match_widget, add_to_side):
 
@@ -450,6 +457,7 @@ class EnvironmentWidget(QWidget):
             layout.insertWidget(i, widget)
         layout.update()
 
+    @Slot(list) #connected to EnvironmentSegmentWidget.segDeleted()
     def deleteSeg(self, arg):
         segWidget = arg[0]
         if segWidget.side == 'r':
