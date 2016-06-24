@@ -914,6 +914,11 @@ class InventoryModel(QAbstractTableModel):
         self.features = inventory.features
         self.possible_values = inventory.possible_values
         self.stresses = inventory.stresses
+        self.minimum_features = dict()
+        self.minimum_features['hayes'] = ['consonantal', 'labial', 'coronal', 'labiodental', 'anterior', 'dorsal',
+                                    'back', 'sonorant', 'delayed_release', 'nasal', 'continuant', 'trill', 'tap',
+                                    'lateral','front', 'back', 'high', 'low']
+        self.minimum_features['spe'] = ['voc', 'ant', 'cor', 'high', 'low', 'back', 'son', 'lat', 'nasal']
 
         self.generateGenericNames()
         self.categorizeInventory()
@@ -1446,7 +1451,7 @@ class InventoryModel(QAbstractTableModel):
             # pick an arbitrary segment and examine its features; they all should have the same feature list
         except IndexError:
             raise CorpusIntegrityError('No segments were found in the inventory')
-        if 'consonantal' in sample.features:
+        if all([feature in sample.features for feature in self.minimum_features['hayes']]):
             self.generateGenericHayes()
             self.cons_features = ['+consonantal']
             self.vowel_features = ['-consonantal']
@@ -1454,7 +1459,7 @@ class InventoryModel(QAbstractTableModel):
             self.rounded_feature = '+round'
             self.diph_feature = '+diphthong'
             self.filterNames = True
-        elif 'voc' in sample.features:
+        elif all([feature in sample.features for feature in self.minimum_features['spe']]):
             self.generateGenericSpe()
             self.cons_features = ['-voc']
             self.vowel_features = ['+voc']

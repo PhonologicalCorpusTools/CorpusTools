@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
         name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(),Qt.DisplayRole)
         if hasattr(self.corpus, 'lexicon'):
             try:
-                discourse = self.corpusModel.corpus.discourses[name]
+                discourse = self.corpusModel.corpus.lexicon.discourses[name]
             except KeyError:
                 return
             self.textWidget.setModel(DiscourseModel(discourse, self.settings))
@@ -354,7 +354,6 @@ class MainWindow(QMainWindow):
                     self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
                     self.inventoryModel.modelReset()
                     self.saveCorpus()
-
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)

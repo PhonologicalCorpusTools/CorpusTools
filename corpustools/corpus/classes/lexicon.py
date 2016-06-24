@@ -1624,7 +1624,7 @@ class Inventory(object):
                             'vowel_row_header_order': dict(), 'vowel_column_header_order': dict(),
                             'consList': list(), 'vowelList': list(), 'non_segment_symbols': ['#'],
                             'vowel_features': [None], 'cons_features': [None], 'voice_feature': None,
-                            'rounded_feature': None,
+                            'rounded_feature': None, 'minimum_features': dict(),
                             'diph_feature': None, 'isNew': True, 'filterNames': False}
 
     def __init__(self):

@@ -75,7 +75,7 @@ class InventoryManager(QDialog):
         '* Double-click an uncategorized segment to see partial matches and a full feature specification.\n'
         '* Default features are required, and they apply automatically to every column and row in the relevant '
             'table.\n'
-        '* After changing a default feature, click "Recategorize" to have the change come into effect.\n'
+        '* After changing a default feature, click "Update defaults" to have the change come into effect.\n'
         '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
             'default features.\n'
         '* Auto-categorization currently only works with SPE or Hayes feature systems.'
@@ -86,7 +86,7 @@ class InventoryManager(QDialog):
         topmessage.setFont(font)
         layout.addWidget(topmessage)
 
-        recatButton = QPushButton('Recategorize segments')
+        recatButton = QPushButton('Update defaults')
         recatButton.clicked.connect(self.recategorize)
         autoRecatButton = QPushButton('Autocategorize')
         autoRecatButton.clicked.connect(self.autoCategorize)
@@ -136,6 +136,25 @@ class InventoryManager(QDialog):
             alert = QMessageBox()
             alert.setWindowTitle('Warning')
             alert.setText(('Your feature system is not compatible with auto-categorization. Sorry about that!'))
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.exec_()
+            return
+
+        if not self.editCons.text() or not self.editVowels.text():
+            alert = QMessageBox()
+            alert.setWindowTitle('Missing information')
+            alert.setText(('You need to include a default consonant feature and default vowel feature. Please ensure'
+                            'that both values are filled.'))
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.exec_()
+            return
+
+        if not self.inventory.cons_features[0] or not self.inventory.vowel_features[0]:
+            alert = QMessageBox()
+            alert.setWindowTitle('Feature error')
+            alert.setText(('You have entered default features, but you did not click "Update defaults". Any time that '
+                            'you change the default features, you must click that button in order for the changes to '
+                            'have an effect.'))
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return
