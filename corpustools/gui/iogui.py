@@ -244,8 +244,9 @@ class CorpusLoadDialog(PCTDialog):
 
     def accept(self):
         result = self.loadCorpus()
-        #returns whether user clicked cancel, or whether the progress bar completed
+        #self.loadCorpus() returns whether user clicked cancel, or whether the progress bar completed
         #it does not return anything about the corpus itself
+        #the corpus is returned to main.py as an attribute of this Dialog object
         if result:
             QDialog.accept(self)
         else:
@@ -806,8 +807,21 @@ class LoadCorpusDialog(PCTDialog):
             and not any([x.anchor for x in kwargs['annotation_types']])):
             QMessageBox.critical(self, 'Missing information',
                                  ('No spelling or transcription was selected for the corpus. Please check the '
-                                 '"Parsing Preview" section and ensure that there is an Annotation Type is set to '
-                                 'either Transcription or Orthography'))
+                                 '"Parsing Preview" section and ensure that you have a "default" Transcription'
+                                 'or Orthography.'))
+            return
+
+        names = [x.name for x in kwargs['annotation_types']]
+        if 'Transcription (alternative)' in names and not 'Transcription (default)' in names:
+            QMessageBox.critical(self, 'Missing information',
+                                 'You have selected an alternative transcription without selecting a default. Please '
+                                 'go to the "Parsing Preview" section, and select one default transcription.')
+            return
+
+        if 'Orthography (alternative)' in names and not 'Orthography (default)' in names:
+            QMessageBox.critical(self, 'Missing information',
+                                 'You have selected an alternative orthography without selecting a default. Please '
+                                 'go to the "Parsing Preview" section, and select one default transcription.')
             return
 
         atts = [x.attribute.display_name for x in kwargs['annotation_types']]
@@ -816,23 +830,22 @@ class LoadCorpusDialog(PCTDialog):
             duplicates = ' and '.join(duplicates)
             QMessageBox.critical(self, 'Duplicate information',
                         'You have more than one column named {} in your corpus. Please go to the '
-                        '"Parsing Preview" window and ensure that all columns have unique names.'.format(duplicates))
+                        '"Parsing Preview" section and ensure that all columns have unique names.'.format(duplicates))
             return
 
         duplicates = False
         names = [x.name for x in kwargs['annotation_types']]
-        if names.count('Transcription') > 1:
-            duplicates = 'Transcription'
-        elif names.count('Orthography') > 1:
-            duplicates = 'Orthography'
+        if names.count('Transcription (default)') > 1:
+            duplicates = 'Transcription (default)'
+        elif names.count('Orthography (default)') > 1:
+            duplicates = 'Orthography (default)'
         if duplicates:
             QMessageBox.critical(self, 'Duplicate information',
             ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
-            'window to change this.\n\n'
-            'A corpus can only have one Transcription type and one Orthography type. You may have as many Other types '
-            'as you need. If you have more than one set of transcriptions or spellings, choose one to act as the '
-            '"default" and set its type to "Transcription" or "Orthography". The others should be set to "Other '
-            '(character)". '.format(duplicates)))
+            'section to change this.\n\n'
+            'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
+            'more than one transcription or spelling system, choose one default and set the others '
+            'to "alternative".'.format(duplicates)))
             return
 
         if self.textType == 'csv':
@@ -924,8 +937,8 @@ class LoadCorpusDialog(PCTDialog):
                     'selected feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
                     'feature. You can change these feature values in PCT by going to Features>View/Change feature '
                     'system...\n\nIf your transcription delimiter symbol appears in the list above, it means that your '
-                    'parsing settings are incorrect. You can change these settings in the "Parsing Preview" pane on '
-                    'right-hand side.'.format(unmatched)))
+                    'parsing settings are incorrect. You can change these settings in the "Parsing Preview" section on'
+                    'the right-hand side.'.format(unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()

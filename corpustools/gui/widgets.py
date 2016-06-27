@@ -202,8 +202,7 @@ class ParsingDialog(QDialog):
             self.digraphWidget.characters -= set([delimiter])
 
 class AnnotationTypeWidget(QGroupBox):
-    def __init__(self, annotation_type, parent = None,
-                ignorable = True):
+    def __init__(self, annotation_type, parent = None, ignorable = True):
         #if title is None:
         #    title = 'Annotation type details'
         QGroupBox.__init__(self, annotation_type.name, parent)
@@ -220,9 +219,11 @@ class AnnotationTypeWidget(QGroupBox):
         proplayout.addRow('Name',self.nameWidget)
 
         self.typeWidget = NonScrollingComboBox()
-        self.typeWidget.addItem('Orthography')
-        self.typeWidget.addItem('Transcription')
-        self.typeWidget.addItem('Other (numeric)')
+        self.typeWidget.addItem('Transcription (default)')
+        self.typeWidget.addItem('Transcription (alternative)')
+        self.typeWidget.addItem('Orthography (default)')
+        self.typeWidget.addItem('Orthography (alternative)')
+        self.typeWidget.addItem('Numeric')
         self.typeWidget.addItem('Other (character)')
         if ignorable:
             self.typeWidget.addItem('Notes (ignored)')
@@ -291,7 +292,7 @@ class AnnotationTypeWidget(QGroupBox):
             self.updateParsingLabels()
         else:
             self.editButton.setEnabled(False)
-        self.suggestName()
+        #self.suggestName()
         self.annotation_type.name = self.typeWidget.currentText()
 
     def suggestName(self):
@@ -340,9 +341,9 @@ class AnnotationTypeWidget(QGroupBox):
             self.ignoreLabel.setText('None')
 
     def editParsingProperties(self):
-        if self.typeWidget.currentText() == 'Orthography':
+        if 'Orthography' in self.typeWidget.currentText():
             atype = 'spelling'
-        elif self.typeWidget.currentText() == 'Transcription':
+        elif 'Transcription' in self.typeWidget.currentText():
             atype = 'tier'
         else:
             return
@@ -366,20 +367,25 @@ class AnnotationTypeWidget(QGroupBox):
         a.anchor = False
         a.base = False
         name = Attribute.sanitize_name(display_name)
-        if self.typeWidget.currentText() == 'Orthography':
+        check_text = self.typeWidget.currentText()
+        if 'Orthography' in check_text:
             a.anchor = True
             a.base = False
             name = 'spelling'
             atype = 'spelling'
-        elif self.typeWidget.currentText() == 'Transcription':
+            if 'default' in check_text:
+                a.default = True
+        elif 'Transcription' in check_text:
             a.anchor = False
             a.base = True
             atype = 'tier'
-        elif self.typeWidget.currentText() == 'Other (numeric)':
+            if 'default' in check_text:
+                a.default = True
+        elif check_text == 'Numeric':
             atype = 'numeric'
-        elif self.typeWidget.currentText() == 'Other (character)':
+        elif check_text == 'Other (character)':
             atype = 'factor'
-        elif self.typeWidget.currentText() == 'Notes (ignored)':
+        elif check_text == 'Notes (ignored)':
             a.ignored = True
         if not a.ignored:
             a.attribute = Attribute(name, atype, display_name)

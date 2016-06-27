@@ -930,7 +930,6 @@ class InventoryModel(QAbstractTableModel):
         for attribute, default_value in Inventory.inventory_attributes.items():
             setattr(self, attribute, default_value)
 
-
     def __eq__(self, other):
         if not isinstance(other, InventoryModel):
             return False

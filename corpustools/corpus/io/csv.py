@@ -35,6 +35,7 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     list of AnnotationTypes
         Autodetected AnnotationTypes for the text file
     """
+    print('inspecting csv')
     if coldelim is not None:
         common_delimiters = [coldelim]
     else:
@@ -131,6 +132,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
 
     if annotation_types is None:
         annotation_types, delimiter = inspect_csv(path, coldelim = delimiter)
+
     for a in annotation_types:
         a.reset()
 
@@ -142,8 +144,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
         headers = f.readline()
         headers = headers.split(delimiter)
         if len(headers)==1:
-            e = DelimiterError(('Could not parse the corpus.\n\Check '
-                                'that the delimiter you typed in matches '
+            e = DelimiterError(('Could not parse the corpus.\n\Check that the column delimiter you typed in matches '
                                 'the one used in the file.'))
             raise(e)
         headers = annotation_types

@@ -45,8 +45,13 @@ class Annotation(BaseAnnotation):
         return '<Annotation "{}">'.format(self.label)
 
 class AnnotationType(object):
+    """
+    AnnotationTypes represent information found in a corpus column.
+    Base annotations are transcriptions/tiers
+    Anchor annotations are spelling
+    """
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
-                    token = False, base = False, speaker = None):
+                    token = False, base = False, speaker = None, default = False,):
         self.characters = set()
         self.ignored_characters = set()
         self.digraphs = set()
@@ -62,15 +67,16 @@ class AnnotationType(object):
         self.anchor = anchor
         self.speaker = speaker
         self.ignored = False
+        self.default = default
         if self.speaker is not None:
             self.output_name = re.sub('{}\W*'.format(self.speaker),'',self.name)
         else:
             self.output_name = self.name
         if attribute is None:
             if base:
-                self.attribute = Attribute(Attribute.sanitize_name(name), 'tier', name)
+                self.attribute = Attribute(Attribute.sanitize_name(name), 'tier', name, is_default=default)
             else:
-                self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name)
+                self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name, is_default=default)
         else:
             self.attribute = attribute
 

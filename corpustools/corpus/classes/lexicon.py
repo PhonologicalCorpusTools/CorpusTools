@@ -888,6 +888,7 @@ class Word(object):
         self.wordtokens = []
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
+            key = key.lower()
             if isinstance(value, tuple):
                 att, value = value
                 if att.att_type == 'numeric':
@@ -898,7 +899,6 @@ class Word(object):
                 elif att.att_type == 'tier':
                     value = Transcription(value)
             else:
-                key = key.lower()
                 if key in self._freq_names:
                     key = 'frequency'
                 if isinstance(value,list):
@@ -913,7 +913,15 @@ class Word(object):
                         pass
                 if key not in self.descriptors:
                     self.descriptors.append(key)
-            setattr(self, key, value)
+
+            if att.is_default:
+                if 'transcription' in key:
+                    setattr(self, 'transcription', value)
+                elif 'spelling' in key or 'orthography' in key:
+                    setattr(self, 'spelling', value)
+            else:
+                setattr(self, key, value)
+
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
@@ -1387,10 +1395,11 @@ class Attribute(object):
         is None.
     """
     ATT_TYPES = ['spelling', 'tier', 'numeric', 'factor']
-    def __init__(self, name, att_type, display_name = None, default_value = None):
+    def __init__(self, name, att_type, display_name = None, default_value = None, is_default = False):
         self.name = name
         self.att_type = att_type
         self._display_name = display_name
+        self.is_default = is_default
 
         if self.att_type == 'numeric':
             self._range = [0,0]
@@ -1633,7 +1642,7 @@ class Inventory(object):
 
     def updateAttributes(self, source):
         for attribute in Inventory.inventory_attributes:
-            setattr(self, attribute, source['attribute'])
+            setattr(self, attribute, source[attribute])
 
     def __getstate__(self):
         state = self.__dict__.copy()
