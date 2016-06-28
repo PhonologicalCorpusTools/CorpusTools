@@ -879,15 +879,31 @@ class TierWidget(QGroupBox):
         layout = QVBoxLayout()
 
         self.tierSelect = QComboBox()
-        self.atts = list()
-        self.spellingName = corpus.attributes[0].display_name
-        if include_spelling:
+        try:
+            self.atts = list()
+            self.spellingName = corpus.default_spelling.attribute.display_name
+            if include_spelling:
+                self.atts.append(corpus.default_spelling.attribute)
+                self.tierSelect.addItem(self.spellingName)
+            self.atts.append(corpus.default_transcription.attribute)
+            self.tierSelect.addItem(corpus.default_transcription.attribute.display_name)
+            for x in corpus.alternative_transcriptions:
+                self.atts.append(x.attribute)
+                self.tierSelect.addItem(x.attribute.display_name)
+
+        except AttributeError:
+            #this happens using an older PCT file that didn't support default/alternative transcriptions
+            self.atts = list()
+            self.spellingName = corpus.attributes[0].display_name
             self.atts.append(corpus.attributes[0])
-            self.tierSelect.addItem(corpus.attributes[0].display_name)
-        for a in corpus.attributes:
-            if corpus.has_transcription and a.att_type == 'tier':
-                self.atts.append(a)
-                self.tierSelect.addItem(a.display_name)
+            if include_spelling:
+                self.tierSelect.addItem(corpus.attributes[0].display_name)
+            for a in corpus.attributes:
+                if corpus.has_transcription and a.att_type == 'tier':
+                    self.atts.append(a)
+                    self.tierSelect.addItem(a.display_name)
+
+
         layout.addWidget(self.tierSelect)
         self.setLayout(layout)
 
@@ -901,16 +917,25 @@ class TierWidget(QGroupBox):
                 self.tierSelect.removeItem(0)
 
     def value(self):
-        index = self.tierSelect.currentIndex()
-        if not self.spellingEnabled and self.spellingIncluded:
-            index += 1
-        return self.atts[index].name
+        text = self.tierSelect.currentText()
+        for a in self.atts:
+            if a.display_name == text:
+                return a.name
+        # index = self.tierSelect.currentIndex()
+        # if not self.spellingEnabled and self.spellingIncluded:
+        # index += 1
+        # return self.atts[index].name
+
 
     def displayValue(self):
-        index = self.tierSelect.currentIndex()
-        if not self.spellingEnabled and self.spellingIncluded:
-            index += 1
-        return self.atts[index].display_name
+        text = self.tierSelect.currentText()
+        for a in self.atts:
+            if a.display_name == text:
+                return a.display_name
+        # index = self.tierSelect.currentIndex()
+        # if not self.spellingEnabled and self.spellingIncluded:
+        #     index += 1
+        # return self.atts[index].display_name
 
 class PunctuationWidget(QGroupBox):
     selectionChanged = Signal()

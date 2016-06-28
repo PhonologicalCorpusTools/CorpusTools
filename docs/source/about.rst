@@ -48,3 +48,10 @@ and Jeff Mielke for the use of the IPHOD corpus, SUBTLEX frequencies,
 Hayes features, and P-base features (respectively) within PCT. Financial
 support for this project comes from a SSHRC Insight Development Grant to
 Kathleen Currie Hall.
+
+Citing PCT
+----------
+
+PCT should be cited as:
+
+Hall, Kathleen Currie, Blake Allen, Michael Fry, Scott Mackie, and Michael McAuliffe. (2016). Phonological CorpusTools, Version 1.2. [Computer program]. Available from https://github.com/PhonologicalCorpusTools/CorpusTools/releases.

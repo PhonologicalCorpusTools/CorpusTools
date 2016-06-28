@@ -65,9 +65,7 @@ class SSDialog(FunctionDialog):
                 'version was originally proposed as a measure of morphological relatedness,'
                 ' but is more accurately described as simply a measure of string similarity.'),
                 '',
-                'Coded by Michael Fry',
-                '',
-                'References',
+                'References: ',
                 ('Khorsi, A. 2012. On Morphological Relatedness. '
                 'Natural Language Engineering, 1-19.'),
                 ('Luce, Paul A. & David B. Pisoni. 1998. '

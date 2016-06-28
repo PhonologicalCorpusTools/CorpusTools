@@ -69,9 +69,7 @@ class KLDialog(FunctionDialog):
                     ' based on the Kullback-Leibler measurement of the difference between'
                     ' probability distributions.'),
                     '',
-                    'Coded by Scott Mackie',
-                    '',
-                    'References',
+                    'References: ',
                     ('Sharon Peperkamp, Rozenn Le Calvez, Jean-Pierre Nadal, Emmanuel Dupoux. '
                     '2006. The Acquisition of allophonic rules: Statistical learning with linguistic constraints '
                     ' Cognition 101 B31-B41')]

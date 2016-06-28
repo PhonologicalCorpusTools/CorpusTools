@@ -224,6 +224,12 @@ class FunctionDialog(PCTDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
 
+        if self.settings['tooltips']:
+            self.aboutButton.setToolTip(('<FONT COLOR=black>'
+                                         '{}'
+                                         '</FONT>'.format('\n'.join(self._about)))
+            )
+
     def setResults(self, results):
         self.results = results
 

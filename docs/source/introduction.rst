@@ -93,6 +93,14 @@ We will do our best to keep the software up to date and to answer any questions
 you might have about it; questions, comments, and suggestions should be sent to
 `Kathleen Currie Hall <kathleen.hall@ubc.ca>`_.
 
+Version 1.2 (July 2016) differs from version 1.1 (July 2015) in the following areas:
+
+1. Inventory management -- The tools for categorizing segments into an inventory chart have been updated to allow users to interactively update the chart based on nature classes, including the ability to add / delete / rearrange columns and rows in the chart. Uncategorized segments are more clearly shown and their features easily examined for reference.
+
+2. Increased flexibility -- Environments can be more flexibly defined, e.g., using wildcards and inserting / modifying / deleting segments or classes of segments within a linear string. Within the functional load analysis, functional load can be calculated within individual sets of environments rather than exclusively at the word level.
+
+3. Small updates for usability -- Numerous small updates have been implemented to aid usability, such as improving the ability to select segments based on features, returning results that list features if those were used in the selection of segments, updating the documentation for clarity, adding an option for normalizing functional load results, etc.
+
 Version 1.1 (July 2015) differs from version 1.0.1 (March 2015) in three main areas:
 
 1. Loading of corpora -- The interface for corpus loading has been streamlined,

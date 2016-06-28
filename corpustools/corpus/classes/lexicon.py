@@ -891,7 +891,6 @@ class Word(object):
             key = key.lower()
             if isinstance(value, tuple):
                 att, value = value
-                print(att.name, att.is_default)
                 if att.att_type == 'numeric':
                     try:
                         value = locale.atof(value)
@@ -915,11 +914,15 @@ class Word(object):
                 if key not in self.descriptors:
                     self.descriptors.append(key)
 
+
             if att.is_default:
                 if att.att_type == 'tier':
                     setattr(self, 'transcription', value)
                 else:
                     setattr(self, 'spelling', value)
+                setattr(self, key, value)
+                #set this twice on purpose, it allows for custom user names without changing much other code
+
             else:
                 if key == 'transcription': #if a non-default happens to share a reserved name
                     setattr(self, 'transcription (alternative)', value)
@@ -1811,6 +1814,10 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_wordtokens = False
+        self.default_transcription = None
+        self.alternative_transcriptions = list()
+        self.default_spelling = None
+        self.alternative_spellings = list()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
@@ -2322,6 +2329,8 @@ class Corpus(object):
         added_default = False
         if word.transcription is not None:
             added_default = self.update_inventory(word.transcription)
+            #added_default == True if the word contains symbols not found in the feature file
+            #in this case, the symbol has been given a default value of 'n' for every feature
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
         for d in word.descriptors:
             if d not in self.attributes:

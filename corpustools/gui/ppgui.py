@@ -75,9 +75,7 @@ class PPDialog(FunctionDialog):
                     'of a word based on positional probabilities of single '
                     'segments and biphones derived from a corpus.'),
                     '',
-                    'Coded by Michael McAuliffe',
-                    '',
-                    'References',
+                    'References: ',
                     ('Vitevitch, Michael S. & Paul A. Luce. 2004.'
                     ' A Web-based interface to calculate phonotactic'
                     ' probability for words and nonwords in English.'

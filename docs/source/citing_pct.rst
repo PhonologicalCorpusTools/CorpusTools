@@ -9,7 +9,7 @@ Please cite PCT as the following (all authors after K. C. Hall are listed
 alphabetically):
 
 Hall, Kathleen Currie, Blake Allen, Michael Fry, Scott Mackie, and
-Michael McAuliffe. (2015). Phonological CorpusTools, Version 1.1.
+Michael McAuliffe. (2016). Phonological CorpusTools, Version 1.2.
 [Computer program]. Available from `PCT GitHub page <http://phonologicalcorpustools.github.io/CorpusTools/>`_.
 
 If you need to cite a more traditional academic source rather than the
