@@ -103,39 +103,7 @@ class BaseCorpusTableModel(BaseTableModel):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
 
-
-        self.columns = list()
-        index_list = [ None, [], None, [], [] ]
-        # default transcription, alt. transcriptions, default spelling,  alt. spellings, other headings
-        for attr in self.corpus.attributes:
-            if attr.att_type == 'tier':
-                if attr.is_default:
-                    index_list[0] = attr
-                else:
-                    index_list[1].append(attr)
-            elif attr.att_type == 'spelling':
-                if attr.is_default:
-                    index_list[2] = attr
-                else:
-                    index_list[3].append(attr)
-            else:
-                index_list[4].append(attr)
-        if index_list[0] is None:
-            raise CorpusIntegrityError('The corpus lacks a default transcription')
-            #self.columns = [x for x in self.corpus.attributes]
-
-        else:
-            self.columns = [index_list[0]]
-            if index_list[1]:
-                keep = [x for x in index_list[1] if not x.name == 'transcription']
-                self.columns.extend(keep)
-            if index_list[2] is not None:
-                self.columns.append(index_list[2])
-            if index_list[3]:
-                keep = [x for x in index_list[3] if not x.name == 'spelling']
-                self.columns.extend(keep)
-            if index_list[4]:
-                self.columns.extend(index_list[4])
+        self.columns = [x for x in self.corpus.attributes]
 
         self.rows = self.corpus.words
 

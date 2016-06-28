@@ -891,6 +891,7 @@ class Word(object):
             key = key.lower()
             if isinstance(value, tuple):
                 att, value = value
+                print(att.name, att.is_default)
                 if att.att_type == 'numeric':
                     try:
                         value = locale.atof(value)
@@ -919,9 +920,6 @@ class Word(object):
                     setattr(self, 'transcription', value)
                 else:
                     setattr(self, 'spelling', value)
-                setattr(self, key, value)
-                #set this twice on purpose, it allows for custom user names without changing much other code
-
             else:
                 if key == 'transcription': #if a non-default happens to share a reserved name
                     setattr(self, 'transcription (alternative)', value)
@@ -1813,10 +1811,6 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_wordtokens = False
-        self.default_transcription = None
-        self.alternative_transcriptions = list()
-        self.default_spelling = None
-        self.alternative_spellings = list()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
