@@ -149,6 +149,17 @@ def load_corpus_csv(corpus_name, path, delimiter,
         headers = annotation_types
         for a in headers:
             corpus.add_attribute(a.attribute)
+            if a.attribute.att_type == 'tier':
+                if a.attribute.is_default:
+                    corpus.default_transcription = a
+                else:
+                    corpus.alternative_transcriptions.append(a)
+            elif a.attribute.att_type == 'spelling':
+                if a.attribute.is_default:
+                    corpus.default_spelling = a
+                else:
+                    corpus.alternative_spellings.append(a)
+
         trans_check = False
 
         for line in f.readlines():
