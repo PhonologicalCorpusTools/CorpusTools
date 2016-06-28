@@ -195,15 +195,15 @@ And the functional load of [t] / [d] based on word tokens is:
 
 :math:`\Delta H = H_{1-tokens} - H_{2-tokens} = 3.924– 3.466 = 0.458`
 
-Rather than taking the difference directly, however, [Surendran2003]_ normalizes the difference by dividing it by the entropy of the corpus before the merger. PCT defaults to normalizing the difference, but clicking "Do not normalize results" will turn the normalization off and return just the difference in entropies.
+Rather than taking the difference directly, however, [Surendran2003]_ normalizes the difference by dividing it by the entropy of the corpus before the merger. PCT defaults to normalizing the difference, but you can choose not to normalize, and just return the difference in entropies as given above.
 
 Returning to the above examples, we would normalize the functional load of [t] / [d] based on word types by dividing the difference given above, 0.387, by the entropy pre-merger, 4.087, and see that the normalized version is:
 
-:math:`\Delta H 0.387 / 4.087 = 0.0947`
+:math:`\Delta H = 0.387 / 4.087 = 0.0947`
 
 And analogously, for the normalized functional load of [t] / [d] based on word tokens, we get:
 
-:math:`\Delta H 0.458 / 4.087 = 0.1121`
+:math:`\Delta H = 0.458 / 4.087 = 0.1121`
 
 .. _method_change_minimal_pairs:
 
@@ -239,6 +239,11 @@ Average Functional Load
 ````````````````````````
 
 [Hume2013]_ suggests that the average functional load (there called "relative contrastiveness") is a useful way of indicating how much work an individual segment does, on average, in comparison to other segments. This is calculated by taking an individual segment, calculating the pairwise functional load of that segment and each other segment in the inventory, and then taking the average across all those pairs. This calculation can also be performed in PCT.
+
+Environment Filters
+```````````````````
+
+In addition to simply calculating functional load based on any occurrence of the segments in question, one can limit the occurences that "count" as occurrences of those segments by specific environments. For example, one might be interested in the functional load not of [t] / [d] in all positions, but only in word-final positions. If the corpus contained the words *hit*, *hid*, *tizzy*, *dizzy*, *mop*, and *shop*, then one could calculate the functional load of [t] / [d] in the corpus (e.g., there are two minimal pairs that hinge on this contrast), or one could specify that one is only interested in word-final [t] / [d] occurrences, and then find that the functional load of word-final [t] / [d] consists of one minimal pair. The algorithms for calculating functional load are the same as above, i.e., using either minimal pairs or change in entropy; the only difference is which instances of the segments are considered to be eligible for inclusion in the calculation.
 
 .. _functional_load_gui:
 
@@ -326,6 +331,9 @@ Once a corpus is loaded, use the following steps.
    the phonological knowledge of speakers. To include all words in the
    corpus, regardless of their token frequency, set the the minimum frequency to 0. Note that if a minimum frequency set, all words below that frequency are simply ignored entirely for the purposes of the entire calculation (e.g., they are not included in the total entropy of the corpus).
 
+10. **Environment**: As described above, any of the possible functional load calculations can be done while limiting the segments to their occurrence in particular environments. Click on “New environment” to add an environment in
+   which to calculate predictability of distribution. See :ref:`environment_selection` for details on how to use this interface. Note that you will not be able to edit the "target" segments in this function, because the targets are automatically populated from the list of pairs selected on the left-hand side.
+
    Here is an example of selecting [m] and [n], with functional load to be
    calculated on the basis of minimal pairs, only including words with a
    token frequency of at least 1, from the built-in example corpus (which
@@ -335,7 +343,7 @@ Once a corpus is loaded, use the following steps.
    :width: 90%
    :align: center
 
-10. **Results**: Once all parameters have been set, click one of the two
+11. **Results**: Once all parameters have been set, click one of the two
     “Calculate functional load” buttons. If this is the first calculation,
     the option to “start new results table” should be selected. For subsequent
     calculations, the calculation can be added to the already started table,
@@ -352,7 +360,7 @@ Once a corpus is loaded, use the following steps.
     relative and whether homophones were ignored or not. (For calculations
     using change in entropy, “N/A” values are entered into the latter two columns.)
 
-11. **Saving results**: Once a results table has been generated for at least
+12. **Saving results**: Once a results table has been generated for at least
     one pair, the table can be saved by clicking on “Save to file” at the
     bottom of the table to open a system dialogue box and save the results
     at a user-designated location.
