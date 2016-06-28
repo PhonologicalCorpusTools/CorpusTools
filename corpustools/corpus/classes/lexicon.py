@@ -914,6 +914,7 @@ class Word(object):
                 if key not in self.descriptors:
                     self.descriptors.append(key)
 
+
             if att.is_default:
                 if att.att_type == 'tier':
                     setattr(self, 'transcription', value)
@@ -2328,6 +2329,8 @@ class Corpus(object):
         added_default = False
         if word.transcription is not None:
             added_default = self.update_inventory(word.transcription)
+            #added_default == True if the word contains symbols not found in the feature file
+            #in this case, the symbol has been given a default value of 'n' for every feature
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
         for d in word.descriptors:
             if d not in self.attributes:

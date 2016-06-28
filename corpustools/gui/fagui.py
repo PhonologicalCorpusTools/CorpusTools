@@ -73,9 +73,7 @@ class FADialog(FunctionDialog):
                     ' often used for analyzing segments as either contrastive'
                     ' or allophonic.'),
                     '',
-                    'Coded by Michael Fry',
-                    '',
-                    'References',
+                    'References: ',
                     ('Johnson, Keith & Babel, Molly. 2010. On the perceptual'
                     ' basis of distinctive _features: Evidence from the perception'
                     ' fricatives by Dutch and English Speakers. Journal of'

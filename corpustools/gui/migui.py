@@ -64,9 +64,7 @@ class MIDialog(FunctionDialog):
                     ' of any two segments, based on their unigram and bigram'
                     ' frequencies in the corpus.'),
                     '',
-                    'Coded by Blake Allen',
-                    '',
-                    #'References',
+                    #'References: ',
                     ]
 
     name = 'mutual information'

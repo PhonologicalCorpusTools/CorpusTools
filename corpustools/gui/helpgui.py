@@ -12,14 +12,16 @@ class AboutDialog(QDialog):
             import corpustools.__version__ as version
             self.help_url += version + '/'
             base_dir = os.path.dirname(sys.executable)
-            if sys.platform == 'win32':
-                self.help_dir = os.path.join(base_dir, 'html')
-            elif sys.platform == 'darwin':
-                self.help_dir = os.path.join(base_dir, 'html')
+            self.help_dir = os.path.join(base_dir, 'html')
+            # if sys.platform == 'win32':
+            #     self.help_dir = os.path.join(base_dir, 'html')
+            # elif sys.platform == 'darwin':
+            #     self.help_dir = os.path.join(base_dir, 'html')
         else:
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
-            self.help_url += 'develop/'
+            #self.help_url += 'develop/'
+            self.help_url += 'latest/'
         use_local = os.path.exists(self.help_dir)
 
         layout = QVBoxLayout()
@@ -56,7 +58,8 @@ class HelpDialog(QDialog):
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
             self.help_dir = os.path.join(base_dir, 'docs','build','html')
-            self.help_url += 'develop/'
+            # self.help_url += 'develop/'
+            self.help_url += 'latest/'
         use_local = os.path.exists(self.help_dir)
         layout = QVBoxLayout()
 

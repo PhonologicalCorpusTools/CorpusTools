@@ -89,9 +89,7 @@ class ASDialog(FunctionDialog):
                 ' sound file and using dynamic time warping or cross-correlation to get '
                 'the average distance/similarity across all tokens.'),
                 '',
-                'Coded by Michael McAuliffe',
-                '',
-                'References',
+                'References: ',
                 ('Ellis, Daniel P. W. 2005. PLP and RASTA (and MFCC, and'
                 ' inversion) in Matlab (online web resource).'
                 ' http://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/.'),

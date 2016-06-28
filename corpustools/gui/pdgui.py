@@ -77,16 +77,14 @@ class PDDialog(FunctionDialog):
                 'Minimum word frequency',
                 'Entropy']
 
-    ABOUT = ['This function calculates'
+    _about = ['This function calculates'
                 ' the predictability of distribution of two sounds, using the measure of entropy'
                 ' (uncertainty). Sounds that are entirely predictably distributed (i.e., in'
                 ' complementary distribution, commonly assumed to be allophonic), will have'
                 ' an entropy of 0. Sounds that are perfectly overlapping in their distributions'
                 ' will have an entropy of 1.',
                 '',
-                'Coded by Scott Mackie and Blake Allen',
-                '',
-                'References',
+                'References: ',
                 ('Hall, K.C. 2009. A probabilistic model of phonological'
                 ' relationships from contrast to allophony. PhD dissertation,'
                 ' The Ohio State University.')]

@@ -96,9 +96,7 @@ class NDDialog(FunctionDialog):
                     ' For information about the distance metrics, see "About this Function"'
                     ' in the string similarity analysis'),
                     '',
-                    'Coded by Blake Allen and Michael Fry',
-                    '',
-                    'References',
+                    'References: ',
                     ('Luce, Paul A. & David B. Pisoni. 1998. '
                     'Recognizing spoken words: The neighborhood activation model. '
                     'Ear Hear 19.1-36.')]

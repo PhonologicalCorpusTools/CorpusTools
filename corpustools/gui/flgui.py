@@ -94,9 +94,7 @@ class FLDialog(FunctionDialog):
                     ' between any two segments, based on either the number of minimal'
                     ' pairs or the change in entropy resulting from merging that contrast.'),
                     '',
-                    'Coded by Blake Allen',
-                    '',
-                    'References',
+                    'References: ',
                     ('Surendran, Dinoj & Partha Niyogi. 2003. Measuring'
                     ' the functional load of phonological contrasts.'
                     ' In Tech. Rep. No. TR-2003-12.'),
