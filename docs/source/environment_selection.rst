@@ -58,26 +58,37 @@ is followed by voiceless stop, one could do the following:
    :width: 90%
    :align: center
 
-2. Click on the left-hand "+" sign twice, and the right-hand "+" sign once. This will give you the following, still blank environment:
+2. Click on the left-hand "+" sign once, and the right-hand "+" sign once. This will give you the following, still blank environment:
 
 .. image:: static/environment2.png
    :width: 90%
    :align: center
 
+3. Click the empty environment slot {} to the right of the target. A new menu pops up, with the following options:
 
-3. Click the central "target" rectangle.
+.. image:: static/environment3.png
+   :width: 90%
+   :align: center
 
-4. Select [m], [n], and [ŋ] either by hand or through their features
+   a. "Add segments" allows you to enter individual segments into the selected position (e.g., to search for [m] and [n]).
+   b. "Add features" allows you to enter a set of features into the selected position (e.g. to search for nasals).
+   c. "Add non-segment symbol" allows you to enter a symbol not classified as a segment (e.g., a word boundary).
+   d. "Match anything here" allows you to enter a wildcard into the selected position. This is useful for ignoring intervening content. E.g., one could search for anything that occurs word-finally, by setting the target to a wildcard, or one could search for [m] and [n], followed by a wildcard, followed by a word boundary, to search for [m] and [n] as the penultimate segment in a word. Note that the wildcard position is just a single slot; PCT will simply treat it as a single segment that can be filled with any content (rather than, say, allowing any number of intervening elements). To get a more unbounded search, we recommend making use of additional tiers (e.g., setting up a tier that contains only [m], [n], and [#], and then searching for all words that have [m] or [n] directly followed by # on that tier; to learn more about tier creation, see :ref:`create_tiers`). 
+   e. "Clear selection" will clear the contents of this position if any contents have already been chosen.
+   f. "Delete" allows you to delete the selected position entirely (not available for the central target position).
+   g. "Add new environment position {To the left, To the right}" will insert an additional environment position in the selected location. This functions the same as the buttons with "+" signs, but allows additional environments to be inserted internally to the environment instead of solely at the periphery.
+
+4. For the target, select [m], [n], and [ŋ] using their features
    (e.g., [+nasal, -vocalic] or whatever combination of features is
-   relevant for the corpus). (Be sure to fully select the segments if
-   you're using features; don't just have them highlighted, or they
-   won't get added to the environment. See :ref:`sound_selection` for details.)
+   relevant for the corpus). (See :ref:`sound_selection` for details.) 
 
 5. Click the leftmost empty set.
 
 6. Select the word boundary symbol, #.
 
-7. Click the empty set immediately to the left of the targets.
+7. Right-click on the # symbol and add an environment position to the right. 
+
+8. Click the new empty set immediately to the left of the targets.
 
 8. Select the vowel [ɪ].
 
@@ -90,11 +101,10 @@ This now gives you an environment that looks something like the following
 (depending on the total inventory and the transcription system of your
 corpus; this example is from the IPHOD corpus):
 
-.. image:: static/environment3.png
+.. image:: static/environment4.png
    :width: 90%
    :align: center
 
-To add additional environments, simply click "New environment." To edit
-a current environment, simply click on the rectangle containing the part
-of the environment you want to edit and re-select the sounds. To remove
-an environment entirely, click on the "Remove environment" button to the right.
+To add additional environments, simply click "New environment." To copy an existing environment (and then edit it, e.g., to search for a different set of sounds in the same environment), click "Copy environment." To edit
+an environment, either right-click on on the rectangle containing the part
+of the environment you want to edit, clear the selection, and re-enter it, or click on the original selection to add to the original choices. To remove an environment entirely, click on the "Remove environment" button to the right.
