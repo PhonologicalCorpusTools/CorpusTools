@@ -287,12 +287,12 @@ class AnnotationTypeWidget(QGroupBox):
         self.typeChanged()
 
     def typeChanged(self):
-        if self.typeWidget.currentIndex() in [0, 1]:
+        if 'Transcription' in self.typeWidget.currentText():
             self.editButton.setEnabled(True)
-            self.updateParsingLabels()
         else:
             self.editButton.setEnabled(False)
         #self.suggestName()
+        self.updateParsingLabels()
         self.annotation_type.name = self.typeWidget.currentText()
 
     def suggestName(self):
@@ -309,12 +309,12 @@ class AnnotationTypeWidget(QGroupBox):
 
 
     def updateParsingLabels(self):
-        if self.typeWidget.currentIndex() == 0:
+        if not 'Transcription' in self.typeWidget.currentText():
             self.digraphLabel.setText('N/A')
             self.numberLabel.setText('N/A')
             self.delimiterLabel.setText('N/A')
             self.morphDelimiterLabel.setText('N/A')
-        elif self.typeWidget.currentIndex() == 1:
+        else:
             if self.annotation_type.digraphs:
                 self.digraphLabel.setText(truncate_string(' '.join(self.annotation_type.digraphs)))
             else:

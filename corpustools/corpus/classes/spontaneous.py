@@ -346,21 +346,6 @@ class Discourse(object):
         """
         return list(x for x in self if x.wordtype == wordtype)
 
-    def _calc_frequency(self,query):
-        if isinstance(query, tuple):
-            count = 0
-            base = query[0]
-            for x in self.find_wordtype(base):
-                cur = query[0]
-                for i in range(1,len(query)):
-                    if cur.following_token != query[i]:
-                        break
-                    cur = cur.following_token
-                else:
-                    count += 1
-            return count
-        elif isinstance(query, Word):
-            return len(self.find_wordtype(query))
 
 class WordToken(object):
     """
@@ -433,6 +418,7 @@ class WordToken(object):
         self._transcription = None
 
         for key, value in kwargs.items():
+            key = key.lower()
             if key == 'transcription':
                 key = '_transcription'
             elif key == 'spelling':
@@ -447,7 +433,6 @@ class WordToken(object):
                 elif att.att_type == 'tier':
                     value = Transcription(value)
             else:
-                key = key.lower()
                 if isinstance(value,list):
                     #assume transcription type stuff
                     value = Transcription(value)
@@ -458,7 +443,13 @@ class WordToken(object):
                             value = f
                     except (ValueError, TypeError):
                         pass
-            setattr(self, key, value)
+            if att.is_default:
+                if 'transcription' in key:
+                    setattr(self, 'transcription', value)
+                elif 'spelling' in key or 'orthography' in key:
+                    setattr(self, 'spelling', value)
+            else:
+                setattr(self, key, value)
 
     def __getstate__(self):
         state = self.__dict__.copy()

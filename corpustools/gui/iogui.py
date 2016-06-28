@@ -803,6 +803,18 @@ class LoadCorpusDialog(PCTDialog):
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
+
+
+        #This loop should not be necessary, but I can't figure out why the Attributes of default AnnotationTypes
+        #are not getting their is_default value set properly elsewhere, so I force it here
+        for x in kwargs['annotation_types']:
+            if 'default' in x.name:
+                x.default = True
+                x.attribute.is_default = True
+            else:
+                x.default = False
+                x.attribute.is_default = False
+
         if (not any([x.base for x in kwargs['annotation_types']])
             and not any([x.anchor for x in kwargs['annotation_types']])):
             QMessageBox.critical(self, 'Missing information',
@@ -821,7 +833,8 @@ class LoadCorpusDialog(PCTDialog):
         if 'Orthography (alternative)' in names and not 'Orthography (default)' in names:
             QMessageBox.critical(self, 'Missing information',
                                  'You have selected an alternative orthography without selecting a default. Please '
-                                 'go to the "Parsing Preview" section, and select one default transcription.')
+                                 'go to the "Parsing Preview" section, and select one default orthography. If your '
+                                 'corpus has no spelling system, then use "Other (character)" or "Notes".')
             return
 
         atts = [x.attribute.display_name for x in kwargs['annotation_types']]

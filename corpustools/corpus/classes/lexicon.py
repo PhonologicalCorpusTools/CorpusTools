@@ -891,6 +891,7 @@ class Word(object):
             key = key.lower()
             if isinstance(value, tuple):
                 att, value = value
+                print(att.name, att.is_default)
                 if att.att_type == 'numeric':
                     try:
                         value = locale.atof(value)
@@ -915,12 +916,17 @@ class Word(object):
                     self.descriptors.append(key)
 
             if att.is_default:
-                if 'transcription' in key:
+                if att.att_type == 'tier':
                     setattr(self, 'transcription', value)
-                elif 'spelling' in key or 'orthography' in key:
+                else:
                     setattr(self, 'spelling', value)
             else:
-                setattr(self, key, value)
+                if key == 'transcription': #if a non-default happens to share a reserved name
+                    setattr(self, 'transcription (alternative)', value)
+                elif key == 'spelling':
+                    setattr(self, 'spelling (alternative)', value)
+                else:
+                    setattr(self, key, value)
 
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))

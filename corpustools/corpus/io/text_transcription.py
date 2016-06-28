@@ -213,10 +213,9 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
         if not os.path.exists(feature_system_path):
             raise(PCTOSError("The feature path specified ({}) does not exist".format(feature_system_path)))
 
-    data = transcription_text_to_data(path, annotation_types,
-                            stop_check, call_back)
+    data = transcription_text_to_data(path, annotation_types, stop_check=stop_check, call_back=call_back)
 
-    discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)

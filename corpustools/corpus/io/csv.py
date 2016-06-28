@@ -35,7 +35,6 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     list of AnnotationTypes
         Autodetected AnnotationTypes for the text file
     """
-    print('inspecting csv')
     if coldelim is not None:
         common_delimiters = [coldelim]
     else:
