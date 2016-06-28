@@ -25,14 +25,14 @@ Download
 
 #. Go to the `PCT releases page`_.
 #. Click on the link for your operating system with the highest number (= most recent version).
-   As of June 2015, that is 1.1.
+   As of July 2016, that is 1.2.
 
 Windows Installer
 =================
 
 #. NOTE: This method requires that you are running a 64-bit version of windows.
    You can check this in Control Panel -> System and Security -> System.
-#. Download the file called “corpustools-1.1.0-amd64.msi” (or similar,
+#. Download the file called “corpustools-1.2.0-amd64.msi” (or similar,
    for a more recent version), by clicking or right-clicking on the link.
    This is an installer program.
 #. Run the downloaded installer program by double-clicking on it, wherever
@@ -43,7 +43,7 @@ Windows Installer
 Mac Executable
 ==============
 
-#. Download the file called 'Phonological.CorpusTools-1.1.0.dmg' by clicking or ctrl-clicking on
+#. Download the file called 'Phonological.CorpusTools-1.2.0.dmg' by clicking or ctrl-clicking on
    the link.
 #. Open the dmg file and drag the Phonological CorpusTools app into Applications.
 #. Phonological CorpusTools is now available in your Applications, and can be
