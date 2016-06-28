@@ -70,6 +70,7 @@ is followed by voiceless stop, one could do the following:
    :width: 90%
    :align: center
 
+These options are as follows:
    a. "Add segments" allows you to enter individual segments into the selected position (e.g., to search for [m] and [n]).
    b. "Add features" allows you to enter a set of features into the selected position (e.g. to search for nasals).
    c. "Add non-segment symbol" allows you to enter a symbol not classified as a segment (e.g., a word boundary).
