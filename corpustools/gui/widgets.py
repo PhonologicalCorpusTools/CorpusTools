@@ -879,26 +879,29 @@ class TierWidget(QGroupBox):
         layout = QVBoxLayout()
 
         self.tierSelect = QComboBox()
-        self.atts = list()
-        self.spellingName = corpus.attributes[0].display_name
+        self.atts = [corpus.default_transcription.attribute]
+        self.tierSelect.addItem(corpus.default_transcription.attribute.display_name)
+        self.atts.extend([x.attribute for x in corpus.alternative_transcriptions])
+        for x in corpus.alternative_transcriptions:
+            self.atts.append(x.attribute)
+            self.tierSelect.addItem(x.attribute.display_name)
+        self.spellingName = corpus.default_spelling.attribute.display_name
         if include_spelling:
-            self.atts.append(corpus.attributes[0])
-            self.tierSelect.addItem(corpus.attributes[0].display_name)
-        for a in corpus.attributes:
-            if corpus.has_transcription and a.att_type == 'tier':
-                self.atts.append(a)
-                self.tierSelect.addItem(a.display_name)
+            self.atts.append(corpus.default_spelling.attribute)
+            self.tierSelect.addItem(corpus.default_spelling.attribute.display_name)
+
+        self.corpus = corpus
         layout.addWidget(self.tierSelect)
         self.setLayout(layout)
 
     def setSpellingEnabled(self, b):
         self.spellingEnabled = b
         if b:
-            if self.tierSelect.itemText(0) != self.spellingName:
-                self.tierSelect.insertItem(0,self.spellingName)
+            if self.tierSelect.itemText(-1) != self.spellingName:
+                self.tierSelect.insertItem(-1,self.spellingName)
         else:
-            if self.tierSelect.itemText(0) == self.spellingName:
-                self.tierSelect.removeItem(0)
+            if self.tierSelect.itemText(-1) == self.spellingName:
+                self.tierSelect.removeItem(-1)
 
     def value(self):
         index = self.tierSelect.currentIndex()
