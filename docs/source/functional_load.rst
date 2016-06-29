@@ -331,8 +331,7 @@ Once a corpus is loaded, use the following steps.
    the phonological knowledge of speakers. To include all words in the
    corpus, regardless of their token frequency, set the the minimum frequency to 0. Note that if a minimum frequency set, all words below that frequency are simply ignored entirely for the purposes of the entire calculation (e.g., they are not included in the total entropy of the corpus).
 
-10. **Environment**: As described above, any of the possible functional load calculations can be done while limiting the segments to their occurrence in particular environments. Click on “New environment” to add an environment in
-   which to calculate predictability of distribution. See :ref:`environment_selection` for details on how to use this interface. Note that you will not be able to edit the "target" segments in this function, because the targets are automatically populated from the list of pairs selected on the left-hand side.
+10. **Environment**: As described above, any of the possible functional load calculations can be done while limiting the segments to their occurrence in particular environments. Click on “New environment” to add an environment in which to calculate predictability of distribution. See :ref:`environment_selection` for details on how to use this interface. Note that you will not be able to edit the "target" segments in this function, because the targets are automatically populated from the list of pairs selected on the left-hand side.
 
    Here is an example of selecting [m] and [n], with functional load to be
    calculated on the basis of minimal pairs that hinge on this contrast only in word-initial position, only including words with a
@@ -368,9 +367,7 @@ Once a corpus is loaded, use the following steps.
       :width: 90%
       :align: center
 
-   .. note:: that in the above screen shot, not all columns are visible;
-      they are visible only by scrolling over to the right, due to constraints
-      on the window size. All columns would be saved to the results file.)
+   Note that in the above screen shot, not all columns are visible; they are visible only by scrolling over to the right, due to constraints on the window size. All columns would be saved to the results file.)
 
    To return to the function dialogue box with your most recently used
    selections, click on “Reopen function dialog.” Otherwise, the results
