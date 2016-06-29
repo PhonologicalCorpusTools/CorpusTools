@@ -81,7 +81,7 @@ box, as in the following diagram:
    :align: center
 
 The example corpora and the included version of the IPHOD corpus include
-phonetic transcriptions in IPA, and are by default interpreted either
+phonetic transcriptions (in IPA for the example corpora and in Arpabet for IPHOD), and are by default interpreted either
 using the feature system of [Mielke2012]_, which in turn is based on
 SPE features [SPE]_ [this is the default for the example corpus], or using
 the feature system suggested by [Hayes2009]_ [this is the default
