@@ -263,7 +263,7 @@ Once a corpus is loaded, use the following steps.
    To calculate the average functional load of a single sound, choose
    "Add one segment"; to calculate the pairwise functional load of two
    segments, choose "Add pair of segments"; to calculate the pairwise
-   functional load based on features, choose "Add pair of features."
+   functional load based on features, choose "Add sets of segments based on features."
 
    For details on how to actually select segments or features, see
    :ref:`sound_selection` or :ref:`feature_selection` as relevant.
@@ -284,12 +284,12 @@ Once a corpus is loaded, use the following steps.
       default is to relativize the raw count to the corpus size, by
       dividing the raw number by the number of lexical entries that
       include at least one instance of any of the target segments.
-   b. **Include vs. ignore homophones**: Second, PCT can either include
-      homophones or ignore them. For example, if the corpus includes
+   b. **Distinguish homophones**: Second, PCT can either distinguish
+      homophones or collapse them. For example, if the corpus includes
       separate entries for the words *sock* (n.), *sock* (v.), *shock* (n.),
       and *shock* (v.), this would count as four minimal pairs if homophones
-      are included, but only one if homophones are ignored. The default is
-      to ignore homophones.
+      are distinguished, but only one if homophones are collapsed. The default is
+      to collapse homophones.
    c. **Output list of minimal pairs to a file**: It is possible to save
       a list of all the actual minimal pairs that PCT finds that hinge on a
       particular chosen contrast to a .txt file. To do so, enter a file
@@ -335,11 +335,11 @@ Once a corpus is loaded, use the following steps.
    which to calculate predictability of distribution. See :ref:`environment_selection` for details on how to use this interface. Note that you will not be able to edit the "target" segments in this function, because the targets are automatically populated from the list of pairs selected on the left-hand side.
 
    Here is an example of selecting [m] and [n], with functional load to be
-   calculated on the basis of minimal pairs, only including words with a
+   calculated on the basis of minimal pairs that hinge on this contrast only in word-initial position, only including words with a
    token frequency of at least 1, from the built-in example corpus (which
-   only has canonical forms):
+   only has canonical forms). [Note that the environment selection is somewhat cut off in this screenshot, but that in PCT, one can scroll over to see it more clearly.]
 
-.. image:: static/funtionalloaddialog.png
+.. image:: static/functionalloaddialog.png
    :width: 90%
    :align: center
 
@@ -349,15 +349,14 @@ Once a corpus is loaded, use the following steps.
     calculations, the calculation can be added to the already started table,
     for direct comparison, or a new table can be started.
 
-    .. note:: that if a table is closed, new calculations will not be added to the previously
-       open table; a new table must be started.
+    Note that if a table is closed, new calculations will not be added to the previously open table; a new table must be started.
 
     Either way, the results table will have the following columns, with one row per calculation: segment 1,
-    segment 2, which tier was used, which measurement method was selected,
+    segment 2, which tier was used, what environments were selected, which measurement method was selected,
     the resulting functional load, what the minimum frequency was, what
     strategy was used for dealing with pronunciation variants, and for
     calculations using minimal pairs, whether the count is absolute or
-    relative and whether homophones were ignored or not. (For calculations
+    relative and whether homophones were distinguished or not. (For calculations
     using change in entropy, “N/A” values are entered into the latter two columns.)
 
 12. **Saving results**: Once a results table has been generated for at least
@@ -365,7 +364,7 @@ Once a corpus is loaded, use the following steps.
     bottom of the table to open a system dialogue box and save the results
     at a user-designated location.
 
-   .. image:: static/funtionalloadresults.png
+   .. image:: static/functionalloadresults.png
       :width: 90%
       :align: center
 
