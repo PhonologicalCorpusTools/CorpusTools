@@ -52,8 +52,4 @@ Kathleen Currie Hall.
 Citing PCT
 ----------
 
-PCT should be cited as:
-
-Hall, Kathleen Currie, Blake Allen, Michael Fry, Scott Mackie, and Michael McAuliffe. (2016). Phonological CorpusTools, Version 1.2. [Computer program]. Available from https://github.com/PhonologicalCorpusTools/CorpusTools/releases.
-
-See :ref:`citing_pct` for more information about citations.
+Please see :ref:`citing_pct` for information.
