@@ -283,7 +283,7 @@ Hayes-style features. Note that for space reasons, the consonant chart and vowel
 
 To create or edit the inventory chart, go to “Features” / "Manage inventory chart." The "Manage inventory" dialogue box appears. If the feature system being used is either the built-in [Hayes2009]_ or the [SPE]_ style feature system, clicking on "Autocategorize" should result in a relatively standard IPA-like chart, which can be further edited if needed. 
 
-#. **Major distinctions (Consonants vs. Vowels)**: PCT first needs to know what the default features are for consonants and vowels. For example, one might set the default for consonants to be [+consonantal] and the default for vowels to be [-consonantal]. 
+#. **Defining defaults (Consonants vs. Vowels)**: PCT first needs to know what the default features are for consonants and vowels. For example, one might set the default for consonants to be [+consonantal] and the default for vowels to be [-consonantal]. After features have been entered into these boxes, click on "Update defaults" to have them go into effect.
 
 #. **Defining rows and columns**: Then, individual rows and columns in the inventory chart can be defined. E.g., in the vowel chart, the first row might set to be High Vowels, and the first column might be set to be Front Vowels. To do so, start by double-clicking the empty "Row 1" header. The "Edit row properties" dialogue box opens. The name of the row can be changed from "Row 1" to "High vowels," and the set of features needed to fill the row can be selected. E.g., one could select the feature [high] and then specify that segments in this row must all be have a [+] value for that feature. Multiple features may be selected. Click "ok." While the row name will update, no segments will actually appear until columns have been defined, too. Double-click on the empty "Column 1" header to open the "Edit column properties" dialogue box. Change the name of the column to "Front vowels" and specify that the segments in this column must be [-back]. Click ok. The inventory chart should now look as follows:
 
@@ -293,7 +293,7 @@ To create or edit the inventory chart, go to “Features” / "Manage inventory 
 
 Note that segments must also match all default features for consonants or vowels in order to appear in the inventory chart, even though those features aren't specified in the individual rows or columns.
 
-#. **Adding rows and columns**: Additional rows and columns can be added by right-clicking on existing rows and columns and selecting "Insert {row, column}." The new row or column will by default appear above or to the left of the selected row or column, respectively, but the order of rows and columns may be re-arranged by clicking on the row or column name and dragging it to the new position. [We know that this re-arranging is somewhat finicky, and we apologize. We'll work on getting a smoother system in place!]
+#. **Adding and re-arranging rows and columns**: Additional rows and columns can be added by right-clicking on existing rows and columns and selecting "Insert {row, column}." The new row or column will by default appear above or to the left of the selected row or column, respectively, but the order of rows and columns may be re-arranged by clicking on the row or column name and dragging it to the new position. [We know that this re-arranging is somewhat finicky, and we apologize. We'll work on getting a smoother system in place! In general, we find that it is easier to move rows up and columns leftward than in the opposite directions.]
 
 #. **Editing or deleting rows and columns**: Double-clicking a row or column also allows you to edit or delete that row or column.
 
@@ -303,49 +303,7 @@ Note that segments must also match all default features for consonants or vowels
    :width: 90%
    :align: center
 
-
-
-
-Essentially, you are telling PCT which feature values are
-associated with which segments in the inventory. There are five sets of
-categories to be edited: "Major distinctions," "Places of articulation,"
-"Manners of articulation," "Vowel height," and "Vowel backness."
-Each is described below. In each case, PCT will ask for which feature or
-set of features is used to specify a particular set of segments. You can
-then type in the box the name of the feature; PCT will auto-complete feature
-names. Once a feature has been included, you can simply mouseover the box on
-the right-hand side to view which segments from the inventory are included by
-the selected features, to check that they are correct and exhaustive. (Note
-that the order of feature selection doesn't matter.)
-
-#. **Major distinctions**: Use the major distinctions tab to edit major
-   class distinctions, i.e., vowels vs. consonants; voicing; diphthongs;
-   and rounding in vowels. For example, the feature specifying vowels in
-   the [SPE]_ system is +voc; the feature in the [Hayes2009]_ system is +syllabic.
-#. **Places of articulation**: Use the places of articulation tab to
-   indicate which features are associated with each standard place of
-   articulation. For example, the features to pick out labial segments
-   in the [SPE]_ system are -cor, +ant, -back; in the [Hayes2009]_ system,
-   they are -coronal, +labial.
-#. **Manners of articulation**: Use the manners of articulation tab to
-   indicate which features are associated with each standard manner of
-   articulation. For example, the features to pick out stops in the [SPE]_
-   system are -cont, -nasal, -son; in the [Hayes2009]_ system, they are
-   -delayed_release, -sonorant, -nasal, -continuant.
-#. **Vowel height**: Use the vowel height tab to indicate which features
-   are associated with each standard height of vowels. For example,
-   the features to pick out close vowels in the [SPE]_ system are +high,
-   +tense, -low; in the [Hayes2009]_ system, they are +high, +tense, -low.
-#. **Vowel backness**: Use the vowel backness tab to indicate which
-   features are associated with each standard degree of backness of vowels.
-   For example, the features to pick out front vowels in the [SPE]_ system
-   are +tense, -back; in the [Hayes2009]_ system, they are -back, +tense, +front.
-
-Here is an example of the "Edit categories" box:
-
-.. image:: static/editcategories.png
-   :width: 90%
-   :align: center
+The above steps can be repeated until all segments are appropriately categorized. The resulting inventory system is the one that will appear in all situations throughout PCT when an inventory is being shown (e.g., for segment selection in searches or analyses).
 
 .. _create_tiers:
 
