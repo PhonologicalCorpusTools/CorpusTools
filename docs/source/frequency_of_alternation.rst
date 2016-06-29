@@ -24,7 +24,7 @@ more or less frequent in a language, and imply that this frequency may
 affect the influence of the alternations on phonological relations. As far
 as we know, however, there is no literature that directly tests this claim
 or establishes how frequency of alternation could actually be quantified
-(though see discussion in [Hall2014b]_).
+(though see discussion in [Hall2016]_).
 
 .. _method_frequency_alternation:
 
@@ -42,7 +42,7 @@ To determine whether two words have an alternation of the targeted phonemes,
 one word must contain phoneme 1, the other must contain phoneme 2, and some
 threshold of “relatedness” must be met. In an ideal world, this would be
 determined by a combination of orthographic, phonological, and semantic
-similarity; see discussion in [Hall2014b]_. Within PCT,
+similarity; see discussion in [Hall2016]_. Within PCT,
 however, a much more basic relatedness criterion is used: string similarity.
 This is indeed what [Khorsi2012]_ proposes as a measure of morphological
 relatedness, and though we caution that this is not in particularly close
