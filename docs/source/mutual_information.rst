@@ -31,7 +31,7 @@ Y occur, such that the mutual information of (X; Y) is the same as the
 mutual information of (Y; X), and furthermore, the pointwise mutual
 information of any individual value of each variable (X = *a*; Y = *b*) is
 the same as the pointwise mutual information of (X = *b*; Y = *a*). Although
-his is perhaps the most intuitive version of mutual information, given
+this is perhaps the most intuitive version of mutual information, given
 that it does give a symmetric measure for “how much information does the
 presence of a provide about the presence of *b*,” we are not currently
 aware of any work that has attempted to use this interpretation of MI
@@ -69,11 +69,11 @@ Method of calculation
 Both of the interpretations of mutual information described above are
 implemented in PCT. We refer to the first one, in which X and Y are
 interpreted as equal random variables, varying over “possible speech
-sounds in a unit,” as word-internal co-occurrence pointwise mutual
-information (pMI), because we specifically use the word as the unit in
+sounds in a unit,” as *word-internal co-occurrence pointwise mutual
+information* (pMI), because we specifically use the word as the unit in
 which to measure pMI. We refer to the second one, in which X and Y are
 different random variables, over either the first or second members of
-bigrams, as ordered pair pMI.
+bigrams, as *ordered pair pMI*.
 
 The general formula for pointwise mutual information is given below;
 it is the binary logarithm of the joint probability of X = *a* and Y = *b*,
@@ -94,8 +94,8 @@ Pointwise mutual information for individual segments:
 :math:`pMI_{word-internal} = log_2 (\frac{p(a \in W \& b \in W)}
 {p(a \in W)*p(b \in W)})`
 
-Ordered pair pMI: In this version, the joint probability that X = *a* and
-Y = *b* is equal to the probability of occurrence of the sequence ab.
+**Ordered pair pMI**: In this version, the joint probability that X = *a* and
+Y = *b* is equal to the probability of occurrence of the sequence *ab*.
 Therefore, the pointwise mutual information of a bigram (e.g., *ab*) is
 equal to the binary logarithm of the probability of the bigram divided
 by the product of the individual segment probabilities, as shown in the
