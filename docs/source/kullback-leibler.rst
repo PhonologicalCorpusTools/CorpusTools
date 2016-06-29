@@ -159,6 +159,15 @@ Kullback-Leibler...” and then follow these steps:
    is chosen, then the environments in the word are [\_t], [\_e], [\_m], [\_a],
    and [\_#]. Note that the word boundaries don’t count as elements of words,
    but can count as parts of environments.
+   
+   Selecting the "both" option forces the KL algorithm to look at the both sides of an environment simaultaneously. This gives different results than looking at the left and the right side independantly. It is possible for a pair of sounds to be considered the most divergent on the "left" or "right" option, but not on the "both" option. Consider the distribution of /i,e/ and /u,o/ in the following hypothetical corpus:
+   
+   tih, tey, diq, dex, bif, pef, biv, pev
+   
+   mun, mul, nul, lum, soz, soc, zoc, cos
+   
+   The set /i,e/ have some overlap in their left- and right-hand environments  (e.g. they both occur after /t/ and before /f/), while /o,u/ have no overlapping environments. The KL algorithm will calculate a lower divergence for the pair /i,e/ than for /u,o/ if the "left side" or "right side" options are selected. 
+   However, when considering both sides simaultaneously, /i/ and /e/ have no overlapping environments at all. The sound /i/ can appear in t_h, d_q, b_f, and b_v while the sound /e/ appears in t_y, d_x, p_f, and p_v. If you run the KL algorithm and select "both sides", then the pair /i,e/ will have the same divergence as /o,e/.
 
 6. **Results**: Once all selections have been made, click “Calculate
    Kullback-Leibler.” If you want to start a new results table, click
