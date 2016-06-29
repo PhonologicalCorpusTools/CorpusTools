@@ -206,7 +206,7 @@ There are four basic options in PCT for dealing with pronunciation variants, eac
    +------------+------------------+----------------+-----------------+
 
 
-3. **Each word token seaparately**: The third option is for PCT to treat
+3. **Each word token separately**: The third option is for PCT to treat
    each pronunciation variant as its own separate lexical entry. This
    allows all variants to be considered, regardless of canonical-ness
    or frequency. At the same time, it will somewhat artificially inflate
@@ -218,7 +218,7 @@ There are four basic options in PCT for dealing with pronunciation variants, eac
    elsewhere in the word, it will make word-initial [p] seem much more
    relatively frequent than it actually is. It allows every pronunciation
    variant to count equally as far as word types are concerned. Token
-   frequencies for each individual variant are used or each variant is assigned
+   frequencies for each individual variant are used, or each variant is assigned
    a frequency of 1 if type frequencies are used.
 
    A fragment of the corpus would be as follows:
