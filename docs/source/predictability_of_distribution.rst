@@ -376,7 +376,7 @@ distribution is calculated using the following steps.
    the “Select segment pair” dialogue box will open. The order that the sounds are selected in is irrelevant; picking [i] first and [u] second will yield the same
    results as picking [u] first and [i] second. See more about interacting with the sound selection box (including, e.g., the use of features in selecting sounds and the options for selecting multiple pairs) in :ref:`sound_selection`.
 
-The second alternative is to select pairs of sounds based on shared vs. contrasting features. This option allows you, for example, to test the predictability of distribution of the front/back contrast in vowels, regardless of vowel height. To do this, click on "Add pair of features"; the "Select feature pair" dialogue box will open. See :ref:`feature_selection` for more information on using this interface.
+The second alternative is to select pairs of sounds based on shared vs. contrasting features. This option allows you, for example, to test the predictability of distribution of the front/back contrast in vowels, regardless of vowel height. To do this, click on "Add sets of segments based on features"; the "Select feature pair" dialogue box will open. See :ref:`feature_selection` for more information on using this interface.
 
 Once sounds have been selected, click “Add.” Pairs will appear in the “Predictability of distribution” dialogue box.
 
@@ -472,7 +472,7 @@ Once sounds have been selected, click “Add.” Pairs will appear in the “Pre
 
    Here’s an example of correctly exhaustive and unique selections for
    calculating the predictability of distribution based on token frequency
-   for [s] and [ʃ] in the example corpus (note that the environments were selected using features, e.g., _#, _[-voc], _[+voc, -high], _[+voc, +high], even though they appear as sets of segments in the environments):
+   for [s] and [ʃ] in the example corpus (note that some environments were selected using features, e.g., _[-voc], _[+voc, -high], while others were selected as segments, e.g., _#, _{u, i}; the environment will show up the way it was selected, but PCT will evaluate exhaustivity and uniqueness correctly [by internally translating featural selections into sets of segments]): 
 
    .. image:: static/proddialog.png
       :width: 90%
