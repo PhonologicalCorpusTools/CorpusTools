@@ -746,8 +746,7 @@ class LoadCorpusDialog(PCTDialog):
                 colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
                 if not colDelim:
                     colDelim = None
-                atts, coldelim = inspect_csv(self.pathWidget.value(),
-                        coldelim = colDelim)
+                atts, coldelim = inspect_csv(self.pathWidget.value(), coldelim = colDelim)
                 self.updateColumnFrame(atts)
             elif self.textType == 'ilg':
                 number = self.lineNumberEdit.text()
@@ -775,6 +774,18 @@ class LoadCorpusDialog(PCTDialog):
             c = AnnotationTypeWidget(a, ignorable = ignorable)
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
+
+        set_default_trans = False
+        set_default_spell = False
+        for c in reversed(self.columns):
+            if not set_default_trans and c.typeWidget.currentText() == 'Transcription (alternative)':
+                c.typeWidget.setCurrentIndex(c.typeWidget.findText('Transcription (default)'))
+                set_default_trans = True
+            if not set_default_spell and c.typeWidget.currentText() == 'Orthography (alternative)':
+                c.typeWidget.setCurrentIndex(c.typeWidget.findText('Orthography (default)'))
+                set_default_spell = True
+            if set_default_spell and set_default_trans:
+                break
 
     def generateKwargs(self):
         path = self.pathWidget.value()

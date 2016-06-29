@@ -267,13 +267,15 @@ class AnnotationTypeWidget(QGroupBox):
 
         if self.annotation_type.token:
             self.associationWidget.click(1)
-        if self.annotation_type.anchor:
-            self.typeWidget.setCurrentIndex(0)
-        elif self.annotation_type.base or self.annotation_type.delimiter is not None:
-            self.typeWidget.setCurrentIndex(1)
+
+        if self.annotation_type.attribute.att_type == 'tier' or 'transcription' in self.annotation_type.attribute.name:
+            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Transcription (alternative)'))
+        elif self.annotation_type.attribute.att_type == 'spelling':
+            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Orthography (alternative)'))
         elif self.annotation_type.attribute.att_type == 'numeric':
-            self.typeWidget.setCurrentIndex(2)
-        #self.attributeWidget = AttributeWidget(attribute = self.annotation_type.attribute)
+            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Numeric'))
+        else:
+            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Other (character)'))
 
         self.nameWidget.setText(self.annotation_type.attribute.display_name)
         #if show_attribute:
