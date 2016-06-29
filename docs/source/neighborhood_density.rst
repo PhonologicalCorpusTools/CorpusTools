@@ -22,7 +22,7 @@ number of words that fit the criterion for being a neighbour.
 Method of calculation
 ---------------------
 
-A word's neighborhood density is equal to the number of other words in the
+A word's neighbourhood density is equal to the number of other words in the
 corpus similar to that word (or, if using token frequencies, the sum of
 those words' counts). The threshold that defines whether two words are
 considered similar to each other can be calculated using any of the three
@@ -30,7 +30,7 @@ distance metrics described in :ref:`method_string_similarity`:
 Levenshtein edit distance,
 phonological edit distance, or Khorsi (2012) similarity. As implemented
 in PCT, for a query word, each other word in the corpus is checked for
-its similarity to the query word and then added to a list of neighbors
+its similarity to the query word and then added to a list of neighbours
 if sufficiently similar.
 
 For further detail about the available distance/similarity metrics,
@@ -102,12 +102,10 @@ density...” in the main menu, and then follow these steps:
       is to be calculated (e.g., the stimuli list for an experiment), that
       list can be saved as a .txt file with one word per line and uploaded
       into PCT for analysis. Note that in this case, if the words **are** in
-      the corpus, either transcription- or spelling-based neighbourhood
-      density can be calculated; either way, the words on the list should be
+      the corpus, the words on the list can be
       written in standard orthography (their transcriptions will be looked
       up in the corpus if needed). If the words are **not** in the corpus, then
-      only spelling-based neighbourhood density can currently be calculated;
-      again, the words should be written orthographically.
+      they should be written orthographically if orthographic neighbourhood density is to be calculated, and transcribed if transcription-based neighbourhood density is to be calculated. If using transcription, note that all symbols in the transcription file must be symbols in the actual inventory of the corpus. E.g., if using IPA, a transcription could be [bnɪk] but not [spe7ec]. If a word in your file contains multi-character symbols, then you should use a period as a delimiter within that word; otherwise, no delimiter is necessary. E.g., if /ts/ is an affricate in your corpus, then the word /atsa/ should be written as "a.ts.a" in your file, but the word /blat/ can be written simply as "blat" in your file.
    d. **Whole corpus**: Alternatively, the neighbourhood density for every word
       in the corpus can be calculated. This is useful, for example, if one
       wishes to find words that match a particular neighbourhood density.
