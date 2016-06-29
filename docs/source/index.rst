@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   about.rst
    introduction.rst
    downloading_and_installing.rst
    loading_corpora.rst
