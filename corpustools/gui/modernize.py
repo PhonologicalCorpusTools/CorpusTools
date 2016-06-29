@@ -6,7 +6,10 @@ def force_update(corpus):
     #This runs through known incompatibilities with previous version of PCT and tries to patch them all up. This gets
     #called from the LoadCorpusDialog.forceUpdate() in iogui.py
     if not hasattr(corpus.inventory, 'segs'):
-        setattr(corpus.inventory, 'segs', {'#': Segment('#')})
+        #setattr(corpus.inventory, 'segs', {'#': Segment('#')})
+        setattr(corpus.inventory,
+                'segs',
+                {symbol: Segment(symbol) for symbol in Inventory.inventory_attributes['non_segment_symbols']})
     has_segs = [seg for seg in corpus.inventory.segs if not seg in Inventory.inventory_attributes['non_segment_symbols']]
 
     if not has_segs:

@@ -1642,8 +1642,16 @@ class Inventory(object):
                             'vowel_row_header_order': dict(), 'vowel_column_header_order': dict(),
                             'consList': list(), 'vowelList': list(), 'non_segment_symbols': ['#'],
                             'vowel_features': [None], 'cons_features': [None], 'voice_feature': None,
-                            'rounded_feature': None, 'minimum_features': dict(),
-                            'diph_feature': None, 'isNew': True, 'filterNames': False}
+                            'rounded_feature': None,
+                            'diph_feature': None, 'isNew': True, 'filterNames': False,
+                            'minimum_features': {'hayes' : ['consonantal', 'labial', 'coronal', 'labiodental',
+                                                              'anterior', 'dorsal',
+                                                              'back', 'sonorant', 'delayed_release', 'nasal',
+                                                              'continuant', 'trill', 'tap',
+                                                              'lateral', 'front', 'back', 'high', 'low'],
+                                                 'spe' : ['voc', 'ant', 'cor', 'high', 'low', 'back', 'son',
+                                                          'lat', 'nasal']}
+                            }
 
     def __init__(self):
         for attribute, default_value in Inventory.inventory_attributes.items():

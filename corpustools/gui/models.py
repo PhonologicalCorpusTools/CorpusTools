@@ -949,10 +949,6 @@ class InventoryModel(QAbstractTableModel):
         self.possible_values = inventory.possible_values
         self.stresses = inventory.stresses
         self.minimum_features = dict()
-        self.minimum_features['hayes'] = ['consonantal', 'labial', 'coronal', 'labiodental', 'anterior', 'dorsal',
-                                    'back', 'sonorant', 'delayed_release', 'nasal', 'continuant', 'trill', 'tap',
-                                    'lateral','front', 'back', 'high', 'low']
-        self.minimum_features['spe'] = ['voc', 'ant', 'cor', 'high', 'low', 'back', 'son', 'lat', 'nasal']
 
         self.generateGenericNames()
         self.categorizeInventory()
