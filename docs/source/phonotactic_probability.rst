@@ -38,7 +38,7 @@ segment in that position divided by the sum of the log token frequency
 of all words that have that position in their transcription.  The bigram
 average is calculated in an equivalent way, except that sequences of two
 segments and their positions are used instead of single segments.  So for
-*blick* that would be /bl/, /lɪ/, /ɪk/ as the included poisitional probabilities.
+*blick* that would be /bl/, /lɪ/, /ɪk/ as the included positional probabilities.
 As with all n-gram based approaches, bigrams are preferable to unigrams.
 In the example of *blick* versus *bnick*, unigrams wouldn't likely capture
 the intuitive difference in phonotactic probability, since the probability
