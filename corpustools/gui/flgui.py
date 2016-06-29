@@ -88,6 +88,7 @@ class FLDialog(FunctionDialog):
                 'Frequency type',
                 'Pronunciation variants',
                 'Minimum word frequency',
+                'Environments',
                 'Result']
 
     _about = [('This function calculates the functional load of the contrast'
@@ -314,6 +315,11 @@ class FLDialog(FunctionDialog):
                 seg_two = seg_pairs[i][1]
             except IndexError:
                 seg_two = ''
+
+            if not self.envWidget.displayValue():
+                environments = 'None'
+            else:
+                environments = ' ; '.join([x for x in self.envWidget.displayValue()])
             self.results.append({'Corpus': self.corpus.name,
                                 'First segment': seg_one,
                                 'Second segment': seg_two,
@@ -324,4 +330,5 @@ class FLDialog(FunctionDialog):
                                 'Frequency type': self.typeTokenWidget.value().title(),
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
+                                'Environments': environments,
                                 'Result': r})
