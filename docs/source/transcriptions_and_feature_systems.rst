@@ -145,8 +145,7 @@ described in :ref:`feature_format`. It is probably easier, however, to create a 
 system by modifying an existing system’s file. While this can be done
 to a certain extent within PCT itself (see :ref:`applying_editing_feature`), large-scale changes
 are best done in separate text-editing software. To do so, you’ll need
-to start with an existing file, which can be obtained through PCT: Download one of the built-in feature systems (:ref:`download_features`) and apply it to your corpus (:ref:`applying_editing_feature`). Then go to “File” / “Export feature
-   system as text file...” and save the file locally.
+to start with an existing file, which can be obtained through PCT: Download one of the built-in feature systems (:ref:`download_features`) and apply it to your corpus (:ref:`applying_editing_feature`). Then go to “File” / “Export feature system as text file...” and save the file locally.
 
 Once you have the file, open it in whatever software you prefer (e.g.,
 TextEdit, OpenOffice, etc.); it may be easiest to import it into a
@@ -291,7 +290,7 @@ To create or edit the inventory chart, go to “Features” / "Manage inventory 
    :width: 90%
    :align: center
 
-Note that segments must also match all default features for consonants or vowels in order to appear in the inventory chart, even though those features aren't specified in the individual rows or columns.
+.. note:: Segments must also match all default features for consonants or vowels in order to appear in the inventory chart, even though those features aren't specified in the individual rows or columns.
 
 3. **Adding and re-arranging rows and columns**: Additional rows and columns can be added by right-clicking on existing rows and columns and selecting "Insert {row, column}." The new row or column will by default appear above or to the left of the selected row or column, respectively, but the order of rows and columns may be re-arranged by clicking on the row or column name and dragging it to the new position. [We know that this re-arranging is somewhat finicky, and we apologize. We'll work on getting a smoother system in place! In general, we find that it is easier to move rows up and columns leftward than in the opposite directions.]
 
@@ -303,7 +302,9 @@ Note that segments must also match all default features for consonants or vowels
    :width: 90%
    :align: center
 
-The above steps can be repeated until all segments are appropriately categorized. The resulting inventory system is the one that will appear in all situations throughout PCT when an inventory is being shown (e.g., for segment selection in searches or analyses). Note that these categories are for display purposes only, however; if, for example, you left [j] and [w] in the vowel chart, this would not prevent you from specifying in an actual analysis that you wanted only [+syllabic, +high] segments and correctly eliminating them. (Likewise, one could safely leave them as uncategorized in the inventory display chart by specifying that vowels must be [+syllabic], and then still access them in analyses by selecting them directly or through use of shared features such as [+high].)
+The above steps can be repeated until all segments are appropriately categorized. The resulting inventory system is the one that will appear in all situations throughout PCT when an inventory is being shown (e.g., for segment selection in searches or analyses). 
+
+.. note:: These categories are for display purposes only, however; if, for example, you left [j] and [w] in the vowel chart, this would not prevent you from specifying in an actual analysis that you wanted only [+syllabic, +high] segments and correctly eliminating them. (Likewise, one could safely leave them as uncategorized in the inventory display chart by specifying that vowels must be [+syllabic], and then still access them in analyses by selecting them directly or through use of shared features such as [+high].)
 
 .. _create_tiers:
 
