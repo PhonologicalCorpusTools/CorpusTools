@@ -15,7 +15,7 @@ In many cases, you will just want to select individual sounds for an analysis
 classes of sounds that differ along some dimension (e.g., comparing front vs.
 back non-low vowels, i.e., [i, e] on the one hand vs. [u, o] on the other).
 
-To do this in an analysis window, click on "Add pair of features" to open the
+To do this in an analysis window, click on "Add sets of segments based on features" to open the
 "Select feature pair" dialogue box.
 
 At the top of the box, there is a place to enter the feature(s) along
@@ -26,15 +26,8 @@ redundant features within a given domain.
 For instance, if the example corpus is open and
 associated with SPE features, and one wanted to calculate the predictability
 of distribution of [i,e] on the one hand vs. [u, o] on the other, one would
-could enter either "back" or "round", but would also have enter "-low" in the "Filter pairs" box.
-To accomplish the same thing
-with Hayes features, one needs to enter only one of  "back, front, round, or labial."
-On the other hand, if one wanted to calculate the predictability of distribution
-for high vowels [i, u] on the one hand and [e, o] on the other, one need
-only list the feature [high].
-The automatic detection is based on the inventory size, so smaller inventories will
-have more detectable redundancies than larger inventories.  Larger inventories will thus
-have to have more features entered for the segment sets to be selected.
+could enter either "back" or "round", but would also have enter "-low" and "+voc" in the "Filter pairs" box.
+
 
 As soon as a feature or set of features has been entered that
 describes two sets of sounds that differ on exactly the feature values for
