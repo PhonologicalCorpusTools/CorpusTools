@@ -92,10 +92,7 @@ References
    Perception of French Vowels. Ms., University of British Columbia &
    University of Canterbury.
 
-.. [Hall2014b] Hall, Kathleen Currie, Claire Allen, Tess Fairburn, Kevin McMullin,
-   Michael Fry, & Masaki Noguchi. 2014. Measuring perceived morphological
-   relatedness. Paper presented at the Canadian Linguistics Association
-   annual meeting.
+.. [Hall2016] Hall, Kathleen Currie, Claire Allen, Tess Fairburn, Michael Fry, Michael McAuliffe & Kevin McMullin. 2016. Measuring perceived morphological relatedness. Canadian Journal of Linguistics / Revue canadienne de linguistique 61.31-67.
 
 .. [Hayes2009] Hayes, Bruce. 2009. Introductory Phonology. Malden, MA: Blackwell - Wiley.
 
