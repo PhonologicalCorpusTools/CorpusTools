@@ -283,13 +283,27 @@ Hayes-style features. Note that for space reasons, the consonant chart and vowel
 
 To create or edit the inventory chart, go to “Features” / "Manage inventory chart." The "Manage inventory" dialogue box appears. If the feature system being used is either the built-in [Hayes2009]_ or the [SPE]_ style feature system, clicking on "Autocategorize" should result in a relatively standard IPA-like chart, which can be further edited if needed. 
 
-To create or edit the categorization, PCT first needs to know what the default features are for consonants and vowels. For example, one might set the default for consonants to be [+consonantal] and the default for vowels to be [-consonantal]. 
+#. **Major distinctions (Consonants vs. Vowels)**: PCT first needs to know what the default features are for consonants and vowels. For example, one might set the default for consonants to be [+consonantal] and the default for vowels to be [-consonantal]. 
 
-Then, individual rows and columns in the inventory chart can be defined. E.g., in the vowel chart, the first row might set to be High Vowels, and the first column might be set to be Front Vowels. To do so, start by double-clicking the empty "Row 1" header. The "Edit row properties" dialogue box opens. The name of the row can be changed from "Row 1" to "High vowels," and the set of features needed to fill the row can be selected. E.g., one could select the feature [high] and then specify that segments in this row must all be have a [+] value for that feature. Multiple features may be selected. Click "ok." While the row name will update, no segments will actually appear until columns have been defined, too. Double-click on the empty "Column 1" header to open the "Edit column properties" dialogue box. Change the name of the column to "Front vowels" and specify that the segments in this column must be [-back]. Click ok. The inventory chart should now look as follows:
+#. **Defining rows and columns**: Then, individual rows and columns in the inventory chart can be defined. E.g., in the vowel chart, the first row might set to be High Vowels, and the first column might be set to be Front Vowels. To do so, start by double-clicking the empty "Row 1" header. The "Edit row properties" dialogue box opens. The name of the row can be changed from "Row 1" to "High vowels," and the set of features needed to fill the row can be selected. E.g., one could select the feature [high] and then specify that segments in this row must all be have a [+] value for that feature. Multiple features may be selected. Click "ok." While the row name will update, no segments will actually appear until columns have been defined, too. Double-click on the empty "Column 1" header to open the "Edit column properties" dialogue box. Change the name of the column to "Front vowels" and specify that the segments in this column must be [-back]. Click ok. The inventory chart should now look as follows:
 
 .. image:: static/high_front_vowels_only.png
    :width: 90%
    :align: center
+
+Note that segments must also match all default features for consonants or vowels in order to appear in the inventory chart, even though those features aren't specified in the individual rows or columns.
+
+#. **Adding rows and columns**: Additional rows and columns can be added by right-clicking on existing rows and columns and selecting "Insert {row, column}." The new row or column will by default appear above or to the left of the selected row or column, respectively, but the order of rows and columns may be re-arranged by clicking on the row or column name and dragging it to the new position. [We know that this re-arranging is somewhat finicky, and we apologize. We'll work on getting a smoother system in place!]
+
+#. **Editing or deleting rows and columns**: Double-clicking a row or column also allows you to edit or delete that row or column.
+
+#. **Deciding which features to use**: In order to help make categorization as easy as possible, information about the feature specifications for uncategorized segments is available. In the "Uncategorized segments" tab, right-click on any listed segment to see both which rows and columns it may have a partial match with, and also an entire list of its featural specifications. If only high front and back vowels have been defined, for example, clicking on the uncategorized vowel [a] would show the following information. Note that this specifies that the [a] will go into the "back vowel" column; it also shows the rest of the features, so that for instance, it's clear that we need a row for [+low] vowels. 
+
+.. image:: static/a_matches.png
+   :width: 90%
+   :align: center
+
+
 
 
 Essentially, you are telling PCT which feature values are
