@@ -96,8 +96,8 @@ Loading a custom feature system
 
 Once you have a feature file in the required format (see :ref:`feature_format`
 and :ref:`modifying_feature`),
-go to “Corpus” / “Manage feature systems...” to load it in. Select
-“Create feature system from text file” and the “Import feature system”
+go to “File” / “Manage feature systems...” to load it in. Select
+“Create feature system from text file” and the “Create feature system from csv”
 dialogue box will open.
 
 1. **File selection**: Specify the file by entering its directory path or
@@ -145,17 +145,8 @@ described in :ref:`feature_format`. It is probably easier, however, to create a 
 system by modifying an existing system’s file. While this can be done
 to a certain extent within PCT itself (see :ref:`applying_editing_feature`), large-scale changes
 are best done in separate text-editing software. To do so, you’ll need
-to start with an existing file, which can be obtained in one of two ways:
-
-1. Through PCT: Download one of the built-in feature systems (:ref:`download_features`) and
-   apply it to your corpus (:ref:`applying_editing_feature`). Then go to “File” / “Export feature
+to start with an existing file, which can be obtained through PCT: Download one of the built-in feature systems (:ref:`download_features`) and apply it to your corpus (:ref:`applying_editing_feature`). Then go to “File” / “Export feature
    system as text file...” and save the file locally.
-2. Online: You can directly download .txt files with the currently
-   available feature systems from the `PCT SourceForge page
-   <http://sourceforge.net/projects/phonologicalcorpustools/>`_, under
-   “Files.” One advantage to this method is that there may be additional
-   feature files that are created as .txt files and made available online
-   before they are packaged into the next release of the downloadable software itself.
 
 Once you have the file, open it in whatever software you prefer (e.g.,
 TextEdit, OpenOffice, etc.); it may be easiest to import it into a
@@ -234,7 +225,7 @@ The following options are shown:
       to remove such segments from the viewing window. (This does NOT
       remove them from the feature system itself; it just de-clutters
       your view of the system.) To revert back to the full system,
-      simply click on “Show full feature system.”
+      simply click on “Show all segments.”
    b. **Corpus coverage**: It’s possible that there are symbols used in
       your corpus that are **not** covered in whatever feature system you
       have selected. To find out, click on “Check corpus inventory
@@ -255,11 +246,8 @@ with the "ipa2spe" transcription and feature file:
    :width: 90%
    :align: center
 
-5. **Display options**: The standard view (shown below) is to display the
-   segments and features as a matrix. One can also select “tree” view,
-   which allows one to see a list of the segments included in the
-   transcription system, organized by phonetic characteristics (but
-   currently without all of their feature specifications).
+5. **Display options**: The standard view is to display the
+   segments and features as a matrix. 
 
 .. _inventory_categories:
 
@@ -281,23 +269,30 @@ is the unordered version of the segments in the sample "Lemurian" corpus
 Once a feature file has been associated with a corpus, this unordered set
 can be arranged into something more closely resembling an IPA chart. Here
 is the Lemurian corpus once the IPA symbols have been interpreted using
-Hayes-style features (note that for space reasons, only the consonant chart
-is shown; the vowel chart is below in the actual PCT window):
+Hayes-style features. Note that for space reasons, the consonant chart and vowel chart are in separate tabbed views; there is also a tab for any segments that have not been categorized.
 
-.. image:: static/lemurian_sorted.png
+
+.. image:: static/lemurian_sorted_cons.png
+   :width: 90%
+   :align: center
+   
+   
+.. image:: static/lemurian_sorted_vowels.png
    :width: 90%
    :align: center
 
-If the feature system being used is either the built-in [Hayes2009]_ or
-the [SPE]_ style feature system, the sorting of segments (regardless of
-the transcription system) in to a standard IPA-like chart will be done
-automatically (though it can still be edited). If a different feature
-system is used, however, the sorting may not be correct if PCT does not
-recognize the features. Therefore, the inventory categories can be edited.
+To create or edit the inventory chart, go to “Features” / "Manage inventory chart." The "Manage inventory" dialogue box appears. If the feature system being used is either the built-in [Hayes2009]_ or the [SPE]_ style feature system, clicking on "Autocategorize" should result in a relatively standard IPA-like chart, which can be further edited if needed. 
 
-To do so, click on "Edit inventory categories" in the “Features” /
-“View / change feature system....” menu. The "Edit categories" dialogue
-box appears. Essentially, you are telling PCT which feature values are
+To create or edit the categorization, PCT first needs to know what the default features are for consonants and vowels. For example, one might set the default for consonants to be [+consonantal] and the default for vowels to be [-consonantal]. 
+
+Then, individual rows and columns in the inventory chart can be defined. E.g., in the vowel chart, the first row might set to be High Vowels, and the first column might be set to be Front Vowels. To do so, start by double-clicking the empty "Row 1" header. The "Edit row properties" dialogue box opens. The name of the row can be changed from "Row 1" to "High vowels," and the set of features needed to fill the row can be selected. E.g., one could select the feature [high] and then specify that segments in this row must all be have a [+] value for that feature. Multiple features may be selected. Click "ok." While the row name will update, no segments will actually appear until columns have been defined, too. Double-click on the empty "Column 1" header to open the "Edit column properties" dialogue box. Change the name of the column to "Front vowels" and specify that the segments in this column must be [-back]. Click ok. The inventory chart should now look as follows:
+
+.. image:: static/high_front_vowels_only.png
+   :width: 90%
+   :align: center
+
+
+Essentially, you are telling PCT which feature values are
 associated with which segments in the inventory. There are five sets of
 categories to be edited: "Major distinctions," "Places of articulation,"
 "Manners of articulation," "Vowel height," and "Vowel backness."
