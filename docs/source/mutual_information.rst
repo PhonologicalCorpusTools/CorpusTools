@@ -33,7 +33,7 @@ information of any individual value of each variable (X = *a*; Y = *b*) is
 the same as the pointwise mutual information of (X = *b*; Y = *a*). Although
 this is perhaps the most intuitive version of mutual information, given
 that it does give a symmetric measure for “how much information does the
-presence of a provide about the presence of *b*,” we are not currently
+presence of *a* provide about the presence of *b*,” we are not currently
 aware of any work that has attempted to use this interpretation of MI
 for phonological purposes.
 
