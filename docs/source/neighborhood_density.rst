@@ -160,14 +160,7 @@ density...” in the main menu, and then follow these steps:
    simply click on the “start new results table” option, and you will be
    returned to your corpus, where a new column has been added automatically.
 
-10. **Saving results**: The results tables can each be saved to tab-delimited
-   .txt files by selecting “Save to file” at the bottom of the window.
-   Any output files containing actual lists of neighbours are already
-   saved as .txt files in the location specified (see step 7). If all
-   neighbourhood densities are calculated for a corpus, the corpus itself
-   can be saved by going to “File” / “Export corpus as text file,” from
-   where it can be reloaded into PCT for use in future sessions with the
-   neighbourhood densities included.
+10. **Saving results**: The results tables can each be saved to tab-delimited .txt files by selecting “Save to file” at the bottom of the window. Any output files containing actual lists of neighbours are already saved as .txt files in the location specified (see step 7). If all neighbourhood densities are calculated for a corpus, the corpus itself can be saved by going to “File” / “Export corpus as text file,” from where it can be reloaded into PCT for use in future sessions with the neighbourhood densities included.
 
 Here’s an example of neighbourhood density being calculated on
 transcriptions for the entire example corpus, using edit distance
