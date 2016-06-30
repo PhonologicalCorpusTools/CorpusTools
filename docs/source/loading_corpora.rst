@@ -635,7 +635,7 @@ Henry Davis, for granting permission to use this text):
    :align: center
 
 The corpus appears on the left, in the familiar columnar format. The
-original text of the corpus appears at the right. Right-clicking on
+original text of the corpus appears at the right, one word at a time but in their original order. Right-clicking on
 a word in the corpus list gives you the option to “Find all tokens”
 in the running text; these words will be highlighted. Similarly,
 right-clicking a word in the running text gives you the option to
