@@ -948,7 +948,6 @@ class InventoryModel(QAbstractTableModel):
         self.features = inventory.features
         self.possible_values = inventory.possible_values
         self.stresses = inventory.stresses
-        self.minimum_features = dict()
 
         self.generateGenericNames()
         self.categorizeInventory()

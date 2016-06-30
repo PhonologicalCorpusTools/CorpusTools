@@ -1,7 +1,7 @@
 import os
 import codecs
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -121,6 +121,9 @@ class LoadCorpusWorker(FunctionWorker):
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
                 except AttributeError:
                     pass #This only has spelling, no transcription
+
+        corpus.set_default_representations() #sets default transcription and spelling tiers, if any
+        corpus.generate_alternative_inventories()
 
         self.dataReady.emit(corpus)
 
@@ -933,36 +936,43 @@ class LoadCorpusDialog(PCTDialog):
             if self.corpus is not None:
                 try:
                     #it's a Corpus object
-                    iterable = self.corpus.inventory.values()
+                    c = self.corpus.inventory
                 except AttributeError:
                     #It's a Discourse object
-                    iterable = self.corpus.lexicon.inventory.values()
+                    c = self.corpus.lexicon.inventory
+
                 unmatched = list()
-                for seg in iterable:
-                    if seg.symbol == '#':
-                        continue
-                    if all(f=='n' for f in seg.features.values()):
-                        if seg.symbol == '\'':
-                            unmatched.append('\' (apostrophe)')
-                        elif seg.symbol == '.':
-                            unmatched.append('. (period)')
-                        elif seg.symbol == ',':
-                            unmatched.append(', (comma)')
-                        else:
-                            unmatched.append(seg.symbol)
+                for name, inventory in self.corpus.all_inventories:
+                    note = list()
+                    for seg in inventory:
+                        if seg.symbol in c.non_segment_symbols:
+                            continue
+                        if all(f == 'n' for f in seg.features.values()):
+                            if seg.symbol == '\'':
+                                note.append('\' (apostrophe)')
+                            elif seg.symbol == '.':
+                                note.append('. (period)')
+                            elif seg.symbol == ',':
+                                note.append(', (comma)')
+                            else:
+                                note.append(seg.symbol)
+                    if note:
+                        note.sort()
+                        unmatched.append(''.join([name, ': ', ','.join(note)]))
+
                 if not unmatched:
                     save_binary(self.corpus,
                                 corpus_name_to_path(self.settings['storage'], self.corpus.name))
                 else:
-                    unmatched = ','.join(sorted(unmatched))
+                    unmatched = '\n'.join(unmatched)
                     alert = QMessageBox()
                     alert.setWindowTitle('Warning')
                     alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
-                    'selected feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
+                    'selected {} feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
                     'feature. You can change these feature values in PCT by going to Features>View/Change feature '
                     'system...\n\nIf your transcription delimiter symbol appears in the list above, it means that your '
                     'parsing settings are incorrect. You can change these settings in the "Parsing Preview" section on'
-                    'the right-hand side.'.format(unmatched)))
+                    'the right-hand side.'.format(self.corpus.specifier.name, unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()

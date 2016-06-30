@@ -519,7 +519,6 @@ class FeatureMatrix(object):
             for attr in self.attributes:
                 if hasattr(feature_entries, attr):
                     setattr(self, attr, getattr(feature_entries, attr))
-
         else:
             for s in feature_entries:
                 self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
@@ -529,7 +528,7 @@ class FeatureMatrix(object):
 
 
     def __eq__(self, other):
-        if not isinstance(other,FeatureMatrix):
+        if not isinstance(other, FeatureMatrix):
             return False
         if self.matrix == other.matrix:
             return True
@@ -826,11 +825,21 @@ class FeatureMatrix(object):
                             for feat in self._features]
         return featline
 
-    def specify(self, seg):
+    def specify(self, seg, assign_defaults = False):
+
         if isinstance(seg, Segment):
-            features = self.matrix[seg.symbol]
+            symbol = seg.symbol
         else:
-            features = self.matrix[seg]
+            symbol = seg
+
+        try:
+            features = self.matrix[symbol]
+        except KeyError:
+            if assign_defaults:
+                self.matrix[symbol] = {feature:'n' for feature in self.features}
+                features = self.matrix[symbol]
+            else:
+                raise KeyError(symbol)
         return features
 
     def __getitem__(self,item):
@@ -1767,7 +1776,7 @@ class Inventory(object):
         for seg in self.segs:
             if seg == '#':
                 continue
-            self.segs[seg].features = specifier.specify(seg)
+            self.segs[seg].features = specifier.specify(seg, assign_defaults=True)
         self.cons_features = specifier.cons_features if hasattr(specifier, 'cons_features') else [None]
         self.vowel_features = specifier.vowel_features if hasattr(specifier, 'vowel_features') else [None]
         self.voice_feature = specifier.voice_feature if hasattr(specifier, 'voice_feature') else None
@@ -1809,9 +1818,6 @@ class Corpus(object):
         Inventory that contains information about segments in the Corpus
     """
 
-    #__slots__ = ['name', 'wordlist', 'specifier',
-    #            'inventory', 'orthography', 'custom', 'feature_system',
-    #            'has_frequency_value','has_spelling_value','has_transcription_value']
     basic_attributes = ['spelling','transcription','frequency']
     def __init__(self, name):
         self.name = name
@@ -1826,6 +1832,7 @@ class Corpus(object):
         self.alternative_transcriptions = list()
         self.default_spelling = None
         self.alternative_spellings = list()
+        self.alternative_inventories = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
@@ -1881,6 +1888,44 @@ class Corpus(object):
     def keys(self):
         for k in sorted(self.wordlist.keys()):
             yield k
+
+    def set_default_representations(self):
+        for att in self.attributes:
+            if att.att_type == 'tier':
+                if att.is_default:
+                    self.default_transcription = att
+                else:
+                    self.alternative_transcriptions.append(att)
+            elif att.att_type == 'spelling':
+                if att.is_default:
+                    self.default_spelling = att
+                else:
+                    self.alternative_spellings(att)
+
+    def generate_alternative_inventories(self):
+
+        for att in self.alternative_transcriptions:
+            altinv = set()
+            for word in self:
+                transcription = getattr(word, att.name)
+                for x in transcription:
+                    altinv.add(x)
+            self.alternative_inventories[att.name] = Inventory()
+            for seg in altinv:
+                self.alternative_inventories[att.name].segs[seg] = Segment(seg,
+                                                                   self.specifier.specify(seg, assign_defaults=True))
+
+    @property
+    def all_inventories(self):
+        inventories = dict()
+        if hasattr(self, 'lexicon'):
+            inventories[self.default_transcription.display_name] = self.lexicon.inventory
+        else:
+            inventories[self.default_transcription.display_name] = self.inventory
+
+        for name,inv in self.alternative_inventories.items():
+            inventories[name] = inv
+        return inventories.items()
 
 
     def retranscribe(self, segmap):
