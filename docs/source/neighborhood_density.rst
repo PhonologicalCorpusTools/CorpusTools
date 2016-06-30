@@ -113,20 +113,22 @@ density...” in the main menu, and then follow these steps:
       separate column; in the “query” box, simply enter the name of that
       column (the default is “Neighborhood Density”).
 
-3. **Tier**: Neighbourhood density can be calculated from most of the available
+3. **Alternative algorithm**: If one is calculating the neighbourhood density for a long word in a large corpus, using edit distance with a max distance of 1, there is a linear-time algorithm that may speed up the calculation as compared to our standard algorithm. Checking this box will select this potentially faster option.
+
+4. **Tier**: Neighbourhood density can be calculated from most of the available
    tiers in a corpus (e.g., spelling, transcription, or tiers that
    represent subsets of entries, such as a vowel or consonant tier).
    (If neighbourhood density is being calculated with phonological edit
    distance as the similarity metric, spelling cannot be used.) Standard
    neighbourhood density is calculated using edit distance on transcriptions.
 
-4. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms.
+5. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms.
 
-5. **Type vs. token frequency**: If the Khorsi algorithm is selected as the
+6. **Type vs. token frequency**: If the Khorsi algorithm is selected as the
    string similarity metric, similarity can be calculated using either
    type or token frequency, as described in :ref:`khorsi`.
 
-6. **Distance / Similarity Threshold**: A specific threshold must be set to
+7. **Distance / Similarity Threshold**: A specific threshold must be set to
    determine what counts as a “neighbour.” If either of the edit distance
    metrics is selected, this should be the maximal distance that is
    allowed – in standard calculations of neighbourhood density, this
@@ -139,13 +141,13 @@ density...” in the main menu, and then follow these steps:
    algorithm to determine what kinds of values are common for words
    that seem to count as neighbours, and working backward from that.
 
-7. **Output file**: If this option is left blank, PCT will simply return
+8. **Output file**: If this option is left blank, PCT will simply return
    the actual neighbourhood density for each word that is calculated
    (i.e., the number of neighbours of each word). If a file is chosen,
    then the number will still be returned, but additionally, a file
    will be created that lists all of the actual neighbours for each word.
 
-8. **Results**: Once all options have been selected, click “Calculate
+9. **Results**: Once all options have been selected, click “Calculate
    neighborhood density.” If this is not the first calculation, and
    you want to add the results to a pre-existing results table, select
    the choice that says “add to current results table.” Otherwise,
@@ -158,7 +160,7 @@ density...” in the main menu, and then follow these steps:
    simply click on the “start new results table” option, and you will be
    returned to your corpus, where a new column has been added automatically.
 
-9. **Saving results**: The results tables can each be saved to tab-delimited
+10. **Saving results**: The results tables can each be saved to tab-delimited
    .txt files by selecting “Save to file” at the bottom of the window.
    Any output files containing actual lists of neighbours are already
    saved as .txt files in the location specified (see step 7). If all
@@ -169,7 +171,7 @@ density...” in the main menu, and then follow these steps:
 
 Here’s an example of neighbourhood density being calculated on
 transcriptions for the entire example corpus, using edit distance
-with a threshold of 1:
+with a threshold of 1, using the standard algorithm:
 
 .. image:: static/neighdendialog.png
    :width: 90%
