@@ -74,9 +74,9 @@ class AnnotationType(object):
             self.output_name = self.name
         if attribute is None:
             if base:
-                self.attribute = Attribute(Attribute.sanitize_name(name), 'tier', name, is_default=default)
+                self.attribute = Attribute(Attribute.sanitize_name(name), 'tier', name, is_default=is_default)
             else:
-                self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name, is_default=default)
+                self.attribute = Attribute(Attribute.sanitize_name(name), 'spelling', name, is_default=is_default)
         else:
             self.attribute = attribute
 
@@ -153,7 +153,7 @@ class AnnotationType(object):
 class DiscourseData(object):
     def __init__(self, name, levels):
         self.name = name
-        self.data = {x.name: x for x in levels}
+        self.data = {x.attribute.name: x for x in levels}
         self.wav_path = None
 
     def __getitem__(self, key):
@@ -172,7 +172,7 @@ class DiscourseData(object):
         return self.data.items()
 
     def mapping(self):
-        return { x.name: x.attribute for x in self.data.values() if not x.ignored}
+        return { x.attribute.name: x.attribute for x in self.data.values() if not x.ignored}
 
     def collapse_speakers(self):
         newdata = {}
@@ -373,9 +373,8 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
     ind = 0
     if lexicon is None:
         lexicon = d.lexicon
-
     for k,v in attribute_mapping.items():
-        a = data[k]
+        a = data[v.name]
 
         if a.token and v not in d.attributes:
             d.add_attribute(v, initialize_defaults = True)

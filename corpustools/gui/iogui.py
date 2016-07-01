@@ -115,12 +115,15 @@ class LoadCorpusWorker(FunctionWorker):
             for seg in corpus.lexicon.inventory:
                 try:
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
+                    print('success')
                 except KeyError:
                     #Occurs if a user selected a feature/transcription system that doesn't match the corpus
                     corpus.lexicon.specifier[seg] = {feature:'n' for feature in corpus.lexicon.specifier.features}
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
+                    print('keyerror')
                 except AttributeError:
                     pass #This only has spelling, no transcription
+                    print('att error')
 
         # TEMPORARY COMMENT
         # corpus.set_default_representations() #sets default transcription and spelling tiers, if any
@@ -947,13 +950,12 @@ class LoadCorpusDialog(PCTDialog):
 
         if result:
             if self.corpus is not None:
-                try:
+                if not hasattr(self.corpus, 'lexicon'):
                     #it's a Corpus object
-                    c = self.corpus.inventory
-                except AttributeError:
+                    c = self.corpus
+                else:
                     #It's a Discourse object
-                    c = self.corpus.lexicon.inventory
-
+                    c = self.corpus.lexicon
 
                 # TEMPORARY COMMENT
                 # unmatched = list()
@@ -976,8 +978,8 @@ class LoadCorpusDialog(PCTDialog):
                 #         unmatched.append(''.join([name, ': ', ','.join(note)]))
 
                 unmatched = list()
-                for seg in self.corpus.inventory:
-                    if seg.symbol in self.corpus.inventory.non_segment_symbols:
+                for seg in c.inventory:
+                    if seg.symbol in c.inventory.non_segment_symbols:
                         continue
                     if all(f == 'n' for f in seg.features.values()):
                         if seg.symbol == '\'':
@@ -989,9 +991,9 @@ class LoadCorpusDialog(PCTDialog):
                         else:
                             unmatched.append(seg.symbol)
 
-                if not unmatched or self.corpus.specifier is None:
-                    save_binary(self.corpus,
-                                corpus_name_to_path(self.settings['storage'], self.corpus.name))
+                if not unmatched or c.specifier is None:
+                    save_binary(c,
+                                corpus_name_to_path(self.settings['storage'], c.name))
                 else:
                     unmatched = '\n'.join(unmatched)
                     alert = QMessageBox()
@@ -1001,13 +1003,13 @@ class LoadCorpusDialog(PCTDialog):
                     'feature. You can change these feature values in PCT by going to Features>View/Change feature '
                     'system...\n\nIf your transcription delimiter symbol appears in the list above, it means that your '
                     'parsing settings are incorrect. You can change these settings in the "Parsing Preview" section on'
-                    'the right-hand side.'.format(self.corpus.specifier.name, unmatched)))
+                    'the right-hand side.'.format(c.specifier.name, unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()
                     if choice == QMessageBox.AcceptRole:
-                        save_binary(self.corpus,
-                                    corpus_name_to_path(self.settings['storage'], self.corpus.name))
+                        save_binary(c,
+                                    corpus_name_to_path(self.settings['storage'], c.name))
                     else:
                         return
             QDialog.accept(self)
