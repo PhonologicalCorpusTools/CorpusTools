@@ -814,7 +814,7 @@ class LoadCorpusDialog(PCTDialog):
                     "Missing information", "Please specify a name for the corpus.")
             return
 
-        if not os.path.exists(self.csvFeatureSystem.path()):
+        if self.csvFeatureSystem.path() is not None and not os.path.exists(self.csvFeatureSystem.path()):
             featurename = os.path.split(self.csvFeatureSystem.path())[-1].split('.')[0]
             reply = QMessageBox.critical(self, 'Missing information',
                     'No feature file called {} could be found'.format(featurename))
@@ -989,7 +989,7 @@ class LoadCorpusDialog(PCTDialog):
                         else:
                             unmatched.append(seg.symbol)
 
-                if not unmatched:
+                if not unmatched or self.corpus.specifier is None:
                     save_binary(self.corpus,
                                 corpus_name_to_path(self.settings['storage'], self.corpus.name))
                 else:

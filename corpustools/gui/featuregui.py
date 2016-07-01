@@ -405,10 +405,12 @@ class EditFeatureMatrixDialog(QDialog):
         box = QFormLayout()
         #self.changeWidget = FeatureSystemSelect(self.settings,default=default)
         self.changeWidget = RestrictedFeatureSystemSelect(self.settings, self.specifier)
+        self.changeWidget.systems.currentIndexChanged.connect(self.changeRestrictedFeatureSystem)
         if self.specifier is not None:
             pos = self.changeWidget.systems.findText(self.specifier.name)
             self.changeWidget.systems.setCurrentIndex(pos)
-            self.changeWidget.systems.currentIndexChanged.connect(self.changeRestrictedFeatureSystem)
+        else:
+            self.changeWidget.systems.setCurrentIndex(0)
         #self.changeWidget.transSystem.activated.connect(self.changeFeatureSystem)
         #self.changeWidget.featureSystem.activated.connect(self.changeFeatureSystem)
 
@@ -609,11 +611,10 @@ class EditFeatureMatrixDialog(QDialog):
             self.layout().insertWidget(0,self.table)
 
     def changeRestrictedFeatureSystem(self):
-        if self.changeWidget.systems.currentText() == self.specifier.name:
+        if self.specifier is not None and self.changeWidget.systems.currentText() == self.specifier.name:
             return
 
         path = self.changeWidget.path()
-
         if self.specs_changed:
             alert = QMessageBox()
             alert.setWindowTitle('Feature system changed')

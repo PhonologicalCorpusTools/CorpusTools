@@ -436,6 +436,7 @@ class MainWindow(QMainWindow):
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 self.corpusModel.corpus.update_features()
                 self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory)
+                self.featureSystemStatus.setText(dialog.specifier.name)
                 self.saveCorpus()
                 return
 
