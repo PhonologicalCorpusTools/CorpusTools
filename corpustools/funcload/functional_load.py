@@ -181,7 +181,7 @@ def minpair_fl(corpus_context, segment_pairs,
 
     if relative_count and contain_target_segment_count > 0:
         result /= float(contain_target_segment_count)
-    return (result, minpairs, segment_pairs)
+    return (result, minpairs, segment_pairs, prevent_normalization)
 
 
 def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
@@ -232,8 +232,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
         original_probs[original_tier] += w.frequency
         original_sum += w.frequency
 
-        neutralized_tier = _merge_segment_pairs(original_tier, segment_pairs, 
-                                                environment_filters)
+        neutralized_tier = _merge_segment_pairs(original_tier, segment_pairs, environment_filters)
         neutralized_probs[neutralized_tier] += w.frequency
         neutralized_sum += w.frequency
 
@@ -243,6 +242,9 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
     else:
         original_probs = {k:v/original_sum for k,v in original_probs.items()}
         preneutr_h = _entropy(original_probs.values())
+
+    if stop_check is not None and stop_check():
+        return
 
     if corpus_context.type_or_token == 'type':
         postneutr_h = log(len(neutralized_probs), 2)
@@ -258,9 +260,12 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
         result = 0.0
 
     if not prevent_normalization and preneutr_h > 0.0:
+        pre_norm = result
         result = result / preneutr_h
+    else:
+        pre_norm = result
 
-    return result
+    return (result, pre_norm)
 
 
 def relative_minpair_fl(corpus_context, segment,
@@ -318,6 +323,7 @@ def relative_minpair_fl(corpus_context, segment,
             environment_filters = environment_filters,
             prevent_normalization = prevent_normalization,
             stop_check = stop_check, call_back = call_back)
+
         results_dict[sp] = res[0]
         results.append(res[0])
         print('Functional load of {}: {}'.format(sp, res[0]))
@@ -328,7 +334,7 @@ def relative_minpair_fl(corpus_context, segment,
         save_minimal_pairs(output_filename, to_output)
 
     result = sum(results)/len(segment_pairs)
-    return (result, results_dict)
+    return (result, results_dict, float(sum(results)))
 
 
 def relative_deltah_fl(corpus_context, segment,
@@ -367,7 +373,7 @@ def relative_deltah_fl(corpus_context, segment,
     results = []
     results_dict = {}
     for sp in segment_pairs:
-        res = deltah_fl(corpus_context, [sp],
+        res, pre_norm = deltah_fl(corpus_context, [sp],
                 environment_filters=environment_filters,
                 prevent_normalization = False,
                 stop_check = stop_check, call_back = call_back)
@@ -376,7 +382,7 @@ def relative_deltah_fl(corpus_context, segment,
         print('Functional load of {}: {}'.format(sp, res))
 
     result = sum(results)/len(segment_pairs)
-    return (result, results_dict)
+    return (result, results_dict, float(sum(results)))
 
 
 

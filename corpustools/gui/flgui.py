@@ -47,18 +47,18 @@ class FLWorker(FunctionWorker):
                     outf = None
                 for pair in pairs:
                     if len(pair) == 1:
-                        res = rel_func(c, pair[0],
-                            output_filename = outf, **kwargs)
+                        res = rel_func(c, pair[0], **kwargs)
+                            #output_filename = outf, **kwargs)
                     else:
                         if isinstance(pair[0], (list, tuple)):
                             in_list = list(zip(pair[0], pair[1]))
                         else:
                             in_list = [pair]
                         res = func(c, in_list, **kwargs)
-                        if self.stopped:
-                            break
                         if output_filename is not None:
                             to_output.append((pair, res[1]))
+                    if self.stopped:
+                        break
                     self.results.append(res)
                 if output_filename is not None:
                     save_minimal_pairs(outf, to_output)
@@ -89,7 +89,8 @@ class FLDialog(FunctionDialog):
                 'Pronunciation variants',
                 'Minimum word frequency',
                 'Environments',
-                'Result']
+                'Result',
+                'Non-normalized result']
 
     _about = [('This function calculates the functional load of the contrast'
                     ' between any two segments, based on either the number of minimal'
@@ -236,13 +237,13 @@ class FLDialog(FunctionDialog):
                                     ' vs. a tier containing only [+voc] segments).'
                                     ' New tiers can be created from the Corpus menu.'
                                     "</FONT>"))
-            self.segPairWidget.setToolTip(("<FONT COLOR=black>"
-            'Add pairs of sounds whose contrast to collapse.'
-                                    ' For example, if you\'re interested in the functional load of the [s]'
-                                    ' / [z] contrast, you only need to add that pair. If, though, you\'re'
-                                    ' interested in the functional load of the voicing contrast among obstruents,'
-                                    ' you may need to add (p, b), (t, d), and (k, g).'
-            "</FONT>"))
+            self.segPairWidget.setToolTip(('<FONT COLOR=black>'
+                            'Select the segments you are interested in. Choose an "individual segment" to get the '
+                            'average functional load for that segment across all pairs it could occur in. Choose a '
+                            '"pair of segments" to get the standard functional of that pair. Choose a "set of segments'
+                            'based on features" to get the functional load of a a particular featural distinction '
+                            '(e.g., the functional load of voicing in obstruents).'
+                            '</FONT>'))
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
             'Calculate the functional load either using'
                             ' the contrast between two sets of segments as a count of minimal pairs'
@@ -308,8 +309,9 @@ class FLDialog(FunctionDialog):
         except ValueError:
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
-            if isinstance(r, tuple):
-                r = r[0]
+            # if isinstance(r, tuple):
+            #     print('this is a tuple ', r)
+            #     r = r[0]
             seg_one = seg_pairs[i][0]
             try:
                 seg_two = seg_pairs[i][1]
@@ -320,6 +322,14 @@ class FLDialog(FunctionDialog):
                 environments = 'None'
             else:
                 environments = ' ; '.join([x for x in self.envWidget.displayValue()])
+
+            pre_normalized = r[-1]
+            if self.preventNormalizationWidget.isChecked():
+                normalized = 'N/A'
+            else:
+                normalized = str(pre_normalized)
+
+
             self.results.append({'Corpus': self.corpus.name,
                                 'First segment': seg_one,
                                 'Second segment': seg_two,
@@ -331,4 +341,5 @@ class FLDialog(FunctionDialog):
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
                                 'Environments': environments,
-                                'Result': r})
+                                'Non-normalized result': normalized,
+                                'Result': r[0]})

@@ -108,8 +108,6 @@ class BaseCorpusTableModel(BaseTableModel):
         self.columns = list()
         index_list = [ None, [], None, [], [] ]
         # default transcription, alt. transcriptions, default spelling,  alt. spellings, other headings
-        for attr in self.corpus.attributes:
-            print(attr, attr.att_type, attr.is_default)
         try:
             for attr in self.corpus.attributes:
                 if attr.att_type == 'tier':
