@@ -122,9 +122,16 @@ class LoadCorpusWorker(FunctionWorker):
                 except AttributeError:
                     pass #This only has spelling, no transcription
 
-        corpus.set_default_representations() #sets default transcription and spelling tiers, if any
-        corpus.generate_alternative_inventories()
-
+        # TEMPORARY COMMENT
+        # corpus.set_default_representations() #sets default transcription and spelling tiers, if any
+        # if self.stopped:
+        #     self.finishedCancelling.emit()
+        #     return
+        #
+        # corpus.generate_alternative_inventories()
+        # if self.stopped:
+        #     self.finishedCancelling.emit()
+        #     return
         self.dataReady.emit(corpus)
 
 
@@ -778,17 +785,18 @@ class LoadCorpusDialog(PCTDialog):
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
 
-        set_default_trans = False
-        set_default_spell = False
-        for c in reversed(self.columns):
-            if not set_default_trans and c.typeWidget.currentText() == 'Transcription (alternative)':
-                c.typeWidget.setCurrentIndex(c.typeWidget.findText('Transcription (default)'))
-                set_default_trans = True
-            if not set_default_spell and c.typeWidget.currentText() == 'Orthography (alternative)':
-                c.typeWidget.setCurrentIndex(c.typeWidget.findText('Orthography (default)'))
-                set_default_spell = True
-            if set_default_spell and set_default_trans:
-                break
+        # TEMPORARY COMMENT
+        # set_default_trans = False
+        # set_default_spell = False
+        # for c in reversed(self.columns):
+        #     if not set_default_trans and c.typeWidget.currentText() == 'Transcription (alternative)':
+        #         c.typeWidget.setCurrentIndex(c.typeWidget.findText('Transcription (default)'))
+        #         set_default_trans = True
+        #     if not set_default_spell and c.typeWidget.currentText() == 'Orthography (alternative)':
+        #         c.typeWidget.setCurrentIndex(c.typeWidget.findText('Orthography (default)'))
+        #         set_default_spell = True
+        #     if set_default_spell and set_default_trans:
+        #         break
 
     def generateKwargs(self):
         path = self.pathWidget.value()
@@ -821,12 +829,15 @@ class LoadCorpusDialog(PCTDialog):
 
         #This loop should not be necessary, but I can't figure out why the Attributes of default AnnotationTypes
         #are not getting their is_default value set properly elsewhere, so I force it here
+
+        # TEMPORARY COMMENTS
         for x in kwargs['annotation_types']:
-            if 'default' in x.name:
-                x.default = True
+            #if 'default' in x.name:
+            if 'transcription' in x.name.lower() or 'orthography' in x.name.lower():
+                x.is_default = True
                 x.attribute.is_default = True
             else:
-                x.default = False
+                x.is_default = False
                 x.attribute.is_default = False
 
         if (not any([x.base for x in kwargs['annotation_types']])
@@ -862,17 +873,19 @@ class LoadCorpusDialog(PCTDialog):
 
         duplicates = False
         names = [x.name for x in kwargs['annotation_types']]
-        if names.count('Transcription (default)') > 1:
-            duplicates = 'Transcription (default)'
-        elif names.count('Orthography (default)') > 1:
-            duplicates = 'Orthography (default)'
+        #TEMPORARY COMMENTS
+        if names.count('Transcription') > 1:# (default)') > 1:
+            duplicates = 'Transcription'# (default)'
+        elif names.count('Orthography') > 1:# (default)') > 1:
+            duplicates = 'Orthography'# (default)'
         if duplicates:
             QMessageBox.critical(self, 'Duplicate information',
             ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
             'section to change this.\n\n'
             'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
             'more than one transcription or spelling system, choose one default and set the others '
-            'to "alternative".'.format(duplicates)))
+            'to "Other (character)"'.format(duplicates)))
+            #'to "alternative".'.format(duplicates)))
             return
 
         if self.textType == 'csv':
@@ -941,24 +954,40 @@ class LoadCorpusDialog(PCTDialog):
                     #It's a Discourse object
                     c = self.corpus.lexicon.inventory
 
+
+                # TEMPORARY COMMENT
+                # unmatched = list()
+                # for name, inventory in self.corpus.all_inventories:
+                #     note = list()
+                #     for seg in inventory:
+                #         if seg.symbol in c.non_segment_symbols:
+                #             continue
+                #         if all(f == 'n' for f in seg.features.values()):
+                #             if seg.symbol == '\'':
+                #                 note.append('\' (apostrophe)')
+                #             elif seg.symbol == '.':
+                #                 note.append('. (period)')
+                #             elif seg.symbol == ',':
+                #                 note.append(', (comma)')
+                #             else:
+                #                 note.append(seg.symbol)
+                #     if note:
+                #         note.sort()
+                #         unmatched.append(''.join([name, ': ', ','.join(note)]))
+
                 unmatched = list()
-                for name, inventory in self.corpus.all_inventories:
-                    note = list()
-                    for seg in inventory:
-                        if seg.symbol in c.non_segment_symbols:
-                            continue
-                        if all(f == 'n' for f in seg.features.values()):
-                            if seg.symbol == '\'':
-                                note.append('\' (apostrophe)')
-                            elif seg.symbol == '.':
-                                note.append('. (period)')
-                            elif seg.symbol == ',':
-                                note.append(', (comma)')
-                            else:
-                                note.append(seg.symbol)
-                    if note:
-                        note.sort()
-                        unmatched.append(''.join([name, ': ', ','.join(note)]))
+                for seg in self.corpus.inventory:
+                    if seg.symbol in self.corpus.inventory.non_segment_symbols:
+                        continue
+                    if all(f == 'n' for f in seg.features.values()):
+                        if seg.symbol == '\'':
+                            unmatched.append('\' (apostrophe)')
+                        elif seg.symbol == '.':
+                            unmatched.append('. (period)')
+                        elif seg.symbol == ',':
+                            unmatched.append(', (comma)')
+                        else:
+                            unmatched.append(seg.symbol)
 
                 if not unmatched:
                     save_binary(self.corpus,
@@ -981,7 +1010,6 @@ class LoadCorpusDialog(PCTDialog):
                                     corpus_name_to_path(self.settings['storage'], self.corpus.name))
                     else:
                         return
-
             QDialog.accept(self)
 
     def updateName(self):

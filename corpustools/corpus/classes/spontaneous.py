@@ -5,7 +5,7 @@ from .lexicon import Transcription, Corpus, Attribute
 
 import os
 import wave
-import math
+import locale
 
 class Speaker(object):
     """
@@ -416,40 +416,66 @@ class WordToken(object):
         self.wavpath = None
         self._spelling = None
         self._transcription = None
+        self._freq_names = ['abs_freq', 'freq_per_mil', 'sfreq', 'lowercase_freq', 'log10_freq']
 
         for key, value in kwargs.items():
             key = key.lower()
-            if key == 'transcription':
+            if key in self._freq_names:
+                key = 'frequency'
+            elif key == 'transcription':
                 key = '_transcription'
             elif key == 'spelling':
                 key = '_spelling'
-            if isinstance(value, tuple):
-                att, value = value
-                if att.att_type == 'numeric':
-                    try:
-                        value = float(value)
-                    except (ValueError, TypeError):
-                        value = float('nan')
-                elif att.att_type == 'tier':
-                    value = Transcription(value)
-            else:
-                if isinstance(value,list):
-                    #assume transcription type stuff
-                    value = Transcription(value)
-                elif key != '_spelling':
-                    try:
-                        f = float(value)
-                        if not math.isnan(f) and not math.isinf(f):
-                            value = f
-                    except (ValueError, TypeError):
-                        pass
-            if att.is_default:
-                if 'transcription' in key:
-                    setattr(self, 'transcription', value)
-                elif 'spelling' in key or 'orthography' in key:
-                    setattr(self, 'spelling', value)
-            else:
-                setattr(self, key, value)
+
+            att, value = value
+            if att.att_type == 'numeric':
+                try:
+                    value = locale.atof(value)
+                except (ValueError, TypeError):
+                    value = float('nan')
+            elif att.att_type == 'factor':
+                pass
+            elif att.att_type == 'spelling':
+                pass
+            elif att.att_type == 'tier':
+                value = Transcription(value)
+
+            setattr(self, key, value)
+
+        # TEMPORARY COMMENT
+        # for key, value in kwargs.items():
+        #     key = key.lower()
+        #     if key == 'transcription':
+        #         key = '_transcription'
+        #     elif key == 'spelling':
+        #         key = '_spelling'
+        #     if isinstance(value, tuple):
+        #         att, value = value
+        #         if att.att_type == 'numeric':
+        #             try:
+        #                 value = float(value)
+        #             except (ValueError, TypeError):
+        #                 value = float('nan')
+        #         elif att.att_type == 'tier':
+        #             value = Transcription(value)
+        #     else:
+        #         if isinstance(value,list):
+        #             #assume transcription type stuff
+        #             value = Transcription(value)
+        #         elif key != '_spelling':
+        #             try:
+        #                 f = float(value)
+        #                 if not math.isnan(f) and not math.isinf(f):
+        #                     value = f
+        #             except (ValueError, TypeError):
+        #                 pass
+        #     if att.is_default:
+        #         if 'transcription' in key:
+        #             setattr(self, 'transcription', value)
+        #         elif 'spelling' in key or 'orthography' in key:
+        #             setattr(self, 'spelling', value)
+        #     else:
+        #         setattr(self, key, value)
 
     def __getstate__(self):
         state = self.__dict__.copy()

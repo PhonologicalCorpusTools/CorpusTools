@@ -167,6 +167,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
                 else:
                     d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
+
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters
                 if not word.spelling:

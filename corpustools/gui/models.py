@@ -102,11 +102,14 @@ class BaseCorpusTableModel(BaseTableModel):
     def __init__(self, corpus, settings, parent = None):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
+        self.rows = self.corpus.words
 
-
+        # TEMPORARAY COMMENTS
         self.columns = list()
         index_list = [ None, [], None, [], [] ]
         # default transcription, alt. transcriptions, default spelling,  alt. spellings, other headings
+        for attr in self.corpus.attributes:
+            print(attr, attr.att_type, attr.is_default)
         try:
             for attr in self.corpus.attributes:
                 if attr.att_type == 'tier':
@@ -121,26 +124,24 @@ class BaseCorpusTableModel(BaseTableModel):
                         index_list[3].append(attr)
                 else:
                     index_list[4].append(attr)
+
+                self.columns = [index_list[0]]
+                if index_list[1]:
+                    keep = [x for x in index_list[1] if not x.name == 'transcription']
+                    self.columns.extend(keep)
+                if index_list[2] is not None:
+                    self.columns.append(index_list[2])
+                if index_list[3]:
+                    keep = [x for x in index_list[3] if not x.name == 'spelling']
+                    self.columns.extend(keep)
+                if index_list[4]:
+                    self.columns.extend(index_list[4])
         except AttributeError:
             #this happens if the corpus is from an older version of PCT
             #that didn't support default/alternative transcriptions
             self.columns = [x for x in self.corpus.attributes]
 
-        else:
-            self.columns = [index_list[0]]
-            if index_list[1]:
-                keep = [x for x in index_list[1] if not x.name == 'transcription']
-                self.columns.extend(keep)
-            if index_list[2] is not None:
-                self.columns.append(index_list[2])
-            if index_list[3]:
-                keep = [x for x in index_list[3] if not x.name == 'spelling']
-                self.columns.extend(keep)
-            if index_list[4]:
-                self.columns.extend(index_list[4])
-
-        self.rows = self.corpus.words
-
+        #self.columns = [x for x in self.corpus.attributes]
         self.allData = self.rows
 
     def sort(self, col, order):

@@ -898,47 +898,75 @@ class Word(object):
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
             key = key.lower()
-            if isinstance(value, tuple):
-                att, value = value
-                if att.att_type == 'numeric':
-                    try:
-                        value = locale.atof(value)
-                    except (ValueError, TypeError):
-                        value = float('nan')
-                elif att.att_type == 'tier':
-                    value = Transcription(value)
-            else:
-                if key in self._freq_names:
-                    key = 'frequency'
-                if isinstance(value,list):
-                    #assume transcription type stuff
-                    value = Transcription(value)
-                elif key != 'spelling':
-                    try:
-                        f = float(value)
-                        if not math.isnan(f) and not math.isinf(f):
-                            value = f
-                    except (ValueError, TypeError):
-                        pass
-                if key not in self.descriptors:
-                    self.descriptors.append(key)
+            att, value = value
+            if att.att_type == 'numeric':
+                try:
+                    value = locale.atof(value)
+                except (ValueError, TypeError):
+                    value = float('nan')
+            elif att.att_type == 'factor':
+                pass
+            elif att.att_type == 'spelling':
+                pass
+            elif att.att_type == 'tier':
+                value = Transcription(value)
+
+            if att.att_type == 'tier' and not key == 'transcription':
+                setattr(self, 'transcription', value)
+            elif att.att_type == 'spelling' and not key == 'spelling':
+                setattr(self, 'spelling', value)
+            elif key in self._freq_names:
+                key = 'frequency'
+
+            setattr(self, key, value)
+
+            if key not in self.descriptors:
+                self.descriptors.append(key)
+
+            # NOT TEMPORARY - THIS COULD POTENTIALLY BE REPLACED WITH THE ABOVE CODE
+            # if isinstance(value, tuple):
+            #     att, value = value
+            #     if att.att_type == 'numeric':
+            #         try:
+            #             value = locale.atof(value)
+            #         except (ValueError, TypeError):
+            #             value = float('nan')
+            #     elif att.att_type == 'tier':
+            #         value = Transcription(value)
+            # else:
+            #     if key in self._freq_names:
+            #         key = 'frequency'
+            #     if isinstance(value,list):
+            #         #assume transcription type stuff
+            #         value = Transcription(value)
+            #     elif key != 'spelling':
+            #         try:
+            #             f = float(value)
+            #             if not math.isnan(f) and not math.isinf(f):
+            #                 value = f
+            #         except (ValueError, TypeError):
+            #             pass
+            #     if key not in self.descriptors:
+            #         self.descriptors.append(key)
 
 
-            if att.is_default:
-                if att.att_type == 'tier':
-                    setattr(self, 'transcription', value)
-                else:
-                    setattr(self, 'spelling', value)
-                setattr(self, key, value)
-                #set this twice on purpose, it allows for custom user names without changing much other code
 
-            else:
-                if key == 'transcription': #if a non-default happens to share a reserved name
-                    setattr(self, 'transcription (alternative)', value)
-                elif key == 'spelling':
-                    setattr(self, 'spelling (alternative)', value)
-                else:
-                    setattr(self, key, value)
+            # TEMPORARY COMMENT
+            # if att.is_default:
+            #     if att.att_type == 'tier':
+            #         setattr(self, 'transcription', value)
+            #     else:
+            #         setattr(self, 'spelling', value)
+            #     setattr(self, key, value)
+            #     #set this twice on purpose, it allows for custom user names without changing much other code
+            #
+            # else:
+            #     if key == 'transcription': #if a non-default happens to share a reserved name
+            #         setattr(self, 'transcription (alternative)', value)
+            #     elif key == 'spelling':
+            #         setattr(self, 'spelling (alternative)', value)
+            #     else:
+            #         setattr(self, key, value)
 
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
@@ -1774,7 +1802,7 @@ class Inventory(object):
 
     def update_features(self, specifier):
         for seg in self.segs:
-            if seg == '#':
+            if seg in self.non_segment_symbols:
                 continue
             self.segs[seg].features = specifier.specify(seg, assign_defaults=True)
         self.cons_features = specifier.cons_features if hasattr(specifier, 'cons_features') else [None]
@@ -1900,7 +1928,7 @@ class Corpus(object):
                 if att.is_default:
                     self.default_spelling = att
                 else:
-                    self.alternative_spellings(att)
+                    self.alternative_spellings.append(att)
 
     def generate_alternative_inventories(self):
 
@@ -1912,9 +1940,9 @@ class Corpus(object):
                     altinv.add(x)
             self.alternative_inventories[att.name] = Inventory()
             for seg in altinv:
+                #for some reason, this loop alters the contents of self.inventory, which it shouldn't
                 self.alternative_inventories[att.name].segs[seg] = Segment(seg,
                                                                    self.specifier.specify(seg, assign_defaults=True))
-
     @property
     def all_inventories(self):
         inventories = dict()

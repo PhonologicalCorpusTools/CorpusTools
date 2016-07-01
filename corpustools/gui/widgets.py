@@ -219,10 +219,10 @@ class AnnotationTypeWidget(QGroupBox):
         proplayout.addRow('Name',self.nameWidget)
 
         self.typeWidget = NonScrollingComboBox()
-        self.typeWidget.addItem('Transcription (default)')
-        self.typeWidget.addItem('Transcription (alternative)')
-        self.typeWidget.addItem('Orthography (default)')
-        self.typeWidget.addItem('Orthography (alternative)')
+        self.typeWidget.addItem('Transcription')# (default)')
+        #self.typeWidget.addItem('Transcription (alternative)')
+        self.typeWidget.addItem('Orthography')# (default)')
+        #self.typeWidget.addItem('Orthography (alternative)')
         self.typeWidget.addItem('Numeric')
         self.typeWidget.addItem('Other (character)')
         if ignorable:
@@ -268,10 +268,11 @@ class AnnotationTypeWidget(QGroupBox):
         if self.annotation_type.token:
             self.associationWidget.click(1)
 
+        #TEMPORARY COMMENT
         if self.annotation_type.attribute.att_type == 'tier' or 'transcription' in self.annotation_type.attribute.name:
-            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Transcription (alternative)'))
+            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Transcription'))# (alternative)'))
         elif self.annotation_type.attribute.att_type == 'spelling':
-            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Orthography (alternative)'))
+            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Orthography'))# (alternative)'))
         elif self.annotation_type.attribute.att_type == 'numeric':
             self.typeWidget.setCurrentIndex(self.typeWidget.findText('Numeric'))
         else:

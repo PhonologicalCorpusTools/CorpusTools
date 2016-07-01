@@ -48,7 +48,7 @@ class FLWorker(FunctionWorker):
                 for pair in pairs:
                     if len(pair) == 1:
                         res = rel_func(c, pair[0],
-                            output_filename = outf,**kwargs)
+                            output_filename = outf, **kwargs)
                     else:
                         if isinstance(pair[0], (list, tuple)):
                             in_list = list(zip(pair[0], pair[1]))

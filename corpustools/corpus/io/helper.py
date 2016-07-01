@@ -51,7 +51,7 @@ class AnnotationType(object):
     Anchor annotations are spelling
     """
     def __init__(self, name, subtype, supertype, attribute = None, anchor = False,
-                    token = False, base = False, speaker = None, default = False,):
+                    token = False, base = False, speaker = None, is_default = False,):
         self.characters = set()
         self.ignored_characters = set()
         self.digraphs = set()
@@ -67,7 +67,7 @@ class AnnotationType(object):
         self.anchor = anchor
         self.speaker = speaker
         self.ignored = False
-        self.default = default
+        self.is_default = is_default
         if self.speaker is not None:
             self.output_name = re.sub('{}\W*'.format(self.speaker),'',self.name)
         else:
