@@ -259,7 +259,7 @@ Once a corpus is loaded, use the following steps.
 2. **Sound selection**: First, decide whether you want to calculate the
    average functional load of a single segment (i.e., its functional load
    averaged across all possible pairwise comparisons), or the more standard
-   functional load of a pair of sounds, defined over segments or features.
+   functional load of a pair of sounds, defined over segments or features. (Note that calculating the average functional load across all the pairwise comparisons will take several minutes.)
    To calculate the average functional load of a single sound, choose
    "Add one segment"; to calculate the pairwise functional load of two
    segments, choose "Add pair of segments"; to calculate the pairwise
