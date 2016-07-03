@@ -115,15 +115,12 @@ class LoadCorpusWorker(FunctionWorker):
             for seg in corpus.lexicon.inventory:
                 try:
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
-                    print('success')
                 except KeyError:
                     #Occurs if a user selected a feature/transcription system that doesn't match the corpus
                     corpus.lexicon.specifier[seg] = {feature:'n' for feature in corpus.lexicon.specifier.features}
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
-                    print('keyerror')
                 except AttributeError:
                     pass #This only has spelling, no transcription
-                    print('att error')
 
         # TEMPORARY COMMENT
         # corpus.set_default_representations() #sets default transcription and spelling tiers, if any

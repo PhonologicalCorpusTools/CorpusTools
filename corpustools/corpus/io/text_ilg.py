@@ -149,6 +149,11 @@ def ilg_to_data(path, annotation_types,
     data = DiscourseData(name, annotation_types)
     mismatching_lines = list()
     while index < len(lines):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         cur_line = {}
         mismatch = False
         for line_ind, annotation_type in enumerate(annotation_types):
@@ -160,7 +165,7 @@ def ilg_to_data(path, annotation_types,
 
             if annotation_type.delimited:
                 line = [parse_transcription(x, annotation_type) for x in line]
-            cur_line[annotation_type.name] = line
+            cur_line[annotation_type.attribute.name] = line
         if mismatch:
             start_line = lines[index][0]
             end_line = start_line + len(annotation_types)
@@ -168,7 +173,13 @@ def ilg_to_data(path, annotation_types,
         if len(mismatching_lines) > 0:
             index += len(annotation_types)
             continue
+
         for word_name in data.word_levels:
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                call_back(cur)
             for i, s in enumerate(cur_line[word_name]):
                 annotations = {}
                 word = Annotation(s)
@@ -230,8 +241,8 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
     Discourse
         Discourse object generated from the text file
     """
-    data = ilg_to_data(path, annotation_types,
-                    stop_check, call_back)
+
+    data = ilg_to_data(path, annotation_types,stop_check, call_back)
     discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     if discourse is None:
         return

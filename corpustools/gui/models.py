@@ -102,7 +102,29 @@ class BaseCorpusTableModel(BaseTableModel):
     def __init__(self, corpus, settings, parent = None):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
+
+        def column_sort(x):
+            att_type = x.att_type
+            if att_type == 'tier':
+                return 0
+            elif att_type == 'spelling':
+                return 1
+            elif att_type == 'factor':
+                return 2
+            elif att_type == 'numeric':
+                return 3
+            else:
+                return 4
+
+        #  TEMP FIX TO GET ONLY ONE TRANSCRIPTION COLUMN
+        self.columns = [x for x in self.corpus.attributes]
+        self.columns.sort(key=column_sort)
+        att_types = [x.att_type for x in self.columns]
+        if att_types.count('tier') > 1:
+            transcription = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='transcription'][0]
+            self.columns.pop(transcription[0])
         self.rows = self.corpus.words
+        self.allData = self.rows
 
         # TEMPORARAY COMMENTS
         # self.columns = list()
@@ -141,8 +163,7 @@ class BaseCorpusTableModel(BaseTableModel):
         #     #that didn't support default/alternative transcriptions
         #     self.columns = [x for x in self.corpus.attributes]
 
-        self.columns = [x for x in self.corpus.attributes]
-        self.allData = self.rows
+
 
     def sort(self, col, order):
         """sort table by given column number col"""
