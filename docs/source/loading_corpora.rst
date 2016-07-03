@@ -808,18 +808,14 @@ To create a subset, click on “File” / “Generate a corpus subset” and fol
 Saving and exporting a corpus or feature file
 =============================================
 
-If “Auto-save” is on (which is the default; see :ref:`preferences`), most changes
-to your corpus (adding a feature system, words, tiers, etc.) will be saved automatically
-and will be available the next time you load the corpus in PCT. Some
-changes are not automatically saved (removing or editing word entries),
-even if Auto-save is on, to prevent inadvertant loss of information.
-If you have made changes that have not been automatically saved, and
-then quit PCT, you will receive a warning message indicating that there
-are unsaved changes. At that point, you may either choose “Don’t save”
-(and therefore lose any such changes), “Save” (to save the changes in
-its current state, to be used the next time it is loaded into PCT), or
-“Cancel” (and return to the corpus view).
+If changes have been made to a corpus (e.g., adding a new tier), you can save them by going to "File" / "Save corpus." If you attempt to close a corpus that has had changes made to it, without first saving them, the "Overwrite corpus?" dialogue box appears:
 
+.. image:: static/overwrite_file.png
+   :width: 90%
+   :align: center
+   
+Here you can specify whether the changes should be saved within the corpus, i.e., overwriting the old version of the corpus, or should be saved as a new, separate corpus. The default is to suggest a new corpus name, based on the old one, but you can select "Overwrite existing file" to simply save the changes within the open corpus. You can also select "Don't ask again and always overwrite old files" to have PCT auto-save changes within a corpus without checking; this setting can be changed at any time in :ref:`preferences`. If you want to discard the changes entirely and not save them either within the current corpus or in a new version of the corpus, simply click "Cancel."
+   
 It is also possible to export
 the corpus as a text file (.txt), which can be opened in other software,
 by selecting “File” / “Export corpus as text file” and entering the
@@ -852,39 +848,22 @@ Preferences
 There are several preferences that can be set in PCT. These can be
 selected by going to “Options” / “Preferences....” The following are available:
 
-1. **Storage**:
-
-   a. **File location**: By default, PCT will save corpus, feature, and
-      result files to your local “Documents” directory, which should
-      exist under the default settings on most computers. When saving
-      a particular output file, you can generally specify the particular
-      storage location as you are saving. However, it is also possible
-      to change the default storage location by changing the file path
-      in this dialogue box. You may enter the path name directly, or
-      select it from a system window by selecting “Choose directory...”.
-   b. **Auto-save**: By default, PCT will automatically save changes to a
-      corpus (e.g., if you have updated a feature system, added a
-      tier, etc.). De-select this option if you prefer to manually
-      save such changes (PCT will prompt you before closing without
-      saving). Changes to word entries (removing or editing a word)
-      are NOT auto-saved and should be saved manually if you want them
-      to be saved; again, PCT will prompt you to save in these cases
-      before exiting. Once Auto-save is deselected, PCT will remember
-      that this is your preference for the next time you open the software -
-      it will not automatically get turned back on.
-
-2. **Display**: By default, PCT will display three decimal places in on-screen
+1. **Storage**: By default, PCT will save corpus, feature, and result files to your local “Documents” directory, which should exist under the default settings on most computers. When saving a particular output file, you can generally specify the particular storage location as you are saving. However, it is also possible to change the default storage location by changing the file path in this dialogue box. You may enter the path name directly, or select it from a system window by selecting “Choose directory...”.
+2. **Display**: 
+   a. **Decimal Places**: By default, PCT will display three decimal places in on-screen
    results tables (e.g., when calculating predictability of distribution or
    string similarity, etc.). The number of displayed decimal places can
    be globally changed here. Note that regardless of the number specified
    here, PCT will save results to files using all of the decimal places
    it has calculated.
+   b. **Wildcard Display**: When creating an environment (see :ref:`environment_selection`), there is an option to include a "wildcard" in any position, which will match any segment in the inventory. The default is for this to display as a single asterisk, but you can change it here to always display the entire set of segments in the inventory if you want to verify what segments are actually being included.
 3. **Processing**: Some calculations consume rather a lot of computational
    resources and can be made faster by using multiprocessing. To allow
    PCT to use multiprocessing on multiple cores when that is possible,
    select this option and indicate how many cores should be used (enter
    0 to have PCT automatically use ¾ of the number of cores available
    on your machine).
+4. **Reminders**: By default, PCT will ask before overwriting feature and corpus files. You can change this; unselecting either option will cause PCT to auto-save changes as over-writes to the existing files. See also :ref:`corpus_save`.
 
 .. _warnings:
 
@@ -895,10 +874,6 @@ When using PCT, hovering over a dialogue box within a function will
 automatically reveal quick ToolTips that give brief information about
 the various aspects of the function. These can be turned on or off by
 going to “Options” / “Show tooltips.”
-
-PCT will also issue certain warnings if various parameters aren’t met.
-It is possible to turn warning messages off by going to “Options” /
-“Show warnings.”
 
 There is also extensive documentation for all aspects of PCT (of which
 the current text is part). There are several options for accessing this information:
@@ -931,9 +906,6 @@ Ctrl-V on a PC; Command-C and Command-V on a Mac).
 
 Updates
 --------
-
-To manually see whether there is a more recent version of PCT available
-for download, click on "Help" / "Check for updates...".
 
 To be automatically notified of new versions of PCT or any other major news
 that is relevant to all users, please sign up for the PCT mailing list,
