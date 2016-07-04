@@ -1021,6 +1021,7 @@ class LoadCorpusDialog(PCTDialog):
                         save_binary(c,
                                     corpus_name_to_path(self.settings['storage'], c.name))
                     else:
+                        self.corpus = None
                         return
             QDialog.accept(self)
 
