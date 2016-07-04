@@ -105,9 +105,9 @@ class BaseCorpusTableModel(BaseTableModel):
 
         def column_sort(x):
             att_type = x.att_type
-            if att_type == 'tier':
+            if att_type == 'spelling':
                 return 0
-            elif att_type == 'spelling':
+            elif att_type == 'tier':
                 return 1
             elif att_type == 'factor':
                 return 2
