@@ -326,16 +326,14 @@ Once a corpus is loaded, use the following steps.
     calculations, the calculation can be added to the already started table,
     for direct comparison, or a new table can be started.
 
-    .. note:: that if a table is closed, new calculations will not be added to the previously
+   Note that if a table is closed, new calculations will not be added to the previously
        open table; a new table must be started.
 
-    Either way, the results table will have the following columns, with one row per calculation: segment 1,
-    segment 2, which tier was used, which measurement method was selected,
+    Either way, the results table will have the following columns, with one row per calculation: the corpus used, segment 1,
+    segment 2, which tier was used, what environment(s) were selected (if applicable), which measurement method was selected,
     the resulting functional load, what the minimum frequency was, what
-    strategy was used for dealing with pronunciation variants, and for
-    calculations using minimal pairs, whether the count is absolute or
-    relative and whether homophones were ignored or not. (For calculations
-    using change in entropy, “N/A” values are entered into the latter two columns.)
+    strategy was used for dealing with pronunciation variants, whether the result is relativized (normalized) or not, and for
+    calculations using minimal pairs, whether homophones were ignored or not. 
 
 11. **Saving results**: Once a results table has been generated for at least
     one pair, the table can be saved by clicking on “Save to file” at the
