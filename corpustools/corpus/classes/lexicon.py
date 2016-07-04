@@ -1685,7 +1685,8 @@ class Inventory(object):
 
 
     """
-    inventory_attributes = {'_data': list(), 'segs': {'#': Segment('#')}, 'features': list(), 'possible_values': list(),
+    inventory_attributes = {'_data': list(), 'segs': {'#': Segment('#')},
+                            'features': list(), 'possible_values': list(),
                             'stresses': list(),
                             'consColumns': set(), 'vowelColumns': set(),
                             'vowelRows': set(), 'consRows': set(),
@@ -1695,7 +1696,7 @@ class Inventory(object):
                             'all_columns': dict(), 'vowel_column_offset': int(), 'vowel_row_offset': int(),
                             'cons_column_header_order': dict(), 'cons_row_header_order': dict(),
                             'vowel_row_header_order': dict(), 'vowel_column_header_order': dict(),
-                            'consList': list(), 'vowelList': list(), 'non_segment_symbols': ['#'],
+                            'consList': list(), 'vowelList': list(), 'non_segment_symbols': ['#', '-', '='],
                             'vowel_features': [None], 'cons_features': [None], 'voice_feature': None,
                             'rounded_feature': None,
                             'diph_feature': None, 'isNew': True, 'filterNames': False,

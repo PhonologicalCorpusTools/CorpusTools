@@ -310,14 +310,17 @@ def parse_transcription(string, annotation_type):
             transcription += trans
         return transcription
     ignored = annotation_type.ignored_characters
+
     if ignored is not None:
         string = ''.join(x for x in string if x not in ignored)
+
     if annotation_type.trans_delimiter is None:
-        string = [x for x in string]
+        if annotation_type.digraph_pattern is not None:
+            string = annotation_type.digraph_pattern.findall(string)
+        else:
+            string = [x for x in string]
     elif annotation_type.trans_delimiter is not None:
         string = string.split(annotation_type.trans_delimiter)
-    elif annotation_type.digraph_pattern is not None:
-        string = annotation_type.digraph_pattern.findall(string)
     else:
         string = parse_numbers.findall(string)
     final_string = []
