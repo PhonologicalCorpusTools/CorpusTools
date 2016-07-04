@@ -898,39 +898,47 @@ class Word(object):
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
             key = key.lower()
+            print(key, value, type(value))
+
             if isinstance(value, tuple):
+                #this block of code is used when loading a corpus for the first time
                 att, value = value
+                if att.att_type == 'numeric':
+                    try:
+                        value = locale.atof(value)
+                    except (ValueError, TypeError):
+                        value = float('nan')
+                elif att.att_type == 'factor':
+                    pass
+                elif att.att_type == 'spelling':
+                    pass
+                elif att.att_type == 'tier':
+                    value = Transcription(value)
+
+                if att.att_type == 'tier' and not key == 'transcription':
+                    setattr(self, 'transcription', value)
+                elif att.att_type == 'spelling' and not key == 'spelling':
+                    setattr(self, 'spelling', value)
+                elif key in self._freq_names:
+                    key = 'frequency'
+
+                setattr(self, key, value)  #this is done twice on purpose
+
+            #the following code is reached when adding a word, not when loading a corpus
             elif isinstance(value, list):
                 #probably a transcription
-                att = Attribute(key, 'tier', key)
+                value = Transcription(value)
+                setattr(self, key, value)
+
             elif isinstance(value, str):
                 try:
                     value = float(value)
-                    att = Attribute('frequency', 'numeric', 'frequency')
                 except ValueError:
-                    att = Attribute(key, 'spelling', key)
+                    pass #it's spelling, leave value as-is
+                setattr(self, key, value)
 
-            if att.att_type == 'numeric':
-                try:
-                    value = locale.atof(value)
-                except (ValueError, TypeError):
-                    value = float('nan')
-            elif att.att_type == 'factor':
-                pass
-            elif att.att_type == 'spelling':
-                pass
-            elif att.att_type == 'tier':
-                value = Transcription(value)
-
-            #problem: loading a corpus, we want the following code, but when adding a word we don't
-            if att.att_type == 'tier' and not key == 'transcription':
-                setattr(self, 'transcription', value)
-            elif att.att_type == 'spelling' and not key == 'spelling':
-                setattr(self, 'spelling', value)
-            elif key in self._freq_names:
-                key = 'frequency'
-
-            setattr(self, key, value) #this is done twice on purpose
+            elif isinstance(value, (float, int)):
+                setattr(self, key, value)
 
             if key not in self.descriptors:
                 self.descriptors.append(key)

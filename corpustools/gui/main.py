@@ -1091,6 +1091,8 @@ class MainWindow(QMainWindow):
                     self.saveCorpus()
                 elif reply.choice == 'cancel':
                     return
+            else:
+                self.saveCorpus()
 
         self.corpusModel = None
         if self.FLWindow is not None:
