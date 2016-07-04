@@ -907,6 +907,9 @@ Ctrl-V on a PC; Command-C and Command-V on a Mac).
 Updates
 --------
 
+To manually see whether there is a more recent version of PCT available
+for download, click on "Help" / "Check for updates...".
+
 To be automatically notified of new versions of PCT or any other major news
 that is relevant to all users, please sign up for the PCT mailing list,
 available from the `PCT website`_.
