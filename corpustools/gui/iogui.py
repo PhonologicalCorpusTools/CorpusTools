@@ -838,6 +838,21 @@ class LoadCorpusDialog(PCTDialog):
                 x.is_default = False
                 x.attribute.is_default = False
 
+        type_ = self.supported_types[self.tabWidget.currentIndex() + 1][0]
+        if type_ == 'running':
+            if self.runningSelect.currentText() == 'Transcribed':
+                if not any([x.base for x in kwargs['annotation_types']]):
+                    QMessageBox.critical(self, 'Incompatible Information',
+                                         'You have selected running text of type "Transcription" in the left window, '
+                                        'but in the Parsing Preview window you did not select a transcription')
+                    return
+            elif self.runningSelect.currentText() == 'Orthography':
+                if not any([x.anchor for x in kwargs['annotation_types']]):
+                    QMessageBox.critical(self, 'Incompatible Information',
+                                         'You have selecting running text of type "Orthography" in the left window, '
+                                        'but in the Parsing Preview window you did not select an orthography.')
+                    return
+
         if (not any([x.base for x in kwargs['annotation_types']])
             and not any([x.anchor for x in kwargs['annotation_types']])):
             QMessageBox.critical(self, 'Missing information',

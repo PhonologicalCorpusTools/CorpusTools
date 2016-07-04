@@ -898,8 +898,6 @@ class Word(object):
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
             key = key.lower()
-            print(key, value, type(value))
-
             if isinstance(value, tuple):
                 #this block of code is used when loading a corpus for the first time
                 att, value = value
