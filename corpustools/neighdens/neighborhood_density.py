@@ -27,7 +27,7 @@ def _is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
 
 def neighborhood_density_all_words(corpus_context,
             algorithm = 'edit_distance', max_distance = 1,
-            num_cores = -1,
+            num_cores = -1, settable_attr = None,
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of all words in the corpus and
     adds them as attributes of the words.
@@ -44,6 +44,8 @@ def neighborhood_density_all_words(corpus_context,
         Optional function to check whether to gracefully terminate early
     call_back : callable, optional
         Optional function to supply progress information during the function
+    settable_attr: string
+        Name of attribute that neighbourhood density results will be assigned to
     """
     function = partial(neighborhood_density, corpus_context,
                         algorithm = algorithm,
@@ -61,7 +63,8 @@ def neighborhood_density_all_words(corpus_context,
             call_back(cur)
             res = function(w)
 
-            setattr(w.original, corpus_context.attribute.name, res[0])
+            #setattr(w.original, corpus_context.attribute.name, res[0])
+            setattr(w.original, settable_attr.name, res[0])
     else:
         iterable = ((w,) for w in corpus_context)
 
@@ -71,7 +74,8 @@ def neighborhood_density_all_words(corpus_context,
             #Have to look up the key, then look up the object due to how
             #multiprocessing pickles objects
             setattr(corpus_context.corpus.find(corpus_context.corpus.key(n[0])),
-                    corpus_context.attribute.name, n[1][0])
+                    #corpus_context.attribute.name, n[1][0])
+                    settable_attr.name, n[1][0])
 
 
 

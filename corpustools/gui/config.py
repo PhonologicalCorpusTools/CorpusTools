@@ -64,7 +64,6 @@ class ReminderPane(BasePane):
         layout.addRow(QLabel('Always ask before overwriting a corpus'), self.remindCorpusFile)
         layout.addRow(QLabel('Always ask before overwriting a feature file'), self.remindFeatureFile)
 
-
         self.setLayout(layout)
 
         self.remindFeatureFile.setChecked(setting_dict['ask_overwrite_features'])
@@ -157,7 +156,7 @@ class Settings(object):
                     'size':('display/size', QSize(270, 225)),
                     'pos': ('display/pos', QPoint(50, 50)),
                     'sigfigs': ('display/sigfigs',3),
-                    'warnings': ('display/warnings',1),
+                    'warnings': ('reminders/warnings',1),
                     'tooltips': ('display/tooltips',1),
                     'show_full_inventory': ('display/searchResults', 0),
                     'use_multi': ('multiprocessing/enabled',0),
@@ -167,11 +166,11 @@ class Settings(object):
 
     storage_setting_keys = ['storage']
 
-    display_setting_keys = ['sigfigs', 'warnings', 'tooltips', 'show_full_inventory']
+    display_setting_keys = ['sigfigs', 'tooltips', 'show_full_inventory']
 
     processing_setting_keys = ['use_multi','num_cores']
 
-    reminder_setting_keys = ['ask_overwrite_features', 'ask_overwrite_corpus']
+    reminder_setting_keys = ['ask_overwrite_features', 'ask_overwrite_corpus', 'warnings']
 
     def __init__(self):
         self.qs = QSettings("PCT","Phonological CorpusTools")

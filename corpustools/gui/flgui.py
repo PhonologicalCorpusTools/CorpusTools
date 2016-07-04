@@ -89,8 +89,8 @@ class FLDialog(FunctionDialog):
                 'Pronunciation variants',
                 'Minimum word frequency',
                 'Environments',
-                'Result',
-                'Non-normalized result']
+                'Result']
+                #'Non-normalized result']
 
     _about = [('This function calculates the functional load of the contrast'
                     ' between any two segments, based on either the number of minimal'
@@ -329,17 +329,30 @@ class FLDialog(FunctionDialog):
             else:
                 normalized = str(pre_normalized)
 
+            if self.relativeCountWidget.isEnabled():
+                if self.relativeCountWidget.isChecked():
+                    relative_str = 'Yes'
+                else:
+                    relative_str = 'No'
+            elif self.preventNormalizationWidget.isEnabled():
+                if self.preventNormalizationWidget.isChecked():
+                    relative_str = 'No'
+                else:
+                    relative_str = 'Yes'
+            else:
+                relative_str = 'No'
+
 
             self.results.append({'Corpus': self.corpus.name,
                                 'First segment': seg_one,
                                 'Second segment': seg_two,
                                 'Algorithm': self.algorithmWidget.displayValue(),
                                 'Distinguished homophones': self.homophoneWidget.isChecked(),
-                                'Relative count': self.relativeCountWidget.isChecked(),
+                                'Relative count': relative_str,# self.relativeCountWidget.isChecked(),
                                 'Transcription tier': self.tierWidget.displayValue(),
                                 'Frequency type': self.typeTokenWidget.value().title(),
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
                                 'Environments': environments,
-                                'Non-normalized result': normalized,
+                                #'Non-normalized result': normalized,
                                 'Result': r[0]})

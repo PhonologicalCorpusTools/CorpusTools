@@ -30,7 +30,7 @@ class NDWorker(FunctionWorker):
         tt = kwargs['type_token']
         att = kwargs.get('attribute', None)
         ft = kwargs['frequency_cutoff']
-        with cm(corpus, st, tt, frequency_threshold = ft) as c:
+        with cm(corpus, st, tt, attribute=att, frequency_threshold = ft) as c:
             try:
                 if 'query' in kwargs:
                     for q in kwargs['query']:
@@ -58,7 +58,8 @@ class NDWorker(FunctionWorker):
                                                 max_distance = kwargs['max_distance'],
                                                 num_cores = kwargs['num_cores'],
                                                 call_back = kwargs['call_back'],
-                                                stop_check = kwargs['stop_check']
+                                                stop_check = kwargs['stop_check'],
+                                                settable_attr = kwargs['attribute']
                                                 )
                     else:
                         find_mutation_minpairs_all_words(c,
@@ -113,7 +114,8 @@ class NDDialog(FunctionDialog):
         if not self.corpusModel.corpus.has_transcription:
             self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
         elif self.corpusModel.corpus.specifier is None:
-            self.layout().addWidget(QLabel('Corpus does not have a feature system loaded, so not all options are available.'))
+            self.layout().addWidget(QLabel(('Corpus does not have a feature system loaded, so not all '
+                                           'options are available.')))
         ndlayout = QHBoxLayout()
 
         algLayout = QVBoxLayout()
@@ -174,6 +176,10 @@ class NDDialog(FunctionDialog):
         vbox.addRow(self.fileWidget)
         vbox.addRow(self.allwordsRadio)
         vbox.addRow(QLabel('Column name:'),self.columnEdit)
+        note = QLabel('(Selecting this option will add a new column containing the results to your corpus. '
+                           'No results window will be displayed.)')
+        note.setWordWrap(True)
+        vbox.addRow(note)
 
         queryFrame.setLayout(vbox)
 
@@ -302,6 +308,7 @@ class NDDialog(FunctionDialog):
                                 ' or any transcription tier of a word (perhaps more useful for phonological purposes),'
                                 ' in the corpus.'
             "</FONT>"))
+
 
     def createNonword(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventory)

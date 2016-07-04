@@ -687,23 +687,23 @@ class LoadCorpusDialog(PCTDialog):
                 self.tabWidget.setTabEnabled(i, False)
 
     def typeChanged(self):
-        type = self.supported_types[self.tabWidget.currentIndex() + 1][0]
-        if type == 'running':
+        type_ = self.supported_types[self.tabWidget.currentIndex() + 1][0]
+        if type_ == 'running':
             if self.runningSelect.currentText() == 'Orthography':
-                type = 'spelling'
+                type_ = 'spelling'
             else:
-                type = 'transcription'
-        elif type == 'multiple':
+                type_ = 'transcription'
+        elif type_ == 'multiple':
             if self.multSelect.currentText() == 'Buckeye':
-                type = 'buckeye'
+                type_ = 'buckeye'
             else:
-                type = 'timit'
-        self.textType = type
+                type_ = 'timit'
+        self.textType = type_
         if self.isDirectory:
             t = 'text'
-            if type == 'textgrid':
-                t = type
-            elif type in ['buckeye','timit']:
+            if type_ == 'textgrid':
+                t = type_
+            elif type_ in ['buckeye','timit']:
                 t = 'multiple'
             self.pathWidget.updateType(t)
         self.inspect()
@@ -825,8 +825,6 @@ class LoadCorpusDialog(PCTDialog):
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
-
-
         #This loop should not be necessary, but I can't figure out why the Attributes of default AnnotationTypes
         #are not getting their is_default value set properly elsewhere, so I force it here
 

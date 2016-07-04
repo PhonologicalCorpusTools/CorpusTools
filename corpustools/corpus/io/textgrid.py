@@ -170,7 +170,6 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
     if call_back is not None:
         call_back('Loading...')
         cur = 0
-
     for word_name in data.word_levels:
         if stop_check is not None and stop_check():
             return
@@ -228,7 +227,7 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
                     continue
                 if at.anchor:
                     continue
-                t = tg.getFirst(at.name)
+                t = tg.getFirst(at.attribute.name)
                 ti = t.intervalContaining(mid_point)
 
                 if ti is None:
@@ -279,6 +278,7 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     Discourse
         Discourse object generated from the TextGrid file
     """
+
     data = textgrid_to_data(path, annotation_types, call_back=call_back, stop_check=stop_check)
     if data is None:
         return

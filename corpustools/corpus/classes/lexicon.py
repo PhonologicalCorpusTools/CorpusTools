@@ -898,7 +898,18 @@ class Word(object):
         self.descriptors = ['spelling','transcription', 'frequency']
         for key, value in kwargs.items():
             key = key.lower()
-            att, value = value
+            if isinstance(value, tuple):
+                att, value = value
+            elif isinstance(value, list):
+                #probably a transcription
+                att = Attribute(key, 'tier', key)
+            elif isinstance(value, str):
+                try:
+                    value = float(value)
+                    att = Attribute('frequency', 'numeric', 'frequency')
+                except ValueError:
+                    att = Attribute(key, 'spelling', key)
+
             if att.att_type == 'numeric':
                 try:
                     value = locale.atof(value)
@@ -911,6 +922,7 @@ class Word(object):
             elif att.att_type == 'tier':
                 value = Transcription(value)
 
+            #problem: loading a corpus, we want the following code, but when adding a word we don't
             if att.att_type == 'tier' and not key == 'transcription':
                 setattr(self, 'transcription', value)
             elif att.att_type == 'spelling' and not key == 'spelling':
@@ -918,7 +930,7 @@ class Word(object):
             elif key in self._freq_names:
                 key = 'frequency'
 
-            setattr(self, key, value)
+            setattr(self, key, value) #this is done twice on purpose
 
             if key not in self.descriptors:
                 self.descriptors.append(key)

@@ -1787,6 +1787,12 @@ class InventoryModel(QAbstractTableModel):
             redundant_features.append(f)
         return redundant_features
 
+    def get_consonants(self):
+        return [seg for seg in self.get_segs() if self.isCons(seg)]
+
+    def get_vowels(self):
+        return [seg for seg in self.get_segs() if self.isVowel(seg)]
+
 
     def features_to_segments(self, feature_description):
         """

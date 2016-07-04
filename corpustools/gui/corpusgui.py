@@ -333,12 +333,14 @@ class AddTierDialog(CreateClassWidget):
             return
         elif self.attribute.name in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
-                                         "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
+                                         "Invalid information",
+                                         "The name '{}' overlaps with a protected column.".format(tierName))
             return
         elif self.attribute in self.corpus.attributes:
 
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
-                                 "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
+                                 "'{}' is already the name of a tier.  Overwrite?".format(tierName),
+                                 QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -348,7 +350,8 @@ class AddTierDialog(CreateClassWidget):
         inClass, notInClass = self.generateClass()
         if not inClass:
             reply = QMessageBox.critical(self,
-                                         "Missing information", "Please specify at least one segment or one feature value")
+                                         "Missing information",
+                                         "Please specify at least one segment or one feature value")
         self.segList = inClass
         QDialog.accept(self)
 
@@ -511,9 +514,10 @@ class AddColumnDialog(QDialog):
 
 
 class AddAbstractTierDialog(QDialog):
-    def __init__(self, parent, corpus):
+    def __init__(self, parent, corpus, inventory):
         QDialog.__init__(self,parent)
         self.corpus = corpus
+        self.inventory = inventory
 
         layout = QVBoxLayout()
 
@@ -549,16 +553,16 @@ class AddAbstractTierDialog(QDialog):
         self.setWindowTitle('Create abstract tier')
 
     def generateSegList(self):
-        consonants = []
-        vowels = []
-        for seg in self.corpus.inventory:
-            category = self.corpus.inventory.categorize(seg)
-            if category is None:
-                continue
-            elif category[0] == 'Consonant':
-                consonants.append(seg.symbol)
-            else:
-                vowels.append(seg.symbol)
+        consonants = [c.symbol for c in self.inventory.get_consonants()]
+        vowels = [v.symbol for v in self.inventory.get_vowels()]
+        # for seg in self.inventory:
+        #     category = self.inventory.categorize(seg)
+        #     if category is None:
+        #         continue
+        #     elif category[0] == 'Consonant':
+        #         consonants.append(seg.symbol)
+        #     else:
+        #         vowels.append(seg.symbol)
         segList = {'C' : consonants,
                     'V' : vowels}
         return segList

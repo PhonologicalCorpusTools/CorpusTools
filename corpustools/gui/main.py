@@ -189,6 +189,8 @@ class MainWindow(QMainWindow):
                         self.saveCorpus()
 
                     self.settings['ask_overwrite_corpus'] = 0 if reply.stopShowing.isChecked() else 1
+                else:
+                    self.saveCorpus()
             function(self)
         return do_check
 
@@ -488,7 +490,7 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def createAbstractTier(self):
-        dialog = AddAbstractTierDialog(self, self.corpusModel.corpus)
+        dialog = AddAbstractTierDialog(self, self.corpusModel.corpus, self.inventoryModel)
         if dialog.exec_():
             self.corpusModel.addAbstractTier(dialog.attribute, dialog.segList)
             if self.settings['ask_overwrite_corpus']:
@@ -683,8 +685,7 @@ class MainWindow(QMainWindow):
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
                 self.PPWindow.table.model().addRows(dialog.results)
             else:
-                self.PPWindow = ResultsWindow('Phonotactic probability results',
-                        dialog,self)
+                self.PPWindow = ResultsWindow('Phonotactic probability results', dialog,self)
                 self.PPWindow.show()
                 self.showPPResults.triggered.connect(self.PPWindow.raise_)
                 self.showPPResults.triggered.connect(self.PPWindow.activateWindow)

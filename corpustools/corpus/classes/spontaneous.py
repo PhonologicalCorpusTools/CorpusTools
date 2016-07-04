@@ -444,7 +444,6 @@ class WordToken(object):
         #
         #     setattr(self, key, value)
 
-
         for key, value in kwargs.items():
             key = key.lower()
             if key == 'transcription':

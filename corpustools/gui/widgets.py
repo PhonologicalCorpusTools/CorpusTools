@@ -374,7 +374,7 @@ class AnnotationTypeWidget(QGroupBox):
         if 'Orthography' in check_text:
             a.anchor = True
             a.base = False
-            name = 'spelling'
+            #name = 'spelling'
             atype = 'spelling'
             if 'default' in check_text:
                 a.default = True
@@ -2592,17 +2592,6 @@ class CreateClassWidget(QDialog):
             'PCT will allow you to create Tiers consisting of any arbitrary set of segments.\n'
             'Once created, the Tier will be added as a column in your corpus, and it will be visible in the main window. '
             'You can then select this Tier inside of certain analysis functions.')
-        elif self.class_type == 'class':
-            explanation = QLabel(('You can create Classes in this window. A Class is simply a set of segments from the inventory '
-            'of your corpus. Classes are normally created on the basis of shared phonological _features, in which case they are '
-            'usually called  \"natural\" classes. An arbitrary set of segments with no common _features may be called \"unnatural\".\n'
-            'PCT allows the creation of classes of either type. Once created, Classes can be selected from within certain analysis functions. '
-            'Classes can also be used to organize the inventory chart for your corpus'))
-        elif self.class_type == 'inventory':
-            self.class_type = 'row or column'
-            explanation = ('This window allows you to specify the details of the column or row you selected in your '
-                            'inventory. You can change the name, and you can set a filter for which kinds of segments '
-                            'should appear in this column or row.')
         else:
             explanation = ''
 
