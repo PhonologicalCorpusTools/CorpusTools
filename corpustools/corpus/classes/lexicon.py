@@ -896,6 +896,8 @@ class Word(object):
         self.frequency = 0
         self.wordtokens = []
         self.descriptors = ['spelling','transcription', 'frequency']
+        transcription_exists = False
+        spelling_exists = False
         for key, value in kwargs.items():
             key = key.lower()
             if isinstance(value, tuple):
@@ -913,10 +915,12 @@ class Word(object):
                 elif att.att_type == 'tier':
                     value = Transcription(value)
 
-                if att.att_type == 'tier' and not key == 'transcription':
-                    setattr(self, 'transcription', value)
-                elif att.att_type == 'spelling' and not key == 'spelling':
-                    setattr(self, 'spelling', value)
+                if att.att_type == 'tier':# and not key == 'transcription':
+                    #setattr(self, 'transcription', value)
+                    transcription_exists = True
+                elif att.att_type == 'spelling':# and not key == 'spelling':
+                    #setattr(self, 'spelling', value)
+                    spelling_exists = True
                 elif key in self._freq_names:
                     key = 'frequency'
 
@@ -941,54 +945,9 @@ class Word(object):
             if key not in self.descriptors:
                 self.descriptors.append(key)
 
-            # NOT TEMPORARY - THIS COULD POTENTIALLY BE REPLACED WITH THE ABOVE CODE
-            # if isinstance(value, tuple):
-            #     att, value = value
-            #     if att.att_type == 'numeric':
-            #         try:
-            #             value = locale.atof(value)
-            #         except (ValueError, TypeError):
-            #             value = float('nan')
-            #     elif att.att_type == 'tier':
-            #         value = Transcription(value)
-            # else:
-            #     if key in self._freq_names:
-            #         key = 'frequency'
-            #     if isinstance(value,list):
-            #         #assume transcription type stuff
-            #         value = Transcription(value)
-            #     elif key != 'spelling':
-            #         try:
-            #             f = float(value)
-            #             if not math.isnan(f) and not math.isinf(f):
-            #                 value = f
-            #         except (ValueError, TypeError):
-            #             pass
-            #     if key not in self.descriptors:
-            #         self.descriptors.append(key)
-
-
-
-            # TEMPORARY COMMENT
-            # if att.is_default:
-            #     if att.att_type == 'tier':
-            #         setattr(self, 'transcription', value)
-            #     else:
-            #         setattr(self, 'spelling', value)
-            #     setattr(self, key, value)
-            #     #set this twice on purpose, it allows for custom user names without changing much other code
-            #
-            # else:
-            #     if key == 'transcription': #if a non-default happens to share a reserved name
-            #         setattr(self, 'transcription (alternative)', value)
-            #     elif key == 'spelling':
-            #         setattr(self, 'spelling (alternative)', value)
-            #     else:
-            #         setattr(self, key, value)
-
-        if self.spelling is None and self.transcription is None:
+        if not transcription_exists and not spelling_exists:#self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
-        if self.spelling is None:
+        if not spelling_exists:#self.spelling is None:
             self.spelling = ''.join(map(str,self.transcription))
 
     def get_len(self, tier_name):

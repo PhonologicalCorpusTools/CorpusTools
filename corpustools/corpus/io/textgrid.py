@@ -239,9 +239,9 @@ def textgrid_to_data(path, annotation_types, stop_check = None,
                     elif at.ignored:
                         value = ''.join(x for x in value if x not in at.ignored)
                 if at.token:
-                    word.token[at.name] = value
+                    word.token[at.attribute.name] = value
                 else:
-                    word.additional[at.name] = value
+                    word.additional[at.attribute.name] = value
 
             annotations[word_name] = [word]
             data.add_annotations(**annotations)
@@ -280,11 +280,14 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     """
 
     data = textgrid_to_data(path, annotation_types, call_back=call_back, stop_check=stop_check)
+    #data is a DiscourseData object, see corpus\io\helper.py
     if data is None:
         return
     data.name = corpus_name
     data.wav_path = find_wav_path(path)
+
     discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    #discourse is a Discourse object, see corpus\classes\lexicon.py
     if discourse is None:
         return
     if feature_system_path is not None:

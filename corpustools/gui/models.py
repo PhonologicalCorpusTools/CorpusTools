@@ -106,10 +106,10 @@ class BaseCorpusTableModel(BaseTableModel):
         #  TEMP FIX TO GET ONLY ONE TRANSCRIPTION COLUMN
         self.columns = [x for x in self.corpus.attributes]
         self.columns.sort(key=self.column_sort)
-        att_types = [x.att_type for x in self.columns]
-        if att_types.count('tier') > 1:
-            transcription = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='transcription'][0]
-            self.columns.pop(transcription[0])
+        # att_types = [x.att_type for x in self.columns]
+        # if att_types.count('tier') > 1:
+        #     transcription = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='transcription'][0]
+        #     self.columns.pop(transcription[0])
         self.rows = self.corpus.words
         self.allData = self.rows
 

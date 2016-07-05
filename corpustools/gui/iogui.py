@@ -825,8 +825,6 @@ class LoadCorpusDialog(PCTDialog):
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
-        #This loop should not be necessary, but I can't figure out why the Attributes of default AnnotationTypes
-        #are not getting their is_default value set properly elsewhere, so I force it here
 
         # TEMPORARY COMMENTS
         for x in kwargs['annotation_types']:
@@ -887,19 +885,19 @@ class LoadCorpusDialog(PCTDialog):
         duplicates = False
         names = [x.name for x in kwargs['annotation_types']]
         #TEMPORARY COMMENTS
-        if names.count('Transcription') > 1:# (default)') > 1:
-            duplicates = 'Transcription'# (default)'
-        elif names.count('Orthography') > 1:# (default)') > 1:
-            duplicates = 'Orthography'# (default)'
-        if duplicates:
-            QMessageBox.critical(self, 'Duplicate information',
-            ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
-            'section to change this.\n\n'
-            'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
-            'more than one transcription or spelling system, choose one default and set the others '
-            'to "Other (character)"'.format(duplicates)))
-            #'to "alternative".'.format(duplicates)))
-            return
+        # if names.count('Transcription') > 1:# (default)') > 1:
+        #     duplicates = 'Transcription'# (default)'
+        # elif names.count('Orthography') > 1:# (default)') > 1:
+        #     duplicates = 'Orthography'# (default)'
+        # if duplicates:
+        #     QMessageBox.critical(self, 'Duplicate information',
+        #     ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
+        #     'section to change this.\n\n'
+        #     'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
+        #     'more than one transcription or spelling system, choose one default and set the others '
+        #     'to "Other (character)"'.format(duplicates)))
+        #     #'to "alternative".'.format(duplicates)))
+        #     return
 
         if self.textType == 'csv':
             kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(
