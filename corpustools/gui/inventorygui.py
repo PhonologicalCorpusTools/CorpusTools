@@ -11,7 +11,7 @@ class InventoryManager(QDialog):
         self.setWindowTitle('Manage inventory')
         self.inventory = inventory
 
-        font = QFont('Arial', 10)
+        font = QFont('Arial', 12)
         font.setBold(True)
         layout = QVBoxLayout()
 
