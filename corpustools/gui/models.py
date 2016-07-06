@@ -103,52 +103,19 @@ class BaseCorpusTableModel(BaseTableModel):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
 
-        #  TEMP FIX TO GET ONLY ONE TRANSCRIPTION COLUMN
         self.columns = [x for x in self.corpus.attributes]
         self.columns.sort(key=self.column_sort)
-        # att_types = [x.att_type for x in self.columns]
-        # if att_types.count('tier') > 1:
-        #     transcription = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='transcription'][0]
-        #     self.columns.pop(transcription[0])
+        att_types = [x.att_type for x in self.columns]
+        # HIDE ANY SHADOW COLUMNS
+        if att_types.count('tier') > 1:
+            transcription = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='transcription'][0]
+            self.columns.pop(transcription[0])
+        if att_types.count('spelling') > 1:
+            spell = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='spelling'][0]
+            self.columns.pop(spell[0])
+
         self.rows = self.corpus.words
         self.allData = self.rows
-
-        # TEMPORARAY COMMENTS
-        # self.columns = list()
-        # index_list = [ None, [], None, [], [] ]
-        # default transcription, alt. transcriptions, default spelling,  alt. spellings, other headings
-        # try:
-        #     for attr in self.corpus.attributes:
-        #         if attr.att_type == 'tier':
-        #             if attr.is_default:
-        #                 index_list[0] = attr
-        #             else:
-        #                 index_list[1].append(attr)
-        #         elif attr.att_type == 'spelling':
-        #             if attr.is_default:
-        #                 index_list[2] = attr
-        #             else:
-        #                 index_list[3].append(attr)
-        #         else:
-        #             index_list[4].append(attr)
-        #
-        #         self.columns = [index_list[0]]
-        #         if index_list[1]:
-        #             keep = [x for x in index_list[1] if not x.name == 'transcription']
-        #             self.columns.extend(keep)
-        #         if index_list[2] is not None:
-        #             self.columns.append(index_list[2])
-        #         if index_list[3]:
-        #             keep = [x for x in index_list[3] if not x.name == 'spelling']
-        #             self.columns.extend(keep)
-        #         if index_list[4]:
-        #             self.columns.extend(index_list[4])
-        #         print('no att error')
-        #         print(self.columns)
-        # except AttributeError:
-        #     #this happens if the corpus is from an older version of PCT
-        #     #that didn't support default/alternative transcriptions
-        #     self.columns = [x for x in self.corpus.attributes]
 
 
     def column_sort(self, x):

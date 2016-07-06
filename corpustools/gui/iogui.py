@@ -62,7 +62,10 @@ class LoadCorpusWorker(FunctionWorker):
         textType = self.kwargs.pop('text_type')
         isDirectory = self.kwargs.pop('isDirectory')
         logging.info('Importing {} corpus named {}'.format(textType, self.kwargs['corpus_name']))
-        logging.info('Path: '.format(self.kwargs['path']))
+        try:
+            logging.info('Path: '.format(self.kwargs['path']))
+        except KeyError:#Buckeye Corpus
+            logging.info('Path: '.format(self.kwargs['word_path']))
         log_annotation_types(self.kwargs['annotation_types'])
         try:
             if textType == 'spelling':
@@ -937,7 +940,6 @@ class LoadCorpusDialog(PCTDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
-
         return kwargs
 
     @check_for_errors

@@ -891,8 +891,8 @@ class Word(object):
 
         _corpus = None
 
-        self.transcription = None
-        self.spelling = None
+        self._transcription = None
+        self._spelling = None
         self.frequency = 0
         self.wordtokens = []
         self.descriptors = ['spelling','transcription', 'frequency']
@@ -915,16 +915,21 @@ class Word(object):
                 elif att.att_type == 'tier':
                     value = Transcription(value)
 
-                if att.att_type == 'tier':# and not key == 'transcription':
-                    #setattr(self, 'transcription', value)
+                if key == 'transcription':
+                    key = 'Transcription'
+                if key == 'spelling':
+                    key = 'Spelling'
+
+                if att.att_type == 'tier':# and self._transcription is None:
+                    setattr(self, '_transcription', value)
                     transcription_exists = True
-                elif att.att_type == 'spelling':# and not key == 'spelling':
-                    #setattr(self, 'spelling', value)
+                elif att.att_type == 'spelling':# and self._spelling is None:
+                    setattr(self, '_spelling', value)
                     spelling_exists = True
                 elif key in self._freq_names:
                     key = 'frequency'
 
-                setattr(self, key, value)  #this is done twice on purpose
+                setattr(self, key, value)
 
             #the following code is reached when adding a word, not when loading a corpus
             elif isinstance(value, list):
@@ -948,7 +953,15 @@ class Word(object):
         if not transcription_exists and not spelling_exists:#self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if not spelling_exists:#self.spelling is None:
-            self.spelling = ''.join(map(str,self.transcription))
+            self._spelling = ''.join(map(str,self._transcription))
+
+    @property
+    def transcription(self):
+        return self._transcription
+
+    @property
+    def spelling(self):
+        return self._spelling
 
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
@@ -965,7 +978,7 @@ class Word(object):
                 yield (j, getattr(self, tier_name)[j])
 
     def __hash__(self):
-        return hash((self.spelling,str(self.transcription)))
+        return hash((self._spelling,str(self._transcription)))
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -977,13 +990,13 @@ class Word(object):
         return state
 
     def __setstate__(self, state):
-        self.transcription = []
-        self.spelling = ''
+        self._transcription = []
+        self._spelling = ''
         self.frequency = 0
         if 'wordtokens' not in state:
             state['wordtokens'] = []
         if 'descriptors' not in state:
-            state['descriptors'] = ['spelling','transcription', 'frequency']
+            state['descriptors'] = ['_spelling','_transcription', 'frequency']
         if 'frequency' not in state['descriptors']:
             state['descriptors'].append('frequency')
         try:
