@@ -1,6 +1,17 @@
 import random
-from corpustools.corpus.classes.lexicon import Inventory, Segment, FeatureMatrix
+from corpustools.corpus.classes.lexicon import Corpus, Inventory, Segment, FeatureMatrix, Word
 from corpustools import __version__ as currentPCTversion
+
+def force_update2(corpus):
+    corpus = Corpus(None, update=corpus)
+    for word in [x for x in corpus]:
+        word2 = Word(update=word)
+        corpus.remove_word(word)
+        corpus.add_word(word2)
+    corpus.inventory = modernize_inventory_attributes(corpus.inventory)
+    corpus.inventory, corpus.specifier = modernize_features(corpus.inventory, corpus.specifier)
+    return corpus
+
 
 def force_update(corpus):
     #This runs through known incompatibilities with previous version of PCT and tries to patch them all up. This gets
@@ -12,12 +23,23 @@ def force_update(corpus):
                 {symbol: Segment(symbol) for symbol in Inventory.inventory_attributes['non_segment_symbols']})
     has_segs = [seg for seg in corpus.inventory.segs if not seg in Inventory.inventory_attributes['non_segment_symbols']]
 
+
+    segs = set()
+    #some old copora have a different spelling/transcription attribute set-up
+    for word in corpus:
+        if not hasattr(word, '_transcription'):
+            setattr(word, 'Transcription', getattr(word, 'transcription'))
+            word._transcription = word.Transcription
+            del word.transcription
+        if not hasattr(word, '_spelling'):
+            word._spelling = word.spelling
+        word._corpus = corpus
+        for seg in word.transcription:
+            segs.add(seg)
+        corpus.remove_word()
+        word = Word(update=word)
+
     if not has_segs:
-        #for some reason, the segment inventory is an empty list on some older PCT files
-        segs = set()
-        for word in corpus:
-            for seg in word.transcription:
-                segs.add(seg)
         for seg in segs:
             corpus.inventory.segs[seg] = Segment(seg,corpus.specifier.specify(seg))
 
@@ -33,8 +55,6 @@ def force_update(corpus):
             f_values.update(features.values())
         f_values.add('n')
         corpus.specifier.possible_values = f_values
-
-
     return corpus
 
 def need_update(corpus):

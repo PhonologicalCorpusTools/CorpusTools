@@ -104,6 +104,7 @@ class BaseCorpusTableModel(BaseTableModel):
         self.corpus = corpus
 
         self.columns = [x for x in self.corpus.attributes]
+
         self.columns.sort(key=self.column_sort)
         att_types = [x.att_type for x in self.columns]
         # HIDE ANY SHADOW COLUMNS

@@ -57,7 +57,6 @@ class LoadBinaryWorker(FunctionWorker):
 
 class LoadCorpusWorker(FunctionWorker):
 
-
     def run(self):
         textType = self.kwargs.pop('text_type')
         isDirectory = self.kwargs.pop('isDirectory')
@@ -139,9 +138,9 @@ class LoadCorpusWorker(FunctionWorker):
 
 
 class CorpusLoadDialog(PCTDialog):
-    def __init__(self, parent, corpus, settings):
+    def __init__(self, parent, current_corpus, settings):
         PCTDialog.__init__(self, parent, infinite_progress=True)
-        self.current_corpus = None if corpus is None else corpus.name
+        self.current_corpus = None if current_corpus is None else current_corpus
         self.corpus = None
         self.settings = settings
         layout = QVBoxLayout()

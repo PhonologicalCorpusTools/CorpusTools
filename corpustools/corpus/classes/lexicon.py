@@ -884,13 +884,18 @@ class Word(object):
         Token frequency in a corpus
     """
 
+    word_attributes = {'_corpus':None, '_transcription':None, '_spelling':None, 'frequency':0, 'wordtokens':list(),
+                       'descriptors':['spelling', 'transcription', 'frequency']}
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
         'lowercase_freq', 'log10_freq']
 
-    def __init__(self, **kwargs):
+    def __init__(self, update=False, **kwargs):
 
-        _corpus = None
+        if update:
+            self.update(update)
+            return
 
+        self._corpus = None
         self._transcription = None
         self._spelling = None
         self.frequency = 0
@@ -959,10 +964,32 @@ class Word(object):
     def transcription(self):
         return self._transcription
 
+    @transcription.setter
+    def transcription(self, value):
+        self._transcription = value
+
+    @transcription.deleter
+    def transcription(self):
+        del self._transcription
+
     @property
     def spelling(self):
         return self._spelling
 
+    @spelling.setter
+    def spelling(self, value):
+        self._spelling = value
+
+    @spelling.deleter
+    def spelling(self):
+        del self._spelling
+
+    def update(self, old_word):
+        for name,default_value in Word.word_attributes.items():
+            if hasattr(old_word, name):
+                setattr(self, name, getattr(old_word, name))
+            else:
+                setattr(self, name, default_value)
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
 
@@ -1681,13 +1708,20 @@ class Inventory(object):
                                                           'lat', 'nasal']}
                             }
 
-    def __init__(self):
+    def __init__(self, update=False):
+        if update:
+            self.update(update)
+            return
+
         for attribute, default_value in Inventory.inventory_attributes.items():
             setattr(self, attribute, default_value)
 
-    def updateAttributes(self, source):
-        for attribute in Inventory.inventory_attributes:
-            setattr(self, attribute, source[attribute])
+    def update(self, source):
+        for attribute, default_value in Inventory.inventory_attributes.items():
+            if hasattr(source, attribute):
+                setattr(self, attribute, source[attribute])
+            else:
+                setattr(self, attribute, default_value)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -1837,8 +1871,20 @@ class Corpus(object):
         Inventory that contains information about segments in the Corpus
     """
 
+    corpus_attributes = {'spelling':None, 'transcription':None, 'frequency':0, 'name':'corpus', 'wordlist': list(),
+                  'specifier': None, 'inventory': Inventory(), 'inventoryModel': None, 'has_frequency': True,
+                  'has_spelling':False, 'has_wordtokens':False, 'default_transcriptions':list(),
+                  '_attributes': [Attribute('spelling', 'spelling'),
+                                  Attribute('transcription', 'tier'),
+                                  Attribute('frequency', 'numeric')],
+                  '_version': currentPCTversion}
     basic_attributes = ['spelling','transcription','frequency']
-    def __init__(self, name):
+
+    def __init__(self, name, update=False):
+        if update:
+            self.update(update)
+            return
+
         self.name = name
         self.wordlist = dict()
         self.specifier = None
@@ -1847,15 +1893,17 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_wordtokens = False
-        self.default_transcription = None
-        self.alternative_transcriptions = list()
-        self.default_spelling = None
-        self.alternative_spellings = list()
-        self.alternative_inventories = dict()
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
         self._version = currentPCTversion
+
+    def update(self, old_corpus):
+        for name,default_value in Corpus.corpus_attributes.items():
+            if hasattr(old_corpus, name):
+                setattr(self, name, getattr(old_corpus, name))
+            else:
+                setattr(self, name, default_value)
 
     @property
     def has_transcription(self):
@@ -2271,9 +2319,11 @@ class Corpus(object):
                             print(k)
                             print(w.__dict__)
                             raise(e)
+
         except Exception as e:
             raise(e)
-            raise(CorpusIntegrityError("An error occurred while loading the corpus: {}.\nPlease redownload or recreate the corpus.".format(str(e))))
+            raise(CorpusIntegrityError("An error occurred while loading the corpus: {}."
+                                       "\nPlease redownload or recreate the corpus.".format(str(e))))
 
     def _specify_features(self):
         self.inventory.specify(self.specifier)

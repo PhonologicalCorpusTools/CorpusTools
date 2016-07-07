@@ -27,6 +27,8 @@ from .featuregui import (FeatureMatrixManager, EditFeatureMatrixDialog,
 
 from .inventorygui import InventoryManager
 
+from corpustools.corpus.classes.lexicon import Corpus, Inventory, Word
+
 from corpustools.corpus.io.helper import get_corpora_list
 
 
@@ -174,14 +176,15 @@ class MainWindow(QMainWindow):
 
     def check_for_unsaved_changes(function):
         def do_check(self):
-            if self.unsavedChanges:
+            if self.corpusModel is None:
+                pass
+            elif self.unsavedChanges:
                 if self.settings['ask_overwrite_corpus']:
                     name_hint = self.generate_corpus_name_hint()
                     reply = FileNameDialog(self.corpusModel.corpus.name, 'corpus', self.settings, hint=name_hint)
                     reply.exec_()
 
                     if reply.choice == 'saveas':
-                        self.corpus.name = reply.getFilename()
                         self.corpusModel.corpus.name = reply.getFilename()
                         self.saveCorpus()
 
@@ -258,7 +261,7 @@ class MainWindow(QMainWindow):
 
     def changeText(self):
         name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(),Qt.DisplayRole)
-        if hasattr(self.corpus, 'lexicon'):
+        if hasattr(self.corpusModel.corpus, 'lexicon'):
             try:
                 discourse = self.corpusModel.corpus.lexicon.discourses[name]
             except KeyError:
@@ -275,23 +278,27 @@ class MainWindow(QMainWindow):
 
     @check_for_unsaved_changes
     def loadCorpus(self):
-        dialog = CorpusLoadDialog(self, self.corpus, self.settings)
+        try:
+            name = self.corpusModel.corpus.name
+        except AttributeError:
+            name = None
+        dialog = CorpusLoadDialog(self, name, self.settings)
         result = dialog.exec_()
 
         if result:
-            self.corpus = dialog.corpus
-            if hasattr(self.corpus,'lexicon'):
-                c = self.corpus.lexicon
-                if hasattr(self.corpus,'discourses'):
+            #check for any incompatibilities first
+            if hasattr(dialog.corpus, 'lexicon'):
+                corpus = dialog.corpus.lexicon
+                if hasattr(corpus,'discourses'):
                     self.discourseTree.show()
-                    self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
+                    self.discourseTree.setModel(SpontaneousSpeechCorpusModel(corpus))
                     self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
                     self.showDiscoursesAct.setEnabled(True)
                     self.showDiscoursesAct.setChecked(True)
                     if self.textWidget.model() is not None:
                         self.textWidget.model().deleteLater()
                 else:
-                    self.textWidget.setModel(DiscourseModel(self.corpus, self.settings))
+                    self.textWidget.setModel(DiscourseModel(corpus, self.settings))
                     self.discourseTree.hide()
                     self.showDiscoursesAct.setEnabled(False)
                     self.showDiscoursesAct.setChecked(False)
@@ -300,8 +307,9 @@ class MainWindow(QMainWindow):
                 self.textWidget.show()
                 self.showTextAct.setEnabled(True)
                 self.showTextAct.setChecked(True)
-            else:
-                c = self.corpus
+
+            else:#no lexicon, just corpus
+                corpus = dialog.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
                 self.showTextAct.setEnabled(False)
@@ -310,15 +318,14 @@ class MainWindow(QMainWindow):
                 self.showDiscoursesAct.setChecked(False)
                 if self.textWidget.model() is not None:
                     self.textWidget.model().deleteLater()
-            self.corpusModel = CorpusModel(c, self.settings)
-            self.corpusTable.setModel(self.corpusModel)
-            self.corpusStatus.setText('Corpus: {}'.format(c.name))
-            if c.specifier is not None:
-                self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
+
+            corpus = self.compatibility_check(corpus)
+            if corpus.specifier is not None:
+                self.featureSystemStatus.setText('Feature system: {}'.format(corpus.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
 
-            if c.specifier is None:
+            if corpus.specifier is None:
                 alert = QMessageBox()
                 alert.setWindowTitle('Missing corpus information')
                 alert.setText('Your corpus was loaded without a transcription or feature system. '
@@ -328,39 +335,75 @@ class MainWindow(QMainWindow):
                               'download one by going to File > Manage feature systems...')
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
+
+            self.corpusModel = CorpusModel(corpus, self.settings)
+            self.corpusTable.setModel(self.corpusModel)
+            self.corpusStatus.setText('Corpus: {}'.format(corpus.name))
+            self.inventoryModel = self.generateInventoryModel()
+            if corpus.inventory.isNew:
+                copy_mode = False
             else:
-
-                try:
-                    if self.corpusModel.corpus.inventory.isNew:
-                        #just loaded from a text file
-                        print(1)
-                        self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
-                        self.inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
-
-                    else:
-                        # just loaded a .corpus file, not from text
-                        print(2)
-                        self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-
-                    self.saveCorpus()
-
-                except AttributeError:
-                    print(3)
-                    # Loading a .corpus from a previous version of PCT - update some attributes
-
-                    self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
-                                                                                    self.corpusModel.corpus.inventory)
-                    self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
-                                                self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
-                    self.corpusModel.corpus.inventory.isNew = False
-                    self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-                    self.inventoryModel.modelReset()
-                    self.saveCorpus()
+                copy_mode = True
+            self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=copy_mode)
+            self.saveCorpus()
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
             self.createSubsetAct.setEnabled(True)
             self.exportCorpusAct.setEnabled(True)
             self.exportFeatureSystemAct.setEnabled(True)
+
+    def generateInventoryModel(self):
+        try:
+            if self.corpusModel.corpus.inventory.isNew:
+                # just loaded from a text file
+                print(1)
+                inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
+                inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
+
+            else:
+                # just loaded a .corpus file, not from text
+                print(2)
+                inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
+
+        except AttributeError:
+            print(3)
+            # Loading a .corpus from a previous version of PCT - update some attributes
+            self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
+                self.corpusModel.corpus.inventory)
+            self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
+                self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
+            self.corpusModel.corpus.inventory.isNew = False
+            inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
+            inventoryModel.modelReset()
+
+        return inventoryModel
+
+    def compatibility_check(self, corpus):
+        update_corpus, update_inventory, update_words = False, False, False
+        for attribute in Corpus.corpus_attributes:
+            if not hasattr(corpus, attribute):
+                update_corpus = True
+                break
+        for attribute in Inventory.inventory_attributes:
+            if not hasattr(corpus.inventory, attribute):
+                update_inventory = True
+                break
+        word = corpus.random_word()
+        for attribute in Word.word_attributes:
+            if not hasattr(word, attribute):
+                update_words = True
+                break
+
+        if update_corpus:
+            corpus = Corpus(None, update=corpus)
+        if update_inventory:
+            corpus.inventory = Inventory(update=corpus.inventory)
+        if update_words:
+            for word in corpus:
+                word2 = Word(update=word)
+                corpus.remove_word(word)
+                corpus.add_word(word2)
+        return corpus
 
     def loadFeatureMatrices(self):
         try:
