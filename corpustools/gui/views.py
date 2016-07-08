@@ -536,11 +536,14 @@ class DiscourseView(QWidget):
         self.table.setModel(model)
         #self.table.setSelectionModel(self.text.selectionModel())
         self.table.selectionModel().selectionChanged.connect(self.updatePlayerTimes)
-        if AUDIO_ENABLED and model.hasAudio():
+
+        if not hasattr(model, 'has_audio') or not model.hasAudio():
+            self.player.hide()
+
+        elif AUDIO_ENABLED and model.hasAudio():
             self.player.setAudioFile(model.audioPath())
             self.player.show()
-        else:
-            self.player.hide()
+
         try:
             self.table.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         except AttributeError:

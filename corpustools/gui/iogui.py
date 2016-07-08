@@ -124,16 +124,6 @@ class LoadCorpusWorker(FunctionWorker):
                 except AttributeError:
                     pass #This only has spelling, no transcription
 
-        # TEMPORARY COMMENT
-        # corpus.set_default_representations() #sets default transcription and spelling tiers, if any
-        # if self.stopped:
-        #     self.finishedCancelling.emit()
-        #     return
-        #
-        # corpus.generate_alternative_inventories()
-        # if self.stopped:
-        #     self.finishedCancelling.emit()
-        #     return
         self.dataReady.emit(corpus)
 
 
@@ -827,7 +817,6 @@ class LoadCorpusDialog(PCTDialog):
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
-
         # TEMPORARY COMMENTS
         for x in kwargs['annotation_types']:
             #if 'default' in x.name:
@@ -1001,8 +990,8 @@ class LoadCorpusDialog(PCTDialog):
                             unmatched.append(seg.symbol)
 
                 if not unmatched or c.specifier is None:
-                    save_binary(c,
-                                corpus_name_to_path(self.settings['storage'], c.name))
+                    save_binary(self.corpus,
+                                corpus_name_to_path(self.settings['storage'], self.corpus.name))
                 else:
                     unmatched = '\n'.join(unmatched)
                     alert = QMessageBox()
@@ -1017,9 +1006,10 @@ class LoadCorpusDialog(PCTDialog):
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()
                     if choice == QMessageBox.AcceptRole:
-                        save_binary(c,
-                                    corpus_name_to_path(self.settings['storage'], c.name))
+                        save_binary(self.corpus,
+                                    corpus_name_to_path(self.settings['storage'], self.corpus.name))
                     else:
+                        c = None
                         self.corpus = None
                         return
             QDialog.accept(self)
@@ -1044,8 +1034,6 @@ class LoadCorpusDialog(PCTDialog):
             self.updateType('multiple')
         elif ext == '.txt':
             self.updateType('text')
-
-
 
 class SubsetCorpusDialog(QDialog):
     def __init__(self, parent, corpus):

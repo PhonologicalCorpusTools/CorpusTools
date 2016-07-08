@@ -144,6 +144,7 @@ class Discourse(object):
         are the WordTokens
     """
     def __init__(self, **kwargs):
+        print([(k,v) for (k,v) in kwargs.items()])
         self.name = ''
         self.speaker = Speaker(None)
         self.wav_path = None
@@ -151,8 +152,10 @@ class Discourse(object):
         for k,v in kwargs.items():
             setattr(self,k,v)
 
-        self._attributes = [Attribute('spelling','spelling','Spelling'),
-                            Attribute('transcription','tier','Transcription'),
+        self._attributes = [#Attribute('spelling','spelling','Spelling'),
+                            Attribute(kwargs['spelling_name'], 'spelling', kwargs['spelling_name']),
+                            #Attribute('transcription','tier','Transcription'),
+                            Attribute(kwargs['transcription_name'], 'tier', kwargs['transcription_name']),
                             Attribute('begin','numeric','Begin'),
                             Attribute('end','numeric', 'End')]
 

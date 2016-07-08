@@ -901,8 +901,6 @@ class Word(object):
         self.frequency = 0
         self.wordtokens = []
         self.descriptors = ['spelling','transcription', 'frequency']
-        transcription_exists = False
-        spelling_exists = False
         for key, value in kwargs.items():
             key = key.lower()
             if isinstance(value, tuple):
@@ -927,10 +925,8 @@ class Word(object):
 
                 if att.att_type == 'tier':# and self._transcription is None:
                     setattr(self, '_transcription', value)
-                    transcription_exists = True
                 elif att.att_type == 'spelling':# and self._spelling is None:
                     setattr(self, '_spelling', value)
-                    spelling_exists = True
                 elif key in self._freq_names:
                     key = 'frequency'
 
@@ -955,9 +951,9 @@ class Word(object):
             if key not in self.descriptors:
                 self.descriptors.append(key)
 
-        if not transcription_exists and not spelling_exists:#self.spelling is None and self.transcription is None:
+        if self._spelling is None and self._transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
-        if not spelling_exists:#self.spelling is None:
+        if self._spelling is None:
             self._spelling = ''.join(map(str,self._transcription))
 
     @property
@@ -985,11 +981,11 @@ class Word(object):
         del self._spelling
 
     def update(self, old_word):
-        for name,default_value in Word.word_attributes.items():
-            if hasattr(old_word, name):
-                setattr(self, name, getattr(old_word, name))
+        for attribute, default_value in Word.word_attributes.items():
+            if hasattr(old_word, attribute):
+                setattr(self, attribute, getattr(old_word, attribute))
             else:
-                setattr(self, name, default_value)
+                setattr(self, attribute, default_value)
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
 
@@ -1719,7 +1715,7 @@ class Inventory(object):
     def update(self, source):
         for attribute, default_value in Inventory.inventory_attributes.items():
             if hasattr(source, attribute):
-                setattr(self, attribute, source[attribute])
+                setattr(self, attribute, getattr(source, attribute))
             else:
                 setattr(self, attribute, default_value)
 
@@ -1871,9 +1867,10 @@ class Corpus(object):
         Inventory that contains information about segments in the Corpus
     """
 
-    corpus_attributes = {'spelling':None, 'transcription':None, 'frequency':0, 'name':'corpus', 'wordlist': list(),
+    corpus_attributes = {#'spelling':None, 'transcription':None,
+                         'name':'corpus', 'wordlist': list(),
                   'specifier': None, 'inventory': Inventory(), 'inventoryModel': None, 'has_frequency': True,
-                  'has_spelling':False, 'has_wordtokens':False, 'default_transcriptions':list(),
+                  'has_spelling':False, 'has_wordtokens':False, 'has_audio': False,
                   '_attributes': [Attribute('spelling', 'spelling'),
                                   Attribute('transcription', 'tier'),
                                   Attribute('frequency', 'numeric')],
@@ -1893,17 +1890,18 @@ class Corpus(object):
         self.has_frequency = True
         self.has_spelling = False
         self.has_wordtokens = False
+        self.has_audio = False
         self._attributes = [Attribute('spelling','spelling'),
                             Attribute('transcription','tier'),
                             Attribute('frequency','numeric')]
         self._version = currentPCTversion
 
     def update(self, old_corpus):
-        for name,default_value in Corpus.corpus_attributes.items():
-            if hasattr(old_corpus, name):
-                setattr(self, name, getattr(old_corpus, name))
+        for attribute,default_value in Corpus.corpus_attributes.items():
+            if hasattr(old_corpus, attribute):
+                setattr(self, attribute, getattr(old_corpus, attribute))
             else:
-                setattr(self, name, default_value)
+                setattr(self, attribute, default_value)
 
     @property
     def has_transcription(self):
@@ -2454,14 +2452,15 @@ class Corpus(object):
             #added_default == True if the word contains symbols not found in the feature file
             #in this case, the symbol has been given a default value of 'n' for every feature
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
-        for d in word.descriptors:
-            if d not in self.attributes:
-                if isinstance(getattr(word,d),str):
-                    self._attributes.append(Attribute(d,'factor'))
-                elif isinstance(getattr(word,d),Transcription):
-                    self._attributes.append(Attribute(d,'tier'))
-                elif isinstance(getattr(word,d),(int, float)):
-                    self._attributes.append(Attribute(d,'numeric'))
+
+        # for d in word.descriptors:
+        #     if d not in self.attributes:
+        #         if isinstance(getattr(word,d),str):
+        #             self._attributes.append(Attribute(d,'factor'))
+        #         elif isinstance(getattr(word,d),Transcription):
+        #             self._attributes.append(Attribute(d,'tier'))
+        #         elif isinstance(getattr(word,d),(int, float)):
+        #             self._attributes.append(Attribute(d,'numeric'))
         for a in self.attributes:
             if not hasattr(word,a.name):
                 word.add_attribute(a.name, a.default_value)
@@ -2522,12 +2521,14 @@ class Corpus(object):
             Existing or newly created Word with the spelling and transcription
             specified
         """
-        try:
-            spelling = kwargs['spelling']
-            if isinstance(spelling,tuple):
-                spelling = spelling[1]
-        except KeyError:
+        for key,value in kwargs.items():
+            att_type = value[0].att_type
+            if att_type == 'spelling':
+                spelling = att_type[1]
+                break
+        else:
             return None
+
 
         words = self.find_all(spelling)
         for w in words:

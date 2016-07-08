@@ -26,10 +26,11 @@ class PCTPythonError(PCTError):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         self.main = 'Something went wrong that wasn\'t handled by PCT.'
 
-        self.information = 'Please forward to the details below to the developers.'
+        self.information = ('If you would like to help with the development of PCT, please copy and paste the '
+                            'information below and send it to PCTbugs@gmail.com. Thank you!')
         self.details = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
-        self.smtp_report()
+        #self.smtp_report()
 
     def smtp_report(self):
         try:

@@ -286,7 +286,6 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
 
         if result:
-            #check for any incompatibilities first
             if hasattr(dialog.corpus, 'lexicon'):
                 corpus = dialog.corpus.lexicon
                 if hasattr(corpus,'discourses'):
@@ -309,6 +308,7 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setChecked(True)
 
             else:#no lexicon, just corpus
+                print('not has lexicon')
                 corpus = dialog.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
@@ -340,11 +340,7 @@ class MainWindow(QMainWindow):
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(corpus.name))
             self.inventoryModel = self.generateInventoryModel()
-            if corpus.inventory.isNew:
-                copy_mode = False
-            else:
-                copy_mode = True
-            self.inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=copy_mode)
+
             self.saveCorpus()
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
@@ -353,28 +349,33 @@ class MainWindow(QMainWindow):
             self.exportFeatureSystemAct.setEnabled(True)
 
     def generateInventoryModel(self):
-        try:
-            if self.corpusModel.corpus.inventory.isNew:
-                # just loaded from a text file
-                print(1)
-                inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
-                inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
 
-            else:
-                # just loaded a .corpus file, not from text
-                print(2)
-                inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
+        if not hasattr(self.corpusModel.corpus.inventory, 'segs'):
+            return None
 
-        except AttributeError:
-            print(3)
-            # Loading a .corpus from a previous version of PCT - update some attributes
-            self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
-                self.corpusModel.corpus.inventory)
-            self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
-                self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
+        # try:
+        if self.corpusModel.corpus.inventory.isNew:
+            # just loaded from a text file
+            print(1)
+            inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
+            inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
             self.corpusModel.corpus.inventory.isNew = False
+
+        else:
+            # just loaded a .corpus file, not from text
+            print(2)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-            inventoryModel.modelReset()
+
+        # except AttributeError:
+        #     print(3)
+        #     # Loading a .corpus from a previous version of PCT - update some attributes
+        #     self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
+        #         self.corpusModel.corpus.inventory)
+        #     self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
+        #         self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
+        #     self.corpusModel.corpus.inventory.isNew = False
+        #     inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
+        #     inventoryModel.modelReset()
 
         return inventoryModel
 
@@ -382,6 +383,7 @@ class MainWindow(QMainWindow):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):
+                print(attribute)
                 update_corpus = True
                 break
         for attribute in Inventory.inventory_attributes:

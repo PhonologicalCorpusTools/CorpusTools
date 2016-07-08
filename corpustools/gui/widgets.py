@@ -882,29 +882,16 @@ class TierWidget(QGroupBox):
         layout = QVBoxLayout()
 
         self.tierSelect = QComboBox()
-        try:
-            self.atts = list()
-            self.spellingName = corpus.default_spelling.attribute.display_name
-            if include_spelling:
-                self.atts.append(corpus.default_spelling.attribute)
-                self.tierSelect.addItem(self.spellingName)
-            self.atts.append(corpus.default_transcription.attribute)
-            self.tierSelect.addItem(corpus.default_transcription.attribute.display_name)
-            for x in corpus.alternative_transcriptions:
-                self.atts.append(x.attribute)
-                self.tierSelect.addItem(x.attribute.display_name)
 
-        except AttributeError:
-            #this happens using an older PCT file that didn't support default/alternative transcriptions
-            self.atts = list()
-            self.spellingName = corpus.attributes[0].display_name
-            self.atts.append(corpus.attributes[0])
-            if include_spelling:
-                self.tierSelect.addItem(corpus.attributes[0].display_name)
-            for a in corpus.attributes:
-                if corpus.has_transcription and a.att_type == 'tier':
-                    self.atts.append(a)
-                    self.tierSelect.addItem(a.display_name)
+        self.atts = list()
+        self.spellingName = corpus.attributes[0].display_name
+        self.atts.append(corpus.attributes[0])
+        if include_spelling:
+            self.tierSelect.addItem(corpus.attributes[0].display_name)
+        for a in corpus.attributes:
+            if corpus.has_transcription and a.att_type == 'tier':
+                self.atts.append(a)
+                self.tierSelect.addItem(a.display_name)
 
 
         layout.addWidget(self.tierSelect)

@@ -287,7 +287,7 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     data.wav_path = find_wav_path(path)
 
     discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
-    #discourse is a Discourse object, see corpus\classes\lexicon.py
+    #discourse is a Discourse object, see corpus\classes\spontaneous.py
     if discourse is None:
         return
     if feature_system_path is not None:
