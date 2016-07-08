@@ -286,8 +286,12 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
 
         if result:
-            if hasattr(dialog.corpus, 'lexicon'):
-                corpus = dialog.corpus.lexicon
+            corpus = dialog.corpus
+            self.corpus = dialog.corpus
+            if hasattr(corpus, 'lexicon'):
+                #the lexicon attribute is a Corpus object
+                corpus.lexicon = self.compatibility_check(corpus.lexicon)
+                c = corpus.lexicon
                 if hasattr(corpus,'discourses'):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(corpus))
@@ -308,8 +312,8 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setChecked(True)
 
             else:#no lexicon, just corpus
-                print('not has lexicon')
-                corpus = dialog.corpus
+                corpus = self.compatibility_check(corpus)
+                c = corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
                 self.showTextAct.setEnabled(False)
@@ -319,13 +323,11 @@ class MainWindow(QMainWindow):
                 if self.textWidget.model() is not None:
                     self.textWidget.model().deleteLater()
 
-            corpus = self.compatibility_check(corpus)
-            if corpus.specifier is not None:
-                self.featureSystemStatus.setText('Feature system: {}'.format(corpus.specifier.name))
+
+            if c.specifier is not None:
+                self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
-
-            if corpus.specifier is None:
                 alert = QMessageBox()
                 alert.setWindowTitle('Missing corpus information')
                 alert.setText('Your corpus was loaded without a transcription or feature system. '
@@ -336,11 +338,10 @@ class MainWindow(QMainWindow):
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
 
-            self.corpusModel = CorpusModel(corpus, self.settings)
+            self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(corpus.name))
             self.inventoryModel = self.generateInventoryModel()
-
             self.saveCorpus()
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
@@ -359,13 +360,13 @@ class MainWindow(QMainWindow):
             print(1)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
             inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
-            self.corpusModel.corpus.inventory.isNew = False
 
         else:
             # just loaded a .corpus file, not from text
             print(2)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
+        self.corpusModel.corpus.inventory.isNew = False
         # except AttributeError:
         #     print(3)
         #     # Loading a .corpus from a previous version of PCT - update some attributes
@@ -383,7 +384,6 @@ class MainWindow(QMainWindow):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):
-                print(attribute)
                 update_corpus = True
                 break
         for attribute in Inventory.inventory_attributes:
@@ -395,7 +395,6 @@ class MainWindow(QMainWindow):
             if not hasattr(word, attribute):
                 update_words = True
                 break
-
         if update_corpus:
             corpus = Corpus(None, update=corpus)
         if update_inventory:

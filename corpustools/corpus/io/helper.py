@@ -372,16 +372,18 @@ def log_annotation_types(annotation_types):
 
 def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
     attribute_mapping = data.mapping()
+    spelling_name, transcription_name = None, None
     for name, value in attribute_mapping.items():
         if value.att_type == 'spelling':
             spelling_name = name
         elif value.att_type == 'tier':
             transcription_name = name
+
     d = Discourse(spelling_name = spelling_name, transcription_name = transcription_name,
                   name = data.name, wav_path = data.wav_path)
     ind = 0
     if lexicon is None:
-        lexicon = d.lexicon
+        lexicon = d.lexicon #despite the name, this is a Corpus object
     for k,v in attribute_mapping.items():
         a = data[v.name]
 

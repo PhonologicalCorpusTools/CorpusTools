@@ -1870,7 +1870,7 @@ class Corpus(object):
     corpus_attributes = {#'spelling':None, 'transcription':None,
                          'name':'corpus', 'wordlist': list(),
                   'specifier': None, 'inventory': Inventory(), 'inventoryModel': None, 'has_frequency': True,
-                  'has_spelling':False, 'has_wordtokens':False, 'has_audio': False,
+                  'has_spelling':False, 'has_wordtokens':False, 'has_audio': False, 'wav_path': None,
                   '_attributes': [Attribute('spelling', 'spelling'),
                                   Attribute('transcription', 'tier'),
                                   Attribute('frequency', 'numeric')],

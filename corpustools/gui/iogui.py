@@ -873,8 +873,8 @@ class LoadCorpusDialog(PCTDialog):
                         '"Parsing Preview" section and ensure that all columns have unique names.'.format(duplicates))
             return
 
-        duplicates = False
-        names = [x.name for x in kwargs['annotation_types']]
+        # duplicates = False
+        # names = [x.name for x in kwargs['annotation_types']]
         #TEMPORARY COMMENTS
         # if names.count('Transcription') > 1:# (default)') > 1:
         #     duplicates = 'Transcription'# (default)'
