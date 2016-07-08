@@ -2524,7 +2524,7 @@ class Corpus(object):
         for key,value in kwargs.items():
             att_type = value[0].att_type
             if att_type == 'spelling':
-                spelling = att_type[1]
+                spelling = value[1]
                 break
         else:
             return None

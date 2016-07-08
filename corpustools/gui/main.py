@@ -292,6 +292,9 @@ class MainWindow(QMainWindow):
                 #the lexicon attribute is a Corpus object
                 corpus.lexicon = self.compatibility_check(corpus.lexicon)
                 c = corpus.lexicon
+                for word in c:
+                    print(word, word.variants())
+
                 if hasattr(corpus,'discourses'):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(corpus))
@@ -302,6 +305,7 @@ class MainWindow(QMainWindow):
                         self.textWidget.model().deleteLater()
                 else:
                     self.textWidget.setModel(DiscourseModel(corpus, self.settings))
+                    #self.textWidget is a DiscourseView object
                     self.discourseTree.hide()
                     self.showDiscoursesAct.setEnabled(False)
                     self.showDiscoursesAct.setChecked(False)
@@ -395,6 +399,7 @@ class MainWindow(QMainWindow):
             if not hasattr(word, attribute):
                 update_words = True
                 break
+
         if update_corpus:
             corpus = Corpus(None, update=corpus)
         if update_inventory:

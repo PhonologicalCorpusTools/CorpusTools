@@ -955,26 +955,6 @@ class LoadCorpusDialog(PCTDialog):
                     #It's a Discourse object
                     c = self.corpus.lexicon
 
-                # TEMPORARY COMMENT
-                # unmatched = list()
-                # for name, inventory in self.corpus.all_inventories:
-                #     note = list()
-                #     for seg in inventory:
-                #         if seg.symbol in c.non_segment_symbols:
-                #             continue
-                #         if all(f == 'n' for f in seg.features.values()):
-                #             if seg.symbol == '\'':
-                #                 note.append('\' (apostrophe)')
-                #             elif seg.symbol == '.':
-                #                 note.append('. (period)')
-                #             elif seg.symbol == ',':
-                #                 note.append(', (comma)')
-                #             else:
-                #                 note.append(seg.symbol)
-                #     if note:
-                #         note.sort()
-                #         unmatched.append(''.join([name, ': ', ','.join(note)]))
-
                 unmatched = list()
                 for seg in c.inventory:
                     if seg.symbol in c.inventory.non_segment_symbols:
