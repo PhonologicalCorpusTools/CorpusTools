@@ -435,6 +435,8 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
 
             word = lexicon.get_or_create_word(**word_kwargs)
             word_token_kwargs['word'] = word
+            word_token_kwargs[word._spelling_name] = word.spelling
+            word_token_kwargs[word._transcription_name] = word.transcription
             if 'begin' not in word_token_kwargs:
                 word_token_kwargs['begin'] = ind
                 word_token_kwargs['end'] = ind + 1

@@ -286,25 +286,21 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
 
         if result:
-            corpus = dialog.corpus
             self.corpus = dialog.corpus
-            if hasattr(corpus, 'lexicon'):
+            if hasattr(self.corpus, 'lexicon'):
                 #the lexicon attribute is a Corpus object
-                corpus.lexicon = self.compatibility_check(corpus.lexicon)
-                c = corpus.lexicon
-                for word in c:
-                    print(word, word.variants())
-
-                if hasattr(corpus,'discourses'):
+                self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
+                c = self.corpus.lexicon
+                if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
-                    self.discourseTree.setModel(SpontaneousSpeechCorpusModel(corpus))
+                    self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
                     self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
                     self.showDiscoursesAct.setEnabled(True)
                     self.showDiscoursesAct.setChecked(True)
                     if self.textWidget.model() is not None:
                         self.textWidget.model().deleteLater()
                 else:
-                    self.textWidget.setModel(DiscourseModel(corpus, self.settings))
+                    self.textWidget.setModel(DiscourseModel(self.corpus, self.settings))
                     #self.textWidget is a DiscourseView object
                     self.discourseTree.hide()
                     self.showDiscoursesAct.setEnabled(False)
@@ -316,8 +312,8 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setChecked(True)
 
             else:#no lexicon, just corpus
-                corpus = self.compatibility_check(corpus)
-                c = corpus
+                self.corpus = self.compatibility_check(self.corpus)
+                c = self.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
                 self.showTextAct.setEnabled(False)
@@ -344,7 +340,7 @@ class MainWindow(QMainWindow):
 
             self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
-            self.corpusStatus.setText('Corpus: {}'.format(corpus.name))
+            self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))
             self.inventoryModel = self.generateInventoryModel()
             self.saveCorpus()
             self.unsavedChanges = False
@@ -453,9 +449,9 @@ class MainWindow(QMainWindow):
             pass
 
     def saveCorpus(self):
-        save_binary(self.corpusModel.corpus,os.path.join(
+        save_binary(self.corpus,os.path.join(
                         self.settings['storage'],'CORPUS',
-                        self.corpusModel.corpus.name+'.corpus'))
+                        self.corpus.name+'.corpus'))
         self.saveCorpusAct.setEnabled(False)
         self.unsavedChanges = False
 

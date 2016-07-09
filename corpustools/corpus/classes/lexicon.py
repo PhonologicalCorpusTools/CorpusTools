@@ -2,12 +2,9 @@ from corpustools import __version__ as currentPCTversion
 import re
 import random
 import collections
-import itertools
 import operator
-import math
 import locale
 
-import pdb
 
 from corpustools.exceptions import CorpusIntegrityError
 
@@ -925,8 +922,10 @@ class Word(object):
 
                 if att.att_type == 'tier':# and self._transcription is None:
                     setattr(self, '_transcription', value)
+                    self._transcription_name = key
                 elif att.att_type == 'spelling':# and self._spelling is None:
                     setattr(self, '_spelling', value)
+                    self._spelling_name = key
                 elif key in self._freq_names:
                     key = 'frequency'
 
@@ -2453,14 +2452,14 @@ class Corpus(object):
             #in this case, the symbol has been given a default value of 'n' for every feature
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
 
-        # for d in word.descriptors:
-        #     if d not in self.attributes:
-        #         if isinstance(getattr(word,d),str):
-        #             self._attributes.append(Attribute(d,'factor'))
-        #         elif isinstance(getattr(word,d),Transcription):
-        #             self._attributes.append(Attribute(d,'tier'))
-        #         elif isinstance(getattr(word,d),(int, float)):
-        #             self._attributes.append(Attribute(d,'numeric'))
+        for d in word.descriptors:
+            if d not in self.attributes:
+                if isinstance(getattr(word,d),str):
+                    self._attributes.append(Attribute(d,'spelling'))#'factor'))
+                elif isinstance(getattr(word,d),Transcription):
+                    self._attributes.append(Attribute(d,'tier'))
+                elif isinstance(getattr(word,d),(int, float)):
+                    self._attributes.append(Attribute(d,'numeric'))
         for a in self.attributes:
             if not hasattr(word,a.name):
                 word.add_attribute(a.name, a.default_value)
@@ -2528,8 +2527,6 @@ class Corpus(object):
                 break
         else:
             return None
-
-
         words = self.find_all(spelling)
         for w in words:
             for k,v in kwargs.items():

@@ -144,7 +144,7 @@ class Discourse(object):
         are the WordTokens
     """
     def __init__(self, **kwargs):
-        print([(k,v) for (k,v) in kwargs.items()])
+
         self.name = ''
         self.speaker = Speaker(None)
         self.wav_path = None

@@ -337,6 +337,7 @@ class DiscourseModel(BaseCorpusTableModel):
         self.corpus = discourse
         self.columns = self.corpus.attributes
         self.rows = [x for x in list(self.corpus.keys())]
+        w = self.corpus[self.rows[0]]
         #self.posToTime = []
         #self.timeToPos = {}
         #for w in self.discourse:
@@ -372,7 +373,7 @@ class CorpusModel(BaseCorpusTableModel):
     def hideNonLexical(self, b):
         self.nonLexHidden = b
         self.layoutAboutToBeChanged.emit()
-        #self.rows = self.allData
+        self.rows = self.allData
         if b:
             self.rows = [x for x in self.rows if str(self.corpus[x].transcription) != '']
         self.layoutChanged.emit()
@@ -1470,7 +1471,6 @@ class InventoryModel(QAbstractTableModel):
         except IndexError:
             raise CorpusIntegrityError('No segments were found in the inventory')
         if all([feature in sample.features for feature in self.minimum_features['hayes']]):
-            print('HAYES')
             self.generateGenericHayes()
             self.cons_features = ['+consonantal']
             self.vowel_features = ['-consonantal']
@@ -1479,7 +1479,6 @@ class InventoryModel(QAbstractTableModel):
             self.diph_feature = '+diphthong'
             self.filterNames = True
         elif all([feature in sample.features for feature in self.minimum_features['spe']]):
-            print('SPE')
             self.generateGenericSpe()
             self.cons_features = ['-voc']
             self.vowel_features = ['+voc']
@@ -1488,7 +1487,6 @@ class InventoryModel(QAbstractTableModel):
             self.diph_feature = None
             self.filterNames = True
         else:
-            print('NEITHER SPE NOR HAYES')
             self.cons_column_data = {'Column 1' : [0, {}, None]}
             self.cons_row_data = {'Row 1' : [0, {}, None]}
             self.vowel_column_data = {'Column 1': [0, {}, None]}
