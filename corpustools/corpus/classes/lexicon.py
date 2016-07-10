@@ -898,6 +898,8 @@ class Word(object):
         self.frequency = 0
         self.wordtokens = []
         self.descriptors = ['spelling','transcription', 'frequency']
+        self._transcription_name = 'transcription'
+        self._spelling_name = 'spelling' #these are assumed defaults - they might change in the code below
         for key, value in kwargs.items():
             key = key.lower()
             if isinstance(value, tuple):
@@ -1706,6 +1708,7 @@ class Inventory(object):
     def __init__(self, update=False):
         if update:
             self.update(update)
+            self.isNew = False
             return
 
         for attribute, default_value in Inventory.inventory_attributes.items():

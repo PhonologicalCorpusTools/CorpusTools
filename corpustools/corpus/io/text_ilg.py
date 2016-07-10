@@ -127,7 +127,7 @@ def text_to_lines(path):
     lines = [(x[0],x[1].strip().split(delimiter)) for x in lines if x[1].strip() != '']
     return lines
 
-def ilg_to_data(path, annotation_types,
+def ilg_to_data(corpus_name, path, annotation_types,
                     stop_check = None, call_back = None):
     #if 'spelling' not in line_names:
     #    raise(PCTError('Spelling required for parsing interlinear gloss files.'))
@@ -142,7 +142,7 @@ def ilg_to_data(path, annotation_types,
         call_back(0,len(lines))
         cur = 0
     index = 0
-    name = os.path.splitext(os.path.split(path)[1])[0]
+    name = corpus_name
 
     for a in annotation_types:
         a.reset()
@@ -242,7 +242,7 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
         Discourse object generated from the text file
     """
 
-    data = ilg_to_data(path, annotation_types,stop_check, call_back)
+    data = ilg_to_data(corpus_name, path, annotation_types,stop_check, call_back)
     discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     if discourse is None:
         return

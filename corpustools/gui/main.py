@@ -323,7 +323,6 @@ class MainWindow(QMainWindow):
                 if self.textWidget.model() is not None:
                     self.textWidget.model().deleteLater()
 
-
             if c.specifier is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
             else:
@@ -366,7 +365,6 @@ class MainWindow(QMainWindow):
             print(2)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
-        self.corpusModel.corpus.inventory.isNew = False
         # except AttributeError:
         #     print(3)
         #     # Loading a .corpus from a previous version of PCT - update some attributes

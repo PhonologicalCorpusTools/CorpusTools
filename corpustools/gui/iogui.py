@@ -28,6 +28,7 @@ from corpustools.corpus.io.helper import (get_corpora_list,
                                         corpus_name_to_path,
                                         inspect_directory,
                                         log_annotation_types)
+from corpustools.gui.featuregui import system_name_to_path
 import corpustools.gui.modernize as modernize
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
@@ -471,7 +472,7 @@ class LoadCorpusDialog(PCTDialog):
         self.settings = settings
         self.textType = None
         self.isDirectory = False
-
+        self.corpus = None
         self.createWidgets()
 
         layout = QVBoxLayout()
@@ -969,10 +970,10 @@ class LoadCorpusDialog(PCTDialog):
                         else:
                             unmatched.append(seg.symbol)
 
-                if not unmatched or c.specifier is None:
-                    save_binary(self.corpus,
-                                corpus_name_to_path(self.settings['storage'], self.corpus.name))
-                else:
+                # if not unmatched or c.specifier is None:
+                #     save_binary(self.corpus,
+                #                 corpus_name_to_path(self.settings['storage'], self.corpus.name))
+                if unmatched and c.specifier is not None:
                     unmatched = '\n'.join(unmatched)
                     alert = QMessageBox()
                     alert.setWindowTitle('Warning')
@@ -986,12 +987,20 @@ class LoadCorpusDialog(PCTDialog):
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()
                     if choice == QMessageBox.AcceptRole:
-                        save_binary(self.corpus,
-                                    corpus_name_to_path(self.settings['storage'], self.corpus.name))
+                        if hasattr(self.corpus, 'lexicon'):
+                            self.corpus.lexicon.specifier.name = '_'.join([
+                                                                self.corpus.lexicon.specifier.name, self.corpus.name])
+                        else:
+                            self.corpus.specifier.name = '_'.join([self.corpus.specifier.name, self.corpus.name])
+
                     else:
                         c = None
                         self.corpus = None
                         return
+            save_binary(self.corpus,
+                    corpus_name_to_path(self.settings['storage'], self.corpus.name))
+            save_binary(c.specifier,
+                    system_name_to_path(self.settings['storage'], c.specifier.name))
             QDialog.accept(self)
 
     def updateName(self):

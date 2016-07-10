@@ -65,11 +65,11 @@ def inspect_discourse_transcription(path):
     annotation_types = [a]
     return annotation_types
 
-def transcription_text_to_data(path, annotation_types = None,
+def transcription_text_to_data(corpus_name, path, annotation_types = None,
                             stop_check = None, call_back = None):
 
 
-    name = os.path.splitext(os.path.split(path)[1])[0]
+    name = corpus_name
 
     if annotation_types is None:
         annotation_types = inspect_discourse_transcription(path)
@@ -213,7 +213,7 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
         if not os.path.exists(feature_system_path):
             raise(PCTOSError("The feature path specified ({}) does not exist".format(feature_system_path)))
 
-    data = transcription_text_to_data(path, annotation_types, stop_check=stop_check, call_back=call_back)
+    data = transcription_text_to_data(corpus_name, path, annotation_types, stop_check=stop_check, call_back=call_back)
 
     discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
 

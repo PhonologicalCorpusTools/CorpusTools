@@ -49,11 +49,10 @@ def inspect_discourse_spelling(path, support_corpus_path = None):
         annotation_types += [AnnotationType('transcription', None, None, base = True)]
     return annotation_types
 
-def spelling_text_to_data(path, annotation_types = None,
+def spelling_text_to_data(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = True,
                             stop_check = None, call_back = None):
-
-    name = os.path.splitext(os.path.split(path)[1])[0]
+    name = corpus_name
     if support_corpus_path is not None:
         if not os.path.exists(support_corpus_path):
             raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
@@ -202,7 +201,7 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
         Discourse object generated from the text file
     """
 
-    data = spelling_text_to_data(path, annotation_types,
+    data = spelling_text_to_data(corpus_name, path, annotation_types,
                 support_corpus_path, ignore_case,
                     stop_check, call_back)
     if data is None:

@@ -159,10 +159,10 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-def textgrid_to_data(path, annotation_types, stop_check = None,
+def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                             call_back = None):
     tg = load_textgrid(path)
-    name = os.path.splitext(os.path.split(path)[1])[0]
+    name = corpus_name
 
     for a in annotation_types:
         a.reset()
@@ -279,11 +279,8 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
         Discourse object generated from the TextGrid file
     """
 
-    data = textgrid_to_data(path, annotation_types, call_back=call_back, stop_check=stop_check)
+    data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
     #data is a DiscourseData object, see corpus\io\helper.py
-    if data is None:
-        return
-    data.name = corpus_name
     data.wav_path = find_wav_path(path)
 
     discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
