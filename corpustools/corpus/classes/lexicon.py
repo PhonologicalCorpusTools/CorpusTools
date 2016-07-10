@@ -892,14 +892,8 @@ class Word(object):
             self.update(update)
             return
 
-        self._corpus = None
-        self._transcription = None
-        self._spelling = None
-        self.frequency = 0
-        self.wordtokens = []
-        self.descriptors = ['spelling','transcription', 'frequency']
-        self._transcription_name = 'transcription'
-        self._spelling_name = 'spelling' #these are assumed defaults - they might change in the code below
+        self.initDefault()
+
         for key, value in kwargs.items():
             key = key.lower()
             if isinstance(value, tuple):
@@ -956,6 +950,16 @@ class Word(object):
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self._spelling is None:
             self._spelling = ''.join(map(str,self._transcription))
+
+    def initDefault(self):
+        for attribute, default_value in Word.word_attributes.items():
+            if isinstance(default_value, list):
+                setattr(self, attribute, [x for x in default_value])
+            elif isinstance(default_value, dict):
+                setattr(self, attribute, default_value.copy())
+            else:
+                setattr(self, attribute, default_value)
+
 
     @property
     def transcription(self):
@@ -1711,8 +1715,16 @@ class Inventory(object):
             self.isNew = False
             return
 
+        self.initDefaults()
+
+    def initDefaults(self):
         for attribute, default_value in Inventory.inventory_attributes.items():
-            setattr(self, attribute, default_value)
+            if isinstance(default_value, list):
+                setattr(self, attribute, [x for x in default_value])
+            elif isinstance(default_value, dict):
+                setattr(self, attribute, default_value.copy())
+            else:
+                setattr(self, attribute, default_value)
 
     def update(self, source):
         for attribute, default_value in Inventory.inventory_attributes.items():
@@ -1870,7 +1882,7 @@ class Corpus(object):
     """
 
     corpus_attributes = {#'spelling':None, 'transcription':None,
-                         'name':'corpus', 'wordlist': list(),
+                         'name':'corpus', 'wordlist': dict(),
                   'specifier': None, 'inventory': Inventory(), 'inventoryModel': None, 'has_frequency': True,
                   'has_spelling':False, 'has_wordtokens':False, 'has_audio': False, 'wav_path': None,
                   '_attributes': [Attribute('spelling', 'spelling'),
@@ -1884,19 +1896,30 @@ class Corpus(object):
             self.update(update)
             return
 
+        self.initDefaults()
         self.name = name
-        self.wordlist = dict()
-        self.specifier = None
-        self.inventory = Inventory()
-        self.inventoryModel = None
-        self.has_frequency = True
-        self.has_spelling = False
-        self.has_wordtokens = False
-        self.has_audio = False
-        self._attributes = [Attribute('spelling','spelling'),
-                            Attribute('transcription','tier'),
-                            Attribute('frequency','numeric')]
-        self._version = currentPCTversion
+        # self.wordlist = dict()
+        # self.specifier = None
+        # self.inventory = Inventory()
+        # self.inventoryModel = None
+        # self.has_frequency = True
+        # self.has_spelling = False
+        # self.has_wordtokens = False
+        # self.has_audio = False
+        # self._attributes = [Attribute('spelling','spelling'),
+        #                     Attribute('transcription','tier'),
+        #                     Attribute('frequency','numeric')]
+        # self._version = currentPCTversion
+
+
+    def initDefaults(self):
+        for attribute, default_value in Corpus.corpus_attributes.items():
+            if isinstance(default_value, list):
+                setattr(self, attribute, [x for x in default_value])
+            elif isinstance(default_value, dict):
+                setattr(self, attribute, default_value.copy())
+            else:
+                setattr(self, attribute, default_value)
 
     def update(self, old_corpus):
         for attribute,default_value in Corpus.corpus_attributes.items():

@@ -948,7 +948,12 @@ class InventoryModel(QAbstractTableModel):
 
     def initDefaults(self):
         for attribute, default_value in Inventory.inventory_attributes.items():
-            setattr(self, attribute, default_value)
+            if isinstance(default_value, list):
+                setattr(self, attribute, [x for x in default_value])
+            elif isinstance(default_value, dict):
+                setattr(self, attribute, default_value.copy())
+            else:
+                setattr(self, attribute, default_value)
 
     def __eq__(self, other):
         if not isinstance(other, InventoryModel):
@@ -965,10 +970,14 @@ class InventoryModel(QAbstractTableModel):
     def setAttributes(self, source):
         for attribute, default_value in Inventory.inventory_attributes.items():
             try:
-                setattr(self, attribute, deepcopy(getattr(source, attribute)))
+                setattr(self, attribute, getattr(source, attribute))
             except AttributeError:
-                setattr(self, attribute, default_value)
-        self.isNew = False
+                if isinstance(default_value, list):
+                    setattr(self, attribute, [x for x in default_value])
+                elif isinstance(default_value, dict):
+                    setattr(self, attribute, default_value.copy())
+                else:
+                    setattr(self, attribute, default_value)
 
     def set_major_class_features(self, source):
         self.cons_features = source.cons_features if hasattr(source, 'cons_features') else None
