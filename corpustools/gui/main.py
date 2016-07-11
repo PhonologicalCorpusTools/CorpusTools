@@ -359,20 +359,16 @@ class MainWindow(QMainWindow):
             return None
 
         # try:
-        print(self.corpusModel.corpus.name)
         if self.corpusModel.corpus.inventory.isNew:
             # just loaded from a text file
             print(1)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
-            print(inventoryModel._data)
             inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
-            print(inventoryModel._data)
 
         else:
             # just loaded a .corpus file, not from text
             print(2)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-            print(inventoryModel._data)
 
         # except AttributeError:
         #     print(3)
@@ -391,7 +387,6 @@ class MainWindow(QMainWindow):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):
-                print('missing corpus attribute ', attribute)
                 update_corpus = True
                 break
         for attribute in Inventory.inventory_attributes:
@@ -403,7 +398,6 @@ class MainWindow(QMainWindow):
             if not hasattr(word, attribute):
                 update_words = True
                 break
-        print(update_corpus, update_inventory, update_words)
         if update_corpus:
             corpus = Corpus(None, update=corpus)
         if update_inventory:

@@ -135,7 +135,6 @@ def load_corpus_csv(corpus_name, path, delimiter,
         call_back(0, 0)
         cur = 0
 
-    print('before reading file', corpus.inventory.segs)
     with open(path, encoding='utf-8') as f:
         headers = f.readline()
         headers = headers.split(delimiter)
