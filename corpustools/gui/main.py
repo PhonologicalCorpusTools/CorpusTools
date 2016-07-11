@@ -241,9 +241,9 @@ class MainWindow(QMainWindow):
     def check_for_feature_system(func):
         def do_check(self):
             if self.corpusModel.corpus.specifier is None:
-                reply = QMessageBox.critical(self, 'Missing information', 'This corpus has no feature file associated, so '
-                'it is not possible to use this menu option.\nPlease associate a feature system with this corpus by going to '
-                'Features > View/change feature system...')
+                reply = QMessageBox.critical(self, 'Missing information', 'This corpus has no feature file associated, '
+                'so it is not possible to use this menu option.\nPlease associate a feature system with this corpus by '
+                'going to Features > View/change feature system...')
                 return
             else:
                 func(self)
@@ -282,15 +282,17 @@ class MainWindow(QMainWindow):
             name = self.corpusModel.corpus.name
         except AttributeError:
             name = None
+
         dialog = CorpusLoadDialog(self, name, self.settings)
         result = dialog.exec_()
 
         if result:
             self.corpus = dialog.corpus
+            self.inventoryModel = None
             if hasattr(self.corpus, 'lexicon'):
                 #the lexicon attribute is a Corpus object
                 self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
-                c = self.corpus.lexicon
+                #c = self.corpus.lexicon
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
@@ -313,7 +315,7 @@ class MainWindow(QMainWindow):
 
             else:#no lexicon, just corpus
                 self.corpus = self.compatibility_check(self.corpus)
-                c = self.corpus
+                #c = self.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
                 self.showTextAct.setEnabled(False)
@@ -323,8 +325,9 @@ class MainWindow(QMainWindow):
                 if self.textWidget.model() is not None:
                     self.textWidget.model().deleteLater()
 
-            if c.specifier is not None:
-                self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
+            specifier_check = self.corpus.specifier if not hasattr(self.corpus, 'lexicon') else self.corpus.lexicon
+            if specifier_check is not None:
+                self.featureSystemStatus.setText('Feature system: {}'.format(specifier_check.name))
             else:
                 self.featureSystemStatus.setText('No feature system selected')
                 alert = QMessageBox()
@@ -337,10 +340,12 @@ class MainWindow(QMainWindow):
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
 
+            c = self.corpus if not hasattr(self.corpus, 'lexicon') else self.corpus.lexicon
             self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))
             self.inventoryModel = self.generateInventoryModel()
+            self.corpusModel.corpus.inventory.isNew = False
             self.saveCorpus()
             self.unsavedChanges = False
             self.saveCorpusAct.setEnabled(False)
@@ -354,16 +359,20 @@ class MainWindow(QMainWindow):
             return None
 
         # try:
+        print(self.corpusModel.corpus.name)
         if self.corpusModel.corpus.inventory.isNew:
             # just loaded from a text file
             print(1)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
+            print(inventoryModel._data)
             inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
+            print(inventoryModel._data)
 
         else:
             # just loaded a .corpus file, not from text
             print(2)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
+            print(inventoryModel._data)
 
         # except AttributeError:
         #     print(3)
@@ -382,6 +391,7 @@ class MainWindow(QMainWindow):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):
+                print('missing corpus attribute ', attribute)
                 update_corpus = True
                 break
         for attribute in Inventory.inventory_attributes:
@@ -393,7 +403,7 @@ class MainWindow(QMainWindow):
             if not hasattr(word, attribute):
                 update_words = True
                 break
-
+        print(update_corpus, update_inventory, update_words)
         if update_corpus:
             corpus = Corpus(None, update=corpus)
         if update_inventory:
@@ -419,7 +429,7 @@ class MainWindow(QMainWindow):
     @check_for_feature_system
     def manageInventoryChart(self):
         copy_model = InventoryModel(self.inventoryModel, copy_mode=True)
-        if not copy_model._data:
+        if not self.inventoryModel._data:
             alert = QMessageBox()
             alert.setWindowTitle('Warning!')
             alert.setText('There was a problem loading your inventory. You can normally fix this problem by going '
@@ -432,12 +442,14 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
         if result:
             self.inventoryModel.updateFromCopy(dialog.inventory)
-            self.corpusModel.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
-            if self.settings['ask_overwrite_corpus']:
-                self.enableSave()
-            else:
-                self.saveCorpus()
-                self.saveCorpusAct.setEnabled(False)
+            #self.corpusModel.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
+            # shouldn't need to save, since this doesn't affect the corpus, only the FeatureMatrix, and there's
+            # already a check for that in the InventoryManager dialog
+            # if self.settings['ask_overwrite_corpus']:
+            #     self.enableSave()
+            # else:
+            #     self.saveCorpus()
+            #     self.saveCorpusAct.setEnabled(False)
 
 
     def subsetCorpus(self):
@@ -447,9 +459,13 @@ class MainWindow(QMainWindow):
             pass
 
     def saveCorpus(self):
-        save_binary(self.corpus,os.path.join(
+        if hasattr(self.corpusModel.corpus, 'lexicon'):
+            self.corpusModel.corpus.lexicon.inventory.save(self.inventoryModel)
+        else:
+            self.corpusModel.corpus.inventory.save(self.inventoryModel)
+        save_binary(self.corpusModel.corpus,os.path.join(
                         self.settings['storage'],'CORPUS',
-                        self.corpus.name+'.corpus'))
+                        self.corpusModel.corpus.name+'.corpus'))
         self.saveCorpusAct.setEnabled(False)
         self.unsavedChanges = False
 

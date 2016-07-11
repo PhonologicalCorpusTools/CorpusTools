@@ -139,7 +139,6 @@ class CorpusLoadDialog(PCTDialog):
         listFrame = QGroupBox('Available corpora')
         listLayout = QGridLayout()
 
-
         self.corporaList = QListWidget(self)
         listLayout.addWidget(self.corporaList)
         listFrame.setLayout(listLayout)
@@ -232,7 +231,6 @@ class CorpusLoadDialog(PCTDialog):
             QDialog.accept(self)
 
     def loadCorpus(self):
-
         selected = [x.text() for x in self.corporaList.selectedItems()]
         if selected:
             self.thread.setParams({

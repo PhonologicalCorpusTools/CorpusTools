@@ -1729,9 +1729,19 @@ class Inventory(object):
     def update(self, source):
         for attribute, default_value in Inventory.inventory_attributes.items():
             if hasattr(source, attribute):
-                setattr(self, attribute, getattr(source, attribute))
+                if isinstance(default_value, list):
+                    setattr(self, attribute, [x for x in getattr(source, attribute)])
+                elif isinstance(default_value, dict):
+                    setattr(self, attribute, getattr(source, attribute).copy())
+                else:
+                    setattr(self, attribute, getattr(source, attribute))
             else:
-                setattr(self, attribute, default_value)
+                if isinstance(default_value, list):
+                    setattr(self, attribute, [x for x in default_value])
+                elif isinstance(default_value, dict):
+                    setattr(self, attribute, default_value.copy())
+                else:
+                    setattr(self, attribute, default_value)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -1757,6 +1767,16 @@ class Inventory(object):
         if 'rounded_feature' not in state:
             state['rounded_feature'] = None
         self.__dict__.update(state)
+
+    def save(self, model):
+        """
+        Takes an InventoryModel as input, and updates attributes. This is called in main.py in saveCorpus().
+        """
+        for attribute in Inventory.inventory_attributes:
+            if hasattr(model, attribute):
+                setattr(self, attribute, getattr(model, attribute))
+            # else:
+            #     pass
 
     def __len__(self):
         return len(self.segs.keys())
@@ -1883,7 +1903,7 @@ class Corpus(object):
 
     corpus_attributes = {#'spelling':None, 'transcription':None,
                          'name':'corpus', 'wordlist': dict(),
-                  'specifier': None, 'inventory': Inventory(), 'inventoryModel': None, 'has_frequency': True,
+                  'specifier': None, 'inventory': None, 'inventoryModel': None, 'has_frequency': True,
                   'has_spelling':False, 'has_wordtokens':False, 'has_audio': False, 'wav_path': None,
                   '_attributes': [Attribute('spelling', 'spelling'),
                                   Attribute('transcription', 'tier'),
@@ -1914,7 +1934,13 @@ class Corpus(object):
 
     def initDefaults(self):
         for attribute, default_value in Corpus.corpus_attributes.items():
-            if isinstance(default_value, list):
+            if attribute == 'inventory':
+                setattr(self, attribute, Inventory())
+            elif attribute == '_attributes':
+                setattr(self, attribute, [Attribute('spelling', 'spelling'),
+                                          Attribute('transcription', 'tier'),
+                                          Attribute('frequency', 'numeric')])
+            elif isinstance(default_value, list):
                 setattr(self, attribute, [x for x in default_value])
             elif isinstance(default_value, dict):
                 setattr(self, attribute, default_value.copy())
