@@ -972,7 +972,7 @@ class LoadCorpusDialog(PCTDialog):
                 #     save_binary(self.corpus,
                 #                 corpus_name_to_path(self.settings['storage'], self.corpus.name))
                 if unmatched and c.specifier is not None:
-                    unmatched = '\n'.join(unmatched)
+                    unmatched = ','.join(unmatched)
                     alert = QMessageBox()
                     alert.setWindowTitle('Warning')
                     alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
