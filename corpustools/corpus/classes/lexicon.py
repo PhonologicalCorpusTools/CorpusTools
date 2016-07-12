@@ -1729,12 +1729,7 @@ class Inventory(object):
     def update(self, source):
         for attribute, default_value in Inventory.inventory_attributes.items():
             if hasattr(source, attribute):
-                if isinstance(default_value, list):
-                    setattr(self, attribute, [x for x in getattr(source, attribute)])
-                elif isinstance(default_value, dict):
-                    setattr(self, attribute, getattr(source, attribute).copy())
-                else:
-                    setattr(self, attribute, getattr(source, attribute))
+                setattr(self, attribute, getattr(source, attribute))
             else:
                 if isinstance(default_value, list):
                     setattr(self, attribute, [x for x in default_value])

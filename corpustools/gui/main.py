@@ -387,10 +387,12 @@ class MainWindow(QMainWindow):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):
+                print(attribute)
                 update_corpus = True
                 break
         for attribute in Inventory.inventory_attributes:
             if not hasattr(corpus.inventory, attribute):
+                print(attribute)
                 update_inventory = True
                 break
         word = corpus.random_word()
@@ -399,8 +401,10 @@ class MainWindow(QMainWindow):
                 update_words = True
                 break
         if update_corpus:
-            corpus = Corpus(None, update=corpus)
+            corpus = Corpus(corpus.name, update=corpus)
         if update_inventory:
+            if not hasattr(corpus.inventory, 'segs'):
+                corpus.inventory = modernize.modernize_inventory_attributes(corpus.inventory)
             corpus.inventory = Inventory(update=corpus.inventory)
         if update_words:
             for word in corpus:

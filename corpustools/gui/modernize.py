@@ -68,8 +68,7 @@ def modernize_inventory_attributes(inventory):
     for attribute,default in Inventory.inventory_attributes.items():
         if not hasattr(inventory, attribute):
             setattr(inventory, attribute, default)
-        elif not getattr(inventory, attribute) and default:
-            setattr(inventory, attribute, default)
+
     has_segs = [s for s in inventory.segs if not s in Inventory.inventory_attributes['non_segment_symbols']]
     if not has_segs and inventory._data:
         #in an older version, inventory._data was a list of segs, but with the model/view set up,
