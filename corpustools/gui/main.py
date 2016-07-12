@@ -387,12 +387,10 @@ class MainWindow(QMainWindow):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):
-                print(attribute)
                 update_corpus = True
                 break
         for attribute in Inventory.inventory_attributes:
             if not hasattr(corpus.inventory, attribute):
-                print(attribute)
                 update_inventory = True
                 break
         word = corpus.random_word()

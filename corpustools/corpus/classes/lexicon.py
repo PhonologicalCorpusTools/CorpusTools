@@ -987,6 +987,10 @@ class Word(object):
 
     def update(self, old_word):
         for attribute, default_value in Word.word_attributes.items():
+            if attribute == '_spelling':
+                setattr(self, '_spelling', old_word.spelling)
+            elif attribute == '_transcription':
+                setattr(self, '_transcription', old_word.transcription)
             if hasattr(old_word, attribute):
                 setattr(self, attribute, getattr(old_word, attribute))
             else:
