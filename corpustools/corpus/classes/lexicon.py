@@ -986,11 +986,12 @@ class Word(object):
         del self._spelling
 
     def update(self, old_word):
+        setattr(self, '_spelling', old_word.__dict__['spelling'])
+        setattr(self, '_transcription', old_word.__dict__['transcription'])
+
         for attribute, default_value in Word.word_attributes.items():
-            if attribute == '_spelling':
-                setattr(self, '_spelling', old_word.spelling)
-            elif attribute == '_transcription':
-                setattr(self, '_transcription', old_word.transcription)
+            if 'spelling' in attribute or 'transcription' in attribute:
+                continue
             if hasattr(old_word, attribute):
                 setattr(self, attribute, getattr(old_word, attribute))
             else:
@@ -1907,7 +1908,8 @@ class Corpus(object):
                   '_attributes': [Attribute('spelling', 'spelling'),
                                   Attribute('transcription', 'tier'),
                                   Attribute('frequency', 'numeric')],
-                  '_version': currentPCTversion}
+                  '_version': currentPCTversion
+                    }
     basic_attributes = ['spelling','transcription','frequency']
 
     def __init__(self, name, update=False):
@@ -1925,6 +1927,7 @@ class Corpus(object):
         # self.has_spelling = False
         # self.has_wordtokens = False
         # self.has_audio = False
+        # self.wordlist = list()
         # self._attributes = [Attribute('spelling','spelling'),
         #                     Attribute('transcription','tier'),
         #                     Attribute('frequency','numeric')]
@@ -1952,6 +1955,11 @@ class Corpus(object):
                 setattr(self, attribute, getattr(old_corpus, attribute))
             else:
                 setattr(self, attribute, default_value)
+
+    def update_wordlist(self, new_wordlist):
+        self.wordlist = dict()
+        for word in new_wordlist:
+            self.add_word(word)
 
     @property
     def has_transcription(self):
@@ -2511,6 +2519,7 @@ class Corpus(object):
                     self._attributes.append(Attribute(d,'tier'))
                 elif isinstance(getattr(word,d),(int, float)):
                     self._attributes.append(Attribute(d,'numeric'))
+
         for a in self.attributes:
             if not hasattr(word,a.name):
                 word.add_attribute(a.name, a.default_value)

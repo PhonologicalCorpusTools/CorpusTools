@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
             self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))
-            self.inventoryModel = self.generateInventoryModel()
+            self.inventoryModel = None if self.corpusModel.corpus.specifier is None else self.generateInventoryModel()
             self.corpusModel.corpus.inventory.isNew = False
             self.saveCorpus()
             self.unsavedChanges = False
@@ -405,10 +405,13 @@ class MainWindow(QMainWindow):
                 corpus.inventory = modernize.modernize_inventory_attributes(corpus.inventory)
             corpus.inventory = Inventory(update=corpus.inventory)
         if update_words:
+            word_list = list()
             for word in corpus:
                 word2 = Word(update=word)
-                corpus.remove_word(word)
-                corpus.add_word(word2)
+                word_list.append(word2)
+            corpus.update_wordlist(word_list)
+                # corpus.remove_word(word)
+                # corpus.add_word(word2)
         return corpus
 
     def loadFeatureMatrices(self):

@@ -1190,6 +1190,11 @@ class FeatureMatrixManager(QDialog):
 
         layout.addWidget(acFrame)
 
+        note = QLabel('This window is only for loading and deleting transcription/features systems. If you would like '
+        'to associate a system with your corpus, go to the Features menu, and select View/change feature system...')
+        note.setWordWrap(True)
+        layout.addWidget(note)
+
         self.setLayout(layout)
 
         self.setWindowTitle('Manage feature systems')

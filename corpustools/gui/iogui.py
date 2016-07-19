@@ -997,8 +997,8 @@ class LoadCorpusDialog(PCTDialog):
                         return
             save_binary(self.corpus,
                     corpus_name_to_path(self.settings['storage'], self.corpus.name))
-            save_binary(c.specifier,
-                    system_name_to_path(self.settings['storage'], c.specifier.name))
+            if c.specifier is not None:
+                save_binary(c.specifier, system_name_to_path(self.settings['storage'], c.specifier.name))
             QDialog.accept(self)
 
     def updateName(self):

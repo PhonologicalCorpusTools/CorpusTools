@@ -148,18 +148,15 @@ class CorpusSummary(QDialog):
 
         main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
 
+        detailTabs = QTabWidget()
         if c.specifier is not None:
             main.addRow(QLabel('Feature system:'),QLabel(c.specifier.name))
+            self.inventorySummary = InventorySummary(corpus, inventory)
+            detailTabs.addTab(self.inventorySummary, 'Inventory')
         else:
             main.addRow(QLabel('Feature system:'),QLabel('None'))
 
         main.addRow(QLabel('Number of words types:'),QLabel(str(len(c))))
-
-        detailTabs = QTabWidget()
-
-        self.inventorySummary = InventorySummary(corpus, inventory)
-
-        detailTabs.addTab(self.inventorySummary,'Inventory')
 
         self.attributeSummary = AttributeSummary(c)
 
