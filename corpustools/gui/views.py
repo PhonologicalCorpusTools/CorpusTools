@@ -121,7 +121,6 @@ class LexiconView(QWidget):
         menu.popup(header.mapToGlobal(pos))
 
     def editColumn(self, index):
-        print(index.column())
         pass
 
     def removeColumn(self, column):
@@ -201,8 +200,7 @@ class LexiconView(QWidget):
         self.selectTokens.emit(tokens)
 
     def showVariants(self, index):
-        variantDialog = VariantView(self,
-                self.table.model().wordObject(index.row()))
+        variantDialog = VariantView(self, self.table.model().wordObject(index.row()))
         variantDialog.show()
 
 class VariantView(QDialog):

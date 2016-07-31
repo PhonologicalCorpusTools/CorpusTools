@@ -164,8 +164,8 @@ def minpair_fl(corpus_context, segment_pairs,
         pairs = itertools.combinations(merged_dict[entry], 2)
         minpair_transcriptions = set()
         for w1, w2 in pairs:
-            if (getattr(w1, corpus_context.sequence_type) 
-                != getattr(w2, corpus_context.sequence_type)): # avoids counting homophones
+            if (getattr(w1, corpus_context.sequence_type) != getattr(w2, corpus_context.sequence_type)):
+                # avoids counting homophones
                 if w1.spelling != w2.spelling: # avoids pronunc. variants
                     ordered_pair = sorted([(w1, getattr(w1, corpus_context.sequence_type)),
                                     (w2, getattr(w2, corpus_context.sequence_type))],

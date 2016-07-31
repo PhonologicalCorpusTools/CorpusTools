@@ -1,11 +1,11 @@
 import os
-import string
-import re
+import collections
 
 from textgrid import TextGrid, IntervalTier
 from textgrid.textgrid import readFile, Interval, Point, PointTier , _getMark
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute, Word, WordToken, Transcription
+from corpustools.corpus.classes.spontaneous import Discourse
 from corpustools.exceptions import TextGridTierError, PCTError
 
 from corpustools.corpus.io.binary import load_binary
@@ -170,7 +170,10 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
     if call_back is not None:
         call_back('Loading...')
         cur = 0
+    word_dict = collections.defaultdict(list)
     for word_name in data.word_levels:
+        #data.word_levels = [k for k,v in data.data.items() if not v.token and v.anchor]
+        #this should return the names of just the spelling tiers, and in most cases len(word_levels)==1
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -180,7 +183,10 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
         for si in spelling_tier:
             annotations = dict()
             word = Annotation(si.mark)
+            # si.mark is the actual text, e.g the spelling of a word
             for n in data.base_levels:
+                #data.base_levels should return a list of names of transcription-type tiers
+                #comapre with data.word_levels a few lines back in the nesting loop
                 if data[word_name].speaker != data[n].speaker and data[n].speaker is not None:
                     continue
                 t = tg.getFirst(n)
@@ -202,6 +208,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                         phoneEnd = si.maxTime
                     if data[n].delimited:
                         parsed = parse_transcription(ti.mark, data[n])
+                        #parsed is a list of BaseAnnotations, not a Transcription
                         if len(parsed) > 0:
                             parsed[0].begin = phoneBegin
                             parsed[-1].end = phoneEnd
@@ -221,6 +228,9 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
 
             mid_point = si.minTime + (si.maxTime - si.minTime)
             for at in annotation_types:
+                #it's not clear what this loop was intended to do
+                #the first three if statements cover enough ground that
+                #every annotation type will be caught, so nothing further ever happens
                 if at.ignored:
                     continue
                 if at.base:
@@ -244,8 +254,13 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                     word.additional[at.attribute.name] = value
 
             annotations[word_name] = [word]
+            word_dict[word.label].append((word_name, word))
             data.add_annotations(**annotations)
-    return data
+            #the add_annotations function appears to do nothing
+            #it is supposed to update the dictionary data.data but the contents of the dictionary remain the
+            #same after the function call
+            #the annotations dictionary seems to contain useful information about words, but none of it is ever used
+    return data,word_dict
 
 
 def load_discourse_textgrid(corpus_name, path, annotation_types,
@@ -278,13 +293,65 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     Discourse
         Discourse object generated from the TextGrid file
     """
-
-    data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
+    data, word_dict = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
     #data is a DiscourseData object, see corpus\io\helper.py
     data.wav_path = find_wav_path(path)
 
-    discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
-    #discourse is a Discourse object, see corpus\classes\spontaneous.py
+    curr_word = list()
+    annotations = dict()
+    spelling_name, transcription_name = None, None
+    for at in annotation_types:
+        if at.name == 'Orthography (default)':
+            spelling_name = at.output_name
+        elif at.name == 'Transcription (default)':
+            transcription_name = at.output_name
+
+        annotations[at] = list()
+        for item in at._list:
+            if isinstance(item, Annotation):
+                #it's spelling
+                if item.label:
+                    annotations[at].append(item.label)
+            elif isinstance(item, BaseAnnotation):
+                #it's a transcription
+                if item.end is None:
+                    curr_word.append(item)
+                elif item.end is not None:
+                    curr_word.append(item)
+                    curr_word = Transcription(curr_word)
+                    annotations[at].append(curr_word)
+                    curr_word = list()
+
+    if spelling_name is None:
+        spelling_name = 'Spelling'
+    if transcription_name is None:
+        transcription_name = 'Transcription'
+    discourse = Discourse(name=data.name, wav_path=data.wav_path,
+                          spelling_name=spelling_name, transcription_name=transcription_name)
+
+    ind = 0
+    for n in range(len(list(annotations.values())[0])):
+        word_kwargs = {at.output_name:(at.attribute, annotations[at][n]) for at in annotations}
+        word = Word(**word_kwargs)
+        word.frequency += 1
+        for at in annotations:
+            if at.token:
+                word_token_kwargs = {at.output_name:(at.attribute, annotations[at][n])}
+                word_token_kwargs['word'] = word
+                if 'begin' not in word_token_kwargs:
+                    word_token_kwargs['begin'] = ind
+                    word_token_kwargs['end'] = ind + 1
+                word_token = WordToken(**word_token_kwargs)
+                word.wordtokens.append(word_token)
+                discourse.add_word(word_token)
+                word.frequency += 1
+        print(word)
+        print(word.wordtokens)
+        discourse.lexicon.add_word(word)
+        ind += 1
+
+    # discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    # discourse is a Discourse object, see corpus\classes\spontaneous.py
     if discourse is None:
         return
     if feature_system_path is not None:

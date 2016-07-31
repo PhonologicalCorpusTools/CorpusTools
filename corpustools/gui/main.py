@@ -358,7 +358,6 @@ class MainWindow(QMainWindow):
         if not hasattr(self.corpusModel.corpus.inventory, 'segs'):
             return None
 
-        # try:
         if self.corpusModel.corpus.inventory.isNew:
             # just loaded from a text file
             print(1)

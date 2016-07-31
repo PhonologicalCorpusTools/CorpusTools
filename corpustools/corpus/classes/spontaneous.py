@@ -5,7 +5,7 @@ from .lexicon import Transcription, Corpus, Attribute
 
 import os
 import wave
-import math
+import traceback
 
 class Speaker(object):
     """
@@ -144,24 +144,24 @@ class Discourse(object):
         are the WordTokens
     """
     def __init__(self, **kwargs):
-
         self.name = ''
         self.speaker = Speaker(None)
         self.wav_path = None
 
-        for k,v in kwargs.items():
-            setattr(self,k,v)
-        if kwargs['spelling_name'] is None:
-            spell_attr = Attribute('spelling','spelling','Spelling')
-        else:
-            spell_attr = Attribute(kwargs['spelling_name'], 'spelling', kwargs['spelling_name'])
+        # for k,v in kwargs.items():
+        #     setattr(self,k,v)
+        # if spelling_name is None:
+        #     spell_attr = Attribute('spelling','spelling','Spelling')
+        # else:
+        #     spell_attr = Attribute(spelling_name, 'spelling', spelling_name)
+        #
+        # if transcription_name is None:
+        #     trans_attr = Attribute('transcription','tier','Transcription'),
+        # else:
+        #     trans_attr = Attribute(transcription_name, 'tier', transcription_name)
 
-        if kwargs['transcription_name'] is None:
-            trans_attr = Attribute('transcription','tier','Transcription'),
-        else:
-            trans_attr = Attribute(kwargs['transcription_name'], 'tier', kwargs['transcription_name'])
-
-        self._attributes = [spell_attr, trans_attr,
+        self._attributes = [Attribute('_spelling', 'spelling', kwargs['spelling_name']),
+                            Attribute('_transcription', 'tier', kwargs['transcription_name']),
                             Attribute('begin','numeric','Begin'),
                             Attribute('end','numeric', 'End')]
 
@@ -225,7 +225,7 @@ class Discourse(object):
             WordToken to be added
         """
         wordtoken.discourse = self
-        self.words[wordtoken.begin] = wordtoken
+        self.words[wordtoken.begins] = wordtoken
         for a in self.attributes:
             if not hasattr(wordtoken,a.name):
                 wordtoken.add_attribute(a.name, a.default_value)
@@ -423,15 +423,15 @@ class WordToken(object):
         self.discourse = None
         self.speaker = None
         self.wavpath = None
+        self.begins = kwargs.pop('begin')
+        self.ends = kwargs.pop('end')
         self._spelling = None
         self._transcription = None
         self._freq_names = ['abs_freq', 'freq_per_mil', 'sfreq', 'lowercase_freq', 'log10_freq']
+
+
         for key, value in kwargs.items():
             key = key.lower()
-            if key == 'transcription':
-                key = '_transcription'
-            elif key == 'spelling':
-                key = '_spelling'
             if isinstance(value, tuple):
                 att, value = value
                 if att.att_type == 'numeric':
@@ -441,26 +441,40 @@ class WordToken(object):
                         value = float('nan')
                 elif att.att_type == 'tier':
                     value = Transcription(value)
+                    self._transcription = value
+
+                setattr(self, key, value)
+
+            elif isinstance(value, list):
+                # probably a transcription
+                value = Transcription(value)
+                setattr(self, key, value)
+                self._transcription = value
+
+            elif isinstance(value, str):
+                try:
+                    value = float(value)
+                except ValueError:
+                    self._spelling = value  # it's spelling, leave value as-is
+                setattr(self, key, value)
+
             else:
-                if isinstance(value,list):
-                    #assume transcription type stuff
-                    value = Transcription(value)
-                elif key != '_spelling':
-                    try:
-                        f = float(value)
-                        if not math.isnan(f) and not math.isinf(f):
-                            value = f
-                    except (ValueError, TypeError):
-                        pass
-            setattr(self, key, value)
-        # TEMPORARY COMMENT
-        #     if att.is_default:
-        #         if 'transcription' in key:
-        #             setattr(self, 'transcription', value)
-        #         elif 'spelling' in key or 'orthography' in key:
-        #             setattr(self, 'spelling', value)
-        #     else:
-        #         setattr(self, key, value)
+                setattr(self, key, value)
+
+        if not self._transcription:
+            for attr in self.__dict__.values():
+                if isinstance(attr, Transcription):
+                    self._transcription = getattr(self, attr)
+                    break
+            else:
+                self._transcription = None
+
+        if not self._spelling:
+            if self._transcription is not None:
+                self._spelling = str(self._transcription)
+            else:
+                self._spelling = None
+
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -513,8 +527,8 @@ class WordToken(object):
     def spelling(self):
         if self._spelling is not None:
             return self._spelling
-        if self.wordtype is not None:
-            return self.wordtype.spelling
+        # if self.wordtype is not None:
+        #     return self.wordtype.spelling
         return None
 
     @spelling.setter
@@ -529,8 +543,8 @@ class WordToken(object):
     def transcription(self):
         if self._transcription is not None:
             return self._transcription
-        if self.wordtype is not None:
-            return self.wordtype.transcription
+        # if self.wordtype is not None:
+        #     return self.wordtype.transcription
         return None
 
     @transcription.setter

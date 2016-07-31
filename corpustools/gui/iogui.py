@@ -560,7 +560,7 @@ class LoadCorpusDialog(PCTDialog):
         self.columnFrame.setLayout(lay)
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.columnFrame)
-        scroll.setMinimumWidth(140)
+        scroll.setMinimumWidth(500)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
         scroll.setSizePolicy(policy)
@@ -776,18 +776,17 @@ class LoadCorpusDialog(PCTDialog):
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
 
-        # TEMPORARY COMMENT
-        # set_default_trans = False
-        # set_default_spell = False
-        # for c in reversed(self.columns):
-        #     if not set_default_trans and c.typeWidget.currentText() == 'Transcription (alternative)':
-        #         c.typeWidget.setCurrentIndex(c.typeWidget.findText('Transcription (default)'))
-        #         set_default_trans = True
-        #     if not set_default_spell and c.typeWidget.currentText() == 'Orthography (alternative)':
-        #         c.typeWidget.setCurrentIndex(c.typeWidget.findText('Orthography (default)'))
-        #         set_default_spell = True
-        #     if set_default_spell and set_default_trans:
-        #         break
+        set_default_trans = False
+        set_default_spell = False
+        for c in reversed(self.columns):
+            if not set_default_trans and c.typeWidget.currentText() == 'Transcription (alternative)':
+                c.typeWidget.setCurrentIndex(c.typeWidget.findText('Transcription (default)'))
+                set_default_trans = True
+            if not set_default_spell and c.typeWidget.currentText() == 'Orthography (alternative)':
+                c.typeWidget.setCurrentIndex(c.typeWidget.findText('Orthography (default)'))
+                set_default_spell = True
+            if set_default_spell and set_default_trans:
+                break
 
     def generateKwargs(self):
         path = self.pathWidget.value()
@@ -816,12 +815,13 @@ class LoadCorpusDialog(PCTDialog):
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
+
         # TEMPORARY COMMENTS
         for x in kwargs['annotation_types']:
-            #if 'default' in x.name:
-            if 'transcription' in x.name.lower() or 'orthography' in x.name.lower():
-                x.is_default = True
-                x.attribute.is_default = True
+            if 'default' in x.name:
+                if 'transcription' in x.name.lower() or 'orthography' in x.name.lower():
+                    x.is_default = True
+                    x.attribute.is_default = True
             else:
                 x.is_default = False
                 x.attribute.is_default = False
@@ -872,22 +872,20 @@ class LoadCorpusDialog(PCTDialog):
                         '"Parsing Preview" section and ensure that all columns have unique names.'.format(duplicates))
             return
 
-        # duplicates = False
-        # names = [x.name for x in kwargs['annotation_types']]
-        #TEMPORARY COMMENTS
-        # if names.count('Transcription') > 1:# (default)') > 1:
-        #     duplicates = 'Transcription'# (default)'
-        # elif names.count('Orthography') > 1:# (default)') > 1:
-        #     duplicates = 'Orthography'# (default)'
-        # if duplicates:
-        #     QMessageBox.critical(self, 'Duplicate information',
-        #     ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
-        #     'section to change this.\n\n'
-        #     'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
-        #     'more than one transcription or spelling system, choose one default and set the others '
-        #     'to "Other (character)"'.format(duplicates)))
-        #     #'to "alternative".'.format(duplicates)))
-        #     return
+        duplicates = False
+        names = [x.name for x in kwargs['annotation_types']]
+        if names.count('Transcription (default)') > 1:
+            duplicates = 'Transcription (default)'
+        elif names.count('Orthography (default)') > 1:
+            duplicates = 'Orthography (default)'
+        if duplicates:
+            QMessageBox.critical(self, 'Duplicate information',
+            ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
+            'section to change this.\n\n'
+            'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
+            'more than one transcription or spelling system, choose one default and set the others '
+            'to "alternative".'.format(duplicates)))
+            return
 
         if self.textType == 'csv':
             kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(

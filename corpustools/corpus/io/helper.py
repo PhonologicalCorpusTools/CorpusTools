@@ -25,8 +25,7 @@ class BaseAnnotation(object):
                                                             self.begin,
                                                             self.end)
     def __eq__(self, other):
-        return self.label == other.label and self.begin == other.begin \
-                and self.end == other.end
+        return self.label == other.label and self.begin == other.begin and self.end == other.end
 
 class Annotation(BaseAnnotation):
     def __init__(self, label = None):
@@ -44,6 +43,9 @@ class Annotation(BaseAnnotation):
     def __repr__(self):
         return '<Annotation "{}">'.format(self.label)
 
+    def __hash__(self):
+        return self.ouput_name+str(self.begins)
+
 class AnnotationType(object):
     """
     AnnotationTypes represent information found in a corpus column.
@@ -58,13 +60,16 @@ class AnnotationType(object):
         self.trans_delimiter = None
         self.morph_delimiters = set()
         self.number_behavior = None
-        self._list = []
+        self._list = [] #This list contains Annotations for spelling and BaseAnnotations for transcriptions
         self.name = name
+        #This variable name is confusing - it represents something like "Orthography" or "Transcription", rather than
+        #the name that the user would have given to the column, e.g. "canonical_pron" or "Spelling"
+        #to get the user's preferred name, look self.output_name, or self.attribute
         self.subtype = subtype
         self.supertype = supertype
         self.token = token
-        self.base = base
-        self.anchor = anchor
+        self.base = base #base is transcription/tier type
+        self.anchor = anchor #anchor is spelling type
         self.speaker = speaker
         self.ignored = False
         self.is_default = is_default
@@ -222,6 +227,14 @@ class DiscourseData(object):
         self.data = newdata
 
     @property
+    def token_levels(self):
+        levels = []
+        for k in self.data.keys():
+            if self.data[k].token:
+                levels.append(k)
+        return levels
+
+    @property
     def word_levels(self):
         levels = []
         for k in self.data.keys():
@@ -373,17 +386,20 @@ def log_annotation_types(annotation_types):
 def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
     attribute_mapping = data.mapping()
     spelling_name, transcription_name = None, None
+
     for name, value in attribute_mapping.items():
-        if value.att_type == 'spelling':
+        if value.att_type == 'spelling' and value.is_default:
             spelling_name = name
-        elif value.att_type == 'tier':
+        elif value.att_type == 'tier' and value.is_default:
             transcription_name = name
+
 
     d = Discourse(spelling_name = spelling_name, transcription_name = transcription_name,
                   name = data.name, wav_path = data.wav_path)
     ind = 0
     if lexicon is None:
         lexicon = d.lexicon #despite the name, this is a Corpus object
+
     for k,v in attribute_mapping.items():
         a = data[v.name]
 
@@ -397,7 +413,9 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
     if call_back is not None:
         call_back('Processing data...')
         cur = 0
+
     for level in data.word_levels:
+        #word_levels is a list of spelling tiers, usually of length 1
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -409,7 +427,7 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
                 continue
             word_kwargs = {level:(attribute_mapping[level], s.label)}
             word_token_kwargs = {}
-            if s.token is not None:
+            if s.token:# is not None:
                 for token_key, token_value in s.token.items():
                     att = attribute_mapping[token_key]
                     word_token_kwargs[att.name] = (att, token_value)
@@ -435,8 +453,6 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
 
             word = lexicon.get_or_create_word(**word_kwargs)
             word_token_kwargs['word'] = word
-            word_token_kwargs[word._spelling_name] = word.spelling
-            word_token_kwargs[word._transcription_name] = word.transcription
             if 'begin' not in word_token_kwargs:
                 word_token_kwargs['begin'] = ind
                 word_token_kwargs['end'] = ind + 1

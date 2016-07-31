@@ -881,7 +881,10 @@ class Word(object):
         Token frequency in a corpus
     """
 
-    word_attributes = {'_corpus':None, '_transcription':None, '_spelling':None, 'frequency':0, 'wordtokens':list(),
+    word_attributes = {'_corpus':None, '_transcription':None, '_spelling':None,
+                       '_transcription_name':None, '_spelling_name': None,
+                       'alt_transcription': None, 'alt_spelling': None,
+                       'frequency':0, 'wordtokens':list(),
                        'descriptors':['spelling', 'transcription', 'frequency']}
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
         'lowercase_freq', 'log10_freq']
@@ -892,7 +895,7 @@ class Word(object):
             self.update(update)
             return
 
-        self.initDefault()
+        self.initDefaults()
 
         for key, value in kwargs.items():
             key = key.lower()
@@ -913,19 +916,25 @@ class Word(object):
 
                 if key == 'transcription':
                     key = 'Transcription'
-                if key == 'spelling':
+                elif key == 'spelling':
                     key = 'Spelling'
-
-                if att.att_type == 'tier':# and self._transcription is None:
-                    setattr(self, '_transcription', value)
-                    self._transcription_name = key
-                elif att.att_type == 'spelling':# and self._spelling is None:
-                    setattr(self, '_spelling', value)
-                    self._spelling_name = key
                 elif key in self._freq_names:
                     key = 'frequency'
 
                 setattr(self, key, value)
+
+                if att.is_default:
+                    if att.att_type == 'tier':
+                        setattr(self, '_transcription', value)
+                        self._transcription_name = key
+                    elif att.att_type == 'spelling':
+                        setattr(self, '_spelling', value)
+                        self._spelling_name = key
+                else:
+                    if att.att_type == 'tier':
+                        self.alt_transcription = key
+                    elif att.att_type == 'spelling':
+                        self.alt_spelling = key
 
             #the following code is reached when adding a word, not when loading a corpus
             elif isinstance(value, list):
@@ -946,12 +955,13 @@ class Word(object):
             if key not in self.descriptors:
                 self.descriptors.append(key)
 
-        if self._spelling is None and self._transcription is None:
+
+        if self._spelling is None or self._transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self._spelling is None:
             self._spelling = ''.join(map(str,self._transcription))
 
-    def initDefault(self):
+    def initDefaults(self):
         for attribute, default_value in Word.word_attributes.items():
             if isinstance(default_value, list):
                 setattr(self, attribute, [x for x in default_value])
@@ -986,8 +996,8 @@ class Word(object):
         del self._spelling
 
     def update(self, old_word):
-        setattr(self, '_spelling', old_word.__dict__['spelling'])
-        setattr(self, '_transcription', old_word.__dict__['transcription'])
+        setattr(self, '_spelling', old_word.spelling)
+        setattr(self, '_transcription', old_word.transcription)
 
         for attribute, default_value in Word.word_attributes.items():
             if 'spelling' in attribute or 'transcription' in attribute:
@@ -1919,19 +1929,6 @@ class Corpus(object):
 
         self.initDefaults()
         self.name = name
-        # self.wordlist = dict()
-        # self.specifier = None
-        # self.inventory = Inventory()
-        # self.inventoryModel = None
-        # self.has_frequency = True
-        # self.has_spelling = False
-        # self.has_wordtokens = False
-        # self.has_audio = False
-        # self.wordlist = list()
-        # self._attributes = [Attribute('spelling','spelling'),
-        #                     Attribute('transcription','tier'),
-        #                     Attribute('frequency','numeric')]
-        # self._version = currentPCTversion
 
 
     def initDefaults(self):
@@ -2582,11 +2579,13 @@ class Corpus(object):
         """
         for key,value in kwargs.items():
             att_type = value[0].att_type
-            if att_type == 'spelling':
+            default = value[0].is_default
+            if att_type == 'spelling' and default:
                 spelling = value[1]
                 break
         else:
             return None
+
         words = self.find_all(spelling)
         for w in words:
             for k,v in kwargs.items():
