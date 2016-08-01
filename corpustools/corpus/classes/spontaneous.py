@@ -144,7 +144,7 @@ class Discourse(object):
         are the WordTokens
     """
     def __init__(self, **kwargs):
-        self.name = ''
+        self.name = kwargs['name']
         self.speaker = Speaker(None)
         self.wav_path = None
 
@@ -423,8 +423,10 @@ class WordToken(object):
         self.discourse = None
         self.speaker = None
         self.wavpath = None
-        self.begins = kwargs.pop('begin')
-        self.ends = kwargs.pop('end')
+        self.begin = kwargs.pop('begin')
+        self.end = kwargs.pop('end')
+        self.begins = self.begin
+        self.ends = self.end
         self._spelling = None
         self._transcription = None
         self._freq_names = ['abs_freq', 'freq_per_mil', 'sfreq', 'lowercase_freq', 'log10_freq']

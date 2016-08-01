@@ -2479,7 +2479,7 @@ class Corpus(object):
         word._corpus = self
         #If the word doesn't exist, add it
         try:
-            check = self.find(word.spelling, keyerror=True)
+            check = self.find(word.spelling)
             if allow_duplicates:
                 #Some words have more than one entry in a corpus, e.g. "live" and "live"
                 #so they need to be assigned unique keys
@@ -2489,7 +2489,7 @@ class Corpus(object):
                     n += 1
                     key = '{} ({})'.format(word.spelling,n)
                     try:
-                        check = self.find(key, keyerror=True)
+                        check = self.find(key)
                     except KeyError:
                         self.wordlist[key] = word
                         break
@@ -2577,14 +2577,17 @@ class Corpus(object):
             Existing or newly created Word with the spelling and transcription
             specified
         """
-        for key,value in kwargs.items():
-            att_type = value[0].att_type
-            default = value[0].is_default
-            if att_type == 'spelling' and default:
-                spelling = value[1]
-                break
-        else:
-            return None
+        try:
+            spelling = kwargs['spelling']
+        except KeyError:
+            for key,value in kwargs.items():
+                att_type = value[0].att_type
+                default = value[0].is_default
+                if att_type == 'spelling' and default:
+                    spelling = value[1]
+                    break
+            else:
+                return None
 
         words = self.find_all(spelling)
         for w in words:
@@ -2624,17 +2627,13 @@ class Corpus(object):
         """
         return self.specifier.features
 
-    def find(self, word, keyerror=True, ignore_case = False):
+    def find(self, word, ignore_case = False):
         """Search for a Word in the corpus
-        If keyerror == True, then raise a KeyError if the word is not found
-        If keyerror == False, then return an EmptyWord if the word is not found
 
         Parameters
         ----------
         word : str
             String representing the spelling of the word (not transcription)
-        keyerror : bool
-            Set whether a KeyError should be raised if a word is not found
 
         Returns
         -------
@@ -2644,7 +2643,7 @@ class Corpus(object):
         Raises
         ------
         KeyError
-            If keyerror == True and word is not found
+            If word is not found
         """
         patterns = [word]
         if ignore_case:

@@ -170,7 +170,6 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
     if call_back is not None:
         call_back('Loading...')
         cur = 0
-    word_dict = collections.defaultdict(list)
     for word_name in data.word_levels:
         #data.word_levels = [k for k,v in data.data.items() if not v.token and v.anchor]
         #this should return the names of just the spelling tiers, and in most cases len(word_levels)==1
@@ -254,13 +253,12 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                     word.additional[at.attribute.name] = value
 
             annotations[word_name] = [word]
-            word_dict[word.label].append((word_name, word))
             data.add_annotations(**annotations)
             #the add_annotations function appears to do nothing
             #it is supposed to update the dictionary data.data but the contents of the dictionary remain the
             #same after the function call
             #the annotations dictionary seems to contain useful information about words, but none of it is ever used
-    return data,word_dict
+    return data
 
 
 def load_discourse_textgrid(corpus_name, path, annotation_types,
@@ -293,13 +291,16 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     Discourse
         Discourse object generated from the TextGrid file
     """
-    data, word_dict = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
+
+    data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
+    #as far as I can tell, the call to textgrid_to_data is unnecessary, but commenting out the call causes
+    #PCT to load with a blank corpus, so it's doing something magic.
     #data is a DiscourseData object, see corpus\io\helper.py
-    data.wav_path = find_wav_path(path)
 
     curr_word = list()
     annotations = dict()
     spelling_name, transcription_name = None, None
+
     for at in annotation_types:
         if at.name == 'Orthography (default)':
             spelling_name = at.output_name
@@ -307,47 +308,54 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
             transcription_name = at.output_name
 
         annotations[at] = list()
+        begin = None
+        end = None
         for item in at._list:
             if isinstance(item, Annotation):
                 #it's spelling
                 if item.label:
-                    annotations[at].append(item.label)
+                    annotations[at].append((item.label, begin, end))
             elif isinstance(item, BaseAnnotation):
                 #it's a transcription
+
+                if item.begin is not None:
+                    begin = item.begin
                 if item.end is None:
                     curr_word.append(item)
                 elif item.end is not None:
+                    end = item.end
                     curr_word.append(item)
                     curr_word = Transcription(curr_word)
-                    annotations[at].append(curr_word)
+                    annotations[at].append((curr_word, begin, end))
                     curr_word = list()
 
     if spelling_name is None:
         spelling_name = 'Spelling'
     if transcription_name is None:
         transcription_name = 'Transcription'
-    discourse = Discourse(name=data.name, wav_path=data.wav_path,
+    discourse = Discourse(name=corpus_name, wav_path=find_wav_path(path),
                           spelling_name=spelling_name, transcription_name=transcription_name)
 
     ind = 0
     for n in range(len(list(annotations.values())[0])):
-        word_kwargs = {at.output_name:(at.attribute, annotations[at][n]) for at in annotations}
+        word_kwargs = {at.output_name:(at.attribute, annotations[at][n][0]) for at in annotations if not at.token}
         word = Word(**word_kwargs)
-        word.frequency += 1
+        try:
+            word = discourse.lexicon.find(word.spelling)
+        except KeyError:
+            discourse.lexicon.add_word(word)
         for at in annotations:
             if at.token:
-                word_token_kwargs = {at.output_name:(at.attribute, annotations[at][n])}
+                word_token_kwargs = {at.output_name:(at.attribute, annotations[at][n][0])}
                 word_token_kwargs['word'] = word
-                if 'begin' not in word_token_kwargs:
-                    word_token_kwargs['begin'] = ind
-                    word_token_kwargs['end'] = ind + 1
+                begin = annotations[at][n][1]
+                end = annotations[at][n][2]
+                word_token_kwargs['begin'] = begin if begin is not None else ind
+                word_token_kwargs['end'] = end if end is not None else ind+1
                 word_token = WordToken(**word_token_kwargs)
                 word.wordtokens.append(word_token)
                 discourse.add_word(word_token)
                 word.frequency += 1
-        print(word)
-        print(word.wordtokens)
-        discourse.lexicon.add_word(word)
         ind += 1
 
     # discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
@@ -358,7 +366,6 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
         discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
-
     return discourse
 
 def load_directory_textgrid(corpus_name, path, annotation_types,
