@@ -816,7 +816,6 @@ class LoadCorpusDialog(PCTDialog):
                     'text_type': self.textType}
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
 
-        # TEMPORARY COMMENTS
         for x in kwargs['annotation_types']:
             if 'default' in x.name:
                 if 'transcription' in x.name.lower() or 'orthography' in x.name.lower():

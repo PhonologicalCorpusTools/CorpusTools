@@ -4,7 +4,7 @@ import collections
 from textgrid import TextGrid, IntervalTier
 from textgrid.textgrid import readFile, Interval, Point, PointTier , _getMark
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute, Word, WordToken, Transcription
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.corpus.classes.spontaneous import Discourse
 from corpustools.exceptions import TextGridTierError, PCTError
 
@@ -12,7 +12,7 @@ from corpustools.corpus.io.binary import load_binary
 import corpustools.gui.modernize as modernize
 
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
-                    AnnotationType,data_to_discourse, find_wav_path,
+                    AnnotationType,data_to_discourse, data_to_discourse2, find_wav_path,
                     Annotation, BaseAnnotation)
 
 class PCTTextGrid(TextGrid):
@@ -297,66 +297,8 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     #PCT to load with a blank corpus, so it's doing something magic.
     #data is a DiscourseData object, see corpus\io\helper.py
 
-    curr_word = list()
-    annotations = dict()
-    spelling_name, transcription_name = None, None
-
-    for at in annotation_types:
-        if at.name == 'Orthography (default)':
-            spelling_name = at.output_name
-        elif at.name == 'Transcription (default)':
-            transcription_name = at.output_name
-
-        annotations[at] = list()
-        begin = None
-        end = None
-        for item in at._list:
-            if isinstance(item, Annotation):
-                #it's spelling
-                if item.label:
-                    annotations[at].append((item.label, begin, end))
-            elif isinstance(item, BaseAnnotation):
-                #it's a transcription
-
-                if item.begin is not None:
-                    begin = item.begin
-                if item.end is None:
-                    curr_word.append(item)
-                elif item.end is not None:
-                    end = item.end
-                    curr_word.append(item)
-                    curr_word = Transcription(curr_word)
-                    annotations[at].append((curr_word, begin, end))
-                    curr_word = list()
-
-    if spelling_name is None:
-        spelling_name = 'Spelling'
-    if transcription_name is None:
-        transcription_name = 'Transcription'
-    discourse = Discourse(name=corpus_name, wav_path=find_wav_path(path),
-                          spelling_name=spelling_name, transcription_name=transcription_name)
-
-    ind = 0
-    for n in range(len(list(annotations.values())[0])):
-        word_kwargs = {at.output_name:(at.attribute, annotations[at][n][0]) for at in annotations if not at.token}
-        word = Word(**word_kwargs)
-        try:
-            word = discourse.lexicon.find(word.spelling)
-        except KeyError:
-            discourse.lexicon.add_word(word)
-        for at in annotations:
-            if at.token:
-                word_token_kwargs = {at.output_name:(at.attribute, annotations[at][n][0])}
-                word_token_kwargs['word'] = word
-                begin = annotations[at][n][1]
-                end = annotations[at][n][2]
-                word_token_kwargs['begin'] = begin if begin is not None else ind
-                word_token_kwargs['end'] = end if end is not None else ind+1
-                word_token = WordToken(**word_token_kwargs)
-                word.wordtokens.append(word_token)
-                discourse.add_word(word_token)
-                word.frequency += 1
-        ind += 1
+    wav_path = find_wav_path(path)
+    discourse = data_to_discourse2(corpus_name, wav_path, annotation_types)
 
     # discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     # discourse is a Discourse object, see corpus\classes\spontaneous.py

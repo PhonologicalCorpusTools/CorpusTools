@@ -3,7 +3,7 @@ import os
 import string
 import logging
 
-from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken
+from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken, Transcription
 from corpustools.exceptions import DelimiterError
 
 NUMBER_CHARACTERS = set(string.digits)
@@ -382,6 +382,75 @@ def log_annotation_types(annotation_types):
     logging.info('')
     for a in annotation_types:
         logging.info(a.pretty_print())
+
+def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
+    curr_word = list()
+    annotations = dict()
+    spelling_name, transcription_name = None, None
+    for at in annotation_types:
+        #this list is looped twice. once here to get spelling and general details, then again to get transcriptions
+        #they can't be combined into a bigger loop because the transcriptions may depend on some of the information
+        #in the first loop, such as spelling
+        annotations[at] = list()
+
+        if at.name == 'Orthography (default)':
+            spelling_name = at.output_name
+        elif at.name == 'Transcription (default)':
+            transcription_name = at.output_name
+
+
+        if all(isinstance(item, Annotation) for item in at._list):
+            # it's a list of spellings, take each one and add it to the overall annotations list
+            for item in at._list:
+                if item.label:
+                    annotations[at].append((item.label, None, None))
+
+        elif all(type(item) == BaseAnnotation for item in at._list):
+            #it's a list of transcription, with each segment as a BaseAnnotation
+            for item in at._list:
+                if item.begin is not None:
+                    begin = item.begin
+                if item.end is None:
+                    curr_word.append(item)
+                elif item.end is not None:
+                    end = item.end
+                    curr_word.append(item)
+                    curr_word = Transcription(curr_word)
+                    annotations[at].append((curr_word, begin, end))
+                    curr_word = list()
+
+
+    if spelling_name is None:
+        spelling_name = 'Spelling'
+    if transcription_name is None:
+        transcription_name = 'Transcription'
+    discourse = Discourse(name=corpus_name, wav_path=wav_path,
+                          spelling_name=spelling_name, transcription_name=transcription_name)
+
+    ind = 0
+    for n in range(len(list(annotations.values())[0])):
+        word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0]) for at in annotations if not at.token}
+        word = Word(**word_kwargs)
+        try:
+            word = discourse.lexicon.find(word.spelling)
+        except KeyError:
+            discourse.lexicon.add_word(word)
+        for at in annotations:
+            word_token_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])}
+            word_token_kwargs['word'] = word
+            begin = annotations[at][n][1]
+            end = annotations[at][n][2]
+            word_token_kwargs['begin'] = begin if begin is not None else ind
+            word_token_kwargs['end'] = end if end is not None else ind + 1
+            word_token = WordToken(**word_token_kwargs)
+            word.frequency += 1
+            discourse.add_word(word_token)
+            if at.token:
+                word.wordtokens.append(word_token)
+
+
+        ind += 1
+    return discourse
 
 def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
     attribute_mapping = data.mapping()

@@ -1,7 +1,7 @@
 
 import os
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus
 from corpustools.corpus.classes import Corpus, Word, Discourse, WordToken, Attribute
@@ -12,7 +12,7 @@ from corpustools.exceptions import (DelimiterError, ILGError, ILGLinesMismatchEr
                                 ILGWordMismatchError)
 
 from .helper import (compile_digraphs, parse_transcription,
-                    DiscourseData, AnnotationType,data_to_discourse,
+                    DiscourseData, AnnotationType, data_to_discourse, data_to_discourse2,
                     Annotation, BaseAnnotation)
 import corpustools.gui.modernize as modernize
 
@@ -190,6 +190,8 @@ def ilg_to_data(corpus_name, path, annotation_types,
                     word.references.append(n)
                     word.begins.append(level_count)
                     word.ends.append(level_count + len(tier_elements))
+                    tier_elements[0].begin = level_count
+                    tier_elements[-1].end =level_count + len(tier_elements)
                     annotations[n] = tier_elements
                 for line_type in cur_line.keys():
                     if data[line_type].ignored:
@@ -242,8 +244,12 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
         Discourse object generated from the text file
     """
 
+
     data = ilg_to_data(corpus_name, path, annotation_types,stop_check, call_back)
-    discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    #discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    discourse = data_to_discourse2(corpus_name=corpus_name, annotation_types=annotation_types)
+    print(discourse.words)
+    print(discourse.lexicon.wordlist)
     if discourse is None:
         return
 
