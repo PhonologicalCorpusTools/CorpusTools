@@ -293,10 +293,7 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     """
 
     data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
-    #as far as I can tell, the call to textgrid_to_data is unnecessary, but commenting out the call causes
-    #PCT to load with a blank corpus, so it's doing something magic.
-    #data is a DiscourseData object, see corpus\io\helper.py
-
+    #text_grid_to_data has side-effects that change annotation_types
     wav_path = find_wav_path(path)
     discourse = data_to_discourse2(corpus_name, wav_path, annotation_types)
 

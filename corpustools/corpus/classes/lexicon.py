@@ -2496,6 +2496,8 @@ class Corpus(object):
             else:
                 return
         except KeyError:
+            if not hasattr(word, 'frequency') or not word.frequency:
+                word.frequency = 1
             self.wordlist[word.spelling] = word
             if word.spelling is not None:
                 if not self.has_spelling:

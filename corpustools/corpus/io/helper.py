@@ -388,9 +388,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
     annotations = dict()
     spelling_name, transcription_name = None, None
     for at in annotation_types:
-        #this list is looped twice. once here to get spelling and general details, then again to get transcriptions
-        #they can't be combined into a bigger loop because the transcriptions may depend on some of the information
-        #in the first loop, such as spelling
         annotations[at] = list()
 
         if at.name == 'Orthography (default)':
@@ -418,6 +415,8 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
                     curr_word = Transcription(curr_word)
                     annotations[at].append((curr_word, begin, end))
                     curr_word = list()
+        else:
+            raise TypeError("AnnotationType._list cannot contain a mix of Annotations and BaseAnnotations")
 
 
     if spelling_name is None:
@@ -443,12 +442,10 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
             word_token_kwargs['begin'] = begin if begin is not None else ind
             word_token_kwargs['end'] = end if end is not None else ind + 1
             word_token = WordToken(**word_token_kwargs)
-            word.frequency += 1
             discourse.add_word(word_token)
             if at.token:
                 word.wordtokens.append(word_token)
-
-
+        word.frequency = len(word.wordtokens)
         ind += 1
     return discourse
 

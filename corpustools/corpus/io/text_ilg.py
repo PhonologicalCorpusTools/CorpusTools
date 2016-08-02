@@ -248,8 +248,6 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
     data = ilg_to_data(corpus_name, path, annotation_types,stop_check, call_back)
     #discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     discourse = data_to_discourse2(corpus_name=corpus_name, annotation_types=annotation_types)
-    print(discourse.words)
-    print(discourse.lexicon.wordlist)
     if discourse is None:
         return
 

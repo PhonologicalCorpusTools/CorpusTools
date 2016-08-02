@@ -469,13 +469,19 @@ class WordToken(object):
                     self._transcription = getattr(self, attr)
                     break
             else:
-                self._transcription = None
+                try:
+                    self._transcription = self.wordtype._transcription
+                except AttributeError:
+                    self._transcription = None
 
         if not self._spelling:
-            if self._transcription is not None:
-                self._spelling = str(self._transcription)
-            else:
-                self._spelling = None
+            try:
+                self._spelling = self.wordtype._spelling
+            except AttributeError:
+                if self._transcription is not None:
+                    self._spelling = str(self._transcription)
+                else:
+                    self._spelling = None
 
 
     def __getstate__(self):
