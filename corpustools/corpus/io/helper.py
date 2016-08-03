@@ -432,9 +432,12 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
         word = Word(**word_kwargs)
         try:
             word = discourse.lexicon.find(word.spelling)
+            word.frequency += 1
         except KeyError:
             discourse.lexicon.add_word(word)
         for at in annotations:
+            if at.output_name == spelling_name:
+                continue
             word_token_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])}
             word_token_kwargs['word'] = word
             begin = annotations[at][n][1]
@@ -445,7 +448,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
             discourse.add_word(word_token)
             if at.token:
                 word.wordtokens.append(word_token)
-        word.frequency = len(word.wordtokens)
         ind += 1
     return discourse
 
