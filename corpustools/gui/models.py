@@ -103,18 +103,12 @@ class BaseCorpusTableModel(BaseTableModel):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
 
-        self.columns = [x for x in self.corpus.attributes]
+        self.columns = [x for x in self.corpus.attributes if not x.name in ('transcription','spelling')]
+        #'transcription' and 'spelling' are special attributes which are acually methods decorated with @property
+        #these methods return the value of either ._transcription or ._spelling
+        #we don't want to put them into the GUI column headers because that will lead to duplication
 
         self.columns.sort(key=self.column_sort)
-        att_types = [x.att_type for x in self.columns]
-
-        # HIDE ANY SHADOW COLUMNS
-        if att_types.count('tier') > 1:
-            transcription = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='transcription'][0]
-            self.columns.pop(transcription[0])
-        if att_types.count('spelling') > 1:
-            spell = [(i,x) for (i,x) in enumerate(self.columns) if x.name=='spelling'][0]
-            self.columns.pop(spell[0])
 
         self.rows = self.corpus.words
         self.allData = self.rows
@@ -269,8 +263,8 @@ class SpontaneousSpeechCorpusModel(QAbstractItemModel):
         if not index.isValid():
             return None
         node = index.internalPointer()
-        if node is None:
-            print(index)
+        # if node is None:
+        #     print(index)
 
         if role == Qt.DisplayRole:
             if index.column() == 0:
@@ -711,8 +705,8 @@ class FeatureSystemTreeModel(QAbstractItemModel):
         if not index.isValid():
             return None
         node = index.internalPointer()
-        if node is None:
-            print(index)
+        # if node is None:
+        #     print(index)
 
         if role == Qt.DisplayRole:
             if index.column() == 0:

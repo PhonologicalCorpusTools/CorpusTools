@@ -81,7 +81,10 @@ class AttributeSummary(QWidget):
         layout = QFormLayout()
 
         self.columnSelect = QComboBox()
-        for a in self.corpus.attributes:
+        self.corpus_attributes = [x for x in self.corpus.attributes if not x.name in ('transcription', 'spelling')]
+        #'transcription' and 'spelling' are special attributes that are actual methods decorated with @property
+        #including them here results in duplications
+        for a in self.corpus_attributes:
             self.columnSelect.addItem(str(a))
         self.columnSelect.currentIndexChanged.connect(self.summarizeColumn)
 
@@ -96,7 +99,7 @@ class AttributeSummary(QWidget):
         self.summarizeColumn()
 
     def summarizeColumn(self):
-        for a in self.corpus.attributes:
+        for a in self.corpus_attributes:
             if str(a) == self.columnSelect.currentText():
                 self.detailFrame.deleteLater()
                 self.detailFrame = QFrame()

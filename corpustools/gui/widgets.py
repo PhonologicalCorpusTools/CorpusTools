@@ -879,18 +879,30 @@ class TierWidget(QGroupBox):
         self.spellingIncluded = include_spelling
         self.spellingEnabled = include_spelling
         layout = QVBoxLayout()
+        self.corpus = corpus
 
         self.tierSelect = QComboBox()
 
-        self.atts = list()
-        self.spellingName = corpus.attributes[0].display_name
-        self.atts.append(corpus.attributes[0])
+
+        self.atts = [att for att in corpus.attributes
+                     if not att.name in ('transcription') and att.att_type == 'tier']
+
         if include_spelling:
-            self.tierSelect.addItem(corpus.attributes[0].display_name)
-        for a in corpus.attributes:
-            if corpus.has_transcription and a.att_type == 'tier':
-                self.atts.append(a)
-                self.tierSelect.addItem(a.display_name)
+            self.atts.extend([att for att in corpus.attributes
+                              if not att.name in ('spelling') and att.att_type == 'spelling'])
+        for att in self.atts:
+            self.tierSelect.addItem(att.display_name)
+        #'transcription' and 'spelling' are special attributes that are actually methods decorated with @property
+        #adding them there creates duplications
+        #
+        # # self.spellingName = corpus.attributes[0].display_name
+        # # self.atts.append(corpus.attributes[0])
+        # if include_spelling:
+        #     self.tierSelect.addItem(corpus.attributes[0].display_name)
+        # for a in corpus.attributes:
+        #     if corpus.has_transcription and a.att_type == 'tier':
+        #         self.atts.append(a)
+        #         self.tierSelect.addItem(a.display_name)
 
 
         layout.addWidget(self.tierSelect)
@@ -899,17 +911,24 @@ class TierWidget(QGroupBox):
     def setSpellingEnabled(self, b):
         self.spellingEnabled = b
         if b:
-            if self.tierSelect.itemText(0) != self.spellingName:
-                self.tierSelect.insertItem(0,self.spellingName)
+            self.atts = [att for att in self.corpus.attributes
+                         if not att.name in ('transcription', 'spelling') and att.att_type in ('tier', 'spelling')]
+            # if self.tierSelect.itemText(0) != self.spellingName:
+            #     self.tierSelect.insertItem(0,self.spellingName)
         else:
-            if self.tierSelect.itemText(0) == self.spellingName:
-                self.tierSelect.removeItem(0)
+            self.atts = [att for att in self.corpus.attributes
+                         if not att.name == 'transcription' and att.att_type == 'tier']
+            # if self.tierSelect.itemText(0) == self.spellingName:
+            #     self.tierSelect.removeItem(0)
+        self.tierSelect.clear()
+        for att in self.atts:
+            self.tierSelect.addItem(att.display_name)
 
     def value(self):
         text = self.tierSelect.currentText()
-        for a in self.atts:
-            if a.display_name == text:
-                return a.name
+        for att in self.atts:
+            if att.display_name == text:
+                return att.name
         # index = self.tierSelect.currentIndex()
         # if not self.spellingEnabled and self.spellingIncluded:
         # index += 1
@@ -918,9 +937,9 @@ class TierWidget(QGroupBox):
 
     def displayValue(self):
         text = self.tierSelect.currentText()
-        for a in self.atts:
-            if a.display_name == text:
-                return a.display_name
+        for att in self.atts:
+            if att.display_name == text:
+                return att.display_name
         # index = self.tierSelect.currentIndex()
         # if not self.spellingEnabled and self.spellingIncluded:
         #     index += 1

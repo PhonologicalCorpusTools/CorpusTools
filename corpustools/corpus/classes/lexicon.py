@@ -885,7 +885,7 @@ class Word(object):
                        '_transcription_name':None, '_spelling_name': None,
                        'alt_transcription': None, 'alt_spelling': None,
                        'frequency':0, 'wordtokens':list(),
-                       'descriptors':['spelling', 'transcription', 'frequency']}
+                       'descriptors':list()}
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
         'lowercase_freq', 'log10_freq']
 
@@ -1911,13 +1911,13 @@ class Corpus(object):
         Inventory that contains information about segments in the Corpus
     """
 
-    corpus_attributes = {#'spelling':None, 'transcription':None,
-                         'name':'corpus', 'wordlist': dict(),
+    corpus_attributes = {'name':'corpus', 'wordlist': dict(),
                   'specifier': None, 'inventory': None, 'inventoryModel': None, 'has_frequency': True,
                   'has_spelling':False, 'has_wordtokens':False, 'has_audio': False, 'wav_path': None,
-                  '_attributes': [Attribute('spelling', 'spelling'),
-                                  Attribute('transcription', 'tier'),
-                                  Attribute('frequency', 'numeric')],
+                  '_attributes': list(),
+                  # '_attributes': [Attribute('spelling', 'spelling'),
+                  #                 Attribute('transcription', 'tier'),
+                  #                 Attribute('frequency', 'numeric')],
                   '_version': currentPCTversion
                     }
     basic_attributes = ['spelling','transcription','frequency']
@@ -1935,10 +1935,10 @@ class Corpus(object):
         for attribute, default_value in Corpus.corpus_attributes.items():
             if attribute == 'inventory':
                 setattr(self, attribute, Inventory())
-            elif attribute == '_attributes':
-                setattr(self, attribute, [Attribute('spelling', 'spelling'),
-                                          Attribute('transcription', 'tier'),
-                                          Attribute('frequency', 'numeric')])
+            # elif attribute == '_attributes':
+            #     setattr(self, attribute, [Attribute('spelling', 'spelling'),
+            #                               Attribute('transcription', 'tier'),
+            #                               Attribute('frequency', 'numeric')])
             elif isinstance(default_value, list):
                 setattr(self, attribute, [x for x in default_value])
             elif isinstance(default_value, dict):

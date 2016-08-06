@@ -31,6 +31,8 @@ from corpustools.corpus.classes.lexicon import Corpus, Inventory, Word
 
 from corpustools.corpus.io.helper import get_corpora_list
 
+from corpustools import __version__ as currentPCTversion
+
 
 from .ssgui import SSDialog
 from .asgui import ASDialog
@@ -383,6 +385,8 @@ class MainWindow(QMainWindow):
         return inventoryModel
 
     def compatibility_check(self, corpus):
+        # if corpus._version == currentPCTversion:
+        #     return
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):
@@ -409,8 +413,7 @@ class MainWindow(QMainWindow):
                 word2 = Word(update=word)
                 word_list.append(word2)
             corpus.update_wordlist(word_list)
-                # corpus.remove_word(word)
-                # corpus.add_word(word2)
+
         return corpus
 
     def loadFeatureMatrices(self):
