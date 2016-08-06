@@ -395,7 +395,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
         elif at.name == 'Transcription (default)':
             transcription_name = at.output_name
 
-
         if all(isinstance(item, Annotation) for item in at._list):
             # it's a list of spellings, take each one and add it to the overall annotations list
             for item in at._list:

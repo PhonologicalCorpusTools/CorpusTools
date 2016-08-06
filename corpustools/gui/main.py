@@ -293,8 +293,9 @@ class MainWindow(QMainWindow):
             self.inventoryModel = None
             if hasattr(self.corpus, 'lexicon'):
                 #the lexicon attribute is a Corpus object
-                self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
-                #c = self.corpus.lexicon
+                if not self.corpus.lexicon._version == currentPCTversion:
+                    self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
+
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
@@ -316,7 +317,8 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setChecked(True)
 
             else:#no lexicon, just corpus
-                self.corpus = self.compatibility_check(self.corpus)
+                if not self.corpus._version == currentPCTversion:
+                    self.corpus = self.compatibility_check(self.corpus)
                 #c = self.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
@@ -327,7 +329,11 @@ class MainWindow(QMainWindow):
                 if self.textWidget.model() is not None:
                     self.textWidget.model().deleteLater()
 
-            specifier_check = self.corpus.specifier if not hasattr(self.corpus, 'lexicon') else self.corpus.lexicon
+            if not hasattr(self.corpus, 'lexicon'):
+                specifier_check = self.corpus.specifier
+            else:
+                specifier_check = self.corpus.lexicon.specifier
+
             if specifier_check is not None:
                 self.featureSystemStatus.setText('Feature system: {}'.format(specifier_check.name))
             else:
@@ -385,8 +391,6 @@ class MainWindow(QMainWindow):
         return inventoryModel
 
     def compatibility_check(self, corpus):
-        # if corpus._version == currentPCTversion:
-        #     return
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
             if not hasattr(corpus, attribute):

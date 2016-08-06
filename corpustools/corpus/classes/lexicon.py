@@ -955,8 +955,7 @@ class Word(object):
             if key not in self.descriptors:
                 self.descriptors.append(key)
 
-
-        if self._spelling is None or self._transcription is None:
+        if self._spelling is None and self._transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self._spelling is None:
             self._spelling = ''.join(map(str,self._transcription))

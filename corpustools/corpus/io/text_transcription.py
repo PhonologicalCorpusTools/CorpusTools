@@ -7,7 +7,7 @@ from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Di
 from corpustools.exceptions import DelimiterError, PCTOSError
 
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
-                    data_to_discourse, AnnotationType, text_to_lines,
+                    data_to_discourse2, AnnotationType, text_to_lines,
                     Annotation, BaseAnnotation)
 
 from .binary import load_binary
@@ -68,7 +68,6 @@ def inspect_discourse_transcription(path):
 def transcription_text_to_data(corpus_name, path, annotation_types = None,
                             stop_check = None, call_back = None):
 
-
     name = corpus_name
 
     if annotation_types is None:
@@ -77,8 +76,8 @@ def transcription_text_to_data(corpus_name, path, annotation_types = None,
     for a in annotation_types:
         a.reset()
     a = AnnotationType('spelling', None, None,
-                attribute = Attribute('spelling','spelling','Spelling'),
-                                            anchor = True)
+                attribute = Attribute('spelling','spelling','Spelling'), anchor = True)
+
     annotation_types.append(a)
 
     data = DiscourseData(name, annotation_types)
@@ -116,6 +115,8 @@ def transcription_text_to_data(corpus_name, path, annotation_types = None,
             word.references.append(n)
             word.begins.append(level_count)
             word.ends.append(level_count + len(tier_elements))
+            tier_elements[0].begin = level_count
+            tier_elements[-1].end = level_count + len(tier_elements)
             annotations[n] = tier_elements
             annotations['spelling'] = [word]
             data.add_annotations(**annotations)
@@ -214,8 +215,8 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
             raise(PCTOSError("The feature path specified ({}) does not exist".format(feature_system_path)))
 
     data = transcription_text_to_data(corpus_name, path, annotation_types, stop_check=stop_check, call_back=call_back)
-
-    discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
+    # discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
+    discourse = data_to_discourse2(corpus_name=corpus_name, wav_path=data.wav_path, annotation_types=annotation_types)
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
