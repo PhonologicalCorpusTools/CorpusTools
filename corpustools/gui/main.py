@@ -293,8 +293,9 @@ class MainWindow(QMainWindow):
             self.inventoryModel = None
             if hasattr(self.corpus, 'lexicon'):
                 #the lexicon attribute is a Corpus object
-                if not self.corpus.lexicon._version == currentPCTversion:
-                    self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
+                if not hasattr(self.corpus, '_version') or not self.corpus.lexicon._version == currentPCTversion:
+                    #self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
+                    self.corpus.lexicon = self.forceUpdate(self.corpus.lexicon)
 
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
@@ -317,8 +318,9 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setChecked(True)
 
             else:#no lexicon, just corpus
-                if not self.corpus._version == currentPCTversion:
-                    self.corpus = self.compatibility_check(self.corpus)
+                if not hasattr(self.corpus, '_version') or not self.corpus._version == currentPCTversion:
+                    #self.corpus = self.compatibility_check(self.corpus)
+                    self.corpus = self.forceUpdate(self.corpus)
                 #c = self.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
@@ -390,6 +392,30 @@ class MainWindow(QMainWindow):
 
         return inventoryModel
 
+
+    def forceUpdate(self, corpus):
+        if hasattr(corpus, '_version'):
+            print(corpus._version)
+        else:
+            print('corpus has no _version')
+        corpus = Corpus(corpus.name, update=corpus)
+        if hasattr(corpus, '_version'):
+            print(corpus._version)
+        else:
+            print('corpus has no _version')
+
+        if not hasattr(corpus.inventory, 'segs'):
+            corpus.inventory = modernize.modernize_inventory_attributes(corpus.inventory)
+        corpus.inventory = Inventory(update=corpus.inventory)
+
+        word_list = list()
+        for word in corpus:
+            word2 = Word(update=word)
+            word_list.append(word2)
+        corpus.update_wordlist(word_list)
+
+        return corpus
+
     def compatibility_check(self, corpus):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
@@ -405,19 +431,20 @@ class MainWindow(QMainWindow):
             if not hasattr(word, attribute):
                 update_words = True
                 break
+
         if update_corpus:
             corpus = Corpus(corpus.name, update=corpus)
         if update_inventory:
             if not hasattr(corpus.inventory, 'segs'):
                 corpus.inventory = modernize.modernize_inventory_attributes(corpus.inventory)
             corpus.inventory = Inventory(update=corpus.inventory)
+        word = corpus.random_word()
         if update_words:
             word_list = list()
             for word in corpus:
                 word2 = Word(update=word)
                 word_list.append(word2)
             corpus.update_wordlist(word_list)
-
         return corpus
 
     def loadFeatureMatrices(self):

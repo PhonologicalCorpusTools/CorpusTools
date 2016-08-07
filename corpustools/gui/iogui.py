@@ -174,23 +174,23 @@ class CorpusLoadDialog(PCTDialog):
 
         self.acceptButton = QPushButton('Load selected corpus')
         self.acceptButton.setDefault(True)
-        self.forceUpdateButton = QPushButton('Load corpus with forced update')
-        self.forceUpdateButton.setAutoDefault(False)
+        #self.forceUpdateButton = QPushButton('Load corpus with forced update')
+        #self.forceUpdateButton.setAutoDefault(False)
         self.cancelButton = QPushButton('Cancel')
         self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
-        acLayout.addWidget(self.forceUpdateButton)
+        #acLayout.addWidget(self.forceUpdateButton)
         acLayout.addWidget(self.cancelButton)
         acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
         self.helpButton.clicked.connect(self.help)
-        self.forceUpdateButton.clicked.connect(self.forceUpdate)
-        self.forceUpdateButton.setToolTip(
-            ('<span>This loads a corpus file, and reformats it to ensure it has all of the '
-             'required attributes for the current version PCT. Try this option if you are having trouble getting a '
-             'corpus to load properly.</span>'))
+        # self.forceUpdateButton.clicked.connect(self.forceUpdate)
+        # self.forceUpdateButton.setToolTip(
+        #     ('<span>This loads a corpus file, and reformats it to ensure it has all of the '
+        #      'required attributes for the current version PCT. Try this option if you are having trouble getting a '
+        #      'corpus to load properly.</span>'))
         acFrame = QFrame()
         acFrame.setLayout(acLayout)
 

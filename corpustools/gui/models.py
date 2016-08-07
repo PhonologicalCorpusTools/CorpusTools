@@ -103,7 +103,7 @@ class BaseCorpusTableModel(BaseTableModel):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
 
-        self.columns = [x for x in self.corpus.attributes if not x.name in ('transcription','spelling')]
+        self.columns = [x for x in self.corpus.attributes]# if not x.name in ('transcription','spelling')]
         #'transcription' and 'spelling' are special attributes which are acually methods decorated with @property
         #these methods return the value of either ._transcription or ._spelling
         #we don't want to put them into the GUI column headers because that will lead to duplication
@@ -335,7 +335,7 @@ class DiscourseModel(BaseCorpusTableModel):
         #these methods return the value of either ._transcription or ._spelling
         #we don't want to put them into the GUI column headers because that will lead to duplication
         self.rows = [x for x in list(self.corpus.keys())]
-        w = self.corpus[self.rows[0]]
+        # w = self.corpus[self.rows[0]]
         #self.posToTime = []
         #self.timeToPos = {}
         #for w in self.discourse:

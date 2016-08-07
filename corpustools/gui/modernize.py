@@ -13,9 +13,24 @@ def force_update2(corpus):
     return corpus
 
 
+def set_defaults(corpus):
+    corpus = Corpus(corpus.name, update=corpus)
+
+    corpus.inventory = Inventory(update=corpus.inventory)
+
+    word_list = list()
+    for word in corpus:
+        word2 = Word(update=word)
+        word_list.append(word2)
+    corpus.update_wordlist(word_list)
+
+    return corpus
+
 def force_update(corpus):
     #This runs through known incompatibilities with previous version of PCT and tries to patch them all up. This gets
     #called from the LoadCorpusDialog.forceUpdate() in iogui.py
+    corpus = set_defaults(corpus)
+
     if not hasattr(corpus.inventory, 'segs'):
         #setattr(corpus.inventory, 'segs', {'#': Segment('#')})
         setattr(corpus.inventory,

@@ -886,8 +886,7 @@ class Word(object):
                        'alt_transcription': None, 'alt_spelling': None,
                        'frequency':0, 'wordtokens':list(),
                        'descriptors':list()}
-    _freq_names = ['abs_freq', 'freq_per_mil','sfreq',
-        'lowercase_freq', 'log10_freq']
+    _freq_names = ['abs_freq', 'freq_per_mil','sfreq', 'lowercase_freq', 'log10_freq']
 
     def __init__(self, update=False, **kwargs):
 
@@ -995,16 +994,25 @@ class Word(object):
         del self._spelling
 
     def update(self, old_word):
-        setattr(self, '_spelling', old_word.spelling)
-        setattr(self, '_transcription', old_word.transcription)
-
         for attribute, default_value in Word.word_attributes.items():
-            if 'spelling' in attribute or 'transcription' in attribute:
-                continue
             if hasattr(old_word, attribute):
-                setattr(self, attribute, getattr(old_word, attribute))
+                setattr(self, attribute, old_word.__dict__[attribute])
             else:
                 setattr(self, attribute, default_value)
+
+        if not self._spelling:
+            self._spelling = old_word.__dict__['spelling']
+            if not self._spelling:
+                self._spelling = old_word.__dict__['_spelling']
+            self.Spelling = self._spelling
+            self._spelling_name = 'Spelling'
+        if not self._transcription:
+            self._transcription = old_word.__dict__['transcription']
+            if not self._transcription:
+                self._transcription = old_word.__dict__['_transcription']
+            self.Transcription = self._transcription
+            self._transcription_name = 'Transcription'
+
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
 
@@ -2104,7 +2112,7 @@ class Corpus(object):
 
     @property
     def attributes(self):
-        return self._attributes
+        return list(set(self._attributes))
 
     @property
     def words(self):
