@@ -467,7 +467,7 @@ class TextView(QAbstractItemView):
 
     def mousePressEvent(self, event):
         QAbstractItemView.mousePressEvent(self, event)
-        #self.setCurrentIndex(self.indexAt(event.pos()))
+        self.setCurrentIndex(self.indexAt(event.pos()))
 
 class DiscourseView(QWidget):
     selectType = Signal(object)
@@ -520,7 +520,7 @@ class DiscourseView(QWidget):
         self.searchField.setPlaceholderText('Search...')
         self.searchField.returnPressed.connect(self.search)
         layout.addWidget(self.searchField, alignment = Qt.AlignRight)
-        #layout.addWidget(self.text)
+        layout.addWidget(self.text)
         layout.addWidget(self.table)
 
         self.player = AudioPlayer()
@@ -594,7 +594,7 @@ class DiscourseView(QWidget):
 
     def showMenu(self, pos):
         menu = QMenu()
-        curview = self.table
+        curview = self.table if self.text.isHidden() else self.text
         index = curview.indexAt(pos)
         changeViewAction = QAction(self)
         if self.text.isHidden():
