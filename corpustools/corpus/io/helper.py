@@ -425,13 +425,22 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
     discourse = Discourse(name=corpus_name, wav_path=wav_path,
                           spelling_name=spelling_name, transcription_name=transcription_name)
 
+    if not 'frequency' in [a.name for a in discourse.lexicon.attributes]:
+        # running text will not have a frequency attribute supplied by the user
+        #textgrids are also unlikely to have this attribute
+        discourse.lexicon.add_attribute(Attribute('frequency', 'numeric', 'Frequency'))
+        add_frequency = True
+    else:
+        add_frequency = False
+
     ind = 0
     for n in range(len(list(annotations.values())[0])):
         word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0]) for at in annotations if not at.token}
         word = Word(**word_kwargs)
         try:
             word = discourse.lexicon.find(word.spelling)
-            word.frequency += 1
+            if add_frequency:
+                word.frequency += 1
         except KeyError:
             discourse.lexicon.add_word(word)
         for at in annotations:
@@ -448,6 +457,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
             if at.token:
                 word.wordtokens.append(word_token)
         ind += 1
+
     return discourse
 
 def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):

@@ -102,7 +102,6 @@ class BaseCorpusTableModel(BaseTableModel):
     def __init__(self, corpus, settings, parent = None):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
-
         self.columns = [x for x in self.corpus.attributes]# if not x.name in ('transcription','spelling')]
         #'transcription' and 'spelling' are special attributes which are acually methods decorated with @property
         #these methods return the value of either ._transcription or ._spelling

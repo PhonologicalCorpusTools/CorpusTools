@@ -381,17 +381,6 @@ class MainWindow(QMainWindow):
             print(2)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
-        # except AttributeError:
-        #     print(3)
-        #     # Loading a .corpus from a previous version of PCT - update some attributes
-        #     self.corpusModel.corpus.inventory = modernize.modernize_inventory_attributes(
-        #         self.corpusModel.corpus.inventory)
-        #     self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier = modernize.modernize_features(
-        #         self.corpusModel.corpus.inventory, self.corpusModel.corpus.specifier)
-        #     self.corpusModel.corpus.inventory.isNew = False
-        #     inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-        #     inventoryModel.modelReset()
-
         return inventoryModel
 
 
