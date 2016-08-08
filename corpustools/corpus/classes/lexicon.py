@@ -883,7 +883,7 @@ class Word(object):
 
     word_attributes = {'_corpus':None, '_transcription':None, '_spelling':None,
                        '_transcription_name':None, '_spelling_name': None,
-                       'alt_transcription': None, 'alt_spelling': None,
+                       'alt_transcriptions': list(), 'alt_spellings': list(),
                        'frequency':0, 'wordtokens':list(),
                        'descriptors':list()}
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq', 'lowercase_freq', 'log10_freq']
@@ -931,9 +931,9 @@ class Word(object):
                         self._spelling_name = key
                 else:
                     if att.att_type == 'tier':
-                        self.alt_transcription = key
+                        self.alt_transcriptions.append(key)
                     elif att.att_type == 'spelling':
-                        self.alt_spelling = key
+                        self.alt_spellings.append(key)
 
             #the following code is reached when adding a word, not when loading a corpus
             elif isinstance(value, list):
@@ -2128,7 +2128,11 @@ class Corpus(object):
 
     @property
     def attributes(self):
-        return list(set(self._attributes))
+        #'transcription' and 'spelling' are special attributes which are acually methods decorated with @property
+        #these methods return the value of either ._transcription or ._spelling
+        #we don't want to put them into the GUI column headers because that will lead to duplication
+        return [a for a in self._attributes if not a.name in ('spelling', 'transcription')]
+
 
     @property
     def words(self):

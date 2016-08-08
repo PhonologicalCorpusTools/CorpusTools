@@ -8,7 +8,8 @@ FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus
-from .helper import DiscourseData,data_to_discourse, AnnotationType, Annotation, BaseAnnotation, find_wav_path
+from .helper import (DiscourseData, data_to_discourse, data_to_discourse2, AnnotationType,
+                    Annotation, BaseAnnotation, find_wav_path)
 
 from corpustools.corpus.io.binary import load_binary
 
@@ -256,6 +257,7 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
         return
     data.name = corpus_name
     data.wav_path = find_wav_path(word_path)
+    #discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types)
     discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     if discourse is None:
         return

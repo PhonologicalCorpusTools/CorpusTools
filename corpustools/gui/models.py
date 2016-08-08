@@ -102,11 +102,7 @@ class BaseCorpusTableModel(BaseTableModel):
     def __init__(self, corpus, settings, parent = None):
         BaseTableModel.__init__(self, settings, parent)
         self.corpus = corpus
-        self.columns = [x for x in self.corpus.attributes]# if not x.name in ('transcription','spelling')]
-        #'transcription' and 'spelling' are special attributes which are acually methods decorated with @property
-        #these methods return the value of either ._transcription or ._spelling
-        #we don't want to put them into the GUI column headers because that will lead to duplication
-
+        self.columns = self.corpus.attributes
         self.columns.sort(key=self.column_sort)
 
         self.rows = self.corpus.words
@@ -328,11 +324,8 @@ class DiscourseModel(BaseCorpusTableModel):
         QAbstractTableModel.__init__(self, parent)
         self.settings = settings
         self.corpus = discourse
-        #self.columns = self.corpus.attributes
-        self.columns = [x for x in self.corpus.attributes if not x.name in ('transcription', 'spelling')]
-        # 'transcription' and 'spelling' are special attributes which are acually methods decorated with @property
-        #these methods return the value of either ._transcription or ._spelling
-        #we don't want to put them into the GUI column headers because that will lead to duplication
+        self.columns = self.corpus.attributes
+
         self.rows = [x for x in list(self.corpus.keys())]
         # w = self.corpus[self.rows[0]]
         #self.posToTime = []
@@ -408,6 +401,7 @@ class CorpusModel(BaseCorpusTableModel):
             end = False
         self.corpus.add_tier(attribute, segList)
         self.columns = [x for x in self.corpus.attributes]
+        self.columns.sort(key=self.column_sort)
         if end:
             self.endInsertColumns()
 
@@ -421,6 +415,7 @@ class CorpusModel(BaseCorpusTableModel):
 
     def endAddColumn(self, end = False):
         self.columns = [x for x in self.corpus.attributes]
+        self.columns.sort(key=self.column_sort)
         if end:
             self.endInsertColumns()
 
@@ -437,6 +432,7 @@ class CorpusModel(BaseCorpusTableModel):
             end = False
         self.corpus.add_count_attribute(attribute, sequenceType, segList)
         self.columns = [x for x in self.corpus.attributes]
+        self.columns.sort(key=self.column_sort)
         if end:
             self.endInsertColumns()
 
@@ -449,6 +445,7 @@ class CorpusModel(BaseCorpusTableModel):
             end = False
         self.corpus.add_abstract_tier(attribute, segList)
         self.columns = [x for x in self.corpus.attributes]
+        self.columns.sort(key=self.column_sort)
         if end:
             self.endInsertColumns()
 
@@ -464,6 +461,7 @@ class CorpusModel(BaseCorpusTableModel):
             self.beginRemoveColumns(QModelIndex(),ind,ind)
             self.corpus.remove_attribute(att)
             self.columns = [x for x in self.corpus.attributes]
+            self.columns.sort(key=self.column_sort)
             self.endRemoveColumns()
 
 class SegmentPairModel(BaseTableModel):

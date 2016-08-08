@@ -6,7 +6,7 @@ from corpustools.exceptions import DelimiterError, PCTOSError
 from .binary import load_binary
 
 from .helper import (DiscourseData, Annotation, BaseAnnotation,
-                        data_to_discourse, AnnotationType, text_to_lines)
+                        data_to_discourse, data_to_discourse2, AnnotationType, text_to_lines)
 
 def inspect_discourse_spelling(path, support_corpus_path = None):
     """
@@ -206,7 +206,8 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
                     stop_check, call_back)
     if data is None:
         return
-    discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
+    #discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
+    discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types)
     return discourse
 
 def export_discourse_spelling(discourse, path, single_line = False):

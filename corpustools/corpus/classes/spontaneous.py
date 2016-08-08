@@ -464,9 +464,9 @@ class WordToken(object):
                 setattr(self, key, value)
 
         if not self._transcription:
-            for attr in self.__dict__.values():
-                if isinstance(attr, Transcription):
-                    self._transcription = getattr(self, attr)
+            for name,value in self.__dict__.items():
+                if isinstance(value, Transcription):
+                    self._transcription = getattr(self, name)
                     break
             else:
                 try:
