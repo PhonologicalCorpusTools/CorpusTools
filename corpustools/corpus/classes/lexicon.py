@@ -967,8 +967,6 @@ class Word(object):
                 setattr(self, attribute, default_value.copy())
             else:
                 setattr(self, attribute, default_value)
-
-
     @property
     def transcription(self):
         return self._transcription
@@ -1000,6 +998,9 @@ class Word(object):
             else:
                 setattr(self, attribute, default_value)
 
+        self.descriptors.extend([att for att in Word.word_attributes if not att.startswith('_')])
+        self.descriptors = list(set(self.descriptors))
+
         if not self._transcription:
             try:
                 self._transcription = old_word.__dict__['transcription']
@@ -1011,6 +1012,7 @@ class Word(object):
 
             self.Transcription = self._transcription
             self._transcription_name = 'Transcription'
+            self.descriptors.append('Transcription')
 
         if not self._spelling:
             try:
@@ -1023,7 +1025,7 @@ class Word(object):
 
             self.Spelling = self._spelling
             self._spelling_name = 'Spelling'
-
+            self.descriptors.append('Spelling')
 
 
     def get_len(self, tier_name):
@@ -2133,7 +2135,6 @@ class Corpus(object):
         #we don't want to put them into the GUI column headers because that will lead to duplication
         return [a for a in self._attributes if not a.name in ('spelling', 'transcription')]
 
-
     @property
     def words(self):
         return sorted(list(self.wordlist.keys()))
@@ -2538,7 +2539,7 @@ class Corpus(object):
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
 
         for d in word.descriptors:
-            if d not in self.attributes:
+            if d not in self._attributes:
                 if isinstance(getattr(word,d),str):
                     self._attributes.append(Attribute(d,'spelling'))#'factor'))
                 elif isinstance(getattr(word,d),Transcription):
@@ -2546,7 +2547,7 @@ class Corpus(object):
                 elif isinstance(getattr(word,d),(int, float)):
                     self._attributes.append(Attribute(d,'numeric'))
 
-        for a in self.attributes:
+        for a in self._attributes:
             if not hasattr(word,a.name):
                 word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word,a.name))

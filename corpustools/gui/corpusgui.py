@@ -73,7 +73,7 @@ class InventorySummary(QWidget):
 
 
 class AttributeSummary(QWidget):
-    def __init__(self, corpus, parent=None):
+    def __init__(self, corpus, columns, parent=None):
         QWidget.__init__(self,parent)
 
         self.corpus = corpus
@@ -82,7 +82,7 @@ class AttributeSummary(QWidget):
 
         self.columnSelect = QComboBox()
         self.corpus_attributes = [x for x in self.corpus.attributes]
-        for a in self.corpus_attributes:
+        for a in columns:#self.corpus_attributes:
             self.columnSelect.addItem(str(a))
         self.columnSelect.currentIndexChanged.connect(self.summarizeColumn)
 
@@ -127,7 +127,7 @@ class AttributeSummary(QWidget):
 
 
 class CorpusSummary(QDialog):
-    def __init__(self, parent, corpus, inventory):
+    def __init__(self, parent, corpus, inventory, columns):
         QDialog.__init__(self,parent)
 
 
@@ -159,7 +159,7 @@ class CorpusSummary(QDialog):
 
         main.addRow(QLabel('Number of words types:'),QLabel(str(len(c))))
 
-        self.attributeSummary = AttributeSummary(c)
+        self.attributeSummary = AttributeSummary(c, columns)
 
         detailTabs.addTab(self.attributeSummary,'Columns')
         detailTabs.currentChanged.connect(self.hideWidgets)

@@ -863,7 +863,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def corpusSummary(self):
-        dialog = CorpusSummary(self,self.corpusModel.corpus, self.inventoryModel)
+        dialog = CorpusSummary(self,self.corpusModel.corpus, self.inventoryModel, self.corpusModel.columns)
         result = dialog.exec_()
 
     def createActions(self):
