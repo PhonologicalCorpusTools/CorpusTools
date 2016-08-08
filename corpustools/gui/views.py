@@ -269,6 +269,7 @@ class TextView(QAbstractItemView):
             return
         if self.model() is None:
             return
+
         fm = QFontMetrics(self.font())
         rowHeight = fm.height() + self.ExtraHeight
         maxWidth = self.viewport().width()
@@ -367,7 +368,7 @@ class TextView(QAbstractItemView):
                 offset = -1
             else:
                 offset = 1
-            index = model().index(index.row() + offset, index.column(), index.parent())
+            index = self.model().index(index.row() + offset, index.column(), index.parent())
         elif ((cursorAction == QAbstractItemView.MoveUp and index.row() > 0) or
             cursorAction == QAbstractItemView.MoveDown and index.row() + 1 < self.model().rowCount()):
             fm = QFontMetrics(self.font())
@@ -473,9 +474,11 @@ class DiscourseView(QWidget):
     def __init__(self,parent=None):
         super(DiscourseView, self).__init__(parent=parent)
 
-        # self.text = TextView(self)
-        # self.text.setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.text.customContextMenuRequested.connect(self.showMenu)
+        self.text = TextView(self)
+        self.text.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.text.customContextMenuRequested.connect(self.showMenu)
+        self.text.hide()
+
         self.table = TableWidget(self)
         self.table.setSortingEnabled(False)
         try:
@@ -484,7 +487,7 @@ class DiscourseView(QWidget):
             self.table.horizontalHeader().setClickable(False)
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.showMenu)
-        #self.table.hide()
+
         self.setStyleSheet( """ TextView::item:selected:active {
                                      background: lightblue;
                                 }
@@ -530,7 +533,7 @@ class DiscourseView(QWidget):
         return self.table.model()
 
     def setModel(self,model):
-        # self.text.setModel(model)
+        self.text.setModel(model)
         self.table.setModel(model)
         #self.table.setSelectionModel(self.text.selectionModel())
         self.table.selectionModel().selectionChanged.connect(self.updatePlayerTimes)
@@ -593,13 +596,13 @@ class DiscourseView(QWidget):
         menu = QMenu()
         curview = self.table
         index = curview.indexAt(pos)
-        # changeViewAction = QAction(self)
-        # if self.text.isHidden():
-        #    changeViewAction.setText('Show as text')
-        # else:
-        #    changeViewAction.setText('Show as table')
-        # changeViewAction.triggered.connect(self.changeView)
-        # menu.addAction(changeViewAction)
+        changeViewAction = QAction(self)
+        if self.text.isHidden():
+           changeViewAction.setText('Show as text')
+        else:
+           changeViewAction.setText('Show as table')
+        changeViewAction.triggered.connect(self.changeView)
+        menu.addAction(changeViewAction)
         if index.isValid():
             lookupAction = QAction(self)
             lookupAction.setText('Look up word')
