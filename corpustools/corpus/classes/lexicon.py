@@ -1000,18 +1000,31 @@ class Word(object):
             else:
                 setattr(self, attribute, default_value)
 
-        if not self._spelling:
-            self._spelling = old_word.__dict__['spelling']
-            if not self._spelling:
-                self._spelling = old_word.__dict__['_spelling']
-            self.Spelling = self._spelling
-            self._spelling_name = 'Spelling'
         if not self._transcription:
-            self._transcription = old_word.__dict__['transcription']
-            if not self._transcription:
-                self._transcription = old_word.__dict__['_transcription']
+            try:
+                self._transcription = old_word.__dict__['transcription']
+            except KeyError:
+                try:
+                    self._transcription = old_word.__dict__['_transcription']
+                except KeyError:
+                    self._transcription = None
+
             self.Transcription = self._transcription
             self._transcription_name = 'Transcription'
+
+        if not self._spelling:
+            try:
+                self._spelling = old_word.__dict__['spelling']
+            except KeyError:
+                try:
+                    self._spelling = old_word.__dict__['_spelling']
+                except KeyError:
+                    self._spelling = None
+
+            self.Spelling = self._spelling
+            self._spelling_name = 'Spelling'
+
+
 
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
@@ -1952,6 +1965,7 @@ class Corpus(object):
                 setattr(self, attribute, default_value.copy())
             else:
                 setattr(self, attribute, default_value)
+        self._version = currentPCTversion
 
     def update(self, old_corpus):
         for attribute,default_value in Corpus.corpus_attributes.items():
@@ -1959,6 +1973,8 @@ class Corpus(object):
                 setattr(self, attribute, getattr(old_corpus, attribute))
             else:
                 setattr(self, attribute, default_value)
+        self._version = currentPCTversion
+
 
     def update_wordlist(self, new_wordlist):
         self.wordlist = dict()

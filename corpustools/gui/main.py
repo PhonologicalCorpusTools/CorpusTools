@@ -346,7 +346,9 @@ class MainWindow(QMainWindow):
                               'The majority of PCT\'s analysis functions require this information to work correctly. '
                               'Go to Features > View/Change feature system... to select one.\n '
                               'If you do not have any feature files available at all, you can '
-                              'download one by going to File > Manage feature systems...')
+                              'download one by going to File > Manage feature systems...\n'
+                              'If your corpus only contains spelling, and not transcription, then you can ignore this '
+                              'warning, although you will still have limited access to PCT analysis functions.')
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
 
@@ -394,15 +396,7 @@ class MainWindow(QMainWindow):
 
 
     def forceUpdate(self, corpus):
-        if hasattr(corpus, '_version'):
-            print(corpus._version)
-        else:
-            print('corpus has no _version')
         corpus = Corpus(corpus.name, update=corpus)
-        if hasattr(corpus, '_version'):
-            print(corpus._version)
-        else:
-            print('corpus has no _version')
 
         if not hasattr(corpus.inventory, 'segs'):
             corpus.inventory = modernize.modernize_inventory_attributes(corpus.inventory)
