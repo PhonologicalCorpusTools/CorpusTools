@@ -390,11 +390,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
     for at in annotation_types:
         annotations[at] = list()
 
-        if at.name == 'Orthography (default)':
-            spelling_name = at.output_name
-        elif at.name == 'Transcription (default)':
-            transcription_name = at.output_name
-
         if all(isinstance(item, Annotation) for item in at._list):
             # it's a list of spellings, take each one and add it to the overall annotations list
             for item in at._list:
@@ -418,16 +413,21 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
             raise TypeError("AnnotationType._list cannot contain a mix of Annotations and BaseAnnotations")
 
 
-    if spelling_name is None:
-        spelling_name = 'Spelling'
-    if transcription_name is None:
-        transcription_name = 'Transcription'
-    discourse = Discourse(name=corpus_name, wav_path=wav_path,
-                          spelling_name=spelling_name, transcription_name=transcription_name)
+    discourse_kwargs = {'name': corpus_name, 'wav_path': wav_path, 'other_attributes': list()}
+    for at in annotation_types:
+        if at.name == 'Orthography (default)':
+            discourse_kwargs['spelling_name'] = at.attribute#.output_name
+            spelling_name = at.output_name
+        elif at.name == 'Transcription (default)':
+            discourse_kwargs['transcription_name'] = at.attribute#.output_name
+        elif at.attribute.att_type in ('tier', 'spelling'):
+            discourse_kwargs['other_attributes'].append(at.attribute)
+
+    discourse = Discourse(discourse_kwargs)
 
     if not 'frequency' in [a.name for a in discourse.lexicon.attributes]:
         # running text will not have a frequency attribute supplied by the user
-        #textgrids are also unlikely to have this attribute
+        # textgrids are also unlikely to have this attribute
         discourse.lexicon.add_attribute(Attribute('frequency', 'numeric', 'Frequency'))
         add_frequency = True
     else:
@@ -443,19 +443,24 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
                 word.frequency += 1
         except KeyError:
             discourse.lexicon.add_word(word)
+
+        word_token_kwargs = dict()
+        word_token_kwargs['word'] = word
+        begin, end = None, None
         for at in annotations:
-            if at.output_name == spelling_name:
-                continue
-            word_token_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])}
-            word_token_kwargs['word'] = word
-            begin = annotations[at][n][1]
-            end = annotations[at][n][2]
-            word_token_kwargs['begin'] = begin if begin is not None else ind
-            word_token_kwargs['end'] = end if end is not None else ind + 1
-            word_token = WordToken(**word_token_kwargs)
-            discourse.add_word(word_token)
-            if at.token:
-                word.wordtokens.append(word_token)
+            word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+            if at.attribute.att_type == 'tier':
+                if at.attribute.is_default:
+                    begin = annotations[at][n][1]
+                    end = annotations[at][n][2]
+                if at.token:
+                    word_token_kwargs['_transcription'] = (at.attribute, annotations[at][n][0])
+        word_token_kwargs['begin'] = begin if begin is not None else ind
+        word_token_kwargs['end'] = end if end is not None else ind + 1
+        word_token = WordToken(**word_token_kwargs)
+        discourse.add_word(word_token)
+        if any(a.token for a in annotations):
+            word.wordtokens.append(word_token)
         ind += 1
 
     return discourse

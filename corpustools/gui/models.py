@@ -325,8 +325,8 @@ class DiscourseModel(BaseCorpusTableModel):
         self.settings = settings
         self.corpus = discourse
         self.columns = self.corpus.attributes
-
-        self.rows = [x for x in list(self.corpus.keys())]
+        self.columns.sort(key=self.column_sort)
+        self.rows = [x for x in list(self.corpus.words)]#keys())]
         # w = self.corpus[self.rows[0]]
         #self.posToTime = []
         #self.timeToPos = {}
@@ -336,7 +336,6 @@ class DiscourseModel(BaseCorpusTableModel):
         #    i = QStandardItem(str(w))
         #    i.setFlags(i.flags() | (not Qt.ItemIsEditable))
         #    self.appendRow(i)
-
         #self.sort(2,Qt.AscendingOrder)
 
     def rowsToTimes(self,rows):

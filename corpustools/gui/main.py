@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
             self.inventoryModel = None
             if hasattr(self.corpus, 'lexicon'):
                 #the lexicon attribute is a Corpus object
-                if not hasattr(self.corpus.lexicon, '_version') or not self.corpus.lexicon._version == currentPCTversion:
+                if not hasattr(self.corpus.lexicon,'_version') or not self.corpus.lexicon._version == currentPCTversion:
                     #self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
                     self.corpus.lexicon = self.forceUpdate(self.corpus.lexicon)
 
@@ -397,6 +397,7 @@ class MainWindow(QMainWindow):
             word_list.append(word2)
         corpus.update_wordlist(word_list)
 
+        print('updated!')
         return corpus
 
     def compatibility_check(self, corpus):

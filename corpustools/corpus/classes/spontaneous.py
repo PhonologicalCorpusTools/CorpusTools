@@ -143,10 +143,10 @@ class Discourse(object):
         place in a text if it's not a speech discourse) and the values
         are the WordTokens
     """
-    def __init__(self, **kwargs):
+    def __init__(self, kwargs):
         self.name = kwargs['name']
         self.speaker = Speaker(None)
-        self.wav_path = None
+        self.wav_path = kwargs['wav_path']
 
         # for k,v in kwargs.items():
         #     setattr(self,k,v)
@@ -160,10 +160,14 @@ class Discourse(object):
         # else:
         #     trans_attr = Attribute(transcription_name, 'tier', transcription_name)
 
-        self._attributes = [Attribute('_spelling', 'spelling', kwargs['spelling_name']),
-                            Attribute('_transcription', 'tier', kwargs['transcription_name']),
+        self._attributes = [#Attribute('spelling', 'spelling', kwargs['spelling_name']),
+                            #Attribute('transcription', 'tier', kwargs['transcription_name']),
+                            kwargs['spelling_name'], kwargs['transcription_name'],
                             Attribute('begin','numeric','Begin'),
                             Attribute('end','numeric', 'End')]
+
+        for att in kwargs['other_attributes']:
+            self._attributes.append(att)
 
         self.words = dict()
 
@@ -250,6 +254,7 @@ class Discourse(object):
                 break
         else:
             self._attributes.append(attribute)
+
         if initialize_defaults:
             for word in self:
                 word.add_attribute(attribute.name,attribute.default_value)
@@ -443,7 +448,7 @@ class WordToken(object):
                         value = float('nan')
                 elif att.att_type == 'tier':
                     value = Transcription(value)
-                    self._transcription = value
+                    #self._transcription = value
 
                 setattr(self, key, value)
 
@@ -451,7 +456,7 @@ class WordToken(object):
                 # probably a transcription
                 value = Transcription(value)
                 setattr(self, key, value)
-                self._transcription = value
+                #self._transcription = value
 
             elif isinstance(value, str):
                 try:

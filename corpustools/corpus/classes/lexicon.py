@@ -1619,8 +1619,8 @@ class Attribute(object):
     @property
     def display_name(self):
         if self._display_name is not None:
-            return self._display_name
-        return self.name.title()
+            return self._display_name.lower()
+        return self.name
 
     @property
     def default_value(self):
