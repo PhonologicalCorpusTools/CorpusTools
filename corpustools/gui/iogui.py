@@ -69,36 +69,39 @@ class LoadCorpusWorker(FunctionWorker):
         log_annotation_types(self.kwargs['annotation_types'])
         try:
             if textType == 'spelling':
-
                 if isDirectory:
                     corpus = load_directory_spelling(**self.kwargs)
                 else:
                     corpus = load_discourse_spelling(**self.kwargs)
-            elif textType == 'transcription':
 
+            elif textType == 'transcription':
                 if isDirectory:
                     corpus = load_directory_transcription(**self.kwargs)
                 else:
                     corpus = load_discourse_transcription(**self.kwargs)
-            elif textType == 'ilg':
 
+            elif textType == 'ilg':
                 if isDirectory:
                     corpus = load_directory_ilg(**self.kwargs)
                 else:
                     corpus = load_discourse_ilg(**self.kwargs)
+
             elif textType == 'textgrid':
                 if isDirectory:
                     corpus = load_directory_textgrid(**self.kwargs)
                 else:
                     corpus = load_discourse_textgrid(**self.kwargs)
+
             elif textType == 'csv':
                 corpus = load_corpus_csv(**self.kwargs)
+
             elif textType in ['buckeye', 'timit']:
                 self.kwargs['dialect'] = textType
                 if isDirectory:
                     corpus = load_directory_multiple_files(**self.kwargs)
                 else:
                     corpus = load_discourse_multiple_files(**self.kwargs)
+
         except PCTError as e:
             self.errorEncountered.emit(e)
             return
@@ -236,7 +239,6 @@ class CorpusLoadDialog(PCTDialog):
             self.thread.setParams({
                 'path': corpus_name_to_path(
                     self.settings['storage'], selected[0])})
-
             self.progressDialog.setWindowTitle('Loading {}...'.format(selected[0]))
             self.thread.start()
             result = self.progressDialog.exec_()
@@ -814,6 +816,7 @@ class LoadCorpusDialog(PCTDialog):
                     'path': path,
                     'isDirectory':self.isDirectory,
                     'text_type': self.textType}
+
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
 
         for x in kwargs['annotation_types']:
@@ -824,6 +827,7 @@ class LoadCorpusDialog(PCTDialog):
             else:
                 x.is_default = False
                 x.attribute.is_default = False
+
 
         type_ = self.supported_types[self.tabWidget.currentIndex() + 1][0]
         if type_ == 'running':
@@ -924,6 +928,7 @@ class LoadCorpusDialog(PCTDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
+
         return kwargs
 
     @check_for_errors

@@ -118,7 +118,7 @@ class SpontaneousSpeechCorpus(object):
             Discourse to be added
         """
         self.discourses[str(discourse)] = discourse
-        #self.lexicon += discourse.lexicon
+        self.lexicon += discourse.lexicon
 
 class Discourse(object):
     """
@@ -166,11 +166,13 @@ class Discourse(object):
                             Attribute('begin','numeric','Begin'),
                             Attribute('end','numeric', 'End')]
 
-        for att in kwargs['other_attributes']:
-            self._attributes.append(att)
+        try:
+            for att in kwargs['other_attributes']:
+                self._attributes.append(att)
+        except KeyError:
+            pass
 
         self.words = dict()
-
         self.lexicon = Corpus(self.name + ' lexicon')
         self.lexicon.has_wordtokens = True
 

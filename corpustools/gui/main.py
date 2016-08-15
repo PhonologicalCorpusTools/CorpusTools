@@ -353,6 +353,7 @@ class MainWindow(QMainWindow):
                 alert.exec_()
 
             c = self.corpus if not hasattr(self.corpus, 'lexicon') else self.corpus.lexicon
+
             self.corpusModel = CorpusModel(c, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))

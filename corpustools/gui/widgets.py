@@ -54,6 +54,7 @@ class TableWidget(QTableView):
 
     def setModel(self,model):
         super(TableWidget, self).setModel(model)
+
         #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
         #try:
         #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -61,10 +62,12 @@ class TableWidget(QTableView):
         #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
         #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
         self.resizeColumnsToContents()
-        try:
-            self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
-        except AttributeError:
-            self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+
+        # FOR SOME REASON THE CODE IN THE FOLLOWING EXCEPT CLAUSE CAUSES A SpontanousSpeechCorpus TO CRASH PYTHON.EXE
+        # try:
+        #     self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
+        # except AttributeError:
+        #     self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
 
     def calcWidth(self):
         header = self.horizontalHeader()
