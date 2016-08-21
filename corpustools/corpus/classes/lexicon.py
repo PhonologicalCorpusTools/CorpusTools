@@ -2013,6 +2013,8 @@ class Corpus(object):
                 self.add_word(w)
         if self.specifier is None and other.specifier is not None:
             self.set_feature_matrix(other.specifier)
+
+        self.inventory.segs.update(other.inventory.segs)
         return self
 
     def key(self, word):

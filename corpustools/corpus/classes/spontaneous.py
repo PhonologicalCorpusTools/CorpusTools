@@ -340,7 +340,8 @@ class Discourse(object):
         corpus = Corpus(self.name + ' lexicon')
         corpus.has_wordtokens = True
         for token in self:
-            word = corpus.get_or_create_word(token.wordtype.spelling,token.wordtype.transcription)
+            word = corpus.get_or_create_word(spelling=token.wordtype.spelling,
+                                             transcription=token.wordtype.transcription)
             word.frequency += 1
             token.wordtype = word
             word.wordtokens.append(token)

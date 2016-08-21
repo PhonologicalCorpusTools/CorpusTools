@@ -536,7 +536,7 @@ class DiscourseView(QWidget):
         self.text.setModel(model)
         self.table.setModel(model)
         #self.table.setSelectionModel(self.text.selectionModel())
-        self.table.selectionModel().selectionChanged.connect(self.updatePlayerTimes)
+        #self.table.selectionModel().selectionChanged.connect(self.updatePlayerTimes)
 
         if not hasattr(model, 'has_audio') or not model.hasAudio():
             self.player.hide()
@@ -641,8 +641,8 @@ class TreeWidget(SubTreeView):
     newLexicon = Signal(object)
     def __init__(self,parent=None):
         super(TreeWidget, self).__init__(parent=parent)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.showMenu)
+        # self.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.customContextMenuRequested.connect(self.showMenu)
         self._selection_model = None
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
         self._width = 40

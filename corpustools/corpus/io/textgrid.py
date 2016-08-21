@@ -262,7 +262,6 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
 
 
 def load_discourse_textgrid(corpus_name, path, annotation_types,
-                            lexicon = None,
                             feature_system_path = None,
                             stop_check = None, call_back = None):
     """
@@ -305,6 +304,7 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
         discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
+
     return discourse
 
 def load_directory_textgrid(corpus_name, path, annotation_types,
@@ -359,9 +359,9 @@ def load_directory_textgrid(corpus_name, path, annotation_types,
         root, filename = t
         name = os.path.splitext(filename)[0]
         d = load_discourse_textgrid(name, os.path.join(root,filename),
-                                    annotation_types, corpus.lexicon,
-                                    None,
-                                    stop_check, call_back)
+                                    annotation_types,
+                                    stop_check=stop_check,
+                                    call_back=call_back)
         corpus.add_discourse(d)
 
     if feature_system_path is not None:

@@ -120,7 +120,6 @@ class MainWindow(QMainWindow):
         self.corpusTable.wordToBeEdited.connect(self.editWord)
         self.corpusTable.columnRemoved.connect(self.enableSave)
         self.discourseTree = TreeWidget(self)
-        self.discourseTree.newLexicon.connect(self.changeLexicon)
         self.discourseTree.hide()
         self.textWidget = DiscourseView(self)
         self.textWidget.hide()
@@ -261,22 +260,28 @@ class MainWindow(QMainWindow):
             self.corpusModel.replaceWord(row, dialog.word)
             self.enableSave()
 
-    def changeText(self):
-        name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(),Qt.DisplayRole)
-        if hasattr(self.corpusModel.corpus, 'lexicon'):
-            try:
-                discourse = self.corpusModel.corpus.lexicon.discourses[name]
-            except KeyError:
-                return
-            self.textWidget.setModel(DiscourseModel(discourse, self.settings))
-
-    def changeLexicon(self, c):
-        self.corpusTable.setModel(CorpusModel(c, self.settings))
-        self.corpusStatus.setText('Corpus: {}'.format(c.name))
-        if c.specifier is not None:
-            self.featureSystemStatus.setText('Feature system: {}'.format(c.specifier.name))
+    def changeTextAndLexicon(self):
+        name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(), Qt.DisplayRole)
+        if name is None:
+            self.corpusTable.setModel(CorpusModel(self.corpusModel.corpus, self.settings))
+            self.textWidget.hide()
         else:
-            self.featureSystemStatus.setText('No feature system selected')
+            self.textWidget.show()
+            self.changeText(name)
+            self.changeLexicon(name)
+
+    def changeText(self,name):
+        discourse = self.corpusModel.corpus.discourses[name]
+        self.textWidget.setModel(DiscourseModel(discourse, self.settings))
+
+    def changeLexicon(self,name):
+        corpus = self.corpusModel.corpus.discourses[name]
+        self.corpusTable.setModel(CorpusModel(corpus.lexicon, self.settings))
+
+        self.corpusStatus.setText('Corpus: {}'.format(corpus.name))
+        name = corpus.lexicon.specifier.name if corpus.lexicon.specifier is not None else 'No feature system selected'
+
+        self.featureSystemStatus.setText('Feature system: {}'.format(name))
 
     @check_for_unsaved_changes
     def loadCorpus(self):
@@ -300,7 +305,9 @@ class MainWindow(QMainWindow):
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
-                    self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                    # self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
+                    # self.discourseTree.selectionModel().selectionChanged.connect(self.changeLexicon)
+                    self.discourseTree.selectionModel().selectionChanged.connect(self.changeTextAndLexicon)
                     self.showDiscoursesAct.setEnabled(True)
                     self.showDiscoursesAct.setChecked(True)
                     if self.textWidget.model() is not None:
@@ -311,17 +318,16 @@ class MainWindow(QMainWindow):
                     self.discourseTree.hide()
                     self.showDiscoursesAct.setEnabled(False)
                     self.showDiscoursesAct.setChecked(False)
+
                 self.corpusTable.selectTokens.connect(self.textWidget.highlightTokens)
                 self.textWidget.selectType.connect(self.corpusTable.highlightType)
                 self.textWidget.show()
                 self.showTextAct.setEnabled(True)
                 self.showTextAct.setChecked(True)
 
-            else:#no lexicon, just corpus
+            else:#nothing special, just a corpus
                 if not hasattr(self.corpus, '_version') or not self.corpus._version == currentPCTversion:
-                    #self.corpus = self.compatibility_check(self.corpus)
                     self.corpus = self.forceUpdate(self.corpus)
-                #c = self.corpus
                 self.textWidget.hide()
                 self.discourseTree.hide()
                 self.showTextAct.setEnabled(False)
@@ -352,9 +358,9 @@ class MainWindow(QMainWindow):
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
 
-            c = self.corpus if not hasattr(self.corpus, 'lexicon') else self.corpus.lexicon
+            #c = self.corpus if not hasattr(self.corpus, 'lexicon') else self.corpus.lexicon
 
-            self.corpusModel = CorpusModel(c, self.settings)
+            self.corpusModel = CorpusModel(self.corpus, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))
             self.inventoryModel = None if self.corpusModel.corpus.specifier is None else self.generateInventoryModel()

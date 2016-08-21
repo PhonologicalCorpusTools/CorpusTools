@@ -229,64 +229,6 @@ class EnvironmentSegmentWidget(QWidget):
     def displayValue(self):
         return self.generateDisplayText()
 
-
-class EnvironmentSelectWidget(QGroupBox):
-    def __init__(self, inventory, parent = None, middle = True, show_full_inventory=False):
-        QGroupBox.__init__(self,'Environments',parent)
-        self.parent = parent
-        self.middle = middle
-        self.inventory = inventory
-        self.show_full_inventory = show_full_inventory
-
-        layout = QVBoxLayout()
-
-        scroll = QScrollArea()
-        self.environmentFrame = QWidget()
-        lay = QBoxLayout(QBoxLayout.TopToBottom)
-        self.addButton = QPushButton('New environment')
-        self.addButton.clicked.connect(self.addNewEnvironment)
-        lay.addWidget(self.addButton)
-        lay.addStretch()
-        self.environmentFrame.setLayout(lay)
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.environmentFrame)
-        scroll.setMinimumWidth(140)
-        scroll.setMinimumHeight(200)
-
-        policy = scroll.sizePolicy()
-        policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        layout.addWidget(scroll)
-
-        self.setLayout(layout)
-
-    def addNewEnvironment(self):
-        envWidget = EnvironmentWidget(self.inventory, middle = self.middle, parent = self,
-                                      show_full_inventory=self.show_full_inventory)
-        pos = self.environmentFrame.layout().count() - 2
-        self.environmentFrame.layout().insertWidget(pos,envWidget)
-
-    @Slot(list) #connected to EnvironmentWidget.copyEnvironment()
-    def addCopiedEnvironment(self, args):
-        copy_data = args[0] if args else None
-        envWidget = EnvironmentWidget(self.inventory, middle=self.middle, parent=self, copy_data=copy_data)
-        pos = self.environmentFrame.layout().count() - 2
-        self.environmentFrame.layout().insertWidget(pos, envWidget)
-
-    def value(self):
-        envs = []
-        for ind in range(self.environmentFrame.layout().count() - 2):
-            wid = self.environmentFrame.layout().itemAt(ind).widget()
-            envs.append(wid.value())
-        return envs
-
-    def displayValue(self):
-        envs = []
-        for ind in range(self.environmentFrame.layout().count() - 2):
-            wid = self.environmentFrame.layout().itemAt(ind).widget()
-            envs.append(wid.displayValue())
-        return envs
-
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False):
         QGroupBox.__init__(self,'Environments',parent)
@@ -416,9 +358,6 @@ class EnvironmentWidget(QWidget):
             wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='r')
             self.rhsWidget.layout().insertWidget(ind, wid)
             wid.segDeleted.connect(self.deleteSeg)
-
-
-
 
 
     def copyEnvironment(self):

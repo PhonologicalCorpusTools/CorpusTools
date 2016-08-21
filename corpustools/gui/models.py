@@ -101,7 +101,15 @@ class BaseCorpusTableModel(BaseTableModel):
 
     def __init__(self, corpus, settings, parent = None):
         BaseTableModel.__init__(self, settings, parent)
+        try:
+           discourses = corpus.discourses
+        except AttributeError:
+            discourses = list()
+
+        if hasattr(corpus, 'lexicon'):
+            corpus = corpus.lexicon
         self.corpus = corpus
+        self.corpus.discourses = discourses
         self.columns = self.corpus.attributes
         self.columns.sort(key=self.column_sort)
 
@@ -262,8 +270,8 @@ class SpontaneousSpeechCorpusModel(QAbstractItemModel):
         #     print(index)
 
         if role == Qt.DisplayRole:
-            if index.column() == 0:
-                return node.name()
+            #if index.column() == 0:
+            return node.name()
 
 
     """INPUTS: int, Qt::Orientation, int"""

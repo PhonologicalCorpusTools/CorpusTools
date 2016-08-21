@@ -3,7 +3,7 @@ HELP_ENABLED = True
 try:
     from PyQt5.QtCore import (QRectF, Qt, QModelIndex, QItemSelection,
                                 pyqtSignal as Signal, pyqtSlot as Slot,
-                                QThread,QAbstractTableModel,
+                                QThread,QAbstractTableModel,QAbstractListModel,
                                 QSize, QSettings,QPoint, QItemSelectionModel,
                                 QSortFilterProxyModel, QAbstractProxyModel, QAbstractItemModel,
                             QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
