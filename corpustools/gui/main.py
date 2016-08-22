@@ -261,9 +261,11 @@ class MainWindow(QMainWindow):
             self.enableSave()
 
     def changeTextAndLexicon(self):
-        name = self.discourseTree.model().data(self.discourseTree.selectionModel().currentIndex(), Qt.DisplayRole)
+        index = self.discourseTree.selectionModel().currentIndex()
+        name = self.discourseTree.model().data(index, Qt.DisplayRole)
         if name is None:
             self.corpusTable.setModel(CorpusModel(self.corpusModel.corpus, self.settings))
+            self.inventoryModel = None if self.corpusModel.corpus.specifier is None else self.generateInventoryModel()
             self.textWidget.hide()
         else:
             self.textWidget.show()
@@ -277,7 +279,7 @@ class MainWindow(QMainWindow):
     def changeLexicon(self,name):
         corpus = self.corpusModel.corpus.discourses[name]
         self.corpusTable.setModel(CorpusModel(corpus.lexicon, self.settings))
-
+        self.inventoryModel = None if self.corpusModel.corpus.specifier is None else self.generateInventoryModel()
         self.corpusStatus.setText('Corpus: {}'.format(corpus.name))
         name = corpus.lexicon.specifier.name if corpus.lexicon.specifier is not None else 'No feature system selected'
 
@@ -379,13 +381,11 @@ class MainWindow(QMainWindow):
 
         if self.corpusModel.corpus.inventory.isNew:
             # just loaded from a text file
-            print(1)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
             inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
 
         else:
             # just loaded a .corpus file, not from text
-            print(2)
             inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
         return inventoryModel

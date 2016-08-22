@@ -4,6 +4,7 @@ import random
 import collections
 import operator
 import locale
+import copy
 
 
 from corpustools.exceptions import CorpusIntegrityError
@@ -991,12 +992,22 @@ class Word(object):
     def spelling(self):
         del self._spelling
 
+    def __copy__(self):
+        return Word(update=self)
+
     def update(self, old_word):
+
+        for attribute, value in old_word.__dict__.items():
+            if not hasattr(self, attribute):
+                setattr(self, attribute, value)
+
         for attribute, default_value in Word.word_attributes.items():
             if hasattr(old_word, attribute):
                 setattr(self, attribute, old_word.__dict__[attribute])
             else:
                 setattr(self, attribute, default_value)
+
+
 
         self.descriptors.extend([att for att in Word.word_attributes if not att.startswith('_')])
         self.descriptors = list(set(self.descriptors))
@@ -2489,7 +2500,7 @@ class Corpus(object):
         new_corpus.specifier = self.specifier
         return new_corpus
 
-    def add_word(self, word, allow_duplicates=True):
+    def add_word(self, word, allow_duplicates=False):
         """Add a word to the Corpus.
         If allow_duplicates is True, then words with identical spelling can
         be added. They are kept sepearate by adding a "silent" number to them
@@ -2524,11 +2535,12 @@ class Corpus(object):
                         self.wordlist[key] = word
                         break
             else:
+                word.frequency += 1
                 return
         except KeyError:
             if not hasattr(word, 'frequency') or not word.frequency:
                 word.frequency = 1
-            self.wordlist[word.spelling] = word
+            self.wordlist[word.spelling] = copy.copy(word)
             if word.spelling is not None:
                 if not self.has_spelling:
                     self.has_spelling = True
