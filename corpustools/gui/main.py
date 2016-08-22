@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
     def changeTextAndLexicon(self):
         index = self.discourseTree.selectionModel().currentIndex()
         name = self.discourseTree.model().data(index, Qt.DisplayRole)
-        if name is None:
+        if name == 'All speakers':
             self.corpusTable.setModel(CorpusModel(self.corpusModel.corpus, self.settings))
             self.inventoryModel = None if self.corpusModel.corpus.specifier is None else self.generateInventoryModel()
             self.textWidget.hide()

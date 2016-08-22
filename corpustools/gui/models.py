@@ -271,6 +271,8 @@ class SpontaneousSpeechCorpusModel(QAbstractItemModel):
 
         if role == Qt.DisplayRole:
             #if index.column() == 0:
+            if node.name() is None:
+                return 'All speakers'
             return node.name()
 
 
