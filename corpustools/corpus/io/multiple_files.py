@@ -130,11 +130,12 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                         continue
                     if at.anchor:
                         continue
+                    print(at.name, at.output_name, at.attribute)
                     value = w[at.name]
                     #what does the follow if-block do? parse_transcription isn't imported
-                    #and ti.mark is an unresolved reference to a non-existent variable ti
-                    if at.delimited:
-                        value = [Annotation(x) for x in parse_transcription(ti.mark)]
+                    #and ti.mark is an unresolved reference
+                    # if at.delimited:
+                    #     value = [Annotation(x) for x in parse_transcription(ti.mark)]
                     if at.token:
                         word.token[at.name] = value
                     else:

@@ -148,21 +148,7 @@ class Discourse(object):
         self.speaker = Speaker(None)
         self.wav_path = kwargs['wav_path']
 
-        # for k,v in kwargs.items():
-        #     setattr(self,k,v)
-        # if spelling_name is None:
-        #     spell_attr = Attribute('spelling','spelling','Spelling')
-        # else:
-        #     spell_attr = Attribute(spelling_name, 'spelling', spelling_name)
-        #
-        # if transcription_name is None:
-        #     trans_attr = Attribute('transcription','tier','Transcription'),
-        # else:
-        #     trans_attr = Attribute(transcription_name, 'tier', transcription_name)
-
-        self._attributes = [#Attribute('spelling', 'spelling', kwargs['spelling_name']),
-                            #Attribute('transcription', 'tier', kwargs['transcription_name']),
-                            kwargs['spelling_name'], kwargs['transcription_name'],
+        self._attributes = [kwargs['spelling_name'], kwargs['transcription_name'],
                             Attribute('begin','numeric','Begin'),
                             Attribute('end','numeric', 'End')]
 

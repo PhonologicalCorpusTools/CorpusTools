@@ -410,6 +410,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
                     annotations[at].append((curr_word, begin, end))
                     curr_word = list()
         else:
+            print(at._list)
             raise TypeError("AnnotationType._list cannot contain a mix of Annotations and BaseAnnotations")
 
 
@@ -420,8 +421,13 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
             spelling_name = at.output_name
         elif at.name == 'Transcription (default)':
             discourse_kwargs['transcription_name'] = at.attribute#.output_name
-        elif at.attribute.att_type in ('tier', 'spelling'):
+        elif at.name == 'Other (character)' or at.attribute.att_type in ('tier', 'spelling'):
             discourse_kwargs['other_attributes'].append(at.attribute)
+
+    if 'spelling_name' not in discourse_kwargs:
+        discourse_kwargs['spelling_name'] = Attribute('Spelling', 'spelling', 'Spelling')
+    if 'transcription_name' not in discourse_kwargs:
+        discourse_kwargs['transcription_name'] = Attribute('Transcription', 'tier', 'Transcription')
 
     discourse = Discourse(discourse_kwargs)
 
@@ -434,8 +440,11 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
         add_frequency = False
 
     ind = 0
+
     for n in range(len(list(annotations.values())[0])):
-        word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0]) for at in annotations if not at.token}
+        word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
+                                        for at in annotations
+                                        if not at.token and not at.ignored}
         word = Word(**word_kwargs)
         try:
             word = discourse.lexicon.find(word.spelling)
@@ -448,6 +457,8 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
         word_token_kwargs['word'] = word
         begin, end = None, None
         for at in annotations:
+            if at.ignored:
+                continue
             word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
             if at.attribute.att_type == 'tier':
                 if at.attribute.is_default:

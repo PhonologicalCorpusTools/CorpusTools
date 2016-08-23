@@ -227,9 +227,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
 
             mid_point = si.minTime + (si.maxTime - si.minTime)
             for at in annotation_types:
-                #it's not clear what this loop was intended to do
-                #the first three if statements cover enough ground that
-                #every annotation type will be caught, so nothing further ever happens
+                #this catches only things marked as "Other (character)"
                 if at.ignored:
                     continue
                 if at.base:
@@ -238,19 +236,23 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                     continue
                 t = tg.getFirst(at.attribute.name)
                 ti = t.intervalContaining(mid_point)
-
                 if ti is None:
-                    value = None
+                    #value = None
+                    continue
                 else:
                     value = ti.mark
-                    if at.delimited:
-                        value = parse_transcription(ti.mark, at)
-                    elif at.ignored:
-                        value = ''.join(x for x in value if x not in at.ignored)
+                    if not value:
+                        continue
+                    value = [Annotation(value)]
+                    # if at.delimited:
+                    #     value = parse_transcription(ti.mark, at)
+                    # elif at.ignored: #this block will never be reached because at.ignored is checked above already
+                    #     value = ''.join(x for x in value if x not in at.ignored)
                 if at.token:
                     word.token[at.attribute.name] = value
                 else:
                     word.additional[at.attribute.name] = value
+                annotations[at.attribute.name] = value
 
             annotations[word_name] = [word]
             data.add_annotations(**annotations)
