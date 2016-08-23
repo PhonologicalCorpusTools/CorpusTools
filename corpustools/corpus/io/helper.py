@@ -383,11 +383,20 @@ def log_annotation_types(annotation_types):
     for a in annotation_types:
         logging.info(a.pretty_print())
 
-def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
+def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, call_back=None, stop_check=None):
     curr_word = list()
     annotations = dict()
     spelling_name, transcription_name = None, None
+    if call_back is not None:
+        call_back('Processing data...')
+        cur = 0
+
     for at in annotation_types:
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         annotations[at] = list()
 
         if all(isinstance(item, Annotation) for item in at._list):
@@ -429,6 +438,12 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
     if 'transcription_name' not in discourse_kwargs:
         discourse_kwargs['transcription_name'] = Attribute('Transcription', 'tier', 'Transcription')
 
+    if stop_check is not None and stop_check():
+        return
+    if call_back is not None:
+        cur += 1
+        call_back(cur)
+
     discourse = Discourse(discourse_kwargs)
 
     if not 'frequency' in [a.name for a in discourse.lexicon.attributes]:
@@ -442,6 +457,11 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None):
     ind = 0
 
     for n in range(len(list(annotations.values())[0])):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            call_back(cur)
         word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
                                         for at in annotations
                                         if not at.token and not at.ignored}

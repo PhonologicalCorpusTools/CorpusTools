@@ -216,7 +216,8 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
 
     data = transcription_text_to_data(corpus_name, path, annotation_types, stop_check=stop_check, call_back=call_back)
     # discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
-    discourse = data_to_discourse2(corpus_name=corpus_name, wav_path=data.wav_path, annotation_types=annotation_types)
+    discourse = data_to_discourse2(corpus_name=corpus_name, wav_path=data.wav_path, annotation_types=annotation_types,
+                                   stop_check=stop_check, call_back=call_back)
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)

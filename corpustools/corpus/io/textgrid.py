@@ -296,7 +296,7 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
     #textgrid_to_data has side-effects that change annotation_types
     wav_path = find_wav_path(path)
-    discourse = data_to_discourse2(corpus_name, wav_path, annotation_types)
+    discourse = data_to_discourse2(corpus_name, wav_path, annotation_types, stop_check=stop_check, call_back=call_back)
 
     # discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     # discourse is a Discourse object, see corpus\classes\spontaneous.py
