@@ -260,8 +260,8 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
         return
     data.name = corpus_name
     data.wav_path = find_wav_path(word_path)
-    #discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types)
-    discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types)
+    #discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     if discourse is None:
         return
     if feature_system_path is not None:

@@ -506,9 +506,9 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
         elif value.att_type == 'tier' and value.is_default:
             transcription_name = name
 
-
-    d = Discourse(spelling_name = spelling_name, transcription_name = transcription_name,
-                  name = data.name, wav_path = data.wav_path)
+    dkwargs = {'spelling_name': spelling_name, 'transcription_name': transcription_name,
+               'name':data.name, 'wav_path':data.wav_path}
+    d = Discourse(dkwargs)
     ind = 0
     if lexicon is None:
         lexicon = d.lexicon #despite the name, this is a Corpus object

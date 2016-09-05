@@ -846,6 +846,8 @@ class EditFeatureMatrixDialog(QDialog):
         missing = []
         neutralized = []
         for seg in corpus_inventory:
+            if seg.symbol == '#':
+                continue
             if seg not in feature_inventory:
                 if str(seg) == '\'':
                     missing.append('\' (apostrophe)')
@@ -872,7 +874,12 @@ class EditFeatureMatrixDialog(QDialog):
         else:
             reply = QMessageBox.information(self,
                     "Complete", 'All segments are specified for all features!')
-        reply.exec_()
+        try:
+            reply.exec_()
+        except AttributeError:
+            pass
+            #An exception is raised when the user hits cancel (sometimes?). It's this one:
+            #AttributeError: 'StandardButton' objects has no attribute 'exec_'
 
 
 class CategoryWidget(QWidget):
@@ -1190,8 +1197,10 @@ class FeatureMatrixManager(QDialog):
 
         layout.addWidget(acFrame)
 
-        note = QLabel('This window is only for loading and deleting transcription/features systems. If you would like '
-        'to associate a system with your corpus, go to the Features menu, and select View/change feature system...')
+        note = QLabel('This window is only for and and removing transcription/features systems.\n'
+                      'When loading a corpus, you will be asked which one of these systems you want to use with your'
+                      'corpus. If you have an existing corpus and you want to change systems, go to '
+                      'the Features menu and select View/change feature system...')
         note.setWordWrap(True)
         layout.addWidget(note)
 
@@ -1216,7 +1225,11 @@ class FeatureMatrixManager(QDialog):
             self.getAvailableSystems()
 
     def removeSystem(self):
-        featureSystem = self.systemsList.currentItem().text()
+        featureSystem = self.systemsList.currentItem()
+        if featureSystem is None:
+            return
+        else:
+            featureSystem = featureSystem.text()
         if self.current_system == featureSystem:
             alert = QMessageBox(QMessageBox.Warning, 'Remove system', 'This feature system is being used by your open '
             'corpus, and you cannot remove it. Please close your corpus first.')

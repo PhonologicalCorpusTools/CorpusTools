@@ -488,9 +488,10 @@ class MainWindow(QMainWindow):
             self.corpusModel.corpus.lexicon.inventory.save(self.inventoryModel)
         else:
             self.corpusModel.corpus.inventory.save(self.inventoryModel)
-        save_binary(self.corpusModel.corpus,os.path.join(
-                        self.settings['storage'],'CORPUS',
-                        self.corpusModel.corpus.name+'.corpus'))
+        save_binary(self.corpusModel.corpus,
+                    os.path.join(self.settings['storage'],'CORPUS',self.corpusModel.corpus.name+'.corpus'))
+        save_binary(self.corpusModel.corpus.specifier,
+                os.path.join(self.settings['storage'], 'FEATURE', self.corpusModel.corpus.specifier.name+'.feature'))
         self.saveCorpusAct.setEnabled(False)
         self.unsavedChanges = False
 

@@ -980,9 +980,12 @@ class LoadCorpusDialog(PCTDialog):
                     alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
                     'selected {} feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
                     'feature. You can change these feature values in PCT by going to Features>View/Change feature '
-                    'system...\n\nIf your transcription delimiter symbol appears in the list above, it means that your '
+                    'system...'
+                    '\n\nIf your transcription delimiter symbol appears in the list above, it means that your '
                     'parsing settings are incorrect. You can change these settings in the "Parsing Preview" section on'
-                    'the right-hand side.'.format(c.specifier.name, unmatched)))
+                    'the right-hand side.'
+                    '\n\nIf you see a very large number of symbols in the list, it is possible that you have selected '
+                    'the wrong feature system for your corpus.'.format(c.specifier.name, unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()
