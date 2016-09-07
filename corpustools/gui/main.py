@@ -31,6 +31,8 @@ from .inventorygui import InventoryManager
 
 from corpustools.corpus.classes.lexicon import Corpus, Inventory, Word
 
+from corpustools.corpus.classes.spontaneous import Discourse
+
 from corpustools.corpus.io.helper import get_corpora_list
 
 from corpustools import __version__ as currentPCTversion
@@ -362,8 +364,6 @@ class MainWindow(QMainWindow):
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
 
-            #c = self.corpus if not hasattr(self.corpus, 'lexicon') else self.corpus.lexicon
-
             self.corpusModel = CorpusModel(self.corpus, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))
@@ -484,10 +484,11 @@ class MainWindow(QMainWindow):
             pass
 
     def saveCorpus(self):
-        if hasattr(self.corpusModel.corpus, 'lexicon'):
-            self.corpusModel.corpus.lexicon.inventory.save(self.inventoryModel)
-        else:
-            self.corpusModel.corpus.inventory.save(self.inventoryModel)
+
+        self.corpusModel.corpus.inventory.save(self.inventoryModel)
+        if isinstance(self.corpus, Discourse):
+            save_binary(self.corpus,
+                        os.path.join(self.settings['storage'],'CORPUS',self.corpus.name+'.corpus') )
         save_binary(self.corpusModel.corpus,
                     os.path.join(self.settings['storage'],'CORPUS',self.corpusModel.corpus.name+'.corpus'))
         save_binary(self.corpusModel.corpus.specifier,
@@ -536,13 +537,12 @@ class MainWindow(QMainWindow):
 
             #if changing feature systems
             if dialog.specifier is not None:
-
                 self.corpusModel.corpus.set_feature_matrix(dialog.specifier)
                 if dialog.transcription_changed:
-                    #This block currently does nothing, due to the RestrictedFeatureSelectSystem in use
-                    #the code should be left alone in case we later choose to move back to the non-Restricted type
+                    #This block is currently unreachable, due to the RestrictedFeatureSelectSystem
+                    #The code should be left alone in case we later choose to move back to the nonRestricted type
                     #RestrictedFeatureSystems are those where the transcription and features are necessarily linked
-                    #In a non-Restricted system the transcription and features can be independantly selected and
+                    #In a nonRestricted system the transcription and features can be independantly selected and
                     #the corpus will get automatically retranscribed
                     self.corpusModel.corpus.retranscribe(dialog.segmap)#this also updates the corpus inventory
                     self.inventoryModel.updateInventory(list(self.corpusModel.corpus.inventory.segs.keys()))
