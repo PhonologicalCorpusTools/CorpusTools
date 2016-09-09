@@ -210,6 +210,7 @@ def ilg_to_data(corpus_name, path, annotation_types,
 
     if len(mismatching_lines) > 0:
         raise(ILGWordMismatchError(mismatching_lines))
+
     return data
 
 
@@ -243,12 +244,11 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
     Discourse
         Discourse object generated from the text file
     """
-
-
     data = ilg_to_data(corpus_name, path, annotation_types,stop_check, call_back)
     #discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     discourse = data_to_discourse2(corpus_name=corpus_name, annotation_types=annotation_types,
                                    stop_check=stop_check, call_back=call_back)
+
     if discourse is None:
         return
 

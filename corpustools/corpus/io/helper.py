@@ -427,7 +427,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
     for at in annotation_types:
         if at.name == 'Orthography (default)':
             discourse_kwargs['spelling_name'] = at.attribute#.output_name
-            spelling_name = at.output_name
         elif at.name == 'Transcription (default)':
             discourse_kwargs['transcription_name'] = at.attribute#.output_name
         elif at.name == 'Other (character)' or at.attribute.att_type in ('tier', 'spelling'):
@@ -462,7 +461,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         if call_back is not None:
             cur += 1
             call_back(cur)
-        word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
+        word_kwargs = {at.attribute.name: (at.attribute, annotations[at][n][0])#{at.output_name: (at.attribute, annotations[at][n][0])
                                         for at in annotations
                                         if not at.token and not at.ignored}
         word = Word(**word_kwargs)

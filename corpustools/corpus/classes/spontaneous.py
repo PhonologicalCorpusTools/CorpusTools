@@ -164,7 +164,13 @@ class Discourse(object):
 
     @property
     def attributes(self):
-        return self._attributes
+        #return [a for a in self._attributes if not a.name in ('spelling', 'transcription')]
+        att_list = list()
+        for a in self._attributes:
+            if not a.display_name in [at.display_name for at in att_list]:
+                att_list.append(a)
+        return att_list
+        #return self._attributes
 
     def keys(self):
         """

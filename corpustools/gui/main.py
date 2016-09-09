@@ -491,8 +491,9 @@ class MainWindow(QMainWindow):
                         os.path.join(self.settings['storage'],'CORPUS',self.corpus.name+'.corpus') )
         save_binary(self.corpusModel.corpus,
                     os.path.join(self.settings['storage'],'CORPUS',self.corpusModel.corpus.name+'.corpus'))
-        save_binary(self.corpusModel.corpus.specifier,
-                os.path.join(self.settings['storage'], 'FEATURE', self.corpusModel.corpus.specifier.name+'.feature'))
+        if self.corpusModel.corpus.specifier is not None:
+            save_binary(self.corpusModel.corpus.specifier,
+                    os.path.join(self.settings['storage'], 'FEATURE', self.corpusModel.corpus.specifier.name+'.feature'))
         self.saveCorpusAct.setEnabled(False)
         self.unsavedChanges = False
 

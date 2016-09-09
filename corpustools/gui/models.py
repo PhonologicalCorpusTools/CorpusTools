@@ -112,10 +112,8 @@ class BaseCorpusTableModel(BaseTableModel):
         self.corpus.discourses = discourses
         self.columns = self.corpus.attributes
         self.columns.sort(key=self.column_sort)
-
         self.rows = self.corpus.words
         self.allData = self.rows
-
 
     def column_sort(self, x):
         att_type = x.att_type
@@ -337,6 +335,7 @@ class DiscourseModel(BaseCorpusTableModel):
         self.columns = self.corpus.attributes
         self.columns.sort(key=self.column_sort)
         self.rows = [x for x in list(self.corpus.words)]#keys())]
+
         # w = self.corpus[self.rows[0]]
         #self.posToTime = []
         #self.timeToPos = {}
