@@ -180,11 +180,11 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
             call_back(cur)
         spelling_tier = tg.getFirst(word_name)
         for si in spelling_tier:
+            if si.mark is None:
+                continue
             annotations = dict()
             word = Annotation(si.mark)
             # si.mark is the actual text, e.g the spelling of a word
-            if si.mark is None:
-                continue
             for n in data.base_levels:
                 #data.base_levels should return a list of names of transcription-type tiers
                 #compare with data.word_levels a few lines back in the nesting loop
@@ -197,8 +197,6 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                         continue
                     if ti.minTime >= si.maxTime:
                         break
-                    #if not ti.mark:
-                    #    continue
 
                     phoneBegin = ti.minTime
                     phoneEnd = ti.maxTime
@@ -212,17 +210,28 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                         parsed[0].begin = phoneBegin
                         parsed[-1].end = phoneEnd
                         tier_elements.extend(parsed)
-                        print('{},{},{},{}'.format(word_name, si, n, parsed))
 
+                # if not tier_elements:
+                #     continue
+
+                if len(tier_elements) > 1:
+                    print(n, tier_elements)
+                    tier_elements[0].end = None
+                    tier_elements[-1].begin = None
+                    for j,_ in enumerate(tier_elements):
+                        if j == 0:
+                            tier_elements[j].end = None
+                        elif j == len(tier_elements)-1:
+                            tier_elements[j].begin = None
+                        else:
+                            tier_elements[j].begin = None
+                            tier_elements[j].end = None
+
+                print(n, tier_elements)
                 level_count = data.level_length(n)
                 word.references.append(n)
                 word.begins.append(level_count)
                 word.ends.append(level_count + len(tier_elements))
-                # if len(tier_elements) > 1:
-                #     tier_elements[0].end = None
-                #     tier_elements[-1].begin = None
-                #     for t in tier_elements[1:-1]:
-                #         t.begin, t.end = None,None
                 annotations[n] = tier_elements
 
             mid_point = si.minTime + (si.maxTime - si.minTime)
