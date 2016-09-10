@@ -978,9 +978,9 @@ class LoadCorpusDialog(PCTDialog):
                     'selected {} feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
                     'feature. You can change these feature values in PCT by going to Features>View/Change feature '
                     'system...'
-                    '\n\nIf your transcription delimiter symbol appears in the list above, it means that your '
-                    'parsing settings are incorrect. You can change these settings in the "Parsing Preview" section on'
-                    'the right-hand side.'
+                    '\n\nIf this list contains your transcription delimiter, or if it contains symbols that should be '
+                    'part of a digraph, then it means that your parsing settings are incorrect. You can change these '
+                    'settings in the "Parsing Preview" section on the right-hand side.'
                     '\n\nIf you see a very large number of symbols in the list, it is possible that you have selected '
                     'the wrong feature system for your corpus.'.format(c.specifier.name, unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)

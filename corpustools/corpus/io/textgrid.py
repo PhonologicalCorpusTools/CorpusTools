@@ -183,6 +183,8 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
             annotations = dict()
             word = Annotation(si.mark)
             # si.mark is the actual text, e.g the spelling of a word
+            if si.mark is None:
+                continue
             for n in data.base_levels:
                 #data.base_levels should return a list of names of transcription-type tiers
                 #compare with data.word_levels a few lines back in the nesting loop
@@ -210,23 +212,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                         parsed[0].begin = phoneBegin
                         parsed[-1].end = phoneEnd
                         tier_elements.extend(parsed)
-                    # if data[n].delimited:
-                    #     parsed = parse_transcription(ti.mark, data[n])
-                    #     #parsed is a list of BaseAnnotations, not a Transcription
-                    #     if len(parsed) > 0:
-                    #         parsed[0].begin = phoneBegin
-                    #         parsed[-1].end = phoneEnd
-                    #         tier_elements.extend(parsed)
-                    # else:
-                    #     print('ti.mark = ', ti.mark)
-                    #     if ti.mark == '':
-                    #         ti.mark = '#'
-                    #         print('changed to ', ti.mark)
-                    #
-                    #     a = parse_transcription(ti.mark, data[n])[0]
-                    #     a.begin = phoneBegin
-                    #     a.end = phoneEnd
-                    #     tier_elements.append(a)
+                        print('{},{},{},{}'.format(word_name, si, n, parsed))
 
                 level_count = data.level_length(n)
                 word.references.append(n)
