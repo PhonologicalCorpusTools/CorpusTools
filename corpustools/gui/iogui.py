@@ -27,7 +27,8 @@ from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
 from corpustools.corpus.io.helper import (get_corpora_list,
                                         corpus_name_to_path,
                                         inspect_directory,
-                                        log_annotation_types)
+                                        log_annotation_types,
+                                        punctuation_names)
 from corpustools.gui.featuregui import system_name_to_path
 import corpustools.gui.modernize as modernize
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
@@ -961,12 +962,8 @@ class LoadCorpusDialog(PCTDialog):
                     if seg.symbol in c.inventory.non_segment_symbols:
                         continue
                     if all(f == 'n' for f in seg.features.values()):
-                        if seg.symbol == '\'':
-                            unmatched.append('\' (apostrophe)')
-                        elif seg.symbol == '.':
-                            unmatched.append('. (period)')
-                        elif seg.symbol == ',':
-                            unmatched.append(', (comma)')
+                        if seg.symbol in punctuation_names:
+                            unmatched.append('{} ({})'.format(seg.symbol, punctuation_names[seg.symbol]))
                         else:
                             unmatched.append(seg.symbol)
 

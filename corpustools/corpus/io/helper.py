@@ -7,6 +7,16 @@ from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordT
 from corpustools.exceptions import DelimiterError
 
 NUMBER_CHARACTERS = set(string.digits)
+punctuation_names = {',': 'comma',
+                     ';': 'semicolon',
+                     '-': 'dash',
+                     '\\': 'backslash',
+                     '/': 'forward slash',
+                     '\'': 'apostrophe',
+                     '.': 'period',
+                     '`': 'backtick',
+                     ':': 'colon'
+                     }
 
 class BaseAnnotation(object):
     def __init__(self, label = None, begin = None, end = None):
@@ -406,7 +416,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
                     annotations[at].append((item.label, None, None))
 
         elif all(type(item) == BaseAnnotation for item in at._list):
-            #it's a list of transcription, with each segment as a BaseAnnotation
+            #it's a list of transcriptions, with each segment as a BaseAnnotation
             for item in at._list:
                 if item.begin is not None:
                     begin = item.begin
@@ -461,7 +471,8 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         if call_back is not None:
             cur += 1
             call_back(cur)
-        word_kwargs = {at.attribute.name: (at.attribute, annotations[at][n][0])#{at.output_name: (at.attribute, annotations[at][n][0])
+        word_kwargs = {at.attribute.name: (at.attribute, annotations[at][n][0])
+                        #{at.output_name: (at.attribute, annotations[at][n][0])
                                         for at in annotations
                                         if not at.token and not at.ignored}
         word = Word(**word_kwargs)

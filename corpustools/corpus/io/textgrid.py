@@ -185,7 +185,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
             # si.mark is the actual text, e.g the spelling of a word
             for n in data.base_levels:
                 #data.base_levels should return a list of names of transcription-type tiers
-                #comapre with data.word_levels a few lines back in the nesting loop
+                #compare with data.word_levels a few lines back in the nesting loop
                 if data[word_name].speaker != data[n].speaker and data[n].speaker is not None:
                     continue
                 t = tg.getFirst(n)
@@ -205,24 +205,38 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                         phoneBegin = si.minTime
                     if phoneEnd > si.maxTime:
                         phoneEnd = si.maxTime
-                    if data[n].delimited:
-                        parsed = parse_transcription(ti.mark, data[n])
-                        #parsed is a list of BaseAnnotations, not a Transcription
-                        if len(parsed) > 0:
-                            parsed[0].begin = phoneBegin
-                            parsed[-1].end = phoneEnd
-                            tier_elements.extend(parsed)
-                    else:
-                        if ti.mark == '':
-                            ti.mark = '#'
-                        a = parse_transcription(ti.mark, data[n])[0]
-                        a.begin = phoneBegin
-                        a.end = phoneEnd
-                        tier_elements.append(a)
+                    parsed = parse_transcription(ti.mark, data[n])
+                    if parsed:
+                        parsed[0].begin = phoneBegin
+                        parsed[-1].end = phoneEnd
+                        tier_elements.extend(parsed)
+                    # if data[n].delimited:
+                    #     parsed = parse_transcription(ti.mark, data[n])
+                    #     #parsed is a list of BaseAnnotations, not a Transcription
+                    #     if len(parsed) > 0:
+                    #         parsed[0].begin = phoneBegin
+                    #         parsed[-1].end = phoneEnd
+                    #         tier_elements.extend(parsed)
+                    # else:
+                    #     print('ti.mark = ', ti.mark)
+                    #     if ti.mark == '':
+                    #         ti.mark = '#'
+                    #         print('changed to ', ti.mark)
+                    #
+                    #     a = parse_transcription(ti.mark, data[n])[0]
+                    #     a.begin = phoneBegin
+                    #     a.end = phoneEnd
+                    #     tier_elements.append(a)
+
                 level_count = data.level_length(n)
                 word.references.append(n)
                 word.begins.append(level_count)
                 word.ends.append(level_count + len(tier_elements))
+                # if len(tier_elements) > 1:
+                #     tier_elements[0].end = None
+                #     tier_elements[-1].begin = None
+                #     for t in tier_elements[1:-1]:
+                #         t.begin, t.end = None,None
                 annotations[n] = tier_elements
 
             mid_point = si.minTime + (si.maxTime - si.minTime)
