@@ -215,7 +215,6 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                 #     continue
 
                 if len(tier_elements) > 1:
-                    print(n, tier_elements)
                     tier_elements[0].end = None
                     tier_elements[-1].begin = None
                     for j,_ in enumerate(tier_elements):
@@ -227,7 +226,6 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                             tier_elements[j].begin = None
                             tier_elements[j].end = None
 
-                print(n, tier_elements)
                 level_count = data.level_length(n)
                 word.references.append(n)
                 word.begins.append(level_count)

@@ -243,7 +243,7 @@ class Discourse(object):
             of the attribute, defaults to False
         """
         for i,a in enumerate(self._attributes):
-            if attribute.name == a.name:
+            if attribute.display_name == a.display_name:
                 self._attributes[i] = attribute
                 break
         else:

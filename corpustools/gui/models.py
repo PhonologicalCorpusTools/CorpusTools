@@ -336,17 +336,6 @@ class DiscourseModel(BaseCorpusTableModel):
         self.columns.sort(key=self.column_sort)
         self.rows = [x for x in list(self.corpus.words)]#keys())]
 
-        # w = self.corpus[self.rows[0]]
-        #self.posToTime = []
-        #self.timeToPos = {}
-        #for w in self.discourse:
-        #    self.timeToPos[w.begin] = len(self.posToTime)
-        #    self.posToTime.append(w.begin)
-        #    i = QStandardItem(str(w))
-        #    i.setFlags(i.flags() | (not Qt.ItemIsEditable))
-        #    self.appendRow(i)
-        #self.sort(2,Qt.AscendingOrder)
-
     def rowsToTimes(self,rows):
         return [self.rows[x] for x in rows]
 
