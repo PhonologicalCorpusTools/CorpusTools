@@ -464,15 +464,14 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         add_frequency = False
 
     ind = 0
-
     for n in range(len(list(annotations.values())[0])):
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
             cur += 1
             call_back(cur)
-        word_kwargs = {at.attribute.name: (at.attribute, annotations[at][n][0])
-                        #{at.output_name: (at.attribute, annotations[at][n][0])
+        word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
+                       #{at.attribute.name: (at.attribute, annotations[at][n][0])
                                         for at in annotations
                                         if not at.token and not at.ignored}
         word = Word(**word_kwargs)
@@ -494,10 +493,12 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
                 if at.attribute.is_default:
                     begin = annotations[at][n][1]
                     end = annotations[at][n][2]
+                    word_token_kwargs['begin'] = begin if begin is not None else ind
+                    word_token_kwargs['end'] = end if end is not None else ind + 1
                 if at.token:
                     word_token_kwargs['_transcription'] = (at.attribute, annotations[at][n][0])
-        word_token_kwargs['begin'] = begin if begin is not None else ind
-        word_token_kwargs['end'] = end if end is not None else ind + 1
+        # word_token_kwargs['begin'] = begin if begin is not None else ind
+        # word_token_kwargs['end'] = end if end is not None else ind + 1
         word_token = WordToken(**word_token_kwargs)
         discourse.add_word(word_token)
         if any(a.token for a in annotations):

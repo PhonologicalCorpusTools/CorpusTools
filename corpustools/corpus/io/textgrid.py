@@ -180,7 +180,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
             call_back(cur)
         spelling_tier = tg.getFirst(word_name)
         for si in spelling_tier:
-            if si.mark is None:
+            if not si.mark:# is None:
                 continue
             annotations = dict()
             word = Annotation(si.mark)
@@ -191,6 +191,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                 if data[word_name].speaker != data[n].speaker and data[n].speaker is not None:
                     continue
                 t = tg.getFirst(n)
+                # t is a list of Intervals
                 tier_elements = list()
                 for ti in t:
                     if ti.maxTime <= si.minTime:
@@ -215,8 +216,6 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                 #     continue
 
                 if len(tier_elements) > 1:
-                    tier_elements[0].end = None
-                    tier_elements[-1].begin = None
                     for j,_ in enumerate(tier_elements):
                         if j == 0:
                             tier_elements[j].end = None
@@ -232,7 +231,8 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                 word.ends.append(level_count + len(tier_elements))
                 annotations[n] = tier_elements
 
-            mid_point = si.minTime + (si.maxTime - si.minTime)
+            #mid_point = si.minTime + (si.maxTime - si.minTime)
+            mid_point = (si.maxTime + si.minTime)/2
             for at in annotation_types:
                 #this catches only things marked as "Other (character)"
                 if at.ignored:
@@ -251,8 +251,8 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                     if not value:
                         continue
                     value = [Annotation(value)]
-                    # if at.delimited:
-                    #     value = parse_transcription(ti.mark, at)
+                    if at.delimited:
+                        value = parse_transcription(ti.mark, at)
                     # elif at.ignored: #this block will never be reached because at.ignored is checked above already
                     #     value = ''.join(x for x in value if x not in at.ignored)
                 if at.token:

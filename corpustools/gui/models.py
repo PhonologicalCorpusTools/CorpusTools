@@ -335,6 +335,7 @@ class DiscourseModel(BaseCorpusTableModel):
         self.columns = self.corpus.attributes
         self.columns.sort(key=self.column_sort)
         self.rows = [x for x in list(self.corpus.words)]#keys())]
+        self.rows.sort()
 
     def rowsToTimes(self,rows):
         return [self.rows[x] for x in rows]
