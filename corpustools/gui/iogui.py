@@ -950,6 +950,8 @@ class LoadCorpusDialog(PCTDialog):
 
         if result:
             if self.corpus is not None:
+                #self.corpus is set in self.setResults(),
+                #which is a slot connected to the LoadCorpusWorker dataReady signalr
                 if not hasattr(self.corpus, 'lexicon'):
                     #it's a Corpus object
                     c = self.corpus
@@ -998,12 +1000,10 @@ class LoadCorpusDialog(PCTDialog):
                         self.corpus = None
                         return
 
-
-            save_binary(self.corpus, corpus_name_to_path(self.settings['storage'], self.corpus.name))
-
-            if c.specifier is not None:
-                save_binary(c.specifier, system_name_to_path(self.settings['storage'], c.specifier.name))
-            QDialog.accept(self)
+                save_binary(self.corpus, corpus_name_to_path(self.settings['storage'], self.corpus.name))
+                if c.specifier is not None:
+                    save_binary(c.specifier, system_name_to_path(self.settings['storage'], c.specifier.name))
+                QDialog.accept(self)
 
     def updateName(self):
         path = self.pathWidget.value()

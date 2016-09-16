@@ -277,6 +277,9 @@ class Discourse(object):
             return True
         return False
 
+    def __getstate__(self):
+        return self.__dict__
+
     def __setstate__(self,state):
         if 'wav_path' not in state:
             state['wav_path'] = None
@@ -284,7 +287,8 @@ class Discourse(object):
         if hasattr(self,'lexicon'):
             self.lexicon.has_wordtokens = True
         for wt in self:
-            wt.wordtype.wordtokens.append(wt)
+            self.lexicon[str(wt.wordtype)].wordtokens.append(wt)
+            #wt.wordtype.wordtokens.append(wt)
 
     def __iter__(self):
         for k in sorted(self.words.keys()):
@@ -488,6 +492,7 @@ class WordToken(object):
         state = self.__dict__.copy()
         state['wavpath'] = None
         return state
+
 
     def __eq__(self, other):
         if not isinstance(other,WordToken):
