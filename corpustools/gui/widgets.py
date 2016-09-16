@@ -10,7 +10,8 @@ from .models import SegmentPairModel, EnvironmentModel, FilterModel
 from .delegates import SwitchDelegate
 
 from corpustools.corpus.classes import Attribute
-from corpustools.corpus.io.helper import get_corpora_list, get_systems_list, corpus_name_to_path, NUMBER_CHARACTERS
+from corpustools.corpus.io.helper import (get_corpora_list, get_systems_list, corpus_name_to_path, NUMBER_CHARACTERS,
+                                            BaseAnnotation)
 
 def truncate_string(string, length = 10):
     return (string[:length] + '...') if len(string) > length + 3 else string
@@ -111,7 +112,7 @@ class ParsingDialog(QDialog):
         self.setWindowTitle('Parsing {}'.format(annotation_type.name))
 
         layout = QFormLayout()
-        self.example = QLabel(' '.join(annotation_type[:5]))
+        self.example = QLabel(' '.join([a.label if isinstance(a,BaseAnnotation) else a for a in annotation_type[:5]]))
         self.example.setWordWrap(True)
         layout.addRow('Example:', self.example)
 
