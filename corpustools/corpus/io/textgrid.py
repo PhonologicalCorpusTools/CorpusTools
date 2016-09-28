@@ -16,6 +16,10 @@ from .helper import (compile_digraphs, parse_transcription, DiscourseData,
                     Annotation, BaseAnnotation)
 
 class PCTTextGrid(TextGrid):
+
+    def __init__(self):
+        super().__init__()
+
     def read(self, f):
         """
         Read the tiers contained in the Praat-formated TextGrid file
@@ -31,6 +35,7 @@ class PCTTextGrid(TextGrid):
             source.readline()
             if source.readline().rstrip().split()[2] == '"IntervalTier"':
                 inam = source.readline().rstrip().split(' = ')[1].strip('"')
+                inam = inam.lower()
                 imin = round(float(source.readline().rstrip().split()[2]), 5)
                 imax = round(float(source.readline().rstrip().split()[2]), 5)
                 itie = IntervalTier(inam)
@@ -44,6 +49,7 @@ class PCTTextGrid(TextGrid):
                 self.append(itie)
             else: # pointTier
                 inam = source.readline().rstrip().split(' = ')[1].strip('"')
+                inam = inam.lower()
                 imin = round(float(source.readline().rstrip().split()[2]), 5)
                 imax = round(float(source.readline().rstrip().split()[2]), 5)
                 itie = PointTier(inam)
@@ -163,7 +169,6 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                             call_back = None):
     tg = load_textgrid(path)
     name = corpus_name
-
     for a in annotation_types:
         a.reset()
     data = DiscourseData(name, annotation_types)

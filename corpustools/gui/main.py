@@ -16,8 +16,7 @@ from .views import (TreeWidget, DiscourseView, ResultsWindow,
 from .models import (CorpusModel, SpontaneousSpeechCorpusModel,
                     DiscourseModel, InventoryModel)
 
-from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog,
-                    save_binary)
+from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog, save_binary)
 
 from .corpusgui import (AddTierDialog, AddAbstractTierDialog,
                         RemoveAttributeDialog,AddColumnDialog,

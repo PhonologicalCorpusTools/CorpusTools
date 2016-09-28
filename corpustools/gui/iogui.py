@@ -929,7 +929,6 @@ class LoadCorpusDialog(PCTDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
-
         return kwargs
 
     @check_for_errors

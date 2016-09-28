@@ -1,5 +1,4 @@
 import datetime
-import time
 from .imports import *
 from .helpgui import HelpDialog
 from corpustools.corpus.io import download_binary
@@ -17,6 +16,8 @@ class ProgressDialog(QProgressDialog):
         if self.infinite:
             self.setMaximum(0)
             self.setMinimum(0)
+        self.reset()
+        self.hide()
 
         self.information = ''
         self.startTime = None
