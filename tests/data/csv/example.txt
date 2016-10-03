@@ -1,4 +1,4 @@
-frequency,spelling,transcription
+﻿frequency,spelling,transcription
 11.0,atema,ɑ.t.e.m.ɑ
 11.0,enuta,e.n.u.t.ɑ
 5.0,mashomisi,m.ɑ.ʃ.o.m.i.s.i
@@ -14,3 +14,4 @@ frequency,spelling,transcription
 33.0,toni,t.o.n.i
 32.0,tusa,t.u.s.ɑ
 2.0,ʃi,ʃ.i
+6.0,gaga,g.a.g.a

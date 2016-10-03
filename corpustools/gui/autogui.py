@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QInputDialog
 from .imports import *
 from .windows import FunctionWorker
 from .widgets import RadioSelectWidget, FeatureEdit, FeatureCompleter
-from .tacticsgui import TacticsDialog
+# from .tacticsgui import TacticsDialog
 from .views import ResultsWindow
 from corpustools.mutualinfo import mutual_information
 
