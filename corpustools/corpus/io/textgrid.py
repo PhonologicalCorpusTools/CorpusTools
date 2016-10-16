@@ -266,6 +266,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                     word.additional[at.attribute.name] = value
                 annotations[at.attribute.name] = value
 
+            print(annotations)
             annotations[word_name] = [word]
             data.add_annotations(**annotations)
             #the add_annotations function appears to do nothing

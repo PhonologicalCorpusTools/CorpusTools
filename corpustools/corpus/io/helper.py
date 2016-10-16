@@ -408,7 +408,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
             cur += 1
             call_back(cur)
         annotations[at] = list()
-
         if all(isinstance(item, Annotation) for item in at._list):
             # it's a list of spellings, take each one and add it to the overall annotations list
             for item in at._list:
@@ -464,17 +463,29 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         add_frequency = False
 
     ind = 0
-    for n in range(len(list(annotations.values())[0])):
+    limit = max([len(list(v)) for v in annotations.values()])
+    for n in range(limit):#len(list(annotations.values())[0])):
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
             cur += 1
             call_back(cur)
-        word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
-                       #{at.attribute.name: (at.attribute, annotations[at][n][0])
-                                        for at in annotations
-                                        if not at.token and not at.ignored}
+
+        word_kwargs = dict()
+        for at in annotations:
+            if at.token or at.ignored:
+                continue
+            else:
+                try:
+                    word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+                except IndexError:
+                    word_kwargs[at.output_name] = (at.attribute, None)
+                #word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+        # word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
+        #                for at in annotations if not at.token and not at.ignored}
+        print(word_kwargs)
         word = Word(**word_kwargs)
+        print(word)
         try:
             word = discourse.lexicon.find(word.spelling)
             if add_frequency:
@@ -488,7 +499,10 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         for at in annotations:
             if at.ignored:
                 continue
-            word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+            try:
+                word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+            except IndexError:
+                word_token_kwargs[at.output_name] = (at.attribute, [])
             if at.attribute.att_type == 'tier':
                 if at.attribute.is_default:
                     begin = annotations[at][n][1]

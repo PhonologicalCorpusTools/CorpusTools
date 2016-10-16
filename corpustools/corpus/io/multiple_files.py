@@ -38,7 +38,7 @@ def inspect_discourse_multiple_files(word_path, dialect):
         annotation_types = [AnnotationType('spelling', 'surface_transcription', None, anchor = True),
                             AnnotationType('transcription', None, 'spelling', base = True, token = False),
                             AnnotationType('surface_transcription', None, 'spelling', base = True, token = True),
-                            AnnotationType('category', None, 'spelling', base = False, token = True)]
+                            AnnotationType('category', None, 'spelling', base = False, token = False)]
     elif dialect == 'timit':
 
         annotation_types = [AnnotationType('spelling', 'transcription', None, anchor = True),
@@ -96,21 +96,29 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
             word.ends.append(level_count + len(found))
             annotations[n] = found
         elif dialect == 'buckeye':
+            print(data.word_levels)
+            print(data.base_levels)
+            word_level_dict = {word_level: None for word_level in data.word_levels}
+
+            for word_level in data.word_levels:
+                level_count = data.level_length(word_level)
+                word.references.append(word_level)
+                word.begins.append(level_count)
+                word.ends.append(level_count)
+                word_level_dict[word_level] = [word]
             if w['transcription'] is None:
                 for n in data.base_levels:
-                    level_count = data.level_length(n)
-                    word.references.append(n)
-                    word.begins.append(level_count)
-                    word.ends.append(level_count)
-            else:
+                    annotations[n] = None
+
+            if w['transcription'] is not None:
                 for n in data.base_levels:
                     if data[n].token:
                         expected = w[n]
                         found = []
                         while len(found) < len(expected):
                             cur_phone = phones.pop(0)
-                            if phone_match(cur_phone.label,expected[len(found)]) \
-                                and cur_phone.end >= beg and cur_phone.begin <= end:
+                            if (phone_match(cur_phone.label,expected[len(found)])
+                                and cur_phone.end >= beg and cur_phone.begin <= end):
                                     found.append(cur_phone)
                             if not len(phones) and i < len(words)-1:
                                 print(name)
@@ -130,8 +138,10 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                         continue
                     if at.anchor:
                         continue
-                    print(at.name, at.output_name, at.attribute)
-                    value = w[at.name]
+                    try:
+                        value = w[at.name]
+                    except KeyError:
+                        value = w[at.output_name]
                     #what does the follow if-block do? parse_transcription isn't imported
                     #and ti.mark is an unresolved reference
                     # if at.delimited:
@@ -140,7 +150,7 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                         word.token[at.name] = value
                     else:
                         word.additional[at.name] = value
-        annotations[data.word_levels[0]] = [word]
+        annotations.update(word_level_dict)
         data.add_annotations(**annotations)
     return data
 
@@ -258,6 +268,7 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
                                     call_back=call_back, stop_check=stop_check)
     if data is None:
         return
+
     data.name = corpus_name
     data.wav_path = find_wav_path(word_path)
     discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types)
