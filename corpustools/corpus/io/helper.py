@@ -483,9 +483,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
                 #word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
         # word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
         #                for at in annotations if not at.token and not at.ignored}
-        print(word_kwargs)
         word = Word(**word_kwargs)
-        print(word)
         try:
             word = discourse.lexicon.find(word.spelling)
             if add_frequency:
@@ -600,3 +598,8 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
             d.add_word(wordtoken)
             ind += 1
     return d
+
+def buckeye_to_discourse(words):
+    for w in words:
+        word = parse_transcription(w)
+        print(word)

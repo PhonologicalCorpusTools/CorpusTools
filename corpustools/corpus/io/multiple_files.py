@@ -3,15 +3,17 @@ import os
 import re
 import sys
 import corpustools.gui.modernize as modernize
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Discourse, Word, WordToken
+from .helper import (DiscourseData, data_to_discourse, data_to_discourse2, AnnotationType,
+                    Annotation, BaseAnnotation, find_wav_path, buckeye_to_discourse)
+
+from corpustools.corpus.io.binary import load_binary
+
 
 FILLERS = set(['uh','um','okay','yes','yeah','oh','heh','yknow','um-huh',
                 'uh-uh','uh-huh','uh-hum','mm-hmm'])
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus
-from .helper import (DiscourseData, data_to_discourse, data_to_discourse2, AnnotationType,
-                    Annotation, BaseAnnotation, find_wav_path)
 
-from corpustools.corpus.io.binary import load_binary
 
 def phone_match(one,two):
     if one != two and one not in two:
@@ -96,21 +98,13 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
             word.ends.append(level_count + len(found))
             annotations[n] = found
         elif dialect == 'buckeye':
-            print(data.word_levels)
-            print(data.base_levels)
-            word_level_dict = {word_level: None for word_level in data.word_levels}
-
-            for word_level in data.word_levels:
-                level_count = data.level_length(word_level)
-                word.references.append(word_level)
-                word.begins.append(level_count)
-                word.ends.append(level_count)
-                word_level_dict[word_level] = [word]
             if w['transcription'] is None:
                 for n in data.base_levels:
-                    annotations[n] = None
-
-            if w['transcription'] is not None:
+                    level_count = data.level_length(n)
+                    word.references.append(n)
+                    word.begins.append(level_count)
+                    word.ends.append(level_count)
+            else:
                 for n in data.base_levels:
                     if data[n].token:
                         expected = w[n]
@@ -150,7 +144,7 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                         word.token[at.name] = value
                     else:
                         word.additional[at.name] = value
-        annotations.update(word_level_dict)
+        annotations[data.word_levels[0]] = [word]
         data.add_annotations(**annotations)
     return data
 
@@ -263,24 +257,58 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
     Discourse
         Discourse object generated from the text file
     """
-    data = multiple_files_to_data(word_path,phone_path, dialect,
-                                    annotation_types,
-                                    call_back=call_back, stop_check=stop_check)
-    if data is None:
-        return
 
-    data.name = corpus_name
-    data.wav_path = find_wav_path(word_path)
-    discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types)
-    #discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
-    if discourse is None:
-        return
+    name = os.path.splitext(os.path.split(word_path)[1])[0]
+    discourse_kwargs = {'name': name, 'wav_path': find_wav_path(word_path), 'other_attributes': list()}
+    for at in annotation_types:
+        if at.name == 'Orthography (default)':
+            discourse_kwargs['spelling_name'] = at.attribute#.output_name
+        elif at.name == 'Transcription (default)':
+            discourse_kwargs['transcription_name'] = at.attribute#.output_name
+        elif at.name == 'Other (character)' or at.attribute.att_type in ('tier', 'spelling'):
+            discourse_kwargs['other_attributes'].append(at.attribute)
+    discourse = Discourse(discourse_kwargs)
+    words = read_words(word_path, dialect)
+
+    for w in words:
+
+        word_kwargs = {at.output_name: (at.attribute, w[at.output_name]) for at in annotation_types}
+        word = Word(**word_kwargs)
+        print('before add_word', word, word.transcription)
+        discourse.lexicon.add_word(word)
+
+        word_token_kwargs = {at.output_name : (at.attribute, w[at.output_name]) for at in annotation_types if at.token}
+        if word_token_kwargs:
+            word_token_kwargs['begin'] = w['begin']
+            word_token_kwargs['end'] = w['end']
+            word_token = WordToken(**word_token_kwargs)
+            discourse.add_word(word_token)
+
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
         discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
 
     return discourse
+    #
+    # data = multiple_files_to_data(word_path,phone_path, dialect,
+    #                                 annotation_types,
+    #                                 call_back=call_back, stop_check=stop_check)
+    #
+    # if data is None:
+    #     return
+    # data.name = corpus_name
+    # data.wav_path = find_wav_path(word_path)
+    # discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types)
+    # #discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
+    # if discourse is None:
+    #     return
+    # if feature_system_path is not None:
+    #     feature_matrix = load_binary(feature_system_path)
+    #     discourse.lexicon.set_feature_matrix(feature_matrix)
+    #     discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
+    #
+    # return discourse
 
 def read_phones(path, dialect, sr = None):
     output = []
