@@ -540,8 +540,8 @@ class WordToken(object):
     def spelling(self):
         if self._spelling is not None:
             return self._spelling
-        # if self.wordtype is not None:
-        #     return self.wordtype.spelling
+        if self.wordtype is not None:
+            return self.wordtype.spelling
         return None
 
     @spelling.setter
@@ -556,8 +556,8 @@ class WordToken(object):
     def transcription(self):
         if self._transcription is not None:
             return self._transcription
-        # if self.wordtype is not None:
-        #     return self.wordtype.transcription
+        if self.wordtype is not None:
+            return self.wordtype.transcription
         return None
 
     @transcription.setter

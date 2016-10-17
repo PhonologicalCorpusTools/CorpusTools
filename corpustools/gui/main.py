@@ -297,7 +297,7 @@ class MainWindow(QMainWindow):
 
         dialog = CorpusLoadDialog(self, name, self.settings)
         result = dialog.exec_()
-
+        print(result)
         if result:
             self.corpus = dialog.corpus
             self.inventoryModel = None

@@ -497,10 +497,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         for at in annotations:
             if at.ignored:
                 continue
-            try:
-                word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
-            except IndexError:
-                word_token_kwargs[at.output_name] = (at.attribute, [])
+            word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
             if at.attribute.att_type == 'tier':
                 if at.attribute.is_default:
                     begin = annotations[at][n][1]
@@ -598,8 +595,3 @@ def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):
             d.add_word(wordtoken)
             ind += 1
     return d
-
-def buckeye_to_discourse(words):
-    for w in words:
-        word = parse_transcription(w)
-        print(word)

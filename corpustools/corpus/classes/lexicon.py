@@ -2516,7 +2516,6 @@ class Corpus(object):
 
         """
         word._corpus = self
-        print('inside add_word', word, word.transcription)
         #If the word doesn't exist, add it
         try:
             check = self.find(word.spelling)
@@ -2543,10 +2542,8 @@ class Corpus(object):
             if word.spelling is not None:
                 if not self.has_spelling:
                     self.has_spelling = True
-        print(word, word.transcription)
         added_default = False
         if word.transcription is not None:
-            print(word, 'does not have a None transcription')
             added_default = self.update_inventory(word.transcription)
             #added_default == True if the word contains symbols not found in the feature file
             #in this case, the symbol has been given a default value of 'n' for every feature

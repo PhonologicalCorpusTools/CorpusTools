@@ -5,7 +5,7 @@ import sys
 import corpustools.gui.modernize as modernize
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Discourse, Word, WordToken
 from .helper import (DiscourseData, data_to_discourse, data_to_discourse2, AnnotationType,
-                    Annotation, BaseAnnotation, find_wav_path, buckeye_to_discourse)
+                    Annotation, BaseAnnotation, find_wav_path)
 
 from corpustools.corpus.io.binary import load_binary
 
@@ -269,26 +269,33 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
             discourse_kwargs['other_attributes'].append(at.attribute)
     discourse = Discourse(discourse_kwargs)
     words = read_words(word_path, dialect)
-
+    ind = 0
     for w in words:
-
         word_kwargs = {at.output_name: (at.attribute, w[at.output_name]) for at in annotation_types}
         word = Word(**word_kwargs)
-        print('before add_word', word, word.transcription)
+        word_token_kwargs = dict()
+        for at in annotation_types:
+            if at.ignored:
+                continue
+            word_token_kwargs[at.output_name] = (at.attribute, w[at.output_name])
+            word_token_kwargs['word'] = word
+            if at.attribute.att_type == 'tier':
+                if at.attribute.is_default:
+                    begin = w['begin']
+                    end = w['end']
+                    word_token_kwargs['begin'] = begin if begin is not None else ind
+                    word_token_kwargs['end'] = end if end is not None else ind + 1
+                if at.token:
+                    word_token_kwargs['_transcription'] = (at.attribute, w['transcription'])
+        word_token = WordToken(**word_token_kwargs)
         discourse.lexicon.add_word(word)
-
-        word_token_kwargs = {at.output_name : (at.attribute, w[at.output_name]) for at in annotation_types if at.token}
-        if word_token_kwargs:
-            word_token_kwargs['begin'] = w['begin']
-            word_token_kwargs['end'] = w['end']
-            word_token = WordToken(**word_token_kwargs)
-            discourse.add_word(word_token)
+        discourse.add_word(word_token)
+        ind += 1
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
         discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
-
     return discourse
     #
     # data = multiple_files_to_data(word_path,phone_path, dialect,
