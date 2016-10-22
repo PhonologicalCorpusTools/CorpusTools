@@ -211,7 +211,7 @@ def load_directory_multiple_files(corpus_name, path, dialect,
         phone_path = os.path.splitext(word_path)[0] + phone_ext
         d = load_discourse_multiple_files(name, word_path, phone_path,
                                             dialect, annotation_types,
-                                            corpus.lexicon, None,
+                                            corpus.lexicon, feature_system_path,
                                             stop_check, None)
         corpus.add_discourse(d)
 
@@ -296,6 +296,7 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
         discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
+
     return discourse
     #
     # data = multiple_files_to_data(word_path,phone_path, dialect,

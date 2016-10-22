@@ -1,0 +1,29 @@
+signal s0101.sd
+type 0
+comment created using xlabel Thu Oct 21 15:50:43 2004
+comment created using xlabel Thu Mar 21 15:22:35 2002
+color 122
+font -misc-*-bold-*-*-*-15-*-*-*-*-*-*-*
+separator ;
+nfields 1
+#
+    61.142603  122 <VOICE=modal>
+    61.397647  122 <VOICE=creaky>
+    176.705681  121 <VOICE=modal>
+    177.442715  121 <VOICE=creaky>
+    208.458474  121 <VOICE=modal>
+    208.998197  121 <VOICE=creaky>
+    218.326046  121 <IVER_overlap-start>
+    218.619639  121 <IVER_overlap-end>
+    281.412600  121 <IVER_overlap-start>
+    282.015381  121 <IVER_overlap-end>
+    283.014140  121 <VOICE=modal>
+    283.342991  121 <VOICE=creaky>
+    286.369100  121 <IVER_overlap-start>
+    286.587431  121 <IVER_overlap-end>
+    358.243781  121 <IVER_overlap-start>
+    358.766553  121 <IVER_overlap-end>
+    570.891209  121 <VOICE=modal>
+    570.988848  121 <VOICE=creaky>
+    595.595736  121 <IVER_overlap-start>
+    596.178854  121 <IVER_overlap-end>

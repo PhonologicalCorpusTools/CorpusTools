@@ -250,9 +250,10 @@ class CorpusLoadDialog(PCTDialog):
         result = self.loadCorpus()
         #self.loadCorpus() returns whether user clicked cancel, or whether the progress bar completed
         #it does not return anything about the corpus itself
-        #the corpus is returned to main.py as an attribute of this Dialog object
+        #the corpus is saved in the Dialog.corpus attribute
         if result:
             QDialog.accept(self)
+
         else:
             self.progressDialog.cancelButton.setEnabled(True)
             self.progressDialog.cancelButton.setText('Cancel')
