@@ -51,37 +51,37 @@ def download_binary(name, path, call_back = None):
     elif name == 'iphod':
         download_link = 'https://www.dropbox.com/s/6ktlhekshg7t9ll/iphod.corpus?dl=1'
     elif name == 'ipa2spe':
-        download_link = 'https://www.dropbox.com/s/g6lsnxacc81ot26/ipa2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/v1y3ea4k4a0c6sq/ipa2spe.feature?dl=1'
     elif name == 'ipa2hayes':
-        download_link = 'https://www.dropbox.com/s/lqhyux5mzx46x15/ipa2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/411ohsfs4tkirfx/ipa2hayes.feature?dl=1'
     elif name == 'celex2spe':
-        download_link = 'https://www.dropbox.com/s/mzpn1w27gtqo965/celex2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/i1bmoe6wxj6nv1c/celex2spe.feature?dl=1'
     elif name == 'celex2hayes':
-        download_link = 'https://www.dropbox.com/s/gtn4cn849ab5rky/celex2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/b6guuw35a5n6x15/celex2hayes.feature?dl=1'
     elif name == 'arpabet2spe':
-        download_link = 'https://www.dropbox.com/s/g1yhfc1951ztzdt/arpabet2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/xim9u2u98bylpiq/arpabet2spe.feature?dl=1'
     elif name == 'arpabet2hayes':
-        download_link = 'https://www.dropbox.com/s/gt6ow1duk97mpyk/arpabet2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/duq1uov8peot450/arpabet2hayes.feature?dl=1'
     elif name == 'cpa2spe':
-        download_link = 'https://www.dropbox.com/s/mekaqc4kkbz7d1l/cpa2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/mszov56r51c32x1/cpa2spe.feature?dl=1'
     elif name == 'cpa2hayes':
-        download_link = 'https://www.dropbox.com/s/4e057221f6ciwix/cpa2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/nre58a9iw9mm3y6/cpa2hayes.feature?dl=1'
     elif name == 'disc2spe':
-        download_link = 'https://www.dropbox.com/s/jpfrpnq7b2myfd6/disc2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/y2i2fv6sp8yokjr/disc2spe.feature?dl=1'
     elif name == 'disc2hayes':
-        download_link = 'https://www.dropbox.com/s/v1t99ys3t8w0guf/disc2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/olzofhnq5i2ayhm/disc2hayes.feature?dl=1'
     elif name == 'klatt2spe':
-        download_link = 'https://www.dropbox.com/s/7yqm7xark4l3p0h/klatt2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/bj9usli01rfrbsz/klatt2spe.feature?dl=1'
     elif name == 'klatt2hayes':
-        download_link = 'https://www.dropbox.com/s/9e8mtf45rwme9jo/klatt2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/6mnptzp94k8ipak/klatt2hayes.feature?dl=1'
     elif name == 'sampa2spe':
-        download_link = 'https://www.dropbox.com/s/4ymm9789xhrvxid/sampa2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/rm0t4zut0ilwqto/sampa2spe.feature?dl=1'
     elif name == 'sampa2hayes':
-        download_link = 'https://www.dropbox.com/s/ch5yzlisoeaz58e/sampa2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/fg3kcu0ydhmnjtx/sampa2hayes.feature?dl=1'
     elif name == 'buckeye2spe':
-        download_link = 'https://www.dropbox.com/s/p8cazx943ky8i3z/buckeye2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/neeklf4470tg83j/buckeye2spe.feature?dl=1'
     elif name == 'buckeye2hayes':
-        download_link = 'https://www.dropbox.com/s/oi58pqd8dzl7puu/Buckeye2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/wnaglo00ij9cjh2/buckeye2hayes.feature?dl=1'
     else:
         return False
     filename, headers = urlretrieve(download_link, path, reporthook=report)
