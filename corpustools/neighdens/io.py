@@ -3,7 +3,7 @@ from corpustools.corpus.classes import Word
 
 def load_words_neighden(path):
     output = list()
-    with open(path,'r') as f:
+    with open(path,'r', encoding='utf-8-sig') as f:
         for line in f:
             fields = [x for x in line.strip().split(None) if x != '']
             if len(fields) > 1:
