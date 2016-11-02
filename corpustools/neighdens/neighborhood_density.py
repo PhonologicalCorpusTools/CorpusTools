@@ -108,6 +108,7 @@ def neighborhood_density(corpus_context, query,
     tuple(int, set)
         Tuple of the number of neighbors and the set of neighbor Words.
     """
+
     matches = []
     if call_back is not None:
         call_back('Finding neighbors...')
@@ -260,14 +261,14 @@ def find_mutation_minpairs(corpus_context, query,
     neighbors = list(set(matches)-set([str(getattr(query, sequence_type))]))
     return (len(neighbors), neighbors)
 
-def ensure_query_is_word(query, corpus, sequence_type, trans_delimiter=''):
+def ensure_query_is_word(query, corpus, sequence_type, trans_delimiter='.'):
     if isinstance(query, Word):
         query_word = query
     else:
         try:
             query_word = corpus.corpus.find(query)
         except KeyError:
-            split_word = query.split('.')
+            split_word = query.split(trans_delimiter)
             if len(split_word) == 1:
                 query_word = Word(**{sequence_type: list(query)})
             else:

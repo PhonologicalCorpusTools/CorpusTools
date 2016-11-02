@@ -896,9 +896,15 @@ class Word(object):
             return
 
         self.initDefaults()
-
+        
         for key, value in kwargs.items():
             key = key.lower()
+            if key == 'transcription':
+                key = 'Transcription'
+            elif key == 'spelling':
+                key = 'Spelling'
+            elif key in self._freq_names:
+                key = 'frequency'
             if isinstance(value, tuple):
                 #this block of code is used when loading a corpus for the first time
                 att, value = value
@@ -911,13 +917,6 @@ class Word(object):
                     value = Transcription(value)
                 else:# att.att_type == 'spelling' or att.att_type == 'factor':
                     pass
-
-                if key == 'transcription':
-                    key = 'Transcription'
-                elif key == 'spelling':
-                    key = 'Spelling'
-                elif key in self._freq_names:
-                    key = 'frequency'
 
                 setattr(self, key, value)
 
@@ -939,12 +938,14 @@ class Word(object):
                 #probably a transcription
                 value = Transcription(value)
                 setattr(self, key, value)
+                setattr(self, '_transcription', value)
 
             elif isinstance(value, str):
                 try:
                     value = float(value)
                 except ValueError:
-                    pass #it's spelling, leave value as-is
+                    #it's spelling, leave value as-is
+                    setattr(self, '_spelling', value)
                 setattr(self, key, value)
 
             elif isinstance(value, (float, int)):
@@ -957,6 +958,8 @@ class Word(object):
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self._spelling is None:
             self._spelling = ''.join(map(str,self._transcription))
+            self.Spelling = self._spelling
+
 
     def initDefaults(self):
         for attribute, default_value in Word.word_attributes.items():
