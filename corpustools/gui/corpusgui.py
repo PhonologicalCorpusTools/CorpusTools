@@ -209,7 +209,7 @@ class AddWordDialog(QDialog):
         self.edits = {}
 
         for a in self.corpus.attributes:
-            if a.att_type == 'tier' and a.name == 'transcription':
+            if a.att_type == 'tier' and a.name == 'Transcription':
                 if not self.corpus.has_transcription:
                     pass
                 else:
@@ -233,7 +233,7 @@ class AddWordDialog(QDialog):
                 print(a.name)
                 print(str(a))
             if word is not None:
-                if a.name == 'transcription' and not self.corpus.has_transcription:
+                if a.name == 'Transcription' and not self.corpus.has_transcription:
                     pass
                 else:
                     self.edits[a.name].setText(str(getattr(word,a.name)))

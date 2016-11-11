@@ -6,8 +6,8 @@ try:
                                 QThread,QAbstractTableModel,QAbstractListModel,
                                 QSize, QSettings,QPoint, QItemSelectionModel,
                                 QSortFilterProxyModel, QAbstractProxyModel, QAbstractItemModel,
-                            QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
-                            QStringListModel)
+                                QSharedMemory, QEvent, QIODevice, QProcess, QUrl, QTime,
+                                QStringListModel)
     from PyQt5.QtGui import (QFont, QKeySequence, QPainter, QFontMetrics, QPen,
                             QRegion,QStandardItemModel,QStandardItem, QIcon, QPixmap,
                             QDesktopServices, QCursor)

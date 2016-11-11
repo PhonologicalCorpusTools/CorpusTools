@@ -2691,7 +2691,7 @@ class FileNameDialog(QDialog):
         options.setLayout(option_layout)
         layout.addWidget(options)
 
-        newNameLayout = QHBoxLayout()
+        newNameLayout = QVBoxLayout()
         newFileNameLabel = QLabel('Name for new file: ')
         self.newFilename = QLineEdit()
         if hint:
@@ -2699,22 +2699,22 @@ class FileNameDialog(QDialog):
         self.newFilename.setEnabled(True)
         newNameLayout.addWidget(newFileNameLabel)
         newNameLayout.addWidget(self.newFilename)
-        newNameNote = QLabel('This file will be saved into your storage directory. You can change this directory by '
-        'going to Options > Preferences...\nYou do not need to add a file extension to this name.')
-        newNameNote.setWordWrap(True)
-        newNameLayout.addWidget(newNameNote)
+        #newNameNote = QLabel('This file will be saved into your storage directory. You can change this directory by '
+        #'going to Options > Preferences...\nYou do not need to add a file extension to this name.')
+        #newNameNote.setWordWrap(True)
+        #newNameLayout.addWidget(newNameNote)
         layout.addLayout(newNameLayout)
 
         stopShowingLayout = QVBoxLayout()
         self.stopShowing = QCheckBox('Don\'t ask again and always overwrite old files')
         stopShowingLayout.addWidget(self.stopShowing)
-        stopShowingText = QLabel('(You can turn this reminder back on later by going to Preferences > Options... '
-                                 'and clicking on the "Reminders" tab)')
+        stopShowingText = QLabel('You can change your storage directory, and your overwrite reminders, by going to '
+                                 'Options > Preferences...')
         stopShowingLayout.addWidget(stopShowingText)
         layout.addLayout(stopShowingLayout)
 
         okButton = QPushButton('OK')
-        cancelButton = QPushButton('Cancel')
+        cancelButton = QPushButton('Cancel (unsaved changes will be lost)')
         okButton.clicked.connect(self.accept)
         cancelButton.clicked.connect(self.cancel)
         layout.addWidget(okButton)

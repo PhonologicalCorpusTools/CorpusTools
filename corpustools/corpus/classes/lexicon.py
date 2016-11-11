@@ -896,7 +896,7 @@ class Word(object):
             return
 
         self.initDefaults()
-        
+
         for key, value in kwargs.items():
             key = key.lower()
             if key == 'transcription':
@@ -957,8 +957,10 @@ class Word(object):
         if self._spelling is None and self._transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self._spelling is None:
-            self._spelling = ''.join(map(str,self._transcription))
-            self.Spelling = self._spelling
+            self.Spelling = ''.join(map(str,self._transcription))
+            self._spelling = self.Spelling
+            if not 'Spelling' in self.descriptors:
+                self.descriptors.append('Spelling')
 
 
     def initDefaults(self):

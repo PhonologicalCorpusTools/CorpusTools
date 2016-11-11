@@ -39,6 +39,7 @@ class NDWorker(FunctionWorker):
                                                 algorithm = kwargs['algorithm'],
                                                 max_distance = kwargs['max_distance'],
                                                 force_quadratic=kwargs['force_quadratic'],
+                                                file_type = kwargs['file_type'],
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
                         else:
@@ -161,6 +162,11 @@ class NDDialog(FunctionDialog):
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
+        self.fileOptions = QComboBox()
+        self.fileOptions.addItem('File contains spelling')
+        self.fileOptions.addItem('File contains transcription')
+        #self.fileOptions.addItem('File contains spelling, look up transcription in corpus')
+
 
         self.allwordsRadio = QRadioButton('Calculate for all words in the corpus')
         self.allwordsRadio.clicked.connect(self.allwordsSelected)
@@ -174,6 +180,7 @@ class NDDialog(FunctionDialog):
         vbox.addRow(self.oneNonwordLabel,self.oneNonwordButton)
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
+        vbox.addRow(self.fileOptions)
         vbox.addRow(self.allwordsRadio)
         vbox.addRow(QLabel('Column name:'),self.columnEdit)
         note = QLabel('(Selecting this option will add a new column containing the results to your corpus. '
@@ -360,10 +367,22 @@ class NDDialog(FunctionDialog):
                 'max_distance':max_distance,
                 'frequency_cutoff':frequency_cutoff,
                 'num_cores':self.settings['num_cores'],
-                'force_quadratic': self.useQuadratic.isChecked()}
+                'force_quadratic': self.useQuadratic.isChecked(),
+                'file_type': None}
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
+
+        if self.fileRadio.isChecked():
+            file_option = self.fileOptions.currentIndex()
+            if file_option == 0:
+                kwargs['file_type'] = 'spelling'
+            elif file_option == 1:
+                kwargs['file_type'] = 'transcription'
+            # elif file_option == 2:
+            #     kwargs['file_type'] = 'lookup'
+        else:
+            kwargs['file_type'] = None
 
         if self.compType is None:
             reply = QMessageBox.critical(self,
@@ -460,18 +479,21 @@ class NDDialog(FunctionDialog):
         self.typeTokenWidget.disable()
         self.maxDistanceEdit.setEnabled(False)
         self.useQuadratic.setEnabled(False)
+        self.fileOptions.setEnabled(True)
 
     def khorsiSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.enable()
         self.tierWidget.setSpellingEnabled(True)
         self.useQuadratic.setEnabled(False)
+        self.fileOptions.setEnabled(True)
 
     def editDistSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.disable()
         self.tierWidget.setSpellingEnabled(True)
         self.useQuadratic.setEnabled(True)
+        self.fileOptions.setEnabled(True)
         #self.maxDistanceEdit.setText('1')
 
     def phonoEditDistSelected(self):
@@ -479,3 +501,5 @@ class NDDialog(FunctionDialog):
         self.typeTokenWidget.disable()
         self.tierWidget.setSpellingEnabled(False)
         self.useQuadratic.setEnabled(False)
+        self.fileOptions.setCurrentIndex(1)
+        self.fileOptions.setEnabled(False)

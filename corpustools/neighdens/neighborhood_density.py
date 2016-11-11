@@ -81,7 +81,7 @@ def neighborhood_density_all_words(corpus_context,
 
 def neighborhood_density(corpus_context, query,
             algorithm = 'edit_distance', max_distance = 1,
-            force_quadratic = False,
+            force_quadratic = False, file_type = None,
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of a particular word in the corpus.
 
@@ -116,7 +116,7 @@ def neighborhood_density(corpus_context, query,
         cur = 0
 
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
-        return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type)
+        return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type, file_type=file_type)
 
     if algorithm == 'edit_distance':
         is_neighbor = partial(_is_edit_distance_neighbor,
@@ -148,7 +148,7 @@ def neighborhood_density(corpus_context, query,
     return (len(neighbors), neighbors)
 
 
-def fast_neighborhood_density(corpus_context, query, sequence_type):
+def fast_neighborhood_density(corpus_context, query, sequence_type, file_type=None, trans_delimiter='.'):
     """Generates all neighbors of edit distance <= 1 and searches 
     for them in corpus_context.
 
@@ -162,11 +162,15 @@ def fast_neighborhood_density(corpus_context, query, sequence_type):
     tierdict = defaultdict(list)
     for entry in corpus_context:
         tierdict[str(getattr(entry, sequence_type))].append(entry)
-
     neighbors = set()
-    query = ensure_query_is_word(query, corpus_context, sequence_type)
+    query = ensure_query_is_word(query, corpus_context, sequence_type, file_type=file_type)
     for candidate in generate_neighbor_candidates(corpus_context, query, sequence_type):
-        cand_str = '.'.join(candidate)
+        #cand_str = trans_delimiter.join(candidate) #makes transcription work
+        #following block makes spelling work
+        if sequence_type.lower() == 'transcription':
+            cand_str = trans_delimiter.join(candidate)
+        else:
+            cand_str = ''.join(candidate)
         if cand_str in tierdict:
             for w in tierdict[cand_str]:
                 neighbors.add(w)
@@ -261,16 +265,27 @@ def find_mutation_minpairs(corpus_context, query,
     neighbors = list(set(matches)-set([str(getattr(query, sequence_type))]))
     return (len(neighbors), neighbors)
 
-def ensure_query_is_word(query, corpus, sequence_type, trans_delimiter='.'):
+def ensure_query_is_word(query, corpus, sequence_type, trans_delimiter='.', file_type=None):
+
     if isinstance(query, Word):
         query_word = query
     else:
-        try:
-            query_word = corpus.corpus.find(query)
-        except KeyError:
-            split_word = query.split(trans_delimiter)
-            if len(split_word) == 1:
-                query_word = Word(**{sequence_type: list(query)})
-            else:
-                query_word = Word(**{sequence_type: split_word})
+        if file_type == 'spelling' and sequence_type.lower() == 'spelling':
+            query_word = Word(**{sequence_type: list(query)})
+        elif file_type == 'transcription' and sequence_type.lower() == 'spelling':
+            query_word = query.replace(trans_delimiter, '')
+            query_word = Word(**{sequence_type: list(query_word)})
+        elif file_type == 'spelling' and sequence_type.lower() == 'transcription':
+            try:
+                query_word = corpus.corpus.find(query)
+            except KeyError:
+                split_word = query.split(trans_delimiter)
+                if len(split_word) == 1:
+                    query_word = Word(**{sequence_type: list(query)})
+                else:
+                    query_word = Word(**{sequence_type: split_word})
+        elif file_type == 'transcription' and sequence_type.lower() == 'transcription':
+            new_query = query.split(trans_delimiter)
+            query_word = Word(**{sequence_type: new_query})
+
     return query_word
