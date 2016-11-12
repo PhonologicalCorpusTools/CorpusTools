@@ -40,6 +40,7 @@ class NDWorker(FunctionWorker):
                                                 max_distance = kwargs['max_distance'],
                                                 force_quadratic=kwargs['force_quadratic'],
                                                 file_type = kwargs['file_type'],
+                                                tier_type = kwargs['tier_type'],
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
                         else:
@@ -163,10 +164,6 @@ class NDDialog(FunctionDialog):
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
         self.fileOptions = QComboBox()
-        self.fileOptions.addItem('File contains spelling')
-        self.fileOptions.addItem('File contains transcription')
-        #self.fileOptions.addItem('File contains spelling, look up transcription in corpus')
-
 
         self.allwordsRadio = QRadioButton('Calculate for all words in the corpus')
         self.allwordsRadio.clicked.connect(self.allwordsSelected)
@@ -201,10 +198,13 @@ class NDDialog(FunctionDialog):
         self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
 
         optionLayout.addWidget(self.tierWidget)
+        for att in reversed(self.tierWidget.attValues()):
+            self.fileOptions.addItem('File contains {}'.format(att.display_name))
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+
         actions = None
         self.variantsWidget = RestrictedContextWidget(self.corpusModel.corpus, actions)
 
@@ -368,21 +368,11 @@ class NDDialog(FunctionDialog):
                 'frequency_cutoff':frequency_cutoff,
                 'num_cores':self.settings['num_cores'],
                 'force_quadratic': self.useQuadratic.isChecked(),
-                'file_type': None}
+                'file_type': self.fileOptions.currentText().split()[-1],
+                'tier_type': self.tierWidget.attValue()}
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
-
-        if self.fileRadio.isChecked():
-            file_option = self.fileOptions.currentIndex()
-            if file_option == 0:
-                kwargs['file_type'] = 'spelling'
-            elif file_option == 1:
-                kwargs['file_type'] = 'transcription'
-            # elif file_option == 2:
-            #     kwargs['file_type'] = 'lookup'
-        else:
-            kwargs['file_type'] = None
 
         if self.compType is None:
             reply = QMessageBox.critical(self,

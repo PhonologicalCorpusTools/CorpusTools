@@ -938,6 +938,14 @@ class TierWidget(QGroupBox):
         # index += 1
         # return self.atts[index].name
 
+    def attValue(self):
+        text = self.tierSelect.currentText()
+        for att in self.atts:
+            if att.display_name == text:
+                return att
+
+    def attValues(self):
+        return self.atts
 
     def displayValue(self):
         text = self.tierSelect.currentText()
