@@ -208,35 +208,50 @@ class AddWordDialog(QDialog):
 
         self.edits = {}
 
-        for a in self.corpus.attributes:
-            if a.att_type == 'tier' and a.name == 'Transcription':
-                if not self.corpus.has_transcription:
-                    pass
-                else:
-                    self.edits[a.name] = TranscriptionWidget('Transcription', corpus, inventory)
-                    self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
-                    main.addRow(self.edits[a.name])
-            elif a.att_type == 'tier':
-                self.edits[a.name] = QLabel('Empty')
-                main.addRow(QLabel(str(a)),self.edits[a.name])
-            elif a.att_type == 'spelling':
-                self.edits[a.name] = QLineEdit()
-                main.addRow(QLabel(str(a)),self.edits[a.name])
-            elif a.att_type == 'numeric':
-                self.edits[a.name] = QLineEdit()
-                self.edits[a.name].setText('0')
-                main.addRow(QLabel(str(a)),self.edits[a.name])
-            elif a.att_type == 'factor':
-                self.edits[a.name] = QLineEdit()
-                main.addRow(QLabel(str(a)),self.edits[a.name])
-            else:
-                print(a.name)
-                print(str(a))
-            if word is not None:
-                if a.name == 'Transcription' and not self.corpus.has_transcription:
-                    pass
-                else:
-                    self.edits[a.name].setText(str(getattr(word,a.name)))
+        if any([a.att_type == 'tier' for a in self.corpus.attributes]) and self.corpus.has_transcription:
+            self.edits['transcription'] = TranscriptionWidget('Transcription', corpus, inventory)
+            #self.edits['transcription'].transcriptionChanged.connect(self.updateTiers)
+            main.addRow(self.edits['transcription'])
+        if any([a.att_type == 'spelling' for a in self.corpus.attributes]):
+            self.edits['spelling'] = QLineEdit()
+            main.addRow(QLabel('Spelling'), self.edits['spelling'])
+        if any([a.att_type == 'numeric' for a in self.corpus.attributes]):
+            self.edits['frequency'] = QLineEdit()
+            self.edits['frequency'].setText('0')
+            main.addRow(QLabel('Frequency'), self.edits['frequency'])
+        if any([a.att_type == 'factor' for a in self.corpus.attributes]):
+            self.edits['factor'] = QLineEdit()
+            main.addRow(QLabel('Factor'), self.edits['factor'])
+
+        # for a in self.corpus.attributes:
+        #     if a.att_type == 'tier':# and a.name == 'Transcription':
+        #         if not self.corpus.has_transcription:
+        #             pass
+        #         else:
+        #             self.edits[a.name] = TranscriptionWidget('Transcription', corpus, inventory)
+        #             self.edits[a.name].transcriptionChanged.connect(self.updateTiers)
+        #             main.addRow(self.edits[a.name])
+        #     elif a.att_type == 'tier':
+        #         self.edits[a.name] = QLabel('Empty')
+        #         main.addRow(QLabel(str(a)),self.edits[a.name])
+        #     elif a.att_type == 'spelling':
+        #         self.edits[a.name] = QLineEdit()
+        #         main.addRow(QLabel(str(a)),self.edits[a.name])
+        #     elif a.att_type == 'numeric':
+        #         self.edits[a.name] = QLineEdit()
+        #         self.edits[a.name].setText('0')
+        #         main.addRow(QLabel(str(a)),self.edits[a.name])
+        #     elif a.att_type == 'factor':
+        #         self.edits[a.name] = QLineEdit()
+        #         main.addRow(QLabel(str(a)),self.edits[a.name])
+        #     else:
+        #         print(a.name)
+        #         print(str(a))
+        #     if word is not None:
+        #         if not self.corpus.has_transcription:#a.name == 'Transcription' and :
+        #             pass
+        #         else:
+        #             self.edits[a.name].setText(str(getattr(word,a.name)))
 
         mainFrame = QFrame()
         mainFrame.setLayout(main)
@@ -283,38 +298,39 @@ class AddWordDialog(QDialog):
 
         for a in self.corpus.attributes:
             if a.att_type == 'tier':
-                text = self.edits[a.name].text()
+                text = self.edits['transcription'].text()
                 if text == 'Empty':
                     text = ''
-                kwargs[a.name] = [x for x in text.split('.') if x != '']
+                kwargs['transcription'] = [x for x in text.split('.') if x != '']
                 #if not kwargs[a.name]:
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a Transcription.".format(str(a)))
                 #    return
 
-                for i in kwargs[a.name]:
+                for i in kwargs['transcription']:
                     if i not in self.inventory.segs:
                         reply = QMessageBox.critical(self,
-                            "Invalid information", "The column '{}' must contain only symbols in the corpus' inventory.".format(str(a)))
+                            'Invalid information', 'The transcription can only contain only symbols '
+                                                   'from the corpus\' inventory.'.format(str(a)))
                         return
             elif a.att_type == 'spelling':
-                kwargs[a.name] = self.edits[a.name].text()
-                if kwargs[a.name] == '' and a.name == 'spelling':
-                    kwargs[a.name] = None
+                kwargs['spelling'] = self.edits['spelling'].text()
+                if kwargs['spelling'] == '':# and a.name == 'spelling':
+                    kwargs['spelling'] = None
                 #if not kwargs[a.name] and a.name == 'spelling':
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a spelling.".format(str(a)))
                 #    return
             elif a.att_type == 'numeric':
                 try:
-                    kwargs[a.name] = float(self.edits[a.name].text())
+                    kwargs['frequency'] = float(self.edits['frequency'].text())
                 except ValueError:
                     reply = QMessageBox.critical(self,
                             "Invalid information", "The column '{}' must be a number.".format(str(a)))
                     return
 
             elif a.att_type == 'factor':
-                kwargs[a.name] = self.edits[a.name].text()
+                kwargs['factor'] = self.edits['factor'].text()
         self.word = Word(**kwargs)
         QDialog.accept(self)
 

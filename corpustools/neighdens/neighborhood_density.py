@@ -166,8 +166,7 @@ def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type, f
     neighbors = set()
     query = ensure_query_is_word(query, corpus_context, sequence_type, tier_type, file_type=file_type)
     for candidate in generate_neighbor_candidates(corpus_context, query, sequence_type):
-        print(candidate, sequence_type, tier_type.att_type, file_type)
-        if tier_type.att_type == 'tier':#sequence_type.lower() == 'transcription':
+        if tier_type.att_type == 'tier':
             cand_str = trans_delimiter.join(candidate)
         else:
             cand_str = ''.join(candidate)
