@@ -885,7 +885,7 @@ class Word(object):
     word_attributes = {'_corpus':None, '_transcription':None, '_spelling':None,
                        '_transcription_name':None, '_spelling_name': None,
                        'alt_transcriptions': list(), 'alt_spellings': list(),
-                       'frequency':0, 'wordtokens':list(),
+                       '_frequency':0, 'wordtokens':list(),
                        'descriptors':list()}
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq', 'lowercase_freq', 'log10_freq']
 
@@ -898,13 +898,9 @@ class Word(object):
         self.initDefaults()
 
         for key, value in kwargs.items():
-            key = key.lower()
-            if key == 'transcription':
-                key = 'Transcription'
-            elif key == 'spelling':
-                key = 'Spelling'
-            elif key in self._freq_names:
-                key = 'frequency'
+            if not all([letter.isupper() for letter in key]):
+                key = key.capitalize()
+
             if isinstance(value, tuple):
                 #this block of code is used when loading a corpus for the first time
                 att, value = value
@@ -913,6 +909,8 @@ class Word(object):
                         value = locale.atof(value)
                     except (ValueError, TypeError):
                         value = float('nan')
+                    if key == 'Frequency':
+                        setattr(self, '_frequency', value)
                 elif att.att_type == 'tier':
                     value = Transcription(value)
                 else:# att.att_type == 'spelling' or att.att_type == 'factor':
@@ -943,13 +941,18 @@ class Word(object):
             elif isinstance(value, str):
                 try:
                     value = float(value)
+                    if key == 'Frequency':
+                        setattr(self, '_frequency', value)
                 except ValueError:
                     #it's spelling, leave value as-is
                     setattr(self, '_spelling', value)
                 setattr(self, key, value)
 
             elif isinstance(value, (float, int)):
+                if key == 'Frequency':
+                    setattr(self, '_frequency', value)
                 setattr(self, key, value)
+
 
             if key not in self.descriptors:
                 self.descriptors.append(key)
@@ -962,7 +965,6 @@ class Word(object):
             if not 'Spelling' in self.descriptors:
                 self.descriptors.append('Spelling')
 
-
     def initDefaults(self):
         for attribute, default_value in Word.word_attributes.items():
             if isinstance(default_value, list):
@@ -971,6 +973,19 @@ class Word(object):
                 setattr(self, attribute, default_value.copy())
             else:
                 setattr(self, attribute, default_value)
+
+    @property
+    def frequency(self):
+        return self._frequency
+
+    @frequency.setter
+    def frequency(self, value):
+        self._frequency = value
+
+    @frequency.deleter
+    def frequency(self):
+        del self._frequency
+
     @property
     def transcription(self):
         return self._transcription
@@ -1006,10 +1021,9 @@ class Word(object):
 
         for attribute, default_value in Word.word_attributes.items():
             if hasattr(old_word, attribute):
-                setattr(self, attribute, old_word.__dict__[attribute])
+                setattr(self, attribute, getattr(old_word, attribute))# old_word.__dict__[attribute])
             else:
                 setattr(self, attribute, default_value)
-
 
 
         self.descriptors.extend([att for att in Word.word_attributes if not att.startswith('_')])
@@ -1041,7 +1055,6 @@ class Word(object):
             self._spelling_name = 'Spelling'
             self.descriptors.append('Spelling')
 
-
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
 
@@ -1071,13 +1084,13 @@ class Word(object):
     def __setstate__(self, state):
         self._transcription = []
         self._spelling = ''
-        self.frequency = 0
+        self._frequency = 0
         if 'wordtokens' not in state:
             state['wordtokens'] = []
         if 'descriptors' not in state:
-            state['descriptors'] = ['_spelling','_transcription', 'frequency']
-        if 'frequency' not in state['descriptors']:
-            state['descriptors'].append('frequency')
+            state['descriptors'] = ['_spelling','_transcription', '_frequency']
+        if '_frequency' not in state['descriptors']:
+            state['descriptors'].append('_frequency')
         try:
             tiers = state.pop('tiers')
             for t in tiers:
@@ -1951,9 +1964,6 @@ class Corpus(object):
                   'specifier': None, 'inventory': None, 'inventoryModel': None, 'has_frequency': True,
                   'has_spelling':False, 'has_wordtokens':False, 'has_audio': False, 'wav_path': None,
                   '_attributes': list(),
-                  # '_attributes': [Attribute('spelling', 'spelling'),
-                  #                 Attribute('transcription', 'tier'),
-                  #                 Attribute('frequency', 'numeric')],
                   '_version': currentPCTversion
                     }
     basic_attributes = ['spelling','transcription','frequency']
@@ -2146,10 +2156,11 @@ class Corpus(object):
 
     @property
     def attributes(self):
-        #'transcription' and 'spelling' are special attributes which are acually methods decorated with @property
-        #these methods return the value of either ._transcription or ._spelling
+        #'transcription', 'spelling' and 'frequency' are special attributes which are acually
+        # methods decorated with @property
+        #these methods return the value of word._transcription, word._spelling, or word._frequency
         #we don't want to put them into the GUI column headers because that will lead to duplication
-        return [a for a in self._attributes if not a.name in ('spelling', 'transcription')]
+        return [a for a in self._attributes if not a.name in ('spelling', 'transcription', 'frequency')]
 
     @property
     def words(self):

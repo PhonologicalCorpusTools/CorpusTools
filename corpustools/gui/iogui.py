@@ -951,7 +951,7 @@ class LoadCorpusDialog(PCTDialog):
         if result:
             if self.corpus is not None:
                 #self.corpus is set in self.setResults(),
-                #which is a slot connected to the LoadCorpusWorker dataReady signalr
+                #which is a slot connected to the LoadCorpusWorker dataReady signal
                 if not hasattr(self.corpus, 'lexicon'):
                     #it's a Corpus object
                     c = self.corpus
