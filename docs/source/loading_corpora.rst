@@ -40,6 +40,8 @@ There are five possible ways of getting a corpus in PCT:
 
 Each of these options is discussed in more detail below.
 
+Note that for any of these scenarios, if you load a corpus without associating it with a feature system, you will have the option to associate a system to the corpus later (see :ref:`applying_editing_feature`). If you load a corpus and try to associate it with a pre-existing feature system that does not in fact have all the segments in the corpus in it (e.g., you're basically using an IPA-based transcription system, but your corpus includes the symbol [č]), then PCT will warn you and ask if you want to proceed. If you do proceed, PCT will automatically create a copy of the existing feature file, add the new segment(s), and give them default feature values of 'n' for all features. The new feature system will be called the same thing as the old one, but will be relativised to the appropriate corpus. E.g., if the original feature system was the ipa2hayes system, and the corpus containing [č] is called 'November_fieldwork', then the new feature system will automatically be called ipa2hayes_November_fieldwork. This feature system is editable and available for use with any other corpora, as generally described in :ref:`applying_editing_feature`.
+
 .. _download_corpora:
 
 Using a built-in corpus
