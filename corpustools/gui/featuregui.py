@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 import codecs
-import time
+
 
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -9,6 +9,8 @@ from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.corpus.io import (load_binary, download_binary,
                     load_feature_matrix_csv, save_binary, DelimiterError,
                     export_feature_matrix_csv)
+
+from corpustools.corpus.io.helper import punctuation_names
 
 from .views import SubTreeView
 from .models import FeatureSystemTableModel, FeatureSystemTreeModel
@@ -849,13 +851,15 @@ class EditFeatureMatrixDialog(QDialog):
             if seg.symbol == '#':
                 continue
             if seg not in feature_inventory:
-                if str(seg) == '\'':
-                    missing.append('\' (apostrophe)')
+                for symbol,name in punctuation_names.items():
+                    if str(seg) == symbol:
+                        missing.append('{} ({})'.format(symbol, name))
                 else:
                     missing.append(str(seg))
-            elif all([f=='n' for f in corpus_inventory[seg.symbol].features.values()]):
-                if str(seg) == '\'':
-                    neutralized.append('\' (apostrophe)')
+            elif all([f=='n' for f in self.specifier[seg.symbol].values()]):
+                for symbol,name in punctuation_names.items():
+                    if str(seg) == symbol:
+                        neutralized.append('{} ({})'.format(symbol, name))
                 else:
                     neutralized.append(str(seg))
 
