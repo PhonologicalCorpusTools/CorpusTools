@@ -174,7 +174,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
                 if not word.spelling:
                     word.spelling = ''.join(map(str,word.transcription))
 
-            corpus.add_word(word)
+            corpus.add_word(word, allow_duplicates=True)
 
     if corpus.specifier is not None:
         corpus.inventory.update_features(corpus.specifier)
