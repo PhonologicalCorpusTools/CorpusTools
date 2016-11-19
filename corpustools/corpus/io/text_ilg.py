@@ -245,6 +245,8 @@ def load_discourse_ilg(corpus_name, path, annotation_types,
         Discourse object generated from the text file
     """
     data = ilg_to_data(corpus_name, path, annotation_types,stop_check, call_back)
+    for at in annotation_types:
+        print(at, at.output_name, at.name, at.attribute.name, at.attribute.display_name)
     #discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
     discourse = data_to_discourse2(corpus_name=corpus_name, annotation_types=annotation_types,
                                    stop_check=stop_check, call_back=call_back)

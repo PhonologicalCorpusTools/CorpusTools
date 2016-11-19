@@ -454,7 +454,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
 
     discourse = Discourse(discourse_kwargs)
 
-    if not 'frequency' in [a.name for a in discourse.lexicon.attributes]:
+    if not 'frequency' in [a.name.lower() for a in discourse.lexicon.attributes]:
         # running text will not have a frequency attribute supplied by the user
         # textgrids are also unlikely to have this attribute
         discourse.lexicon.add_attribute(Attribute('frequency', 'numeric', 'Frequency'))

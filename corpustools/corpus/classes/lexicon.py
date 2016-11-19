@@ -521,8 +521,13 @@ class FeatureMatrix(object):
             for s in feature_entries:
                 self.matrix[s['symbol']] = {k:v for k,v in s.items() if k != 'symbol'}
                 self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
-            if self._features is None:
-                self._features = {k for k in s.keys() if k != 'symbol'}
+            #This if-block never seems to be called, and this whole class' code
+            #appears to treat ._features as a list, so why it should default to
+            #dictionary here is unclear. Additionally, the features() property method
+            #seems to assume a dictionary
+            #
+            # if self._features is None:
+            #     self._features = {k for k in s.keys() if k != 'symbol'}
 
 
     def __eq__(self, other):
@@ -684,7 +689,10 @@ class FeatureMatrix(object):
             otherwise use the FeatureMatrix's ``default_value``
         """
 
-        self._features.update({feature})
+        #self._features.update({feature})
+        #see note about dictionary vs. list in the __init__() method
+        self._features.append(feature)
+        self._features.sort()
         if default is None:
             self.validate()
         else:
@@ -887,7 +895,7 @@ class Word(object):
                        'alt_transcriptions': list(), 'alt_spellings': list(),
                        '_frequency':0, 'wordtokens':list(),
                        'descriptors':list()}
-    _freq_names = ['abs_freq', 'freq_per_mil','sfreq', 'lowercase_freq', 'log10_freq']
+    _freq_names = ['abs_freq', 'freq_per_mil','sfreq', 'lowercase_freq', 'log10_freq', 'freq', 'frequency']
 
     def __init__(self, update=False, **kwargs):
 
@@ -964,6 +972,9 @@ class Word(object):
             self._spelling = self.Spelling
             if not 'Spelling' in self.descriptors:
                 self.descriptors.append('Spelling')
+        if not 'Frequency' in self.descriptors:
+            self.descriptors.append('Frequency')
+            self.Frequency = 0
 
     def initDefaults(self):
         for attribute, default_value in Word.word_attributes.items():
@@ -2555,7 +2566,7 @@ class Corpus(object):
                 return
         except KeyError:
             if not hasattr(word, 'frequency') or not word.frequency:
-                word.frequency = 1
+                word._frequency = 1
             self.wordlist[word.spelling] = copy.copy(word)
             if word.spelling is not None:
                 if not self.has_spelling:

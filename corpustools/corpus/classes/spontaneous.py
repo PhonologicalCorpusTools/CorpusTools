@@ -437,7 +437,8 @@ class WordToken(object):
 
 
         for key, value in kwargs.items():
-            key = key.lower()
+            if not all([letter.isupper() for letter in key]):
+                key = key.capitalize()
             if isinstance(value, tuple):
                 att, value = value
                 if att.att_type == 'numeric':
@@ -445,6 +446,8 @@ class WordToken(object):
                         value = float(value)
                     except (ValueError, TypeError):
                         value = float('nan')
+                    if key == 'Frequency':
+                        setattr(self, '_frequency', value)
                 elif att.att_type == 'tier':
                     value = Transcription(value)
                     #self._transcription = value
