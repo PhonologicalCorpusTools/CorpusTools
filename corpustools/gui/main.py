@@ -473,11 +473,11 @@ class MainWindow(QMainWindow):
             #self.corpusModel.corpus.inventory.__dict__.update(self.inventoryModel.__dict__)
             # shouldn't need to save, since this doesn't affect the corpus, only the FeatureMatrix, and there's
             # already a check for that in the InventoryManager dialog
-            # if self.settings['ask_overwrite_corpus']:
-            #     self.enableSave()
-            # else:
-            #     self.saveCorpus()
-            #     self.saveCorpusAct.setEnabled(False)
+            if self.settings['ask_overwrite_corpus']:
+                self.enableSave()
+            else:
+                self.saveCorpus()
+                self.saveCorpusAct.setEnabled(False)
 
 
     def subsetCorpus(self):

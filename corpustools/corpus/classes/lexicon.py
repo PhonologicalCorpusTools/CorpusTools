@@ -1862,6 +1862,8 @@ class Inventory(object):
 
     def __iter__(self):
         for k in sorted(self.segs.keys()):
+            if k in self.non_segment_symbols:
+                continue
             yield self.segs[k]
 
     def __contains__(self, item):
