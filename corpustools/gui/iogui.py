@@ -83,6 +83,7 @@ class LoadCorpusWorker(FunctionWorker):
 
             elif textType == 'ilg':
                 if isDirectory:
+                    print(self.kwargs)
                     corpus = load_directory_ilg(**self.kwargs)
                 else:
                     corpus = load_discourse_ilg(**self.kwargs)

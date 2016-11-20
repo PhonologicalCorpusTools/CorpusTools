@@ -1634,7 +1634,9 @@ class Attribute(object):
         str
             Sanitized name
         """
-        return re.sub('\W','',name.lower())
+        name = re.sub('\W','',name.lower())
+        name = name if all([s.isupper() for s in name]) else name.capitalize()
+        return name
 
     def __hash__(self):
         return hash(self.name)
@@ -1657,7 +1659,7 @@ class Attribute(object):
     @property
     def display_name(self):
         if self._display_name is not None:
-            return self._display_name.lower()
+            return self._display_name#.lower()
         return self.name
 
     @property

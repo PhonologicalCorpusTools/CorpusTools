@@ -371,6 +371,7 @@ class AnnotationTypeWidget(QGroupBox):
         a = self.annotation_type
         a.token = self.associationWidget.value() == 'token'
         display_name = self.nameWidget.text()
+        display_name = display_name if all([s.isupper() for s in display_name]) else display_name.capitalize()
         a.anchor = False
         a.base = False
         name = Attribute.sanitize_name(display_name)
@@ -433,7 +434,7 @@ class AttributeWidget(QGroupBox):
         self.useAs.currentIndexChanged.connect(self.updateUseAs)
 
         for i in range(self.useAs.count()):
-            if attribute is not None and self.useAs.itemText(i).lower() == attribute.name:
+            if attribute is not None and self.useAs.itemText(i) == attribute.name:
                 self.useAs.setCurrentIndex(i)
                 if attribute.name == 'transcription' and attribute.att_type != 'tier':
                     attribute.att_type = 'tier'
@@ -449,10 +450,10 @@ class AttributeWidget(QGroupBox):
         self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
 
     def type(self):
-        return self.typeWidget.currentText().lower()
+        return self.typeWidget.currentText()
 
     def updateUseAs(self):
-        t = self.useAs.currentText().lower()
+        t = self.useAs.currentText()
         if t == 'custom column':
             self.typeWidget.setEnabled(True)
         else:
@@ -466,7 +467,7 @@ class AttributeWidget(QGroupBox):
             self.typeWidget.setEnabled(False)
 
     def use(self):
-        return self.useAs.currentText().lower()
+        return self.useAs.currentText()
 
     def value(self):
         display = self.nameWidget.text()

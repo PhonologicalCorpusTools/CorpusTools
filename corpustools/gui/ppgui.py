@@ -299,7 +299,7 @@ class PPDialog(FunctionDialog):
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please enter a column name.")
                 return
-            colName = column.lower().replace(' ','_')
+            colName = column.replace(' ','_')
             attribute = Attribute(colName,'numeric',column)
             if column in self.corpusModel.columns:
 

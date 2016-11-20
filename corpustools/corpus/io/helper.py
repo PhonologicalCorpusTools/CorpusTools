@@ -435,9 +435,9 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
     discourse_kwargs = {'name': corpus_name, 'wav_path': wav_path, 'other_attributes': list()}
     for at in annotation_types:
         if at.name == 'Orthography (default)':
-            discourse_kwargs['spelling_name'] = at.attribute#.output_name
+            discourse_kwargs['spelling_name'] = at.attribute
         elif at.name == 'Transcription (default)':
-            discourse_kwargs['transcription_name'] = at.attribute#.output_name
+            discourse_kwargs['transcription_name'] = at.attribute
         elif at.name == 'Other (character)' or at.attribute.att_type in ('tier', 'spelling'):
             discourse_kwargs['other_attributes'].append(at.attribute)
 
@@ -477,9 +477,11 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
                 continue
             else:
                 try:
-                    word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+                    #word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+                    word_kwargs[at.attribute.name] = (at.attribute, annotations[at][n][0])
                 except IndexError:
-                    word_kwargs[at.output_name] = (at.attribute, None)
+                    #word_kwargs[at.output_name] = (at.attribute, None)
+                    word_kwargs[at.attribute.name] = (at.attribute, None)
                 #word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
         # word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
         #                for at in annotations if not at.token and not at.ignored}
@@ -488,8 +490,10 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
             word = discourse.lexicon.find(word.spelling)
             if add_frequency:
                 word.frequency += 1
+            print('add word {} {}'.format(word, word.frequency))
         except KeyError:
             discourse.lexicon.add_word(word)
+            print('KeyError {} {}'.format(word, word.frequency))
 
         word_token_kwargs = dict()
         word_token_kwargs['word'] = word
@@ -497,7 +501,8 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         for at in annotations:
             if at.ignored:
                 continue
-            word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+            #word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
+            word_token_kwargs[at.attribute.name] = (at.attribute, annotations[at][n][0])
             if at.attribute.att_type == 'tier':
                 if at.attribute.is_default:
                     begin = annotations[at][n][1]

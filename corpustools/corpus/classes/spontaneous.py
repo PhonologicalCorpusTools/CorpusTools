@@ -147,7 +147,6 @@ class Discourse(object):
         self.name = kwargs['name']
         self.speaker = Speaker(None)
         self.wav_path = kwargs['wav_path']
-
         self._attributes = [kwargs['spelling_name'], kwargs['transcription_name'],
                             Attribute('begin','numeric','Begin'),
                             Attribute('end','numeric', 'End')]

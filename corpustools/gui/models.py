@@ -332,9 +332,11 @@ class DiscourseModel(BaseCorpusTableModel):
         QAbstractTableModel.__init__(self, parent)
         self.settings = settings
         self.corpus = discourse
+        print(self.corpus.lexicon.attributes)
+        print(self.corpus.attributes)
         self.columns = self.corpus.attributes
         self.columns.sort(key=self.column_sort)
-        self.rows = [x for x in list(self.corpus.words)]#keys())]
+        self.rows = [x for x in list(self.corpus.words)]
         self.rows.sort()
 
     def rowsToTimes(self,rows):

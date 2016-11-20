@@ -340,7 +340,7 @@ class AddTierDialog(CreateClassWidget):
 
     def accept(self):
         tierName = self.nameEdit.text()
-        self.attribute = Attribute(tierName.lower().replace(' ',''),'tier',tierName)
+        self.attribute = Attribute(tierName.replace(' ',''),'tier',tierName)
         if tierName == '':
             reply = QMessageBox.critical(self,
                                          "Missing information", "Please enter a name for the tier.")
@@ -415,7 +415,7 @@ class AddCountColumnDialog(QDialog):
 
     def accept(self):
         name = self.nameWidget.text()
-        self.attribute = Attribute(name.lower().replace(' ',''),'numeric',name)
+        self.attribute = Attribute(name.replace(' ',''),'numeric',name)
         if name == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please enter a name for the tier.")
@@ -499,7 +499,7 @@ class AddColumnDialog(QDialog):
         name = self.nameWidget.text()
         at = self.typeWidget.currentText().lower()
         dv = self.defaultWidget.text()
-        self.attribute = Attribute(name.lower().replace(' ',''),at,name)
+        self.attribute = Attribute(name.replace(' ',''),at,name)
         if name == '':
             reply = QMessageBox.critical(self,
                     "Missing information", "Please enter a name for the tier.")
