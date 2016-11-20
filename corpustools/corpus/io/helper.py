@@ -490,10 +490,8 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
             word = discourse.lexicon.find(word.spelling)
             if add_frequency:
                 word.frequency += 1
-            print('add word {} {}'.format(word, word.frequency))
         except KeyError:
             discourse.lexicon.add_word(word)
-            print('KeyError {} {}'.format(word, word.frequency))
 
         word_token_kwargs = dict()
         word_token_kwargs['word'] = word

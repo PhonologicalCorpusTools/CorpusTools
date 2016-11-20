@@ -918,7 +918,8 @@ class Word(object):
                     except (ValueError, TypeError):
                         value = float('nan')
                     if key == 'Frequency':
-                        setattr(self, '_frequency', value)
+                        setattr(self, key, value)
+                        setattr(self, '_frequency', self.Frequency)
                 elif att.att_type == 'tier':
                     value = Transcription(value)
                 else:# att.att_type == 'spelling' or att.att_type == 'factor':
@@ -950,7 +951,8 @@ class Word(object):
                 try:
                     value = float(value)
                     if key == 'Frequency':
-                        setattr(self, '_frequency', value)
+                        setattr(self, 'Frequency', value)
+                        setattr(self, '_frequency', self.Frequency)
                 except ValueError:
                     #it's spelling, leave value as-is
                     setattr(self, '_spelling', value)
@@ -958,7 +960,8 @@ class Word(object):
 
             elif isinstance(value, (float, int)):
                 if key == 'Frequency':
-                    setattr(self, '_frequency', value)
+                    setattr(self, 'Frequency', value)
+                    setattr(self, '_frequency', self.Frequency)
                 setattr(self, key, value)
 
 
@@ -987,15 +990,15 @@ class Word(object):
 
     @property
     def frequency(self):
-        return self._frequency
+        return self.Frequency
 
     @frequency.setter
     def frequency(self, value):
-        self._frequency = value
+        self.Frequency = value
 
     @frequency.deleter
     def frequency(self):
-        del self._frequency
+        del self.Frequency
 
     @property
     def transcription(self):

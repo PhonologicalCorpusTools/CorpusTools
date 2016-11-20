@@ -301,14 +301,14 @@ class MainWindow(QMainWindow):
 
         dialog = CorpusLoadDialog(self, name, self.settings)
         result = dialog.exec_()
-        print(result)
         if result:
             self.corpus = dialog.corpus
             self.inventoryModel = None
             if hasattr(self.corpus, 'lexicon'):
+                for word in self.corpus.lexicon:
+                    print(word, word.frequency, word._frequency, word.Frequency)
                 #the lexicon attribute is a Corpus object
                 if not hasattr(self.corpus.lexicon,'_version') or not self.corpus.lexicon._version == currentPCTversion:
-                    #self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
                     self.corpus.lexicon = self.forceUpdate(self.corpus.lexicon)
 
                 if hasattr(self.corpus,'discourses'):
