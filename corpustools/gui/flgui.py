@@ -41,7 +41,7 @@ class FLWorker(FunctionWorker):
                 output_filename = kwargs.pop('output_filename', None)
                 if output_filename is not None:
                     to_output = []
-                    outf = open(output_filename, mode='w', encoding='utf-8')
+                    outf = open(output_filename, mode='w', encoding='utf-8-sig')
                     save_minimal_pairs(outf, [], write_header= True)
                 else:
                     outf = None

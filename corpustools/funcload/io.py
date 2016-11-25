@@ -3,7 +3,7 @@ import csv
 
 def save_minimal_pairs(output_filename, to_output, write_header = False):
     if isinstance(output_filename, str):
-        outf = open(output_filename, mode='w', encoding='utf-8')
+        outf = open(output_filename, mode='w', encoding='utf-8-sig')
         needs_closed = True
     else:
         outf = output_filename

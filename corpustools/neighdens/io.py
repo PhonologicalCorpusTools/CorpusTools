@@ -17,7 +17,7 @@ def load_words_neighden(path):
     return output
 
 def print_neighden_results(output_filename, neighbors):
-    with open(output_filename, mode='w', encoding='utf-8') as outf:
+    with open(output_filename, mode='w', encoding='utf-8-sig') as outf:
         writer = csv.writer(outf,delimiter='\t')
         for n in neighbors:
             writer.writerow([n])

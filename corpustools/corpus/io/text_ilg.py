@@ -333,7 +333,7 @@ def export_discourse_ilg(discourse, path, trans_delim = '.'):
     trans_delim : str, optional
         Delimiter for segments, defaults to ``.``
     """
-    with open(path, encoding='utf-8', mode='w') as f:
+    with open(path, encoding='utf-8-sig', mode='w') as f:
         spellings = list()
         transcriptions = list()
         for wt in discourse:

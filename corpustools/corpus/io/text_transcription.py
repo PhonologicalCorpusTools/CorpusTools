@@ -242,7 +242,7 @@ def export_discourse_transcription(discourse, path, trans_delim = '.', single_li
         Flag to enforce all text to be on a single line, defaults to False.
         If False, lines are 10 words long.
     """
-    with open(path, encoding='utf-8', mode='w') as f:
+    with open(path, encoding='utf-8-sig', mode='w') as f:
         count = 0
         for i, wt in enumerate(discourse):
             count += 1

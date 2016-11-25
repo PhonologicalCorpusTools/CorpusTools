@@ -37,7 +37,7 @@ def find_versions(download_url):
     df = open_url(download_url)
 
     try:
-        downloads = df.read().decode("utf-8")
+        downloads = df.read().decode("utf-8-sig")
     finally:
         df.close()
     versions = list()

@@ -1,4 +1,4 @@
-﻿frequency,spelling,transcription
+﻿Frequency,Spelling,Transcription
 11.0,atema,ɑ.t.e.m.ɑ
 11.0,enuta,e.n.u.t.ɑ
 5.0,mashomisi,m.ɑ.ʃ.o.m.i.s.i

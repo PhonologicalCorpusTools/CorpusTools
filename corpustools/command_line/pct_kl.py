@@ -58,7 +58,7 @@ def main():
         if not outfile.endswith('.txt'):
             outfile += '.txt'
 
-        with open(outfile, mode='w', encoding='utf-8') as f:
+        with open(outfile, mode='w', encoding='utf-8-sig') as f:
             print('Seg1,Seg2,Seg1 entropy,Seg2 entropy,Possible UR, Spurious UR\n\r',file=f)
             print(','.join([str(r) for r in results]), file=f)
             print('\n\rContext,Context frequency,{} frequency in context,{} frequency in context\n\r'.format(seg1,seg2), file=f)

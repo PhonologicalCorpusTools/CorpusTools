@@ -311,7 +311,7 @@ class ProdError(PCTError):
         return self.value
 
     def print_to_file(self,error_directory):
-        with open(os.path.join(error_directory,self.filename),'w',encoding='utf-8') as f:
+        with open(os.path.join(error_directory,self.filename),'w',encoding='utf-8-sig') as f:
             if self.missing:
                 print(('The following words have at least one of the '
                             'segments you are searching for, but it occurs in '

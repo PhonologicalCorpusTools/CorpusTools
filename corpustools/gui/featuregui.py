@@ -777,7 +777,7 @@ class EditFeatureMatrixDialog(QDialog):
         new_path = os.path.join(self.settings['storage'], 'FEATURE', new_system_name + '.txt')
         inverse_segmap = {v: k for k, v in self.segmap.items()}
 
-        with open(new_path, encoding='utf-8', mode='w') as f:
+        with open(new_path, encoding='utf-8-sig', mode='w') as f:
             print('symbol\t{}'.format(featureline), file=f)
             for seg in new_symbols:
                 if seg in inverse_segmap:

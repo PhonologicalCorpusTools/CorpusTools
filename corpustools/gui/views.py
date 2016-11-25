@@ -776,7 +776,7 @@ class ResultsWindow(QDialog):
                         filter = 'Text files (*.txt *.csv)')
 
         if filename and filename[0]:
-            with open(filename[0], mode='w', encoding='utf-8') as f:
+            with open(filename[0], mode='w', encoding='utf-8-sig') as f:
                 writer = csv.writer(f, delimiter='\t')
                 writer.writerow(self.table.model().columns)
                 for row in self.table.model().rows:

@@ -122,7 +122,7 @@ def KullbackLeibler(corpus_context, seg1, seg2, side, outfile = None,
         if not outfile.endswith('.txt'):
             outfile += '.txt'
 
-        with open(outfile, mode='w', encoding='utf-8') as f:
+        with open(outfile, mode='w', encoding='utf-8-sig') as f:
             print('Context, Context frequency, {} frequency in context, {} frequency in context\n\r'.format(seg1,seg2), file=f)
             for context,result in allC.items():
                 cfrequency = freq_c[context]/totalC

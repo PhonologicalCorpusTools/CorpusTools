@@ -725,7 +725,7 @@ class LoadCorpusDialog(PCTDialog):
                 except PCTError:
                     self.updateColumnFrame([])
                     return
-                self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8'))
+                self.columnDelimiterEdit.setText(coldelim.encode('unicode_escape').decode('utf-8-sig'))
                 self.updateColumnFrame(atts)
             else:
                 if self.textType == 'textgrid':

@@ -219,7 +219,7 @@ if __name__ == '__main__':
     lexicon = generate_lexicon(60, 3, 40)#base lexicon size, max syllable length, number of minimal pairs to add to base lexicon
     lexicon = allophones(lexicon)
     corpus = make_corpus(lexicon)
-    with open(os.path.join(os.getcwd(),'lemurian.txt'), mode='w', encoding='utf-8') as f:
+    with open(os.path.join(os.getcwd(),'lemurian.txt'), mode='w', encoding='utf-8-sig') as f:
         f.write('Transcription,Spelling,Frequency\n')
         for word in corpus:
             print(word, file=f)

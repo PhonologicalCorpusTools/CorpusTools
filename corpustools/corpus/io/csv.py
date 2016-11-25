@@ -44,7 +44,7 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     else:
         trans_delimiters = ['.',' ', ';', ',']
 
-    with open(path,'r', encoding='utf-8') as f:
+    with open(path,'r', encoding='utf-8-sig') as f:
         lines = []
         head = f.readline().strip()
         for line in f.readlines():
@@ -135,7 +135,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
         call_back(0, 0)
         cur = 0
 
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding='utf-8-sig') as f:
         headers = f.readline()
         headers = headers.split(delimiter)
         if len(headers)==1:
@@ -301,7 +301,7 @@ def export_corpus_csv(corpus, path,
     elif variant_behavior == 'column':
         header += ['Variants']
 
-    with open(path, encoding='utf-8', mode='w') as f:
+    with open(path, encoding='utf-8-sig', mode='w') as f:
         print(delimiter.join(header), file=f)
 
         for word in corpus.iter_sort():
@@ -345,7 +345,7 @@ def export_feature_matrix_csv(feature_matrix, path, delimiter = ','):
     delimiter : str
         Character to mark boundaries between columns.  Defaults to ','
     """
-    with open(path, encoding='utf-8', mode='w') as f:
+    with open(path, encoding='utf-8-sig', mode='w') as f:
         header = ['symbol'] + feature_matrix.features
         writer = DictWriter(f, header,delimiter=delimiter)
         writer.writerow({h: h for h in header})
