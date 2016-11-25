@@ -45,9 +45,9 @@ def download_binary(name, path, call_back = None):
                 call_back(0,size)
             call_back(blocknum * bs)
     if name == 'example':
-        download_link = 'https://www.dropbox.com/s/mn46ss4maq940f5/example.corpus?dl=1'
+        download_link = 'https://www.dropbox.com/s/fb7txi4c1rf8lbx/example.corpus?dl=1'
     elif name == 'lemurian':
-        download_link = 'https://www.dropbox.com/s/dmvsghoytnubp7r/lemurian.corpus?dl=1'
+        download_link = 'https://www.dropbox.com/s/o98q83bq5derf3u/lemurian.corpus?dl=1'
     elif name == 'iphod':
         download_link = 'https://www.dropbox.com/s/6ktlhekshg7t9ll/iphod.corpus?dl=1'
     elif name == 'ipa2spe':

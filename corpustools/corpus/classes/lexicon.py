@@ -1641,7 +1641,7 @@ class Attribute(object):
         str
             Sanitized name
         """
-        name = re.sub('\W','',name.lower())
+        name = re.sub('\W','',name)#.lower())
         name = name if all([s.isupper() for s in name]) else name.capitalize()
         return name
 

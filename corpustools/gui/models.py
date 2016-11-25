@@ -1314,9 +1314,6 @@ class InventoryModel(QAbstractTableModel):
     def modelReset(self, *args, **kwargs):
         self.modelAboutToBeReset.emit()
         preserve_features = kwargs.pop('preserve_features', False)
-        print('in modelReset')
-        print(kwargs)
-        print(preserve_features)
         if not preserve_features:
             self.categorizeInventory()
         self.sortData()
