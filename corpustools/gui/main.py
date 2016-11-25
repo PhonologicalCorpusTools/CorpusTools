@@ -520,6 +520,7 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def showFeatureSystem(self):
+        oldSystem = self.corpusModel.corpus.specifier.name
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         results = dialog.exec_()
         if results:
@@ -552,7 +553,8 @@ class MainWindow(QMainWindow):
                     self.inventoryModel.updateInventory(list(self.corpusModel.corpus.inventory.segs.keys()))
 
                 self.corpusModel.corpus.update_features()
-                self.inventoryModel.updateFeatures(dialog.specifier)
+                preserveFeatures = True if dialog.specifier.name == oldSystem else False
+                self.inventoryModel.updateFeatures(dialog.specifier, preserve_features = preserveFeatures)
 
             if dialog.feature_system_changed:
                 self.inventoryModel.reGenerateNames()

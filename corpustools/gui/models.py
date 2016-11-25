@@ -1001,7 +1001,7 @@ class InventoryModel(QAbstractTableModel):
         self.setAttributes(copy)
         self.modelReset()
 
-    def updateFeatures(self, specifier):
+    def updateFeatures(self, specifier, preserve_features = False):
         for seg in self.segs:
             if seg == '#':
                 continue
@@ -1011,7 +1011,7 @@ class InventoryModel(QAbstractTableModel):
 
         self.features = specifier.features
         self.possible_values = specifier.possible_values
-        self.modelReset()
+        self.modelReset(preserve_features=preserve_features)
 
     def updateInventory(self, new_segs):
         self.segs = {symbol: Segment(symbol) for symbol in new_segs}
@@ -1313,7 +1313,12 @@ class InventoryModel(QAbstractTableModel):
 
     def modelReset(self, *args, **kwargs):
         self.modelAboutToBeReset.emit()
-        self.categorizeInventory()
+        preserve_features = kwargs.pop('preserve_features', False)
+        print('in modelReset')
+        print(kwargs)
+        print(preserve_features)
+        if not preserve_features:
+            self.categorizeInventory()
         self.sortData()
         self.filterGenericNames()
         self.endResetModel()

@@ -69,7 +69,7 @@ def system_name_to_path(storage_directory,name):
 
 class FeatureSystemSelect(QGroupBox):
     changed  = Signal()
-    def __init__(self,settings,parent=None,default = None, add = False):
+    def __init__(self, settings, parent=None, default = None, add = False):
         QGroupBox.__init__(self,'Transcription and features',parent)
         self.settings = settings
         layout = QFormLayout()
@@ -510,6 +510,7 @@ class EditFeatureMatrixDialog(QDialog):
             QDialog.accept(self)
             return
 
+        oldSystem = self.specifier.name
         missing = []
         feature_inventory = self.specifier.segments
         for seg in self.corpus.inventory:
@@ -560,7 +561,7 @@ class EditFeatureMatrixDialog(QDialog):
 
 
         self.transcription_changed = False
-        self.feature_system_changed = True
+        self.feature_system_changed = False if self.specifier.name == oldSystem else True
         filename = os.path.join(self.settings['storage'], 'FEATURE', self.specifier.name)
         if not filename.endswith('.feature'):
             filename += '.feature'
@@ -570,7 +571,6 @@ class EditFeatureMatrixDialog(QDialog):
 
     def accept(self):
         info = self.changeWidget.value()
-        print(info)
         if not info == self.specifier.name:
             self.feature_system_changed = True
             alert = QMessageBox()

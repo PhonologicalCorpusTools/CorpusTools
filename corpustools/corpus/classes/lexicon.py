@@ -523,11 +523,11 @@ class FeatureMatrix(object):
                 self.possible_values.update({v for k,v in s.items() if k != 'symbol'})
             #This if-block never seems to be called, and this whole class' code
             #appears to treat ._features as a list, so why it should default to
-            #dictionary here is unclear. Additionally, the features() property method
-            #seems to assume a dictionary
-            #
-            # if self._features is None:
-            #     self._features = {k for k in s.keys() if k != 'symbol'}
+            #dictionary here is unclear. However, changing to a list causes the
+            #"make feature system from text file" option to break, so better to
+            #leave this alone
+            if self._features is None:
+                self._features = {k for k in s.keys() if k != 'symbol'}
 
 
     def __eq__(self, other):
@@ -1002,11 +1002,13 @@ class Word(object):
 
     @property
     def transcription(self):
-        return self._transcription
+        #return self._transcription
+        return getattr(self, self._transcription_name, self._transcription)
 
     @transcription.setter
     def transcription(self, value):
-        self._transcription = value
+        setattr(self, self._transcription_name, value)
+        #self._transcription = value
 
     @transcription.deleter
     def transcription(self):
@@ -1014,11 +1016,13 @@ class Word(object):
 
     @property
     def spelling(self):
-        return self._spelling
+        #return self._spelling
+        return getattr(self, self._spelling_name, self._transcription)
 
     @spelling.setter
     def spelling(self, value):
-        self._spelling = value
+        setattr(self, self._spelling_name, value)
+        #self._spelling = value
 
     @spelling.deleter
     def spelling(self):
@@ -2570,7 +2574,9 @@ class Corpus(object):
                 word.frequency += 1
                 return
         except KeyError:
-            if not hasattr(word, 'frequency') or not word.frequency:
+            if not hasattr(word, 'Frequency'):
+                word.Frequency = 1
+            if not word.frequency:
                 word._frequency = 1
             self.wordlist[word.spelling] = copy.copy(word)
             if word.spelling is not None:

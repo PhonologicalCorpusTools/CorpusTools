@@ -2667,7 +2667,7 @@ class FileNameDialog(QDialog):
         if file_type == 'features':
             window_title = 'feature system'
             text = ('You have made changes to the {} feature system. This might affect other corpora '
-            'which depend on the same features. It is recommended that save your changes under '
+            'which depend on the same features. It is recommended that you save your changes under '
             'a different name, unless you are absolutely sure that no other corpora need these features.'
             '\n\nWhat do you want to do?'.format(name))
             self.filename_list = get_systems_list(settings['storage'])
