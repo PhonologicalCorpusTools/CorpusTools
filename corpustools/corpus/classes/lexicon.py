@@ -1039,10 +1039,9 @@ class Word(object):
 
         for attribute, default_value in Word.word_attributes.items():
             if hasattr(old_word, attribute):
-                setattr(self, attribute, getattr(old_word, attribute))# old_word.__dict__[attribute])
+                setattr(self, attribute, getattr(old_word, attribute))
             else:
                 setattr(self, attribute, default_value)
-
 
         self.descriptors.extend([att for att in Word.word_attributes if not att.startswith('_')])
         self.descriptors = list(set(self.descriptors))
@@ -1072,6 +1071,18 @@ class Word(object):
             self.Spelling = self._spelling
             self._spelling_name = 'Spelling'
             self.descriptors.append('Spelling')
+
+        self.Frequency = old_word.__dict__['frequency']
+        try:
+            self.descriptors.remove('_frequency')
+        except ValueError:
+            pass
+        try:
+            self.descriptors.remove('frequency')
+        except ValueError:
+            pass
+        self.descriptors.append('Frequency')
+
 
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
@@ -1998,7 +2009,6 @@ class Corpus(object):
         self.initDefaults()
         self.name = name
 
-
     def initDefaults(self):
         for attribute, default_value in Corpus.corpus_attributes.items():
             if attribute == 'inventory':
@@ -2022,7 +2032,6 @@ class Corpus(object):
             else:
                 setattr(self, attribute, default_value)
         self._version = currentPCTversion
-
 
     def update_wordlist(self, new_wordlist):
         self.wordlist = dict()
@@ -2577,8 +2586,8 @@ class Corpus(object):
             if not hasattr(word, 'Frequency'):
                 word.Frequency = 1
             if not word.frequency:
-                word._frequency = 1
-            self.wordlist[word.spelling] = copy.copy(word)
+                word.frequency = 1
+            self.wordlist[word.spelling] = word#copy.copy(word)
             if word.spelling is not None:
                 if not self.has_spelling:
                     self.has_spelling = True
