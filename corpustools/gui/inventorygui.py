@@ -75,10 +75,12 @@ class InventoryManager(QDialog):
         '* Double-click an uncategorized segment to see partial matches and a full feature specification.\n'
         '* Default features are required, and they apply automatically to every column and row in the relevant '
             'table.\n'
-        '* After changing a default feature, click "Update defaults" to have the change come into effect.\n'
+        '* After changing a default feature, click "Update features" to have the change come into effect.\n'
         '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
             'default features.\n'
-        '* Auto-categorization currently only works with SPE or Hayes feature systems.'
+        '* Auto-categorization currently only works with SPE or Hayes feature systems.\n'
+        '* If you have recently made changes to your feature system, you may need to click "Update features" to see '
+            'those changes in effect.'
         ))
 
         #topmessage.setWordWrap(True)
@@ -86,7 +88,7 @@ class InventoryManager(QDialog):
         topmessage.setFont(font)
         layout.addWidget(topmessage)
 
-        recatButton = QPushButton('Update defaults')
+        recatButton = QPushButton('Update features')
         recatButton.clicked.connect(self.recategorize)
         autoRecatButton = QPushButton('Autocategorize')
         autoRecatButton.clicked.connect(self.autoCategorize)
@@ -152,7 +154,7 @@ class InventoryManager(QDialog):
         if not self.inventory.cons_features[0] or not self.inventory.vowel_features[0]:
             alert = QMessageBox()
             alert.setWindowTitle('Feature error')
-            alert.setText(('You have entered default features, but you did not click "Update defaults". Any time that '
+            alert.setText(('You have entered default features, but you did not click "Update features". Any time that '
                             'you change the default features, you must click that button in order for the changes to '
                             'have an effect.'))
             alert.addButton('OK', QMessageBox.AcceptRole)
