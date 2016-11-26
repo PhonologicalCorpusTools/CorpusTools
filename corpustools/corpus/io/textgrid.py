@@ -20,6 +20,9 @@ class PCTTextGrid(TextGrid):
     def __init__(self):
         super().__init__()
 
+    def name_filter(self,name):
+        return name.capitalize() if not all([x.isupper() for x in name]) else name
+
     def read(self, f):
         """
         Read the tiers contained in the Praat-formated TextGrid file
@@ -35,7 +38,7 @@ class PCTTextGrid(TextGrid):
             source.readline()
             if source.readline().rstrip().split()[2] == '"IntervalTier"':
                 inam = source.readline().rstrip().split(' = ')[1].strip('"')
-                inam = inam.lower()
+                inam = self.name_filter(inam)
                 imin = round(float(source.readline().rstrip().split()[2]), 5)
                 imax = round(float(source.readline().rstrip().split()[2]), 5)
                 itie = IntervalTier(inam)
@@ -49,7 +52,7 @@ class PCTTextGrid(TextGrid):
                 self.append(itie)
             else: # pointTier
                 inam = source.readline().rstrip().split(' = ')[1].strip('"')
-                inam = inam.lower()
+                inam = self.name_filter(inam)
                 imin = round(float(source.readline().rstrip().split()[2]), 5)
                 imax = round(float(source.readline().rstrip().split()[2]), 5)
                 itie = PointTier(inam)

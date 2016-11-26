@@ -454,7 +454,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
 
     discourse = Discourse(discourse_kwargs)
 
-    if not 'frequency' in [a.name.lower() for a in discourse.lexicon.attributes]:
+    if not 'Frequency' in [a.name for a in discourse.lexicon.attributes]:
         # running text will not have a frequency attribute supplied by the user
         # textgrids are also unlikely to have this attribute
         discourse.lexicon.add_attribute(Attribute('frequency', 'numeric', 'Frequency'))
@@ -479,6 +479,10 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
                 try:
                     #word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
                     word_kwargs[at.attribute.name] = (at.attribute, annotations[at][n][0])
+                    if at.attribute.att_type == 'tier':
+                        #word_kwargs['_transcription_name'] = at.attribute.name
+                        print('found a tier')
+                        print(at.attribute.name)
                 except IndexError:
                     #word_kwargs[at.output_name] = (at.attribute, None)
                     word_kwargs[at.attribute.name] = (at.attribute, None)

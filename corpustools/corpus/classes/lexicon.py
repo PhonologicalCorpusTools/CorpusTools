@@ -979,6 +979,13 @@ class Word(object):
             self.descriptors.append('Frequency')
             self.Frequency = 0
 
+        if self._transcription_name is None:
+            for d in self.descriptors:
+                if isinstance(getattr(self,d,None), Transcription):
+                    self._transcription_name = d
+                    break
+
+
     def initDefaults(self):
         for attribute, default_value in Word.word_attributes.items():
             if isinstance(default_value, list):
@@ -1002,8 +1009,11 @@ class Word(object):
 
     @property
     def transcription(self):
-        #return self._transcription
-        return getattr(self, self._transcription_name, self._transcription)
+        try:
+            value = getattr(self, self._transcription_name, self._transcription)
+        except (TypeError, AttributeError):
+            value = self.Transcription
+        return value
 
     @transcription.setter
     def transcription(self, value):

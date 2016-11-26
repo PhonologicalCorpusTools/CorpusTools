@@ -1,7 +1,7 @@
 
 from collections import OrderedDict
 
-from .lexicon import Transcription, Corpus, Attribute
+from .lexicon import Transcription, Corpus, Attribute, Word
 
 import os
 import wave
@@ -359,7 +359,7 @@ class Discourse(object):
         return list(x for x in self if x.wordtype == wordtype)
 
 
-class WordToken(object):
+class WordToken():
     """
     WordToken objects are individual productions of Words
 
@@ -433,7 +433,6 @@ class WordToken(object):
         self._spelling = None
         self._transcription = None
         self._freq_names = ['abs_freq', 'freq_per_mil', 'sfreq', 'lowercase_freq', 'log10_freq']
-
 
         for key, value in kwargs.items():
             if not all([letter.isupper() for letter in key]):
