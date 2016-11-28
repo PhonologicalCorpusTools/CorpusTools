@@ -814,6 +814,7 @@ class LoadCorpusDialog(PCTDialog):
                     'No feature file called {} could be found'.format(featurename))
             return
 
+
         kwargs = {'corpus_name': name,
                     'path': path,
                     'isDirectory':self.isDirectory,
@@ -923,13 +924,29 @@ class LoadCorpusDialog(PCTDialog):
                 kwargs['word_path'] = kwargs.pop('path')
                 kwargs['phone_path'] = phone_path
 
+        if not any(['Transcription' in x.name for x in kwargs['annotation_types']]):
+            alert = QMessageBox()
+            alert.setWindowTitle('No transcription selected')
+            alert.setText('You did not select any transcription column for your corpus. '
+                          'Without transcriptions, you will not be able to use some of PCT\'s analysis '
+                          'functions. Click "OK" if you want to continue without transcriptions. Click '
+                          '"Cancel" to go back.')
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.addButton('Cancel', QMessageBox.RejectRole)
+            alert.exec_()
+            if alert.buttonRole(alert.clickedButton()) == QMessageBox.RejectRole:
+                return
+            else:
+                kwargs['feature_system_path'] = None
+
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
                     "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
-            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
+
         return kwargs
 
     @check_for_errors
