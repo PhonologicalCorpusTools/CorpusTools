@@ -924,7 +924,8 @@ class LoadCorpusDialog(PCTDialog):
                 kwargs['word_path'] = kwargs.pop('path')
                 kwargs['phone_path'] = phone_path
 
-        if not any(['Transcription' in x.name for x in kwargs['annotation_types']]):
+        if (not self.textType == 'spelling' and
+                not any(['Transcription' in x.name for x in kwargs['annotation_types']])):
             alert = QMessageBox()
             alert.setWindowTitle('No transcription selected')
             alert.setText('You did not select any transcription column for your corpus. '

@@ -464,7 +464,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
 
     ind = 0
     limit = max([len(list(v)) for v in annotations.values()])
-    for n in range(limit):#len(list(annotations.values())[0])):
+    for n in range(limit):
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -477,14 +477,9 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
                 continue
             else:
                 try:
-                    #word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
                     word_kwargs[at.attribute.name] = (at.attribute, annotations[at][n][0])
                 except IndexError:
-                    #word_kwargs[at.output_name] = (at.attribute, None)
                     word_kwargs[at.attribute.name] = (at.attribute, None)
-                #word_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
-        # word_kwargs = {at.output_name: (at.attribute, annotations[at][n][0])
-        #                for at in annotations if not at.token and not at.ignored}
         word = Word(**word_kwargs)
         try:
             word = discourse.lexicon.find(word.spelling)
@@ -509,14 +504,13 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
                     word_token_kwargs['end'] = end if end is not None else ind + 1
                 if at.token:
                     word_token_kwargs['_transcription'] = (at.attribute, annotations[at][n][0])
-        # word_token_kwargs['begin'] = begin if begin is not None else ind
-        # word_token_kwargs['end'] = end if end is not None else ind + 1
+        word_token_kwargs['begin'] = begin if begin is not None else ind
+        word_token_kwargs['end'] = end if end is not None else ind + 1
         word_token = WordToken(**word_token_kwargs)
         discourse.add_word(word_token)
         if any(a.token for a in annotations):
             word.wordtokens.append(word_token)
         ind += 1
-
     return discourse
 
 def data_to_discourse(data, lexicon = None, call_back=None, stop_check=None):

@@ -1202,7 +1202,7 @@ class FeatureMatrixManager(QDialog):
         layout.addWidget(acFrame)
 
         note = QLabel('This window is only for adding and removing transcription/features systems.\n'
-                      'When loading a corpus, you will be asked which one of these systems you want to use with your'
+                      'When loading a corpus, you will be asked which one of these systems you want to use with your '
                       'corpus. If you have an existing corpus and you want to change systems, go to '
                       'the Features menu and select View/change feature system...')
         note.setWordWrap(True)

@@ -448,7 +448,7 @@ class WordToken():
                         setattr(self, '_frequency', value)
                 elif att.att_type == 'tier':
                     value = Transcription(value)
-                    #self._transcription = value
+                    self._transcription = value
 
                 setattr(self, key, value)
 
@@ -456,7 +456,7 @@ class WordToken():
                 # probably a transcription
                 value = Transcription(value)
                 setattr(self, key, value)
-                #self._transcription = value
+                self._transcription = value
 
             elif isinstance(value, str):
                 try:

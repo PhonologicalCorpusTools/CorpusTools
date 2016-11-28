@@ -968,11 +968,12 @@ class Word(object):
             if key not in self.descriptors:
                 self.descriptors.append(key)
 
-        if self._spelling is None and self._transcription is None:
+        if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
-        if self._spelling is None:
+        if self.spelling is None:
             self.Spelling = ''.join(map(str,self._transcription))
             self._spelling = self.Spelling
+            self._spelling_name = 'Spelling'
             if not 'Spelling' in self.descriptors:
                 self.descriptors.append('Spelling')
         if not 'Frequency' in self.descriptors:
@@ -984,7 +985,8 @@ class Word(object):
                 if isinstance(getattr(self,d,None), Transcription):
                     self._transcription_name = d
                     break
-
+            else:
+                self._transcription = None
 
     def initDefaults(self):
         for attribute, default_value in Word.word_attributes.items():
@@ -1012,13 +1014,14 @@ class Word(object):
         try:
             value = getattr(self, self._transcription_name, self._transcription)
         except (TypeError, AttributeError):
-            value = self.Transcription
+            value = None #transcription doesn't exist
         return value
 
     @transcription.setter
     def transcription(self, value):
-        setattr(self, self._transcription_name, value)
-        #self._transcription = value
+        if self._transcription_name is not None:
+            setattr(self, self._transcription_name, value)
+        self._transcription = value
 
     @transcription.deleter
     def transcription(self):
@@ -1026,13 +1029,17 @@ class Word(object):
 
     @property
     def spelling(self):
-        #return self._spelling
-        return getattr(self, self._spelling_name, self._transcription)
+        try:
+            value = getattr(self, self._spelling_name, self._spelling)
+        except (TypeError, AttributeError):
+            value = None #spelling doesn't exist
+        return value
 
     @spelling.setter
     def spelling(self, value):
-        setattr(self, self._spelling_name, value)
-        #self._spelling = value
+        if self._spelling_name is not None:
+            setattr(self, self._spelling_name, value)
+        self._spelling = value
 
     @spelling.deleter
     def spelling(self):

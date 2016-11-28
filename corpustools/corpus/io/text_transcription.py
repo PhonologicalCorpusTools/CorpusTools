@@ -30,7 +30,7 @@ def inspect_discourse_transcription(path):
     trans_delimiters = ['.', ';', ',']
 
     att = Attribute('transcription','tier','Transcription')
-    a = AnnotationType('transcription', None, None, attribute = att,
+    a = AnnotationType('Transcription', None, None, attribute = att,
                                             base = True)
 
     if os.path.isdir(path):
@@ -75,8 +75,8 @@ def transcription_text_to_data(corpus_name, path, annotation_types = None,
 
     for a in annotation_types:
         a.reset()
-    a = AnnotationType('spelling', None, None,
-                attribute = Attribute('spelling','spelling','Spelling'), anchor = True)
+    a = AnnotationType('Spelling', None, None,
+                attribute = Attribute('Spelling','spelling','Spelling'), anchor = True)
 
     annotation_types.append(a)
 
@@ -88,7 +88,7 @@ def transcription_text_to_data(corpus_name, path, annotation_types = None,
         call_back(0, len(lines))
         cur = 0
     trans_check = False
-    n = 'transcription'
+    n = 'Transcription'
 
     for line in lines:
         if stop_check is not None and stop_check():
@@ -118,7 +118,7 @@ def transcription_text_to_data(corpus_name, path, annotation_types = None,
             tier_elements[0].begin = level_count
             tier_elements[-1].end = level_count + len(tier_elements)
             annotations[n] = tier_elements
-            annotations['spelling'] = [word]
+            annotations['Spelling'] = [word]
             data.add_annotations(**annotations)
     #if data[n].delimiter and not trans_check:
     #    raise(DelimiterError('The transcription delimiter specified does not create multiple segments. Please specify another delimiter.'))

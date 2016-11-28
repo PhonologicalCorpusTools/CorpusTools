@@ -26,7 +26,7 @@ def inspect_discourse_spelling(path, support_corpus_path = None):
     list of AnnotationTypes
         Autodetected AnnotationTypes for the text file
     """
-    a = AnnotationType('spelling', None, None, anchor = True, token = False)
+    a = AnnotationType('Spelling', None, None, anchor = True, token = False)
     if os.path.isdir(path):
         for root, subdirs, files in os.walk(path):
             for filename in files:
@@ -46,7 +46,7 @@ def inspect_discourse_spelling(path, support_corpus_path = None):
                 a.add(trial, save = False)
     annotation_types = [a]
     if support_corpus_path is not None:
-        annotation_types += [AnnotationType('transcription', None, None, base = True)]
+        annotation_types += [AnnotationType('Transcription', None, None, base = True)]
     return annotation_types
 
 def spelling_text_to_data(corpus_name, path, annotation_types = None,
@@ -59,9 +59,9 @@ def spelling_text_to_data(corpus_name, path, annotation_types = None,
         support = load_binary(support_corpus_path)
     if annotation_types is None:
         annotation_types = inspect_discourse_spelling(path, support_corpus_path)
-
     for a in annotation_types:
         a.reset()
+
     data = DiscourseData(name, annotation_types)
 
     lines = text_to_lines(path)
@@ -82,7 +82,7 @@ def spelling_text_to_data(corpus_name, path, annotation_types = None,
         annotations = {}
         for word in line:
             spell = word.strip()
-            spell = ''.join(x for x in spell if not x in data['spelling'].ignored_characters)
+            spell = ''.join(x for x in spell if not x in data['Spelling'].ignored_characters)
             if spell == '':
                 continue
             word = Annotation(spell)
@@ -99,7 +99,7 @@ def spelling_text_to_data(corpus_name, path, annotation_types = None,
                 word.begins.append(level_count)
                 word.ends.append(level_count + len(tier_elements))
                 annotations[n] = tier_elements
-            annotations['spelling'] = [word]
+            annotations['Spelling'] = [word]
             data.add_annotations(**annotations)
 
     return data
@@ -163,7 +163,7 @@ def load_directory_spelling(corpus_name, path, annotation_types = None,
     return corpus
 
 def load_discourse_spelling(corpus_name, path, annotation_types = None,
-                            lexicon = None,
+                            lexicon = None, feature_system_path=None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """
