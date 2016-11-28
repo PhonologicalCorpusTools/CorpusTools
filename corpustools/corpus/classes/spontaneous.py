@@ -1,8 +1,5 @@
-
 from collections import OrderedDict
-
 from .lexicon import Transcription, Corpus, Attribute, Word
-
 import os
 import wave
 import traceback

@@ -1089,7 +1089,10 @@ class Word(object):
             self._spelling_name = 'Spelling'
             self.descriptors.append('Spelling')
 
-        self.Frequency = old_word.__dict__['frequency']
+        try:
+            self.Frequency = old_word.__dict__['frequency']
+        except KeyError:
+            self.Frequency = old_word.__dict__['Frequency']
         try:
             self.descriptors.remove('_frequency')
         except ValueError:
