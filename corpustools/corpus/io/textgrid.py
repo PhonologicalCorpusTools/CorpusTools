@@ -380,6 +380,7 @@ def load_directory_textgrid(corpus_name, path, annotation_types,
                                     stop_check=stop_check,
                                     call_back=call_back)
         corpus.add_discourse(d)
+
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         corpus.lexicon.set_feature_matrix(feature_matrix)

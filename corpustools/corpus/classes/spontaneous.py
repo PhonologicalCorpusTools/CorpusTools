@@ -2,7 +2,7 @@ from collections import OrderedDict
 from .lexicon import Transcription, Corpus, Attribute, Word
 import os
 import wave
-import traceback
+import random
 
 class Speaker(object):
     """
@@ -157,6 +157,10 @@ class Discourse(object):
         self.words = dict()
         self.lexicon = Corpus(self.name + ' lexicon')
         self.lexicon.has_wordtokens = True
+
+    def random_word(self):
+        word = random.choice(list(self.words.keys()))
+        return self.words[word]
 
     @property
     def attributes(self):

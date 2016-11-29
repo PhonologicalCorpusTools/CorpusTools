@@ -2085,7 +2085,7 @@ class Corpus(object):
                         setattr(sw, a.name, getattr(w, a.name))
                 sw.wordtokens += w.wordtokens
             except KeyError:
-                self.add_word(w)
+                self.add_word(copy.copy(w))
         if self.specifier is None and other.specifier is not None:
             self.set_feature_matrix(other.specifier)
 
@@ -2767,7 +2767,7 @@ class Corpus(object):
             except KeyError:
                 try:
                     key = '{} (1)'.format(w)
-                    result = [self.wordlist[key]]
+                    result = self.wordlist[key]
                     return result
                 except KeyError:
                     pass

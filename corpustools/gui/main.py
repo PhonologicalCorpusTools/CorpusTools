@@ -305,16 +305,14 @@ class MainWindow(QMainWindow):
             self.corpus = dialog.corpus
             self.inventoryModel = None
             if hasattr(self.corpus, 'lexicon'):
+                # the lexicon attribute is a Corpus object
                 self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
-                #the lexicon attribute is a Corpus object
-                if not hasattr(self.corpus.lexicon,'_version') or not self.corpus.lexicon._version == currentPCTversion:
-                    self.corpus.lexicon = self.forceUpdate(self.corpus.lexicon)
+                # if not hasattr(self.corpus.lexicon,'_version') or not self.corpus.lexicon._version == currentPCTversion:
+                #     self.corpus.lexicon = self.forceUpdate(self.corpus.lexicon)
 
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
-                    # self.discourseTree.selectionModel().selectionChanged.connect(self.changeText)
-                    # self.discourseTree.selectionModel().selectionChanged.connect(self.changeLexicon)
                     self.discourseTree.selectionModel().selectionChanged.connect(self.changeTextAndLexicon)
                     self.showDiscoursesAct.setEnabled(True)
                     self.showDiscoursesAct.setChecked(True)
