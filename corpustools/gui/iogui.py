@@ -701,6 +701,7 @@ class LoadCorpusDialog(PCTDialog):
             elif type_ in ['buckeye','timit']:
                 t = 'multiple'
             self.pathWidget.updateType(t)
+
         self.inspect()
 
     def help(self):
@@ -777,8 +778,12 @@ class LoadCorpusDialog(PCTDialog):
         for a in reversed(atts):
             ignorable = self.textType not in ['spelling','transcription']
             c = AnnotationTypeWidget(a, ignorable = ignorable)
+            if not ignorable:# self.textType in ['spelling', 'transcription']:
+                print(c.nameWidget.text())
+                c.nameWidget.setEnabled(False)
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
+
 
         set_default_trans = False
         set_default_spell = False
@@ -791,6 +796,7 @@ class LoadCorpusDialog(PCTDialog):
                 set_default_spell = True
             if set_default_spell and set_default_trans:
                 break
+
 
     def generateKwargs(self):
         path = self.pathWidget.value()

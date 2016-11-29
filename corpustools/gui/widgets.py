@@ -207,8 +207,6 @@ class ParsingDialog(QDialog):
 
 class AnnotationTypeWidget(QGroupBox):
     def __init__(self, annotation_type, parent = None, ignorable = True):
-        #if title is None:
-        #    title = 'Annotation type details'
         QGroupBox.__init__(self, annotation_type.name, parent)
 
         main = QHBoxLayout()
