@@ -518,7 +518,10 @@ class MainWindow(QMainWindow):
 
     @check_for_empty_corpus
     def showFeatureSystem(self):
-        oldSystem = self.corpusModel.corpus.specifier.name
+        try:
+            oldSystem = self.corpusModel.corpus.specifier.name
+        except AttributeError:
+            oldSystem = None
         dialog = EditFeatureMatrixDialog(self, self.corpusModel.corpus, self.settings)
         results = dialog.exec_()
         if results:
