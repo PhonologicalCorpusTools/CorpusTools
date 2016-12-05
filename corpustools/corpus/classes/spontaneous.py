@@ -100,10 +100,11 @@ class SpontaneousSpeechCorpus(object):
         for d in self.discourses.values():
             yield d
 
-    def __setstate__(self,state):
-        self.__dict__.update(state)
-        self.lexicon.has_wordtokens = True
+    def __getstate__(self):
+        return self.__dict__
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
     def add_discourse(self, discourse):
         """
@@ -157,6 +158,7 @@ class Discourse(object):
         self.words = dict()
         self.lexicon = Corpus(self.name + ' lexicon')
         self.lexicon.has_wordtokens = True
+        self.lexicon.discourse = self
 
     def random_word(self):
         word = random.choice(list(self.words.keys()))
@@ -169,6 +171,7 @@ class Discourse(object):
         for a in self._attributes:
             if not a.display_name in [at.display_name for at in att_list]:
                 att_list.append(a)
+        #att_list.sort()
         return att_list
         #return self._attributes
 
@@ -284,11 +287,12 @@ class Discourse(object):
         if 'wav_path' not in state:
             state['wav_path'] = None
         self.__dict__.update(state)
+
         if hasattr(self,'lexicon'):
             self.lexicon.has_wordtokens = True
-        for wt in self:
-            self.lexicon[str(wt.wordtype)].wordtokens.append(wt)
-            #wt.wordtype.wordtokens.append(wt)
+        # for wt in self:
+        #     self.lexicon[str(wt.wordtype)].wordtokens.append(wt)
+        #     wt.wordtype.wordtokens.append(wt)
 
     def __iter__(self):
         for k in sorted(self.words.keys()):
@@ -495,6 +499,8 @@ class WordToken():
         state['wavpath'] = None
         return state
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
     def __eq__(self, other):
         if not isinstance(other,WordToken):
