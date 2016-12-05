@@ -1123,9 +1123,9 @@ class Word(object):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        state['wordtokens'] = []
-        state['_corpus'] = None
-        #for k,v in state.items():
+        # state['wordtokens'] = []
+        # state['_corpus'] = None
+        # for k,v in state.items():
         #    if (k == 'transcription' or k in self.tiers) and v is not None:
         #        state[k] = [x.symbol for x in v] #Only store string symbols
         return state
@@ -1607,6 +1607,12 @@ class Attribute(object):
             else:
                 self._default_value = Transcription(None)
 
+    def __gt__(self, other):
+        return self.display_name < other.display_name
+
+    def __lt__(self, other):
+        return not self.__gt__(other)
+
     @property
     def delimiter(self):
         if self.att_type != 'tier':
@@ -2013,7 +2019,7 @@ class Corpus(object):
         Inventory that contains information about segments in the Corpus
     """
 
-    corpus_attributes = {'name':'corpus', 'wordlist': dict(),
+    corpus_attributes = {'name':'corpus', 'wordlist': dict(), '_discourse': None,
                   'specifier': None, 'inventory': None, 'inventoryModel': None, 'has_frequency': True,
                   'has_spelling':False, 'has_wordtokens':False, 'has_audio': False, 'wav_path': None,
                   '_attributes': list(),
@@ -2211,7 +2217,7 @@ class Corpus(object):
         # methods decorated with @property
         #these methods return the value of word._transcription, word._spelling, or word._frequency
         #we don't want to put them into the GUI column headers because that will lead to duplication
-        return [a for a in self._attributes if not a.name in ('spelling', 'transcription', 'frequency')]
+        return sorted([a for a in self._attributes if not a.name in ('spelling', 'transcription', 'frequency')])
 
     @property
     def words(self):
@@ -2436,7 +2442,7 @@ class Corpus(object):
             word.remove_attribute(name)
 
     def __getstate__(self):
-        state = self.__dict__.copy()
+        state = self.__dict__
         return state
 
     def __setstate__(self, state):
@@ -2467,17 +2473,17 @@ class Corpus(object):
             #Backwards compatability
             for k,w in self.wordlist.items():
                 w._corpus = self
-                for a in self.attributes:
-                    if a.att_type == 'tier':
-                        if not isinstance(getattr(w,a.name), Transcription):
-                            setattr(w,a.name,Transcription(getattr(w,a.name)))
-                    else:
-                        try:
-                            a.update_range(getattr(w,a.name))
-                        except AttributeError as e:
-                            print(k)
-                            print(w.__dict__)
-                            raise(e)
+                # for a in self.attributes:
+                #     if a.att_type == 'tier':
+                #         if not isinstance(getattr(w,a.name), Transcription):
+                #             setattr(w,a.name,Transcription(getattr(w,a.name)))
+                #     else:
+                #         try:
+                #             a.update_range(getattr(w,a.name))
+                #         except AttributeError as e:
+                #             print(k)
+                #             print(w.__dict__)
+                #             raise(e)
 
         except Exception as e:
             raise(e)

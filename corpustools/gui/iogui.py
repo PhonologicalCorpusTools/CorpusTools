@@ -779,7 +779,6 @@ class LoadCorpusDialog(PCTDialog):
             ignorable = self.textType not in ['spelling','transcription']
             c = AnnotationTypeWidget(a, ignorable = ignorable)
             if not ignorable:# self.textType in ['spelling', 'transcription']:
-                print(c.nameWidget.text())
                 c.nameWidget.setEnabled(False)
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
@@ -982,7 +981,6 @@ class LoadCorpusDialog(PCTDialog):
                 else:
                     #It's a Discourse object
                     c = self.corpus.lexicon
-
                 unmatched = list()
                 for seg in c.inventory:
                     if seg.symbol in c.inventory.non_segment_symbols:
@@ -993,9 +991,6 @@ class LoadCorpusDialog(PCTDialog):
                         else:
                             unmatched.append(seg.symbol)
 
-                # if not unmatched or c.specifier is None:
-                #     save_binary(self.corpus,
-                #                 corpus_name_to_path(self.settings['storage'], self.corpus.name))
                 if unmatched and c.specifier is not None:
                     unmatched = ','.join(unmatched)
                     alert = QMessageBox()
@@ -1027,6 +1022,7 @@ class LoadCorpusDialog(PCTDialog):
                 save_binary(self.corpus, corpus_name_to_path(self.settings['storage'], self.corpus.name))
                 if c.specifier is not None:
                     save_binary(c.specifier, system_name_to_path(self.settings['storage'], c.specifier.name))
+
                 QDialog.accept(self)
 
     def updateName(self):

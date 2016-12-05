@@ -1,8 +1,7 @@
-
-
 import sys
 import os
 import scipy.special
+#from scipy import special
 import PyQt5
 from cx_Freeze import setup, Executable
 
