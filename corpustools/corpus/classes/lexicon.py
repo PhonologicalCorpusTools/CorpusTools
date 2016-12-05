@@ -1060,6 +1060,11 @@ class Word(object):
             else:
                 setattr(self, attribute, default_value)
 
+        if hasattr(old_word, 'wordtokens'):
+            self.wordtokens = list()
+            for wt in old_word.wordtokens:
+                self.wordtokens.append(copy.copy(wt))
+
         self.descriptors.extend([att for att in Word.word_attributes if not att.startswith('_')])
         self.descriptors = list(set(self.descriptors))
 
@@ -2088,8 +2093,9 @@ class Corpus(object):
                 sw.frequency += w.frequency
                 for a in self.attributes:
                     if getattr(sw, a.name) == a.default_value and getattr(w, a.name) != a.default_value:
-                        setattr(sw, a.name, getattr(w, a.name))
-                sw.wordtokens += w.wordtokens
+                        setattr(sw, a.name, copy.copy(getattr(w, a.name)))
+                for wt in w.wordtokens:
+                    sw.wordtokens.append(copy.copy(wt))
             except KeyError:
                 self.add_word(copy.copy(w))
         if self.specifier is None and other.specifier is not None:

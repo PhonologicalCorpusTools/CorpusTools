@@ -189,6 +189,7 @@ class Discourse(object):
     def __len__(self):
         return len(self.words.keys())
 
+
     def __eq__(self, other):
         if not isinstance(other,Discourse):
             return False
@@ -426,7 +427,14 @@ class WordToken():
 
 
     """
-    def __init__(self,**kwargs):
+    wordtoken_attributes = {'wordtype': None, 'discourse': None, 'speaker': None, 'wavpath': None, 'begin': None,
+                            'end': None, '_spelling': None, '_transcription': None, '_freq_names': None}
+    def __init__(self,update=False,**kwargs):
+
+        if update:
+            self.update(update)
+            return
+
         self.wordtype = kwargs.pop('word',None)
         self.discourse = None
         self.speaker = None
@@ -493,6 +501,20 @@ class WordToken():
                 else:
                     self._spelling = None
 
+    def __copy__(self):
+        return WordToken(update=self)
+
+    def update(self, old_token):
+
+        for attribute, value in old_token.__dict__.items():
+            if not hasattr(self, attribute):
+                setattr(self, attribute, value)
+
+        for attribute, default_value in WordToken.wordtoken_attributes.items():
+            if hasattr(old_token, attribute):
+                setattr(self, attribute, getattr(old_token, attribute))
+            else:
+                setattr(self, attribute, default_value)
 
     def __getstate__(self):
         state = self.__dict__.copy()
