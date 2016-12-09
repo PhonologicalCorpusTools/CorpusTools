@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys
 import os
+from multiprocessing import freeze_support
+from corpustools.gui.main import MainWindow,QApplicationMessaging
 
 if sys.platform.startswith('win'):
     if getattr(sys, 'frozen', False):
@@ -16,11 +18,7 @@ if sys.platform.startswith('win'):
         sys.stdout = FakeSTD()
         sys.stderr = FakeSTD()
 
-from multiprocessing import freeze_support
-from corpustools.gui.main import MainWindow,QApplicationMessaging
-
 def main():
-    freeze_support()
 
     app = QApplicationMessaging(sys.argv)
     if app.isRunning():
@@ -38,5 +36,6 @@ def main():
 
 
 if __name__ == '__main__':
+    freeze_support()
     main()
 

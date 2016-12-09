@@ -1,7 +1,6 @@
 import sys
 import os
 import scipy.special
-#from scipy import special
 import PyQt5
 from cx_Freeze import setup, Executable
 
@@ -9,9 +8,9 @@ def readme():
     with open('README.md') as f:
         return f.read()
 
-
 ufuncs_path = scipy.special._ufuncs.__file__
-incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1]),('docs/build','html')]
+incl_files = [(ufuncs_path,os.path.split(ufuncs_path)[1]),('docs','html')]
+
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
@@ -23,18 +22,18 @@ group_name = 'PCT'
 exe_name = 'Phonological CorpusTools'
 
 shortcut_table = [
-    ("StartMenuShortcut",        # Shortcut
-     "ProgramMenuFolder",          # Directory_
-     "%s" % (exe_name,),           # Name
-     "TARGETDIR",              # Component_
-     "[TARGETDIR]pct.exe",# Target
-     None,                     # Arguments
-     None,                     # Description
-     None,                     # Hotkey
-     None,   # Icon
-     None,                     # IconIndex
-     None,                     # ShowCmd
-     'TARGETDIR'               # WkDir
+    ("StartMenuShortcut",       # Shortcut
+     "ProgramMenuFolder",       # Directory_
+     "%s" % (exe_name,),        # Name
+     "TARGETDIR",               # Component_
+     "[TARGETDIR]pct.exe",      # Target
+     None,                      # Arguments
+     None,                      # Description
+     None,                      # Hotkey
+     None,                      # Icon
+     None,                      # IconIndex
+     None,                      # ShowCmd
+     'TARGETDIR'                # WkDir
      )
     ]
 
@@ -64,9 +63,10 @@ build_exe_options = {"excludes": [
                             "scipy.special",
                             "scipy.special._ufuncs_cxx",
                             "scipy.sparse.csgraph._validation",
-                            #"acousticsim",
+                            "scipy.spatial",
                             "textgrid",
-                            "sys"]
+                            "sys",
+                            "multiprocessing"]
                             }
 
 msi_data = {"Shortcut": shortcut_table}
@@ -115,13 +115,14 @@ setup(name='Phonological CorpusTools',
                 'corpustools.symbolsim',
                 'corpustools.neighdens',
                 'corpustools.mutualinfo',
-                'corpustools.phonoprob'],
-      executables = [Executable('corpustools/command_line/pct.py',
+                'corpustools.phonoprob',
+                ],
+      executables = [Executable('corpustools/command_line/pct.pyw',
                             #targetName = 'pct',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            #icon='docs/images/icon.icns'
+                            #icon='docs/images/favicon.png'
                             )],
       options={
           'bdist_msi': bdist_msi_options,

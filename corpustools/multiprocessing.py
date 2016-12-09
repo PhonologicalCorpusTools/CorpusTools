@@ -1,5 +1,5 @@
 
-from multiprocessing import Process, Manager, Queue, cpu_count, Value, Lock, Pool, JoinableQueue
+from multiprocessing import Process, process, Manager, Queue, cpu_count, Value, Lock, Pool, JoinableQueue
 from queue import Empty, Full
 
 import time

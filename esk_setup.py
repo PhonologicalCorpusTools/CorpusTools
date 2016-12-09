@@ -5,7 +5,8 @@ import PyQt5
 import os
 import sys
 from glob import glob
-
+from corpustools import acousticsim
+from corpustools.corpus.io import textgrid
 
 ufuncs_path = scipy.special._ufuncs.__file__
 doc_files = dict()
@@ -51,7 +52,8 @@ freezer_options = {
                             "scipy.sparse.csgraph._validation",
                             "acousticsim",
                             "textgrid",
-                            "sys"],
+                            "sys",
+                            "multiprocessing"],
                 "excludes":[
                         'matplotlib',
                         "tcl",
@@ -72,8 +74,8 @@ exe = bdist_esky.Executable('corpustools/command_line/pct.py',
                             #targetName = 'pct',
                             gui_only=True,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
-                            #shortcutName=exe_name,
-                            icon='docs/images/logo.ico'
+                            shortcutName=exe_name,
+                            #icon='docs/images/favicon.png'
                             )
 
 build_exe_options = {"excludes": [
@@ -102,10 +104,11 @@ build_exe_options = {"excludes": [
                             "scipy.sparse.csgraph._validation",
                             "acousticsim",
                             "textgrid",
-                            "sys"]
+                            "sys",
+                            "multiprocessing"]
                             }
 
-bdist_mac_options = {'iconfile':'docs/images/icon.icns',
+bdist_mac_options = {'iconfile':'docs/images/favicon.icns',
                     'qt_menu_nib':'/opt/local/share/qt5/plugins/platforms',
                     'bundle_name':'Phonological CorpusTools',
                     #'include_frameworks':["/Library/Frameworks/Tcl.framework",
@@ -129,7 +132,8 @@ setup(name="PhonologicalCorpusTools",
                 'corpustools.symbolsim',
                 'corpustools.neighdens',
                 'corpustools.mutualinfo',
-                'corpustools.phonoprob',],
+                'corpustools.phonoprob',
+                'corpustoools.acousticsim'],
         data_files = incl_files,
         options={
                 #"bdist_mac_options":bdist_mac_options,
