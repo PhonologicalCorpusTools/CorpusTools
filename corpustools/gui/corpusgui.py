@@ -184,6 +184,7 @@ class CorpusSummary(QDialog):
         self.setLayout(layout)
         self.setWindowTitle('Corpus summary')
 
+
     def hideWidgets(self,index):
         return
         if index == 0:

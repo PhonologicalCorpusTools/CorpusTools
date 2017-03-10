@@ -6,7 +6,6 @@ import operator
 import locale
 import copy
 
-
 from corpustools.exceptions import CorpusIntegrityError
 
 class Segment(object):

@@ -1621,7 +1621,7 @@ class InventoryBox(QWidget):
 
     def generateSegmentButton(self,symbol):
         wid = SegmentButton(symbol)#This needs to be a SegmentButton for the i,j segment
-        wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
+        #wid.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.MinimumExpanding)
         b = QGridLayout()
         b.setAlignment(Qt.AlignCenter)
         b.setContentsMargins(0, 0, 0, 0)
@@ -1779,7 +1779,6 @@ class MultiSegmentCell(QWidget):
             if col > col_max:
                 col = 0
                 row += 1
-
         self.setLayout(layout)
 
     def __str__(self):

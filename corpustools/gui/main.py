@@ -166,7 +166,6 @@ class MainWindow(QMainWindow):
             setattr(self, window_name, None)
         self.setMinimumWidth(self.menuBar().sizeHint().width())
 
-
     def sizeHint(self):
         sz = QMainWindow.sizeHint(self)
         minWidth = self.menuBar().sizeHint().width()

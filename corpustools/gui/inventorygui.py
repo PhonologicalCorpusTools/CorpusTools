@@ -134,10 +134,15 @@ class InventoryManager(QDialog):
             self.inventory.resetCategories()
 
     def autoCategorize(self):
-        if not any([x in self.inventory.features for x in ['voc', 'consonantal']]):
+
+
+        if (not set(self.inventory.minimum_features['spe']).issubset(set(self.inventory.features)) and
+            not set(self.inventory.minimum_features['hayes']).issubset(set(self.inventory.features))):
             alert = QMessageBox()
-            alert.setWindowTitle('Warning')
-            alert.setText(('Your feature system is not compatible with auto-categorization. Sorry about that!'))
+            alert.setWindowTitle('Action cannot be completed')
+            alert.setText(('Your inventory cannot be auto-categorized. '
+                           'Currently, only SPE-style and Hayes-style feature systems '
+                            'are compatible with this function. Sorry about that!'))
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return

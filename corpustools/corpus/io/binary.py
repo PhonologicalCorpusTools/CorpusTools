@@ -176,3 +176,10 @@ class PCTUnpickler(pickle._Unpickler):
                 dispatch[key[0]](self)
         except pickle._Stop as stopinst:
             return stopinst.value
+
+
+if __name__ == '__main__':
+    corpus = load_binary(r'C:\Users\Scott\Documents\PCT\CorpusTools\CORPUS\Lexique_for_PCT.corpus')
+    print(corpus.name)
+    print(len(corpus))
+    print(corpus.specifier.name)
