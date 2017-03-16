@@ -114,7 +114,7 @@ class BaseCorpusContext(object):
     def get_phone_probs(self, gramsize = 1, probability = True, preserve_position = True, log_count = True):
         """
         Generate (and cache) phonotactic probabilities for segments in
-        the Corpus.
+        the Corpus. # <- this doesn't seem right: surely it's just their probability (frequency) in the corpus, not their phonotactic probability? --KCH
 
         Parameters
         ----------
@@ -123,7 +123,7 @@ class BaseCorpusContext(object):
 
         probability : boolean
             If True, frequency counts will be normalized by total frequency,
-            defaults to False
+            defaults to False # <- doesn't it default to True as defined above? -- KCH
 
         preserve_position : boolean
             If True, segments will in different positions in the transcription
@@ -137,7 +137,7 @@ class BaseCorpusContext(object):
         -------
         dict
             Keys are segments (or sequences of segments) and values are
-            their phonotactic probability in the Corpus
+            their phonotactic probability in the Corpus # <- as above; KCH
         """
         if (gramsize, preserve_position, log_count) not in self._freq_base:
             freq_base = collections.defaultdict(float)
