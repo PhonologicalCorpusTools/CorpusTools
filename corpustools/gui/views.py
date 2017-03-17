@@ -727,13 +727,12 @@ class ResultsWindow(QDialog):
         layout.addWidget(self.table)
         self.aclayout = QHBoxLayout()
         self.redoButton = QPushButton('Reopen function dialog')
-        #self.redoButton.setFixedSize(self.redoButton.minimumSizeHint())
         self.redoButton.clicked.connect(self.redo)
         self.saveButton = QPushButton('Save to file')
-        #self.saveButton.setFixedSize(self.saveButton.minimumSizeHint())
+
         self.saveButton.clicked.connect(self.save)
         self.closeButton = QPushButton('Close window')
-        #self.closeButton.setFixedSize(self.closeButton.minimumSizeHint())
+
         self.closeButton.clicked.connect(self.reject)
         self.aclayout.addWidget(self.redoButton)
         self.aclayout.addWidget(self.saveButton)
@@ -742,14 +741,14 @@ class ResultsWindow(QDialog):
         acframe.setLayout(self.aclayout)
         layout.addWidget(acframe)
         self.setLayout(layout)
-        #self.setWidget(frame)
+
         self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()
         self.setWindowTitle(title)
         dialogWidth = self.table.horizontalHeader().length() + 50
         dialogHeight = self.table.verticalHeader().length() + 50
         self.resize(dialogWidth, dialogHeight)
-        #self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 
     def sizeHint(self):
         sz = QDialog.sizeHint(self)
@@ -818,6 +817,34 @@ class PhonoSearchResults(ResultsWindow):
         self.raise_()
         self.activateWindow()
 
+class UncategorizedView(QTableView):
+
+    def __init__(self, inventory):
+        super().__init__()
+        self.setModel(inventory)
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+        self.horizontalHeader().hide()
+        self.verticalHeader().hide()
+        self.doubleClicked.connect(self.showFeatures)
+
+    def showFeatures(self, index):
+        try:
+            seg = self.model().data(index, role=Qt.DisplayRole)
+        except IndexError:
+            return
+
+        if not seg:
+            return #emtpy cells in an UncategorizedModel have empty strings
+
+        alert = QMessageBox()
+        windowTitle, text = self.model().getPartialCategorization(seg)
+        alert.setWindowTitle(windowTitle)
+        alert.setText(text)
+        alert.addButton('Return', QMessageBox.AcceptRole)
+        alert.exec_()
+        return
+
 class InventoryView(QTableView):
 
     dropSuccessful = Signal(str)
@@ -848,33 +875,10 @@ class InventoryView(QTableView):
         self.verticalHeader().customContextMenuRequested.connect(self.showRowMenu)
         #self.verticalHeader().setStretchLastSection(True)
 
-        self.doubleClicked.connect(self.showFeatures)
-
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
-
-    def showFeatures(self, index):
-        model_name = self.model().__class__.__name__
-        if not model_name == 'UncategorizedModel':
-            return
-
-        try:
-            seg = self.model().data(index, role=Qt.DisplayRole)
-        except IndexError:
-            return
-
-        if not seg:
-            return #emtpy cells in an UncategorizedModel have empty strings
-
-        alert = QMessageBox()
-        windowTitle, text = self.model().getPartialCategorization(seg)
-        alert.setWindowTitle(windowTitle)
-        alert.setText(text)
-        alert.addButton('Return', QMessageBox.AcceptRole)
-        alert.exec_()
-        return
 
 
     def showRowMenu(self, pos):

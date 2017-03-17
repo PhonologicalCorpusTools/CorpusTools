@@ -1,5 +1,5 @@
 from .imports import *
-from .views import InventoryView
+from .views import InventoryView, UncategorizedView
 from .models import ConsonantModel, VowelModel, UncategorizedModel
 from .widgets import FeatureEdit, FeatureCompleter
 from collections import namedtuple
@@ -33,9 +33,7 @@ class InventoryManager(QDialog):
         inventoryTabs.addTab(self.vowelView, 'Vowels')
 
         self.uncModel = UncategorizedModel(self.inventory)
-        self.uncView = InventoryView(self.uncModel)
-        self.uncView.horizontalHeader().hide()
-        self.uncView.verticalHeader().hide()
+        self.uncView = UncategorizedView(self.uncModel)
         inventoryTabs.addTab(self.uncView, 'Uncategorized segments')
 
         self.inventory.modelResetSignal.connect(self.uncModel.modelReset)
@@ -79,8 +77,8 @@ class InventoryManager(QDialog):
         '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
             'default features.\n'
         '* Auto-categorization currently only works with SPE or Hayes feature systems.\n'
-        '* If you have recently made changes to your feature system, you may need to click "Update features" to see '
-            'those changes in effect.'
+        '* If you have recently made changes to your feature system, you may need to click "Update deefault features" '
+            'to see those changes in effect.'
         ))
 
         #topmessage.setWordWrap(True)
@@ -88,7 +86,7 @@ class InventoryManager(QDialog):
         topmessage.setFont(font)
         layout.addWidget(topmessage)
 
-        recatButton = QPushButton('Update features')
+        recatButton = QPushButton('Update default features')
         recatButton.clicked.connect(self.recategorize)
         autoRecatButton = QPushButton('Autocategorize')
         autoRecatButton.clicked.connect(self.autoCategorize)
@@ -111,8 +109,6 @@ class InventoryManager(QDialog):
         layout.addLayout(buttonLayout)
 
         self.setLayout(layout)
-        #self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        #self.adjustSize()
 
     def accept(self):
         self.recategorize(exiting=True)
@@ -150,8 +146,8 @@ class InventoryManager(QDialog):
         if not self.editCons.text() or not self.editVowels.text():
             alert = QMessageBox()
             alert.setWindowTitle('Missing information')
-            alert.setText(('You need to include a default consonant feature and default vowel feature. Please ensure'
-                            'that both values are filled.'))
+            alert.setText(('You need to include a default consonant feature and a default vowel feature.\n'
+                           'Please ensure that both values are filled in.'))
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return
@@ -159,9 +155,9 @@ class InventoryManager(QDialog):
         if not self.inventory.cons_features[0] or not self.inventory.vowel_features[0]:
             alert = QMessageBox()
             alert.setWindowTitle('Feature error')
-            alert.setText(('You have entered default features, but you did not click "Update features". Any time that '
-                            'you change the default features, you must click that button in order for the changes to '
-                            'have an effect.'))
+            alert.setText(('You have entered default features, but you did not click "Update default features". '
+                           'Any time that you change the default features, you must click that button in order '
+                            'for the changes to have an effect.'))
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return
@@ -175,8 +171,9 @@ class InventoryManager(QDialog):
         vowel_features = [item.strip() for item in self.editVowels.text().split(',')] if self.editVowels.text() else None
         if (cons_features is None or vowel_features is None) and not exiting:
             alert = QMessageBox()
-            alert.setText('One of the categories is missing a default feature. Please fill in both.')
             alert.setWindowTitle('Missing feature value')
+            alert.setText(('You need to include a default consonant feature and a default vowel feature.\n'
+                           'Please ensure that both values are filled in.'))
             alert.exec_()
             return
         round_features = None #not yet implemented

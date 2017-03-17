@@ -306,8 +306,6 @@ class MainWindow(QMainWindow):
             if hasattr(self.corpus, 'lexicon'):
                 # the lexicon attribute is a Corpus object
                 self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
-                # if not hasattr(self.corpus.lexicon,'_version') or not self.corpus.lexicon._version == currentPCTversion:
-                #     self.corpus.lexicon = self.forceUpdate(self.corpus.lexicon)
 
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()

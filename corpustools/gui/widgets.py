@@ -2162,7 +2162,6 @@ class SegmentPairSelectWidget(QGroupBox):
         if single_segment:
             vbox.addWidget(self.addSingleButton)
         vbox.addWidget(self.addButton)
-        #vbox.addWidget(self.addSetButton)
         if features:
             if len(self.inventory.features) == 0:
                 self.addFeatButton.setEnabled(False)
@@ -2172,7 +2171,6 @@ class SegmentPairSelectWidget(QGroupBox):
         vbox.addWidget(self.table)
         self.setLayout(vbox)
 
-        #self.setFixedWidth(self.minimumSizeHint().width())
 
     def singleSegPopup(self):
         dialog = SingleSegmentDialog(self.inventory)

@@ -20,7 +20,7 @@ class InventorySummary(QWidget):
 
         layout.setAlignment(Qt.AlignTop)
 
-        self.segments = InventoryBox('Segments',inventory)
+        self.segments = InventoryBox('Segments',inventory, show_seglist=False)
         self.segments.setExclusive(True)
         for b in self.segments.btnGroup.buttons():
             b.clicked.connect(self.summarizeSegment)
@@ -143,33 +143,31 @@ class CorpusSummary(QDialog):
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
-        #layout.setSizeConstraint(QLayout.SetFixedSize)
 
         main = QFormLayout()
 
         main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
+        main.addRow(QLabel('Number of words types:'), QLabel(str(len(c))))
 
-        detailTabs = QTabWidget()
         if c.specifier is not None:
             main.addRow(QLabel('Feature system:'),QLabel(c.specifier.name))
-            self.inventorySummary = InventorySummary(corpus, inventory)
-            detailTabs.addTab(self.inventorySummary, 'Inventory')
+            showInventory = True
         else:
             main.addRow(QLabel('Feature system:'),QLabel('None'))
-
-        main.addRow(QLabel('Number of words types:'),QLabel(str(len(c))))
-
-        self.attributeSummary = AttributeSummary(c, columns)
-
-        detailTabs.addTab(self.attributeSummary,'Columns')
-        detailTabs.currentChanged.connect(self.hideWidgets)
-
-        main.addRow(detailTabs)
+            showInventory = False
+        #the inventory is loaded near the end of this function, in order
+        #to make it appear in the right place in the layout
 
         mainFrame = QFrame()
         mainFrame.setLayout(main)
 
-        layout.addWidget(mainFrame, alignment = Qt.AlignCenter)
+        layout.addWidget(mainFrame)#, alignment = Qt.AlignCenter)
+
+        layout.addWidget(AttributeSummary(corpus, columns))
+
+        if showInventory:
+            self.inventorySummary = InventorySummary(corpus, inventory)
+            layout.addWidget(self.inventorySummary)
 
         self.doneButton = QPushButton('Done')
         acLayout = QHBoxLayout()
@@ -183,19 +181,6 @@ class CorpusSummary(QDialog):
 
         self.setLayout(layout)
         self.setWindowTitle('Corpus summary')
-
-
-    def hideWidgets(self,index):
-        return
-        if index == 0:
-            self.inventorySummary.hide()
-            self.attributeSummary.hide()
-        elif index == 1:
-            self.inventorySummary.hide()
-            self.attributeSummary.show()
-        self.adjustSize()
-
-
 
 class AddWordDialog(QDialog):
     def __init__(self, parent, corpus, inventory, word = None):
