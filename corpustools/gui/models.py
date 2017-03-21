@@ -2,13 +2,10 @@ from PyQt5.QtCore import QVariant
 import random
 import itertools
 import collections
-from copy import deepcopy
 from .widgets import *
 from corpustools.corpus.classes.lexicon import Segment, Inventory
 from corpustools.exceptions import CorpusIntegrityError
-
-from collections import Counter, defaultdict
-
+from collections import defaultdict
 from .imports import *
 
 class BaseTableModel(QAbstractTableModel):
@@ -939,6 +936,7 @@ class InventoryModel(QAbstractTableModel):
         self.filterGenericNames()
         self.isNew = False
 
+
     def initDefaults(self):
         for attribute, default_value in Inventory.inventory_attributes.items():
             if isinstance(default_value, list):
@@ -1420,11 +1418,11 @@ class InventoryModel(QAbstractTableModel):
         self.all_columns.update(self.vowel_column_header_order)
         self.all_rows.update(self.cons_row_header_order)
         self.all_rows.update(self.vowel_row_header_order)
+
         col_total = max(len(self.all_columns), len(self.uncategorized))
         row_total = len(self.all_rows) + 1  # add one row for uncategorized
 
-        self._data = [[None for j in range(col_total)]
-                      for k in range(row_total)]
+        self._data = [[None for j in range(col_total)] for k in range(row_total)]
 
         #ADD IN UNCATEGORIZED DATA
         for j in range(len(self._data[-1])):
@@ -1465,6 +1463,7 @@ class InventoryModel(QAbstractTableModel):
         self.vowelRows = set()
         self.consColumns = set()
         self.vowelColumns = set()
+        self.uncategorized = list()
         self.filterNames = False
         self.modelReset()
 
@@ -1902,36 +1901,24 @@ class ConsonantModel(QSortFilterProxyModel):
         else:
             return False
 
-class UncategorizedModel(QSortFilterProxyModel):
+class UncategorizedModel(QAbstractTableModel):
 
     def __init__(self, inventory, col_max = 5):
         super().__init__()
-        self.setSourceModel(inventory)
-        self.segs = self.sourceModel().segs
-        self.non_segment_symbols = self.sourceModel().non_segment_symbols
+        self.sourceInventory = inventory
+        self.inventory = inventory._data[-1]
+        self.non_segment_symbols = inventory.non_segment_symbols
         self._data = list()
         self.col_max = col_max
         self.organizeData()
-
-    def mapFromSource(self, index):
-        if not index.isValid():
-            return QModelIndex()
-        row = index.column()%self.col_max
-        column = int(index.column()/self.col_max)
-        return self.index(row, column)
-
-    def mapToSource(self, index):
-        if not index.isValid():
-            return QModelIndex()
-        row = self.sourceModel().rowCount()-1
-        column = (index.row()*self.col_max)+index.column()
-        return self.sourceModel().index(row, column)
+        self.modelReset()
 
     def organizeData(self):
-        info = self.sourceModel()._data[self.sourceModel().rowCount()-1]
-        info = [i for i in info if i]
+        info = self.sourceInventory._data[-1]
+        info = [i for i in info if i is not None]
+        info.sort()
         row = list()
-        for i in info:
+        for row_num,i in enumerate(info):
             row.append(i)
             if len(row) == self.col_max:
                 self._data.append(row)
@@ -1974,10 +1961,10 @@ class UncategorizedModel(QSortFilterProxyModel):
         return windowTitle, text
 
     def features(self):
-        return self.sourceModel().features
+        return self.sourceInventory.features
 
     def possible_values(self):
-        return self.sourceModel().possible_values
+        return self.sourceInventory.possible_values
 
     def rowCount(self, parent=None):
         return len(self._data)
