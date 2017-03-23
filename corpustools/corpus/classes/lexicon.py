@@ -92,15 +92,10 @@ class Segment(object):
                 return False
         elif isinstance(specification,list) or isinstance(specification, set):
             for f in specification:
-                print(f)
                 try:
                     if self[f[1:]]!=f[0]:
-                        print('no match', self.symbol, self.features)
                         return False
-                    else:
-                        print('match', self.symbol, self.features)
                 except KeyError:
-                    print('KeyError', self.symbol, self.features)
                     return False
         elif isinstance(specification, dict):
             for f,v in specification.items():
