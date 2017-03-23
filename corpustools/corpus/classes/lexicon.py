@@ -92,10 +92,15 @@ class Segment(object):
                 return False
         elif isinstance(specification,list) or isinstance(specification, set):
             for f in specification:
+                print(f)
                 try:
                     if self[f[1:]]!=f[0]:
+                        print('no match', self.symbol, self.features)
                         return False
+                    else:
+                        print('match', self.symbol, self.features)
                 except KeyError:
+                    print('KeyError', self.symbol, self.features)
                     return False
         elif isinstance(specification, dict):
             for f,v in specification.items():
@@ -110,10 +115,12 @@ class Segment(object):
         return item.lower() in self.features
 
     def __getitem__(self, key):
-        return self.features[key.lower()]
+        #return self.features[key.lower()]
+        return self.features[key]
 
     def __setitem__(self, key, value):
-        self.features[key.lower()] = value
+        #self.features[key.lower()] = value
+        self.features[key] = value
 
     def __repr__(self):
         return self.__str__()
