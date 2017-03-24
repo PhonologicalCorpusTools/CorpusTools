@@ -1602,8 +1602,10 @@ class InventoryBox(QWidget):
         row = 0
         col = 0
         table = [[]]
-        for s in self.inventory.uncategorized:
-            btn = self.generateSegmentButton(s.symbol)
+        segs = self.inventory._data[-1]
+        segs.sort()
+        for s in segs:
+            btn = self.generateSegmentButton(s)#.symbol)
             btn.setCheckable(True)
             table[row].append(btn)
             col += 1
@@ -1613,7 +1615,7 @@ class InventoryBox(QWidget):
                 table.append([])
 
         self.uncTable.setRowCount(len(table))
-        self.uncTable.setColumnCount(col_max)
+        self.uncTable.setColumnCount(col_max+1)
         for row in range(len(table)):
             for col in range(len(table[row])):
                 self.uncTable.setCellWidget(row, col, table[row][col])

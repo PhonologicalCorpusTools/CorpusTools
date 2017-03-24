@@ -77,7 +77,7 @@ class InventoryManager(QDialog):
         '* A segment only gets fully categorized into the table if it matches a row, and a column, and all of the '
             'default features.\n'
         '* Auto-categorization currently only works with SPE or Hayes feature systems.\n'
-        '* If you have recently made changes to your feature system, you may need to click "Update deefault features" '
+        '* If you have recently made changes to your feature system, you may need to click "Update default features" '
             'to see those changes in effect.'
         ))
 

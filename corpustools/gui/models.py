@@ -1945,16 +1945,16 @@ class UncategorizedModel(QAbstractTableModel):
 
     def getPartialCategorization(self, seg):
 
-        if seg in self.non_segment_symbols:
+        if seg in self.sourceInventory.non_segment_symbols:
             windowTitle = 'Non-segment symbol'
             text= ('This is a non-segment symbol (probably a boundary symbol). As such, it has no phonological '
                            'features and cannot be sorted into a chart.')
         else:
-            seg = self.segs[seg]
+            seg = self.sourceInventory.segs[seg]
             features = [value + key for (key, value) in seg.features.items()]
             features.sort(key=lambda x: x[1])
             features = '\n'.join(features)
-            partials = self.sourceModel().getPartialCategorization(seg)
+            partials = self.sourceInventory.getPartialCategorization(seg)
             windowTitle = 'Feature matches'
             text = '{}\n\nThe segment /{}/ has these features:\n\n{}'.format(partials, seg.symbol, features)
 

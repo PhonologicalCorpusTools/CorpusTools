@@ -147,7 +147,7 @@ class CorpusSummary(QDialog):
         main = QFormLayout()
 
         main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
-        main.addRow(QLabel('Number of words types:'), QLabel(str(len(c))))
+        main.addRow(QLabel('Number of word types:'), QLabel(str(len(c))))
 
         if c.specifier is not None:
             main.addRow(QLabel('Feature system:'),QLabel(c.specifier.name))
