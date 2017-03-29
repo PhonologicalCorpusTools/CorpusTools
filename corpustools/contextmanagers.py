@@ -96,6 +96,7 @@ class BaseCorpusContext(object):
                     seq = tier.with_word_boundaries()
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:
+                    print(x)
                     if len(x) == 1:
                         x = x[0]
                     freq_base[x] += word.frequency
@@ -189,14 +190,14 @@ class CanonicalVariantContext(BaseCorpusContext):
 
     def __iter__(self):
         for word in self.corpus:
-            if math.isnan(word.frequency):
-                continue
             if self.type_or_token == 'token' and word.frequency == 0:
                 continue
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
             w = copy.copy(word)
-            if self.type_or_token == 'type':
+            if math.isnan(word.frequency):
+                w.frequency = 0
+            elif self.type_or_token == 'type':
                 w.frequency = 1
             w.original = word
             yield w
@@ -219,14 +220,14 @@ class MostFrequentVariantContext(BaseCorpusContext):
 
     def __iter__(self):
         for word in self.corpus:
-            if math.isnan(word.frequency):
-                continue
             if self.type_or_token == 'token' and word.frequency == 0:
                 continue
             if self.frequency_threshold > 0 and word.frequency < self.frequency_threshold:
                 continue
             v = word.variants(self.sequence_type)
             w = copy.copy(word)
+            if math.isnan(word.frequency):
+                w.frequency = 0
             if len(v.keys()) > 0:                                       # Sort variants by most frequent
                 v_sorted = sorted(v.items(), key=operator.itemgetter(1), reverse=True)
                 if len(v_sorted) == 1:                                  # There's only 1 variant
