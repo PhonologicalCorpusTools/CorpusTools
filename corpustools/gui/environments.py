@@ -125,20 +125,21 @@ class EnvironmentSegmentWidget(QWidget):
         layout.addWidget(self.mainLabel)
 
         self.setLayout(layout)
+        self.allowZeroMatch = False
 
         if self.enabled:
             self.menu = QMenu(self)
             segmentAct = QAction("Add segments", self, triggered=self.selectSegments)
             featureAct = QAction("Add features", self, triggered=self.selectFeatures)
-            arbitraryAct = QAction("Match anything here", self, triggered=self.addArbitrary)
             clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
+            matchAnythingAct = QAction("Match anything", self, triggered=self.addArbitrary)
             self.menu.addAction(segmentAct)
             self.menu.addAction(featureAct)
             if not self.middle:
                 nonSegSelectMenu = self.menu.addMenu('Add non-segment symbol')
                 for symbol in self.inventory.non_segment_symbols:
                     nonSegSelectMenu.addAction(QAction(symbol, self, triggered=self.addNonSegSymbol))
-            self.menu.addAction(arbitraryAct)
+            self.menu.addAction(matchAnythingAct)
             self.menu.addAction(clearAct)
             if not self.middle:
                 deleteAct = QAction("Delete", self, triggered=self.deleteSelection)
@@ -149,6 +150,10 @@ class EnvironmentSegmentWidget(QWidget):
             addToRightAct = QAction("To the right", self, triggered=self.addToRight)
             addNewPosMenu.addAction(addToLeftAct)
             addNewPosMenu.addAction(addToRightAct)
+            if not self.middle:
+                self.allowZeroAct = QAction("Allow zero-match in this position", self,
+                                       checkable=True, triggered=self.setZeroMatching)
+                self.menu.addAction(self.allowZeroAct)
         else:
             self.mainLabel.setEnabled(False)
 
@@ -156,6 +161,9 @@ class EnvironmentSegmentWidget(QWidget):
             self.segments = preset_label.segments
             self.features = preset_label.features
             self.updateLabel()
+
+    def setZeroMatching(self, b):
+        self.allowZeroMatch = self.allowZeroAct.isChecked()
 
     def addToLeft(self):
         self.parent_.insertSegWidget(self, 'l')
@@ -216,9 +224,6 @@ class EnvironmentSegmentWidget(QWidget):
             self.updateLabel()
 
     def value(self):
-        # if '*' in self.mainLabel.text():
-        #     return ['*']
-
         segs = [s for s in self.segments]
         if self.features:
             more_segs = self.inventory.features_to_segments(self.features)
@@ -422,17 +427,23 @@ class EnvironmentWidget(QWidget):
         segWidget.segDeleted.connect(self.deleteSeg)
 
     def value(self):
+        lhsZeroPositions = list()
+        rhsZeroPositions = list()
         lhs = []
         for ind in range(self.lhsWidget.layout().count()):
             wid = self.lhsWidget.layout().itemAt(ind).widget()
             lhs.append(wid.value())
+            if wid.allowZeroMatch:
+                lhsZeroPositions.append(ind)
         rhs = []
         for ind in range(self.rhsWidget.layout().count()):
             wid = self.rhsWidget.layout().itemAt(ind).widget()
             rhs.append(wid.value())
+            if wid.allowZeroMatch:
+                rhsZeroPositions.append(ind)
         middle = self.middleWidget.value()
 
-        return EnvironmentFilter(middle, lhs, rhs)
+        return EnvironmentFilter(middle, lhs, rhs, zeroPositions=(lhsZeroPositions, rhsZeroPositions))
 
     def displayValue(self):
 

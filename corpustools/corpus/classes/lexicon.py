@@ -256,16 +256,39 @@ class Transcription(object):
         num_segs = len(environment)
 
         possibles = zip(*[self.with_word_boundaries()[i:] for i in range(num_segs)])
+
         lhs_num = environment.lhs_count()
         middle_num = lhs_num
         rhs_num = middle_num + 1
         envs = []
+
         for i, p in enumerate(possibles):
             if p in environment:
                 lhs = p[:lhs_num]
                 middle = p[middle_num]
                 rhs = p[rhs_num:]
                 envs.append(Environment(middle, i + middle_num, lhs, rhs))
+
+        lhsZeroes, rhsZeroes = environment.zeroPositions
+        if lhsZeroes is not None:
+            possibles = zip(*[word[i:] for i in range(num_segs)])
+            for i, p in enumerate(possibles):
+                if environment.without_zeroes_contains(p):
+                    lhs = p[:lhs_num]
+                    middle = p[middle_num]
+                    rhs = p[rhs_num:]
+                    envs.append(Environment(middle, i + middle_num, lhs, rhs))
+
+        if rhsZeroes is not None:
+            rhsZeroes = [rz+middle_num+1 for rz in rhsZeroes]
+            possibles = zip(*[word[i:] for i in range(num_segs)])
+            for i, p in enumerate(possibles):
+                if environment.without_zeroes_contains(p):
+                    lhs = p[:lhs_num]
+                    middle = p[middle_num]
+                    rhs = p[rhs_num:]
+                    envs.append(Environment(middle, i + middle_num, lhs, rhs))
+
         if not envs:
             return None
         return envs
@@ -1372,7 +1395,7 @@ class EnvironmentFilter(object):
         List of set of segments on the right of the middle
 
     """
-    def __init__(self, middle_segments, lhs = None, rhs = None):
+    def __init__(self, middle_segments, lhs = None, rhs = None, zeroPositions = None):
         self.original_middle = middle_segments
         self.special_match_symbol = '*'
         if lhs is not None:
@@ -1385,6 +1408,11 @@ class EnvironmentFilter(object):
         self.lhs_string = None
         self.rhs_string = None
         self._sanitize()
+
+        if zeroPositions is None:
+            self.zeroPositions = (None, None)
+        else:
+            self.zeroPositions = zeroPositions
 
     @property
     def middle(self):
@@ -1533,6 +1561,33 @@ class EnvironmentFilter(object):
             if sequence[i] not in s:
                 return False
         return True
+
+    def without_zeroes_contains(self, sequence):
+        for i, s in enumerate(self.without_zero_positions()):
+            if self.special_match_symbol in s:
+                continue
+            if sequence[i] not in s:
+                return False
+        return True
+
+    def without_zero_positions(self):
+        e = list()
+        if self.lhs is not None:
+            for i,s in enumerate(self.lhs):
+                if i in self.zeroPositions[0]:
+                    continue
+                else:
+                    e.append(s)
+
+        e.append(self._middle)
+
+        if self.rhs is not None:
+            for i,s in enumerate(self.rhs):
+                if i in self.zeroPositions[1]:
+                    continue
+                else:
+                    e.append(s)
+        return e
 
 class Attribute(object):
     """
