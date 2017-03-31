@@ -102,7 +102,7 @@ class EnvironmentDialog(QDialog):
 class EnvironmentSegmentWidget(QWidget):
     segDeleted = Signal(list)
     def __init__(self, inventory, parent = None, middle = False, enabled = True,
-                 preset_label = False, show_full_inventory=False, side=None):
+                 preset_label = False, show_full_inventory=False, side=None, allow_zero_match = False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
@@ -125,7 +125,7 @@ class EnvironmentSegmentWidget(QWidget):
         layout.addWidget(self.mainLabel)
 
         self.setLayout(layout)
-        self.allowZeroMatch = False
+        self.allowZeroMatch = allow_zero_match
 
         if self.enabled:
             self.menu = QMenu(self)
@@ -355,12 +355,16 @@ class EnvironmentWidget(QWidget):
 
         for ind in range(copy_data.lhsWidget.layout().count()):
             copy_wid = copy_data.lhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='l')
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='l',
+                                                                allow_zero_match=copy_wid.allowZeroMatch)
+            wid.allowZeroAct.setChecked(copy_wid.allowZeroMatch)
             self.lhsWidget.layout().insertWidget(ind, wid)
             wid.segDeleted.connect(self.deleteSeg)
         for ind in range(copy_data.rhsWidget.layout().count()):
             copy_wid = copy_data.rhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='r')
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='r',
+                                                                allow_zero_match=copy_wid.allowZeroMatch)
+            wid.allowZeroAct.setChecked(copy_wid.allowZeroMatch)
             self.rhsWidget.layout().insertWidget(ind, wid)
             wid.segDeleted.connect(self.deleteSeg)
 

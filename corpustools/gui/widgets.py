@@ -1471,7 +1471,11 @@ class FeatureSelectionWidget(SegmentSelectionWidget):
         self.feature_list = set()
 
     def value(self):
-        features = [f for f in self.searchWidget.text().split(',')]
+        if ',' in self.searchWidget.text():
+            features = [f.strip() for f in self.searchWidget.text().split(',')]
+        else:
+            features = [f.strip() for f in self.searchWidget.text().split()]
+
         for f in features:
             self.feature_list.add(f)
         return sorted(list(self.feature_list))

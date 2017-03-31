@@ -270,7 +270,8 @@ class Transcription(object):
                 envs.append(Environment(middle, i + middle_num, lhs, rhs))
 
         lhsZeroes, rhsZeroes = environment.zeroPositions
-        if lhsZeroes is not None:
+        if lhsZeroes:
+            word = [seg for pos,seg in enumerate(self.with_word_boundaries()) if pos not in lhsZeroes]
             possibles = zip(*[word[i:] for i in range(num_segs)])
             for i, p in enumerate(possibles):
                 if environment.without_zeroes_contains(p):
@@ -279,8 +280,9 @@ class Transcription(object):
                     rhs = p[rhs_num:]
                     envs.append(Environment(middle, i + middle_num, lhs, rhs))
 
-        if rhsZeroes is not None:
+        if rhsZeroes:
             rhsZeroes = [rz+middle_num+1 for rz in rhsZeroes]
+            word = [seg for pos, seg in enumerate(self.with_word_boundaries()) if pos not in rhsZeroes]
             possibles = zip(*[word[i:] for i in range(num_segs)])
             for i, p in enumerate(possibles):
                 if environment.without_zeroes_contains(p):
