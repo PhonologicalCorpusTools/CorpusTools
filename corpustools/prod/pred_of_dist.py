@@ -126,8 +126,8 @@ def calc_prod_all_envs(corpus_context, seg1, seg2, all_info = False, stop_check 
     return H
 
 
-def calc_prod(corpus_context, envs, strict = True, all_info = False, stop_check = None,
-                call_back = None):
+def calc_prod(corpus_context, envs, strict = True, all_info = False, ordered_pair = None,
+              stop_check = None, call_back = None):
     """
     Main function for calculating predictability of distribution for
     two segments over specified environments in a corpus.
@@ -159,8 +159,9 @@ def calc_prod(corpus_context, envs, strict = True, all_info = False, stop_check 
         of seg2] if all_info is True, or just entropy if all_info is False.
     """
     seg_list = envs[0].middle
+    print('seg_list is', seg_list)
     for e in envs:
-        if e.middle != seg_list:
+        if not all(s in seg_list for s in e.middle):#e.middle != seg_list:
             raise(PCTError("Middle segments of all environments must be the same."))
 
     returned = check_envs(corpus_context, envs, stop_check, call_back)
@@ -206,7 +207,7 @@ def calc_prod(corpus_context, envs, strict = True, all_info = False, stop_check 
             H = sum(seg_H.values())*-1
             if not H:
                 H = H+0 #avoid the -0.0 problem
-        H_dict[env] = [H, total_tokens] + [matches[x] for x in seg_list]
+        H_dict[env] = [H, total_tokens] + [matches[x] for x in ordered_pair]
 
     #CALCULATE WEIGHTED ENTROPY LAST
     weighted_H = 0
@@ -218,9 +219,10 @@ def calc_prod(corpus_context, envs, strict = True, all_info = False, stop_check 
     except ZeroDivisionError:
         avg_h = 0.0
 
-    H_dict['AVG'] = [weighted_H, avg_h] + [total_matches[x] for x in seg_list]
+    H_dict['AVG'] = [weighted_H, avg_h] + [total_matches[x] for x in ordered_pair]
 
     if not all_info:
         for k,v in H_dict.items():
             H_dict[k] = v[0]
+
     return H_dict

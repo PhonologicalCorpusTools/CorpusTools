@@ -33,12 +33,14 @@ class PDWorker(FunctionWorker):
             try:
                 envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
+                    ordered_pair = pair
                     if envs is not None:
                         for env in envs:
                             env.middle = set(pair)
                         res = calc_prod(c,
                                 envs,
                                 kwargs['strict'],
+                                ordered_pair = ordered_pair,
                                 all_info = True,
                                 stop_check = kwargs['stop_check'],
                                 call_back = kwargs['call_back'])

@@ -96,7 +96,6 @@ class BaseCorpusContext(object):
                     seq = tier.with_word_boundaries()
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:
-                    print(x)
                     if len(x) == 1:
                         x = x[0]
                     freq_base[x] += word.frequency

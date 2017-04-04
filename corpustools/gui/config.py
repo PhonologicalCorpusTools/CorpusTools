@@ -321,6 +321,4 @@ class PreferencesDialog(QDialog):
         self.settings.update(self.processingWidget.get_current_state())
         self.settings.update(self.reminderWidget.get_current_state())
         self.settings.check_storage()
-        print(self.displayWidget.displayAllWidget.isChecked())
-        print(self.settings['show_full_inventory'])
         QDialog.accept(self)
