@@ -148,6 +148,7 @@ class PCTUnpickler(pickle._Unpickler):
         self.read = self._unframer.read
         self.readline = self._unframer.readline
         self.mark = object()  # any new unique object
+        self.metastack = []
         self.stack = []
         self.append = self.stack.append
         self.proto = 0
