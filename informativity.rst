@@ -51,7 +51,7 @@ Given this input, the informativity of a given segment is calculated as follows:
 
 The following is an example run of the function for a single segment:
 
-.. image:: static/informativity1.png
+.. image:: informativity1.png
    :width: 90%
    :align: center
 
@@ -61,7 +61,7 @@ creates a dictionary with the segments as the key, and the output of the get_inf
 
 The following is an example run for getting the informativities for all segments in the inventory:
 
-.. image:: static/informativity2.png
+.. image:: informativity2.png
    :width: 90%
    :align: center
 
@@ -79,7 +79,7 @@ PCT uses Python 3, and run the following:
 
 The following is an example run of the current test print statements:
 
-.. image:: static/informativity_559tests.png
+.. image:: informativity_559tests.png
    :width: 90%
    :align: center
 
