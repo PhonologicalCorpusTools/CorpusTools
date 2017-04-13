@@ -510,7 +510,7 @@ class ResultsModel(BaseTableModel):
                 cv = results[currRow][currHeader]
                 nv = results[currRow+1][currHeader]
                 if type(cv) is str:
-                    nch =min(len(cv), len(nv))
+                    nch = min(len(cv), len(nv))
                     cv = cv[0:nch]
                     nv = nv[0:nch]
                     cv = str(list(cv))

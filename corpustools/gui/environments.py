@@ -132,7 +132,7 @@ class EnvironmentSegmentWidget(QWidget):
             segmentAct = QAction("Add segments", self, triggered=self.selectSegments)
             featureAct = QAction("Add features", self, triggered=self.selectFeatures)
             clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
-            matchAnythingAct = QAction("Match anything", self, triggered=self.addArbitrary)
+            matchAnythingAct = QAction("Match single wildcard", self, triggered=self.addArbitrary)
             self.menu.addAction(segmentAct)
             self.menu.addAction(featureAct)
             if not self.middle:
@@ -151,7 +151,7 @@ class EnvironmentSegmentWidget(QWidget):
             addNewPosMenu.addAction(addToLeftAct)
             addNewPosMenu.addAction(addToRightAct)
             if not self.middle:
-                self.allowZeroAct = QAction("Allow zero-match in this position", self,
+                self.allowZeroAct = QAction("Make this position optional", self,
                                        checkable=True, triggered=self.setZeroMatching)
                 self.menu.addAction(self.allowZeroAct)
         else:

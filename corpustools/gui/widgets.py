@@ -2104,6 +2104,7 @@ class SegmentPairSelectWidget(QGroupBox):
         QGroupBox.__init__(self,'Segments',parent)
 
         self.inventory = inventory
+        self.dialog = None
 
         vbox = QVBoxLayout()
         self.addSingleButton = QPushButton('Add individual segments')
@@ -2139,41 +2140,45 @@ class SegmentPairSelectWidget(QGroupBox):
 
 
     def singleSegPopup(self):
-        dialog = SingleSegmentDialog(self.inventory)
-        dialog.rowToAdd.connect(self.addPairs)
+        self.dialog = SingleSegmentDialog(self.inventory)
+        self.dialog.rowToAdd.connect(self.addPairs)
         addOneMore = True
         while addOneMore:
-            dialog.reset()
-            result = dialog.exec_()
-            addOneMore = dialog.addOneMore
+            self.dialog.reset()
+            result = self.dialog.exec_()
+            addOneMore = self.dialog.addOneMore
+        self.dialog = None
 
     def featurePairPopup(self):
-        dialog = FeaturePairDialog(self.inventory)
-        dialog.rowToAdd.connect(self.addPairs)
+        self.dialog = FeaturePairDialog(self.inventory)
+        self.dialog.rowToAdd.connect(self.addPairs)
         addOneMore = True
         while addOneMore:
-            dialog.reset()
-            result = dialog.exec_()
-            addOneMore = dialog.addOneMore
+            self.dialog.reset()
+            result = self.dialog.exec_()
+            addOneMore = self.dialog.addOneMore
+        self.dialog = None
 
 
     def segSetPairPopup(self):
-        dialog = SegmentSetPairDialog(self.inventory)
-        dialog.rowToAdd.connect(self.addPairs)
+        self.dialog = SegmentSetPairDialog(self.inventory)
+        self.dialog.rowToAdd.connect(self.addPairs)
         addOneMore = True
         while addOneMore:
-            dialog.reset()
-            result = dialog.exec_()
-            addOneMore = dialog.addOneMore
+            self.dialog.reset()
+            result = self.dialog.exec_()
+            addOneMore = self.dialog.addOneMore
+        self.dialog = None
 
     def segPairPopup(self):
-        dialog = SegmentPairDialog(self.inventory)
-        dialog.rowToAdd.connect(self.addPairs)
+        self.dialog = SegmentPairDialog(self.inventory)
+        self.dialog.rowToAdd.connect(self.addPairs)
         addOneMore = True
         while addOneMore:
-            dialog.reset()
-            result = dialog.exec_()
-            addOneMore = dialog.addOneMore
+            self.dialog.reset()
+            result = self.dialog.exec_()
+            addOneMore = self.dialog.addOneMore
+        self.dialog = None
 
     def addPairs(self, pairs):
         for p in pairs:
