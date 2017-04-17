@@ -30,7 +30,7 @@ class PDWorker(FunctionWorker):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'], frequency_threshold = kwargs['frequency_cutoff']) as c:
             try:
                 envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
@@ -75,6 +75,7 @@ class PDDialog(FunctionDialog):
                 'Frequency of first segment',
                 'Frequency of second segment',
                 'Frequency of environment',
+                'Minimum word frequency',
                 'Entropy']
 
     ABOUT = ['This function calculates'
@@ -141,7 +142,18 @@ class PDDialog(FunctionDialog):
         checkFrame.setLayout(checkLayout)
 
         optionLayout.addWidget(checkFrame)
+        
+        ##----------------------
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+        ##----------------------
+        
         optionFrame = QGroupBox('Options')
 
         optionFrame.setLayout(optionLayout)
@@ -225,17 +237,27 @@ class PDDialog(FunctionDialog):
         envs = self.envWidget.value()
         if len(envs) > 0:
             kwargs['envs'] = envs
-
+        ##------------------
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        ##-------------------
         kwargs['corpus'] = self.corpus
         kwargs['context'] = self.variantsWidget.value()
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['strict'] = self.enforceCheck.isChecked()
         kwargs['type_token'] = self.typeTokenWidget.value()
+        kwargs['frequency_cutoff'] = frequency_cutoff
         return kwargs
 
     def setResults(self,results):
         self.results = []
         seg_pairs = self.segPairWidget.value()
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
         for i, r in enumerate(results):
             if isinstance(r,dict):
                 for env,v in r.items():
@@ -247,7 +269,8 @@ class PDDialog(FunctionDialog):
                                         self.variantsWidget.value().title(),
                                         v[2], # freq of seg1
                                         v[3], #freq of seg2
-                                        v[1], #total_tokens
+                                        v[1], #total_tokens,
+                                        frequency_cutoff,
                                         v[0]] #H
                                         )
             else:
@@ -260,5 +283,6 @@ class PDDialog(FunctionDialog):
                                         r[2], # freq of seg1
                                         r[3], #freq of seg2
                                         r[1], #total_tokens
+                                        frequency_cutoff,
                                         r[0]]) #H
 

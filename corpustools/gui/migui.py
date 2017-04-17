@@ -29,7 +29,7 @@ class MIWorker(FunctionWorker):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'], frequency_threshold = kwargs['frequency_cutoff']) as c:
             try:
                 for pair in kwargs['segment_pairs']:
                     res = pointwise_mi(c, pair,
@@ -63,6 +63,7 @@ class MIDialog(FunctionDialog):
                 'Transcription tier',
                 'Frequency type',
                 'Pronunciation variants',
+                'Minimum word frequency',
                 'Mutual information']
 
     _about = [('This function calculates the mutual information for a bigram'
@@ -105,7 +106,18 @@ class MIDialog(FunctionDialog):
         optionLayout.addWidget(self.variantsWidget)
 
         optionLayout.addWidget(self.typeTokenWidget)
+        
+        ##----------------------
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+        ##----------------------
+        
         self.inWordCheck = QCheckBox('Set domain to word')
         optionLayout.addWidget(self.inWordCheck)
 
@@ -152,12 +164,19 @@ class MIDialog(FunctionDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one bigram.")
             return None
+        ##------------------
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        ##-------------------
         return {'corpus':self.corpus,
                 'context': self.variantsWidget.value(),
                 'type_token': self.typeTokenWidget.value(),
                 'segment_pairs':[tuple(y for y in x) for x in segPairs],
                 'in_word': self.inWordCheck.isChecked(),
                 'halve_edges': self.halveEdgesCheck.isChecked(),
+                'frequency_cutoff':frequency_cutoff,
                 'sequence_type': self.tierWidget.value()}
 
     def setResults(self,results):
@@ -167,6 +186,10 @@ class MIDialog(FunctionDialog):
             dom = 'Word'
         else:
             dom = 'Unigram/Bigram'
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
         for i, r in enumerate(results):
             self.results.append([self.corpus.name,
                                 seg_pairs[i][0],seg_pairs[i][1],
@@ -174,4 +197,5 @@ class MIDialog(FunctionDialog):
                                 self.tierWidget.displayValue(),
                                 self.typeTokenWidget.value().title(),
                                 self.variantsWidget.value().title(),
+                                frequency_cutoff,
                                 r])

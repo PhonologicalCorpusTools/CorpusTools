@@ -32,7 +32,7 @@ class KLWorker(FunctionWorker):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token']) as c:
+        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'], frequency_threshold = kwargs['frequency_cutoff']) as c:
             try:
                 for pair in kwargs['segment_pairs']:
                     res = KullbackLeibler(c,
@@ -61,6 +61,7 @@ class KLDialog(FunctionDialog):
                 'First segment',
                 'Second segment',
                 'Context',
+                'Minimum word frequency',
                 'Transcription tier',
                 'Frequency type',
                 'Pronunciation variants',
@@ -119,7 +120,18 @@ class KLDialog(FunctionDialog):
                                                         #('All', 'all')]),
                                                         )
         optionLayout.addWidget(self.contextRadioWidget)
+        
+        ##----------------------
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:',self.minFreqEdit)
 
+        minFreqFrame.setLayout(box)
+
+        optionLayout.addWidget(minFreqFrame)
+        ##----------------------
+        
         kllayout.addLayout(optionLayout)
         klframe.setLayout(kllayout)
         self.layout().insertWidget(0, klframe)
@@ -131,23 +143,33 @@ class KLDialog(FunctionDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one segment pair.")
             return None
+        ##------------------
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
+        ##-------------------
         kwargs['segment_pairs'] = segPairs
         kwargs['corpus'] = self.corpus
         kwargs['context'] = self.variantsWidget.value()
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['type_token'] = self.typeTokenWidget.value()
         kwargs['side'] = self.contextRadioWidget.value()[0]
-
+        kwargs['frequency_cutoff'] = frequency_cutoff
         return kwargs
 
     def setResults(self,results):
         self.results = []
         seg_pairs = [tuple(y for y in x) for x in self.segPairWidget.value()]
         context = self.contextRadioWidget.displayValue()
+        try:
+            frequency_cutoff = float(self.minFreqEdit.text())
+        except ValueError:
+            frequency_cutoff = 0.0
         for i, r in enumerate(results):
             self.results.append([self.corpus.name,
                                 seg_pairs[i][0],seg_pairs[i][1],
-                                context,
+                                context, frequency_cutoff,
                                 self.tierWidget.displayValue(),
                                 self.typeTokenWidget.value().title(),
                                 self.variantsWidget.value().title()]+list(r))
