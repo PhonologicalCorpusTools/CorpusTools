@@ -205,29 +205,76 @@ And analogously, for the normalized functional load of [t] / [d] based on word t
 
 :math:`\Delta H = 0.458 / 4.087 = 0.1121`
 
+Note that the typical way of calculating Delta-H functional load is to use word tokens, not word types.
+
 .. _method_change_minimal_pairs:
 
 (Relative) Minimal Pair Counts
 ``````````````````````````````
 
 The second means of calculating functional load that is included in PCT
-is a straight count of minimal pairs, which can be relativized to the
+is a straight count of minimal pairs, which can be relativized either to the total number of words in the corpus, or to the
 number of words in the corpus that are potential minimal pairs—i.e. the
 number of words in the corpus with at least one of the target segments.
 
 In the above example, the number of minimal pairs that hinge on [h] vs.
 [ŋ] is of course 0, so the functional load of [h] / [ŋ] is 0. The number
-of minimal pairs that hinge on [t] / [d] is 3, and the number of words
-with either [t] or [d] is 11; the functional load as a relativized minimal
-pair count would therefore be 3/11 = 0.273. Note that here, a relatively
-loose definition of minimal pair is used; specifically, two words are
+of minimal pairs that hinge on [t] / [d] is 3, the total number of words in the corpus is 17, 
+and the number of words with either [t] or [d] is 11. Thus, the raw minimal pair count 
+would be 3; the minimal pair count relativized to the corpus length would be 3 / 17 = 0.176; 
+and the minimal pair count relativized to the number of words containing [t] or [d] is 3 / 11 = 0.273. 
+Note that here, a relatively loose definition of minimal pair is used; specifically, two words are
 considered to be a minimal pair hinging on sounds A and B if, upon merger
 of A and B into a single symbol X, the words are identical. Thus, *toot* and
 *dude* are considered a minimal pair on this definition, because they both
-become [XuX] upon merger of [t] and [d].
+become [XuX] upon merger of [t] and [d]. Also note that either version of the relativization
+relies on dividing the number of PAIRS by the total number of relevant WORDS;
+it is intended just to provide some relative measure, rather than to be straightforwardly
+interpretable as, say, a percentage. 
+
+The difference between the two relativizations is that relativizing to the corpus allows
+for direct comparison between functional loads of different pairs in the same corpus as
+well as the comparison of functional loads across corpora. Within a single
+corpus, raw minimal pair counts can be directly compared, but a raw minimal pair count of 
+5 would be indicative of a highly contrastive pair if there are only 15 words in the corpus,
+while being indicative of a low-contrast pair in a corpus of 15000 words. Thus, relativizing
+to the corpus size is useful for cross-corpus comparisons.
+
+On the other hand, relativizing to the number of words containing the segments in question
+is more informative about their own "relative" contrastiveness in comparison to their "potential"
+for contrast, an issue discussed in [Martin2017]_. In particular, imagine that we have a toy corpus with 100 words. There are 
+5 minimal pairs based on [m]/[n], and 5 minimal pairs based on [b]/[d]. These would be 
+identical functional loads as far as either of the first two measures are concerned 
+(i.e., raw counts, where the FLs would be 5 and 5, or counts relativized to corpus size,
+where the FLs would be 5 / 100 = 0.05 and 0.05).
+
+But, if there are 18 words in the corpus that contain either [m] or [n] (or both), and 80 words 
+in the corpus that contain either [b] or [d] (or both), then the minimal pair 
+counts relativized to the number of words with the relevant segments will differ widely. 
+Now, the functional load of [m]/[n] would be 5 / 18 (=0.278), while that of [b]/[d] would be 5 / 80 (=0.0625), 
+much lower. In other words, the [b]/[d] contrast is making much less use of its potential
+for contrast than the [m]/[n] contrat.
+
+A benefit of this approach is that it does take into account the relative frequency of the sounds in any given pair (see also [Martin2017]_). That is, for sounds that are less frequent overall, we would _expect_ there to be fewer minimal pairs, and by relativizing to only the number of words containing at least one of the two sounds in the pair, we capture that expectation: Intuitively, it makes sense that if [m] and [n] in the above example are so much less frequent than [b] and [d], then having five minimal pairs hinging on [m] and [n] is more surprising than having five minimal pairs hinging on [b] and [d], so we want to say that the [m] / [n] contrast does more work in distinguishing lexical items than does [b]/[d].
+
+The problem with this approach is that it conflates "work done by distinguishing lexical items" with "predictability of distribution,"  which can be calculated separately in PCT (see :ref:`predictability_of_distribution`). That is, minimal pairs provide examples of environments that are unpredictable. So for the [m]/[n] case, what is happening is that the sounds are often in unpredictable contexts (i.e., minimal pairs) relative to their total distribution, while [b] and [d] are generally not in completely unpredictable contexts, though that happens occasionally (relative to their distribution). 
+
+Thus, this way of measuring "functional load" (i.e., minimal pair counts relative to the number of words in the corpus containing the relevant segments) in fact conflates a measure of lexical distinction (the classic definition of functional load) and a measure of predictability of distribution. This can be seen in the following graph showing the correlation of predictability of distribution to minimal pair counts relativized to the number of words containing the relevant segments, for (some) pairs of obstruents in the [IPHOD]_ corpus (with a correlation coefficient of r = 0.75):
+
+.. image:: static/prod_vs_rel_min_pairs.png
+   :width: 90%
+   :align: center
+
+While functional load and predictability of distribution are correlated with each other regardless, the measure of functional load relative to the number of words containing the relevant segments is more highly correlated than the other measures of functional load. The two are generally correlated because pairs of sounds with a high functional load *must* provide many examples of the unpredictable environments, and so high functional load tends to be associated with a high entropy score (low degree of predictability of distribution). The converse, however, is not true. That is, pairs of sounds with a low functional load may have either a high or low predictability of distribution. They could have a low functional load because they are infrequent in the language, but do occur in minimal pairs (and therefore have a low degree of predictability of distribution / high entropy), or they could have a low functional load because they are frequent in the language but never occur in the same context, in which case, they would have a high degree of predictability of distribution (low entropy). Using either the absolute measure of functional load (raw number of minimal pairs) or one relativized only to the corpus size will minimize the correlation between functional load and predictability of distribution. This can be seen in the following graph, which again shows the correlation of predictability of distribution to functional load for pairs of obstruents in the [IPHOD]_ corpus, but using the count of minimal pairs relativized to the corpus size. Here, the correlation is only r = 0.61.
+
+
+.. image:: static/prod_vs_raw_min_pairs.png
+   :width: 90%
+   :align: center
 
 The resulting calculations of functional load are thus quite similar
-between the two measures, but the units are entirely different.
+between the two algorithms (change in entropy vs. minimal pair count),
+though the units are entirely different.
 Functional load based on change in entropy is measured in *bits*,
 while functional load based on relativized minimal pair counts is
 simply a percentage. Also note that functional load based on minimal
@@ -235,10 +282,21 @@ pairs is only based on type frequency; the frequency of the usage of
 the words is not used as a weighting factor, the way it can be under
 the calculation of functional load as change in entropy.
 
+Furthermore, if raw minimal pair count is used, or minimal pairs relativized to the size of the corpus,
+these will be perfectly analogous to the (non-standard) calculation of functional load based on 
+change in entropy using word types (rather than tokens). This is shown below, where the same pairs of obstruents in the [IPHOD]_ corpus are shown with their type-based Delta-H entropy on the y-axis and their raw minimal pair counts on the x-axis (r = 0.999):
+
+
+.. image:: static/delta-H_vs_raw_min_pairs.png
+   :width: 90%
+   :align: center
+
+Thus, using either type-based change-in-entropy or raw minimal pair counts, or minimal pair counts relative to the length of the whole corpus, will all provide equivalent measurements of functional load. In particular, note that this means that type-based change-in-entropy will be analogous to the minimal pair counts advocated by [Wedel2013]_. Token-based change-in-entropy should be used to either emulate [Surendran2003]_, or to specifically take into account the actual frequency with which words are used. Minimal pair count relative to the number of words containing the relevant segments should be used to get a sense of the degree to which a contrast meets its "potential" for contrast, but should be used with caution, understanding that it does conflate functional load and predictability of distribution.
+
 Average Functional Load
 ````````````````````````
 
-[Hume2013]_ suggests that the average functional load (there called "relative contrastiveness") is a useful way of indicating how much work an individual segment does, on average, in comparison to other segments. This is calculated by taking an individual segment, calculating the pairwise functional load of that segment and each other segment in the inventory, and then taking the average across all those pairs. This calculation can also be performed in PCT.
+[Hume2013]_ suggests that the average functional load (there called "relative contrastiveness") is a useful way of indicating how much work an individual segment does, on average, in comparison to other segments. This is calculated by taking an individual segment, calculating the pairwise functional load of that segment and each other segment in the inventory (using any of the methods described above), and then taking the average across all those pairs. This calculation can also be performed in PCT.
 
 Environment Filters
 ```````````````````
