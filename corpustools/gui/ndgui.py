@@ -361,6 +361,13 @@ class NDDialog(FunctionDialog):
         alg = self.algorithmWidget.value()
         typeToken = self.typeTokenWidget.value()
 
+        if self.fileRadio.isChecked(): #using list of words not in corpus
+            file_type = self.fileOptions.currentText().split(' ')[-1].strip()
+            for tiername in [self.tierWidget.tierSelect.itemText(i) for i in range(self.tierWidget.tierSelect.count())]:
+                if tiername == file_type:
+                    self.tierWidget.tierSelect.setCurrentText(tiername)
+                    break
+
         kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': alg,
                 'context': self.variantsWidget.value(),
