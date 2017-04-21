@@ -159,7 +159,6 @@ def calc_prod(corpus_context, envs, strict = True, all_info = False, ordered_pai
         of seg2] if all_info is True, or just entropy if all_info is False.
     """
     seg_list = envs[0].middle
-    print('seg_list is', seg_list)
     for e in envs:
         if not all(s in seg_list for s in e.middle):#e.middle != seg_list:
             raise(PCTError("Middle segments of all environments must be the same."))

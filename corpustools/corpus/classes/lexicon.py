@@ -928,7 +928,6 @@ class Word(object):
         if update:
             self.update(update)
             return
-
         self.initDefaults()
 
         for key, value in kwargs.items():
@@ -972,6 +971,7 @@ class Word(object):
                 value = Transcription(value)
                 setattr(self, key, value)
                 setattr(self, '_transcription', value)
+                setattr(self, '_transcription_name', key)
 
             elif isinstance(value, str):
                 try:
@@ -982,6 +982,7 @@ class Word(object):
                 except ValueError:
                     #it's spelling, leave value as-is
                     setattr(self, '_spelling', value)
+                    setattr(self, '_spelling_name', key)
                 setattr(self, key, value)
 
             elif isinstance(value, (float, int)):

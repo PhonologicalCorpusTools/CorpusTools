@@ -79,7 +79,7 @@ def neighborhood_density_all_words(corpus_context,
 
 
 
-def neighborhood_density(corpus_context, query,
+def neighborhood_density(corpus_context, query, tierdict,
             algorithm = 'edit_distance', max_distance = 1,
             force_quadratic = False, file_type = None, tier_type=None,
             stop_check = None, call_back = None):
@@ -116,8 +116,8 @@ def neighborhood_density(corpus_context, query,
         cur = 0
 
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
-        return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type,
-                                         tier_type, file_type=file_type)
+        return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type, tier_type, tierdict,
+                                         file_type=file_type)
 
     if algorithm == 'edit_distance':
         is_neighbor = partial(_is_edit_distance_neighbor,
@@ -149,7 +149,8 @@ def neighborhood_density(corpus_context, query,
     return (len(neighbors), neighbors)
 
 
-def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type, file_type=None, trans_delimiter='.'):
+def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type,
+                              tierdict, file_type=None, trans_delimiter='.'):
     """Generates all neighbors of edit distance <= 1 and searches 
     for them in corpus_context.
 
@@ -159,10 +160,7 @@ def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type, f
     m: length of query
     s: size of segment inventory
     """
-    # Create a dict with sequence_type keys for constaint-time lookup
-    tierdict = defaultdict(list)
-    for entry in corpus_context:
-        tierdict[str(getattr(entry, sequence_type))].append(entry)
+
     neighbors = set()
     query = ensure_query_is_word(query, corpus_context, sequence_type, tier_type, file_type=file_type)
     for candidate in generate_neighbor_candidates(corpus_context, query, sequence_type):
@@ -173,7 +171,6 @@ def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type, f
         if cand_str in tierdict:
             for w in tierdict[cand_str]:
                 neighbors.add(w)
-
     return (len(neighbors), neighbors)
 
 def generate_neighbor_candidates(corpus_context, query, sequence_type):

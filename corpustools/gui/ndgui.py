@@ -1,5 +1,5 @@
 import os
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from .imports import *
 from corpustools.neighdens.neighborhood_density import (neighborhood_density,
@@ -10,11 +10,9 @@ from corpustools.neighdens.io import load_words_neighden, print_neighden_results
 from corpustools.corpus.classes import Attribute
 from corpustools.exceptions import PCTError, PCTPythonError
 from .windows import FunctionWorker, FunctionDialog
-from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget,
-                        RestrictedContextWidget)
+from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget, RestrictedContextWidget)
 from .corpusgui import AddWordDialog
-from corpustools.contextmanagers import (CanonicalVariantContext,
-                                        MostFrequentVariantContext)
+from corpustools.contextmanagers import (CanonicalVariantContext, MostFrequentVariantContext)
 
 class NDWorker(FunctionWorker):
     def run(self):
@@ -33,9 +31,13 @@ class NDWorker(FunctionWorker):
         with cm(corpus, st, tt, attribute=att, frequency_threshold = ft) as c:
             try:
                 if 'query' in kwargs:
+                    # Create a dict with sequence_type keys for constaint-time lookup
+                    tierdict = defaultdict(list)
+                    for entry in c:
+                        tierdict[str(getattr(entry, kwargs['sequence_type']))].append(entry)
                     for q in kwargs['query']:
                         if kwargs['algorithm'] != 'substitution':
-                            res = neighborhood_density(c, q,
+                            res = neighborhood_density(c, q, tierdict,
                                                 algorithm = kwargs['algorithm'],
                                                 max_distance = kwargs['max_distance'],
                                                 force_quadratic=kwargs['force_quadratic'],
@@ -370,6 +372,7 @@ class NDDialog(FunctionDialog):
                 'force_quadratic': self.useQuadratic.isChecked(),
                 'file_type': self.fileOptions.currentText().split()[-1],
                 'tier_type': self.tierWidget.attValue()}
+
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
