@@ -185,9 +185,6 @@ def generate_neighbor_candidates(corpus_context, query, sequence_type):
         if str(char) not in ['#', sequence[i]]:
             yield [str(c) for c in sequence[:]] + [str(char)] # insertion
 
-
-
-
 def find_mutation_minpairs_all_words(corpus_context, num_cores = -1,
                     stop_check = None, call_back = None):
     function = partial(find_mutation_minpairs, corpus_context)
