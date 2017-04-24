@@ -90,7 +90,7 @@ class BaseCorpusContext(object):
             freq_base = collections.defaultdict(float)
             for word in self:
                 tier = getattr(word, self.sequence_type)
-                if self.sequence_type == 'spelling':
+                if self.sequence_type.lower() == 'spelling':
                     seq = ['#'] + [x for x in tier] + ['#']
                 else:
                     seq = tier.with_word_boundaries()

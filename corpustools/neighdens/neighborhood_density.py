@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from corpustools.corpus.classes import Word
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi
@@ -10,12 +8,12 @@ from corpustools.multiprocessing import filter_mp, score_mp
 
 from functools import partial
 
-from corpustools.exceptions import NeighDenError
-
 def _is_edit_distance_neighbor(w, query, sequence_type, max_distance):
-    if len(getattr(w, sequence_type)) > len(getattr(query, sequence_type))+max_distance:
+    w_len = len(getattr(w, sequence_type))
+    query_len = len(getattr(query, sequence_type))
+    if  w_len > query_len+max_distance:
         return False
-    if len(getattr(w, sequence_type)) < len(getattr(query, sequence_type))-max_distance:
+    if w_len < query_len-max_distance:
         return False
     return edit_distance(w, query, sequence_type, max_distance) <= max_distance
 
@@ -110,10 +108,13 @@ def neighborhood_density(corpus_context, query, tierdict,
     """
 
     matches = []
+    query = ensure_query_is_word(query, corpus_context, corpus_context.sequence_type, tier_type)
+
     if call_back is not None:
-        call_back('Finding neighbors...')
+        call_back('Finding neighbors for {}...'.format(query))
         call_back(0,len(corpus_context))
         cur = 0
+
 
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type, tier_type, tierdict,
@@ -129,7 +130,7 @@ def neighborhood_density(corpus_context, query, tierdict,
                                 sequence_type = corpus_context.sequence_type,
                                 max_distance = max_distance)
     elif algorithm == 'khorsi':
-        freq_base = freq_base = corpus_context.get_frequency_base()
+        freq_base = corpus_context.get_frequency_base()
         is_neighbor = partial(_is_khorsi_neighbor,
                                 freq_base = freq_base,
                                 sequence_type = corpus_context.sequence_type,
@@ -185,9 +186,10 @@ def generate_neighbor_candidates(corpus_context, query, sequence_type):
         if str(char) not in ['#', sequence[i]]:
             yield [str(c) for c in sequence[:]] + [str(char)] # insertion
 
-def find_mutation_minpairs_all_words(corpus_context, num_cores = -1,
+def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores = -1,
                     stop_check = None, call_back = None):
-    function = partial(find_mutation_minpairs, corpus_context)
+
+    function = partial(find_mutation_minpairs, corpus_context, tier_type=tier_type)
     if call_back is not None:
         call_back('Calculating neighborhood densities...')
         call_back(0,len(corpus_context))
@@ -212,7 +214,7 @@ def find_mutation_minpairs_all_words(corpus_context, num_cores = -1,
             #multiprocessing pickles objects
             setattr(corpus_context.corpus.find(corpus_context.corpus.key(n[0])), corpus_context.attribute.name, n[1][0])
 
-def find_mutation_minpairs(corpus_context, query,
+def find_mutation_minpairs(corpus_context, query, tier_type = None,
                     stop_check = None, call_back = None):
     """Find all minimal pairs of the query word based only on segment
     mutations (not deletions/insertions)
@@ -235,27 +237,30 @@ def find_mutation_minpairs(corpus_context, query,
     """
     matches = []
     sequence_type = corpus_context.sequence_type
+    query = ensure_query_is_word(query, corpus_context, corpus_context.sequence_type, tier_type)
     if call_back is not None:
         call_back('Finding neighbors...')
         call_back(0,len(corpus_context))
         cur = 0
     al = Aligner(features_tf=False, ins_penalty=float('inf'), del_penalty=float('inf'), sub_penalty=1)
     for w in corpus_context:
+        w_sequence = getattr(w, sequence_type)
+        query_sequence = getattr(query, sequence_type)
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
             cur += 1
             if cur % 10 == 0:
                 call_back(cur)
-        if (len(getattr(w, sequence_type)) > len(getattr(query, sequence_type))+1 or
-            len(getattr(w, sequence_type)) < len(getattr(query, sequence_type))-1):
+        if (len(w_sequence) > len(query_sequence)+1 or
+            len(w_sequence) < len(query_sequence)-1):
             continue
-        m = al.make_similarity_matrix(getattr(query, sequence_type), getattr(w, sequence_type))
+        m = al.make_similarity_matrix(query_sequence, w_sequence)
         if m[-1][-1]['f'] != 1:
             continue
-        matches.append(str(getattr(w, sequence_type)))
+        matches.append(str(w_sequence))
 
-    neighbors = list(set(matches)-set([str(getattr(query, sequence_type))]))
+    neighbors = list(set(matches)-set([str(query_sequence)]))
     return (len(neighbors), neighbors)
 
 def ensure_query_is_word(query, corpus, sequence_type, tier_type, trans_delimiter='.', file_type=None):

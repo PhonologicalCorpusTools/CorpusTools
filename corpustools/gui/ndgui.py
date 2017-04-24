@@ -34,7 +34,8 @@ class NDWorker(FunctionWorker):
                     # Create a dict with sequence_type keys for constaint-time lookup
                     tierdict = defaultdict(list)
                     for entry in c:
-                        tierdict[str(getattr(entry, kwargs['sequence_type']))].append(entry)
+                        w = getattr(entry, kwargs['sequence_type'])
+                        tierdict[str(w)].append(entry)
                     for q in kwargs['query']:
                         if kwargs['algorithm'] != 'substitution':
                             res = neighborhood_density(c, q, tierdict,
@@ -47,6 +48,7 @@ class NDWorker(FunctionWorker):
                                                 call_back = kwargs['call_back'])
                         else:
                             res = find_mutation_minpairs(c, q,
+                                        tier_type=kwargs['tier_type'],
                                         stop_check = kwargs['stop_check'],
                                         call_back = kwargs['call_back'])
                         if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
@@ -67,6 +69,7 @@ class NDWorker(FunctionWorker):
                                                 )
                     else:
                         find_mutation_minpairs_all_words(c,
+                                                tier_type = kwargs['tier_type'],
                                                 num_cores = kwargs['num_cores'],
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
@@ -383,6 +386,8 @@ class NDDialog(FunctionDialog):
         out_file = self.saveFileWidget.value()
         if out_file == '':
             out_file = None
+        else:
+            kwargs['output_filename'] = out_file
 
         if self.compType is None:
             reply = QMessageBox.critical(self,

@@ -764,7 +764,6 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
 
-
     @check_for_empty_corpus
     @check_for_transcription
     def phonoProb(self):

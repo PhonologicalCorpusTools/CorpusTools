@@ -186,8 +186,8 @@ class FunctionDialog(PCTDialog):
     header = None
     _about = None
     name = ''
-    def __init__(self,parent, settings, worker):
-        PCTDialog.__init__(self, parent)
+    def __init__(self,parent, settings, worker, infinite_progress=False):
+        PCTDialog.__init__(self, parent, infinite_progress=infinite_progress)
         self.settings = settings
         layout = QVBoxLayout()
 
