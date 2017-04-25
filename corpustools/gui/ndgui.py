@@ -28,14 +28,15 @@ class NDWorker(FunctionWorker):
         tt = kwargs['type_token']
         att = kwargs.get('attribute', None)
         ft = kwargs['frequency_cutoff']
+        output = list()
         with cm(corpus, st, tt, attribute=att, frequency_threshold = ft) as c:
             try:
+                tierdict = defaultdict(list)
+                for entry in c:
+                    w = getattr(entry, kwargs['sequence_type'])
+                    tierdict[str(w)].append(entry)
                 if 'query' in kwargs:
                     # Create a dict with sequence_type keys for constaint-time lookup
-                    tierdict = defaultdict(list)
-                    for entry in c:
-                        w = getattr(entry, kwargs['sequence_type'])
-                        tierdict[str(w)].append(entry)
                     for q in kwargs['query']:
                         if kwargs['algorithm'] != 'substitution':
                             res = neighborhood_density(c, q, tierdict,
@@ -55,11 +56,14 @@ class NDWorker(FunctionWorker):
                             print_neighden_results(kwargs['output_filename'],res[1])
                         if self.stopped:
                             break
+                        if kwargs['file_list'] is not None:
+                            output.append(','.join([q, str(res[0]), ','.join([str(r) for r in res[1]])]))
                         self.results.append([q,res[0]])
                 else:
                     end = kwargs['corpusModel'].beginAddColumn(att)
                     if kwargs['algorithm'] != 'substitution':
-                        neighborhood_density_all_words(c,
+                        neighborhood_density_all_words(c, tierdict,
+                                                tier_type = kwargs['tier_type'],
                                                 algorithm = kwargs['algorithm'],
                                                 max_distance = kwargs['max_distance'],
                                                 num_cores = kwargs['num_cores'],
@@ -84,6 +88,11 @@ class NDWorker(FunctionWorker):
         if self.stopped:
             self.finishedCancelling.emit()
             return
+        if output and kwargs['file_list']:
+            with open(kwargs['output_filename'], encoding='utf-8', mode='w') as outf:
+                print('Word,Density,Neighbors', file=outf)
+                for item in output:
+                    print(item, file=outf)
         self.dataReady.emit(self.results)
 
 
@@ -332,19 +341,19 @@ class NDDialog(FunctionDialog):
 
     def oneWordSelected(self):
         self.compType = 'one'
-        self.saveFileWidget.setEnabled(True)
+        # self.saveFileWidget.setEnabled(True)
 
     def oneNonwordSelected(self):
         self.compType = 'nonword'
-        self.saveFileWidget.setEnabled(True)
+        # self.saveFileWidget.setEnabled(True)
 
     def fileSelected(self):
         self.compType = 'file'
-        self.saveFileWidget.setEnabled(False)
+        # self.saveFileWidget.setEnabled(False)
 
     def allwordsSelected(self):
         self.compType = 'all'
-        self.saveFileWidget.setEnabled(False)
+        # self.saveFileWidget.setEnabled(False)
 
     def generateKwargs(self):
 
@@ -389,6 +398,7 @@ class NDDialog(FunctionDialog):
         else:
             kwargs['output_filename'] = out_file
 
+        kwargs['file_list'] = None
         if self.compType is None:
             reply = QMessageBox.critical(self,
                 "Missing information", 'Please select an option from the "Query" section in the middle of the window.')
@@ -421,6 +431,7 @@ class NDDialog(FunctionDialog):
             kwargs['output_filename'] = out_file
         elif self.compType == 'file':
             path = self.fileWidget.value()
+            kwargs['file_list'] = path
             if not path:
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please enter a file path.")

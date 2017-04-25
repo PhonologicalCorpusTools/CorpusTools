@@ -23,7 +23,7 @@ def _is_phono_edit_distance_neighbor(w, query, sequence_type, specifier, max_dis
 def _is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
     return khorsi(w, query, freq_base, sequence_type, max_distance) >= max_distance
 
-def neighborhood_density_all_words(corpus_context,
+def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
             algorithm = 'edit_distance', max_distance = 1,
             num_cores = -1, settable_attr = None,
             stop_check = None, call_back = None):
@@ -46,6 +46,8 @@ def neighborhood_density_all_words(corpus_context,
         Name of attribute that neighbourhood density results will be assigned to
     """
     function = partial(neighborhood_density, corpus_context,
+                        tierdict = tierdict,
+                        tier_type = tier_type,
                         algorithm = algorithm,
                         max_distance = max_distance)
     if call_back is not None:
