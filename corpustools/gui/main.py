@@ -49,6 +49,7 @@ from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
 from .klgui import KLDialog
+from .infogui import InformativityDialog
 from .autogui import AutoDialog
 from .helpgui import AboutDialog, HelpDialog
 
@@ -160,7 +161,7 @@ class MainWindow(QMainWindow):
         self.corpus = None
         self.corpusModel = None
         self.inventoryModel = None
-        self.resultsCodes = ['FL', 'PD', 'FA', 'SS', 'AS', 'ND', 'PP', 'MI', 'KL', 'PhonoSearch', 'Auto']
+        self.resultsCodes = ['FL', 'PD', 'FA', 'SS', 'AS', 'ND', 'PP', 'MI', 'KL', 'PhonoSearch', 'Auto', 'Informativity']
         for abbrv in self.resultsCodes:
             window_name = abbrv+'Window'
             setattr(self, window_name, None)
@@ -714,6 +715,13 @@ class MainWindow(QMainWindow):
 
 
     @check_for_empty_corpus
+    def informativity(self):
+        dialog = InformativityDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            pass
+
+    @check_for_empty_corpus
     @check_for_transcription
     def mutualInfo(self):
         dialog = MIDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
@@ -970,6 +978,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate string similarity for corpus", triggered=self.stringSim)
 
+        self.informativityAct = QAction("Calculate informativity...",
+                self,
+                statusTip="Calculate informativity for segments in the inventory", triggered=self.informativity)
+
         self.freqaltAct = QAction( "Calculate frequency of alternation...",
                 self,
                 statusTip="Calculate frequency of alternation", triggered=self.freqOfAlt)
@@ -1126,6 +1138,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.phonoProbAct)
         self.analysisMenu.addAction(self.funcloadAct)
         self.analysisMenu.addAction(self.prodAct)
+        self.analysisMenu.addAction(self.informativityAct)
         self.analysisMenu.addAction(self.klAct)
         self.analysisMenu.addAction(self.stringSimAct)
         self.analysisMenu.addAction(self.neighDenAct)

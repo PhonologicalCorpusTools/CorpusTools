@@ -181,3 +181,4 @@ print("Informativity for all segments in inventory:")
 output = all_informativity(corpus_in, rounding=4)
 for s in sorted(output.keys()):
     print(s, output[s])
+#remove ROUNDING from output, since this is already handled in PCT's global settings
