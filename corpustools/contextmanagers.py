@@ -35,6 +35,7 @@ class BaseCorpusContext(object):
         self.sequence_type = sequence_type
         self.type_or_token = type_or_token
         self.corpus = corpus
+        self.name = self.corpus.name
         self.attribute = attribute
         self._freq_base = {}
         self.length = None

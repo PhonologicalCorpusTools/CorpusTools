@@ -719,7 +719,15 @@ class MainWindow(QMainWindow):
         dialog = InformativityDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
-            pass
+            if self.InformativityWindow is not None and dialog.update and self.InformativityIWindow.isVisible():
+                self.InformativityWindow.table.model().addRows(dialog.results)
+            else:
+                self.InformativityWindow = ResultsWindow('Mutual information results',dialog,self)
+                self.InformativityWindow.show()
+                self.showInformativityResults.triggered.connect(self.InformativityWindow.raise_)
+                self.showInformativityResults.triggered.connect(self.InformativityWindow.activateWindow)
+                self.InformativityWindow.rejected.connect(lambda: self.showInformativityResults.setVisible(False))
+                self.showInformativityResults.setVisible(True)
 
     @check_for_empty_corpus
     @check_for_transcription
@@ -1092,6 +1100,9 @@ class MainWindow(QMainWindow):
 
         self.showAutoResults = QAction("Automatic phonological analysis results", self)
         self.showAutoResults.setVisible(False)
+
+        self.showInformativityResults = QAction("Informativity results", self)
+        self.showInformativityResults.setVisible(False)
 
         self.closeResultsWindowsAct = QAction("Close all open results windows", self,
                                            triggered=self.closeResultsWindows)

@@ -65,8 +65,6 @@ def calc_freq_of_alt(corpus_context, seg1, seg2, algorithm, output_filename = No
             list_seg2.append(w)
             all_words.add(w.spelling)
 
-
-
     if call_back is not None:
         call_back('Calculating string similarities...')
         call_back(0, len(list_seg1) * len(list_seg2))
