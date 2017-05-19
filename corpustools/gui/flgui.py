@@ -166,11 +166,17 @@ class FLDialog(FunctionDialog):
 
         box = QVBoxLayout()
 
-        self.relativeCountWidget = QCheckBox('Use counts relative to number of possible pairs')
+        self.relativeCountWidget = QRadioButton('Use counts relative to number of possible pairs')
+        self.relativeCountCorpusWidget = QRadioButton('Use counts relative to the entire corpus')
+        self.relativeButtonGroup = QButtonGroup()
+        self.relativeButtonGroup.addButton(self.relativeCountWidget)
+        self.relativeButtonGroup.addButton(self.relativeCountCorpusWidget)
+        self.relativeButtonGroup.setExclusive(True)
         self.relativeCountWidget.setChecked(True)
         self.homophoneWidget = QCheckBox('Distinguish homophones')
 
         box.addWidget(self.relativeCountWidget)
+        box.addWidget(self.relativeCountCorpusWidget)
         box.addWidget(self.homophoneWidget)
 
         fileFrame = QGroupBox('Output list of minimal pairs to a file')
@@ -266,6 +272,9 @@ class FLDialog(FunctionDialog):
     def entropySelected(self):
         self.saveFileWidget.setEnabled(False)
         self.relativeCountWidget.setEnabled(False)
+        self.relativeCountWidget.setChecked(False)
+        self.relativeCountCorpusWidget.setEnabled(True)
+        self.relativeCountCorpusWidget.setChecked(True)
         self.homophoneWidget.setEnabled(False)
         self.preventNormalizationWidget.setEnabled(True)
         self.typeTokenWidget.widgets[1].setChecked(True)
@@ -290,12 +299,13 @@ class FLDialog(FunctionDialog):
                 'type_token':self.typeTokenWidget.value(),
                 'algorithm': alg,
                 'prevent_normalization': self.preventNormalizationWidget.isChecked(),
-                'environment_filters': self.envWidget.value()}
+                'environment_filter': self.envWidget.value()}
         if alg == 'min_pairs':
             out_file = self.saveFileWidget.value()
             if out_file == '':
                 out_file = None
-            self.kwargs['relative_count'] = self.relativeCountWidget.isChecked()
+            self.kwargs['relative_count_to_relevant_sounds'] = self.relativeCountWidget.isChecked()
+            self.kwargs['relative_count_to_whole_corpus'] = self.relativeCountCorpusWidget.isChecked()
             self.kwargs['distinguish_homophones'] = self.homophoneWidget.isChecked()
             self.kwargs['output_filename'] = out_file
 
@@ -322,6 +332,10 @@ class FLDialog(FunctionDialog):
                 environments = 'None'
             else:
                 environments = ' ; '.join([x for x in self.envWidget.displayValue()])
+
+            if isinstance(r, float):
+                r = [r]
+
 
             pre_normalized = r[-1]
             if self.preventNormalizationWidget.isChecked():
