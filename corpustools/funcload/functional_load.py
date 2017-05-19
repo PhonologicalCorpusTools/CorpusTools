@@ -2,47 +2,99 @@ import re
 from collections import defaultdict
 from math import *
 import itertools
+from math import factorial
 import time
 
-from .io import save_minimal_pairs
+from corpustools.exceptions import FuncLoadError 
+from corpustools.funcload.io import save_minimal_pairs 
+from corpustools.corpus.classes.lexicon import EnvironmentFilter
 
-import pdb
 
+def is_minpair(first, second, corpus_context, segment_pairs, environment_filter): 
+    """Return True iff first/second are a minimal pair.
+    Checks that all segments in those words are identical OR a valid segment pair
+    (from segment_pairs) and fit the environment_filter, and that there is at least
+    one difference between first and second.
 
-def _merge_segment_pairs(tier, segment_pairs, environment_filters):
-    """Merge the specified segment pairs for the given tier of segments if 
-    its position fits one of the environment filters. Return a string.
+    Parameters
+    ----------
+
+    first, second: Word
+        Two words to evaluate as a minimal pair. 
+    corpus_context: CorpusContext
+        The context manager that the corpus should be evaluated from (e.g., canonical variants).
+    segment_pairs: List
+        list of length-2 tuples of str
+    environment_filter: Environment
+        The environment in which words should be evaluated for being a minimal pair.
+    
     """
-    merged = []
-    for i in range(len(tier)):
-        merged.append(_check_to_add_merged(tier, i, segment_pairs, environment_filters))
-    return ' '.join(merged)
-
-def _check_to_add_merged(tier, i, segment_pairs, environment_filters):
-    for sp in segment_pairs:
-        if tier[i] in sp and _fits_environment(tier, i, environment_filters):
-            return 'NEUTR:'+str(sp[0])+'/'+str(sp[1])
-    return tier[i]
-
-def _ready_for_re(word, index):
-    w = [str(seg) for seg in word]
-    w[index] = '_'
-    return ' '.join(w)
-
-def _fits_environment(tier, index, environment_filters):
-    """Return True iff for tier, the environment
-    of its index'th element fits passes one of the environment_filters.
-    """
-    if not environment_filters:
+    first = getattr(first, corpus_context.sequence_type)
+    second = getattr(second, corpus_context.sequence_type)
+    if len(first) != len(second):
+        return False
+    has_difference = False
+    for i in range(len(first)):
+        if first[i] == second[i]:
+            continue
+        elif (conflateable(first[i], second[i], segment_pairs) 
+            and fits_environment(first, second, i, environment_filter)): 
+            has_difference = True
+            continue
+        else:
+            return False
+    if has_difference:
         return True
-    ef_res = []
-    for ef in environment_filters:
-        tier_re = _ready_for_re(tier, index)
-        ef_res.append(_make_environment_re(ef))
 
-    return any([bool(re.search(env_re, tier_re)) for env_re in ef_res])
 
-def _make_environment_re(environment_filter):
+def conflateable(seg1, seg2, segment_pairs):
+    """Return True iff seg1 and seg2 are exactly one of the segment pairs
+    in segment_pairs (ignoring ordering of either).
+
+    seg1 and seg2 will never be identical in the input.
+
+    Parameters
+    ----------
+
+    seg1, seg2: Segment
+        Two segments on which minimal pairs might hinge. 
+    segment_pairs: List
+        list of length-2 tuples of str
+    
+    """
+    for segment_pair in segment_pairs:
+        seg_set = set(segment_pair)
+        if seg1 in seg_set and seg2 in seg_set:
+            return True
+    return False
+
+
+def fits_environment(w1, w2, index, environment_filter):
+    """Return True iff for both w1 and w2 (tiers), the environment
+    of its i'th element passes the environment_filter.
+
+    """
+    if not environment_filter:
+        return True
+
+    def ready_for_re(word, index):
+        w = [str(seg) for seg in word]
+        w[index] = '_'
+        return ' '.join(w)
+
+    w1 = ready_for_re(w1, index)
+    w2 = ready_for_re(w2, index)
+    env_re = make_environment_re(environment_filter) 
+
+    return (bool(re.search(env_re, w1)) and bool(re.search(env_re, w2)))
+
+
+def ready_for_re(word, index):
+        w = [str(seg) for seg in word]
+        w[index] = '_'
+        return ' '.join(w)
+
+def make_environment_re(environment_filter): 
     if environment_filter.lhs:
         re_lhs = ' '.join(['('+('|'.join([seg for seg in position])+')') for position in environment_filter.lhs])
         re_lhs = re_lhs.replace('#', '^')
@@ -57,40 +109,21 @@ def _make_environment_re(environment_filter):
 
     if re_lhs and not re_lhs.endswith('^)'):
         re_lhs += ' '
-    if re_rhs and not re_rhs.startswith('($'):
+    if re_rhs and not re_rhs.endswith('($'):
         re_rhs = ' ' + re_rhs
-
     return re_lhs + '_' + re_rhs
 
 
-def _entropy(probabilities):
-    """Calculate the entropy of a choice from the provided probability distribution.
-
-    Parameters
-    ---------
-    probabilities : list of floats
-        Contains the probability of each item in the list.
-
-    Returns
-    -------
-    float
-        Entropy
-    """
-    return -(sum([p*log(p,2) if p > 0 else 0 for p in probabilities]))
-
-
+# This is the function I really edited
+# I changed the parameter called 'relative_count' to 'relative_count_to_relevant_sounds' and changed its default value.
+# I added a new parameter, 'relative_count_to_whole_corpus', and set its default to true.
+# I updated the doc strings.
 def minpair_fl(corpus_context, segment_pairs,
-        relative_count = True, distinguish_homophones = False,
-        environment_filters = None, prevent_normalization = False,
+        relative_count_to_relevant_sounds = False, relative_count_to_whole_corpus = True, distinguish_homophones = False,
+        environment_filter = None, prevent_normalization = False,
         stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between two segments
     as a count of minimal pairs.
-
-    Begin by creating a representation of each transcription that has collapsed
-    all segment pairs (subject to the environment filter) and creating a dict
-    with these segment-merged representations as keys, with lists of their
-    respective words as values. Minimal pairs are then each pair of words within
-    the list of words with the same segment-merged representation.
 
     Parameters
     ----------
@@ -98,15 +131,21 @@ def minpair_fl(corpus_context, segment_pairs,
         Context manager for a corpus
     segment_pairs : list of length-2 tuples of str
         The pairs of segments to be conflated.
-    relative_count : bool, optional
-        If True, divide the number of minimal pairs by the total count
+    relative_count_to_relevant_sounds : bool, optional
+        If True, divide the number of minimal pairs by 
         by the total number of words that contain either of the two segments.
+        # changed the name of this from "relative_count" to "relative_count_to_relevant_sounds"
+        # set its default to False above
+    relative_count_to_whole_corpus : bool, optional
+        If True, divide the number of minimal pairs by the total number of words 
+        in the corpus (regardless of whether those words contain the target sounds).
+        Defaults to True.
     distinguish_homophones : bool, optional
         If False, then you'll count sock~shock (sock=clothing) and
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    environment_filters : list of EnvironmentFilter
+    environment_filter : EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
         particular segmental contexts
     stop_check : callable, optional
@@ -117,24 +156,31 @@ def minpair_fl(corpus_context, segment_pairs,
     Returns
     -------
     tuple(int or float, list)
-        Tuple of: 0. if `relative_count`==False, an int of the raw number of
-        minimal pairs; if `relative_count`==True, a float of that
+        Tuple of: 0. if `relative_count_to_relevant_sounds`==False and 
+        `relative_count_to_whole_corpus`==False, an int of the raw number of
+        minimal pairs; if `relative_count_to_relevant_sounds`==True, a float of that
         count divided by the total number of words in the corpus that
-        include either `s1` or `s2`; and 1. list of minimal pairs.
+        include either `s1` or `s2`; if `relative_count_to_whole_corpus`==True, a
+        float of the raw count divided by the total number of words in the corpus; 
+        and 1. list of minimal pairs.
     """
+
     if stop_check is not None and stop_check():
         return
 
-    if not environment_filters:
-        environment_filters = []
+    ## Count the number of words in the corpus (needed if relative_count_to_whole_corpus is True)
+    num_words_in_corpus = len(corpus_context.corpus)
 
-    all_target_segments = list(itertools.chain.from_iterable(segment_pairs))
-    merged_dict = defaultdict(list)
-    contain_target_segment_count = 0
+    ## Filter out words that have none of the target segments
+    ## (for relative_count_to_relevant_sounds as well as improving runtime)
+    contain_target_segment = []
+    if call_back is not None:
+        call_back('Finding words with the specified segments...')
+        call_back(0, len(corpus_context))
+        cur = 0
 
-    ## Create dict of words in lexicon, with segment-merged transcriptions as keys
-    cur = 0
-    for w in corpus_context:
+    all_target_segments = list(itertools.chain.from_iterable(segment_pairs)) # creates a list of target segments from the list of tuples
+    for w in corpus_context: # loops through the words in the context manager
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -142,50 +188,63 @@ def minpair_fl(corpus_context, segment_pairs,
             if cur % 100 == 0:
                 call_back(cur)
         tier = getattr(w, corpus_context.sequence_type)
-        ## Only add words with at least one of the target segments in the right
-        ## environment (for relative_count, and to improve time/space efficiency)
-        if any([s in all_target_segments and _fits_environment(tier, i, environment_filters) 
-                for i, s in enumerate(tier)]):
-            contain_target_segment_count += 1
-            ## Create segment-pair-merged (neutralized) representations
-            merged = _merge_segment_pairs(tier, segment_pairs, environment_filters)
-            if 'NEUTR' in merged:
-                merged_dict[merged].append(w)
+        if any([s in tier for s in all_target_segments]):
+                contain_target_segment.append(w)
     if stop_check is not None and stop_check():
         return
 
-    ## Generate output
-    result = 0
+    ## Find minimal pairs
     minpairs = []
-    for entry in merged_dict:
-        if len(merged_dict[entry]) == 1: # can't contain a pair
-            continue
+    if call_back is not None:
+        call_back('Finding minimal pairs...')
+        if len(contain_target_segment) >= 2:
+            call_back(0,factorial(len(contain_target_segment))/(factorial(len(contain_target_segment)-2)*2))
+        cur = 0
+    for first, second in itertools.combinations(contain_target_segment, 2):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        if is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
+            ordered_pair = sorted([(first, getattr(first, corpus_context.sequence_type)),
+                                   (second, getattr(second, corpus_context.sequence_type))],
+                                   key = lambda x: x[1]) # sort by tier/transcription
+            minpairs.append(tuple(ordered_pair))
 
-        pairs = itertools.combinations(merged_dict[entry], 2)
-        minpair_transcriptions = set()
-        for w1, w2 in pairs:
-            if (getattr(w1, corpus_context.sequence_type) != getattr(w2, corpus_context.sequence_type)):
-                # avoids counting homophones
-                if w1.spelling != w2.spelling: # avoids pronunc. variants
-                    ordered_pair = sorted([(w1, getattr(w1, corpus_context.sequence_type)),
-                                    (w2, getattr(w2, corpus_context.sequence_type))],
-                                    key = lambda x: x[1]) # sort by tier/transcription
-                    trans_pair = tuple([transcription for _, transcription in ordered_pair])
-                    if distinguish_homophones:
-                        result += 1
-                    else:
-                        if trans_pair not in minpair_transcriptions:
-                            result += 1
-                    minpair_transcriptions.add(trans_pair)
-                    minpairs.append(tuple(ordered_pair))
+    ## Generate output 
+    if not distinguish_homophones:
+        actual_minpairs = {}
 
-    if relative_count and contain_target_segment_count > 0:
-        result /= float(contain_target_segment_count)
-    return (result, minpairs, segment_pairs, prevent_normalization)
+        for pair in minpairs:
+            if stop_check is not None and stop_check():
+                return
+            key = (pair[0][1], pair[1][1]) # Keys are tuples of transcriptions
+            if key not in actual_minpairs:
+                actual_minpairs[key] = (pair[0][0], pair[1][0]) # Values are words
+            else:
+                pair_freq = pair[0][0].frequency + pair[1][0].frequency
+                existing_freq = actual_minpairs[key][0].frequency + \
+                                actual_minpairs[key][1].frequency
+                if pair_freq > existing_freq:
+                    actual_minpairs[key] = (pair[0][0], pair[1][0])
+        result = sum((x[0].frequency + x[1].frequency)/2
+                    for x in actual_minpairs.values())
+    else:
+        result = sum((x[0][0].frequency + x[1][0].frequency)/2 for x in minpairs)
+
+    if relative_count_to_relevant_sounds and len(contain_target_segment) > 0:
+        result /= sum(x.frequency for x in contain_target_segment)
+        
+    elif relative_count_to_whole_corpus:
+        result = result / num_words_in_corpus
+    
+    return (result, minpairs)
 
 
-def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
-              prevent_normalization = False, stop_check = None, call_back = None):
+def deltah_fl(corpus_context, segment_pairs, environment_filter = None, prevent_normalization = False,
+            stop_check = None, call_back = None):
     """Calculate the functional load of the contrast between between two
     segments as the decrease in corpus entropy caused by a merger.
 
@@ -195,10 +254,9 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
         Context manager for a corpus
     segment_pairs : list of length-2 tuples of str
         The pairs of segments to be conflated.
-    environment_filters : list of EnvironmentFilter
+    environment_filter : EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
-    prevent_normalization : bool
-        Prevents division of the entropy difference by the pre-merger entropy
+        particular segmental contexts
     stop_check : callable, optional
         Optional function to check whether to gracefully terminate early
     call_back : callable, optional
@@ -211,15 +269,19 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
         non-homophonous words in the corpus before a merger of `s1`
         and `s2` and b) the entropy of that choice after the merger.
     """
-    if not environment_filters:
-        environment_filters = []
-
-    original_sum = 0
+    if call_back is not None:
+        call_back('Finding instances of segments...')
+        call_back(0, len(corpus_context))
+        cur = 0
+    freq_sum = 0
     original_probs = defaultdict(float)
-    neutralized_sum = 0
-    neutralized_probs = defaultdict(float)
 
-    cur = 0
+    all_target_segments = list(itertools.chain.from_iterable(segment_pairs))
+    if environment_filter:
+        filled_environment = EnvironmentFilter(tuple(all_target_segments),
+                                               environment_filter.lhs,
+                                               environment_filter.rhs)
+
     for w in corpus_context:
         if stop_check is not None and stop_check():
             return
@@ -228,51 +290,54 @@ def deltah_fl(corpus_context, segment_pairs, environment_filters = None,
             if cur % 20 == 0:
                 call_back(cur)
 
-        original_tier = getattr(w, corpus_context.sequence_type)
-        original_probs[original_tier] += w.frequency
-        original_sum += w.frequency
+        f = w.frequency
 
-        neutralized_tier = _merge_segment_pairs(original_tier, segment_pairs, environment_filters)
-        neutralized_probs[neutralized_tier] += w.frequency
-        neutralized_sum += w.frequency
+        original_probs[getattr(w, corpus_context.sequence_type)] += f
+        freq_sum += f
 
-
-    if corpus_context.type_or_token == 'type':
-        preneutr_h = log(len(original_probs), 2)
-    else:
-        original_probs = {k:v/original_sum for k,v in original_probs.items()}
-        preneutr_h = _entropy(original_probs.values())
+    original_probs = {k:v/freq_sum for k,v in original_probs.items()}
 
     if stop_check is not None and stop_check():
         return
+    preneutr_h = entropy(original_probs.values())
 
-    if corpus_context.type_or_token == 'type':
-        postneutr_h = log(len(neutralized_probs), 2)
-    else:
-        neutralized_probs = {k:v/neutralized_sum for k,v in neutralized_probs.items()}
-        postneutr_h = _entropy(neutralized_probs.values())
+    neutralized_probs = defaultdict(float)
+    if call_back is not None:
+        call_back('Neutralizing instances of segments...')
+        call_back(0, len(list(original_probs.keys())))
+        cur = 0
+    for k,v in original_probs.items():
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        if not environment_filter or k.find(filled_environment):
+            n = [neutralize_segment(seg, segment_pairs)
+                    for seg in k]
+            neutralized_probs['.'.join(n)] += v
+    postneutr_h = entropy(neutralized_probs.values())
 
     if stop_check is not None and stop_check():
         return
-        
     result = preneutr_h - postneutr_h
     if result < 1e-10:
         result = 0.0
 
-    if not prevent_normalization and preneutr_h > 0.0:
-        pre_norm = result
-        result = result / preneutr_h
-    else:
-        pre_norm = result
-
-    return (result, pre_norm)
+    return result
 
 
+# This function is weirdly named. It should really be something like
+# average_minpair_fl
+# It has also been changed so as to have two "relativizer" options:
+# one to words containing the relevant segments and one to all
+# words in the corpus (though it basically does the calculation
+# by calling the above minpair_fl() function).
 def relative_minpair_fl(corpus_context, segment,
-            relative_count = True, distinguish_homophones = False,
-            output_filename = None, environment_filters = None,
-            prevent_normalization = False,
-            stop_check = None, call_back = None):
+            relative_count_to_relevant_sounds = False, relative_count_to_whole_corpus = True, 
+            distinguish_homophones = False, output_filename = None, environment_filter = None,
+            prevent_normalization = False, stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as a count of minimal pairs.
 
@@ -282,15 +347,19 @@ def relative_minpair_fl(corpus_context, segment,
         Context manager for a corpus
     segment : str
         The target segment.
-    relative_count : bool, optional
-        If True, divide the number of minimal pairs by the total count
+    relative_count_to_relevant_sounds : bool, optional
+        If True, divide the number of minimal pairs
         by the total number of words that contain either of the two segments.
+    relative_count_to_whole_corpus : bool, optional
+        If True, divide the number of minimal pairs by the total number of words 
+        in the corpus (regardless of whether those words contain the target sounds).
+        Defaults to True.
     distinguish_homophones : bool, optional
         If False, then you'll count sock~shock (sock=clothing) and
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    environment_filters : list of EnvironmentFilter
+    environment_filter : EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
         particular segmental contexts
     stop_check : callable, optional
@@ -301,45 +370,37 @@ def relative_minpair_fl(corpus_context, segment,
     Returns
     -------
     int or float
-        If `relative_count`==False, returns an int of the raw number of
-        minimal pairs. If `relative_count`==True, returns a float of
+        If `relative_count_to_relevant_sounds`==False and `relative_count_to_whole_corpus`==False,
+        returns an int of the raw number of
+        minimal pairs. If `relative_count_to_relevant_sounds`==True, returns a float of
         that count divided by the total number of words in the corpus
-        that include either `s1` or `s2`.
+        that include either `s1` or `s2`. If `relative_count_to_whole_corpus`==True, a
+        float of the raw count divided by the total number of words in the corpus. 
     """
-    if not environment_filters:
-        environment_filters = []
-
     all_segments = corpus_context.inventory
     segment_pairs = [(segment,other.symbol) for other in all_segments
                         if other.symbol != segment and other.symbol != '#']
 
     results = []
-    results_dict = {}
     to_output = []
     for sp in segment_pairs:
         res = minpair_fl(corpus_context, [sp],
-            relative_count = relative_count,
+            relative_count_to_relevant_sounds = relative_count_to_relevant_sounds,
+            relative_count_to_whole_corpus = relative_count_to_whole_corpus, 
             distinguish_homophones = distinguish_homophones,
-            environment_filters = environment_filters,
+            environment_filter = environment_filter,
             prevent_normalization = prevent_normalization,
             stop_check = stop_check, call_back = call_back)
-
-        results_dict[sp] = res[0]
         results.append(res[0])
-        print('Functional load of {}: {}'.format(sp, res[0]))
 
         if output_filename is not None:
             to_output.append((sp, res[1]))
     if output_filename is not None:
         save_minimal_pairs(output_filename, to_output)
-
-    result = sum(results)/len(segment_pairs)
-    return (result, results_dict, float(sum(results)))
-
+    return sum(results)/len(segment_pairs)
 
 def relative_deltah_fl(corpus_context, segment,
-                environment_filters = None,
-                prevent_normalization = False,
+                environment_filter = None,
                 stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as the decrease in corpus entropy
@@ -363,27 +424,16 @@ def relative_deltah_fl(corpus_context, segment,
         non-homophonous words in the corpus before a merger of `s1`
         and `s2` and b) the entropy of that choice after the merger.
     """
-    if not environment_filters:
-        environment_filters = []
-
     all_segments = corpus_context.inventory
     segment_pairs = [(segment,other.symbol) for other in all_segments
                         if other.symbol != segment and other.symbol != '#']
 
     results = []
-    results_dict = {}
     for sp in segment_pairs:
-        res, pre_norm = deltah_fl(corpus_context, [sp],
-                environment_filters=environment_filters,
-                prevent_normalization = False,
-                stop_check = stop_check, call_back = call_back)
-        results.append(res)
-        results_dict[sp] = res
-        print('Functional load of {}: {}'.format(sp, res))
-
-    result = sum(results)/len(segment_pairs)
-    return (result, results_dict, float(sum(results)))
-
+        results.append(deltah_fl(corpus_context, [sp],
+                environment_filter=environment_filter,
+                stop_check = stop_check, call_back = call_back))
+    return sum(results)/len(segment_pairs)
 
 
 def collapse_segpairs_fl(corpus_context, **kwargs):
@@ -394,11 +444,10 @@ def collapse_segpairs_fl(corpus_context, **kwargs):
     if func_type == 'min_pairs':
         fl = minpair_fl(corpus_context, segment_pairs,
                         relative_count, distinguish_homophones,
-                          environment_filters=environment_filters)
+                          environment_filter=environment_filter)
     elif func_type == 'entropy':
         fl = deltah_fl(corpus_context, segment_pairs,
-          environment_filters=environment_filters)
-
+          environment_filter=environment_filter)
 
 
 def individual_segpairs_fl(corpus_context, **kwargs):
@@ -412,11 +461,26 @@ def individual_segpairs_fl(corpus_context, **kwargs):
         if func_type == 'min_pairs':
             fl = minpair_fl(corpus_context, [pair],
                             relative_count, distinguish_homophones,
-                              environment_filters=environment_filters)
+                              environment_filter=environment_filter)
         elif func_type == 'entropy':
             fl = deltah_fl(corpus_context, [pair],
-              environment_filters=environment_filters)
+              environment_filter=environment_filter)
         results.append(fl)
+
+def entropy(probabilities):
+    """Calculate the entropy of a choice from the provided probability distribution.
+
+    Parameters
+    ---------
+    probabilities : list of floats
+        Contains the probability of each item in the list.
+
+    Returns
+    -------
+    float
+        Entropy
+    """
+    return -(sum([p*log(p,2) if p > 0 else 0 for p in probabilities]))
 
 
 def neutralize_segment(segment, segment_pairs):
@@ -430,12 +494,16 @@ def neutralize_segment(segment, segment_pairs):
     return s
 
 
+# This one also now has two different "relative count" options.
 def all_pairwise_fls(corpus_context, relative_fl = False,
                     algorithm = 'minpair',
-                    prevent_normalization = False,
-                    relative_count = True, distinguish_homophones = False,
-                    environment_filters = None):
+                    relative_count_to_relevant_sounds = False, relative_count_to_whole_corpus = True,
+                    distinguish_homophones = False,
+                    environment_filter = None,
+                    call_back = None, stop_check=None):
     """Calculate the functional load of the contrast between two segments as a count of minimal pairs.
+    This version calculates the functional load for ALL pairs of segments in the inventory,
+    which could be useful for visually mapping out phoneme inventories.
 
     Parameters
     ----------
@@ -447,15 +515,19 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
     algorithm : str {'minpair', 'deltah'}
         Algorithm to use for calculating functional load: "minpair" for
         minimal pair count or "deltah" for change in entropy.
-    relative_count : bool, optional
+    relative_count_to_relevant_sounds : bool, optional
         If True, divide the number of minimal pairs by the total count
         by the total number of words that contain either of the two segments.
+    relative_count_to_whole_corpus : bool, optional
+        If True, divide the number of minimal pairs by the total number of words 
+        in the corpus (regardless of whether those words contain the target sounds).
+        Defaults to True.
     distinguish_homophones : bool, optional
         If False, then you'll count sock~shock (sock=clothing) and
         sock~shock (sock=punch) as just one minimal pair; but if True,
         you'll overcount alternative spellings of the same word, e.g.
         axel~actual and axle~actual. False is the value used by Wedel et al.
-    environment_filters : list of EnvironmentFilter
+    environment_filter : EnvironmentFilter
         Allows the user to restrict the neutralization process to segments in
         particular segmental contexts
 
@@ -465,17 +537,18 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
     OR
     list of (str, float)
         Normally returns a list of all Segment pairs and their respective functional load values, as length-2 tuples ordered by FL.
-        If calculating relative FL, returns a dictionary of each segment and its relative (average) FL, with entries ordered by FL.
+        If calculating relative FL (i.e., average FL for a segment), returns a dictionary of each segment and its relative (average) FL, with entries ordered by FL.
     """
-    if not environment_filters:
-        environment_filters = []
-
     fls = {}
     total_calculations = ((((len(corpus_context.inventory)-1)**2)-len(corpus_context.inventory)-1)/2)+1
     ct = 1
     t = time.time()
     if '' in corpus_context.inventory:
         raise Exception('Warning: Calculation of functional load for all segment pairs requires that all items in corpus have a non-null transcription.')
+    
+    # Count the number of words in the corpus (needed if relative_count_to_whole_corpus is True)
+    num_words_in_corpus = len(corpus_context.corpus)
+    
     for i, s1 in enumerate(corpus_context.inventory[:-1]):
         for s2 in corpus_context.inventory[i+1:]:
             if s1 != '#' and s2 != '#':
@@ -489,12 +562,13 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
                     s2 = s2.symbol
                 if algorithm == 'minpair':
                     fl = minpair_fl(corpus_context, [(s1, s2)],
-                            relative_count=relative_count,
+                            relative_count_to_relevant_sounds=relative_count_to_relevant_sounds,
+                            relative_count_to_whole_corpus=relative_count_to_whole_corpus,
                             distinguish_homophones=distinguish_homophones,
-                            environment_filters=environment_filters)[0]
+                            environment_filter=environment_filter)[0]
                 elif algorithm == 'deltah':
                     fl = deltah_fl(corpus_context, [(s1, s2)],
-                    environment_filters=environment_filters)
+                    environment_filter=environment_filter)
                 fls[(s1, s2)] = fl
     if not relative_fl:
         ordered_fls = sorted([(pair, fls[pair]) for pair in fls], key=lambda p: p[1], reverse=True)
@@ -512,3 +586,76 @@ def all_pairwise_fls(corpus_context, relative_fl = False,
                 rel_fls[s] = total / (len(corpus_context.inventory) - 1)
         ordered_rel_fls = sorted([(s, rel_fls[s]) for s in rel_fls], key=lambda p: p[1], reverse=True)
         return ordered_rel_fls
+
+    
+    ## Filter out words that have none of the target segments
+    ## (for relative_count_to_relevant_sounds as well as improving runtime)
+    contain_target_segment = []
+    if call_back is not None:
+        call_back('Finding words with the specified segments...')
+        call_back(0, len(corpus_context))
+        cur = 0
+
+    all_target_segments = list(itertools.chain.from_iterable(segment_pairs)) # creates a list of target segments from the list of tuples
+    for w in corpus_context: # loops through the words in the context manager
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        tier = getattr(w, corpus_context.sequence_type)
+        if any([s in tier for s in all_target_segments]):
+                contain_target_segment.append(w)
+    if stop_check is not None and stop_check():
+        return
+
+    ## Find minimal pairs
+    minpairs = []
+    if call_back is not None:
+        call_back('Finding minimal pairs...')
+        if len(contain_target_segment) >= 2:
+            call_back(0,factorial(len(contain_target_segment))/(factorial(len(contain_target_segment)-2)*2))
+        cur = 0
+    for first, second in itertools.combinations(contain_target_segment, 2):
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+        if is_minpair(first, second, corpus_context, segment_pairs, environment_filter):
+            ordered_pair = sorted([(first, getattr(first, corpus_context.sequence_type)),
+                                   (second, getattr(second, corpus_context.sequence_type))],
+                                   key = lambda x: x[1]) # sort by tier/transcription
+            minpairs.append(tuple(ordered_pair))
+
+    ## Generate output 
+    if not distinguish_homophones:
+        actual_minpairs = {}
+
+        for pair in minpairs:
+            if stop_check is not None and stop_check():
+                return
+            key = (pair[0][1], pair[1][1]) # Keys are tuples of transcriptions
+            if key not in actual_minpairs:
+                actual_minpairs[key] = (pair[0][0], pair[1][0]) # Values are words
+            else:
+                pair_freq = pair[0][0].frequency + pair[1][0].frequency
+                existing_freq = actual_minpairs[key][0].frequency + \
+                                actual_minpairs[key][1].frequency
+                if pair_freq > existing_freq:
+                    actual_minpairs[key] = (pair[0][0], pair[1][0])
+        result = sum((x[0].frequency + x[1].frequency)/2
+                    for x in actual_minpairs.values())
+    else:
+        result = sum((x[0][0].frequency + x[1][0].frequency)/2 for x in minpairs)
+
+    if relative_count_to_relevant_sounds and len(contain_target_segment) > 0:
+        result /= sum(x.frequency for x in contain_target_segment)
+
+    # added what to do if the relative count to the whole corpus is true, namely, divide by the number of words in the corpus    
+    elif relative_count_to_whole_corpus:
+        result = result / num_words_in_corpus
+    
+    return (result, minpairs)
