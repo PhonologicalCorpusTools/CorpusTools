@@ -321,9 +321,13 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter = None, prevent_
 
     if stop_check is not None and stop_check():
         return
+
     result = preneutr_h - postneutr_h
     if result < 1e-10:
         result = 0.0
+
+    if not prevent_normalization and preneutr_h > 0.0:
+        result = result / preneutr_h
 
     return result
 

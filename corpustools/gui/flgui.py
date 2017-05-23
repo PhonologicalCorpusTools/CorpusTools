@@ -83,7 +83,7 @@ class FLDialog(FunctionDialog):
                 'Second segment',
                 'Algorithm',
                 'Distinguished homophones',
-                'Relative count',
+                'Count',
                 'Transcription tier',
                 'Frequency type',
                 'Pronunciation variants',
@@ -166,17 +166,20 @@ class FLDialog(FunctionDialog):
 
         box = QVBoxLayout()
 
-        self.relativeCountWidget = QRadioButton('Use counts relative to number of possible pairs')
-        self.relativeCountCorpusWidget = QRadioButton('Use counts relative to the entire corpus')
+        self.relativeCountCorpusWidget = QRadioButton('Output results relative to the entire corpus')
+        self.relativeCountWidget = QRadioButton('Output results relative to number of possible pairs')
+        self.noRelativeCountWidget = QRadioButton('Output results as raw counts')
         self.relativeButtonGroup = QButtonGroup()
-        self.relativeButtonGroup.addButton(self.relativeCountWidget)
         self.relativeButtonGroup.addButton(self.relativeCountCorpusWidget)
+        self.relativeButtonGroup.addButton(self.relativeCountWidget)
+        self.relativeButtonGroup.addButton(self.noRelativeCountWidget)
         self.relativeButtonGroup.setExclusive(True)
-        self.relativeCountWidget.setChecked(True)
+        self.relativeCountCorpusWidget.setChecked(True)
         self.homophoneWidget = QCheckBox('Distinguish homophones')
 
-        box.addWidget(self.relativeCountWidget)
         box.addWidget(self.relativeCountCorpusWidget)
+        box.addWidget(self.relativeCountWidget)
+        box.addWidget(self.noRelativeCountWidget)
         box.addWidget(self.homophoneWidget)
 
         fileFrame = QGroupBox('Output list of minimal pairs to a file')
@@ -198,8 +201,14 @@ class FLDialog(FunctionDialog):
 
         box2 = QVBoxLayout()
         entropyOptionFrame.setLayout(box2)
-        self.preventNormalizationWidget = QCheckBox('Do not normalize results')
-        self.preventNormalizationWidget.setChecked(False)
+        self.preventNormalizationWidget = QRadioButton('Output results as raw change in entropy')
+        self.allowNormalizationWidget = QRadioButton('Output results normalized to corpus size')
+        normalizationButtonGroup = QButtonGroup()
+        normalizationButtonGroup.addButton(self.preventNormalizationWidget)
+        normalizationButtonGroup.addButton(self.allowNormalizationWidget)
+        normalizationButtonGroup.setExclusive(True)
+        self.allowNormalizationWidget.setChecked(True)
+        box2.addWidget(self.allowNormalizationWidget)
         box2.addWidget(self.preventNormalizationWidget)
 
         l.addWidget(entropyOptionFrame)
@@ -264,20 +273,23 @@ class FLDialog(FunctionDialog):
     def minPairsSelected(self):
         self.saveFileWidget.setEnabled(True)
         self.relativeCountWidget.setEnabled(True)
+        self.relativeCountCorpusWidget.setEnabled(True)
+        self.noRelativeCountWidget.setEnabled(True)
         self.homophoneWidget.setEnabled(True)
         self.preventNormalizationWidget.setEnabled(False)
+        self.allowNormalizationWidget.setEnabled(False)
         #self.typeTokenWidget.widgets[0].setChecked(True)
         self.typeTokenWidget.setEnabled(False)
 
     def entropySelected(self):
         self.saveFileWidget.setEnabled(False)
         self.relativeCountWidget.setEnabled(False)
-        self.relativeCountWidget.setChecked(False)
-        self.relativeCountCorpusWidget.setEnabled(True)
-        self.relativeCountCorpusWidget.setChecked(True)
+        self.relativeCountCorpusWidget.setEnabled(False)
+        self.noRelativeCountWidget.setEnabled(False)
         self.homophoneWidget.setEnabled(False)
         self.preventNormalizationWidget.setEnabled(True)
-        self.typeTokenWidget.widgets[1].setChecked(True)
+        self.allowNormalizationWidget.setEnabled(True)
+        # self.typeTokenWidget.widgets[1].setChecked(True)
         self.typeTokenWidget.setEnabled(True)
 
     def generateKwargs(self):
@@ -338,23 +350,20 @@ class FLDialog(FunctionDialog):
 
 
             pre_normalized = r[-1]
-            if self.preventNormalizationWidget.isChecked():
-                normalized = 'N/A'
-            else:
-                normalized = str(pre_normalized)
 
             if self.relativeCountWidget.isEnabled():
                 if self.relativeCountWidget.isChecked():
-                    relative_str = 'Yes'
+                    count_str = 'Relative to min pairs'
+                elif self.relativeCountCorpusWidget.isChecked():
+                    count_str = 'Relative to corpus size'
                 else:
-                    relative_str = 'No'
+                    count_str = 'Raw frequency'
             elif self.preventNormalizationWidget.isEnabled():
                 if self.preventNormalizationWidget.isChecked():
-                    relative_str = 'No'
+                    count_str = 'Raw entropy'
                 else:
-                    relative_str = 'Yes'
-            else:
-                relative_str = 'No'
+                    count_str = 'Normalized to corpus size'
+
 
 
             self.results.append({'Corpus': self.corpus.name,
@@ -362,7 +371,7 @@ class FLDialog(FunctionDialog):
                                 'Second segment': seg_two,
                                 'Algorithm': self.algorithmWidget.displayValue(),
                                 'Distinguished homophones': self.homophoneWidget.isChecked(),
-                                'Relative count': relative_str,# self.relativeCountWidget.isChecked(),
+                                'Count': count_str,# self.relativeCountWidget.isChecked(),
                                 'Transcription tier': self.tierWidget.displayValue(),
                                 'Frequency type': self.typeTokenWidget.value().title(),
                                 'Pronunciation variants': self.variantsWidget.value().title(),

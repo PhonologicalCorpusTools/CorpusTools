@@ -928,12 +928,12 @@ class Word(object):
         if update:
             self.update(update)
             return
+
         self.initDefaults()
 
         for key, value in kwargs.items():
             if not all([letter.isupper() for letter in key]):
                 key = key.capitalize()
-
             if isinstance(value, tuple):
                 #this block of code is used when loading a corpus for the first time
                 att, value = value
