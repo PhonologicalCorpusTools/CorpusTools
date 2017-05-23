@@ -27,7 +27,39 @@ One of the primary decisions in calculating informativity, is selecting the type
 [CohenPriva2015]_ discusses four options used in the literature - uniphone, biphone, triphone, and all preceding
 segments in the word. Within PCT, "all preceding" is currently the only supported option.
 
-As a concrete example, consider the following 
+As a concrete example, consider the following example, taken from [CohenPriva2015]_, §2.3:
+
+Assume the following corpus with the associated token frequency counts:
+
+Spelling Transcription  Frequency
+talk     [tɑk]          200
+talks    [tɑks]         100
+talking  [tɑkɪŋ]        100
+walk     [wɑk]          150
+walks    [wɑks]         300
+walking  [wɑkɪŋ]        150
+
+In this corpus, the segment [s] appears twice, once in 'talks' and once in 'walks.' To calculate the informativity of [s] in this corpus using "all preceding segments" as the context, we do the following:
+
+1. For each context, calculate :math:`log2P(segment|context)` 
+   a. For the context in 'talks,' i.e., [tɑk_], there are three words with this context ('talk,' 'talks,' and 'talking'), and their token frequencies are 200, 100, and 100 (respectively). The probability of [s] in this context is the frequency of 'talks' divided by the total frequency of the context, i.e., 100 / (200 + 100 + 100) = 100 / 400 = 0.25. Then, :math:`log2P(0.25)` gives -2. That is, we have (negative) two bits of information in this context (the negation will be inversed at the end of the calculation). [Note: one could certainly imagine doing this calculation using type frequencies, but Cohen Priva presents only token frequencies; we follow his method here.]
+   b. For the context in 'walks', we can similarly calculate that the probability of [s] in this context is the frequency of 'walks' divided by the total frequency of the context, i.e., 300 / (150 + 300 + 150) = 300 / 600 = 0.5. Then, :math:`log2P(0.5)` gives -1. In other words, we have (negative) one bit of information in this context. It is less surprising to have an [s] after [wɑk] (only 1 bit of information is gained) than it is to have an [s] after [tɑk] (where 2 bits of information were gained).
+
+2. For each context, calculate :math:`P(context|segment)`.
+   a. For the context in 'talks', the probability of having this context given an [s] is found by taking the frequency of 'talks' and dividing by the sum of the contexts with [s], i.e., 100 / (100 + 300) = 100 / 400 = 0.25.
+   b. For the context in 'walks,' we analogously get 300 / (100 + 300) = 300 / 400 = 0.75.
+   In other words, 25% of the contexts that contain [s] are the [tɑk] contexts (which are more informative) while 75% are the [wɑk] contexts (which are less informative).
+   
+3. For each context, multiply :math:`log2P(segment|context)` (the information content in the context) by :math:`P(context|segment)` (the relative frequency of this context).
+   a. For the context in 'talks' we multiply -2 by 0.25 and get -0.5.
+   b. For the context in 'walks' we multiply -1 by 0.75 and get -0.75.
+   In other words, we are weighting the information content of each context by the frequency of the context.
+
+4. We sum the products for each context. Here, -0.5 + -0.75 = -1.25.
+
+5. For ease of comprehension, we take the inverse of the sign. -(-1.25) = 1.25
+
+Thus, the informativity of [s] in this corpus is 1.25 bits. In some (less frequent) contexts, it has an information content of 2 bits, while in other (more frequent) contexts, it has an information content of 1 bit. On average, then, we end up with an average information content (i.e., an informativity) of 1.25 bits.
 
 .. _method_informativity:
 
