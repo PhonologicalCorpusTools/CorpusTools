@@ -11,9 +11,13 @@ About the function
 
 Informativity is one of three primary information theoretic measures that has been demonstrated to affect how speech is
 realized. Informativity is “the weighted average of the negative log predictability of all the occurrences of a segment”
-[CohenPriva2015]_. It is formally defined with the following formula:
+[CohenPriva2015]_. Informally, it can be thought of as the "usual" (average) amount of information (surprisal) that a particular segment carries within a corpus. In other words, rather than being a measure of how probable a segment is in a particular context, it is a measure of how predictable that segment is when it occurs in any context. Thus, it can be used to explain the fact that some segments may be locally probable in some context, and yet exhibit properties generally expected of unpredictable segments: such segments are those whose general predictability (informativity) is low, even if their local predictability is high ([CohenPriva2015]_: 248).
+
+It is formally defined with the following formula:
 
 :math:`-sum[P(context|segment) * log2P(segment|context)]`
+
+Within this formula, :math:`-log2P(segment|context)` is the negative logged probability of the segment in the given context, i.e., its information content. This transformation from probability to information simply captures the idea that more probable elements contain less information and are less surprising. By multiplying each of these information content values by :math:`P(context|segment)`, i.e., the probability of the context given the segment, we weight the local information content by the frequency of that context; by then summing these products over all possible contexts for a segment, we get the total informativity score for that segment.
 
 While other information theoretic measures such as frequency and predictability can be used to describe a wide variety
 of deletion and duration effects, Cohen Priva argues that informativity provides more nuanced and accurate predictions,
@@ -22,6 +26,8 @@ and offers empirical evidence from English, as well as other languages [CohenPri
 One of the primary decisions in calculating informativity, is selecting the type of context to be used.
 [CohenPriva2015]_ discusses four options used in the literature - uniphone, biphone, triphone, and all preceding
 segments in the word. Within PCT, "all preceding" is currently the only supported option.
+
+As a concrete example, consider the following 
 
 .. _method_informativity:
 
@@ -33,7 +39,7 @@ Method of calculation
 Defining context
 ````````````````
 The context for a given segment is currently defined as all of the preceding segments within the same word - the
-preferred method in [CohenPriva2015]. The context method includes parameters for the index (integer) of the segment and word in question. Index is used instead of segment, as a word may contain more than one of the same segment,and it is important to consider the context for each occurrence. The function returns a tuple of segments comprising the context. Typical users will not interact with context. Future improvements to the informativity function will allow for customizable context.
+preferred method in [CohenPriva2015]. The context method includes parameters for the index (integer) of the segment and word in question. Index is used instead of segment, as a word may contain more than one of the same segment, and it is important to consider the context for each occurrence. The function returns a tuple of segments comprising the context. Typical users will not interact with context. Future improvements to the informativity function will allow for customizable context.
 
 Informativity
 `````````````
