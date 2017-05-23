@@ -29,6 +29,10 @@ References
 .. [SPE] Chomsky, Noam & Morris Halle. 1968. The sound pattern of English.
    New York: Harper & Row.
 
+.. [CohenPriva2015] Cohen Priva, Uriel (2015). Informativity affects consonant duration and deletion rates. Laboratory Phonology, 6(2), 243–278.
+
+.. [CohenPrivaInPress] Cohen Priva, Uriel (in press). Informativity and the actuation of lenition. Language. Retrieved from   https://urielcpublic.s3.amazonaws.com/Informativity-and-the-actuation-of-lenition-accepted.pdf
+
 .. [Connine2008] Connine, Cynthia M., Larissa J. Ranbom, and David J. Patterson. 2008.
    Processing variant forms in spoken word recognition: The role of variant frequency.
    Perception & Psychophysics 70:403-411.

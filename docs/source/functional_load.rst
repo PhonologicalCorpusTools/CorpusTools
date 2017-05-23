@@ -340,8 +340,8 @@ Once a corpus is loaded, use the following steps.
       minimal pairs that hinge on the contrast in the corpus, if you just
       want to know the scope of the contrast. On the other hand, the
       default is to relativize the raw count to the corpus size, by
-      dividing the raw number by the number of lexical entries that
-      include at least one instance of any of the target segments.
+      dividing the raw number by the total number of words in the corpus. Still another possibility is to relativize by the number of lexical entries that
+      include at least one instance of any of the target segments. For discussion of these three options, see above.
    b. **Distinguish homophones**: Second, PCT can either distinguish
       homophones or collapse them. For example, if the corpus includes
       separate entries for the words *sock* (n.), *sock* (v.), *shock* (n.),

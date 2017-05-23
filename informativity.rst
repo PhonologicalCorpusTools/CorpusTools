@@ -32,7 +32,7 @@ Consider a toy example, taken from [CohenPriva2015]_, §2.3, in which the follow
 in a PCT corpus, as it is assumed that each row in the corpus represents
 1 type; it is included here for clarity):
 
-+---------+----------------+-------+
++---------+---------+------+-------+
 |  Word   | Trans.  | Type | Token | 
 |         |         | Freq.| Freq. | 
 +=========+=========+======+=======+
@@ -53,31 +53,31 @@ In this corpus, the segment [s] appears twice, once in 'talks' and once in 'walk
 
 1. For each context, calculate :math:`log2P(segment|context)` 
 
-   a. For the context in 'talks,' i.e., [tɑk_], there are three words with this context ('talk,' 'talks,' and 'talking'), and their token frequencies are 200, 100, and 100 (respectively). The probability of [s] in this context is the frequency of 'talks' divided by the total frequency of the context, i.e., 100 / (200 + 100 + 100) = 100 / 400 = 0.25. Then, :math:`log2P(0.25)` gives -2. That is, we have (negative) two bits of information in this context (the negation will be inversed at the end of the calculation). [Note: one could certainly imagine doing this calculation using type frequencies, but Cohen Priva presents only token frequencies; we follow his method here.]
+   a. For the context in 'talks,' i.e., [tɑk..], there are three words with this context ('talk,' 'talks,' and 'talking'), and their token frequencies are 200, 100, and 100 (respectively). The probability of [s] in this context is the token frequency of 'talks' divided by the total token frequency of the context, i.e., 100 / (200 + 100 + 100) = 100 / 400 = 0.25. Then, :math:`log2P(0.25)` gives -2. That is, we have (negative) two bits of information in this context (the negation will be inversed at the end of the calculation). [Note: one can also do this calculation using type frequencies, though Cohen Priva presents only token frequencies; the default for PCT is also to use token frequencies. Using type frequency, the probability of [s] in this context would be 1 / (1+1+1) = 1/3, and the information content would be -1.58 bits.]
    
-   b. For the context in 'walks', we can similarly calculate that the probability of [s] in this context is the frequency of 'walks' divided by the total frequency of the context, i.e., 300 / (150 + 300 + 150) = 300 / 600 = 0.5. Then, :math:`log2P(0.5)` gives -1. In other words, we have (negative) one bit of information in this context. It is less surprising to have an [s] after [wɑk] (only 1 bit of information is gained) than it is to have an [s] after [tɑk] (where 2 bits of information were gained).
+   b. For the context in 'walks', we can similarly calculate that the probability of [s] in this context is the token frequency of 'walks' divided by the total token frequency of the context, i.e., 300 / (150 + 300 + 150) = 300 / 600 = 0.5. Then, :math:`log2P(0.5)` gives -1. In other words, we have (negative) one bit of information in this context. It is less surprising to have an [s] after [wɑk] (only 1 bit of information is gained) than it is to have an [s] after [tɑk] (where 2 bits of information were gained). (Note that using type frequency, we would also have -1.58 bits of information for [s] after [wɑk]; i.e., the amount of information gained is the same in either context.)
 
 2. For each context, calculate :math:`P(context|segment)`.
 
-   a. For the context in 'talks', the probability of having this context given an [s] is found by taking the frequency of 'talks' and dividing by the sum of the contexts with [s], i.e., 100 / (100 + 300) = 100 / 400 = 0.25.
+   a. For the context in 'talks', the probability of having this context given an [s] is found by taking the token frequency of 'talks' and dividing by the sum of the token frequencies of the contexts with [s], i.e., 100 / (100 + 300) = 100 / 400 = 0.25. (Using type frequency, this would be 1 / (1+1) = 0.5.)
    
-   b. For the context in 'walks,' we analogously get 300 / (100 + 300) = 300 / 400 = 0.75.
+   b. For the context in 'walks,' we analogously get 300 / (100 + 300) = 300 / 400 = 0.75. (Using type frequency, this would again be 1 / (1+1) = 0.5.)
    
-   In other words, 25% of the contexts that contain [s] are the [tɑk] contexts (which are more informative) while 75% are the [wɑk] contexts (which are less informative).
+   In other words, using token frequencies, 25% of the contexts that contain [s] are the [tɑk] contexts (which are more informative) while 75% are the [wɑk] contexts (which are less informative). (Using type frequencies, we have an equal number of contexts that are [tɑk] as [wɑk], and they each contain the same amount of information.)
    
 3. For each context, multiply :math:`log2P(segment|context)` (the information content in the context) by :math:`P(context|segment)` (the relative frequency of this context).
 
-   a. For the context in 'talks' we multiply -2 by 0.25 and get -0.5.
+   a. Using token freqeuncies: For the context in 'talks' we multiply -2 by 0.25 and get -0.5. (For type frequencies: -1.58 * .5 = -0.79.)
    
-   b. For the context in 'walks' we multiply -1 by 0.75 and get -0.75.
+   b. Using token frequencies: For the context in 'walks' we multiply -1 by 0.75 and get -0.75. (For type frequencies: -1.58 * .5 = -0.79.)
    
    In other words, we are weighting the information content of each context by the frequency of the context.
 
-4. We sum the products for each context. Here, -0.5 + -0.75 = -1.25.
+4. We sum the products for each context. Here, for the token frequency case, -0.5 + -0.75 = -1.25. (For type frequencies: -0.79 + -0.79 = -1.58.)
 
-5. For ease of comprehension, we take the inverse of the sign. -(-1.25) = 1.25
+5. For ease of comprehension, we take the inverse of the sign. For token frequencies: -(-1.25) = 1.25. (For type frequencies: -(-1.58) = 1.58.)
 
-Thus, the informativity of [s] in this corpus is 1.25 bits. In some (less frequent) contexts, it has an information content of 2 bits, while in other (more frequent) contexts, it has an information content of 1 bit. On average, then, we end up with an average information content (i.e., an informativity) of 1.25 bits.
+Thus, the informativity of [s] in this corpus (using token frequency) is 1.25 bits. In some (less frequent) contexts, it has an information content of 2 bits, while in other (more frequent) contexts, it has an information content of 1 bit. On average, then, we end up with an average information content (i.e., an informativity) of 1.25 bits. (The type frequency calculation in this case is less interesting, though it wouldn't have to be; here, [s] always has an information content of 1.58 bits in all equally frequent contexts, so its average information content, i.e., its informativity, is also 1.58 bits.)
 
 .. _method_informativity:
 
@@ -139,23 +139,60 @@ The following is an example run of the current test print statements:
    :width: 90%
    :align: center
 
-3.  **Run additional tests**: At your discretion!
 
+.. _informativity_gui:
 
-**NOTE**: In the future, this portion of the documentation will be modified for calculating informativity in the GUI and
-on the command line, to better conform to and integrate with PCT.
-
-.. _functional_load_gui:
-
-Calculating functional load in the GUI
+Calculating informativity in the GUI
 --------------------------------------
-Details will be added here upon full integration with PCT.
 
-.. _functional_load_cli:
+As with most analysis functions, a corpus must first be loaded (see
+:ref:`loading_corpora`).
+Once a corpus is loaded, use the following steps.
 
-Implementing the functional load function on the command line
--------------------------------------------------------------
-Details will be added here upon full integration with PCT.
+1. **Getting started**: Choose “Analysis” / “Calculate informativity...”
+   from the top menu bar.
+2. **Sound selection**: First, decide whether you want to calculate the
+   informativity of a single segment (or multiple segments), or the informativity of all segments in the corpus.
+   To calculate the informativity of individual sounds, choose
+   "Select one or more segments from the invnetory." To calculate the informativity of ALL segments in the corpus, choose "Select all segments in the inventory."
+   
+   For details on how to actually select segments (by themselves or using features), see
+   :ref:`sound_selection` or :ref:`feature_selection` as relevant.
+
+   When multiple individual segments are selected, each
+   entry will be treated separately.
+   
+3. **Tier**: Select which tier the informativity should be calculated from.
+   The default is the “transcription” tier, i.e., looking at the entire
+   word transcriptions. If another tier has been created (see :ref:`create_tiers`),
+   informativity can be calculated on the basis of that tier. For example,
+   if a vowel tier has been created, then the preceding context will be only the vowels that precede the segment in question. Thus, the words [mapotik] and [ʃɹaɡofli] would provide the same context for the vowel [i], given that their vowel-tier
+   representations are each [aoi].
+   
+4. **Preceding context**: As described above, informativity could be calculated on the basis of contexts of varying sizes, as uniphone, biphone, etc. The current version of PCT only allows the calculation based on all segments preceding the given segment in a word.
+
+5. **Pronunciation variants**: If the corpus contains multiple pronunciation
+   variants for lexical items, select what strategy should be used. For details,
+   see :ref:`pronunciation_variants`.
+
+6. **Type vs. Token frequency**: As mentioned above, it is possible to calculate informativity on the basis of type or token frequency. Following Cohen Priva, however, PCT defaults for having this calculation be based on token frequency, but type frequency can be used instead.
+
+7. **Results**: Once all parameters have been set, click one of the two
+    “Calculate informativity” buttons. If this is the first calculation,
+    the option to “start new results table” should be selected. For subsequent
+    calculations, the calculation can be added to the already started table,
+    for direct comparison, or a new table can be started.
+    
+    Note that if a table is closed, new calculations will not be added to the previously
+       open table; a new table must be started.
+       
+    Either way, the results table will have the following columns, with one row per calculation: the corpus being used, the segment for which informativity was calculated, the actual result for informativity, and the selected context.
+
+8. **Saving results**: Once a results table has been generated for at least
+    one pair, the table can be saved by clicking on “Save to file” at the
+    bottom of the table to open a system dialogue box and save the results
+    at a user-designated location.
+
 
 .. _informativity_classes_and_functions:
 
