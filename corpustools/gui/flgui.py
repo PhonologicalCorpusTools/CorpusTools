@@ -230,9 +230,14 @@ class FLDialog(FunctionDialog):
 
             self.preventNormalizationWidget.setToolTip(('<FONT COLOR=black>'
             'When calculating change in entropy, this option prevents normalization of the entropy difference by '
-                        'the pre-neutralization entropy. To replicate the Surendran and Niyogi metric, '
-                        'turn this option OFF.'
+                        'the pre-neutralization entropy. This is not the method used by Surendran and Niyogi.'
+                        ''
             '</FONT>'))
+
+            self.allowNormalizationWidget.setToolTip(('<FONT COLOR=black>'
+                                                        'When calculating change in entropy, this option will normalize the entropy difference by '
+                                                        'the pre-neutralization entropy. This will replicate the Surendran and Niyogi metric'
+                                                        '</FONT>'))
 
             self.homophoneWidget.setToolTip(("<FONT COLOR=black>"
             'This setting will overcount alternative'
@@ -246,6 +251,13 @@ class FLDialog(FunctionDialog):
                             ' be divided by the number of words that include any of the target segments'
                             ' present in the list at the left.'
             "</FONT>"))
+            self.relativeCountCorpusWidget.setToolTip(("<FONT COLOR=black>"
+                                                 'The raw count of minimal pairs will'
+                                                 ' be divided by the number of words in the corpus.'
+                                                 "</FONT>"))
+            self.noRelativeCountWidget.setToolTip(("<FONT COLOR=black>"
+                                                 'The raw count of minimal pairs will not be changed.'
+                                                 "</FONT>"))
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
                                     'Choose which tier functional load should'
                                     ' be calculated over (e.g., the whole transcription'

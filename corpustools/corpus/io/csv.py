@@ -359,3 +359,4 @@ def export_feature_matrix_csv(feature_matrix, path, delimiter = ','):
             featline = feature_matrix.seg_to_feat_line(seg)
             outdict = {header[i]: featline[i] for i in range(len(header))}
             writer.writerow(outdict)
+
