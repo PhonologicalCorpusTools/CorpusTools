@@ -32,7 +32,7 @@ Consider a toy example, taken from [CohenPriva2015]_, §2.3, in which the follow
 in a PCT corpus, as it is assumed that each row in the corpus represents
 1 type; it is included here for clarity):
 
-+---------+----------------+-------+
++---------+---------+------+-------+
 |  Word   | Trans.  | Type | Token | 
 |         |         | Freq.| Freq. | 
 +=========+=========+======+=======+
@@ -53,7 +53,7 @@ In this corpus, the segment [s] appears twice, once in 'talks' and once in 'walk
 
 1. For each context, calculate :math:`log2P(segment|context)` 
 
-   a. For the context in 'talks,' i.e., [tɑk_], there are three words with this context ('talk,' 'talks,' and 'talking'), and their token frequencies are 200, 100, and 100 (respectively). The probability of [s] in this context is the frequency of 'talks' divided by the total frequency of the context, i.e., 100 / (200 + 100 + 100) = 100 / 400 = 0.25. Then, :math:`log2P(0.25)` gives -2. That is, we have (negative) two bits of information in this context (the negation will be inversed at the end of the calculation). [Note: one could certainly imagine doing this calculation using type frequencies, but Cohen Priva presents only token frequencies; we follow his method here.]
+   a. For the context in 'talks,' i.e., [tɑk..], there are three words with this context ('talk,' 'talks,' and 'talking'), and their token frequencies are 200, 100, and 100 (respectively). The probability of [s] in this context is the frequency of 'talks' divided by the total frequency of the context, i.e., 100 / (200 + 100 + 100) = 100 / 400 = 0.25. Then, :math:`log2P(0.25)` gives -2. That is, we have (negative) two bits of information in this context (the negation will be inversed at the end of the calculation). [Note: one could certainly imagine doing this calculation using type frequencies, but Cohen Priva presents only token frequencies; we follow his method here.]
    
    b. For the context in 'walks', we can similarly calculate that the probability of [s] in this context is the frequency of 'walks' divided by the total frequency of the context, i.e., 300 / (150 + 300 + 150) = 300 / 600 = 0.5. Then, :math:`log2P(0.5)` gives -1. In other words, we have (negative) one bit of information in this context. It is less surprising to have an [s] after [wɑk] (only 1 bit of information is gained) than it is to have an [s] after [tɑk] (where 2 bits of information were gained).
 
@@ -139,17 +139,60 @@ The following is an example run of the current test print statements:
    :width: 90%
    :align: center
 
-3.  **Run additional tests**: At your discretion!
-
-
-**NOTE**: In the future, this portion of the documentation will be modified for calculating informativity in the GUI and
-on the command line, to better conform to and integrate with PCT.
 
 .. _functional_load_gui:
 
 Calculating functional load in the GUI
 --------------------------------------
-Details will be added here upon full integration with PCT.
+
+As with most analysis functions, a corpus must first be loaded (see
+:ref:`loading_corpora`).
+Once a corpus is loaded, use the following steps.
+
+1. **Getting started**: Choose “Analysis” / “Calculate informativity...”
+   from the top menu bar.
+2. **Sound selection**: First, decide whether you want to calculate the
+   informativity of a single segment (or multiple segments), or the informativity of all segments in the corpus.
+   To calculate the informativity of individual sounds, choose
+   "Select one or more segments from the invnetory." To calculate the informativity of ALL segments in the corpus, choose "Select all segments in the inventory."
+   
+   For details on how to actually select segments (by themselves or using features), see
+   :ref:`sound_selection` or :ref:`feature_selection` as relevant.
+
+   When multiple individual segments are selected, each
+   entry will be treated separately.
+   
+3. **Tier**: Select which tier the informativity should be calculated from.
+   The default is the “transcription” tier, i.e., looking at the entire
+   word transcriptions. If another tier has been created (see :ref:`create_tiers`),
+   informativity can be calculated on the basis of that tier. For example,
+   if a vowel tier has been created, then the preceding context will be only the vowels that precede the segment in question. Thus, the words [mapotik] and [ʃɹaɡofli] would provide the same context for the vowel [i], given that their vowel-tier
+   representations are each [aoi].
+   
+4. **Preceding context**: As described above, informativity could be calculated on the basis of contexts of varying sizes, as uniphone, biphone, etc. The current version of PCT only allows the calculation based on all segments preceding the given segment in a word.
+
+5. **Pronunciation variants**: If the corpus contains multiple pronunciation
+   variants for lexical items, select what strategy should be used. For details,
+   see :ref:`pronunciation_variants`.
+
+6. **Type vs. Token frequency**: As mentioned above, it is theoretically possible to calculate informativity on the basis of type or token frequency. Following Cohen Priva, however, PCT currently only allows this calculation based on token frequency.
+
+7. **Results**: Once all parameters have been set, click one of the two
+    “Calculate informativity” buttons. If this is the first calculation,
+    the option to “start new results table” should be selected. For subsequent
+    calculations, the calculation can be added to the already started table,
+    for direct comparison, or a new table can be started.
+
+   Note that if a table is closed, new calculations will not be added to the previously
+       open table; a new table must be started.
+
+    Either way, the results table will have the following columns, with one row per calculation: the corpus being used, the segment for which informativity was calculated, the actual result for informativity, and the selected context.
+
+8. **Saving results**: Once a results table has been generated for at least
+    one pair, the table can be saved by clicking on “Save to file” at the
+    bottom of the table to open a system dialogue box and save the results
+    at a user-designated location.
+
 
 .. _functional_load_cli:
 
