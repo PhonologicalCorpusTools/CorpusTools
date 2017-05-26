@@ -71,6 +71,11 @@ class InformativityDialog(FunctionDialog):
 
         self.layout().insertWidget(0, infoFrame)
 
+        if showToolTips:
+            self.typeTokenWidget.setToolTip('To replicate the original informativity algorithm by Cohen Priva, choose'
+                                            'token frequency.')
+
+
     def addOne(self):
         self.dialog = SingleSegmentDialog(self.inventory)
         self.dialog.rowToAdd.connect(self.addToList)
