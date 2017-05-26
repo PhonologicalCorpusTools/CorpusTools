@@ -126,7 +126,7 @@ def conditional_probability(segment_frs, context_frs, stop_check=None, call_back
             conditional_prs[c] = segment_frs[c]
     return conditional_prs
 
-def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcription', rounding=3,
+def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcription', rounding=3, type_or_token='token',
                                call_back = None, stop_check=None):
     # s_frs = segment_in_context_frequencies(segment, corpus_context, sequence_type)
     # seg_frequencies = {seg:segment_in_context_frequencies(seg, corpus, sequence_type) for seg in segment_list}
@@ -150,7 +150,10 @@ def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcript
         for seg in getattr(word, sequence_type):
             i += 1
             if seg in segment_list:
-                seg_frequencies[seg][context(i, word, sequence_type)] += word.frequency
+                if type_or_token == 'token':
+                    seg_frequencies[seg][context(i, word, sequence_type)] += word.frequency
+                else:
+                    seg_frequencies[seg][context(i, word, sequence_type)] += 1
 
     if call_back is not None:
         call_back('Calculating context frequencies...')
@@ -167,7 +170,10 @@ def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcript
             for c in seg_frequencies[seg]:
                 if c is not None:
                     if tuple(getattr(word, sequence_type)[0:len(c)]) == c:
-                        context_frequencies[seg][c] += word.frequency
+                        if type_or_token == 'token':
+                            context_frequencies[seg][c] += word.frequency
+                        else:
+                            context_frequencies[seg][c] += 1
 
     if call_back is not None:
         call_back('Calculating context frequencies...')
@@ -198,9 +204,12 @@ def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcript
         summary = {
             "Corpus": corpus.name,
             "Segment": seg,
+            "Informativity": informativity,
             "Context": "all",
             "Rounding": rounding,
-            "Informativity": informativity}
+            "Type or token": type_or_token,
+            "Transcription tier": sequence_type,
+            "Pronunciation variants": None}
 
         seg_summary.append(summary)
 

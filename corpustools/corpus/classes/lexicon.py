@@ -1026,7 +1026,7 @@ class Word(object):
 
     @property
     def frequency(self):
-        return self.Frequency
+        return max([self.Frequency, self._frequency])
 
     @frequency.setter
     def frequency(self, value):
