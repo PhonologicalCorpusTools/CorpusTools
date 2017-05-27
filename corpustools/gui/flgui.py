@@ -231,7 +231,6 @@ class FLDialog(FunctionDialog):
             self.preventNormalizationWidget.setToolTip(('<FONT COLOR=black>'
             'When calculating change in entropy, this option prevents normalization of the entropy difference by '
                         'the pre-neutralization entropy. This is not the method used by Surendran and Niyogi.'
-                        ''
             '</FONT>'))
 
             self.allowNormalizationWidget.setToolTip(('<FONT COLOR=black>'
@@ -268,7 +267,7 @@ class FLDialog(FunctionDialog):
                             'Select the segments you are interested in. Choose an "individual segment" to get the '
                             'average functional load for that segment across all pairs it could occur in. Choose a '
                             '"pair of segments" to get the standard functional of that pair. Choose a "set of segments'
-                            'based on features" to get the functional load of a a particular featural distinction '
+                            'based on features" to get the functional load of a particular featural distinction '
                             '(e.g., the functional load of voicing in obstruents).'
                             '</FONT>'))
             self.algorithmWidget.setToolTip(("<FONT COLOR=black>"
@@ -281,6 +280,8 @@ class FLDialog(FunctionDialog):
             'Note that whether "Distinguish homophones" is checked or not, this file will'
             ' include all minimal pairs with unique spellings.'
             "</FONT>"))
+            self.typeTokenWidget.setToolTip('<FONT COLOR=black>To replicate Surendran & Niyogi, use token frequency.\n'
+                                    'To mimic Wedel et al.\'s minimal pair counts, use type frequency.</FONT>')
 
     def minPairsSelected(self):
         self.saveFileWidget.setEnabled(True)
