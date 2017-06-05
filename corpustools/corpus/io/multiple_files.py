@@ -136,8 +136,9 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
                         value = w[at.name]
                     except KeyError:
                         value = w[at.output_name]
-                    #what does the follow if-block do? parse_transcription isn't imported
+                    #what does the following if-block do? parse_transcription isn't imported
                     #and ti.mark is an unresolved reference
+                    #I've commented it out for now
                     # if at.delimited:
                     #     value = [Annotation(x) for x in parse_transcription(ti.mark)]
                     if at.token:
@@ -288,6 +289,7 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
                 if at.token:
                     word_token_kwargs['_transcription'] = (at.attribute, w['transcription'])
         word_token = WordToken(**word_token_kwargs)
+        word.wordtokens.append(word_token)
         discourse.lexicon.add_word(word)
         discourse.add_word(word_token)
         ind += 1

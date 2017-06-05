@@ -944,7 +944,8 @@ class Word(object):
                         value = float('nan')
                     if key == 'Frequency':
                         setattr(self, key, value)
-                        setattr(self, '_frequency', self.Frequency)
+                        setattr(self, '_frequency', value)
+
                 elif att.att_type == 'tier':
                     value = Transcription(value)
                 else:# att.att_type == 'spelling' or att.att_type == 'factor':
@@ -1005,6 +1006,7 @@ class Word(object):
                 self.descriptors.append('Spelling')
         if not 'Frequency' in self.descriptors:
             self.descriptors.append('Frequency')
+            self._frequency = 0
             self.Frequency = 0
 
         if self._transcription_name is None:
@@ -2654,6 +2656,7 @@ class Corpus(object):
 
         """
         word._corpus = self
+        tokens = word.wordtokens[:]
         #If the word doesn't exist, add it
         try:
             check = self.find(word.spelling)
@@ -2671,13 +2674,13 @@ class Corpus(object):
                         self.wordlist[key] = word
                         break
             else:
-                word.frequency += 1
+                check.frequency += 1
+                check.wordtokens.extend(tokens)
                 return
         except KeyError:
-            if not hasattr(word, 'Frequency'):
-                word.Frequency = 1
-            if not word.frequency:
-                word.frequency = 1
+            if word.frequency == 0:
+                word.frequency += 1
+
             self.wordlist[word.spelling] = word#copy.copy(word)
             if word.spelling is not None:
                 if not self.has_spelling:

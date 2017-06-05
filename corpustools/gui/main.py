@@ -32,7 +32,7 @@ from .inventorygui import InventoryManager
 
 from corpustools.corpus.classes.lexicon import Corpus, Inventory, Word
 
-from corpustools.corpus.classes.spontaneous import Discourse
+from corpustools.corpus.classes.spontaneous import Discourse, SpontaneousSpeechCorpus
 
 from corpustools.corpus.io.helper import get_corpora_list
 
@@ -360,11 +360,10 @@ class MainWindow(QMainWindow):
                               'warning, although you will still have limited access to PCT analysis functions.')
                 alert.addButton('OK', QMessageBox.AcceptRole)
                 alert.exec_()
-
             self.corpusModel = CorpusModel(self.corpus, self.settings)
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))
-            self.inventoryModel = None if self.corpusModel.corpus.specifier is None else self.generateInventoryModel()
+            self.inventoryModel = None if specifier_check is None else self.generateInventoryModel()
             self.corpusModel.corpus.inventory.isNew = False
             self.saveCorpus()
             self.unsavedChanges = False
@@ -374,7 +373,6 @@ class MainWindow(QMainWindow):
             self.exportFeatureSystemAct.setEnabled(True)
 
     def generateInventoryModel(self):
-
         if not hasattr(self.corpusModel.corpus.inventory, 'segs'):
             return None
 
@@ -485,11 +483,8 @@ class MainWindow(QMainWindow):
     def saveCorpus(self):
 
         self.corpusModel.corpus.inventory.save(self.inventoryModel)
-        if isinstance(self.corpus, Discourse):
-            save_binary(self.corpus,
-                        os.path.join(self.settings['storage'],'CORPUS',self.corpus.name+'.corpus') )
-        save_binary(self.corpusModel.corpus,
-                    os.path.join(self.settings['storage'],'CORPUS',self.corpusModel.corpus.name+'.corpus'))
+        save_binary(self.corpus, os.path.join(self.settings['storage'], 'CORPUS', self.corpus.name+'.corpus') )
+
         if self.corpusModel.corpus.specifier is not None:
             save_binary(self.corpusModel.corpus.specifier,
                     os.path.join(self.settings['storage'], 'FEATURE', self.corpusModel.corpus.specifier.name+'.feature'))

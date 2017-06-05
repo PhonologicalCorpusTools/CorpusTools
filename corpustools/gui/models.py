@@ -924,7 +924,6 @@ class InventoryModel(QAbstractTableModel):
             return
 
         self.initDefaults()
-
         self.segs = inventory.segs
         self.features = inventory.features
         self.possible_values = inventory.possible_values
