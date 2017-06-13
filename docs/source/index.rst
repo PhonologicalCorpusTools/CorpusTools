@@ -24,6 +24,7 @@ Contents:
    phonotactic_probability.rst
    functional_load.rst
    predictability_of_distribution.rst
+   informativity.rst
    kullback-leibler.rst
    string_similarity.rst
    neighborhood_density.rst
