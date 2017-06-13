@@ -97,7 +97,7 @@ def acoustic_similarity_mapping(path_mapping,**kwargs):
     to_rep = _build_to_rep(**kwargs)
 
     num_cores = kwargs.get('num_cores', 1)
-    output_sim = kwargs.get('output_sim',False)
+    output_sim = kwargs.get('output_sim', True)
 
     match_function = kwargs.get('match_function', 'dtw')
     cache = kwargs.get('cache',None)
