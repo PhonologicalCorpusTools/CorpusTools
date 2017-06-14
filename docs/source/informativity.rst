@@ -103,7 +103,7 @@ math:`SegFreq`.
 
 Given this input, the informativity of a given segment is calculated as follows, in Python pseudocode:
 
-:math:`\frac{-\sum _{SegFreq[c]*log_{2}} c \in ContextProb}{\sum s \in SegFreq}`
+:math:`\frac{-\sum SegFreq[c]*log_{2}, for c \in ContextProb}{\sum s \in SegFreq}`
 
 The following is an example run of the function for a single segment, using the lemurian corpus:
 
