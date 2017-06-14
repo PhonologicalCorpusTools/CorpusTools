@@ -93,17 +93,11 @@ preferred method in [CohenPriva2015]. The context method includes parameters for
 
 Informativity
 `````````````
-The function to get the informativity of one segment is structured such that it calls on other functions within
-informativity.py to create three dictionaries containing:
-
-1.  The frequency of a segment occurring given a context, with contexts as the key and captured in the dictionary
-:math:`SegFreq`.
-2.  The frequency of those contexts, regardless of the segment that occurs afterward.
-3.  The conditional probabilities of a segment occurring in a given context, captured in dictionary :math:`ContextProb`.
+The function that calculates informativity create two Python dictionaries. The dictionary :math:`SegFreq` maps contexts to in-context segment frequencies. The dictionary :math:`ContextProb` maps contexts to in-context conditional probability of segments.
 
 Given this input, the informativity of a given segment is calculated as follows:
 
-:math:`\frac{-\sum SegFreq[c]*log_{2}\,for\,c \in ContextProb}{\sum s \in SegFreq}`
+:math:`\frac{-\sum SegFreq[c]*log_{2}(ContextProb[c])\,for\,c \in ContextProb}{\sum s \in SegFreq}`
 
 The following is an example run of the function for a single segment, using the built-in lemurian corpus (see :ref:`examplecorpora`):
 
