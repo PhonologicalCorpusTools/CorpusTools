@@ -97,16 +97,14 @@ The function to get the informativity of one segment is structured such that it 
 informativity.py to create three dictionaries containing:
 
 1.  The frequency of a segment occurring given a context, with contexts as the key and captured in the dictionary
-:math:`s_frs`
+s_frs
 2.  The frequency of those contexts, regardless of the segment that occurs after
-3.  The conditional probabilities of a segment occurring in a given context, captured in dictionary :math:`c_prs`.
+3.  The conditional probabilities of a segment occurring in a given context, captured in dictionary c_prs.
 
 Given this input, the informativity of a given segment is calculated as follows:
 
-:math:`\frac{\sum_{s_{i}*log_{2}c_{i} \in C}}{\sum_{s_{j} \in S}}`
-
 .. code:: python
- informativity=round(-(sum([(s_frs[c])*log2(c_prs[c]) for c in c_prs]))/sum([(s_frs[s])for s in s_frs]),rounding)
+   informativity = round(-(sum([(s_frs[c])*log2(c_prs[c]) for c in c_prs]))/sum([(s_frs[s])for s in s_frs]),rounding)
 
 The following is an example run of the function for a single segment, using the lemurian corpus:
 
