@@ -101,10 +101,9 @@ s_frs
 2.  The frequency of those contexts, regardless of the segment that occurs after
 3.  The conditional probabilities of a segment occurring in a given context, captured in dictionary c_prs.
 
-Given this input, the informativity of a given segment is calculated as follows:
+Given this input, the informativity of a given segment is calculated as follows, in Python pseudocode:
 
-.. code:: python
-   informativity = round(-(sum([(s_frs[c])*log2(c_prs[c]) for c in c_prs]))/sum([(s_frs[s])for s in s_frs]),rounding)
+:math:`\frac{-(\sum([(s_frs[c])*log_{2}(c_prs[c]) for c in c_prs]))}{\sum([(s_frs[s])for s in s_frs])}`
 
 The following is an example run of the function for a single segment, using the lemurian corpus:
 
