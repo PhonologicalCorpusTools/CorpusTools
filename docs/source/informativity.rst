@@ -15,9 +15,9 @@ realized. Informativity is “the weighted average of the negative log predictab
 
 It is formally defined with the following formula:
 
-:math:`-sum[P(context|segment) * log2P(segment|context)]`
+:math:`-sum[P(context|segment) * log_{2}P(segment|context)]`
 
-Within this formula, :math:`-log2P(segment|context)` is the negative logged probability of the segment in the given context, i.e., its information content. This transformation from probability to information simply captures the idea that more probable elements contain less information and are less surprising. By multiplying each of these information content values by :math:`P(context|segment)`, i.e., the probability of the context given the segment, we weight the local information content by the frequency of that context; by then summing these products over all possible contexts for a segment, we get the total informativity score for that segment.
+Within this formula, :math:`-log_{2}P(segment|context)` is the negative logged probability of the segment in the given context, i.e., its information content. This transformation from probability to information simply captures the idea that more probable elements contain less information and are less surprising. By multiplying each of these information content values by :math:`P(context|segment)`, i.e., the probability of the context given the segment, we weight the local information content by the frequency of that context; by then summing these products over all possible contexts for a segment, we get the total informativity score for that segment.
 
 While other information theoretic measures such as frequency and predictability can be used to describe a wide variety
 of deletion and duration effects, Cohen Priva argues that informativity provides more nuanced and accurate predictions,
@@ -51,11 +51,11 @@ in a PCT corpus, as it is assumed that each row in the corpus represents
 
 In this corpus, the segment [s] appears twice, once in 'talks' and once in 'walks.' To calculate the informativity of [s] in this corpus using "all preceding segments" as the context, we do the following:
 
-1. For each context, calculate :math:`log2P(segment|context)` 
+1. For each context, calculate :math:`log_{2}P(segment|context)` 
 
-   a. For the context in 'talks,' i.e., [tɑk..], there are three words with this context ('talk,' 'talks,' and 'talking'), and their token frequencies are 200, 100, and 100 (respectively). The probability of [s] in this context is the token frequency of 'talks' divided by the total token frequency of the context, i.e., 100 / (200 + 100 + 100) = 100 / 400 = 0.25. Then, :math:`log2P(0.25)` gives -2. That is, we have (negative) two bits of information in this context (the negation will be inversed at the end of the calculation). [Note: one can also do this calculation using type frequencies, though Cohen Priva presents only token frequencies; the default for PCT is also to use token frequencies. Using type frequency, the probability of [s] in this context would be 1 / (1+1+1) = 1/3, and the information content would be -1.58 bits.]
+   a. For the context in 'talks,' i.e., [tɑk..], there are three words with this context ('talk,' 'talks,' and 'talking'), and their token frequencies are 200, 100, and 100 (respectively). The probability of [s] in this context is the token frequency of 'talks' divided by the total token frequency of the context, i.e., 100 / (200 + 100 + 100) = 100 / 400 = 0.25. Then, :math:`log_{2}P(0.25)` gives -2. That is, we have (negative) two bits of information in this context (the negation will be inversed at the end of the calculation). [Note: one can also do this calculation using type frequencies, though Cohen Priva presents only token frequencies; the default for PCT is also to use token frequencies. Using type frequency, the probability of [s] in this context would be 1 / (1+1+1) = 1/3, and the information content would be -1.58 bits.]
    
-   b. For the context in 'walks', we can similarly calculate that the probability of [s] in this context is the token frequency of 'walks' divided by the total token frequency of the context, i.e., 300 / (150 + 300 + 150) = 300 / 600 = 0.5. Then, :math:`log2P(0.5)` gives -1. In other words, we have (negative) one bit of information in this context. It is less surprising to have an [s] after [wɑk] (only 1 bit of information is gained) than it is to have an [s] after [tɑk] (where 2 bits of information were gained). (Note that using type frequency, we would also have -1.58 bits of information for [s] after [wɑk]; i.e., the amount of information gained is the same in either context.)
+   b. For the context in 'walks', we can similarly calculate that the probability of [s] in this context is the token frequency of 'walks' divided by the total token frequency of the context, i.e., 300 / (150 + 300 + 150) = 300 / 600 = 0.5. Then, :math:`log_{2}P(0.5)` gives -1. In other words, we have (negative) one bit of information in this context. It is less surprising to have an [s] after [wɑk] (only 1 bit of information is gained) than it is to have an [s] after [tɑk] (where 2 bits of information were gained). (Note that using type frequency, we would also have -1.58 bits of information for [s] after [wɑk]; i.e., the amount of information gained is the same in either context.)
 
 2. For each context, calculate :math:`P(context|segment)`.
 
@@ -65,7 +65,7 @@ In this corpus, the segment [s] appears twice, once in 'talks' and once in 'walk
    
    In other words, using token frequencies, 25% of the contexts that contain [s] are the [tɑk] contexts (which are more informative) while 75% are the [wɑk] contexts (which are less informative). (Using type frequencies, we have an equal number of contexts that are [tɑk] as [wɑk], and they each contain the same amount of information.)
    
-3. For each context, multiply :math:`log2P(segment|context)` (the information content in the context) by :math:`P(context|segment)` (the relative frequency of this context).
+3. For each context, multiply :math:`log_{2}P(segment|context)` (the information content in the context) by :math:`P(context|segment)` (the relative frequency of this context).
 
    a. Using token freqeuncies: For the context in 'talks' we multiply -2 by 0.25 and get -0.5. (For type frequencies: -1.58 * .5 = -0.79.)
    
@@ -94,7 +94,7 @@ preferred method in [CohenPriva2015]. The context method includes parameters for
 Informativity
 `````````````
 The function to get the informativity of one segment is structured such that it calls on other functions within
-:math:`informativity.py` to create three dictionaries containing:
+informativity.py to create three dictionaries containing:
 
 1.  The frequency of a segment occurring given a context, with contexts as the key and captured in the dictionary
 :math:`s_frs`
@@ -103,51 +103,31 @@ The function to get the informativity of one segment is structured such that it 
 
 Given this input, the informativity of a given segment is calculated as follows:
 
-:math:`informativity=round(-(sum([(s_frs[c])*log2(c_prs[c]) for c in c_prs]))/sum([(s_frs[s])for s in s_frs]),rounding)`
+:math: `\frac{\sum_{s_{i}*log_{2}c_{i} \in C}}{\sum_{s_{j} \in S}}`
 
-The following is an example run of the function for a single segment:
+.. code:: python
+ informativity=round(-(sum([(s_frs[c])*log2(c_prs[c]) for c in c_prs]))/sum([(s_frs[s])for s in s_frs]),rounding)
 
-.. image:: static/informativity1.png
+The following is an example run of the function for a single segment, using the lemurian corpus:
+
+.. image:: static/informativity1GUI.png
    :width: 90%
    :align: center
 
-In addition to getting the informativity for a single segment, :math:`informativity.py` includes a function to calculate
-the informativity of all segments in a corpus. This function gets the list of segments from the corpus’ inventory, and
-creates a dictionary with the segments as the key, and the output of the get_informativity function as its value.
+In addition to getting the informativity for a single segment, informativity can be calculated for all segments in a corpus. The following is an example run for getting the informativities for all segments in the lemurian inventory:
 
-The following is an example run for getting the informativities for all segments in the inventory:
-
-.. image:: static/informativity2.png
+.. image:: static/informativity2GUI.png
    :width: 90%
    :align: center
-
-.. _informativity_corpus_file:
-
-Calculating informativity with a .corpus file
----------------------------------------------
-
-1.  **Locate the corpus**: Verify that the lemurian.corpus file is located in the same directory as informativity.py.
-
-2.  **Run informativity.py**: Open a terminal and navigate to the directory where informativity.py is located. Note that
-PCT uses Python 3, and run the following:
-
-    :math:`python informativity.py`
-
-The following is an example run of the current test print statements:
-
-.. image:: static/informativity_559tests.png
-   :width: 90%
-   :align: center
-
 
 .. _informativity_gui:
 
-Calculating informativity in the GUI
+Calculating informativity in PCT
 --------------------------------------
 
 As with most analysis functions, a corpus must first be loaded (see
 :ref:`loading_corpora`).
-Once a corpus is loaded, use the following steps.
+Once a corpus is loaded, follow these steps.
 
 1. **Getting started**: Choose “Analysis” / “Calculate informativity...”
    from the top menu bar.
@@ -193,18 +173,7 @@ Once a corpus is loaded, use the following steps.
     bottom of the table to open a system dialogue box and save the results
     at a user-designated location.
 
-
-.. _informativity_classes_and_functions:
-
-Additional Information
-----------------------
-Details will be added here upon full integration with PCT.
-
-**********
-References
-**********
-
-Note that these references will be migrated to the "references.rst" file when fully integrated.
+.. _references:
 
 .. [CohenPriva2015] Cohen Priva, Uriel (2015). Informativity affects consonant duration and deletion rates. Laboratory Phonology, 6(2), 243–278.
 
