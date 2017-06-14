@@ -103,7 +103,7 @@ informativity.py to create three dictionaries containing:
 
 Given this input, the informativity of a given segment is calculated as follows:
 
-:math: `\frac{\sum_{s_{i}*log_{2}c_{i} \in C}}{\sum_{s_{j} \in S}}`
+:math:`\frac{\sum_{s_{i}*log_{2}c_{i} \in C}}{\sum_{s_{j} \in S}}`
 
 .. code:: python
  informativity=round(-(sum([(s_frs[c])*log2(c_prs[c]) for c in c_prs]))/sum([(s_frs[s])for s in s_frs]),rounding)
@@ -155,18 +155,13 @@ Once a corpus is loaded, follow these steps.
    variants for lexical items, select what strategy should be used. For details,
    see :ref:`pronunciation_variants`.
 
-6. **Type vs. Token frequency**: As mentioned above, it is possible to calculate informativity on the basis of type or token frequency. Following Cohen Priva, however, PCT defaults for having this calculation be based on token frequency, but type frequency can be used instead.
+6. **Type vs. Token frequency**: As mentioned above, it is possible to calculate informativity on the basis of type or token frequency. Following Cohen Priva, however, PCT defaults are based on token frequency.
 
 7. **Results**: Once all parameters have been set, click one of the two
     “Calculate informativity” buttons. If this is the first calculation,
     the option to “start new results table” should be selected. For subsequent
     calculations, the calculation can be added to the already started table,
     for direct comparison, or a new table can be started.
-    
-    Note that if a table is closed, new calculations will not be added to the previously
-       open table; a new table must be started.
-       
-    Either way, the results table will have the following columns, with one row per calculation: the corpus being used, the segment for which informativity was calculated, the actual result for informativity, and the selected context.
 
 8. **Saving results**: Once a results table has been generated for at least
     one pair, the table can be saved by clicking on “Save to file” at the
