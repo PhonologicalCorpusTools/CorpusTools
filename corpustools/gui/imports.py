@@ -23,15 +23,16 @@ try:
                                 QSlider, QItemDelegate, QScrollArea, QBoxLayout, QStackedWidget,
                                 QCompleter, QTableWidgetItem)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
+
     try:
-        from PyQt5.QtWebKitWidgets import QWebView
+        from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
     except ImportError:
         HELP_ENABLED = False
     try:
         from PyQt5.QtMultimedia import QSound, QMediaPlayer, QMediaContent, QAudioOutput
     except ImportError:
         AUDIO_ENABLED = False
-    #print('PyQt5 version')
+
 except ImportError:
     raise(Exception("We could not find an installation of PyQt5.  Please double check that it is installed."))
 
