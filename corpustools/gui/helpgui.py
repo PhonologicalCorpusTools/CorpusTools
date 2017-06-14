@@ -97,4 +97,3 @@ class HelpDialog(QDialog):
 
     def openURL(self, URL):
         QDesktopServices().openUrl(QUrl(URL))
-
