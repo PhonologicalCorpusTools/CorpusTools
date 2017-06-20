@@ -25,9 +25,10 @@ try:
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
 
     try:
-        from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
+        from PyQt5.QtWebKitWidgets import QWebView
     except ImportError:
         HELP_ENABLED = False
+
     try:
         from PyQt5.QtMultimedia import QSound, QMediaPlayer, QMediaContent, QAudioOutput
     except ImportError:

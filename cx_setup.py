@@ -46,8 +46,9 @@ build_exe_options = {"excludes": [
                     "includes": [
                             "PyQt5",
                             "PyQt5.QtWebKitWidgets",
-                            "PyQt5.QtWebKit",
-                            "PyQt5.QtPrintSupport",
+                            #"PyQt5.QtWebKit",
+                            #"PyQt5.QtWebEngineWidgets",
+                            #"PyQt5.QtPrintSupport",
                             "PyQt5.QtMultimedia",
                             "numpy",
                             "scipy",
@@ -86,11 +87,11 @@ bdist_mac_options = {'iconfile':'docs/images/icon.icns',
 bdist_dmg_options = {'applications_shortcut':True}
 
 setup(name='Phonological CorpusTools',
-      version='1.2.0',
+      version='1.3.0',
       description='',
       long_description='',
       classifiers=[
-        'Development Status :: 3 - Alpha',
+        #'Development Status :: 3 - Alpha',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Operating System :: OS Independent',
@@ -116,13 +117,15 @@ setup(name='Phonological CorpusTools',
                 'corpustools.neighdens',
                 'corpustools.mutualinfo',
                 'corpustools.phonoprob',
+                'corpustools.informativity'
+                #'scipy'
                 ],
-      executables = [Executable('corpustools/command_line/pct.pyw',
+      executables = [Executable('corpustools/command_line/pct.py',
                             #targetName = 'pct',
                             base=base,
                             #shortcutDir=r'[StartMenuFolder]\%s' % group_name,
                             #shortcutName=exe_name,
-                            #icon='docs/images/favicon.png'
+                            icon='corpustools/command_line/favicon.png'
                             )],
       options={
           'bdist_msi': bdist_msi_options,
