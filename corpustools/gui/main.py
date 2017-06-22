@@ -1148,7 +1148,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.klAct)
         self.analysisMenu.addAction(self.stringSimAct)
         self.analysisMenu.addAction(self.neighDenAct)
-        self.analysisMenu.addAction(self.freqaltAct)
+        # self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
         #self.analysisMenu.addAction(self.autoAnalysisAct)

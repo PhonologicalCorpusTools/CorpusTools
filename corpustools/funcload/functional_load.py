@@ -404,7 +404,7 @@ def relative_minpair_fl(corpus_context, segment,
     return sum(results)/len(segment_pairs)
 
 def relative_deltah_fl(corpus_context, segment,
-                environment_filter = None,
+                environment_filter = None, prevent_normalization=False,
                 stop_check = None, call_back = None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as the decrease in corpus entropy
@@ -434,7 +434,7 @@ def relative_deltah_fl(corpus_context, segment,
 
     results = []
     for sp in segment_pairs:
-        results.append(deltah_fl(corpus_context, [sp],
+        results.append(deltah_fl(corpus_context, [sp], prevent_normalization=prevent_normalization,
                 environment_filter=environment_filter,
                 stop_check = stop_check, call_back = call_back))
     return sum(results)/len(segment_pairs)
