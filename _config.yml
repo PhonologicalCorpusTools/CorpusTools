@@ -1,0 +1,8 @@
+title: Phonological CorpusTools
+description: Take the stress out of corpus analysis!
+google_analytics: UA-55004424-1
+show_downloads: true
+theme: jekyll-theme-slate
+
+gems:
+  - jekyll-mentions
