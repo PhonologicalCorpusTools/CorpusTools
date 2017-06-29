@@ -14,7 +14,13 @@ An overview of the beta version of PCT (0.15, July 2014) and its utility is avai
 ### Versions
 #### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...") and/or [subscribe to our e-mail list for notifications](http://eepurl.com/bqLDRD).
 
-Version 1.2 will be released in December 2016. It differs from v. 1.1 (July 2015) in the following areas:
+Version 1.3 was released in July 2017. It differs from v. 1.2 (December 2016) in the following areas:
+
+1. An additonal analysis algorithm for calculating informativity has been added.
+2. The options for relativizing functional load have been revised and clarified.
+3. Numerous small usability fixes have been included.
+
+Version 1.2 was released in December 2016. It differs from v. 1.1 (July 2015) in the following areas:
 
 1. Inventory management -- The tools for categorizing segments into an inventory chart have been updated to allow users to interactively update the chart based on nature classes, including the ability to add / delete / rearrange columns and rows in the chart. Uncategorized segments are more clearly shown and their features easily examined for reference.
 
@@ -80,6 +86,7 @@ Below, you can find lists of the multi-character sequences that are included in 
 * **Kullback-Leibler divergence**: Calculation of the Kullback-Leibler divergence between the distributions of two sounds, again as a measure of the predictability of phonological distribution (cf. Kullback & Leibler 1951; Peperkamp et al. 2006).
 * **String similarity** and **Neighbourhood density**: Calculation of the extent to which pairs of words are similar to each other using either orthographic or phonetic transcription, and calculation of neighbourhood density (cf. Frisch et al. 2004, Khorsi 2012; Greenberg & Jenkins 1964; Luce & Pisoni 1998; Yao 2011).
 * **Frequency of alternation**: Estimation of the frequency with which two sounds alternate with each other, given a measure of similarity (cf. Silverman 2006, Johnson & Babel 2010, Lu 2012).
+* **Informativity**: Calculation of the average information content of a given segment based on the sounds that precede it in words across the corpus (cf. Cohen-Priva 2008, 2015).
 * **Mutual Information**: Calculation of the mutual information between pairs of segments in the corpus (cf. Brent 1999; Goldsmith & Riggle 2012).
 * **Acoustic similarity**: Calculation of the acoustic similarity between sounds / words, based on alignment of MFCCs (cf. Mielke 2012) or amplitude envelopes (cf. Lewandowski 2012), derived from .wav files.
 
@@ -128,6 +135,8 @@ Phonological CorpusTools should now be installed! Run it from a terminal window 
 * Brent, Michael R. 1999. An efficient, probabilistically sound algorithm for segmentation and word discovery. Machine Learning 34.71-105.
 * Brysbaert, Marc, & Boris New. 2009. Moving beyond Kučera and Francis: A critical evaluation of current word frequency norms and the introduction of a new and improved word frequency measure for American English. Behavior Research Methods 41(4): 977-990.
 * Bybee, Joan L. 2001. Phonology and language use. Cambridge: Cambridge UP.
+* Cohen Priva, Uriel. 2008. Using information content to predict phone deletion. In N. Abner & J. Bishop (eds.), Proceedings of the 27th West Coast Conference on Formal Linguistics, 90-98. Somerville, MA: Cascadilla Proceedings Project.
+* Cohen Priva, Uriel. 2015. Informativity affects consonant duration and deletion rates. Laboratory Phonology 6(2). 243-278. 
 * Ernestus, Mirjam. 2011. Gradience and categoricality in phonological theory. In The Blackwell Companion to Phonology, ed. by M. van Oostendorp, C.J. Ewen, E. Hume & K. Rice, 2115-36. Oxford: Wiley-Blackwell.
 * Chomsky, Noam & Morris Halle. 1968. The sound pattern of English. New York: Harper & Row.
 * Frisch, Stefan A. 2011. Frequency effects. In The Blackwell Companion to Phonology, ed. by M. van Oostendorp, C.J. Ewen, E. Hume & K. Rice, 2137-63. Oxford: Wiley-Blackwell.
