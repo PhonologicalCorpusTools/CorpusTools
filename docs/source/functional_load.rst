@@ -203,7 +203,7 @@ Returning to the above examples, we would normalize the functional load of [t] /
 
 And analogously, for the normalized functional load of [t] / [d] based on word tokens, we get:
 
-:math:`\Delta H = 0.458 / 4.087 = 0.1121`
+:math:`\Delta H = 0.458 / 3.924 = 0.1167`
 
 Note that the typical way of calculating Delta-H functional load is to use word tokens, not word types.
 
