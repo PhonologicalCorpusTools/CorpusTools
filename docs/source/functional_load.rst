@@ -167,7 +167,7 @@ are divided among only 13 unique words instead of 17.
 
 Thus, the entropy after a [t] / [d] merger, assuming word types, is:
 
-:math:`H_{1 - types} = -[(\frac{1}{13} log_{2}(\frac{1}{13}))
+:math:`H_{2 - types} = -[(\frac{1}{13} log_{2}(\frac{1}{13}))
 + (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))
 + (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))\\
 + (\frac{1}{13} log_{2}(\frac{1}{13})) + (\frac{1}{13} log_{2}(\frac{1}{13}))
@@ -178,7 +178,7 @@ Thus, the entropy after a [t] / [d] merger, assuming word types, is:
 
 And the entropy after a [t] / [d] merger, assuming word tokens, is:
 
-:math:`H_{1 - tokens} = -[(\frac{2}{70} log_{2}(\frac{2}{70}))
+:math:`H_{2 - tokens} = -[(\frac{2}{70} log_{2}(\frac{2}{70}))
 + (\frac{4}{70} log_{2}(\frac{4}{70})) + (\frac{1}{70} log_{2}(\frac{1}{70}))
 + (\frac{6}{70} log_{2}(\frac{6}{70})) + (\frac{8}{70} log_{2}(\frac{8}{70}))\\
 + (\frac{2}{70} log_{2}(\frac{2}{70})) + (\frac{7}{70} log_{2}(\frac{7}{70}))
