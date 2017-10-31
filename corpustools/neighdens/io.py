@@ -21,3 +21,12 @@ def print_neighden_results(output_filename, neighbors):
         writer = csv.writer(outf,delimiter='\t')
         for n in neighbors:
             writer.writerow([n])
+
+def print_all_neighden_results(output_filename, neighors_dict):
+    with open(output_filename, mode='w', encoding='utf-8-sig') as outf:
+        for word,neighbors in neighors_dict.items():
+            if not neighbors:
+                print(word, file=outf)
+            else:
+                line = '\t'.join([word, '\t'.join([n for n in neighbors])])
+                print(line, file=outf)

@@ -1,12 +1,12 @@
+from functools import partial
+
 from corpustools.corpus.classes import Word
 from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 from corpustools.symbolsim.phono_align import Aligner
-
 from corpustools.multiprocessing import filter_mp, score_mp
 
-from functools import partial
 
 def _is_edit_distance_neighbor(w, query, sequence_type, max_distance):
     w_len = len(getattr(w, sequence_type))
@@ -54,6 +54,9 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
         call_back('Calculating neighborhood densities...')
         call_back(0,len(corpus_context))
         cur = 0
+
+    results = dict()
+
     if num_cores == -1:
 
         for w in corpus_context:
@@ -62,13 +65,10 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
             cur += 1
             call_back(cur)
             res = function(w)
-
-            #setattr(w.original, corpus_context.attribute.name, res[0])
+            results[str(w)] = [str(r) for r in res[1]]
             setattr(w.original, settable_attr.name, res[0])
     else:
         iterable = ((w,) for w in corpus_context)
-
-
         neighbors = score_mp(iterable, function, num_cores, call_back, stop_check, chunk_size = 1)
         for n in neighbors:
             #Have to look up the key, then look up the object due to how
@@ -77,7 +77,7 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
                     #corpus_context.attribute.name, n[1][0])
                     settable_attr.name, n[1][0])
 
-
+    return results
 
 def neighborhood_density(corpus_context, query, tierdict,
             algorithm = 'edit_distance', max_distance = 1,
@@ -196,6 +196,9 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
         call_back('Calculating neighborhood densities...')
         call_back(0,len(corpus_context))
         cur = 0
+
+    results = dict()
+
     if num_cores == -1:
 
         for w in corpus_context:
@@ -204,7 +207,7 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
             cur += 1
             call_back(cur)
             res = function(w)
-
+            results[str(w)] = [r.replace('.','') for r in res[1]]
             setattr(w.original, corpus_context.attribute.name, res[0])
     else:
         iterable = ((w,) for w in corpus_context)
@@ -215,6 +218,8 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
             #Have to look up the key, then look up the object due to how
             #multiprocessing pickles objects
             setattr(corpus_context.corpus.find(corpus_context.corpus.key(n[0])), corpus_context.attribute.name, n[1][0])
+
+    return results
 
 def find_mutation_minpairs(corpus_context, query, tier_type = None,
                     stop_check = None, call_back = None):

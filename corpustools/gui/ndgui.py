@@ -6,7 +6,7 @@ from corpustools.neighdens.neighborhood_density import (neighborhood_density,
                             neighborhood_density_all_words,
                             find_mutation_minpairs_all_words,
                             find_mutation_minpairs)
-from corpustools.neighdens.io import load_words_neighden, print_neighden_results
+from corpustools.neighdens.io import *
 from corpustools.corpus.classes import Attribute
 from corpustools.exceptions import PCTError, PCTPythonError
 from .windows import FunctionWorker, FunctionDialog
@@ -62,7 +62,7 @@ class NDWorker(FunctionWorker):
                 else:
                     end = kwargs['corpusModel'].beginAddColumn(att)
                     if kwargs['algorithm'] != 'substitution':
-                        neighborhood_density_all_words(c, tierdict,
+                        results = neighborhood_density_all_words(c, tierdict,
                                                 tier_type = kwargs['tier_type'],
                                                 algorithm = kwargs['algorithm'],
                                                 max_distance = kwargs['max_distance'],
@@ -72,12 +72,14 @@ class NDWorker(FunctionWorker):
                                                 settable_attr = kwargs['attribute']
                                                 )
                     else:
-                        find_mutation_minpairs_all_words(c,
+                        results = find_mutation_minpairs_all_words(c,
                                                 tier_type = kwargs['tier_type'],
                                                 num_cores = kwargs['num_cores'],
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
                     end = kwargs['corpusModel'].endAddColumn(end)
+                    if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
+                            print_all_neighden_results(kwargs['output_filename'], results)
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return

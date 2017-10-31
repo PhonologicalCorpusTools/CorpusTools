@@ -43,7 +43,7 @@ class LoadFeatureSystemWorker(FunctionWorker):
 
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
-    systems = [x.split('.')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
+    systems = [x.split('.feature')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
     return systems
 
 def get_feature_system_styles(storage_directory):

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import sys
 import os
+import resources
 from multiprocessing import freeze_support
 from corpustools.gui.main import MainWindow,QApplicationMessaging
+from PyQt5.QtGui import QIcon
 
 if sys.platform.startswith('win'):
     if getattr(sys, 'frozen', False):
@@ -28,6 +30,7 @@ def main():
             app.sendMessage('ARISE')
     else:
         main = MainWindow(app)
+        main.setWindowIcon(QIcon(':/favicon.png'))
         app.aboutToQuit.connect(main.cleanUp)
 
         app.setActiveWindow(main)
