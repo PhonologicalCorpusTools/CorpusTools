@@ -25,7 +25,7 @@ def _is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
 
 def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
             algorithm = 'edit_distance', max_distance = 1,
-            num_cores = -1, settable_attr = None,
+            num_cores = -1, settable_attr = None, collapse_homophones = False,
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of all words in the corpus and
     adds them as attributes of the words.
@@ -49,7 +49,8 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
                         tierdict = tierdict,
                         tier_type = tier_type,
                         algorithm = algorithm,
-                        max_distance = max_distance)
+                        max_distance = max_distance,
+                        collapse_homophones = collapse_homophones)
     if call_back is not None:
         call_back('Calculating neighborhood densities...')
         call_back(0,len(corpus_context))
@@ -80,7 +81,7 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
     return results
 
 def neighborhood_density(corpus_context, query, tierdict,
-            algorithm = 'edit_distance', max_distance = 1,
+            algorithm = 'edit_distance', max_distance = 1, collapse_homophones = False,
             force_quadratic = False, file_type = None, tier_type=None,
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of a particular word in the corpus.
@@ -120,7 +121,7 @@ def neighborhood_density(corpus_context, query, tierdict,
 
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type, tier_type, tierdict,
-                                         file_type=file_type)
+                                         file_type=file_type, collapse_homophones=collapse_homophones)
 
     if algorithm == 'edit_distance':
         is_neighbor = partial(_is_edit_distance_neighbor,
@@ -153,7 +154,7 @@ def neighborhood_density(corpus_context, query, tierdict,
 
 
 def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type,
-                              tierdict, file_type=None, trans_delimiter='.'):
+                              tierdict, file_type=None, trans_delimiter='.', collapse_homophones = False):
     """Generates all neighbors of edit distance <= 1 and searches 
     for them in corpus_context.
 
@@ -173,7 +174,10 @@ def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type,
             cand_str = ''.join(candidate)
         if cand_str in tierdict:
             for w in tierdict[cand_str]:
-                neighbors.add(w)
+                if collapse_homophones and any(word.transcription == w.transcription for word in neighbors):
+                    continue
+                else:
+                    neighbors.add(w)
     return (len(neighbors), neighbors)
 
 def generate_neighbor_candidates(corpus_context, query, sequence_type):
@@ -188,10 +192,10 @@ def generate_neighbor_candidates(corpus_context, query, sequence_type):
         if str(char) not in ['#', sequence[i]]:
             yield [str(c) for c in sequence[:]] + [str(char)] # insertion
 
-def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores = -1,
+def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores = -1, collapse_homophones = False,
                     stop_check = None, call_back = None):
 
-    function = partial(find_mutation_minpairs, corpus_context, tier_type=tier_type)
+    function = partial(find_mutation_minpairs, corpus_context, tier_type=tier_type, collapse_homophones = collapse_homophones)
     if call_back is not None:
         call_back('Calculating neighborhood densities...')
         call_back(0,len(corpus_context))
@@ -207,7 +211,7 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
             cur += 1
             call_back(cur)
             res = function(w)
-            results[str(w)] = [r.replace('.','') for r in res[1]]
+            results[str(w)] = [str(r) for r in res[1]]
             setattr(w.original, corpus_context.attribute.name, res[0])
     else:
         iterable = ((w,) for w in corpus_context)
@@ -221,7 +225,7 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
 
     return results
 
-def find_mutation_minpairs(corpus_context, query, tier_type = None,
+def find_mutation_minpairs(corpus_context, query, tier_type = None, collapse_homophones = False,
                     stop_check = None, call_back = None):
     """Find all minimal pairs of the query word based only on segment
     mutations (not deletions/insertions)
@@ -265,8 +269,14 @@ def find_mutation_minpairs(corpus_context, query, tier_type = None,
         m = al.make_similarity_matrix(query_sequence, w_sequence)
         if m[-1][-1]['f'] != 1:
             continue
-        matches.append(str(w_sequence))
 
+        if collapse_homophones and any(m.transcription == w.transcription for m in matches):
+            continue
+        else:
+            #matches.append(str(w_sequence))
+            matches.append(w)
+
+    matches = [m.spelling for m in matches]
     neighbors = list(set(matches)-set([str(query_sequence)]))
     return (len(neighbors), neighbors)
 

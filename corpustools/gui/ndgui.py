@@ -43,6 +43,7 @@ class NDWorker(FunctionWorker):
                                                 algorithm = kwargs['algorithm'],
                                                 max_distance = kwargs['max_distance'],
                                                 force_quadratic=kwargs['force_quadratic'],
+                                                collapse_homophones = kwargs['collapse_homophones'],
                                                 file_type = kwargs['file_type'],
                                                 tier_type = kwargs['tier_type'],
                                                 stop_check = kwargs['stop_check'],
@@ -50,6 +51,7 @@ class NDWorker(FunctionWorker):
                         else:
                             res = find_mutation_minpairs(c, q,
                                         tier_type=kwargs['tier_type'],
+                                        collapse_homophones = kwargs['collapse_homophones'],
                                         stop_check = kwargs['stop_check'],
                                         call_back = kwargs['call_back'])
                         if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
@@ -69,11 +71,13 @@ class NDWorker(FunctionWorker):
                                                 num_cores = kwargs['num_cores'],
                                                 call_back = kwargs['call_back'],
                                                 stop_check = kwargs['stop_check'],
-                                                settable_attr = kwargs['attribute']
+                                                settable_attr = kwargs['attribute'],
+                                                collapse_homophones = kwargs['collapse_homophones']
                                                 )
                     else:
                         results = find_mutation_minpairs_all_words(c,
                                                 tier_type = kwargs['tier_type'],
+                                                collapse_homophones = kwargs['collapse_homophones'],
                                                 num_cores = kwargs['num_cores'],
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
@@ -210,6 +214,9 @@ class NDDialog(FunctionDialog):
         self.useQuadratic = QCheckBox('Use alternative algorithm')
         self.useQuadratic.setChecked(False)
         optionLayout.addWidget(self.useQuadratic)
+
+        self.collapseHomophones = QCheckBox('Collapse homophones into a single neighbor')
+        optionLayout.addWidget(self.collapseHomophones)
 
         self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
 
@@ -392,7 +399,8 @@ class NDDialog(FunctionDialog):
                 'num_cores':self.settings['num_cores'],
                 'force_quadratic': self.useQuadratic.isChecked(),
                 'file_type': self.fileOptions.currentText().split()[-1],
-                'tier_type': self.tierWidget.attValue()}
+                'tier_type': self.tierWidget.attValue(),
+                'collapse_homophones': self.collapseHomophones.isChecked()}
 
         out_file = self.saveFileWidget.value()
         if out_file == '':
