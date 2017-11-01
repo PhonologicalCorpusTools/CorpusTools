@@ -113,6 +113,7 @@ class PPDialog(FunctionDialog):
         self.oneWordRadio.setAutoExclusive(True)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
+        self.oneWordRadio.setChecked(True)
 
         self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
@@ -121,6 +122,7 @@ class PPDialog(FunctionDialog):
         self.oneNonword = None
         self.oneNonwordButton = QPushButton('Create word/nonword')
         self.oneNonwordButton.clicked.connect(self.createNonword)
+
 
         self.fileRadio = QRadioButton('Calculate for list of words')
         self.fileRadio.clicked.connect(self.fileSelected)

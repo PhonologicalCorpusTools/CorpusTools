@@ -171,6 +171,7 @@ class NDDialog(FunctionDialog):
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
+        self.oneWordRadio.setChecked()
 
         self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)

@@ -124,10 +124,10 @@ class BaseCorpusContext(object):
 
         probability : boolean
             If True, frequency counts will be normalized by total frequency,
-            defaults to False
+            defaults to True
 
         preserve_position : boolean
-            If True, segments will in different positions in the transcription
+            If True, segments in different positions in the transcription
             will not be collapsed, defaults to True
 
         log_count : boolean
@@ -168,7 +168,7 @@ class BaseCorpusContext(object):
         if probability and not preserve_position:
             return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
         elif probability:
-            return_dict = { k:v/freq_base['total'][k[1]] for k,v in return_dict.items() if k != 'total'}
+            return_dict = { k:v/freq_base['total'][k[1]] if k != 'total' and freq_base['total'][k[1]] > 0 else 0 for k,v in return_dict.items() }
         return return_dict
 
     def __exit__(self, exc_type, exc, exc_tb):
