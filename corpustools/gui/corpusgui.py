@@ -147,7 +147,9 @@ class CorpusSummary(QDialog):
         main = QFormLayout()
 
         main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
-        main.addRow(QLabel('Number of word types:'), QLabel(str(len(c))))
+        main.addRow(QLabel('Number of word types:'), QLabel(str(len(corpus))))
+        token_count = int(sum(word.frequency for word in corpus))
+        main.addRow(QLabel('Number of word tokens:'), QLabel(str(token_count)))
 
         if c.specifier is not None:
             main.addRow(QLabel('Feature system:'),QLabel(c.specifier.name))
