@@ -842,6 +842,12 @@ class MainWindow(QMainWindow):
         else:
             self.discourseTree.hide()
 
+    def showVersion(self):
+        alert = QMessageBox()
+        alert.setWindowTitle('Version information')
+        alert.setText('You are currently running PCT version {}'.format(currentPCTversion))
+        alert.exec_()
+
     def about(self):
         dialog = AboutDialog(self)
         dialog.exec_()
@@ -892,6 +898,10 @@ class MainWindow(QMainWindow):
         result = dialog.exec_()
 
     def createActions(self):
+
+        self.showVersionAct = QAction('&Show version number...',
+                                      self,
+                                      triggered = self.showVersion)
 
         self.loadCorpusAct = QAction( "L&oad corpus...",
                 self, shortcut=QKeySequence.Open,
@@ -1051,11 +1061,11 @@ class MainWindow(QMainWindow):
         self.quitAct = QAction("&Quit", self, shortcut="Ctrl+Q",
                 statusTip="Quit the application", triggered=self.close)
 
-        self.aboutAct = QAction("&About", self,
+        self.aboutAct = QAction("&About...", self,
                 statusTip="Show the application's About box",
                 triggered=self.about)
 
-        self.helpAct = QAction("&Help", self,
+        self.helpAct = QAction("&Help...", self,
                 statusTip="Help information",
                 triggered=self.help)
 
@@ -1177,6 +1187,7 @@ class MainWindow(QMainWindow):
             self.helpMenu.addSeparator()
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.aboutAct)
+        self.helpMenu.addAction(self.showVersionAct)
 
     def closeResultsWindows(self):
         for abbrv in self.resultsCodes:
