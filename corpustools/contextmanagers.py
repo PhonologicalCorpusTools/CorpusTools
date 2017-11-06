@@ -31,7 +31,7 @@ class BaseCorpusContext(object):
         If specified, ignore words below this token frequency
     """
     def __init__(self, corpus, sequence_type, type_or_token,
-                attribute = None, frequency_threshold = 0):
+                attribute = None, frequency_threshold = 0, log_count=True):
         self.sequence_type = sequence_type
         self.type_or_token = type_or_token
         self.corpus = corpus
@@ -40,6 +40,7 @@ class BaseCorpusContext(object):
         self._freq_base = {}
         self.length = None
         self.frequency_threshold = frequency_threshold
+        self.log_count = log_count
 
     @property
     def inventory(self):
@@ -112,7 +113,7 @@ class BaseCorpusContext(object):
             return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
         return return_dict
 
-    def get_phone_probs(self, gramsize = 1, probability = True, preserve_position = True, log_count = True):
+    def get_phone_probs(self, gramsize = 1, probability = True, preserve_position = True):
         """
         Generate (and cache) phonotactic probabilities for segments in
         the Corpus.
@@ -140,13 +141,14 @@ class BaseCorpusContext(object):
             Keys are segments (or sequences of segments) and values are
             their phonotactic probability in the Corpus
         """
-        if (gramsize, preserve_position, log_count) not in self._freq_base:
+        if (gramsize, preserve_position, self.log_count) not in self._freq_base:
             freq_base = collections.defaultdict(float)
             totals = collections.defaultdict(float)
             for word in self:
                 freq = word.frequency
-                if self.type_or_token != 'type' and log_count:
-                    freq = math.log(freq)
+                if self.type_or_token != 'type' and self.log_count:
+                    freq = math.log(freq) if freq > 1 else math.log(1.00001)
+                print(word, word.frequency, freq)
                 grams = zip(*[getattr(word, self.sequence_type)[i:] for i in range(gramsize)])
 
                 for i, x in enumerate(grams):
@@ -161,14 +163,16 @@ class BaseCorpusContext(object):
                 freq_base['total'] = sum(value for value in freq_base.values())
             else:
                 freq_base['total'] = totals
-            self._freq_base[(gramsize, preserve_position, log_count)] = freq_base
+            self._freq_base[(gramsize, preserve_position, self.log_count)] = freq_base
 
-        freq_base = self._freq_base[(gramsize,preserve_position, log_count)]
+        freq_base = self._freq_base[(gramsize,preserve_position, self.log_count)]
         return_dict = { k:v for k,v in freq_base.items()}
         if probability and not preserve_position:
             return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
         elif probability:
-            return_dict = { k:v/freq_base['total'][k[1]] if k != 'total' and freq_base['total'][k[1]] > 0 else 0 for k,v in return_dict.items() }
+            return_dict = { k:v/freq_base['total'][k[1]]
+                            if freq_base['total'][k[1]] > 0 else 0
+                            for k,v in return_dict.items() if k != 'total'}
         return return_dict
 
     def __exit__(self, exc_type, exc, exc_tb):

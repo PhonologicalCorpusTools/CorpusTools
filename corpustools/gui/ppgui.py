@@ -27,7 +27,8 @@ class PPWorker(FunctionWorker):
         tt = kwargs['type_token']
         att = kwargs.get('attribute', None)
         ft = kwargs['frequency_cutoff']
-        with cm(corpus, st, tt, attribute=att, frequency_threshold = ft) as c:
+        log_count = kwargs['log_count']
+        with cm(corpus, st, tt, attribute=att, frequency_threshold = ft, log_count=log_count) as c:
             try:
                 if 'query' in kwargs:
                     for q in kwargs['query']:
@@ -114,6 +115,7 @@ class PPDialog(FunctionDialog):
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
         self.oneWordRadio.setChecked(True)
+        self.oneWordRadio.click()
 
         self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
@@ -157,6 +159,10 @@ class PPDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        self.useLogScale = QCheckBox('Use log-scaled word frequencies (token count only)')
+        optionLayout.addWidget(self.useLogScale)
+        self.useLogScale.setChecked(True)
+
         self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=False)
 
         optionLayout.addWidget(self.tierWidget)
@@ -164,6 +170,15 @@ class PPDialog(FunctionDialog):
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
                                             ('Count tokens','token')]))
+        for widget in self.typeTokenWidget.widgets:
+            if 'token' in widget.text():
+                #we can only use log-scaling on token frequency
+                widget.clicked.connect(lambda x: self.useLogScale.setEnabled(True))
+            else:
+                #if type frequency is selected, then disable to log-scale option
+                widget.clicked.connect(lambda y: self.useLogScale.setEnabled(False))
+        self.typeTokenWidget.initialClick()
+
         actions = None
         self.variantsWidget = RestrictedContextWidget(self.corpusModel.corpus, actions)
 
@@ -211,6 +226,11 @@ class PPDialog(FunctionDialog):
                                 ' in the corpus.'
             "</FONT>"))
 
+            self.useLogScale.setToolTip(("<FONT COLOR=black>"
+            'If checked, then the token frequency count will be log-scaled. This option does not apply to type'
+            ' frequency.'
+            "</FONT>"))
+
     def createNonword(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventory)
         if dialog.exec_():
@@ -245,7 +265,8 @@ class PPDialog(FunctionDialog):
                 'sequence_type':self.tierWidget.value(),
                 'type_token':self.typeTokenWidget.value(),
                 'frequency_cutoff':frequency_cutoff,
-                'probability_type':self.probabilityTypeWidget.value()}
+                'probability_type':self.probabilityTypeWidget.value(),
+                'log_count': self.useLogScale.isEnabled() and self.useLogScale.isChecked()}
 
         if self.compType is None:
             reply = QMessageBox.critical(self,
