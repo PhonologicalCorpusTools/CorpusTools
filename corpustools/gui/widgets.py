@@ -1956,7 +1956,7 @@ class SegmentPairDialog(AbstractPairDialog):
     def __init__(self, inventory, parent = None):
         AbstractPairDialog.__init__(self, inventory, parent)
         self.inventoryFrame = SegmentSelectionWidget(inventory)
-        self.setLayout(QHBoxLayout())
+        #self.setLayout(QHBoxLayout())
         self.layout().insertWidget(0, self.inventoryFrame)
 
         self.setWindowTitle('Select segment pair')

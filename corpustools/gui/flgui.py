@@ -114,93 +114,65 @@ class FLDialog(FunctionDialog):
         self.showToolTips = showToolTips
         self.kwargs = dict()
 
-        flFrame = QFrame()
-        fllayout = QHBoxLayout()
+        mainFrame = QFrame()
+        mainLayout = QHBoxLayout()
 
-        self.segPairWidget = SegmentPairSelectWidget(self.inventory, single_segment = True)
+        self.optionsList = QListWidget()
+        self.optionsList.addItem('Segment selection')
+        self.optionsList.addItem('Functional load options')
+        self.optionsList.addItem('Standard options')
+        self.optionsList.addItem('Envrionments')
+        mainLayout.addWidget(self.optionsList)
 
-        fllayout.addWidget(self.segPairWidget)
+        #Set up segment selection widgets
+        segFrame = QFrame()
+        segPairLayout = QVBoxLayout()
+        segFrame.setLayout(segPairLayout)
 
-        secondPane = QFrame()
+        self.segPairWidget = SegmentPairSelectWidget(self.inventory, single_segment=True)
+        segPairLayout.addWidget(self.segPairWidget)
 
-        l = QVBoxLayout()
 
+        #Set up functional load option widgets
+        flOptionsFrame = QFrame()
+        flOptionsLayout = QVBoxLayout()
+        flOptionsFrame.setLayout(flOptionsLayout)
+
+        #algorithm options
+        algorithmFrame = QGroupBox('Algorithm selection')
+        algorithmLayout = QVBoxLayout()
         self.algorithmWidget = RadioSelectWidget('Functional load algorithm',
-                                            OrderedDict([('Minimal pairs','min_pairs'),
-                                            ('Change in entropy','entropy')]),
-                                            {'Minimal pairs': self.minPairsSelected,
-                                            'Change in entropy': self.entropySelected})
+                                                 OrderedDict([('Minimal pairs', 'min_pairs'),
+                                                              ('Change in entropy', 'entropy')]),
+                                                 {'Minimal pairs': self.minPairsSelected,
+                                                  'Change in entropy': self.entropySelected})
+        algorithmLayout.addWidget(self.algorithmWidget)
+        algorithmFrame.setLayout(algorithmLayout)
+        flOptionsLayout.addWidget(algorithmFrame)
 
-        l.addWidget(self.algorithmWidget)
-
-        secondPane.setLayout(l)
-
-        fllayout.addWidget(secondPane)
-
-        optionLayout = QVBoxLayout()
-
-        self.tierWidget = TierWidget(corpus,include_spelling=False)
-
-        optionLayout.addWidget(self.tierWidget)
-
-
-        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
-                                                    OrderedDict([('Type','type'),
-                                                    ('Token','token')]))
-        actions = None
-        self.variantsWidget = ContextWidget(self.corpus, actions)
-
-        optionLayout.addWidget(self.variantsWidget)
-        optionLayout.addWidget(self.typeTokenWidget)
-
-        minFreqFrame = QGroupBox('Minimum frequency')
-        box = QFormLayout()
-        self.minFreqEdit = QLineEdit()
-        box.addRow('Minimum word frequency:',self.minFreqEdit)
-
-        minFreqFrame.setLayout(box)
-
-        optionLayout.addWidget(minFreqFrame)
-
+        #miniminal pair options
         minPairOptionFrame = QGroupBox('Minimal pair options')
-
-        box = QVBoxLayout()
-
+        minPairOptionsLayout = QVBoxLayout()
         self.relativeCountCorpusWidget = QRadioButton('Output results relative to the entire corpus')
         self.relativeCountWidget = QRadioButton('Output results relative to number of possible pairs')
         self.noRelativeCountWidget = QRadioButton('Output results as raw counts')
         self.relativeButtonGroup = QButtonGroup()
         self.relativeButtonGroup.addButton(self.relativeCountCorpusWidget)
+        minPairOptionsLayout.addWidget(self.relativeCountCorpusWidget)
         self.relativeButtonGroup.addButton(self.relativeCountWidget)
+        minPairOptionsLayout.addWidget(self.relativeCountWidget)
         self.relativeButtonGroup.addButton(self.noRelativeCountWidget)
+        minPairOptionsLayout.addWidget(self.noRelativeCountWidget)
         self.relativeButtonGroup.setExclusive(True)
         self.relativeCountCorpusWidget.setChecked(True)
         self.homophoneWidget = QCheckBox('Distinguish homophones')
+        minPairOptionsLayout.addWidget(self.homophoneWidget)
+        minPairOptionFrame.setLayout(minPairOptionsLayout)
+        flOptionsLayout.addWidget(minPairOptionFrame)
 
-        box.addWidget(self.relativeCountCorpusWidget)
-        box.addWidget(self.relativeCountWidget)
-        box.addWidget(self.noRelativeCountWidget)
-        box.addWidget(self.homophoneWidget)
-
-        fileFrame = QGroupBox('Output list of minimal pairs to a file')
-
-        self.saveFileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
-
-        vbox = QHBoxLayout()
-        vbox.addWidget(self.saveFileWidget)
-
-        fileFrame.setLayout(vbox)
-
-        box.addWidget(fileFrame)
-
-        minPairOptionFrame.setLayout(box)
-
-        l.addWidget(minPairOptionFrame)
-
-        entropyOptionFrame = QGroupBox('Entropy options')
-
-        box2 = QVBoxLayout()
-        entropyOptionFrame.setLayout(box2)
+        #entropy options
+        entropyOptionsFrame = QGroupBox('Entropy options')
+        entropyOptionsLayout = QVBoxLayout()
         self.preventNormalizationWidget = QRadioButton('Output results as raw change in entropy')
         self.allowNormalizationWidget = QRadioButton('Output results normalized to corpus size')
         normalizationButtonGroup = QButtonGroup()
@@ -208,24 +180,67 @@ class FLDialog(FunctionDialog):
         normalizationButtonGroup.addButton(self.allowNormalizationWidget)
         normalizationButtonGroup.setExclusive(True)
         self.allowNormalizationWidget.setChecked(True)
-        box2.addWidget(self.allowNormalizationWidget)
-        box2.addWidget(self.preventNormalizationWidget)
+        entropyOptionsLayout.addWidget(self.allowNormalizationWidget)
+        entropyOptionsLayout.addWidget(self.preventNormalizationWidget)
+        entropyOptionsFrame.setLayout(entropyOptionsLayout)
+        flOptionsLayout.addWidget(entropyOptionsFrame)
 
-        l.addWidget(entropyOptionFrame)
+        #file output options
+        fileFrame = QGroupBox('Output list of minimal pairs to a file')
+        fileLayout = QHBoxLayout()
+        fileFrame.setLayout(fileLayout)
+        self.saveFileWidget = SaveFileWidget('Select file location', 'Text files (*.txt)')
+        fileLayout.addWidget(self.saveFileWidget)
+        flOptionsLayout.addWidget(fileFrame)
 
-        optionFrame = QGroupBox('Options')
-        optionFrame.setLayout(optionLayout)
-        fllayout.addWidget(optionFrame)
+        #Set up standard option widgets
+        standardOptionsFrame = QFrame()
+        standardOptionsLayout = QVBoxLayout()
+        standardOptionsFrame.setLayout(standardOptionsLayout)
 
-        self.envWidget = EnvironmentSelectWidget(self.inventory, middle = False)
-        fllayout.addWidget(self.envWidget)
+        #tier options
+        self.tierWidget = TierWidget(corpus, include_spelling=False)
+        standardOptionsLayout.addWidget(self.tierWidget)
 
-        flFrame.setLayout(fllayout)
+        #variants options
+        actions = None
+        self.variantsWidget = ContextWidget(self.corpus, actions)
+        standardOptionsLayout.addWidget(self.variantsWidget)
 
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequencies',
+                                                 OrderedDict([('Type', 'type'),
+                                                              ('Token', 'token')]))
+        standardOptionsLayout.addWidget(self.typeTokenWidget)
 
-        self.layout().insertWidget(0,flFrame)
+        #frequency options
+        minFreqFrame = QGroupBox('Minimum frequency')
+        box = QFormLayout()
+        self.minFreqEdit = QLineEdit()
+        box.addRow('Minimum word frequency:', self.minFreqEdit)
+        minFreqFrame.setLayout(box)
+        standardOptionsLayout.addWidget(minFreqFrame)
 
+        #Set up environment widgets
+        environmentsFrame = QFrame()
+        environmentsLayout = QVBoxLayout()
+        environmentsFrame.setLayout(environmentsLayout)
+        self.envWidget = EnvironmentSelectWidget(self.inventory, middle=False)
+        environmentsLayout.addWidget(self.envWidget)
+
+        self.stackedWidget = QStackedWidget()
+        self.stackedWidget.addWidget(segFrame)
+        self.stackedWidget.addWidget(flOptionsFrame)
+        self.stackedWidget.addWidget(standardOptionsFrame)
+        self.stackedWidget.addWidget(environmentsFrame)
+        self.stackedWidget.setCurrentIndex(0)
+
+        mainLayout.addWidget(self.stackedWidget)
+        self.optionsList.currentRowChanged.connect(self.stackedWidget.setCurrentIndex)
+
+        mainFrame.setLayout(mainLayout)
+        self.layout().insertWidget(0, mainFrame)
         self.algorithmWidget.initialClick()
+
         if self.showToolTips:
 
             self.preventNormalizationWidget.setToolTip(('<FONT COLOR=black>'
