@@ -84,10 +84,11 @@ def fits_environment(w1, w2, index, environment_filter):
 
     w1 = ready_for_re(w1, index)
     w2 = ready_for_re(w2, index)
-    env_re = make_environment_re(environment_filter) 
-
-    return (bool(re.search(env_re, w1)) and bool(re.search(env_re, w2)))
-
+    for env in environment_filter:
+        env_re = make_environment_re(env)
+        if not (bool(re.search(env_re, w1)) and bool(re.search(env_re, w2))):
+            return False
+    return True
 
 def ready_for_re(word, index):
         w = [str(seg) for seg in word]

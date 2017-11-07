@@ -266,7 +266,7 @@ class FLDialog(FunctionDialog):
             self.segPairWidget.setToolTip(('<FONT COLOR=black>'
                             'Select the segments you are interested in. Choose an "individual segment" to get the '
                             'average functional load for that segment across all pairs it could occur in. Choose a '
-                            '"pair of segments" to get the standard functional of that pair. Choose a "set of segments'
+                            '"pair of segments" to get the standard functional load of that pair. Choose a "set of segments'
                             'based on features" to get the functional load of a particular featural distinction '
                             '(e.g., the functional load of voicing in obstruents).'
                             '</FONT>'))
