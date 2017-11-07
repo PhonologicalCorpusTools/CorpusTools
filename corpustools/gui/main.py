@@ -814,6 +814,8 @@ class MainWindow(QMainWindow):
                 self.showSearchResults.triggered.connect(self.PhonoSearchWindow.activateWindow)
                 self.PhonoSearchWindow.rejected.connect(lambda: self.showSearchResults.setVisible(False))
                 self.showSearchResults.setVisible(True)
+        self.settings['recent_searches'] = dialog.recentSearches
+        self.settings['saved_searches'] = dialog.savedSearches
 
     def createWord(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel)

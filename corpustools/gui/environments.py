@@ -308,8 +308,9 @@ class EnvironmentWidget(QWidget):
 
         self.lhsWidget = QWidget()
 
-        lhslayout = QHBoxLayout()
-        self.lhsWidget.setLayout(lhslayout)
+        self.lhsLayout = QHBoxLayout()
+
+        self.lhsWidget.setLayout(self.lhsLayout)
 
         self.rhsAddNew = QPushButton('+')
 
@@ -317,8 +318,9 @@ class EnvironmentWidget(QWidget):
 
         self.rhsWidget = QWidget()
 
-        rhslayout = QHBoxLayout()
-        self.rhsWidget.setLayout(rhslayout)
+        self.rhsLayout = QHBoxLayout()
+
+        self.rhsWidget.setLayout(self.rhsLayout)
 
         self.middleWidget = EnvironmentSegmentWidget(self.inventory, parent=self, middle = True, enabled = middle,
                                                      show_full_inventory=show_full_inventory)

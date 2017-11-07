@@ -162,7 +162,9 @@ class Settings(object):
                     'use_multi': ('multiprocessing/enabled',0),
                     'num_cores': ('multiprocessing/numcores',1),
                     'ask_overwrite_features': ('reminders/features', 1),
-                    'ask_overwrite_corpus': ('reminders/corpus', 1)}
+                    'ask_overwrite_corpus': ('reminders/corpus', 1),
+                    'saved_searches': ('searches/saved', None),
+                    'recent_searches': ('searches/recent', None)}
 
     storage_setting_keys = ['storage']
 
@@ -171,6 +173,8 @@ class Settings(object):
     processing_setting_keys = ['use_multi','num_cores']
 
     reminder_setting_keys = ['ask_overwrite_features', 'ask_overwrite_corpus', 'warnings']
+
+    search_keys = ['saved_searches', 'recent_searches']
 
     def __init__(self):
         self.qs = QSettings("PCT","Phonological CorpusTools")
@@ -213,7 +217,10 @@ class Settings(object):
             return tuple(type(d)(self.qs.value(k,d)) for k, d in mapped_key)
         else:
             inikey, default = mapped_key
-            if key == 'num_cores':
+            if key in self.search_keys:
+                if default is None:
+                    return list()
+            elif key == 'num_cores':
                 if self['use_multi']:
                     return type(default)(self.qs.value(inikey,default))
                 else:
