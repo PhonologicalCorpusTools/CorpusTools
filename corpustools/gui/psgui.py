@@ -75,7 +75,6 @@ class RecentSearchDialog(QDialog):
         tableLayout.addWidget(recentFrame)
 
         for i,search in enumerate(recents):
-            print(i, search)
             searchItem = QTableWidgetItem(search.displayValue)
             recentSearchesTable.setItem(i, 0, searchItem)
 
@@ -91,7 +90,6 @@ class RecentSearchDialog(QDialog):
         tableLayout.addWidget(savedFrame)
 
         for i,search in enumerate(saved):
-            print(i, search)
             searchItem = QTableWidgetItem(search.displayValue)
             recentSearchesTable.setItem(i, 0, searchItem)
 

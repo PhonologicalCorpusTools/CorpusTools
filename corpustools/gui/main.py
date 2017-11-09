@@ -3,6 +3,8 @@
 import os
 import sys
 import logging
+from collections import defaultdict
+
 import corpustools.gui.modernize as modernize
 from PyQt5 import QtGui
 
@@ -10,7 +12,7 @@ from .imports import *
 
 from .widgets import FileNameDialog
 
-from .config import Settings, PreferencesDialog
+from .config import PCTSettings, PreferencesDialog
 
 from .views import (TreeWidget, DiscourseView, ResultsWindow,
                     LexiconView,PhonoSearchResults)
@@ -108,7 +110,13 @@ class MainWindow(QMainWindow):
 
         self.unsavedChanges = False
 
-        self.settings = Settings()
+        self.settings = PCTSettings()
+        self.readSettings()
+        if self.settings['searches']['recent'] is None:
+            self.settings['searches']['recent'] = list()
+        if self.settings['searches']['saved'] is None:
+            self.settings['searches']['saved'] = list()
+
         logging.basicConfig(handlers = [logging.FileHandler(os.path.join(
                                 self.settings.log_directory(), 'pct_gui.log'),
                             encoding = 'utf-8-sig',
@@ -181,6 +189,73 @@ class MainWindow(QMainWindow):
         #self.raise_()
         #self.show()
         self.activateWindow()
+
+    def writeSettings(self):
+        self.settingsObject = QSettings('UBC Phonology Tools', application='Phonological CorpusTools')
+
+        self.settingsObject.beginGroup('storage_folder')
+        self.settingsObject.setValue('directory', self.settings['storage_folder']['directory'])
+        self.settingsObject.setValue('praat', self.settings['storage_folder']['directory'])
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('display')
+        self.settingsObject.setValue('size', self.settings['display']['size'])
+        self.settingsObject.setValue('pos', self.settings['display']['pos'])
+        self.settingsObject.setValue('sigfigs', self.settings['display']['sigfigs'])
+        self.settingsObject.setValue('tooltips', self.settings['display']['tooltips'])
+        self.settingsObject.setValue('searchResults', self.settings['display']['searchResults'])
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('reminders')
+        self.settingsObject.setValue('warnings', self.settings['reminders']['warnings'])
+        self.settingsObject.setValue('features', self.settings['reminders']['features'])
+        self.settingsObject.setValue('corpus', self.settings['reminders']['corpus'])
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('multiprocessing')
+        self.settingsObject.setValue('enabled', self.settings['multiprocessing']['enabled'])
+        self.settingsObject.setValue('numcores', self.settings['multiprocessing']['numcores'])
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('searches')
+        self.settingsObject.setValue('saved', self.settings['searches']['saved'])
+        self.settingsObject.setValue('recent', self.settings['searches']['recent'])
+        self.settingsObject.endGroup()
+
+
+    def readSettings(self):
+        self.settingsObject = QSettings('UBC Phonology Tools', application='Phonological CorpusTools')
+
+        self.settingsObject.beginGroup('storage_folder')
+        self.settings['storage_folder']['directory'] = self.settingsObject.value('directory',
+                                                defaultValue = os.path.normpath(os.path.join(
+                                                os.path.expanduser('~/Documents'), 'PCT', 'CorpusTools')))
+        self.settings['storage_folder']['praat'] = self.settingsObject.value('praat', defaultValue = '')
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('display')
+        self.settings['display']['size'] = self.settingsObject.value('size', defaultValue = QSize(270, 225))
+        self.settings['display']['pos'] = self.settingsObject.value('pos', defaultValue = QPoint(50, 50))
+        self.settings['display']['sigfigs'] = self.settingsObject.value('sigfigs', defaultValue = 3)
+        self.settings['display']['tooltips'] = self.settingsObject.value('tooltips', defaultValue = 1)
+        self.settings['display']['searchResults'] = self.settingsObject.value('searchResults', defaultValue = 0)
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('reminders')
+        self.settings['reminders']['warnings'] = self.settingsObject.value('warnings', 1)
+        self.settings['reminders']['features'] = self.settingsObject.value('features', 1)
+        self.settings['reminders']['corpus'] = self.settingsObject.value('corpus', 1)
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('multiprocessing')
+        self.settings['multiprocessing']['enabled'] = self.settingsObject.value('enabled', 0)
+        self.settings['multiprocessing']['numcores'] = self.settingsObject.value('numcores', 1)
+        self.settingsObject.endGroup()
+
+        self.settingsObject.beginGroup('searches')
+        self.settings['searches']['saved'] = self.settingsObject.value('saved', None)
+        self.settings['searches']['recent'] = self.settingsObject.value('recent', None)
+        self.settingsObject.endGroup()
 
     def check_for_unsaved_changes(function):
         def do_check(self):
@@ -507,7 +582,11 @@ class MainWindow(QMainWindow):
     def showPreferences(self):
         dialog = PreferencesDialog(self, self.settings)
         if dialog.exec_():
-            self.settings = dialog.settings
+            self.settings.update(dialog.storeWidget.get_current_state())
+            self.settings.update(dialog.displayWidget.get_current_state())
+            self.settings.update(dialog.processingWidget.get_current_state())
+            self.settings.update(dialog.reminderWidget.get_current_state())
+            self.settings.check_storage()
 
     @check_for_empty_corpus
     def showFeatureSystem(self):
@@ -797,7 +876,6 @@ class MainWindow(QMainWindow):
                 self.saveCorpus()
                 self.saveCorpusAct.setEnabled(False)
 
-
     @check_for_empty_corpus
     @check_for_transcription
     def phonoSearch(self):
@@ -814,8 +892,8 @@ class MainWindow(QMainWindow):
                 self.showSearchResults.triggered.connect(self.PhonoSearchWindow.activateWindow)
                 self.PhonoSearchWindow.rejected.connect(lambda: self.showSearchResults.setVisible(False))
                 self.showSearchResults.setVisible(True)
-        self.settings['recent_searches'] = dialog.recentSearches
         self.settings['saved_searches'] = dialog.savedSearches
+        self.settings['recent_searches'] = dialog.recentSearches
 
     def createWord(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel)
@@ -1250,6 +1328,7 @@ class MainWindow(QMainWindow):
         #tmpfiles = os.listdir(TMP_DIR)
         #for f in tmpfiles:
         #    os.remove(os.path.join(TMP_DIR,f))
+        self.writeSettings()
         super(MainWindow, self).closeEvent(event)
 
     def cleanUp(self):
@@ -1262,7 +1341,10 @@ def clean(item):
     """Clean up the memory by closing and deleting the item if possible."""
     if isinstance(item, list) or isinstance(item, dict):
         for _ in range(len(item)):
-            clean(item.pop())
+            try:
+                clean(item.pop())
+            except TypeError:
+                pass
     else:
         try:
             item.close()
