@@ -59,6 +59,7 @@ class PPWorker(FunctionWorker):
         if self.stopped:
             self.finishedCancelling.emit()
             return
+
         self.dataReady.emit(self.results)
 
 class PPDialog(FunctionDialog):
@@ -68,6 +69,7 @@ class PPDialog(FunctionDialog):
                 'Probability type',
                 'Transcription tier',
                 'Frequency type',
+                'Log-scaled frequency',
                 'Pronunciation variants',
                 'Minimum word frequency',
                 'Phonotactic probability']
@@ -350,6 +352,7 @@ class PPDialog(FunctionDialog):
                                 'Probability type': self.probabilityTypeWidget.displayValue(),
                                 'Transcription tier': self.tierWidget.displayValue(),
                                 'Frequency type': self.typeTokenWidget.value().title(),
+                                'Log-scaled frequency': 'Yes' if self.useLogScale.isChecked() else 'No',
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
                                 'Phonotactic probability': pp})

@@ -145,10 +145,13 @@ class BaseCorpusContext(object):
             freq_base = collections.defaultdict(float)
             totals = collections.defaultdict(float)
             for word in self:
-                freq = word.frequency
-                if self.type_or_token != 'type' and self.log_count:
-                    freq = math.log(freq) if freq > 1 else math.log(1.00001)
-                print(word, word.frequency, freq)
+                if self.type_or_token == 'type':
+                    freq = 1
+                elif self.type_or_token == 'token' and self.log_count:
+                    freq = math.log(word.frequency) if word.frequency > 1 else math.log(1.00001)
+                else:
+                    freq = word.frequency
+
                 grams = zip(*[getattr(word, self.sequence_type)[i:] for i in range(gramsize)])
 
                 for i, x in enumerate(grams):
@@ -171,7 +174,6 @@ class BaseCorpusContext(object):
             return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
         elif probability:
             return_dict = { k:v/freq_base['total'][k[1]]
-                            if freq_base['total'][k[1]] > 0 else 0
                             for k,v in return_dict.items() if k != 'total'}
         return return_dict
 
