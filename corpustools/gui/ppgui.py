@@ -179,7 +179,9 @@ class PPDialog(FunctionDialog):
             else:
                 #if type frequency is selected, then disable to log-scale option
                 widget.clicked.connect(lambda y: self.useLogScale.setEnabled(False))
-        self.typeTokenWidget.initialClick()
+        self.typeTokenWidget.widgets[1].click()
+        #normally we do self.typeTokenWidget.initialClick()
+        #but here we default to token, not type, because that's in the original algorithim by V&L
 
         actions = None
         self.variantsWidget = RestrictedContextWidget(self.corpusModel.corpus, actions)
