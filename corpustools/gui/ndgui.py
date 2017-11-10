@@ -5,7 +5,8 @@ from .imports import *
 from corpustools.neighdens.neighborhood_density import (neighborhood_density,
                             neighborhood_density_all_words,
                             find_mutation_minpairs_all_words,
-                            find_mutation_minpairs)
+                            find_mutation_minpairs,
+                            ensure_query_is_word)
 from corpustools.neighdens.io import *
 from corpustools.corpus.classes import Attribute
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -32,12 +33,33 @@ class NDWorker(FunctionWorker):
         with cm(corpus, st, tt, attribute=att, frequency_threshold = ft) as c:
             try:
                 tierdict = defaultdict(list)
+                # Create a dict with sequence_type keys for constant-time lookup
                 for entry in c:
                     w = getattr(entry, kwargs['sequence_type'])
                     tierdict[str(w)].append(entry)
                 if 'query' in kwargs:
-                    # Create a dict with sequence_type keys for constaint-time lookup
+                    last_value_removed = None
+                    last_key_removed = None
                     for q in kwargs['query']:
+                        q = ensure_query_is_word(q, c, c.sequence_type, kwargs['tier_type'])
+                        #the following code for adding/removing keys is to ensures that homophones are counted later
+                        #in the ND algorithm, but that words are not considered their own neighbours
+                        #however, we only do this when comparing inside a corpus. when using a list of external word
+                        #we don't want to do this, since it's possible for the external list to contain words that
+                        #are int he corpus, and removing them gives the wrong ND value in this case
+                        if not kwargs['file_list']:
+                            if last_value_removed:
+                                tierdict[last_key_removed].append(last_value_removed)
+                            try:
+                                w = getattr(q, kwargs['sequence_type'])
+                                last_key_removed = str(w)
+                                last_value_removed = tierdict[str(w)].pop()
+                            except IndexError:
+                                #this happens if comparing against a word not in the corpus
+                                #in this case, we don't need to worry about the homophone problem
+                                last_key_removed = None
+                                last_value_removed = None
+                        #now we call the actual ND algorithms
                         if kwargs['algorithm'] != 'substitution':
                             res = neighborhood_density(c, q, tierdict,
                                                 algorithm = kwargs['algorithm'],
@@ -59,7 +81,7 @@ class NDWorker(FunctionWorker):
                         if self.stopped:
                             break
                         if kwargs['file_list'] is not None:
-                            output.append(','.join([q, str(res[0]), ','.join([str(r) for r in res[1]])]))
+                            output.append(','.join([str(q), str(res[0]), ','.join([str(r) for r in res[1]])]))
                         self.results.append([q,res[0]])
                 else:
                     end = kwargs['corpusModel'].beginAddColumn(att)
@@ -94,7 +116,7 @@ class NDWorker(FunctionWorker):
         if self.stopped:
             self.finishedCancelling.emit()
             return
-        if output and kwargs['file_list']:
+        if output and 'output_filename' in kwargs:
             with open(kwargs['output_filename'], encoding='utf-8', mode='w') as outf:
                 print('Word,Density,Neighbors', file=outf)
                 for item in output:
@@ -109,6 +131,7 @@ class NDDialog(FunctionDialog):
                 'Threshold',
                 'String type',
                 'Frequency type',
+                'Collapsed homophones',
                 'Pronunciation variants',
                 'Minimum word frequency',
                 'Neighborhood density']
@@ -452,7 +475,8 @@ class NDDialog(FunctionDialog):
                         "Invalid information", "The file path entered was not found.")
                 return
             kwargs['query'] = list()
-            text = load_words_neighden(path)
+            file_sequence_type = self.fileOptions.currentText().split(' ')[-1].lower()
+            text = load_words_neighden(path, file_sequence_type)
             for t in text:
                 kwargs['query'].append(t)
         elif self.compType == 'all':
@@ -498,6 +522,7 @@ class NDDialog(FunctionDialog):
                                 'Threshold': thresh,
                                 'String type': self.tierWidget.displayValue(),
                                 'Frequency type': typetoken,
+                                'Collapsed homophones': 'Yes' if self.collapseHomophones.isChecked() else 'No',
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
                                 'Neighborhood density': nd})

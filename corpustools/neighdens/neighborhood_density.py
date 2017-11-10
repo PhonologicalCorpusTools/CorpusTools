@@ -118,7 +118,8 @@ def neighborhood_density(corpus_context, query, tierdict,
         call_back(0,len(corpus_context))
         cur = 0
 
-
+    for k,v in tierdict.items():
+        print(k, v)
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type, tier_type, tierdict,
                                          file_type=file_type, collapse_homophones=collapse_homophones)
@@ -165,23 +166,27 @@ def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type,
     s: size of segment inventory
     """
 
-    neighbors = set()
+    neighbors = list()
     query = ensure_query_is_word(query, corpus_context, sequence_type, tier_type, file_type=file_type)
+
     for candidate in generate_neighbor_candidates(corpus_context, query, sequence_type):
         if tier_type.att_type == 'tier':
             cand_str = trans_delimiter.join(candidate)
         else:
             cand_str = ''.join(candidate)
+
         if cand_str in tierdict:
             for w in tierdict[cand_str]:
                 if collapse_homophones and any(word.transcription == w.transcription for word in neighbors):
                     continue
                 else:
-                    neighbors.add(w)
+                    neighbors.append(w)
     return (len(neighbors), neighbors)
 
 def generate_neighbor_candidates(corpus_context, query, sequence_type):
     sequence = getattr(query, sequence_type)
+    print(sequence, type(sequence))
+    yield [str(c) for c in sequence]
     for i in range(len(sequence)):
         yield [str(c) for c in sequence[:i]] + [str(c) for c in sequence[i+1:]] # deletion
         for char in corpus_context.inventory:

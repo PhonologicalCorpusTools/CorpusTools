@@ -1,19 +1,25 @@
 import csv
 from corpustools.corpus.classes import Word
 
-def load_words_neighden(path):
+def load_words_neighden(path, file_sequence_type='spelling'):
     output = list()
     with open(path,'r', encoding='utf-8-sig') as f:
         for line in f:
-            fields = [x for x in line.strip().split(None) if x != '']
-            if len(fields) > 1:
-                fields[1] = fields[1].split('.')
-                fields = Word(spelling=fields[0], transcription = fields[1])
-            elif len(fields) == 1:
-                fields = fields[0]
-            else:
-                continue
-            output.append(fields)
+            line = line.strip()
+            # if '.' in line:
+            #     word = Word(spelling = line.replace('.',''), transcription = line.split('.'))
+            # else:
+            #     word = Word(spelling = line, transcription = [x for x in line])
+            # word = Word(spelling=''.join(line), transcription=line.split('.'))
+            # fields = [x for x in line.strip().split() if x != '']
+            # if len(fields) > 1:
+            #     fields[1] = fields[1].split('.')
+            #     fields = Word(spelling=fields[0], transcription = fields[1])
+            # elif len(fields) == 1:
+            #     fields = fields[0]
+            # else:
+            #     continue
+            output.append(line)
     return output
 
 def print_neighden_results(output_filename, neighbors):
