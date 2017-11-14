@@ -3,7 +3,7 @@
 import os
 import sys
 import logging
-from collections import defaultdict
+import collections
 
 import corpustools.gui.modernize as modernize
 from PyQt5 import QtGui
@@ -113,7 +113,7 @@ class MainWindow(QMainWindow):
         self.settings = PCTSettings()
         self.readSettings()
         if self.settings['searches']['recent'] is None:
-            self.settings['searches']['recent'] = list()
+            self.settings['searches']['recent'] = collections.deque(maxlen=5)
         if self.settings['searches']['saved'] is None:
             self.settings['searches']['saved'] = list()
 

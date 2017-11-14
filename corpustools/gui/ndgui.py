@@ -42,11 +42,11 @@ class NDWorker(FunctionWorker):
                     last_key_removed = None
                     for q in kwargs['query']:
                         q = ensure_query_is_word(q, c, c.sequence_type, kwargs['tier_type'])
-                        #the following code for adding/removing keys is to ensures that homophones are counted later
-                        #in the ND algorithm, but that words are not considered their own neighbours
+                        #the following code for adding/removing keys is to ensure that homophones are counted later in
+                        #the ND algorithm (if the user wants to), but that words are not considered their own neighbours
                         #however, we only do this when comparing inside a corpus. when using a list of external word
                         #we don't want to do this, since it's possible for the external list to contain words that
-                        #are int he corpus, and removing them gives the wrong ND value in this case
+                        #are in the corpus, and removing them gives the wrong ND value in this case
                         if not kwargs['file_list']:
                             if last_value_removed:
                                 tierdict[last_key_removed].append(last_value_removed)

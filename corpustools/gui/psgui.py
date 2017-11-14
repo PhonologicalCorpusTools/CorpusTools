@@ -34,10 +34,11 @@ class RecentSearch:
 
     def __init__(self, widget):
         self.widgetData = list()
+        self.noteData = str()
         envWidget = widget.environmentFrame.layout().itemAt(0).widget()
         #type(envWidget) == corpustools.gui.environments.EnvironmentWidget
         middle = envWidget.middleWidget
-        #type(middle) == orpustools.gui.environments.EnvironmentSegmentWidget
+        #type(middle) == corpustools.gui.environments.EnvironmentSegmentWidget
         lhs = envWidget.lhsLayout
         rhs = envWidget.rhsLayout
 
@@ -54,44 +55,60 @@ class RecentSearch:
     def __str__(self):
         return self.displayValue
 
+    def target(self):
+        return self.middleDisplayValue
+
+    def environment(self):
+        return self.displayValue
+
+    def note(self):
+        return self.noteData
+
+    def updateNote(self, noteData):
+        self.noteData = noteData
+
 
 class RecentSearchDialog(QDialog):
 
-    def __init__(self, recents = None, saved = None):
+    def __init__(self, recents, saved):
         super().__init__()
         self.setWindowTitle('Searches')
         mainLayout = QVBoxLayout()
         tableLayout = QHBoxLayout()
+        self.saved = saved
 
         recentFrame = QGroupBox('Recent Searches')
         recentLayout = QVBoxLayout()
         recentFrame.setLayout(recentLayout)
         recentSearchesTable = QTableWidget()
-        recentSearchesTable.setColumnCount(1)
+        recentSearchesTable.setColumnCount(2)
+        recentSearchesTable.setHorizontalHeaderLabels(['Target', 'Environment'])
         recentSearchesTable.setRowCount(5)
-        recentSearchesTable.horizontalHeader().hide()
-
+        recentSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
         recentLayout.addWidget(recentSearchesTable)
         tableLayout.addWidget(recentFrame)
 
         for i,search in enumerate(recents):
-            searchItem = QTableWidgetItem(search.displayValue)
-            recentSearchesTable.setItem(i, 0, searchItem)
-
+            recentSearchesTable.setItem(i, 0, QTableWidgetItem(search.target()))
+            recentSearchesTable.setItem(i, 1, QTableWidgetItem(search.environment()))
 
         savedFrame = QGroupBox('Saved Searches')
         savedLayout = QVBoxLayout()
         savedFrame.setLayout(savedLayout)
-        savedSearchesTable = QTableWidget()
-        savedSearchesTable.setColumnCount(1)
-        savedSearchesTable.setRowCount(5)
-        savedSearchesTable.horizontalHeader().hide()
-        savedLayout.addWidget(savedSearchesTable)
+        self.savedSearchesTable = QTableWidget()
+        self.savedSearchesTable.setColumnCount(3)
+        self.savedSearchesTable.setHorizontalHeaderLabels(['Target', 'Environment', 'Notes'])
+        self.savedSearchesTable.setRowCount(len(self.saved))
+        self.savedSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
+        savedLayout.addWidget(self.savedSearchesTable)
         tableLayout.addWidget(savedFrame)
 
-        for i,search in enumerate(saved):
-            searchItem = QTableWidgetItem(search.displayValue)
-            recentSearchesTable.setItem(i, 0, searchItem)
+        for i,search in enumerate(self.saved):
+            self.savedSearchesTable.setItem(i, 0, QTableWidgetItem(search.target()))
+            self.savedSearchesTable.setItem(i, 1, QTableWidgetItem(search.environment()))
+            noteItem = QTableWidgetItem(search.note())
+            noteItem.setFlags(noteItem.flags() | Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(i, 2, noteItem)
 
         buttonLayout = QHBoxLayout()
         ok = QPushButton('OK')
@@ -104,6 +121,20 @@ class RecentSearchDialog(QDialog):
         mainLayout.addLayout(tableLayout)
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
+
+    def updateNote(self):
+        for row in range(self.savedSearchesTable.rowCount()):
+            tableItem = self.savedSearchesTable.item(row, 2)
+            note = tableItem.text()
+            self.saved[row].updateNote(note)
+
+    def accept(self):
+        self.updateNote()
+        super().accept()
+
+    def reject(self):
+        self.updateNote()
+        super().reject()
 
 
 class PhonoSearchDialog(FunctionDialog):
@@ -155,6 +186,11 @@ class PhonoSearchDialog(FunctionDialog):
         self.layout().insertWidget(0,psFrame)
         self.setWindowTitle('Phonological search')
         self.progressDialog.setWindowTitle('Searching')
+
+    def accept(self):
+        search = RecentSearch(self.envWidget)
+        self.recentSearches.appendleft(search) #recentSearches is a collections.deque object, not a regular list
+        super().accept()
 
     def loadSearch(self):
         dialog = RecentSearchDialog(self.recentSearches, self.savedSearches)
