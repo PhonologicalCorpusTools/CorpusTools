@@ -147,14 +147,14 @@ class PhonoSearchDialog(FunctionDialog):
     _about = ['']
 
     name = 'phonological search'
-    def __init__(self, parent, settings, corpus, inventory, showToolTips):
+    def __init__(self, parent, settings, recents, saved, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, PSWorker())
 
         self.corpus = corpus
         self.inventory = inventory
         self.showToolTips = showToolTips
-        self.recentSearches = settings['recent_searches']
-        self.savedSearches = settings['saved_searches']
+        self.recentSearches = recents
+        self.savedSearches = saved
 
         psFrame = QFrame()
         pslayout = QHBoxLayout()

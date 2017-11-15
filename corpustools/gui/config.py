@@ -152,6 +152,7 @@ class ProcessingPane(BasePane):
 class PCTSettings(collections.defaultdict):
     shortcuts = {'storage': 'storage_folder/directory',
                   'praatpath': 'storage_folder/praat',
+                  'searches': 'storage_folder/searches',
                   'size': 'display/size',
                   'pos': 'display/pos',
                   'sigfigs': 'display/sigfigs',
@@ -161,9 +162,7 @@ class PCTSettings(collections.defaultdict):
                   'use_multi': 'multiprocessing/enabled',
                   'num_cores': 'multiprocessing/numcores',
                   'ask_overwrite_features': 'reminders/features',
-                  'ask_overwrite_corpus': 'reminders/corpus',
-                  'saved_searches': 'searches/saved',
-                  'recent_searches': 'searches/recent'}
+                  'ask_overwrite_corpus': 'reminders/corpus'}
 
     storage_setting_keys = ['storage']
 
@@ -173,7 +172,6 @@ class PCTSettings(collections.defaultdict):
 
     reminder_setting_keys = ['ask_overwrite_features', 'ask_overwrite_corpus', 'warnings']
 
-    search_keys = ['saved_searches', 'recent_searches']
 
     def __init__(self):
         super().__init__(dict)
@@ -206,6 +204,9 @@ class PCTSettings(collections.defaultdict):
     def feature_directory(self):
         return os.path.join(self['storage_folder']['directory'], 'FEATURE')
 
+    def search_directory(self):
+        return os.path.join(self['storage_folder']['directory'], 'FEATURE')
+
     def get_storage_settings(self):
         out = {x: self[x] for x in self.storage_setting_keys}
         return out
@@ -231,18 +232,19 @@ class PCTSettings(collections.defaultdict):
         TMP_DIR = os.path.join(self['storage_folder']['directory'],'TMP')
         CORPUS_DIR = os.path.join(self['storage_folder']['directory'],'CORPUS')
         FEATURE_DIR = os.path.join(self['storage_folder']['directory'],'FEATURE')
+        SEARCH_DIR = os.path.join(self['storage_folder']['directory'],'SEARCH')
         if not os.path.exists(LOG_DIR):
             os.mkdir(LOG_DIR)
         if not os.path.exists(ERROR_DIR):
             os.mkdir(ERROR_DIR)
         if not os.path.exists(TMP_DIR):
             os.mkdir(TMP_DIR)
-
         if not os.path.exists(CORPUS_DIR):
             os.mkdir(CORPUS_DIR)
-
         if not os.path.exists(FEATURE_DIR):
             os.mkdir(FEATURE_DIR)
+        if not os.path.exists(SEARCH_DIR):
+            os.mkdir(SEARCH_DIR)
 
 class PreferencesDialog(QDialog):
 

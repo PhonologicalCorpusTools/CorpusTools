@@ -20,7 +20,7 @@ from .views import (TreeWidget, DiscourseView, ResultsWindow,
 from .models import (CorpusModel, SpontaneousSpeechCorpusModel,
                     DiscourseModel, InventoryModel)
 
-from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog, save_binary)
+from .iogui import (CorpusLoadDialog, SubsetCorpusDialog, ExportCorpusDialog, save_binary, load_binary)
 
 from .corpusgui import (AddTierDialog, AddAbstractTierDialog,
                         RemoveAttributeDialog,AddColumnDialog,
@@ -112,10 +112,16 @@ class MainWindow(QMainWindow):
 
         self.settings = PCTSettings()
         self.readSettings()
-        if self.settings['searches']['recent'] is None:
-            self.settings['searches']['recent'] = collections.deque(maxlen=5)
-        if self.settings['searches']['saved'] is None:
-            self.settings['searches']['saved'] = list()
+        self.settings.check_storage()
+        try:
+            self.recentSearches = load_binary(os.path.join(self.settings.search_directory(), 'recent.searches'))
+        except FileNotFoundError:
+            self.recentSearches = collections.deque(maxlen = 5)
+
+        try:
+            self.savedSearches = load_binary(os.path.join(self.settings.search_directory(), 'saved.searches'))
+        except FileNotFoundError:
+            self.savedSearches = list()
 
         logging.basicConfig(handlers = [logging.FileHandler(os.path.join(
                                 self.settings.log_directory(), 'pct_gui.log'),
@@ -195,7 +201,8 @@ class MainWindow(QMainWindow):
 
         self.settingsObject.beginGroup('storage_folder')
         self.settingsObject.setValue('directory', self.settings['storage_folder']['directory'])
-        self.settingsObject.setValue('praat', self.settings['storage_folder']['directory'])
+        self.settingsObject.setValue('praat', self.settings['storage_folder']['praat'])
+        self.settingsObject.setValue('searches', self.settings['storage_folder']['searches'])
         self.settingsObject.endGroup()
 
         self.settingsObject.beginGroup('display')
@@ -217,11 +224,11 @@ class MainWindow(QMainWindow):
         self.settingsObject.setValue('numcores', self.settings['multiprocessing']['numcores'])
         self.settingsObject.endGroup()
 
-        self.settingsObject.beginGroup('searches')
-        self.settingsObject.setValue('saved', self.settings['searches']['saved'])
-        self.settingsObject.setValue('recent', self.settings['searches']['recent'])
-        self.settingsObject.endGroup()
-
+        # self.settingsObject.beginGroup('searches')
+        # self.settingsObject.setValue('saved', os.path.join(self.settings['directory']['storage']))
+        # self.settingsObject.setValue('saved', self.settings['searches']['saved'])
+        # self.settingsObject.setValue('recent', self.settings['searches']['recent'])
+        # self.settingsObject.endGroup()
 
     def readSettings(self):
         self.settingsObject = QSettings('UBC Phonology Tools', application='Phonological CorpusTools')
@@ -230,7 +237,8 @@ class MainWindow(QMainWindow):
         self.settings['storage_folder']['directory'] = self.settingsObject.value('directory',
                                                 defaultValue = os.path.normpath(os.path.join(
                                                 os.path.expanduser('~/Documents'), 'PCT', 'CorpusTools')))
-        self.settings['storage_folder']['praat'] = self.settingsObject.value('praat', defaultValue = '')
+        self.settings['storage_folder']['praat'] = self.settingsObject.value('praat')
+        self.settings['storage_folder']['searches'] = self.settingsObject.value('searches')
         self.settingsObject.endGroup()
 
         self.settingsObject.beginGroup('display')
@@ -252,10 +260,10 @@ class MainWindow(QMainWindow):
         self.settings['multiprocessing']['numcores'] = self.settingsObject.value('numcores', 1)
         self.settingsObject.endGroup()
 
-        self.settingsObject.beginGroup('searches')
-        self.settings['searches']['saved'] = self.settingsObject.value('saved', None)
-        self.settings['searches']['recent'] = self.settingsObject.value('recent', None)
-        self.settingsObject.endGroup()
+        # self.settingsObject.beginGroup('searches')
+        # self.settings['searches']['saved'] = self.settingsObject.value('saved', None)
+        # self.settings['searches']['recent'] = self.settingsObject.value('recent', None)
+        # self.settingsObject.endGroup()
 
     def check_for_unsaved_changes(function):
         def do_check(self):
@@ -879,7 +887,8 @@ class MainWindow(QMainWindow):
     @check_for_empty_corpus
     @check_for_transcription
     def phonoSearch(self):
-        dialog = PhonoSearchDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        dialog = PhonoSearchDialog(self, self.settings, self.recentSearches, self.savedSearches,
+                                   self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
             if self.PhonoSearchWindow is not None and dialog.update and self.PhonoSearchWindow.isVisible():
@@ -892,8 +901,9 @@ class MainWindow(QMainWindow):
                 self.showSearchResults.triggered.connect(self.PhonoSearchWindow.activateWindow)
                 self.PhonoSearchWindow.rejected.connect(lambda: self.showSearchResults.setVisible(False))
                 self.showSearchResults.setVisible(True)
-        self.settings['saved_searches'] = dialog.savedSearches
-        self.settings['recent_searches'] = dialog.recentSearches
+        self.recentSearches = dialog.recentSearches
+        self.savedSearches = dialog.savedSearches
+
 
     def createWord(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel)
@@ -1329,6 +1339,8 @@ class MainWindow(QMainWindow):
         #for f in tmpfiles:
         #    os.remove(os.path.join(TMP_DIR,f))
         self.writeSettings()
+        save_binary(self.savedSearches, os.path.join(self.settings.search_directory(), 'saved.searches'))
+        save_binary(self.recentSearches, os.path.join(self.settings.search_directory(), 'recent.searches'))
         super(MainWindow, self).closeEvent(event)
 
     def cleanUp(self):
