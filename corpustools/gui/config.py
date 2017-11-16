@@ -205,7 +205,7 @@ class PCTSettings(collections.defaultdict):
         return os.path.join(self['storage_folder']['directory'], 'FEATURE')
 
     def search_directory(self):
-        return os.path.join(self['storage_folder']['directory'], 'FEATURE')
+        return os.path.join(self['storage_folder']['directory'], 'SEARCH')
 
     def get_storage_settings(self):
         out = {x: self[x] for x in self.storage_setting_keys}

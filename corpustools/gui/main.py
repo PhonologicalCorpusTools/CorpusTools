@@ -113,6 +113,8 @@ class MainWindow(QMainWindow):
         self.settings = PCTSettings()
         self.readSettings()
         self.settings.check_storage()
+        print(self.settings['searches'])
+
         try:
             self.recentSearches = load_binary(os.path.join(self.settings.search_directory(), 'recent.searches'))
         except FileNotFoundError:
