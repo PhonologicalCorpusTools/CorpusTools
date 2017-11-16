@@ -111,6 +111,7 @@ class EnvironmentSegmentWidget(QWidget):
         self.enabled = enabled
         self.show_full_inventory = show_full_inventory
         self.side = side
+        self.allowZeroMatch = allow_zero_match
 
         self.middle = middle
 
@@ -125,7 +126,7 @@ class EnvironmentSegmentWidget(QWidget):
         layout.addWidget(self.mainLabel)
 
         self.setLayout(layout)
-        self.allowZeroMatch = allow_zero_match
+
 
         if self.enabled:
             self.menu = QMenu(self)
@@ -233,6 +234,14 @@ class EnvironmentSegmentWidget(QWidget):
 
     def displayValue(self):
         return self.generateDisplayText()
+
+    def getData(self):
+        return (self.inventory, self.segments, self.features, self.inventory, self.middle, self.enabled,
+                self.show_full_inventory, self.side, self.allowZeroMatch)
+
+    def loadData(self, data):
+        self.inventory, self.segment, self.features, self.inventory, self.middle, self.enabled, \
+        self.show_full_inventory, self.side, self.allowZeroMatch = data
 
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False):
@@ -425,12 +434,14 @@ class EnvironmentWidget(QWidget):
                                              show_full_inventory=self.show_full_inventory, side='l')
         self.lhsWidget.layout().insertWidget(0,segWidget)
         segWidget.segDeleted.connect(self.deleteSeg)
+        return segWidget
 
     def addRhs(self):
         segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
                                              show_full_inventory=self.show_full_inventory, side='r')
         self.rhsWidget.layout().addWidget(segWidget)
         segWidget.segDeleted.connect(self.deleteSeg)
+        return segWidget
 
     def value(self):
         lhsZeroPositions = list()
