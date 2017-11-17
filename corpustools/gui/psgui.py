@@ -125,6 +125,11 @@ class RecentSearchDialog(QDialog):
         self.recentSearchesTable.cellClicked.connect(self.resetSavedTable)
         self.savedSearchesTable.cellClicked.connect(self.resetRecentTable)
 
+        recentMenu = QMenu()
+        recentMenu.addAction('Delete search')
+        recentMenu.addAction('Move to "saved" searches')
+        recentMenu.setContextMenuPolicy(Qt.CustomContextMenu)
+
         buttonLayout = QHBoxLayout()
         ok = QPushButton('Load selected search')
         ok.clicked.connect(self.accept)
@@ -153,12 +158,7 @@ class RecentSearchDialog(QDialog):
 
     def accept(self):
         self.updateNote()
-        # print('saved item:', self.savedSearchesTable.currentItem())
-        # print('saved index:', self.savedSearchesTable.currentIndex())
-        # print('saved row: ', self.savedSearchesTable.currentRow())
-        # print('recent item:', self.recentSearchesTable.currentItem())
-        # print('recent index:', self.recentSearchesTable.currentIndex())
-        # print('recent row: ', self.recentSearchesTable.currentRow())
+
         if self.recentSearchesTable.currentItem() is not None:
             self.selectedSearch = self.recentSearchesTable.currentItem()
             row = self.recentSearchesTable.currentRow()
@@ -174,8 +174,6 @@ class RecentSearchDialog(QDialog):
             self.selectedSearch = item
         else:
             self.selectedSearch = None
-
-        # print(self.selectedSearch)
 
         super().accept()
 
@@ -246,36 +244,41 @@ class PhonoSearchDialog(FunctionDialog):
         if dialog.selectedSearch is None:
             return
 
-        for n in reversed(range(self.envWidget.environmentFrame.layout().count())):
+        #first remove all of the existing environments
+        #it's important to loop over the count()-2 because looping over the full count deletes important
+        #widgets like the "add new environment" button
+        for n in reversed(range(self.envWidget.environmentFrame.layout().count()-2)):
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
             try:
                 widget.deleteLater()
             except AttributeError: #widget is None
                 pass
+
+        #add a new blank environment
         self.envWidget.addNewEnvironment()
-        widget = self.envWidget.environmentFrame.layout().itemAt(0).widget()
-        #type(widget) == environments.EnvironmentWidget
-        search = dialog.selectedSearch
-        #type(search) == RecentSearch, which is located in this module
 
+        #Get the widgets in the new environment and update them accordingly
+        widget = self.envWidget.environmentFrame.layout().itemAt(0).widget() #== environments.EnvironmentWidget
+        search = dialog.selectedSearch#== RecentSearch which is located in this module
+
+        #update the middle widget
         widget.middleWidget.loadData(search.middleData)
+        widget.middleWidget.updateLabel()
 
-        #left hand side
+        #update the left hand side
         for value in search.lhsValue:
             lhsWidget = widget.addLhs()
-            lhsWidget.addToRight()
 
-        for n in range(len(search.lhsData)):
+        for n in range(len(search.lhsValue)):
             button = widget.lhsLayout.itemAt(n).widget()
             button.loadData(search.lhsData[n])
             button.updateLabel()
 
-        #right hand side
+        #update the right hand side
         for value in search.rhsValue:
             rhsWidget = widget.addRhs()
-            rhsWidget.addToRight()
 
-        for n in range(len(search.rhsData)):
+        for n in range(len(search.rhsValue)):
             button = widget.rhsLayout.itemAt(n).widget()
             button.loadData(search.rhsData[n])
             button.updateLabel()

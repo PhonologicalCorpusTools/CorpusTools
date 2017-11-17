@@ -236,12 +236,13 @@ class EnvironmentSegmentWidget(QWidget):
         return self.generateDisplayText()
 
     def getData(self):
-        return (self.inventory, self.segments, self.features, self.inventory, self.middle, self.enabled,
-                self.show_full_inventory, self.side, self.allowZeroMatch)
+        attrs = ['inventory', 'segments', 'features', 'inventory', 'middle', 'enabled',
+                 'show_full_inventory', 'side', 'allowZeroMatch']
+        return {attr:getattr(self,attr) for attr in attrs}
 
     def loadData(self, data):
-        self.inventory, self.segment, self.features, self.inventory, self.middle, self.enabled, \
-        self.show_full_inventory, self.side, self.allowZeroMatch = data
+        for k,v in data.items(): #see the getData() function above for details
+            setattr(self, k, v)
 
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False):
