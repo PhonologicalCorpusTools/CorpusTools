@@ -1,5 +1,6 @@
 from .imports import *
 import time
+import collections
 
 from .widgets import TierWidget
 
@@ -101,8 +102,13 @@ class RecentSearchDialog(QDialog):
         tableLayout.addWidget(recentFrame)
 
         for i,search in enumerate(recents):
-            self.recentSearchesTable.setItem(i, 0, QTableWidgetItem(search.target()))
-            self.recentSearchesTable.setItem(i, 1, QTableWidgetItem(search.environment()))
+            targetItem = QTableWidgetItem(search.target())
+            targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
+            self.recentSearchesTable.setItem(i, 0, targetItem)
+
+            envItem = QTableWidgetItem(search.environment())
+            envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
+            self.recentSearchesTable.setItem(i, 1, envItem)
 
         savedFrame = QGroupBox('Saved Searches')
         savedLayout = QVBoxLayout()
@@ -116,19 +122,20 @@ class RecentSearchDialog(QDialog):
         tableLayout.addWidget(savedFrame)
 
         for i,search in enumerate(self.saved):
-            self.savedSearchesTable.setItem(i, 0, QTableWidgetItem(search.target()))
-            self.savedSearchesTable.setItem(i, 1, QTableWidgetItem(search.environment()))
+            targetItem = QTableWidgetItem(search.target())
+            targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(i, 0, targetItem)
+
+            envItem = QTableWidgetItem(search.environment())
+            envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(i, 1, envItem)
+
             noteItem = QTableWidgetItem(search.note())
             noteItem.setFlags(noteItem.flags() | Qt.ItemIsEditable)
             self.savedSearchesTable.setItem(i, 2, noteItem)
 
-        self.recentSearchesTable.cellClicked.connect(self.resetSavedTable)
-        self.savedSearchesTable.cellClicked.connect(self.resetRecentTable)
-
-        recentMenu = QMenu()
-        recentMenu.addAction('Delete search')
-        recentMenu.addAction('Move to "saved" searches')
-        recentMenu.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.recentSearchesTable.cellClicked.connect(self.deselectSavedTable)
+        self.savedSearchesTable.cellClicked.connect(self.deselectRecentTable)
 
         buttonLayout = QHBoxLayout()
         ok = QPushButton('Load selected search')
@@ -141,19 +148,87 @@ class RecentSearchDialog(QDialog):
         mainLayout.addLayout(tableLayout)
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
+        self.makeMenus()
 
-    def resetRecentTable(self):
+    def makeMenus(self):
+        self.recentMenu = QMenu()
+        self.deleteRecentAction = QAction('Delete search')
+        self.moveToSavedAction = QAction('Move to "saved" searches')
+        self.recentMenu.addAction(self.deleteRecentAction)
+        self.recentMenu.addAction(self.moveToSavedAction)
+        self.recentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.recentSearchesTable.customContextMenuRequested.connect(self.showRecentMenu)
+
+        self.savedMenu = QMenu()
+        self.deleteSaveAction = QAction('Delete search')
+        self.savedMenu.addAction(self.deleteSaveAction)
+        self.savedSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.savedSearchesTable.customContextMenuRequested.connect(self.showSavedMenu)
+
+    def showSavedMenu(self, pos):
+        index = self.savedSearchesTable.indexAt(pos)
+        action = self.savedMenu.exec_(self.mapToGlobal(pos))
+        item = self.savedSearchesTable.itemAt(index.row(), index.column())
+        if not item:
+            return
+        if action == self.deleteSaveAction:
+            self.deleteSavedSearch(index)
+
+    def showRecentMenu(self, pos):
+        index = self.recentSearchesTable.indexAt(pos)
+        action = self.recentMenu.exec_(self.mapToGlobal(pos))
+        item = self.recentSearchesTable.itemAt(index.row(), index.column())
+        if not item:
+            return
+        if action == self.deleteRecentAction:
+            self.deleteRecentSearch(index)
+        elif action == self.moveToSavedAction:
+            self.addToSavedTable(index)
+
+    def addToSavedTable(self, index):
+        self.savedSearchesTable.insertRow(self.savedSearchesTable.rowCount())
+        row = self.savedSearchesTable.rowCount()
+        search = self.recents[index.row()]
+
+        targetItem = QTableWidgetItem(search.target())
+        targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
+        self.savedSearchesTable.setItem(row, 0, targetItem)
+
+        envItem = QTableWidgetItem(search.environment())
+        envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
+        self.savedSearchesTable.setItem(row, 1, envItem)
+
+        noteItem = QTableWidgetItem(search.note())
+        noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
+        self.savedSearchesTable.setItem(row, 2, noteItem)
+
+        self.saved.append(search)
+        self.deleteRecentSearch(index)
+
+    def deleteSavedSearch(self, index):
+        self.savedSearchesTable.removeRow(index.row())
+        self.saved.pop(index.row())
+
+    def deleteRecentSearch(self, index):
+        self.recentSearchesTable.removeRow(index.row())
+        self.recentSearchesTable.insertRow(self.recentSearchesTable.rowCount())
+        self.recents = collections.deque([x for (i,x) in enumerate(self.recents) if not i == index.row()])
+
+    def deselectRecentTable(self):
         self.recentSearchesTable.clearSelection()
         self.recentSearchesTable.setCurrentCell(-1, -1)
 
-    def resetSavedTable(self):
+    def deselectSavedTable(self):
         self.savedSearchesTable.clearSelection()
         self.savedSearchesTable.setCurrentCell(-1, -1)
 
     def updateNote(self):
         for row in range(self.savedSearchesTable.rowCount()):
             tableItem = self.savedSearchesTable.item(row, 2)
-            note = tableItem.text()
+            if tableItem is None:
+                note = str()
+            else:
+                note = tableItem.text()
             self.saved[row].updateNote(note)
 
     def accept(self):
@@ -241,6 +316,8 @@ class PhonoSearchDialog(FunctionDialog):
     def loadSearch(self):
         dialog = RecentSearchDialog(self.recentSearches, self.savedSearches)
         dialog.exec_()
+        self.recentSearches = dialog.recents
+        self.savedSearches = dialog.saved
         if dialog.selectedSearch is None:
             return
 
