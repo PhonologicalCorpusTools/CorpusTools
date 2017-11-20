@@ -16,6 +16,8 @@ class PSWorker(FunctionWorker):
     def run(self):
         time.sleep(0.1)
         kwargs = self.kwargs
+        if 'envs' not in kwargs or not kwargs['envs']:
+            return #user clicked "search" without actually entering a single environment
         try:
             self.results = phonological_search(**kwargs)
         except PCTError as e:
@@ -85,23 +87,41 @@ class RecentSearchDialog(QDialog):
     def __init__(self, recents, saved):
         super().__init__()
         self.setWindowTitle('Searches')
-        mainLayout = QVBoxLayout()
-        tableLayout = QHBoxLayout()
+        self.mainLayout = QVBoxLayout()
+        self.tableLayout = QHBoxLayout()
         self.saved = saved
         self.recents = recents
 
+        self.setupRecentsTable()
+        self.setupSavedTable()
+
+        buttonLayout = QHBoxLayout()
+        ok = QPushButton('Load selected search')
+        ok.clicked.connect(self.accept)
+        buttonLayout.addWidget(ok)
+        cancel = QPushButton('Go back')
+        cancel.clicked.connect(self.reject)
+        buttonLayout.addWidget(cancel)
+
+        self.mainLayout.addLayout(self.tableLayout)
+        self.mainLayout.addLayout(buttonLayout)
+        self.setLayout(self.mainLayout)
+        self.makeMenus()
+
+    def setupRecentsTable(self):
         recentFrame = QGroupBox('Recent Searches')
         recentLayout = QVBoxLayout()
         recentFrame.setLayout(recentLayout)
         self.recentSearchesTable = QTableWidget()
+        self.recentSearchesTable.setSortingEnabled(False)
         self.recentSearchesTable.setColumnCount(2)
         self.recentSearchesTable.setHorizontalHeaderLabels(['Target', 'Environment'])
         self.recentSearchesTable.setRowCount(5)
         self.recentSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
         recentLayout.addWidget(self.recentSearchesTable)
-        tableLayout.addWidget(recentFrame)
-
-        for i,search in enumerate(recents):
+        self.tableLayout.addWidget(recentFrame)
+        print('setting up RecentTable')
+        for i, search in enumerate(self.recents):
             targetItem = QTableWidgetItem(search.target())
             targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
             self.recentSearchesTable.setItem(i, 0, targetItem)
@@ -109,19 +129,26 @@ class RecentSearchDialog(QDialog):
             envItem = QTableWidgetItem(search.environment())
             envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
             self.recentSearchesTable.setItem(i, 1, envItem)
+            print(targetItem.row(), targetItem.column(), targetItem.text())
+            print(envItem.row(), envItem.column(), envItem.text())
 
+        self.recentSearchesTable.cellClicked.connect(self.deselectSavedTable)
+
+
+    def setupSavedTable(self):
         savedFrame = QGroupBox('Saved Searches')
         savedLayout = QVBoxLayout()
         savedFrame.setLayout(savedLayout)
         self.savedSearchesTable = QTableWidget()
+        self.savedSearchesTable.setSortingEnabled(False)
         self.savedSearchesTable.setColumnCount(3)
         self.savedSearchesTable.setHorizontalHeaderLabels(['Target', 'Environment', 'Notes'])
         self.savedSearchesTable.setRowCount(len(self.saved))
         self.savedSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
         savedLayout.addWidget(self.savedSearchesTable)
-        tableLayout.addWidget(savedFrame)
-
-        for i,search in enumerate(self.saved):
+        print('setting up SavedTable')
+        self.tableLayout.addWidget(savedFrame)
+        for i, search in enumerate(self.saved):
             targetItem = QTableWidgetItem(search.target())
             targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
             self.savedSearchesTable.setItem(i, 0, targetItem)
@@ -133,22 +160,10 @@ class RecentSearchDialog(QDialog):
             noteItem = QTableWidgetItem(search.note())
             noteItem.setFlags(noteItem.flags() | Qt.ItemIsEditable)
             self.savedSearchesTable.setItem(i, 2, noteItem)
-
-        self.recentSearchesTable.cellClicked.connect(self.deselectSavedTable)
+            print(targetItem.row(), targetItem.column(), targetItem.text())
+            print(envItem.row(), envItem.column(), envItem.text())
+            print(noteItem.row(), noteItem.column(), noteItem.text())
         self.savedSearchesTable.cellClicked.connect(self.deselectRecentTable)
-
-        buttonLayout = QHBoxLayout()
-        ok = QPushButton('Load selected search')
-        ok.clicked.connect(self.accept)
-        buttonLayout.addWidget(ok)
-        cancel = QPushButton('Cancel')
-        cancel.clicked.connect(self.reject)
-        buttonLayout.addWidget(cancel)
-
-        mainLayout.addLayout(tableLayout)
-        mainLayout.addLayout(buttonLayout)
-        self.setLayout(mainLayout)
-        self.makeMenus()
 
     def makeMenus(self):
         self.recentMenu = QMenu()
@@ -167,7 +182,7 @@ class RecentSearchDialog(QDialog):
 
     def showSavedMenu(self, pos):
         index = self.savedSearchesTable.indexAt(pos)
-        action = self.savedMenu.exec_(self.mapToGlobal(pos))
+        action = self.savedMenu.exec_(self.savedSearchesTable.mapToGlobal(pos))
         item = self.savedSearchesTable.itemAt(index.row(), index.column())
         if not item:
             return
@@ -176,7 +191,7 @@ class RecentSearchDialog(QDialog):
 
     def showRecentMenu(self, pos):
         index = self.recentSearchesTable.indexAt(pos)
-        action = self.recentMenu.exec_(self.mapToGlobal(pos))
+        action = self.recentMenu.exec_(self.recentSearchesTable.mapToGlobal(pos))
         item = self.recentSearchesTable.itemAt(index.row(), index.column())
         if not item:
             return
@@ -186,24 +201,26 @@ class RecentSearchDialog(QDialog):
             self.addToSavedTable(index)
 
     def addToSavedTable(self, index):
-        self.savedSearchesTable.insertRow(self.savedSearchesTable.rowCount())
-        row = self.savedSearchesTable.rowCount()
         search = self.recents[index.row()]
-
-        targetItem = QTableWidgetItem(search.target())
-        targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
-        self.savedSearchesTable.setItem(row, 0, targetItem)
-
-        envItem = QTableWidgetItem(search.environment())
-        envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
-        self.savedSearchesTable.setItem(row, 1, envItem)
-
-        noteItem = QTableWidgetItem(search.note())
-        noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
-        self.savedSearchesTable.setItem(row, 2, noteItem)
-
         self.saved.append(search)
         self.deleteRecentSearch(index)
+
+        self.savedSearchesTable.setRowCount(len(self.saved))
+
+        for row in range(len(self.saved)):
+            search = self.saved[row]
+
+            targetItem = QTableWidgetItem(search.target())
+            targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(row, 0, targetItem)
+
+            envItem = QTableWidgetItem(search.environment())
+            envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(row, 1, envItem)
+
+            noteItem = QTableWidgetItem(search.note())
+            noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(row, 2, noteItem)
 
     def deleteSavedSearch(self, index):
         self.savedSearchesTable.removeRow(index.row())
@@ -212,7 +229,7 @@ class RecentSearchDialog(QDialog):
     def deleteRecentSearch(self, index):
         self.recentSearchesTable.removeRow(index.row())
         self.recentSearchesTable.insertRow(self.recentSearchesTable.rowCount())
-        self.recents = collections.deque([x for (i,x) in enumerate(self.recents) if not i == index.row()])
+        self.recents = collections.deque([x for (i,x) in enumerate(self.recents) if not i == index.row()], maxlen=5)
 
     def deselectRecentTable(self):
         self.recentSearchesTable.clearSelection()
@@ -371,6 +388,8 @@ class PhonoSearchDialog(FunctionDialog):
     def generateKwargs(self):
         kwargs = {}
         envs = self.envWidget.value()
+        if not envs:
+            return
         if len(envs) > 0:
             for i, e in enumerate(envs):
                 if len(e.middle) == 0:
