@@ -120,7 +120,6 @@ class RecentSearchDialog(QDialog):
         self.recentSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
         recentLayout.addWidget(self.recentSearchesTable)
         self.tableLayout.addWidget(recentFrame)
-        print('setting up RecentTable')
         for i, search in enumerate(self.recents):
             targetItem = QTableWidgetItem(search.target())
             targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
@@ -129,8 +128,6 @@ class RecentSearchDialog(QDialog):
             envItem = QTableWidgetItem(search.environment())
             envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
             self.recentSearchesTable.setItem(i, 1, envItem)
-            print(targetItem.row(), targetItem.column(), targetItem.text())
-            print(envItem.row(), envItem.column(), envItem.text())
 
         self.recentSearchesTable.cellClicked.connect(self.deselectSavedTable)
 
@@ -146,7 +143,6 @@ class RecentSearchDialog(QDialog):
         self.savedSearchesTable.setRowCount(len(self.saved))
         self.savedSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
         savedLayout.addWidget(self.savedSearchesTable)
-        print('setting up SavedTable')
         self.tableLayout.addWidget(savedFrame)
         for i, search in enumerate(self.saved):
             targetItem = QTableWidgetItem(search.target())
@@ -160,9 +156,7 @@ class RecentSearchDialog(QDialog):
             noteItem = QTableWidgetItem(search.note())
             noteItem.setFlags(noteItem.flags() | Qt.ItemIsEditable)
             self.savedSearchesTable.setItem(i, 2, noteItem)
-            print(targetItem.row(), targetItem.column(), targetItem.text())
-            print(envItem.row(), envItem.column(), envItem.text())
-            print(noteItem.row(), noteItem.column(), noteItem.text())
+
         self.savedSearchesTable.cellClicked.connect(self.deselectRecentTable)
 
     def makeMenus(self):
