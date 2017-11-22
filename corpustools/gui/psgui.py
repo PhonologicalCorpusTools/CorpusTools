@@ -35,10 +35,10 @@ class PSWorker(FunctionWorker):
 
 class RecentSearch:
 
-    def __init__(self, widget):
+    def __init__(self, envWidget):
         self.widgetData = list()
         self.noteData = str()
-        envWidget = widget.environmentFrame.layout().itemAt(0).widget()
+        #envWidget = widget.environmentFrame.layout().itemAt(0).widget()
         #type(envWidget) == corpustools.gui.environments.EnvironmentWidget
         middle = envWidget.middleWidget
         self.middleData = middle.getData()
@@ -320,8 +320,11 @@ class PhonoSearchDialog(FunctionDialog):
         self.progressDialog.setWindowTitle('Searching')
 
     def accept(self):
-        search = RecentSearch(self.envWidget)
-        self.recentSearches.appendleft(search) #recentSearches is a collections.deque object, not a regular list
+        for n in range(self.envWidget.environmentFrame.layout().count()-2):
+            #the -2 avoids catching some unncessary widgets
+            widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
+            search = RecentSearch(widget)
+            self.recentSearches.appendleft(search) #recentSearches is a collections.deque object, not a regular list
         super().accept()
 
     def loadSearch(self):
@@ -372,11 +375,15 @@ class PhonoSearchDialog(FunctionDialog):
             button.updateLabel()
 
     def saveSearch(self):
-        search = RecentSearch(self.envWidget)
-        self.savedSearches.append(search)
+        layoutCount = self.envWidget.environmentFrame.layout().count()-2
+        # the -2 avoids catching some unncessary widgets
+        for n in range(layoutCount):
+            widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
+            search = RecentSearch(widget)
+            self.savedSearches.append(search)
         alert = QMessageBox()
         alert.setWindowTitle('Success')
-        alert.setText('Search saved!')
+        alert.setText('Search{} saved!'.format('es' if layoutCount > 1 else ''))
         alert.exec_()
 
     def generateKwargs(self):
