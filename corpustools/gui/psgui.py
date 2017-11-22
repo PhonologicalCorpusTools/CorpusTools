@@ -91,14 +91,16 @@ class RecentSearchDialog(QDialog):
         self.tableLayout = QHBoxLayout()
         self.saved = saved
         self.recents = recents
+        self.currentSearches = list()
 
         self.setupRecentsTable()
         self.setupSavedTable()
+        self.setupCurrentSearchTable()
 
         buttonLayout = QHBoxLayout()
-        ok = QPushButton('Load selected search')
-        ok.clicked.connect(self.accept)
-        buttonLayout.addWidget(ok)
+        self.okButton = QPushButton('Load selected search')
+        self.okButton.clicked.connect(self.accept)
+        buttonLayout.addWidget(self.okButton)
         cancel = QPushButton('Go back')
         cancel.clicked.connect(self.reject)
         buttonLayout.addWidget(cancel)
@@ -130,6 +132,7 @@ class RecentSearchDialog(QDialog):
             self.recentSearchesTable.setItem(i, 1, envItem)
 
         self.recentSearchesTable.cellClicked.connect(self.deselectSavedTable)
+        self.recentSearchesTable.cellClicked.connect(self.deselectCurrentTable)
 
 
     def setupSavedTable(self):
@@ -158,21 +161,56 @@ class RecentSearchDialog(QDialog):
             self.savedSearchesTable.setItem(i, 2, noteItem)
 
         self.savedSearchesTable.cellClicked.connect(self.deselectRecentTable)
+        self.savedSearchesTable.cellClicked.connect(self.deselectCurrentTable)
+
+    def setupCurrentSearchTable(self):
+        currentFrame = QGroupBox('Current Search')
+        currentLayout = QVBoxLayout()
+        currentFrame.setLayout(currentLayout)
+        self.currentSearchesTable = QTableWidget()
+        self.currentSearchesTable.setSortingEnabled(False)
+        self.currentSearchesTable.setColumnCount(2)
+        self.currentSearchesTable.setHorizontalHeaderLabels(['Target', 'Environment'])
+        self.currentSearchesTable.setRowCount(0)
+        self.currentSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
+        currentLayout.addWidget(self.currentSearchesTable)
+        self.tableLayout.addWidget(currentFrame)
+
+        self.currentSearchesTable.cellClicked.connect(self.deselectRecentTable)
+        self.currentSearchesTable.cellClicked.connect(self.deselectSavedTable)
 
     def makeMenus(self):
         self.recentMenu = QMenu()
         self.deleteRecentAction = QAction('Delete search')
         self.moveToSavedAction = QAction('Move to "saved" searches')
+        self.addToCurrentAction = QAction('Add to current search')
         self.recentMenu.addAction(self.deleteRecentAction)
         self.recentMenu.addAction(self.moveToSavedAction)
+        self.recentMenu.addAction(self.addToCurrentAction)
         self.recentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.recentSearchesTable.customContextMenuRequested.connect(self.showRecentMenu)
 
         self.savedMenu = QMenu()
         self.deleteSaveAction = QAction('Delete search')
         self.savedMenu.addAction(self.deleteSaveAction)
+        self.savedMenu.addAction(self.addToCurrentAction)
         self.savedSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.savedSearchesTable.customContextMenuRequested.connect(self.showSavedMenu)
+
+        self.currentMenu = QMenu()
+        self.deleteCurrentAction = QAction('Remove from current search')
+        self.currentMenu.addAction(self.deleteCurrentAction)
+        self.currentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.currentSearchesTable.customContextMenuRequested.connect(self.showCurrentMenu)
+
+    def showCurrentMenu(self, pos):
+        index = self.currentSearchesTable.indexAt(pos)
+        action = self.currentMenu.exec_(self.currentSearchesTable.mapToGlobal(pos))
+        item = self.currentSearchesTable.itemAt(index.row(), index.column())
+        if not item:
+            return
+        if action == self.deleteCurrentAction:
+            self.deleteCurrentSearch(index)
 
     def showSavedMenu(self, pos):
         index = self.savedSearchesTable.indexAt(pos)
@@ -182,6 +220,8 @@ class RecentSearchDialog(QDialog):
             return
         if action == self.deleteSaveAction:
             self.deleteSavedSearch(index)
+        elif action == self.addToCurrentAction:
+            self.addToCurrent(index, self.saved)
 
     def showRecentMenu(self, pos):
         index = self.recentSearchesTable.indexAt(pos)
@@ -192,16 +232,36 @@ class RecentSearchDialog(QDialog):
         if action == self.deleteRecentAction:
             self.deleteRecentSearch(index)
         elif action == self.moveToSavedAction:
-            self.addToSavedTable(index)
+            self.moveToSavedTable(index)
+        elif action == self.addToCurrentAction:
+            self.addToCurrent(index, self.recents)
 
-    def addToSavedTable(self, index):
+    def addToCurrent(self, index, searchlist):
+        search = searchlist[index.row()]
+        self.currentSearches.append(search)
+
+        self.currentSearchesTable.setRowCount(len(self.currentSearches))
+
+        for row, search in enumerate(self.currentSearches):
+            targetItem = QTableWidgetItem(search.target())
+            targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
+            self.currentSearchesTable.setItem(row, 0, targetItem)
+
+            envItem = QTableWidgetItem(search.environment())
+            envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
+            self.currentSearchesTable.setItem(row, 1, envItem)
+
+    def moveToSavedTable(self, index):
         search = self.recents[index.row()]
         self.saved.append(search)
         self.deleteRecentSearch(index)
 
+        # for some reason, adding a new row isn't working. a blank row is added on screen, no cell contents.
+        # after closing and re-opening, the row is correctly filled (meaning self.saved is properly updated)
+        # to solve this problem, update the entire table from scratch, which seems to work
         self.savedSearchesTable.setRowCount(len(self.saved))
-
         for row in range(len(self.saved)):
+
             search = self.saved[row]
 
             targetItem = QTableWidgetItem(search.target())
@@ -215,6 +275,10 @@ class RecentSearchDialog(QDialog):
             noteItem = QTableWidgetItem(search.note())
             noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
             self.savedSearchesTable.setItem(row, 2, noteItem)
+
+    def deleteCurrentSearch(self, index):
+        self.currentSearchesTable.removeRow(index.row())
+        self.currentSearches.pop(index.row())
 
     def deleteSavedSearch(self, index):
         self.savedSearchesTable.removeRow(index.row())
@@ -233,6 +297,10 @@ class RecentSearchDialog(QDialog):
         self.savedSearchesTable.clearSelection()
         self.savedSearchesTable.setCurrentCell(-1, -1)
 
+    def deselectCurrentTable(self):
+        self.currentSearchesTable.clearSelection()
+        self.currentSearchesTable.setCurrentCell(-1, -1)
+
     def updateNote(self):
         for row in range(self.savedSearchesTable.rowCount()):
             tableItem = self.savedSearchesTable.item(row, 2)
@@ -241,6 +309,8 @@ class RecentSearchDialog(QDialog):
             else:
                 note = tableItem.text()
             self.saved[row].updateNote(note)
+
+
 
     def accept(self):
         self.updateNote()
@@ -253,6 +323,7 @@ class RecentSearchDialog(QDialog):
                 self.selectedSearch = None
             else:
                 self.selectedSearch = item
+
         elif self.savedSearchesTable.currentItem() is not None:
             self.selectedSearch = self.savedSearchesTable.currentItem()
             row = self.savedSearchesTable.currentRow()
@@ -332,7 +403,7 @@ class PhonoSearchDialog(FunctionDialog):
         dialog.exec_()
         self.recentSearches = dialog.recents
         self.savedSearches = dialog.saved
-        if dialog.selectedSearch is None:
+        if dialog.selectedSearch is None and not dialog.currentSearches:
             return
 
         #first remove all of the existing environments
@@ -345,34 +416,40 @@ class PhonoSearchDialog(FunctionDialog):
             except AttributeError: #widget is None
                 pass
 
-        #add a new blank environment
-        self.envWidget.addNewEnvironment()
+        if dialog.selectedSearch is not None and not dialog.currentSearches:
+            searchlist = [dialog.selectedSearch]
+        else:
+            searchlist = dialog.currentSearches
 
-        #Get the widgets in the new environment and update them accordingly
-        widget = self.envWidget.environmentFrame.layout().itemAt(0).widget() #== environments.EnvironmentWidget
-        search = dialog.selectedSearch#== RecentSearch which is located in this module
+        for index, search in enumerate(searchlist):
+            #add a new blank environment
+            self.envWidget.addNewEnvironment()
 
-        #update the middle widget
-        widget.middleWidget.loadData(search.middleData)
-        widget.middleWidget.updateLabel()
+            #Get the widgets in the new environment and update them accordingly
+            widget = self.envWidget.environmentFrame.layout().itemAt(index).widget()#== environments.EnvironmentWidget
+            #search = dialog.selectedSearch#== RecentSearch which is located in this module
 
-        #update the left hand side
-        for value in search.lhsValue:
-            lhsWidget = widget.addLhs()
+            #update the middle widget
+            widget.middleWidget.loadData(search.middleData)
+            widget.middleWidget.updateLabel()
 
-        for n in range(len(search.lhsValue)):
-            button = widget.lhsLayout.itemAt(n).widget()
-            button.loadData(search.lhsData[n])
-            button.updateLabel()
+            #update the left hand side
+            for value in search.lhsValue:
+                lhsWidget = widget.addLhs()
 
-        #update the right hand side
-        for value in search.rhsValue:
-            rhsWidget = widget.addRhs()
+            for lhs_num in range(len(search.lhsValue)):
+                button = widget.lhsLayout.itemAt(lhs_num).widget()
+                button.loadData(search.lhsData[lhs_num])
+                button.updateLabel()
 
-        for n in range(len(search.rhsValue)):
-            button = widget.rhsLayout.itemAt(n).widget()
-            button.loadData(search.rhsData[n])
-            button.updateLabel()
+            #update the right hand side
+            for value in search.rhsValue:
+                rhsWidget = widget.addRhs()
+
+            for rhs_num in range(len(search.rhsValue)):
+                button = widget.rhsLayout.itemAt(rhs_num).widget()
+                button.loadData(search.rhsData[rhs_num])
+                button.updateLabel()
 
     def saveSearch(self):
         layoutCount = self.envWidget.environmentFrame.layout().count()-2
