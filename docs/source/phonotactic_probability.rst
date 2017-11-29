@@ -166,7 +166,7 @@ in the main menu, and then follow these steps:
    the phonotactic probabilities included.
 
 An example of the “Phonotactic Probability” dialogue box for calculating
-the probability of the non-word “pidger” [pɪdʒɚ], or [P.IH.JH.ER] in Arpabet, using unigram position
+the probability of the non-word “pidger” [pɪdʒɚ], or [P.IH.JH.ER] in Arpabet, using log-scaled, token-frequency-based, biphone position
 probabilities (using the IPHOD corpus):
 
 .. image:: static/phonoprobdialog.png
