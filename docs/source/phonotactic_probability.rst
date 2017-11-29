@@ -167,13 +167,17 @@ in the main menu, and then follow these steps:
 
 An example of the “Phonotactic Probability” dialogue box for calculating
 the probability of the non-word “pidger” [pɪdʒɚ], or [P.IH.JH.ER] in Arpabet, using log-scaled, token-frequency-based, biphone position
-probabilities (using the IPHOD corpus):
+probabilities, using the IPHOD corpus (note that the results window is too long to fit in one screenshot; the second one has just been scrolled to the right so that the actual phonotactic probability result is visible):
 
 .. image:: static/phonoprobdialog.png
    :width: 90%
    :align: center
 
 .. image:: static/phonoprobresults.png
+   :width: 90%
+   :align: center
+   
+.. image:: static/phonoprobresults_2.png
    :width: 90%
    :align: center
 
