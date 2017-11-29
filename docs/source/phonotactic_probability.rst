@@ -131,32 +131,34 @@ in the main menu, and then follow these steps:
       a separate column; in the “query” box, simply enter the name of
       that column (the default is “Phonotactic probability”).
 
-3. **Tier**: Phonotactic probability can be calculated from transcription
+3. **Log scaling**: If token frequencies are being used, the default is to log the frequencies first (following Vitevitch and Luce, described above). PCT takes natural logs, i.e., logs with base e, but note that because of the calculation involved, the choice of log makes no difference to the final answer (the calculation involves dividing the log frequency of words with the sound in question in the given position by the log frequency of all words that have any sound in the given position, so the bases of the logs cancel each other). One can choose not to log-scale the frequencies at all if one prefers. Note that this is an option only for token frequencies; if type frequencies are being used, each word has a type frequency of 1, and the logarithm of 1 is 0, regardless of the base; hence, log-scaling type frequencies would make all the calculations meaningless. Note that if log-scaling of token frequencies is used, then in the event that a word has a token frequency of 1, this is first replaced in the calculation with 1.00001 to avoid any problems with division by zero.
+
+4. **Tier**: Phonotactic probability can be calculated from transcription
    tiers in a corpus (e.g., transcription or tiers that represent subsets
    of entries, such as a vowel or consonant tier).
 
-4. **Pronunciation variants**: Specify whether phonotactic probability should be calculated based on the canonical pronunciations of each word or the most frequent pronunciations (which may not be the same). See more in :ref:`pronunciation_variants`.
+5. **Pronunciation variants**: Specify whether phonotactic probability should be calculated based on the canonical pronunciations of each word or the most frequent pronunciations (which may not be the same). See more in :ref:`pronunciation_variants`.
 
-5. **Type vs. token frequency**: Specify whether phonotactic probabilities
+6. **Type vs. token frequency**: Specify whether phonotactic probabilities
    should be based on word type frequency or token frequency.  The
-   original Vitevitch & Luce algorithm uses token frequency. Token frequency
-   will use the log frequency when calculating probabilities.
-6. **Probability type**: Specify whether to use biphone positional
+   original Vitevitch & Luce algorithm uses token frequency. As discussed above in (3), token frequency
+   defaults to using the log frequency when calculating probabilities.
+7. **Probability type**: Specify whether to use biphone positional
    probabilities or single segment positional probabilities.  Defaults to biphone.
-7. **Results**: Once all options have been selected, click “Calculate
+8. **Results**: Once all options have been selected, click “Calculate
    phonotactic probability.” If this is not the first calculation, and
    you want to add the results to a pre-existing results table, select
    the choice that says “add to current results table.” Otherwise, select
    “start new results table.” A dialogue box will open, showing a table of
    the results, including the word, its phonotactic probability, the
    transcription tier from which phonotactic probability was calculated,
-   whether type or token frequency was used, whether the algorithm used
+   whether type or token frequency was used, whether the frequency was log-scaled, whether the algorithm used
    unigram or bigram probabilities, and the phonotactic probability algorithm
    that was used. If the phonotactic probability for all words in the corpus
    is being calculated, simply click on the “start new results table” option,
-   and you will be returned to your corpus, where a new column has been added
+   and you will be returned to your corpus, where a new column containing the phonotactic probability for each word has been added
    automatically.
-8. **Saving results**: The results tables can each be saved to tab-delimited .txt
+9. **Saving results**: The results tables can each be saved to tab-delimited .txt
    files by selecting “Save to file” at the bottom of the window. If all
    phonotactic probabilities are calculated for a corpus, the corpus
    itself can be saved by going to “File” / “Export corpus as text file,”
