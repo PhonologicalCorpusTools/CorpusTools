@@ -30,6 +30,7 @@ class NDWorker(FunctionWorker):
         att = kwargs.get('attribute', None)
         ft = kwargs['frequency_cutoff']
         output = list()
+
         with cm(corpus, st, tt, attribute=att, frequency_threshold = ft) as c:
             try:
                 tierdict = defaultdict(list)
@@ -37,21 +38,21 @@ class NDWorker(FunctionWorker):
                 for entry in c:
                     w = getattr(entry, kwargs['sequence_type'])
                     tierdict[str(w)].append(entry)
-                if 'query' in kwargs:
+                if 'query' in kwargs:#this will be true when searching for a single word (in the corpus or not)
                     last_value_removed = None
                     last_key_removed = None
                     for q in kwargs['query']:
                         q = ensure_query_is_word(q, c, c.sequence_type, kwargs['tier_type'])
                         #the following code for adding/removing keys is to ensure that homophones are counted later in
                         #the ND algorithm (if the user wants to), but that words are not considered their own neighbours
-                        #however, we only do this when comparing inside a corpus. when using a list of external word
+                        #however, we only do this when comparing inside a corpus. when using a list of external words
                         #we don't want to do this, since it's possible for the external list to contain words that
                         #are in the corpus, and removing them gives the wrong ND value in this case
                         if not kwargs['file_list']:
                             if last_value_removed:
                                 tierdict[last_key_removed].append(last_value_removed)
+                            w = getattr(q, kwargs['sequence_type'])
                             try:
-                                w = getattr(q, kwargs['sequence_type'])
                                 last_key_removed = str(w)
                                 last_value_removed = tierdict[str(w)].pop()
                             except IndexError:
@@ -77,18 +78,19 @@ class NDWorker(FunctionWorker):
                                         stop_check = kwargs['stop_check'],
                                         call_back = kwargs['call_back'])
                         if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
-                            print_neighden_results(kwargs['output_filename'],res[1])
+                            print_neighden_results(kwargs['output_filename'], res[1], kwargs['output_format'])
                         if self.stopped:
                             break
                         if kwargs['file_list'] is not None:
                             output.append(','.join([str(q), str(res[0]), ','.join([str(r) for r in res[1]])]))
                         self.results.append([q,res[0]])
-                else:
+                else:#this will be true if searching the entire corpus, or using an external list of words
                     end = kwargs['corpusModel'].beginAddColumn(att)
                     if kwargs['algorithm'] != 'substitution':
                         results = neighborhood_density_all_words(c, tierdict,
                                                 tier_type = kwargs['tier_type'],
                                                 algorithm = kwargs['algorithm'],
+                                                output_format = kwargs['output_format'],
                                                 max_distance = kwargs['max_distance'],
                                                 num_cores = kwargs['num_cores'],
                                                 call_back = kwargs['call_back'],
@@ -105,7 +107,7 @@ class NDWorker(FunctionWorker):
                                                 call_back = kwargs['call_back'])
                     end = kwargs['corpusModel'].endAddColumn(end)
                     if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
-                            print_all_neighden_results(kwargs['output_filename'], results)
+                        print_all_neighden_results(kwargs['output_filename'], results)
             except PCTError as e:
                 self.errorEncountered.emit(e)
                 return
@@ -285,9 +287,13 @@ class NDDialog(FunctionDialog):
         fileFrame = QGroupBox('Output list of neighbors to a file')
 
         self.saveFileWidget = SaveFileWidget('Select file location','Text files (*.txt)')
+        self.saveFileFormat = QComboBox()
+        for att in reversed(self.tierWidget.attValues()):
+            self.saveFileFormat.addItem('Output neighbours as {}'.format(att.display_name))
 
         vbox = QHBoxLayout()
         vbox.addWidget(self.saveFileWidget)
+        vbox.addWidget(self.saveFileFormat)
 
         fileFrame.setLayout(vbox)
 
@@ -424,7 +430,8 @@ class NDDialog(FunctionDialog):
                 'force_quadratic': self.useQuadratic.isChecked(),
                 'file_type': self.fileOptions.currentText().split()[-1],
                 'tier_type': self.tierWidget.attValue(),
-                'collapse_homophones': self.collapseHomophones.isChecked()}
+                'collapse_homophones': self.collapseHomophones.isChecked(),
+                'output_format': self.saveFileFormat.currentText().split(' ')[-1].lower()}
 
         out_file = self.saveFileWidget.value()
         if out_file == '':

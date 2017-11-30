@@ -67,7 +67,7 @@ class RecentSearch:
 
 
     def __str__(self):
-        return self.displayValue
+        return self.displayValue.replace('_', '_'+self.middleDisplayValue+'_')
 
     def target(self):
         return self.middleDisplayValue
@@ -412,7 +412,9 @@ class PhonoSearchDialog(FunctionDialog):
         for n in reversed(range(self.envWidget.environmentFrame.layout().count()-2)):
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
             try:
+                widget.setParent(None)
                 widget.deleteLater()
+                del widget
             except AttributeError: #widget is None
                 pass
 
@@ -421,13 +423,14 @@ class PhonoSearchDialog(FunctionDialog):
         else:
             searchlist = dialog.currentSearches
 
-        for index, search in enumerate(searchlist):
+        for n in range(len(searchlist)):
             #add a new blank environment
             self.envWidget.addNewEnvironment()
 
+        for index, search in enumerate(searchlist):
+
             #Get the widgets in the new environment and update them accordingly
             widget = self.envWidget.environmentFrame.layout().itemAt(index).widget()#== environments.EnvironmentWidget
-            #search = dialog.selectedSearch#== RecentSearch which is located in this module
 
             #update the middle widget
             widget.middleWidget.loadData(search.middleData)

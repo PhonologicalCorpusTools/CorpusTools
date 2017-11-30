@@ -223,7 +223,6 @@ class PCTSettings(collections.defaultdict):
         out = {x: self[x] for x in self.processing_setting_keys}
         return out
 
-
     def check_storage(self):
         if not os.path.exists(self['storage_folder']['directory']):
             os.makedirs(self['storage_folder']['directory'])

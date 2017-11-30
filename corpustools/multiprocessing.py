@@ -206,7 +206,7 @@ class ScoreWorker(Process):
         return
 
 
-def score_mp(iterable, function, num_procs, call_back, stop_check, debug = True, chunk_size = 500):
+def score_mp(iterable, function, num_procs, call_back, stop_check, debug = False, chunk_size = 500):
     job_queue = JoinableQueue(100)
     scored_queue = Queue()
     stopped = Stopped()

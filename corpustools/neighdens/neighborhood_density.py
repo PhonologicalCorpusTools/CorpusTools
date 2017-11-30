@@ -24,7 +24,7 @@ def _is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
     return khorsi(w, query, freq_base, sequence_type, max_distance) >= max_distance
 
 def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
-            algorithm = 'edit_distance', max_distance = 1,
+            algorithm = 'edit_distance', max_distance = 1, output_format = 'spelling',
             num_cores = -1, settable_attr = None, collapse_homophones = False,
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of all words in the corpus and
@@ -57,8 +57,7 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
         cur = 0
 
     results = dict()
-
-    if num_cores == -1:
+    if num_cores == -1 or num_cores == 1:
 
         for w in corpus_context:
             if stop_check is not None and stop_check():
@@ -66,8 +65,10 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
             cur += 1
             call_back(cur)
             res = function(w)
-            results[str(w)] = [str(r) for r in res[1]]
-            setattr(w.original, settable_attr.name, res[0])
+            results[str(w)] = [getattr(r, output_format) for r in res[1]]
+            setattr(w.original, settable_attr.name, res[0]-1)
+            #the -1 is to account for the fact that words are counted as their own neighbour, and this is incorrect
+            #subtracting 1 here is easier than fixing the neighbourhood density algorithm
     else:
         iterable = ((w,) for w in corpus_context)
         neighbors = score_mp(iterable, function, num_cores, call_back, stop_check, chunk_size = 1)
@@ -118,8 +119,6 @@ def neighborhood_density(corpus_context, query, tierdict,
         call_back(0,len(corpus_context))
         cur = 0
 
-    for k,v in tierdict.items():
-        print(k, v)
     if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type, tier_type, tierdict,
                                          file_type=file_type, collapse_homophones=collapse_homophones)
@@ -185,7 +184,6 @@ def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type,
 
 def generate_neighbor_candidates(corpus_context, query, sequence_type):
     sequence = getattr(query, sequence_type)
-    print(sequence, type(sequence))
     yield [str(c) for c in sequence]
     for i in range(len(sequence)):
         yield [str(c) for c in sequence[:i]] + [str(c) for c in sequence[i+1:]] # deletion
@@ -207,8 +205,7 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
         cur = 0
 
     results = dict()
-
-    if num_cores == -1:
+    if num_cores == -1 or num_cores == 1:
 
         for w in corpus_context:
             if stop_check is not None and stop_check():
@@ -216,12 +213,10 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
             cur += 1
             call_back(cur)
             res = function(w)
-            results[str(w)] = [str(r) for r in res[1]]
+            results[str(w)] = res[1]#[str(r) for r in res[1]]
             setattr(w.original, corpus_context.attribute.name, res[0])
     else:
         iterable = ((w,) for w in corpus_context)
-
-
         neighbors = score_mp(iterable, function, num_cores, call_back, stop_check, chunk_size= 1)
         for n in neighbors:
             #Have to look up the key, then look up the object due to how

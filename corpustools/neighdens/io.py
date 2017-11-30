@@ -6,33 +6,26 @@ def load_words_neighden(path, file_sequence_type='spelling'):
     with open(path,'r', encoding='utf-8-sig') as f:
         for line in f:
             line = line.strip()
-            # if '.' in line:
-            #     word = Word(spelling = line.replace('.',''), transcription = line.split('.'))
-            # else:
-            #     word = Word(spelling = line, transcription = [x for x in line])
-            # word = Word(spelling=''.join(line), transcription=line.split('.'))
-            # fields = [x for x in line.strip().split() if x != '']
-            # if len(fields) > 1:
-            #     fields[1] = fields[1].split('.')
-            #     fields = Word(spelling=fields[0], transcription = fields[1])
-            # elif len(fields) == 1:
-            #     fields = fields[0]
-            # else:
-            #     continue
             output.append(line)
     return output
 
-def print_neighden_results(output_filename, neighbors):
+def print_neighden_results(output_filename, neighbors, output_format):
     with open(output_filename, mode='w', encoding='utf-8-sig') as outf:
         writer = csv.writer(outf,delimiter='\t')
         for n in neighbors:
-            writer.writerow([n])
+            output = str(getattr(n, output_format)).replace('.','')
+            writer.writerow([output])
 
 def print_all_neighden_results(output_filename, neighors_dict):
     with open(output_filename, mode='w', encoding='utf-8-sig') as outf:
+        print('Word\tDensity\tNeighbours', file=outf)
         for word,neighbors in neighors_dict.items():
             if not neighbors:
-                print(word, file=outf)
+                print('\t'.join([word, '0', '']), file=outf)
             else:
-                line = '\t'.join([word, '\t'.join([n for n in neighbors])])
+                line = '\t'.join([word,
+                                  str(len(neighbors)-1),
+                                  ','.join([str(n).replace('.', '') for n in neighbors[1:]])])
+                #the -1 and the [1:] slice are to account for words being considered their own neighbours
+                #it's easier to fix this here than to mess with the ND algorithm
                 print(line, file=outf)
