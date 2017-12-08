@@ -105,7 +105,8 @@ density...” in the main menu, and then follow these steps:
       the corpus, the words on the list can be
       written in standard orthography (their transcriptions will be looked
       up in the corpus if needed). If the words are **not** in the corpus, then
-      they should be written orthographically if orthographic neighbourhood density is to be calculated, and transcribed if transcription-based neighbourhood density is to be calculated. If using transcription, note that all symbols in the transcription file must be symbols in the actual inventory of the corpus. E.g., if using IPA, a transcription could be [bnɪk] but not [spe7ec]. If a word in your file contains multi-character symbols, then you should use a period as a delimiter within that word; otherwise, no delimiter is necessary. E.g., if /ts/ is an affricate in your corpus, then the word /atsa/ should be written as "a.ts.a" in your file, but the word /blat/ can be written simply as "blat" in your file.
+      they should be written orthographically if orthographic neighbourhood density is to be calculated, and transcribed if transcription-based neighbourhood density is to be calculated. If using transcription, note that all symbols in the transcription file must be symbols in the actual inventory of the corpus. E.g., if using IPA, a transcription could be [bnɪk] but not [spe7ec]. If a word in your file contains multi-character symbols, then you should use a period as a delimiter within that word; otherwise, no delimiter is necessary. E.g., if /ts/ is an affricate in your corpus, then the word /atsa/ should be written as "a.ts.a" in your file, but the word /blat/ can be written simply as "blat" in your file. Note that words in the .txt file will not be added to the corpus, nor does PCT include any of the words in the .txt file itself when calculating the neighbourhood densities of each word.
+      
    d. **Whole corpus**: Alternatively, the neighbourhood density for every word
       in the corpus can be calculated. This is useful, for example, if one
       wishes to find words that match a particular neighbourhood density.
@@ -115,20 +116,26 @@ density...” in the main menu, and then follow these steps:
 
 3. **Alternative algorithm**: If one is calculating the neighbourhood density for a long word in a large corpus, using edit distance with a max distance of 1, there is a linear-time algorithm that may speed up the calculation as compared to our standard algorithm. Checking this box will select this potentially faster option.
 
-4. **Tier**: Neighbourhood density can be calculated from most of the available
+4. **Collapse homophones**: Before neighbourhood density is calculated, one can choose whether or not to collapse all homophones in the corpus. Collapsing homophones will mean that each set of homophonic words is counted as a single word for the purpose of calculating neighbourhood density (though no changes to the actual corpus will be implemented). For example, if the word 'nata' [nɑtɑ] were in the corpus, along with the words 'mata' [mɑtɑ], 'mata' [mɑtɑ], 'sata' [sɑtɑ], and 'satha' [sɑtɑ], one would expect the following behaviour (noting that 'mata' and 'mata' are both homographs and homophones, while 'sata' and 'satha' are homophones but not homographs): 
+   a. If the neighbourhood density of 'nata' is calculated without collapsing homophones, then it has a density of 4 ([mɑtɑ], [mɑtɑ], [sɑtɑ], and [sɑtɑ]); 
+   b. If the neighbourhood density of 'nata' is calculated after first collapsing homophones, then it has a density of 2 ([mɑtɑ] and [sɑtɑ]). 
+   
+   Note that if homophones are collapsed before calculating neighbourhood density, this will also affect any words that are homophones of the word in question. E.g., if the neighbourhood density of 'sata' is calculated in the above example, it will have a density of 4 if homophones are not collapsed ([mɑtɑ], [mɑtɑ], [nɑtɑ], and [sɑtɑ], with [sɑtɑ] coming only from 'satha'), while it will have a density of 2 if homophones are collapsed ([mɑtɑ] and [nɑtɑ]; [sɑtɑ] no longer counts as a neighbour because homophones are collapsed before any calculations are made).  #NB: THIS IS CURRENTLY ONLY TRUE IF CALCULATING ND FOR ALL WORDS IN THE CORPUS; YOU GET DIFFERENT BEHAVIOUR IF IT'S ONE WORD AT A TIME! FIX THIS.
+
+5. **Tier**: Neighbourhood density can be calculated from most of the available
    tiers in a corpus (e.g., spelling, transcription, or tiers that
    represent subsets of entries, such as a vowel or consonant tier).
    (If neighbourhood density is being calculated with phonological edit
    distance as the similarity metric, spelling cannot be used.) Standard
-   neighbourhood density is calculated using edit distance on transcriptions.
+   neighbourhood density is calculated using edit distance on transcriptions. #NB: THIS IS NOT FULLY FUNCTIONAL!
 
-5. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms.
+6. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms.
 
-6. **Type vs. token frequency**: If the Khorsi algorithm is selected as the
+7. **Type vs. token frequency**: If the Khorsi algorithm is selected as the
    string similarity metric, similarity can be calculated using either
    type or token frequency, as described in :ref:`khorsi`.
 
-7. **Distance / Similarity Threshold**: A specific threshold must be set to
+8. **Distance / Similarity Threshold**: A specific threshold must be set to
    determine what counts as a “neighbour.” If either of the edit distance
    metrics is selected, this should be the maximal distance that is
    allowed – in standard calculations of neighbourhood density, this
@@ -141,13 +148,13 @@ density...” in the main menu, and then follow these steps:
    algorithm to determine what kinds of values are common for words
    that seem to count as neighbours, and working backward from that.
 
-8. **Output file**: If this option is left blank, PCT will simply return
+9. **Output file**: If this option is left blank, PCT will simply return
    the actual neighbourhood density for each word that is calculated
    (i.e., the number of neighbours of each word). If a file is chosen,
    then the number will still be returned, but additionally, a file
-   will be created that lists all of the actual neighbours for each word.
+   will be created that lists all of the actual neighbours for each word. It can be specified whether the output file should contain the orthographic representation or the transcription of each neighbour. Note that in the case of homophones that have been collapsed, the representation of the alphabetically first homophone will be the only one included.
 
-9. **Results**: Once all options have been selected, click “Calculate
+10. **Results**: Once all options have been selected, click “Calculate
    neighborhood density.” If this is not the first calculation, and
    you want to add the results to a pre-existing results table, select
    the choice that says “add to current results table.” Otherwise,
@@ -160,7 +167,7 @@ density...” in the main menu, and then follow these steps:
    simply click on the “start new results table” option, and you will be
    returned to your corpus, where a new column has been added automatically.
 
-10. **Saving results**: The results tables can each be saved to tab-delimited .txt files by selecting “Save to file” at the bottom of the window. Any output files containing actual lists of neighbours are already saved as .txt files in the location specified (see step 7). If all neighbourhood densities are calculated for a corpus, the corpus itself can be saved by going to “File” / “Export corpus as text file,” from where it can be reloaded into PCT for use in future sessions with the neighbourhood densities included.
+11. **Saving results**: The results tables can each be saved to tab-delimited .txt files by selecting “Save to file” at the bottom of the window. Any output files containing actual lists of neighbours are already saved as .txt files in the location specified (see step 7). If all neighbourhood densities are calculated for a corpus, the corpus itself can be saved by going to “File” / “Export corpus as text file,” from where it can be reloaded into PCT for use in future sessions with the neighbourhood densities included.
 
 Here’s an example of neighbourhood density being calculated on
 transcriptions for the entire example corpus, using edit distance
