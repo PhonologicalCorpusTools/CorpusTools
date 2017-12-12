@@ -158,6 +158,7 @@ class NDDialog(FunctionDialog):
         self.inventory = inventory
         self.showToolTips = showToolTips
 
+
         if not self.corpusModel.corpus.has_transcription:
             self.layout().addWidget(QLabel('Corpus does not have transcription, so not all options are available.'))
         elif self.corpusModel.corpus.specifier is None:
@@ -309,6 +310,7 @@ class NDDialog(FunctionDialog):
         self.layout().insertWidget(0,ndFrame)
 
         self.algorithmWidget.initialClick()
+
         if self.showToolTips:
 
             loadFromFileTip = ('<FONT COLOR=black>There must be one word per line in the file that you load. '
@@ -317,7 +319,7 @@ class NDDialog(FunctionDialog):
                                'corpus you could supply the word "bnick" but not "spe7ec".\nIf a word in your file contains '
                                'multi-character symbols, then you should use a period as a delimiter for that word. Otherwise '
                                'no delimiter is necessary. For example, if /ts/ is an affricate in your corpus, then the word '
-                               '/atsa/ should be written as "a.ts.a" in your file, but the word /blat/ can be written simply '
+                               '/atsano/ should be written as "a.ts.a.n.o" in your file, but the word /blat/ can be written simply '
                                'as "blat" in your file.'
                                '</FONT>')
 

@@ -97,6 +97,16 @@ class RecentSearchDialog(QDialog):
         self.setupSavedTable()
         self.setupCurrentSearchTable()
 
+        explainLayout = QHBoxLayout()
+        explanation = ('To search in a single environment, select one and click "Load selected search".\n'
+                       'To search multiple environments, right-click each one and choose "Add to current search". '
+                       'Click "Load" when you are finished.')
+        explainLabel = QLabel()
+        explainLabel.setText(explanation)
+        explainLabel.setWordWrap(True)
+        explainLabel.setFont(QFont("Arial", 14))
+        explainLayout.addWidget(explainLabel)
+
         buttonLayout = QHBoxLayout()
         self.okButton = QPushButton('Load selected search')
         self.okButton.clicked.connect(self.accept)
@@ -106,6 +116,7 @@ class RecentSearchDialog(QDialog):
         buttonLayout.addWidget(cancel)
 
         self.mainLayout.addLayout(self.tableLayout)
+        self.mainLayout.addLayout(explainLayout)
         self.mainLayout.addLayout(buttonLayout)
         self.setLayout(self.mainLayout)
         self.makeMenus()
@@ -181,9 +192,9 @@ class RecentSearchDialog(QDialog):
 
     def makeMenus(self):
         self.recentMenu = QMenu()
-        self.deleteRecentAction = QAction('Delete search')
-        self.moveToSavedAction = QAction('Move to "saved" searches')
-        self.addToCurrentAction = QAction('Add to current search')
+        self.deleteRecentAction = QAction('Delete search', self)
+        self.moveToSavedAction = QAction('Move to "saved" searches', self)
+        self.addToCurrentAction = QAction('Add to current search', self)
         self.recentMenu.addAction(self.deleteRecentAction)
         self.recentMenu.addAction(self.moveToSavedAction)
         self.recentMenu.addAction(self.addToCurrentAction)
@@ -191,14 +202,14 @@ class RecentSearchDialog(QDialog):
         self.recentSearchesTable.customContextMenuRequested.connect(self.showRecentMenu)
 
         self.savedMenu = QMenu()
-        self.deleteSaveAction = QAction('Delete search')
+        self.deleteSaveAction = QAction('Delete search', self)
         self.savedMenu.addAction(self.deleteSaveAction)
         self.savedMenu.addAction(self.addToCurrentAction)
         self.savedSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.savedSearchesTable.customContextMenuRequested.connect(self.showSavedMenu)
 
         self.currentMenu = QMenu()
-        self.deleteCurrentAction = QAction('Remove from current search')
+        self.deleteCurrentAction = QAction('Remove from current search', self)
         self.currentMenu.addAction(self.deleteCurrentAction)
         self.currentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.currentSearchesTable.customContextMenuRequested.connect(self.showCurrentMenu)
