@@ -117,12 +117,13 @@ class FLDialog(FunctionDialog):
         mainFrame = QFrame()
         mainLayout = QHBoxLayout()
 
-        self.optionsList = QListWidget()
-        self.optionsList.addItem('Segment selection')
-        self.optionsList.addItem('Functional load options')
-        self.optionsList.addItem('Standard options')
-        self.optionsList.addItem('Envrionments')
-        mainLayout.addWidget(self.optionsList)
+        #Set up algorithm options
+        # self.optionsList = QListWidget()
+        # self.optionsList.addItem('Segment selection')
+        # self.optionsList.addItem('Functional load options')
+        # self.optionsList.addItem('Standard options')
+        # self.optionsList.addItem('Envrionments')
+        # mainLayout.addWidget(self.optionsList)
 
         #Set up segment selection widgets
         segFrame = QFrame()
@@ -227,15 +228,22 @@ class FLDialog(FunctionDialog):
         self.envWidget = EnvironmentSelectWidget(self.inventory, middle=False)
         environmentsLayout.addWidget(self.envWidget)
 
-        self.stackedWidget = QStackedWidget()
-        self.stackedWidget.addWidget(segFrame)
-        self.stackedWidget.addWidget(flOptionsFrame)
-        self.stackedWidget.addWidget(standardOptionsFrame)
-        self.stackedWidget.addWidget(environmentsFrame)
-        self.stackedWidget.setCurrentIndex(0)
+        #Update layout
+        mainLayout.addWidget(segFrame)
+        mainLayout.addWidget(flOptionsFrame)
+        mainLayout.addWidget(standardOptionsFrame)
+        mainLayout.addWidget(environmentsFrame)
 
-        mainLayout.addWidget(self.stackedWidget)
-        self.optionsList.currentRowChanged.connect(self.stackedWidget.setCurrentIndex)
+        #Set up stacked widgets
+        # self.stackedWidget = QStackedWidget()
+        # self.stackedWidget.addWidget(segFrame)
+        # self.stackedWidget.addWidget(flOptionsFrame)
+        # self.stackedWidget.addWidget(standardOptionsFrame)
+        # self.stackedWidget.addWidget(environmentsFrame)
+        # self.stackedWidget.setCurrentIndex(0)
+        #
+        # mainLayout.addWidget(self.stackedWidget)
+        # self.optionsList.currentRowChanged.connect(self.stackedWidget.setCurrentIndex)
 
         mainFrame.setLayout(mainLayout)
         self.layout().insertWidget(0, mainFrame)
