@@ -889,7 +889,6 @@ class TierWidget(QGroupBox):
 
         self.atts = [att for att in corpus.attributes
                      if not att.name in ('transcription') and att.att_type == 'tier']
-
         if include_spelling:
             self.atts.extend([att for att in corpus.attributes
                               if not att.name in ('spelling') and att.att_type == 'spelling'])
@@ -907,8 +906,10 @@ class TierWidget(QGroupBox):
         #         self.atts.append(a)
         #         self.tierSelect.addItem(a.display_name)
 
-
         layout.addWidget(self.tierSelect)
+        index = self.tierSelect.findText('Transcription')
+        self.tierSelect.setCurrentIndex(index)
+
         self.setLayout(layout)
 
     def setSpellingEnabled(self, b):
@@ -928,16 +929,15 @@ class TierWidget(QGroupBox):
             self.tierSelect.addItem(att.display_name)
 
     def value(self):
+        #returns only the attribute name
         text = self.tierSelect.currentText()
         for att in self.atts:
             if att.display_name == text:
                 return att.name
-        # index = self.tierSelect.currentIndex()
-        # if not self.spellingEnabled and self.spellingIncluded:
-        # index += 1
-        # return self.atts[index].name
+
 
     def attValue(self):
+        #returns attribute type value
         text = self.tierSelect.currentText()
         for att in self.atts:
             if att.display_name == text:

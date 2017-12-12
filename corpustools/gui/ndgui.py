@@ -37,7 +37,8 @@ class NDWorker(FunctionWorker):
                 # Create a dict with sequence_type keys for constant-time lookup
                 for entry in c:
                     w = getattr(entry, kwargs['sequence_type'])
-                    tierdict[str(w)].append(entry)
+                    key = str(w)
+                    tierdict[key].append(entry)
                 if 'query' in kwargs:#this will be true when searching for a single word (in the corpus or not)
                     last_value_removed = None
                     last_key_removed = None
@@ -48,18 +49,17 @@ class NDWorker(FunctionWorker):
                         #however, we only do this when comparing inside a corpus. when using a list of external words
                         #we don't want to do this, since it's possible for the external list to contain words that
                         #are in the corpus, and removing them gives the wrong ND value in this case
-                        if not kwargs['file_list']:
+                        if kwargs['in_corpus']:
                             if last_value_removed:
                                 tierdict[last_key_removed].append(last_value_removed)
                             w = getattr(q, kwargs['sequence_type'])
-                            try:
-                                last_key_removed = str(w)
-                                last_value_removed = tierdict[str(w)].pop()
-                            except IndexError:
-                                #this happens if comparing against a word not in the corpus
-                                #in this case, we don't need to worry about the homophone problem
-                                last_key_removed = None
-                                last_value_removed = None
+                            last_key_removed = str(w)
+                            #last_value_removed = tierdict[last_key_removed].pop()
+                            for i, item in enumerate(tierdict[last_key_removed]):
+                                if str(item) == str(q):
+                                    last_value_removed = tierdict[last_key_removed].pop(i)
+                                    break
+
                         #now we call the actual ND algorithms
                         if kwargs['algorithm'] != 'substitution':
                             res = neighborhood_density(c, q, tierdict,
@@ -242,7 +242,7 @@ class NDDialog(FunctionDialog):
         self.useQuadratic.setChecked(False)
         optionLayout.addWidget(self.useQuadratic)
 
-        self.collapseHomophones = QCheckBox('Collapse homophones into a single neighbor')
+        self.collapseHomophones = QCheckBox('Collapse homophones before calculating')
         optionLayout.addWidget(self.collapseHomophones)
 
         self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
@@ -310,6 +310,10 @@ class NDDialog(FunctionDialog):
         self.layout().insertWidget(0,ndFrame)
 
         self.algorithmWidget.initialClick()
+        # for unknown reasons, the tierSelect combobox doesn't get set to Transcription inside of neighbourhood density
+        # even though it does in every other algorithm. this extra line is necessary, and it has to go here
+        self.tierWidget.tierSelect.setCurrentIndex(self.tierWidget.tierSelect.findText('Transcription'))
+
 
         if self.showToolTips:
 
@@ -424,16 +428,17 @@ class NDDialog(FunctionDialog):
         kwargs = {'corpusModel':self.corpusModel,
                 'algorithm': alg,
                 'context': self.variantsWidget.value(),
-                'sequence_type':self.tierWidget.value(),
+                'sequence_type':self.tierWidget.value(),#this is just a string
+                'tier_type': self.tierWidget.attValue(),#this is an Attribute type object
                 'type_token':typeToken,
                 'max_distance':max_distance,
                 'frequency_cutoff':frequency_cutoff,
                 'num_cores':self.settings['num_cores'],
                 'force_quadratic': self.useQuadratic.isChecked(),
                 'file_type': self.fileOptions.currentText().split()[-1],
-                'tier_type': self.tierWidget.attValue(),
                 'collapse_homophones': self.collapseHomophones.isChecked(),
-                'output_format': self.saveFileFormat.currentText().split(' ')[-1].lower()}
+                'output_format': self.saveFileFormat.currentText().split(' ')[-1].lower(),\
+                'in_corpus': True}
 
         out_file = self.saveFileWidget.value()
         if out_file == '':
@@ -471,10 +476,12 @@ class NDDialog(FunctionDialog):
                         "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
                 return
             kwargs['query'] = [self.oneNonword]
+            kwargs['in_corpus'] = False
             kwargs['output_filename'] = out_file
         elif self.compType == 'file':
             path = self.fileWidget.value()
             kwargs['file_list'] = path
+            kwargs['in_corpus'] = False
             if not path:
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please enter a file path.")

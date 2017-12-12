@@ -176,7 +176,8 @@ def fast_neighborhood_density(corpus_context, query, sequence_type, tier_type,
 
         if cand_str in tierdict:
             for w in tierdict[cand_str]:
-                if collapse_homophones and any(word.transcription == w.transcription for word in neighbors):
+                w_sequence = getattr(w, sequence_type)
+                if collapse_homophones and any(getattr(word, sequence_type) == w_sequence for word in neighbors):
                     continue
                 else:
                     neighbors.append(w)
@@ -270,7 +271,8 @@ def find_mutation_minpairs(corpus_context, query, tier_type = None, collapse_hom
         if m[-1][-1]['f'] != 1:
             continue
 
-        if collapse_homophones and any(m.transcription == w.transcription for m in matches):
+        w_sequence = getattr(w, sequence_type)
+        if collapse_homophones and any(getattr(m, sequence_type) == w_sequence for m in matches):
             continue
         else:
             #matches.append(str(w_sequence))

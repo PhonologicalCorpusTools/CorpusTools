@@ -354,6 +354,7 @@ class AddTierDialog(CreateClassWidget):
             reply = QMessageBox.critical(self,
                                          "Missing information",
                                          "Please specify at least one segment or one feature value")
+            return
         self.segList = inClass
         QDialog.accept(self)
 
