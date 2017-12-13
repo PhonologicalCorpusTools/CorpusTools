@@ -69,6 +69,7 @@ class NDWorker(FunctionWorker):
                                                 collapse_homophones = kwargs['collapse_homophones'],
                                                 file_type = kwargs['file_type'],
                                                 tier_type = kwargs['tier_type'],
+                                                sequence_type = kwargs['sequence_type'],
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
                         else:
@@ -84,7 +85,7 @@ class NDWorker(FunctionWorker):
                         if kwargs['file_list'] is not None:
                             output.append(','.join([str(q), str(res[0]), ','.join([str(r) for r in res[1]])]))
                         self.results.append([q,res[0]])
-                else:#this will be true if searching the entire corpus, or using an external list of words
+                else:#this will be the case if searching the entire corpus
                     end = kwargs['corpusModel'].beginAddColumn(att)
                     if kwargs['algorithm'] != 'substitution':
                         results = neighborhood_density_all_words(c, tierdict,
@@ -99,7 +100,7 @@ class NDWorker(FunctionWorker):
                                                 collapse_homophones = kwargs['collapse_homophones']
                                                 )
                     else:
-                        results = find_mutation_minpairs_all_words(c,
+                        results = find_mutation_minpairs_all_words(c, tierdict,
                                                 tier_type = kwargs['tier_type'],
                                                 collapse_homophones = kwargs['collapse_homophones'],
                                                 num_cores = kwargs['num_cores'],

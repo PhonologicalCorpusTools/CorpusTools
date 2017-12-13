@@ -23,7 +23,7 @@ def _is_phono_edit_distance_neighbor(w, query, sequence_type, specifier, max_dis
 def _is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
     return khorsi(w, query, freq_base, sequence_type, max_distance) >= max_distance
 
-def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
+def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None, sequence_type = None,
             algorithm = 'edit_distance', max_distance = 1, output_format = 'spelling',
             num_cores = -1, settable_attr = None, collapse_homophones = False,
             stop_check = None, call_back = None):
@@ -48,6 +48,7 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
     function = partial(neighborhood_density, corpus_context,
                         tierdict = tierdict,
                         tier_type = tier_type,
+                        sequence_type = sequence_type,
                         algorithm = algorithm,
                         max_distance = max_distance,
                         collapse_homophones = collapse_homophones)
@@ -57,18 +58,41 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
         cur = 0
 
     results = dict()
+    last_value_removed = None
+    last_key_removed = None
     if num_cores == -1 or num_cores == 1:
 
         for w in corpus_context:
             if stop_check is not None and stop_check():
                 return
-            cur += 1
-            call_back(cur)
-            res = function(w)
+            if last_value_removed:
+                tierdict[last_key_removed].append(last_value_removed)
+            w_sequence = getattr(w, corpus_context.sequence_type)
+            last_key_removed = str(w_sequence)
+            for i, item in enumerate(tierdict[last_key_removed]):
+                if str(item) == str(w):
+                    last_value_removed = tierdict[last_key_removed].pop(i)
+                    break
+            res = neighborhood_density(corpus_context, w, tierdict,
+                        tier_type = tier_type,
+                        sequence_type = sequence_type,
+                        algorithm = algorithm,
+                        max_distance = max_distance,
+                        collapse_homophones = collapse_homophones)
             results[str(w)] = [getattr(r, output_format) for r in res[1]]
-            setattr(w.original, settable_attr.name, res[0]-1)
-            #the -1 is to account for the fact that words are counted as their own neighbour, and this is incorrect
-            #subtracting 1 here is easier than fixing the neighbourhood density algorithm
+            setattr(w.original, settable_attr.name, res[0])
+
+
+        # for w in corpus_context:
+        #     if stop_check is not None and stop_check():
+        #         return
+        #     cur += 1
+        #     call_back(cur)
+        #     res = function(w)
+        #     results[str(w)] = [getattr(r, output_format) for r in res[1]]
+        #     setattr(w.original, settable_attr.name, res[0]-1)
+        #     #the -1 is to account for the fact that words are counted as their own neighbour, and this is incorrect
+        #     #subtracting 1 here is easier than fixing the neighbourhood density algorithm
     else:
         iterable = ((w,) for w in corpus_context)
         neighbors = score_mp(iterable, function, num_cores, call_back, stop_check, chunk_size = 1)
@@ -83,7 +107,7 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None,
 
 def neighborhood_density(corpus_context, query, tierdict,
             algorithm = 'edit_distance', max_distance = 1, collapse_homophones = False,
-            force_quadratic = False, file_type = None, tier_type=None,
+            force_quadratic = False, file_type = None, tier_type=None, sequence_type = None,
             stop_check = None, call_back = None):
     """Calculate the neighborhood density of a particular word in the corpus.
 
@@ -196,7 +220,7 @@ def generate_neighbor_candidates(corpus_context, query, sequence_type):
         if str(char) not in ['#', sequence[i]]:
             yield [str(c) for c in sequence[:]] + [str(char)] # insertion
 
-def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores = -1, collapse_homophones = False,
+def find_mutation_minpairs_all_words(corpus_context, tierdict, tier_type = None, num_cores = -1, collapse_homophones = False,
                     stop_check = None, call_back = None):
 
     function = partial(find_mutation_minpairs, corpus_context, tier_type=tier_type, collapse_homophones = collapse_homophones)
@@ -206,16 +230,33 @@ def find_mutation_minpairs_all_words(corpus_context, tier_type = None, num_cores
         cur = 0
 
     results = dict()
+    last_value_removed = None
+    last_key_removed = None
     if num_cores == -1 or num_cores == 1:
-
         for w in corpus_context:
             if stop_check is not None and stop_check():
                 return
-            cur += 1
-            call_back(cur)
-            res = function(w)
-            results[str(w)] = res[1]#[str(r) for r in res[1]]
+            if last_value_removed:
+                tierdict[last_key_removed].append(last_value_removed)
+            w_sequence = getattr(w, corpus_context.sequence_type)
+            last_key_removed = str(w_sequence)
+            for i, item in enumerate(tierdict[last_key_removed]):
+                if str(item) == str(w):
+                    last_value_removed = tierdict[last_key_removed].pop(i)
+                    break
+            res = find_mutation_minpairs(corpus_context, w,
+                                         tier_type=tier_type, collapse_homophones = collapse_homophones)
+            results[str(w)] = res[1]
             setattr(w.original, corpus_context.attribute.name, res[0])
+
+        # for w in corpus_context:
+        #     if stop_check is not None and stop_check():
+        #         return
+        #     cur += 1
+        #     call_back(cur)
+        #     res = function(w)
+        #     results[str(w)] = res[1]#[str(r) for r in res[1]]
+        #     setattr(w.original, corpus_context.attribute.name, res[0])
     else:
         iterable = ((w,) for w in corpus_context)
         neighbors = score_mp(iterable, function, num_cores, call_back, stop_check, chunk_size= 1)
