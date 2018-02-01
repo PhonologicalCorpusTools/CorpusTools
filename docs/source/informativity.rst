@@ -25,7 +25,7 @@ and offers empirical evidence from English, as well as other languages [CohenPri
 
 One of the primary decisions in calculating informativity, is selecting the type of context to be used.
 [CohenPriva2015]_ discusses four options used in the literature - uniphone, biphone, triphone, and all preceding
-segments in the word. Within PCT, "all preceding" is currently the only supported option.
+segments in the word. Within PCT, "all preceding" is currently the only supported option (this is the option that Cohen Priva actually uses in his subsequent analyses).
 
 Consider a toy example, taken from [CohenPriva2015]_, §2.3, in which the following corpus is assumed
 (note that, generally speaking, there is no “type frequency” column
