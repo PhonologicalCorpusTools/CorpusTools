@@ -101,11 +101,8 @@ density...” in the main menu, and then follow these steps:
    c. **List of words**: If there is a specific list of words for which density
       is to be calculated (e.g., the stimuli list for an experiment), that
       list can be saved as a .txt file with one word per line and uploaded
-      into PCT for analysis. Note that in this case, if the words **are** in
-      the corpus, the words on the list can be
-      written in standard orthography (their transcriptions will be looked
-      up in the corpus if needed). If the words are **not** in the corpus, then
-      they should be written orthographically if orthographic neighbourhood density is to be calculated, and transcribed if transcription-based neighbourhood density is to be calculated. If using transcription, note that all symbols in the transcription file must be symbols in the actual inventory of the corpus. E.g., if using IPA, a transcription could be [bnɪk] but not [spe7ec]. If a word in your file contains multi-character symbols, then you should use a period as a delimiter within that word; otherwise, no delimiter is necessary. E.g., if /ts/ is an affricate in your corpus, then the word /atsa/ should be written as "a.ts.a" in your file, but the word /blat/ can be written simply as "blat" in your file. Note that words in the .txt file will not be added to the corpus, nor does PCT include any of the words in the .txt file itself when calculating the neighbourhood densities of each word.
+      into PCT for analysis. Note that the words
+      should be written orthographically if orthographic neighbourhood density is to be calculated, and transcribed if transcription-based neighbourhood density is to be calculated. If using transcription, note that all symbols in the transcription file must be symbols in the actual inventory of the corpus. E.g., if using IPA, a transcription could be [bnɪk] but not [spe7ec]. If a word in your file contains multi-character symbols, then you should use a period as a delimiter within that word; otherwise, no delimiter is necessary. E.g., if /ts/ is an affricate in your corpus, then the word /atsa/ should be written as "a.ts.a" in your file, but the word /blat/ can be written simply as "blat" in your file. Note that words in the .txt file will not be added to the corpus, nor does PCT include any of the words in the .txt file itself when calculating the neighbourhood densities of each word.
       
    d. **Whole corpus**: Alternatively, the neighbourhood density for every word
       in the corpus can be calculated. This is useful, for example, if one
@@ -127,7 +124,7 @@ density...” in the main menu, and then follow these steps:
    represent subsets of entries, such as a vowel or consonant tier).
    (If neighbourhood density is being calculated with phonological edit
    distance as the similarity metric, spelling cannot be used.) Standard
-   neighbourhood density is calculated using edit distance on transcriptions. #NB: THIS IS NOT FULLY FUNCTIONAL!
+   neighbourhood density is calculated using edit distance on transcriptions. Note that if you are calculating ND on a list of words from a file (see 2c above), the tier must match what you put in the file (e.g., if you say the file contains spelling, PCT will force the ND calculation to be based on the spelling tier, and if you say the file contains transcription, PCT will force the ND calculations to be based on the transcription tier). 
 
 6. **Pronunciation variants**: If the corpus contains multiple pronunciation variants for lexical items, select what strategy should be used. For details, see :ref:`pronunciation_variants`. Note that here, the only choices currently available are canonical or most-frequent forms.
 
