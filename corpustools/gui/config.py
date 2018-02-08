@@ -85,7 +85,7 @@ class DisplayPane(BasePane):
 
         self.sigfigWidget = QLineEdit()
         self.displayAllWidget = QCheckBox()
-        displayAllLabel = QLabel('Display entire inventory in results when "Match any segment" is selected')
+        displayAllLabel = QLabel('Display entire inventory in results when "Match single wildcard" is selected')
         displayAllLabel.setWordWrap(True)
 
         layout.addRow(QLabel('Number of displayed decimal places:'),self.sigfigWidget)

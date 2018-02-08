@@ -98,13 +98,15 @@ class RecentSearchDialog(QDialog):
         self.setupCurrentSearchTable()
 
         explainLayout = QHBoxLayout()
-        explanation = ('To search in a single environment, select one and click "Load selected search".\n'
-                       'To search multiple environments, right-click each one and choose "Add to current search". '
-                       'Click "Load" when you are finished.')
+        explanation = ('* Right-clicking a cell will reveal additional options.\n'
+                       '* To search a single environment, simply left-click to select it.\n'
+                       '* To search multiple environments, right-click each one and choose "Add to current search".\n'
+                       '* Click "Load selected search" when you are finished.\n'
+                       )
         explainLabel = QLabel()
         explainLabel.setText(explanation)
         explainLabel.setWordWrap(True)
-        explainLabel.setFont(QFont("Arial", 14))
+        explainLabel.setFont(QFont("Arial", 12))
         explainLayout.addWidget(explainLabel)
 
         buttonLayout = QHBoxLayout()

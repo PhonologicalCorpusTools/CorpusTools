@@ -77,7 +77,7 @@ def download_binary(name, path, call_back = None):
     elif name == 'sampa2spe':
         download_link = 'https://www.dropbox.com/s/rm0t4zut0ilwqto/sampa2spe.feature?dl=1'
     elif name == 'sampa2hayes':
-        download_link = 'https://www.dropbox.com/s/fg3kcu0ydhmnjtx/sampa2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/s8hxakvs18oc7um/sampa2hayes.feature?dl=1'
     elif name == 'buckeye2spe':
         download_link = 'https://www.dropbox.com/s/neeklf4470tg83j/buckeye2spe.feature?dl=1'
     elif name == 'buckeye2hayes':

@@ -2,7 +2,11 @@ import os
 import collections
 
 from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import readFile, Interval, Point, PointTier , _getMark
+from textgrid.textgrid import Interval, Point, PointTier , _getMark
+try:
+    from textgrid.textgrid import readFile
+except ImportError:
+    from textgrid.textgrid import detectEncoding as readFile
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
 from corpustools.corpus.classes.spontaneous import Discourse
