@@ -1257,6 +1257,7 @@ class FeatureMatrixManager(QDialog):
     def getAvailableSystems(self):
         self.systemsList.clear()
         systems = get_systems_list(self.settings['storage'])
+        systems = sorted(systems, key=lambda s:s.lower())
         for s in systems:
             self.systemsList.addItem(s)
 
