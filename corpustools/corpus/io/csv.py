@@ -179,11 +179,12 @@ def load_corpus_csv(corpus_name, path, delimiter,
     if corpus.specifier is not None:
         corpus.inventory.update_features(corpus.specifier)
 
-    if corpus.has_transcription and not trans_check:
-        e = DelimiterError(('Could not parse transcriptions with that delimiter. '
-                            '\n\Check that the transcription delimiter you typed '
+    if any(len(word.transcription) > 1 for word in corpus):
+        if corpus.has_transcription and not trans_check:
+            e = DelimiterError(('Could not parse transcriptions with that delimiter. '
+                            '\nCheck that the transcription delimiter you typed '
                             'in matches the one used in the file.'))
-        raise(e)
+            raise(e)
 
     if stop_check is not None and stop_check():
         return
@@ -228,12 +229,11 @@ def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back 
             return
         if call_back is not None:
             call_back(i)
-
         if line:
             if len(line.keys()) == 1:
-                raise(DelimiterError)
+                raise DelimiterError
             if 'symbol' not in line:
-                raise(KeyError)
+                raise KeyError
             #Compat
             newline = {}
             for k,v in line.items():
