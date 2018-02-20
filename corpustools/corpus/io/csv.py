@@ -146,7 +146,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
         for a in headers:
             corpus.add_attribute(a.attribute)
 
-        trans_check = False
+        trans_check = True
 
         for line in f.readlines():
             if stop_check is not None and stop_check():
