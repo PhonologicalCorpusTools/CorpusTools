@@ -617,7 +617,17 @@ on the transcription tier:
 
 
 
-3. **Results**: Once all selections have been made, click on “Calculate
+3. **Saving Searches**: It is possible to save particular searches and then re-load them for later use (within the same corpus, or in a different one). PCT will automatically save the five most recent searches for you, but you can also specify that any particular search should be saved for the long term.
+
+To save a search, click on "Save current search" in the "Phonological Search" dialogue box (see above pictures). To modify it or to use a saved search, click on "Load recent search." Doing so brings up the "Searches" dialogue box as follows:
+
+.. image:: static/phonosearchsaved.png
+   :width: 90%
+   :align: center
+   
+   On the left are listed the five most recent searches, showing the target and environment for each search. In the center are the officially "saved" searches. On the right is an empty panel in which a new search can be 'built' from the saved searches. Right-clicking on one of these panels will bring up further options. For example, right-clicking on a recent search allows you to transfer it to the saved searches, to delete it entirely, or to add it to the current search. Similarly, right-clicking on a saved search allows you to delete it entirely or to add it to the current search. Double-clicking in the "Notes" column of saved searches allows you to label searches or add other useful information about them. Once one or more searches have been added to the "Current Search" panel, they can be loaded by clicking on "Load selected search." (Note that if only one search is needed, it does not have to be added to the "Current Search" panel first, though it can be.) You will be turned to the main "Phonological Search" dialogue box and the environments for searches will be automatically populated with the selected searches. These can then be further modified if needed (though they would then need to be re-saved if you want them to be stored.)
+
+4. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
    or you want to start a new once, choose the “Start new results table”
    option. If you want to add the results to a pre-existing table, choose
