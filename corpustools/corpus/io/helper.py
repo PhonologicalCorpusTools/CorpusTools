@@ -276,6 +276,7 @@ def get_corpora_list(storage_directory):
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
     systems = [x.split('.')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
+    systems = sorted(systems, key=lambda s:s.lower())
     return systems
 
 def parse_filename(filename):
