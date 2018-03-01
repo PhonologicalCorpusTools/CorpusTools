@@ -44,6 +44,7 @@ class LoadFeatureSystemWorker(FunctionWorker):
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
     systems = [x.split('.feature')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
+    systems = sorted(systems, key=lambda s:s.lower())
     return systems
 
 def get_feature_system_styles(storage_directory):
@@ -1257,7 +1258,6 @@ class FeatureMatrixManager(QDialog):
     def getAvailableSystems(self):
         self.systemsList.clear()
         systems = get_systems_list(self.settings['storage'])
-        systems = sorted(systems, key=lambda s:s.lower())
         for s in systems:
             self.systemsList.addItem(s)
 
