@@ -395,7 +395,7 @@ def log_annotation_types(annotation_types):
 
 def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, call_back=None, stop_check=None):
     curr_word = list()
-    annotations = dict()
+    annotations = {at:list() for at in annotation_types}
     spelling_name, transcription_name = None, None
     if call_back is not None:
         call_back('Processing data...')
@@ -407,7 +407,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         if call_back is not None:
             cur += 1
             call_back(cur)
-        annotations[at] = list()
         if all(isinstance(item, Annotation) for item in at._list):
             # it's a list of spellings, take each one and add it to the overall annotations list
             for item in at._list:
@@ -430,7 +429,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         else:
             print(at._list)
             raise TypeError("AnnotationType._list cannot contain a mix of Annotations and BaseAnnotations")
-
 
     discourse_kwargs = {'name': corpus_name, 'wav_path': wav_path, 'other_attributes': list()}
     for at in annotation_types:
@@ -478,6 +476,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
             else:
                 try:
                     word_kwargs[at.attribute.name] = (at.attribute, annotations[at][n][0])
+                    #annotations[at][n] should be a tuple of (curr_word, begin, end) or (item_label, None, None)
                 except IndexError:
                     word_kwargs[at.attribute.name] = (at.attribute, None)
         word = Word(**word_kwargs)
@@ -494,8 +493,12 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         for at in annotations:
             if at.ignored:
                 continue
+            try:
+                word_token_kwargs[at.attribute.name] = (at.attribute, annotations[at][n][0])
+                # annotations[at][n] should be a tuple of (curr_word, begin, end) or (item_label, None, None)
+            except IndexError:
+                word_token_kwargs[at.attribute.name] = (at.attribute, None)
             #word_token_kwargs[at.output_name] = (at.attribute, annotations[at][n][0])
-            word_token_kwargs[at.attribute.name] = (at.attribute, annotations[at][n][0])
             if at.attribute.att_type == 'tier':
                 if at.attribute.is_default:
                     begin = annotations[at][n][1]

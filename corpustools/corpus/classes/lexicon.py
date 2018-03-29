@@ -205,7 +205,7 @@ class Transcription(object):
                             self.boundaries['morpheme'].append(i)
                             cur_group = s.group
                 except AttributeError:
-                    if isinstance(s,str):
+                    if isinstance(s,str) or isinstance(s, Segment):
                         self._list.append(s)
                     elif isinstance(s,dict):
                         try:
@@ -1040,10 +1040,10 @@ class Word(object):
 
     @property
     def transcription(self):
-        try:
-            value = getattr(self, self._transcription_name, self._transcription)
-        except (TypeError, AttributeError):
-            value = None #transcription doesn't exist
+        if self._transcription_name is not None:
+            value = getattr(self, self._transcription_name)
+        else:
+            value = self._transcription
         return value
 
     @transcription.setter
@@ -2135,6 +2135,11 @@ class Corpus(object):
         for a in self.attributes:
             if a.att_type == 'tier' and len(a.range) > 0:
                 return True
+
+        w = self.random_word()
+        if w.transcription is not None:
+            return True
+
         return False
 
     def __eq__(self, other):

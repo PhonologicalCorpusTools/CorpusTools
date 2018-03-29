@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import sys
 import os
-import resources
-from multiprocessing import freeze_support
+base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0,base)
+print(base)
 from corpustools.gui.main import MainWindow,QApplicationMessaging
 from PyQt5.QtGui import QIcon
 
@@ -39,6 +40,5 @@ def main():
 
 
 if __name__ == '__main__':
-    freeze_support()
     main()
 

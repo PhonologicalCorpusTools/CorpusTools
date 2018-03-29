@@ -1,12 +1,13 @@
 import os
+from string import punctuation
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus, Corpus, Word, Discourse, WordToken
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Discourse, Attribute, Segment, Transcription
 
-from corpustools.exceptions import DelimiterError, PCTOSError
+from corpustools.exceptions import PCTOSError
 from .binary import load_binary
 
 from .helper import (DiscourseData, Annotation, BaseAnnotation,
-                        data_to_discourse, data_to_discourse2, AnnotationType, text_to_lines)
+                     data_to_discourse, data_to_discourse2, AnnotationType, text_to_lines)
 
 def inspect_discourse_spelling(path, support_corpus_path = None):
     """
@@ -53,12 +54,17 @@ def spelling_text_to_data(corpus_name, path, annotation_types = None,
                             support_corpus_path = None, ignore_case = True,
                             stop_check = None, call_back = None):
     name = corpus_name
+    if annotation_types is None:
+        annotation_types = inspect_discourse_spelling(path, support_corpus_path)
+
     if support_corpus_path is not None:
         if not os.path.exists(support_corpus_path):
             raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
         support = load_binary(support_corpus_path)
-    if annotation_types is None:
-        annotation_types = inspect_discourse_spelling(path, support_corpus_path)
+        a = AnnotationType('Transcription', None, None,
+                           attribute=Attribute('Transcription', 'transcription', 'Transcription'), base=True)
+        annotation_types.append(a)
+
     for a in annotation_types:
         a.reset()
 
@@ -206,10 +212,47 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
                     stop_check, call_back)
     if data is None:
         return
+
     #discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
     discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types,
                                    stop_check=stop_check, call_back=call_back)
+
+    if support_corpus_path is not None:
+        support = load_binary(support_corpus_path)
+        discourse = add_transcriptions_and_features(discourse, support, ignore_case)
     return discourse
+
+def add_transcriptions_and_features(discourse, support_corpus, ignore_case):
+    att = Attribute('transcription', 'tier', 'Transcription')
+    discourse.lexicon.add_attribute(att, True)
+    discourse.lexicon.specifier = support_corpus.specifier
+    for word in discourse.lexicon:
+        try:
+            trans = support_corpus.find(word.spelling, ignore_case=ignore_case).transcription
+        except KeyError:
+            try:
+                no_punctuation = ''.join([x for x in word.spelling if not x in punctuation])
+                trans = support_corpus.find(no_punctuation, ignore_case=ignore_case).transcription
+            except KeyError:
+                trans = Transcription([symbol for symbol in word.spelling])
+        word.transcription = trans
+        for d in word.descriptors:
+            if d not in discourse.lexicon._attributes:
+                if isinstance(getattr(word,d),str):
+                    discourse.lexicon._attributes.append(Attribute(d,'spelling'))#'factor'))
+                elif isinstance(getattr(word,d),Transcription):
+                    discourse.lexicon._attributes.append(Attribute(d,'tier'))
+                elif isinstance(getattr(word,d),(int, float)):
+                    discourse.lexicon._attributes.append(Attribute(d,'numeric'))
+        for a in discourse.lexicon._attributes:
+            if not hasattr(word,a.name):
+                word.add_attribute(a.name, a.default_value)
+            a.update_range(getattr(word,a.name))
+        discourse.lexicon.update_inventory(word.transcription)
+    discourse.lexicon.inventory.update_features(discourse.lexicon.specifier)
+
+    return discourse
+
 
 def export_discourse_spelling(discourse, path, single_line = False):
     """

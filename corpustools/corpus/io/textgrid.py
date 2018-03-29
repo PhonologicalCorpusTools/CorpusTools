@@ -372,6 +372,7 @@ def load_directory_textgrid(corpus_name, path, annotation_types,
         cur = 0
     corpus = SpontaneousSpeechCorpus(corpus_name, path)
     for i, t in enumerate(file_tuples):
+        print('Parsing file {} of {}...'.format(i+1, len(file_tuples)))
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -379,6 +380,7 @@ def load_directory_textgrid(corpus_name, path, annotation_types,
             call_back(i)
         root, filename = t
         name = os.path.splitext(filename)[0]
+        print('File name: ', name)
         d = load_discourse_textgrid(name, os.path.join(root,filename),
                                     annotation_types,
                                     stop_check=stop_check,

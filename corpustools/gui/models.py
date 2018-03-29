@@ -931,6 +931,10 @@ class InventoryModel(QAbstractTableModel):
 
         self.generateGenericNames()
         self.categorizeInventory()
+        print(self.consColumns)
+        print(self.consRows)
+        print(self.cons_column_data)
+        print(self.cons_row_data)
         self.sortData()
         self.filterGenericNames()
         self.isNew = False
@@ -1395,7 +1399,7 @@ class InventoryModel(QAbstractTableModel):
             else:
                 data = self.vowelRows
         else:
-            raise TypeError('The orientation value passed to Inventory.getHeaderOrder is not valid')
+            raise ValueError('The orientation value passed to Inventory.getHeaderOrder is not valid')
         return sorted(data)
 
     def sortData(self):

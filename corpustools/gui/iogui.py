@@ -857,7 +857,7 @@ class LoadCorpusDialog(PCTDialog):
             and not any([x.anchor for x in kwargs['annotation_types']])):
             QMessageBox.critical(self, 'Missing information',
                                  ('No spelling or transcription was selected for the corpus. Please check the '
-                                 '"Parsing Preview" section and ensure that you have a "default" Transcription'
+                                 '"Parsing Preview" section and ensure that you have a "default" Transcription '
                                  'or Orthography.'))
             return
 

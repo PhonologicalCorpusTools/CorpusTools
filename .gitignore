@@ -9,6 +9,7 @@
 *.app
 *.xls
 *.xlsx
+*.textgrid
 
 # C extensions
 *.so

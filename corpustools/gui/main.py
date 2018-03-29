@@ -391,7 +391,6 @@ class MainWindow(QMainWindow):
             if hasattr(self.corpus, 'lexicon'):
                 # the lexicon attribute is a Corpus object
                 self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
-
                 if hasattr(self.corpus,'discourses'):
                     self.discourseTree.show()
                     self.discourseTree.setModel(SpontaneousSpeechCorpusModel(self.corpus))
