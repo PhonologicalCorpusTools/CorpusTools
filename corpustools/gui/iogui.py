@@ -294,7 +294,6 @@ class CorpusLoadDialog(PCTDialog):
     def getAvailableCorpora(self):
         self.corporaList.clear()
         corpora = get_corpora_list(self.settings['storage'])
-        corpora = sorted(corpora, key=lambda s:s.lower())
         for c in corpora:
             self.corporaList.addItem(c)
 

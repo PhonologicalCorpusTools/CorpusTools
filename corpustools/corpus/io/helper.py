@@ -270,11 +270,13 @@ class DiscourseData(object):
 def get_corpora_list(storage_directory):
     corpus_dir = os.path.join(storage_directory,'CORPUS')
     corpora = [parse_filename(x) for x in os.listdir(corpus_dir)]
+    corpora = sorted(corpora, key=lambda s:s.lower())
     return corpora
 
 def get_systems_list(storage_directory):
     system_dir = os.path.join(storage_directory,'FEATURE')
     systems = [x.split('.')[0] for x in os.listdir(system_dir) if x.endswith('.feature')]
+    systems = sorted(systems, key=lambda s:s.lower())
     return systems
 
 def parse_filename(filename):
