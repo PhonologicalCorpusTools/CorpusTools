@@ -224,40 +224,6 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
 
     if support_corpus_path is not None:
         discourse.lexicon.specifier = support.specifier
-    #    discourse = add_transcriptions_and_features(discourse, support, ignore_case)
-
-    return discourse
-
-def add_transcriptions_and_features(discourse, support_corpus, ignore_case):
-    att = Attribute('Transcription', 'tier', 'Transcription')
-    discourse.lexicon._attributes.append(att)
-    discourse.lexicon.specifier = support_corpus.specifier
-    for word in discourse.lexicon:
-        try:
-            trans = support_corpus.find(word.spelling, ignore_case=ignore_case).transcription
-        except KeyError:
-            try:
-                no_punctuation = ''.join([x for x in word.spelling if not x in punctuation])
-                trans = support_corpus.find(no_punctuation, ignore_case=ignore_case).transcription
-            except KeyError:
-                trans = Transcription([symbol for symbol in word.spelling])
-        word.transcription = trans
-        for token in word.wordtokens:
-            token.transcription = word.transcription
-        for d in word.descriptors:
-            if d not in discourse.lexicon._attributes:
-                if isinstance(getattr(word,d),str):
-                    discourse.lexicon._attributes.append(Attribute(d,'spelling'))#'factor'))
-                elif isinstance(getattr(word,d),Transcription):
-                    discourse.lexicon._attributes.append(Attribute(d,'tier'))
-                elif isinstance(getattr(word,d),(int, float)):
-                    discourse.lexicon._attributes.append(Attribute(d,'numeric'))
-        for a in discourse.lexicon._attributes:
-            if not hasattr(word,a.name):
-                word.add_attribute(a.name, a.default_value)
-            a.update_range(getattr(word,a.name))
-        discourse.lexicon.update_inventory(word.transcription)
-    discourse.lexicon.inventory.update_features(discourse.lexicon.specifier)
 
     return discourse
 

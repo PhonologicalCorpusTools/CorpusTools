@@ -405,7 +405,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
         cur = 0
 
     for at in annotation_types:
-        print(at)
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -439,7 +438,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
         transcriptions = [key for key in annotations if key.name == 'Transcription'][0]
         for index, info in enumerate(spellings):
             spelling = info[0] #info[1] is the start time, info[2] is the end time (or else None)
-            print(spelling, type(spelling))
             try:
                 transcription = support_corpus.find(spelling, ignore_case=ignore_case).transcription
             except KeyError:
@@ -448,7 +446,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
                     transcription = support_corpus.find(no_punctuation, ignore_case=ignore_case).transcription
                 except KeyError:
                     transcription = Transcription([symbol for symbol in spelling])
-            print(transcription, type(transcription))
             annotations[transcriptions].append((transcription, index, index+1))
 
     discourse_kwargs = {'name': corpus_name, 'wav_path': wav_path, 'other_attributes': list()}
