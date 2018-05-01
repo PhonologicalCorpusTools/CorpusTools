@@ -62,7 +62,8 @@ def spelling_text_to_data(corpus_name, path, annotation_types = None,
             raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
         support = load_binary(support_corpus_path)
         a = AnnotationType('Transcription', None, None,
-                           attribute=Attribute('Transcription', 'transcription', 'Transcription'), base=True)
+                           attribute=Attribute('Transcription', 'transcription', 'Transcription'),
+                           base=True, is_default=True)
         annotation_types.append(a)
 
     for a in annotation_types:
@@ -213,18 +214,23 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
     if data is None:
         return
 
+    if support_corpus_path is not None:
+        support = load_binary(support_corpus_path)
+
     #discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
     discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types,
+                                   support_corpus=support, ignore_case=ignore_case,
                                    stop_check=stop_check, call_back=call_back)
 
     if support_corpus_path is not None:
-        support = load_binary(support_corpus_path)
-        discourse = add_transcriptions_and_features(discourse, support, ignore_case)
+        discourse.lexicon.specifier = support.specifier
+    #    discourse = add_transcriptions_and_features(discourse, support, ignore_case)
+
     return discourse
 
 def add_transcriptions_and_features(discourse, support_corpus, ignore_case):
-    att = Attribute('transcription', 'tier', 'Transcription')
-    discourse.lexicon.add_attribute(att, True)
+    att = Attribute('Transcription', 'tier', 'Transcription')
+    discourse.lexicon._attributes.append(att)
     discourse.lexicon.specifier = support_corpus.specifier
     for word in discourse.lexicon:
         try:
@@ -236,6 +242,8 @@ def add_transcriptions_and_features(discourse, support_corpus, ignore_case):
             except KeyError:
                 trans = Transcription([symbol for symbol in word.spelling])
         word.transcription = trans
+        for token in word.wordtokens:
+            token.transcription = word.transcription
         for d in word.descriptors:
             if d not in discourse.lexicon._attributes:
                 if isinstance(getattr(word,d),str):

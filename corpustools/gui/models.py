@@ -931,10 +931,6 @@ class InventoryModel(QAbstractTableModel):
 
         self.generateGenericNames()
         self.categorizeInventory()
-        print(self.consColumns)
-        print(self.consRows)
-        print(self.cons_column_data)
-        print(self.cons_row_data)
         self.sortData()
         self.filterGenericNames()
         self.isNew = False

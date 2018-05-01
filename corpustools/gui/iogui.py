@@ -131,7 +131,6 @@ class LoadCorpusWorker(FunctionWorker):
 
         self.dataReady.emit(corpus)
 
-
 class CorpusLoadDialog(PCTDialog):
     def __init__(self, parent, current_corpus, settings):
         PCTDialog.__init__(self, parent, infinite_progress=True)

@@ -395,7 +395,8 @@ def log_annotation_types(annotation_types):
     for a in annotation_types:
         logging.info(a.pretty_print())
 
-def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, call_back=None, stop_check=None):
+def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, support_corpus=None, ignore_case=False,
+                       call_back=None, stop_check=None):
     curr_word = list()
     annotations = {at:list() for at in annotation_types}
     spelling_name, transcription_name = None, None
@@ -404,6 +405,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         cur = 0
 
     for at in annotation_types:
+        print(at)
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -431,6 +433,23 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, c
         else:
             print(at._list)
             raise TypeError("AnnotationType._list cannot contain a mix of Annotations and BaseAnnotations")
+
+    if support_corpus is not None:
+        spellings = [value for key,value in annotations.items() if key.name=='Orthography (default)'][0]
+        transcriptions = [key for key in annotations if key.name == 'Transcription'][0]
+        for index, info in enumerate(spellings):
+            spelling = info[0] #info[1] is the start time, info[2] is the end time (or else None)
+            print(spelling, type(spelling))
+            try:
+                transcription = support_corpus.find(spelling, ignore_case=ignore_case).transcription
+            except KeyError:
+                try:
+                    no_punctuation = ''.join([x for x in spelling if not x in string.punctuation])
+                    transcription = support_corpus.find(no_punctuation, ignore_case=ignore_case).transcription
+                except KeyError:
+                    transcription = Transcription([symbol for symbol in spelling])
+            print(transcription, type(transcription))
+            annotations[transcriptions].append((transcription, index, index+1))
 
     discourse_kwargs = {'name': corpus_name, 'wav_path': wav_path, 'other_attributes': list()}
     for at in annotation_types:

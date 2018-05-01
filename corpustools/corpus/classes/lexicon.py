@@ -923,8 +923,9 @@ class Word(object):
                        'descriptors':list()}
     _freq_names = ['abs_freq', 'freq_per_mil','sfreq', 'lowercase_freq', 'log10_freq', 'freq', 'frequency']
 
-    def __init__(self, update=False, **kwargs):
+    def __init__(self, **kwargs):
 
+        update = kwargs.pop('update', False)
         if update:
             self.update(update)
             return
