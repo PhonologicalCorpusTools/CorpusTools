@@ -1096,15 +1096,14 @@ class Word(object):
                 self.wordtokens.append(copy.copy(wt))
 
         self.descriptors.extend([att for att in Word.word_attributes if not att.startswith('_')])
-        self.descriptors = list(set(self.descriptors))
 
         if not self._transcription:
             try:
-                self._transcription = old_word.__dict__['transcription']
-            except KeyError:
+                self._transcription = old_word.transcription
+            except AttributeError:
                 try:
-                    self._transcription = old_word.__dict__['_transcription']
-                except KeyError:
+                    self._transcription = old_word._transcription
+                except AttributeError:
                     self._transcription = None
 
             self.Transcription = self._transcription
@@ -1113,11 +1112,11 @@ class Word(object):
 
         if not self._spelling:
             try:
-                self._spelling = old_word.__dict__['spelling']
-            except KeyError:
+                self._spelling = old_word.spelling
+            except AttributeError:
                 try:
-                    self._spelling = old_word.__dict__['_spelling']
-                except KeyError:
+                    self._spelling = old_word._spelling
+                except AttributeError:
                     self._spelling = None
 
             self.Spelling = self._spelling
@@ -1125,9 +1124,9 @@ class Word(object):
             self.descriptors.append('Spelling')
 
         try:
-            self.Frequency = old_word.__dict__['frequency']
-        except KeyError:
-            self.Frequency = old_word.__dict__['Frequency']
+            self.Frequency = old_word.frequency
+        except AttributeError:
+            self.Frequency = old_word.Frequency
         try:
             self.descriptors.remove('_frequency')
         except ValueError:
@@ -1138,6 +1137,7 @@ class Word(object):
             pass
         self.descriptors.append('Frequency')
 
+        self.descriptors = list(set(self.descriptors))
 
     def get_len(self, tier_name):
         return len(getattr(self, tier_name))
