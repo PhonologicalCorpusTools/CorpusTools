@@ -448,6 +448,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
                     transcription = Transcription([symbol for symbol in spelling])
             annotations[transcriptions].append((transcription, index, index+1))
 
+
     discourse_kwargs = {'name': corpus_name, 'wav_path': wav_path, 'other_attributes': list()}
     for at in annotation_types:
         if at.name == 'Orthography (default)':

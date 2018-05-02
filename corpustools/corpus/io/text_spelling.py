@@ -1,7 +1,6 @@
 import os
-from string import punctuation
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus, Discourse, Attribute, Segment, Transcription
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Discourse, Attribute, Corpus
 
 from corpustools.exceptions import PCTOSError
 from .binary import load_binary
@@ -58,9 +57,13 @@ def spelling_text_to_data(corpus_name, path, annotation_types = None,
         annotation_types = inspect_discourse_spelling(path, support_corpus_path)
 
     if support_corpus_path is not None:
-        if not os.path.exists(support_corpus_path):
-            raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
-        support = load_binary(support_corpus_path)
+        if isinstance(support_corpus_path, Corpus):
+            support = support_corpus_path
+        else:
+            if not os.path.exists(support_corpus_path):
+                raise(PCTOSError("The corpus path specified ({}) does not exist".format(support_corpus_path)))
+            support = load_binary(support_corpus_path)
+
         a = AnnotationType('Transcription', None, None,
                            attribute=Attribute('Transcription', 'transcription', 'Transcription'),
                            base=True, is_default=True)
@@ -140,7 +143,7 @@ def load_directory_spelling(corpus_name, path, annotation_types = None,
         Corpus containing Discourses corresponding to the text files
     """
     if call_back is not None:
-        call_back('Finding  files...')
+        call_back('Finding files...')
         call_back(0, 0)
     file_tuples = []
     for root, subdirs, files in os.walk(path):
@@ -154,6 +157,10 @@ def load_directory_spelling(corpus_name, path, annotation_types = None,
         call_back(0,len(file_tuples))
         cur = 0
     corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    if support_corpus_path is not None:
+        support = load_binary(support_corpus_path)
+    else:
+        support = None
     for i, t in enumerate(file_tuples):
         if stop_check is not None and stop_check():
             return
@@ -162,15 +169,17 @@ def load_directory_spelling(corpus_name, path, annotation_types = None,
             call_back(i)
         root, filename = t
         name = os.path.splitext(filename)[0]
+        at = annotation_types[:]
+        #it's necessary to take a copy, because the annotation types might be altered during the load_discourse_spelling
+        #function, and if so this affect the annotation types on future loops in the current function
         d = load_discourse_spelling(name, os.path.join(root,filename),
-                                    annotation_types, corpus.lexicon,
-                                    support_corpus_path, ignore_case,
-                                    stop_check, call_back)
+                                    annotation_types=at,
+                                    support_corpus_path = support, ignore_case = ignore_case,
+                                    stop_check = stop_check, call_back = call_back)
         corpus.add_discourse(d)
     return corpus
 
 def load_discourse_spelling(corpus_name, path, annotation_types = None,
-                            lexicon = None, feature_system_path=None,
                             support_corpus_path = None, ignore_case = False,
                             stop_check = None, call_back = None):
     """
@@ -210,18 +219,26 @@ def load_discourse_spelling(corpus_name, path, annotation_types = None,
 
     data = spelling_text_to_data(corpus_name, path, annotation_types,
                 support_corpus_path, ignore_case,
-                    stop_check, call_back)
+                stop_check, call_back)
+
     if data is None:
         return
 
     if support_corpus_path is not None:
-        support = load_binary(support_corpus_path)
+        if isinstance(support_corpus_path, Corpus):
+            #the corpus is 'preloaded' if this function is called by load_directory_spelling
+            #otherwise the corpus has to be loaded once per file in a directory, which could be slow
+            support = support_corpus_path
+        else:
+            #otherwise, it's a string representing a path to the corpus
+            support = load_binary(support_corpus_path)
+    else:
+        support = None
 
     #discourse = data_to_discourse(data, lexicon, stop_check=stop_check, call_back=call_back)
     discourse = data_to_discourse2(corpus_name=data.name, wav_path=data.wav_path, annotation_types=annotation_types,
                                    support_corpus=support, ignore_case=ignore_case,
                                    stop_check=stop_check, call_back=call_back)
-
     if support_corpus_path is not None:
         discourse.lexicon.specifier = support.specifier
 
