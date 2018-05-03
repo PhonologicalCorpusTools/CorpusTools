@@ -26,10 +26,6 @@ class TableWidget(QTableView):
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         self.horizontalHeader().setMinimumSectionSize(70)
-        # try:
-        #     self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        # except AttributeError:
-        #     self.horizontalHeader().setResizeMode(QHeaderView.Fixed)
 
         self.setSortingEnabled(True)
         self.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
@@ -38,37 +34,23 @@ class TableWidget(QTableView):
 
     def keyPressEvent(self, e):
         if (e.modifiers() & Qt.ControlModifier):
-            #selected = self.selectionModel().selectedRows()
+            selected = self.selectionModel().selectedRows()
             if e.key() == Qt.Key_C: #copy
-                #s = '\t'+"\t".join([str(self.table.horizontalHeaderItem(i).text()) for i in xrange(selected[0].leftColumn(), selected[0].rightColumn()+1)])
-                #s = s + '\n'
-                s = ''
-
-                for r in selected:
-                    #s += self.table.verticalHeaderItem(r).text() + '\t'
-                    for c in range(self.model().columnCount()):
-                        ind = self.model().index(r.row(),c)
-                        s += self.model().data(ind,Qt.DisplayRole) + "\t"
-                    s = s[:-1] + "\n" #eliminate last '\t'
-                self.clip.setText(s)
+                copyInfo = list()
+                for row in selected:
+                    copy = list()
+                    for col in range(self.model().columnCount()):
+                        ind = self.model().index(row.row(),col)
+                        copy.append(self.model().data(ind,Qt.DisplayRole))
+                    copy = '\t'.join(copy)
+                    copyInfo.append(copy)
+                copyInfo = '\n'.join(copyInfo)
+                self.clip.setText(copyInfo)
 
 
     def setModel(self,model):
         super(TableWidget, self).setModel(model)
-
-        #self.horizontalHeader().resizeSections(QHeaderView.ResizeToContents)
-        #try:
-        #    self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        #except AttributeError:
-        #    self.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-        #self.model().columnsRemoved.connect(self.horizontalHeader().resizeSections)
         self.resizeColumnsToContents()
-
-        # FOR SOME REASON THE CODE IN THE FOLLOWING EXCEPT CLAUSE CAUSES A SpontanousSpeechCorpus TO CRASH PYTHON.EXE
-        # try:
-        #     self.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
-        # except AttributeError:
-        #     self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
 
     def calcWidth(self):
         header = self.horizontalHeader()
