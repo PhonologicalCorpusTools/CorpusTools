@@ -2159,8 +2159,11 @@ class Corpus(object):
                 sw = self.find(w.spelling)
                 sw.frequency += w.frequency
                 for a in self.attributes:
-                    if getattr(sw, a.name) == a.default_value and getattr(w, a.name) != a.default_value:
-                        setattr(sw, a.name, copy.copy(getattr(w, a.name)))
+                    try:
+                        if getattr(sw, a.name) == a.default_value and getattr(w, a.name) != a.default_value:
+                            setattr(sw, a.name, copy.copy(getattr(w, a.name)))
+                    except AttributeError:
+                        pass
                 for wt in w.wordtokens:
                     sw.wordtokens.append(copy.copy(wt))
             except KeyError:

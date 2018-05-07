@@ -9,7 +9,7 @@ from corpustools.decorators import check_for_errors
 from corpustools.corpus.io.binary import load_binary, save_binary, PCTUnpickler
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
                                     export_corpus_csv)
-from corpustools.corpus.io.textgrid import (inspect_discourse_textgrid,
+from corpustools.corpus.io.pct_textgrid import (inspect_discourse_textgrid,
                                             load_discourse_textgrid,
                                             load_directory_textgrid)
 from corpustools.corpus.io.text_ilg import (load_discourse_ilg,

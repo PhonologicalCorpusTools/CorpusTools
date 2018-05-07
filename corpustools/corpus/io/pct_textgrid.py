@@ -283,7 +283,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
 
 
 def load_discourse_textgrid(corpus_name, path, annotation_types,
-                            feature_system_path = None,
+                            feature_system_path = None, support_corpus_path = None,
                             stop_check = None, call_back = None):
     """
     Load a discourse from a TextGrid file
@@ -315,21 +315,24 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
     #textgrid_to_data has side-effects that change annotation_types
     wav_path = find_wav_path(path)
-    discourse = data_to_discourse2(corpus_name, wav_path, annotation_types, stop_check=stop_check, call_back=call_back)
-
-    # discourse = data_to_discourse(data, lexicon, call_back=call_back, stop_check=stop_check)
-    # discourse is a Discourse object, see corpus\classes\spontaneous.py
-    if discourse is None:
-        return
-    if feature_system_path is not None:
-        feature_matrix = load_binary(feature_system_path)
-        discourse.lexicon.set_feature_matrix(feature_matrix)
-        discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
+    if support_corpus_path is not None:
+        if isinstance(support_corpus_path, Corpus):
+            #the corpus is 'preloaded' if this function is called by load_directory_textgrid
+            #otherwise the corpus has to be loaded once per file in a directory, which could be slow
+            support = support_corpus_path
+        else:
+            #otherwise, it's a string representing a path to the corpus
+            support = load_binary(support_corpus_path)
+    else:
+        support = None
+    discourse = data_to_discourse2(corpus_name, wav_path,
+                                   annotation_types=annotation_types, support_corpus = support,
+                                   stop_check=stop_check, call_back=call_back)
 
     return discourse
 
 def load_directory_textgrid(corpus_name, path, annotation_types,
-                            feature_system_path = None,
+                            feature_system_path = None, support_corpus_path = None,
                             stop_check = None, call_back = None):
     """
     Loads a directory of TextGrid files
@@ -371,8 +374,11 @@ def load_directory_textgrid(corpus_name, path, annotation_types,
         call_back(0,len(file_tuples))
         cur = 0
     corpus = SpontaneousSpeechCorpus(corpus_name, path)
+    if support_corpus_path is not None:
+        support = load_binary(support_corpus_path)
+    else:
+        support = None
     for i, t in enumerate(file_tuples):
-        print('Parsing file {} of {}...'.format(i+1, len(file_tuples)))
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
@@ -380,9 +386,10 @@ def load_directory_textgrid(corpus_name, path, annotation_types,
             call_back(i)
         root, filename = t
         name = os.path.splitext(filename)[0]
-        print('File name: ', name)
+        at = annotation_types[:]
         d = load_discourse_textgrid(name, os.path.join(root,filename),
-                                    annotation_types,
+                                    annotation_types=at,
+                                    support_corpus_path=support,
                                     stop_check=stop_check,
                                     call_back=call_back)
         corpus.add_discourse(d)

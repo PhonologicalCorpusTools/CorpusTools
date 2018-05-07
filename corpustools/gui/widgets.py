@@ -34,7 +34,11 @@ class TableWidget(QTableView):
 
     def keyPressEvent(self, e):
         if (e.modifiers() & Qt.ControlModifier):
-            selected = self.selectionModel().selectedRows()
+            try:
+                selected = self.selectionModel().selectedRows()
+            except AttributeError:
+                super().keyPressEvent(e)
+                return
             if e.key() == Qt.Key_C: #copy
                 copyInfo = list()
                 for row in selected:
