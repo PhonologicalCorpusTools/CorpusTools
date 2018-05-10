@@ -175,9 +175,9 @@ def load_directory_transcription(corpus_name, path, annotation_types = None,
         root, filename = t
         name = os.path.splitext(filename)[0]
         d = load_discourse_transcription(name, os.path.join(root,filename),
-                                    annotation_types,
-                                    corpus.lexicon, None,
-                                    stop_check, call_back)
+                                    annotation_types=annotation_types,
+                                    lexicon=corpus.lexicon, feature_system_path=feature_system_path,
+                                    stop_check=stop_check, call_back=call_back)
         corpus.add_discourse(d)
     return corpus
 
@@ -222,7 +222,6 @@ def load_discourse_transcription(corpus_name, path, annotation_types = None,
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
         discourse.lexicon.set_feature_matrix(feature_matrix)
-        discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
 
     return discourse
 

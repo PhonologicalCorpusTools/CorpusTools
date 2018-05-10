@@ -307,7 +307,7 @@ def export_corpus_csv(corpus, path,
         for word in corpus.iter_sort():
             word_outline = []
             for a in corpus.attributes:
-                word_outline.append(make_safe(getattr(word, a.name),trans_delimiter))
+                word_outline.append(make_safe(getattr(word, a.name), trans_delimiter))
             if variant_behavior == 'token':
                 var = word.variants()
                 for v, freq in var.items():
