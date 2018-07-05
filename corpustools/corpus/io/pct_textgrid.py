@@ -1,7 +1,6 @@
 import os
 
 from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import Interval, PointTier , _getMark
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Attribute, Corpus
 from corpustools.corpus.classes.spontaneous import Discourse
@@ -10,9 +9,9 @@ from corpustools.exceptions import PCTError
 from corpustools.corpus.io.binary import load_binary
 import corpustools.gui.modernize as modernize
 
-from .helper import (compile_digraphs, parse_transcription, DiscourseData,
-                    AnnotationType,data_to_discourse, data_to_discourse2, find_wav_path,
-                    Annotation, BaseAnnotation)
+from .helper import (parse_transcription, DiscourseData,
+                    AnnotationType, data_to_discourse2, find_wav_path,
+                    Annotation,)
 
 def uniqueLabels(tier):
     return set(x.mark for x in tier.intervals)
