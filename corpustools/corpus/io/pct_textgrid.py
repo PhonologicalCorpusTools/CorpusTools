@@ -1,16 +1,11 @@
 import os
-import collections
 
 from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import Interval, Point, PointTier , _getMark
-try:
-    from textgrid.textgrid import readFile
-except ImportError:
-    from textgrid.textgrid import detectEncoding as readFile
+from textgrid.textgrid import Interval, PointTier , _getMark
 
-from corpustools.corpus.classes import SpontaneousSpeechCorpus, Speaker, Attribute
+from corpustools.corpus.classes import SpontaneousSpeechCorpus, Attribute, Corpus
 from corpustools.corpus.classes.spontaneous import Discourse
-from corpustools.exceptions import TextGridTierError, PCTError
+from corpustools.exceptions import PCTError
 
 from corpustools.corpus.io.binary import load_binary
 import corpustools.gui.modernize as modernize
@@ -18,56 +13,6 @@ import corpustools.gui.modernize as modernize
 from .helper import (compile_digraphs, parse_transcription, DiscourseData,
                     AnnotationType,data_to_discourse, data_to_discourse2, find_wav_path,
                     Annotation, BaseAnnotation)
-
-class PCTTextGrid(TextGrid):
-
-    def __init__(self):
-        super().__init__()
-
-    def name_filter(self,name):
-        return name.capitalize() if not all([x.isupper() for x in name]) else name
-
-    def read(self, f):
-        """
-        Read the tiers contained in the Praat-formated TextGrid file
-        indicated by string f
-        """
-        source = readFile(f)
-        self.minTime = round(float(source.readline().split()[2]), 5)
-        self.maxTime = round(float(source.readline().split()[2]), 5)
-        source.readline() # more header junk
-        m = int(source.readline().rstrip().split()[2]) # will be self.n
-        source.readline()
-        for i in range(m): # loop over grids
-            source.readline()
-            if source.readline().rstrip().split()[2] == '"IntervalTier"':
-                inam = source.readline().rstrip().split(' = ')[1].strip('"')
-                inam = self.name_filter(inam)
-                imin = round(float(source.readline().rstrip().split()[2]), 5)
-                imax = round(float(source.readline().rstrip().split()[2]), 5)
-                itie = IntervalTier(inam)
-                for j in range(int(source.readline().rstrip().split()[3])):
-                    source.readline().rstrip().split() # header junk
-                    jmin = round(float(source.readline().rstrip().split()[2]), 5)
-                    jmax = round(float(source.readline().rstrip().split()[2]), 5)
-                    jmrk = _getMark(source)
-                    if jmin < jmax: # non-null
-                        itie.addInterval(Interval(jmin, jmax, jmrk))
-                self.append(itie)
-            else: # pointTier
-                inam = source.readline().rstrip().split(' = ')[1].strip('"')
-                inam = self.name_filter(inam)
-                imin = round(float(source.readline().rstrip().split()[2]), 5)
-                imax = round(float(source.readline().rstrip().split()[2]), 5)
-                itie = PointTier(inam)
-                n = int(source.readline().rstrip().split()[3])
-                for j in range(n):
-                    source.readline().rstrip() # header junk
-                    jtim = round(float(source.readline().rstrip().split()[2]),
-                                                                           5)
-                    jmrk = source.readline().rstrip().split()[2][1:-1]
-
-        source.close()
 
 def uniqueLabels(tier):
     return set(x.mark for x in tier.intervals)
@@ -144,8 +89,7 @@ def inspect_discourse_textgrid(path):
     return anno_types
 
 def load_textgrid(path):
-    tg = PCTTextGrid()
-    tg.read(path)
+    tg = TextGrid.fromFile(path)
     return tg
 
 def guess_tiers(tg):
@@ -329,6 +273,10 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
                                    annotation_types=annotation_types, support_corpus = support,
                                    stop_check=stop_check, call_back=call_back)
 
+    if feature_system_path is not None:
+        feature_matrix = load_binary(feature_system_path)
+        discourse.lexicon.set_feature_matrix(feature_matrix)
+        discourse.lexicon.specifier = modernize.modernize_specifier(discourse.lexicon.specifier)
     return discourse
 
 def load_directory_textgrid(corpus_name, path, annotation_types,
