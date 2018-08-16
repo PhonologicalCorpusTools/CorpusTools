@@ -1,4 +1,5 @@
 from corpustools import __version__ as currentPCTversion
+from decimal import Decimal
 import re
 import random
 import collections
@@ -935,6 +936,8 @@ class Word(object):
         for key, value in kwargs.items():
             if not all([letter.isupper() for letter in key]):
                 key = key.capitalize()
+            if isinstance(value, Decimal):
+                value = float(value)
             if isinstance(value, tuple):
                 #this block of code is used when loading a corpus for the first time
                 att, value = value

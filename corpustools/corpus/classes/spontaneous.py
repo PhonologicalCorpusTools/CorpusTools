@@ -3,6 +3,7 @@ from .lexicon import Transcription, Corpus, Attribute, Word
 import os
 import wave
 import random
+from decimal import Decimal
 
 class Speaker(object):
     """
@@ -259,7 +260,7 @@ class Discourse(object):
 
 
     def __getitem__(self, key):
-        if isinstance(key, float) or isinstance(key, int):
+        if isinstance(key, float) or isinstance(key, int) or isinstance(key, Decimal):
             #Find the word token at a given time
             keys = filter(lambda x: x >= key,self.words.keys())
             t = min(keys,key = lambda x: x - key)
