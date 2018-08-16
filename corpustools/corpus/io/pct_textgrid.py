@@ -1,8 +1,8 @@
 import os
 import collections
 
-from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import Interval, Point, PointTier , _getMark
+from corpustools.corpus.io.textgrid import TextGrid, IntervalTier
+from corpustools.corpus.io.textgrid import Interval, Point, PointTier , _getMark
 try:
     from textgrid.textgrid import readFile
 except ImportError:
