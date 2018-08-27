@@ -210,11 +210,16 @@ def load_directory_multiple_files(corpus_name, path, dialect,
             phone_ext = '.phn'
         word_path = os.path.join(root,filename)
         phone_path = os.path.splitext(word_path)[0] + phone_ext
-        d = load_discourse_multiple_files(name, word_path, phone_path,
-                                            dialect, annotation_types,
-                                            corpus.lexicon, feature_system_path,
-                                            stop_check, None)
-        corpus.add_discourse(d)
+
+        try:
+	        d = load_discourse_multiple_files(name, word_path, phone_path,
+	                                            dialect, annotation_types,
+	                                            corpus.lexicon, feature_system_path,
+	                                            stop_check, None)
+	        corpus.add_discourse(d)
+	    except ValueError:
+	    	print('There was an issue importing ' + str(name))
+	    	print('It could be a formatting issue within the file')
 
     if feature_system_path is not None:
         feature_matrix = load_binary(feature_system_path)
