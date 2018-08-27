@@ -883,7 +883,10 @@ class FeatureMatrix(object):
             return self.matrix[item.symbol]
         if isinstance(item,tuple):
             #tuple should be (symbol,feature_name) to get only that feature's value
-            return self.matrix[item[0]][item[1]]
+            try:
+                return self.matrix[item[0]][item[1]]
+            except KeyError:
+                return self.matrix[item[0]][item[1].lower()]
 
     def __delitem__(self,item):
         del self.matrix[item]

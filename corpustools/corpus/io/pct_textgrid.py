@@ -1,15 +1,11 @@
 import os
 
-<<<<<<< HEAD
-from corpustools.corpus.io.textgrid import TextGrid, IntervalTier
-from corpustools.corpus.io.textgrid import Interval, Point, PointTier , _getMark
+from textgrid import TextGrid, IntervalTier
+from textgrid.textgrid import Interval, Point, PointTier , _getMark
 try:
     from textgrid.textgrid import readFile
 except ImportError:
     from textgrid.textgrid import detectEncoding as readFile
-=======
-from textgrid import TextGrid, IntervalTier
->>>>>>> de116a6cf9026c1763ea57011c2508606a361787
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Attribute, Corpus
 from corpustools.corpus.classes.spontaneous import Discourse
@@ -21,6 +17,67 @@ import corpustools.gui.modernize as modernize
 from .helper import (parse_transcription, DiscourseData,
                     AnnotationType, data_to_discourse2, find_wav_path,
                     Annotation,)
+
+class PCTTextGrid(TextGrid):
+
+    def __init__(self):
+        super().__init__()
+
+    def name_filter(self, name):
+        """
+        Captialize the initial letter to match the specifications in PCT
+        """
+        return name.capitalize() if not all([x.isupper() for x in name]) else name
+
+    def read(self, f, round_digits=15):
+        """
+        Read the tiers contained in the Praat-formatted TextGrid file
+        indicated by string f. Times are rounded to the specified precision.
+        """
+        source = readFile(f)
+        self.minTime = round(float(source.readline().split()[2]), round_digits)
+        self.maxTime = round(float(source.readline().split()[2]), round_digits)
+        source.readline() # more header junk
+        m = int(source.readline().rstrip().split()[2]) # will be self.n
+        source.readline()
+        for i in range(m): # loop over grids
+            source.readline()
+            if source.readline().rstrip().split()[2] == '"IntervalTier"':
+                inam = source.readline().rstrip().split(' = ')[1].strip('"')
+                inam = self.name_filter(inam)
+                imin = round(float(source.readline().rstrip().split()[2]),
+                             round_digits)
+                imax = round(float(source.readline().rstrip().split()[2]),
+                             round_digits)
+                itie = IntervalTier(inam)
+                for j in range(int(source.readline().rstrip().split()[3])):
+                    source.readline().rstrip().split() # header junk
+                    jmin = round(float(source.readline().rstrip().split()[2]),
+                                 round_digits)
+                    jmax = round(float(source.readline().rstrip().split()[2]),
+                                 round_digits)
+                    jmrk = _getMark(source)
+                    if jmin < jmax: # non-null
+                        itie.addInterval(Interval(jmin, jmax, jmrk))
+                self.append(itie)
+            else: # pointTier
+                inam = source.readline().rstrip().split(' = ')[1].strip('"')
+                inam = self.name_filter(inam)
+                imin = round(float(source.readline().rstrip().split()[2]),
+                             round_digits)
+                imax = round(float(source.readline().rstrip().split()[2]),
+                             round_digits)
+                itie = PointTier(inam)
+                n = int(source.readline().rstrip().split()[3])
+                for j in range(n):
+                    source.readline().rstrip() # header junk
+                    jtim = round(float(source.readline().rstrip().split()[2]),
+                                 round_digits)
+                    jmrk = _getMark(source)
+                    itie.addPoint(Point(jtim, jmrk))
+                self.append(itie)
+        source.close()
+
 
 def uniqueLabels(tier):
     return set(x.mark for x in tier.intervals)
@@ -97,7 +154,8 @@ def inspect_discourse_textgrid(path):
     return anno_types
 
 def load_textgrid(path):
-    tg = TextGrid.fromFile(path)
+    tg = PCTTextGrid()
+    tg.read(path)
     return tg
 
 def guess_tiers(tg):
