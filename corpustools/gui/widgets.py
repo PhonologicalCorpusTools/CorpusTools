@@ -95,25 +95,42 @@ class ParsingDialog(QDialog):
     def __init__(self, parent, annotation_type, att_type):
         QDialog.__init__(self, parent)
         self.characters = annotation_type.characters
-        self.setWindowTitle('Parsing {}'.format(annotation_type.name))
+        self.setWindowTitle('Parsing {}'.format(annotation_type.name))\
+
+        scroll = QScrollArea()
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setWidgetResizable(False)
+
+        mainwidget = QWidget()
 
         layout = QFormLayout()
-        self.example = QLabel(' '.join([a.label if isinstance(a,BaseAnnotation) else a for a in annotation_type[:5]]))
+        self.example = QLabel(' '.join([a.label if isinstance(a, BaseAnnotation) else a for a in annotation_type[:5]]))
         self.example.setWordWrap(True)
         layout.addRow('Example:', self.example)
 
         self.punctuationWidget = PunctuationWidget(annotation_type.punctuation)
         self.punctuationWidget.setPunctuation(annotation_type.ignored_characters)
         self.delimiterWidget = QLineEdit()
+
+        self.syllableDelimiterWidget = QLineEdit()
+        self.syllableDelimiterWidget.textChanged.connect(self.updatePunctuation)
+
         self.morphDelimiterWidget = PunctuationWidget(annotation_type.punctuation & set('-='),
                                                         'Morpheme delimiter')
         self.morphDelimiterWidget.setPunctuation(annotation_type.morph_delimiters)
+
         self.digraphWidget = DigraphWidget()
+
         self.numberBehaviorSelect = QComboBox()
         self.numberBehaviorSelect.addItem('Same as other characters')
         self.numberBehaviorSelect.addItem('Tone')
         self.numberBehaviorSelect.addItem('Stress')
         self.numberBehaviorSelect.currentIndexChanged.connect(self.updatePunctuation)
+
+        self.streeSpecification = StressSpecificationWidget()
+        self.toneSpecification = ToneSpecificationWidget()
+
 
         self.digraphWidget.characters = annotation_type.characters
         self.digraphWidget.setDigraphs(annotation_type.digraphs)
@@ -125,7 +142,9 @@ class ParsingDialog(QDialog):
             self.punctuationWidget.updateButtons([delimiter])
         self.delimiterWidget.textChanged.connect(self.updatePunctuation)
         if att_type == 'tier':
-            layout.addRow('Transcription delimiter',self.delimiterWidget)
+            layout.addRow('Transcription delimiter', self.delimiterWidget)
+            layout.addRow("Syllable delimiter", self.syllableDelimiterWidget)
+
         layout.addRow(self.morphDelimiterWidget)
         self.morphDelimiterWidget.selectionChanged.connect(self.updatePunctuation)
 
@@ -134,6 +153,9 @@ class ParsingDialog(QDialog):
                 layout.addRow('Number parsing', self.numberBehaviorSelect)
             else:
                 layout.addRow('Number parsing', QLabel('No numbers'))
+
+        layout.addRow(self.streeSpecification)
+        layout.addRow(self.toneSpecification)
         layout.addRow(self.punctuationWidget)
         if att_type == 'tier':
             layout.addRow(self.digraphWidget)
@@ -151,7 +173,13 @@ class ParsingDialog(QDialog):
 
         layout.addRow(acFrame)
 
-        self.setLayout(layout)
+        mainwidget.setLayout(layout)
+
+        scroll.setWidget(mainwidget)
+
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(scroll)
+        self.setLayout(mainLayout)
 
     def ignored(self):
         return self.punctuationWidget.value()
@@ -161,6 +189,9 @@ class ParsingDialog(QDialog):
 
     def transDelimiter(self):
         return self.delimiterWidget.text()
+
+    def syllableDelimiter(self):
+        return self.syllableDelimiterWidget.text()
 
     def numberBehavior(self):
         if self.numberBehaviorSelect.currentIndex() == 0:
@@ -176,7 +207,7 @@ class ParsingDialog(QDialog):
             delimiter = []
         else:
             delimiter = [delimiter]
-        self.morphDelimiterWidget.updateButtons(delimiter, emit = False)
+        self.morphDelimiterWidget.updateButtons(delimiter, emit=False)
 
         delimiter += self.morphDelimiterWidget.value()
         self.punctuationWidget.updateButtons(delimiter)
@@ -190,6 +221,25 @@ class ParsingDialog(QDialog):
         delimiter = self.delimiterWidget.text()
         if delimiter != '':
             self.digraphWidget.characters -= set([delimiter])
+
+    def has_stress(self):
+        return self.streeSpecification.hasStress.isChecked()
+
+    def has_tone(self):
+        return self.toneSpecification.hasTone.isChecked()
+
+    def get_stress_specification(self):
+        if self.has_stress():
+            return self.streeSpecification.get_stress_specification()
+        else:
+            return dict()
+
+    def get_tone_specification(self):
+        if self.has_tone():
+            return self.toneSpecification.get_tone_specification()
+        else:
+            return dict()
+
 
 class AnnotationTypeWidget(QGroupBox):
     def __init__(self, annotation_type, parent = None, ignorable = True):
@@ -274,7 +324,6 @@ class AnnotationTypeWidget(QGroupBox):
 
         self.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
 
-
         self.typeChanged()
 
     def typeChanged(self):
@@ -343,11 +392,19 @@ class AnnotationTypeWidget(QGroupBox):
             self.annotation_type.ignored_characters = dialog.ignored()
             self.annotation_type.digraphs = dialog.digraphs()
             self.annotation_type.morph_delimiters = dialog.morphDelimiters()
+            self.annotation_type.stress_specification = dialog.get_stress_specification()
+            self.annotation_type.tone_specification = dialog.get_tone_specification()
             d = dialog.transDelimiter()
             if d == '':
                 self.annotation_type.trans_delimiter = None
             else:
                 self.annotation_type.trans_delimiter = d
+
+            syll_d = dialog.syllableDelimiter()
+            if syll_d == "":
+                self.annotation_type.syllable_delimiter = None
+            else:
+                self.annotation_type.syllable_delimiter = syll_d
             self.annotation_type.number_behavior = dialog.numberBehavior()
             self.updateParsingLabels()
 
@@ -2727,3 +2784,118 @@ class FileNameDialog(QDialog):
     def cancel(self):
         self.choice = 'cancel'
         QDialog.reject(self)
+
+
+class StressSpecificationWidget(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+
+        mainLayout = QVBoxLayout()
+        self.hasStress = QCheckBox("Has stress")
+        self.hasStress.stateChanged.connect(self.enable_table)
+        mainLayout.addWidget(self.hasStress)
+
+        # Default
+        data = {"Type": ["Primary", "Secondary"],
+                "Symbol": ["\'", "\""]}
+
+        # Create Empty 2x5 Table
+        self.table = QTableWidget(enabled=False)
+        self.table.setRowCount(5)
+        self.table.setColumnCount(2)
+
+        # Enter data onto Table
+        for n, key in enumerate(data.keys()):
+            for m, item in enumerate(data[key]):
+                new_item = QTableWidgetItem(item)
+                self.table.setItem(m, n, new_item)
+
+        # Add Header
+        self.table.setHorizontalHeaderLabels(["Type", "Symbol"])
+        self.table.verticalHeader().setVisible(False)  # Disable row count label
+
+        # Adjust size of Table
+        self.table.resizeColumnsToContents()
+        self.table.resizeRowsToContents()
+
+        # Add Table to the layout
+        mainLayout.addWidget(self.table)
+        self.setLayout(mainLayout)
+
+    def enable_table(self):
+        if self.hasStress.isChecked():
+            self.table.setEnabled(True)
+        else:
+            self.table.setEnabled(False)
+
+    def num_stress_type(self):
+        for row in reversed(range(self.table.rowCount())):
+            item = self.table.item(row, 0)
+            if item is None:
+                self.table.removeRow(row)
+        return self.table.rowCount()
+
+    def get_stress_specification(self):
+        stress_pattern = dict()
+        for row in range(self.num_stress_type()):
+            type = str(self.table.item(row, 0).text())
+            symbol = str(self.table.item(row, 1).text())
+            stress_pattern[symbol] = type
+        return stress_pattern
+
+class ToneSpecificationWidget(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+
+        mainLayout = QVBoxLayout()
+        self.hasTone = QCheckBox("Has tone")
+        self.hasTone.stateChanged.connect(self.enable_table)
+        mainLayout.addWidget(self.hasTone)
+
+        # Default
+        data = {"Type": ["Tone1", "Tone2", "Tone3", "Tone4", "Tone5", "Tone6"],
+                "Symbol": ["1", "2", "3", "4", "5", "6"]}
+
+        # Create Empty 2x6 Table
+        self.table = QTableWidget(enabled=False)
+        self.table.setRowCount(10)
+        self.table.setColumnCount(2)
+
+        # Enter data onto Table
+        for n, key in enumerate(data.keys()):
+            for m, item in enumerate(data[key]):
+                new_item = QTableWidgetItem(item)
+                self.table.setItem(m, n, new_item)
+
+        # Add Header
+        self.table.setHorizontalHeaderLabels(["Type", "Symbol"])
+        self.table.verticalHeader().setVisible(False)  # Disable row count label
+
+        # Adjust size of Table
+        self.table.resizeColumnsToContents()
+        self.table.resizeRowsToContents()
+
+        # Add Table to the layout
+        mainLayout.addWidget(self.table)
+        self.setLayout(mainLayout)
+
+    def enable_table(self):
+        if self.hasTone.isChecked():
+            self.table.setEnabled(True)
+        else:
+            self.table.setEnabled(False)
+
+    def num_tone_type(self):
+        for row in reversed(range(self.table.rowCount())):
+            item = self.table.item(row, 0)
+            if item is None:
+                self.table.removeRow(row)
+        return self.table.rowCount()
+
+    def get_tone_specification(self):
+        tone_pattern = dict()
+        for row in range(self.num_tone_type()):
+            type = str(self.table.item(row, 0).text())
+            symbol = str(self.table.item(row, 1).text())
+            tone_pattern[symbol] = type
+        return tone_pattern

@@ -928,6 +928,10 @@ class InventoryModel(QAbstractTableModel):
         self.features = inventory.features
         self.possible_values = inventory.possible_values
         self.stresses = inventory.stresses
+        self.syllables = inventory.syllables
+        self.stress_types = inventory.stress_types
+        self.tone_types = inventory.tone_types
+
 
         self.generateGenericNames()
         self.categorizeInventory()

@@ -354,17 +354,14 @@ class RecentSearchDialog(QDialog):
 
 
 class PhonoSearchDialog(FunctionDialog):
-    header = ['Word',
-                'Transcription',
-                'Segment',
-                'Environment',
-                'Token frequency']
+    header = ['Word', 'Transcription', 'Segment', 'Environment', 'Token frequency']
     summary_header = ['Segment', 'Environment', 'Type frequency', 'Token frequency']
     _about = ['']
-
     name = 'phonological search'
+
     def __init__(self, parent, settings, recents, saved, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, PSWorker())
+        self.setWindowTitle('Phonological search')
 
         self.corpus = corpus
         self.inventory = inventory
@@ -374,41 +371,41 @@ class PhonoSearchDialog(FunctionDialog):
 
         psFrame = QFrame()
         pslayout = QHBoxLayout()
-        self.envWidget = EnvironmentSelectWidget(self.inventory,
-                                                 show_full_inventory=bool(settings['show_full_inventory']))
+        self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
         pslayout.addWidget(self.envWidget)
 
         optionFrame = QGroupBox('Options')
         optionLayout = QVBoxLayout()
         optionFrame.setLayout(optionLayout)
 
-        self.tierWidget = TierWidget(corpus,include_spelling=False)
+        self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionLayout.addWidget(self.tierWidget)
 
         searchFrame = QGroupBox('Searches')
         searchLayout = QVBoxLayout()
         searchFrame.setLayout(searchLayout)
+
         loadSearch = QPushButton('Load recent search')
         loadSearch.clicked.connect(self.loadSearch)
+        searchLayout.addWidget(loadSearch)
+
         saveSearch = QPushButton('Save current search')
         saveSearch.clicked.connect(self.saveSearch)
-        searchLayout.addWidget(loadSearch)
         searchLayout.addWidget(saveSearch)
-        optionLayout.addWidget(searchFrame)
 
+        optionLayout.addWidget(searchFrame)
         pslayout.addWidget(optionFrame)
 
         psFrame.setLayout(pslayout)
-        self.layout().insertWidget(0,psFrame)
-        self.setWindowTitle('Phonological search')
+        self.layout().insertWidget(0, psFrame)
         self.progressDialog.setWindowTitle('Searching')
 
     def accept(self):
-        for n in range(self.envWidget.environmentFrame.layout().count()-2):
-            #the -2 avoids catching some unncessary widgets
+        for n in range(self.envWidget.environmentFrame.layout().count() - 2):
+            # the -2 avoids catching some unncessary widgets
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
             search = RecentSearch(widget)
-            self.recentSearches.appendleft(search) #recentSearches is a collections.deque object, not a regular list
+            self.recentSearches.appendleft(search)  # recentSearches is a collections.deque object, not a regular list
         super().accept()
 
     def loadSearch(self):
@@ -488,7 +485,7 @@ class PhonoSearchDialog(FunctionDialog):
             for i, e in enumerate(envs):
                 if len(e.middle) == 0:
                     reply = QMessageBox.critical(self, "Missing information",
-                            "Please specify at least segment to search for in environment {}.".format(i+1))
+                                                 "Please specify at least segment to search for in environment {}.".format(i+1))
                     return
             kwargs['envs'] = envs
 

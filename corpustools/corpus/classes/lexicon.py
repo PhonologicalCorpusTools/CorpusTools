@@ -157,6 +157,7 @@ class Segment(object):
     def __len__(self):
         return len(self.symbol)
 
+
 class Transcription(object):
     """
     Transcription object, sequence of symbols
@@ -178,52 +179,110 @@ class Transcription(object):
         Possible keys of 'morpheme' or 'tone' that keeps track of where
         morpheme or tone boundaries are inserted
     """
-    def __init__(self,seg_list):
+    def __init__(self, seg_list):
+        # Note to myself: in the original implementation, seg_list is a list
+        # of BaseAnnotation type
+
+        # If there is a syllable delimiter, then it's a list of SyllableBaseAnnotation
+        self._syllable_list = [] # A list of dictionaries
         self._list = []
-        #self._times = []
         self.stress_pattern = {}
-        self.boundaries = {}
+        self.boundaries = {}  # TODO: Don't know when this is used
         cur_group = 0
         cur_tone = None
         if seg_list is not None:
-            for i,s in enumerate(seg_list):
-                try:
-                    self._list.append(s.label)
-                    #if s.begin is not None and s.end is not None:
-                    #    self._times.append((s.begin,s.end))
-                    if s.stress is not None:
-                        self.stress_pattern[i] = s.stress
-                    if s.tone is not None:
-                        if 'tone' not in self.boundaries:
-                            self.boundaries['tone'] = {}
-                        if s.tone != cur_tone:
-                            self.boundaries['tone'][i] = s.tone
-                            cur_tone = s.tone
-                    if s.group is not None:
-                        if 'morpheme' not in self.boundaries:
-                            self.boundaries['morpheme'] = []
-                        if s.group != cur_group:
-                            self.boundaries['morpheme'].append(i)
-                            cur_group = s.group
-                except AttributeError:
-                    if isinstance(s,str) or isinstance(s, Segment):
-                        self._list.append(s)
-                    elif isinstance(s,dict):
+            first_element = seg_list[0]
+
+            try:
+                if first_element.type == "syllable":
+                    has_syllable_level = True
+                else:
+                    has_syllable_level = False
+            except Exception:
+                has_syllable_level = False
+
+            if has_syllable_level:
+                # TODO: need to extend the function to be able to add new words in the future
+                for base_syll in seg_list:
+                    self._syllable_list.append(base_syll.label)
+                    for i, s in enumerate(base_syll):
                         try:
-                            symbol = s['label']
-                        except KeyError:
-                            symbol = s['symbol']
-                        self._list.append(symbol)
-                        #if 'begin' in s and 'end' in s:
-                        #    self._times.append((s['begin'],s['end']))
-                    elif isinstance(s,list):
-                        if len(s) == 3:
-                            self._list.append(s[0])
-                            #self._times.append((s[1],s[2]))
+                            self._list.append(s.label)
+                            # if s.begin is not None and s.end is not None:
+                            #    self._times.append((s.begin,s.end))
+                            if s.stress is not None:
+                                self.stress_pattern[i] = s.stress
+                            if s.tone is not None:
+                                if 'tone' not in self.boundaries:
+                                    self.boundaries['tone'] = {}
+                                if s.tone != cur_tone:
+                                    self.boundaries['tone'][i] = s.tone
+                                    cur_tone = s.tone
+                            if s.group is not None:
+                                if 'morpheme' not in self.boundaries:
+                                    self.boundaries['morpheme'] = []
+                                if s.group != cur_group:
+                                    self.boundaries['morpheme'].append(i)
+                                    cur_group = s.group
+                        except AttributeError:
+                            if isinstance(s, str) or isinstance(s, Segment):
+                                self._list.append(s)
+                            elif isinstance(s, dict):
+                                try:
+                                    symbol = s['label']
+                                except KeyError:
+                                    symbol = s['symbol']
+                                self._list.append(symbol)
+                                # if 'begin' in s and 'end' in s:
+                                #    self._times.append((s['begin'],s['end']))
+                            elif isinstance(s, list):
+                                if len(s) == 3:  # TODO: what is this line for?
+                                    self._list.append(s[0])
+                                    # self._times.append((s[1],s[2]))
+                                else:
+                                    raise (NotImplementedError('That format for seg_list is not supported.'))
+                            else:
+                                raise (NotImplementedError('That format for seg_list is not supported.'))
+
+            else:
+                for i, s in enumerate(seg_list):
+                    try:
+                        self._list.append(s.label)
+                        #if s.begin is not None and s.end is not None:
+                        #    self._times.append((s.begin,s.end))
+                        if s.stress is not None:
+                            self.stress_pattern[i] = s.stress
+                        if s.tone is not None:
+                            if 'tone' not in self.boundaries:
+                                self.boundaries['tone'] = {}
+                            if s.tone != cur_tone:
+                                self.boundaries['tone'][i] = s.tone
+                                cur_tone = s.tone
+                        if s.group is not None:
+                            if 'morpheme' not in self.boundaries:
+                                self.boundaries['morpheme'] = []
+                            if s.group != cur_group:
+                                self.boundaries['morpheme'].append(i)
+                                cur_group = s.group
+                    except AttributeError:
+                        if isinstance(s, str) or isinstance(s, Segment):
+                            self._list.append(s)
+                        elif isinstance(s, dict):
+                            try:
+                                symbol = s['label']
+                            except KeyError:
+                                symbol = s['symbol']
+                            self._list.append(symbol)
+                            #if 'begin' in s and 'end' in s:
+                            #    self._times.append((s['begin'],s['end']))
+                        elif isinstance(s, list):
+                            if len(s) == 3:  # TODO: what is this line for?
+                                self._list.append(s[0])
+                                #self._times.append((s[1],s[2]))
+                            else:
+                                raise(NotImplementedError('That format for seg_list is not supported.'))
                         else:
                             raise(NotImplementedError('That format for seg_list is not supported.'))
-                    else:
-                        raise(NotImplementedError('That format for seg_list is not supported.'))
 
     def with_word_boundaries(self):
         """
@@ -255,6 +314,7 @@ class Transcription(object):
         if all(m not in self for m in environment._middle):
             return None
         num_segs = len(environment)
+        print("num_segs: ", num_segs)
 
         possibles = zip(*[self.with_word_boundaries()[i:] for i in range(num_segs)])
 
@@ -837,7 +897,7 @@ class FeatureMatrix(object):
         """
         return list(self.matrix.keys())
 
-    def seg_to_feat_line(self,symbol):
+    def seg_to_feat_line(self, symbol):
         """
         Get a list of feature values for a given segment in the order
         that features are return in get_feature_list
@@ -854,8 +914,7 @@ class FeatureMatrix(object):
         list
             List of feature values for the symbol, as well as the symbol itself
         """
-        featline = [symbol] + [ self.matrix[symbol][feat]
-                            for feat in self._features]
+        featline = [symbol] + [self.matrix[symbol][feat] for feat in self._features]
         return featline
 
     def specify(self, seg, assign_defaults = False):
@@ -917,16 +976,17 @@ class Word(object):
         Token frequency in a corpus
     """
 
-    word_attributes = {'_corpus':None, '_transcription':None, '_spelling':None,
-                       '_transcription_name':None, '_spelling_name': None,
+    word_attributes = {'_corpus': None, '_transcription': None, '_spelling': None,
+                       '_transcription_name': None, '_spelling_name': None,
                        'alt_transcriptions': list(), 'alt_spellings': list(),
-                       '_frequency':0, 'wordtokens':list(),
-                       'descriptors':list()}
-    _freq_names = ['abs_freq', 'freq_per_mil','sfreq', 'lowercase_freq', 'log10_freq', 'freq', 'frequency']
+                       '_frequency': 0, 'wordtokens': list(),
+                       'descriptors': list()}
+    _freq_names = ['abs_freq', 'freq_per_mil', 'sfreq', 'lowercase_freq', 'log10_freq', 'freq', 'frequency']
 
     def __init__(self, **kwargs):
-
         update = kwargs.pop('update', False)
+
+        # TODO: Don't know what the following code is doing...
         if update:
             self.update(update)
             return
@@ -939,7 +999,7 @@ class Word(object):
             if isinstance(value, Decimal):
                 value = float(value)
             if isinstance(value, tuple):
-                #this block of code is used when loading a corpus for the first time
+                # this block of code is used when loading a corpus for the first time
                 att, value = value
                 if att.att_type == 'numeric':
                     try:
@@ -951,8 +1011,10 @@ class Word(object):
                         setattr(self, '_frequency', value)
 
                 elif att.att_type == 'tier':
-                    value = Transcription(value)
-                else:# att.att_type == 'spelling' or att.att_type == 'factor':
+                    value = Transcription(value)  # The value argument is a list of BaseAnnotation
+                    # _list is a list of segment symbol
+
+                else:  # att.att_type == 'spelling' or att.att_type == 'factor':
                     pass
 
                 setattr(self, key, value)
@@ -970,9 +1032,9 @@ class Word(object):
                     elif att.att_type == 'spelling':
                         self.alt_spellings.append(key)
 
-            #the following code is reached when adding a word, not when loading a corpus
+            # the following code is reached when adding a word, not when loading a corpus
             elif isinstance(value, list):
-                #probably a transcription
+                # probably a transcription
                 value = Transcription(value)
                 setattr(self, key, value)
                 setattr(self, '_transcription', value)
@@ -996,19 +1058,18 @@ class Word(object):
                     setattr(self, '_frequency', self.Frequency)
                 setattr(self, key, value)
 
-
             if key not in self.descriptors:
                 self.descriptors.append(key)
 
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
         if self.spelling is None:
-            self.Spelling = ''.join(map(str,self._transcription))
+            self.Spelling = ''.join(map(str, self._transcription))
             self._spelling = self.Spelling
             self._spelling_name = 'Spelling'
             if not 'Spelling' in self.descriptors:
                 self.descriptors.append('Spelling')
-        if not 'Frequency' in self.descriptors:
+        if 'Frequency' not in self.descriptors:
             self.descriptors.append('Frequency')
             self._frequency = 0
             self.Frequency = 0
@@ -1020,6 +1081,7 @@ class Word(object):
                     break
             else:
                 self._transcription = None
+
 
     def initDefaults(self):
         for attribute, default_value in Word.word_attributes.items():
@@ -1876,9 +1938,10 @@ class Inventory(object):
 
 
     """
-    inventory_attributes = {'_data': list(), 'segs': {'#': Segment('#')},
+    inventory_attributes = {'_data': list(), 'segs': {'#': Segment('#')}, 'syllables': dict(),
                             'features': list(), 'possible_values': list(),
                             'stresses': list(),
+                            'stress_types': dict(), 'tone_types': dict(),
                             'consColumns': set(), 'vowelColumns': set(),
                             'vowelRows': set(), 'consRows': set(),
                             'cons_column_data': {}, 'cons_row_data': {},
@@ -2668,7 +2731,9 @@ class Corpus(object):
 
         """
         word._corpus = self
-        tokens = word.wordtokens[:]
+        tokens = word.wordtokens[:]  # What is this doing?
+
+        # TODO: need to figure out what the following code is doing
         #If the word doesn't exist, add it
         try:
             check = self.find(word.spelling)
@@ -2679,7 +2744,7 @@ class Corpus(object):
                 n = 0
                 while True:
                     n += 1
-                    key = '{} ({})'.format(word.spelling,n)
+                    key = '{} ({})'.format(word.spelling, n)
                     try:
                         check = self.find(key)
                     except KeyError:
@@ -2693,10 +2758,11 @@ class Corpus(object):
             if word.frequency == 0:
                 word.frequency += 1
 
-            self.wordlist[word.spelling] = word#copy.copy(word)
+            self.wordlist[word.spelling] = word  #copy.copy(word)
             if word.spelling is not None:
                 if not self.has_spelling:
                     self.has_spelling = True
+
         added_default = False
         if word.transcription is not None:
             added_default = self.update_inventory(word.transcription)
@@ -2706,17 +2772,17 @@ class Corpus(object):
 
         for d in word.descriptors:
             if d not in self._attributes:
-                if isinstance(getattr(word,d),str):
+                if isinstance(getattr(word, d), str):
                     self._attributes.append(Attribute(d,'spelling'))#'factor'))
-                elif isinstance(getattr(word,d),Transcription):
+                elif isinstance(getattr(word, d), Transcription):
                     self._attributes.append(Attribute(d,'tier'))
-                elif isinstance(getattr(word,d),(int, float)):
-                    self._attributes.append(Attribute(d,'numeric'))
+                elif isinstance(getattr(word, d), (int, float)):
+                    self._attributes.append(Attribute(d, 'numeric'))
 
         for a in self._attributes:
-            if not hasattr(word,a.name):
+            if not hasattr(word, a.name):
                 word.add_attribute(a.name, a.default_value)
-            a.update_range(getattr(word,a.name))
+            a.update_range(getattr(word, a.name))
 
         return added_default
 
@@ -2743,13 +2809,13 @@ class Corpus(object):
             if s not in self.inventory:
                 self.inventory.segs[s] = Segment(s)
                 if self.specifier is not None:
-                    if not s in self.specifier:
+                    if s not in self.specifier:
                         self.specifier[s] = {feature.lower(): 'n' for feature in self.specifier.features}
                         added_default = True
                     self.inventory.segs[s].features = self.specifier[s]
 
         if transcription.stress_pattern:
-            for k,v in transcription.stress_pattern.items():
+            for k, v in transcription.stress_pattern.items():
                 self.inventory.stresses[v].add(transcription[k])
 
         return added_default

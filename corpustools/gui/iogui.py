@@ -398,7 +398,7 @@ class SupportCorpusWidget(QGroupBox):
 
 
 class CorpusSourceWidget(QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         QWidget.__init__(self, parent)
 
         self.filefilter = 'Text files (*.txt *.csv *.TextGrid *.words *.wrds)'
@@ -795,34 +795,38 @@ class LoadCorpusDialog(PCTDialog):
             if set_default_spell and set_default_trans:
                 break
 
-
     def generateKwargs(self):
         path = self.pathWidget.value()
         if path == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a file or directory.")
+                                         "Missing information",
+                                         "Please specify a file or directory.")
             return
+
         if not os.path.exists(path):
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The specified path to the corpus file does not exist.")
+                                         "Invalid information",
+                                         "The specified path to the corpus file does not exist.")
             return
+
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a name for the corpus.")
+                                         "Missing information",
+                                         "Please specify a name for the corpus.")
             return
 
         if self.csvFeatureSystem.path() is not None and not os.path.exists(self.csvFeatureSystem.path()):
             featurename = os.path.split(self.csvFeatureSystem.path())[-1].split('.')[0]
-            reply = QMessageBox.critical(self, 'Missing information',
-                    'No feature file called {} could be found'.format(featurename))
+            reply = QMessageBox.critical(self,
+                                         'Missing information',
+                                         'No feature file called {} could be found'.format(featurename))
             return
 
-
         kwargs = {'corpus_name': name,
-                    'path': path,
-                    'isDirectory':self.isDirectory,
-                    'text_type': self.textType}
+                  'path': path,
+                  'isDirectory':self.isDirectory,
+                  'text_type': self.textType}
 
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
 
@@ -835,15 +839,16 @@ class LoadCorpusDialog(PCTDialog):
                 x.is_default = False
                 x.attribute.is_default = False
 
-
         type_ = self.supported_types[self.tabWidget.currentIndex() + 1][0]
         if type_ == 'running':
             if self.runningSelect.currentText() == 'Transcribed':
                 if not any([x.base for x in kwargs['annotation_types']]):
-                    QMessageBox.critical(self, 'Incompatible Information',
+                    QMessageBox.critical(self,
+                                         'Incompatible Information',
                                          'You have selected running text of type "Transcription" in the left window, '
                                         'but in the Parsing Preview window you did not select a transcription')
                     return
+
             elif self.runningSelect.currentText() == 'Orthography':
                 if not any([x.anchor for x in kwargs['annotation_types']]):
                     QMessageBox.critical(self, 'Incompatible Information',
@@ -853,20 +858,21 @@ class LoadCorpusDialog(PCTDialog):
 
         if (not any([x.base for x in kwargs['annotation_types']])
             and not any([x.anchor for x in kwargs['annotation_types']])):
-            QMessageBox.critical(self, 'Missing information',
+            QMessageBox.critical(self,
+                                 'Missing information',
                                  ('No spelling or transcription was selected for the corpus. Please check the '
                                  '"Parsing Preview" section and ensure that you have a "default" Transcription '
                                  'or Orthography.'))
             return
 
         names = [x.name for x in kwargs['annotation_types']]
-        if 'Transcription (alternative)' in names and not 'Transcription (default)' in names:
+        if 'Transcription (alternative)' in names and 'Transcription (default)' not in names:
             QMessageBox.critical(self, 'Missing information',
                                  'You have selected an alternative transcription without selecting a default. Please '
                                  'go to the "Parsing Preview" section, and select one default transcription.')
             return
 
-        if 'Orthography (alternative)' in names and not 'Orthography (default)' in names:
+        if 'Orthography (alternative)' in names and 'Orthography (default)' not in names:
             QMessageBox.critical(self, 'Missing information',
                                  'You have selected an alternative orthography without selecting a default. Please '
                                  'go to the "Parsing Preview" section, and select one default orthography. If your '
@@ -874,7 +880,7 @@ class LoadCorpusDialog(PCTDialog):
             return
 
         atts = [x.attribute.display_name for x in kwargs['annotation_types']]
-        duplicates = list(set([x for x in atts if atts.count(x)>1]))
+        duplicates = list(set([x for x in atts if atts.count(x) > 1]))
         if duplicates:
             duplicates = ' and '.join(duplicates)
             QMessageBox.critical(self, 'Duplicate information',
@@ -905,8 +911,7 @@ class LoadCorpusDialog(PCTDialog):
         elif self.textType == 'textgrid':
             kwargs['feature_system_path'] = self.tgFeatureSystem.path()
         elif self.textType == 'spelling':
-            (kwargs['support_corpus_path'],
-                kwargs['ignore_case']) = self.runningLookupWidget.value()
+            (kwargs['support_corpus_path'], kwargs['ignore_case']) = self.runningLookupWidget.value()
         elif self.textType == 'transcription':
             kwargs['feature_system_path'] = self.runningFeatureSystem.path()
         elif self.textType == 'ilg':

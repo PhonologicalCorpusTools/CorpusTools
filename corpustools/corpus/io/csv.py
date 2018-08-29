@@ -76,7 +76,7 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
         else:
             cat = Attribute.guess_type(vals[h][:num_lines], trans_delimiters)
         att = Attribute(Attribute.sanitize_name(h), cat, h)
-        a = AnnotationType(h, None, None, token = False, attribute = att)
+        a = AnnotationType(h, None, None, token=False, attribute=att)
         if cat == 'tier':
             for t in trans_delimiters:
                 if t in vals[h][0] or t in vals[h][-1]:
@@ -117,7 +117,6 @@ def load_corpus_csv(corpus_name, path, delimiter,
         Corpus object generated from the text file
 
     """
-    #begin = time.time()
     corpus = Corpus(corpus_name)
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
@@ -125,7 +124,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
         corpus.set_feature_matrix(feature_matrix)
 
     if annotation_types is None:
-        annotation_types, delimiter = inspect_csv(path, coldelim = delimiter)
+        annotation_types, delimiter = inspect_csv(path, coldelim=delimiter)
 
     for a in annotation_types:
         a.reset()
@@ -138,11 +137,12 @@ def load_corpus_csv(corpus_name, path, delimiter,
     with open(path, encoding='utf-8-sig') as f:
         headers = f.readline()
         headers = headers.split(delimiter)
-        if len(headers)==1:
+        if len(headers) == 1:
             e = DelimiterError(('Could not parse the corpus.\n\Check that the column delimiter you typed in matches '
                                 'the one used in the file.'))
-            raise(e)
+            raise e
         headers = annotation_types
+
         for a in headers:
             corpus.add_attribute(a.attribute)
 
@@ -158,10 +158,10 @@ def load_corpus_csv(corpus_name, path, delimiter,
             if not line: #blank or just a newline
                 continue
             d = {}
-            for k,v in zip(headers,line.split(delimiter)):
+            for k, v in zip(headers, line.split(delimiter)):
                 v = v.strip()
                 if k.attribute.att_type == 'tier':
-                    trans = parse_transcription(v, k)
+                    trans = parse_transcription(v, k, feature_matrix=feature_matrix, corpus=corpus)  # trans is a list of BaseAnnotation
                     if not trans_check and len(trans) > 1:
                         trans_check = True
                     d[k.attribute.name] = (k.attribute, trans)
@@ -169,10 +169,11 @@ def load_corpus_csv(corpus_name, path, delimiter,
                     d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
 
+            # TODO: what is the following code doing?
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters
                 if not word.spelling:
-                    word.spelling = ''.join(map(str,word.transcription))
+                    word.spelling = ''.join(map(str, word.transcription))
 
             corpus.add_word(word, allow_duplicates=True)
 
@@ -184,7 +185,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
             e = DelimiterError(('Could not parse transcriptions with that delimiter. '
                             '\nCheck that the transcription delimiter you typed '
                             'in matches the one used in the file.'))
-            raise(e)
+            raise e
 
     if stop_check is not None and stop_check():
         return
