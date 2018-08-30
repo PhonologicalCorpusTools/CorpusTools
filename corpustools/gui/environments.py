@@ -2,8 +2,10 @@ from .imports import *
 from .widgets import SegmentSelectionWidget, SegmentSelectDialog
 from corpustools.corpus.classes.lexicon import EnvironmentFilter
 import sip
+from pprint import pprint
+import regex as re
 
-SPECIAL_SYMBOL_RE = []
+SPECIAL_SYMBOL_RE = ['.', '^', '$', '*', '+', '?', '|', '{', '}', '[', ']', '#', '(', ')']
 
 class EnvironmentDialog(QDialog):
     rowToAdd = Signal(str)
@@ -297,7 +299,7 @@ class EnvironmentSelectWidget(QGroupBox):
         envs = []
         for ind in range(self.environmentFrame.layout().count() - 2):
             wid = self.environmentFrame.layout().itemAt(ind).widget()
-            envs.append(wid.value())
+            envs.append(wid.value())  # wid here is EnvironmentWidget
         return envs
 
     def displayValue(self):
@@ -543,7 +545,9 @@ class SyllableConstructDialog(QDialog):
         output['search_type'] = self.searchTypeWidget.value()
         syllable_info = self.syllWidget.value()
         output.update(syllable_info)
-        
+
+        pprint(output)
+
         return output
 
     def featureValue(self):
@@ -646,7 +650,7 @@ class SyllableConstructWidget(QGroupBox):
         segWidget.segDeleted.connect(self.deleteSeg)
         return segWidget
 
-    @Slot(list)  # connected to SyllableSegmentWidget.segDeleted()
+    @Slot(list)  # connected to SyllableWidget.segDeleted()
     def deleteSeg(self, arg):
         segWidget = arg[0]
         if segWidget.constituent == "codas":
@@ -911,16 +915,14 @@ class SyllableWidget(QWidget):
         QWidget.__init__(self, parent)
         self.inventory = inventory
 
-        self.onset = list()  # a list of dictionary
+        # Crucial data
+        self.onset = list()
         self.nucleus = list()
         self.coda = list()
         self.stress = set()
         self.tone = set()
         self.searchType = ''
         self.nonSeg = set()
-
-        #self.segments = set()
-        #self.features = set()
 
         self.parent = parent
         self.show_full_inventory = show_full_inventory
@@ -930,24 +932,24 @@ class SyllableWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
+        """
         if self.middle:
             lab = '_\n\n' + 'Onset: {}\nNucleus: {}\nCoda: {}\nStress: {}\nTone: {}\nSearch Type: {}'.format(
                 self.onset, self.nucleus, self.coda, self.stress, self.tone, self.searchType)
         else:
             lab = 'Onset: {}\nNucleus: {}\nCoda: {}\nStress: {}\nTone: {}\nSearch Type: {}'.format(
                 self.onset, self.nucleus, self.coda, self.stress, self.tone, self.searchType)
+        """
 
-        self.mainLabel = QPushButton(lab)
+        self.mainLabel = QPushButton()
         self.mainLabel.setStyleSheet("padding: 4px")
+        self.updateLabel()
         layout.addWidget(self.mainLabel)
 
         self.menu = QMenu(self)
         unspecifiedSyllableAct = QAction("Add an unspecified syllable", self, triggered=self.addUnspecifiedSyllable)
         syllableAct = QAction("Construct the syllable", self, triggered=self.constructSyllable)
-        #segmentAct = QAction("Add segments", self, triggered=self.selectSegments)
-        #featureAct = QAction("Add features", self, triggered=self.selectFeatures)
         clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
-        #matchAnythingAct = QAction("Match single wildcard", self, triggered=self.addArbitrary)
         self.menu.addAction(unspecifiedSyllableAct)
         self.menu.addAction(syllableAct)
         self.menu.addAction(clearAct)
@@ -959,16 +961,12 @@ class SyllableWidget(QWidget):
             deleteAct = QAction("Delete", self, triggered=self.deleteSelection)
             self.menu.addAction(deleteAct)
         self.mainLabel.setMenu(self.menu)
+
         addNewPosMenu = self.menu.addMenu("Add new environment position")
         addToLeftAct = QAction("To the left", self, triggered=self.addToLeft)
         addToRightAct = QAction("To the right", self, triggered=self.addToRight)
         addNewPosMenu.addAction(addToLeftAct)
         addNewPosMenu.addAction(addToRightAct)
-
-        #if preset_label:
-        #    self.segments = preset_label.segments
-        #    self.features = preset_label.features
-        #    self.updateLabel()
 
     def addToLeft(self):
         self.parent.insertSegWidget(self, 'l')
@@ -978,10 +976,18 @@ class SyllableWidget(QWidget):
 
     def addNonSegSymbol(self):
         self.nonSeg.add(self.sender().text())
-        self.updateLabel()
+        self.onset = list()
+        self.nucleus = list()
+        self.coda = list()
+        self.stress = set()
+        self.tone = set()
+        self.searchType = ''
+
+        label = '{' + ','.join(self.nonSeg) + '}'
+        self.mainLabel.setText(label)
 
     def clearSelection(self):
-        self.onset = list()  # a list of dictionary
+        self.onset = list()
         self.nucleus = list()
         self.coda = list()
         self.stress = set()
@@ -991,18 +997,15 @@ class SyllableWidget(QWidget):
         self.updateLabel()
 
     def deleteSelection(self):
-        self.segDeleted.emit([self])  # connected to EnvironmentSegmentWidget.deleteSeg()
+        self.segDeleted.emit([self])  # connected to SyllableConstructionWidget.deleteSeg()
 
     def updateLabel(self):
         labelText = self.generateDisplayText()
-        if not labelText:
-             labelText = '{}'
         if self.middle:
             labelText = '_\n\n{}'.format(labelText)
         self.mainLabel.setText(labelText)
 
     def generateDisplayText(self):
-
         display_onset = ''
         for slot in self.onset:
             displayList = list()
@@ -1047,7 +1050,13 @@ class SyllableWidget(QWidget):
 
     def addUnspecifiedSyllable(self):
         # TODO: implement this
-        pass
+        self.onset = list()
+        self.nucleus = list()
+        self.coda = list()
+        self.stress = set()
+        self.tone = set()
+        self.searchType = ''
+        self.nonSeg = set()
 
     def constructSyllable(self):
         dialog = SyllableConstructDialog(self.inventory, parent=self, use_features=True)
@@ -1062,43 +1071,36 @@ class SyllableWidget(QWidget):
             self.updateLabel()
 
     def value(self):
-        # The output should be a dictionary that contains all the specification
-        # onset = [{'segments': ['b'], 'features': ['+syllabic']}]
-
         output = {'onset': list(),
                   'nucleus': list(),
-                  'coda': list(),
-                  'stress': set(),
-                  'tone': set(),
-                  'search_type': ''}
+                  'coda': list()}
 
-        for unit in self.onset:  # unit is a dic
-            segs = unit['segments']  # this is a list of segments
+        for unit in self.onset:
+            segs = unit['segments']
             if unit['features']:
-                more_segs = self.inventory.features_to_segments(unit['features'])
-                segs.extend(more_segs)
-                segs = set(segs)
+                more_segs = self.inventory.features_to_segments(list(unit['features']))
+                segs = segs.union(more_segs)
             output['onset'].append(segs)
 
-        for unit in self.coda:  # unit is a dic
-            segs = unit['segments']  # this is a list of segments
+        for unit in self.coda:
+            segs = unit['segments']
             if unit['features']:
-                more_segs = self.inventory.features_to_segments(unit['features'])
-                segs.extend(more_segs)
-                segs = set(segs)
+                more_segs = self.inventory.features_to_segments(list(unit['features']))
+                segs = segs.union(more_segs)
             output['coda'].append(segs)
 
         for unit in self.nucleus:
             segs = unit['segments']
             if unit['features']:
-                more_segs = self.inventory.features_to_segments(unit['features'])
-                segs.extend(more_segs)
-                segs = set(segs)
+                more_segs = self.inventory.features_to_segments(list(unit['features']))
+                segs = segs.union(more_segs)
             output['nucleus'].append(segs)
 
-        output['stress'].union(self.stress)
-        output['tone'].union(self.tone)
+
+        output['stress'] = self.stress
+        output['tone'] = self.tone
         output['search_type'] = self.searchType
+        output['nonsegs'] = self.nonSeg
 
         return output
 
@@ -1257,7 +1259,7 @@ class EnvironmentWidget(QWidget):
         segWidget.segDeleted.connect(self.deleteSeg)
         return segWidget
 
-    def value(self):
+    def value_original(self):
         lhsZeroPositions = list()
         rhsZeroPositions = list()
         lhs = []
@@ -1273,13 +1275,159 @@ class EnvironmentWidget(QWidget):
             if wid.allowZeroMatch:
                 rhsZeroPositions.append(ind)
         middle = self.middleWidget.value()
-        print(middle)
-
-        print("lhs: ", lhs)
-        print("rhs: ", rhs)
-        print("middle: ", middle)
 
         return EnvironmentFilter(middle, lhs, rhs, zeroPositions=(lhsZeroPositions, rhsZeroPositions))
+
+    def value(self):
+        lhs = []
+        for ind in range(self.lhsWidget.layout().count()):
+            wid = self.lhsWidget.layout().itemAt(ind).widget()
+            lhs.append(wid.value())
+        rhs = []
+        for ind in range(self.rhsWidget.layout().count()):
+            wid = self.rhsWidget.layout().itemAt(ind).widget()
+            rhs.append(wid.value())
+        middle = self.middleWidget.value()
+
+        lhs_re = ''
+        for syl in lhs:
+            onset_re = ''
+            for unit in syl['onset']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                onset_re += unit_re
+            onset_re = '(?:(?#ONSET)' + onset_re + ')'
+
+            nucleus_re = ''
+            for unit in syl['nucleus']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                nucleus_re += unit_re
+            nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
+
+            coda_re = ''
+            for unit in syl['coda']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                coda_re += unit_re
+            coda_re = '(?:(?#CODA)' + coda_re + ')'
+            syl_re = '(?:\.(?#SYLLABLE)' + onset_re + nucleus_re + coda_re + '\.)'
+            lhs_re += syl_re
+        lhs_re = '((?#LHS)' + lhs_re + ')'
+        lhs_re = re.compile(lhs_re)
+
+        middle_re = ''
+        onset_re = ''
+        for unit in middle['onset']:
+            re_group = set()
+            for seg in unit:
+                if seg in SPECIAL_SYMBOL_RE:
+                    seg = '\\' + seg
+                    re_group.add(seg)
+                else:
+                    re_group.add(seg)
+            unit_re = '(?:' + '|'.join(re_group) + ')'
+            onset_re += unit_re
+        onset_re = '(?:(?#ONSET)' + onset_re + ')'
+
+        nucleus_re = ''
+        for unit in middle['nucleus']:
+            re_group = set()
+            for seg in unit:
+                if seg in SPECIAL_SYMBOL_RE:
+                    seg = '\\' + seg
+                    re_group.add(seg)
+                else:
+                    re_group.add(seg)
+            unit_re = '(?:' + '|'.join(re_group) + ')'
+            nucleus_re += unit_re
+        nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
+
+        coda_re = ''
+        for unit in middle['coda']:
+            re_group = set()
+            for seg in unit:
+                if seg in SPECIAL_SYMBOL_RE:
+                    seg = '\\' + seg
+                    re_group.add(seg)
+                else:
+                    re_group.add(seg)
+            unit_re = '(?:' + '|'.join(re_group) + ')'
+            coda_re += unit_re
+        coda_re = '(?:(?#CODA)' + coda_re + ')'
+        syl_re = '(?:\.(?#SYLLABLE)' + onset_re + nucleus_re + coda_re + '\.)'
+        middle_re = '((?#MID)' + syl_re + ')'
+        middle_re = re.compile(middle_re)
+
+        rhs_re = ''
+        for syl in rhs:
+            onset_re = ''
+            for unit in syl['onset']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                onset_re += unit_re
+            onset_re = '(?:(?#ONSET)' + onset_re + ')'
+
+            nucleus_re = ''
+            for unit in syl['nucleus']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                nucleus_re += unit_re
+            nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
+
+            coda_re = ''
+            for unit in syl['coda']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                coda_re += unit_re
+            coda_re = '(?:(?#CODA)' + coda_re + ')'
+            syl_re = '(?:\.(?#SYLLABLE)' + onset_re + nucleus_re + coda_re + '\.)'
+            rhs_re += syl_re
+        rhs_re = '((?#RHS)' + rhs_re + ')'
+        rhs_re = re.compile(rhs_re)
+
+        print(lhs_re)
+        print(middle_re)
+        print(rhs_re)
+
+        return EnvironmentFilter(middle, lhs, rhs)
+
 
     def displayValue(self):
         lhs = list()
