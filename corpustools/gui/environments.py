@@ -106,7 +106,7 @@ class EnvironmentSegmentWidget(QWidget):
     segDeleted = Signal(list)
 
     def __init__(self, inventory, parent=None, middle=False, enabled=True, preset_label=False,
-                 show_full_inventory=False, side=None, allow_zero_match=False, syllable_constituent=False):
+                 show_full_inventory=False, side=None, allow_zero_match=False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.segments = set()
@@ -139,15 +139,6 @@ class EnvironmentSegmentWidget(QWidget):
             matchAnythingAct = QAction("Match single wildcard", self, triggered=self.addArbitrary)
             self.menu.addAction(segmentAct)
             self.menu.addAction(featureAct)
-
-            # syllable part
-
-            if not syllable_constituent:
-                addSyllableMenu = self.menu.addMenu("Add syllables")
-                generalSyllableAct = QAction("\u03C3", self, triggered=self.addGeneralSyllable)
-                constructSyllableAct = QAction("Construct syllables", self, triggered=self.constructSyllable)
-                addSyllableMenu.addAction(generalSyllableAct)
-                addSyllableMenu.addAction(constructSyllableAct)
 
             if not self.middle:
                 nonSegSelectMenu = self.menu.addMenu('Add non-segment symbol')
@@ -237,18 +228,6 @@ class EnvironmentSegmentWidget(QWidget):
             self.features = set(dialog.value())
             self.updateLabel()
 
-
-    def addGeneralSyllable(self):
-        # TODO: implement this
-        pass
-
-    def constructSyllable(self):
-        pass
-        dialog = SyllableConstructDialog(self.inventory, selected=self.segments, parent=self, use_features=True)
-        if dialog.exec_(): # Ok pressed
-            # TODO: implement this
-            pass
-
     def value(self):
         segs = [s for s in self.segments]
         if self.features:
@@ -328,7 +307,7 @@ class EnvironmentSelectWidget(QGroupBox):
             envs.append(wid.displayValue())
         return envs
 
-
+"""
 class EnvironmentWidget(QWidget):
     envCopied = Signal(list)
 
@@ -503,6 +482,7 @@ class EnvironmentWidget(QWidget):
         rhs = ','.join(rhs) if rhs else ''
 
         return '{}_{}'.format(lhs, rhs)
+"""
 
 class SyllableConstructDialog(QDialog):
     def __init__(self, inventory, selected=None, parent=None, use_features=False, start_pressed=None):
@@ -549,8 +529,22 @@ class SyllableConstructDialog(QDialog):
         self.setLayout(mainLayout)
 
     def value(self):
-        pass
-        # return self.segFrame.value()
+        # This needs to return a dictionary
+        #{'onset': [{'segments': {'p', 't', 'k'},
+        #            'features': {'-voice'}}
+        #           {'segments': {'b', 'd', 'g'},
+        #            'features': {'+voice'}}],
+        # 'coda'}
+
+        output = dict()
+
+        output['stress'] = self.stressWidget.value()
+        output['tone'] = self.toneWidget.value()
+        output['search_type'] = self.searchTypeWidget.value()
+        syllable_info = self.syllWidget.value()
+        output.update(syllable_info)
+        
+        return output
 
     def featureValue(self):
         pass
@@ -573,82 +567,82 @@ class SyllableConstructWidget(QGroupBox):
 
         layout = QHBoxLayout()
 
-        lhsGroup = QGroupBox("Onset")
-        globalLhsLayout = QHBoxLayout()
+        onsetGroup = QGroupBox("Onset")
+        globalOnsetLayout = QHBoxLayout()
 
-        self.lhsWidget = QWidget()
-        self.lhsLayout = QHBoxLayout()
-        self.lhsWidget.setLayout(self.lhsLayout)
-        self.lhsSegmentWidget = SyllableSegmentWidget(self.inventory,
+        self.onsetWidget = QWidget()
+        self.onsetLayout = QHBoxLayout()
+        self.onsetWidget.setLayout(self.onsetLayout)
+        self.onsetSegmentWidget = SyllableSegmentWidget(self.inventory,
                                                       "onsets",
                                                       parent=self,
                                                       root=True,
                                                       show_full_inventory=self.show_full_inventory)
-        self.lhsLayout.addWidget(self.lhsSegmentWidget)
-        self.lhsAddNew = QPushButton('+')
-        self.lhsAddNew.clicked.connect(self.addLhs)
+        self.onsetLayout.addWidget(self.onsetSegmentWidget)
+        self.onsetAddNew = QPushButton('+')
+        self.onsetAddNew.clicked.connect(self.addOnset)
 
-        globalLhsLayout.addWidget(self.lhsAddNew)
-        globalLhsLayout.addWidget(self.lhsWidget)
-        lhsGroup.setLayout(globalLhsLayout)
+        globalOnsetLayout.addWidget(self.onsetAddNew)
+        globalOnsetLayout.addWidget(self.onsetWidget)
+        onsetGroup.setLayout(globalOnsetLayout)
 
 
-        rhsGroup = QGroupBox("Coda")
+        codaGroup = QGroupBox("Coda")
 
-        globalRhsLayout = QHBoxLayout()
+        globalCodaLayout = QHBoxLayout()
 
-        self.rhsWidget = QWidget()
-        self.rhsLayout = QHBoxLayout()
-        self.rhsWidget.setLayout(self.rhsLayout)
+        self.codaWidget = QWidget()
+        self.codaLayout = QHBoxLayout()
+        self.codaWidget.setLayout(self.codaLayout)
 
-        self.rhsSegmentWidget = SyllableSegmentWidget(self.inventory,
+        self.codaSegmentWidget = SyllableSegmentWidget(self.inventory,
                                                       "codas",
                                                       parent=self,
                                                       root=True,
                                                       show_full_inventory=self.show_full_inventory)
-        self.rhsLayout.addWidget(self.rhsSegmentWidget)
-        self.rhsAddNew = QPushButton('+')
-        self.rhsAddNew.clicked.connect(self.addRhs)
-        globalRhsLayout.addWidget(self.rhsWidget)
-        globalRhsLayout.addWidget(self.rhsAddNew)
+        self.codaLayout.addWidget(self.codaSegmentWidget)
+        self.codaAddNew = QPushButton('+')
+        self.codaAddNew.clicked.connect(self.addCoda)
+        globalCodaLayout.addWidget(self.codaWidget)
+        globalCodaLayout.addWidget(self.codaAddNew)
 
-        rhsGroup.setLayout(globalRhsLayout)
+        codaGroup.setLayout(globalCodaLayout)
 
-        middleGroup = QGroupBox("Nucleus")
+        nucleusGroup = QGroupBox("Nucleus")
 
-        middleLayout = QHBoxLayout()
-        self.middleWidget = SyllableSegmentWidget(self.inventory,
+        nucleusLayout = QHBoxLayout()
+        self.nucleusWidget = SyllableSegmentWidget(self.inventory,
                                                   "nuclei",
                                                   parent=self,
                                                   root=True,
                                                   show_full_inventory=self.show_full_inventory)
-        middleLayout.addWidget(self.middleWidget)
-        middleGroup.setLayout(middleLayout)
+        nucleusLayout.addWidget(self.nucleusWidget)
+        nucleusGroup.setLayout(nucleusLayout)
 
 
-        layout.addWidget(lhsGroup)
-        layout.addWidget(middleGroup)
-        layout.addWidget(rhsGroup)
+        layout.addWidget(onsetGroup)
+        layout.addWidget(nucleusGroup)
+        layout.addWidget(codaGroup)
         layout.addStretch()
         self.setLayout(layout)
 
-    def addLhs(self):
+    def addOnset(self):
         segWidget = SyllableSegmentWidget(self.inventory,
                                           "onsets",
                                           parent=self,
                                           root=False,
                                           show_full_inventory=self.show_full_inventory)
-        self.lhsWidget.layout().insertWidget(0, segWidget)
+        self.onsetWidget.layout().insertWidget(0, segWidget)
         segWidget.segDeleted.connect(self.deleteSeg)
         return segWidget
 
-    def addRhs(self):
+    def addCoda(self):
         segWidget = SyllableSegmentWidget(self.inventory,
                                           "codas",
                                           parent=self,
                                           root=False,
                                           show_full_inventory=self.show_full_inventory)
-        self.rhsWidget.layout().addWidget(segWidget)
+        self.codaWidget.layout().addWidget(segWidget)
         segWidget.segDeleted.connect(self.deleteSeg)
         return segWidget
 
@@ -656,9 +650,9 @@ class SyllableConstructWidget(QGroupBox):
     def deleteSeg(self, arg):
         segWidget = arg[0]
         if segWidget.constituent == "codas":
-            layout = self.rhsWidget.layout()
+            layout = self.codaWidget.layout()
         elif segWidget.constituent == 'onsets':
-            layout = self.lhsWidget.layout()
+            layout = self.onsetWidget.layout()
         for ind in reversed(range(layout.count())):
             if layout.itemAt(ind) == segWidget:
                 layout.removeAt(ind)
@@ -666,7 +660,21 @@ class SyllableConstructWidget(QGroupBox):
         segWidget.deleteLater()
 
     def value(self):
-        pass
+        output = {'onset': list(),
+                  'nucleus': list(),
+                  'coda': list()}
+
+        output['nucleus'].append(self.nucleusWidget.value())
+
+        for i in range(self.onsetLayout.count()):
+            segWidget = self.onsetLayout.itemAt(i).widget()
+            output['onset'].append(segWidget.value())
+
+        for j in range(self.codaLayout.count()):
+            segWidget = self.codaLayout.itemAt(j).widget()
+            output['coda'].append(segWidget.value())
+
+        return output
 
     def displayValue(self):
         pass
@@ -688,10 +696,14 @@ class SearchTypeWidget(QGroupBox):
 
         self.setLayout(layout)
 
+    def value(self):
+        return str(self.typeSelect.currentText())
+
 
 class StressWidget(QGroupBox):
     def __init__(self, inventory, parent=None):
         QGroupBox.__init__(self, 'Stress', parent)
+        self.inventory = inventory
 
         layout = QVBoxLayout()
         self.stressSelect = QComboBox()
@@ -699,7 +711,7 @@ class StressWidget(QGroupBox):
         for type in inventory.stress_types.keys():
             self.stressSelect.addItem(type)
 
-        for type in ["Any", "Unstressed"]:
+        for type in ["Any", "Stressed", "Unstressed"]:
             self.stressSelect.addItem(type)
 
         layout.addWidget(self.stressSelect)
@@ -712,11 +724,27 @@ class StressWidget(QGroupBox):
             self.setEnabled(False)
 
     def value(self):
-        pass
+        if not self.stressSelect.isEnabled():
+            return set()
+
+        answer = str(self.stressSelect.currentText())
+        if answer == 'Any':
+            output = set(self.inventory.stress_types.keys())
+            output.add('Unstressed')
+            return output
+        elif answer == 'Stressed':
+            output = set(self.inventory.stress_types.keys())
+            return output
+        elif answer == 'Unstressed':
+            output = {'Unstressed'}
+            return output
+        else:
+            return answer
         
 class ToneWidget(QGroupBox):
     def __init__(self, inventory, parent=None):
         QGroupBox.__init__(self, 'Tone', parent)
+        self.inventory = inventory
 
         layout = QVBoxLayout()
         self.toneSelect = QComboBox()
@@ -724,7 +752,7 @@ class ToneWidget(QGroupBox):
         for type in inventory.tone_types.keys():
             self.toneSelect.addItem(type)
 
-        for type in ["Any", "None"]:
+        for type in ["Any", "Toned", "Untoned"]:
             self.toneSelect.addItem(type)
 
         layout.addWidget(self.toneSelect)
@@ -735,6 +763,24 @@ class ToneWidget(QGroupBox):
 
         if len(inventory.tone_types.keys()) == 0:
             self.setEnabled(False)
+
+    def value(self):
+        if not self.toneSelect.isEnabled():
+            return set()
+
+        answer = str(self.toneSelect.currentText())
+        if answer == 'Any':
+            output = set(self.inventory.tone_types.keys())
+            output.add('Untoned')
+            return output
+        elif answer == 'Toned':
+            output = set(self.inventory.tone_types.keys())
+            return output
+        elif answer == 'Untoned':
+            output = {'Untoned'}
+            return output
+        else:
+            return answer
 
 class SyllableSegmentWidget(QWidget):
     segDeleted = Signal(list)
@@ -831,12 +877,14 @@ class SyllableSegmentWidget(QWidget):
             self.updateLabel()
 
     def value(self):
-        segs = [s for s in self.segments]
-        if self.features:
-            more_segs = self.inventory.features_to_segments(self.features)
-            segs.extend(more_segs)
-            segs = list(set(segs))
-        return segs
+        # {'segments': ('p', 't', 'k'),
+        # 'features': ('+syllabic')}
+
+        output = dict()
+        output['segments'] = self.segments
+        output['features'] = self.features
+
+        return output
 
     def displayValue(self):
         return self.generateDisplayText()
@@ -859,17 +907,17 @@ class SyllableSegmentWidget(QWidget):
 class SyllableWidget(QWidget):
     segDeleted = Signal(list)
 
-    def __init__(self, inventory, parent=None, middle=False, preset_label=False, show_full_inventory=False, side=None):
+    def __init__(self, inventory, parent=None, middle=False, show_full_inventory=False, side=None):
         QWidget.__init__(self, parent)
         self.inventory = inventory
 
-        self.onset = list()  # a list of sets, with each representing a slot
-        self.nucleus = dict()
+        self.onset = list()  # a list of dictionary
+        self.nucleus = list()
         self.coda = list()
         self.stress = set()
         self.tone = set()
-        self.searchType = None
-        self.nonSeg = list()
+        self.searchType = ''
+        self.nonSeg = set()
 
         #self.segments = set()
         #self.features = set()
@@ -883,9 +931,11 @@ class SyllableWidget(QWidget):
         self.setLayout(layout)
 
         if self.middle:
-            lab = '_\n\n{}'
+            lab = '_\n\n' + 'Onset: {}\nNucleus: {}\nCoda: {}\nStress: {}\nTone: {}\nSearch Type: {}'.format(
+                self.onset, self.nucleus, self.coda, self.stress, self.tone, self.searchType)
         else:
-            lab = '{}'
+            lab = 'Onset: {}\nNucleus: {}\nCoda: {}\nStress: {}\nTone: {}\nSearch Type: {}'.format(
+                self.onset, self.nucleus, self.coda, self.stress, self.tone, self.searchType)
 
         self.mainLabel = QPushButton(lab)
         self.mainLabel.setStyleSheet("padding: 4px")
@@ -931,9 +981,13 @@ class SyllableWidget(QWidget):
         self.updateLabel()
 
     def clearSelection(self):
-        self.onset = list
-        self.nucleus = dict()
+        self.onset = list()  # a list of dictionary
+        self.nucleus = list()
         self.coda = list()
+        self.stress = set()
+        self.tone = set()
+        self.searchType = ''
+        self.nonSeg = set()
         self.updateLabel()
 
     def deleteSelection(self):
@@ -958,11 +1012,12 @@ class SyllableWidget(QWidget):
             display_onset += displayText
 
         display_nucleus = ''
-        displayList = list()
-        displayList.extend(self.nucleus["segments"])
-        displayList.extend(self.nucleus["features"])
-        displayText = '(' + ','.join(displayList) + ')'
-        display_nucleus += displayText
+        for slot in self.nucleus:
+            displayList = list()
+            displayList.extend(slot["segments"])
+            displayList.extend(slot["features"])
+            displayText = '(' + ','.join(displayList) + ')'
+            display_nucleus += displayText
 
         display_coda = ''
         for slot in self.coda:
@@ -995,19 +1050,57 @@ class SyllableWidget(QWidget):
         pass
 
     def constructSyllable(self):
-        pass
-        dialog = SyllableConstructDialog(self.inventory, selected=self.segments, parent=self, use_features=True)
+        dialog = SyllableConstructDialog(self.inventory, parent=self, use_features=True)
         if dialog.exec_():  # Ok pressed
-            # TODO: implement this
-            pass
+            result = dialog.value()
+            self.onset = result['onset']
+            self.nucleus = result['nucleus']
+            self.coda = result['coda']
+            self.stress = result['stress']
+            self.tone = result['tone']
+            self.searchType = result['search_type']
+            self.updateLabel()
 
     def value(self):
-        segs = [s for s in self.segments]
-        if self.features:
-            more_segs = self.inventory.features_to_segments(self.features)
-            segs.extend(more_segs)
-            segs = list(set(segs))
-        return segs
+        # The output should be a dictionary that contains all the specification
+        # onset = [{'segments': ['b'], 'features': ['+syllabic']}]
+
+        output = {'onset': list(),
+                  'nucleus': list(),
+                  'coda': list(),
+                  'stress': set(),
+                  'tone': set(),
+                  'search_type': ''}
+
+        for unit in self.onset:  # unit is a dic
+            segs = unit['segments']  # this is a list of segments
+            if unit['features']:
+                more_segs = self.inventory.features_to_segments(unit['features'])
+                segs.extend(more_segs)
+                segs = set(segs)
+            output['onset'].append(segs)
+
+        for unit in self.coda:  # unit is a dic
+            segs = unit['segments']  # this is a list of segments
+            if unit['features']:
+                more_segs = self.inventory.features_to_segments(unit['features'])
+                segs.extend(more_segs)
+                segs = set(segs)
+            output['coda'].append(segs)
+
+        for unit in self.nucleus:
+            segs = unit['segments']
+            if unit['features']:
+                more_segs = self.inventory.features_to_segments(unit['features'])
+                segs.extend(more_segs)
+                segs = set(segs)
+            output['nucleus'].append(segs)
+
+        output['stress'].union(self.stress)
+        output['tone'].union(self.tone)
+        output['search_type'] = self.searchType
+
+        return output
 
     def displayValue(self):
         return self.generateDisplayText()
@@ -1018,5 +1111,188 @@ class SyllableWidget(QWidget):
         return {attr: getattr(self, attr) for attr in attrs}
 
     def loadData(self, data):
-        for k, v in data.items(): #see the getData() function above for details
+        for k, v in data.items():  # see the getData() function above for details
             setattr(self, k, v)
+
+class EnvironmentWidget(QWidget):
+    envCopied = Signal(list)
+
+    def __init__(self, inventory, parent=None, middle=True, copy_data=None, show_full_inventory=False):
+        QWidget.__init__(self)
+        self.inventory = inventory
+        self.parent = parent
+        self.middle = middle
+        self.show_full_inventory = show_full_inventory
+        self.envCopied.connect(self.parent.addCopiedEnvironment)
+        layout = QHBoxLayout()
+
+        self.lhsAddNew = QPushButton('+')
+        self.lhsAddNew.clicked.connect(self.addLhs)
+        self.lhsWidget = QWidget()
+        self.lhsLayout = QHBoxLayout()
+        self.lhsWidget.setLayout(self.lhsLayout)
+
+        self.rhsAddNew = QPushButton('+')
+        self.rhsAddNew.clicked.connect(self.addRhs)
+
+        self.rhsWidget = QWidget()
+        self.rhsLayout = QHBoxLayout()
+        self.rhsWidget.setLayout(self.rhsLayout)
+
+        self.middleWidget = SyllableWidget(self.inventory,
+                                           parent=self,
+                                           middle=True,
+                                           show_full_inventory=show_full_inventory)
+
+        self.removeButton = QPushButton('Remove environment')
+        self.removeButton.clicked.connect(self.deleteLater)
+        self.copyButton = QPushButton('Copy environment')
+        self.copyButton.clicked.connect(self.copyEnvironment)
+
+        layout.addWidget(self.lhsAddNew)
+        layout.addWidget(self.lhsWidget)
+        layout.addWidget(self.middleWidget)
+        layout.addWidget(self.rhsWidget)
+        layout.addWidget(self.rhsAddNew)
+
+        layout.addStretch()
+
+        optionlayout = QVBoxLayout()
+
+        optionlayout.addWidget(self.removeButton)
+        optionlayout.addWidget(self.copyButton)
+
+        layout.addLayout(optionlayout)
+
+        self.setLayout(layout)
+        if copy_data:
+            self.loadfromCopy(copy_data)
+
+    def loadfromCopy(self, copy_data):
+        self.middleWidget.segments = copy_data.middleWidget.segments
+        self.middleWidget.features = copy_data.middleWidget.features
+        self.middleWidget.mainLabel.setText(copy_data.middleWidget.mainLabel.text())
+
+        for ind in range(copy_data.lhsWidget.layout().count()):
+            copy_wid = copy_data.lhsWidget.layout().itemAt(ind).widget()
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='l',
+                                                                allow_zero_match=copy_wid.allowZeroMatch)
+            wid.allowZeroAct.setChecked(copy_wid.allowZeroMatch)
+            self.lhsWidget.layout().insertWidget(ind, wid)
+            wid.segDeleted.connect(self.deleteSeg)
+        for ind in range(copy_data.rhsWidget.layout().count()):
+            copy_wid = copy_data.rhsWidget.layout().itemAt(ind).widget()
+            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='r',
+                                                                allow_zero_match=copy_wid.allowZeroMatch)
+            wid.allowZeroAct.setChecked(copy_wid.allowZeroMatch)
+            self.rhsWidget.layout().insertWidget(ind, wid)
+            wid.segDeleted.connect(self.deleteSeg)
+
+    def copyEnvironment(self):
+        self.envCopied.emit([self]) #connected to EnvironmentSelectWidget.addCopiedEnvironment()
+
+    def insertSegWidget(self, match_widget, add_to_side):
+
+        if match_widget.side is None:#middle widget
+            if add_to_side == 'r':
+                self.addRhs()
+            elif add_to_side == 'l':
+                self.addLhs()
+            return
+
+        segWidget = SyllableWidget(self.inventory,
+                                   parent=self,
+                                   show_full_inventory=self.show_full_inventory,
+                                   side=match_widget.side)
+        segWidget.segDeleted.connect(self.deleteSeg)
+        if match_widget.side == 'r':
+            layout = self.rhsWidget.layout()
+        elif match_widget.side == 'l':
+            layout = self.lhsWidget.layout()
+
+        widgets = list()
+        for ind in range(layout.count()):
+            if layout.itemAt(ind).widget() == match_widget:
+                if add_to_side == 'l':
+                    widgets.append(segWidget)
+                    widgets.append(layout.itemAt(ind).widget())
+                elif add_to_side == 'r':
+                    widgets.append(layout.itemAt(ind).widget())
+                    widgets.append(segWidget)
+            else:
+                widgets.append(layout.itemAt(ind).widget())
+
+        for i, widget in enumerate(widgets):
+            layout.insertWidget(i, widget)
+        layout.update()
+
+    @Slot(list) #connected to EnvironmentSegmentWidget.segDeleted()
+    def deleteSeg(self, arg):
+        segWidget = arg[0]
+        if segWidget.side == 'r':
+            layout = self.rhsWidget.layout()
+        elif segWidget.side == 'l':
+            layout = self.lhsWidget.layout()
+        for ind in reversed(range(layout.count())):
+            if layout.itemAt(ind) == segWidget:
+                layout.removeAt(ind)
+                break
+        segWidget.deleteLater()
+
+    def addLhs(self):
+        segWidget = SyllableWidget(self.inventory,
+                                   parent=self,
+                                   show_full_inventory=self.show_full_inventory,
+                                   side='l')
+        self.lhsWidget.layout().insertWidget(0, segWidget)
+        segWidget.segDeleted.connect(self.deleteSeg)
+        return segWidget
+
+    def addRhs(self):
+        segWidget = SyllableWidget(self.inventory,
+                                   parent=self,
+                                   show_full_inventory=self.show_full_inventory,
+                                   side='r')
+        self.rhsWidget.layout().addWidget(segWidget)
+        segWidget.segDeleted.connect(self.deleteSeg)
+        return segWidget
+
+    def value(self):
+        lhsZeroPositions = list()
+        rhsZeroPositions = list()
+        lhs = []
+        for ind in range(self.lhsWidget.layout().count()):
+            wid = self.lhsWidget.layout().itemAt(ind).widget()
+            lhs.append(wid.value())
+            if wid.allowZeroMatch:
+                lhsZeroPositions.append(ind)
+        rhs = []
+        for ind in range(self.rhsWidget.layout().count()):
+            wid = self.rhsWidget.layout().itemAt(ind).widget()
+            rhs.append(wid.value())
+            if wid.allowZeroMatch:
+                rhsZeroPositions.append(ind)
+        middle = self.middleWidget.value()
+        print(middle)
+
+        print("lhs: ", lhs)
+        print("rhs: ", rhs)
+        print("middle: ", middle)
+
+        return EnvironmentFilter(middle, lhs, rhs, zeroPositions=(lhsZeroPositions, rhsZeroPositions))
+
+    def displayValue(self):
+        lhs = list()
+        rhs = list()
+
+        for ind in range(self.lhsWidget.layout().count()):
+            wid = self.lhsWidget.layout().itemAt(ind).widget()
+            lhs.append(wid.displayValue())
+        lhs = ','.join(lhs) if lhs else ''
+
+        for ind in range(self.rhsWidget.layout().count()):
+            wid = self.rhsWidget.layout().itemAt(ind).widget()
+            rhs.append(wid.displayValue())
+        rhs = ','.join(rhs) if rhs else ''
+
+        return '{}_{}'.format(lhs, rhs)
