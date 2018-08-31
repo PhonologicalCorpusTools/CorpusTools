@@ -368,15 +368,35 @@ class PhonoSearchDialog(FunctionDialog):
         self.showToolTips = showToolTips
         self.recentSearches = recents
         self.savedSearches = saved
+        self.settings = settings
 
-        psFrame = QFrame()
-        pslayout = QHBoxLayout()
-        self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
-        pslayout.addWidget(self.envWidget)
+        self.psFrame = QFrame()
+        self.pslayout = QHBoxLayout()
 
         optionFrame = QGroupBox('Options')
         optionLayout = QVBoxLayout()
         optionFrame.setLayout(optionLayout)
+
+        modeFrame = QGroupBox('Search mode')
+        modeLayout = QVBoxLayout()
+        modeFrame.setLayout(modeLayout)
+
+        self.modeGroup = QButtonGroup()
+        segMode = QCheckBox('Segments')
+        segMode.clicked.connect(self.changeMode)
+        segMode.setChecked(True)
+        self.mode = 'segMode'
+        self.modeGroup.addButton(segMode)
+        sylMode = QCheckBox('Syllables')
+        sylMode.clicked.connect(self.changeMode)
+        self.modeGroup.addButton(sylMode)
+        self.modeGroup.setExclusive(True)
+        self.modeGroup.setId(segMode, 0)
+        self.modeGroup.setId(sylMode, 1)
+
+        modeLayout.addWidget(segMode)
+        modeLayout.addWidget(sylMode)
+        optionLayout.addWidget(modeFrame)
 
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionLayout.addWidget(self.tierWidget)
@@ -394,11 +414,31 @@ class PhonoSearchDialog(FunctionDialog):
         searchLayout.addWidget(saveSearch)
 
         optionLayout.addWidget(searchFrame)
-        pslayout.addWidget(optionFrame)
 
-        psFrame.setLayout(pslayout)
-        self.layout().insertWidget(0, psFrame)
+        self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
+
+        self.pslayout.addWidget(self.envWidget)
+        self.pslayout.addWidget(optionFrame)
+
+        self.psFrame.setLayout(self.pslayout)
+        self.layout().insertWidget(0, self.psFrame)
+
         self.progressDialog.setWindowTitle('Searching')
+
+    def changeMode(self):
+        self.pslayout.removeWidget(self.envWidget)
+        self.envWidget.deleteLater()
+        if self.modeGroup.checkedId() == 0:  # segMode is checked
+            self.mode = 'segMode'
+            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
+                                                     mode=self.mode)
+            self.pslayout.insertWidget(0, self.envWidget)
+
+        else:
+            self.mode = 'sylMode'
+            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
+                                                     mode=self.mode)
+            self.pslayout.insertWidget(0, self.envWidget)
 
     def accept(self):
         for n in range(self.envWidget.environmentFrame.layout().count() - 2):
@@ -491,18 +531,22 @@ class PhonoSearchDialog(FunctionDialog):
 
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
+        kwargs['mode'] = self.mode
         return kwargs
 
-    def setResults(self,results):
-        self.results = []
-        for w,f in results:
-            segs = tuple(x.middle for x in f)
-            try:
-                envs = tuple(str(x) for x in f)
-            except IndexError:
-                envs = tuple()
-            self.results.append({'Word': w, 
-                                'Transcription': str(getattr(w,self.tierWidget.value())),
-                                'Segment': segs,
-                                'Environment': envs,
-                                'Token frequency':w.frequency})
+    def setResults(self, results):
+        self.results = list()
+        if self.mode == 'segMode':
+            for w, f in results:
+                segs = tuple(x.middle for x in f)
+                try:
+                    envs = tuple(str(x) for x in f)
+                except IndexError:
+                    envs = tuple()
+                self.results.append({'Word': w,
+                                     'Transcription': str(getattr(w, self.tierWidget.value())),
+                                     'Segment': segs,
+                                     'Environment': envs,
+                                     'Token frequency': w.frequency})
+        else:
+            pass

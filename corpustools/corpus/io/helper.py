@@ -455,7 +455,6 @@ def parse_transcription(string, annotation_type, feature_matrix=None, corpus=Non
         string = "".join(string)
         syllables = string.split(sd)
         for syllable in syllables:
-            print(syllable)
             s = SyllableBaseAnnotation(feature_matrix, syllable, stress_spec=annotation_type.stress_specification,
                                        tone_spec=annotation_type.tone_specification)
 

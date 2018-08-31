@@ -5,7 +5,7 @@ import sip
 from pprint import pprint
 import regex as re
 
-SPECIAL_SYMBOL_RE = ['.', '^', '$', '*', '+', '?', '|', '{', '}', '[', ']', '#', '(', ')']
+SPECIAL_SYMBOL_RE = ['.', '^', '$', '*', '+', '?', '|', '{', '}', '[', ']', '#', '(', ')', '\'', '\"']
 
 class EnvironmentDialog(QDialog):
     rowToAdd = Signal(str)
@@ -203,8 +203,6 @@ class EnvironmentSegmentWidget(QWidget):
 
     def generateDisplayText(self):
         displayList = list()
-        print("self.segments: ", self.segments)
-        print("self.features: ", self.features)
         if len(self.segments) == len(self.inventory.segs):
             if self.show_full_inventory:
                 displayList = ','.join(self.segments)
@@ -251,12 +249,13 @@ class EnvironmentSegmentWidget(QWidget):
             setattr(self, k, v)
 
 class EnvironmentSelectWidget(QGroupBox):
-    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, mode="segMode"):
         QGroupBox.__init__(self, 'Environments', parent)
         self.parent = parent
         self.middle = middle
         self.inventory = inventory
         self.show_full_inventory = show_full_inventory
+        self.mode = mode
 
         layout = QVBoxLayout()
 
@@ -284,32 +283,37 @@ class EnvironmentSelectWidget(QGroupBox):
         self.setLayout(layout)
 
     def addNewEnvironment(self):
-        envWidget = EnvironmentWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
+        if self.mode == 'segMode':
+            envWidget = EnvironmentWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
+        else:
+            envWidget = EnvironmentSyllableWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos, envWidget)
 
     @Slot(list) #connected to EnvironmentWidget.envCopied()
     def addCopiedEnvironment(self, args):
+        # TODO: need to change this part to fit the new sylmode
         copy_data = args[0] if args else None
         envWidget = EnvironmentWidget(self.inventory, middle=copy_data.middle, parent=self, copy_data=copy_data)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos, envWidget)
 
     def value(self):
+        # TODO: need to change this part to fit the new sylmode
         envs = []
         for ind in range(self.environmentFrame.layout().count() - 2):
             wid = self.environmentFrame.layout().itemAt(ind).widget()
-            envs.append(wid.value())  # wid here is EnvironmentWidget
+            envs.append(wid.value())  # wid here is EnvironmentWidget, and value() returns an EnvFilter
         return envs
 
     def displayValue(self):
+        # TODO: need to change this part to fit the new sylmode
         envs = []
         for ind in range(self.environmentFrame.layout().count() - 2):
             wid = self.environmentFrame.layout().itemAt(ind).widget()
             envs.append(wid.displayValue())
         return envs
 
-"""
 class EnvironmentWidget(QWidget):
     envCopied = Signal(list)
 
@@ -461,11 +465,6 @@ class EnvironmentWidget(QWidget):
             if wid.allowZeroMatch:
                 rhsZeroPositions.append(ind)
         middle = self.middleWidget.value()
-        print(middle)
-
-        print("lhs: ", lhs)
-        print("rhs: ", rhs)
-        print("middle: ", middle)
 
         return EnvironmentFilter(middle, lhs, rhs, zeroPositions=(lhsZeroPositions, rhsZeroPositions))
 
@@ -484,7 +483,6 @@ class EnvironmentWidget(QWidget):
         rhs = ','.join(rhs) if rhs else ''
 
         return '{}_{}'.format(lhs, rhs)
-"""
 
 class SyllableConstructDialog(QDialog):
     def __init__(self, inventory, selected=None, parent=None, use_features=False, start_pressed=None):
@@ -1116,7 +1114,7 @@ class SyllableWidget(QWidget):
         for k, v in data.items():  # see the getData() function above for details
             setattr(self, k, v)
 
-class EnvironmentWidget(QWidget):
+class EnvironmentSyllableWidget(QWidget):
     envCopied = Signal(list)
 
     def __init__(self, inventory, parent=None, middle=True, copy_data=None, show_full_inventory=False):
@@ -1259,26 +1257,8 @@ class EnvironmentWidget(QWidget):
         segWidget.segDeleted.connect(self.deleteSeg)
         return segWidget
 
-    def value_original(self):
-        lhsZeroPositions = list()
-        rhsZeroPositions = list()
-        lhs = []
-        for ind in range(self.lhsWidget.layout().count()):
-            wid = self.lhsWidget.layout().itemAt(ind).widget()
-            lhs.append(wid.value())
-            if wid.allowZeroMatch:
-                lhsZeroPositions.append(ind)
-        rhs = []
-        for ind in range(self.rhsWidget.layout().count()):
-            wid = self.rhsWidget.layout().itemAt(ind).widget()
-            rhs.append(wid.value())
-            if wid.allowZeroMatch:
-                rhsZeroPositions.append(ind)
-        middle = self.middleWidget.value()
-
-        return EnvironmentFilter(middle, lhs, rhs, zeroPositions=(lhsZeroPositions, rhsZeroPositions))
-
     def value(self):
+        # TODO: write another function to simplify this one
         lhs = []
         for ind in range(self.lhsWidget.layout().count()):
             wid = self.lhsWidget.layout().itemAt(ind).widget()
@@ -1291,6 +1271,19 @@ class EnvironmentWidget(QWidget):
 
         lhs_re = ''
         for syl in lhs:
+            stress_re = ''
+            re_group = set()
+            for stress in syl['stress']:
+                if stress == 'Unstressed':
+                    stress = ''
+                    re_group.add(stress)
+                elif stress in SPECIAL_SYMBOL_RE:
+                    stress = '\\' + stress
+                    re_group.add(stress)
+                else:
+                    re_group.add(stress)
+            stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
+
             onset_re = ''
             for unit in syl['onset']:
                 re_group = set()
@@ -1329,12 +1322,25 @@ class EnvironmentWidget(QWidget):
                 unit_re = '(?:' + '|'.join(re_group) + ')'
                 coda_re += unit_re
             coda_re = '(?:(?#CODA)' + coda_re + ')'
-            syl_re = '(?:\.(?#SYLLABLE)' + onset_re + nucleus_re + coda_re + '\.)'
+
+            syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
             lhs_re += syl_re
         lhs_re = '((?#LHS)' + lhs_re + ')'
-        lhs_re = re.compile(lhs_re)
+        #lhs_re = re.compile(lhs_re)
 
-        middle_re = ''
+        stress_re = ''
+        re_group = set()
+        for stress in middle['stress']:
+            if stress == 'Unstressed':
+                stress = ''
+                re_group.add(stress)
+            elif stress in SPECIAL_SYMBOL_RE:
+                stress = '\\' + stress
+                re_group.add(stress)
+            else:
+                re_group.add(stress)
+        stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
+
         onset_re = ''
         for unit in middle['onset']:
             re_group = set()
@@ -1373,12 +1379,25 @@ class EnvironmentWidget(QWidget):
             unit_re = '(?:' + '|'.join(re_group) + ')'
             coda_re += unit_re
         coda_re = '(?:(?#CODA)' + coda_re + ')'
-        syl_re = '(?:\.(?#SYLLABLE)' + onset_re + nucleus_re + coda_re + '\.)'
+        syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
         middle_re = '((?#MID)' + syl_re + ')'
-        middle_re = re.compile(middle_re)
+        #middle_re = re.compile(middle_re)
 
         rhs_re = ''
         for syl in rhs:
+            stress_re = ''
+            re_group = set()
+            for stress in syl['stress']:
+                if stress == 'Unstressed':
+                    stress = ''
+                    re_group.add(stress)
+                elif stress in SPECIAL_SYMBOL_RE:
+                    stress = '\\' + stress
+                    re_group.add(stress)
+                else:
+                    re_group.add(stress)
+            stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
+
             onset_re = ''
             for unit in syl['onset']:
                 re_group = set()
@@ -1417,19 +1436,20 @@ class EnvironmentWidget(QWidget):
                 unit_re = '(?:' + '|'.join(re_group) + ')'
                 coda_re += unit_re
             coda_re = '(?:(?#CODA)' + coda_re + ')'
-            syl_re = '(?:\.(?#SYLLABLE)' + onset_re + nucleus_re + coda_re + '\.)'
+            syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
             rhs_re += syl_re
         rhs_re = '((?#RHS)' + rhs_re + ')'
-        rhs_re = re.compile(rhs_re)
+        #rhs_re = re.compile(rhs_re)
 
         print(lhs_re)
         print(middle_re)
         print(rhs_re)
 
-        return EnvironmentFilter(middle, lhs, rhs)
+        return [lhs_re, middle_re, rhs_re]
 
 
     def displayValue(self):
+        # TODO: need to change as well
         lhs = list()
         rhs = list()
 

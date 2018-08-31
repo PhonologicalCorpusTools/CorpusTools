@@ -295,7 +295,7 @@ class Transcription(object):
         """
         return ['#'] + self._list + ['#']
 
-    def find(self, environment):
+    def find(self, environment, mode):
         """
         Find instances of an EnvironmentFilter in the Transcription
 
@@ -309,48 +309,51 @@ class Transcription(object):
         list
             List of Environments that fit the EnvironmentFilter
         """
-        if not isinstance(environment, EnvironmentFilter):
-            return None
-        if all(m not in self for m in environment._middle):
-            return None
-        num_segs = len(environment)
-        print("num_segs: ", num_segs)
+        if mode == 'segMode':
+            if not isinstance(environment, EnvironmentFilter):
+                return None
+            if all(m not in self for m in environment._middle):
+                return None
+            num_segs = len(environment)
 
-        possibles = zip(*[self.with_word_boundaries()[i:] for i in range(num_segs)])
+            possibles = zip(*[self.with_word_boundaries()[i:] for i in range(num_segs)])
 
-        lhs_num = environment.lhs_count()
-        middle_num = lhs_num
-        rhs_num = middle_num + 1
-        envs = []
+            lhs_num = environment.lhs_count()
+            middle_num = lhs_num
+            rhs_num = middle_num + 1
+            envs = []
 
-        for i, p in enumerate(possibles):
-            if p in environment:
-                lhs = p[:lhs_num]
-                middle = p[middle_num]
-                rhs = p[rhs_num:]
-                envs.append(Environment(middle, i + middle_num, lhs, rhs))
-
-        lhsZeroes, rhsZeroes = environment.zeroPositions
-        if lhsZeroes:
-            word = [seg for pos,seg in enumerate(self.with_word_boundaries()) if pos not in lhsZeroes]
-            possibles = zip(*[word[i:] for i in range(num_segs)])
             for i, p in enumerate(possibles):
-                if environment.without_zeroes_contains(p):
+                if p in environment:
                     lhs = p[:lhs_num]
                     middle = p[middle_num]
                     rhs = p[rhs_num:]
                     envs.append(Environment(middle, i + middle_num, lhs, rhs))
 
-        if rhsZeroes:
-            rhsZeroes = [rz+middle_num+1 for rz in rhsZeroes]
-            word = [seg for pos, seg in enumerate(self.with_word_boundaries()) if pos not in rhsZeroes]
-            possibles = zip(*[word[i:] for i in range(num_segs)])
-            for i, p in enumerate(possibles):
-                if environment.without_zeroes_contains(p):
-                    lhs = p[:lhs_num]
-                    middle = p[middle_num]
-                    rhs = p[rhs_num:]
-                    envs.append(Environment(middle, i + middle_num, lhs, rhs))
+            lhsZeroes, rhsZeroes = environment.zeroPositions
+            if lhsZeroes:
+                word = [seg for pos,seg in enumerate(self.with_word_boundaries()) if pos not in lhsZeroes]
+                possibles = zip(*[word[i:] for i in range(num_segs)])
+                for i, p in enumerate(possibles):
+                    if environment.without_zeroes_contains(p):
+                        lhs = p[:lhs_num]
+                        middle = p[middle_num]
+                        rhs = p[rhs_num:]
+                        envs.append(Environment(middle, i + middle_num, lhs, rhs))
+
+            if rhsZeroes:
+                rhsZeroes = [rz+middle_num+1 for rz in rhsZeroes]
+                word = [seg for pos, seg in enumerate(self.with_word_boundaries()) if pos not in rhsZeroes]
+                possibles = zip(*[word[i:] for i in range(num_segs)])
+                for i, p in enumerate(possibles):
+                    if environment.without_zeroes_contains(p):
+                        lhs = p[:lhs_num]
+                        middle = p[middle_num]
+                        rhs = p[rhs_num:]
+                        envs.append(Environment(middle, i + middle_num, lhs, rhs))
+        else:  # mode == 'sylMode'
+            pass
+
 
         if not envs:
             return None
@@ -1384,7 +1387,7 @@ class Environment(object):
     rhs : list, optional
         Segments to the right of the middle segment
     """
-    def __init__(self, middle, position, lhs = None, rhs = None):
+    def __init__(self, middle, position, lhs=None, rhs=None):
         self.middle = middle
         self.position = position
         self.lhs = lhs
@@ -1466,7 +1469,7 @@ class EnvironmentFilter(object):
         List of set of segments on the right of the middle
 
     """
-    def __init__(self, middle_segments, lhs = None, rhs = None, zeroPositions = None):
+    def __init__(self, middle_segments, lhs=None, rhs=None, zeroPositions=None):
         self.original_middle = middle_segments
         self.special_match_symbol = '*'
         if lhs is not None:

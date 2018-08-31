@@ -871,7 +871,7 @@ class MainWindow(QMainWindow):
             if self.PPWindow is not None and dialog.update and self.PPWindow.isVisible():
                 self.PPWindow.table.model().addRows(dialog.results)
             else:
-                self.PPWindow = ResultsWindow('Phonotactic probability results', dialog,self)
+                self.PPWindow = ResultsWindow('Phonotactic probability results', dialog, self)
                 self.PPWindow.show()
                 self.showPPResults.triggered.connect(self.PPWindow.raise_)
                 self.showPPResults.triggered.connect(self.PPWindow.activateWindow)
