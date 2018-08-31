@@ -1455,6 +1455,40 @@ class Environment(object):
     def __ne__(self,other):
         return not self.__eq__(other)
 
+class SyllableEnvironmentFilter(object):
+    def __init__(self, middle_syllables, lhs=list(), rhs=list()):
+        self.middle_syllables = middle_syllables
+        self.lhs = lhs
+        self.rhs = rhs
+
+    @property
+    def middle_syllables(self):
+        return self.middle_syllables
+
+    @property
+    def lhs(self):
+        return self.lhs
+
+    @property
+    def rhs(self):
+        return self.rhs
+
+    @middle_syllables.setter
+    def middle_syllables(self, new):
+        self.middle_syllables = new
+
+    @lhs.setter
+    def lhs(self, new):
+        self.lhs = new
+
+    @rhs.setter
+    def rhs(self, new):
+        self.rhs = new
+
+    def get_regular_expression(self):
+        pass
+
+
 class EnvironmentFilter(object):
     """
     Filter to use for searching words to generate Environments that match
