@@ -1486,7 +1486,68 @@ class SyllableEnvironmentFilter(object):
         self.rhs = new
 
     def get_regular_expression(self):
-        pass
+        """
+        This returns the regular expression associated with the environment
+
+        :return:
+        """
+        lhs_re = ''
+        for syl in lhs:
+            stress_re = ''
+            re_group = set()
+            for stress in syl['stress']:
+                if stress == 'Unstressed':
+                    stress = ''
+                    re_group.add(stress)
+                elif stress in SPECIAL_SYMBOL_RE:
+                    stress = '\\' + stress
+                    re_group.add(stress)
+                else:
+                    re_group.add(stress)
+            stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
+
+            onset_re = ''
+            for unit in syl['onset']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                onset_re += unit_re
+            onset_re = '(?:(?#ONSET)' + onset_re + ')'
+
+            nucleus_re = ''
+            for unit in syl['nucleus']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                nucleus_re += unit_re
+            nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
+
+            coda_re = ''
+            for unit in syl['coda']:
+                re_group = set()
+                for seg in unit:
+                    if seg in SPECIAL_SYMBOL_RE:
+                        seg = '\\' + seg
+                        re_group.add(seg)
+                    else:
+                        re_group.add(seg)
+                unit_re = '(?:' + '|'.join(re_group) + ')'
+                coda_re += unit_re
+            coda_re = '(?:(?#CODA)' + coda_re + ')'
+
+            syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
+            lhs_re += syl_re
+        lhs_re = '((?#LHS)' + lhs_re + ')'
 
 
 class EnvironmentFilter(object):
