@@ -1265,7 +1265,7 @@ class EnvironmentSyllableWidget(QWidget):
             wid = self.rhsWidget.layout().itemAt(ind).widget()
             rhs.append(wid.value())
 
-        return SyllableEnvironmentFilter(middle, lhs=lhs, rhs=rhs)
+        return SyllableEnvironmentFilter(self.inventory, middle, lhs=lhs, rhs=rhs)
 
 
     def displayValue(self):

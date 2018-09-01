@@ -1542,10 +1542,11 @@ class Environment(object):
         return not self.__eq__(other)
 
 class SyllableEnvironmentFilter(object):
-    def __init__(self, middle_syllables, lhs=list(), rhs=list()):
+    def __init__(self, inventory, middle_syllables, lhs=list(), rhs=list()):
         self._middle_syllables = middle_syllables
         self._lhs = lhs
         self._rhs = rhs
+        self._inventory = inventory
 
     @property
     def middle(self):
@@ -1558,6 +1559,14 @@ class SyllableEnvironmentFilter(object):
     @property
     def rhs(self):
         return self._rhs
+
+    @property
+    def inventory(self):
+        return self._inventory
+
+    @inventory.setter
+    def inventory(self, new):
+        self._inventory = new
 
     @middle.setter
     def middle(self, new):
@@ -1594,34 +1603,64 @@ class SyllableEnvironmentFilter(object):
                     re_group.add(seg)
             unit_re = '(?:' + '|'.join(re_group) + ')'
             constituent_re += unit_re
-        constituent_re = '(?:(?#' + constituent.upper() + ')' + constituent_re + ')'
+
+        if syllable['search_type'] == 'Exactly matches':
+            constituent_re = '(?:(?#' + constituent.upper() + ')' + constituent_re + ')'
+        else:
+            general_unit_re_group = set()
+            segs = list(self.inventory.segs.keys())
+            segs.remove('#')  # Because # is a boundary symbol
+            for seg in segs:
+                if seg in SPECIAL_SYMBOL_RE:
+                    seg = '\\' + seg
+                    general_unit_re_group.add(seg)
+                else:
+                    general_unit_re_group.add(seg)
+            general_unit_re = '(?:(?#ALLSEGS)' + '|'.join(general_unit_re_group) + ')*'
+            constituent_re = '(?:(?#' + constituent.upper() + ')' + general_unit_re + constituent_re + general_unit_re + ')'
         return constituent_re
 
     def generate_stress_re(self, syllable):
         re_group = set()
-        for stress in syllable['stress']:
-            if stress == 'Unstressed':
-                stress = ''
-                re_group.add(stress)
-            elif stress in SPECIAL_SYMBOL_RE:
-                stress = '\\' + stress
-                re_group.add(stress)
-            else:
-                re_group.add(stress)
+        if syllable['search_type'] == 'Exactly matches':
+            for stress in syllable['stress']:
+                if stress == 'Unstressed':
+                    stress = ''
+                    re_group.add(stress)
+                elif stress in SPECIAL_SYMBOL_RE:
+                    stress = '\\' + stress
+                    re_group.add(stress)
+                else:
+                    re_group.add(stress)
+        else:  # search_type = minimally contains
+            re_group.add('')
+            for stress in self.inventory.stress_types.keys():
+                if stress in SPECIAL_SYMBOL_RE:
+                    stress = '\\' + stress
+                    re_group.add(stress)
+
         stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
         return stress_re
 
     def generate_tone_re(self, syllable):
         re_group = set()
-        for tone in syllable['tone']:
-            if tone == 'Untoned':
-                tone = ''
-                re_group.add(tone)
-            elif tone in SPECIAL_SYMBOL_RE:
-                tone = '\\' + tone
-                re_group.add(tone)
-            else:
-                re_group.add(tone)
+        if syllable['search_type'] == 'Exactly matches':
+            for tone in syllable['tone']:
+                if tone == 'Untoned':
+                    tone = ''
+                    re_group.add(tone)
+                elif tone in SPECIAL_SYMBOL_RE:
+                    tone = '\\' + tone
+                    re_group.add(tone)
+                else:
+                    re_group.add(tone)
+        else:
+            re_group.add('')
+            for tone in self.inventory.tone_types.keys():
+                if tone in SPECIAL_SYMBOL_RE:
+                    tone = '\\' + tone
+                    re_group.add(tone)
+
         tone_re = '(?:(?#TONE)' + '|'.join(re_group) + ')'
         return tone_re
 
