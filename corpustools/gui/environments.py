@@ -544,7 +544,7 @@ class SyllableConstructDialog(QDialog):
         syllable_info = self.syllWidget.value()
         output.update(syllable_info)
 
-        pprint(output)
+        #pprint(output)
 
         return output
 
@@ -930,15 +930,6 @@ class SyllableWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        """
-        if self.middle:
-            lab = '_\n\n' + 'Onset: {}\nNucleus: {}\nCoda: {}\nStress: {}\nTone: {}\nSearch Type: {}'.format(
-                self.onset, self.nucleus, self.coda, self.stress, self.tone, self.searchType)
-        else:
-            lab = 'Onset: {}\nNucleus: {}\nCoda: {}\nStress: {}\nTone: {}\nSearch Type: {}'.format(
-                self.onset, self.nucleus, self.coda, self.stress, self.tone, self.searchType)
-        """
-
         self.mainLabel = QPushButton()
         self.mainLabel.setStyleSheet("padding: 4px")
         self.updateLabel()
@@ -1099,6 +1090,8 @@ class SyllableWidget(QWidget):
         output['tone'] = self.tone
         output['search_type'] = self.searchType
         output['nonsegs'] = self.nonSeg
+
+        pprint(output)
 
         return output
 

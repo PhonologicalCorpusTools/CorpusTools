@@ -298,7 +298,7 @@ class Transcription(object):
         return ['#'] + self._list + ['#']
 
     def with_syllable_and_word_boundaries(self):
-        return '#.' + '..'.join(self._syllable_list) + '.#'
+        return '.#..' + '..'.join(self._syllable_list) + '..#.'
 
     def find(self, environment, mode):
         """
@@ -1571,6 +1571,17 @@ class SyllableEnvironmentFilter(object):
     def rhs(self, new):
         self._rhs = new
 
+    def generate_nonsegs_re(self, syllable):
+        re_group = set()
+        for symbol in syllable['nonsegs']:
+            if symbol in SPECIAL_SYMBOL_RE:
+                symbol = '\\' + symbol
+                re_group.add(symbol)
+            else:
+                re_group.add(symbol)
+        nonsegs_re = '(?:\.(?#NONSEGS)' + '|'.join(re_group) + '\.)'
+        return nonsegs_re
+
     def generate_constituent_re(self, syllable, constituent):
         constituent_re = ''
         for unit in syllable[constituent]:
@@ -1615,12 +1626,15 @@ class SyllableEnvironmentFilter(object):
         return tone_re
 
     def generate_syllable_re(self, syllable):
-        stress_re = self.generate_stress_re(syllable)
-        tone_re = self.generate_tone_re(syllable)
-        onset_re = self.generate_constituent_re(syllable, 'onset')
-        nucleus_re = self.generate_constituent_re(syllable, 'nucleus')
-        coda_re = self.generate_constituent_re(syllable, 'coda')
-        syllable_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + tone_re + '\.)'
+        if syllable['nonsegs']:
+            syllable_re = self.generate_nonsegs_re(syllable)
+        else:
+            stress_re = self.generate_stress_re(syllable)
+            tone_re = self.generate_tone_re(syllable)
+            onset_re = self.generate_constituent_re(syllable, 'onset')
+            nucleus_re = self.generate_constituent_re(syllable, 'nucleus')
+            coda_re = self.generate_constituent_re(syllable, 'coda')
+            syllable_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + tone_re + '\.)'
         return syllable_re
 
     def generate_regular_expression(self):
