@@ -1,7 +1,7 @@
 
 
 def phonological_search(corpus, envs, sequence_type='transcription', call_back=None, stop_check=None,
-                        mode='segMode'):
+                        mode='segMode', result_type='positive'):
     """
     Perform a search of a corpus for segments, with the option of only
     searching in certain phonological environments.
@@ -47,10 +47,16 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
                 call_back(cur)
         tier = getattr(word, sequence_type)
         found = []
+
         for env in envs:
             es = tier.find(env, mode)
             if es is not None:
                 found.extend(es)
-        if found:
-            results.append((word, found))
+
+        if result_type == 'positive':
+            if found:
+                results.append((word, found))
+        else:
+            if not found:
+                results.append((word, found))
     return results

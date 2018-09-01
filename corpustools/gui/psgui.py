@@ -398,6 +398,27 @@ class PhonoSearchDialog(FunctionDialog):
         modeLayout.addWidget(sylMode)
         optionLayout.addWidget(modeFrame)
 
+        resultTypeFrame = QGroupBox('Result type')
+        resultTypeLayout = QVBoxLayout()
+        resultTypeFrame.setLayout(resultTypeLayout)
+
+        self.resultTypeGroup = QButtonGroup()
+        pos = QCheckBox('Positive')
+        pos.clicked.connect(self.changeResultType)
+        pos.setChecked(True)
+        self.resultType = 'positive'
+        self.resultTypeGroup.addButton(pos)
+        neg = QCheckBox('Negative')
+        neg.clicked.connect(self.changeResultType)
+        self.resultTypeGroup.addButton(neg)
+        self.resultTypeGroup.setExclusive(True)
+        self.resultTypeGroup.setId(pos, 2)
+        self.resultTypeGroup.setId(neg, -2)
+
+        resultTypeLayout.addWidget(pos)
+        resultTypeLayout.addWidget(neg)
+        optionLayout.addWidget(resultTypeFrame)
+
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionLayout.addWidget(self.tierWidget)
 
@@ -424,6 +445,12 @@ class PhonoSearchDialog(FunctionDialog):
         self.layout().insertWidget(0, self.psFrame)
 
         self.progressDialog.setWindowTitle('Searching')
+
+    def changeResultType(self):
+        if self.resultTypeGroup.checkedId() == 2:  # positive
+            self.resultType = 'positive'
+        else:
+            self.resultType = 'negative'
 
     def changeMode(self):
         self.pslayout.removeWidget(self.envWidget)
@@ -532,6 +559,7 @@ class PhonoSearchDialog(FunctionDialog):
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['mode'] = self.mode
+        kwargs['result_type'] = self.resultType
         return kwargs
 
     def setResults(self, results):

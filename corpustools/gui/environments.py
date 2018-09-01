@@ -815,9 +815,10 @@ class SyllableSegmentWidget(QWidget):
         self.menu.addAction(clearAct)
         self.menu.addAction(matchAnythingAct)
         if self.root:
-            self.matchAllAct = QAction("Match all %s" % self.constituent, self, checkable=True,
-                                       triggered=self.setMatchAll)
-            self.menu.addAction(self.matchAllAct)
+            pass
+            #self.matchAllAct = QAction("Match all %s" % self.constituent, self, checkable=True,
+            #                           triggered=self.setMatchAll)
+            #self.menu.addAction(self.matchAllAct)
         else:
             deleteAct = QAction("Delete", self, triggered=self.deleteSelection)
             self.menu.addAction(deleteAct)
@@ -831,9 +832,18 @@ class SyllableSegmentWidget(QWidget):
 
     def setMatchAll(self):
         self.matchAll = self.matchAllAct.isChecked()
+        if self.matchAll:
+            segs = list(self.inventory.segs.keys())
+            segs.remove('#')  # Because # is a boundary symbol
+            self.segments = segs
+            self.features = set()
+        else:
+            self.segments = set()
+            self.features = set()
+        self.updateLabel()
 
     def addArbitrary(self):
-        self.segments = set(self.inventory.segs)
+        self.segments = set(self.inventory.segs.keys() - ['#'])
         self.updateLabel()
 
     def clearSelection(self):
@@ -853,7 +863,7 @@ class SyllableSegmentWidget(QWidget):
 
     def generateDisplayText(self):
         displayList = list()
-        if len(self.segments) == len(self.inventory.segs):
+        if len(self.segments) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
             if self.show_full_inventory:
                 displayList = ','.join(self.segments)
             else:
@@ -997,27 +1007,45 @@ class SyllableWidget(QWidget):
     def generateDisplayText(self):
         display_onset = ''
         for slot in self.onset:
-            displayList = list()
-            displayList.extend(slot["segments"])
-            displayList.extend(slot["features"])
-            displayText = '(' + ','.join(displayList) + ')'
-            display_onset += displayText
+            if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
+                if self.show_full_inventory:
+                    display_onset += '(' + ','.join(self.segments) + ')'
+                else:
+                    display_onset += '{*}'
+            else:
+                displayList = list()
+                displayList.extend(slot["segments"])
+                displayList.extend(slot["features"])
+                displayText = '(' + ','.join(displayList) + ')'
+                display_onset += displayText
 
         display_nucleus = ''
         for slot in self.nucleus:
-            displayList = list()
-            displayList.extend(slot["segments"])
-            displayList.extend(slot["features"])
-            displayText = '(' + ','.join(displayList) + ')'
-            display_nucleus += displayText
+            if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
+                if self.show_full_inventory:
+                    display_nucleus += '(' + ','.join(self.segments) + ')'
+                else:
+                    display_nucleus += '{*}'
+            else:
+                displayList = list()
+                displayList.extend(slot["segments"])
+                displayList.extend(slot["features"])
+                displayText = '(' + ','.join(displayList) + ')'
+                display_nucleus += displayText
 
         display_coda = ''
         for slot in self.coda:
-            displayList = list()
-            displayList.extend(slot["segments"])
-            displayList.extend(slot["features"])
-            displayText = '(' + ','.join(displayList) + ')'
-            display_coda += displayText
+            if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
+                if self.show_full_inventory:
+                    display_coda += '(' + ','.join(self.segments) + ')'
+                else:
+                    display_coda += '{*}'
+            else:
+                displayList = list()
+                displayList.extend(slot["segments"])
+                displayList.extend(slot["features"])
+                displayText = '(' + ','.join(displayList) + ')'
+                display_coda += displayText
 
         display_stress = '(' + ','.join(self.stress) + ')'
         display_tone = '(' + ','.join(self.tone) + ')'
@@ -1038,14 +1066,16 @@ class SyllableWidget(QWidget):
 
 
     def addUnspecifiedSyllable(self):
-        # TODO: implement this
+        self.nonSeg = set()
         self.onset = list()
         self.nucleus = list()
         self.coda = list()
         self.stress = set()
         self.tone = set()
-        self.searchType = ''
-        self.nonSeg = set()
+        self.searchType = 'minimally contains'
+
+        label = '{' + '\u03C3' + '}'
+        self.mainLabel.setText(label)
 
     def constructSyllable(self):
         dialog = SyllableConstructDialog(self.inventory, parent=self, use_features=True)

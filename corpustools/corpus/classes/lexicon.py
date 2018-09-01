@@ -186,7 +186,7 @@ class Transcription(object):
         # of BaseAnnotation type
 
         # If there is a syllable delimiter, then it's a list of SyllableBaseAnnotation
-        self._syllable_list = []
+        self._syllable_list = []  # a list of dictionaries
         self._list = []
         self.stress_pattern = {}
         self.boundaries = {}  # TODO: Don't know when this is used
@@ -206,7 +206,7 @@ class Transcription(object):
             if has_syllable_level:
                 # TODO: need to extend the function to be able to add new words in the future
                 for base_syll in seg_list:
-                    self._syllable_list.append(base_syll.label)
+                    self._syllable_list.append(base_syll)
                     for i, s in enumerate(base_syll):
                         try:
                             self._list.append(s.label)
@@ -298,7 +298,36 @@ class Transcription(object):
         return ['#'] + self._list + ['#']
 
     def with_syllable_and_word_boundaries(self):
-        return '.#..' + '..'.join(self._syllable_list) + '..#.'
+        syllable_str = ''
+        for syllable in self._syllable_list:
+            onset_str = ''
+            for seg in syllable.onset:
+                onset_str += seg.label
+            onset_str = '.' + onset_str + '.'
+
+            nucleus_str = ''
+            for seg in syllable.nucleus:
+                nucleus_str += seg.label
+            nucleus_str = '.' + nucleus_str + '.'
+
+            coda_str = ''
+            for seg in syllable.coda:
+                coda_str += seg.label
+            coda_str = '.' + coda_str + '.'
+
+            if syllable.stress:
+                stress_str = syllable.stress
+            else:
+                stress_str = ''
+
+            if syllable.tone:
+                tone_str = syllable.tone
+            else:
+                tone_str = ''
+
+            syllable_str += '-' + stress_str + onset_str + nucleus_str + coda_str + tone_str + '-'
+
+        return '-#-' + syllable_str + '-#-'
 
     def find(self, environment, mode):
         """
@@ -363,9 +392,9 @@ class Transcription(object):
             for match in re.finditer(reg_exp, word_str, overlapped=True):
                 start = match.start()
                 group_dict = match.groupdict()
-                lhs = group_dict['LHS'].strip('.').split(sep='..')
-                middle = group_dict['MID'].strip('.').split(sep='..')
-                rhs = group_dict['RHS'].strip('.').split(sep='..')
+                lhs = group_dict['LHS'].replace('.', '').strip('-').split(sep='--')
+                middle = group_dict['MID'].replace('.', '').strip('-').split(sep='--')
+                rhs = group_dict['RHS'].replace('.', '').strip('-').split(sep='--')
                 print(match.groupdict())
                 print(lhs, middle, rhs)
                 envs.append(SyllableEnvironment(start, middle, lhs=lhs, rhs=rhs))
@@ -1588,7 +1617,7 @@ class SyllableEnvironmentFilter(object):
                 re_group.add(symbol)
             else:
                 re_group.add(symbol)
-        nonsegs_re = '(?:\.(?#NONSEGS)' + '|'.join(re_group) + '\.)'
+        nonsegs_re = '(?:-(?#NONSEGS)' + '|'.join(re_group) + '-)'
         return nonsegs_re
 
     def generate_constituent_re(self, syllable, constituent):
@@ -1605,7 +1634,7 @@ class SyllableEnvironmentFilter(object):
             constituent_re += unit_re
 
         if syllable['search_type'] == 'Exactly matches':
-            constituent_re = '(?:(?#' + constituent.upper() + ')' + constituent_re + ')'
+            constituent_re = '(?:\.(?#' + constituent.upper() + ')' + constituent_re + '\.)'
         else:
             general_unit_re_group = set()
             segs = list(self.inventory.segs.keys())
@@ -1617,10 +1646,11 @@ class SyllableEnvironmentFilter(object):
                 else:
                     general_unit_re_group.add(seg)
             general_unit_re = '(?:(?#ALLSEGS)' + '|'.join(general_unit_re_group) + ')*'
-            constituent_re = '(?:(?#' + constituent.upper() + ')' + general_unit_re + constituent_re + general_unit_re + ')'
+            constituent_re = '(?:\.(?#' + constituent.upper() + ')' + general_unit_re + constituent_re + general_unit_re + '\.)'
         return constituent_re
 
     def generate_stress_re(self, syllable):
+        """
         re_group = set()
         if syllable['search_type'] == 'Exactly matches':
             for stress in syllable['stress']:
@@ -1641,8 +1671,22 @@ class SyllableEnvironmentFilter(object):
 
         stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
         return stress_re
+        """
+        re_group = set()
+        for stress in syllable['stress']:
+            if stress == 'Unstressed':
+                stress = ''
+                re_group.add(stress)
+            elif stress in SPECIAL_SYMBOL_RE:
+                stress = '\\' + stress
+                re_group.add(stress)
+            else:
+                re_group.add(stress)
+        stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
+        return stress_re
 
     def generate_tone_re(self, syllable):
+        """
         re_group = set()
         if syllable['search_type'] == 'Exactly matches':
             for tone in syllable['tone']:
@@ -1663,6 +1707,20 @@ class SyllableEnvironmentFilter(object):
 
         tone_re = '(?:(?#TONE)' + '|'.join(re_group) + ')'
         return tone_re
+        """
+        re_group = set()
+        for tone in syllable['tone']:
+            if tone == 'Untoned':
+                tone = ''
+                re_group.add(tone)
+            elif tone in SPECIAL_SYMBOL_RE:
+                tone = '\\' + tone
+                re_group.add(tone)
+            else:
+                re_group.add(tone)
+
+        tone_re = '(?:(?#TONE)' + '|'.join(re_group) + ')'
+        return tone_re
 
     def generate_syllable_re(self, syllable):
         if syllable['nonsegs']:
@@ -1673,7 +1731,7 @@ class SyllableEnvironmentFilter(object):
             onset_re = self.generate_constituent_re(syllable, 'onset')
             nucleus_re = self.generate_constituent_re(syllable, 'nucleus')
             coda_re = self.generate_constituent_re(syllable, 'coda')
-            syllable_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + tone_re + '\.)'
+            syllable_re = '(?:-(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + tone_re + '-)'
         return syllable_re
 
     def generate_regular_expression(self):
@@ -1701,7 +1759,7 @@ class SyllableEnvironmentFilter(object):
         rhs_re = '(?P<RHS>' + rhs_re + ')'
 
         final_re = lhs_re + mid_re + rhs_re
-
+        print(final_re)
         return re.compile(final_re)
 
 
