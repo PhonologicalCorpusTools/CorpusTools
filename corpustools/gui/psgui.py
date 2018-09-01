@@ -441,11 +441,11 @@ class PhonoSearchDialog(FunctionDialog):
             self.pslayout.insertWidget(0, self.envWidget)
 
     def accept(self):
-        for n in range(self.envWidget.environmentFrame.layout().count() - 2):
-            # the -2 avoids catching some unncessary widgets
-            widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
-            search = RecentSearch(widget)
-            self.recentSearches.appendleft(search)  # recentSearches is a collections.deque object, not a regular list
+        #for n in range(self.envWidget.environmentFrame.layout().count() - 2):
+        #    # the -2 avoids catching some unncessary widgets
+        #    widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
+        #    search = RecentSearch(widget)
+        #    self.recentSearches.appendleft(search)  # recentSearches is a collections.deque object, not a regular list
         super().accept()
 
     def loadSearch(self):
@@ -549,4 +549,14 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Environment': envs,
                                      'Token frequency': w.frequency})
         else:
-            pass
+            for word, list_of_sylEnvs in results:
+                middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
+                try:
+                    envs = tuple(str(syl) for syl in list_of_sylEnvs)
+                except IndexError:
+                    envs = tuple()
+                self.results.append({'Word': word,
+                                     'Transcription': str(getattr(word, self.tierWidget.value())),
+                                     'Segment': middle_syllables,
+                                     'Environment': envs,
+                                     'Token frequency': word.frequency})

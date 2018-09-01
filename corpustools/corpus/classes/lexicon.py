@@ -1,6 +1,6 @@
 from corpustools import __version__ as currentPCTversion
 from decimal import Decimal
-import re
+import regex as re
 import random
 import collections
 import operator
@@ -8,6 +8,8 @@ import locale
 import copy
 
 from corpustools.exceptions import CorpusIntegrityError
+
+SPECIAL_SYMBOL_RE = ['.', '^', '$', '*', '+', '?', '|', '{', '}', '[', ']', '#', '(', ')', '\'', '\"']
 
 class Segment(object):
     """
@@ -184,7 +186,7 @@ class Transcription(object):
         # of BaseAnnotation type
 
         # If there is a syllable delimiter, then it's a list of SyllableBaseAnnotation
-        self._syllable_list = [] # A list of dictionaries
+        self._syllable_list = []
         self._list = []
         self.stress_pattern = {}
         self.boundaries = {}  # TODO: Don't know when this is used
@@ -295,6 +297,9 @@ class Transcription(object):
         """
         return ['#'] + self._list + ['#']
 
+    def with_syllable_and_word_boundaries(self):
+        return '#.' + '..'.join(self._syllable_list) + '.#'
+
     def find(self, environment, mode):
         """
         Find instances of an EnvironmentFilter in the Transcription
@@ -309,6 +314,7 @@ class Transcription(object):
         list
             List of Environments that fit the EnvironmentFilter
         """
+        envs = []
         if mode == 'segMode':
             if not isinstance(environment, EnvironmentFilter):
                 return None
@@ -321,7 +327,6 @@ class Transcription(object):
             lhs_num = environment.lhs_count()
             middle_num = lhs_num
             rhs_num = middle_num + 1
-            envs = []
 
             for i, p in enumerate(possibles):
                 if p in environment:
@@ -352,8 +357,18 @@ class Transcription(object):
                         rhs = p[rhs_num:]
                         envs.append(Environment(middle, i + middle_num, lhs, rhs))
         else:  # mode == 'sylMode'
-            pass
-
+            reg_exp = environment.generate_regular_expression()
+            word_str = self.with_syllable_and_word_boundaries()
+            print(word_str)
+            for match in re.finditer(reg_exp, word_str, overlapped=True):
+                start = match.start()
+                group_dict = match.groupdict()
+                lhs = group_dict['LHS'].strip('.').split(sep='..')
+                middle = group_dict['MID'].strip('.').split(sep='..')
+                rhs = group_dict['RHS'].strip('.').split(sep='..')
+                print(match.groupdict())
+                print(lhs, middle, rhs)
+                envs.append(SyllableEnvironment(start, middle, lhs=lhs, rhs=rhs))
 
         if not envs:
             return None
@@ -1371,6 +1386,77 @@ class Word(object):
     def __ge__(self, other):
         return self.spelling >= other.spelling
 
+class SyllableEnvironment(object):
+    def __init__(self, start, middle, lhs=list(), rhs=list()):
+        self._start = start
+        self._middle = middle
+        self._lhs = lhs
+        self._rhs = rhs
+
+    @property
+    def middle(self):
+        return self._middle
+
+    @middle.setter
+    def middle(self, new):
+        self._middle = new
+
+    @property
+    def lhs(self):
+        return self._lhs
+
+    @property
+    def rhs(self):
+        return self._rhs
+
+    @lhs.setter
+    def lhs(self, new):
+        self._lhs = new
+
+    @rhs.setter
+    def rhs(self, new):
+        self._rhs = new
+
+    @property
+    def start(self):
+        return self._start
+
+    @start.setter
+    def start(self, new):
+        self._start = new
+
+    def __str__(self):
+        lhs = '-'.join(self._lhs)
+        rhs = '-'.join(self._rhs)
+        return lhs + '_' + rhs
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __hash__(self):
+        return hash((self._start, self._middle, self._lhs, self._rhs))
+
+    def __eq__(self, other):
+        """
+        Two Environments are equal if they share a left AND right hand side
+        An empty lhs or rhs is an automatic match
+        """
+        if not isinstance(other, SyllableEnvironment):
+            return False
+
+        if other.lhs and other.lhs != self._lhs:
+            return False
+        if other.rhs and other.rhs != self._rhs:
+            return False
+        if other.start != self._start:
+            return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+
 class Environment(object):
     """
     Specific sequence of segments that was a match for an EnvironmentFilter
@@ -1457,97 +1543,113 @@ class Environment(object):
 
 class SyllableEnvironmentFilter(object):
     def __init__(self, middle_syllables, lhs=list(), rhs=list()):
-        self.middle_syllables = middle_syllables
-        self.lhs = lhs
-        self.rhs = rhs
+        self._middle_syllables = middle_syllables
+        self._lhs = lhs
+        self._rhs = rhs
 
     @property
-    def middle_syllables(self):
-        return self.middle_syllables
+    def middle(self):
+        return self._middle_syllables
 
     @property
     def lhs(self):
-        return self.lhs
+        return self._lhs
 
     @property
     def rhs(self):
-        return self.rhs
+        return self._rhs
 
-    @middle_syllables.setter
-    def middle_syllables(self, new):
-        self.middle_syllables = new
+    @middle.setter
+    def middle(self, new):
+        self._middle_syllables = new
 
     @lhs.setter
     def lhs(self, new):
-        self.lhs = new
+        self._lhs = new
 
     @rhs.setter
     def rhs(self, new):
-        self.rhs = new
+        self._rhs = new
 
-    def get_regular_expression(self):
+    def generate_constituent_re(self, syllable, constituent):
+        constituent_re = ''
+        for unit in syllable[constituent]:
+            re_group = set()
+            for seg in unit:
+                if seg in SPECIAL_SYMBOL_RE:
+                    seg = '\\' + seg
+                    re_group.add(seg)
+                else:
+                    re_group.add(seg)
+            unit_re = '(?:' + '|'.join(re_group) + ')'
+            constituent_re += unit_re
+        constituent_re = '(?:(?#' + constituent.upper() + ')' + constituent_re + ')'
+        return constituent_re
+
+    def generate_stress_re(self, syllable):
+        re_group = set()
+        for stress in syllable['stress']:
+            if stress == 'Unstressed':
+                stress = ''
+                re_group.add(stress)
+            elif stress in SPECIAL_SYMBOL_RE:
+                stress = '\\' + stress
+                re_group.add(stress)
+            else:
+                re_group.add(stress)
+        stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
+        return stress_re
+
+    def generate_tone_re(self, syllable):
+        re_group = set()
+        for tone in syllable['tone']:
+            if tone == 'Untoned':
+                tone = ''
+                re_group.add(tone)
+            elif tone in SPECIAL_SYMBOL_RE:
+                tone = '\\' + tone
+                re_group.add(tone)
+            else:
+                re_group.add(tone)
+        tone_re = '(?:(?#TONE)' + '|'.join(re_group) + ')'
+        return tone_re
+
+    def generate_syllable_re(self, syllable):
+        stress_re = self.generate_stress_re(syllable)
+        tone_re = self.generate_tone_re(syllable)
+        onset_re = self.generate_constituent_re(syllable, 'onset')
+        nucleus_re = self.generate_constituent_re(syllable, 'nucleus')
+        coda_re = self.generate_constituent_re(syllable, 'coda')
+        syllable_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + tone_re + '\.)'
+        return syllable_re
+
+    def generate_regular_expression(self):
         """
         This returns the regular expression associated with the environment
 
         :return:
         """
         lhs_re = ''
-        for syl in lhs:
-            stress_re = ''
-            re_group = set()
-            for stress in syl['stress']:
-                if stress == 'Unstressed':
-                    stress = ''
-                    re_group.add(stress)
-                elif stress in SPECIAL_SYMBOL_RE:
-                    stress = '\\' + stress
-                    re_group.add(stress)
-                else:
-                    re_group.add(stress)
-            stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
+        for syllable in self._lhs:
+            syllable_re = self.generate_syllable_re(syllable)
+            lhs_re += syllable_re
+        lhs_re = '(?P<LHS>' + lhs_re + ')'
 
-            onset_re = ''
-            for unit in syl['onset']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                onset_re += unit_re
-            onset_re = '(?:(?#ONSET)' + onset_re + ')'
+        mid_re = ''
+        for syllable in self._middle_syllables:
+            syllable_re = self.generate_syllable_re(syllable)
+            mid_re += syllable_re
+        mid_re = '(?P<MID>' + mid_re + ')'
 
-            nucleus_re = ''
-            for unit in syl['nucleus']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                nucleus_re += unit_re
-            nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
+        rhs_re = ''
+        for syllable in self._rhs:
+            syllable_re = self.generate_syllable_re(syllable)
+            rhs_re += syllable_re
+        rhs_re = '(?P<RHS>' + rhs_re + ')'
 
-            coda_re = ''
-            for unit in syl['coda']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                coda_re += unit_re
-            coda_re = '(?:(?#CODA)' + coda_re + ')'
+        final_re = lhs_re + mid_re + rhs_re
 
-            syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
-            lhs_re += syl_re
-        lhs_re = '((?#LHS)' + lhs_re + ')'
+        return re.compile(final_re)
 
 
 class EnvironmentFilter(object):

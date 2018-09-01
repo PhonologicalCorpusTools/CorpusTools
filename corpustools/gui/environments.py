@@ -1,6 +1,6 @@
 from .imports import *
 from .widgets import SegmentSelectionWidget, SegmentSelectDialog
-from corpustools.corpus.classes.lexicon import EnvironmentFilter
+from corpustools.corpus.classes.lexicon import EnvironmentFilter, SyllableEnvironmentFilter
 import sip
 from pprint import pprint
 import regex as re
@@ -1169,6 +1169,7 @@ class EnvironmentSyllableWidget(QWidget):
             self.loadfromCopy(copy_data)
 
     def loadfromCopy(self, copy_data):
+        #TODO: need to reimplement this
         self.middleWidget.segments = copy_data.middleWidget.segments
         self.middleWidget.features = copy_data.middleWidget.features
         self.middleWidget.mainLabel.setText(copy_data.middleWidget.mainLabel.text())
@@ -1189,6 +1190,7 @@ class EnvironmentSyllableWidget(QWidget):
             wid.segDeleted.connect(self.deleteSeg)
 
     def copyEnvironment(self):
+        # TODO: need to reimplement this
         self.envCopied.emit([self]) #connected to EnvironmentSelectWidget.addCopiedEnvironment()
 
     def insertSegWidget(self, match_widget, add_to_side):
@@ -1258,194 +1260,19 @@ class EnvironmentSyllableWidget(QWidget):
         return segWidget
 
     def value(self):
-        # TODO: write another function to simplify this one
         lhs = []
         for ind in range(self.lhsWidget.layout().count()):
             wid = self.lhsWidget.layout().itemAt(ind).widget()
             lhs.append(wid.value())
+
+        middle = [self.middleWidget.value()]
+
         rhs = []
         for ind in range(self.rhsWidget.layout().count()):
             wid = self.rhsWidget.layout().itemAt(ind).widget()
             rhs.append(wid.value())
-        middle = self.middleWidget.value()
 
-        lhs_re = ''
-        for syl in lhs:
-            stress_re = ''
-            re_group = set()
-            for stress in syl['stress']:
-                if stress == 'Unstressed':
-                    stress = ''
-                    re_group.add(stress)
-                elif stress in SPECIAL_SYMBOL_RE:
-                    stress = '\\' + stress
-                    re_group.add(stress)
-                else:
-                    re_group.add(stress)
-            stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
-
-            onset_re = ''
-            for unit in syl['onset']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                onset_re += unit_re
-            onset_re = '(?:(?#ONSET)' + onset_re + ')'
-
-            nucleus_re = ''
-            for unit in syl['nucleus']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                nucleus_re += unit_re
-            nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
-
-            coda_re = ''
-            for unit in syl['coda']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                coda_re += unit_re
-            coda_re = '(?:(?#CODA)' + coda_re + ')'
-
-            syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
-            lhs_re += syl_re
-        lhs_re = '((?#LHS)' + lhs_re + ')'
-        #lhs_re = re.compile(lhs_re)
-
-        stress_re = ''
-        re_group = set()
-        for stress in middle['stress']:
-            if stress == 'Unstressed':
-                stress = ''
-                re_group.add(stress)
-            elif stress in SPECIAL_SYMBOL_RE:
-                stress = '\\' + stress
-                re_group.add(stress)
-            else:
-                re_group.add(stress)
-        stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
-
-        onset_re = ''
-        for unit in middle['onset']:
-            re_group = set()
-            for seg in unit:
-                if seg in SPECIAL_SYMBOL_RE:
-                    seg = '\\' + seg
-                    re_group.add(seg)
-                else:
-                    re_group.add(seg)
-            unit_re = '(?:' + '|'.join(re_group) + ')'
-            onset_re += unit_re
-        onset_re = '(?:(?#ONSET)' + onset_re + ')'
-
-        nucleus_re = ''
-        for unit in middle['nucleus']:
-            re_group = set()
-            for seg in unit:
-                if seg in SPECIAL_SYMBOL_RE:
-                    seg = '\\' + seg
-                    re_group.add(seg)
-                else:
-                    re_group.add(seg)
-            unit_re = '(?:' + '|'.join(re_group) + ')'
-            nucleus_re += unit_re
-        nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
-
-        coda_re = ''
-        for unit in middle['coda']:
-            re_group = set()
-            for seg in unit:
-                if seg in SPECIAL_SYMBOL_RE:
-                    seg = '\\' + seg
-                    re_group.add(seg)
-                else:
-                    re_group.add(seg)
-            unit_re = '(?:' + '|'.join(re_group) + ')'
-            coda_re += unit_re
-        coda_re = '(?:(?#CODA)' + coda_re + ')'
-        syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
-        middle_re = '((?#MID)' + syl_re + ')'
-        #middle_re = re.compile(middle_re)
-
-        rhs_re = ''
-        for syl in rhs:
-            stress_re = ''
-            re_group = set()
-            for stress in syl['stress']:
-                if stress == 'Unstressed':
-                    stress = ''
-                    re_group.add(stress)
-                elif stress in SPECIAL_SYMBOL_RE:
-                    stress = '\\' + stress
-                    re_group.add(stress)
-                else:
-                    re_group.add(stress)
-            stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
-
-            onset_re = ''
-            for unit in syl['onset']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                onset_re += unit_re
-            onset_re = '(?:(?#ONSET)' + onset_re + ')'
-
-            nucleus_re = ''
-            for unit in syl['nucleus']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                nucleus_re += unit_re
-            nucleus_re = '(?:(?#NUCLEUS)' + nucleus_re + ')'
-
-            coda_re = ''
-            for unit in syl['coda']:
-                re_group = set()
-                for seg in unit:
-                    if seg in SPECIAL_SYMBOL_RE:
-                        seg = '\\' + seg
-                        re_group.add(seg)
-                    else:
-                        re_group.add(seg)
-                unit_re = '(?:' + '|'.join(re_group) + ')'
-                coda_re += unit_re
-            coda_re = '(?:(?#CODA)' + coda_re + ')'
-            syl_re = '(?:\.(?#SYLLABLE)' + stress_re + onset_re + nucleus_re + coda_re + '\.)'
-            rhs_re += syl_re
-        rhs_re = '((?#RHS)' + rhs_re + ')'
-        #rhs_re = re.compile(rhs_re)
-
-        print(lhs_re)
-        print(middle_re)
-        print(rhs_re)
-
-        return [lhs_re, middle_re, rhs_re]
+        return SyllableEnvironmentFilter(middle, lhs=lhs, rhs=rhs)
 
 
     def displayValue(self):
