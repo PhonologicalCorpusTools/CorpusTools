@@ -388,15 +388,15 @@ class Transcription(object):
         else:  # mode == 'sylMode'
             reg_exp = environment.generate_regular_expression()
             word_str = self.with_syllable_and_word_boundaries()
-            print(word_str)
+            #print(word_str)
             for match in re.finditer(reg_exp, word_str, overlapped=True):
                 start = match.start()
                 group_dict = match.groupdict()
                 lhs = group_dict['LHS'].replace('.', '').strip('-').split(sep='--')
                 middle = group_dict['MID'].replace('.', '').strip('-').split(sep='--')
                 rhs = group_dict['RHS'].replace('.', '').strip('-').split(sep='--')
-                print(match.groupdict())
-                print(lhs, middle, rhs)
+                #print(match.groupdict())
+                #print(lhs, middle, rhs)
                 envs.append(SyllableEnvironment(start, middle, lhs=lhs, rhs=rhs))
 
         if not envs:
@@ -1759,7 +1759,7 @@ class SyllableEnvironmentFilter(object):
         rhs_re = '(?P<RHS>' + rhs_re + ')'
 
         final_re = lhs_re + mid_re + rhs_re
-        print(final_re)
+        #print(final_re)
         return re.compile(final_re)
 
 

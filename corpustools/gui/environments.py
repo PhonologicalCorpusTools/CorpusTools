@@ -1070,9 +1070,9 @@ class SyllableWidget(QWidget):
         self.onset = list()
         self.nucleus = list()
         self.coda = list()
-        self.stress = set()
-        self.tone = set()
-        self.searchType = 'minimally contains'
+        self.stress = set(list(self.inventory.stress_types.keys()) + ['Unstressed'])
+        self.tone = set(list(self.inventory.tone_types.keys()) + ['Untoned'])
+        self.searchType = 'Minimally contains'
 
         label = '{' + '\u03C3' + '}'
         self.mainLabel.setText(label)

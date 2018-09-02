@@ -38,6 +38,7 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
         call_back(0, len(corpus))
         cur = 0
     results = []
+    counter = 0
     for word in corpus:
         if stop_check is not None and stop_check():
             return
@@ -55,8 +56,11 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
 
         if result_type == 'positive':
             if found:
+                counter += 1
                 results.append((word, found))
         else:
             if not found:
                 results.append((word, found))
+
+    print(counter)
     return results
