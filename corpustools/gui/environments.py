@@ -290,11 +290,14 @@ class EnvironmentSelectWidget(QGroupBox):
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos, envWidget)
 
-    @Slot(list) #connected to EnvironmentWidget.envCopied()
+    @Slot(list)  # connected to EnvironmentWidget.envCopied()
     def addCopiedEnvironment(self, args):
-        # TODO: need to change this part to fit the new sylmode
         copy_data = args[0] if args else None
-        envWidget = EnvironmentWidget(self.inventory, middle=copy_data.middle, parent=self, copy_data=copy_data)
+        if self.mode == 'segMode':
+            envWidget = EnvironmentWidget(self.inventory, middle=copy_data.middle, parent=self, copy_data=copy_data)
+        else:
+            envWidget = EnvironmentSyllableWidget(self.inventory, middle=copy_data.middle, parent=self,
+                                                  copy_data=copy_data)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos, envWidget)
 
@@ -865,7 +868,8 @@ class SyllableSegmentWidget(QWidget):
 class SyllableWidget(QWidget):
     segDeleted = Signal(list)
 
-    def __init__(self, inventory, parent=None, middle=False, show_full_inventory=False, side=None):
+    def __init__(self, inventory, parent=None, middle=False, show_full_inventory=False, side=None,
+                 preset=False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
 
@@ -885,9 +889,23 @@ class SyllableWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.mainLabel = QPushButton()
-        self.mainLabel.setStyleSheet("padding: 4px")
-        self.updateLabel()
+        self.specification = QFormLayout()
+        self.onsetLabel = QLabel()
+        self.nucleusLabel = QLabel()
+        self.codaLabel = QLabel()
+        self.stressLabel = QLabel()
+        self.toneLabel = QLabel()
+        self.specification.addRow('Onset:', self.onsetLabel)
+        self.specification.addRow('Nucleus:', self.nucleusLabel)
+        self.specification.addRow('Coda:', self.codaLabel)
+        self.specification.addRow('Stress:', self.stressLabel)
+        self.specification.addRow('Tone:', self.toneLabel)
+        if self.middle:
+            self.specification.addRow('_____', QLabel('_____'))
+        layout.addLayout(self.specification)
+
+        self.mainLabel = QPushButton('Edit')
+        #self.mainLabel.setStyleSheet("padding: 4px")
         layout.addWidget(self.mainLabel)
 
         self.menu = QMenu(self)
@@ -912,6 +930,17 @@ class SyllableWidget(QWidget):
         addNewPosMenu.addAction(addToLeftAct)
         addNewPosMenu.addAction(addToRightAct)
 
+        self.updateLabel()
+
+        if preset:
+            self.onset = preset.onset
+            self.nucleus = preset.nucleus
+            self.coda = preset.coda
+            self.stress = preset.stress
+            self.tone = preset.tone
+            self.nonSeg = preset.nonSeg
+            self.updateLabel()
+
     def addToLeft(self):
         self.parent.insertSegWidget(self, 'l')
 
@@ -926,8 +955,7 @@ class SyllableWidget(QWidget):
         self.stress = set()
         self.tone = set()
 
-        label = '{' + ','.join(self.nonSeg) + '}'
-        self.mainLabel.setText(label)
+        self.updateLabel()
 
     def clearSelection(self):
         self.onset = {'search_type': '', 'contents': []}
@@ -942,68 +970,64 @@ class SyllableWidget(QWidget):
         self.segDeleted.emit([self])  # connected to SyllableConstructionWidget.deleteSeg()
 
     def updateLabel(self):
-        labelText = self.generateDisplayText()
-        if self.middle:
-            labelText = '_\n\n{}'.format(labelText)
-        self.mainLabel.setText(labelText)
+        self.generateDisplayText()
+
+    def generateColorText(self, slot, neg_color='darkRed', pos_color='darkGreen'):
+        if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
+            if self.show_full_inventory:
+                display_text = '{' + ','.join(self.segments) + '}'
+            else:
+                display_text = '{*}'
+        else:
+            display_list = list()
+            display_list.extend(slot["segments"])
+            display_list.extend(slot["features"])
+            display_text = '{' + ','.join(display_list) + '}'
+
+        if slot['negative']:
+            display_text = '<font color=\"' + neg_color + '\">' + display_text + '</font>'
+        else:
+            display_text = '<font color=\"' + pos_color + '\">' + display_text + '</font>'
+
+        return display_text
 
     def generateDisplayText(self):
         display_onset = ''
         for slot in self.onset['contents']:
-            if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
-                if self.show_full_inventory:
-                    display_onset += '(' + ','.join(self.segments) + ')'
-                else:
-                    display_onset += '{*}'
-            else:
-                displayList = list()
-                displayList.extend(slot["segments"])
-                displayList.extend(slot["features"])
-                displayText = '(' + ','.join(displayList) + ')'
-                display_onset += displayText
+            display_text = self.generateColorText(slot)
+            display_onset += display_text
+
+        self.onsetLabel.setText(display_onset)
+        if self.onset['search_type'] == 'Minimally contains':
+            self.onsetLabel.setStyleSheet('background:white')
 
         display_nucleus = ''
         for slot in self.nucleus['contents']:
-            if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
-                if self.show_full_inventory:
-                    display_nucleus += '(' + ','.join(self.segments) + ')'
-                else:
-                    display_nucleus += '{*}'
-            else:
-                displayList = list()
-                displayList.extend(slot["segments"])
-                displayList.extend(slot["features"])
-                displayText = '(' + ','.join(displayList) + ')'
-                display_nucleus += displayText
+            display_text = self.generateColorText(slot)
+            display_nucleus += display_text
+
+        self.nucleusLabel.setText(display_nucleus)
+        if self.nucleus['search_type'] == 'Minimally contains':
+            self.nucleusLabel.setStyleSheet('background:white')
 
         display_coda = ''
         for slot in self.coda['contents']:
-            if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
-                if self.show_full_inventory:
-                    display_coda += '(' + ','.join(self.segments) + ')'
-                else:
-                    display_coda += '{*}'
-            else:
-                displayList = list()
-                displayList.extend(slot["segments"])
-                displayList.extend(slot["features"])
-                displayText = '(' + ','.join(displayList) + ')'
-                display_coda += displayText
+            display_text = self.generateColorText(slot)
+            display_coda += display_text
 
-        display_stress = '(' + ','.join(self.stress) + ')'
-        display_tone = '(' + ','.join(self.tone) + ')'
+        self.codaLabel.setText(display_coda)
+        if self.coda['search_type'] == 'Minimally contains':
+            self.codaLabel.setStyleSheet('background:white')
 
-        template = 'Onset: {}\n' \
-                   'Nucleus: {}\n' \
-                   'Coda: {}\n' \
-                   'Stress: {}\n' \
-                   'Tone: {}\n'.format(display_onset,
-                                            display_nucleus,
-                                            display_coda,
-                                            display_stress,
-                                            display_tone)
+        display_stress = '{' + ','.join(self.stress) + '}'
+        display_tone = '{' + ','.join(self.tone) + '}'
 
-        return template
+        self.stressLabel.setText(display_stress)
+        self.toneLabel.setText(display_tone)
+
+        if self.nonSeg:
+            label = '{' + ','.join(self.nonSeg) + '}'
+            self.mainLabel.setText(label)
 
 
     def addUnspecifiedSyllable(self):
@@ -1058,7 +1082,6 @@ class SyllableWidget(QWidget):
         output['tone'] = self.tone
         output['nonsegs'] = self.nonSeg
 
-        #pprint(output)
         return output
 
     def displayValue(self):
@@ -1130,23 +1153,22 @@ class EnvironmentSyllableWidget(QWidget):
             self.loadfromCopy(copy_data)
 
     def loadfromCopy(self, copy_data):
-        #TODO: need to reimplement this
-        self.middleWidget.segments = copy_data.middleWidget.segments
-        self.middleWidget.features = copy_data.middleWidget.features
+        self.middleWidget.onset = copy_data.middleWidget.onset
+        self.middleWidget.nucleus = copy_data.middleWidget.nucleus
+        self.middleWidget.coda = copy_data.middleWidget.coda
+        self.middleWidget.stress = copy_data.middleWidget.stress
+        self.middleWidget.tone = copy_data.middleWidget.tone
+        self.middleWidget.nonSeg = copy_data.middleWidget.nonSeg
         self.middleWidget.mainLabel.setText(copy_data.middleWidget.mainLabel.text())
 
         for ind in range(copy_data.lhsWidget.layout().count()):
             copy_wid = copy_data.lhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='l',
-                                                                allow_zero_match=copy_wid.allowZeroMatch)
-            wid.allowZeroAct.setChecked(copy_wid.allowZeroMatch)
+            wid = SyllableWidget(self.inventory, parent=self, side='l', preset=copy_wid)
             self.lhsWidget.layout().insertWidget(ind, wid)
             wid.segDeleted.connect(self.deleteSeg)
         for ind in range(copy_data.rhsWidget.layout().count()):
             copy_wid = copy_data.rhsWidget.layout().itemAt(ind).widget()
-            wid = EnvironmentSegmentWidget(self.inventory, parent=self, preset_label=copy_wid, side='r',
-                                                                allow_zero_match=copy_wid.allowZeroMatch)
-            wid.allowZeroAct.setChecked(copy_wid.allowZeroMatch)
+            wid = SyllableWidget(self.inventory, parent=self, side='r', preset=copy_wid)
             self.rhsWidget.layout().insertWidget(ind, wid)
             wid.segDeleted.connect(self.deleteSeg)
 
@@ -1155,7 +1177,7 @@ class EnvironmentSyllableWidget(QWidget):
 
     def insertSegWidget(self, match_widget, add_to_side):
 
-        if match_widget.side is None:#middle widget
+        if match_widget.side is None:  # middle widget
             if add_to_side == 'r':
                 self.addRhs()
             elif add_to_side == 'l':
@@ -1188,7 +1210,7 @@ class EnvironmentSyllableWidget(QWidget):
             layout.insertWidget(i, widget)
         layout.update()
 
-    @Slot(list) #connected to EnvironmentSegmentWidget.segDeleted()
+    @Slot(list)  # connected to SyllableWidget.segDeleted()
     def deleteSeg(self, arg):
         segWidget = arg[0]
         if segWidget.side == 'r':
