@@ -327,6 +327,7 @@ class Transcription(object):
 
             syllable_str += '-' + stress_str + onset_str + nucleus_str + coda_str + tone_str + '-'
 
+        #print('-#-' + syllable_str + '-#-')
         return '-#-' + syllable_str + '-#-'
 
     def find(self, environment, mode):
@@ -1621,8 +1622,8 @@ class SyllableEnvironmentFilter(object):
         return nonsegs_re
 
     def generate_constituent_re(self, syllable, constituent):
-        constituent_re = ''
-        for unit in syllable[constituent]:
+        constituent_re = list()
+        for unit in syllable[constituent]['contents']:
             re_group = set()
             for seg in unit:
                 if seg in SPECIAL_SYMBOL_RE:
@@ -1631,10 +1632,10 @@ class SyllableEnvironmentFilter(object):
                 else:
                     re_group.add(seg)
             unit_re = '(?:' + '|'.join(re_group) + ')'
-            constituent_re += unit_re
+            constituent_re.append(unit_re)
 
-        if syllable['search_type'] == 'Exactly matches':
-            constituent_re = '(?:\.(?#' + constituent.upper() + ')' + constituent_re + '\.)'
+        if syllable[constituent]['search_type'] == 'Exactly matches':
+            constituent_re = '(?:\.(?#' + constituent.upper() + ')' + ''.join(constituent_re) + '\.)'
         else:
             general_unit_re_group = set()
             segs = list(self.inventory.segs.keys())
@@ -1646,35 +1647,13 @@ class SyllableEnvironmentFilter(object):
                 else:
                     general_unit_re_group.add(seg)
             general_unit_re = '(?:(?#ALLSEGS)' + '|'.join(general_unit_re_group) + ')*'
-            constituent_re = '(?:\.(?#' + constituent.upper() + ')' + general_unit_re + constituent_re + general_unit_re + '\.)'
+            constituent_re = '(?:\.(?#' + constituent.upper() + ')' + general_unit_re + general_unit_re.join(constituent_re) + general_unit_re + '\.)'
         return constituent_re
 
     def generate_stress_re(self, syllable):
-        """
-        re_group = set()
-        if syllable['search_type'] == 'Exactly matches':
-            for stress in syllable['stress']:
-                if stress == 'Unstressed':
-                    stress = ''
-                    re_group.add(stress)
-                elif stress in SPECIAL_SYMBOL_RE:
-                    stress = '\\' + stress
-                    re_group.add(stress)
-                else:
-                    re_group.add(stress)
-        else:  # search_type = minimally contains
-            re_group.add('')
-            for stress in self.inventory.stress_types.keys():
-                if stress in SPECIAL_SYMBOL_RE:
-                    stress = '\\' + stress
-                    re_group.add(stress)
-
-        stress_re = '(?:(?#STRESS)' + '|'.join(re_group) + ')'
-        return stress_re
-        """
         re_group = set()
         for stress in syllable['stress']:
-            if stress == 'Unstressed':
+            if stress == 'None':
                 stress = ''
                 re_group.add(stress)
             elif stress in SPECIAL_SYMBOL_RE:
@@ -1686,31 +1665,9 @@ class SyllableEnvironmentFilter(object):
         return stress_re
 
     def generate_tone_re(self, syllable):
-        """
-        re_group = set()
-        if syllable['search_type'] == 'Exactly matches':
-            for tone in syllable['tone']:
-                if tone == 'Untoned':
-                    tone = ''
-                    re_group.add(tone)
-                elif tone in SPECIAL_SYMBOL_RE:
-                    tone = '\\' + tone
-                    re_group.add(tone)
-                else:
-                    re_group.add(tone)
-        else:
-            re_group.add('')
-            for tone in self.inventory.tone_types.keys():
-                if tone in SPECIAL_SYMBOL_RE:
-                    tone = '\\' + tone
-                    re_group.add(tone)
-
-        tone_re = '(?:(?#TONE)' + '|'.join(re_group) + ')'
-        return tone_re
-        """
         re_group = set()
         for tone in syllable['tone']:
-            if tone == 'Untoned':
+            if tone == 'None':
                 tone = ''
                 re_group.add(tone)
             elif tone in SPECIAL_SYMBOL_RE:

@@ -2393,7 +2393,7 @@ class SegmentSetPairDialog(BigramDialog):
         self.rhs.setExclusive(False)
 
 class SegmentSelectDialog(QDialog):
-    def __init__(self, inventory, selected = None, parent = None, use_features=False, start_pressed=None):
+    def __init__(self, inventory, selected=None, parent=None, use_features=False, start_pressed=None):
         QDialog.__init__(self,parent)
 
         layout = QVBoxLayout()
