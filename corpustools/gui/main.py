@@ -261,6 +261,10 @@ class MainWindow(QMainWindow):
         self.settings['multiprocessing']['numcores'] = self.settingsObject.value('numcores', 1)
         self.settingsObject.endGroup()
 
+        self.settingsObject.beginGroup('resultsDisplay')
+        self.settings['resultsDisplay']['unique_first'] = self.settingsObject.value('unique_first', 0)
+        self.settingsObject.endGroup()
+
         # self.settingsObject.beginGroup('searches')
         # self.settings['searches']['saved'] = self.settingsObject.value('saved', None)
         # self.settings['searches']['recent'] = self.settingsObject.value('recent', None)
@@ -594,6 +598,7 @@ class MainWindow(QMainWindow):
             self.settings.update(dialog.displayWidget.get_current_state())
             self.settings.update(dialog.processingWidget.get_current_state())
             self.settings.update(dialog.reminderWidget.get_current_state())
+            self.settings.update(dialog.resultsDisplayWidget.get_current_state())
             self.settings.check_storage()
 
     @check_for_empty_corpus

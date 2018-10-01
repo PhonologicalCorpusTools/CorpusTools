@@ -509,13 +509,7 @@ class ResultsModel(BaseTableModel):
             while stop is not 1 and currRow+1 < len(results):
                 cv = results[currRow][currHeader]
                 nv = results[currRow+1][currHeader]
-                if type(cv) is str:
-                    nch = min(len(cv), len(nv))
-                    cv = cv[0:nch]
-                    nv = nv[0:nch]
-                    cv = str(list(cv))
-                    nv = str(list(nv))
-                if cv is not nv:
+                if cv != nv:
                     stop = 1
                 currRow +=1
             if stop == 0:
@@ -527,7 +521,11 @@ class ResultsModel(BaseTableModel):
         for headerIdx in (headerDynamic + headerStatic):
             newHeader.append(header[headerIdx])
 
-        self.columns = newHeader
+        orderResults = settings.__getitem__('resultsDisplay')
+        if orderResults['unique_first']:
+            self.columns = newHeader
+        else:
+            self.columns = header
         currRows = []
         for row in results:
             currRow = []

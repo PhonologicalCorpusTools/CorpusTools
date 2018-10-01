@@ -143,11 +143,32 @@ class ProcessingPane(BasePane):
 
     def get_current_state(self):
         setting_dict = {}
-
         setting_dict['use_multi'] = int(self.usemultiCheck.isChecked())
         setting_dict['num_cores'] = int(self.numcoresWidget.text())
 
         return setting_dict
+
+class ResultsDisplayPane(BasePane):
+
+    def __init__(self, setting_dict):
+        BasePane.__init__(self)
+
+        layout = QFormLayout()
+
+        self.resultsDisplayUniqueFirst = QCheckBox()
+
+        layout.addRow(QLabel('Always Display unique results first \n(unchecked will display results in a default order)'), self.resultsDisplayUniqueFirst)
+
+        self.setLayout(layout)
+
+        self.resultsDisplayUniqueFirst.setChecked(setting_dict['unique_first'])
+        
+
+    def get_current_state(self):
+        settings_dict = {}
+        settings_dict['unique_first'] = bool(self.resultsDisplayUniqueFirst.isChecked())
+        return settings_dict
+
 
 class PCTSettings(collections.defaultdict):
     shortcuts = {'storage': 'storage_folder/directory',
@@ -162,7 +183,8 @@ class PCTSettings(collections.defaultdict):
                   'use_multi': 'multiprocessing/enabled',
                   'num_cores': 'multiprocessing/numcores',
                   'ask_overwrite_features': 'reminders/features',
-                  'ask_overwrite_corpus': 'reminders/corpus'}
+                  'ask_overwrite_corpus': 'reminders/corpus',
+                  'unique_first': 'resultsDisplay/unique_first'}
 
     storage_setting_keys = ['storage']
 
@@ -172,6 +194,8 @@ class PCTSettings(collections.defaultdict):
 
     reminder_setting_keys = ['ask_overwrite_features', 'ask_overwrite_corpus', 'warnings']
 
+    results_display_setting_keys = ['unique_first']
+
 
     def __init__(self):
         super().__init__(dict)
@@ -179,6 +203,7 @@ class PCTSettings(collections.defaultdict):
     def __getitem__(self, key):
         if key in self.shortcuts:
             key1, key2 = self.shortcuts[key].split('/')
+            #print(self)
             return self[key1][key2]
         else:
             return super().__getitem__(key)
@@ -220,7 +245,11 @@ class PCTSettings(collections.defaultdict):
         return out
 
     def get_reminder_settings(self):
-        out = {x: self[x] for x in self.processing_setting_keys}
+        out = {x: self[x] for x in self.reminder_setting_keys}
+        return out
+
+    def get_results_display_settings(self):
+        out = {x: self[x] for x in self.results_display_setting_keys}
         return out
 
     def check_storage(self):
@@ -273,6 +302,13 @@ class PreferencesDialog(QDialog):
         self.reminderWidget = ReminderPane(self.settings)
 
         tabWidget.addTab(self.reminderWidget, 'Reminders')
+
+        #Results Display
+        self.resultsDisplayWidget = ResultsDisplayPane(self.settings.get_results_display_settings())
+
+        tabWidget.addTab(self.resultsDisplayWidget, 'Results Display')
+
+
 
         layout = QVBoxLayout()
         layout.addWidget(tabWidget)
