@@ -674,7 +674,7 @@ class SearchTypeWidget(QGroupBox):
         layout = QVBoxLayout()
         self.typeSelect = QComboBox()
 
-        for type in ["Exactly matches", "Minimally contains"]:
+        for type in ["Exactly matches", "Minimally contains", "Starts with", "Ends with"]:
             self.typeSelect.addItem(type)
 
         layout.addWidget(self.typeSelect)
@@ -1000,6 +1000,10 @@ class SyllableWidget(QWidget):
         self.onsetLabel.setText(display_onset)
         if self.onset['search_type'] == 'Minimally contains':
             self.onsetLabel.setStyleSheet('background:white')
+        elif self.onset['search_type'] == 'Starts with':
+            self.onsetLabel.setStyleSheet('background:green')
+        elif self.onset['search_type'] == 'Ends with':
+            self.onsetLabel.setStyleSheet('background:red')
 
         display_nucleus = ''
         for slot in self.nucleus['contents']:
@@ -1009,6 +1013,10 @@ class SyllableWidget(QWidget):
         self.nucleusLabel.setText(display_nucleus)
         if self.nucleus['search_type'] == 'Minimally contains':
             self.nucleusLabel.setStyleSheet('background:white')
+        elif self.onset['search_type'] == 'Starts with':
+            self.onsetLabel.setStyleSheet('background:green')
+        elif self.onset['search_type'] == 'Ends with':
+            self.onsetLabel.setStyleSheet('background:red')
 
         display_coda = ''
         for slot in self.coda['contents']:
@@ -1018,6 +1026,10 @@ class SyllableWidget(QWidget):
         self.codaLabel.setText(display_coda)
         if self.coda['search_type'] == 'Minimally contains':
             self.codaLabel.setStyleSheet('background:white')
+        elif self.onset['search_type'] == 'Starts with':
+            self.onsetLabel.setStyleSheet('background:green')
+        elif self.onset['search_type'] == 'Ends with':
+            self.onsetLabel.setStyleSheet('background:red')
 
         display_stress = '{' + ','.join(self.stress) + '}'
         display_tone = '{' + ','.join(self.tone) + '}'

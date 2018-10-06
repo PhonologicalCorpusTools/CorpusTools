@@ -1636,7 +1636,7 @@ class SyllableEnvironmentFilter(object):
 
         if syllable[constituent]['search_type'] == 'Exactly matches':
             constituent_re = '(?:\.(?#' + constituent.upper() + ')' + ''.join(constituent_re) + '\.)'
-        else:
+        else:  # Not Exactly matches
             general_unit_re_group = set()
             segs = list(self.inventory.segs.keys())
             segs.remove('#')  # Because # is a boundary symbol
@@ -1647,7 +1647,13 @@ class SyllableEnvironmentFilter(object):
                 else:
                     general_unit_re_group.add(seg)
             general_unit_re = '(?:(?#ALLSEGS)' + '|'.join(general_unit_re_group) + ')*'
-            constituent_re = '(?:\.(?#' + constituent.upper() + ')' + general_unit_re + general_unit_re.join(constituent_re) + general_unit_re + '\.)'
+            if syllable[constituent]['search_type'] == 'Starts with':
+                constituent_re = '(?:\.(?#' + constituent.upper() + ')' + ''.join(constituent_re) + general_unit_re + '\.)'
+            elif syllable[constituent]['search_type'] == 'Ends with':
+                constituent_re = '(?:\.(?#' + constituent.upper() + ')' + general_unit_re + ''.join(constituent_re) + '\.)'
+            else:  # Minimally contains
+                constituent_re = '(?:\.(?#' + constituent.upper() + ')' + general_unit_re + general_unit_re.join(constituent_re) + general_unit_re + '\.)'
+
         return constituent_re
 
     def generate_stress_re(self, syllable):

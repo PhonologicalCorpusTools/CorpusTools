@@ -142,7 +142,7 @@ class ParsingDialog(QDialog):
             self.punctuationWidget.updateButtons([delimiter])
         self.delimiterWidget.textChanged.connect(self.updatePunctuation)
         if att_type == 'tier':
-            layout.addRow('Transcription delimiter', self.delimiterWidget)
+            layout.addRow('Segment delimiter', self.delimiterWidget)
             layout.addRow("Syllable delimiter", self.syllableDelimiterWidget)
 
         layout.addRow(self.morphDelimiterWidget)
