@@ -167,12 +167,19 @@ class BaseCorpusTableModel(BaseTableModel):
         return None
 
 class FilterModel(QAbstractTableModel):
-    conditionalMapping = {'__eq__':'==',
-                    '__neq__':'!=',
-                    '__gt__':'>',
-                    '__gte__':'>=',
-                    '__lt__':'<',
-                    '__lte__':'<='}
+    #conditionalMapping = {'__eq__': '==',
+    #                      '__neq__': '!=',
+    #                      '__gt__': '>',
+    #                      '__gte__': '>=',
+    #                      '__lt__': '<',
+    #                      '__lte__': '<='}
+
+    conditionalMapping = {operator.eq: '==',
+                          operator.ne: '!=',
+                          operator.gt: '>',
+                          operator.ge: '>=',
+                          operator.lt: '<',
+                          operator.le: '<='}
     def __init__(self,parent = None):
         QAbstractTableModel.__init__(self,parent)
 

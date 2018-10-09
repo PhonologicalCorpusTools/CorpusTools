@@ -734,7 +734,8 @@ class AttributeFilterWidget(QGroupBox):
         while addOneMore:
             result = dialog.exec_()
             if result:
-                self.table.model().addRow([dialog.filter])
+                #self.table.model().addRow([dialog.filter])
+                self.table.model().addRow(dialog.filter)
             addOneMore = dialog.addOneMore
 
     def removeFilt(self):
@@ -744,7 +745,8 @@ class AttributeFilterWidget(QGroupBox):
             self.table.model().removeRows([s.row() for s in selected])
 
     def value(self):
-        return [x[0] for x in self.table.model().filters]
+        #return [x[0] for x in self.table.model().filters]
+        return [x for x in self.table.model().filters]
 
 class EditInventoryWindow(QDialog):
 
