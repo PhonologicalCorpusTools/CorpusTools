@@ -45,7 +45,7 @@ class TableWidget(QTableView):
                     copy = list()
                     for col in range(self.model().columnCount()):
                         ind = self.model().index(row.row(),col)
-                        copy.append(self.model().data(ind,Qt.DisplayRole))
+                        copy.append(self.model().data(ind, Qt.DisplayRole))
                     copy = '\t'.join(copy)
                     copyInfo.append(copy)
                 copyInfo = '\n'.join(copyInfo)
@@ -618,6 +618,7 @@ class NumericFilter(QWidget):
                     'less than or equal to')
     conditionals = (operator.eq, operator.ne, operator.gt, operator.ge,
                     operator.lt, operator.le)
+
     def __init__(self,parent=None):
 
         QWidget.__init__(self,parent)
@@ -729,6 +730,7 @@ class AttributeFilterDialog(QDialog):
         val = self.filterWidget.value()
         if a.att_type == 'numeric':
             comp = val[0]
+
             try:
                 value = float(val[1])
             except ValueError:
@@ -786,12 +788,13 @@ class AttributeFilterWidget(QGroupBox):
         self.setLayout(vbox)
 
     def filtPopup(self):
-        dialog = AttributeFilterDialog(self.attributes,self)
+        dialog = AttributeFilterDialog(self.attributes, self)
         addOneMore = True
         while addOneMore:
             result = dialog.exec_()
             if result:
-                self.table.model().addRow([dialog.filter])
+                #self.table.model().addRow([dialog.filter])
+                self.table.model().addRow(dialog.filter)
             addOneMore = dialog.addOneMore
 
     def removeFilt(self):
@@ -801,7 +804,8 @@ class AttributeFilterWidget(QGroupBox):
             self.table.model().removeRows([s.row() for s in selected])
 
     def value(self):
-        return [x[0] for x in self.table.model().filters]
+        #return [x[0] for x in self.table.model().filters]  # This is the original code
+        return [x for x in self.table.model().filters]
 
 class EditInventoryWindow(QDialog):
 

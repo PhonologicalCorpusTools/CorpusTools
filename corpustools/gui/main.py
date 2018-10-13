@@ -558,7 +558,7 @@ class MainWindow(QMainWindow):
 
 
     def subsetCorpus(self):
-        dialog = SubsetCorpusDialog(self,self.corpusModel.corpus)
+        dialog = SubsetCorpusDialog(self, self.corpusModel.corpus)
         result = dialog.exec_()
         if result:
             pass

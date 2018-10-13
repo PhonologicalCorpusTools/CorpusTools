@@ -486,7 +486,12 @@ class EnvironmentWidget(QWidget):
         return '{}_{}'.format(lhs, rhs)
 
 class SyllableConstructDialog(QDialog):
-    def __init__(self, inventory, selected=None, parent=None, use_features=False, start_pressed=None):
+    def __init__(self, inventory, parent=None,
+                 preselected_onset=dict(),
+                 preselected_nucleus=dict(),
+                 preselected_coda=dict(),
+                 preselected_stress=set(),
+                 preselected_tone=set()):
         QDialog.__init__(self, parent)
 
         self.setWindowTitle('Construct syllables')
@@ -495,17 +500,20 @@ class SyllableConstructDialog(QDialog):
         self.setLayout(mainLayout)
 
         layout = QHBoxLayout()
-        self.syllWidget = SyllableConstructWidget(inventory, parent=self)
+        self.syllWidget = SyllableConstructWidget(inventory, parent=self,
+                                                  preselected_onset=preselected_onset,
+                                                  preselected_nucleus=preselected_nucleus,
+                                                  preselected_coda=preselected_coda)
         layout.addWidget(self.syllWidget)
 
         optionFrame = QGroupBox('Options')
         optionLayout = QVBoxLayout()
         optionFrame.setLayout(optionLayout)
 
-        self.stressWidget = StressWidget(inventory, parent=self)
+        self.stressWidget = StressWidget(inventory, parent=self, preselected_stress=preselected_stress)
         optionLayout.addWidget(self.stressWidget)
 
-        self.toneWidget = ToneWidget(inventory, parent=self)
+        self.toneWidget = ToneWidget(inventory, parent=self, preselected_tone=preselected_tone)
         optionLayout.addWidget(self.toneWidget)
 
         layout.addWidget(optionFrame)
@@ -537,7 +545,10 @@ class SyllableConstructDialog(QDialog):
 class SyllableConstructWidget(QGroupBox):
     #sylCopied = Signal(list)
 
-    def __init__(self, inventory, parent=None, show_full_inventory=False):
+    def __init__(self, inventory, parent=None, show_full_inventory=False,
+                 preselected_onset=dict(),
+                 preselected_nucleus=dict(),
+                 preselected_coda=dict()):
         QGroupBox.__init__(self, 'Syllable', parent)
         self.parent = parent
         self.inventory = inventory
@@ -550,15 +561,24 @@ class SyllableConstructWidget(QGroupBox):
         globalOnsetLayout = QVBoxLayout()
         onsetGroup.setLayout(globalOnsetLayout)
 
-        self.onsetSearchType = SearchTypeWidget(parent=onsetGroup)
+        self.onsetSearchType = SearchTypeWidget(parent=onsetGroup,
+                                                preselected_type=preselected_onset['search_type'])
         globalOnsetLayout.addWidget(self.onsetSearchType)
 
         bottomLayout = QHBoxLayout()
         self.onsetWidget = QWidget()
         self.onsetLayout = QHBoxLayout()
         self.onsetWidget.setLayout(self.onsetLayout)
-        #self.onsetSegmentWidget = SyllableSegmentWidget(self.inventory, 'onsets', parent=self, root=True, show_full_inventory=show_full_inventory)
-        #self.onsetLayout.addWidget(self.onsetSegmentWidget)
+
+        for seg_dict in preselected_onset['contents']:
+            segWidget = SyllableSegmentWidget(self.inventory, "onsets", parent=self, root=False,
+                                              show_full_inventory=self.show_full_inventory,
+                                              preselected_segments=seg_dict['segments'],
+                                              preselected_features=seg_dict['features'],
+                                              preselected_negative=seg_dict['negative'])
+            self.onsetWidget.layout().addWidget(segWidget)
+            segWidget.segDeleted.connect(self.deleteSeg)
+
         self.onsetAddNew = QPushButton('+')
         self.onsetAddNew.clicked.connect(self.addOnset)
 
@@ -571,7 +591,8 @@ class SyllableConstructWidget(QGroupBox):
         globalCodaLayout = QVBoxLayout()
         codaGroup.setLayout(globalCodaLayout)
 
-        self.codaSearchType = SearchTypeWidget(parent=codaGroup)
+        self.codaSearchType = SearchTypeWidget(parent=codaGroup,
+                                               preselected_type=preselected_coda['search_type'])
         globalCodaLayout.addWidget(self.codaSearchType)
 
         bottomLayout = QHBoxLayout()
@@ -579,8 +600,15 @@ class SyllableConstructWidget(QGroupBox):
         self.codaLayout = QHBoxLayout()
         self.codaWidget.setLayout(self.codaLayout)
 
-        #self.codaSegmentWidget = SyllableSegmentWidget(self.inventory, "codas", parent=self, root=True, show_full_inventory=self.show_full_inventory)
-        #self.codaLayout.addWidget(self.codaSegmentWidget)
+        for seg_dict in preselected_coda['contents']:
+            segWidget = SyllableSegmentWidget(self.inventory, "codas", parent=self, root=False,
+                                              show_full_inventory=self.show_full_inventory,
+                                              preselected_segments=seg_dict['segments'],
+                                              preselected_features=seg_dict['features'],
+                                              preselected_negative=seg_dict['negative'])
+            self.codaWidget.layout().addWidget(segWidget)
+            segWidget.segDeleted.connect(self.deleteSeg)
+
         self.codaAddNew = QPushButton('+')
         self.codaAddNew.clicked.connect(self.addCoda)
 
@@ -593,7 +621,8 @@ class SyllableConstructWidget(QGroupBox):
         globalNucleusLayout = QVBoxLayout()
         nucleusGroup.setLayout(globalNucleusLayout)
 
-        self.nucleusSearchType = SearchTypeWidget(parent=nucleusGroup)
+        self.nucleusSearchType = SearchTypeWidget(parent=nucleusGroup,
+                                                  preselected_type=preselected_nucleus['search_type'])
         globalNucleusLayout.addWidget(self.nucleusSearchType)
 
         bottomLayout = QHBoxLayout()
@@ -601,7 +630,21 @@ class SyllableConstructWidget(QGroupBox):
         self.nucleusLayout = QHBoxLayout()
         self.nucleusWidget.setLayout(self.nucleusLayout)
 
-        self.nucleus = SyllableSegmentWidget(self.inventory, "nuclei", parent=self, root=True, show_full_inventory=show_full_inventory)
+        if preselected_nucleus['contents']:
+            self.nucleus = SyllableSegmentWidget(self.inventory,
+                                                "nuclei",
+                                                parent=self,
+                                                root=True,
+                                                show_full_inventory=show_full_inventory,
+                                                preselected_segments=preselected_nucleus['contents'][0]['segments'],
+                                                preselected_features=preselected_nucleus['contents'][0]['features'],
+                                                preselected_negative=preselected_nucleus['contents'][0]['negative'])
+        else:
+            self.nucleus = SyllableSegmentWidget(self.inventory,
+                                                 "nuclei",
+                                                 parent=self,
+                                                 root=True)
+
         self.nucleusLayout.addWidget(self.nucleus)
         bottomLayout.addWidget(self.nucleusWidget)
         globalNucleusLayout.addLayout(bottomLayout)
@@ -668,18 +711,23 @@ class SyllableConstructWidget(QGroupBox):
 
         
 class SearchTypeWidget(QGroupBox):
-    def __init__(self, parent=None):
-        QGroupBox.__init__(self, "Search type", parent)
+    def __init__(self, parent=None, preselected_type=''):
+        QGroupBox.__init__(self, 'Search type', parent)
 
         layout = QVBoxLayout()
         self.typeSelect = QComboBox()
 
-        for type in ["Exactly matches", "Minimally contains", "Starts with", "Ends with"]:
-            self.typeSelect.addItem(type)
+        for search_type in ['Exactly matches', 'Minimally contains', 'Starts with', 'Ends with']:
+            self.typeSelect.addItem(search_type)
 
         layout.addWidget(self.typeSelect)
-        index = self.typeSelect.findText("Exactly matches")
+
+        index = self.typeSelect.findText('Exactly matches')
         self.typeSelect.setCurrentIndex(index)
+
+        if preselected_type:
+            preselected_index = self.typeSelect.findText(preselected_type)
+            self.typeSelect.setCurrentIndex(preselected_index)
 
         self.setLayout(layout)
 
@@ -688,7 +736,7 @@ class SearchTypeWidget(QGroupBox):
 
 
 class StressWidget(QGroupBox):
-    def __init__(self, inventory, parent=None):
+    def __init__(self, inventory, parent=None, preselected_stress=set()):
         QGroupBox.__init__(self, 'Stress', parent)
 
         self.layout = QVBoxLayout()
@@ -696,9 +744,11 @@ class StressWidget(QGroupBox):
 
         self.options = list(inventory.stress_types.keys()) + ['None']
 
-        for type in self.options:
-            setattr(self, type, QCheckBox(type))
-            self.layout.addWidget(getattr(self, type))
+        for stress in self.options:
+            setattr(self, stress, QCheckBox(stress))
+            self.layout.addWidget(getattr(self, stress))
+            if stress in preselected_stress:
+                getattr(self, stress).setChecked(True)
 
         # If there is no stress, then disable this widget
         if len(inventory.stress_types.keys()) == 0:
@@ -709,8 +759,8 @@ class StressWidget(QGroupBox):
             return set()
 
         selected = set()
-        for type in self.options:
-            button = getattr(self, type)
+        for stress in self.options:
+            button = getattr(self, stress)
             if button.isChecked():
                 selected.add(button.text())
 
@@ -718,7 +768,7 @@ class StressWidget(QGroupBox):
 
         
 class ToneWidget(QGroupBox):
-    def __init__(self, inventory, parent=None):
+    def __init__(self, inventory, parent=None, preselected_tone=set()):
         QGroupBox.__init__(self, 'Tone', parent)
         self.inventory = inventory
 
@@ -727,10 +777,11 @@ class ToneWidget(QGroupBox):
 
         self.options = list(inventory.tone_types.keys()) + ['None']
 
-        for type in self.options:
-            setattr(self, type, QCheckBox(type))
-            self.layout.addWidget(getattr(self, type))
-
+        for tone in self.options:
+            setattr(self, tone, QCheckBox(tone))
+            self.layout.addWidget(getattr(self, tone))
+            if tone in preselected_tone:
+                getattr(self, tone).setChecked(True)
 
         # If there is no stress, then disable this widget
         if len(inventory.tone_types.keys()) == 0:
@@ -741,8 +792,8 @@ class ToneWidget(QGroupBox):
             return set()
 
         selected = set()
-        for type in self.options:
-            button = getattr(self, type)
+        for tone in self.options:
+            button = getattr(self, tone)
             if button.isChecked():
                 selected.add(button.text())
 
@@ -751,16 +802,24 @@ class ToneWidget(QGroupBox):
 class SyllableSegmentWidget(QWidget):
     segDeleted = Signal(list)
 
-    def __init__(self, inventory, constituent, parent=None, root=False, show_full_inventory=False):
+    def __init__(self,
+                 inventory,
+                 constituent,
+                 parent=None,
+                 root=False,
+                 show_full_inventory=False,
+                 preselected_segments=set(),
+                 preselected_features=set(),
+                 preselected_negative=False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
         self.constituent = constituent
-        self.segments = set()
-        self.features = set()
+        self.segments = preselected_segments
+        self.features = preselected_features
         self.parent_ = parent
         self.show_full_inventory = show_full_inventory
         self.root = root
-        self.negative = False
+        self.negative = preselected_negative
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -775,6 +834,8 @@ class SyllableSegmentWidget(QWidget):
         clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
         matchAnythingAct = QAction("Match single wildcard", self, triggered=self.addArbitrary)
         self.negAct = QAction("Set negative", self, checkable=True, triggered=self.setNegative)
+        if self.negative:
+            self.negAct.setChecked(True)
         self.menu.addAction(segmentAct)
         self.menu.addAction(featureAct)
         self.menu.addAction(clearAct)
@@ -785,6 +846,7 @@ class SyllableSegmentWidget(QWidget):
             self.menu.addAction(deleteAct)
 
         self.mainLabel.setMenu(self.menu)
+        self.updateLabel()
 
     def setNegative(self):
         self.negative = self.negAct.isChecked()
@@ -813,13 +875,13 @@ class SyllableSegmentWidget(QWidget):
         displayList = list()
         if len(self.segments) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
             if self.show_full_inventory:
-                displayList = ','.join(self.segments)
+                displayList = ', '.join(self.segments)
             else:
                 displayList = '{*}'
         else:
             displayList.extend(self.segments)
             displayList.extend(self.features)
-            displayList = ','.join(displayList)
+            displayList = ', '.join(displayList)
             displayList = '{{{}}}'.format(displayList)
 
         return displayList
@@ -868,8 +930,7 @@ class SyllableSegmentWidget(QWidget):
 class SyllableWidget(QWidget):
     segDeleted = Signal(list)
 
-    def __init__(self, inventory, parent=None, middle=False, show_full_inventory=False, side=None,
-                 preset=False):
+    def __init__(self, inventory, parent=None, middle=False, show_full_inventory=False, side=None, preset=False):
         QWidget.__init__(self, parent)
         self.inventory = inventory
 
@@ -900,8 +961,9 @@ class SyllableWidget(QWidget):
         self.specification.addRow('Coda:', self.codaLabel)
         self.specification.addRow('Stress:', self.stressLabel)
         self.specification.addRow('Tone:', self.toneLabel)
+
         if self.middle:
-            self.specification.addRow('_____', QLabel('_____'))
+            self.specification.addRow('POSITION', QLabel('MIDDLE'))
         layout.addLayout(self.specification)
 
         self.mainLabel = QPushButton('Edit')
@@ -909,9 +971,9 @@ class SyllableWidget(QWidget):
         layout.addWidget(self.mainLabel)
 
         self.menu = QMenu(self)
-        unspecifiedSyllableAct = QAction("Add an unspecified syllable", self, triggered=self.addUnspecifiedSyllable)
-        syllableAct = QAction("Construct the syllable", self, triggered=self.constructSyllable)
-        clearAct = QAction("Clear selection", self, triggered=self.clearSelection)
+        unspecifiedSyllableAct = QAction('Add an unspecified syllable', self, triggered=self.addUnspecifiedSyllable)
+        syllableAct = QAction('Construct the syllable', self, triggered=self.constructSyllable)
+        clearAct = QAction('Clear selection', self, triggered=self.clearSelection)
         self.menu.addAction(unspecifiedSyllableAct)
         self.menu.addAction(syllableAct)
         self.menu.addAction(clearAct)
@@ -920,13 +982,13 @@ class SyllableWidget(QWidget):
             nonSegSelectMenu = self.menu.addMenu('Add non-segment symbol')
             for symbol in self.inventory.non_segment_symbols:
                 nonSegSelectMenu.addAction(QAction(symbol, self, triggered=self.addNonSegSymbol))
-            deleteAct = QAction("Delete", self, triggered=self.deleteSelection)
+            deleteAct = QAction('Delete', self, triggered=self.deleteSelection)
             self.menu.addAction(deleteAct)
         self.mainLabel.setMenu(self.menu)
 
-        addNewPosMenu = self.menu.addMenu("Add new environment position")
-        addToLeftAct = QAction("To the left", self, triggered=self.addToLeft)
-        addToRightAct = QAction("To the right", self, triggered=self.addToRight)
+        addNewPosMenu = self.menu.addMenu('Add new environment position')
+        addToLeftAct = QAction('To the left', self, triggered=self.addToLeft)
+        addToRightAct = QAction('To the right', self, triggered=self.addToRight)
         addNewPosMenu.addAction(addToLeftAct)
         addNewPosMenu.addAction(addToRightAct)
 
@@ -954,7 +1016,6 @@ class SyllableWidget(QWidget):
         self.coda = {'search_type': '', 'contents': []}
         self.stress = set()
         self.tone = set()
-
         self.updateLabel()
 
     def clearSelection(self):
@@ -964,6 +1025,8 @@ class SyllableWidget(QWidget):
         self.stress = set()
         self.tone = set()
         self.nonSeg = set()
+
+        self.mainLabel.setText('Edit')
         self.updateLabel()
 
     def deleteSelection(self):
@@ -975,14 +1038,14 @@ class SyllableWidget(QWidget):
     def generateColorText(self, slot, neg_color='darkRed', pos_color='darkGreen'):
         if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
             if self.show_full_inventory:
-                display_text = '{' + ','.join(self.segments) + '}'
+                display_text = '{' + ', '.join(self.segments) + '}'
             else:
                 display_text = '{*}'
         else:
             display_list = list()
-            display_list.extend(slot["segments"])
-            display_list.extend(slot["features"])
-            display_text = '{' + ','.join(display_list) + '}'
+            display_list.extend(slot['segments'])
+            display_list.extend(slot['features'])
+            display_text = '{' + ', '.join(display_list) + '}'
 
         if slot['negative']:
             display_text = '<font color=\"' + neg_color + '\">' + display_text + '</font>'
@@ -992,18 +1055,21 @@ class SyllableWidget(QWidget):
         return display_text
 
     def generateDisplayText(self):
+
         display_onset = ''
         for slot in self.onset['contents']:
             display_text = self.generateColorText(slot)
             display_onset += display_text
 
         self.onsetLabel.setText(display_onset)
-        if self.onset['search_type'] == 'Minimally contains':
+        if self.onset['search_type'] == 'Exactly matches':
+            self.onsetLabel.setStyleSheet('background:transparent')
+        elif self.onset['search_type'] == 'Minimally contains':
             self.onsetLabel.setStyleSheet('background:white')
         elif self.onset['search_type'] == 'Starts with':
-            self.onsetLabel.setStyleSheet('background:green')
+            self.onsetLabel.setStyleSheet('background:lightgreen')
         elif self.onset['search_type'] == 'Ends with':
-            self.onsetLabel.setStyleSheet('background:red')
+            self.onsetLabel.setStyleSheet('background:#FAAFBE')
 
         display_nucleus = ''
         for slot in self.nucleus['contents']:
@@ -1011,12 +1077,14 @@ class SyllableWidget(QWidget):
             display_nucleus += display_text
 
         self.nucleusLabel.setText(display_nucleus)
-        if self.nucleus['search_type'] == 'Minimally contains':
+        if self.nucleus['search_type'] == 'Exactly matches':
+            self.nucleusLabel.setStyleSheet('background:transparent')
+        elif self.nucleus['search_type'] == 'Minimally contains':
             self.nucleusLabel.setStyleSheet('background:white')
-        elif self.onset['search_type'] == 'Starts with':
-            self.onsetLabel.setStyleSheet('background:green')
-        elif self.onset['search_type'] == 'Ends with':
-            self.onsetLabel.setStyleSheet('background:red')
+        elif self.nucleus['search_type'] == 'Starts with':
+            self.nucleusLabel.setStyleSheet('background:lightgreen')
+        elif self.nucleus['search_type'] == 'Ends with':
+            self.nucleusLabel.setStyleSheet('background:#FAAFBE')
 
         display_coda = ''
         for slot in self.coda['contents']:
@@ -1024,37 +1092,45 @@ class SyllableWidget(QWidget):
             display_coda += display_text
 
         self.codaLabel.setText(display_coda)
-        if self.coda['search_type'] == 'Minimally contains':
+        if self.coda['search_type'] == 'Exactly matches':
+            self.codaLabel.setStyleSheet('background:transparent')
+        elif self.coda['search_type'] == 'Minimally contains':
             self.codaLabel.setStyleSheet('background:white')
-        elif self.onset['search_type'] == 'Starts with':
-            self.onsetLabel.setStyleSheet('background:green')
-        elif self.onset['search_type'] == 'Ends with':
-            self.onsetLabel.setStyleSheet('background:red')
+        elif self.coda['search_type'] == 'Starts with':
+            self.codaLabel.setStyleSheet('background:lightgreen')
+        elif self.coda['search_type'] == 'Ends with':
+            self.codaLabel.setStyleSheet('background:#FAAFBE')
 
-        display_stress = '{' + ','.join(self.stress) + '}'
-        display_tone = '{' + ','.join(self.tone) + '}'
+        display_stress = '{' + ', '.join(self.stress) + '}'
+        display_tone = '{' + ', '.join(self.tone) + '}'
 
         self.stressLabel.setText(display_stress)
         self.toneLabel.setText(display_tone)
 
         if self.nonSeg:
-            label = '{' + ','.join(self.nonSeg) + '}'
+            label = '{' + ', '.join(self.nonSeg) + '}'
             self.mainLabel.setText(label)
 
 
     def addUnspecifiedSyllable(self):
         self.nonSeg = set()
         self.onset = {'contents': [], 'search_type': 'Minimally contains'}
-        self.nucleus = {'contents': [{'segments': set(), 'features': set(), 'negative': False}], 'search_type': 'Minimally contains'}
+        self.nucleus = {'contents': [], 'search_type': 'Minimally contains'}
         self.coda = {'contents': [], 'search_type': 'Minimally contains'}
         self.stress = set(list(self.inventory.stress_types.keys()) + ['None'])
         self.tone = set(list(self.inventory.tone_types.keys()) + ['None'])
 
         label = '{' + '\u03C3' + '}'
         self.mainLabel.setText(label)
+        self.updateLabel()
 
     def constructSyllable(self):
-        dialog = SyllableConstructDialog(self.inventory, parent=self, use_features=True)
+        dialog = SyllableConstructDialog(self.inventory, parent=self,
+                                         preselected_onset=self.onset,
+                                         preselected_nucleus=self.nucleus,
+                                         preselected_coda=self.coda,
+                                         preselected_stress=self.stress,
+                                         preselected_tone=self.tone)
         if dialog.exec_():  # Ok pressed
             result = dialog.value()
             self.onset = result['onset']

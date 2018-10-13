@@ -1115,6 +1115,7 @@ class SubsetCorpusDialog(QDialog):
             msgBox.addButton("Abort", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
+
         new_corpus = self.corpus.subset(filters)
         new_corpus.name = name
         new_corpus.set_feature_matrix(self.corpus.specifier)

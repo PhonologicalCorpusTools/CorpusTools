@@ -167,22 +167,30 @@ class BaseCorpusTableModel(BaseTableModel):
         return None
 
 class FilterModel(QAbstractTableModel):
-    conditionalMapping = {'__eq__':'==',
-                    '__neq__':'!=',
-                    '__gt__':'>',
-                    '__gte__':'>=',
-                    '__lt__':'<',
-                    '__lte__':'<='}
-    def __init__(self,parent = None):
-        QAbstractTableModel.__init__(self,parent)
+    #conditionalMapping = {'__eq__': '==',
+    #                      '__neq__': '!=',
+    #                      '__gt__': '>',
+    #                      '__gte__': '>=',
+    #                      '__lt__': '<',
+    #                      '__lte__': '<='}
+
+    conditionalMapping = {operator.eq: '==',
+                          operator.ne: '!=',
+                          operator.gt: '>',
+                          operator.ge: '>=',
+                          operator.lt: '<',
+                          operator.le: '<='}
+
+    def __init__(self, parent=None):
+        QAbstractTableModel.__init__(self, parent)
 
         self.columns = ['']
         self.filters = list()
 
-    def rowCount(self,parent=None):
+    def rowCount(self, parent=None):
         return len(self.filters)
 
-    def columnCount(self,parent=None):
+    def columnCount(self, parent=None):
         return len(self.columns)
 
     def data(self, index, role=None):
@@ -192,7 +200,7 @@ class FilterModel(QAbstractTableModel):
             return None
         f = self.filters[index.row()]
         if f[0].att_type == 'numeric':
-            return_data = ' '.join([str(f[0]),self.conditionalMapping[f[1]], str(f[2])])
+            return_data = ' '.join([str(f[0]), self.conditionalMapping[f[1]], str(f[2])])
         else:
             s = ', '.join(f[1])
             if len(s) > 20:
@@ -205,12 +213,12 @@ class FilterModel(QAbstractTableModel):
             return self.columns[col]
         return None
 
-    def addRow(self,env):
+    def addRow(self, env):
         self.layoutAboutToBeChanged.emit()
         self.filters.append(env)
         self.layoutChanged.emit()
 
-    def removeRow(self,ind):
+    def removeRow(self, ind):
         self.layoutAboutToBeChanged.emit()
         del self.filters[ind]
         self.layoutChanged.emit()
