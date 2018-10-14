@@ -2625,6 +2625,7 @@ class Corpus(object):
                         break
             else:
                 new_corpus.add_word(word)
+
         return new_corpus
 
     @property

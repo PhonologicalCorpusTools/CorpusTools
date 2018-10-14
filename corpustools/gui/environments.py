@@ -1134,10 +1134,20 @@ class SyllableWidget(QWidget):
         if dialog.exec_():  # Ok pressed
             result = dialog.value()
             self.onset = result['onset']
+            print('Onset =')
+            pprint(self.onset)
             self.nucleus = result['nucleus']
+            print('Nuclues =')
+            pprint(self.nucleus)
             self.coda = result['coda']
+            print('Coda =')
+            pprint(self.coda)
             self.stress = result['stress']
+            print('Stress =')
+            pprint(self.stress)
             self.tone = result['tone']
+            print('Tone =')
+            pprint(self.tone)
             self.updateLabel()
 
     def extract_unit_info(self, unit):
