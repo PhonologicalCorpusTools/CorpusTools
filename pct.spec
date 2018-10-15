@@ -1,11 +1,14 @@
 # -*- mode: python -*-
+import os
+import sys
 
 block_cipher = None
+pct_path = os.getcwd()
+icon_path = os.path.join(pct_path, 'resources', 'favicon32x32.ico')
 
-
-a = Analysis(['pct.py'],
-             pathex=['C:\\Users\\Scott\\Documents\\GitHub\\CorpusTools'],
-             binaries=[],
+a = Analysis([os.path.join(pct_path, 'bin', 'pct_qt_debug.py')],
+             pathex=[pct_path],
+             binaries=None,
              datas=[],
              hiddenimports=[],
              hookspath=[],
@@ -21,8 +24,12 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='pct',
+          name='PCT',
           debug=False,
           strip=False,
           upx=True,
-          console=False )
+          console=False,
+          icon=icon_path)
+
+if sys.platform == 'darwin':
+   app = BUNDLE(exe, name='PCT.app', icon=icon_path)
