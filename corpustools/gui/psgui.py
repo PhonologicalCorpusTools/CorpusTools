@@ -46,7 +46,7 @@ class RecentSearch:
         lhs = envWidget.lhsLayout
         rhs = envWidget.rhsLayout
 
-        self.displayValue = envWidget.displayValue()
+        self.displayValue = envWidget.displayValue()  # EnvironmentWidget and EnvironmentSyllableWidget
 
         self.middleValue = middle.value()
         self.middleDisplayValue = middle.displayValue()
@@ -468,11 +468,11 @@ class PhonoSearchDialog(FunctionDialog):
             self.pslayout.insertWidget(0, self.envWidget)
 
     def accept(self):
-        #for n in range(self.envWidget.environmentFrame.layout().count() - 2):
-        #    # the -2 avoids catching some unncessary widgets
-        #    widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
-        #    search = RecentSearch(widget)
-        #    self.recentSearches.appendleft(search)  # recentSearches is a collections.deque object, not a regular list
+        for n in range(self.envWidget.environmentFrame.layout().count() - 2):
+            # the -2 avoids catching some unncessary widgets
+            widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
+            search = RecentSearch(widget)
+            self.recentSearches.appendleft(search)  # recentSearches is a collections.deque object, not a regular list
         super().accept()
 
     def loadSearch(self):

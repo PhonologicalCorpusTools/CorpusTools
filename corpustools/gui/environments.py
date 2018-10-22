@@ -118,7 +118,7 @@ class EnvironmentSegmentWidget(QWidget):
         self.show_full_inventory = show_full_inventory
         self.side = side
         self.allowZeroMatch = allow_zero_match
-        self.middle = middle  # what is this?
+        self.middle = middle
 
         layout = QVBoxLayout()
         if self.middle:
@@ -249,7 +249,7 @@ class EnvironmentSegmentWidget(QWidget):
             setattr(self, k, v)
 
 class EnvironmentSelectWidget(QGroupBox):
-    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, mode="segMode"):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, mode='segMode'):
         QGroupBox.__init__(self, 'Environments', parent)
         self.parent = parent
         self.middle = middle
@@ -1034,6 +1034,13 @@ class SyllableWidget(QWidget):
 
     def updateLabel(self):
         self.generateDisplayText()
+        if (self.nonSeg == set() and self.onset == {'contents': [], 'search_type': 'Minimally contains'} and
+                self.nucleus == {'contents': [], 'search_type': 'Minimally contains'} and
+                self.coda == {'contents': [], 'search_type': 'Minimally contains'} and
+                self.stress == set(list(self.inventory.stress_types.keys()) + ['None']) and
+                self.tone == set(list(self.inventory.tone_types.keys()) + ['None'])):
+            label = '{' + '\u03C3' + '}'
+            self.mainLabel.setText(label)
 
     def generateColorText(self, slot, neg_color='darkRed', pos_color='darkGreen'):
         if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
@@ -1134,20 +1141,20 @@ class SyllableWidget(QWidget):
         if dialog.exec_():  # Ok pressed
             result = dialog.value()
             self.onset = result['onset']
-            print('Onset =')
-            pprint(self.onset)
+            #print('Onset =')
+            #pprint(self.onset)
             self.nucleus = result['nucleus']
-            print('Nuclues =')
-            pprint(self.nucleus)
+            #print('Nuclues =')
+            #pprint(self.nucleus)
             self.coda = result['coda']
-            print('Coda =')
-            pprint(self.coda)
+            #print('Coda =')
+            #pprint(self.coda)
             self.stress = result['stress']
-            print('Stress =')
-            pprint(self.stress)
+            #print('Stress =')
+            #pprint(self.stress)
             self.tone = result['tone']
-            print('Tone =')
-            pprint(self.tone)
+            #print('Tone =')
+            #pprint(self.tone)
             self.updateLabel()
 
     def extract_unit_info(self, unit):
@@ -1182,13 +1189,46 @@ class SyllableWidget(QWidget):
 
         return output
 
+    def generateSlotText(self, slot):
+        if len(slot['segments']) == len(self.inventory.segs.keys()) - 1:  # exclude '#'
+            if self.show_full_inventory:
+                display_text = '(' + ','.join(self.segments) + ')'
+            else:
+                display_text = '(*)'
+        else:
+            display_list = list()
+            display_list.extend(slot['segments'])
+            display_list.extend(slot['features'])
+            display_text = '(' + ','.join(display_list) + ')'
+
+        return display_text
+
     def displayValue(self):
-        return self.generateDisplayText()
+        if self.nonSeg:
+            text = '{' + ', '.join(self.nonSeg) + '}'
+            return text
+        elif self.mainLabel.text() == '{\u03C3}':
+            return '\u03C3'
+        else:
+            onset = ''
+            for slot in self.onset['contents']:
+                text = self.generateSlotText(slot)
+                onset += text
+
+            nucleus = ''
+            for slot in self.nucleus['contents']:
+                text = self.generateSlotText(slot)
+                nucleus += text
+
+            coda = ''
+            for slot in self.coda['contents']:
+                text = self.generateSlotText(slot)
+                coda += text
+            return '{' + onset + nucleus + coda + '}'
 
     def getData(self):
-        #TODO: change this
-        attrs = ['inventory', 'segments', 'features', 'inventory', 'middle', 'enabled',
-                 'show_full_inventory', 'side', 'allowZeroMatch']
+        attrs = ['inventory', 'onset', 'nucleus', 'coda', 'stress', 'tone', 'nonSeg',
+                 'middle', 'show_full_inventory', 'side']
         return {attr: getattr(self, attr) for attr in attrs}
 
     def loadData(self, data):
@@ -1356,18 +1396,17 @@ class EnvironmentSyllableWidget(QWidget):
 
 
     def displayValue(self):
-        # TODO: need to change as well
         lhs = list()
         rhs = list()
 
         for ind in range(self.lhsWidget.layout().count()):
             wid = self.lhsWidget.layout().itemAt(ind).widget()
             lhs.append(wid.displayValue())
-        lhs = ','.join(lhs) if lhs else ''
+        lhs = ''.join(lhs) if lhs else ''
 
         for ind in range(self.rhsWidget.layout().count()):
             wid = self.rhsWidget.layout().itemAt(ind).widget()
             rhs.append(wid.displayValue())
-        rhs = ','.join(rhs) if rhs else ''
+        rhs = ''.join(rhs) if rhs else ''
 
         return '{}_{}'.format(lhs, rhs)
