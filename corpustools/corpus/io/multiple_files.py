@@ -216,6 +216,8 @@ def load_directory_multiple_files(corpus_name, path, dialect,
                                     dialect, annotation_types,
                                     corpus.lexicon, feature_system_path,
                                     stop_check, None)
+            print(name)
+            print(word_path)
             corpus.add_discourse(d)
         except ValueError:
             print('Error importing for participant ' + name)
@@ -383,9 +385,14 @@ def read_words(path, dialect, sr = None):
                 end = float(line[0])
                 word = sys.intern(line[1])
                 if word[0] != "<" and word[0] != "{":
-                    citation = line[2].split(' ')
-                    phonetic = line[3].split(' ')
-                    category = line[4]
+                	try:
+	                    citation = line[2].split(' ')
+	                    phonetic = line[3].split(' ')
+	                    category = line[4]
+	                except:
+	                	citation = None
+	                	phonetic = None
+	                	category = None
                 else:
                     citation = None
                     phonetic = None
