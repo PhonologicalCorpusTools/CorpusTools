@@ -216,8 +216,6 @@ def load_directory_multiple_files(corpus_name, path, dialect,
                                     dialect, annotation_types,
                                     corpus.lexicon, feature_system_path,
                                     stop_check, None)
-            print(name)
-            print(word_path)
             corpus.add_discourse(d)
         except ValueError:
             print('Error importing for participant ' + name)
