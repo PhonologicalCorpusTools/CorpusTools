@@ -1,11 +1,7 @@
 import os
-
-from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import Interval, Point, PointTier , _getMark
-#try:
-#    from textgrid.textgrid import readFile
-#except ImportError:
-#    from textgrid.textgrid import detectEncoding as readFile
+import codecs
+from corpustools.corpus.io.textgrid11_pct import TextGrid, IntervalTier, readFile, Interval, Point, PointTier, _getMark
+#from corpustools.corpus.io.textgrid import Interval, Point, PointTier , _getMark
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Attribute, Corpus
 from corpustools.corpus.classes.spontaneous import Discourse
@@ -31,15 +27,17 @@ class PCTTextGrid(TextGrid):
 
     def read(self, f, round_digits=15):
         """
-        Read the tiers contained in the Praat-formatted TextGrid file
-        indicated by string f. Times are rounded to the specified precision.
+        Read the tiers contained in the Praat-formated TextGrid file
+        indicated by string f
         """
         source = readFile(f)
-        self.minTime = round(float(source.readline().split()[2]), round_digits)
-        self.maxTime = round(float(source.readline().split()[2]), round_digits)
+        self.minTime = round(float(source.readline().split()[2]), 5)
+        self.maxTime = round(float(source.readline().split()[2]), 5)
         source.readline() # more header junk
         m = int(source.readline().rstrip().split()[2]) # will be self.n
+        
         source.readline()
+
         for i in range(m): # loop over grids
             source.readline()
             if source.readline().rstrip().split()[2] == '"IntervalTier"':
@@ -78,26 +76,6 @@ class PCTTextGrid(TextGrid):
                 self.append(itie)
         source.close()
 
-    def readFile(f):
-        """
-        This helper method returns an appropriate file handle given a path f.
-        This handles UTF-8, which is itself an ASCII extension, so also ASCII.
-        """
-        try:
-            source = codecs.open(f, 'r', encoding='utf-16')
-            source.readline() # Read one line to ensure correct encoding
-        except UnicodeError:
-            try:
-                source = codecs.open(f, 'r', encoding='utf-8')
-                source.readline() # Read one line to ensure correct encoding
-            except UnicodeError:
-                source = codecs.open(f, 'r')
-                source.readline() # Read one line to ensure correct encoding
-        source.readline() # header junk
-        source.readline() # header junk
-
-        return source
-    
 def uniqueLabels(tier):
     return set(x.mark for x in tier.intervals)
 
