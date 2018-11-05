@@ -304,7 +304,10 @@ TextGrids [PRAAT]_. This is particularly useful for creating spontaneous
 speech corpora from recordings, especially if the transcription is
 based on what was actually spoken rather than on canonical forms of
 each word -- PCT can keep track of the individual pronunciation variants
-associated with individual words (see :ref:`pronunciation_variants`).
+associated with individual words (see :ref:`pronunciation_variants`). PCT 
+uses the TextGrid package (https://pypi.org/project/TextGrid/) to read in
+.TextGrid files. Currently, it uses TextGrid version 1.1, which has been
+added to the /corpustools/corpus/io folder to maintain compatibility. 
 
 Once you have selected the file path or directory and named the corpus
 (see :ref:`custom_corpus`), make sure that the "TextGrid" tab is selected
