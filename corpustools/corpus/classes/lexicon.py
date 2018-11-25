@@ -185,8 +185,8 @@ class Transcription(object):
         self.boundaries = {}
         cur_group = 0
         cur_tone = None
-        if seg_list is not None:
-            for i,s in enumerate(seg_list):
+        if seg_list:
+            for i, s in enumerate(seg_list):
                 try:
                     self._list.append(s.label)
                     #if s.begin is not None and s.end is not None:

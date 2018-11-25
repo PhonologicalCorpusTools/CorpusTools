@@ -742,7 +742,8 @@ class AttributeFilterWidget(QGroupBox):
         select = self.table.selectionModel()
         if select.hasSelection():
             selected = select.selectedRows()
-            self.table.model().removeRows([s.row() for s in selected])
+            for r in selected:
+                self.table.model().removeRow(r.row())
 
     def value(self):
         #return [x[0] for x in self.table.model().filters]
