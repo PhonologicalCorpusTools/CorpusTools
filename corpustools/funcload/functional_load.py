@@ -4,6 +4,7 @@ from math import *
 import itertools
 from math import factorial
 import time
+#from pprint import pprint
 
 from corpustools.exceptions import FuncLoadError
 from corpustools.funcload.io import save_minimal_pairs
@@ -534,6 +535,7 @@ def entropy(probabilities):
 
 
 def neutralize_segment(segment, segment_pairs):
+    #This can actually be simplified because segment_pairs is always a single-item list, but later...
     for sp in segment_pairs:
         try:
             s = segment.symbol

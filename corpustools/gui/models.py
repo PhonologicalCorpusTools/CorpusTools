@@ -517,13 +517,7 @@ class ResultsModel(BaseTableModel):
             while stop is not 1 and currRow+1 < len(results):
                 cv = results[currRow][currHeader]
                 nv = results[currRow+1][currHeader]
-                if type(cv) is str:
-                    nch = min(len(cv), len(nv))
-                    cv = cv[0:nch]
-                    nv = nv[0:nch]
-                    cv = str(list(cv))
-                    nv = str(list(nv))
-                if cv is not nv:
+                if cv != nv:
                     stop = 1
                 currRow +=1
             if stop == 0:
@@ -535,7 +529,11 @@ class ResultsModel(BaseTableModel):
         for headerIdx in (headerDynamic + headerStatic):
             newHeader.append(header[headerIdx])
 
-        self.columns = newHeader
+        orderResults = settings.__getitem__('resultsDisplay')
+        if orderResults['unique_first']:
+            self.columns = newHeader
+        else:
+            self.columns = header
         currRows = []
         for row in results:
             currRow = []
@@ -1411,14 +1409,20 @@ class InventoryModel(QAbstractTableModel):
         return sorted(data)
 
     def sortData(self):
-        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
-        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
-        sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
-        sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
+        try:
+            sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
+            sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
+            sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
+            sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
+        except KeyError():
+            consColumsn.remove('Column 1')
+            sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
+            sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
+            sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
+            sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
         self.cons_column_header_order = {i: name for i, name in enumerate(sorted_cons_col_headers)}
         self.vowel_column_offset = len(self.cons_column_header_order)
-        self.vowel_column_header_order = {i + self.vowel_column_offset: name for i, name in
-                                          enumerate(sorted_vowel_col_headers)}
+        self.vowel_column_header_order = {i + self.vowel_column_offset: name for i, name in enumerate(sorted_vowel_col_headers)}
         self.cons_row_header_order = {i: name for i, name in enumerate(sorted_cons_row_headers)}
         self.vowel_row_offset = len(self.cons_row_header_order)
         self.vowel_row_header_order = {i + self.vowel_row_offset: name for i, name in
