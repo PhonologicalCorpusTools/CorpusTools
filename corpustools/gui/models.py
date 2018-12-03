@@ -84,7 +84,7 @@ class BaseTableModel(QAbstractTableModel):
         del self.rows[ind]
         self.endRemoveRows()
 
-    def removeRows(self,inds):
+    def removeRows(self, inds):
         inds = sorted(inds, reverse=True)
         for i in inds:
             self.beginRemoveRows(QModelIndex(),i,i)
@@ -180,16 +180,17 @@ class FilterModel(QAbstractTableModel):
                           operator.ge: '>=',
                           operator.lt: '<',
                           operator.le: '<='}
-    def __init__(self,parent = None):
-        QAbstractTableModel.__init__(self,parent)
+
+    def __init__(self, parent=None):
+        QAbstractTableModel.__init__(self, parent)
 
         self.columns = ['']
         self.filters = list()
 
-    def rowCount(self,parent=None):
+    def rowCount(self, parent=None):
         return len(self.filters)
 
-    def columnCount(self,parent=None):
+    def columnCount(self, parent=None):
         return len(self.columns)
 
     def data(self, index, role=None):
@@ -199,7 +200,7 @@ class FilterModel(QAbstractTableModel):
             return None
         f = self.filters[index.row()]
         if f[0].att_type == 'numeric':
-            return_data = ' '.join([str(f[0]),self.conditionalMapping[f[1]], str(f[2])])
+            return_data = ' '.join([str(f[0]), self.conditionalMapping[f[1]], str(f[2])])
         else:
             s = ', '.join(f[1])
             if len(s) > 20:
@@ -212,12 +213,12 @@ class FilterModel(QAbstractTableModel):
             return self.columns[col]
         return None
 
-    def addRow(self,env):
+    def addRow(self, env):
         self.layoutAboutToBeChanged.emit()
         self.filters.append(env)
         self.layoutChanged.emit()
 
-    def removeRow(self,ind):
+    def removeRow(self, ind):
         self.layoutAboutToBeChanged.emit()
         del self.filters[ind]
         self.layoutChanged.emit()
@@ -933,6 +934,10 @@ class InventoryModel(QAbstractTableModel):
         self.features = inventory.features
         self.possible_values = inventory.possible_values
         self.stresses = inventory.stresses
+        self.syllables = inventory.syllables
+        self.stress_types = inventory.stress_types
+        self.tone_types = inventory.tone_types
+
 
         if not self.cons_column_data:
             self.reGenerateNames()

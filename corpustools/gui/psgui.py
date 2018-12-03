@@ -46,7 +46,7 @@ class RecentSearch:
         lhs = envWidget.lhsLayout
         rhs = envWidget.rhsLayout
 
-        self.displayValue = envWidget.displayValue()
+        self.displayValue = envWidget.displayValue()  # EnvironmentWidget and EnvironmentSyllableWidget
 
         self.middleValue = middle.value()
         self.middleDisplayValue = middle.displayValue()
@@ -354,61 +354,125 @@ class RecentSearchDialog(QDialog):
 
 
 class PhonoSearchDialog(FunctionDialog):
-    header = ['Word',
-                'Transcription',
-                'Segment',
-                'Environment',
-                'Token frequency']
+    header = ['Word', 'Transcription', 'Segment', 'Environment', 'Token frequency']
     summary_header = ['Segment', 'Environment', 'Type frequency', 'Token frequency']
     _about = ['']
-
     name = 'phonological search'
+
     def __init__(self, parent, settings, recents, saved, corpus, inventory, showToolTips):
         FunctionDialog.__init__(self, parent, settings, PSWorker())
+        self.setWindowTitle('Phonological search')
 
         self.corpus = corpus
         self.inventory = inventory
         self.showToolTips = showToolTips
         self.recentSearches = recents
         self.savedSearches = saved
+        self.settings = settings
 
-        psFrame = QFrame()
-        pslayout = QHBoxLayout()
-        self.envWidget = EnvironmentSelectWidget(self.inventory,
-                                                 show_full_inventory=bool(settings['show_full_inventory']))
-        pslayout.addWidget(self.envWidget)
+        self.psFrame = QFrame()
+        self.pslayout = QHBoxLayout()
 
         optionFrame = QGroupBox('Options')
         optionLayout = QVBoxLayout()
         optionFrame.setLayout(optionLayout)
 
-        self.tierWidget = TierWidget(corpus,include_spelling=False)
+        modeFrame = QGroupBox('Search mode')
+        modeLayout = QVBoxLayout()
+        modeFrame.setLayout(modeLayout)
+
+        self.modeGroup = QButtonGroup()
+        segMode = QCheckBox('Segments')
+        segMode.clicked.connect(self.changeMode)
+        segMode.setChecked(True)
+        self.mode = 'segMode'
+        self.modeGroup.addButton(segMode)
+        sylMode = QCheckBox('Syllables')
+        sylMode.clicked.connect(self.changeMode)
+        self.modeGroup.addButton(sylMode)
+        self.modeGroup.setExclusive(True)
+        self.modeGroup.setId(segMode, 0)
+        self.modeGroup.setId(sylMode, 1)
+
+        modeLayout.addWidget(segMode)
+        modeLayout.addWidget(sylMode)
+        optionLayout.addWidget(modeFrame)
+
+        resultTypeFrame = QGroupBox('Result type')
+        resultTypeLayout = QVBoxLayout()
+        resultTypeFrame.setLayout(resultTypeLayout)
+
+        self.resultTypeGroup = QButtonGroup()
+        pos = QCheckBox('Positive')
+        pos.clicked.connect(self.changeResultType)
+        pos.setChecked(True)
+        self.resultType = 'positive'
+        self.resultTypeGroup.addButton(pos)
+        neg = QCheckBox('Negative')
+        neg.clicked.connect(self.changeResultType)
+        self.resultTypeGroup.addButton(neg)
+        self.resultTypeGroup.setExclusive(True)
+        self.resultTypeGroup.setId(pos, 2)
+        self.resultTypeGroup.setId(neg, -2)
+
+        resultTypeLayout.addWidget(pos)
+        resultTypeLayout.addWidget(neg)
+        optionLayout.addWidget(resultTypeFrame)
+
+        self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionLayout.addWidget(self.tierWidget)
 
         searchFrame = QGroupBox('Searches')
         searchLayout = QVBoxLayout()
         searchFrame.setLayout(searchLayout)
+
         loadSearch = QPushButton('Load recent search')
         loadSearch.clicked.connect(self.loadSearch)
+        searchLayout.addWidget(loadSearch)
+
         saveSearch = QPushButton('Save current search')
         saveSearch.clicked.connect(self.saveSearch)
-        searchLayout.addWidget(loadSearch)
         searchLayout.addWidget(saveSearch)
+
         optionLayout.addWidget(searchFrame)
 
-        pslayout.addWidget(optionFrame)
+        self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
 
-        psFrame.setLayout(pslayout)
-        self.layout().insertWidget(0,psFrame)
-        self.setWindowTitle('Phonological search')
+        self.pslayout.addWidget(self.envWidget)
+        self.pslayout.addWidget(optionFrame)
+
+        self.psFrame.setLayout(self.pslayout)
+        self.layout().insertWidget(0, self.psFrame)
+
         self.progressDialog.setWindowTitle('Searching')
 
+    def changeResultType(self):
+        if self.resultTypeGroup.checkedId() == 2:  # positive
+            self.resultType = 'positive'
+        else:
+            self.resultType = 'negative'
+
+    def changeMode(self):
+        self.pslayout.removeWidget(self.envWidget)
+        self.envWidget.deleteLater()
+        if self.modeGroup.checkedId() == 0:  # segMode is checked
+            self.mode = 'segMode'
+            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
+                                                     mode=self.mode)
+            self.pslayout.insertWidget(0, self.envWidget)
+
+        else:
+            self.mode = 'sylMode'
+            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
+                                                     mode=self.mode)
+            self.pslayout.insertWidget(0, self.envWidget)
+
     def accept(self):
-        for n in range(self.envWidget.environmentFrame.layout().count()-2):
-            #the -2 avoids catching some unncessary widgets
+        for n in range(self.envWidget.environmentFrame.layout().count() - 2):
+            # the -2 avoids catching some unncessary widgets
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
             search = RecentSearch(widget)
-            self.recentSearches.appendleft(search) #recentSearches is a collections.deque object, not a regular list
+            self.recentSearches.appendleft(search)  # recentSearches is a collections.deque object, not a regular list
         super().accept()
 
     def loadSearch(self):
@@ -488,24 +552,39 @@ class PhonoSearchDialog(FunctionDialog):
             for i, e in enumerate(envs):
                 if len(e.middle) == 0:
                     reply = QMessageBox.critical(self, "Missing information",
-                            "Please specify at least segment to search for in environment {}.".format(i+1))
+                                                 "Please specify at least segment to search for in environment {}.".format(i+1))
                     return
             kwargs['envs'] = envs
 
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
+        kwargs['mode'] = self.mode
+        kwargs['result_type'] = self.resultType
         return kwargs
 
-    def setResults(self,results):
-        self.results = []
-        for w,f in results:
-            segs = tuple(x.middle for x in f)
-            try:
-                envs = tuple(str(x) for x in f)
-            except IndexError:
-                envs = tuple()
-            self.results.append({'Word': w, 
-                                'Transcription': str(getattr(w,self.tierWidget.value())),
-                                'Segment': segs,
-                                'Environment': envs,
-                                'Token frequency':w.frequency})
+    def setResults(self, results):
+        self.results = list()
+        if self.mode == 'segMode':
+            for w, f in results:
+                segs = tuple(x.middle for x in f)
+                try:
+                    envs = tuple(str(x) for x in f)
+                except IndexError:
+                    envs = tuple()
+                self.results.append({'Word': w,
+                                     'Transcription': str(getattr(w, self.tierWidget.value())),
+                                     'Segment': segs,
+                                     'Environment': envs,
+                                     'Token frequency': w.frequency})
+        else:
+            for word, list_of_sylEnvs in results:
+                middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
+                try:
+                    envs = tuple(str(syl) for syl in list_of_sylEnvs)
+                except IndexError:
+                    envs = tuple()
+                self.results.append({'Word': word,
+                                     'Transcription': str(getattr(word, self.tierWidget.value())),
+                                     'Segment': middle_syllables,
+                                     'Environment': envs,
+                                     'Token frequency': word.frequency})

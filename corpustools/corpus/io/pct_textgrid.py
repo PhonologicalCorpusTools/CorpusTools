@@ -197,7 +197,9 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
         if call_back is not None:
             cur += 1
             call_back(cur)
+
         spelling_tier = tg.getFirst(word_name)
+
         for si in spelling_tier:
             if not si.mark:# is None:
                 continue

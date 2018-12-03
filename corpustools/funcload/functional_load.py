@@ -535,7 +535,7 @@ def entropy(probabilities):
 
 
 def neutralize_segment(segment, segment_pairs):
-    #This can actually be simplified because segment_pairs is always a single-item list, but later...
+    # TODO: this can actually be simplified because segment_pairs is always a single-item list
     for sp in segment_pairs:
         try:
             s = segment.symbol
