@@ -2596,7 +2596,7 @@ class Corpus(object):
                     self.inventory.segs[seg].features = self.specifier[seg]
 
 
-    def subset(self, filters):
+    def subset(self, filters, mode):
         """
         Generate a subset of the corpus based on filters.
 
