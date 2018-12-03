@@ -8,6 +8,15 @@ Citing PCT and the algorithms used therein
 Please cite PCT as the following (all authors after K. C. Hall are listed
 alphabetically):
 
+v. 1.3: 
+
+Hall, Kathleen Currie, Blake Allen, Michael Fry, Khia Johnson, Roger Lo, Scott Mackie, and
+Michael McAuliffe. (2017). Phonological CorpusTools, Version 1.3.
+[Computer program]. Available from `PCT GitHub page <http://phonologicalcorpustools.github.io/CorpusTools/>`_.
+
+
+v. 1.2:
+
 Hall, Kathleen Currie, Blake Allen, Michael Fry, Scott Mackie, and
 Michael McAuliffe. (2016). Phonological CorpusTools, Version 1.2.
 [Computer program]. Available from `PCT GitHub page <http://phonologicalcorpustools.github.io/CorpusTools/>`_.
