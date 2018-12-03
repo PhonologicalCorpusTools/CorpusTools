@@ -347,13 +347,14 @@ Once a corpus is loaded, use the following steps.
       separate entries for the words *sock* (n.), *sock* (v.), *shock* (n.),
       and *shock* (v.), this would count as four minimal pairs if homophones
       are distinguished, but only one if homophones are collapsed. The default is
-      to collapse homophones.
+      to collapse homophones. 
    c. **Output list of minimal pairs to a file**: It is possible to save
       a list of all the actual minimal pairs that PCT finds that hinge on a
       particular chosen contrast to a .txt file. To do so, enter a file
       path name, or select "Choose file..." to use a regular system
       dialogue box. If nothing is entered here, no list will be saved,
       but the overall output will still be provided (and can be saved independently).
+      Note that this list will always include ALL minimal pairs in the corpus, without collapsing homophones, regardless of whether the option to distinguish or collapse them above is chosen. E.g., it might include *sock* (n.) / *shock* (n.), *sock* (n.) / *shock* (v.), *sock* (v.) / *shock* (n.), and *sock* (v.) / *shock* (v.), even if this is counted as only one minimal pair in the calculation of the functional load.
 
 5. **Change in entropy options**: If you are calculating
    functional load using change in entropy, one parameter can be set.
