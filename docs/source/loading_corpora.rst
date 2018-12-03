@@ -451,24 +451,28 @@ file, as described in the section on :ref:`custom_corpus`.
 
 4. **Delimiters and Special Characters**: For transcription and orthography
    columns, transcription and morpheme delimiters as well as any special
-   characters are previewed at the right-hand side of the column informatin
+   characters are previewed at the right-hand side of the column information
    box. By clicking on "Edit parsing settings," you can edit these, as follows:
 
     a. **Example**: At the top of the "parsing" dialogue box, you will see
        an example of the entries in the column, to remind yourself of what
        sort of entries you are dealing with.
-    b. **Transcription delimiter**: If your transcriptions are delimited
+    b. **Segment delimiter**: If your transcriptions are delimited by segment,
        (i.e., have special characters that indicate segment breaks, as
-       in [t.ai.d] for the word 'tide,' you can enter the delimiting
-       character here). PCT will automatically search for this delimiter,
+       in [t.ai.d] for the word 'tide') you can enter the delimiting
+       character here. PCT will automatically search for this delimiter,
        but you may adjust it manually as well. For more on understanding
        complex transcriptions, see :ref:`complex_transcriptions`.
-    c. **Morpheme delimiter**: If your transcriptions include a morpheme
+    c. **Syllable delimiter**: If your transcriptions use a delimiter for syllable,
+       you can use :ref:`syllable_mode` in the phonological search. Similar to "Segment delimiter,"
+       you can specify your syllable delimiter. For example, if the word 'subtle' is
+       transcribed as [sə-tl], enter "-" here.
+    d. **Morpheme delimiter**: If your transcriptions include a morpheme
        delimiter (i.e., have special characters that indicate morpheme breaks,
        as in [ri-du] for the word 'redo,' you can enter the delimiting character
        here. PCT will automatically search for this delimiter, but you may
        adjust it manually as well.
-    d. **Number parsing**: If PCT detects that there are numbers in the
+    e. **Number parsing**: If PCT detects that there are numbers in the
        transcriptions, you have several options. Sometimes, numbers are
        simply used as alternatives for segmental transcriptions (e.g., [2]
        is used in the Lexique corpus [LEXIQUE]_ for IPA [ø]); in this case,
@@ -481,7 +485,9 @@ file, as described in the section on :ref:`custom_corpus`.
        indicate stress (e.g., [EH2.R.OW0.D.AY0.N.AE1.M.IH0.K] is the
        representation of the word "aerodynamic" in the IPHOD corpus [IPHOD]_
        using CMU [CMU]_ transcriptions that include stress).
-    e. **Punctuation to ignore**: If there are punctuation marks in the file,
+    f. **Has stress / Has tone**: If your transcriptions use a special symbol to indicate the
+       stress or tone, select the checkbox and specify the type and symbol in the table below.
+    g. **Punctuation to ignore**: If there are punctuation marks in the file,
        and these have not already been specified as being used as either
        transcription of morpheme delimiters, then they will be listed as
        possible punctuation marks that PCT can ignore. Ignoring punctuation
@@ -494,7 +500,7 @@ file, as described in the section on :ref:`custom_corpus`.
        Each symbol can be ignored or included as needed. (Clicking on the
        symbol so that it is selected makes PCT IGNORE the symbol in the
        corpus creation.)
-    f. **Multicharacter segments**: See the discussion in
+    h. **Multicharacter segments**: See the discussion in
        :ref:`construct_multicharacter_sequences` in the section on
        :ref:`complex_transcriptions` for details.
 
