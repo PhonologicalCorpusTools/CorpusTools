@@ -14,6 +14,12 @@ An overview of the beta version of PCT (0.15, July 2014) and its utility is avai
 ### Versions
 #### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...") and/or [subscribe to our e-mail list for notifications](http://eepurl.com/bqLDRD).
 
+Version 1.4 will be released in December 2018. It differs from v. 1.3 (July 2017) in the following areas:
+
+1. Support for syllable structure has been added to the software, allowing searches based on stress or tone.
+2. The functional load algorithm based on minimal pair counts has been FIXED -- previous versions returned counts based on token frequencies instead of type frequencies.
+3. The feature values in the pre-included feature systems have been updated to fix corruption issues.
+
 Version 1.3 was released in July 2017. It differs from v. 1.2 (December 2016) in the following areas:
 
 1. An additonal analysis algorithm for calculating informativity has been added.
@@ -51,7 +57,7 @@ Please see the user's manual of the latest version for complete documentation; c
 
 PCT itself should be cited something like the following (using the correct version number):
 
-Hall, Kathleen Currie, Blake Allen, Michael Fry, Scott Mackie, and Michael McAuliffe. (2016). Phonological CorpusTools, Version 1.2. [Computer program]. Available from https://github.com/PhonologicalCorpusTools/CorpusTools/releases.
+Hall, Kathleen Currie, Blake Allen, Michael Fry, Khia Johnson, Roger Lo, Scott Mackie, Michael McAuliffe, and Stanley Nam. (2018). Phonological CorpusTools, Version 1.4. [Computer program]. Available from https://github.com/PhonologicalCorpusTools/CorpusTools/releases.
 
 ### About us
 We are a group of researchers in the [Linguistics Department](http://linguistics.ubc.ca) at the [University of British Columbia](http://www.ubc.ca). The PI on this project is [Dr. Kathleen Currie Hall](http://linguistics.ubc.ca/persons/kathleen-hall/), and the project is supported in part by a SSHRC Insight Development grant to Dr. Hall.
