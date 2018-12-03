@@ -1057,13 +1057,33 @@ class SubsetCorpusDialog(QDialog):
         self.corpus = corpus
 
         layout = QVBoxLayout()
-
         mainlayout = QFormLayout()
 
         self.nameEdit = QLineEdit()
         self.nameEdit.setText(corpus.name + '_subset')
 
-        mainlayout.addRow(QLabel('Name for new corpus'),self.nameEdit)
+        mainlayout.addRow(QLabel('Name for new corpus'), self.nameEdit)
+
+        modeFrame = QGroupBox('Filter logic')
+        modeLayout = QHBoxLayout()
+        modeFrame.setLayout(modeLayout)
+
+        self.logicGroup = QButtonGroup()
+        andMode = QCheckBox('AND')
+        andMode.clicked.connect(self.changeMode)
+        andMode.setChecked(True)
+        self.mode = 'andMode'
+        self.logicGroup.addButton(andMode)
+        orMode = QCheckBox('OR')
+        orMode.clicked.connect(self.changeMode)
+        self.logicGroup.addButton(orMode)
+        self.logicGroup.setExclusive(True)
+        self.logicGroup.setId(orMode, 0)
+        self.logicGroup.setId(andMode, 1)
+
+        modeLayout.addWidget(andMode)
+        modeLayout.addWidget(orMode)
+        mainlayout.addRow(modeFrame)
 
         self.filterWidget = AttributeFilterWidget(corpus)
 
@@ -1088,12 +1108,16 @@ class SubsetCorpusDialog(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
+        self.setWindowTitle('Subset corpus')
 
-        self.setWindowTitle('Subset corporus')
+    def changeMode(self):
+        if self.logicGroup.checkedId() == 0:
+            self.mode = 'orMode'
+        else:
+            self.mode = 'andMode'
 
     def help(self):
-        self.helpDialog = HelpDialog(self,name = 'loading corpora',
-                                    section = 'subsetting-a-corpus')
+        self.helpDialog = HelpDialog(self, name='loading corpora', section='subsetting-a-corpus')
         self.helpDialog.exec_()
 
     def accept(self):
@@ -1101,22 +1125,33 @@ class SubsetCorpusDialog(QDialog):
         name = self.nameEdit.text()
         if name == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a name for the new corpus.")
+                                         'Missing information',
+                                         'Please specify a name for the new corpus.')
             return None
         if len(filters) == 0:
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify at least one filter.")
+                                         'Missing information',
+                                         'Please specify at least one filter.')
+            return None
+
+        new_corpus = self.corpus.subset(filters, self.mode)
+
+        if len(new_corpus) == 0:
+            reply = QMessageBox.critical(self,
+                                         'Subcorpus empty',
+                                         'Subcorpus generated is empty. '
+                                         'Please change the filter specifications')
             return None
 
         if name in get_corpora_list(self.parent().settings['storage']):
-            msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
-                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
-            msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
-            msgBox.addButton("Abort", QMessageBox.RejectRole)
+            msgBox = QMessageBox(QMessageBox.Warning, 'Duplicate name',
+                                 'A corpus named "{}" already exists.  Overwrite?'.format(name),
+                                 QMessageBox.NoButton, self)
+            msgBox.addButton('Overwrite', QMessageBox.AcceptRole)
+            msgBox.addButton('Abort', QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
 
-        new_corpus = self.corpus.subset(filters)
         new_corpus.name = name
         new_corpus.set_feature_matrix(self.corpus.specifier)
         save_binary(new_corpus,

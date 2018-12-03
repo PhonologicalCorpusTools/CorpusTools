@@ -84,7 +84,7 @@ class BaseTableModel(QAbstractTableModel):
         del self.rows[ind]
         self.endRemoveRows()
 
-    def removeRows(self,inds):
+    def removeRows(self, inds):
         inds = sorted(inds, reverse=True)
         for i in inds:
             self.beginRemoveRows(QModelIndex(),i,i)

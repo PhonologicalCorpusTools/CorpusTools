@@ -192,7 +192,7 @@ class Transcription(object):
         self.boundaries = {}  # TODO: Don't know when this is used
         cur_group = 0
         cur_tone = None
-        if seg_list is not None:
+        if seg_list:
             first_element = seg_list[0]
 
             try:
@@ -1931,6 +1931,20 @@ class EnvironmentFilter(object):
                     e.append(s)
         return e
 
+    def generate_regular_expression(self):
+
+        RegExp = ''
+
+        for set in self.lhs:
+            RegExp += '(%s)' % '|'.join(set)
+
+        RegExp += '(?P<MID>%s)' % '|'.join(self.middle)
+
+        for set in self.rhs:
+            RegExp += '(%s)' % '|'.join(set)
+
+        return RegExp
+
 class Attribute(object):
     """
     Attributes are for collecting summary information about attributes of
@@ -2608,21 +2622,32 @@ class Corpus(object):
         """
 
         new_corpus = Corpus('')
-        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
-                    for x in self.attributes]
+        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name) for x in self.attributes]
 
-        for word in self:
-            for f in filters:
-                if f[0].att_type == 'numeric':
-                    op = f[1]
-                    if not op(getattr(word,f[0].name), f[2]):
-                        break
-                elif f[0].att_type == 'factor':
-                    if getattr(word,f[0].name) not in f[1]:
-                        break
-            else:
-                new_corpus.add_word(word)
-
+        if mode == 'andMode':
+            for word in self:
+                for f in filters:
+                    if f[0].att_type == 'numeric':
+                        op = f[1]
+                        if not op(getattr(word, f[0].name), f[2]):
+                            break
+                    elif f[0].att_type == 'factor':
+                        if getattr(word, f[0].name) not in f[1]:
+                            break
+                else:
+                    new_corpus.add_word(word)
+        else:
+            for word in self:
+                for f in filters:
+                    if f[0].att_type == 'numeric':
+                        op = f[1]
+                        if op(getattr(word, f[0].name), f[2]):
+                            new_corpus.add_word(word)
+                            break
+                    elif f[0].att_type == 'factor':
+                        if getattr(word, f[0].name) in f[1]:
+                            new_corpus.add_word(word)
+                            break
         return new_corpus
 
     @property

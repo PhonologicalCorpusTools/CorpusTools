@@ -801,7 +801,8 @@ class AttributeFilterWidget(QGroupBox):
         select = self.table.selectionModel()
         if select.hasSelection():
             selected = select.selectedRows()
-            self.table.model().removeRows([s.row() for s in selected])
+            for r in selected:
+                self.table.model().removeRow(r.row())
 
     def value(self):
         #return [x[0] for x in self.table.model().filters]  # This is the original code
@@ -925,14 +926,13 @@ class RetranscribeWidget(QDialog):
 
 class TierWidget(QGroupBox):
     def __init__(self, corpus, parent = None, include_spelling = False):
-        QGroupBox.__init__(self,'Tier',parent)
+        QGroupBox.__init__(self, 'Tier', parent)
         self.spellingIncluded = include_spelling
         self.spellingEnabled = include_spelling
         layout = QVBoxLayout()
         self.corpus = corpus
 
         self.tierSelect = QComboBox()
-
 
         self.atts = [att for att in corpus.attributes
                      if not att.name in ('transcription') and att.att_type == 'tier']

@@ -35,7 +35,7 @@ class FLWorker(FunctionWorker):
         with cm(kwargs.pop('corpus'),
                 kwargs.pop('sequence_type'),
                 kwargs.pop('type_token'),
-                frequency_threshold = kwargs.pop('frequency_cutoff')) as c:
+                frequency_threshold=kwargs.pop('frequency_cutoff')) as c:
             try:
                 pairs = kwargs.pop('segment_pairs')
                 output_filename = kwargs.pop('output_filename', None)

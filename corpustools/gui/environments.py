@@ -563,12 +563,14 @@ class SyllableConstructWidget(QGroupBox):
 
         self.onsetSearchType = SearchTypeWidget(parent=onsetGroup,
                                                 preselected_type=preselected_onset['search_type'])
+
         globalOnsetLayout.addWidget(self.onsetSearchType)
 
-        bottomLayout = QHBoxLayout()
+        onsetBottomLayout = QHBoxLayout()
         self.onsetWidget = QWidget()
         self.onsetLayout = QHBoxLayout()
         self.onsetWidget.setLayout(self.onsetLayout)
+
 
         for seg_dict in preselected_onset['contents']:
             segWidget = SyllableSegmentWidget(self.inventory, "onsets", parent=self, root=False,
@@ -581,10 +583,12 @@ class SyllableConstructWidget(QGroupBox):
 
         self.onsetAddNew = QPushButton('+')
         self.onsetAddNew.clicked.connect(self.addOnset)
+        self.onsetLabel = QLabel()
 
-        bottomLayout.addWidget(self.onsetAddNew)
-        bottomLayout.addWidget(self.onsetWidget)
-        globalOnsetLayout.addLayout(bottomLayout)
+        onsetBottomLayout.addWidget(self.onsetAddNew)
+        onsetBottomLayout.addWidget(self.onsetWidget)
+        onsetBottomLayout.addWidget(self.onsetLabel)
+        globalOnsetLayout.addLayout(onsetBottomLayout)
 
         # coda part
         codaGroup = QGroupBox('Coda')
@@ -595,7 +599,7 @@ class SyllableConstructWidget(QGroupBox):
                                                preselected_type=preselected_coda['search_type'])
         globalCodaLayout.addWidget(self.codaSearchType)
 
-        bottomLayout = QHBoxLayout()
+        codaBottomLayout = QHBoxLayout()
         self.codaWidget = QWidget()
         self.codaLayout = QHBoxLayout()
         self.codaWidget.setLayout(self.codaLayout)
@@ -611,10 +615,12 @@ class SyllableConstructWidget(QGroupBox):
 
         self.codaAddNew = QPushButton('+')
         self.codaAddNew.clicked.connect(self.addCoda)
+        self.codaLabel = QLabel()
 
-        bottomLayout.addWidget(self.codaWidget)
-        bottomLayout.addWidget(self.codaAddNew)
-        globalCodaLayout.addLayout(bottomLayout)
+        codaBottomLayout.addWidget(self.codaLabel)
+        codaBottomLayout.addWidget(self.codaWidget)
+        codaBottomLayout.addWidget(self.codaAddNew)
+        globalCodaLayout.addLayout(codaBottomLayout)
 
         # nucleus part
         nucleusGroup = QGroupBox('Nucleus')
@@ -654,17 +660,32 @@ class SyllableConstructWidget(QGroupBox):
         layout.addWidget(codaGroup)
         layout.addStretch()
         self.setLayout(layout)
+        self.setZeroSymbol()
+
+
+    def setZeroSymbol(self):
+        if self.onsetLayout.count() == 0:
+            self.onsetLabel.setText('\u2205')
+        else:
+            self.onsetLabel.setText('')
+
+        if self.codaLayout.count() == 0:
+            self.codaLabel.setText('\u2205')
+        else:
+            self.codaLabel.setText('')
 
     def addOnset(self):
         segWidget = SyllableSegmentWidget(self.inventory, "onsets", parent=self, root=False, show_full_inventory=self.show_full_inventory)
         self.onsetWidget.layout().insertWidget(0, segWidget)
         segWidget.segDeleted.connect(self.deleteSeg)
+        self.setZeroSymbol()
         return segWidget
 
     def addCoda(self):
         segWidget = SyllableSegmentWidget(self.inventory, "codas", parent=self, root=False, show_full_inventory=self.show_full_inventory)
         self.codaWidget.layout().addWidget(segWidget)
         segWidget.segDeleted.connect(self.deleteSeg)
+        self.setZeroSymbol()
         return segWidget
 
     @Slot(list)  # connected to SyllableWidget.segDeleted()
@@ -674,11 +695,15 @@ class SyllableConstructWidget(QGroupBox):
             layout = self.codaWidget.layout()
         elif segWidget.constituent == 'onsets':
             layout = self.onsetWidget.layout()
+
         for ind in reversed(range(layout.count())):
-            if layout.itemAt(ind) == segWidget:
-                layout.removeAt(ind)
+            if layout.itemAt(ind).widget() == segWidget:
+                layout.removeWidget(segWidget)
                 break
         segWidget.deleteLater()
+        self.setZeroSymbol()
+
+
 
     def value(self):
         output = {'onset': dict(),
@@ -722,7 +747,7 @@ class SearchTypeWidget(QGroupBox):
 
         layout.addWidget(self.typeSelect)
 
-        index = self.typeSelect.findText('Exactly matches')
+        index = self.typeSelect.findText('Minimally contains')
         self.typeSelect.setCurrentIndex(index)
 
         if preselected_type:
