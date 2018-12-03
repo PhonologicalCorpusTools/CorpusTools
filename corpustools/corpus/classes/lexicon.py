@@ -2250,8 +2250,7 @@ class Corpus(object):
                     self.inventory.segs[seg] = Segment(seg)
                     self.inventory.segs[seg].features = self.specifier[seg]
 
-
-    def subset(self, filters):
+    def subset(self, filters, mode):
         """
         Generate a subset of the corpus based on filters.
 
@@ -2277,20 +2276,32 @@ class Corpus(object):
         """
 
         new_corpus = Corpus('')
-        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name)
-                    for x in self.attributes]
+        new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name) for x in self.attributes]
 
-        for word in self:
-            for f in filters:
-                if f[0].att_type == 'numeric':
-                    op = f[1]
-                    if not op(getattr(word,f[0].name), f[2]):
-                        break
-                elif f[0].att_type == 'factor':
-                    if getattr(word,f[0].name) not in f[1]:
-                        break
-            else:
-                new_corpus.add_word(word)
+        if mode == 'andMode':
+            for word in self:
+                for f in filters:
+                    if f[0].att_type == 'numeric':
+                        op = f[1]
+                        if not op(getattr(word, f[0].name), f[2]):
+                            break
+                    elif f[0].att_type == 'factor':
+                        if getattr(word, f[0].name) not in f[1]:
+                            break
+                else:
+                    new_corpus.add_word(word)
+        else:
+            for word in self:
+                for f in filters:
+                    if f[0].att_type == 'numeric':
+                        op = f[1]
+                        if op(getattr(word, f[0].name), f[2]):
+                            new_corpus.add_word(word)
+                            break
+                    elif f[0].att_type == 'factor':
+                        if getattr(word, f[0].name) in f[1]:
+                            new_corpus.add_word(word)
+                            break
         return new_corpus
 
     @property
