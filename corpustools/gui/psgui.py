@@ -48,8 +48,8 @@ class RecentSearch:
 
         self.displayValue = envWidget.displayValue()  # EnvironmentWidget and EnvironmentSyllableWidget
 
-        self.middleValue = middle.value()
-        self.middleDisplayValue = middle.displayValue()
+        self.middleValue = middle.value()  # a list of segments
+        self.middleDisplayValue = middle.displayValue()  # {a, +syllabic}
 
         lhsWidgets = [lhs.itemAt(i).widget() for i in range(lhs.count())]
         self.lhsValue, self.lhsDisplayValue, self.lhsData = list(), list(), list()
@@ -67,7 +67,7 @@ class RecentSearch:
 
 
     def __str__(self):
-        return self.displayValue.replace('_', '_'+self.middleDisplayValue+'_')
+        return self.displayValue.replace('_', '_' + self.middleDisplayValue + '_')
 
     def target(self):
         return self.middleDisplayValue
@@ -532,9 +532,9 @@ class PhonoSearchDialog(FunctionDialog):
                 button.updateLabel()
 
     def saveSearch(self):
-        layoutCount = self.envWidget.environmentFrame.layout().count()-2
+        layoutCount = self.envWidget.environmentFrame.layout().count()-2  # This returns # of env spec.
         # the -2 avoids catching some unncessary widgets
-        for n in range(layoutCount):
+        for n in range(layoutCount):  # for each environment
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
             search = RecentSearch(widget)
             self.savedSearches.append(search)
