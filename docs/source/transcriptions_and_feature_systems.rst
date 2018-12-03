@@ -238,8 +238,8 @@ The following options are shown:
       system itself by editing the .txt file and reloading it (more
       information given in :ref:`modifying_feature`).
 
-Below is an example of the "Edit feature" system dialogue box, loaded
-with the "ipa2spe" transcription and feature file:
+Below is an example of the “Edit feature” system dialogue box, loaded
+with the “ipa2spe” transcription and feature file:
 
 .. image:: static/editfeatures.png
    :width: 90%
@@ -258,7 +258,7 @@ needs to display the inventory of the corpus in order for sounds to be
 selected for search or analysis. The default is to display segments in
 alphabetical order, which is not necessarily particularly intuitive as
 far as a linguist's ability to interact with the list. For example, here
-is the unordered version of the segments in the sample "Lemurian" corpus
+is the unordered version of the segments in the sample “Lemurian” corpus
 (see :ref:`example_corpora`):
 
 .. image:: static/lemurian_unsorted.png
@@ -280,7 +280,7 @@ Hayes-style features. Note that for space reasons, the consonant chart and vowel
    :width: 90%
    :align: center
 
-To create or edit the inventory chart, go to “Features” / "Manage inventory chart." The "Manage inventory" dialogue box appears. If the feature system being used is either the built-in [Hayes2009]_ or the [SPE]_ style feature system, clicking on "Autocategorize" should result in a relatively standard IPA-like chart, which can be further edited if needed. [Note: if you are using a custom feature system but want the "Autocategorize" function to work, please ensure that all of the following features are included in your system, with these exact names, even if they aren't phonologically necessary for your inventory:
+To create or edit the inventory chart, go to “Features” / “Manage inventory chart.” The “Manage inventory” dialogue box appears. If the feature system being used is either the built-in [Hayes2009]_ or the [SPE]_ style feature system, clicking on “Autocategorize” should result in a relatively standard IPA-like chart, which can be further edited if needed. [Note: if you are using a custom feature system but want the “Autocategorize” function to work, please ensure that all of the following features are included in your system, with these exact names, even if they aren't phonologically necessary for your inventory:
 
 For "Hayes"-like systems: 'consonantal', 'sonorant', 'nasal', 'continuant', 'lateral', 'trill', 'tap', 'delayed_release', 'voice', 'labial', 'labiodental', 'coronal', 'anterior', 'dorsal', 'front', 'back', 'high', 'low'
 
@@ -585,52 +585,80 @@ and select “Show non-transcribed items.”
 Phonological Search
 ===================
 
-PCT allows you to do searches for various strings, defined by segments or
-features. The search returns two types of information: one, a general count
+PCT allows you to do searches for various strings, defined by segments or features. 
+The search returns two types of information: one, a general count
 of the number of entries that fit the search description, and two, the
 actual list of all the words in the corpus that contain the specified
-string. To conduct a search, choose “Corpus” / “Phonological search...”
+string. There are two modes in which this “phonological search” can be conducted: “Segment mode” and “Syllable mode.”
+“Segment mode” treats words in the corpus as a linear sequence of segments, so it is useful for 
+searching for a target in a linear context. This is the only search type that was available 
+in early versions of PCT.
+“Syllable mode,” on the other hand, allows you to construct syllables for your search, 
+such that you can search for both syllable components like “onset” and “coda” and also 
+for characteristics of words that are defined at the syllabic level, such as tone or stress. 
+Syllable mode requires your corpus to have syllable delimiters.
+
+To conduct a search, first choose “Corpus” / “Phonological search...”
 and do the following:
 
-1. **Environments**: Select the strings you want to search for. See :ref:`environment_selection` and :ref:`sound_selection` for details.
+.. _segment_mode:
 
-2. **Tier**: Select the tier on which phonological search should be performed.
+Segment Mode
+------------
+Segment mode lets you search a target in linear environments.
+
+1. **Search mode**: Select “Segments.”
+
+2. **Result type**: Select either positive or negative. A positive search returns entries 
+that satisfy the environment you choose in the environment selection; while negative search 
+returns the strings that do *not* fall under the environment that you specify, i.e., the complement 
+of your search.
+
+3. **Tier**: Select the tier on which phonological search should be performed.
    The default would be the transcription tier, so that phonological
    environments are defined locally. But, for example, if a vowel tier
    is selected, then one could search for the occurrence of, e.g., [i]
    before mid vowels on that tier (hence ignoring intervening consonants). (Note that it is not currently possible to do a phonological search within :ref:`pronunciation_variants`; the search will look only at the canonical forms or whatever forms are listed in the specified tier.)
 
-An example of adding environments (in this case, the environment “word-initial,
+4. **Environments**: Select the strings you want to search for. See :ref:`environment_selection` and :ref:`sound_selection` for details.
+
+An example of adding environments for a positive search (in this case, the environment “word-initial,
 before a vowel”):
 
 .. image:: static/phonosearchenvironment.png
-   :width: 90%
+   :width: 100%
    :align: center
 
 An example of the phonological search window, set up to search for
 voiceless stops word-initially before vowels and between [a] vowels,
-on the transcription tier:
+on the transcription tier (positive search):
 
 .. image:: static/phonosearchenvironment2.png
-   :width: 90%
+   :width: 100%
    :align: center
 
+An example of the phonological search window, set up to search for
+voiceless stops word-initially before vowels and between [a] vowels,
+on the transcription tier (negative search):
 
+.. image:: static/phonosearchenvironment3.png
+   :width: 100%
+   :align: center
 
-3. **Saving Searches**: It is possible to save particular searches and then re-load them for later use (within the same corpus, or in a different one). PCT will automatically save the five most recent searches for you, but you can also specify that any particular search should be saved for the long term.
+5. **Saving Searches**: It is possible to save particular searches and then re-load them for later use (within the same corpus, or in a different one). PCT will automatically save the five most recent searches for you, but you can also specify that any particular search should be saved for the long term.
 
-To save a search, click on "Save current search" in the "Phonological Search" dialogue box (see above pictures). To modify it or to use a saved search, click on "Load recent search." Doing so brings up the "Searches" dialogue box as follows:
+To save a search, click on “Save current search” in the “Phonological Search” dialogue box (see above pictures). To modify it or to use a saved search, click on “Load recent search.” Doing so brings up the “Searches” dialogue box as follows:
 
 .. image:: static/phonosearchsaved.png
    :width: 90%
    :align: center
    
 
-On the left are listed the five most recent searches, showing the target and environment for each search. In the center are the officially "saved" searches. On the right is an empty panel in which a new search can be 'built' from the saved searches. Right-clicking on one of these panels will bring up further options. For example, right-clicking on a recent search allows you to transfer it to the saved searches, to delete it entirely, or to add it to the current search. Similarly, right-clicking on a saved search allows you to delete it entirely or to add it to the current search. Double-clicking in the "Notes" column of saved searches allows you to label searches or add other useful information about them. Once one or more searches have been added to the "Current Search" panel, they can be loaded by clicking on "Load selected search." (Note that if only one search is needed, it does not have to be added to the "Current Search" panel first, though it can be.) You will be turned to the main "Phonological Search" dialogue box and the environments for searches will be automatically populated with the selected searches. These can then be further modified if needed (though they would then need to be re-saved if you want them to be stored.)
+On the left are listed the five most recent searches, showing the target and environment for each search. In the center are the officially “saved” searches. On the right is an empty panel in which a new search can be 'built' from the saved searches. Right-clicking on one of these panels will bring up further options. For example, right-clicking on a recent search allows you to transfer it to the saved searches, to delete it entirely, or to add it to the current search. Similarly, right-clicking on a saved search allows you to delete it entirely or to add it to the current search. Double-clicking in the “Notes” column of saved searches allows you to label searches or add other useful information about them. Once one or more searches have been added to the "Current Search" panel, they can be loaded by clicking on "Load selected search." (Note that if only one search is needed, it does not have to be added to the "Current Search" panel first, though it can be.) You will be turned to the main "Phonological Search" dialogue box and the environments for searches will be automatically populated with the selected searches. These can then be further modified if needed (though they would then need to be re-saved if you want them to be stored.)
 
-4. **Results**: Once all selections have been made, click on “Calculate
+6. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
-   or you want to start a new once, choose the “Start new results table”
+   or you want to start a new one, choose the “Start new results table”
    option. If you want to add the results to a pre-existing table, choose
    the “Add to current results table” option. The results appear in a new
    dialogue box that first shows the summary results, i.e., a list that
@@ -654,7 +682,7 @@ On the left are listed the five most recent searches, showing the target and env
    return to the search selection dialogue box, click on “Reopen function dialogue.”
    Otherwise, when finished, click on “Close window” to return to the corpus.
 
-An example of the summary results window for the above phonological search:
+An example of the summary results window for the above positive phonological search:
 
 .. image:: static/phonosearchsummary.png
    :width: 90%
@@ -667,10 +695,117 @@ And the individual results from the same search, sorted by environment:
    :width: 90%
    :align: center
 
+Finally, the same environment but negative search option returns the following individual results:
+
+.. image:: static/phonosearchindividualnegative.png
+   :width: 90%
+   :align: center
+
+   
+.. _syllable_mode:
+
+Syllable Mode
+-------------
+Syllable mode enables you to incorporate the notion of the syllable in your phonological searches. The basic 
+operation is the same as segments mode, except the environment selection. Syllables mode comes in handy 
+when, for example, you want to limit your search to the second syllable of a word, or to the onset of a syllable. 
+If you were to do it in segments mode, you would need to construct by hand all the different types of possible syllables before
+the target, because the segments mode is blind to the notion of the syllable. Syllables mode also allows you to search 
+for characteristics that are specified at the syllabic level, such as stress or tone. In order to use syllables mode, though, 
+your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
+
+
+1. **Search mode**: Select “Syllables.”
+
+2. **Result type**: Select either positive or negative. A positive search returns entries that satisfy
+   the environment you choose in the environment selection; while negative search returns the strings
+   that do NOT fall under the environment that you specify. 
+
+3. **Tier**: Select the tier on which phonological search should be performed.
+   The default would be the transcription tier, so that phonological
+   environments are defined locally. But, for example, if a vowel tier
+   is selected, then one could search for the occurrence of, e.g., [i]
+   before mid vowels on that tier (hence ignoring intervening consonants). 
+   Note that it is not currently possible to do a syllable search within other tiers than 'Transcription.' 
+   Also, phonological search within :ref:`pronunciation_variants` is not available. The search will look 
+   only at the canonical forms or whatever forms are listed in the specified tier.)
+
+4. **Environments**: Construct a syllable by selecting 'Construct the syllable,' or add a non-segment symbol (for non-targets). Constructing a syllable means 
+specifying the environment for each syllable component. See examples below for the syllable construction. Also, see :ref:`environment_selection` and :ref:`sound_selection` for environment selection.
+
+To construct a syllable, first you will need to add a new environment by clicking the “New environment” button. 
+And then, you can construct a target syllable by selecting "Construct the syllable" from the dropdown menu 
+of Edit. The Construct syllables window will pop up. Now you can specify Onset and Nucleus just as you 
+would do in :ref:`environment_selection`. And you can also specify Stress and Tone for the target syllable 
+on the right-hand side. 
+
+For each syllable component, you can select environment and specify a search type among "Exactly matches", "Minimally contains", "Starts with", and "Ends with." 
+Please note that using "Exactly matches" while not specifying an onset/coda slot means "no onset/coda", while using "Minimally contains" without specifying an 
+onset or coda means that the onset or coda may either be empty or filled. Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
+
+Additionally, you can exclude specific segments at a syllable component by selecting "Set negative" from the dropdown menu. For example, 
+if you want to search for a syllable that has any phoneme except +labial at the onset position and [a] as the nucleus, you can do so in 
+the "Construct syllables" window by specifying "Nucleus" as [a] and setting "Onset" as +labial with "Set negative" option checked from 
+the dropdown menu. This will search for [sa], [ra], etc. but exclude [ma] or [pa].
+
+Now, let's assume you search for the cases where the second syllables are either /bi/ or /pi/ (bilabial-stop onset and high-front vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
+
+An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of a bilabial stop and the nucleus of a high front vowel):
+
+.. image:: static/phonosearchenvironmentsyllable.png
+   :width: 100%
+   :align: center
+
+Another example of constructing the syllable (unlike above, only closed syllables are counted):
+
+.. image:: static/phonosearchenvironmentsyllable2.png
+   :width: 100%
+   :align: center
+
+   
+5. **Saving Searches**: It is possible to save particular searches, as in the Segments mode. To save a search, click on "Save current search" in the "Phonological Search" dialogue box. See above for more information.
+
+6. **Results**: Once all selections have been made, click on “Calculate
+   phonological search.” If there is not already an existing results table,
+   or you want to start a new one, choose the “Start new results table”
+   option. If you want to add the results to a pre-existing table, choose
+   the “Add to current results table” option. The results appear in a new
+   dialogue box that first shows the summary results, i.e., a list that
+   contains the segment that was searched for, each environment that was
+   searched for, the total count of words that contain that segment in that
+   environment, and the total token frequency for those words (note that
+   these are the frequencies of the WORDS containing the specified environments,
+   so if for example, a particular word contains multiple instances of the same
+   environment, this is NOT reflected in the counts). The individual words in
+   the corpus that match the search criteria can be shown by clicking on “Show
+   individual results” at the bottom of the screen; this opens a new dialogue
+   box in which each word in the corpus that matches the search criteria is
+   listed, including the transcription of the word, the segment that was found
+   that matches the search criteria, and which environment that segment
+   occurred in in that word. Note that the results can be sorted by any of
+   the columns by clicking on that column’s name. To return to the summary results, click on
+   “Show summary results.” Each set of results can be saved to a .txt file by
+   clicking “Save to file” at the bottom of the relevant results window. To
+   return to the search selection dialogue box, click on “Reopen function dialogue.”
+   Otherwise, when finished, click on “Close window” to return to the corpus.
+
+An example of the summary results window for the above syllable mode search:
+
+.. image:: static/phonosearchsummarysyllable.png
+   :width: 70%
+   :align: center
+
+And the individual results from the same search, sorted by environment:
+
+
+.. image:: static/phonosearchindividualsyllable.png
+   :width: 70%
+   :align: center
+
 .. _io_classes_and_functions:
 
 Classes and functions
----------------------
+=====================
 For further details about the relevant classes and functions in PCT's
 source code, please refer to :ref:`api_reference`.
 
