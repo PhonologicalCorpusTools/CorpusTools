@@ -282,7 +282,7 @@ Hayes-style features. Note that for space reasons, the consonant chart and vowel
 
 To create or edit the inventory chart, go to “Features” / "Manage inventory chart." The "Manage inventory" dialogue box appears. If the feature system being used is either the built-in [Hayes2009]_ or the [SPE]_ style feature system, clicking on "Autocategorize" should result in a relatively standard IPA-like chart, which can be further edited if needed. [Note: if you are using a custom feature system but want the "Autocategorize" function to work, please ensure that all of the following features are included in your system, with these exact names, even if they aren't phonologically necessary for your inventory:
 
-For "Hayes"-like systems: 'consonantal', 'sonorant', 'nasal', 'continuant', 'lateral', 'trill', 'tap', 'delayed_release', 'labial', 'labiodental', 'coronal', 'anterior', 'dorsal', 'front', 'back', 'high', 'low'
+For "Hayes"-like systems: 'consonantal', 'sonorant', 'nasal', 'continuant', 'lateral', 'trill', 'tap', 'delayed_release', 'voice', 'labial', 'labiodental', 'coronal', 'anterior', 'dorsal', 'front', 'back', 'high', 'low'
 
 For "SPE"-like systems: 'voc', 'son', 'ant', 'cor', 'high', 'low', 'back', 'lat', 'nasal'
 
