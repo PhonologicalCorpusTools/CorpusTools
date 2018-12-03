@@ -1,11 +1,7 @@
 import os
-
-from textgrid import TextGrid, IntervalTier
-from textgrid.textgrid import Interval, Point, PointTier , _getMark
-try:
-    from textgrid.textgrid import readFile
-except ImportError:
-    from textgrid.textgrid import detectEncoding as readFile
+import codecs
+from corpustools.corpus.io.textgrid11_pct import TextGrid, IntervalTier, readFile, Interval, Point, PointTier, _getMark
+#from corpustools.corpus.io.textgrid import Interval, Point, PointTier , _getMark
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Attribute, Corpus
 from corpustools.corpus.classes.spontaneous import Discourse
@@ -31,15 +27,17 @@ class PCTTextGrid(TextGrid):
 
     def read(self, f, round_digits=15):
         """
-        Read the tiers contained in the Praat-formatted TextGrid file
-        indicated by string f. Times are rounded to the specified precision.
+        Read the tiers contained in the Praat-formated TextGrid file
+        indicated by string f
         """
         source = readFile(f)
-        self.minTime = round(float(source.readline().split()[2]), round_digits)
-        self.maxTime = round(float(source.readline().split()[2]), round_digits)
+        self.minTime = round(float(source.readline().split()[2]), 5)
+        self.maxTime = round(float(source.readline().split()[2]), 5)
         source.readline() # more header junk
         m = int(source.readline().rstrip().split()[2]) # will be self.n
+        
         source.readline()
+
         for i in range(m): # loop over grids
             source.readline()
             if source.readline().rstrip().split()[2] == '"IntervalTier"':
@@ -77,7 +75,6 @@ class PCTTextGrid(TextGrid):
                     itie.addPoint(Point(jtim, jmrk))
                 self.append(itie)
         source.close()
-
 
 def uniqueLabels(tier):
     return set(x.mark for x in tier.intervals)

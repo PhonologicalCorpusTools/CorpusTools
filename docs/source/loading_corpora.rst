@@ -304,7 +304,10 @@ TextGrids [PRAAT]_. This is particularly useful for creating spontaneous
 speech corpora from recordings, especially if the transcription is
 based on what was actually spoken rather than on canonical forms of
 each word -- PCT can keep track of the individual pronunciation variants
-associated with individual words (see :ref:`pronunciation_variants`).
+associated with individual words (see :ref:`pronunciation_variants`). PCT 
+uses the TextGrid package (https://pypi.org/project/TextGrid/) to read in
+.TextGrid files. Currently, it uses TextGrid version 1.1, which has been
+added to the /corpustools/corpus/io folder to maintain compatibility. 
 
 Once you have selected the file path or directory and named the corpus
 (see :ref:`custom_corpus`), make sure that the "TextGrid" tab is selected
@@ -782,21 +785,21 @@ PCT as simply a new corpus.
 
 To create a subset, click on “File” / “Generate a corpus subset” and follow these steps:
 
-1. **Name**: Enter the name for your new corpus. The default is to use the
+1. **Name for new corpus**: Enter the name for your new corpus. The default is to use the
    name of the current corpus, followed by “_subset,” but a more informative
    name (e.g., “Gitksan_nouns”) may be useful.
-2. **Filters**: Click on “Add filter” to add a filter that will be used to
+2. **Filter logic**: Choose either “AND” or “OR.” The “AND” option makes multiple filters
+   to be applied cumulative; i.e., the subset corpus will only contain items that pass through 
+   ALL filters (rather than, say, one of the filters, or having many subsets, one for each filter).
+   If you want to generate a subset of items that pass any one of the filters, select “OR” here.
+3. **Filters**: Click on “Add filter” to add a filter that will be used to
    subset the corpus. You can filter based on any numeric or factor tier
    / column that is part of your corpus. For a numeric column (e.g., frequency),
    you can specify that you want words that have values that are equal to,
    greater than, less than, greater than or equal to, less than or equal to,
    or not equal to any given value. For a factor column (e.g. an abstract CV
    skeleton tier), you can add as many or as few levels of the factor as you like.
-3. **Multiple filters**: After a filter has been created, you can choose to
-   “Add” it or “Add and create another” filter. The filters are
-   cumulative; i.e., having two filters will mean that the subset
-   corpus will contain items that pass through BOTH filters (rather
-   than, say, either filter, or having two subsets, one for each filter).
+   After a filter has been created, you can choose to “Add” it or “Add and create another” filter.
 4. **Create subset**: Once all filters have been selected, click on “Create
    subset corpus.” You will be returned to your current corpus view,
    but the subsetted corpus is available if you then go to “File” /

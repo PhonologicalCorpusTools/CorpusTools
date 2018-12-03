@@ -394,9 +394,12 @@ class EnvironmentWidget(QWidget):
 
         if match_widget.side is None:  # middle widget
             if add_to_side == 'r':
-                self.addRhs()
-            elif add_to_side == 'l':
-                self.addLhs()
+                layout = self.rhsWidget.layout()
+                layout.insertWidget(0, segWidget)
+            if add_to_side == 'l':
+                layout = self.lhsWidget.layout()
+                layout.insertWidget(len(layout)+1, segWidget)
+            layout.update()
             return
 
         segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
