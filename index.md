@@ -19,6 +19,7 @@ Version 1.4 will be released in December 2018. It differs from v. 1.3 (July 2017
 1. Support for syllable structure has been added to the software, allowing searches based on stress or tone.
 2. The functional load algorithm based on minimal pair counts has been FIXED -- previous versions returned counts based on token frequencies instead of type frequencies.
 3. The feature values in the pre-included feature systems have been updated to fix corruption issues.
+4. Functional load calculations with right-hand environment specifications should be working.
 
 Version 1.3 was released in July 2017. It differs from v. 1.2 (December 2016) in the following areas:
 
