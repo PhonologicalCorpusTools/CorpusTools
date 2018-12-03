@@ -6,8 +6,6 @@ import time
 
 from .io import save_minimal_pairs
 
-import pdb
-
 
 def _merge_segment_pairs(tier, segment_pairs, environment_filters):
     """Merge the specified segment pairs for the given tier of segments if 
@@ -30,7 +28,8 @@ def _ready_for_re(word, index):
     return ' '.join(w)
 
 def _fits_environment(tier, index, environment_filters):
-    """Return True iff for tier, the environment
+    """
+    Return True iff for tier, the environment
     of its index'th element fits passes one of the environment_filters.
     """
     if not environment_filters:
