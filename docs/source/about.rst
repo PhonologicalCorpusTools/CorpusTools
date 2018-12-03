@@ -28,8 +28,11 @@ Contributors
 | Kathleen Currie Hall (`kathleen.hall@ubc.ca`_)
 | Blake Allen
 | Michael Fry
+| Khia Johnson
+| Roger Lo
 | Scott Mackie
 | Michael McAuliffe
+| Stanley Nam
 |
 |
 | Department of Linguistics
