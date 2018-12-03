@@ -393,6 +393,9 @@ class EnvironmentWidget(QWidget):
     def insertSegWidget(self, match_widget, add_to_side):
 
         if match_widget.side is None:  # middle widget
+            segWidget = EnvironmentSegmentWidget(self.inventory, parent=self,
+                                                 show_full_inventory=self.show_full_inventory, side=add_to_side, )
+            segWidget.segDeleted.connect(self.deleteSeg)
             if add_to_side == 'r':
                 layout = self.rhsWidget.layout()
                 layout.insertWidget(0, segWidget)
