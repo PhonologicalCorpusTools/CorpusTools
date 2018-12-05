@@ -10,15 +10,14 @@ a = Analysis([os.path.join(pct_path, 'bin', 'pct_qt_debug.py')],
              pathex=[pct_path],
              binaries=None,
              datas=[],
-             hiddenimports=[],
+             hiddenimports=['PyQt5'],
              hookspath=[],
              runtime_hooks=[],
-             excludes=[],
+             excludes=['matplotlib'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher)
-pyz = PYZ(a.pure, a.zipped_data,
-             cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
