@@ -3032,7 +3032,6 @@ class Corpus(object):
         word._corpus = self
         tokens = word.wordtokens[:]  # What is this doing?
 
-        # TODO: need to figure out what the following code is doing
         #If the word doesn't exist, add it
         try:
             check = self.find(word.spelling)

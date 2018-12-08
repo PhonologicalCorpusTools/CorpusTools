@@ -4,7 +4,7 @@ import logging
 from collections import OrderedDict, defaultdict
 
 from .imports import *
-from corpustools.exceptions import PCTError, PCTPythonError
+from corpustools.exceptions import PCTError, PCTPythonError, MissingFeatureError
 from corpustools.decorators import check_for_errors
 from corpustools.corpus.io.binary import load_binary, save_binary, PCTUnpickler
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
@@ -102,6 +102,10 @@ class LoadCorpusWorker(FunctionWorker):
                     corpus = load_directory_multiple_files(**self.kwargs)
                 else:
                     corpus = load_discourse_multiple_files(**self.kwargs)
+
+        except MissingFeatureError as e:
+            self.errorEncountered.emit(e)
+            return
 
         except PCTError as e:
             self.errorEncountered.emit(e)

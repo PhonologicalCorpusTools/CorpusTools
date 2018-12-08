@@ -79,6 +79,11 @@ class DelimiterError(PCTError):
     """
     pass
 
+
+class MissingFeatureError(PCTError):
+    pass
+
+
 class ILGError(PCTError):
     """
     Exception for general issues when loading interlinear gloss files.

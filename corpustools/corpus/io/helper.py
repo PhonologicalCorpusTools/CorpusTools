@@ -4,7 +4,7 @@ import string
 import logging
 
 from corpustools.corpus.classes import Discourse, Attribute, Corpus, Word, WordToken, Transcription
-from corpustools.exceptions import DelimiterError
+from corpustools.exceptions import DelimiterError, MissingFeatureError
 
 NUMBER_CHARACTERS = set(string.digits)
 punctuation_names = {',': 'comma',
@@ -40,31 +40,42 @@ class BaseAnnotation(object):
 
 
 class SyllableBaseAnnotation(object):
-    def __init__(self, feature_matrix, label, stress_spec=dict(), tone_spec=dict(), begin=None, end=None):
-        self.type = "syllable"
-        self.label = label
+    def __init__(self, syllable, feature_matrix, annotation_type, begin=None, end=None):
+        self.type = 'syllable'
+        self.label = syllable
         self.begin = begin
         self.end = end
 
         self.stress = None
         self.tone = None
-
         self.onset = list()  # a list of BaseAnnotation
         self.nucleus = list()
         self.coda = list()
         self.mora = None
-        self.group = None # Keep this for now so the program won't break
+        self.group = None  # Keep this for now so the program won't break
 
-        is_nucleus = False
-        for seg in label:
-            if seg in stress_spec.keys():
-                self.stress = seg
-            elif seg in tone_spec.keys():
-                self.tone = seg
+        if annotation_type.trans_delimiter is None:
+            if annotation_type.digraph_pattern is not None:
+                syllable = annotation_type.digraph_pattern.findall(syllable)
             else:
-                for i, j in enumerate(feature_matrix.features):
-                    if j == "syllabic":
-                        index_for_syllabic = i + 1
+                syllable = [x for x in syllable]
+        else:
+            syllable = syllable.split(annotation_type.trans_delimiter)
+        is_nucleus = False
+        for segs in syllable:
+            seg = ''
+            for symbol in segs:
+                if symbol in annotation_type.stress_specification.keys():
+                    self.stress = symbol
+                elif symbol in annotation_type.tone_specification.keys():
+                    self.tone = symbol
+                else:
+                    seg += symbol
+            
+            for i, j in enumerate(feature_matrix.features):
+                if j == 'syllabic':
+                    index_for_syllabic = i + 1
+            try:
                 if feature_matrix.seg_to_feat_line(seg)[index_for_syllabic] == "-":  # not syllabic
                     if is_nucleus:
                         self.coda.append(BaseAnnotation(seg))
@@ -73,6 +84,9 @@ class SyllableBaseAnnotation(object):
                 else:  # syllabic
                     is_nucleus = True
                     self.nucleus.append(BaseAnnotation(seg))
+            except KeyError as e:
+                e = MissingFeatureError('The feature values for {} is not specified.'.format(seg))
+                raise e
 
     def __iter__(self):
         segs = list()
@@ -414,10 +428,46 @@ def inspect_directory(directory):
 parse_numbers = re.compile('\d+|\S')
 
 
+def parse_syllable(string, feature_matrix, annotation_type, corpus):
+    syllables = string.split(annotation_type.syllable_delimiter)
+
+    result = []
+    for syllable in syllables:
+        s = SyllableBaseAnnotation(syllable, feature_matrix, annotation_type)
+
+        if syllable not in corpus.inventory.syllables.keys():
+            corpus.inventory.syllables[syllable] = {"stress": s.stress,
+                                                    "tone": s.tone,
+                                                    "onset": s.onset,
+                                                    "nucleus": s.nucleus,
+                                                    "coda": s.coda}
+        result.append(s)
+    return result
+
+
+def parse_segment(string, annotation_type):
+    if annotation_type.trans_delimiter is None:
+        if annotation_type.digraph_pattern is not None:
+            string = annotation_type.digraph_pattern.findall(string)
+        else:
+            string = [x for x in string]
+    else:
+        string = string.split(annotation_type.trans_delimiter)
+
+    result = []
+    for seg in string:
+        if seg == '':
+            continue
+
+        a = BaseAnnotation(seg)  # seg corresponds to label
+        result.append(a)
+
+    return result
+
+
 def parse_transcription(string, annotation_type, feature_matrix=None, corpus=None):
 
-    # The following block of codes runs when md is specified
-    # TODO: I'll deal with this later
+    # The following block of code runs when md is specified
     md = annotation_type.morph_delimiters
     if len(md) and any(x in string for x in md):
         morphs = re.split("|".join(md), string)
@@ -434,63 +484,68 @@ def parse_transcription(string, annotation_type, feature_matrix=None, corpus=Non
     if ignored is not None:
         string = ''.join(x for x in string if x not in ignored)
 
-    if annotation_type.trans_delimiter is None:
-        if annotation_type.digraph_pattern is not None:
-            string = annotation_type.digraph_pattern.findall(string)
-        else:
-            string = [x for x in string]
-    elif annotation_type.trans_delimiter is not None:
-        string = string.split(annotation_type.trans_delimiter)
+    if annotation_type.syllable_delimiter is not None:
+        result = parse_syllable(string, feature_matrix, annotation_type, corpus)
     else:
-        # TODO: figure out what parse_numbers is doing
-        string = parse_numbers.findall(string)
+        result = parse_segment(string, annotation_type)
 
-    final_string = []
+
+    #if annotation_type.trans_delimiter is None:
+    #    if annotation_type.digraph_pattern is not None:
+    #        string = annotation_type.digraph_pattern.findall(string)
+    #    else:
+    #        string = [x for x in string]
+    #elif annotation_type.trans_delimiter is not None:
+    #    string = string.split(annotation_type.trans_delimiter)
+    #else:
+    #    string = parse_numbers.findall(string)
+
+    #final_string = []
 
     corpus.inventory.stress_types = annotation_type.stress_specification
     corpus.inventory.tone_types = annotation_type.tone_specification
 
-    sd = annotation_type.syllable_delimiter
-    if sd is not None:
-        string = "".join(string)
-        syllables = string.split(sd)
-        for syllable in syllables:
-            s = SyllableBaseAnnotation(feature_matrix, syllable, stress_spec=annotation_type.stress_specification,
-                                       tone_spec=annotation_type.tone_specification)
+    #sd = annotation_type.syllable_delimiter
 
-            if syllable not in corpus.inventory.syllables.keys():
-                corpus.inventory.syllables[syllable] = {"stress": s.stress,
-                                                        "tone": s.tone,
-                                                        "onset": s.onset,
-                                                        "nucleus": s.nucleus,
-                                                        "coda": s.coda}
-            final_string.append(s)
-    else:
-        for seg in string:
-            if seg == '':
-                continue
-            num = None
+    #if sd is not None:
+    #    string = "".join(string)
+    #    syllables = string.split(sd)
+    #    for syllable in syllables:
+    #        s = SyllableBaseAnnotation(feature_matrix, syllable, stress_spec=annotation_type.stress_specification,
+    #                                   tone_spec=annotation_type.tone_specification)
+    #
+    #        if syllable not in corpus.inventory.syllables.keys():
+    #            corpus.inventory.syllables[syllable] = {"stress": s.stress,
+    #                                                    "tone": s.tone,
+    #                                                    "onset": s.onset,
+    #                                                    "nucleus": s.nucleus,
+    #                                                    "coda": s.coda}
+    #        final_string.append(s)
+    #else:
+    #    for seg in string:
+    #        if seg == '':
+    #            continue
+    #        num = None
 
             # The following codes deal with number_behavior when specified
-            # TODO: Might need to change the interface, so this part will be changed
-            if annotation_type.number_behavior is not None:
-                if annotation_type.number_behavior == 'stress':
-                    num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
-                    seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
-                elif annotation_type.number_behavior == 'tone':
-                    num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
-                    seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
-                if num == '':
-                    num = None
-                if seg == '':
-                    setattr(final_string[-1], annotation_type.number_behavior, num)
-                    continue
+    #        if annotation_type.number_behavior is not None:
+    #            if annotation_type.number_behavior == 'stress':
+    #                num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
+    #                seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
+    #            elif annotation_type.number_behavior == 'tone':
+    #                num = ''.join(x for x in seg if x in NUMBER_CHARACTERS)
+    #                seg = ''.join(x for x in seg if x not in NUMBER_CHARACTERS)
+    #            if num == '':
+    #                num = None
+    #            if seg == '':
+    #                setattr(final_string[-1], annotation_type.number_behavior, num)
+    #                continue
 
-            a = BaseAnnotation(seg)  # seg corresponds to label
-            if annotation_type.number_behavior is not None and num is not None:
-                setattr(a, annotation_type.number_behavior, num)
-            final_string.append(a)
-    return final_string
+    #        a = BaseAnnotation(seg)  # seg corresponds to label
+    #        if annotation_type.number_behavior is not None and num is not None:
+    #            setattr(a, annotation_type.number_behavior, num)
+    #        final_string.append(a)
+    return result
 
 def text_to_lines(path):
     delimiter = None

@@ -2808,8 +2808,11 @@ class StressSpecificationWidget(QWidget):
         self.table.setRowCount(5)
         self.table.setColumnCount(2)
 
+        rows = list(data.keys())
+        rows.sort(reverse=True)
+
         # Enter data onto Table
-        for n, key in enumerate(data.keys()):
+        for n, key in enumerate(rows):
             for m, item in enumerate(data[key]):
                 new_item = QTableWidgetItem(item)
                 self.table.setItem(m, n, new_item)
@@ -2865,8 +2868,11 @@ class ToneSpecificationWidget(QWidget):
         self.table.setRowCount(10)
         self.table.setColumnCount(2)
 
+        rows = list(data.keys())
+        rows.sort(reverse=True)
+
         # Enter data onto Table
-        for n, key in enumerate(data.keys()):
+        for n, key in enumerate(rows):
             for m, item in enumerate(data[key]):
                 new_item = QTableWidgetItem(item)
                 self.table.setItem(m, n, new_item)

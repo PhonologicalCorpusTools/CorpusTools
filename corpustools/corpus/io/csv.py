@@ -154,9 +154,11 @@ def load_corpus_csv(corpus_name, path, delimiter,
             if call_back is not None:
                 cur += 1
                 call_back(cur)
+
             line = line.strip()
-            if not line: #blank or just a newline
+            if not line:  # blank or just a newline
                 continue
+
             d = {}
             for k, v in zip(headers, line.split(delimiter)):
                 v = v.strip()
