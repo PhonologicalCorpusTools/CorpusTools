@@ -363,8 +363,10 @@ def read_words(path, dialect, sr = None):
     output = list()
     with open(path,'r') as file_handle:
         if dialect == 'timit':
+            transcription_path = os.path.splitext(path)[0] + '.phn'
+            with open(transcription_path, 'r') as f:
+                timit_trans = f.read().split()
             for line in file_handle:
-
                 l = line.strip().split(' ')
                 start = float(l[0])
                 end = float(l[1])
@@ -372,7 +374,25 @@ def read_words(path, dialect, sr = None):
                 if sr is not None:
                     start /= sr
                     end /= sr
-                output.append({'spelling':word, 'begin':start, 'end':end})
+                i = 0
+                phonetic = []
+                while float(timit_trans[i]) < end:
+                    if float(timit_trans[i]) == start:
+                        phonetic.append(timit_trans[i + 2])
+                        i += 1
+                        if float(timit_trans[i]) == end:
+                            break
+                        while i:
+                            i += 3
+                            if float(timit_trans[i]) < end:
+                                phonetic.append(timit_trans[i + 1])
+                            elif float(timit_trans[i]) == end:
+                                phonetic.append(timit_trans[i + 1])
+                                i += 2
+                                break
+                    else:
+                        i += 3
+                output.append({'spelling':word, 'begin':start, 'end':end, 'transcription':phonetic})
         elif dialect == 'buckeye':
             f = re.split(r"#\r{0,1}\n",file_handle.read())[1]
             line_pattern = re.compile("; | \d{3} ")
@@ -383,14 +403,14 @@ def read_words(path, dialect, sr = None):
                 end = float(line[0])
                 word = sys.intern(line[1])
                 if word[0] != "<" and word[0] != "{":
-                	try:
-	                    citation = line[2].split(' ')
-	                    phonetic = line[3].split(' ')
-	                    category = line[4]
-	                except:
-	                	citation = None
-	                	phonetic = None
-	                	category = None
+                    try:
+                        citation = line[2].split(' ')
+                        phonetic = line[3].split(' ')
+                        category = line[4]
+                    except:
+                        citation = None
+                        phonetic = None
+                        category = None
                 else:
                     citation = None
                     phonetic = None
