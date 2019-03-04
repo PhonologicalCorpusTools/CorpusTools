@@ -56,6 +56,7 @@ setup(name='corpustools',
           'numpy',
           'scipy',
           'textgrid'
+          'pyqt'
           #'python-acoustic-similarity'
       ],
       entry_points = {

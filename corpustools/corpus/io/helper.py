@@ -71,22 +71,22 @@ class SyllableBaseAnnotation(object):
                     self.tone = symbol
                 else:
                     seg += symbol
-            
-            for i, j in enumerate(feature_matrix.features):
-                if j == 'syllabic':
-                    index_for_syllabic = i + 1
-            try:
-                if feature_matrix.seg_to_feat_line(seg)[index_for_syllabic] == "-":  # not syllabic
-                    if is_nucleus:
-                        self.coda.append(BaseAnnotation(seg))
-                    else:
-                        self.onset.append(BaseAnnotation(seg))
-                else:  # syllabic
-                    is_nucleus = True
-                    self.nucleus.append(BaseAnnotation(seg))
-            except KeyError as e:
-                e = MissingFeatureError('The feature values for {} is not specified.'.format(seg))
-                raise e
+
+                    for i, j in enumerate(feature_matrix.features):
+                        if j == 'syllabic':
+                            index_for_syllabic = i + 1
+                    try:
+                        if feature_matrix.seg_to_feat_line(seg)[index_for_syllabic] == "-":  # not syllabic
+                            if is_nucleus:
+                                self.coda.append(BaseAnnotation(seg))
+                            else:
+                                self.onset.append(BaseAnnotation(seg))
+                        else:  # syllabic
+                            is_nucleus = True
+                            self.nucleus.append(BaseAnnotation(seg))
+                    except KeyError as e:
+                        e = MissingFeatureError('The feature values for {} is not specified.'.format(seg))
+                        raise e
 
     def __iter__(self):
         segs = list()
@@ -502,8 +502,9 @@ def parse_transcription(string, annotation_type, feature_matrix=None, corpus=Non
 
     #final_string = []
 
-    corpus.inventory.stress_types = annotation_type.stress_specification
-    corpus.inventory.tone_types = annotation_type.tone_specification
+    if corpus is not None:
+        corpus.inventory.stress_types = annotation_type.stress_specification
+        corpus.inventory.tone_types = annotation_type.tone_specification
 
     #sd = annotation_type.syllable_delimiter
 
