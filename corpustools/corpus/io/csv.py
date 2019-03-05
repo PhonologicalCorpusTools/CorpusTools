@@ -87,6 +87,75 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
 
     return atts, best
 
+def check_feature_coverage_csv(corpus_name, path, delimiter, annotation_types=None, feature_system_path=None,
+                               stop_check=None, call_back=None):
+
+    if feature_system_path is not None and os.path.exists(feature_system_path):
+        feature_matrix = load_binary(feature_system_path)
+        feature_matrix = modernize.modernize_specifier(feature_matrix)
+
+    if annotation_types is None:
+        annotation_types, delimiter = inspect_csv(path, coldelim=delimiter)
+
+    for a in annotation_types:
+        a.reset()
+
+    missing = set()
+
+    with open(path, encoding='utf-8-sig') as f:
+        headers = f.readline()
+        headers = headers.split(delimiter)
+        if len(headers) == 1:
+            e = DelimiterError(('Could not parse the corpus.\n\Check that the column delimiter you typed in matches '
+                                'the one used in the file.'))
+            raise e
+        headers = annotation_types
+
+        for line in f.readlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            for k, v in zip(headers, line.split(delimiter)):
+                v = v.strip()
+                if k.attribute.att_type == 'tier':
+                    ignored = k.ignored_characters
+                    if ignored is not None:
+                        v = ''.join(x for x in v if x not in ignored)
+
+                    sd = k.syllable_delimiter
+                    if sd is not None:
+                        syllables = v.split(sd)
+                    else:
+                        syllables = [v]
+
+                    td = k.trans_delimiter
+                    stress_spec = set(k.stress_specification.keys())
+                    tone_spec = set(k.tone_specification.keys())
+                    supra_spec = stress_spec.union(tone_spec)
+                    for syllable in syllables:
+                        syllable = ''.join(x for x in syllable if x not in supra_spec)
+
+                        if td is None:
+                            if k.digraph_pattern is not None:
+                                string = k.digraph_pattern.findall(syllable)
+                            else:
+                                string = [x for x in syllable]
+                        else:
+                            string = syllable.split(td)
+
+                        for seg in string:
+                            if seg == '':
+                                continue
+
+                            if seg not in feature_matrix.segments:
+                                missing.add(seg)
+
+    print('In csv.py', missing)
+
+
+
+
 def load_corpus_csv(corpus_name, path, delimiter,
                     annotation_types = None,
                     feature_system_path = None,
@@ -117,6 +186,9 @@ def load_corpus_csv(corpus_name, path, delimiter,
         Corpus object generated from the text file
 
     """
+    check_feature_coverage_csv(corpus_name, path, delimiter, annotation_types, feature_system_path,
+                               stop_check, call_back)
+
     corpus = Corpus(corpus_name)
     if feature_system_path is not None and os.path.exists(feature_system_path):
         feature_matrix = load_binary(feature_system_path)
@@ -171,7 +243,6 @@ def load_corpus_csv(corpus_name, path, delimiter,
                     d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
 
-            # TODO: what is the following code doing?
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters
                 if not word.spelling:
