@@ -49,7 +49,7 @@ def download_binary(name, path, call_back = None):
     elif name == 'lemurian':
         download_link = 'https://www.dropbox.com/s/o98q83bq5derf3u/lemurian.corpus?dl=1'
     elif name == 'iphod':
-        download_link = 'https://www.dropbox.com/s/y8ca1uxvw08ewg4/iphod.corpus?dl=1'
+        download_link = 'https://www.dropbox.com/s/unmc8g7to1ythsi/iphod.corpus?dl=1'
     elif name == 'ipa2spe':
         download_link = 'https://www.dropbox.com/s/v1y3ea4k4a0c6sq/ipa2spe.feature?dl=1'
     elif name == 'ipa2hayes':
