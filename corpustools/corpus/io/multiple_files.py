@@ -29,7 +29,7 @@ def inspect_discourse_multiple_files(word_path, dialect):
     word_path : str
         Full path to text file
     dialect : str
-        Either 'buckeye' or 'timit'
+        Currently, only 'buckeye'
 
     Returns
     -------
@@ -41,10 +41,6 @@ def inspect_discourse_multiple_files(word_path, dialect):
                             AnnotationType('transcription', None, 'spelling', base = True, token = False),
                             AnnotationType('surface_transcription', None, 'spelling', base = True, token = True),
                             AnnotationType('category', None, 'spelling', base = False, token = False)]
-    elif dialect == 'timit':
-
-        annotation_types = [AnnotationType('spelling', 'transcription', None, anchor = True),
-                            AnnotationType('transcription', None, 'spelling', base = True, token = True)]
     else:
         raise(NotImplementedError)
     return annotation_types
@@ -81,23 +77,7 @@ def multiple_files_to_data(word_path, phone_path, dialect, annotation_types = No
         word.label = w['spelling']
         beg = w['begin']
         end = w['end']
-        if dialect == 'timit':
-            found_all = False
-            found = []
-            while not found_all:
-                p = phones.pop(0)
-                if p.begin < beg:
-                    continue
-                found.append(p)
-                if p.end == end:
-                    found_all = True
-            n = 'transcription'
-            level_count = data.level_length(n)
-            word.references.append(n)
-            word.begins.append(level_count)
-            word.ends.append(level_count + len(found))
-            annotations[n] = found
-        elif dialect == 'buckeye':
+        if dialect == 'buckeye':
             if w['transcription'] is None:
                 for n in data.base_levels:
                     level_count = data.level_length(n)
@@ -164,7 +144,7 @@ def load_directory_multiple_files(corpus_name, path, dialect,
     path : str
         Path to directory of text files
     dialect : str
-        One of 'buckeye' or 'timit'
+        Currently only 'buckeye'
     annotation_types : list of AnnotationType, optional
         List of AnnotationType specifying how to parse the glosses.
         Auto-generated based on dialect.
@@ -207,8 +187,6 @@ def load_directory_multiple_files(corpus_name, path, dialect,
         name,ext = os.path.splitext(filename)
         if ext == '.words':
             phone_ext = '.phones'
-        else:
-            phone_ext = '.phn'
         word_path = os.path.join(root,filename)
         phone_path = os.path.splitext(word_path)[0] + phone_ext
         try:
@@ -245,7 +223,7 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
     phone_path : str
         Full path to phones text file
     dialect : str
-        One of 'buckeye' or 'timit'
+        Currently, only 'buckeye'
     annotation_types : list of AnnotationType, optional
         List of AnnotationType specifying how to parse the glosses.
         Auto-generated based on dialect.
@@ -328,20 +306,7 @@ def load_discourse_multiple_files(corpus_name, word_path, phone_path, dialect,
 def read_phones(path, dialect, sr = None):
     output = []
     with open(path,'r') as file_handle:
-        if dialect == 'timit':
-            if sr is None:
-                sr = 16000
-            for line in file_handle:
-
-                l = line.strip().split(' ')
-                start = float(l[0])
-                end = float(l[1])
-                label = l[2]
-                if sr is not None:
-                    start /= sr
-                    end /= sr
-                output.append(BaseAnnotation(label, begin, end))
-        elif dialect == 'buckeye':
+        if dialect == 'buckeye':
             header_pattern = re.compile("#\r{0,1}\n")
             line_pattern = re.compile("\s+\d{3}\s+")
             label_pattern = re.compile(" {0,1};| {0,1}\+")
@@ -362,38 +327,7 @@ def read_phones(path, dialect, sr = None):
 def read_words(path, dialect, sr = None):
     output = list()
     with open(path,'r') as file_handle:
-        if dialect == 'timit':
-            transcription_path = os.path.splitext(path)[0] + '.phn'
-            with open(transcription_path, 'r') as f:
-                timit_trans = f.read().split()
-            for line in file_handle:
-                l = line.strip().split(' ')
-                start = float(l[0])
-                end = float(l[1])
-                word = l[2]
-                if sr is not None:
-                    start /= sr
-                    end /= sr
-                i = 0
-                phonetic = []
-                while float(timit_trans[i]) < end:
-                    if float(timit_trans[i]) == start:
-                        phonetic.append(timit_trans[i + 2])
-                        i += 1
-                        if float(timit_trans[i]) == end:
-                            break
-                        while i:
-                            i += 3
-                            if float(timit_trans[i]) < end:
-                                phonetic.append(timit_trans[i + 1])
-                            elif float(timit_trans[i]) == end:
-                                phonetic.append(timit_trans[i + 1])
-                                i += 2
-                                break
-                    else:
-                        i += 3
-                output.append({'spelling':word, 'begin':start, 'end':end, 'transcription':phonetic})
-        elif dialect == 'buckeye':
+        if dialect == 'buckeye':
             f = re.split(r"#\r{0,1}\n",file_handle.read())[1]
             line_pattern = re.compile("; | \d{3} ")
             begin = 0.0

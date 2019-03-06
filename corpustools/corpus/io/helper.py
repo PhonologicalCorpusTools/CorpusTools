@@ -411,7 +411,7 @@ def inspect_directory(directory):
                 t = 'textgrid'
             elif ext == '.txt':
                 t = 'text'
-            elif ext in ['.words', '.wrd']:
+            elif ext == '.words':
                 t = 'multiple'
             else:
                 continue

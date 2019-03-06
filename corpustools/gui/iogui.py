@@ -96,7 +96,7 @@ class LoadCorpusWorker(FunctionWorker):
             elif textType == 'csv':
                 corpus = load_corpus_csv(**self.kwargs)
 
-            elif textType in ['buckeye', 'timit']:
+            elif textType == 'buckeye':
                 self.kwargs['dialect'] = textType
                 if isDirectory:
                     corpus = load_directory_multiple_files(**self.kwargs)
@@ -405,7 +405,7 @@ class CorpusSourceWidget(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
 
-        self.filefilter = 'Text files (*.txt *.csv *.TextGrid *.words *.wrds)'
+        self.filefilter = 'Text files (*.txt *.csv *.TextGrid *.words)'
         self.relevent_files = None
         self.suggested_type = None
 
@@ -632,7 +632,7 @@ class LoadCorpusDialog(PCTDialog):
 
         self.multSelect = QComboBox()
         self.multSelect.addItem('Buckeye')
-        self.multSelect.addItem('Timit')
+        # self.multSelect.addItem('Timit')
         self.multSelect.currentIndexChanged.connect(self.typeChanged)
 
         self.runningSelect = QComboBox()
@@ -694,14 +694,15 @@ class LoadCorpusDialog(PCTDialog):
         elif type_ == 'multiple':
             if self.multSelect.currentText() == 'Buckeye':
                 type_ = 'buckeye'
-            else:
-                type_ = 'timit'
+            # Now Buckeye is the only multiple type but others can be added later
+            # else:
+            #    type_ = 'timit'
         self.textType = type_
         if self.isDirectory:
             t = 'text'
             if type_ == 'textgrid':
                 t = type_
-            elif type_ in ['buckeye','timit']:
+            elif type_ == 'buckeye':
                 t = 'multiple'
             self.pathWidget.updateType(t)
 
@@ -741,7 +742,7 @@ class LoadCorpusDialog(PCTDialog):
                     anno_types = inspect_discourse_transcription(self.pathWidget.value())
                 elif self.textType == 'spelling':
                     anno_types = inspect_discourse_spelling(self.pathWidget.value())
-                elif self.textType in ['buckeye','timit']:
+                elif self.textType == 'buckeye':
                     anno_types = inspect_discourse_multiple_files(self.pathWidget.value(), self.textType)
                 self.updateColumnFrame(anno_types)
 
@@ -922,14 +923,12 @@ class LoadCorpusDialog(PCTDialog):
             kwargs['feature_system_path'] = self.ilgFeatureSystem.path()
             #(kwargs['support_corpus_path'],
             #    kwargs['ignore_case']) = self.ilgLookupWidget.value()
-        elif self.textType in ['buckeye', 'timit']:
+        elif self.textType == 'buckeye':
             kwargs['feature_system_path'] = self.multFeatureSystem.path()
             if not self.isDirectory:
                 base, ext = os.path.splitext(path)
                 if ext == '.words':
                     phone_path = base +'.phones'
-                elif ext == '.wrd':
-                    phone_path = base + '.phn'
                 if not os.path.exists(phone_path):
                     reply = QMessageBox.critical(self,
                             "Invalid information", "The phone file for the specified words file does not exist.")
@@ -1049,7 +1048,7 @@ class LoadCorpusDialog(PCTDialog):
             self.updateType('textgrid')
         elif ext == '.csv':
             self.updateType('csv')
-        elif ext in ['.words','.wrds']:
+        elif ext == '.words':
             self.updateType('multiple')
         elif ext == '.txt':
             self.updateType('text')
