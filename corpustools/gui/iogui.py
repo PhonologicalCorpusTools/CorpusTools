@@ -309,7 +309,8 @@ class DownloadCorpusDialog(QDialog):
         self.corporaWidget = RadioSelectWidget('Select a corpus',
                                         OrderedDict([('Example toy corpus','example'),
                                         ('Lemurian (Toy language)','lemurian'),
-                                        ('IPHOD','iphod')]))
+                                        ('IPHOD with homographs','iphod_with_homographs'),
+                                        ('IPHOD without homographs (default before 2019)','iphod_without_homographs')]))
 
         layout.addWidget(self.corporaWidget)
 
