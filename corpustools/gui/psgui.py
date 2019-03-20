@@ -394,6 +394,9 @@ class PhonoSearchDialog(FunctionDialog):
         self.modeGroup.setId(segMode, 0)
         self.modeGroup.setId(sylMode, 1)
 
+        if (len(inventory.syllables) == 0): # if there's no syllable in the corpus,
+            sylMode.setEnabled(False)       # then grey out the syllable search option.
+
         modeLayout.addWidget(segMode)
         modeLayout.addWidget(sylMode)
         optionLayout.addWidget(modeFrame)
