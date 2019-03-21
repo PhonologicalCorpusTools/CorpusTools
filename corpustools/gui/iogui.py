@@ -952,6 +952,20 @@ class LoadCorpusDialog(PCTDialog):
                 return
             else:
                 kwargs['feature_system_path'] = None
+        elif kwargs['feature_system_path'] == None:
+            alert = QMessageBox()
+            alert.setWindowTitle('No feature file selected')
+            alert.setText('You didn’t select any “Transcription and feature” file for your corpus. '
+                          'You have two options:\n\n1. Select a pre-existing feature file from the list, even if it '
+                          'doesn’t perfectly match your corpus’ system. PCT will warn you of the symbols that aren’t '
+                          'recognized and assign default features to them; these can then be changed later.\n\n'
+                          '2. Exit out of the “Import corpus” dialogue box, and download or create an appropriate '
+                          'feature system by going to “File” > “Manage feature systems…”; once a system is available, '
+                          'return to the “Import corpus” dialogue box and select that feature system.')
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.exec_()
+            if alert.buttonRole(alert.clickedButton()) == QMessageBox.AcceptRole:
+                return
 
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
@@ -960,6 +974,8 @@ class LoadCorpusDialog(PCTDialog):
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return None
+
+        # if kwargs['feature_system_path'] = None
 
         return kwargs
 
