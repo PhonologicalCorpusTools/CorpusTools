@@ -69,7 +69,7 @@ raw running text (orthographically and/or phonetically transcribed) can be
 uploaded and turned into lexical lists in columnar format (corpora) for
 subsequent analysis. Raw sound files accompanied by Praat TextGrids
 [PRAAT]_ may also be uploaded for analyses of acoustic
-similarity, and certain pre-existing special types of corpora can be uploaded natively (Buckeye [BUCKEYE]_, TIMIT [TIMIT]_). Orthographic corpora can have their transcriptions “looked up”
+similarity, and certain pre-existing special types of corpora can be uploaded natively (Buckeye [BUCKEYE]_). Orthographic corpora can have their transcriptions “looked up”
 in a pre-existing transcribed corpus of the same language.
 
 Phonological analysis can be done using built-in feature charts based on
