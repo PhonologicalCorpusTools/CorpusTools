@@ -35,12 +35,25 @@ There are five possible ways of getting a corpus in PCT:
 4. Create a corpus from Praat TextGrids [PRAAT]_;
 
 5. Import a corpus from your own local copy of another standard corpus
-   (currently, we support the Buckeye corpus [BUCKEYE]_ and the
-   TIMIT corpus [TIMIT]_).
+   (currently, we support only the Buckeye corpus [BUCKEYE]_; TIMIT corpus [TIMIT]_
+   is not supported anymore.).
 
 Each of these options is discussed in more detail below.
 
-Note that for any of these scenarios, if you load a corpus without associating it with a feature system, you will have the option to associate a system to the corpus later (see :ref:`applying_editing_feature`). If you load a corpus and try to associate it with a pre-existing feature system that does not in fact have all the segments in the corpus in it (e.g., you're basically using an IPA-based transcription system, but your corpus includes the symbol [č]), then PCT will warn you and ask if you want to proceed. If you do proceed, PCT will automatically create a copy of the existing feature file, add the new segment(s), and give them default feature values of 'n' for all features. The new feature system will be called the same thing as the old one, but will be relativised to the appropriate corpus. E.g., if the original feature system was the ipa2hayes system, and the corpus containing [č] is called 'November_fieldwork', then the new feature system will automatically be called ipa2hayes_November_fieldwork. This feature system is editable and available for use with any other corpora, as generally described in :ref:`applying_editing_feature`.
+Note that for any of these scenarios, if you load a corpus without associating it with
+a feature system, you will have the option to associate a system to the corpus later
+(see :ref:`applying_editing_feature`). If you load a corpus and try to associate it
+with a pre-existing feature system that does not in fact have all the segments in the
+corpus in it (e.g., you're basically using an IPA-based transcription system, but your
+corpus includes the symbol [č]), then PCT will warn you and ask if you want to proceed.
+If you do proceed, PCT will automatically create a copy of the existing feature file,
+add the new segment(s), and give them default feature values of 'n' for all features.
+The new feature system will be called the same thing as the old one, but will be
+relativised to the appropriate corpus. E.g., if the original feature system was the
+ipa2hayes system, and the corpus containing [č] is called 'November_fieldwork', then
+the new feature system will automatically be called ipa2hayes_November_fieldwork. This
+feature system is editable and available for use with any other corpora, as generally
+described in :ref:`applying_editing_feature`.
 
 .. _download_corpora:
 
@@ -54,12 +67,30 @@ The first time you want to use a built-in corpus, you’ll need to download it
 (from a Dropbox link accessed by PCT internally); you must therefore be
 connected to the internet to complete this step. To do so, click on
 “Download example corpora” from the right-hand menu. This will allow
-you to download either of the two example corpora (one is called "example" and the other called "Lemurian" (both are entirely made up; see :ref:`example_corpora`)  and/or the IPHOD corpus
-[IPHOD]_. Note that the version of the IPHOD corpus that is
-contained here has been altered from the freely `downloadable version
-<http://www.iphod.com/>`_, in that it (1) does not have the derived columns and
-(2) has been re-formatted as a .corpus file for easy reading by PCT.
-It also contains only the following information: word, transcription,
+you to download either of the two example corpora (one is called "example" and the
+other called "Lemurian" (both are entirely made up; see :ref:`example_corpora`)
+and/or the two versions of IPhOD corpus [IPHOD]_.
+
+Note that there are currently two versions of IPhOD corpus available on PCT: 'IPHOD with
+homographs' and 'IPHOD without homographs.' The one without homographs was the default
+up to 2019. 'IPHOD with homographs' contains all different pronunciations of a homograph
+provided in the `original IPhOD corpus <http://www.iphod.com/>`_, while the other version
+only has one pronunciation. As the '(token) frequency' (from the SUBTLEX corpus [SUBTLEX]_)
+is for each orthographic word, the same frequency value is given for two or more homographs.
+Therefore, it is important to note that using the one with homographs may double count the
+frequency of a lexeme in analyses.
+
+For example, the word 'African' is a homograph as it has two pronunciations, transcribed
+as /AE.F.R.AH.K.AH.N/ and /AE.F.R.IH.K.AH.N/, respectively. 'IPHOD with homographs'
+contains both pronunciations as separate entries. Both entries have the same value, 6.76
+(per million words), for the 'Frequency' column. 'IPHOD without homographs,' on the other
+hand, only has /AE.F.R.AH.K.AH.N/ with the frequency of 6.76.
+
+Also note that the versions of the IPHOD corpus that are
+contained here have been altered from the freely `downloadable version
+<http://www.iphod.com/>`_, in that they (1) do not have the derived columns and
+(2) have been re-formatted as a .corpus file for easy reading by PCT.
+They also contain only the following information: word, transcription,
 and token frequency (from the SUBTLEX corpus [SUBTLEX]_).
 Please note that if you use the IPHOD corpus, you should use the following
 citation (see more on citing corpora and functions of PCT in :ref:`citing_pct`):
@@ -134,7 +165,7 @@ At the top of the box, enter the path for the file that will form the corpus or 
 
 Enter a name for the corpus in the box to the right of the corpus source selection. (Note that on some screens, the box may initially appear to be absent; simply re-size the "Import corpus" dialogue box to make it appear.)
 
-PCT will automatically detect what kind of file type you have selected and select the tab for the corpus type that it thinks most likely. For .txt files, it will default to assuming it is a column-delimited file, but you can easily select the "running text" or "interlinear text" tabs instead. For .TextGrid files, it will take you to the TextGrid tab; if it detects a directory of Buckeye or TIMIT files, it will take you to the "Other standards" tab. The choices within each of these tabs is described below: :ref:`column-delimited`; :ref:`running_text`; :ref:`interlinear`; :ref:`textgrid`; :ref:`other_standards`
+PCT will automatically detect what kind of file type you have selected and select the tab for the corpus type that it thinks most likely. For .txt files, it will default to assuming it is a column-delimited file, but you can easily select the "running text" or "interlinear text" tabs instead. For .TextGrid files, it will take you to the TextGrid tab; if it detects a directory of Buckeye files, it will take you to the "Other standards" tab. The choices within each of these tabs is described below: :ref:`column-delimited`; :ref:`running_text`; :ref:`interlinear`; :ref:`textgrid`; :ref:`other_standards`
 
 .. _column-delimited:
 
@@ -354,13 +385,13 @@ Other Standards
 ===============
 
 Finally, PCT comes pre-equipped to handle certain other standard corpus types.
-At the moment, the only supported standards are the Buckeye corpus [BUCKEYE]_ and
-the TIMIT corpus [TIMIT]_. You must obtain your own copy of either of these
-corpora through their usual means and store it locally; PCT simply gives you a
-way to easily open these corpora in the standard PCT format.
+At the moment, the only supported standards are the Buckeye corpus [BUCKEYE]_.
+You must obtain your own copy of the Buckeye corpus through its usual means
+and store it locally; PCT simply gives you a way to easily open these corpora
+in the standard PCT format.
 
 When selecting the corpus source, navigate to the directory where the
-Buckeye or TIMIT files are stored. PCT will automatically detect the
+Buckeye files are stored. PCT will automatically detect the
 format of files in the directory and select the "Other Standards" tab.
 Within that tab, it will also automatically select the file format.
 
