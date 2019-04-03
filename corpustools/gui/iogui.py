@@ -952,7 +952,7 @@ class LoadCorpusDialog(PCTDialog):
                 return
             else:
                 kwargs['feature_system_path'] = None
-        elif kwargs['feature_system_path'] == None:
+        elif 'feature_system_path' in kwargs and kwargs['feature_system_path'] is None:
             alert = QMessageBox()
             alert.setWindowTitle('No feature file selected')
             alert.setText('You didn’t select any “Transcription and feature” file for your corpus. '
