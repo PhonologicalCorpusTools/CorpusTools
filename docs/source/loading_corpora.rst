@@ -34,9 +34,7 @@ There are five possible ways of getting a corpus in PCT:
 
 4. Create a corpus from Praat TextGrids [PRAAT]_;
 
-5. Import a corpus from your own local copy of another standard corpus
-   (currently, we support only the Buckeye corpus [BUCKEYE]_; TIMIT corpus [TIMIT]_
-   is not supported anymore.).
+5. Import a corpus from your own local copy of another standard corpus; currently, we support only the Buckeye corpus [BUCKEYE]_; the TIMIT corpus [TIMIT]_ is not supported anymore. (PCT is intended to focus on analyses of lexical and usage-based statistics and phonological analysis. The TIMIT corpus is not actually structured for this kind of work, because it is a pre-structured corpus rather than containing spontaneous-style speech. It is also not trivial to figure out how to develop a PCT-compatible feature system for the TIMIT-style transcriptions, where sub-segmental units are transcribed separately (e.g., stop closure vs. release burst). Thus, we no longer support the TIMIT format.)
 
 Each of these options is discussed in more detail below.
 
