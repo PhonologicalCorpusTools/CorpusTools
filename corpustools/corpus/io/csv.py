@@ -253,8 +253,8 @@ def load_corpus_csv(corpus_name, path, delimiter,
     if corpus.specifier is not None:
         corpus.inventory.update_features(corpus.specifier)
 
-    if any(len(word.transcription) > 1 for word in corpus):
-        if corpus.has_transcription and not trans_check:
+    if corpus.has_transcription and any(len(word.transcription) > 1 for word in corpus):
+        if not trans_check:
             e = DelimiterError(('Could not parse transcriptions with that delimiter. '
                             '\nCheck that the transcription delimiter you typed '
                             'in matches the one used in the file.'))

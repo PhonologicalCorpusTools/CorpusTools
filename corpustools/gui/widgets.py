@@ -955,7 +955,10 @@ class TierWidget(QGroupBox):
 
         layout.addWidget(self.tierSelect)
         index = self.tierSelect.findText('Transcription')
-        self.tierSelect.setCurrentIndex(index)
+        if index != -1:
+            self.tierSelect.setCurrentIndex(index)
+        else:
+            self.tierSelect.setCurrentIndex(0)
 
         self.setLayout(layout)
 
