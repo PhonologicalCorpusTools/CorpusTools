@@ -46,8 +46,6 @@ of /n/ and /l/ in the second position isn't necessarily radically different.
 Using bigrams, however, would capture that the probability of /bl/ versus /bn/
 in the first position is radically different.
 
-Test line
-
 Consider a toy example, in which the following corpus is assumed
 (note that, generally speaking, there is no “type frequency” column
 in a PCT corpus, as it is assumed that each row in the corpus represents
@@ -68,12 +66,10 @@ in a PCT corpus, as it is assumed that each row in the corpus represents
 |  mup   | [mʌp]  |    1 |    57 |
 +--------+--------+------+-------+
 
-
 Let's take the case of bigram phonotactic probability, calculated using token frequencies (which is the default in PCT and which is recommended by Vitevitch and Luce). To calculate this value for the word *blick* we do as follows:
 
 :math:`PhonProb_{tokens} = [\frac{log(22) + log(107)}{log(22) + log(107) + log(3) + log(57)} + \frac{log(22)}{log(22) + log(107) + log(3) + log(57)} + \frac{log(22) + log(3)}{log(22) + log(107) + log(3)}] / 3
 = 0.43795`
-
 
 There are other ways of calculating phonotactic probability that don't
 have the strict left-to-right positional assumptions that the Vitevitch
