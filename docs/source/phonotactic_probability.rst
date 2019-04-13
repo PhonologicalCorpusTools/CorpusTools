@@ -71,12 +71,12 @@ Let's take the case of bigram phonotactic probability, calculated using token fr
 .. math:: \text{PhonProb}_{\text{tokens}} &= \Bigg[\frac{\text{Sum of log frequencies of words with [bl] in initial biphone position}}{\text{Sum of log frequencies of words with any biphone in initial biphone position}} \\
                                           &+ \frac{\text{Sum of log frequencies of words with [lɪ] in second biphone position}}{\text{Sum of log frequencies of words with any biphone in second biphone position}} \\
                                           &+ \frac{\text{Sum of log frequencies of words with [ɪk] in third biphone position}}{\text{Sum of log frequencies of words with any biphone in third biphone position}} \Bigg] \\
-                                          &/ [Number of biphone positions]
+                                          &\bigg/ [\text{Number of biphone positions}]
 
 ...which in this specific case, translates to:
 
 .. math:: \text{PhonProb}_{\text{tokens}} &= \Bigg[\frac{log(22) + log(107)}{log(22) + log(107) + log(3) + log(57)} + \frac{log(22)}{log(22) + log(107) + log(3) + log(57)} \\
-                                          &+ \frac{log(22) + log(3)}{log(22) + log(107) + log(3)} \Bigg] / 3 \\
+                                          &\quad + \frac{log(22) + log(3)}{log(22) + log(107) + log(3)} \Bigg] / 3 \\
                                           &= 0.43795
 
 There are other ways of calculating phonotactic probability that don't
