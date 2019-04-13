@@ -68,7 +68,9 @@ in a PCT corpus, as it is assumed that each row in the corpus represents
 
 Let's take the case of bigram phonotactic probability, calculated using token frequencies (which is the default in PCT and which is recommended by Vitevitch and Luce). To calculate this value for the word *blick* we do the following:
 
-.. math:: PhonProb_{tokens} = [\frac{Sum of log frequencies of words with [bl] in initial biphone position}{Sum of log frequencies of words with any biphone in initial biphone position} + \frac{Sum of log frequencies of words with [lɪ] in second biphone position}{lSum of log frequencies of words with any biphone in second biphone position} + \frac{Sum of log frequencies of words with [ɪk] in third biphone position}{Sum of log frequencies of words with any biphone in third biphone position}] / [Number of biphone positions]
+.. math:: \text{PhonProb}_{\text{tokens}} &= [\frac{\text{Sum of log frequencies of words with [bl] in initial biphone position}}{\text{Sum of log frequencies of words with any biphone in initial biphone position}} \\
+                                          &+ \frac{\text{Sum of log frequencies of words with [lɪ] in second biphone position}}{\text{Sum of log frequencies of words with any biphone in second biphone position}} \\
+                                          &+ \frac{\text{Sum of log frequencies of words with [ɪk] in third biphone position}}{\text{Sum of log frequencies of words with any biphone in third biphone position}}] / [Number of biphone positions]
 
 ...which in this specific case, translates to:
 
