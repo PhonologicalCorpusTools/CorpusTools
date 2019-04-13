@@ -72,8 +72,8 @@ Let's take the case of bigram phonotactic probability, calculated using token fr
 
 ...which in this specific case, translates to:
 
-.. math:: \text{PhonProb}_{\text{tokens}} &= [\frac{log(22) + log(107)}{log(22) + log(107) + log(3) + log(57)} \\
-                                          &+ \frac{log(22)}{log(22) + log(107) + log(3) + log(57)} + \frac{log(22) + log(3)}{log(22) + log(107) + log(3)}] / 3 \\
+.. math:: \text{PhonProb}_{\text{tokens}} &= \left[\frac{log(22) + log(107)}{log(22) + log(107) + log(3) + log(57)} + \frac{log(22)}{log(22) + log(107) + log(3) + log(57)} \\
+                                          &\qquad + \frac{log(22) + log(3)}{log(22) + log(107) + log(3)}\right] \middle/ 3 \\
                                           &= 0.43795
 
 There are other ways of calculating phonotactic probability that don't
