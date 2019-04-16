@@ -257,7 +257,7 @@ def minpair_fl(corpus_context, segment_pairs,
 def deltah_fl(corpus_context, segment_pairs, environment_filter=None, prevent_normalization=False,
               stop_check=None, call_back=None):
     """
-    Calculate the functional load of the contrast between between two
+    Calculate the functional load of the contrast between two
     segments as the decrease in corpus entropy caused by a merger.
 
     Parameters
@@ -315,6 +315,7 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter=None, prevent_no
         freq_sum += f
 
     if corpus_context.type_or_token == 'type':
+        original_probs = {k[0]: 1 / len(original) for k in original.items()}
         preneutr_h = log(len(original), 2)
     else:
         original_probs = {k: v / freq_sum for k, v in original.items()}
