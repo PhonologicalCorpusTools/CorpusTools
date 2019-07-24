@@ -561,7 +561,7 @@ class PhonoSearchResultsModel(BaseTableModel):
         tokenfreq = defaultdict(float)
 
         for line in self.allData:
-            segs = line['Segment']
+            segs = line['Target']
             envs = line['Environment']
             for i,seg in enumerate(segs):
                 segenv = seg,envs[i]

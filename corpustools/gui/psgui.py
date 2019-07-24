@@ -354,8 +354,8 @@ class RecentSearchDialog(QDialog):
 
 
 class PhonoSearchDialog(FunctionDialog):
-    header = ['Word', 'Transcription', 'Segment', 'Environment', 'Token frequency']
-    summary_header = ['Segment', 'Environment', 'Type frequency', 'Token frequency']
+    header = ['Word', 'Transcription', 'Target', 'Environment', 'Token frequency']
+    summary_header = ['Target', 'Environment', 'Type frequency', 'Token frequency']
     _about = ['']
     name = 'phonological search'
 
@@ -576,7 +576,7 @@ class PhonoSearchDialog(FunctionDialog):
                     envs = tuple()
                 self.results.append({'Word': w,
                                      'Transcription': str(getattr(w, self.tierWidget.value())),
-                                     'Segment': segs,
+                                     'Target': segs,
                                      'Environment': envs,
                                      'Token frequency': w.frequency})
         else:
@@ -588,6 +588,6 @@ class PhonoSearchDialog(FunctionDialog):
                     envs = tuple()
                 self.results.append({'Word': word,
                                      'Transcription': str(getattr(word, self.tierWidget.value())),
-                                     'Segment': middle_syllables,
+                                     'Target': middle_syllables,
                                      'Environment': envs,
                                      'Token frequency': word.frequency})

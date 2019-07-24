@@ -37,7 +37,7 @@ class InventorySummary(QWidget):
         self.detailFrame.deleteLater()
         seg = self.sender().text()
 
-        self.detailFrame = QGroupBox('Segment details')
+        self.detailFrame = QGroupBox('Inventory information')
 
         layout = QFormLayout()
         layout.setAlignment(Qt.AlignTop)
@@ -100,7 +100,7 @@ class AttributeSummary(QWidget):
         for a in self.corpus_attributes:
             if str(a) == self.columnSelect.currentText():
                 self.detailFrame.deleteLater()
-                self.detailFrame = QFrame()
+                self.detailFrame = QGroupBox('Column Information')
                 layout = QFormLayout()
                 layout.addRow(QLabel('Type:'), QLabel(a.att_type.title()))
                 if a.att_type == 'numeric':
