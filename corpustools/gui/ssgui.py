@@ -1,5 +1,6 @@
 import time
 from .imports import *
+import os
 
 from collections import OrderedDict
 
@@ -413,7 +414,16 @@ class SSDialog(FunctionDialog):
                 reply = QMessageBox.critical(self,
                                              "Invalid information", "The file path entered was not found.")
                 return
-            kwargs['query'] = read_pairs_file(pairs_path)
+
+            out = list()
+            q = read_pairs_file(pairs_path)
+            for pair in q:
+                w1 = self.corpusModel.corpus.find(pair[0])
+                w2 = self.corpusModel.corpus.find(pair[1])
+                out.append((w1, w2))
+            kwargs['query'] = out
+            #The following is original code, which doesn't seem to work
+            #kwargs['query'] = read_pairs_file(pairs_path)
         return kwargs
 
     def setResults(self, results):
