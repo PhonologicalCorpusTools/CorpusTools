@@ -55,7 +55,7 @@ setup(name='corpustools',
       install_requires=[
           'numpy',
           'scipy',
-          'textgrid'
+          'textgrid',
           'pyqt'
           #'python-acoustic-similarity'
       ],
