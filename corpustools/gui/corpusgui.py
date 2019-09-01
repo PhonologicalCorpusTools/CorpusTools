@@ -20,7 +20,7 @@ class InventorySummary(QWidget):
 
         layout.setAlignment(Qt.AlignTop)
 
-        self.segments = InventoryBox('Segments',inventory, show_seglist=False)
+        self.segments = InventoryBox('Segments', inventory, show_seglist=False)
         self.segments.setExclusive(True)
         for b in self.segments.btnGroup.buttons():
             b.clicked.connect(self.summarizeSegment)
@@ -32,6 +32,7 @@ class InventorySummary(QWidget):
         layout.addWidget(self.detailFrame)
 
         self.setLayout(layout)
+        self.resize(self.segments.width(), self.segments.height())
 
     def summarizeSegment(self):
         self.detailFrame.deleteLater()
@@ -128,7 +129,7 @@ class AttributeSummary(QWidget):
 
 class CorpusSummary(QDialog):
     def __init__(self, parent, corpus, inventory, columns):
-        QDialog.__init__(self,parent)
+        QDialog.__init__(self, parent)
 
 
         if hasattr(corpus,'lexicon'):
@@ -152,10 +153,10 @@ class CorpusSummary(QDialog):
         main.addRow(QLabel('Number of word tokens:'), QLabel(str(token_count)))
 
         if c.specifier is not None:
-            main.addRow(QLabel('Feature system:'),QLabel(c.specifier.name))
+            main.addRow(QLabel('Feature system:'), QLabel(c.specifier.name))
             showInventory = True
         else:
-            main.addRow(QLabel('Feature system:'),QLabel('None'))
+            main.addRow(QLabel('Feature system:'), QLabel('None'))
             showInventory = False
         #the inventory is loaded near the end of this function, in order
         #to make it appear in the right place in the layout
@@ -182,6 +183,7 @@ class CorpusSummary(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
+        self.resize(self.inventorySummary.width(), self.inventorySummary.height() + 200)
         self.setWindowTitle('Corpus summary')
 
 class AddWordDialog(QDialog):
