@@ -1,4 +1,5 @@
-### Note: the "tar.gz" and ".zip" links to the right will download the individual program files, not the executable version of the software. The latest release of the executable can be found here: https://github.com/PhonologicalCorpusTools/CorpusTools/releases
+### Note: the "tar.gz" and ".zip" links at the top of this page will download the individual program files, not the executable version of the software. The latest release of the executable can be found here: [https://github.com/PhonologicalCorpusTools/CorpusTools/releases](https://github.com/PhonologicalCorpusTools/CorpusTools/releases). More details on installation are below.
+
 
 ## About Phonological CorpusTools
 
