@@ -9,12 +9,12 @@ There is an ever-increasing interest in exploring the roles of frequency and usa
 
 Phonological CorpusTools (PCT) is our answer to these problems -- a free, downloadable program with both a graphical and command-line interface, designed to be a search and analysis aid for dealing with questions of phonological interest in large corpora. 
 
-An overview of the beta version of PCT (0.15, July 2014) and its utility is available in [poster format](http://faculty.arts.ubc.ca/kchall/kchall/Downloads_files/Mackie_et_al_2014_LabPhon_poster.pdf).
+An overview of the beta version of PCT (0.15, July 2014) and its utility is available in [poster format](http://blogs.ubc.ca/kathleencurriehall/files/2019/09/Mackie_et_al_2014_LabPhon_poster.pdf).
 
 ### Versions
-#### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...") and/or [subscribe to our e-mail list for notifications](http://eepurl.com/bqLDRD).
+#### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...").
 
-Version 1.4 will be released in December 2018. It differs from v. 1.3 (July 2017) in the following areas:
+Version 1.4 was released in December 2018. It differs from v. 1.3 (July 2017) in the following areas:
 
 1. Support for syllable structure has been added to the software, allowing searches based on stress or tone.
 2. The functional load algorithm based on minimal pair counts has been FIXED -- previous versions returned counts based on token frequencies instead of type frequencies.
@@ -45,16 +45,16 @@ Version 1.1 was released as of 6 July 2015. It differs from version 1.0.1 (March
 
 ## Workshops / Tutorials
 
-We're delighted to be participating in various workshops / conferences:
+We're delighted to have participated in various workshops / conferences:
 * [Annual Meeting on Phonology 2015](http://blogs.ubc.ca/amp2015/)
 * [Tools for Big Data in Phonology / LabPhon 2016](http://mlmlab.org/bigphon/)
-* [Symposium on the role of predictability in shaping human language sound patterns / SST 2016](http://sst2016.westernsydney.edu.au/index.php/predictability-symposium/)
+* Symposium on the role of predictability in shaping human language sound patterns / SST 2016
 
 Example files and tutorial handouts can be downloaded from: https://www.dropbox.com/sh/v4l29isywe532an/AAB_a1mQqaEzBpirEY6a62Xha?dl=0
 
 ## Documentation
 
-Please see the user's manual of the latest version for complete documentation; currently available at http://corpustools.readthedocs.org/en/latest/. Note that you can download a .pdf of this guide by going to "Read the Docs" on the bottom left-hand side of the page and selecting "PDF." Documentation can also be found throughout the PCT software itself by clicking on "Help" (either in the main menu or in dialogue boxes relating to individual functions).
+Please see the user's manual of the latest version for complete documentation; currently available at [http://corpustools.readthedocs.org/en/latest/](http://corpustools.readthedocs.org/en/latest/). Note that you can download a .pdf of this guide by going to "Read the Docs" on the bottom left-hand side of the page and selecting "PDF." Documentation can also be found throughout the PCT software itself by clicking on "Help" (either in the main menu or in dialogue boxes relating to individual functions).
 
 PCT itself should be cited something like the following (using the correct version number):
 
