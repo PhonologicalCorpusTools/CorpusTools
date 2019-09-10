@@ -2,6 +2,7 @@ import os
 import codecs
 import logging
 from collections import OrderedDict, defaultdict
+import webbrowser
 
 from .imports import *
 from corpustools.exceptions import PCTError, PCTPythonError, MissingFeatureError
@@ -35,7 +36,9 @@ from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
 from .widgets import  (RadioSelectWidget,SaveFileWidget,AttributeFilterWidget, AnnotationTypeWidget,CorpusSelect)
 from .featuregui import FeatureSystemSelect, RestrictedFeatureSystemSelect
-from .helpgui import HelpDialog
+from .helpgui import HelpDialog, get_url
+
+from pprint import pprint
 
 
 class LoadBinaryWorker(FunctionWorker):
@@ -220,8 +223,10 @@ class CorpusLoadDialog(PCTDialog):
 
 
     def help(self):
-        self.helpDialog = HelpDialog(self, name = 'loading corpora')
-        self.helpDialog.exec_()
+        url = get_url('loading corpora')
+        webbrowser.open(url)
+        #self.helpDialog = HelpDialog(self, name = 'loading corpora')
+        #self.helpDialog.exec_()
 
     def setResults(self, results):
         if results is None:
@@ -1137,8 +1142,10 @@ class SubsetCorpusDialog(QDialog):
             self.mode = 'andMode'
 
     def help(self):
-        self.helpDialog = HelpDialog(self, name='loading corpora', section='subsetting-a-corpus')
-        self.helpDialog.exec_()
+        url = get_url('loading corpora', section='subsetting-a-corpus')
+        webbrowser.open(url)
+        #self.helpDialog = HelpDialog(self, name='loading corpora', section='subsetting-a-corpus')
+        #self.helpDialog.exec_()
 
     def accept(self):
         filters = self.filterWidget.value()

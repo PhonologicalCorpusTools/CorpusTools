@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import collections
+import webbrowser
 
 import corpustools.gui.modernize as modernize
 from PyQt5 import QtGui
@@ -53,7 +54,7 @@ from .migui import MIDialog
 from .klgui import KLDialog
 from .infogui import InformativityDialog
 from .autogui import AutoDialog
-from .helpgui import AboutDialog, HelpDialog
+from .helpgui import AboutDialog, HelpDialog, get_url
 
 
 class QApplicationMessaging(QApplication):
@@ -944,13 +945,33 @@ class MainWindow(QMainWindow):
         alert.exec_()
 
     def about(self):
-        dialog = AboutDialog(self)
-        dialog.exec_()
-        #dialog.show()
+        help_url = 'http://corpustools.readthedocs.org/en/'
+        if hasattr(sys, 'frozen'):
+            import corpustools.__version__ as version
+            help_url += version + '/'
+            base_dir = os.path.dirname(sys.executable)
+            help_dir = os.path.join(base_dir, 'html')
+        else:
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            help_dir = os.path.join(base_dir, 'docs', 'build', 'html')
+            help_url += 'latest/'
+
+        use_local = os.path.exists(help_dir)
+
+        if use_local:
+            about_page = os.path.join(help_dir, 'about.html')
+        else:
+            about_page = help_url + 'about.html'
+
+        webbrowser.open(about_page)
+        #dialog = AboutDialog(self)
+        #dialog.exec_()
 
     def help(self):
-        dialog = HelpDialog(self)
-        dialog.exec_()
+        url = get_url('index')
+        webbrowser.open(url)
+        #dialog = HelpDialog(self)
+        #dialog.exec_()
 
     def checkForUpdates(self):
         if getattr(sys, "frozen", False):

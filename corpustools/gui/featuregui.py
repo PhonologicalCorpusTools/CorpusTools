@@ -1,5 +1,6 @@
 import os
 from collections import OrderedDict
+import webbrowser
 import codecs
 
 
@@ -19,7 +20,7 @@ from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
                     TableWidget, RetranscribeWidget, FeatureEdit, FeatureCompleter, FileNameDialog)
 
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
-from .helpgui import HelpDialog
+from .helpgui import HelpDialog, get_url
 import corpustools.gui.modernize as modernize
 
 class LoadFeatureSystemWorker(FunctionWorker):
@@ -593,9 +594,11 @@ class EditFeatureMatrixDialog(QDialog):
         QDialog.accept(self)
 
     def help(self):
-        self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
-                                    section = 'applying-editing-feature-systems')
-        self.helpDialog.exec_()
+        url = get_url('transcriptions and feature systems', section='applying-editing-feature-systems')
+        webbrowser.open(url)
+        #self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
+        #                            section = 'applying-editing-feature-systems')
+        #self.helpDialog.exec_()
 
 
     def changeDisplay(self):
@@ -1214,8 +1217,10 @@ class FeatureMatrixManager(QDialog):
         self.setWindowTitle('Manage feature systems')
 
     def help(self):
-        self.helpDialog = HelpDialog(self, name = 'transcriptions and feature systems')
-        self.helpDialog.exec_()
+        url = get_url('transcriptions and feature systems')
+        webbrowser.open(url)
+        #self.helpDialog = HelpDialog(self, name = 'transcriptions and feature systems')
+        #self.helpDialog.exec_()
 
     def openCsvWindow(self):
         dialog = SystemFromCsvDialog(self,self.settings)

@@ -1,6 +1,7 @@
 import datetime
 from .imports import *
-from .helpgui import HelpDialog
+import webbrowser
+from .helpgui import HelpDialog, get_url
 from corpustools.corpus.io import download_binary
 from corpustools.exceptions import PCTError
 
@@ -143,7 +144,7 @@ class PCTDialog(QDialog):
 
         self.progressDialog = ProgressDialog(self, infinite_progress)
 
-    def handleError(self,error):
+    def handleError(self, error):
         if isinstance(error, PCTError):
             if hasattr(error, 'main'):
                 reply = QMessageBox()
@@ -259,8 +260,10 @@ class FunctionDialog(PCTDialog):
         self.calc()
 
     def about(self):
-        self.aboutWindow = HelpDialog(self, self.name)
-        self.aboutWindow.exec_()
+        url = get_url(self.name)
+        webbrowser.open(url)
+        #self.aboutWindow = HelpDialog(self, self.name)
+        #self.aboutWindow.exec_()
 
 
 class DownloadWorker(FunctionWorker):
