@@ -1142,7 +1142,9 @@ class Word(object):
 
     @property
     def frequency(self):
-        return max([self.Frequency, self._frequency])
+        # TODO: figure out what different frequencies are doing...
+        #return max([self.Frequency, self._frequency])
+        return self.Frequency
 
     @frequency.setter
     def frequency(self, value):
