@@ -50,8 +50,8 @@ class SSWorker(FunctionWorker):
 
 
 class SSDialog(FunctionDialog):
-    header = ['Corpus', 'First word', 'Second word', 'Algorithm', 'String type', 'Frequency type',
-              'Pronunciation variants', 'Minimum word frequency', 'Result']
+    header = ['Corpus', 'PCT ver.', 'First word', 'Second word', 'Algorithm', 'String type',
+              'Frequency type', 'Pronunciation variants', 'Minimum word frequency', 'Result']
 
     _about = [('This function calculates the similarity between words in the corpus,'
                ' based on either their spelling or their transcription. Similarity '
@@ -443,6 +443,7 @@ class SSDialog(FunctionDialog):
             else:
                 typetoken = self.typeTokenWidget.value().title()
             self.results.append({'Corpus': self.corpusModel.corpus.name,
+                                 'PCT ver.': self.corpusModel.corpus._version,
                                  'First word': w1,
                                  'Second word': w2,
                                  'Algorithm': self.algorithmWidget.displayValue(),
