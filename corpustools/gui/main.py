@@ -901,7 +901,7 @@ class MainWindow(QMainWindow):
                 self.PhonoSearchWindow.table.model().addRows(dialog.results)
             else:
                 self.PhonoSearchWindow = PhonoSearchResults(
-                                'Phonological search results',dialog,self)
+                                'Phonological search results', dialog, self)
                 self.PhonoSearchWindow.show()
                 self.showSearchResults.triggered.connect(self.PhonoSearchWindow.raise_)
                 self.showSearchResults.triggered.connect(self.PhonoSearchWindow.activateWindow)

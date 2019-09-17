@@ -568,9 +568,10 @@ class PhonoSearchResultsModel(BaseTableModel):
                 typefreq[segenv] += 1
                 tokenfreq[segenv] += line['Word'].frequency
 
+        metaInfo = self.rows[0][0], self.rows[0][1] # get corpus and PCT version information before 'self.rows' is reset
         self.rows = list()
         for k,v in sorted(typefreq.items()):
-            self.rows.append([k[0],k[1],v, tokenfreq[k]])
+            self.rows.append([metaInfo[0], metaInfo[1], k[0], k[1], v, tokenfreq[k]])
             #this row formatting doesn't match the dictionary-style results used elsewhere, which might be a problem,
             #but the results are fixed in the right order currently
         self.columns = self.summary_header

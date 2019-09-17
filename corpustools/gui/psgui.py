@@ -354,8 +354,8 @@ class RecentSearchDialog(QDialog):
 
 
 class PhonoSearchDialog(FunctionDialog):
-    header = ['Word', 'Transcription', 'Target', 'Environment', 'Token frequency']
-    summary_header = ['Target', 'Environment', 'Type frequency', 'Token frequency']
+    header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Target', 'Environment', 'Token frequency']
+    summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency']
     _about = ['']
     name = 'phonological search'
 
@@ -574,7 +574,9 @@ class PhonoSearchDialog(FunctionDialog):
                     envs = tuple(str(x) for x in f)
                 except IndexError:
                     envs = tuple()
-                self.results.append({'Word': w,
+                self.results.append({'Corpus': self.corpus.name,
+                                     'PCT ver.': self.corpus._version,
+                                     'Word': w,
                                      'Transcription': str(getattr(w, self.tierWidget.value())),
                                      'Target': segs,
                                      'Environment': envs,
@@ -586,7 +588,9 @@ class PhonoSearchDialog(FunctionDialog):
                     envs = tuple(str(syl) for syl in list_of_sylEnvs)
                 except IndexError:
                     envs = tuple()
-                self.results.append({'Word': word,
+                self.results.append({'Corpus': self.corpus.name,
+                                     'PCT ver.': self.corpus._version,
+                                     'Word': word,
                                      'Transcription': str(getattr(word, self.tierWidget.value())),
                                      'Target': middle_syllables,
                                      'Environment': envs,
