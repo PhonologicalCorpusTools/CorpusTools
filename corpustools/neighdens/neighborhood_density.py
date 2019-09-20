@@ -5,7 +5,7 @@ from corpustools.symbolsim.edit_distance import edit_distance
 from corpustools.symbolsim.khorsi import khorsi
 from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 from corpustools.symbolsim.phono_align import Aligner
-from corpustools.multiprocessing import filter_mp, score_mp
+from corpustools.multiproc import filter_mp, score_mp
 
 
 def _is_edit_distance_neighbor(w, query, sequence_type, max_distance):

@@ -46,6 +46,7 @@ setup(name='corpustools',
                 'corpustools.prod',
                 'corpustools.phonosearch',
                 'corpustools.gui',
+                'corpustools.informativity',
                 'corpustools.symbolsim',
                 'corpustools.neighdens',
                 'corpustools.mutualinfo',
@@ -56,9 +57,9 @@ setup(name='corpustools',
           'numpy',
           'scipy',
           'textgrid',
-          'pyqt'
+          'pyqt5'
           #'python-acoustic-similarity'
-      ],
+        ],
       entry_points = {
         'console_scripts': ['pct=corpustools.command_line.pct:main',
                             'pct_corpus=corpustools.command_line.pct_corpus:main',
