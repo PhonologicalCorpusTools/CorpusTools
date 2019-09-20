@@ -79,18 +79,19 @@ class FLWorker(FunctionWorker):
 
 class FLDialog(FunctionDialog):
     header = ['Corpus',
-                'First segment',
-                'Second segment',
-                'Algorithm',
-                'Distinguished homophones',
-                'Count',
-                'Transcription tier',
-                'Frequency type',
-                'Pronunciation variants',
-                'Minimum word frequency',
-                'Environments',
-                'Result']
-                #'Non-normalized result']
+              'PCT ver.',
+              'First segment',
+              'Second segment',
+              'Algorithm',
+              'Distinguished homophones',
+              'Count',
+              'Transcription tier',
+              'Frequency type',
+              'Pronunciation variants',
+              'Minimum word frequency',
+              'Environments',
+              'Result']
+              #'Non-normalized result']
 
     _about = [('This function calculates the functional load of the contrast'
                     ' between any two segments, based on either the number of minimal'
@@ -403,6 +404,7 @@ class FLDialog(FunctionDialog):
 
 
             self.results.append({'Corpus': self.corpus.name,
+                                'PCT ver.': self.corpus._version,
                                 'First segment': seg_one,
                                 'Second segment': seg_two,
                                 'Algorithm': self.algorithmWidget.displayValue(),

@@ -203,6 +203,7 @@ def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcript
         informativity = calculate_informativity(seg_frequencies[seg], seg_conditional_probs[seg], rounding)
         summary = {
             "Corpus": corpus.name,
+            "PCT ver.": corpus.corpus._version,
             "Segment": seg,
             "Informativity": informativity,
             "Context": "all",

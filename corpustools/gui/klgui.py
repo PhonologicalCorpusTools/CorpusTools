@@ -51,19 +51,20 @@ class KLWorker(FunctionWorker):
 
 class KLDialog(FunctionDialog):
     header = ['Corpus',
-                'First segment',
-                'Second segment',
-                'Context',
-                'Minimum word frequency',
-                'Transcription tier',
-                'Frequency type',
-                'Pronunciation variants',
-                'First segment entropy',
-                'Second segment entropy',
-                'Kullback-Leibler divergence',
-                'Possible UR',
-                'Spurious allophones'
-                ]
+              'PCT ver.',
+              'First segment',
+              'Second segment',
+              'Context',
+              'Minimum word frequency',
+              'Transcription tier',
+              'Frequency type',
+              'Pronunciation variants',
+              'First segment entropy',
+              'Second segment entropy',
+              'Kullback-Leibler divergence',
+              'Possible UR',
+              'Spurious allophones'
+              ]
 
     _about = [('This function calculates a difference in distribution of two segments'
                     ' based on the Kullback-Leibler measurement of the difference between'
@@ -167,6 +168,7 @@ class KLDialog(FunctionDialog):
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
+                                'PCT ver.': self.corpus._version,
                                 'First segment': seg_pairs[i][0],
                                 'Second segment': seg_pairs[i][1],
                                 'Context': context,

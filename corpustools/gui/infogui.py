@@ -11,7 +11,7 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
 
 class InformativityDialog(FunctionDialog):
 
-    header = ['Corpus', 'Segment', 'Informativity', 'Context', 'Type or token', 'Transcription tier', 'Pronunciation variants']
+    header = ['Corpus', 'PCT ver.', 'Segment', 'Informativity', 'Context', 'Type or token', 'Transcription tier', 'Pronunciation variants']
 
     _about = []
 

@@ -716,7 +716,7 @@ class ResultsWindow(QDialog):
         self._parent = parent
         QDialog.__init__(self)
         self.dialog = dialog
-        dataModel = ResultsModel(self.dialog.header,self.dialog.results, self._parent.settings)
+        dataModel = ResultsModel(self.dialog.header, self.dialog.results, self._parent.settings)
         layout = QVBoxLayout()
         self.table = TableWidget()
         self.table.setModel(dataModel)

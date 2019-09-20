@@ -129,15 +129,16 @@ class NDWorker(FunctionWorker):
 
 class NDDialog(FunctionDialog):
     header = ['Corpus',
-                'Word',
-                'Algorithm',
-                'Threshold',
-                'String type',
-                'Frequency type',
-                'Collapsed homophones',
-                'Pronunciation variants',
-                'Minimum word frequency',
-                'Neighborhood density']
+              'PCT ver.',
+              'Word',
+              'Algorithm',
+              'Threshold',
+              'String type',
+              'Frequency type',
+              'Collapsed homophones',
+              'Pronunciation variants',
+              'Minimum word frequency',
+              'Neighborhood density']
 
     _about = [('This function calculates the neighborhood density (size)'
                     ' of a word. A neighborhood is the set of words sufficiently'
@@ -533,7 +534,8 @@ class NDDialog(FunctionDialog):
                 thresh = 'N/A'
             else:
                 thresh = float(self.maxDistanceEdit.text())
-            self.results.append({'Corpus': self.corpusModel.corpus.name, 
+            self.results.append({'Corpus': self.corpusModel.corpus.name,
+                                'PCT ver.': self.corpusModel.corpus._version,
                                 'Word': w,
                                 'Algorithm': self.algorithmWidget.displayValue(),
                                 'Threshold': thresh,

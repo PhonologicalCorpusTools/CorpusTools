@@ -64,15 +64,16 @@ class PPWorker(FunctionWorker):
 
 class PPDialog(FunctionDialog):
     header = ['Corpus',
-                'Word',
-                'Algorithm',
-                'Probability type',
-                'Transcription tier',
-                'Frequency type',
-                'Log-scaled frequency',
-                'Pronunciation variants',
-                'Minimum word frequency',
-                'Phonotactic probability']
+              'PCT ver.',
+              'Word',
+              'Algorithm',
+              'Probability type',
+              'Transcription tier',
+              'Frequency type',
+              'Log-scaled frequency',
+              'Pronunciation variants',
+              'Minimum word frequency',
+              'Phonotactic probability']
 
     _about = [('This function calculates the phonotactic probability '
                     'of a word based on positional probabilities of single '
@@ -349,6 +350,7 @@ class PPDialog(FunctionDialog):
         for result in results:
             w, pp = result
             self.results.append({'Corpus': self.corpusModel.corpus.name,
+                                'PCT ver.': self.corpusModel.corpus._version,
                                 'Word': str(w),
                                 'Algorithm': self.algorithmWidget.displayValue().replace('&&','&'),
                                 'Probability type': self.probabilityTypeWidget.displayValue(),

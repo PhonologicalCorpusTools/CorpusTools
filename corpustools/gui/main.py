@@ -810,7 +810,7 @@ class MainWindow(QMainWindow):
             if self.InformativityWindow is not None and dialog.update and self.InformativityIWindow.isVisible():
                 self.InformativityWindow.table.model().addRows(dialog.results)
             else:
-                self.InformativityWindow = ResultsWindow('Mutual information results',dialog,self)
+                self.InformativityWindow = ResultsWindow('Mutual information results', dialog, self)
                 self.InformativityWindow.show()
                 self.showInformativityResults.triggered.connect(self.InformativityWindow.raise_)
                 self.showInformativityResults.triggered.connect(self.InformativityWindow.activateWindow)
@@ -901,7 +901,7 @@ class MainWindow(QMainWindow):
                 self.PhonoSearchWindow.table.model().addRows(dialog.results)
             else:
                 self.PhonoSearchWindow = PhonoSearchResults(
-                                'Phonological search results',dialog,self)
+                                'Phonological search results', dialog, self)
                 self.PhonoSearchWindow.show()
                 self.showSearchResults.triggered.connect(self.PhonoSearchWindow.raise_)
                 self.showSearchResults.triggered.connect(self.PhonoSearchWindow.activateWindow)
