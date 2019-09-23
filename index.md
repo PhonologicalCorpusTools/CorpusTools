@@ -22,6 +22,8 @@ Version 1.4 was released in December 2018. It differs from v. 1.3 (July 2017) in
 3. The feature values in the pre-included feature systems have been updated to fix corruption issues.
 4. Functional load calculations with right-hand environment specifications should be working.
 
+Smaller updates within 1.4 (e.g., 1.4.1) are to fix small issues in functionality but do not reflect major changes.
+
 Version 1.3 was released in July 2017. It differs from v. 1.2 (December 2016) in the following areas:
 
 1. An additonal analysis algorithm for calculating informativity has been added.
