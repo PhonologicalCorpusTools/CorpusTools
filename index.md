@@ -108,13 +108,13 @@ NOTE 1: This method requires that you are running a 64-bit version of windows. Y
 
 NOTE 2: When the software is downloaded, you may get a security warning indicating that you have tried to launch an unrecognized app. Selecting "Run anyway" should allow PCT to work as expected.
 
-Download the latest version's installer (PhonologicalCorpusTools_win64_1.1.0.exe) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
+Download the latest version's installer (should be a file ending in .exe) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
 
 ### Mac OS X (requires 10.8 or higher)
 
 NOTE 1: When the software is downloaded, you may get a security warning indicating that you have tried to launch an unrecognized app. If you Ctrl-click on the application and select "Open," you should be able to override the security warning and use PCT normally.
 
-Download the file 'Phonological.CorpusTools-1.1.0.dmg' from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application.
+Download the latest version's installer (should be a file ending in .dmg) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application.
 
 ### Linux
 
