@@ -175,6 +175,7 @@ Phonological CorpusTools should now be installed! Run it from a terminal window 
 * Silverman, Daniel. 2006. A critical introduction to phonology: Of sound, mind, and body. London/New York: Continuum.
 * Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12. Chicago.
 * Vaden, K. I., H. R. Halpin & G. S. Hickok. 2009. Irvine Phonotactic Online Dictionary, Version 2.0. [Data file.] Available from: http://www.iphod.com.
+* Vitevitch, Michael S. & Luce, Paul A. (2004). A web-based interface to calculate phonotactic probability for words and nonwords in English. Behavior Research Methods, Instruments, and Computers, 36(3), 481-487. https://doi.org/10.3758/bf03195594 
 * Wedel, Andrew, Abby Kaplan & Scott Jackson. 2013. High functional load inhibits phonological contrast loss: A corpus study. Cognition 128.179-86.
 * Weide, Robert L. 1994. CMU Pronouncing Dictionary. http://www.speech.cs.cmu.edu/cgi-bin/cmudict.
 * Yao, Yao. 2011. The effects of phonological neighborhoods on pronunciation variation in conversational speech. Berkeley: University of California, Berkeley Doctoral dissertation. 
