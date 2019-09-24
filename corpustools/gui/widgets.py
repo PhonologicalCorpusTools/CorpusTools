@@ -2010,6 +2010,7 @@ class SegmentPairDialog(AbstractPairDialog):
         self.layout().insertWidget(0, self.inventoryFrame)
 
         self.setWindowTitle('Select segment pair')
+        self.resize(self.inventoryFrame.width(), self.inventoryFrame.height() + 100)
 
     def reset(self):
         self.inventoryFrame.clearAll()
@@ -2443,6 +2444,8 @@ class SegmentSelectDialog(QDialog):
             self.setWindowTitle('Select features')
         else:
             self.setWindowTitle('Select segments')
+
+        self.resize(self.segFrame.inventoryFrame.width(), self.segFrame.inventoryFrame.height() + 100)
 
     def value(self):
         return self.segFrame.value()
