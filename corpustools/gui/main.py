@@ -393,6 +393,7 @@ class MainWindow(QMainWindow):
         if result:
             self.corpus = dialog.corpus
             self.inventoryModel = None
+            setattr(self.corpus, '_version', currentPCTversion)
             if hasattr(self.corpus, 'lexicon'):
                 # the lexicon attribute is a Corpus object
                 self.corpus.lexicon = self.compatibility_check(self.corpus.lexicon)
