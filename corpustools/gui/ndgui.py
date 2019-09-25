@@ -14,6 +14,7 @@ from .windows import FunctionWorker, FunctionDialog
 from .widgets import (RadioSelectWidget, FileWidget, SaveFileWidget, TierWidget, RestrictedContextWidget)
 from .corpusgui import AddWordDialog
 from corpustools.contextmanagers import (CanonicalVariantContext, MostFrequentVariantContext)
+from corpustools import __version__
 
 class NDWorker(FunctionWorker):
     def run(self):
@@ -535,7 +536,7 @@ class NDDialog(FunctionDialog):
             else:
                 thresh = float(self.maxDistanceEdit.text())
             self.results.append({'Corpus': self.corpusModel.corpus.name,
-                                'PCT ver.': self.corpusModel.corpus._version,
+                                'PCT ver.': __version__,#self.corpusModel.corpus._version,
                                 'Word': w,
                                 'Algorithm': self.algorithmWidget.displayValue(),
                                 'Threshold': thresh,

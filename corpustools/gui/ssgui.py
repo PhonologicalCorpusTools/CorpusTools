@@ -16,6 +16,8 @@ from .corpusgui import AddWordDialog
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                          MostFrequentVariantContext)
 
+from corpustools import __version__
+
 
 class SSWorker(FunctionWorker):
     def run(self):
@@ -443,7 +445,7 @@ class SSDialog(FunctionDialog):
             else:
                 typetoken = self.typeTokenWidget.value().title()
             self.results.append({'Corpus': self.corpusModel.corpus.name,
-                                 'PCT ver.': self.corpusModel.corpus._version,
+                                 'PCT ver.': __version__,#self.corpusModel.corpus._version,
                                  'First word': w1,
                                  'Second word': w2,
                                  'Algorithm': self.algorithmWidget.displayValue(),

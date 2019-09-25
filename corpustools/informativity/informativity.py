@@ -1,5 +1,6 @@
 from math import log2
 from collections import defaultdict
+from corpustools import __version__
 
 
 def context(index, word, sequence_type = 'transcription'):
@@ -203,7 +204,7 @@ def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcript
         informativity = calculate_informativity(seg_frequencies[seg], seg_conditional_probs[seg], rounding)
         summary = {
             "Corpus": corpus.name,
-            "PCT ver.": corpus.corpus._version,
+            "PCT ver.": __version__,#corpus.corpus._version,
             "Segment": seg,
             "Informativity": informativity,
             "Context": "all",

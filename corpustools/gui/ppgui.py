@@ -12,6 +12,7 @@ from .widgets import (RadioSelectWidget, FileWidget, TierWidget, RestrictedConte
 from .corpusgui import AddWordDialog
 from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext)
+from corpustools import __version__
 
 class PPWorker(FunctionWorker):
     def run(self):
@@ -350,7 +351,7 @@ class PPDialog(FunctionDialog):
         for result in results:
             w, pp = result
             self.results.append({'Corpus': self.corpusModel.corpus.name,
-                                'PCT ver.': self.corpusModel.corpus._version,
+                                'PCT ver.': __version__,#self.corpusModel.corpus._version,
                                 'Word': str(w),
                                 'Algorithm': self.algorithmWidget.displayValue().replace('&&','&'),
                                 'Probability type': self.probabilityTypeWidget.displayValue(),

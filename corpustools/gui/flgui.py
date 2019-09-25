@@ -12,6 +12,7 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,
                                         WeightedVariantContext)
+from corpustools import __version__
 
 class FLWorker(FunctionWorker):
     def run(self):
@@ -404,7 +405,7 @@ class FLDialog(FunctionDialog):
 
 
             self.results.append({'Corpus': self.corpus.name,
-                                'PCT ver.': self.corpus._version,
+                                'PCT ver.': __version__,#self.corpus._version,
                                 'First segment': seg_one,
                                 'Second segment': seg_two,
                                 'Algorithm': self.algorithmWidget.displayValue(),

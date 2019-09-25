@@ -11,6 +11,7 @@ from .environments import EnvironmentSelectWidget
 from corpustools.phonosearch import phonological_search
 
 from corpustools.exceptions import PCTError, PCTPythonError
+from corpustools import __version__
 
 class PSWorker(FunctionWorker):
     def run(self):
@@ -575,7 +576,7 @@ class PhonoSearchDialog(FunctionDialog):
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,
-                                     'PCT ver.': self.corpus._version,
+                                     'PCT ver.': __version__, #self.corpus._version,
                                      'Word': w,
                                      'Transcription': str(getattr(w, self.tierWidget.value())),
                                      'Target': segs,
@@ -589,7 +590,7 @@ class PhonoSearchDialog(FunctionDialog):
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,
-                                     'PCT ver.': self.corpus._version,
+                                     'PCT ver.': __version__,#self.corpus._version,
                                      'Word': word,
                                      'Transcription': str(getattr(word, self.tierWidget.value())),
                                      'Target': middle_syllables,

@@ -10,6 +10,7 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
                                         MostFrequentVariantContext,
                                         SeparatedTokensVariantContext,
                                         WeightedVariantContext)
+from corpustools import __version__
 
 class KLWorker(FunctionWorker):
     def run(self):
@@ -168,7 +169,7 @@ class KLDialog(FunctionDialog):
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
-                                'PCT ver.': self.corpus._version,
+                                'PCT ver.': __version__,#self.corpus._version,
                                 'First segment': seg_pairs[i][0],
                                 'Second segment': seg_pairs[i][1],
                                 'Context': context,
