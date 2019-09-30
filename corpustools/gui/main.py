@@ -465,14 +465,15 @@ class MainWindow(QMainWindow):
         if not hasattr(self.corpusModel.corpus.inventory, 'segs'):
             return None
 
-        if self.corpusModel.corpus.inventory.isNew:
+        #if self.corpusModel.corpus.inventory.isNew:
             # just loaded from a text file
-            inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
-            inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
+            # inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
+            # inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
+            pass
 
-        else:
+        #else:
             # just loaded a .corpus file, not from text
-            inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
+        inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
 
         return inventoryModel
 
