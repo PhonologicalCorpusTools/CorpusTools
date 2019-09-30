@@ -25,7 +25,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='PCT',
+          name='Phonological CorpusTools',
           debug=False,
           strip=False,
           upx=True,
@@ -33,4 +33,4 @@ exe = EXE(pyz,
           icon=icon_path)
 
 if sys.platform == 'darwin':
-   app = BUNDLE(exe, name='PCT.app', icon=icon_path)
+   app = BUNDLE(exe, name='Phonological CorpusTools.app', icon=icon_path)

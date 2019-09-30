@@ -947,25 +947,25 @@ class MainWindow(QMainWindow):
         alert.exec_()
 
     def about(self):
-        help_url = 'http://corpustools.readthedocs.org/en/'
-        if hasattr(sys, 'frozen'):
-            import corpustools.__version__ as version
-            help_url += version + '/'
-            base_dir = os.path.dirname(sys.executable)
-            help_dir = os.path.join(base_dir, 'html')
-        else:
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            help_dir = os.path.join(base_dir, 'docs', 'build', 'html')
-            help_url += 'latest/'
+        # help_url = 'http://corpustools.readthedocs.org/en/'
+        # if hasattr(sys, 'frozen'):
+        #     import corpustools.__version__ as version
+        #     help_url += version + '/'
+        #     base_dir = os.path.dirname(sys.executable)
+        #     help_dir = os.path.join(base_dir, 'html')
+        # else:
+        #     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        #     help_dir = os.path.join(base_dir, 'docs', 'build', 'html')
+        #     help_url += 'latest/'
+        #
+        # use_local = os.path.exists(help_dir)
+        #
+        # if use_local:
+        #     about_page = os.path.join(help_dir, 'about.html')
+        # else:
+        #     about_page = help_url + 'about.html'
 
-        use_local = os.path.exists(help_dir)
-
-        if use_local:
-            about_page = os.path.join(help_dir, 'about.html')
-        else:
-            about_page = help_url + 'about.html'
-
-        webbrowser.open(about_page)
+        webbrowser.open('https://corpustools.readthedocs.io/en/latest/about.html')
         #dialog = AboutDialog(self)
         #dialog.exec_()
 
