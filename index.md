@@ -14,6 +14,7 @@ An overview of the beta version of PCT (0.15, July 2014) and its utility is avai
 
 ### Versions
 #### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...").
+Version 1.4.1 was released in September 2019. This version sizes inventory tables in a more appropriate way, includes the version number in output tables for archival purposes, and fixes bugs in the phonological search, functional load, and "About PCT" functions. 
 
 Version 1.4 was released in December 2018. It differs from v. 1.3 (July 2017) in the following areas:
 
