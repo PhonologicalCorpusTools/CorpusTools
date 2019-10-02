@@ -103,9 +103,10 @@ class QApplicationMessaging(QApplication):
         socket.waitForBytesWritten(self._timeout)
         socket.disconnectFromServer()
 
+
 class MainWindow(QMainWindow):
 
-    def __init__(self,app):
+    def __init__(self, app):
         app.messageFromOtherInstance.connect(self.handleMessage)
         super(MainWindow, self).__init__()
 
@@ -118,18 +119,17 @@ class MainWindow(QMainWindow):
         try:
             self.recentSearches = load_binary(os.path.join(self.settings.search_directory(), 'recent.searches'))
         except FileNotFoundError:
-            self.recentSearches = collections.deque(maxlen = 5)
+            self.recentSearches = collections.deque(maxlen=5)
 
         try:
             self.savedSearches = load_binary(os.path.join(self.settings.search_directory(), 'saved.searches'))
         except FileNotFoundError:
             self.savedSearches = list()
 
-        logging.basicConfig(handlers = [logging.FileHandler(os.path.join(
-                                self.settings.log_directory(), 'pct_gui.log'),
-                            encoding = 'utf-8-sig',
-                            mode = 'w')],
-                            level = logging.INFO)
+        logging.basicConfig(handlers=[logging.FileHandler(os.path.join(self.settings.log_directory(), 'pct_gui.log'),
+                            encoding='utf-8-sig',
+                            mode='w')],
+                            level=logging.INFO)
 
         self.showWarnings = True
         self.showToolTips = True
@@ -237,18 +237,18 @@ class MainWindow(QMainWindow):
 
         self.settingsObject.beginGroup('storage_folder')
         self.settings['storage_folder']['directory'] = self.settingsObject.value('directory',
-                                                defaultValue = os.path.normpath(os.path.join(
-                                                os.path.expanduser('~/Documents'), 'PCT', 'CorpusTools')))
+                                                                                 defaultValue=os.path.normpath(os.path.join(
+                                                                                     os.path.expanduser('~/Documents'), 'PCT', 'CorpusTools')))
         self.settings['storage_folder']['praat'] = self.settingsObject.value('praat')
         self.settings['storage_folder']['searches'] = self.settingsObject.value('searches')
         self.settingsObject.endGroup()
 
         self.settingsObject.beginGroup('display')
-        self.settings['display']['size'] = self.settingsObject.value('size', defaultValue = QSize(270, 225))
-        self.settings['display']['pos'] = self.settingsObject.value('pos', defaultValue = QPoint(50, 50))
-        self.settings['display']['sigfigs'] = self.settingsObject.value('sigfigs', defaultValue = 3)
-        self.settings['display']['tooltips'] = self.settingsObject.value('tooltips', defaultValue = 1)
-        self.settings['display']['searchResults'] = self.settingsObject.value('searchResults', defaultValue = 0)
+        self.settings['display']['size'] = self.settingsObject.value('size', defaultValue=QSize(759, 500))
+        self.settings['display']['pos'] = self.settingsObject.value('pos', defaultValue=QPoint(50, 50))
+        self.settings['display']['sigfigs'] = self.settingsObject.value('sigfigs', defaultValue=3)
+        self.settings['display']['tooltips'] = self.settingsObject.value('tooltips', defaultValue=1)
+        self.settings['display']['searchResults'] = self.settingsObject.value('searchResults', defaultValue=0)
         self.settingsObject.endGroup()
 
         self.settingsObject.beginGroup('reminders')

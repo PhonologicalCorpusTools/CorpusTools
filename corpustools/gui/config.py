@@ -215,7 +215,6 @@ class PCTSettings(collections.defaultdict):
         else:
             super().__setitem__(key, value)
 
-
     def update(self, other_dict):
         for key in other_dict:
             self[key] = other_dict[key]
@@ -273,6 +272,7 @@ class PCTSettings(collections.defaultdict):
             os.mkdir(FEATURE_DIR)
         if not os.path.exists(SEARCH_DIR):
             os.mkdir(SEARCH_DIR)
+
 
 class PreferencesDialog(QDialog):
 
