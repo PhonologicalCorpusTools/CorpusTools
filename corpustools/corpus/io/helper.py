@@ -212,6 +212,8 @@ class AnnotationType(object):
             return True
         if self.digraphs:
             return True
+        if 'Transcription' in self.name:
+            return True
         return False
 
     def __iter__(self):
@@ -467,7 +469,7 @@ def parse_segment(string, annotation_type):
 
 def parse_transcription(string, annotation_type, feature_matrix=None, corpus=None):
 
-    # The following block of code runs when md is specified
+    # The following block of code runs when morpheme delimiter is specified
     md = annotation_type.morph_delimiters
     if len(md) and any(x in string for x in md):
         morphs = re.split("|".join(md), string)
