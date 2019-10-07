@@ -9,32 +9,32 @@ from corpustools.exceptions import PCTError, PCTPythonError, MissingFeatureError
 from corpustools.decorators import check_for_errors
 from corpustools.corpus.io.binary import load_binary, save_binary, PCTUnpickler
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
-                                    export_corpus_csv)
+                                       export_corpus_csv)
 from corpustools.corpus.io.pct_textgrid import (inspect_discourse_textgrid,
-                                            load_discourse_textgrid,
-                                            load_directory_textgrid)
+                                                load_discourse_textgrid,
+                                                load_directory_textgrid)
 from corpustools.corpus.io.text_ilg import (load_discourse_ilg,
                                             inspect_discourse_ilg,
                                             load_directory_ilg)
 from corpustools.corpus.io.text_spelling import (load_discourse_spelling,
-                                                inspect_discourse_spelling,
-                                                load_directory_spelling)
+                                                 inspect_discourse_spelling,
+                                                 load_directory_spelling)
 from corpustools.corpus.io.text_transcription import (load_discourse_transcription,
-                                                        inspect_discourse_transcription,
-                                                        load_directory_transcription)
+                                                      inspect_discourse_transcription,
+                                                      load_directory_transcription)
 from corpustools.corpus.io.multiple_files import (load_discourse_multiple_files,
-                                                    inspect_discourse_multiple_files,
-                                                    load_directory_multiple_files)
+                                                  inspect_discourse_multiple_files,
+                                                  load_directory_multiple_files)
 from corpustools.corpus.io.helper import (get_corpora_list,
-                                        corpus_name_to_path,
-                                        inspect_directory,
-                                        log_annotation_types,
-                                        punctuation_names)
+                                          corpus_name_to_path,
+                                          inspect_directory,
+                                          log_annotation_types,
+                                          punctuation_names)
 from corpustools.gui.featuregui import system_name_to_path
 import corpustools.gui.modernize as modernize
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 
-from .widgets import  (RadioSelectWidget,SaveFileWidget,AttributeFilterWidget, AnnotationTypeWidget,CorpusSelect)
+from .widgets import (RadioSelectWidget, SaveFileWidget, AttributeFilterWidget, AnnotationTypeWidget, CorpusSelect)
 from .featuregui import FeatureSystemSelect, RestrictedFeatureSystemSelect
 from .helpgui import HelpDialog, get_url
 
@@ -60,6 +60,7 @@ class LoadBinaryWorker(FunctionWorker):
             return
         self.dataReady.emit(results)
 
+
 class LoadCorpusWorker(FunctionWorker):
 
     def run(self):
@@ -68,7 +69,7 @@ class LoadCorpusWorker(FunctionWorker):
         logging.info('Importing {} corpus named {}'.format(textType, self.kwargs['corpus_name']))
         try:
             logging.info('Path: '.format(self.kwargs['path']))
-        except KeyError:#Buckeye Corpus
+        except KeyError:  # Buckeye Corpus
             logging.info('Path: '.format(self.kwargs['word_path']))
         log_annotation_types(self.kwargs['annotation_types'])
         try:
@@ -123,20 +124,21 @@ class LoadCorpusWorker(FunctionWorker):
         if corpus is None:
             return
 
-        #If a Discourse object was just loaded, it needs to have its features specified
-        #A Corpus has its features specified already at this point
+        # If a Discourse object was just loaded, it needs to have its features specified
+        # A Corpus has its features specified already at this point
         if hasattr(corpus, 'lexicon'):
             for seg in corpus.lexicon.inventory:
                 try:
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
                 except KeyError:
-                    #Occurs if a user selected a feature/transcription system that doesn't match the corpus
-                    corpus.lexicon.specifier[seg] = {feature:'n' for feature in corpus.lexicon.specifier.features}
+                    # Occurs if a user selected a feature/transcription system that doesn't match the corpus
+                    corpus.lexicon.specifier[seg] = {feature: 'n' for feature in corpus.lexicon.specifier.features}
                     corpus.lexicon.inventory[seg].features = corpus.lexicon.specifier.specify(seg)
                 except AttributeError:
-                    pass #This only has spelling, no transcription
+                    pass  # This only has spelling, no transcription
 
         self.dataReady.emit(corpus)
+
 
 class CorpusLoadDialog(PCTDialog):
     def __init__(self, parent, current_corpus, settings):
@@ -184,13 +186,13 @@ class CorpusLoadDialog(PCTDialog):
 
         self.acceptButton = QPushButton('Load selected corpus')
         self.acceptButton.setDefault(True)
-        #self.forceUpdateButton = QPushButton('Load corpus with forced update')
-        #self.forceUpdateButton.setAutoDefault(False)
+        # self.forceUpdateButton = QPushButton('Load corpus with forced update')
+        # self.forceUpdateButton.setAutoDefault(False)
         self.cancelButton = QPushButton('Cancel')
         self.helpButton = QPushButton('Help')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.acceptButton)
-        #acLayout.addWidget(self.forceUpdateButton)
+        # acLayout.addWidget(self.forceUpdateButton)
         acLayout.addWidget(self.cancelButton)
         acLayout.addWidget(self.helpButton)
         self.acceptButton.clicked.connect(self.accept)
@@ -221,12 +223,11 @@ class CorpusLoadDialog(PCTDialog):
         self.thread.dataReady.connect(self.progressDialog.accept)
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
 
-
     def help(self):
         url = get_url('loading corpora')
         webbrowser.open(url)
-        #self.helpDialog = HelpDialog(self, name = 'loading corpora')
-        #self.helpDialog.exec_()
+        # self.helpDialog = HelpDialog(self, name = 'loading corpora')
+        # self.helpDialog.exec_()
 
     def setResults(self, results):
         if results is None:
@@ -256,9 +257,9 @@ class CorpusLoadDialog(PCTDialog):
 
     def accept(self):
         result = self.loadCorpus()
-        #self.loadCorpus() returns whether user clicked cancel, or whether the progress bar completed
-        #it does not return anything about the corpus itself
-        #the corpus is saved in the Dialog.corpus attribute
+        # self.loadCorpus() returns whether user clicked cancel, or whether the progress bar completed
+        # it does not return anything about the corpus itself
+        # the corpus is saved in the Dialog.corpus attribute
         if result:
             QDialog.accept(self)
 
@@ -285,18 +286,19 @@ class CorpusLoadDialog(PCTDialog):
             alert = QMessageBox()
             alert.setWindowTitle('Warning!')
             alert.setText('You are trying to delete the corpus that is currently open in PCT. '
-                    'Please close the corpus before deleting. You can do this '
-                    'by opening up another corpus first, or else by closing PCT and re-opening with a blank window.')
+                          'Please close the corpus before deleting. You can do this '
+                          'by opening up another corpus first, or else by closing PCT and re-opening with a blank window.')
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return
         msgBox = QMessageBox(QMessageBox.Warning, "Remove corpus",
-                "This will permanently remove '{}'.  Are you sure?".format(corpus), QMessageBox.NoButton, self)
+                             "This will permanently remove '{}'.  Are you sure?".format(corpus), QMessageBox.NoButton,
+                             self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
-        os.remove(corpus_name_to_path(self.settings['storage'],corpus))
+        os.remove(corpus_name_to_path(self.settings['storage'], corpus))
         self.getAvailableCorpora()
 
     def getAvailableCorpora(self):
@@ -312,10 +314,11 @@ class DownloadCorpusDialog(QDialog):
         self.settings = settings
         layout = QVBoxLayout()
         self.corporaWidget = RadioSelectWidget('Select a corpus',
-                                        OrderedDict([('Example toy corpus','example'),
-                                        ('Lemurian (Toy language)','lemurian'),
-                                        ('IPHOD with homographs','iphod_with_homographs'),
-                                        ('IPHOD without homographs (default before 2019)','iphod_without_homographs')]))
+                                               OrderedDict([('Example toy corpus', 'example'),
+                                                            ('Lemurian (Toy language)', 'lemurian'),
+                                                            ('IPHOD with homographs', 'iphod_with_homographs'),
+                                                            ('IPHOD without homographs (default before 2019)',
+                                                             'iphod_without_homographs')]))
 
         layout.addWidget(self.corporaWidget)
 
@@ -344,7 +347,7 @@ class DownloadCorpusDialog(QDialog):
 
         self.thread = DownloadWorker()
 
-        self.progressDialog = QProgressDialog('Downloading...','Cancel',0,100,self)
+        self.progressDialog = QProgressDialog('Downloading...', 'Cancel', 0, 100, self)
         self.progressDialog.setWindowTitle('Download corpus')
         self.progressDialog.setAutoClose(False)
         self.progressDialog.setAutoReset(False)
@@ -354,15 +357,15 @@ class DownloadCorpusDialog(QDialog):
         self.thread.finished.connect(self.progressDialog.accept)
 
     def help(self):
-        self.helpDialog = HelpDialog(self,name = 'loading corpora',
-                                    section = 'using-a-built-in-corpus')
+        self.helpDialog = HelpDialog(self, name='loading corpora',
+                                     section='using-a-built-in-corpus')
         self.helpDialog.exec_()
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
         self.progressDialog.reset()
 
-    def updateProgress(self,progress):
+    def updateProgress(self, progress):
         self.progressDialog.setValue(progress)
         self.progressDialog.repaint()
 
@@ -370,14 +373,14 @@ class DownloadCorpusDialog(QDialog):
         name = self.corporaWidget.value()
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Overwrite corpus",
-                    "The corpus '{}' is already available.  Would you like to overwrite it?".format(name),
-                    QMessageBox.NoButton, self)
+                                 "The corpus '{}' is already available.  Would you like to overwrite it?".format(name),
+                                 QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-        self.thread.setParams({'name':name,
-                'path':corpus_name_to_path(self.settings['storage'],name)})
+        self.thread.setParams({'name': name,
+                               'path': corpus_name_to_path(self.settings['storage'], name)})
 
         self.thread.start()
 
@@ -387,16 +390,17 @@ class DownloadCorpusDialog(QDialog):
         if result:
             QDialog.accept(self)
 
+
 class SupportCorpusWidget(QGroupBox):
-    def __init__(self, settings, parent = None):
+    def __init__(self, settings, parent=None):
         QGroupBox.__init__(self, 'Support corpus', parent)
         self.supportCorpus = CorpusSelect(self, settings)
 
         layout = QFormLayout()
-        layout.addRow(QLabel('Corpus to look up transcriptions'),self.supportCorpus)
+        layout.addRow(QLabel('Corpus to look up transcriptions'), self.supportCorpus)
 
         self.ignoreCase = QCheckBox()
-        layout.addRow(QLabel('Ignore case for look up'),self.ignoreCase)
+        layout.addRow(QLabel('Ignore case for look up'), self.ignoreCase)
 
         self.setLayout(layout)
 
@@ -464,7 +468,7 @@ class CorpusSourceWidget(QWidget):
 
     def pickFile(self):
         filename = QFileDialog.getOpenFileName(self, 'Select file',
-                                                filter=self.filefilter)
+                                               filter=self.filefilter)
         if filename:
             self.pathEdit.setText(filename[0])
 
@@ -473,11 +477,12 @@ class CorpusSourceWidget(QWidget):
 
 
 class LoadCorpusDialog(PCTDialog):
-    supported_types = [(None, ''),('csv', 'Column-delimited file'),
-                        ('running', 'Running text'),
-                        ('ilg', 'Interlinear text'),
-                        ('textgrid', 'TextGrid'),
-                        ('multiple', 'Other standards'),]
+    supported_types = [(None, ''), ('csv', 'Column-delimited file'),
+                       ('running', 'Running text'),
+                       ('ilg', 'Interlinear text'),
+                       ('textgrid', 'TextGrid'),
+                       ('multiple', 'Other standards'), ]
+
     def __init__(self, parent, settings):
         PCTDialog.__init__(self, parent, infinite_progress=True)
         self.settings = settings
@@ -516,13 +521,13 @@ class LoadCorpusDialog(PCTDialog):
 
         csvFrame = QWidget()
         csvlayout = QFormLayout()
-        csvlayout.addRow(QLabel('Column delimiter (auto-detected)'),self.columnDelimiterEdit)
+        csvlayout.addRow(QLabel('Column delimiter (auto-detected)'), self.columnDelimiterEdit)
         csvlayout.addRow(self.csvForceInspectButton)
 
         csvlayout.addRow(self.csvFeatureSystem)
 
         csvFrame.setLayout(csvlayout)
-        self.tabWidget.addTab(csvFrame,'Column-delimited file')
+        self.tabWidget.addTab(csvFrame, 'Column-delimited file')
 
         runningFrame = QWidget()
         runninglayout = QFormLayout()
@@ -531,30 +536,30 @@ class LoadCorpusDialog(PCTDialog):
         runninglayout.addRow(self.runningFeatureSystem)
         runninglayout.addRow(self.runningLookupWidget)
         runningFrame.setLayout(runninglayout)
-        self.tabWidget.addTab(runningFrame,'Running text')
+        self.tabWidget.addTab(runningFrame, 'Running text')
 
         ilgFrame = QWidget()
         ilglayout = QFormLayout()
-        ilglayout.addRow(QLabel('Number of lines per gloss (auto-detected)'),self.lineNumberEdit)
+        ilglayout.addRow(QLabel('Number of lines per gloss (auto-detected)'), self.lineNumberEdit)
         ilglayout.addRow(self.ilgForceInspectButton)
         ilglayout.addRow(self.ilgFeatureSystem)
-        #ilglayout.addRow(self.ilgLookupWidget)
+        # ilglayout.addRow(self.ilgLookupWidget)
         ilgFrame.setLayout(ilglayout)
-        self.tabWidget.addTab(ilgFrame,'Interlinear text')
+        self.tabWidget.addTab(ilgFrame, 'Interlinear text')
 
         tgFrame = QWidget()
         tglayout = QFormLayout()
         tglayout.addRow(self.tgFeatureSystem)
         tglayout.addRow(self.tgLookupWidget)
         tgFrame.setLayout(tglayout)
-        self.tabWidget.addTab(tgFrame,'TextGrid')
+        self.tabWidget.addTab(tgFrame, 'TextGrid')
 
         multFrame = QFrame()
         multlayout = QFormLayout()
         multlayout.addRow('File format', self.multSelect)
         multlayout.addRow(self.multFeatureSystem)
         multFrame.setLayout(multlayout)
-        self.tabWidget.addTab(multFrame,'Other standards')
+        self.tabWidget.addTab(multFrame, 'Other standards')
 
         self.tabWidget.currentChanged.connect(self.typeChanged)
 
@@ -646,40 +651,39 @@ class LoadCorpusDialog(PCTDialog):
         self.runningSelect.addItem('Transcribed')
         self.runningSelect.currentIndexChanged.connect(self.typeChanged)
 
-
     def updateType(self, type):
         curIndex = self.tabWidget.currentIndex()
         if type == 'text':
             if not self.isDirectory and curIndex > 2:
-                self.tabWidget.setTabEnabled(0,True)
+                self.tabWidget.setTabEnabled(0, True)
                 self.tabWidget.setCurrentIndex(0)
             elif self.isDirectory:
-                self.tabWidget.setTabEnabled(1,True)
+                self.tabWidget.setTabEnabled(1, True)
                 self.tabWidget.setCurrentIndex(1)
-                self.tabWidget.setTabEnabled(0,False)
+                self.tabWidget.setTabEnabled(0, False)
             else:
                 self.inspect()
         elif type == 'textgrid':
             if curIndex != 3:
-                self.tabWidget.setTabEnabled(3,True)
+                self.tabWidget.setTabEnabled(3, True)
                 self.tabWidget.setCurrentIndex(3)
             else:
                 self.inspect()
         elif type == 'multiple':
             if curIndex != 4:
-                self.tabWidget.setTabEnabled(4,True)
+                self.tabWidget.setTabEnabled(4, True)
                 self.tabWidget.setCurrentIndex(4)
             else:
                 self.inspect()
         elif type == 'csv':
             if curIndex != 0:
-                self.tabWidget.setTabEnabled(0,True)
+                self.tabWidget.setTabEnabled(0, True)
                 self.tabWidget.setCurrentIndex(0)
             else:
                 self.inspect()
         for i in range(self.tabWidget.count()):
             if type == 'text':
-                if self.supported_types[i + 1][0] in ['csv', 'running','ilg']:
+                if self.supported_types[i + 1][0] in ['csv', 'running', 'ilg']:
                     if self.isDirectory and self.supported_types[i + 1][0] == 'csv':
                         continue
                     self.tabWidget.setTabEnabled(i, True)
@@ -715,9 +719,12 @@ class LoadCorpusDialog(PCTDialog):
         self.inspect()
 
     def help(self):
-        self.helpDialog = HelpDialog(self,name = 'loading corpora',
-                                    section = 'using-a-custom-corpus')
-        self.helpDialog.exec_()
+        url = get_url(name='loading corpora',
+                      section='creating-a-corpus')
+        webbrowser.open(url)
+        # self.helpDialog = HelpDialog(self,name = 'loading corpora',
+        #                            section = 'using-a-custom-corpus')
+        # self.helpDialog.exec_()
 
     def setResults(self, results):
         self.corpus = results
@@ -762,7 +769,7 @@ class LoadCorpusDialog(PCTDialog):
                 colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
                 if not colDelim:
                     colDelim = None
-                atts, coldelim = inspect_csv(self.pathWidget.value(), coldelim = colDelim)
+                atts, coldelim = inspect_csv(self.pathWidget.value(), coldelim=colDelim)
                 self.updateColumnFrame(atts)
             elif self.textType == 'ilg':
                 number = self.lineNumberEdit.text()
@@ -773,11 +780,11 @@ class LoadCorpusDialog(PCTDialog):
                         number = int(number)
                     except:
                         number = None
-                annotation_types = inspect_discourse_ilg(self.pathWidget.value(), number = number)
+                annotation_types = inspect_discourse_ilg(self.pathWidget.value(), number=number)
                 self.updateColumnFrame(annotation_types)
 
     def updateColumnFrame(self, atts):
-        for i in reversed(range(self.columnFrame.layout().count()-1)):
+        for i in reversed(range(self.columnFrame.layout().count() - 1)):
             w = self.columnFrame.layout().itemAt(i).widget()
             if w is None:
                 del w
@@ -786,13 +793,12 @@ class LoadCorpusDialog(PCTDialog):
             w.deleteLater()
         self.columns = list()
         for a in reversed(atts):
-            ignorable = self.textType not in ['spelling','transcription']
-            c = AnnotationTypeWidget(a, ignorable = ignorable)
-            if not ignorable:# self.textType in ['spelling', 'transcription']:
+            ignorable = self.textType not in ['spelling', 'transcription']
+            c = AnnotationTypeWidget(a, ignorable=ignorable)
+            if not ignorable:  # self.textType in ['spelling', 'transcription']:
                 c.nameWidget.setEnabled(False)
             self.columns.append(c)
             self.columnFrame.layout().insertWidget(0, c)
-
 
         set_default_trans = False
         set_default_spell = False
@@ -836,7 +842,7 @@ class LoadCorpusDialog(PCTDialog):
 
         kwargs = {'corpus_name': name,
                   'path': path,
-                  'isDirectory':self.isDirectory,
+                  'isDirectory': self.isDirectory,
                   'text_type': self.textType}
 
         kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
@@ -857,23 +863,23 @@ class LoadCorpusDialog(PCTDialog):
                     QMessageBox.critical(self,
                                          'Incompatible Information',
                                          'You have selected running text of type "Transcription" in the left window, '
-                                        'but in the Parsing Preview window you did not select a transcription')
+                                         'but in the Parsing Preview window you did not select a transcription')
                     return
 
             elif self.runningSelect.currentText() == 'Orthography':
                 if not any([x.anchor for x in kwargs['annotation_types']]):
                     QMessageBox.critical(self, 'Incompatible Information',
                                          'You have selecting running text of type "Orthography" in the left window, '
-                                        'but in the Parsing Preview window you did not select an orthography.')
+                                         'but in the Parsing Preview window you did not select an orthography.')
                     return
 
         if (not any([x.base for x in kwargs['annotation_types']])
-            and not any([x.anchor for x in kwargs['annotation_types']])):
+                and not any([x.anchor for x in kwargs['annotation_types']])):
             QMessageBox.critical(self,
                                  'Missing information',
                                  ('No spelling or transcription was selected for the corpus. Please check the '
-                                 '"Parsing Preview" section and ensure that you have a "default" Transcription '
-                                 'or Orthography.'))
+                                  '"Parsing Preview" section and ensure that you have a "default" Transcription '
+                                  'or Orthography.'))
             return
 
         names = [x.name for x in kwargs['annotation_types']]
@@ -895,8 +901,9 @@ class LoadCorpusDialog(PCTDialog):
         if duplicates:
             duplicates = ' and '.join(duplicates)
             QMessageBox.critical(self, 'Duplicate information',
-                        'You have more than one column named {} in your corpus. Please go to the '
-                        '"Parsing Preview" section and ensure that all columns have unique names.'.format(duplicates))
+                                 'You have more than one column named {} in your corpus. Please go to the '
+                                 '"Parsing Preview" section and ensure that all columns have unique names.'.format(
+                                     duplicates))
             return
 
         duplicates = False
@@ -907,17 +914,18 @@ class LoadCorpusDialog(PCTDialog):
             duplicates = 'Orthography (default)'
         if duplicates:
             QMessageBox.critical(self, 'Duplicate information',
-            ('You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
-            'section to change this.\n\n'
-            'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
-            'more than one transcription or spelling system, choose one default and set the others '
-            'to "alternative".'.format(duplicates)))
+                                 (
+                                     'You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
+                                     'section to change this.\n\n'
+                                     'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
+                                     'more than one transcription or spelling system, choose one default and set the others '
+                                     'to "alternative".'.format(duplicates)))
             return
 
         if self.textType == 'csv':
             kwargs['delimiter'] = codecs.getdecoder("unicode_escape")(
-                                        self.columnDelimiterEdit.text()
-                                        )[0]
+                self.columnDelimiterEdit.text()
+            )[0]
             kwargs['feature_system_path'] = self.csvFeatureSystem.path()
         elif self.textType == 'textgrid':
             kwargs['feature_system_path'] = self.tgFeatureSystem.path()
@@ -927,17 +935,18 @@ class LoadCorpusDialog(PCTDialog):
             kwargs['feature_system_path'] = self.runningFeatureSystem.path()
         elif self.textType == 'ilg':
             kwargs['feature_system_path'] = self.ilgFeatureSystem.path()
-            #(kwargs['support_corpus_path'],
+            # (kwargs['support_corpus_path'],
             #    kwargs['ignore_case']) = self.ilgLookupWidget.value()
         elif self.textType == 'buckeye':
             kwargs['feature_system_path'] = self.multFeatureSystem.path()
             if not self.isDirectory:
                 base, ext = os.path.splitext(path)
                 if ext == '.words':
-                    phone_path = base +'.phones'
+                    phone_path = base + '.phones'
                 if not os.path.exists(phone_path):
                     reply = QMessageBox.critical(self,
-                            "Invalid information", "The phone file for the specified words file does not exist.")
+                                                 "Invalid information",
+                                                 "The phone file for the specified words file does not exist.")
                     return
                 kwargs['word_path'] = kwargs.pop('path')
                 kwargs['phone_path'] = phone_path
@@ -974,7 +983,8 @@ class LoadCorpusDialog(PCTDialog):
 
         if name in get_corpora_list(self.settings['storage']):
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate name",
-                    "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton, self)
+                                 "A corpus named '{}' already exists.  Overwrite?".format(name), QMessageBox.NoButton,
+                                 self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -1002,13 +1012,13 @@ class LoadCorpusDialog(PCTDialog):
 
         if result:
             if self.corpus is not None:
-                #self.corpus is set in self.setResults(),
-                #which is a slot connected to the LoadCorpusWorker dataReady signal
+                # self.corpus is set in self.setResults(),
+                # which is a slot connected to the LoadCorpusWorker dataReady signal
                 if not hasattr(self.corpus, 'lexicon'):
-                    #it's a Corpus object
+                    # it's a Corpus object
                     c = self.corpus
                 else:
-                    #It's a Discourse object
+                    # It's a Discourse object
                     c = self.corpus.lexicon
                 unmatched = list()
                 for seg in c.inventory:
@@ -1025,21 +1035,21 @@ class LoadCorpusDialog(PCTDialog):
                     alert = QMessageBox()
                     alert.setWindowTitle('Warning')
                     alert.setText(('The following symbols in your corpus do not match up with any symbols in your '
-                    'selected {} feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
-                    'feature. You can change these feature values in PCT by going to Features>View/Change feature '
-                    'system...'
-                    '\n\nIf this list contains your transcription delimiter, or if it contains symbols that should be '
-                    'part of a digraph, then it means that your parsing settings are incorrect. You can change these '
-                    'settings in the "Parsing Preview" section on the right-hand side.'
-                    '\n\nIf you see a very large number of symbols in the list, it is possible that you have selected '
-                    'the wrong feature system for your corpus.'.format(c.specifier.name, unmatched)))
+                                   'selected {} feature system:\n{}\n\nThese symbols have been given default values of \'n\' for every '
+                                   'feature. You can change these feature values in PCT by going to Features>View/Change feature '
+                                   'system...'
+                                   '\n\nIf this list contains your transcription delimiter, or if it contains symbols that should be '
+                                   'part of a digraph, then it means that your parsing settings are incorrect. You can change these '
+                                   'settings in the "Parsing Preview" section on the right-hand side.'
+                                   '\n\nIf you see a very large number of symbols in the list, it is possible that you have selected '
+                                   'the wrong feature system for your corpus.'.format(c.specifier.name, unmatched)))
                     alert.addButton('OK (load corpus with default features)', QMessageBox.AcceptRole)
                     alert.addButton('Cancel (return to previous window)', QMessageBox.RejectRole)
                     choice = alert.exec_()
                     if choice == QMessageBox.AcceptRole:
                         if hasattr(self.corpus, 'lexicon'):
                             self.corpus.lexicon.specifier.name = '_'.join([
-                                                                self.corpus.lexicon.specifier.name, self.corpus.name])
+                                self.corpus.lexicon.specifier.name, self.corpus.name])
                         else:
                             self.corpus.specifier.name = '_'.join([self.corpus.specifier.name, self.corpus.name])
 
@@ -1074,6 +1084,7 @@ class LoadCorpusDialog(PCTDialog):
             self.updateType('multiple')
         elif ext == '.txt':
             self.updateType('text')
+
 
 class SubsetCorpusDialog(QDialog):
     def __init__(self, parent, corpus):
@@ -1144,8 +1155,8 @@ class SubsetCorpusDialog(QDialog):
     def help(self):
         url = get_url('loading corpora', section='subsetting-a-corpus')
         webbrowser.open(url)
-        #self.helpDialog = HelpDialog(self, name='loading corpora', section='subsetting-a-corpus')
-        #self.helpDialog.exec_()
+        # self.helpDialog = HelpDialog(self, name='loading corpora', section='subsetting-a-corpus')
+        # self.helpDialog.exec_()
 
     def accept(self):
         filters = self.filterWidget.value()
@@ -1182,13 +1193,15 @@ class SubsetCorpusDialog(QDialog):
         new_corpus.name = name
         new_corpus.set_feature_matrix(self.corpus.specifier)
         save_binary(new_corpus,
-            corpus_name_to_path(self.parent().settings['storage'], new_corpus.name))
+                    corpus_name_to_path(self.parent().settings['storage'], new_corpus.name))
         QDialog.accept(self)
+
 
 class ExportCorpusDialog(QDialog):
     variantOptions = [('Do not include', None),
-                        ('Include in each word\'s line', 'column'),
-                        ('Have a line for each variant', 'token')]
+                      ('Include in each word\'s line', 'column'),
+                      ('Have a line for each variant', 'token')]
+
     def __init__(self, parent, corpus):
         QDialog.__init__(self, parent)
 
@@ -1198,19 +1211,19 @@ class ExportCorpusDialog(QDialog):
 
         inlayout = QFormLayout()
 
-        self.pathWidget = SaveFileWidget('Select file location','Text files (*.txt *.csv)')
+        self.pathWidget = SaveFileWidget('Select file location', 'Text files (*.txt *.csv)')
 
-        inlayout.addRow('File name:',self.pathWidget)
+        inlayout.addRow('File name:', self.pathWidget)
 
         self.columnDelimiterEdit = QLineEdit()
         self.columnDelimiterEdit.setText(',')
 
-        inlayout.addRow('Column delimiter:',self.columnDelimiterEdit)
+        inlayout.addRow('Column delimiter:', self.columnDelimiterEdit)
 
         self.transDelimiterEdit = QLineEdit()
         self.transDelimiterEdit.setText('.')
 
-        inlayout.addRow('Transcription delimiter:',self.transDelimiterEdit)
+        inlayout.addRow('Transcription delimiter:', self.transDelimiterEdit)
 
         self.variantWidget = QComboBox()
         for o in self.variantOptions:
@@ -1248,16 +1261,16 @@ class ExportCorpusDialog(QDialog):
 
         if filename == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a path to save the corpus.")
+                                         "Missing information", "Please specify a path to save the corpus.")
             return
 
         colDelim = codecs.getdecoder("unicode_escape")(self.columnDelimiterEdit.text())[0]
         if len(colDelim) != 1:
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The column delimiter must be a single character.")
+                                         "Invalid information", "The column delimiter must be a single character.")
             return
         transDelim = self.transDelimiterEdit.text()
         variant_behavior = self.variantOptions[self.variantWidget.currentIndex()][1]
-        export_corpus_csv(self.corpus,filename,colDelim,transDelim, variant_behavior)
+        export_corpus_csv(self.corpus, filename, colDelim, transDelim, variant_behavior)
 
         QDialog.accept(self)
