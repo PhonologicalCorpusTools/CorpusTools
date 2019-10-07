@@ -352,9 +352,12 @@ class DownloadFeatureMatrixDialog(QDialog):
         self.thread.finished.connect(self.progressDialog.accept)
 
     def help(self):
-        self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
-                                    section = 'downloadable-transcription-and-feature-choices')
-        self.helpDialog.exec_()
+        url = get_url('transcriptions and feature systems',
+                      section='downloadable-transcription-and-feature-choices')
+        webbrowser.open(url)
+        # self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
+        #                             section = 'downloadable-transcription-and-feature-choices')
+        # self.helpDialog.exec_()
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
@@ -1324,9 +1327,12 @@ class SystemFromCsvDialog(PCTDialog):
         self.thread.finishedCancelling.connect(self.progressDialog.reject)
 
     def help(self):
-        self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
-                                    section = 'loading-a-custom-feature-system')
-        self.helpDialog.exec_()
+        url = get_url('transcriptions and feature systems',
+                      section='using-a-custom-feature-system')
+        webbrowser.open(url)
+        # self.helpDialog = HelpDialog(self,name = 'transcriptions and feature systems',
+        #                             section = 'loading-a-custom-feature-system')
+        # self.helpDialog.exec_()
 
     def generateKwargs(self):
         kwargs = {}

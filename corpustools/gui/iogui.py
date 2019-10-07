@@ -357,9 +357,11 @@ class DownloadCorpusDialog(QDialog):
         self.thread.finished.connect(self.progressDialog.accept)
 
     def help(self):
-        self.helpDialog = HelpDialog(self, name='loading corpora',
-                                     section='using-a-built-in-corpus')
-        self.helpDialog.exec_()
+        url = get_url('loading corpora', section='using-a-built-in-corpus')
+        webbrowser.open(url)
+        # self.helpDialog = HelpDialog(self, name='loading corpora',
+        #                              section='using-a-built-in-corpus')
+        # self.helpDialog.exec_()
 
     def updateProgressText(self, text):
         self.progressDialog.setLabelText(text)
