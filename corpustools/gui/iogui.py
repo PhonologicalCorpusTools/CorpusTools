@@ -143,7 +143,7 @@ class LoadCorpusWorker(FunctionWorker):
 class CorpusLoadDialog(PCTDialog):
     def __init__(self, parent, current_corpus, settings):
         PCTDialog.__init__(self, parent, infinite_progress=True)
-        self.current_corpus = None if current_corpus is None else current_corpus
+        self.current_corpus = None if current_corpus is None else parent.corpus.name
         self.corpus = None
         self.settings = settings
         layout = QVBoxLayout()
