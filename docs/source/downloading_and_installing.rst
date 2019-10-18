@@ -18,7 +18,7 @@ using the following steps. Note that there are several dependencies that are
 pre-requisites before PCT can function properly. For Mac and Windows machines,
 we have created executable files that bundle most of the dependencies and the
 PCT software itself into a single package. Using these is the easiest /
-fastest way to get PCT up and running on your machine.
+fastest way to get PCT up and running on your machine. Note: PCT v 1.4.1 is confirmed to work on Mac OS 10.13 and higher, but may have issues on earlier OS platforms
 
 Download
 ========
@@ -37,7 +37,7 @@ Windows Installer
 # Download the latest version's installer (should be a file ending in .exe) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
 
 
-Mac Executable
+Mac Executable -- PCT v 1.4.1 is confirmed to work on 10.13 and higher, but may have issues on earlier OS platforms
 ==============
 
 # NOTE 1: When the software is downloaded, you may get a security warning indicating that you have tried to launch an unrecognized app. If you Ctrl-click on the application and select "Open," you should be able to override the security warning and use PCT normally.
