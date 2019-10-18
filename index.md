@@ -111,7 +111,7 @@ NOTE 2: When the software is downloaded, you may get a security warning indicati
 
 Download the latest version's installer (should be a file ending in .exe) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
 
-### Mac OS X (requires 10.8 or higher)
+### Mac OS X (requires 10.8 or higher) -- PCT v 1.4.1 is confirmed to work on 10.13 and higher, but may have issues on earlier OS platforms
 
 NOTE 1: When the software is downloaded, you may get a security warning indicating that you have tried to launch an unrecognized app. If you Ctrl-click on the application and select "Open," you should be able to override the security warning and use PCT normally.
 
