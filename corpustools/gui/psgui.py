@@ -538,6 +538,8 @@ class PhonoSearchDialog(FunctionDialog):
     def saveSearch(self):
         layoutCount = self.envWidget.environmentFrame.layout().count()-2  # This returns # of env spec.
         # the -2 avoids catching some unncessary widgets
+        if layoutCount == 0:  # save search should not work when no environment is specified
+            return
         for n in range(layoutCount):  # for each environment
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
             search = RecentSearch(widget)
