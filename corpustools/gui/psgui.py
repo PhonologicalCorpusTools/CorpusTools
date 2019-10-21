@@ -36,9 +36,9 @@ class PSWorker(FunctionWorker):
 
 class RecentSearch:
 
-    def __init__(self, envWidget):
+    def __init__(self, envWidget, note = str()):
         self.widgetData = list()
-        self.noteData = str()
+        self.noteData = note
         #envWidget = widget.environmentFrame.layout().itemAt(0).widget()
         #type(envWidget) == corpustools.gui.environments.EnvironmentWidget
         middle = envWidget.middleWidget
@@ -156,23 +156,23 @@ class RecentSearchDialog(QDialog):
         self.savedSearchesTable = QTableWidget()
         self.savedSearchesTable.setSortingEnabled(False)
         self.savedSearchesTable.setColumnCount(3)
-        self.savedSearchesTable.setHorizontalHeaderLabels(['Target', 'Environment', 'Notes'])
+        self.savedSearchesTable.setHorizontalHeaderLabels(['Name', 'Target', 'Environment'])
         self.savedSearchesTable.setRowCount(len(self.saved))
         self.savedSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
         savedLayout.addWidget(self.savedSearchesTable)
         self.tableLayout.addWidget(savedFrame)
         for i, search in enumerate(self.saved):
+            noteItem = QTableWidgetItem(search.note())
+            noteItem.setFlags(noteItem.flags() | Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(i, 0, noteItem)
+
             targetItem = QTableWidgetItem(search.target())
             targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(i, 0, targetItem)
+            self.savedSearchesTable.setItem(i, 1, targetItem)
 
             envItem = QTableWidgetItem(search.environment())
             envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(i, 1, envItem)
-
-            noteItem = QTableWidgetItem(search.note())
-            noteItem.setFlags(noteItem.flags() | Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(i, 2, noteItem)
+            self.savedSearchesTable.setItem(i, 2, envItem)
 
         self.savedSearchesTable.cellClicked.connect(self.deselectRecentTable)
         self.savedSearchesTable.cellClicked.connect(self.deselectCurrentTable)
@@ -352,6 +352,53 @@ class RecentSearchDialog(QDialog):
         self.selectedSearch = None
         self.updateNote()
         super().reject()
+
+
+class PSSaveDialog(QDialog):
+    def __init__(self, widget):
+        QDialog.__init__(self, widget)
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        search = RecentSearch(widget)
+
+        main.addRow('Name of search', self.nameWidget) # put 'name of search' input box here
+        main.addRow(QLabel('Target:'), QLabel(search.target()))
+        main.addRow(QLabel('Environment:'), QLabel(search.environment()))
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.setWindowTitle('Save current search')
+        self.createButton = QPushButton('Save')
+        self.createButton.setAutoDefault(True)
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+    def accept(self):
+        self.assignName()
+        QDialog.accept(self)
+
+    def assignName(self):
+        self.name = self.nameWidget.text()
+        return self.name
 
 
 class PhonoSearchDialog(FunctionDialog):
@@ -538,9 +585,15 @@ class PhonoSearchDialog(FunctionDialog):
     def saveSearch(self):
         layoutCount = self.envWidget.environmentFrame.layout().count()-2  # This returns # of env spec.
         # the -2 avoids catching some unncessary widgets
+        if layoutCount == 0:   # save search should not work when no environment is specified
+            return
         for n in range(layoutCount):  # for each environment
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
-            search = RecentSearch(widget)
+            name = str()
+            dialog = PSSaveDialog(widget)
+            if dialog.exec_():
+                name = dialog.name
+            search = RecentSearch(widget, name)
             self.savedSearches.append(search)
         alert = QMessageBox()
         alert.setWindowTitle('Success')
