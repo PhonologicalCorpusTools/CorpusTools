@@ -278,17 +278,17 @@ class RecentSearchDialog(QDialog):
 
             search = self.saved[row]
 
+            noteItem = QTableWidgetItem(search.note())
+            noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(row, 0, noteItem)
+
             targetItem = QTableWidgetItem(search.target())
             targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(row, 0, targetItem)
+            self.savedSearchesTable.setItem(row, 1, targetItem)
 
             envItem = QTableWidgetItem(search.environment())
             envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(row, 1, envItem)
-
-            noteItem = QTableWidgetItem(search.note())
-            noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(row, 2, noteItem)
+            self.savedSearchesTable.setItem(row, 2, envItem)
 
     def deleteCurrentSearch(self, index):
         self.currentSearchesTable.removeRow(index.row())
@@ -587,18 +587,27 @@ class PhonoSearchDialog(FunctionDialog):
         # the -2 avoids catching some unncessary widgets
         if layoutCount == 0:   # save search should not work when no environment is specified
             return
+        # size of layoutCount
+        cancelCount = 0 # should deduct the number of 'cancels' the user selects on the save window
         for n in range(layoutCount):  # for each environment
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
             name = str()
             dialog = PSSaveDialog(widget)
             if dialog.exec_():
                 name = dialog.name
+            else:
+                cancelCount += 1
+                continue
             search = RecentSearch(widget, name)
             self.savedSearches.append(search)
-        alert = QMessageBox()
-        alert.setWindowTitle('Success')
-        alert.setText('Search{} saved!'.format('es' if layoutCount > 1 else ''))
-        alert.exec_()
+
+        layoutCount = layoutCount - cancelCount
+        # the number of cancels is deducted so that the 'success' window shows the exact number of searches saved
+        if layoutCount > 0:
+            alert = QMessageBox()
+            alert.setWindowTitle('Success')
+            alert.setText('%d Search%s saved!' % (layoutCount, 'es' if layoutCount > 1 else ''))
+            alert.exec_()
 
     def generateKwargs(self):
         kwargs = {}
