@@ -1324,7 +1324,7 @@ class SegmentButton(QPushButton):
 class FeatureEdit(QLineEdit):
     featureEntered = Signal(list)
     featuresFinalized = Signal(list)
-    delimPattern = re.compile('([,;]+)')
+    delimPattern = re.compile('([,;]+[ ]?)')
     # delimPattern = re.compile('([,; ]+)')
     # The previous code (above) includes the space as a feature delimiter.
     # This raises error for features 'constricted glottis' and 'spread glottis' as they have a space in the name.
