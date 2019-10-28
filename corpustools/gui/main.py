@@ -912,7 +912,7 @@ class MainWindow(QMainWindow):
         self.recentSearches = dialog.recentSearches
         self.savedSearches = dialog.savedSearches
 
-
+    @check_for_empty_corpus
     def createWord(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel)
         if dialog.exec_():
