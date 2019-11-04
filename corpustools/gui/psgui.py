@@ -85,24 +85,24 @@ class RecentSearch:
 
 class RecentSearchDialog(QDialog):
 
-    def __init__(self, recents, saved):
+    def __init__(self, recents, saved, currentEnv):
         super().__init__()
         self.setWindowTitle('Searches')
         self.mainLayout = QVBoxLayout()
         self.tableLayout = QHBoxLayout()
         self.saved = saved
         self.recents = recents
-        self.currentSearches = list()
+        self.currentSearches = currentEnv
 
         self.setupRecentsTable()
         self.setupSavedTable()
         self.setupCurrentSearchTable()
 
         explainLayout = QHBoxLayout()
-        explanation = ('* Right-clicking a cell will reveal additional options.\n'
-                       '* To search a single environment, simply left-click to select it.\n'
-                       '* To search multiple environments, right-click each one and choose "Add to current search".\n'
-                       '* Click "Load selected search" when you are finished.\n'
+        explanation = ('* To add an environment to current search, right-click and choose "Add to current search"\n'
+                       '* To remove an environment, right-click and choose "Delete search".\n'
+                       '* You can also save recent searches by selecting "Save search" from the right-click menu.\n'
+                       '* Click "Update environments" when you are finished.\n'
                        )
         explainLabel = QLabel()
         explainLabel.setText(explanation)
@@ -111,10 +111,10 @@ class RecentSearchDialog(QDialog):
         explainLayout.addWidget(explainLabel)
 
         buttonLayout = QHBoxLayout()
-        self.okButton = QPushButton('Load selected search')
+        self.okButton = QPushButton('Update environments')
         self.okButton.clicked.connect(self.accept)
         buttonLayout.addWidget(self.okButton)
-        cancel = QPushButton('Go back')
+        cancel = QPushButton('Cancel')
         cancel.clicked.connect(self.reject)
         buttonLayout.addWidget(cancel)
 
@@ -185,10 +185,18 @@ class RecentSearchDialog(QDialog):
         self.currentSearchesTable.setSortingEnabled(False)
         self.currentSearchesTable.setColumnCount(2)
         self.currentSearchesTable.setHorizontalHeaderLabels(['Target', 'Environment'])
-        self.currentSearchesTable.setRowCount(0)
+        self.currentSearchesTable.setRowCount(len(self.currentSearches))
         self.currentSearchesTable.setSelectionBehavior(QTableWidget.SelectRows)
         currentLayout.addWidget(self.currentSearchesTable)
         self.tableLayout.addWidget(currentFrame)
+        for i, search in enumerate(self.currentSearches):
+            targetItem = QTableWidgetItem(search.target())
+            targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
+            self.currentSearchesTable.setItem(i, 1, targetItem)
+
+            envItem = QTableWidgetItem(search.environment())
+            envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
+            self.currentSearchesTable.setItem(i, 2, envItem)
 
         self.currentSearchesTable.cellClicked.connect(self.deselectRecentTable)
         self.currentSearchesTable.cellClicked.connect(self.deselectSavedTable)
@@ -196,7 +204,7 @@ class RecentSearchDialog(QDialog):
     def makeMenus(self):
         self.recentMenu = QMenu()
         self.deleteRecentAction = QAction('Delete search', self)
-        self.moveToSavedAction = QAction('Move to "saved" searches', self)
+        self.moveToSavedAction = QAction('Save search', self)
         self.addToCurrentAction = QAction('Add to current search', self)
         self.recentMenu.addAction(self.deleteRecentAction)
         self.recentMenu.addAction(self.moveToSavedAction)
@@ -212,7 +220,7 @@ class RecentSearchDialog(QDialog):
         self.savedSearchesTable.customContextMenuRequested.connect(self.showSavedMenu)
 
         self.currentMenu = QMenu()
-        self.deleteCurrentAction = QAction('Remove from current search', self)
+        self.deleteCurrentAction = QAction('Delete search', self)
         self.currentMenu.addAction(self.deleteCurrentAction)
         self.currentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.currentSearchesTable.customContextMenuRequested.connect(self.showCurrentMenu)
@@ -527,7 +535,13 @@ class PhonoSearchDialog(FunctionDialog):
         super().accept()
 
     def loadSearch(self):
-        dialog = RecentSearchDialog(self.recentSearches, self.savedSearches)
+        currentlyLoaded = list()
+        for n in range(self.envWidget.environmentFrame.layout().count() - 2):
+            widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
+            widget = RecentSearch(widget)
+            currentlyLoaded.append(widget)
+
+        dialog = RecentSearchDialog(self.recentSearches, self.savedSearches, currentlyLoaded)
         dialog.exec_()
         self.recentSearches = dialog.recents
         self.savedSearches = dialog.saved
