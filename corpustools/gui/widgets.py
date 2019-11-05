@@ -1336,7 +1336,7 @@ class FeatureEdit(QLineEdit):
         self.inventory = inventory
         self.valid_strings = self.inventory.valid_feature_strings()
 
-    def setCompleter(self,completer):
+    def setCompleter(self, completer):
         if self.completer is not None:
             self.disconnect(self.completer,0,0)
         self.completer = completer
@@ -1388,7 +1388,7 @@ class FeatureEdit(QLineEdit):
                     e.ignore()
                     return
         else:
-            if e.key() in (Qt.Key_Enter, Qt.Key_Return):
+            if e.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Tab):
                 self.finalize()
                 return
         isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
@@ -1413,7 +1413,7 @@ class FeatureEdit(QLineEdit):
         self.completer.complete(cr)
 
 class FeatureCompleter(QCompleter):
-    def __init__(self,inventory,parent=None):
+    def __init__(self, inventory, parent=None):
         QCompleter.__init__(self, parent)
         self.stringList = inventory.valid_feature_strings()
         self.setModel(QStringListModel())

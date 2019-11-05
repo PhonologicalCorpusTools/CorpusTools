@@ -249,14 +249,18 @@ class RecentSearchDialog(QDialog):
         index = self.recentSearchesTable.indexAt(pos)
         action = self.recentMenu.exec_(self.recentSearchesTable.mapToGlobal(pos))
         item = self.recentSearchesTable.itemAt(index.row(), index.column())
-        if not item:
+#        if not item:
+#            return
+
+        try:
+            if action == self.deleteRecentAction:
+                self.deleteRecentSearch(index)
+            elif action == self.moveToSavedAction:
+                self.moveToSavedTable(index)
+            elif action == self.addToCurrentAction:
+                self.addToCurrent(index, self.recents)
+        except IndexError: # Right-clicking on an empty slot raises IndexError
             return
-        if action == self.deleteRecentAction:
-            self.deleteRecentSearch(index)
-        elif action == self.moveToSavedAction:
-            self.moveToSavedTable(index)
-        elif action == self.addToCurrentAction:
-            self.addToCurrent(index, self.recents)
 
     def addToCurrent(self, index, searchlist):
         search = searchlist[index.row()]
