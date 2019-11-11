@@ -1407,7 +1407,7 @@ class FeatureEdit(QLineEdit):
                 e.ignore()
                 return
         else:
-            if e.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Tab):
+            if e.key() in (Qt.Key_Enter, Qt.Key_Return):
                 self.finalize()
                 return
         isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
