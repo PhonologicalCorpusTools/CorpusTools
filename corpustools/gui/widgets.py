@@ -1324,6 +1324,7 @@ class SegmentButton(QPushButton):
 class FeatureEdit(QLineEdit):
     featureEntered = Signal(list)
     featuresFinalized = Signal(list)
+    tabPressed = Signal()
     delimPattern = re.compile('([,;]+[ ]?)')
     # delimPattern = re.compile('([,; ]+)')
     # The previous code (above) includes the space as a feature delimiter.
@@ -1335,6 +1336,12 @@ class FeatureEdit(QLineEdit):
         self.clearOnEnter = clearOnEnter
         self.inventory = inventory
         self.valid_strings = self.inventory.valid_feature_strings()
+        self.tabPressed.connect(self.tab)
+
+    def tab(self):
+        index = self.completer.currentIndex()
+        self.completer.activated.emit(index.data())
+        self.completer.popup().hide()
 
     def setCompleter(self, completer):
         if self.completer is not None:
@@ -1379,14 +1386,26 @@ class FeatureEdit(QLineEdit):
 
     def currentFeature(self):
         return self.delimPattern.split(self.text())[-1]
+    
+    def event(self, e):
+        # keyPressEvent() doesn't catch the tab key when pressed so catch it under event
+        if e.type() == QEvent.KeyPress:
+            if e.key() == Qt.Key_Tab:
+                self.tabPressed.emit()
+                return True
+            else:
+                self.keyPressed(e)
+                return True
+        return super().event(e)
 
-    def keyPressEvent(self,e):
+
+    def keyPressed(self,e):
         if self.completer and self.completer.popup().isVisible():
-                if e.key() in ( Qt.Key_Space, Qt.Key_Enter,
-                                Qt.Key_Return,Qt.Key_Escape,
-                                Qt.Key_Tab,Qt.Key_Backtab):
-                    e.ignore()
-                    return
+            if e.key() in ( Qt.Key_Space, Qt.Key_Enter,
+                            Qt.Key_Return, Qt.Key_Escape,
+                            Qt.Key_Tab, Qt.Key_Backtab):  # e.ignore() doesn't work when e.key() == Qt.Key_Tab
+                e.ignore()
+                return
         else:
             if e.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Tab):
                 self.finalize()
