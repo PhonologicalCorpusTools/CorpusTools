@@ -792,6 +792,7 @@ your corpus at any time. To do so, go to “Corpus” / “Summary.”
    a. **Segments**: Clicking on any individual segment in the inventory will
       display its type and token frequency in the corpus, both in terms
       of the raw number of occurrences and the percentage of occurrences.
+      Note that the percentages are calculated as follows: First, for any segment X, the number of occurrences of X in words in the corpus is counted (e.g., if the corpus consists of the words 'mother' [#mʌðɚ#], 'father' [#fɑðɚ#], and 'mommy' [#mɑmi#], and X is [m], then it is counted once in the word 'mother' and twice in the word 'mommy' for a total of 3 occurrences). This number is then relativized to the total number of segments (including word boundaries, which are also included in the summary window) that occur in words in the corpus (e.g. 18 in the three-word corpus of 'mother,' 'father,' and 'mommy' since each word has four phonemes and two word boundaries = 6 segments each), for a type-based percentage of 3/18 = 0.1667 = 16.67%. In the case of token frequency, each occurrence of a segment is multiplied by the frequency of occurrence in the corpus. E.g. if the token frequencies in our mini-corpus example are n = 3 for 'mother,' n = 4 for 'father,' and n = 7 for 'mommy,' then the token frequency of [m] is (1*3) + (2*7) = 17, and the token-based percentage of [m] is 17 / [(3*6) + (4*6) + (7*6)] = 0.2024 = 20.24%.
 
 3. **Columns**: Under the “Columns” tab, you can get information about each
    of the columns in your corpus (including any that you have added as
