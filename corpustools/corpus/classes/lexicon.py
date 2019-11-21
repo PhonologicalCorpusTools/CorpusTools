@@ -1089,15 +1089,23 @@ class Word(object):
                 setattr(self, '_transcription_name', key)
 
             elif isinstance(value, str):
-                try:
-                    value = float(value)
-                    if key == 'Frequency':
-                        setattr(self, 'Frequency', value)
-                        setattr(self, '_frequency', self.Frequency)
-                except ValueError:
-                    #it's spelling, leave value as-is
+                if key == 'Spelling':
+                    # it's spelling. leave value as-is even though it is only consist of numeric
                     setattr(self, '_spelling', value)
                     setattr(self, '_spelling_name', key)
+
+                elif key == 'Frequency':
+                    setattr(self, 'Frequency', float(value))
+                    setattr(self, '_frequency', self.Frequency)
+                #try:
+                #    value = float(value)
+                #    if key == 'Frequency':
+                #        setattr(self, 'Frequency', value)
+                #        setattr(self, '_frequency', self.Frequency)
+                #except ValueError:
+                #    #it's spelling, leave value as-is
+                #    setattr(self, '_spelling', value)
+                #    setattr(self, '_spelling_name', key)
                 setattr(self, key, value)
 
             elif isinstance(value, (float, int)):
