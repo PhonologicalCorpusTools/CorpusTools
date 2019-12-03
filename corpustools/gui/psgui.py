@@ -83,6 +83,53 @@ class RecentSearch:
         self.noteData = noteData
 
 
+class PSSaveDialog(QDialog):
+    def __init__(self, widget):
+        QDialog.__init__(self, widget)
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        main = QFormLayout()
+
+        self.nameWidget = QLineEdit()
+
+        search = RecentSearch(widget)
+
+        main.addRow('Name of search', self.nameWidget) # put 'name of search' input box here
+        main.addRow(QLabel('Target:'), QLabel(search.target()))
+        main.addRow(QLabel('Environment:'), QLabel(search.environment()))
+
+        mainFrame = QFrame()
+        mainFrame.setLayout(main)
+
+        layout.addWidget(mainFrame)
+
+        self.setWindowTitle('Save current search')
+        self.createButton = QPushButton('Save')
+        self.createButton.setAutoDefault(True)
+        self.cancelButton = QPushButton('Cancel')
+        acLayout = QHBoxLayout()
+        acLayout.addWidget(self.createButton)
+        acLayout.addWidget(self.cancelButton)
+        self.createButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(acLayout)
+
+        layout.addWidget(acFrame)
+
+        self.setLayout(layout)
+
+    def accept(self):
+        self.assignName()
+        QDialog.accept(self)
+
+    def assignName(self):
+        self.name = self.nameWidget.text()
+        return self.name
+
+
 class RecentSearchDialog(QDialog):
 
     def __init__(self, recents, saved, currentEnv):
@@ -202,6 +249,7 @@ class RecentSearchDialog(QDialog):
         self.currentSearchesTable.cellClicked.connect(self.deselectSavedTable)
 
     def makeMenus(self):
+        # Dropdown menu for recent searches
         self.recentMenu = QMenu()
         self.deleteRecentAction = QAction('Delete search', self)
         self.moveToSavedAction = QAction('Save search', self)
@@ -212,13 +260,17 @@ class RecentSearchDialog(QDialog):
         self.recentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.recentSearchesTable.customContextMenuRequested.connect(self.showRecentMenu)
 
+        # Dropdown menu for saved searches
         self.savedMenu = QMenu()
+        self.changeSavedAction = QAction('Name this search', self)
         self.deleteSaveAction = QAction('Delete search', self)
+        self.savedMenu.addAction(self.changeSavedAction)
         self.savedMenu.addAction(self.deleteSaveAction)
         self.savedMenu.addAction(self.addToCurrentAction)
         self.savedSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.savedSearchesTable.customContextMenuRequested.connect(self.showSavedMenu)
 
+        # Dropdown menu for current searches
         self.currentMenu = QMenu()
         self.deleteCurrentAction = QAction('Delete search', self)
         self.currentMenu.addAction(self.deleteCurrentAction)
@@ -242,6 +294,8 @@ class RecentSearchDialog(QDialog):
             return
         if action == self.deleteSaveAction:
             self.deleteSavedSearch(index)
+        if action == self.changeSavedAction:
+            self.changeSavedSearch(index)
         elif action == self.addToCurrentAction:
             self.addToCurrent(index, self.saved)
 
@@ -327,13 +381,23 @@ class RecentSearchDialog(QDialog):
         self.currentSearchesTable.clearSelection()
         self.currentSearchesTable.setCurrentCell(-1, -1)
 
+    def changeSavedSearch(self, index):
+        search = self.recents[index.row()]
+        widget = QWidget(search)
+        dialog = PSSaveDialog(widget)
+        if dialog.exec_():
+            name = dialog.name
+
     def updateNote(self):
         for row in range(self.savedSearchesTable.rowCount()):
             tableItem = self.savedSearchesTable.item(row, 2)
             if tableItem is None:
                 note = str()
             else:
-                note = tableItem.text()
+                if self.saved[row].noteData != '-':
+                    note = self.saved[row].noteData
+                else:
+                    note = tableItem.text()
             self.saved[row].updateNote(note)
 
 
@@ -364,53 +428,6 @@ class RecentSearchDialog(QDialog):
         self.selectedSearch = None
         self.updateNote()
         super().reject()
-
-
-class PSSaveDialog(QDialog):
-    def __init__(self, widget):
-        QDialog.__init__(self, widget)
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignCenter)
-
-        main = QFormLayout()
-
-        self.nameWidget = QLineEdit()
-
-        search = RecentSearch(widget)
-
-        main.addRow('Name of search', self.nameWidget) # put 'name of search' input box here
-        main.addRow(QLabel('Target:'), QLabel(search.target()))
-        main.addRow(QLabel('Environment:'), QLabel(search.environment()))
-
-        mainFrame = QFrame()
-        mainFrame.setLayout(main)
-
-        layout.addWidget(mainFrame)
-
-        self.setWindowTitle('Save current search')
-        self.createButton = QPushButton('Save')
-        self.createButton.setAutoDefault(True)
-        self.cancelButton = QPushButton('Cancel')
-        acLayout = QHBoxLayout()
-        acLayout.addWidget(self.createButton)
-        acLayout.addWidget(self.cancelButton)
-        self.createButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-
-        acFrame = QFrame()
-        acFrame.setLayout(acLayout)
-
-        layout.addWidget(acFrame)
-
-        self.setLayout(layout)
-
-    def accept(self):
-        self.assignName()
-        QDialog.accept(self)
-
-    def assignName(self):
-        self.name = self.nameWidget.text()
-        return self.name
 
 
 class PhonoSearchDialog(FunctionDialog):
@@ -609,7 +626,6 @@ class PhonoSearchDialog(FunctionDialog):
         cancelCount = 0 # should deduct the number of 'cancels' the user selects on the save window
         for n in range(layoutCount):  # for each environment
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
-            name = str()
             dialog = PSSaveDialog(widget)
             if dialog.exec_():
                 name = dialog.name
