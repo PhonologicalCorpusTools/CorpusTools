@@ -84,16 +84,14 @@ class RecentSearch:
 
 
 class PSSaveDialog(QDialog):
-    def __init__(self, widget):
-        QDialog.__init__(self, widget)
+    def __init__(self, search):
+        super(PSSaveDialog, self).__init__()
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
         main = QFormLayout()
 
         self.nameWidget = QLineEdit()
-
-        search = RecentSearch(widget)
 
         main.addRow('Name of search', self.nameWidget) # put 'name of search' input box here
         main.addRow(QLabel('Target:'), QLabel(search.target()))
@@ -104,7 +102,7 @@ class PSSaveDialog(QDialog):
 
         layout.addWidget(mainFrame)
 
-        self.setWindowTitle('Save current search')
+        self.setWindowTitle('Name this search')
         self.createButton = QPushButton('Save')
         self.createButton.setAutoDefault(True)
         self.cancelButton = QPushButton('Cancel')
@@ -239,11 +237,11 @@ class RecentSearchDialog(QDialog):
         for i, search in enumerate(self.currentSearches):
             targetItem = QTableWidgetItem(search.target())
             targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
-            self.currentSearchesTable.setItem(i, 1, targetItem)
+            self.currentSearchesTable.setItem(i, 0, targetItem)
 
             envItem = QTableWidgetItem(search.environment())
             envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
-            self.currentSearchesTable.setItem(i, 2, envItem)
+            self.currentSearchesTable.setItem(i, 1, envItem)
 
         self.currentSearchesTable.cellClicked.connect(self.deselectRecentTable)
         self.currentSearchesTable.cellClicked.connect(self.deselectSavedTable)
@@ -252,20 +250,20 @@ class RecentSearchDialog(QDialog):
         # Dropdown menu for recent searches
         self.recentMenu = QMenu()
         self.deleteRecentAction = QAction('Delete search', self)
-        self.moveToSavedAction = QAction('Save search', self)
+        self.recentToSavedAction = QAction('Save search', self)
         self.addToCurrentAction = QAction('Add to current search', self)
         self.recentMenu.addAction(self.deleteRecentAction)
-        self.recentMenu.addAction(self.moveToSavedAction)
+        self.recentMenu.addAction(self.recentToSavedAction)
         self.recentMenu.addAction(self.addToCurrentAction)
         self.recentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.recentSearchesTable.customContextMenuRequested.connect(self.showRecentMenu)
 
         # Dropdown menu for saved searches
         self.savedMenu = QMenu()
-        self.changeSavedAction = QAction('Name this search', self)
         self.deleteSaveAction = QAction('Delete search', self)
-        self.savedMenu.addAction(self.changeSavedAction)
+        self.changeSavedAction = QAction('Change name', self)
         self.savedMenu.addAction(self.deleteSaveAction)
+        self.savedMenu.addAction(self.changeSavedAction)
         self.savedMenu.addAction(self.addToCurrentAction)
         self.savedSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.savedSearchesTable.customContextMenuRequested.connect(self.showSavedMenu)
@@ -273,7 +271,9 @@ class RecentSearchDialog(QDialog):
         # Dropdown menu for current searches
         self.currentMenu = QMenu()
         self.deleteCurrentAction = QAction('Delete search', self)
+        self.currentToSavedAction = QAction('Save search', self)
         self.currentMenu.addAction(self.deleteCurrentAction)
+        self.currentMenu.addAction(self.currentToSavedAction)
         self.currentSearchesTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.currentSearchesTable.customContextMenuRequested.connect(self.showCurrentMenu)
 
@@ -285,6 +285,8 @@ class RecentSearchDialog(QDialog):
             return
         if action == self.deleteCurrentAction:
             self.deleteCurrentSearch(index)
+        elif action == self.currentToSavedAction:
+            self.currentToSavedTable(index)
 
     def showSavedMenu(self, pos):
         index = self.savedSearchesTable.indexAt(pos)
@@ -309,8 +311,8 @@ class RecentSearchDialog(QDialog):
         try:
             if action == self.deleteRecentAction:
                 self.deleteRecentSearch(index)
-            elif action == self.moveToSavedAction:
-                self.moveToSavedTable(index)
+            elif action == self.recentToSavedAction:
+                self.recentToSavedTable(index)
             elif action == self.addToCurrentAction:
                 self.addToCurrent(index, self.recents)
         except IndexError: # Right-clicking on an empty slot raises IndexError
@@ -331,30 +333,26 @@ class RecentSearchDialog(QDialog):
             envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
             self.currentSearchesTable.setItem(row, 1, envItem)
 
-    def moveToSavedTable(self, index):
+    def recentToSavedTable(self, index):
         search = self.recents[index.row()]
+        dialog = PSSaveDialog(search)
+        if dialog.exec_():
+            search.noteData = dialog.name
         self.saved.append(search)
         self.deleteRecentSearch(index)
 
         # for some reason, adding a new row isn't working. a blank row is added on screen, no cell contents.
         # after closing and re-opening, the row is correctly filled (meaning self.saved is properly updated)
         # to solve this problem, update the entire table from scratch, which seems to work
-        self.savedSearchesTable.setRowCount(len(self.saved))
-        for row in range(len(self.saved)):
+        self.refreshSavedTable()
 
-            search = self.saved[row]
-
-            noteItem = QTableWidgetItem(search.note())
-            noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(row, 0, noteItem)
-
-            targetItem = QTableWidgetItem(search.target())
-            targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(row, 1, targetItem)
-
-            envItem = QTableWidgetItem(search.environment())
-            envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
-            self.savedSearchesTable.setItem(row, 2, envItem)
+    def currentToSavedTable(self, index):
+        search = self.currentSearches[index.row()]
+        dialog = PSSaveDialog(search)
+        if dialog.exec_():
+            search.noteData = dialog.name
+        self.saved.append(search)
+        self.refreshSavedTable()  # update the saved table after adding a new row
 
     def deleteCurrentSearch(self, index):
         self.currentSearchesTable.removeRow(index.row())
@@ -382,11 +380,28 @@ class RecentSearchDialog(QDialog):
         self.currentSearchesTable.setCurrentCell(-1, -1)
 
     def changeSavedSearch(self, index):
-        search = self.recents[index.row()]
-        widget = QWidget(search)
-        dialog = PSSaveDialog(widget)
+        search = self.saved[index.row()]
+        dialog = PSSaveDialog(search)
         if dialog.exec_():
-            name = dialog.name
+            self.saved[index.row()].noteData = dialog.name
+        self.refreshSavedTable()  # update the saved table after adding a new row
+
+    def refreshSavedTable(self):
+        self.savedSearchesTable.setRowCount(len(self.saved))
+        for row in range(len(self.saved)):
+            search = self.saved[row]
+
+            noteItem = QTableWidgetItem(search.note())
+            noteItem.setFlags(noteItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(row, 0, noteItem)
+
+            targetItem = QTableWidgetItem(search.target())
+            targetItem.setFlags(targetItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(row, 1, targetItem)
+
+            envItem = QTableWidgetItem(search.environment())
+            envItem.setFlags(envItem.flags() ^ Qt.ItemIsEditable)
+            self.savedSearchesTable.setItem(row, 2, envItem)
 
     def updateNote(self):
         for row in range(self.savedSearchesTable.rowCount()):
@@ -626,7 +641,8 @@ class PhonoSearchDialog(FunctionDialog):
         cancelCount = 0 # should deduct the number of 'cancels' the user selects on the save window
         for n in range(layoutCount):  # for each environment
             widget = self.envWidget.environmentFrame.layout().itemAt(n).widget()
-            dialog = PSSaveDialog(widget)
+            search = RecentSearch(widget)
+            dialog = PSSaveDialog(search)
             if dialog.exec_():
                 name = dialog.name
             else:
