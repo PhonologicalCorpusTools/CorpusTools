@@ -1,3 +1,4 @@
+from corpustools.gui.imports import QMessageBox
 from corpustools import __version__ as currentPCTversion
 from decimal import Decimal
 import regex as re
@@ -3045,6 +3046,20 @@ class Corpus(object):
         #If the word doesn't exist, add it
         try:
             check = self.find(word.spelling)
+            if check.Transcription == word.Transcription:
+                askBox = QMessageBox()
+                askBox.setWindowTitle("Duplicated words?")
+                askBox.setText(("Your input \'{}\' already exists in the corpus. \n"
+                                "You can add it as a separate entry and have duplicate rows, \n"
+                                "or simply add frequency to the existing entry."
+                               .format(word.spelling)))
+                askBox.addButton("Add as a separate entry", QMessageBox.AcceptRole)
+                askBox.addButton("Add frequency to the existing word", QMessageBox.RejectRole)
+                if askBox.exec_() == QMessageBox.AcceptRole:
+                    allow_duplicates = True
+            else:
+                allow_duplicates = True
+
             if allow_duplicates:
                 #Some words have more than one entry in a corpus, e.g. "live" and "live"
                 #so they need to be assigned unique keys
@@ -3059,7 +3074,7 @@ class Corpus(object):
                         self.wordlist[key] = word
                         break
             else:
-                check.frequency += 1
+                check.frequency += word.frequency
                 check.wordtokens.extend(tokens)
                 return
         except KeyError:
