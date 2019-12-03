@@ -3050,7 +3050,7 @@ class Corpus(object):
                 askBox = QMessageBox()
                 askBox.setWindowTitle("Duplicated words?")
                 askBox.setText(("Your input \'{}\' already exists in the corpus. \n"
-                                "You can add it as a separate entry and have duplicate rows, \n"
+                                "You can add it as a separate entry, \n"
                                 "or simply add frequency to the existing entry."
                                .format(word.spelling)))
                 askBox.addButton("Add as a separate entry", QMessageBox.AcceptRole)
