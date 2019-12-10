@@ -916,7 +916,24 @@ class MainWindow(QMainWindow):
     def createWord(self):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel)
         if dialog.exec_():
-            self.corpusModel.addWord(dialog.word)
+            allow_duplicates = False
+            try:
+                duplicate_check = self.corpus.find(dialog.word.spelling)
+                if duplicate_check.Transcription == dialog.word.Transcription:
+                    askBox = QMessageBox()
+                    askBox.setWindowTitle("Duplicated words?")
+                    askBox.setText(("Your input \'{}\' already exists in the corpus. \n"
+                                    "You can add it as a separate entry, \n"
+                                    "or simply add frequency to the existing entry.".format(dialog.word.spelling)))
+                    askBox.addButton("Add as a separate entry", QMessageBox.AcceptRole)
+                    askBox.addButton("Add frequency to the existing word", QMessageBox.RejectRole)
+                    if askBox.exec_() == QMessageBox.AcceptRole:
+                        allow_duplicates = True
+                else:
+                    allow_duplicates = True
+            except KeyError:
+                pass
+            self.corpusModel.addWord(dialog.word, allow_duplicates)
             self.enableSave()
 
     def toggleWarnings(self):
