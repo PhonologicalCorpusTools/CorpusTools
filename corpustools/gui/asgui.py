@@ -253,7 +253,8 @@ class ASDialog(FunctionDialog):
 
 
     def envelopesSelected(self):
-        self.coeffEdit.setText('')
+        # self.coeffEdit.setText('')
+        self.coeffEdit.setText('0')
         self.coeffEdit.setEnabled(False)
         self.filterEdit.setText('8')
 
