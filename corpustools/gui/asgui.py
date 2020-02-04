@@ -253,8 +253,7 @@ class ASDialog(FunctionDialog):
 
 
     def envelopesSelected(self):
-        # self.coeffEdit.setText('')
-        self.coeffEdit.setText('0')
+        self.coeffEdit.setText('N/A')
         self.coeffEdit.setEnabled(False)
         self.filterEdit.setText('8')
 
@@ -272,7 +271,7 @@ class ASDialog(FunctionDialog):
             return
         try:
             coeffs = int(self.coeffEdit.text())
-            if coeffs < 0:
+            if coeffs <= 0:
                 raise(ValueError)
             if int(self.coeffEdit.text()) > int(self.filterEdit.text())-1:
                 raise(ValueError)
@@ -375,7 +374,7 @@ class ASDialog(FunctionDialog):
                                 'Minimum frequency': float(self.minFreqEdit.text()),
                                 'Maximum frequency': float(self.maxFreqEdit.text()),
                                 'Number of filters': int(self.filterEdit.text()),
-                                'Number of coefficients': int(self.coeffEdit.text()),
+                                'Number of coefficients': self.coeffEdit.text(),
                                 'Result': r[2],
                                 'Is similarity': self.outputSimWidget.isChecked()})
 
