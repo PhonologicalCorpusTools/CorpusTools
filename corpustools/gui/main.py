@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
         self.settingsObject.beginGroup('display')
         self.settings['display']['size'] = self.settingsObject.value('size', defaultValue=QSize(759, 500))
         self.settings['display']['pos'] = self.settingsObject.value('pos', defaultValue=QPoint(50, 50))
-        self.settings['display']['sigfigs'] = self.settingsObject.value('sigfigs', defaultValue=3)
+        self.settings['display']['sigfigs'] = int(self.settingsObject.value('sigfigs', defaultValue=3))
         self.settings['display']['tooltips'] = self.settingsObject.value('tooltips', defaultValue=1)
         self.settings['display']['searchResults'] = self.settingsObject.value('searchResults', defaultValue=0)
         self.settingsObject.endGroup()
