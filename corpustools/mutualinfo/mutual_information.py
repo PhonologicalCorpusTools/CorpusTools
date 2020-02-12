@@ -57,7 +57,7 @@ def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
-        raise MutualInfoError('The bigram {} was not found in the corpus using {}s'.format(''.join(query),sequence_type))
+        raise MutualInfoError('The bigram {} was not found in the corpus using {}s'.format(''.join(query), corpus_context.sequence_type))
 
 
     if unigram_dict[query[0]] == 0.0:
