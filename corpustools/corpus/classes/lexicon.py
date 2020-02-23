@@ -1025,7 +1025,7 @@ class Word(object):
     """
 
     word_attributes = {'_corpus': None, '_transcription': None, '_spelling': None,
-                       '_transcription_name': None, '_spelling_name': None,
+                       '_transcription_name': None, '_spelling_name': None, '_freq_name': None,
                        'alt_transcriptions': list(), 'alt_spellings': list(),
                        '_frequency': 0, 'wordtokens': list(),
                        'descriptors': list()}
@@ -1054,8 +1054,9 @@ class Word(object):
                         value = locale.atof(value)
                     except (ValueError, TypeError):
                         value = float('nan')
-                    if key == 'Frequency':
-                        setattr(self, key, value)
+                    if hasattr(att, 'is_freq'):
+                        self._freq_name = key
+                        setattr(self, 'Frequency', float(value))
                         setattr(self, '_frequency', value)
 
                 elif att.att_type == 'tier':
@@ -1108,6 +1109,7 @@ class Word(object):
                 #    setattr(self, '_spelling_name', key)
                 setattr(self, key, value)
 
+            #TODO: Need modification. possibly this chunk should has something to do with the issues
             elif isinstance(value, (float, int)):
                 if key == 'Frequency':
                     setattr(self, 'Frequency', value)
@@ -1125,7 +1127,7 @@ class Word(object):
             self._spelling_name = 'Spelling'
             if not 'Spelling' in self.descriptors:
                 self.descriptors.append('Spelling')
-        if 'Frequency' not in self.descriptors:
+        if not hasattr(self, 'Frequency'):
             self.descriptors.append('Frequency')
             self._frequency = 0
             self.Frequency = 0
@@ -2007,6 +2009,13 @@ class Attribute(object):
         self.att_type = att_type
         self._display_name = display_name
         self.is_default = is_default
+
+        # Special treatment for the 'frequency' attribute type selected when creating corpus from a file.
+        # freq should basically work like other numerics in terms of summary presentation so att_type = 'numeric'
+        # but should mark it with self.is_freq
+        if self.att_type == 'freq':
+            self.att_type = 'numeric'
+            self.is_freq = True
 
         if self.att_type == 'numeric':
             self._range = [0,0]
@@ -3085,7 +3094,7 @@ class Corpus(object):
                 elif isinstance(getattr(word, d), Transcription):
                     self._attributes.append(Attribute(d,'tier'))
                 elif isinstance(getattr(word, d), (int, float)):
-                    self._attributes.append(Attribute(d, 'numeric'))
+                    self._attributes.append(Attribute(d, 'frequency'))
 
         for a in self._attributes:
             if not hasattr(word, a.name):

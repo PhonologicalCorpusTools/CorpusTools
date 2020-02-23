@@ -261,6 +261,7 @@ class AnnotationTypeWidget(QGroupBox):
         self.typeWidget.addItem('Transcription (alternative)')
         self.typeWidget.addItem('Orthography (default)')
         self.typeWidget.addItem('Orthography (alternative)')
+        self.typeWidget.addItem('Frequency')
         self.typeWidget.addItem('Numeric')
         self.typeWidget.addItem('Other (character)')
         if ignorable:
@@ -429,7 +430,9 @@ class AnnotationTypeWidget(QGroupBox):
             atype = 'tier'
             a.is_default = True if 'default' in check_text else False
 
-        elif check_text == 'Numeric':
+        elif check_text == 'Frequency':
+            atype = 'freq'
+        elif check_text == check_text == 'Numeric':
             atype = 'numeric'
         elif check_text == 'Other (character)':
             atype = 'factor'

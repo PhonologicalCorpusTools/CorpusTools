@@ -898,6 +898,32 @@ class LoadCorpusDialog(PCTDialog):
                                  'corpus has no spelling system, then use "Other (character)" or "Notes".')
             return
 
+        duplicates = False
+        if names.count('Transcription (default)') > 1:
+            duplicates = 'Transcription (default)'
+        elif names.count('Orthography (default)') > 1:
+            duplicates = 'Orthography (default)'
+        elif names.count('Frequency') > 1:
+            duplicates = 'Frequency'
+        if type(duplicates) is str:
+            if 'default' in duplicates:
+                QMessageBox.critical(self, 'Duplicate information',
+                                     (
+                                         'You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
+                                         'section to change this.\n\n'
+                                         'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
+                                         'more than one transcription or spelling systems, choose one default and set the others '
+                                         'to "alternative".'.format(duplicates)))
+            elif 'Frequency' in duplicates:
+                QMessageBox.critical(self, 'Duplicate information',
+                                     (
+                                         'You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
+                                         'section to change this.\n\n'
+                                         'A corpus can only have one "Frequency" column. If your corpus contains '
+                                         'more than one frequency systems, choose one as "Frequency" and set the others '
+                                         'to "Numeric".'.format(duplicates)))
+            return
+
         atts = [x.attribute.display_name for x in kwargs['annotation_types']]
         duplicates = list(set([x for x in atts if atts.count(x) > 1]))
         if duplicates:
@@ -906,22 +932,6 @@ class LoadCorpusDialog(PCTDialog):
                                  'You have more than one column named {} in your corpus. Please go to the '
                                  '"Parsing Preview" section and ensure that all columns have unique names.'.format(
                                      duplicates))
-            return
-
-        duplicates = False
-        names = [x.name for x in kwargs['annotation_types']]
-        if names.count('Transcription (default)') > 1:
-            duplicates = 'Transcription (default)'
-        elif names.count('Orthography (default)') > 1:
-            duplicates = 'Orthography (default)'
-        if duplicates:
-            QMessageBox.critical(self, 'Duplicate information',
-                                 (
-                                     'You have more than one column with an Annotation Type set to {}. Please go to the "Parsing Preview" '
-                                     'section to change this.\n\n'
-                                     'A corpus can only have one "default" Transcription and Orthography. If your corpus contains '
-                                     'more than one transcription or spelling system, choose one default and set the others '
-                                     'to "alternative".'.format(duplicates)))
             return
 
         if self.textType == 'csv':
@@ -955,12 +965,13 @@ class LoadCorpusDialog(PCTDialog):
 
         if (not self.textType == 'spelling' and
                 not any(['Transcription' in x.name for x in kwargs['annotation_types']])):
-            alert = QMessageBox()
-            alert.setWindowTitle('No transcription selected')
-            alert.setText('You did not select any transcription column for your corpus. '
-                          'Without transcriptions, you will not be able to use some of PCT\'s analysis '
-                          'functions. Click "OK" if you want to continue without transcriptions. Click '
-                          '"Cancel" to go back.')
+            alert = QMessageBox(QMessageBox.Warning,
+                                'No transcription selected',
+                                'You did not select any transcription column for your corpus. '
+                                'Without transcriptions, you will not be able to use some of PCT\'s analysis '
+                                'functions. Click "OK" if you want to continue without transcriptions. Click '
+                                '"Cancel" to go back.',
+                                QMessageBox.NoButton, self)
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.addButton('Cancel', QMessageBox.RejectRole)
             alert.exec_()
@@ -969,18 +980,33 @@ class LoadCorpusDialog(PCTDialog):
             else:
                 kwargs['feature_system_path'] = None
         elif 'feature_system_path' in kwargs and kwargs['feature_system_path'] is None:
-            alert = QMessageBox()
-            alert.setWindowTitle('No feature file selected')
-            alert.setText('You didn’t select any “Transcription and feature” file for your corpus. '
-                          'You have two options:\n\n1. Select a pre-existing feature file from the list, even if it '
-                          'doesn’t perfectly match your corpus’ system. PCT will warn you of the symbols that aren’t '
-                          'recognized and assign default features to them; these can then be changed later.\n\n'
-                          '2. Exit out of the “Import corpus” dialogue box, and download or create an appropriate '
-                          'feature system by going to “File” > “Manage feature systems…”; once a system is available, '
-                          'return to the “Import corpus” dialogue box and select that feature system.')
+            alert = QMessageBox(QMessageBox.Warning,
+                                'No feature file selected',
+                                'You didn’t select any “Transcription and feature” file for your corpus. '
+                                'You have two options:\n\n1. Select a pre-existing feature file from the list, even if it '
+                                'doesn’t perfectly match your corpus’ system. PCT will warn you of the symbols that aren’t '
+                                'recognized and assign default features to them; these can then be changed later.\n\n'
+                                '2. Exit out of the “Import corpus” dialogue box, and download or create an appropriate '
+                                'feature system by going to “File” > “Manage feature systems…”; once a system is available, '
+                                'return to the “Import corpus” dialogue box and select that feature system.',
+                                QMessageBox.NoButton, self)
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             if alert.buttonRole(alert.clickedButton()) == QMessageBox.AcceptRole:
+                return
+
+        if not any(['Frequency' in x.name for x in kwargs['annotation_types']]):
+            alert = QMessageBox(QMessageBox.Warning,
+                                'No frequency selected',
+                                'You didn’t select any frequency column for your corpus. \n'
+                                'Click "OK" if you want to proceed, and PCT will create a new column for frequency '
+                                'with the value of 1 for each entry. '
+                                'Click "Cancel" to go back.',
+                                QMessageBox.NoButton, self)
+            alert.addButton('OK', QMessageBox.AcceptRole)
+            alert.addButton('Cancel', QMessageBox.RejectRole)
+            alert.exec_()
+            if alert.buttonRole(alert.clickedButton()) == QMessageBox.RejectRole:
                 return
 
         if name in get_corpora_list(self.settings['storage']):
