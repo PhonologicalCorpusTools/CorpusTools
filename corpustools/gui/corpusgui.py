@@ -4,14 +4,15 @@ from corpustools.contextmanagers import CanonicalVariantContext
 from corpustools.corpus.classes import Word, Attribute
 
 from .widgets import (RadioSelectWidget, SegmentSelectionWidget,
-                    InventoryBox,
-                    CreateClassWidget, TranscriptionWidget, TierWidget)
+                      InventoryBox,
+                      CreateClassWidget, TranscriptionWidget, TierWidget)
 from .featuregui import FeatureSystemSelect
 from .helpgui import HelpDialog
 
+
 class InventorySummary(QWidget):
     def __init__(self, corpus, inventory, parent=None):
-        QWidget.__init__(self,parent)
+        QWidget.__init__(self, parent)
 
         self.type_context = CanonicalVariantContext(corpus, 'transcription', 'type')
         self.token_context = CanonicalVariantContext(corpus, 'transcription', 'token')
@@ -43,39 +44,39 @@ class InventorySummary(QWidget):
         layout = QFormLayout()
         layout.setAlignment(Qt.AlignTop)
         with self.type_context as c:
-            freq_base = c.get_frequency_base(gramsize = 1,
-                            probability = False)
+            freq_base = c.get_frequency_base(gramsize=1,
+                                             probability=False)
 
-            probs = c.get_frequency_base(gramsize = 1,
-                        probability = True)
+            probs = c.get_frequency_base(gramsize=1,
+                                         probability=True)
 
         layout.addRow(QLabel('Type frequency:'),
-                            QLabel('{:,.1f} ({:.2%})'.format(
-                                                freq_base[seg], probs[seg]
-                                                )
-                            ))
+                      QLabel('{:,.1f} ({:.2%})'.format(
+                          freq_base[seg], probs[seg]
+                      )
+                      ))
 
         with self.token_context as c:
-            freq_base = c.get_frequency_base(gramsize = 1,
-                            probability = False)
+            freq_base = c.get_frequency_base(gramsize=1,
+                                             probability=False)
 
-            probs = c.get_frequency_base(gramsize = 1,
-                            probability = True)
+            probs = c.get_frequency_base(gramsize=1,
+                                         probability=True)
 
         layout.addRow(QLabel('Token frequency:'),
-                            QLabel('{:,.1f} ({:.2%})'.format(
-                                                    freq_base[seg], probs[seg]
-                                                    )
-                            ))
+                      QLabel('{:,.1f} ({:.2%})'.format(
+                          freq_base[seg], probs[seg]
+                      )
+                      ))
 
         self.detailFrame.setLayout(layout)
 
-        self.layout().addWidget(self.detailFrame, alignment = Qt.AlignTop)
+        self.layout().addWidget(self.detailFrame, alignment=Qt.AlignTop)
 
 
 class AttributeSummary(QWidget):
     def __init__(self, corpus, columns, parent=None):
-        QWidget.__init__(self,parent)
+        QWidget.__init__(self, parent)
 
         self.corpus = corpus
 
@@ -83,11 +84,11 @@ class AttributeSummary(QWidget):
 
         self.columnSelect = QComboBox()
         self.corpus_attributes = [x for x in self.corpus.attributes]
-        for a in columns:#self.corpus_attributes:
+        for a in columns:  # self.corpus_attributes:
             self.columnSelect.addItem(str(a))
         self.columnSelect.currentIndexChanged.connect(self.summarizeColumn)
 
-        layout.addRow(QLabel('Column'),self.columnSelect)
+        layout.addRow(QLabel('Column'), self.columnSelect)
 
         self.detailFrame = QFrame()
 
@@ -131,11 +132,10 @@ class CorpusSummary(QDialog):
     def __init__(self, parent, corpus, inventory, columns):
         QDialog.__init__(self, parent)
 
-
-        if hasattr(corpus,'lexicon'):
+        if hasattr(corpus, 'lexicon'):
             c = corpus.lexicon
 
-            if hasattr(corpus,'discourses'):
+            if hasattr(corpus, 'discourses'):
                 speech_corpus = True
             else:
                 speech_corpus = False
@@ -147,7 +147,7 @@ class CorpusSummary(QDialog):
 
         main = QFormLayout()
 
-        main.addRow(QLabel('Corpus:'),QLabel(corpus.name))
+        main.addRow(QLabel('Corpus:'), QLabel(corpus.name))
         main.addRow(QLabel('Number of word types:'), QLabel(str(len(corpus))))
         token_count = int(sum(word.frequency for word in corpus))
         main.addRow(QLabel('Number of word tokens:'), QLabel(str(token_count)))
@@ -158,13 +158,13 @@ class CorpusSummary(QDialog):
         else:
             main.addRow(QLabel('Feature system:'), QLabel('None'))
             showInventory = False
-        #the inventory is loaded near the end of this function, in order
-        #to make it appear in the right place in the layout
+        # the inventory is loaded near the end of this function, in order
+        # to make it appear in the right place in the layout
 
         mainFrame = QFrame()
         mainFrame.setLayout(main)
 
-        layout.addWidget(mainFrame)#, alignment = Qt.AlignCenter)
+        layout.addWidget(mainFrame)  # , alignment = Qt.AlignCenter)
 
         layout.addWidget(AttributeSummary(corpus, columns))
 
@@ -186,9 +186,10 @@ class CorpusSummary(QDialog):
         self.resize(self.inventorySummary.width(), self.inventorySummary.height() + 200)
         self.setWindowTitle('Corpus summary')
 
+
 class AddWordDialog(QDialog):
-    def __init__(self, parent, corpus, inventory, word = None):
-        QDialog.__init__(self,parent)
+    def __init__(self, parent, corpus, inventory, word=None):
+        QDialog.__init__(self, parent)
         self.corpus = corpus
         self.inventory = inventory
         layout = QVBoxLayout()
@@ -200,7 +201,7 @@ class AddWordDialog(QDialog):
 
         if any([a.att_type == 'tier' for a in self.corpus.attributes]) and self.corpus.has_transcription:
             self.edits['transcription'] = TranscriptionWidget('Transcription', corpus, inventory)
-            #self.edits['transcription'].transcriptionChanged.connect(self.updateTiers)
+            # self.edits['transcription'].transcriptionChanged.connect(self.updateTiers)
             main.addRow(self.edits['transcription'])
         if any([a.att_type == 'spelling' for a in self.corpus.attributes]):
             self.edits['spelling'] = QLineEdit()
@@ -292,7 +293,7 @@ class AddWordDialog(QDialog):
                 if text == 'Empty':
                     text = ''
                 kwargs['transcription'] = [x for x in text.split('.') if x != '']
-                #if not kwargs[a.name]:
+                # if not kwargs[a.name]:
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a Transcription.".format(str(a)))
                 #    return
@@ -300,14 +301,15 @@ class AddWordDialog(QDialog):
                 for i in kwargs['transcription']:
                     if i not in self.inventory.segs:
                         reply = QMessageBox.critical(self,
-                            'Invalid information', 'The transcription can only contain only symbols '
-                                                   'from the corpus\' inventory.'.format(str(a)))
+                                                     'Invalid information',
+                                                     'The transcription can only contain only symbols '
+                                                     'from the corpus\' inventory.'.format(str(a)))
                         return
             elif a.att_type == 'spelling':
                 kwargs['spelling'] = self.edits['spelling'].text()
-                if kwargs['spelling'] == '':# and a.name == 'spelling':
+                if kwargs['spelling'] == '':  # and a.name == 'spelling':
                     kwargs['spelling'] = None
-                #if not kwargs[a.name] and a.name == 'spelling':
+                # if not kwargs[a.name] and a.name == 'spelling':
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a spelling.".format(str(a)))
                 #    return
@@ -316,7 +318,8 @@ class AddWordDialog(QDialog):
                     kwargs['frequency'] = float(self.edits['frequency'].text())
                 except ValueError:
                     reply = QMessageBox.critical(self,
-                            "Invalid information", "The column '{}' must be a number.".format(str(a)))
+                                                 "Invalid information",
+                                                 "The column '{}' must be a number.".format(str(a)))
                     return
 
             elif a.att_type == 'factor':
@@ -324,13 +327,14 @@ class AddWordDialog(QDialog):
         self.word = Word(**kwargs)
         QDialog.accept(self)
 
+
 class AddTierDialog(CreateClassWidget):
     def __init__(self, parent, corpus, inventory, class_type='tier'):
         CreateClassWidget.__init__(self, parent, corpus, inventory, class_type)
 
     def accept(self):
         tierName = self.nameEdit.text()
-        self.attribute = Attribute(tierName.replace(' ',''),'tier',tierName)
+        self.attribute = Attribute(tierName.replace(' ', ''), 'tier', tierName)
         if tierName == '':
             reply = QMessageBox.critical(self,
                                          "Missing information", "Please enter a name for the tier.")
@@ -349,8 +353,8 @@ class AddTierDialog(CreateClassWidget):
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
-        #createType = self.createType.currentText()
-        #createList = self.createWidget.value()
+        # createType = self.createType.currentText()
+        # createList = self.createWidget.value()
         inClass, notInClass = self.generateClass()
         if not inClass:
             reply = QMessageBox.critical(self,
@@ -360,9 +364,10 @@ class AddTierDialog(CreateClassWidget):
         self.segList = inClass
         QDialog.accept(self)
 
+
 class AddCountColumnDialog(QDialog):
     def __init__(self, parent, corpus, inventory):
-        QDialog.__init__(self,parent)
+        QDialog.__init__(self, parent)
         self.corpus = corpus
 
         layout = QVBoxLayout()
@@ -371,16 +376,15 @@ class AddCountColumnDialog(QDialog):
 
         self.nameWidget = QLineEdit()
 
-        main.addRow('Name of column',self.nameWidget)
+        main.addRow('Name of column', self.nameWidget)
 
         self.tierWidget = TierWidget(self.corpus)
 
-        main.addRow('Tier to count on',self.tierWidget)
+        main.addRow('Tier to count on', self.tierWidget)
 
         self.segmentSelect = SegmentSelectionWidget(inventory)
 
         main.addRow(self.segmentSelect)
-
 
         mainFrame = QFrame()
         mainFrame.setLayout(main)
@@ -406,19 +410,21 @@ class AddCountColumnDialog(QDialog):
 
     def accept(self):
         name = self.nameWidget.text()
-        self.attribute = Attribute(name.replace(' ',''),'numeric',name)
+        self.attribute = Attribute(name.replace(' ', ''), 'numeric', name)
         if name == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please enter a name for the tier.")
+                                         "Missing information", "Please enter a name for the tier.")
             return
         elif self.attribute.name in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The name '{}' overlaps with a protected column.".format(name))
+                                         "Invalid information",
+                                         "The name '{}' overlaps with a protected column.".format(name))
             return
         elif self.attribute in self.corpus.attributes:
 
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
-                    "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton, self)
+                                 "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton,
+                                 self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -432,8 +438,8 @@ class AddCountColumnDialog(QDialog):
 
 
 class AddColumnDialog(QDialog):
-    def __init__(self, parent, corpus, attribute = None):
-        QDialog.__init__(self,parent)
+    def __init__(self, parent, corpus, attribute=None):
+        QDialog.__init__(self, parent)
         self.corpus = corpus
 
         layout = QVBoxLayout()
@@ -442,7 +448,7 @@ class AddColumnDialog(QDialog):
 
         self.nameWidget = QLineEdit()
 
-        main.addRow('Name of column',self.nameWidget)
+        main.addRow('Name of column', self.nameWidget)
 
         self.typeWidget = QComboBox()
         for at in Attribute.ATT_TYPES:
@@ -451,12 +457,11 @@ class AddColumnDialog(QDialog):
             self.typeWidget.addItem(at.title())
         self.typeWidget.currentIndexChanged.connect(self.updateDefault)
 
-        main.addRow('Type of column',self.typeWidget)
+        main.addRow('Type of column', self.typeWidget)
 
         self.defaultWidget = QLineEdit()
 
-        main.addRow('Default value',self.defaultWidget)
-
+        main.addRow('Default value', self.defaultWidget)
 
         mainFrame = QFrame()
         mainFrame.setLayout(main)
@@ -490,19 +495,21 @@ class AddColumnDialog(QDialog):
         name = self.nameWidget.text()
         at = self.typeWidget.currentText().lower()
         dv = self.defaultWidget.text()
-        self.attribute = Attribute(name.replace(' ',''),at,name)
+        self.attribute = Attribute(name.replace(' ', ''), at, name)
         if name == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please enter a name for the tier.")
+                                         "Missing information", "Please enter a name for the tier.")
             return
         elif self.attribute.name in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The name '{}' overlaps with a protected column.".format(name))
+                                         "Invalid information",
+                                         "The name '{}' overlaps with a protected column.".format(name))
             return
         elif self.attribute in self.corpus.attributes:
 
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
-                    "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton, self)
+                                 "'{}' is already the name of a tier.  Overwrite?".format(name), QMessageBox.NoButton,
+                                 self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -512,7 +519,8 @@ class AddColumnDialog(QDialog):
                 dv = float(dv)
             except ValueError:
                 reply = QMessageBox.critical(self,
-                        "Invalid information", "The default value for numeric columns must be a number")
+                                             "Invalid information",
+                                             "The default value for numeric columns must be a number")
                 return
         self.attribute.default_value = dv
         QDialog.accept(self)
@@ -520,7 +528,7 @@ class AddColumnDialog(QDialog):
 
 class AddAbstractTierDialog(QDialog):
     def __init__(self, parent, corpus, inventory):
-        QDialog.__init__(self,parent)
+        QDialog.__init__(self, parent)
         self.corpus = corpus
         self.inventory = inventory
 
@@ -568,38 +576,39 @@ class AddAbstractTierDialog(QDialog):
         #         consonants.append(seg.symbol)
         #     else:
         #         vowels.append(seg.symbol)
-        segList = {'C' : consonants,
-                    'V' : vowels}
+        segList = {'C': consonants,
+                   'V': vowels}
         return segList
 
     def preview(self):
         if self.cvradio.isChecked():
             segList = self.generateSegList()
         preview = "The following abstract symbols correspond to the following segments:\n"
-        for k,v in segList.items():
-            preview += '{}: {}\n'.format(k,', '.join(v))
+        for k, v in segList.items():
+            preview += '{}: {}\n'.format(k, ', '.join(v))
         reply = QMessageBox.information(self,
-                "Tier preview", preview)
-
+                                        "Tier preview", preview)
 
     def accept(self):
         if self.cvradio.isChecked():
             tierName = 'CV skeleton'
-            self.attribute = Attribute('cvskeleton','factor','CV skeleton')
+            self.attribute = Attribute('cvskeleton', 'factor', 'CV skeleton')
             self.segList = self.generateSegList()
 
         if tierName == '':
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please enter a name for the tier.")
+                                         "Missing information", "Please enter a name for the tier.")
             return
         if self.attribute.name in self.corpus.basic_attributes:
             reply = QMessageBox.critical(self,
-                    "Invalid information", "The name '{}' overlaps with a protected column.".format(tierName))
+                                         "Invalid information",
+                                         "The name '{}' overlaps with a protected column.".format(tierName))
             return
         elif self.attribute in self.corpus.attributes:
 
             msgBox = QMessageBox(QMessageBox.Warning, "Duplicate tiers",
-                    "'{}' is already the name of a tier.  Overwrite?".format(tierName), QMessageBox.NoButton, self)
+                                 "'{}' is already the name of a tier.  Overwrite?".format(tierName),
+                                 QMessageBox.NoButton, self)
             msgBox.addButton("Overwrite", QMessageBox.AcceptRole)
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -646,11 +655,12 @@ class RemoveAttributeDialog(QDialog):
         selected = self.tierSelect.selectedItems()
         if not selected:
             reply = QMessageBox.critical(self,
-                    "Missing information", "Please specify a column to remove.")
+                                         "Missing information", "Please specify a column to remove.")
             return
         self.tiers = [x.text() for x in selected]
         msgBox = QMessageBox(QMessageBox.Warning, "Remove columns",
-                "This will permanently remove the columns: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+                             "This will permanently remove the columns: {}.  Are you sure?".format(
+                                 ', '.join(self.tiers)), QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
@@ -661,17 +671,15 @@ class RemoveAttributeDialog(QDialog):
     def removeAll(self):
         if self.tierSelect.count() == 0:
             reply = QMessageBox.critical(self,
-                    "Missing information", "There are no columns to remove.")
+                                         "Missing information", "There are no columns to remove.")
             return
         self.tiers = [self.tierSelect.item(i).text() for i in range(self.tierSelect.count())]
         msgBox = QMessageBox(QMessageBox.Warning, "Remove columns",
-                "This will permanently remove the columns: {}.  Are you sure?".format(', '.join(self.tiers)), QMessageBox.NoButton, self)
+                             "This will permanently remove the columns: {}.  Are you sure?".format(
+                                 ', '.join(self.tiers)), QMessageBox.NoButton, self)
         msgBox.addButton("Remove", QMessageBox.AcceptRole)
         msgBox.addButton("Cancel", QMessageBox.RejectRole)
         if msgBox.exec_() != QMessageBox.AcceptRole:
             return
 
         QDialog.accept(self)
-
-
-

@@ -871,7 +871,7 @@ class LoadCorpusDialog(PCTDialog):
             elif self.runningSelect.currentText() == 'Orthography':
                 if not any([x.anchor for x in kwargs['annotation_types']]):
                     QMessageBox.critical(self, 'Incompatible Information',
-                                         'You have selecting running text of type "Orthography" in the left window, '
+                                         'You have selected running text of type "Orthography" in the left window, '
                                          'but in the Parsing Preview window you did not select an orthography.')
                     return
 
