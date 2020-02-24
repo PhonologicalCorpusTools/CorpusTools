@@ -858,6 +858,7 @@ class LoadCorpusDialog(PCTDialog):
                 x.is_default = False
                 x.attribute.is_default = False
 
+        # Prompting messages when users try to create a corpus from a file but requirements are not satisfied
         type_ = self.supported_types[self.tabWidget.currentIndex() + 1][0]
         if type_ == 'running':
             if self.runningSelect.currentText() == 'Transcribed':
@@ -969,7 +970,7 @@ class LoadCorpusDialog(PCTDialog):
                                 'No transcription selected',
                                 'You did not select any transcription column for your corpus. '
                                 'Without transcriptions, you will not be able to use some of PCT\'s analysis '
-                                'functions. Click "OK" if you want to continue without transcriptions. Click '
+                                'functions. \nClick "OK" if you want to continue without transcriptions. \nClick '
                                 '"Cancel" to go back.',
                                 QMessageBox.NoButton, self)
             alert.addButton('OK', QMessageBox.AcceptRole)
@@ -979,6 +980,7 @@ class LoadCorpusDialog(PCTDialog):
                 return
             else:
                 kwargs['feature_system_path'] = None
+
         elif 'feature_system_path' in kwargs and kwargs['feature_system_path'] is None:
             alert = QMessageBox(QMessageBox.Warning,
                                 'No feature file selected',
@@ -995,12 +997,12 @@ class LoadCorpusDialog(PCTDialog):
             if alert.buttonRole(alert.clickedButton()) == QMessageBox.AcceptRole:
                 return
 
-        if not any(['Frequency' in x.name for x in kwargs['annotation_types']]):
+        if not any(['Frequency' in x.name for x in kwargs['annotation_types']]) and type_ == 'csv':
+            # a column for freq is expected if creating corpus from csv:
             alert = QMessageBox(QMessageBox.Warning,
                                 'No frequency selected',
                                 'You didn’t select any frequency column for your corpus. \n'
-                                'Click "OK" if you want to proceed, and PCT will create a new column for frequency '
-                                'with the value of 1 for each entry. '
+                                'Click "OK" if you want to proceed, and PCT will create a new column for frequency.\n '
                                 'Click "Cancel" to go back.',
                                 QMessageBox.NoButton, self)
             alert.addButton('OK', QMessageBox.AcceptRole)
