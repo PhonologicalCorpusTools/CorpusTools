@@ -1028,7 +1028,7 @@ class MainWindow(QMainWindow):
             msgBox.setStandardButtons(QMessageBox.Ok)
             result = msgBox.exec_()
 
-
+    @check_for_transcription
     @check_for_empty_corpus
     def corpusSummary(self):
         dialog = CorpusSummary(self,self.corpusModel.corpus, self.inventoryModel, self.corpusModel.columns)
