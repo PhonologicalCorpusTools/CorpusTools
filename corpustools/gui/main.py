@@ -775,7 +775,6 @@ class MainWindow(QMainWindow):
         dialog = FLDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
         result = dialog.exec_()
         if result:
-            graph = FLGraph(dialog.results)
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
                 self.FLWindow.table.model().addRows(dialog.results)
             else:
