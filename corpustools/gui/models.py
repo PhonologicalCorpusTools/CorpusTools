@@ -1413,6 +1413,8 @@ class InventoryModel(QAbstractTableModel):
         return sorted(data)
 
     def sortData(self):
+        if len(self._data) != 0:
+            return
         sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
         sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
         sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
