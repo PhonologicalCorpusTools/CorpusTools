@@ -56,6 +56,8 @@ from .infogui import InformativityDialog
 from .autogui import AutoDialog
 from .helpgui import AboutDialog, HelpDialog, get_url
 
+from corpustools.gui.graph import FLGraph
+
 
 class QApplicationMessaging(QApplication):
     messageFromOtherInstance = Signal(bytes)
