@@ -292,13 +292,13 @@ class AddWordDialog(QDialog):
                 text = self.edits['transcription'].text()
                 if text == 'Empty':
                     text = ''
-                kwargs['transcription'] = [x for x in text.split('.') if x != '']
+                kwargs[a.display_name] = [x for x in text.split('.') if x != '']
                 # if not kwargs[a.name]:
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a Transcription.".format(str(a)))
                 #    return
 
-                for i in kwargs['transcription']:
+                for i in kwargs[a.display_name]:
                     if i not in self.inventory.segs:
                         reply = QMessageBox.critical(self,
                                                      'Invalid information',
@@ -306,16 +306,16 @@ class AddWordDialog(QDialog):
                                                      'from the corpus\' inventory.'.format(str(a)))
                         return
             elif a.att_type == 'spelling':
-                kwargs['spelling'] = self.edits['spelling'].text()
-                if kwargs['spelling'] == '':  # and a.name == 'spelling':
-                    kwargs['spelling'] = None
+                kwargs[a.display_name] = self.edits['spelling'].text()
+                if kwargs[a.display_name] == '':  # and a.name == 'spelling':
+                    kwargs[a.display_name] = None
                 # if not kwargs[a.name] and a.name == 'spelling':
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a spelling.".format(str(a)))
                 #    return
-            elif a.att_type == 'numeric':
+            elif a.att_type == 'numeric' and hasattr(a, 'is_freq'):
                 try:
-                    kwargs['frequency'] = float(self.edits['frequency'].text())
+                    kwargs[a.display_name] = float(self.edits['frequency'].text())
                 except ValueError:
                     reply = QMessageBox.critical(self,
                                                  "Invalid information",
@@ -323,7 +323,7 @@ class AddWordDialog(QDialog):
                     return
 
             elif a.att_type == 'factor':
-                kwargs['factor'] = self.edits['factor'].text()
+                kwargs[a.display_name] = self.edits['factor'].text()
         self.word = Word(**kwargs)
         QDialog.accept(self)
 
