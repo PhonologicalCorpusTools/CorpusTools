@@ -264,6 +264,9 @@ class AddWordDialog(QDialog):
             self.createButton = QPushButton('Create word')
             self.setWindowTitle('Create word')
         else:
+            self.edits['transcription'].setText('.'.join(word.Transcription._list))
+            self.edits['spelling'].setText(word.Spelling)
+            self.edits['frequency'].setText(str(word.Frequency))
             self.createButton = QPushButton('Save word changes')
             self.setWindowTitle('Edit word')
         self.createButton.setAutoDefault(True)
