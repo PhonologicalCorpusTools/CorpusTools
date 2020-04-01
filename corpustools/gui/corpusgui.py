@@ -252,6 +252,9 @@ class AddWordDialog(QDialog):
             self.createButton = QPushButton('Create word')
             self.setWindowTitle('Create word')
         else:
+            self.edits['transcription'].setText('.'.join(word.Transcription._list))
+            self.edits['spelling'].setText(word.Spelling)
+            self.edits['frequency'].setText(str(word.Frequency))
             self.createButton = QPushButton('Save word changes')
             self.setWindowTitle('Edit word')
         self.createButton.setAutoDefault(True)
@@ -313,7 +316,7 @@ class AddWordDialog(QDialog):
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a spelling.".format(str(a)))
                 #    return
-            elif a.att_type == 'numeric' and hasattr(a, 'is_freq'):
+            elif a.att_type == 'numeric' and (hasattr(a, 'is_freq') or a.display_name == 'Frequency'):
                 try:
                     kwargs[a.display_name] = float(self.edits['frequency'].text())
                 except ValueError:
