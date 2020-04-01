@@ -1109,7 +1109,7 @@ class Word(object):
                 #    setattr(self, '_spelling_name', key)
                 setattr(self, key, value)
 
-            #TODO: Need modification. possibly this chunk should has something to do with the issues
+            #TODO: Need to learn what this does.
             elif isinstance(value, (float, int)):
                 if key == 'Frequency':
                     setattr(self, 'Frequency', value)

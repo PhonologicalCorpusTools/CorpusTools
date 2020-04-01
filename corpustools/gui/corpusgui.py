@@ -202,17 +202,29 @@ class AddWordDialog(QDialog):
         if any([a.att_type == 'tier' for a in self.corpus.attributes]) and self.corpus.has_transcription:
             self.edits['transcription'] = TranscriptionWidget('Transcription', corpus, inventory)
             # self.edits['transcription'].transcriptionChanged.connect(self.updateTiers)
+            try:
+                self.edits['transcription'].setText('.'.join(word.Transcription._list))
+            except AttributeError:
+                pass
             main.addRow(self.edits['transcription'])
         if any([a.att_type == 'spelling' for a in self.corpus.attributes]):
             self.edits['spelling'] = QLineEdit()
+            try:
+                self.edits['spelling'].setText(word.Spelling)
+            except AttributeError:
+                pass
             main.addRow(QLabel('Spelling'), self.edits['spelling'])
-        if any([a.att_type == 'numeric' for a in self.corpus.attributes]):
-            self.edits['frequency'] = QLineEdit()
-            self.edits['frequency'].setText('0')
-            main.addRow(QLabel('Frequency'), self.edits['frequency'])
         if any([a.att_type == 'factor' for a in self.corpus.attributes]):
             self.edits['factor'] = QLineEdit()
             main.addRow(QLabel('Factor'), self.edits['factor'])
+
+        # Frequency is mandatory
+        self.edits['frequency'] = QLineEdit()
+        try:
+            self.edits['frequency'].setText(str(word.Frequency))
+        except AttributeError:
+            self.edits['frequency'].setText('0')
+        main.addRow(QLabel('Frequency'), self.edits['frequency'])
 
         # for a in self.corpus.attributes:
         #     if a.att_type == 'tier':# and a.name == 'Transcription':
@@ -313,7 +325,7 @@ class AddWordDialog(QDialog):
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a spelling.".format(str(a)))
                 #    return
-            elif a.att_type == 'numeric' and hasattr(a, 'is_freq'):
+            elif a.att_type == 'numeric' and (hasattr(a, 'is_freq') or a.display_name == 'Frequency'):
                 try:
                     kwargs[a.display_name] = float(self.edits['frequency'].text())
                 except ValueError:
