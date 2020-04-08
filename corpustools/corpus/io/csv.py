@@ -48,7 +48,8 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
         lines = []
         head = f.readline().strip()
         for line in f.readlines():
-            lines.append(line.strip())
+            if line != '\n':
+                lines.append(line.strip())
 
     best = ''
     num = 1
