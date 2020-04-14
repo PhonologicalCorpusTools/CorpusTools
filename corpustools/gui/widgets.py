@@ -2292,9 +2292,9 @@ class BigramDialog(QDialog):
 
         rhsEnvLayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        self.lhs = SegmentSelectionWidget(self.inventory, exclusive = True)
+        self.lhs = SegmentSelectionWidget(self.inventory, exclusive = False)
 
-        self.rhs = SegmentSelectionWidget(self.inventory, exclusive = True)
+        self.rhs = SegmentSelectionWidget(self.inventory, exclusive = False)
 
         lhsEnvLayout.addWidget(self.lhs)
         rhsEnvLayout.addWidget(self.rhs)
@@ -2358,8 +2358,11 @@ class BigramDialog(QDialog):
                     "Missing information", "Please specify a right hand of the bigram.")
             return
 
-        env = lhs, rhs
-        self.rowToAdd.emit([env])
+        # iterate over multiple selected segments and add a row for each combination
+        for l, r in product(lhs, rhs):
+            env = l, r
+            self.rowToAdd.emit([env])
+
         if not self.addOneMore:
             QDialog.accept(self)
         else:
