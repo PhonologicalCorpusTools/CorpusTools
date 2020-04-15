@@ -24,7 +24,7 @@ class FLGraph:
         # Plots a circular graph with edges connecting all the vertices, where the width of each edge is
         #   50 * functional load
         ig.plot(self.graph, layout=self.graph.layout_circle(), vertex_label=self.graph.vs["name"],
-                edge_width=[(50*weight) for weight in self.graph.es["weight"]])
+                edge_width=[1-(50 * weight) for weight in self.graph.es["weight"]])
 
     def construct_graph(self):
         # Creates a graph from self.segments and self.fl_weights
