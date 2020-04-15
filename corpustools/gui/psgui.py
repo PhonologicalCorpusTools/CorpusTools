@@ -279,42 +279,52 @@ class RecentSearchDialog(QDialog):
 
     def showCurrentMenu(self, pos):
         index = self.currentSearchesTable.indexAt(pos)
+        selected = self.currentSearchesTable.selectionModel().selectedRows()  # multiple search selection as a list
         action = self.currentMenu.exec_(self.currentSearchesTable.mapToGlobal(pos))
         item = self.currentSearchesTable.itemAt(index.row(), index.column())
-        if not item:
+        if not item or action is None:
             return
         if action == self.deleteCurrentAction:
-            self.deleteCurrentSearch(index)
+            for index in reversed(selected):  # and loop over the list to get each search
+                self.deleteCurrentSearch(index)
+            return
         elif action == self.currentToSavedAction:
-            self.currentToSavedTable(index)
+            for index in selected:  # and loop over the list to get each search
+                self.currentToSavedTable(index)
 
     def showSavedMenu(self, pos):
         index = self.savedSearchesTable.indexAt(pos)
+        selected = self.savedSearchesTable.selectionModel().selectedRows()  # multiple search selection as a list
         action = self.savedMenu.exec_(self.savedSearchesTable.mapToGlobal(pos))
         item = self.savedSearchesTable.itemAt(index.row(), index.column())
-        if not item:
+        if not item or action is None:
             return
         if action == self.deleteSaveAction:
-            self.deleteSavedSearch(index)
+            for index in reversed(selected):  # and loop over the list to get each search
+                self.deleteSavedSearch(index)
+            return
         if action == self.changeSavedAction:
             self.changeSavedSearch(index)
+            return
         elif action == self.addToCurrentAction:
-            self.addToCurrent(index, self.saved)
+            for index in selected:
+                self.addToCurrent(index, self.saved)
 
     def showRecentMenu(self, pos):
         index = self.recentSearchesTable.indexAt(pos)
+        selected = self.recentSearchesTable.selectionModel().selectedRows()
         action = self.recentMenu.exec_(self.recentSearchesTable.mapToGlobal(pos))
-        item = self.recentSearchesTable.itemAt(index.row(), index.column())
-#        if not item:
-#            return
-
         try:
             if action == self.deleteRecentAction:
-                self.deleteRecentSearch(index)
+                for index in reversed(selected):
+                    self.deleteRecentSearch(index)
+                return
             elif action == self.recentToSavedAction:
-                self.recentToSavedTable(index)
+                for index in selected:
+                    self.recentToSavedTable(index)
             elif action == self.addToCurrentAction:
-                self.addToCurrent(index, self.recents)
+                for index in selected:
+                    self.addToCurrent(index, self.recents)
         except IndexError: # Right-clicking on an empty slot raises IndexError
             return
 
