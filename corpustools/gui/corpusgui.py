@@ -207,6 +207,7 @@ class AddWordDialog(QDialog):
             except AttributeError:
                 pass
             main.addRow(self.edits['transcription'])
+
         if any([a.att_type == 'spelling' for a in self.corpus.attributes]):
             self.edits['spelling'] = QLineEdit()
             try:
@@ -214,17 +215,26 @@ class AddWordDialog(QDialog):
             except AttributeError:
                 pass
             main.addRow(QLabel('Spelling'), self.edits['spelling'])
-        if any([a.att_type == 'factor' for a in self.corpus.attributes]):
-            self.edits['factor'] = QLineEdit()
-            main.addRow(QLabel('Factor'), self.edits['factor'])
 
         # Frequency is mandatory
         self.edits['frequency'] = QLineEdit()
         try:
-            self.edits['frequency'].setText(str(word.Frequency))
+            self.edits['frequency'].setText(str(word._frequency))
         except AttributeError:
             self.edits['frequency'].setText('0')
         main.addRow(QLabel('Frequency'), self.edits['frequency'])
+
+        # After three core columns (transcription, spelling, and freq) come factor columns
+        if any([a.att_type == 'factor' for a in self.corpus.attributes]):
+            for i, b in enumerate([a.att_type == 'factor' for a in self.corpus.attributes]):
+                if b:
+                    self.edits[self.corpus.attributes[i].name] = QLineEdit()
+                    try:
+                        self.edits[self.corpus.attributes[i].name].setText(getattr(word, self.corpus.attributes[i].name))
+                    except AttributeError:
+                        pass
+                    main.addRow(QLabel(self.corpus.attributes[i].display_name),
+                                self.edits[self.corpus.attributes[i].name])
 
         # for a in self.corpus.attributes:
         #     if a.att_type == 'tier':# and a.name == 'Transcription':
@@ -321,6 +331,8 @@ class AddWordDialog(QDialog):
                 kwargs[a.display_name] = self.edits['spelling'].text()
                 if kwargs[a.display_name] == '':  # and a.name == 'spelling':
                     kwargs[a.display_name] = None
+                if a.display_name != 'Spelling':
+                    kwargs['_spelling_name'] = a.display_name
                 # if not kwargs[a.name] and a.name == 'spelling':
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a spelling.".format(str(a)))
@@ -333,9 +345,11 @@ class AddWordDialog(QDialog):
                                                  "Invalid information",
                                                  "The column '{}' must be a number.".format(str(a)))
                     return
+                if a.display_name != 'Frequency':
+                    kwargs['_freq_name'] = a.display_name
 
             elif a.att_type == 'factor':
-                kwargs[a.display_name] = self.edits['factor'].text()
+                kwargs[a.name] = self.edits[a.name].text()
         self.word = Word(**kwargs)
         QDialog.accept(self)
 
@@ -346,6 +360,7 @@ class AddTierDialog(CreateClassWidget):
 
     def accept(self):
         tierName = self.nameEdit.text()
+        tierName = tierName.capitalize()
         self.attribute = Attribute(tierName.replace(' ', ''), 'tier', tierName)
         if tierName == '':
             reply = QMessageBox.critical(self,
@@ -422,6 +437,7 @@ class AddCountColumnDialog(QDialog):
 
     def accept(self):
         name = self.nameWidget.text()
+        name = name.capitalize()
         self.attribute = Attribute(name.replace(' ', ''), 'numeric', name)
         if name == '':
             reply = QMessageBox.critical(self,
@@ -505,6 +521,7 @@ class AddColumnDialog(QDialog):
 
     def accept(self):
         name = self.nameWidget.text()
+        name = name.capitalize()
         at = self.typeWidget.currentText().lower()
         dv = self.defaultWidget.text()
         self.attribute = Attribute(name.replace(' ', ''), at, name)
@@ -604,7 +621,7 @@ class AddAbstractTierDialog(QDialog):
     def accept(self):
         if self.cvradio.isChecked():
             tierName = 'CV skeleton'
-            self.attribute = Attribute('cvskeleton', 'factor', 'CV skeleton')
+            self.attribute = Attribute('Cvskeleton', 'factor', 'CV skeleton')
             self.segList = self.generateSegList()
 
         if tierName == '':

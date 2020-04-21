@@ -1041,9 +1041,12 @@ class Word(object):
 
         self.initDefaults()
 
+        self._freq_name = kwargs.pop('_freq_name', None)
+        self._spelling_name = kwargs.pop('_spelling_name', None)
+
         for key, value in kwargs.items():
-            if not all([letter.isupper() for letter in key]):
-                key = key.capitalize()
+            # if not all([letter.isupper() for letter in key]):
+            #     key = key.capitalize()
             if isinstance(value, Decimal):
                 value = float(value)
             if isinstance(value, tuple):
@@ -1095,7 +1098,11 @@ class Word(object):
                     setattr(self, '_spelling', value)
                     setattr(self, '_spelling_name', key)
 
-                elif key == 'Frequency':
+                elif key == self._spelling_name:
+                    setattr(self, 'spelling', value)
+                    setattr(self, '_spelling', value)
+
+                elif key == 'Frequency' or key == self._freq_name:
                     setattr(self, 'Frequency', float(value))
                     setattr(self, '_frequency', self.Frequency)
                 #try:
@@ -1109,9 +1116,8 @@ class Word(object):
                 #    setattr(self, '_spelling_name', key)
                 setattr(self, key, value)
 
-            #TODO: Need to learn what this does.
             elif isinstance(value, (float, int)):
-                if key == 'Frequency':
+                if key == 'Frequency' or key == self._freq_name:
                     setattr(self, 'Frequency', value)
                     setattr(self, '_frequency', self.Frequency)
                 setattr(self, key, value)
@@ -1121,7 +1127,7 @@ class Word(object):
 
         if self.spelling is None and self.transcription is None:
             raise(ValueError('Words must be specified with at least a spelling or a transcription.'))
-        if self.spelling is None:
+        if self.spelling is None and self._spelling_name is None:
             self.Spelling = ''.join(map(str, self._transcription))
             self._spelling = self.Spelling
             self._spelling_name = 'Spelling'
