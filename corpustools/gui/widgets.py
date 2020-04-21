@@ -657,7 +657,11 @@ class AttributeFilterDialog(QDialog):
 
         self.selectWidget = QComboBox()
         for a in attributes:
-            if a.att_type in ['factor','numeric']:
+            if a.att_type in'numeric':
+                self.attributes.append(a)
+                self.selectWidget.addItem(a.display_name)
+        for a in attributes:
+            if a.att_type in 'factor':
                 self.attributes.append(a)
                 self.selectWidget.addItem(a.display_name)
 
