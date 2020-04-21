@@ -203,14 +203,14 @@ class AddWordDialog(QDialog):
             self.edits['transcription'] = TranscriptionWidget('Transcription', corpus, inventory)
             # self.edits['transcription'].transcriptionChanged.connect(self.updateTiers)
             try:
-                self.edits['transcription'].setText('.'.join(word.Transcription._list))
+                self.edits['transcription'].setText('.'.join(word._transcription._list))
             except AttributeError:
                 pass
             main.addRow(self.edits['transcription'])
         if any([a.att_type == 'spelling' for a in self.corpus.attributes]):
             self.edits['spelling'] = QLineEdit()
             try:
-                self.edits['spelling'].setText(word.Spelling)
+                self.edits['spelling'].setText(word._spelling)
             except AttributeError:
                 pass
             main.addRow(QLabel('Spelling'), self.edits['spelling'])
@@ -264,9 +264,6 @@ class AddWordDialog(QDialog):
             self.createButton = QPushButton('Create word')
             self.setWindowTitle('Create word')
         else:
-            self.edits['transcription'].setText('.'.join(word.Transcription._list))
-            self.edits['spelling'].setText(word.Spelling)
-            self.edits['frequency'].setText(str(word.Frequency))
             self.createButton = QPushButton('Save word changes')
             self.setWindowTitle('Edit word')
         self.createButton.setAutoDefault(True)
@@ -313,7 +310,7 @@ class AddWordDialog(QDialog):
                 #            "Missing information", "Words must have a Transcription.".format(str(a)))
                 #    return
 
-                for i in kwargs[a.display_name]:
+                for i in list(dict.fromkeys(kwargs[a.display_name])):
                     if i not in self.inventory.segs:
                         reply = QMessageBox.critical(self,
                                                      'Invalid information',
