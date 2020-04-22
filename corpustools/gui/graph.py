@@ -1,4 +1,5 @@
-import igraph as ig
+# Archived method for visualizing functional load
+#import igraph as ig
 
 class FLGraph:
     # Plots a graph based on the results of functional load calculation
