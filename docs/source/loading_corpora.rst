@@ -188,6 +188,12 @@ there to be feature systems to choose from, you must first have loaded
 them into PCT (:ref:`transcriptions_and_feature_systems`). If you haven't
 yet added any, you may still import the corpus and then add them later.
 
+To parse transcription with syllable boundaries, you have to put the syllable-delimiter
+symbol in the "Syllable delimiter" box. Note also that in order for the syllable-parsing
+algorithm to work (which just assigns the nucleus to the [+syllabic] segment in a syllable
+and onset/coda to segments that come before/after the nucleus), you have to
+specify all feature values to all the segment present in the corpus in the feature file.
+
 On the right-hand side of the "Import corpus" dialogue box, you will see a
 "Parsing preview" window. This shows each of the columns in the corpus and
 allows you to specify particular parameters for each one. For details on
