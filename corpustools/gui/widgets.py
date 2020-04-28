@@ -1806,7 +1806,7 @@ class InventoryBox(QWidget):
             else:
                 self.selectedSegList.append(seg)
         self.selectedSegListLabel.setText(','.join(self.selectedSegList))
-        self.selectedSegListLabel.update()
+        self.selectedSegListLabel.repaint()
 
     def clearAll(self):
         reexc = self.btnGroup.exclusive()
