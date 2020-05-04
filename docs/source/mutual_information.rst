@@ -35,7 +35,8 @@ this is perhaps the most intuitive version of mutual information, given
 that it does give a symmetric measure for “how much information does the
 presence of *a* provide about the presence of *b*,” we are not currently
 aware of any work that has attempted to use this interpretation of MI
-for phonological purposes.
+for phonological purposes. Accordingly, this is currently not implemented
+in PCT.
 
 The other interpretation of MI assumes that X and Y are different random
 variables, with X being “possible speech sounds occurring as the first
@@ -66,14 +67,13 @@ simply a list of individual words and their token frequencies.
 Method of calculation
 ---------------------
 
-Both of the interpretations of mutual information described above are
-implemented in PCT. We refer to the first one, in which X and Y are
-interpreted as equal random variables, varying over “possible speech
-sounds in a unit,” as *word-internal co-occurrence pointwise mutual
-information* (pMI), because we specifically use the word as the unit in
-which to measure pMI. We refer to the second one, in which X and Y are
-different random variables, over either the first or second members of
-bigrams, as *ordered pair pMI*.
+We refer to the first one, in which X and Y are interpreted as equal
+random variables, varying over “possible speech sounds in a unit,” as
+*word-internal co-occurrence pointwise mutual information* (pMI), because
+we specifically use the word as the unit in which to measure pMI. We refer
+to the second one, in which X and Y are different random variables, over either
+the first or second members of bigrams, as *ordered pair pMI*.  Currently,
+the second one, namely *ordered pair pMI*, is implemented in PCT.
 
 The general formula for pointwise mutual information is given below;
 it is the binary logarithm of the joint probability of X = *a* and Y = *b*,
