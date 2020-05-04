@@ -28,7 +28,9 @@ Contents:
    kullback-leibler.rst
    string_similarity.rst
    neighborhood_density.rst
-   frequency_of_alternation.rst
+
+   .. frequency_of_alternation.rst
+
    mutual_information.rst
    acoustic_similarity.rst
    citing_pct.rst

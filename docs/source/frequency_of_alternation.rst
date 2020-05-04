@@ -9,6 +9,9 @@ Frequency of alternation
 About the function
 ------------------
 
+**Frequency of alternation is currently not supported in PCT. What follows below
+is the description of the function up to PCT ver. 1.2**
+
 The occurrence of alternations can be used in assessing whether two
 phonemes in a language are contrastive or allophonic, with alternations
 promoting the analysis of allophony (e.g., [Silverman2006]_, [Johnson2010]_,

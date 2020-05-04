@@ -165,6 +165,7 @@ Analysis functions
 
 Frequency of alternation
 ------------------------
+**Frequency of alternation is currently not supported in PCT.**
 
 .. currentmodule:: corpustools.freqalt
 
