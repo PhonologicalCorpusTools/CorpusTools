@@ -35,8 +35,7 @@ this is perhaps the most intuitive version of mutual information, given
 that it does give a symmetric measure for “how much information does the
 presence of *a* provide about the presence of *b*,” we are not currently
 aware of any work that has attempted to use this interpretation of MI
-for phonological purposes. Accordingly, this is currently not implemented
-in PCT.
+for phonological purposes.
 
 The other interpretation of MI assumes that X and Y are different random
 variables, with X being “possible speech sounds occurring as the first
@@ -67,13 +66,14 @@ simply a list of individual words and their token frequencies.
 Method of calculation
 ---------------------
 
-We refer to the first one, in which X and Y are interpreted as equal
-random variables, varying over “possible speech sounds in a unit,” as
-*word-internal co-occurrence pointwise mutual information* (pMI), because
-we specifically use the word as the unit in which to measure pMI. We refer
-to the second one, in which X and Y are different random variables, over either
-the first or second members of bigrams, as *ordered pair pMI*.  Currently,
-the second one, namely *ordered pair pMI*, is implemented in PCT.
+Both of the interpretations of mutual information described above are
+implemented in PCT. We refer to the first one, in which X and Y are
+interpreted as equal random variables, varying over “possible speech
+sounds in a unit,” as *word-internal co-occurrence pointwise mutual
+information* (pMI), because we specifically use the word as the unit in
+which to measure pMI. We refer to the second one, in which X and Y are
+different random variables, over either the first or second members of
+bigrams, as *ordered pair pMI*.
 
 The general formula for pointwise mutual information is given below;
 it is the binary logarithm of the joint probability of X = *a* and Y = *b*,
@@ -129,7 +129,9 @@ Calculating mutual information in the GUI
 -----------------------------------------
 
 To start the analysis, click on “Analysis” / “Calculate mutual information...”
-in the main menu, and then follow these steps:
+in the main menu. The choice between the two algorithms depends on the setting
+of **Domain**. The default is *ordered pair pMI* and choosing “set domain to word”
+switches to the **unordered** *word-internal co-occurrence pMI*. Follow these steps:
 
 1. **Bigram**: Click on the “Add bigram” button in the “Mutual Information”
    dialogue box. A new window will open with an inventory of all
