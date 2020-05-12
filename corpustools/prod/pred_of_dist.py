@@ -100,7 +100,7 @@ def calc_prod_all_envs(corpus_context, seg1, seg2, all_info = False, stop_check 
         frequency of seg2] if all_info is True, or just entropy if
         all_info is False.
     """
-    freq_base  = corpus_context.get_frequency_base()
+    freq_base = corpus_context.get_frequency_base()
     if stop_check is not None and stop_check():
         return
     if isinstance(seg1, str):

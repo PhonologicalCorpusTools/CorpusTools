@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
-
 import math
 import time
+from collections import OrderedDict
+from corpustools.exceptions import MutualInfoError, PCTError
+from corpustools.prod.pred_of_dist import check_envs
 
-from corpustools.exceptions import MutualInfoError
-
-def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
+def pointwise_mi_all_envs(corpus_context, query, halve_edges = False, in_word = False,
                 stop_check = None, call_back = None):
     """
-    Calculate the mutual information for a bigram.
+    Calculate the mutual information for a bigram, regardless of environment (when env not specified).
 
     Parameters
     ----------
@@ -37,6 +35,88 @@ def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
         call_back("Generating probabilities...")
         call_back(0,0)
         cur = 0
+    if in_word:
+        unigram_dict = get_in_word_unigram_frequencies(corpus_context, query)
+        bigram_dict = get_in_word_bigram_frequency(corpus_context, query)
+    else:
+        unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
+        bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
+
+    #if '#' in query:
+    #    raise(Exception("Word boundaries are currently unsupported."))
+    try:
+        prob_s1 = unigram_dict[query[0]]
+    except KeyError:
+        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[0])))
+    try:
+        prob_s2 = unigram_dict[query[1]]
+    except KeyError:
+        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[1])))
+    try:
+        prob_bg = bigram_dict[query]
+    except KeyError:
+        raise MutualInfoError('The bigram {} was not found in the corpus using {}s'.format(''.join(query), corpus_context.sequence_type))
+
+
+    if unigram_dict[query[0]] == 0.0:
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
+    if unigram_dict[query[1]] == 0.0:
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
+    if bigram_dict[query] == 0.0:
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
+
+
+    return math.log((prob_bg/(prob_s1*prob_s2)), 2)
+
+
+def pointwise_mi(corpus_context, envs, halve_edges = False, in_word = False,
+                stop_check = None, call_back = None):
+    """
+    Calculate the mutual information for a bigram over specified environment.
+
+    Parameters
+    ----------
+    corpus_context : CorpusContext
+        Context manager for a corpus
+    envs : list of EnvironmentFilter
+        List of EnvironmentFilter objects that specify environments
+    halve_edges : bool
+        Flag whether to only count word boundaries once per word rather than
+        twice, defaults to False
+    in_word : bool
+        Flag to calculate non-local, non-ordered mutual information,
+        defaults to False
+    stop_check : callable or None
+        Optional function to check whether to gracefully terminate early
+    call_back : callable or None
+        Optional function to supply progress information during the function
+
+    Returns
+    -------
+    dict
+        Keys are the environments specified and values are
+        mutual information value of the bigram.
+    """
+    seg_list = envs[0].middle
+    for e in envs:
+        if not all(s in seg_list for s in e.middle):#e.middle != seg_list:
+            raise(PCTError("Middle segments of all environments must be the same."))
+
+
+    returned = check_envs(corpus_context, envs, stop_check, call_back)
+    env_matches, miss_envs, overlap_envs = returned
+
+    MI_dict = OrderedDict()
+
+    total_matches = {x: 0 for x in seg_list}
+    total_frequency = 0
+
+    if call_back is not None:
+        call_back("Generating probabilities...")
+        call_back(0,0)
+        cur = 0
+    # for env in env_matches:
+
     if in_word:
         unigram_dict = get_in_word_unigram_frequencies(corpus_context, query)
         bigram_dict = get_in_word_bigram_frequency(corpus_context, query)
