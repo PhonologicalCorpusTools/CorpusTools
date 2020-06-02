@@ -249,12 +249,13 @@ class EnvironmentSegmentWidget(QWidget):
             setattr(self, k, v)
 
 class EnvironmentSelectWidget(QGroupBox):
-    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, mode='segMode'):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, single_env=False, mode='segMode'):
         QGroupBox.__init__(self, 'Environments', parent)
         self.parent = parent
         self.middle = middle
         self.inventory = inventory
         self.show_full_inventory = show_full_inventory
+        self.single_env = single_env
         self.mode = mode
 
         layout = QVBoxLayout()
@@ -289,6 +290,8 @@ class EnvironmentSelectWidget(QGroupBox):
             envWidget = EnvironmentSyllableWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos, envWidget)
+        if self.single_env:
+            self.addButton.setEnabled(False)
 
     @Slot(list)  # connected to EnvironmentWidget.envCopied()
     def addCopiedEnvironment(self, args):
@@ -345,9 +348,11 @@ class EnvironmentWidget(QWidget):
                                                      show_full_inventory=show_full_inventory)
 
         self.removeButton = QPushButton('Remove environment')
-        self.removeButton.clicked.connect(self.deleteLater)
+        self.removeButton.clicked.connect(self.deleteEnvironment)
         self.copyButton = QPushButton('Copy environment')
         self.copyButton.clicked.connect(self.copyEnvironment)
+        if self.parent.single_env:
+            self.copyButton.setEnabled(False)
 
         layout.addWidget(self.lhsAddNew)
         layout.addWidget(self.lhsWidget)
@@ -389,6 +394,10 @@ class EnvironmentWidget(QWidget):
 
     def copyEnvironment(self):
         self.envCopied.emit([self])  # connected to EnvironmentSelectWidget.addCopiedEnvironment()
+
+    def deleteEnvironment(self):
+        self.parent.addButton.setEnabled(True)
+        self.deleteLater()
 
     def insertSegWidget(self, match_widget, add_to_side):
 

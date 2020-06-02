@@ -92,7 +92,7 @@ class MIDialog(FunctionDialog):
 
         milayout.addWidget(self.segPairWidget)
 
-        self.envWidget = EnvironmentSelectWidget(inventory, middle = False)
+        self.envWidget = EnvironmentSelectWidget(inventory, middle = False, single_env=True)
 
         self.envWidget.setTitle('Environments (optional)')
         milayout.addWidget(self.envWidget)
