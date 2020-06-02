@@ -295,7 +295,10 @@ class Transcription(object):
         list
             Transcription with word boundaries
         """
-        return ['#'] + self._list + ['#']
+        if '#' not in self._list:
+            return ['#'] + self._list + ['#']
+        else:
+            return self._list
 
     def with_syllable_and_word_boundaries(self):
         syllable_str = ''
@@ -338,6 +341,7 @@ class Transcription(object):
         ----------
         environment : EnvironmentFilter
             EnvironmentFilter to search for
+        mode : ??
 
         Returns
         -------

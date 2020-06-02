@@ -1,13 +1,14 @@
 import math
 import time
-from collections import OrderedDict
-from corpustools.exceptions import MutualInfoError, PCTError
-from corpustools.prod.pred_of_dist import check_envs
+import regex as re
 
-def pointwise_mi_all_envs(corpus_context, query, halve_edges = False, in_word = False,
-                stop_check = None, call_back = None):
+from corpustools.exceptions import MutualInfoError
+from corpustools.corpus.classes.lexicon import Corpus, Word
+
+def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
+                 stop_check = None, call_back = None):
     """
-    Calculate the mutual information for a bigram, regardless of environment (when env not specified).
+    Calculate the mutual information for a bigram.
 
     Parameters
     ----------
@@ -42,16 +43,16 @@ def pointwise_mi_all_envs(corpus_context, query, halve_edges = False, in_word = 
         unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
         bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
 
-    #if '#' in query:
-    #    raise(Exception("Word boundaries are currently unsupported."))
     try:
         prob_s1 = unigram_dict[query[0]]
     except KeyError:
-        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[0])))
+        raise(MutualInfoError('The segment {} was not found in the corpus, '
+                              'or in the environment, if you specified one. '.format(query[0])))
     try:
         prob_s2 = unigram_dict[query[1]]
     except KeyError:
-        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[1])))
+        raise(MutualInfoError('The segment {} was not found in the corpus, '
+                              'or in the environment, if you specified one. '.format(query[1])))
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
@@ -69,10 +70,13 @@ def pointwise_mi_all_envs(corpus_context, query, halve_edges = False, in_word = 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 
 
-def pointwise_mi(corpus_context, envs, halve_edges = False, in_word = False,
-                stop_check = None, call_back = None):
+def mi_env_filter(corpus_context, envs):
     """
-    Calculate the mutual information for a bigram over specified environment.
+    Environment filter
+    It extracts only those words that satisfy environment condition and
+    returns a new corpus_context. The output is to be an argument of the original MI function
+    as the substitute of an original corpus_context
+    Spelling and frequency of each word, frequency_threshold, and other parameters of corpus_context retained.
 
     Parameters
     ----------
@@ -80,75 +84,53 @@ def pointwise_mi(corpus_context, envs, halve_edges = False, in_word = False,
         Context manager for a corpus
     envs : list of EnvironmentFilter
         List of EnvironmentFilter objects that specify environments
-    halve_edges : bool
-        Flag whether to only count word boundaries once per word rather than
-        twice, defaults to False
-    in_word : bool
-        Flag to calculate non-local, non-ordered mutual information,
-        defaults to False
-    stop_check : callable or None
-        Optional function to check whether to gracefully terminate early
-    call_back : callable or None
-        Optional function to supply progress information during the function
 
     Returns
     -------
-    dict
-        Keys are the environments specified and values are
-        mutual information value of the bigram.
+    CorpusContext
+        with only words that satisfy environment filter.
+        All transcription removed except for the two position which will be compared against the bigram user inputs
     """
-    seg_list = envs[0].middle
-    for e in envs:
-        if not all(s in seg_list for s in e.middle):#e.middle != seg_list:
-            raise(PCTError("Middle segments of all environments must be the same."))
+    pattern = ''
+    user_wb = False
+    clipped_corpus = Corpus(corpus_context.corpus.name)
 
+    num_lhs = len(envs[0].lhs)
+    num_rhs = len(envs[0].rhs)
 
-    returned = check_envs(corpus_context, envs, stop_check, call_back)
-    env_matches, miss_envs, overlap_envs = returned
+    for left_string in envs[0].lhs:
+        pattern = pattern + "("+"|".join(left_string)+")"
 
-    MI_dict = OrderedDict()
+    pattern = pattern + ".."
+    for right_string in envs[0].rhs:
+        pattern = pattern + "(" + "|".join(right_string) + ")"
+    if re.search(r"#", pattern) is not None:
+        user_wb = True
+    pattern = re.compile(pattern)
 
-    total_matches = {x: 0 for x in seg_list}
-    total_frequency = 0
+    for word in corpus_context:
+        tier = getattr(word, corpus_context.sequence_type)
 
-    if call_back is not None:
-        call_back("Generating probabilities...")
-        call_back(0,0)
-        cur = 0
-    # for env in env_matches:
+        if user_wb:
+            tier_search_from = "".join(tier.with_word_boundaries())
+        else:
+            tier_search_from = "".join(tier)
 
-    if in_word:
-        unigram_dict = get_in_word_unigram_frequencies(corpus_context, query)
-        bigram_dict = get_in_word_bigram_frequency(corpus_context, query)
-    else:
-        unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
-        bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
+        found = pattern.finditer(tier_search_from)
+        for f in found:
+            kwargs = {}
 
-    #if '#' in query:
-    #    raise(Exception("Word boundaries are currently unsupported."))
-    try:
-        prob_s1 = unigram_dict[query[0]]
-    except KeyError:
-        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[0])))
-    try:
-        prob_s2 = unigram_dict[query[1]]
-    except KeyError:
-        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[1])))
-    try:
-        prob_bg = bigram_dict[query]
-    except KeyError:
-        raise MutualInfoError('The bigram {} was not found in the corpus using {}s'.format(''.join(query), corpus_context.sequence_type))
+            new_trans = tier_search_from[f.span()[0]+(num_lhs-1):f.span()[1]-(num_rhs-1)]
+            new_trans = list(new_trans)
+            kwargs[word._transcription_name] = new_trans
+            kwargs[word._spelling_name] = str(word)
+            kwargs[word._freq_name] = word._frequency
+            new_word = Word(**kwargs)
+            clipped_corpus.add_word(new_word, allow_duplicates=True)# add word to clipped_corpus
+            print(str(new_trans))
+    corpus_context.corpus = clipped_corpus
 
-
-    if unigram_dict[query[0]] == 0.0:
-        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[0]))
-    if unigram_dict[query[1]] == 0.0:
-        raise MutualInfoError('Warning! Mutual information could not be calculated because the unigram {} is not in the corpus.'.format(query[1]))
-    if bigram_dict[query] == 0.0:
-        raise MutualInfoError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
-
-
-    return math.log((prob_bg/(prob_s1*prob_s2)), 2)
+    return corpus_context # corpus_context (clipped), to be fed into the original function
 
 
 def get_in_word_unigram_frequencies(corpus_context, query):

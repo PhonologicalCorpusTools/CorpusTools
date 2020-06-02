@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from corpustools.mutualinfo.mutual_information import pointwise_mi, pointwise_mi_all_envs
+from corpustools.mutualinfo.mutual_information import mi_env_filter, pointwise_mi
 from .imports import *
 from .environments import EnvironmentSelectWidget
 from .widgets import (BigramWidget, RadioSelectWidget, TierWidget, ContextWidget)
@@ -25,24 +25,20 @@ class MIWorker(FunctionWorker):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'], frequency_threshold = kwargs['frequency_cutoff']) as c:
+        with cm(kwargs['corpus'], kwargs['sequence_type'],
+                kwargs['type_token'], frequency_threshold=kwargs['frequency_cutoff']) as c:
             try:
                 envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
                     if envs is not None:
-                        for env in envs:
-                            env.middle = set(pair)
-                        res = pointwise_mi(c, envs,
-                                           halve_edges=kwargs['halve_edges'],
-                                           in_word=kwargs['in_word'],
-                                           stop_check=kwargs['stop_check'],
-                                           call_back=kwargs['call_back'])
-                    else:
-                        res = pointwise_mi_all_envs(c, pair,
-                                halve_edges = kwargs['halve_edges'],
-                                in_word = kwargs['in_word'],
-                                stop_check = kwargs['stop_check'],
-                                call_back = kwargs['call_back'])
+                        c = mi_env_filter(c, envs)
+                        kwargs['in_word'] = False
+
+                    res = pointwise_mi(c, pair,
+                                       halve_edges = kwargs['halve_edges'],
+                                       in_word = kwargs['in_word'],
+                                       stop_check = kwargs['stop_check'],
+                                       call_back = kwargs['call_back'])
                     if self.stopped:
                         break
                     self.results.append(res)
@@ -129,7 +125,7 @@ class MIDialog(FunctionDialog):
         optionLayout.addWidget(minFreqFrame)
         ##----------------------
         
-        self.inWordCheck = QCheckBox('Set domain to word')
+        self.inWordCheck = QCheckBox('Set domain to word (ignored when env. specified)')
         optionLayout.addWidget(self.inWordCheck)
 
         self.halveEdgesCheck = QCheckBox('Halve word boundary count')
