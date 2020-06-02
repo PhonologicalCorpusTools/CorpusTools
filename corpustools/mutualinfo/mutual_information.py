@@ -120,7 +120,7 @@ def mi_env_filter(corpus_context, envs):
         for f in found:
             kwargs = {}
 
-            new_trans = tier_search_from[f.span()[0]+(num_lhs-1):f.span()[1]-(num_rhs-1)]
+            new_trans = tier_search_from[f.span()[0]+(num_lhs-1):f.span()[1]]
             new_trans = list(new_trans)
             kwargs[word._transcription_name] = new_trans
             kwargs[word._spelling_name] = str(word)
