@@ -98,6 +98,9 @@ def mi_env_filter(corpus_context, envs):
     num_lhs = len(envs[0].lhs)
     num_rhs = len(envs[0].rhs)
 
+    if num_lhs + num_rhs == 0:
+        return corpus_context
+
     for left_string in envs[0].lhs:
         pattern = pattern + "("+"|".join(left_string)+")"
 
@@ -120,7 +123,7 @@ def mi_env_filter(corpus_context, envs):
         for f in found:
             kwargs = {}
 
-            new_trans = tier_search_from[f.span()[0]+(num_lhs-1):f.span()[1]]
+            new_trans = tier_search_from[f.span()[0]:f.span()[1]]
             new_trans = list(new_trans)
             kwargs[word._transcription_name] = new_trans
             kwargs[word._spelling_name] = str(word)

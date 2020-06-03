@@ -93,9 +93,21 @@ class MIDialog(FunctionDialog):
         milayout.addWidget(self.segPairWidget)
 
         self.envWidget = EnvironmentSelectWidget(inventory, middle = False, single_env=True)
+        self.envWidget.setTitle('')
+        #self.envWidget.setTitle('Environments (optional)')
+        #milayout.addWidget(self.envWidget)
 
-        self.envWidget.setTitle('Environments (optional)')
-        milayout.addWidget(self.envWidget)
+        self.envCheck = QCheckBox('Set an environment filter')
+        self.envCheck.clicked.connect(self.setEnv)
+
+        envLayout = QFormLayout()
+
+        envLayout.addWidget(self.envCheck)
+        envLayout.addWidget(self.envWidget)
+        self.envWidget.setEnabled(False)
+        envFrame = QGroupBox('Environment (optional)')
+        envFrame.setLayout(envLayout)
+        milayout.addWidget(envFrame)
 
         optionLayout = QFormLayout()
 
@@ -125,7 +137,7 @@ class MIDialog(FunctionDialog):
         optionLayout.addWidget(minFreqFrame)
         ##----------------------
         
-        self.inWordCheck = QCheckBox('Set domain to word (ignored when env. specified)')
+        self.inWordCheck = QCheckBox('Set domain to word')
         optionLayout.addWidget(self.inWordCheck)
 
         self.halveEdgesCheck = QCheckBox('Halve word boundary count')
@@ -173,7 +185,7 @@ class MIDialog(FunctionDialog):
                     "Missing information", "Please specify at least one bigram.")
             return None
         envs = self.envWidget.value()
-        if len(envs) > 0:
+        if len(envs) > 0 and self.envCheck.checkState():
             self.kwargs['envs'] = envs
             self.kwargs['display_envs'] = {e: d for (e, d) in zip(envs, self.envWidget.displayValue())}
         ##------------------
@@ -234,3 +246,11 @@ class MIDialog(FunctionDialog):
                                     'Pronunciation variants': self.variantsWidget.value().title(),
                                     'Minimum word frequency': frequency_cutoff,
                                     'Mutual information': r})
+
+    def setEnv(self):
+        if self.envCheck.checkState():
+            self.envWidget.setEnabled(True)
+            self.inWordCheck.setEnabled(False)
+        else:
+            self.envWidget.setEnabled(False)
+            self.inWordCheck.setEnabled(True)
