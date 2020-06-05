@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-
-
 import math
 import time
+import regex as re
 
 from corpustools.exceptions import MutualInfoError
+from corpustools.corpus.classes.lexicon import Corpus, Word
 
 def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
-                stop_check = None, call_back = None):
+                 stop_check = None, call_back = None):
     """
     Calculate the mutual information for a bigram.
 
@@ -44,16 +43,16 @@ def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
         unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
         bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
 
-    #if '#' in query:
-    #    raise(Exception("Word boundaries are currently unsupported."))
     try:
         prob_s1 = unigram_dict[query[0]]
     except KeyError:
-        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[0])))
+        raise(MutualInfoError('The segment {} was not found in the corpus, '
+                              'or in the environment, if you specified one. '.format(query[0])))
     try:
         prob_s2 = unigram_dict[query[1]]
     except KeyError:
-        raise(MutualInfoError('The segment {} was not found in the corpus'.format(query[1])))
+        raise(MutualInfoError('The segment {} was not found in the corpus, '
+                              'or in the environment, if you specified one. '.format(query[1])))
     try:
         prob_bg = bigram_dict[query]
     except KeyError:
@@ -69,6 +68,72 @@ def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
 
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
+
+
+def mi_env_filter(corpus_context, envs):
+    """
+    Environment filter
+    It extracts only those words that satisfy environment condition and
+    returns a new corpus_context. The output is to be an argument of the original MI function
+    as the substitute of an original corpus_context
+    Spelling and frequency of each word, frequency_threshold, and other parameters of corpus_context retained.
+
+    Parameters
+    ----------
+    corpus_context : CorpusContext
+        Context manager for a corpus
+    envs : list of EnvironmentFilter
+        List of EnvironmentFilter objects that specify environments
+
+    Returns
+    -------
+    CorpusContext
+        with only words that satisfy environment filter.
+        All transcription removed except for the two position which will be compared against the bigram user inputs
+    """
+    pattern = ''
+    user_wb = False
+    clipped_corpus = Corpus(corpus_context.corpus.name)
+
+    num_lhs = len(envs[0].lhs)
+    num_rhs = len(envs[0].rhs)
+
+    if num_lhs + num_rhs == 0:
+        return corpus_context
+
+    for left_string in envs[0].lhs:
+        pattern = pattern + "("+"|".join(left_string)+")"
+
+    pattern = pattern + ".."
+    for right_string in envs[0].rhs:
+        pattern = pattern + "(" + "|".join(right_string) + ")"
+    if re.search(r"#", pattern) is not None:
+        user_wb = True
+    pattern = re.compile(pattern)
+
+    for word in corpus_context:
+        tier = getattr(word, corpus_context.sequence_type)
+
+        if user_wb:
+            tier_search_from = "".join(tier.with_word_boundaries())
+        else:
+            tier_search_from = "".join(tier)
+
+        found = pattern.finditer(tier_search_from)
+        for f in found:
+            kwargs = {}
+
+            new_trans = tier_search_from[f.span()[0]:f.span()[1]]
+            new_trans = list(new_trans)
+            kwargs[word._transcription_name] = new_trans
+            kwargs[word._spelling_name] = str(word)
+            kwargs[word._freq_name] = word._frequency
+            new_word = Word(**kwargs)
+            clipped_corpus.add_word(new_word, allow_duplicates=True)# add word to clipped_corpus
+            print(str(new_trans))
+    corpus_context.corpus = clipped_corpus
+
+    return corpus_context # corpus_context (clipped), to be fed into the original function
 
 
 def get_in_word_unigram_frequencies(corpus_context, query):

@@ -1,7 +1,8 @@
 from collections import OrderedDict
 
-from corpustools.mutualinfo.mutual_information import pointwise_mi
+from corpustools.mutualinfo.mutual_information import mi_env_filter, pointwise_mi
 from .imports import *
+from .environments import EnvironmentSelectWidget
 from .widgets import (BigramWidget, RadioSelectWidget, TierWidget, ContextWidget)
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.exceptions import PCTError, PCTPythonError
@@ -24,14 +25,20 @@ class MIWorker(FunctionWorker):
             cm = SeparatedTokensVariantContext
         elif context == ContextWidget.relative_value:
             cm = WeightedVariantContext
-        with cm(kwargs['corpus'], kwargs['sequence_type'], kwargs['type_token'], frequency_threshold = kwargs['frequency_cutoff']) as c:
+        with cm(kwargs['corpus'], kwargs['sequence_type'],
+                kwargs['type_token'], frequency_threshold=kwargs['frequency_cutoff']) as c:
             try:
+                envs = kwargs.pop('envs', None)
                 for pair in kwargs['segment_pairs']:
+                    if envs is not None:
+                        c = mi_env_filter(c, envs)
+                        kwargs['in_word'] = False
+
                     res = pointwise_mi(c, pair,
-                            halve_edges = kwargs['halve_edges'],
-                            in_word = kwargs['in_word'],
-                            stop_check = kwargs['stop_check'],
-                            call_back = kwargs['call_back'])
+                                       halve_edges = kwargs['halve_edges'],
+                                       in_word = kwargs['in_word'],
+                                       stop_check = kwargs['stop_check'],
+                                       call_back = kwargs['call_back'])
                     if self.stopped:
                         break
                     self.results.append(res)
@@ -84,6 +91,26 @@ class MIDialog(FunctionDialog):
         self.segPairWidget = BigramWidget(self.inventory)
 
         milayout.addWidget(self.segPairWidget)
+
+        ##---------------------- Environment selection frame (envFrame) consists of a check box and selection widget
+        envFrame = QGroupBox('Environment (optional)')
+
+        envLayout = QFormLayout()
+
+        self.envCheck = QCheckBox('Set an environment filter')
+        self.envCheck.clicked.connect(self.setEnv)
+
+        self.envWidget = EnvironmentSelectWidget(inventory, middle = False, single_env=True)
+        self.envWidget.setTitle('')
+        self.envWidget.setEnabled(False)
+
+        envLayout.addWidget(self.envCheck)
+        envLayout.addWidget(self.envWidget)
+
+        envFrame.setLayout(envLayout)
+
+        milayout.addWidget(envFrame)
+        ##----------------------
 
         optionLayout = QFormLayout()
 
@@ -154,25 +181,31 @@ class MIDialog(FunctionDialog):
             self.halveEdgesCheck.setToolTip(halveEdgesToolTip)
 
     def generateKwargs(self):
+        self.kwargs = {}
         segPairs = self.segPairWidget.value()
         if len(segPairs) == 0:
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one bigram.")
             return None
+        envs = self.envWidget.value()
+        if len(envs) > 0 and self.envCheck.checkState():
+            self.kwargs['envs'] = envs
+            self.kwargs['display_envs'] = {e: d for (e, d) in zip(envs, self.envWidget.displayValue())}
         ##------------------
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
         ##-------------------
-        return {'corpus':self.corpus,
-                'context': self.variantsWidget.value(),
-                'type_token': self.typeTokenWidget.value(),
-                'segment_pairs':[tuple(y for y in x) for x in segPairs],
-                'in_word': self.inWordCheck.isChecked(),
-                'halve_edges': self.halveEdgesCheck.isChecked(),
-                'frequency_cutoff':frequency_cutoff,
-                'sequence_type': self.tierWidget.value()}
+        self.kwargs['corpus'] = self.corpus
+        self.kwargs['context'] = self.variantsWidget.value()
+        self.kwargs['type_token'] = self.typeTokenWidget.value()
+        self.kwargs['segment_pairs'] = [tuple(y for y in x) for x in segPairs]
+        self.kwargs['in_word'] = self.inWordCheck.isChecked()
+        self.kwargs['halve_edges'] = self.halveEdgesCheck.isChecked()
+        self.kwargs['frequency_cutoff'] = frequency_cutoff
+        self.kwargs['sequence_type'] = self.tierWidget.value()
+        return self.kwargs
 
     def setResults(self,results):
         self.results = []
@@ -186,14 +219,41 @@ class MIDialog(FunctionDialog):
         except ValueError:
             frequency_cutoff = 0.0
         for i, r in enumerate(results):
-            self.results.append({'Corpus': self.corpus.name,
-                                'PCT ver.': __version__,#self.corpus._version,
-                                'First segment': seg_pairs[i][0],
-                                'Second segment': seg_pairs[i][1],
-                                'Domain': dom,
-                                'Halved edges': self.halveEdgesCheck.isChecked(),
-                                'Transcription tier': self.tierWidget.displayValue(),
-                                'Frequency type': self.typeTokenWidget.value().title(),
-                                'Pronunciation variants': self.variantsWidget.value().title(),
-                                'Minimum word frequency': frequency_cutoff,
-                                'Mutual information': r})
+            if isinstance(r,dict):
+                for env,v in r.items():
+                    try:
+                        env = self.kwargs['display_envs'][env]
+                    except KeyError as e:
+                        pass #a few things, like "AVG", don't have a special display name
+                    self.results.append({'Corpus': self.corpus.name,
+                                         'PCT ver.': __version__,  # self.corpus._version,
+                                         'First segment': seg_pairs[i][0],
+                                         'Second segment': seg_pairs[i][1],
+                                         'Domain': dom,
+                                         'Environment': env,
+                                         'Halved edges': self.halveEdgesCheck.isChecked(),
+                                         'Transcription tier': self.tierWidget.displayValue(),
+                                         'Frequency type': self.typeTokenWidget.value().title(),
+                                         'Pronunciation variants': self.variantsWidget.value().title(),
+                                         'Minimum word frequency': frequency_cutoff,
+                                         'Mutual information': r})
+            else:
+                self.results.append({'Corpus': self.corpus.name,
+                                    'PCT ver.': __version__,#self.corpus._version,
+                                    'First segment': seg_pairs[i][0],
+                                    'Second segment': seg_pairs[i][1],
+                                    'Domain': dom,
+                                    'Halved edges': self.halveEdgesCheck.isChecked(),
+                                    'Transcription tier': self.tierWidget.displayValue(),
+                                    'Frequency type': self.typeTokenWidget.value().title(),
+                                    'Pronunciation variants': self.variantsWidget.value().title(),
+                                    'Minimum word frequency': frequency_cutoff,
+                                    'Mutual information': r})
+
+    def setEnv(self):
+        if self.envCheck.checkState():
+            self.envWidget.setEnabled(True)
+            self.inWordCheck.setEnabled(False)
+        else:
+            self.envWidget.setEnabled(False)
+            self.inWordCheck.setEnabled(True)
