@@ -129,8 +129,8 @@ def mi_env_filter(corpus_context, envs):
             kwargs[word._spelling_name] = str(word)
             kwargs[word._freq_name] = word._frequency
             new_word = Word(**kwargs)
-            clipped_corpus.add_word(new_word, allow_duplicates=True)# add word to clipped_corpus
-            print(str(new_trans))
+            clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
+            # print(str(new_trans))  # print the 'word' that satisfies the environment (and to be added)
     corpus_context.corpus = clipped_corpus
 
     return corpus_context # corpus_context (clipped), to be fed into the original function

@@ -568,7 +568,9 @@ class PhonoSearchResultsModel(BaseTableModel):
                 typefreq[segenv] += 1
                 tokenfreq[segenv] += line['Word'].frequency
 
-        metaInfo = self.rows[0][0], self.rows[0][1] # get corpus and PCT version information before 'self.rows' is reset
+        if len(self.rows) > 0:
+            metaInfo = self.rows[0][0], self.rows[0][1]  # get corpus and PCT version information
+
         self.rows = list()
         for k,v in sorted(typefreq.items()):
             self.rows.append([metaInfo[0], metaInfo[1], k[0], k[1], v, tokenfreq[k]])
