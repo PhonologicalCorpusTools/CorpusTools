@@ -169,8 +169,8 @@ class MainWindow(QMainWindow):
         self.featureSystemStatus.setText("No feature system selected")
         self.statusBar().addWidget(self.featureSystemStatus)
         self.setWindowTitle("Phonological CorpusTools")
-        #iconPath = os.path.join(os.path.dirname(sys.modules[__name__].__file__), '../../resources/favicon.png')
-        #self.setWindowIcon(QtGui.QIcon(iconPath))
+        iconPath = os.path.join(os.path.dirname(sys.modules[__name__].__file__), '../../resources/favicon.png')
+        self.setWindowIcon(QtGui.QIcon(iconPath))
         self.createActions()
         self.createMenus()
         self.corpus = None
