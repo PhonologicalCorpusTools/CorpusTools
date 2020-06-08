@@ -282,6 +282,7 @@ class EnvironmentSelectWidget(QGroupBox):
         layout.addWidget(scroll)
 
         self.setLayout(layout)
+        self.setMinimumWidth(400)
 
     def addNewEnvironment(self):
         if self.mode == 'segMode':
@@ -332,12 +333,15 @@ class EnvironmentWidget(QWidget):
         layout = QHBoxLayout()
 
         self.lhsAddNew = QPushButton('+')
+        self.lhsAddNew.setFixedWidth(50)
         self.lhsAddNew.clicked.connect(self.addLhs)
+
         self.lhsWidget = QWidget()
         self.lhsLayout = QHBoxLayout()
         self.lhsWidget.setLayout(self.lhsLayout)
 
         self.rhsAddNew = QPushButton('+')
+        self.rhsAddNew.setFixedWidth(50)
         self.rhsAddNew.clicked.connect(self.addRhs)
 
         self.rhsWidget = QWidget()
@@ -1292,12 +1296,15 @@ class EnvironmentSyllableWidget(QWidget):
         layout = QHBoxLayout()
 
         self.lhsAddNew = QPushButton('+')
+        self.lhsAddNew.setFixedWidth(50)
         self.lhsAddNew.clicked.connect(self.addLhs)
+
         self.lhsWidget = QWidget()
         self.lhsLayout = QHBoxLayout()
         self.lhsWidget.setLayout(self.lhsLayout)
 
         self.rhsAddNew = QPushButton('+')
+        self.rhsAddNew.setFixedWidth(50)
         self.rhsAddNew.clicked.connect(self.addRhs)
 
         self.rhsWidget = QWidget()
@@ -1330,6 +1337,7 @@ class EnvironmentSyllableWidget(QWidget):
         layout.addLayout(optionlayout)
 
         self.setLayout(layout)
+        self.setMinimumWidth(400)
 
         if copy_data:
             self.loadfromCopy(copy_data)
