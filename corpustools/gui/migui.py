@@ -92,26 +92,6 @@ class MIDialog(FunctionDialog):
 
         milayout.addWidget(self.segPairWidget)
 
-        ##---------------------- Environment selection frame (envFrame) consists of a check box and selection widget
-        envFrame = QGroupBox('Environment (optional)')
-
-        envLayout = QFormLayout()
-
-        self.envCheck = QCheckBox('Set an environment filter')
-        self.envCheck.clicked.connect(self.setEnv)
-
-        self.envWidget = EnvironmentSelectWidget(inventory, middle = False, single_env=True)
-        self.envWidget.setTitle('')
-        self.envWidget.setEnabled(False)
-
-        envLayout.addWidget(self.envCheck)
-        envLayout.addWidget(self.envWidget)
-
-        envFrame.setLayout(envLayout)
-
-        milayout.addWidget(envFrame)
-        ##----------------------
-
         optionLayout = QFormLayout()
 
         self.tierWidget = TierWidget(corpus,include_spelling=False)
@@ -153,7 +133,27 @@ class MIDialog(FunctionDialog):
         milayout.addWidget(optionFrame)
         miFrame.setLayout(milayout)
 
-        self.layout().insertWidget(0,miFrame)
+        ##---------------------- Environment selection frame (envFrame) consists of a check box and selection widget
+        envFrame = QGroupBox('Environment (optional)')
+
+        envLayout = QFormLayout()
+
+        self.envCheck = QCheckBox('Set an environment filter')
+        self.envCheck.clicked.connect(self.setEnv)
+
+        self.envWidget = EnvironmentSelectWidget(inventory, middle = False, single_env=True)
+        self.envWidget.setTitle('')
+        self.envWidget.setEnabled(False)
+
+        envLayout.addWidget(self.envCheck)
+        envLayout.addWidget(self.envWidget)
+
+        envFrame.setLayout(envLayout)
+
+        milayout.addWidget(envFrame)
+        ##----------------------
+
+        self.layout().insertWidget(0, miFrame)
 
         if self.showToolTips:
             self.tierWidget.setToolTip(("<FONT COLOR=black>"

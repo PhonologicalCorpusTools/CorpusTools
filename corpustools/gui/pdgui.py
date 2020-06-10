@@ -109,7 +109,6 @@ class PDDialog(FunctionDialog):
 
         self.envWidget = EnvironmentSelectWidget(inventory, middle = False)
 
-        self.envWidget.setTitle('Environments (optional)')
         pdlayout.addWidget(self.envWidget)
 
         optionLayout = QVBoxLayout()

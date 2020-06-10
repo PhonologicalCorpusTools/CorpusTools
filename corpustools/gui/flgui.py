@@ -228,6 +228,7 @@ class FLDialog(FunctionDialog):
         environmentsLayout = QVBoxLayout()
         environmentsFrame.setLayout(environmentsLayout)
         self.envWidget = EnvironmentSelectWidget(self.inventory, middle=False)
+        self.envWidget.setTitle('Environments (optional)')
         environmentsLayout.addWidget(self.envWidget)
 
         #Update layout
