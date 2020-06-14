@@ -10,7 +10,7 @@ def load_words_neighden(path, file_sequence_type='spelling'):
     return output
 
 def print_neighden_results(output_filename, neighbors, output_format):
-    with open(output_filename, mode='w', encoding='utf-8-sig') as outf:
+    with open(output_filename, mode='w', encoding='utf-8-sig', newline='') as outf:
         writer = csv.writer(outf,delimiter='\t')
         for n in neighbors:
             output = str(getattr(n, output_format)).replace('.','')

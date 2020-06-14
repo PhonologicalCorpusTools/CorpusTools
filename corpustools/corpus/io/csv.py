@@ -420,11 +420,14 @@ def export_feature_matrix_csv(feature_matrix, path, delimiter = ','):
     delimiter : str
         Character to mark boundaries between columns.  Defaults to ','
     """
-    with open(path, encoding='utf-8-sig', mode='w') as f:
+    with open(path, encoding='utf-8-sig', mode='w', newline='') as f:
         header = ['symbol'] + feature_matrix.features
-        writer = DictWriter(f, header,delimiter=delimiter)
-        writer.writerow({h: h for h in header})
-        for seg in feature_matrix.segments:
+        writer = DictWriter(f, header, delimiter=delimiter)
+
+        writer.writeheader()    # write header (list of features)
+        #  writer.writerow({h: h for h in header})
+
+        for seg in feature_matrix.segments:     # loop over each seg in inventory and write its feature values as a row
             #If FeatureMatrix uses dictionaries
             #outdict = feature_matrix[seg]
             #outdict['symbol'] = seg
