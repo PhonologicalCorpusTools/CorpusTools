@@ -295,10 +295,7 @@ class Transcription(object):
         list
             Transcription with word boundaries
         """
-        if '#' not in self._list:
-            return ['#'] + self._list + ['#']
-        else:
-            return self._list
+        return ['#'] + self._list + ['#']
 
     def with_syllable_and_word_boundaries(self):
         syllable_str = ''

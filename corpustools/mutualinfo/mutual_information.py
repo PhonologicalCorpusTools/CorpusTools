@@ -40,8 +40,10 @@ def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
         unigram_dict = get_in_word_unigram_frequencies(corpus_context, query)
         bigram_dict = get_in_word_bigram_frequency(corpus_context, query)
     else:
-        unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges, probability=True)
-        bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges, probability=True)
+        unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges,
+                                                         probability=True, need_wd=False)
+        bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges,
+                                                        probability=True, need_wd=False)
 
     try:
         prob_s1 = unigram_dict[query[0]]
@@ -119,22 +121,36 @@ def mi_env_filter(corpus_context, envs):
         else:
             tier_search_from = "".join(tier)
 
-        found = pattern.finditer(tier_search_from)
+        found = pattern.finditer(tier_search_from, overlapped=True)
+        env_context = []
         for f in found:
-            kwargs = {}
+            if len(env_context) == 0:
+                env_context = list(f.span())
+            elif f.span()[0] < env_context[1]:
+                env_context[1] = f.span()[1]
+            else:
+                clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus)
+                env_context = list(f.span())
 
-            new_trans = tier_search_from[f.span()[0]:f.span()[1]]
-            new_trans = list(new_trans)
-            kwargs[word._transcription_name] = new_trans
-            kwargs[word._spelling_name] = str(word)
-            kwargs[word._freq_name] = word._frequency
-            new_word = Word(**kwargs)
-            clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
-            # print(str(new_trans))  # print the 'word' that satisfies the environment (and to be added)
-    corpus_context.corpus = clipped_corpus
+        if bool(env_context):
+            clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus)
 
-    return corpus_context # corpus_context (clipped), to be fed into the original function
+    if bool(clipped_corpus.wordlist):  # if the clipped corpus is not empty, set it as the context for calculating MI
+        corpus_context.corpus = clipped_corpus
+    else:    # if the matrix corpus does not have any case of satisfying the specified env., prompt a warning
+        raise MutualInfoError('Warning! Mutual information could not be calculated because the specified environment is not in the corpus.')
 
+    return corpus_context  # corpus_context (clipped), to be fed into the original function
+
+def clip_context(new_trans, word, clipped_corpus):
+    kwargs = {}
+    new_trans = list(new_trans)
+    kwargs[word._transcription_name] = new_trans
+    kwargs[word._spelling_name] = str(word)
+    kwargs[word._freq_name] = word._frequency
+    new_word = Word(**kwargs)
+    clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
+    # print(str(new_trans))  # print the 'word' that satisfies the environment (and to be added)
 
 def get_in_word_unigram_frequencies(corpus_context, query):
     totals = [0 for x in query]

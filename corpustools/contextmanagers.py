@@ -65,7 +65,7 @@ class BaseCorpusContext(object):
             self.length = counter
             return self.length
 
-    def get_frequency_base(self, gramsize = 1, halve_edges = False, probability = False):
+    def get_frequency_base(self, gramsize=1, halve_edges=False, probability=False, need_wd=True):
         """
         Generate (and cache) frequencies for each segment in the Corpus.
 
@@ -82,6 +82,10 @@ class BaseCorpusContext(object):
             If True, frequency counts will be normalized by total frequency,
             defaults to False
 
+        need_wd : boolean
+            If True, word boundaries are added. Default to True.
+            False if e.g., for env filter in mutual information
+
         Returns
         -------
         dict
@@ -94,8 +98,10 @@ class BaseCorpusContext(object):
                 tier = getattr(word, self.sequence_type)
                 if self.sequence_type.lower() == 'spelling':
                     seq = ['#'] + [x for x in tier] + ['#']
-                else:
+                elif need_wd:
                     seq = tier.with_word_boundaries()
+                else:
+                    seq = tier._list
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:
                     if len(x) == 1:
