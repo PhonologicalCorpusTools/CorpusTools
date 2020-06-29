@@ -2651,6 +2651,7 @@ class Corpus(object):
 
         new_corpus = Corpus('')
         new_corpus._attributes = [Attribute(x.name, x.att_type, x.display_name) for x in self.attributes]
+        new_corpus.inventory = self.inventory
 
         if mode == 'andMode':
             for word in self:
