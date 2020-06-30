@@ -67,6 +67,7 @@ class MIDialog(FunctionDialog):
               'Frequency type',
               'Pronunciation variants',
               'Minimum word frequency',
+              'Environments',
               'Mutual information']
 
     _about = [('This function calculates the mutual information for a bigram'
@@ -133,7 +134,7 @@ class MIDialog(FunctionDialog):
         milayout.addWidget(optionFrame)
         miFrame.setLayout(milayout)
 
-        ##---------------------- Environment selection frame (envFrame) consists of a check box and selection widget
+        ##---------------------- Environment selection frame (envFrame) consists of: check box, selection widget, savefile widget
         envFrame = QGroupBox('Environment (optional)')
 
         envLayout = QFormLayout()
@@ -218,42 +219,30 @@ class MIDialog(FunctionDialog):
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
+        if not self.envWidget.displayValue():
+            environments = 'None'
+        else:
+            environments = ' ; '.join([x for x in self.envWidget.displayValue()])
         for i, r in enumerate(results):
-            if isinstance(r,dict):
-                for env,v in r.items():
-                    try:
-                        env = self.kwargs['display_envs'][env]
-                    except KeyError as e:
-                        pass #a few things, like "AVG", don't have a special display name
-                    self.results.append({'Corpus': self.corpus.name,
-                                         'PCT ver.': __version__,  # self.corpus._version,
-                                         'First segment': seg_pairs[i][0],
-                                         'Second segment': seg_pairs[i][1],
-                                         'Domain': dom,
-                                         'Environment': env,
-                                         'Halved edges': self.halveEdgesCheck.isChecked(),
-                                         'Transcription tier': self.tierWidget.displayValue(),
-                                         'Frequency type': self.typeTokenWidget.value().title(),
-                                         'Pronunciation variants': self.variantsWidget.value().title(),
-                                         'Minimum word frequency': frequency_cutoff,
-                                         'Mutual information': r})
-            else:
-                self.results.append({'Corpus': self.corpus.name,
-                                    'PCT ver.': __version__,#self.corpus._version,
-                                    'First segment': seg_pairs[i][0],
-                                    'Second segment': seg_pairs[i][1],
-                                    'Domain': dom,
-                                    'Halved edges': self.halveEdgesCheck.isChecked(),
-                                    'Transcription tier': self.tierWidget.displayValue(),
-                                    'Frequency type': self.typeTokenWidget.value().title(),
-                                    'Pronunciation variants': self.variantsWidget.value().title(),
-                                    'Minimum word frequency': frequency_cutoff,
-                                    'Mutual information': r})
+            self.results.append({'Corpus': self.corpus.name,
+                                'PCT ver.': __version__,#self.corpus._version,
+                                'First segment': seg_pairs[i][0],
+                                'Second segment': seg_pairs[i][1],
+                                'Domain': dom,
+                                'Halved edges': self.halveEdgesCheck.isChecked(),
+                                'Transcription tier': self.tierWidget.displayValue(),
+                                'Frequency type': self.typeTokenWidget.value().title(),
+                                'Pronunciation variants': self.variantsWidget.value().title(),
+                                'Minimum word frequency': frequency_cutoff,
+                                'Environments': environments,
+                                'Mutual information': r})
 
     def setEnv(self):
         if self.envCheck.checkState():
             self.envWidget.setEnabled(True)
+            self.saveFileWidget.setEnabled(True)
             self.inWordCheck.setEnabled(False)
         else:
             self.envWidget.setEnabled(False)
+            self.saveFileWidget.setEnabled(False)
             self.inWordCheck.setEnabled(True)

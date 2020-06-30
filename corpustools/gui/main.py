@@ -829,7 +829,7 @@ class MainWindow(QMainWindow):
             if self.MIWindow is not None and dialog.update and self.MIWindow.isVisible():
                 self.MIWindow.table.model().addRows(dialog.results)
             else:
-                self.MIWindow = ResultsWindow('Mutual information results',dialog,self)
+                self.MIWindow = ResultsWindow('Mutual information results', dialog, self)
                 self.MIWindow.show()
                 self.showMIResults.triggered.connect(self.MIWindow.raise_)
                 self.showMIResults.triggered.connect(self.MIWindow.activateWindow)
