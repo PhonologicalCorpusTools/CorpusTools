@@ -3,7 +3,7 @@ from collections import OrderedDict
 from corpustools.mutualinfo.mutual_information import mi_env_filter, pointwise_mi
 from .imports import *
 from .environments import EnvironmentSelectWidget
-from .widgets import (BigramWidget, RadioSelectWidget, TierWidget, ContextWidget)
+from .widgets import (BigramWidget, RadioSelectWidget, TierWidget, ContextWidget, SaveFileWidget)
 from .windows import FunctionWorker, FunctionDialog
 from corpustools.exceptions import PCTError, PCTPythonError
 from corpustools.contextmanagers import (CanonicalVariantContext,
@@ -146,8 +146,16 @@ class MIDialog(FunctionDialog):
         self.envWidget.setTitle('')
         self.envWidget.setEnabled(False)
 
+        fileFrame = QGroupBox('Output list of contexts to a file')
+        fileLayout = QHBoxLayout()
+        fileFrame.setLayout(fileLayout)
+        self.saveFileWidget = SaveFileWidget('Select file location', 'Text files (*.txt)')
+        self.saveFileWidget.setEnabled(False)
+        fileLayout.addWidget(self.saveFileWidget)
+
         envLayout.addWidget(self.envCheck)
         envLayout.addWidget(self.envWidget)
+        envLayout.addWidget(fileFrame)
 
         envFrame.setLayout(envLayout)
 
