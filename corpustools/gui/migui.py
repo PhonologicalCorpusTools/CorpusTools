@@ -29,11 +29,12 @@ class MIWorker(FunctionWorker):
                 kwargs['type_token'], frequency_threshold=kwargs['frequency_cutoff']) as c:
             try:
                 envs = kwargs.pop('envs', None)
-                for pair in kwargs['segment_pairs']:
-                    if envs is not None:
-                        c = mi_env_filter(c, envs)
-                        kwargs['in_word'] = False
 
+                if envs is not None:    #  if env is set, c(orpus context) is 'extracted'
+                    c = mi_env_filter(c, envs)
+                    kwargs['in_word'] = False
+
+                for pair in kwargs['segment_pairs']:
                     res = pointwise_mi(c, pair,
                                        halve_edges = kwargs['halve_edges'],
                                        in_word = kwargs['in_word'],
@@ -214,6 +215,7 @@ class MIDialog(FunctionDialog):
         self.kwargs['halve_edges'] = self.halveEdgesCheck.isChecked()
         self.kwargs['frequency_cutoff'] = frequency_cutoff
         self.kwargs['sequence_type'] = self.tierWidget.value()
+        self.kwargs['context_output_path'] = self.saveFileWidget.value() if self.saveFileWidget.value() != '' else ''
         return self.kwargs
 
     def setResults(self,results):
