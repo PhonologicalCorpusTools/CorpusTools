@@ -91,7 +91,7 @@ class FLDialog(FunctionDialog):
               'Pronunciation variants',
               'Minimum word frequency',
               'Environments',
-              'Result']
+              'Functional load']
               #'Non-normalized result']
 
     _about = [('This function calculates the functional load of the contrast'
@@ -418,4 +418,4 @@ class FLDialog(FunctionDialog):
                                 'Minimum word frequency': frequency_cutoff,
                                 'Environments': environments,
                                 #'Non-normalized result': normalized,
-                                'Result': r[0]})
+                                'Functional load': r[0]})
