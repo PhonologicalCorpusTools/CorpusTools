@@ -1,5 +1,6 @@
 import math
 import time
+import csv
 import regex as re
 
 from corpustools.exceptions import MutualInfoError
@@ -72,7 +73,7 @@ def pointwise_mi(corpus_context, query, halve_edges = False, in_word = False,
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
 
 
-def mi_env_filter(corpus_context, envs):
+def mi_env_filter(corpus_context, envs, context_output_path=''):
     """
     Environment filter
     It extracts only those words that satisfy environment condition and
@@ -86,6 +87,8 @@ def mi_env_filter(corpus_context, envs):
         Context manager for a corpus
     envs : list of EnvironmentFilter
         List of EnvironmentFilter objects that specify environments
+    context_output_path : str
+        Path to save the list of 'clipped' words as a txt file (optional)
 
     Returns
     -------
@@ -113,6 +116,7 @@ def mi_env_filter(corpus_context, envs):
         user_wb = True
     pattern = re.compile(pattern)
 
+    context_pair = []
     for word in corpus_context:
         tier = getattr(word, corpus_context.sequence_type)
 
@@ -129,28 +133,36 @@ def mi_env_filter(corpus_context, envs):
             elif f.span()[0] < env_context[1]:
                 env_context[1] = f.span()[1]
             else:
-                clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus)
+                context_pair.append(clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
                 env_context = list(f.span())
 
         if bool(env_context):
-            clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus)
+            context_pair.append(clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
 
     if bool(clipped_corpus.wordlist):  # if the clipped corpus is not empty, set it as the context for calculating MI
         corpus_context.corpus = clipped_corpus
     else:    # if the matrix corpus does not have any case of satisfying the specified env., prompt a warning
         raise MutualInfoError('Warning! Mutual information could not be calculated because the specified environment is not in the corpus.')
 
+    if context_output_path != '':
+        with open(context_output_path, mode='w', encoding='utf-8-sig', newline='') as f:
+            writer = csv.writer(f, delimiter='\t')
+            writer.writerow(['Environment', 'Word', 'Context'])
+            for context in context_pair:
+                writer.writerow([str(envs[0]), context[0], context[1]])
+
     return corpus_context  # corpus_context (clipped), to be fed into the original function
 
 def clip_context(new_trans, word, clipped_corpus):
     kwargs = {}
     new_trans = list(new_trans)
+    original_word = getattr(word, word._transcription_name)
     kwargs[word._transcription_name] = new_trans
     kwargs[word._spelling_name] = str(word)
     kwargs[word._freq_name] = word._frequency
     new_word = Word(**kwargs)
     clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
-    # print(str(new_trans))  # print the 'word' that satisfies the environment (and to be added)
+    return str(original_word), ''.join(new_trans)  # print the 'word' that satisfies the environment (and to be added)
 
 def get_in_word_unigram_frequencies(corpus_context, query):
     totals = [0 for x in query]
