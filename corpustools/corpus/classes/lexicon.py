@@ -1221,6 +1221,9 @@ class Word(object):
                 setattr(self, attribute, getattr(old_word, attribute))
             else:
                 setattr(self, attribute, default_value)
+            if attribute == '_freq_name':
+                if self._freq_name is None:
+                    self._freq_name = 'Frequency'
 
         if hasattr(old_word, 'wordtokens'):
             self.wordtokens = list()

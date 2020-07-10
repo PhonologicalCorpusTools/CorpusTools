@@ -514,6 +514,9 @@ class MainWindow(QMainWindow):
             if not hasattr(word, 'Frequency'):
                 update_words = True
                 break
+            if hasattr(word, '_freq_name') and word._freq_name is None:
+                update_words = True
+                break
         if update_corpus:
             corpus = Corpus(corpus.name, update=corpus)
         if update_inventory:
