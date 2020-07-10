@@ -133,11 +133,13 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
             elif f.span()[0] < env_context[1]:
                 env_context[1] = f.span()[1]
             else:
-                context_pair.append(clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
+                context_pair.append((str(word),) +
+                                    clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
                 env_context = list(f.span())
 
         if bool(env_context):
-            context_pair.append(clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
+            context_pair.append((str(word),) +
+                                clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
 
     if bool(clipped_corpus.wordlist):  # if the clipped corpus is not empty, set it as the context for calculating MI
         corpus_context.corpus = clipped_corpus
@@ -147,9 +149,9 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
     if context_output_path != '':
         with open(context_output_path, mode='w', encoding='utf-8-sig', newline='') as f:
             writer = csv.writer(f, delimiter='\t')
-            writer.writerow(['Environment', 'Word', 'Context'])
+            writer.writerow(['Orthography', 'Transcription', 'Environment',  'Context'])
             for context in context_pair:
-                writer.writerow([str(envs[0]), context[0], context[1]])
+                writer.writerow([context[0], context[1], str(envs[0]), context[2]])
 
     return corpus_context  # corpus_context (clipped), to be fed into the original function
 
