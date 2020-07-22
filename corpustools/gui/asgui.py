@@ -81,8 +81,8 @@ class ASDialog(FunctionDialog):
             'Maximum frequency',
             'Number of filters',
             'Number of coefficients',
-            'Result',
-            'Is similarity']
+            'Is similarity',
+            'Result']
 
     _about = [('This function calculates the acoustic similarity of sound files in two'
                 ' directories by generating either MFCCs or amplitude envelopes for each'
@@ -375,6 +375,6 @@ class ASDialog(FunctionDialog):
                                 'Maximum frequency': float(self.maxFreqEdit.text()),
                                 'Number of filters': int(self.filterEdit.text()),
                                 'Number of coefficients': self.coeffEdit.text(),
-                                'Result': r[2],
-                                'Is similarity': self.outputSimWidget.isChecked()})
+                                'Is similarity': self.outputSimWidget.isChecked(),
+                                'Result': r[2]})
 
