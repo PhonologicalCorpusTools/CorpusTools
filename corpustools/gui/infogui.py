@@ -11,9 +11,23 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
 
 class InformativityDialog(FunctionDialog):
 
-    header = ['Corpus', 'PCT ver.', 'Segment', 'Informativity', 'Context', 'Type or token', 'Transcription tier', 'Pronunciation variants']
+    header = ['Corpus',
+              'PCT ver.',
+              'Segment',
+              'Context',
+              'Type or token',
+              'Transcription tier',
+              'Pronunciation variants',
+              'Informativity']
 
-    _about = []
+    _about = [('This function calculates the average information (surprisal) that a segment carries'
+               ' within a corpus. Informativity here is defined as "the weighted average of the'
+               ' negative log predictability of all the occurrences of a segment."'),
+              '',
+              'References: ',
+              ('Cohen Priva, Uriel. 2015.'
+               ' Informativity affects consonant duration and deletion rates.'
+               ' Laboratory Phonology, 6(2), 243–278')]
 
     name = 'informativity'
 
