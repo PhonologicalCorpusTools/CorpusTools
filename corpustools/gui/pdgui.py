@@ -69,6 +69,7 @@ class PDWorker(FunctionWorker):
 class PDDialog(FunctionDialog):
     header = ['Corpus',
               'PCT ver.',
+              'Analysis name',
               'First segment',
               'Second segment',
               'Environment',
@@ -79,7 +80,7 @@ class PDDialog(FunctionDialog):
               'Frequency of second segment',
               'Frequency of environment',
               'Minimum word frequency',
-              'Entropy']
+              'Result']
 
     _about = ['This function calculates'
                 ' the predictability of distribution of two sounds, using the measure of entropy'
@@ -266,11 +267,12 @@ class PDDialog(FunctionDialog):
                                         'Frequency of second segment': v[3], #freq of seg2
                                         'Frequency of environment': v[1], #total_tokens,
                                         'Minimum word frequency': frequency_cutoff,
-                                        'Entropy': v[0]} #H
+                                        'Result': v[0]} #H
                                         )
             else:
                 self.results.append({'Corpus': self.corpus.name,
                                      'PCT ver.': __version__,#self.corpus._version,
+                                     'Analysis name': self.name.capitalize(),
                                      'First segment': seg_pairs[i][0],
                                      'Second segment': seg_pairs[i][1],
                                      'Environment': 'FREQ-ONLY',
@@ -281,5 +283,5 @@ class PDDialog(FunctionDialog):
                                      'Frequency of second segment': r[3], #freq of seg2
                                      'Frequency of environment': r[1], #total_tokens,
                                      'Minimum word frequency': frequency_cutoff,
-                                     'Entropy': r[0]} #H
+                                     'Result': r[0]} #H
                                      )

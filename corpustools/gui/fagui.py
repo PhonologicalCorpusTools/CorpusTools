@@ -53,6 +53,8 @@ class FAWorker(FunctionWorker):
 
 class FADialog(FunctionDialog):
     header = ['Corpus',
+                'PCT ver.'
+                'Analysis name',
                 'First segment',
                 'Second segment',
                 'Algorithm',
@@ -63,7 +65,7 @@ class FADialog(FunctionDialog):
                 'Minimum word frequency',
                 'Total words in corpus',
                 'Total words with alternations',
-                'Frequency of alternation']
+                'Result']
 
     _about = [('This function calculates the frequency of alternation '
                     'of two segments. In general, an alternation is seen when'
@@ -341,7 +343,7 @@ class FADialog(FunctionDialog):
                                 'Minimum word frequency': frequency_cutoff,
                                 'Total words in corpus': r[0],
                                 'Total words with alternations': r[1],
-                                'Frequency of alternation': r[2]})
+                                'Result': r[2]})
 
     def khorsiSelected(self):
         self.typeTokenWidget.enable()

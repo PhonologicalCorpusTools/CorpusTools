@@ -53,6 +53,7 @@ class KLWorker(FunctionWorker):
 class KLDialog(FunctionDialog):
     header = ['Corpus',
               'PCT ver.',
+              'Analysis name',
               'First segment',
               'Second segment',
               'Context',
@@ -170,6 +171,7 @@ class KLDialog(FunctionDialog):
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
                                 'PCT ver.': __version__,#self.corpus._version,
+                                'Analysis name': self.name.capitalize(),
                                 'First segment': seg_pairs[i][0],
                                 'Second segment': seg_pairs[i][1],
                                 'Context': context,

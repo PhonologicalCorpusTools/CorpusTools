@@ -131,6 +131,7 @@ class NDWorker(FunctionWorker):
 class NDDialog(FunctionDialog):
     header = ['Corpus',
               'PCT ver.',
+              'Analysis name',
               'Word',
               'Algorithm',
               'Threshold',
@@ -139,7 +140,7 @@ class NDDialog(FunctionDialog):
               'Collapsed homophones',
               'Pronunciation variants',
               'Minimum word frequency',
-              'Neighborhood density']
+              'Result']
 
     _about = [('This function calculates the neighborhood density (size)'
                     ' of a word. A neighborhood is the set of words sufficiently'
@@ -537,6 +538,7 @@ class NDDialog(FunctionDialog):
                 thresh = float(self.maxDistanceEdit.text())
             self.results.append({'Corpus': self.corpusModel.corpus.name,
                                 'PCT ver.': __version__,#self.corpusModel.corpus._version,
+                                'Analysis name': self.name.capitalize(),
                                 'Word': w,
                                 'Algorithm': self.algorithmWidget.displayValue(),
                                 'Threshold': thresh,
@@ -545,7 +547,7 @@ class NDDialog(FunctionDialog):
                                 'Collapsed homophones': 'Yes' if self.collapseHomophones.isChecked() else 'No',
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
-                                'Neighborhood density': nd})
+                                'Result': nd})
 
     def substitutionSelected(self):
         self.typeTokenWidget.disable()

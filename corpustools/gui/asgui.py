@@ -18,6 +18,7 @@ except ImportError:
 from .imports import *
 from .widgets import DirectoryWidget, RadioSelectWidget, FileWidget
 from .windows import FunctionWorker, FunctionDialog
+from corpustools import __version__
 
 class ASWorker(FunctionWorker):
     def run(self):
@@ -73,7 +74,9 @@ class ASWorker(FunctionWorker):
 
 class ASDialog(FunctionDialog):
 
-    header = ['File 1',
+    header = ['PCT ver.',
+            'Analysis name',
+            'File 1',
             'File 2',
             'Representation',
             'Match function',
@@ -367,7 +370,9 @@ class ASDialog(FunctionDialog):
         self.results = list()
 
         for r in results:            
-            self.results.append({'File 1': r[0],
+            self.results.append({'PCT ver.': __version__,#self.corpusModel.corpus._version,
+                                'Analysis name': self.name.capitalize(),
+                                'File 1': r[0],
                                 'File 2': r[1],
                                 'Representation': self.representationWidget.displayValue(),
                                 'Match function': self.distAlgWidget.displayValue(),

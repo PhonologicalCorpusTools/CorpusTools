@@ -61,6 +61,7 @@ class MIWorker(FunctionWorker):
 class MIDialog(FunctionDialog):
     header = ['Corpus',
               'PCT ver.',
+              'Analysis name',
               'First segment',
               'Second segment',
               'Domain',
@@ -70,7 +71,7 @@ class MIDialog(FunctionDialog):
               'Pronunciation variants',
               'Minimum word frequency',
               'Environments',
-              'Mutual information']
+              'Result']
 
     _about = [('This function calculates the mutual information for a bigram'
                     ' of any two segments, based on their unigram and bigram'
@@ -237,6 +238,7 @@ class MIDialog(FunctionDialog):
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
                                 'PCT ver.': __version__,#self.corpus._version,
+                                'Analysis name': self.name.capitalize(),
                                 'First segment': seg_pairs[i][0],
                                 'Second segment': seg_pairs[i][1],
                                 'Domain': dom,
@@ -246,7 +248,7 @@ class MIDialog(FunctionDialog):
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
                                 'Environments': environments,
-                                'Mutual information': r})
+                                'Result': r})
 
     def setEnv(self):
         if self.envCheck.checkState():

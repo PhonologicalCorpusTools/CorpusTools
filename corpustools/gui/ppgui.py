@@ -67,6 +67,7 @@ class PPDialog(FunctionDialog):
     header = ['Corpus',
               'PCT ver.',
               'Word',
+              'Analysis name',
               'Algorithm',
               'Probability type',
               'Transcription tier',
@@ -74,7 +75,7 @@ class PPDialog(FunctionDialog):
               'Log-scaled frequency',
               'Pronunciation variants',
               'Minimum word frequency',
-              'Phonotactic probability']
+              'Result']
 
     _about = [('This function calculates the phonotactic probability '
                     'of a word based on positional probabilities of single '
@@ -352,6 +353,7 @@ class PPDialog(FunctionDialog):
             w, pp = result
             self.results.append({'Corpus': self.corpusModel.corpus.name,
                                 'PCT ver.': __version__,#self.corpusModel.corpus._version,
+                                'Analysis name': self.name.capitalize(),
                                 'Word': str(w),
                                 'Algorithm': self.algorithmWidget.displayValue().replace('&&','&'),
                                 'Probability type': self.probabilityTypeWidget.displayValue(),
@@ -360,7 +362,7 @@ class PPDialog(FunctionDialog):
                                 'Log-scaled frequency': 'Yes' if self.useLogScale.isChecked() else 'No',
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'Minimum word frequency': frequency_cutoff,
-                                'Phonotactic probability': pp})
+                                'Result': pp})
 
     def vitevitchSelected(self):
         self.probabilityTypeWidget.enable()

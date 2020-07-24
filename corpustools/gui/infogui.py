@@ -13,12 +13,13 @@ class InformativityDialog(FunctionDialog):
 
     header = ['Corpus',
               'PCT ver.',
+              'Analysis name',
               'Segment',
               'Context',
               'Type or token',
               'Transcription tier',
               'Pronunciation variants',
-              'Informativity']
+              'Result']
 
     _about = [('This function calculates the average information (surprisal) that a segment carries'
                ' within a corpus. Informativity here is defined as "the weighted average of the'

@@ -205,13 +205,14 @@ def get_multiple_informativity(corpus, segment_list, sequence_type = 'transcript
         summary = {
             "Corpus": corpus.name,
             "PCT ver.": __version__,#corpus.corpus._version,
+            'Analysis name': 'Informativity',
             "Segment": seg,
             "Context": "all",
             "Rounding": rounding,
             "Type or token": type_or_token,
             "Transcription tier": sequence_type,
             "Pronunciation variants": None,
-            "Informativity": informativity}
+            "Result": informativity}
 
         seg_summary.append(summary)
 
@@ -253,7 +254,7 @@ def get_informativity(corpus_context, segment, sequence_type = 'transcription', 
         "Segment": segment,
         "Context": "all",
         "Rounding": rounding,
-        "Informativity": informativity
+        "Result": informativity
     }
     return summary
 

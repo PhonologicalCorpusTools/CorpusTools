@@ -81,6 +81,7 @@ class FLWorker(FunctionWorker):
 class FLDialog(FunctionDialog):
     header = ['Corpus',
               'PCT ver.',
+              'Analysis name',
               'First segment',
               'Second segment',
               'Algorithm',
@@ -91,7 +92,7 @@ class FLDialog(FunctionDialog):
               'Pronunciation variants',
               'Minimum word frequency',
               'Environments',
-              'Functional load']
+              'Result']
               #'Non-normalized result']
 
     _about = [('This function calculates the functional load of the contrast'
@@ -407,6 +408,7 @@ class FLDialog(FunctionDialog):
 
             self.results.append({'Corpus': self.corpus.name,
                                 'PCT ver.': __version__,#self.corpus._version,
+                                'Analysis name': self.name.capitalize(),
                                 'First segment': seg_one,
                                 'Second segment': seg_two,
                                 'Algorithm': self.algorithmWidget.displayValue(),
@@ -418,4 +420,4 @@ class FLDialog(FunctionDialog):
                                 'Minimum word frequency': frequency_cutoff,
                                 'Environments': environments,
                                 #'Non-normalized result': normalized,
-                                'Functional load': r[0]})
+                                'Result': r[0]})
