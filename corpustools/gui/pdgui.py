@@ -257,6 +257,7 @@ class PDDialog(FunctionDialog):
                         pass #a few things, like "AVG", don't have a special display name
                     self.results.append({'Corpus': self.corpus.name,
                                         'PCT ver.': __version__,#self.corpus._version,
+                                        'Analysis name': self.name.capitalize(),
                                         'First segment': seg_pairs[i][0],
                                         'Second segment': seg_pairs[i][1],
                                         'Environment': env,

@@ -63,7 +63,7 @@ class KLDialog(FunctionDialog):
               'Pronunciation variants',
               'First segment entropy',
               'Second segment entropy',
-              'Kullback-Leibler divergence',
+              'Result',
               'Possible UR',
               'Spurious allophones'
               ]
@@ -181,6 +181,6 @@ class KLDialog(FunctionDialog):
                                 'Pronunciation variants': self.variantsWidget.value().title(),
                                 'First segment entropy': r[0],
                                 'Second segment entropy': r[1],
-                                'Kullback-Leibler divergence': r[2],
+                                'Result': r[2],
                                 'Possible UR': r[3],
                                 'Spurious allophones': r[4]})
