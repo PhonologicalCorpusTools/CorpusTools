@@ -2157,12 +2157,7 @@ class SegPairTableWidget(TableWidget):
         self.horizontalHeader().setSectionsClickable(False)
 
         switch = QPushButton()
-        if sys.platform == 'darwin' or sys.platform.startswith('win'):
-            icon = QIcon()
-            icon.addPixmap(QPixmap(":/Icon/resources/object-flip-horizontal.png"),
-                        QIcon.Normal, QIcon.Off)
-        else:
-            icon = QIcon.fromTheme('object-flip-horizontal')
+        icon = self.style().standardIcon(QStyle.SP_BrowserReload)
         switch.setIcon(icon)
         self.horizontalHeader().setDefaultSectionSize(switch.iconSize().width()+16)
         self.horizontalHeader().setSectionResizeMode(0,QHeaderView.ResizeToContents)
