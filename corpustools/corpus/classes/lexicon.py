@@ -2645,6 +2645,8 @@ class Corpus(object):
         ----------
         filters : list of tuples
             See above for format
+        mode : str
+            How multiple filters are processed. Either 'andMode' or 'orMode'.
 
         Returns
         -------
@@ -3105,7 +3107,8 @@ class Corpus(object):
                 elif isinstance(getattr(word, d), Transcription):
                     self._attributes.append(Attribute(d,'tier'))
                 elif isinstance(getattr(word, d), (int, float)):
-                    self._attributes.append(Attribute(d, 'frequency'))
+                    if word._freq_name not in self._attributes:
+                        self._attributes.append(Attribute(d, 'frequency'))
 
         for a in self._attributes:
             if not hasattr(word, a.name):
