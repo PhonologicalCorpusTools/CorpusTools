@@ -314,13 +314,13 @@ class AddWordDialog(QDialog):
                 text = self.edits['transcription'].text()
                 if text == 'Empty':
                     text = ''
-                kwargs[a.display_name] = [x for x in text.split('.') if x != '']
+                kwargs[a.name] = [x for x in text.split('.') if x != '']
                 # if not kwargs[a.name]:
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a Transcription.".format(str(a)))
                 #    return
 
-                for i in list(dict.fromkeys(kwargs[a.display_name])):
+                for i in list(dict.fromkeys(kwargs[a.name])):
                     if i not in self.inventory.segs:
                         reply = QMessageBox.critical(self,
                                                      'Invalid information',
@@ -328,25 +328,25 @@ class AddWordDialog(QDialog):
                                                      'from the corpus\' inventory.'.format(str(a)))
                         return
             elif a.att_type == 'spelling':
-                kwargs[a.display_name] = self.edits['spelling'].text()
-                if kwargs[a.display_name] == '':  # and a.name == 'spelling':
-                    kwargs[a.display_name] = None
-                if a.display_name != 'Spelling':
-                    kwargs['_spelling_name'] = a.display_name
+                kwargs[a.name] = self.edits['spelling'].text()
+                if kwargs[a.name] == '':  # and a.name == 'spelling':
+                    kwargs[a.name] = None
+                if a.name != 'Spelling':
+                    kwargs['_spelling_name'] = a.name
                 # if not kwargs[a.name] and a.name == 'spelling':
                 #    reply = QMessageBox.critical(self,
                 #            "Missing information", "Words must have a spelling.".format(str(a)))
                 #    return
             elif a.att_type == 'numeric' and (hasattr(a, 'is_freq') or a.display_name == 'Frequency'):
                 try:
-                    kwargs[a.display_name] = float(self.edits['frequency'].text())
+                    kwargs[a.name] = float(self.edits['frequency'].text())
                 except ValueError:
                     reply = QMessageBox.critical(self,
                                                  "Invalid information",
                                                  "The column '{}' must be a number.".format(str(a)))
                     return
-                if a.display_name != 'Frequency':
-                    kwargs['_freq_name'] = a.display_name
+                if a.name != 'Frequency':
+                    kwargs['_freq_name'] = a.name
 
             elif a.att_type == 'factor':
                 kwargs[a.name] = self.edits[a.name].text()
