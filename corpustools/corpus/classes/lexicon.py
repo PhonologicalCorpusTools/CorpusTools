@@ -1046,8 +1046,8 @@ class Word(object):
         self._spelling_name = kwargs.pop('_spelling_name', None)
 
         for key, value in kwargs.items():
-            # if not all([letter.isupper() for letter in key]):
-            #     key = key.capitalize()
+            if not all([letter.isupper() for letter in key]):
+                key = key.capitalize()
             if isinstance(value, Decimal):
                 value = float(value)
             if isinstance(value, tuple):
