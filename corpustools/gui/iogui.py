@@ -1002,7 +1002,7 @@ class LoadCorpusDialog(PCTDialog):
             alert = QMessageBox(QMessageBox.Warning,
                                 'No frequency selected',
                                 'You didn’t select any frequency column for your corpus. \n'
-                                'Click "OK" if you want to proceed, and PCT will create a new column for frequency.\n '
+                                'Click "OK" if you want to proceed, and PCT will create a new column for frequency. \n'
                                 'Click "Cancel" to go back.',
                                 QMessageBox.NoButton, self)
             alert.addButton('OK', QMessageBox.AcceptRole)
@@ -1224,6 +1224,10 @@ class SubsetCorpusDialog(QDialog):
         new_corpus.set_feature_matrix(self.corpus.specifier)
         save_binary(new_corpus,
                     corpus_name_to_path(self.parent().settings['storage'], new_corpus.name))
+        QMessageBox.information(self, 'Corpus subset created',
+                                'Successfully generated a corpus subset. \nTo open it, go to "File > Load '
+                                'corpus..." and select "{}".'.format(new_corpus.name),
+                                QMessageBox.Ok, QMessageBox.Ok)
         QDialog.accept(self)
 
 
