@@ -3081,7 +3081,7 @@ class Corpus(object):
                         self.wordlist[key] = word
                         break
             else:
-                check.frequency += word.frequency
+                check.frequency += word.frequency if word.frequency != 0 else 1
                 check.wordtokens.extend(tokens)
                 return
         except KeyError:
