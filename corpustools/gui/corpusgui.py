@@ -221,7 +221,7 @@ class AddWordDialog(QDialog):
         try:
             self.edits['frequency'].setText(str(word._frequency))
         except AttributeError:
-            self.edits['frequency'].setText('0')
+            self.edits['frequency'].setText('1')
         main.addRow(QLabel('Frequency'), self.edits['frequency'])
 
         # After three core columns (transcription, spelling, and freq) come factor columns
