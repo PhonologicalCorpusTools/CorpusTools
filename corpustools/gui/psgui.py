@@ -456,8 +456,8 @@ class RecentSearchDialog(QDialog):
 
 
 class PhonoSearchDialog(FunctionDialog):
-    header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Target', 'Environment', 'Token frequency']
-    summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency']
+    header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Target', 'Environment', 'Token frequency', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number', 'Min Syllable Number', 'Max Syllable Number']
+    summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number', 'Min Syllable Number', 'Max Syllable Number']
     _about = ['']
     name = 'phonological search'
 
@@ -541,10 +541,48 @@ class PhonoSearchDialog(FunctionDialog):
 
         optionLayout.addWidget(searchFrame)
 
+        filterFrame = QGroupBox('Additional filters')
+        filterLayout = QVBoxLayout()
+        filterFrame.setLayout(filterLayout)
+
+        wordFreqFrame = QGroupBox('Word frequency filters')
+        wFbox = QFormLayout()
+        self.minWordFreqFrame = QLineEdit()
+        wFbox.addRow('Minimum:', self.minWordFreqFrame)
+        self.maxWordFreqFrame = QLineEdit()
+        wFbox.addRow('Maximum:', self.maxWordFreqFrame)
+        wordFreqFrame.setLayout(wFbox)
+        filterLayout.addWidget(wordFreqFrame)
+
+        phonFreqFrame = QGroupBox('Phoneme number filters')
+        pFbox = QFormLayout()
+        self.minPhonFreqFrame = QLineEdit()
+        pFbox.addRow('Minimum:', self.minPhonFreqFrame)
+        self.maxPhonFreqFrame = QLineEdit()
+        pFbox.addRow('Maximum:', self.maxPhonFreqFrame)
+        phonFreqFrame.setLayout(pFbox)
+        filterLayout.addWidget(phonFreqFrame)
+
+        syllFreqFrame = QGroupBox('Syllable number filters')
+        sFbox = QFormLayout()
+        self.minSyllFreqFrame = QLineEdit()
+        sFbox.addRow('Minimum:', self.minSyllFreqFrame)
+        self.maxSyllFreqFrame = QLineEdit()
+        sFbox.addRow('Maximum:', self.maxSyllFreqFrame)
+        if len(inventory.syllables) == 0:
+            # grey out the box if there are no syllable delimiters
+            self.maxSyllFreqFrame.setStyleSheet("""QLineEdit { background-color: rgb(236, 236, 236);}""")
+            self.maxSyllFreqFrame.setEnabled(False)
+            self.minSyllFreqFrame.setStyleSheet("""QLineEdit { background-color: rgb(236, 236, 236);}""")
+            self.minSyllFreqFrame.setEnabled(False)
+        syllFreqFrame.setLayout(sFbox)
+        filterLayout.addWidget(syllFreqFrame)
+
         self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
 
         self.pslayout.addWidget(self.envWidget)
         self.pslayout.addWidget(optionFrame)
+        self.pslayout.addWidget(filterFrame)
 
         self.psFrame.setLayout(self.pslayout)
         self.layout().insertWidget(0, self.psFrame)
@@ -682,14 +720,75 @@ class PhonoSearchDialog(FunctionDialog):
                     return
             kwargs['envs'] = envs
 
+        try:
+            min_word_freq = float(self.minWordFreqFrame.text())
+        except ValueError:
+            min_word_freq = 0.0
+        try:
+            min_phon_num = float(self.minPhonFreqFrame.text())
+        except ValueError:
+            min_phon_num = 0.0
+        try:
+            min_syl_num = float(self.minSyllFreqFrame.text())
+        except ValueError:
+            min_syl_num = 0.0
+
+        try:
+            max_word_freq = float(self.maxWordFreqFrame.text())
+        except ValueError:
+            max_word_freq = 99999
+        try:
+            max_phon_num = float(self.maxPhonFreqFrame.text())
+        except ValueError:
+            max_phon_num = 99999
+        try:
+            max_syl_num = float(self.maxSyllFreqFrame.text())
+        except ValueError:
+            max_syl_num = 99999
+
+        kwargs['min_word_freq'] = min_word_freq
+        kwargs['min_phon_num'] = min_phon_num
+        kwargs['min_syl_num'] = min_syl_num
+        kwargs['max_word_freq'] = max_word_freq
+        kwargs['max_phon_num'] = max_phon_num
+        kwargs['max_syl_num'] = max_syl_num
+
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['mode'] = self.mode
         kwargs['result_type'] = self.resultType
+
         return kwargs
 
     def setResults(self, results):
         self.results = list()
+
+        try:
+            min_word_freq = float(self.minWordFreqFrame.text())
+        except ValueError:
+            min_word_freq = "N/A"
+        try:
+            min_phon_num = float(self.minPhonFreqFrame.text())
+        except ValueError:
+            min_phon_num = "N/A"
+        try:
+            min_syl_num = float(self.minSyllFreqFrame.text())
+        except ValueError:
+            min_syl_num = "N/A"
+
+        try:
+            max_word_freq = float(self.maxWordFreqFrame.text())
+        except ValueError:
+            max_word_freq = "N/A"
+        try:
+            max_phon_num = float(self.maxPhonFreqFrame.text())
+        except ValueError:
+            max_phon_num = "N/A"
+        try:
+            max_syl_num = float(self.maxSyllFreqFrame.text())
+        except ValueError:
+            max_syl_num = "N/A"
+
         if self.mode == 'segMode':
             for w, f in results:
                 segs = tuple(x.middle for x in f)
@@ -703,7 +802,13 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Transcription': str(getattr(w, self.tierWidget.value())),
                                      'Target': segs,
                                      'Environment': envs,
-                                     'Token frequency': w.frequency})
+                                     'Token frequency': w.frequency,
+                                     'Min Word Freq': min_word_freq,
+                                     'Max Word Freq': max_word_freq,
+                                     'Min Phoneme Number': min_phon_num,
+                                     'Max Phoneme Number': max_phon_num,
+                                     'Min Syllable Number': min_syl_num,
+                                     'Max Syllable Number': max_syl_num})
         else:
             for word, list_of_sylEnvs in results:
                 middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
@@ -717,4 +822,10 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Transcription': str(getattr(word, self.tierWidget.value())),
                                      'Target': middle_syllables,
                                      'Environment': envs,
-                                     'Token frequency': word.frequency})
+                                     'Token frequency': word.frequency,
+                                     'Min Word Freq': min_word_freq,
+                                     'Max Word Freq': max_word_freq,
+                                     'Min Phoneme Number': min_phon_num,
+                                     'Max Phoneme Number': max_phon_num,
+                                     'Min Syllable Number': min_syl_num,
+                                     'Max Syllable Number': max_syl_num})
