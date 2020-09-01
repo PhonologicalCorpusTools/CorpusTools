@@ -1406,7 +1406,11 @@ class Word(object):
         dict
             Dictionary with keys of Transcriptions and values of their frequencies
         """
-        return collections.Counter(getattr(x,sequence_type) for x in self.wordtokens)
+        try:
+            return collections.Counter(getattr(x, 'Surface_transcription') for x in self.wordtokens)  # Buckeye Corpus
+        except AttributeError:
+            pass
+        return collections.Counter(getattr(x, sequence_type) for x in self.wordtokens)
 
     def __repr__(self):
         return '<Word: \'%s\'>' % self.spelling
