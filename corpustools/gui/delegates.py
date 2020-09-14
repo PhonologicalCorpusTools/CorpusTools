@@ -19,3 +19,7 @@ class SwitchDelegate(QItemDelegate):
 
     def click(self, index):
         index.model().switchRow(index.row())
+        # The following two lines add and then delete a random row.
+        # This serves as a solution to the problem where the table does not refresh on MacOS.
+        index.model().addRow(row=('xx', 'xx'))
+        index.model().removeRow(ind=len(index.model().rows)-1)
