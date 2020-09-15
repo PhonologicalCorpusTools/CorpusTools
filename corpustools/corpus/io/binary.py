@@ -83,7 +83,7 @@ def download_binary(name, path, call_back = None):
     elif name == 'buckeye2spe':
         download_link = 'https://www.dropbox.com/s/neeklf4470tg83j/buckeye2spe.feature?dl=1'
     elif name == 'buckeye2hayes':
-        download_link = 'https://www.dropbox.com/s/wnaglo00ij9cjh2/buckeye2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/71xio76izapck9x/buckeye2hayes.feature?dl=1'
     else:
         return False
     filename, headers = urlretrieve(download_link, path, reporthook=report)
