@@ -1259,6 +1259,14 @@ class ExportCorpusDialog(QDialog):
 
         inlayout.addRow('Transcription delimiter:', self.transDelimiterEdit)
 
+        self.syllDelimiterEdit = QLineEdit()
+        self.syllDelimiterEdit.setText('-')
+        if len(self.corpus.inventory.syllables) == 0:  # if there's no syllable in the corpus,
+            self.syllDelimiterEdit.setEnabled(False)   # then grey out the syllable delimiter option.
+            self.syllDelimiterEdit.setText('')
+
+        inlayout.addRow('Syllable delimiter:', self.syllDelimiterEdit)
+
         self.variantWidget = QComboBox()
         for o in self.variantOptions:
             self.variantWidget.addItem(o[0])
@@ -1303,8 +1311,15 @@ class ExportCorpusDialog(QDialog):
             reply = QMessageBox.critical(self,
                                          "Invalid information", "The column delimiter must be a single character.")
             return
+
         transDelim = self.transDelimiterEdit.text()
+        syllDelim = self.syllDelimiterEdit.text() if self.syllDelimiterEdit.text() != '' else None
+        if colDelim == transDelim or colDelim == syllDelim or transDelim == syllDelim:
+            reply = QMessageBox.critical(self,
+                                         "Invalid information", "The delimiters must be different from each other.")
+            return
+
         variant_behavior = self.variantOptions[self.variantWidget.currentIndex()][1]
-        export_corpus_csv(self.corpus, filename, colDelim, transDelim, variant_behavior)
+        export_corpus_csv(self.corpus, filename, colDelim, transDelim, syllDelim, variant_behavior)
 
         QDialog.accept(self)

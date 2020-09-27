@@ -200,7 +200,7 @@ class Transcription(object):
                     has_syllable_level = True
                 else:
                     has_syllable_level = False
-            except Exception:
+            except AttributeError:
                 has_syllable_level = False
 
             if has_syllable_level:
@@ -586,6 +586,10 @@ class Transcription(object):
 
     def __len__(self):
         return len(self._list)
+
+    @property
+    def list(self):
+        return self._list
 
 
 class FeatureMatrix(object):

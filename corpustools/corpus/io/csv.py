@@ -1,10 +1,10 @@
 from csv import DictReader, DictWriter
 import os
 
-from corpustools.corpus.classes.lexicon import Corpus, FeatureMatrix, Word, Attribute
+from corpustools.corpus.classes.lexicon import Corpus, FeatureMatrix, Word, Attribute, Transcription
 from corpustools.corpus.io.binary import save_binary, load_binary
 
-from .helper import parse_transcription, AnnotationType
+from .helper import parse_transcription, AnnotationType, SyllableBaseAnnotation
 
 from corpustools.exceptions import DelimiterError, PCTError
 import corpustools.gui.modernize as modernize
@@ -322,7 +322,7 @@ def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back 
     feature_matrix.validate()
     return feature_matrix
 
-def make_safe(value, delimiter):
+def make_safe(value, seg_delimiter, syll_delimiter=None):
     """
     Recursively parse transcription lists into strings for saving
 
@@ -331,20 +331,29 @@ def make_safe(value, delimiter):
     value : object
         Object to make into string
 
-    delimiter : str
-        Character to mark boundaries between list elements
+    seg_delimiter : str
+        Character to mark boundaries between segments
+
+    syll_delimiter : str, optional
+        Character to mark boundaries between syllables
 
     Returns
     -------
     str
         Safe string
     """
-    if isinstance(value,list):
-        return delimiter.join(map(lambda x: make_safe(x, delimiter),value))
+    if isinstance(value, Transcription):
+        if syll_delimiter is not None:
+            return syll_delimiter.join(map(lambda x: make_safe(list(x), seg_delimiter), value._syllable_list))
+        else:
+            return seg_delimiter.join(map(lambda x: make_safe(x, seg_delimiter), value.list))
+    elif isinstance(value, list):
+        return seg_delimiter.join(map(lambda x: make_safe(x, seg_delimiter), value))
+
     return str(value)
 
 def export_corpus_csv(corpus, path,
-                    delimiter = ',', trans_delimiter = '.',
+                    delimiter = ',', trans_delimiter = '.', syll_delimiter = None,
                     variant_behavior = None):
     """
     Save a corpus as a column-delimited text file
@@ -359,6 +368,8 @@ def export_corpus_csv(corpus, path,
         Character to mark boundaries between columns.  Defaults to ','
     trans_delimiter : str
         Character to mark boundaries in transcriptions.  Defaults to '.'
+    syll_delimiter : str, optional
+        Character to mark boundaries in syllables.  Defaults to 'None'. Only active when syllable exists.
     variant_behavior : str, optional
         How to treat variants, 'token' will have a line for each variant,
         'column' will have a single column for all variants for a word,
@@ -382,7 +393,7 @@ def export_corpus_csv(corpus, path,
         for word in corpus.iter_sort():
             word_outline = []
             for a in corpus.attributes:
-                word_outline.append(make_safe(getattr(word, a.name), trans_delimiter))
+                word_outline.append(make_safe(getattr(word, a.name), trans_delimiter, syll_delimiter))
             if variant_behavior == 'token':
                 var = word.variants()
                 for v, freq in var.items():

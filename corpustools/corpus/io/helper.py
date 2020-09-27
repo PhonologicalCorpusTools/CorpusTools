@@ -91,11 +91,11 @@ class SyllableBaseAnnotation(object):
     def __iter__(self):
         segs = list()
         for o in self.onset:
-            segs.append(o)
+            segs.append(o.label)
         for n in self.nucleus:
-            segs.append(n)
+            segs.append(n.label)
         for c in self.coda:
-            segs.append(c)
+            segs.append(c.label)
         return iter(segs)
 
     def get_onset(self):
