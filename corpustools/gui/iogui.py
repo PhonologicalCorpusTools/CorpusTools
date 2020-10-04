@@ -1315,11 +1315,22 @@ class ExportCorpusDialog(QDialog):
         transDelim = self.transDelimiterEdit.text()
         syllDelim = self.syllDelimiterEdit.text() if self.syllDelimiterEdit.text() != '' else None
         if colDelim == transDelim or colDelim == syllDelim or transDelim == syllDelim:
-            reply = QMessageBox.critical(self,
-                                         "Invalid information", "The delimiters must be different from each other.")
-            return
+            reply = QMessageBox(QMessageBox.Warning,
+                                "Invalid information", 'You used the same delimiter for column, transcription, or'
+                                                       ' syllable.\nClick "OK" if you want to proceed, but you may lose'
+                                                       ' information. \nClick "Cancel" to go back.',
+                                QMessageBox.NoButton, self)
+            reply.addButton('OK', QMessageBox.AcceptRole)
+            reply.addButton('Cancel', QMessageBox.RejectRole)
+            reply.exec_()
+            if reply.buttonRole(reply.clickedButton()) == QMessageBox.RejectRole:
+                return
 
         variant_behavior = self.variantOptions[self.variantWidget.currentIndex()][1]
         export_corpus_csv(self.corpus, filename, colDelim, transDelim, syllDelim, variant_behavior)
 
+        # Success message
+        QMessageBox.information(self, "Corpus exported",
+                                "You successfully exported \'{}\' corpus.".format(self.corpus.name),
+                                QMessageBox.Ok, QMessageBox.Ok)
         QDialog.accept(self)
