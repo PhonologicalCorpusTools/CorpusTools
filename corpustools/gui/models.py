@@ -1243,7 +1243,7 @@ class InventoryModel(QAbstractTableModel):
 
         column_data.pop(target)
         headers.remove(target)
-        self.modelReset()
+        self.modelReset(table_changed=True)
         return True
 
 
@@ -1267,7 +1267,7 @@ class InventoryModel(QAbstractTableModel):
                 row_data[key][0] -= 1
         row_data.pop(target)
         headers.remove(target)
-        self.modelReset()
+        self.modelReset(table_changed=True)
         return True
 
     def insertColumn(self, index, consonants=True):
@@ -1295,7 +1295,7 @@ class InventoryModel(QAbstractTableModel):
                 column_data[new_name] = [index.column(), basic_features, None]
                 headers.add(new_name)
                 break
-        self.modelReset()
+        self.modelReset(table_changed=True)
         return True
 
     def insertRow(self, index, consonants=True):
@@ -1321,15 +1321,15 @@ class InventoryModel(QAbstractTableModel):
                 row_data[new_name] = [index.row(), basic_features, None]
                 headers.add(new_name)
                 break
-        self.modelReset()
+        self.modelReset(table_changed=True)
         return True
 
-    def modelReset(self, *args, **kwargs):
+    def modelReset(self, table_changed=False, *args, **kwargs):
         self.modelAboutToBeReset.emit()
         preserve_features = kwargs.pop('preserve_features', False)
         if not preserve_features:
             self.categorizeInventory()
-        self.sortData()
+        self.sortData(table_changed)
         self.filterGenericNames()
         self.endResetModel()
         self.modelResetSignal.emit(True)
@@ -1414,9 +1414,13 @@ class InventoryModel(QAbstractTableModel):
             raise ValueError('The orientation value passed to Inventory.getHeaderOrder is not valid')
         return sorted(data)
 
-    def sortData(self):
+    def sortData(self, table_changed=False):
         if len(self._data) != 0:
-            return
+            # Determine if inventory table is sorted because of added column or row. if yes, run sortData. if not, skip.
+            if not table_changed:
+                return
+            else:
+                pass
         sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
         sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
         sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
