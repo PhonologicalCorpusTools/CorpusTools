@@ -544,7 +544,7 @@ class PhonoSearchDialog(FunctionDialog):
         filterFrame = QGroupBox('Additional filters')
         filterLayout = QVBoxLayout()
         filterFrame.setLayout(filterLayout)
-
+        filterFrame.setFixedWidth(200)
         wordFreqFrame = QGroupBox('Word frequency filters')
         wFbox = QFormLayout()
         self.minWordFreqFrame = QLineEdit()
