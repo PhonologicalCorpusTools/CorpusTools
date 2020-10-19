@@ -1415,16 +1415,14 @@ class InventoryModel(QAbstractTableModel):
         return sorted(data)
 
     def sortData(self, table_changed=False):
-        if len(self._data) != 0:
-            # Determine if inventory table is sorted because of added column or row. if yes, run sortData. if not, skip.
-            if not table_changed:
-                return
-            else:
-                pass
-        sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
-        sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
-        sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
-        sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
+        try:
+            sorted_cons_col_headers = sorted(list(self.consColumns), key=lambda x: self.cons_column_data[x][0])
+            sorted_cons_row_headers = sorted(list(self.consRows), key=lambda x: self.cons_row_data[x][0])
+            sorted_vowel_col_headers = sorted(list(self.vowelColumns), key=lambda x: self.vowel_column_data[x][0])
+            sorted_vowel_row_headers = sorted(list(self.vowelRows), key=lambda x: self.vowel_row_data[x][0])
+        except KeyError:
+            return
+
         self.cons_column_header_order = {i: name for i, name in enumerate(sorted_cons_col_headers)}
         self.vowel_column_offset = len(self.cons_column_header_order)
         self.vowel_column_header_order = {i + self.vowel_column_offset: name for i, name in enumerate(sorted_vowel_col_headers)}
@@ -1503,8 +1501,27 @@ class InventoryModel(QAbstractTableModel):
             self.filterNames = True
         elif all([feature in sample.features for feature in self.minimum_features['spe']]):
             self.generateGenericSpe()
-            self.cons_features = ['-voc']
-            self.vowel_features = ['+voc']
+            if 'consonantal' in sample.features:
+                # If 'consonantal' exists, it overrides 'vocalic' as the determinant of categories.
+                # Following four for-loops need to be cleaned.
+                for k in self.cons_column_data.keys():
+                    self.cons_column_data[k][1]['voc'] = '+'
+                    self.cons_column_data[k][1]['consonantal'] = self.cons_column_data[k][1].pop('voc')
+                for k in self.cons_row_data.keys():
+                    self.cons_row_data[k][1]['voc'] = '+'
+                    self.cons_row_data[k][1]['consonantal'] = self.cons_row_data[k][1].pop('voc')
+                for k in self.vowel_column_data.keys():
+                    self.vowel_column_data[k][1]['voc'] = '-'
+                    self.vowel_column_data[k][1]['consonantal'] = self.vowel_column_data[k][1].pop('voc')
+                for k in self.vowel_row_data.keys():
+                    self.vowel_row_data[k][1]['voc'] = '-'
+                    self.vowel_row_data[k][1]['consonantal'] = self.vowel_row_data[k][1].pop('voc')
+
+                self.cons_features = ['+consonantal']
+                self.vowel_features = ['-consonantal']
+            else:
+                self.cons_features = ['-voc']
+                self.vowel_features = ['+voc']
             self.voice_feature = '+voice'
             self.rounded_feature = '+round'
             self.diph_feature = None
