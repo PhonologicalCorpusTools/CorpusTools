@@ -1501,24 +1501,24 @@ class InventoryModel(QAbstractTableModel):
             self.filterNames = True
         elif all([feature in sample.features for feature in self.minimum_features['spe']]):
             self.generateGenericSpe()
-            if 'consonantal' in sample.features:
-                # If 'consonantal' exists, it overrides 'vocalic' as the determinant of categories.
+            if 'cons' in sample.features:
+                # If 'cons' exists, it overrides 'vocalic' as the determinant of categories.
                 # Following four for-loops need to be cleaned.
                 for k in self.cons_column_data.keys():
                     self.cons_column_data[k][1]['voc'] = '+'
-                    self.cons_column_data[k][1]['consonantal'] = self.cons_column_data[k][1].pop('voc')
+                    self.cons_column_data[k][1]['cons'] = self.cons_column_data[k][1].pop('voc')
                 for k in self.cons_row_data.keys():
                     self.cons_row_data[k][1]['voc'] = '+'
-                    self.cons_row_data[k][1]['consonantal'] = self.cons_row_data[k][1].pop('voc')
+                    self.cons_row_data[k][1]['cons'] = self.cons_row_data[k][1].pop('voc')
                 for k in self.vowel_column_data.keys():
                     self.vowel_column_data[k][1]['voc'] = '-'
-                    self.vowel_column_data[k][1]['consonantal'] = self.vowel_column_data[k][1].pop('voc')
+                    self.vowel_column_data[k][1]['cons'] = self.vowel_column_data[k][1].pop('voc')
                 for k in self.vowel_row_data.keys():
                     self.vowel_row_data[k][1]['voc'] = '-'
-                    self.vowel_row_data[k][1]['consonantal'] = self.vowel_row_data[k][1].pop('voc')
+                    self.vowel_row_data[k][1]['cons'] = self.vowel_row_data[k][1].pop('voc')
 
-                self.cons_features = ['+consonantal']
-                self.vowel_features = ['-consonantal']
+                self.cons_features = ['+cons']
+                self.vowel_features = ['-cons', '+voice']
             else:
                 self.cons_features = ['-voc']
                 self.vowel_features = ['+voc']
@@ -1546,7 +1546,8 @@ class InventoryModel(QAbstractTableModel):
         self.cons_row_data['Stop'] = [0,{'voc':'-','cont':'-','nasal':'-','son':'-'},None]
         self.cons_row_data['Nasal'] = [1,{'voc':'-','nasal':'+'},None]
         self.cons_row_data['Fricative'] = [2,{'voc':'-','cont':'+','nasal':'-','son':'-'},None]
-        self.cons_row_data['Lateral'] = [3,{'voc':'-','lat':'+'},None]
+        self.cons_row_data['Approximant'] = [3, {'voc': '-', 'cont': '+', 'nasal': '-', 'son': '+', 'lat': '-'}, None]
+        self.cons_row_data['Lateral approximant'] = [4,{'voc': '-', 'lat':'+'},None]
 
         self.vowel_row_data = dict()
         self.vowel_row_data['High'] = [0,{'voc':'+','high':'+','low':'-'},None]
