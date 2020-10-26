@@ -55,7 +55,8 @@ def download_binary(name, path, call_back = None):
     elif name == 'ipa2spe':
         download_link = 'https://www.dropbox.com/s/v1y3ea4k4a0c6sq/ipa2spe.feature?dl=1'
     elif name == 'ipa2hayes':
-        download_link = 'https://www.dropbox.com/s/411ohsfs4tkirfx/ipa2hayes.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/w5zhk6n0l5bx1q6/ipa2hayes.feature?dl=1' # new, ɹ is [+consonantal]
+        # download_link = 'https://www.dropbox.com/s/411ohsfs4tkirfx/ipa2hayes.feature?dl=1' # old, ɹ is [-consonantal]
     elif name == 'celex2spe':
         download_link = 'https://www.dropbox.com/s/i1bmoe6wxj6nv1c/celex2spe.feature?dl=1'
     elif name == 'celex2hayes':
