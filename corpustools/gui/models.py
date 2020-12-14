@@ -1546,8 +1546,8 @@ class InventoryModel(QAbstractTableModel):
         self.cons_row_data['Stop'] = [0,{'voc':'-','cont':'-','nasal':'-','son':'-'},None]
         self.cons_row_data['Nasal'] = [1,{'voc':'-','nasal':'+'},None]
         self.cons_row_data['Fricative'] = [2,{'voc':'-','cont':'+','nasal':'-','son':'-'},None]
-        self.cons_row_data['Approximant'] = [3, {'voc': '-', 'cont': '+', 'nasal': '-', 'son': '+', 'lat': '-'}, None]
-        self.cons_row_data['Lateral approximant'] = [4,{'voc': '-', 'lat':'+'},None]
+        self.cons_row_data['Liquid'] = [3, {'voc': '-', 'cont': '+', 'nasal': '-', 'son': '+', 'lat': '-'}, None]
+        self.cons_row_data['Lateral liquid'] = [4,{'voc': '-', 'lat':'+'},None]
 
         self.vowel_row_data = dict()
         self.vowel_row_data['High'] = [0,{'voc':'+','high':'+','low':'-'},None]
