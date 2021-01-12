@@ -78,6 +78,12 @@ To download one of these systems, click on “Corpus” /
    :width: 90%
    :align: center
 
+The in-built SPE and Hayes systems use '0,' 'n,' or '.', in addition to '+' and '-'. In the Hayes system, '0' is used
+to indicate the given feature cannot be defined for the segment, like [lateral] for noncoronals. For the same purpose,
+the SPE system uses 'n'. Additionally, a '.' in the SPE system is used for complex segments with conflict feature values.
+For example, in the ipa2spe feature, [coronal] for /fʃ/ has a '.' because its component /f/ and /ʃ/ are specified
+for opposite values.
+
 See :ref:`applying_editing_feature` for more information about applying / editing feature systems in
 conjunction with corpora.
 
@@ -294,7 +300,10 @@ For "SPE"-like systems: 'voc', 'son', 'ant', 'cor', 'high', 'low', 'back', 'lat'
    :width: 90%
    :align: center
 
-.. note:: Segments must also match all default features for consonants or vowels in order to appear in the inventory chart, even though those features aren't specified in the individual rows or columns.
+.. note:: Segments must also match all default features for consonants or vowels in order to appear in the inventory
+    chart, even though those features aren't specified in the individual rows or columns. For instance, /ɹ/ does not
+    appear in the inventory chart of consonants under the default settings with the built-in Hayes system. This is
+    because /ɹ/ has [-consonant] while the default consonant feature for the Hayes system is [+consonant].
 
 3. **Adding and re-arranging rows and columns**: Additional rows and columns can be added by right-clicking on existing rows and columns and selecting "Insert {row, column}." The new row or column will by default appear above or to the left of the selected row or column, respectively, but the order of rows and columns may be re-arranged by clicking on the row or column name and dragging it to the new position. [We know that this re-arranging is somewhat finicky, and we apologize. We'll work on getting a smoother system in place! In general, we find that it is easier to move rows up and columns leftward than in the opposite directions.]
 

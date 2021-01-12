@@ -27,14 +27,14 @@ Download
 #. Click on the link for your operating system with the highest number (= most recent version).
  
 
-Windows Installer
-=================
+Windows Executable
+==================
 
 # NOTE 1: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -> System and Security -> System.
 
 # NOTE 2: When the software is downloaded, you may get a security warning indicating that you have tried to launch an unrecognized app. Selecting "Run anyway" should allow PCT to work as expected.
 
-# Download the latest version's installer (should be a file ending in .exe) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). Double-click this file to install PCT to your computer. It can then be run the same as any other program, via Start -> Programs.
+# Download the latest version's executable (should be a file ending in .exe) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). Double-click this file to run PCT to your computer. It can then be run the same as any other program.
 
 
 Mac Executable -- PCT v 1.4.1 is confirmed to work on 10.13 and higher, but may have issues on earlier OS platforms
