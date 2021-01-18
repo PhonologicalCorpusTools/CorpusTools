@@ -37,7 +37,7 @@ class MIWorker(FunctionWorker):
 
                 for pair in kwargs['segment_pairs']:
                     res = pointwise_mi(c, pair,
-                                       halve_edges = kwargs['halve_edges'],
+                                       word_boundary = kwargs['word_boundary'],
                                        in_word = kwargs['in_word'],
                                        stop_check = kwargs['stop_check'],
                                        call_back = kwargs['call_back'])
@@ -65,7 +65,7 @@ class MIDialog(FunctionDialog):
               'First segment',
               'Second segment',
               'Domain',
-              'Halved edges',
+              'Word boundary',
               'Transcription tier',
               'Frequency type',
               'Pronunciation variants',
@@ -98,20 +98,27 @@ class MIDialog(FunctionDialog):
 
         optionLayout = QFormLayout()
 
+        ##---------------------- 'Tier widget' in Options panel
         self.tierWidget = TierWidget(corpus,include_spelling=False)
 
         optionLayout.addRow(self.tierWidget)
 
-        self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
-                                            OrderedDict([('Count types','type'),
-                                            ('Count tokens','token')]))
-
+        ##---------------------- 'Pronunciation variants' in Options panel
         actions = None
         self.variantsWidget = ContextWidget(self.corpus, actions)
 
         optionLayout.addWidget(self.variantsWidget)
 
+        ##---------------------- 'Type or token frequency' in Options panel
+        self.typeTokenWidget = RadioSelectWidget('Type or token frequency',
+                                            OrderedDict([('Count types','type'),
+                                            ('Count tokens','token')]))
         optionLayout.addWidget(self.typeTokenWidget)
+
+        ##----------------------
+
+        ##----------------------
+
         
         ##----------------------
         minFreqFrame = QGroupBox('Minimum frequency')
@@ -123,13 +130,19 @@ class MIDialog(FunctionDialog):
 
         optionLayout.addWidget(minFreqFrame)
         ##----------------------
-        
-        self.inWordCheck = QCheckBox('Set domain to word')
+
+        self.wordBoundaryWidget = RadioSelectWidget('Word boundary',
+                                                 OrderedDict([('Halve word boundaries (default)', 'Halved'),
+                                                              ('Keep both word boundaries', 'Both sides'),
+                                                              ('Ignore all word boundaries', 'Ignored')]))
+        optionLayout.addWidget(self.wordBoundaryWidget)
+        ##----------------------
+        self.inWordCheck = QCheckBox('Set domain to word (unordered word-internal pMI)')
         optionLayout.addWidget(self.inWordCheck)
 
-        self.halveEdgesCheck = QCheckBox('Halve word boundary count')
-        self.halveEdgesCheck.setChecked(True)
-        optionLayout.addWidget(self.halveEdgesCheck)
+        # self.halveEdgesCheck = QCheckBox('Halve word boundary count')
+        # self.halveEdgesCheck.setChecked(True)
+        # optionLayout.addWidget(self.halveEdgesCheck)
 
         optionFrame = QGroupBox('Options')
         optionFrame.setLayout(optionLayout)
@@ -185,12 +198,12 @@ class MIDialog(FunctionDialog):
             "</FONT>")
             self.inWordCheck.setToolTip(inwordToolTip)
 
-            halveEdgesToolTip = ("<FONT COLOR=black>"
-            'make the number of edge characters (#) equal to '
-                        'the size of the corpus + 1, rather than double the '
-                        'size of the corpus - 1.'
-            "</FONT>")
-            self.halveEdgesCheck.setToolTip(halveEdgesToolTip)
+            # halveEdgesToolTip = ("<FONT COLOR=black>"
+            # 'make the number of edge characters (#) equal to '
+            #             'the size of the corpus + 1, rather than double the '
+            #             'size of the corpus - 1.'
+            # "</FONT>")
+            # self.halveEdgesCheck.setToolTip(halveEdgesToolTip)
 
     def generateKwargs(self):
         self.kwargs = {}
@@ -214,7 +227,7 @@ class MIDialog(FunctionDialog):
         self.kwargs['type_token'] = self.typeTokenWidget.value()
         self.kwargs['segment_pairs'] = [tuple(y for y in x) for x in segPairs]
         self.kwargs['in_word'] = self.inWordCheck.isChecked()
-        self.kwargs['halve_edges'] = self.halveEdgesCheck.isChecked()
+        self.kwargs['word_boundary'] = self.wordBoundaryWidget.value()
         self.kwargs['frequency_cutoff'] = frequency_cutoff
         self.kwargs['sequence_type'] = self.tierWidget.value()
         self.kwargs['context_output_path'] = self.saveFileWidget.value() if self.saveFileWidget.value() != '' else ''
@@ -242,7 +255,7 @@ class MIDialog(FunctionDialog):
                                 'First segment': seg_pairs[i][0],
                                 'Second segment': seg_pairs[i][1],
                                 'Domain': dom,
-                                'Halved edges': self.halveEdgesCheck.isChecked(),
+                                'Word boundary': self.wordBoundaryWidget.value(),
                                 'Transcription tier': self.tierWidget.displayValue(),
                                 'Frequency type': self.typeTokenWidget.value().title(),
                                 'Pronunciation variants': self.variantsWidget.value().title(),

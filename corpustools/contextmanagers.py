@@ -83,7 +83,7 @@ class BaseCorpusContext(object):
             defaults to False
 
         need_wd : boolean
-            If True, word boundaries are added. Default to True.
+            If True, word boundaries are added. Defaults to True.
             False if e.g., for env filter in mutual information
 
         Returns
@@ -98,10 +98,13 @@ class BaseCorpusContext(object):
                 tier = getattr(word, self.sequence_type)
                 if self.sequence_type.lower() == 'spelling':
                     seq = ['#'] + [x for x in tier] + ['#']
-                elif need_wd:
-                    seq = tier.with_word_boundaries()
+                elif need_wd:       # if each word should have word boundaries
+                    if halve_edges:   # and only at the end of the word (word boundary is counted only once per word)
+                        seq = tier.list + ['#']
+                    else:             # WB on both sides of the word
+                        seq = tier.with_word_boundaries()
                 else:
-                    seq = tier._list
+                    seq = tier.list
                 grams = zip(*[seq[i:] for i in range(gramsize)])
                 for x in grams:
                     if len(x) == 1:
@@ -111,10 +114,10 @@ class BaseCorpusContext(object):
             self._freq_base[(gramsize)] = freq_base
         freq_base = self._freq_base[(gramsize)]
         return_dict = { k:v for k,v in freq_base.items()}
-        if halve_edges and '#' in return_dict:
-            return_dict['#'] = (return_dict['#'] / 2) + 1
-            if not probability:
-                return_dict['total'] -= return_dict['#'] - 2
+        # if halve_edges and '#' in return_dict:
+        #     return_dict['#'] = (return_dict['#'] / 2) + 1
+        #     if not probability:
+        #         return_dict['total'] -= return_dict['#'] - 2
         if probability:
             return_dict = { k:v/freq_base['total'] for k,v in return_dict.items()}
         return return_dict
