@@ -65,7 +65,7 @@ class BaseCorpusContext(object):
             self.length = counter
             return self.length
 
-    def get_frequency_base(self, gramsize=1, halve_edges=False, probability=False, need_wd=True):
+    def get_frequency_base(self, gramsize=1, halve_edges=False, probability=False, need_wb=True):
         """
         Generate (and cache) frequencies for each segment in the Corpus.
 
@@ -82,7 +82,7 @@ class BaseCorpusContext(object):
             If True, frequency counts will be normalized by total frequency,
             defaults to False
 
-        need_wd : boolean
+        need_wb : boolean
             If True, word boundaries are added. Defaults to True.
             False if e.g., for env filter in mutual information
 
@@ -98,7 +98,7 @@ class BaseCorpusContext(object):
                 tier = getattr(word, self.sequence_type)
                 if self.sequence_type.lower() == 'spelling':
                     seq = ['#'] + [x for x in tier] + ['#']
-                elif need_wd:       # if each word should have word boundaries
+                elif need_wb:       # if each word should have word boundaries
                     if halve_edges:   # and only at the end of the word (word boundary is counted only once per word)
                         seq = tier.list + ['#']
                     else:             # WB on both sides of the word

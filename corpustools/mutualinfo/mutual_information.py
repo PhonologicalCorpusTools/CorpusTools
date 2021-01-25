@@ -88,6 +88,18 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
 
     return corpus_context  # corpus_context (clipped), to be fed into the original function
 
+def clip_context(new_trans, word, clipped_corpus):
+    kwargs = {}
+    new_trans = list(new_trans)
+    original_word = getattr(word, word._transcription_name)
+    kwargs[word._transcription_name] = new_trans
+    kwargs[word._spelling_name] = str(word)
+    kwargs[word._freq_name] = word._frequency
+    kwargs['_freq_name'] = word._freq_name
+
+    new_word = Word(**kwargs)
+    clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
+    return str(original_word), ''.join(new_trans)  # print the 'word' that satisfies the environment (and to be added)
 
 def pointwise_mi(corpus_context, query, word_boundary = 'halve', in_word = False,
                  stop_check = None, call_back = None):
@@ -137,9 +149,9 @@ def pointwise_mi(corpus_context, query, word_boundary = 'halve', in_word = False
 
 
         unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges,
-                                                         probability=True, need_wd=need_wd)
+                                                         probability=True, need_wb=need_wd)
         bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges,
-                                                        probability=True, need_wd=need_wd)
+                                                        probability=True, need_wb=need_wd)
 
     try:
         prob_s1 = unigram_dict[query[0]]
@@ -166,17 +178,6 @@ def pointwise_mi(corpus_context, query, word_boundary = 'halve', in_word = False
 
 
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
-
-def clip_context(new_trans, word, clipped_corpus):
-    kwargs = {}
-    new_trans = list(new_trans)
-    original_word = getattr(word, word._transcription_name)
-    kwargs[word._transcription_name] = new_trans
-    kwargs[word._spelling_name] = str(word)
-    kwargs[word._freq_name] = word._frequency
-    new_word = Word(**kwargs)
-    clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
-    return str(original_word), ''.join(new_trans)  # print the 'word' that satisfies the environment (and to be added)
 
 def get_in_word_unigram_frequencies(corpus_context, query):
     totals = [0 for x in query]
