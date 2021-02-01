@@ -6,7 +6,7 @@ import regex as re
 from corpustools.exceptions import MutualInfoError
 from corpustools.corpus.classes.lexicon import Corpus, Word
 
-def mi_env_filter(corpus_context, envs, context_output_path=''):
+def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='Ignored'):
     """
     Environment filter
     It extracts only those words that satisfy environment condition and
@@ -22,6 +22,12 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
         List of EnvironmentFilter objects that specify environments
     context_output_path : str
         Path to save the list of 'clipped' words as a txt file (optional)
+    word_boundary : str
+        How to count word boundaries once per word. Three options.
+        'Halved' counts once,
+        'Both sides' counts twice (word-initial and word-final), and
+        'Ignored' does not count word boundaries.
+        Defaults to 'Ignored' (do not count word boundary)
 
     Returns
     -------
@@ -30,7 +36,7 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
         All transcription removed except for the two position which will be compared against the bigram user inputs
     """
     pattern = ''
-    user_wb = False
+    wb_in_env = False
     clipped_corpus = Corpus(corpus_context.corpus.name)
 
     num_lhs = len(envs[0].lhs)
@@ -46,14 +52,14 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
     for right_string in envs[0].rhs:
         pattern = pattern + "(" + "|".join(right_string) + ")"
     if re.search(r"#", pattern) is not None:
-        user_wb = True
+        wb_in_env = True
     pattern = re.compile(pattern)
 
     context_pair = []
     for word in corpus_context:
         tier = getattr(word, corpus_context.sequence_type)
 
-        if user_wb:
+        if wb_in_env:
             tier_search_from = "".join(tier.with_word_boundaries())
         else:
             tier_search_from = "".join(tier)
@@ -66,13 +72,19 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
             elif f.span()[0] < env_context[1]:
                 env_context[1] = f.span()[1]
             else:
-                context_pair.append((str(word),) +
-                                    clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
+                newword = wb_manager(tier=tier_search_from,
+                                     env_context=env_context,
+                                     wb=word_boundary,
+                                     wb_in_env=wb_in_env)
+                context_pair.append((str(word),) + clip_context(newword, word, clipped_corpus))
                 env_context = list(f.span())
 
         if bool(env_context):
-            context_pair.append((str(word),) +
-                                clip_context(tier_search_from[env_context[0]:env_context[1]], word, clipped_corpus))
+            newword = wb_manager(tier=tier_search_from,
+                                 env_context=env_context,
+                                 wb=word_boundary,
+                                 wb_in_env=wb_in_env)
+            context_pair.append((str(word),) + clip_context(newword, word, clipped_corpus))
 
     if bool(clipped_corpus.wordlist):  # if the clipped corpus is not empty, set it as the context for calculating MI
         corpus_context.corpus = clipped_corpus
@@ -88,6 +100,33 @@ def mi_env_filter(corpus_context, envs, context_output_path=''):
 
     return corpus_context  # corpus_context (clipped), to be fed into the original function
 
+def wb_manager(tier, env_context, wb, wb_in_env):
+    new_word = tier[env_context[0]:env_context[1]]
+
+    if env_context[1] == len(tier) and (wb == 'Both sides' or wb == 'Halved'):
+        # if the end of the context equals to the word-end and WB option is both or one, add WB symbol
+        new_word = new_word + '#'
+
+    if env_context[0] == 0 and wb == 'Both sides':
+        # if the start of the context equals to the word-initial and WB option is both, add WB symbol
+        new_word = '#' + new_word
+
+    if wb_in_env:
+        if wb == 'Both sides':
+            if env_context[0] == 1:
+                new_word = '#' + new_word
+            if env_context[1] + 1 == len(tier):
+                new_word = new_word + '#'
+        if wb == 'Halved':
+            if env_context[1] + 1 == len(tier):
+                new_word = new_word + '#'
+            new_word = re.sub(r'^#+', '', new_word)
+        if wb == 'Ignored':
+            new_word = re.sub(r'#+', '', new_word)
+        new_word = re.sub(r"##+", '#', new_word)  # remove the word boundary symbol added when searching with wb in env
+    return new_word
+
+
 def clip_context(new_trans, word, clipped_corpus):
     kwargs = {}
     new_trans = list(new_trans)
@@ -101,7 +140,7 @@ def clip_context(new_trans, word, clipped_corpus):
     clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
     return str(original_word), ''.join(new_trans)  # print the 'word' that satisfies the environment (and to be added)
 
-def pointwise_mi(corpus_context, query, word_boundary = 'halve', in_word = False,
+def pointwise_mi(corpus_context, query, env_filtered = False, word_boundary = 'halve', in_word = False,
                  stop_check = None, call_back = None):
     """
     Calculate the mutual information for a bigram.
@@ -112,6 +151,9 @@ def pointwise_mi(corpus_context, query, word_boundary = 'halve', in_word = False
         Context manager for a corpus
     query : tuple
         Tuple of two strings, each a segment/letter
+    env_filtered : bool
+        True if a env filter selected by the user.
+        Defaults to False
     word_boundary : str
         How to count word boundaries once per word. Three options.
         'Halved' counts once,
@@ -142,10 +184,10 @@ def pointwise_mi(corpus_context, query, word_boundary = 'halve', in_word = False
         need_wd = True
         halve_edges = True
 
-        if word_boundary == 'Both sides':
+        if env_filtered or word_boundary == 'Ignored':
+            need_wd = False         # if env filtered, c(orpus) already has needed word boundaries when being clipped!
+        elif word_boundary == 'Both sides':
             halve_edges = False
-        elif word_boundary == 'Ignored':
-            need_wd = False
 
 
         unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges,

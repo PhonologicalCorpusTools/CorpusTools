@@ -32,11 +32,12 @@ class MIWorker(FunctionWorker):
 
                 if envs is not None:    # if env is set, c(orpus context) is 'extracted'
                     context_output_path = kwargs.pop('context_output_path')  # context_output_path for env context export
-                    c = mi_env_filter(c, envs, context_output_path)
+                    c = mi_env_filter(c, envs, context_output_path, word_boundary=kwargs['word_boundary'])
                     kwargs['in_word'] = False
 
                 for pair in kwargs['segment_pairs']:
                     res = pointwise_mi(c, pair,
+                                       env_filtered=bool(envs),
                                        word_boundary = kwargs['word_boundary'],
                                        in_word = kwargs['in_word'],
                                        stop_check = kwargs['stop_check'],
