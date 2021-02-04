@@ -117,11 +117,6 @@ class MIDialog(FunctionDialog):
         optionLayout.addWidget(self.typeTokenWidget)
 
         ##----------------------
-
-        ##----------------------
-
-        
-        ##----------------------
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
         self.minFreqEdit = QLineEdit()
@@ -133,7 +128,7 @@ class MIDialog(FunctionDialog):
         ##----------------------
 
         self.wordBoundaryWidget = RadioSelectWidget('Word boundary',
-                                                 OrderedDict([('Halve word boundaries (default)', 'Halved'),
+                                                 OrderedDict([('One word boundary at the end (default)', 'Halved'),
                                                               ('Keep both word boundaries', 'Both sides'),
                                                               ('Ignore all word boundaries', 'Ignored')]))
         optionLayout.addWidget(self.wordBoundaryWidget)

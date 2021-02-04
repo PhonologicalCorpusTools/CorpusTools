@@ -6,6 +6,7 @@ import regex as re
 from corpustools.exceptions import MutualInfoError
 from corpustools.corpus.classes.lexicon import Corpus, Word
 
+
 def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='Ignored'):
     """
     Environment filter
@@ -89,7 +90,8 @@ def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='I
     if bool(clipped_corpus.wordlist):  # if the clipped corpus is not empty, set it as the context for calculating MI
         corpus_context.corpus = clipped_corpus
     else:    # if the matrix corpus does not have any case of satisfying the specified env., prompt a warning
-        raise MutualInfoError('Warning! Mutual information could not be calculated because the specified environment is not in the corpus.')
+        raise MutualInfoError('Warning! Mutual information could not be calculated'
+                              'because the specified environment is not in the corpus.')
 
     if context_output_path != '':
         with open(context_output_path, mode='w', encoding='utf-8-sig', newline='') as f:
@@ -99,6 +101,7 @@ def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='I
                 writer.writerow([context[0], context[1], str(envs[0]), context[2]])
 
     return corpus_context  # corpus_context (clipped), to be fed into the original function
+
 
 def wb_manager(tier, env_context, wb, wb_in_env):
     new_word = tier[env_context[0]:env_context[1]]
@@ -140,8 +143,9 @@ def clip_context(new_trans, word, clipped_corpus):
     clipped_corpus.add_word(new_word, allow_duplicates=True)  # add word to clipped_corpus
     return str(original_word), ''.join(new_trans)  # print the 'word' that satisfies the environment (and to be added)
 
-def pointwise_mi(corpus_context, query, env_filtered = False, word_boundary = 'halve', in_word = False,
-                 stop_check = None, call_back = None):
+
+def pointwise_mi(corpus_context, query, env_filtered=False, word_boundary='halve', in_word=False,
+                 stop_check=None, call_back=None):
     """
     Calculate the mutual information for a bigram.
 
@@ -189,7 +193,6 @@ def pointwise_mi(corpus_context, query, env_filtered = False, word_boundary = 'h
         elif word_boundary == 'Both sides':
             halve_edges = False
 
-
         unigram_dict = corpus_context.get_frequency_base(gramsize = 1, halve_edges = halve_edges,
                                                          probability=True, need_wb=need_wd)
         bigram_dict = corpus_context.get_frequency_base(gramsize = 2, halve_edges = halve_edges,
@@ -218,8 +221,8 @@ def pointwise_mi(corpus_context, query, env_filtered = False, word_boundary = 'h
     if bigram_dict[query] == 0.0:
         raise MutualInfoError('Warning! Mutual information could not be calculated because the bigram {} is not in the corpus.'.format(str(query)))
 
-
     return math.log((prob_bg/(prob_s1*prob_s2)), 2)
+
 
 def get_in_word_unigram_frequencies(corpus_context, query):
     totals = [0 for x in query]
@@ -229,6 +232,7 @@ def get_in_word_unigram_frequencies(corpus_context, query):
                 totals[i] += word.frequency
     return {k: totals[i] / len(corpus_context) for i, k in enumerate(query)}
 
+
 def get_in_word_bigram_frequency(corpus_context, query):
     total = 0
     for word in corpus_context:
@@ -236,6 +240,7 @@ def get_in_word_bigram_frequency(corpus_context, query):
         if all(x in tier for x in query):
             total += word.frequency
     return {query: total / len(corpus_context)}
+
 
 def all_mis(corpus_context,
             word_boundary, in_word = False,
