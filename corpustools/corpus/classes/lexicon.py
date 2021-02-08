@@ -1755,6 +1755,39 @@ class SyllableEnvironmentFilter(object):
         #print(final_re)
         return re.compile(final_re)
 
+    def __str__(self):
+        ls = ''
+        for syllable in self._lhs:
+            ls += self.str_syllable(syllable)
+
+        md = ''
+        for syllable in self._middle_syllables:
+            md += self.str_syllable(syllable)
+
+        rs = ''
+        for syllable in self._rhs:
+            rs += self.str_syllable(syllable)
+
+        bound1 = "-" if ls and (md or rs) else ""
+        bound2 = "-" if bound1 and rs else ""
+
+        return ls + bound1 + md + bound2 + rs
+
+
+    def str_syllable(self, syllable):
+        onset = ''.join([self.str_set(set) for set in syllable['onset']['contents']])
+        nucleus = ''.join([self.str_set(set) for set in syllable['nucleus']['contents']])
+        coda = ''.join([self.str_set(set) for set in syllable['coda']['contents']])
+
+        return onset + nucleus + coda
+
+    def str_set(self, segments):
+        inv_set = set(self._inventory.segs.keys())
+        inv_set.remove('#')
+        if segments != inv_set:
+            return "{" + ''.join(segments) + "}"
+        else:
+            return "{*}"
 
 class EnvironmentFilter(object):
     """

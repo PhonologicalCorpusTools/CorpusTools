@@ -64,7 +64,7 @@ class BaseTableModel(QAbstractTableModel):
 
     def addRow(self,row):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        if isinstance(row[0], dict):
+        if isinstance(row, dict):
             self.rows.append([row[header] for header in self.columns])
         else:
             self.rows.append(row)
@@ -482,6 +482,12 @@ class SegmentPairModel(BaseTableModel):
 
         self.rows[row] = (seg2, seg1)
         self.dataChanged.emit(self.createIndex(row,0), self.createIndex(row,1))
+
+class ABSegmentsModel(BaseTableModel):
+    def __init__(self, parent=None):
+        QAbstractTableModel.__init__(self,parent)
+        self.columns = ['A', 'B']
+        self.rows = []
 
 
 class VariantModel(BaseTableModel):

@@ -67,9 +67,9 @@ class ReminderPane(BasePane):
 
         self.setLayout(layout)
 
-        self.remindFeatureFile.setChecked(setting_dict['ask_overwrite_features'])
-        self.remindFeatureFile.setChecked(setting_dict['ask_overwrite_features'])
-        self.remindCorpusFile.setChecked(setting_dict['ask_overwrite_corpus'])
+        self.remindFeatureFile.setChecked(int(setting_dict['ask_overwrite_features']))
+        self.remindFeatureFile.setChecked(int(setting_dict['ask_overwrite_features']))
+        self.remindCorpusFile.setChecked(int(setting_dict['ask_overwrite_corpus']))
 
     def get_current_state(self):
         settings_dict = {}
@@ -135,7 +135,7 @@ class ProcessingPane(BasePane):
         use_multi = setting_dict['use_multi']
         num_cores = setting_dict['num_cores']
 
-        self.usemultiCheck.setChecked(use_multi)
+        self.usemultiCheck.setChecked(int(use_multi))
 
         self.numcoresWidget.setText(str(num_cores))
 
