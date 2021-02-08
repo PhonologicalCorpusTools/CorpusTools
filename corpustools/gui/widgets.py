@@ -5,13 +5,15 @@ from itertools import combinations, product
 
 from .imports import *
 
-from .models import SegmentPairModel, EnvironmentModel, FilterModel
+from .models import SegmentPairModel, EnvironmentModel, FilterModel, ABSegmentsModel
 
 from .delegates import SwitchDelegate
 
 from corpustools.corpus.classes import Attribute
 from corpustools.corpus.io.helper import (get_corpora_list, get_systems_list, corpus_name_to_path, NUMBER_CHARACTERS,
                                             BaseAnnotation)
+from ..corpus.classes.lexicon import SyllableEnvironmentFilter
+
 
 def truncate_string(string, length = 10):
     return (string[:length] + '...') if len(string) > length + 3 else string
@@ -2368,6 +2370,74 @@ class BigramDialog(QDialog):
         else:
             self.reset()
 
+class SyllableBigramDialog(QDialog):
+    rowToAdd = Signal(object)
+    def __init__(self, inventory, parent=None):
+        QDialog.__init__(self, parent)
+
+        self.inventory = inventory
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        # Setting up the two syllable widgets
+        self.lhsEnvFrame = QGroupBox('Left hand side')
+        lhsEnvLayout = QVBoxLayout()
+        self.rhsEnvFrame = QGroupBox('Right hand side')
+        rhsEnvLayout = QVBoxLayout()
+
+        from corpustools.gui.environments import SyllableWidget
+        self.lhs = SyllableWidget(self.inventory)
+        self.rhs = SyllableWidget(self.inventory)
+        lhsEnvLayout.addWidget(self.lhs)
+        rhsEnvLayout.addWidget(self.rhs)
+        self.lhsEnvFrame.setLayout(lhsEnvLayout)
+        self.rhsEnvFrame.setLayout(rhsEnvLayout)
+
+        # Adding the widgets to the dialog frame
+        envFrame = QFrame()
+        envLayout = QHBoxLayout()
+
+        envLayout.addWidget(self.lhsEnvFrame)
+        envLayout.addWidget(self.rhsEnvFrame)
+        envFrame.setLayout(envLayout)
+        layout.addWidget(envFrame)
+
+        # Adding accept/cancel buttons
+        self.addButton = QPushButton('Add')
+        self.cancelButton = QPushButton('Cancel')
+        self.acLayout = QHBoxLayout()
+        self.acLayout.addWidget(self.addButton, alignment=Qt.AlignLeft)
+        self.acLayout.addWidget(self.cancelButton, alignment=Qt.AlignLeft)
+        self.addButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        acFrame = QFrame()
+        acFrame.setLayout(self.acLayout)
+
+        # Create the window
+        layout.addWidget(acFrame, alignment = Qt.AlignLeft)
+        self.addOneMore = False
+        self.setLayout(layout)
+        self.setWindowTitle('Create bigram')
+
+    def accept(self):
+        env = SyllableEnvironmentFilter(inventory=self.inventory, lhs=[self.lhs.value()], middle_syllables=[self.rhs.value()])
+
+        if self.isEmptySyllable(env.lhs[0]) or self.isEmptySyllable(env.middle[0]):
+            reply = QMessageBox.critical(self, "Missing information", "Please specify both sides of the bigram.")
+            return
+
+        self.rowToAdd.emit(env)
+        QDialog.accept(self)
+
+    def isEmptySyllable(self, syllable):
+        # returns true if onset/nucleus/coda of the syllable dict are all empty
+        noOnset = not syllable['onset']['contents']
+        noNucleus = not syllable['nucleus']['contents']
+        noCoda = not syllable['coda']['contents']
+
+        return noOnset and noNucleus and noCoda
+
 
 class SegFeatSelect(QGroupBox):
     def __init__(self,corpus, title, parent = None, exclusive = False):
@@ -2485,8 +2555,9 @@ class SegmentSelectDialog(QDialog):
         self.segFrame.clearAll()
 
 class BigramWidget(QGroupBox):
-    def __init__(self,inventory,parent=None):
+    def __init__(self,inventory,parent=None, tplayout=False):
         QGroupBox.__init__(self,'Bigrams',parent)
+        self.tplayout = tplayout
 
         self.inventory = inventory
         vbox = QVBoxLayout()
@@ -2515,11 +2586,21 @@ class BigramWidget(QGroupBox):
         self.setLayout(vbox)
 
     def addRows(self, rows):
+        if self.tplayout:
+            if type(rows) == list:
+                for row in rows:
+                    resultsdict = {'A':row[0], 'B':row[1]}
+                    self.table.model().addRow(resultsdict)
+            elif type(rows) == SyllableEnvironmentFilter:
+                resultsdict = {'A':SyllableEnvironmentFilter(self.inventory, rows.lhs),
+                               'B':SyllableEnvironmentFilter(self.inventory, rows.middle)}
+                self.table.model().addRow(resultsdict)
+            return
         if isinstance(rows, list):
             for row in rows:
                 self.table.model().addRow([row])
         else:
-            self.table.model().addRow([row])
+            self.table.model().addRow([rows])
 
     def envPopup(self):
         dialog = BigramDialog(self.inventory,self)
@@ -2535,7 +2616,22 @@ class BigramWidget(QGroupBox):
             self.table.model().removeRows([s.row() for s in selected])
 
     def value(self):
+        if self.tplayout:
+            return [x for x in self.table.model().rows]
         return [x[0] for x in self.table.model().rows]
+
+
+class SyllableBigramWidget(BigramWidget):
+    def __init__(self, inventory, parent=None, tplayout=False):
+        BigramWidget.__init__(self, inventory, parent, tplayout)
+        self.setTitle('Syllable bigrams')
+
+    def envPopup(self):
+        dialog = SyllableBigramDialog(self.inventory, self)
+        dialog.rowToAdd.connect(self.addRows)
+        result = dialog.exec_()
+        dialog.rowToAdd.disconnect()
+        dialog.deleteLater()
 
 class RadioSelectWidget(QGroupBox):
     def __init__(self,title,options, actions=None, enabled=None,parent=None):

@@ -51,6 +51,7 @@ from .ndgui import NDDialog
 from .ppgui import PPDialog
 from .psgui import PhonoSearchDialog
 from .migui import MIDialog
+from .trpgui import TPDialog
 from .klgui import KLDialog
 from .infogui import InformativityDialog
 from .autogui import AutoDialog
@@ -176,7 +177,7 @@ class MainWindow(QMainWindow):
         self.corpus = None
         self.corpusModel = None
         self.inventoryModel = None
-        self.resultsCodes = ['FL', 'PD', 'FA', 'SS', 'AS', 'ND', 'PP', 'MI', 'KL', 'PhonoSearch', 'Auto', 'Informativity']
+        self.resultsCodes = ['FL', 'PD', 'FA', 'SS', 'AS', 'ND', 'PP', 'MI', 'TP', 'KL', 'PhonoSearch', 'Auto', 'Informativity']
         for abbrv in self.resultsCodes:
             window_name = abbrv+'Window'
             setattr(self, window_name, None)
@@ -839,6 +840,21 @@ class MainWindow(QMainWindow):
                 self.MIWindow.rejected.connect(lambda: self.showMIResults.setVisible(False))
                 self.showMIResults.setVisible(True)
 
+    @check_for_empty_corpus
+    def transitionalProb(self):
+        dialog = TPDialog(self, self.settings, self.corpusModel.corpus, self.inventoryModel, self.showToolTips)
+        result = dialog.exec_()
+        if result:
+            if self.TPWindow is not None and dialog.update and self.TPWindow.isVisible():
+                self.TPWindow.table.model().addRows(dialog.results)
+            else:
+                self.TPWindow = ResultsWindow('Transitional probability results', dialog, self)
+                self.TPWindow.show()
+                self.showTPResults.triggered.connect(self.TPWindow.raise_)
+                self.showTPResults.triggered.connect(self.TPWindow.activateWindow)
+                self.TPWindow.rejected.connect(lambda: self.showTPResults.setVisible(False))
+                self.showTPResults.setVisible(True)
+
     def acousticSim(self):
         dialog = ASDialog(self, self.settings, self.showToolTips)
         result = dialog.exec_()
@@ -1154,6 +1170,10 @@ class MainWindow(QMainWindow):
                 self,
                 statusTip="Calculate mutual information", triggered=self.mutualInfo)
 
+        self.transitionalProbAct = QAction( "Calculate transitional probability...",
+                self,
+                statusTip="Calculate transitional probability", triggered=self.transitionalProb)
+
         self.acousticSimFileAct = QAction( "Calculate acoustic similarity (for files)...",
                 self,
                 statusTip="Calculate acoustic similarity for files", triggered=self.acousticSim)
@@ -1220,6 +1240,9 @@ class MainWindow(QMainWindow):
 
         self.showMIResults = QAction("Mutual information results", self)
         self.showMIResults.setVisible(False)
+
+        self.showTPResults = QAction("Transitional probability results", self)
+        self.showTPResults.setVisible(False)
 
         self.showASResults = QAction("Acoustic similarity results", self)
         self.showASResults.setVisible(False)
@@ -1299,6 +1322,7 @@ class MainWindow(QMainWindow):
         self.analysisMenu.addAction(self.neighDenAct)
         # self.analysisMenu.addAction(self.freqaltAct)
         self.analysisMenu.addAction(self.mutualInfoAct)
+        self.analysisMenu.addAction(self.transitionalProbAct)
         self.analysisMenu.addAction(self.acousticSimFileAct)
         #self.analysisMenu.addAction(self.autoAnalysisAct)
 
@@ -1317,6 +1341,7 @@ class MainWindow(QMainWindow):
         self.viewMenu.addAction(self.showNDResults)
         self.viewMenu.addAction(self.showFAResults)
         self.viewMenu.addAction(self.showMIResults)
+        self.viewMenu.addAction(self.showTPResults)
         self.viewMenu.addAction(self.showASResults)
         self.viewMenu.addAction(self.showSearchResults)
 
@@ -1376,6 +1401,8 @@ class MainWindow(QMainWindow):
         if self.MIWindow is not None:
             self.MIWindow.reject()
             #self.MIWindow.deleteLater()
+        if self.TPWindow is not None:
+            self.TPWindow.reject()
         if self.KLWindow is not None:
             self.KLWindow.reject()
             #self.KLWindow.deleteLater()

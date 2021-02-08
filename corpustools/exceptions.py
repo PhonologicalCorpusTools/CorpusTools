@@ -187,6 +187,13 @@ class MutualInfoError(PCTError):
     """
     pass
 
+class TPError(PCTError):
+    """
+    Base error class for exceptions in mutual information function
+    calls.
+    """
+    pass
+
 class NeighDenError(PCTError):
     """
     Base error class for exceptions in neighborhood density function
