@@ -30,7 +30,7 @@ class MIWorker(FunctionWorker):
             try:
                 envs = kwargs.pop('envs', None)
 
-                if envs is not None:    # if env is set, c(orpus context) is 'extracted'
+                if envs:    # if env is set, c(orpus context) is 'extracted'
                     context_output_path = kwargs.pop('context_output_path')  # context_output_path for env context export
                     c = mi_env_filter(c, envs, context_output_path, word_boundary=kwargs['word_boundary'])
                     kwargs['in_word'] = False
@@ -128,7 +128,7 @@ class MIDialog(FunctionDialog):
         ##----------------------
 
         self.wordBoundaryWidget = RadioSelectWidget('Word boundary',
-                                                 OrderedDict([('One word boundary at the end (default)', 'Halved'),
+                                                 OrderedDict([('Word boundary at the end only (default)', 'Word-final only'),
                                                               ('Keep both word boundaries', 'Both sides'),
                                                               ('Ignore all word boundaries', 'Ignored')]))
         optionLayout.addWidget(self.wordBoundaryWidget)
@@ -146,7 +146,7 @@ class MIDialog(FunctionDialog):
         milayout.addWidget(optionFrame)
         miFrame.setLayout(milayout)
 
-        ##---------------------- Environment selection frame (envFrame) consists of: check box, selection widget, savefile widget
+        ##---------------------- Environment selection frame (envFrame): check box, selection widget, WB widget, savefile widget
         envFrame = QGroupBox('Environment (optional)')
 
         envLayout = QFormLayout()
@@ -158,6 +158,11 @@ class MIDialog(FunctionDialog):
         self.envWidget.setTitle('')
         self.envWidget.setEnabled(False)
 
+        self.envWBWidget = RadioSelectWidget('Can word boundary be a potential component of bigram?',
+                                             OrderedDict([('Yes', True),
+                                                          ('No', False)]))
+        self.envWBWidget.setEnabled(False)
+
         fileFrame = QGroupBox('Output list of contexts to a file')
         fileLayout = QHBoxLayout()
         fileFrame.setLayout(fileLayout)
@@ -167,6 +172,7 @@ class MIDialog(FunctionDialog):
 
         envLayout.addWidget(self.envCheck)
         envLayout.addWidget(self.envWidget)
+        envLayout.addWidget(self.envWBWidget)
         envLayout.addWidget(fileFrame)
 
         envFrame.setLayout(envLayout)
@@ -209,9 +215,15 @@ class MIDialog(FunctionDialog):
                     "Missing information", "Please specify at least one bigram.")
             return None
         envs = self.envWidget.value()
-        if len(envs) > 0 and self.envCheck.checkState():
-            self.kwargs['envs'] = envs
-            self.kwargs['display_envs'] = {e: d for (e, d) in zip(envs, self.envWidget.displayValue())}
+        if self.envCheck.checkState():
+            if len(envs) > 0:
+                self.kwargs['envs'] = envs
+                self.kwargs['display_envs'] = {e: d for (e, d) in zip(envs, self.envWidget.displayValue())}
+            else:
+                reply = QMessageBox.critical(self,
+                                             "Missing information", "Please provide at least one environment filter,\n"
+                                                                    "or uncheck 'Set an environment filter.'")
+                return None
         ##------------------
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
@@ -223,10 +235,12 @@ class MIDialog(FunctionDialog):
         self.kwargs['type_token'] = self.typeTokenWidget.value()
         self.kwargs['segment_pairs'] = [tuple(y for y in x) for x in segPairs]
         self.kwargs['in_word'] = self.inWordCheck.isChecked()
-        self.kwargs['word_boundary'] = self.wordBoundaryWidget.value()
         self.kwargs['frequency_cutoff'] = frequency_cutoff
         self.kwargs['sequence_type'] = self.tierWidget.value()
         self.kwargs['context_output_path'] = self.saveFileWidget.value() if self.saveFileWidget.value() != '' else ''
+        self.kwargs['env_checked'] = self.envCheck.checkState()  # 0 if env_filter unchecked, 2 if checked.
+        self.kwargs['word_boundary'] = self.wordBoundaryWidget.value() if not self.envCheck.checkState() \
+            else self.envWBWidget.value()
         return self.kwargs
 
     def setResults(self,results):
@@ -242,8 +256,10 @@ class MIDialog(FunctionDialog):
             frequency_cutoff = 0.0
         if not self.envWidget.displayValue():
             environments = 'None'
+            wb̠output = self.wordBoundaryWidget.value()
         else:
             environments = ' ; '.join([x for x in self.envWidget.displayValue()])
+            wb̠output = 'Potentially be in a bigram' if self.envWBWidget.value() else 'Ignored'
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
                                 'PCT ver.': __version__,#self.corpus._version,
@@ -251,7 +267,7 @@ class MIDialog(FunctionDialog):
                                 'First segment': seg_pairs[i][0],
                                 'Second segment': seg_pairs[i][1],
                                 'Domain': dom,
-                                'Word boundary': self.wordBoundaryWidget.value(),
+                                'Word boundary': wb̠output,
                                 'Transcription tier': self.tierWidget.displayValue(),
                                 'Frequency type': self.typeTokenWidget.value().title(),
                                 'Pronunciation variants': self.variantsWidget.value().title(),
@@ -263,8 +279,12 @@ class MIDialog(FunctionDialog):
         if self.envCheck.checkState():
             self.envWidget.setEnabled(True)
             self.saveFileWidget.setEnabled(True)
+            self.envWBWidget.setEnabled(True)
             self.inWordCheck.setEnabled(False)
+            self.wordBoundaryWidget.setEnabled(False)
         else:
             self.envWidget.setEnabled(False)
             self.saveFileWidget.setEnabled(False)
+            self.envWBWidget.setEnabled(False)
             self.inWordCheck.setEnabled(True)
+            self.wordBoundaryWidget.setEnabled(True)

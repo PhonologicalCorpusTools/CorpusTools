@@ -7,7 +7,7 @@ from corpustools.exceptions import MutualInfoError
 from corpustools.corpus.classes.lexicon import Corpus, Word
 
 
-def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='Ignored'):
+def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary=True):
     """
     Environment filter
     It extracts only those words that satisfy environment condition and
@@ -23,12 +23,9 @@ def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='I
         List of EnvironmentFilter objects that specify environments
     context_output_path : str
         Path to save the list of 'clipped' words as a txt file (optional)
-    word_boundary : str
-        How to count word boundaries once per word. Three options.
-        'Halved' counts once,
-        'Both sides' counts twice (word-initial and word-final), and
-        'Ignored' does not count word boundaries.
-        Defaults to 'Ignored' (do not count word boundary)
+    word_boundary : bool
+        Whether word boundary should be considered as a part of bigram
+        Defaults to True
 
     Returns
     -------
@@ -37,7 +34,7 @@ def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='I
         All transcription removed except for the two position which will be compared against the bigram user inputs
     """
     pattern = ''
-    wb_in_env = False
+    wb_in_env = [False, False]
     clipped_corpus = Corpus(corpus_context.corpus.name)
 
     num_lhs = len(envs[0].lhs)
@@ -47,21 +44,26 @@ def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='I
         return corpus_context
 
     for left_string in envs[0].lhs:
-        pattern = pattern + "("+"|".join(left_string)+")"
-
+        half_env = "(" + "|".join(left_string) + ")"
+        if re.search(r"#", half_env) is not None:
+            wb_in_env[0] = True
+        pattern = pattern + half_env
     pattern = pattern + ".."
     for right_string in envs[0].rhs:
-        pattern = pattern + "(" + "|".join(right_string) + ")"
-    if re.search(r"#", pattern) is not None:
-        wb_in_env = True
+        half_env = "(" + "|".join(right_string) + ")"
+        if re.search(r"#", half_env) is not None:
+            wb_in_env[1] = True
+        pattern = pattern + half_env
     pattern = re.compile(pattern)
 
     context_pair = []
     for word in corpus_context:
         tier = getattr(word, corpus_context.sequence_type)
 
-        if wb_in_env:
+        if word_boundary or (wb_in_env[0] + wb_in_env[1]) == 2:
             tier_search_from = "".join(tier.with_word_boundaries())
+        elif wb_in_env[0] + wb_in_env[1]:
+            tier_search_from = "#" + "".join(tier) if wb_in_env[0] else "".join(tier) + "#"
         else:
             tier_search_from = "".join(tier)
 
@@ -73,18 +75,12 @@ def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='I
             elif f.span()[0] < env_context[1]:
                 env_context[1] = f.span()[1]
             else:
-                newword = wb_manager(tier=tier_search_from,
-                                     env_context=env_context,
-                                     wb=word_boundary,
-                                     wb_in_env=wb_in_env)
+                newword = tier_search_from[env_context[0]:env_context[1]]
                 context_pair.append((str(word),) + clip_context(newword, word, clipped_corpus))
                 env_context = list(f.span())
 
-        if bool(env_context):
-            newword = wb_manager(tier=tier_search_from,
-                                 env_context=env_context,
-                                 wb=word_boundary,
-                                 wb_in_env=wb_in_env)
+        if env_context:
+            newword = tier_search_from[env_context[0]:env_context[1]]
             context_pair.append((str(word),) + clip_context(newword, word, clipped_corpus))
 
     if bool(clipped_corpus.wordlist):  # if the clipped corpus is not empty, set it as the context for calculating MI
@@ -103,33 +99,6 @@ def mi_env_filter(corpus_context, envs, context_output_path='', word_boundary='I
     return corpus_context  # corpus_context (clipped), to be fed into the original function
 
 
-def wb_manager(tier, env_context, wb, wb_in_env):
-    new_word = tier[env_context[0]:env_context[1]]
-
-    if env_context[1] == len(tier) and (wb == 'Both sides' or wb == 'Halved'):
-        # if the end of the context equals to the word-end and WB option is both or one, add WB symbol
-        new_word = new_word + '#'
-
-    if env_context[0] == 0 and wb == 'Both sides':
-        # if the start of the context equals to the word-initial and WB option is both, add WB symbol
-        new_word = '#' + new_word
-
-    if wb_in_env:
-        if wb == 'Both sides':
-            if env_context[0] == 1:
-                new_word = '#' + new_word
-            if env_context[1] + 1 == len(tier):
-                new_word = new_word + '#'
-        if wb == 'Halved':
-            if env_context[1] + 1 == len(tier):
-                new_word = new_word + '#'
-            new_word = re.sub(r'^#+', '', new_word)
-        if wb == 'Ignored':
-            new_word = re.sub(r'#+', '', new_word)
-        new_word = re.sub(r"##+", '#', new_word)  # remove the word boundary symbol added when searching with wb in env
-    return new_word
-
-
 def clip_context(new_trans, word, clipped_corpus):
     kwargs = {}
     new_trans = list(new_trans)
@@ -144,7 +113,7 @@ def clip_context(new_trans, word, clipped_corpus):
     return str(original_word), ''.join(new_trans)  # print the 'word' that satisfies the environment (and to be added)
 
 
-def pointwise_mi(corpus_context, query, env_filtered=False, word_boundary='halve', in_word=False,
+def pointwise_mi(corpus_context, query, env_filtered=False, word_boundary='Word-final only', in_word=False,
                  stop_check=None, call_back=None):
     """
     Calculate the mutual information for a bigram.
@@ -158,12 +127,13 @@ def pointwise_mi(corpus_context, query, env_filtered=False, word_boundary='halve
     env_filtered : bool
         True if a env filter selected by the user.
         Defaults to False
-    word_boundary : str
-        How to count word boundaries once per word. Three options.
-        'Halved' counts once,
+    word_boundary : str or bool
+        How to count word boundaries once per word. str if no env filter selected, bool with env filters
+        'Word-final only' counts once,
         'Both sides' counts twice (word-initial and word-final), and
         'Ignored' does not count word boundaries.
-        Defaults to 'halve' (count word boundary once in word-final position)
+        Trueː env filter selected and # can be a part of a bigram.
+        Defaults to 'Word-final only' (count word boundary once in word-final position)
     in_word : bool
         Flag to calculate non-local, non-ordered mutual information,
         defaults to False
