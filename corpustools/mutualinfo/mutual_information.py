@@ -113,7 +113,7 @@ def clip_context(new_trans, word, clipped_corpus):
     return str(original_word), ''.join(new_trans)  # print the 'word' that satisfies the environment (and to be added)
 
 
-def pointwise_mi(corpus_context, query, env_filtered=False, word_boundary='Word-final only', in_word=False,
+def pointwise_mi(corpus_context, query, env_filtered=False, word_boundary='Word-end only', in_word=False,
                  stop_check=None, call_back=None):
     """
     Calculate the mutual information for a bigram.
@@ -129,11 +129,11 @@ def pointwise_mi(corpus_context, query, env_filtered=False, word_boundary='Word-
         Defaults to False
     word_boundary : str or bool
         How to count word boundaries once per word. str if no env filter selected, bool with env filters
-        'Word-final only' counts once,
+        'Word-end only' counts once,
         'Both sides' counts twice (word-initial and word-final), and
         'Ignored' does not count word boundaries.
         Trueː env filter selected and # can be a part of a bigram.
-        Defaults to 'Word-final only' (count word boundary once in word-final position)
+        Defaults to 'Word-end only' (count word boundary once in word-final position)
     in_word : bool
         Flag to calculate non-local, non-ordered mutual information,
         defaults to False

@@ -67,6 +67,7 @@ class MIDialog(FunctionDialog):
               'Second segment',
               'Domain',
               'Word boundary',
+              'Word boundary in bigram',
               'Transcription tier',
               'Frequency type',
               'Pronunciation variants',
@@ -128,7 +129,7 @@ class MIDialog(FunctionDialog):
         ##----------------------
 
         self.wordBoundaryWidget = RadioSelectWidget('Word boundary',
-                                                 OrderedDict([('Word boundary at the end only (default)', 'Word-final only'),
+                                                 OrderedDict([('Word boundary at the end only (default)', 'Word-end only'),
                                                               ('Keep both word boundaries', 'Both sides'),
                                                               ('Ignore all word boundaries', 'Ignored')]))
         optionLayout.addWidget(self.wordBoundaryWidget)
@@ -158,7 +159,7 @@ class MIDialog(FunctionDialog):
         self.envWidget.setTitle('')
         self.envWidget.setEnabled(False)
 
-        self.envWBWidget = RadioSelectWidget('Can word boundary be a potential component of bigram?',
+        self.envWBWidget = RadioSelectWidget('Should word boundaries be able to count as a member of a bigram?',
                                              OrderedDict([('Yes', True),
                                                           ('No', False)]))
         self.envWBWidget.setEnabled(False)
@@ -214,8 +215,9 @@ class MIDialog(FunctionDialog):
             reply = QMessageBox.critical(self,
                     "Missing information", "Please specify at least one bigram.")
             return None
-        envs = self.envWidget.value()
+
         if self.envCheck.checkState():
+            envs = self.envWidget.value()
             if len(envs) > 0:
                 self.kwargs['envs'] = envs
                 self.kwargs['display_envs'] = {e: d for (e, d) in zip(envs, self.envWidget.displayValue())}
@@ -254,12 +256,14 @@ class MIDialog(FunctionDialog):
             frequency_cutoff = float(self.minFreqEdit.text())
         except ValueError:
             frequency_cutoff = 0.0
-        if not self.envWidget.displayValue():
+        if not (self.envWidget.displayValue() and self.envCheck.checkState()):
             environments = 'None'
             wb̠output = self.wordBoundaryWidget.value()
+            env_wb_output = 'N/A'
         else:
             environments = ' ; '.join([x for x in self.envWidget.displayValue()])
-            wb̠output = 'Potentially be in a bigram' if self.envWBWidget.value() else 'Ignored'
+            wb̠output = 'N/A'
+            env_wb_output = self.envWBWidget.displayValue()
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
                                 'PCT ver.': __version__,#self.corpus._version,
@@ -268,6 +272,7 @@ class MIDialog(FunctionDialog):
                                 'Second segment': seg_pairs[i][1],
                                 'Domain': dom,
                                 'Word boundary': wb̠output,
+                                'Word boundary in bigram': env_wb_output,
                                 'Transcription tier': self.tierWidget.displayValue(),
                                 'Frequency type': self.typeTokenWidget.value().title(),
                                 'Pronunciation variants': self.variantsWidget.value().title(),
