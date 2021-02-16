@@ -1126,6 +1126,8 @@ class Word(object):
                     setattr(self, 'Frequency', value)
                     setattr(self, '_frequency', self.Frequency)
                 setattr(self, key, value)
+            else:
+                setattr(self, key, value)
 
             if key not in self.descriptors:
                 self.descriptors.append(key)
@@ -1414,7 +1416,7 @@ class Word(object):
             return collections.Counter(getattr(x, 'Surface_transcription') for x in self.wordtokens)  # Buckeye Corpus
         except AttributeError:
             pass
-        return collections.Counter(getattr(x, sequence_type) for x in self.wordtokens)
+        return collections.Counter(getattr(x, 'transcription') for x in self.wordtokens)
 
     def __repr__(self):
         return '<Word: \'%s\'>' % self.spelling

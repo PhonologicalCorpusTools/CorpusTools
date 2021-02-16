@@ -302,17 +302,17 @@ class SeparatedTokensVariantContext(BaseCorpusContext):
             variants = word.variants(self.sequence_type)
             for v in variants:                                      # Create a new word from each variant
                 kwargs = {}
-                if self.sequence_type == 'spelling':
+                if self.sequence_type.lower() == 'spelling':
                     kwargs['spelling'] = v
-                    kwargs['transcription'] = word.transcription
+                    kwargs['transcription'] = word.transcription.list
                     kwargs['frequency'] = variants[v]
-                elif self.sequence_type == 'transcription':
+                elif self.sequence_type.lower() == 'transcription':
                     kwargs['spelling'] = word.spelling
-                    kwargs['transcription'] = v
+                    kwargs['transcription'] = v.list
                     kwargs['frequency'] = variants[v]
                 else:
                     kwargs['spelling'] = word.spelling
-                    kwargs['transcription'] = word.transcription
+                    kwargs['transcription'] = word.transcription.list
                     kwargs['frequency'] = variants[v]
                     kwargs[self.sequence_type] = v
                 if self.type_or_token == 'type':
@@ -351,17 +351,17 @@ class WeightedVariantContext(BaseCorpusContext):
             total_variants = sum(variants.values())
             for v in variants:                                      # Create a new word from each variant
                 kwargs = {}
-                if self.sequence_type == 'spelling':
+                if self.sequence_type.lower() == 'spelling':
                     kwargs['spelling'] = v
-                    kwargs['transcription'] = word.transcription
+                    kwargs['transcription'] = word.transcription.list
                     kwargs['frequency'] = variants[v]/total_variants
-                elif self.sequence_type == 'transcription':
+                elif self.sequence_type.lower() == 'transcription':
                     kwargs['spelling'] = word.spelling
-                    kwargs['transcription'] = v
+                    kwargs['transcription'] = v.list
                     kwargs['frequency'] = variants[v]/total_variants
                 else:
                     kwargs['spelling'] = word.spelling
-                    kwargs['transcription'] = word.transcription
+                    kwargs['transcription'] = word.transcription.list
                     kwargs['frequency'] = variants[v]/total_variants
                     kwargs[self.sequence_type] = v
                 if self.type_or_token == 'type':
