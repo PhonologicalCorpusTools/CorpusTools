@@ -135,7 +135,7 @@ class MIDialog(FunctionDialog):
         optionLayout.addWidget(self.wordBoundaryWidget)
         ##----------------------
         self.inWordCheck = QCheckBox('Set domain to word (unordered word-internal pMI)')
-        self.inWordCheck.clicked.connect(self.WB_widget_enabler)
+        self.inWordCheck.clicked.connect(self.set_inword)
 
         optionLayout.addWidget(self.inWordCheck)
 
@@ -155,7 +155,7 @@ class MIDialog(FunctionDialog):
         envLayout = QFormLayout()
 
         self.envCheck = QCheckBox('Set an environment filter')
-        self.envCheck.clicked.connect(self.setEnv)
+        self.envCheck.clicked.connect(self.set_env_filters)
 
         self.envWidget = EnvironmentSelectWidget(inventory, middle = False, single_env=True)
         self.envWidget.setTitle('')
@@ -282,7 +282,7 @@ class MIDialog(FunctionDialog):
                                 'Environments': environments,
                                 'Result': r})
 
-    def setEnv(self):
+    def set_env_filters(self):
         if self.envCheck.checkState():
             self.envWidget.setEnabled(True)
             self.saveFileWidget.setEnabled(True)
@@ -294,6 +294,14 @@ class MIDialog(FunctionDialog):
             self.saveFileWidget.setEnabled(False)
             self.envWBWidget.setEnabled(False)
             self.inWordCheck.setEnabled(True)
+        self.WB_widget_enabler()
+
+    def set_inword(self):
+        if self.inWordCheck.checkState():
+            self.envCheck.setEnabled(False)
+            self.envCheck.setChecked(False)
+        else:
+            self.envCheck.setEnabled(True)
         self.WB_widget_enabler()
 
     def WB_widget_enabler(self):
