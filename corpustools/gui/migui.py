@@ -135,6 +135,8 @@ class MIDialog(FunctionDialog):
         optionLayout.addWidget(self.wordBoundaryWidget)
         ##----------------------
         self.inWordCheck = QCheckBox('Set domain to word (unordered word-internal pMI)')
+        self.inWordCheck.clicked.connect(self.WB_widget_enabler)
+
         optionLayout.addWidget(self.inWordCheck)
 
         # self.halveEdgesCheck = QCheckBox('Halve word boundary count')
@@ -258,7 +260,7 @@ class MIDialog(FunctionDialog):
             frequency_cutoff = 0.0
         if not (self.envWidget.displayValue() and self.envCheck.checkState()):
             environments = 'None'
-            wb̠output = self.wordBoundaryWidget.value()
+            wb̠output = self.wordBoundaryWidget.value() if self.wordBoundaryWidget.isEnabled() else 'N/A'
             env_wb_output = 'N/A'
         else:
             environments = ' ; '.join([x for x in self.envWidget.displayValue()])
@@ -286,10 +288,16 @@ class MIDialog(FunctionDialog):
             self.saveFileWidget.setEnabled(True)
             self.envWBWidget.setEnabled(True)
             self.inWordCheck.setEnabled(False)
-            self.wordBoundaryWidget.setEnabled(False)
+            self.inWordCheck.setChecked(False)
         else:
             self.envWidget.setEnabled(False)
             self.saveFileWidget.setEnabled(False)
             self.envWBWidget.setEnabled(False)
             self.inWordCheck.setEnabled(True)
+        self.WB_widget_enabler()
+
+    def WB_widget_enabler(self):
+        if not self.envCheck.checkState() and not self.inWordCheck.checkState():
             self.wordBoundaryWidget.setEnabled(True)
+        else:
+            self.wordBoundaryWidget.setEnabled(False)
