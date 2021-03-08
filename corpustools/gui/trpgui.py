@@ -9,13 +9,13 @@ from .models import ABSegmentsModel
 from .windows import FunctionWorker, FunctionDialog
 from .widgets import BigramWidget, TierWidget, RadioSelectWidget, ContextWidget, SyllableBigramWidget
 from corpustools.contextmanagers import (CanonicalVariantContext, MostFrequentVariantContext,
-                                        SeparatedTokensVariantContext,
-                                        WeightedVariantContext)
+                                         SeparatedTokensVariantContext,
+                                         WeightedVariantContext)
 
 from ..transprob.transitional_probability import calc_trans_prob
 
-
 from corpustools import __version__
+
 
 # GUI for the Transitional Probability windows
 
@@ -58,7 +58,7 @@ class TPDialog(FunctionDialog):
               'PCT ver.',
               'Algorithm type',
               'Bigram',
-              #'Segment type',
+              # 'Segment type',
               'Word boundary',
               'Direction',
               'Sequence type',
@@ -114,24 +114,12 @@ class TPDialog(FunctionDialog):
         # modeLayout.addWidget(sylMode)
         # optionLayout.addWidget(modeFrame)
 
-        dirFrame = QGroupBox('Direction')
-        dirLayout = QVBoxLayout()
-        dirFrame.setLayout(dirLayout)
+        # Direction
+        self.dirWidget = RadioSelectWidget('Direction',
+                                           OrderedDict([('P(B|A) Forward', 'forward'),
+                                                        ('P(A|B) Backward', 'backward')]))
 
-        self.dirGroup = QButtonGroup()
-        forwardMode = QCheckBox('P(B|A) Forward')
-        forwardMode.setChecked(True)
-        self.dirGroup.addButton(forwardMode)
-
-        backwardMode = QCheckBox('P(A|B) Backward')
-        self.dirGroup.addButton(backwardMode)
-        self.dirGroup.setExclusive(True)
-        self.dirGroup.setId(forwardMode, 1)
-        self.dirGroup.setId(backwardMode, 0)
-
-        dirLayout.addWidget(forwardMode)
-        dirLayout.addWidget(backwardMode)
-        optionLayout.addWidget(dirFrame)
+        optionLayout.addWidget(self.dirWidget)
 
         # Word boundary
         self.wordBoundaryWidget = RadioSelectWidget('Word boundary',
@@ -172,12 +160,12 @@ class TPDialog(FunctionDialog):
             #                       ' between individual segments or'
             #                       ' between syllables.'
             #                       "</FONT>"))
-            dirFrame.setToolTip(("<FONT COLOR=black>"
-                                 'Choose the direction of the algorithm:'
-                                 ' for two units AB, forward TP'
-                                 ' is the probability of B given A'
-                                 ' and backward TP is the probability'
-                                 ' of A given B. See Anghelescu (2016)'))
+            self.dirWidget.setToolTip(("<FONT COLOR=black>"
+                                       'Choose the direction of the algorithm:'
+                                       ' for two units AB, forward TP'
+                                       ' is the probability of B given A'
+                                       ' and backward TP is the probability'
+                                       ' of A given B. See Anghelescu (2016)'))
             self.tierWidget.setToolTip(("<FONT COLOR=black>"
                                         'Choose which tier transitional probability should'
                                         ' be calculated over (e.g., the whole transcription'
@@ -200,10 +188,10 @@ class TPDialog(FunctionDialog):
             self.tpLayout.insertWidget(0, self.envWidget)
             if self.showToolTips:
                 self.envWidget.setToolTip(("<FONT COLOR=black>"
-                                       'Select at lest one pair of segments for'
-                                       ' calculating transitional probability.'
-                                       ' Each pair will be its own calculation'
-                                       "</FONT>"))
+                                           'Select at lest one pair of segments for'
+                                           ' calculating transitional probability.'
+                                           ' Each pair will be its own calculation'
+                                           "</FONT>"))
         else:
             self.mode = 'sylMode'
             self.envWidget = SyllableBigramWidget(self.inventory, tplayout=True)
@@ -211,10 +199,10 @@ class TPDialog(FunctionDialog):
             self.envWidget.table.setModel(ABSegmentsModel())
             if self.showToolTips:
                 self.envWidget.setToolTip(("<FONT COLOR=black>"
-                                       'Select at lest one pair of syllables for'
-                                       ' calculating transitional probability.'
-                                       ' Each pair will be its own calculation'
-                                       "</FONT>"))
+                                           'Select at lest one pair of syllables for'
+                                           ' calculating transitional probability.'
+                                           ' Each pair will be its own calculation'
+                                           "</FONT>"))
 
     def generateKwargs(self):
         segPairs = self.envWidget.value()
@@ -230,14 +218,12 @@ class TPDialog(FunctionDialog):
         except ValueError:
             f_cutoff = 0.0
 
-        direction = 'forward' if self.dirGroup.checkedId() == 1 else 'backward'
-
         return {'corpus': self.corpus,
                 'context': self.variantsWidget.value(),
-                #'mode': self.mode,
+                # 'mode': self.mode,
                 'bigrams': self.create_bigrams(segPairs),
                 'wb': self.wordBoundaryWidget.value(),
-                'dir': direction,
+                'dir': self.dirWidget.value(),
                 'sequence_type': self.typeTokenWidget.value(),
                 'frequency_cutoff': f_cutoff,
                 'tier': self.tierWidget.value()}
@@ -267,17 +253,17 @@ class TPDialog(FunctionDialog):
         except ValueError:
             f_cutoff = 0.0
         # mode = 'Segments' if self.mode == 'segMode' else 'Syllables'
-        dir = 'P(B|A) Forward' if self.dirGroup.checkedId() == 1 else 'P(A|B) Backward'
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
                                  'PCT ver.': __version__,
                                  'Algorithm type': 'Transitional probability',
                                  # 'First segment': self.get_symbol(0, seg_pairs[i]),
                                  # 'Second segment': self.get_symbol(1, seg_pairs[i]),
-                                 'Bigram': ''.join(seg_pairs[i]), # if self.mode=='segMode' else ''.join([str(i) for i in seg_pairs[i]]),
+                                 'Bigram': ''.join(seg_pairs[i]),
+                                 # if self.mode=='segMode' else ''.join([str(i) for i in seg_pairs[i]]),
                                  'Word boundary': self.wordBoundaryWidget.value(),
                                  # 'Segment type': mode,
-                                 'Direction': dir,
+                                 'Direction': self.dirWidget.value(),
                                  'Sequence type': self.typeTokenWidget.value(),
                                  'Tier': self.tierWidget.value(),
                                  'Minimum word frequency': f_cutoff,
