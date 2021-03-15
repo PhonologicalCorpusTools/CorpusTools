@@ -23,7 +23,7 @@ how phonologically close any two words might be.
 
 String similarity could be part of a calculation of morphological
 relatedness, if used in conjunction with a measure of semantic similarity
-(see, e.g., [Hall2014b]_). In particular, it can be used in conjunction
+(see, e.g., [Hall2016]_). In particular, it can be used in conjunction
 with the Frequency of Alternation function of PCT (see :ref:`frequency_of_alternation`) as a means
 of calculating the frequency with which two sounds alternate with each
 other in a language.

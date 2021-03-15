@@ -194,7 +194,7 @@ in the row for [#i#].
 
 Now, we can calculate pMI(ʃ,i) in this “Clipped corpus,” that is, using the forms in the “Context” column.
 
-:math:`pMI_{_#, WB as bigram} (ʃ,i) = log_2 (\frac{p(ʃi)}
+:math:`pMI_{(\_\#, WB\ bigram)} (ʃ,i) = log_2 (\frac{p(ʃi)}
 {p(ʃ)*p(i)}) = 3.17`
 
 since, :math:`p(ʃi) = \frac{2}{8}`, :math:`p(ʃ) = \frac{2}{12}`, and :math:`p(i) = \frac{3}{12}`
@@ -216,8 +216,10 @@ since, :math:`p(ʃi) = \frac{2}{8}`, :math:`p(ʃ) = \frac{2}{12}`, and :math:`p(
 +--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
 
 Again, we can calculate pMI(ʃ,i) in this “Clipped corpus,” that is, using the forms in the “Context” column.
+Note that the word [#i#] does not have the context since the word-initial word boundary symbol cannot be a
+part of bigram.
 
-:math:`pMI_{_#, WB not as bigram} (ʃ,i) = log_2 (\frac{p(ʃi)}
+:math:`pMI_{(\_\#)} (ʃ,i) = log_2 (\frac{p(ʃi)}
 {p(ʃ)*p(i)}) = 2.75`
 
 since, :math:`p(ʃi) = \frac{2}{6}`, :math:`p(ʃ) = \frac{2}{9}`, and :math:`p(i) = \frac{2}{9}`

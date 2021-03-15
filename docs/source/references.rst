@@ -161,6 +161,10 @@ References
    speech: Data and analysis, ed. by K. Maekawa & K. Yoneyama, 87-108.
    Tokyo: The National Institute of Japanese Language.
 
+.. [Martin2014] Martin, A. (2014). An Investigation into the Functional Load
+   of Phonological Features & Perceptual Correlates. (Master's thesis),
+   Université Paris Descartes, Paris.
+
 .. [Matlab] The MathWorks Inc. (2014).  MATLAB, Version R2014a.
 
 .. [Mielke2008] Mielke, Jeff. 2008. The emergence of distinctive features.

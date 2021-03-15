@@ -242,7 +242,7 @@ to the corpus size is useful for cross-corpus comparisons.
 
 On the other hand, relativizing to the number of words containing the segments in question
 is more informative about their own "relative" contrastiveness in comparison to their "potential"
-for contrast, an issue discussed in [Martin2017]_. In particular, imagine that we have a toy corpus with 100 words. There are 
+for contrast, an issue discussed in [Martin2014]_. In particular, imagine that we have a toy corpus with 100 words. There are
 5 minimal pairs based on [m]/[n], and 5 minimal pairs based on [b]/[d]. These would be 
 identical functional loads as far as either of the first two measures are concerned 
 (i.e., raw counts, where the FLs would be 5 and 5, or counts relativized to corpus size,
@@ -255,7 +255,7 @@ Now, the functional load of [m]/[n] would be 5 / 18 (=0.278), while that of [b]/
 much lower. In other words, the [b]/[d] contrast is making much less use of its potential
 for contrast than the [m]/[n] contrat.
 
-A benefit of this approach is that it does take into account the relative frequency of the sounds in any given pair (see also [Martin2017]_). That is, for sounds that are less frequent overall, we would _expect_ there to be fewer minimal pairs, and by relativizing to only the number of words containing at least one of the two sounds in the pair, we capture that expectation: Intuitively, it makes sense that if [m] and [n] in the above example are so much less frequent than [b] and [d], then having five minimal pairs hinging on [m] and [n] is more surprising than having five minimal pairs hinging on [b] and [d], so we want to say that the [m] / [n] contrast does more work in distinguishing lexical items than does [b]/[d].
+A benefit of this approach is that it does take into account the relative frequency of the sounds in any given pair (see also [Martin2014]_). That is, for sounds that are less frequent overall, we would _expect_ there to be fewer minimal pairs, and by relativizing to only the number of words containing at least one of the two sounds in the pair, we capture that expectation: Intuitively, it makes sense that if [m] and [n] in the above example are so much less frequent than [b] and [d], then having five minimal pairs hinging on [m] and [n] is more surprising than having five minimal pairs hinging on [b] and [d], so we want to say that the [m] / [n] contrast does more work in distinguishing lexical items than does [b]/[d].
 
 The problem with this approach is that it conflates "work done by distinguishing lexical items" with "predictability of distribution,"  which can be calculated separately in PCT (see :ref:`predictability_of_distribution`). That is, minimal pairs provide examples of environments that are unpredictable. So for the [m]/[n] case, what is happening is that the sounds are often in unpredictable contexts (i.e., minimal pairs) relative to their total distribution, while [b] and [d] are generally not in completely unpredictable contexts, though that happens occasionally (relative to their distribution). 
 
