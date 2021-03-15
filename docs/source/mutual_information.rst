@@ -61,6 +61,11 @@ in order for this latter use of mutual information to be useful, one must
 be using a corpus based on running text rather than a corpus that is
 simply a list of individual words and their token frequencies.
 
+Note that pointwise mutual information can also be expressed in terms of the
+information content of each of the members of the bigram. Information is measured as the
+negative log of the probability of a unit :math:`(I(a) = -log_2*p(a))`, so the
+pMI of a bigram *ab* is also equal to :math:`I(a) + I(b) – I(ab)`.
+
 .. _mi_method:
 
 Method of calculation
@@ -81,10 +86,18 @@ divided by the product of the individual probabilities that X = *a* and Y = *b*.
 
 :math:`pMI = log_2 (\frac{p(X=a \& Y = b)}{p(X=a)*p(Y=b)})`
 
-**Word-internal co-occurrence pMI**: In this version, the joint probability
-that X = *a* and Y = *b* is equal to the probability that some unit
-(here, a word) contains both a and b (in any order). Therefore, the
-pointwise mutual information of the sounds *a* and *b* is equal to the binary
+Note that in PCT, calculations are not rounded until the final stage,
+whereas in [Goldsmith2012]_, rounding was done at some
+intermediate stages as well, which may result in slightly different
+final pMI values being calculated.
+
+.. _mi_method_word_internal_pmi:
+
+Word-internal co-occurrence pMI
+```````````````````````````````
+In this implementation of pMI, the joint probability that X = *a* and Y = *b*
+is equal to the probability that some unit (in our case, a word) contains
+both a and b in any order. Therefore, the pMI of the sounds *a* and *b* is equal to the binary
 logarithm of the probability of some word containing both *a* and *b*, divided
 by the product of the individual probabilities of a word containing *a* and
 a word containing *b*.
@@ -94,10 +107,13 @@ Pointwise mutual information for individual segments:
 :math:`pMI_{word-internal} = log_2 (\frac{p(a \in W \& b \in W)}
 {p(a \in W)*p(b \in W)})`
 
-**Ordered pair pMI**: In this version, the joint probability that X = *a* and
-Y = *b* is equal to the probability of occurrence of the sequence *ab*.
-Therefore, the pointwise mutual information of a bigram (e.g., *ab*) is
-equal to the binary logarithm of the probability of the bigram divided
+.. _mi_method_ordered_pair_pmi:
+
+Ordered pair pMI
+````````````````
+In this version, the joint probability that X = *a* and Y = *b* is equal to the probability
+of occurrence of the sequence *ab*. Therefore, the pointwise mutual information of a bigram
+(e.g., *ab*) is equal to the binary logarithm of the probability of the bigram divided
 by the product of the individual segment probabilities, as shown in the
 formula below.
 
@@ -113,15 +129,99 @@ probability of [b]. Bigram probabilities are calculated by dividing counts
 by the total number of bigrams, and unigram probabilities are calculated
 equivalently.
 
-Note that pMI can also be expressed in terms of the information content
-of each of the members of the bigram. Information is measured as the
-negative log of the probability of a unit :math:`(I(a) = -log_2*p(a))`, so the
-pMI of a bigram *ab* is also equal to :math:`I(a) + I(b) – I(ab)`.
+.. _mi_env_filter:
 
-Note that in PCT, calculations are not rounded until the final stage,
-whereas in [Goldsmith2012]_, rounding was done at some
-intermediate stages as well, which may result in slightly different
-final pMI values being calculated.
+Environment filters
+```````````````````
+In addition to simply calculating mutual information based on any occurrence of the two segments,
+the user may limit the occurrences that "count" as occurrences of those segments by specific
+environments using :ref:`environment_selection`. For example, one might be interested in calculating
+the ordered pair pMI not in all positions but only in word-final positions (environment filtering is
+irrelevant for word-internal co-occurrence pMI). Let's assume we calculate pMI of the bigram [ʃ,i] in the
+mini corpus below. For the purpose of presentation, each word occurs once in the corpus and
+transcriptions contain word boundaries (#) on both sides, contra the default setting for word boundaries.
+
++--------+------------+------+-----------+-------------+----------+----------+-----------+
+|  Word  |  Trans.    | Freq.| Num. seg. | Num. bigram | Num. [ʃ] | Num. [i] | Num. [ʃi] |
++========+============+======+===========+=============+==========+==========+===========+
+|  ʃaʃi  |  [#ʃaʃi#]  |  1   |     6     |      5      |    2     |    1     |     1     |
++--------+------------+------+-----------+-------------+----------+----------+-----------+
+|   ʃi   |   [#ʃi#]   |  1   |     4     |      3      |    1     |    1     |     1     |
++--------+------------+------+-----------+-------------+----------+----------+-----------+
+| ʃisota | [#ʃisota#] |  1   |     8     |      7      |    1     |    1     |     1     |
++--------+------------+------+-----------+-------------+----------+----------+-----------+
+|   i    |   [#i#]    |  1   |     3     |      2      |    0     |    1     |     0     |
++--------+------------+------+-----------+-------------+----------+----------+-----------+
+|        Total        |  4   |    21     |     17      |    4     |    4     |     3     |
++--------+------------+------+-----------+-------------+----------+----------+-----------+
+
+One could calculate pMI of the bigram [ʃ,i] in this corpus with or without environment filtering.
+
+Let's first calculate pMI(ʃ,i) without environment filtering as the baseline. Using the numbers presented
+in the table,
+
+:math:`pMI (ʃ,i) = log_2 (\frac{p(ʃi)}
+{p(ʃ)*p(i)}) = 2.28`
+
+since, :math:`p(ʃi) = \frac{3}{17}`, :math:`p(ʃ) = \frac{4}{21}`, and :math:`p(i) = \frac{4}{21}`
+
+Meanwhile, when calculating pMI for the same bigram only in word-final position, we “clip” corpus,
+leaving only the last two segment positions in each word for potential bigrams. (Note that The location
+of the potential bigrams is dependent on the :ref:`environment_selection`. For example,
+calculating the same bigram in a word-initial position would require leaving the first two positions.)
+In the two tables below, the result of clipping is shown as “Context” columns.
+
+Whether the word boundary can be a part of potential bigram is critical for the last word [#i#].
+If # can count as a member of bigram, the word has the bigram [#, i]. If not, the word [#i#] is ignored.
+The comparison is presented in the two tables below. Note how “context” columns are different
+in the row for [#i#].
+
+**Word boundary counts as a member of a bigram**
+
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|  Word  |  Trans.    | Context | Freq.| Num. seg. | Num. bigram | Num. [ʃ] | Num. [i] | Num. [ʃi] |
++========+============+=========+======+===========+=============+==========+==========+===========+
+|  ʃaʃi  |  [#ʃaʃi#]  |  [ʃi#]  |  1   |     3     |      2      |    1     |    1     |     1     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|   ʃi   |   [#ʃi#]   |  [ʃi#]  |  1   |     3     |      2      |    1     |    1     |     1     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+| ʃisota | [#ʃisota#] |  [ta#]  |  1   |     3     |      2      |    0     |    0     |     0     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|   i    |   [#i#]    |  [#i#]  |  1   |     3     |      2      |    0     |    1     |     0     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|        Total                  |  4   |    12     |      8      |    2     |    3     |     2     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+
+Now, we can calculate pMI(ʃ,i) in this “Clipped corpus,” that is, using the forms in the “Context” column.
+
+:math:`pMI_{_#, WB as bigram} (ʃ,i) = log_2 (\frac{p(ʃi)}
+{p(ʃ)*p(i)}) = 3.17`
+
+since, :math:`p(ʃi) = \frac{2}{8}`, :math:`p(ʃ) = \frac{2}{12}`, and :math:`p(i) = \frac{3}{12}`
+
+**Word boundary does NOT count as a member of a bigram**
+
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|  Word  |  Trans.    | Context | Freq.| Num. seg. | Num. bigram | Num. [ʃ] | Num. [i] | Num. [ʃi] |
++========+============+=========+======+===========+=============+==========+==========+===========+
+|  ʃaʃi  |  [#ʃaʃi#]  |  [ʃi#]  |  1   |     3     |      2      |    1     |    1     |     1     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|   ʃi   |   [#ʃi#]   |  [ʃi#]  |  1   |     3     |      2      |    1     |    1     |     1     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+| ʃisota | [#ʃisota#] |  [ta#]  |  1   |     3     |      2      |    0     |    0     |     0     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|   i    |   [#i#]    |   N/A   |                                                                  |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+|        Total                  |  3   |     9     |      6      |    2     |    2     |     2     |
++--------+------------+---------+------+-----------+-------------+----------+----------+-----------+
+
+Again, we can calculate pMI(ʃ,i) in this “Clipped corpus,” that is, using the forms in the “Context” column.
+
+:math:`pMI_{_#, WB not as bigram} (ʃ,i) = log_2 (\frac{p(ʃi)}
+{p(ʃ)*p(i)}) = 2.75`
+
+since, :math:`p(ʃi) = \frac{2}{6}`, :math:`p(ʃ) = \frac{2}{9}`, and :math:`p(i) = \frac{2}{9}`
+
 
 .. _mi_gui:
 
@@ -130,14 +230,18 @@ Calculating mutual information in the GUI
 
 To start the analysis, click on “Analysis” / “Calculate mutual information...”
 in the main menu. The choice between the two algorithms depends on the setting
-of **Domain**. The default is *ordered pair pMI* and choosing “set domain to word”
-switches to the **unordered** *word-internal co-occurrence pMI*. Follow these steps:
+of **Set domain to word**. The default is *ordered pair pMI* and choosing “set domain to word”
+switches to the **unordered** *word-internal co-occurrence pMI*. Note that switching
+to word-internal pMI is not available when the environment filter is on.
 
-1. **Bigram**: Click on the “Add bigram” button in the “Mutual Information”
+Follow these steps to calculate mutual information:
+
+1. **Bigrams**: Click on the “Add bigram” button in the “Mutual Information”
    dialogue box. A new window will open with an inventory of all
    the segments that occur in your corpus. Select the bigram by clicking
    on one segment from the “left-hand side” and one segment from the
-   “right-hand side.” Note that the order of the sounds matters in this function! To add more than one bigram, click “Add and create
+   “right-hand side.” Note that the order of the sounds matters if “Set domain to word
+   (unordered word-internal pMI) is unchecked.” To add more than one bigram, click “Add and create
    another” to be automatically returned to the selection window. Once
    the last bigram has been selected, simply click “Add” to return to
    the Mutual Information dialogue box. All the selected bigrams will
@@ -159,30 +263,45 @@ switches to the **unordered** *word-internal co-occurrence pMI*. Follow these st
    but this option seems to be unavailable, see :ref:`corpus_format` on the required
    format for a corpus.)
 
-5. **Domain**: Choosing “set domain to word” will change the calculation so
-   that the calculation is for word-internal co-occurrence pMI. In this
-   case, the order and adjacency  of the bigram does not matter; it is
-   simply treated as a pair of segments that could occur anywhere in a word.
+5. **Minimum frequency**: It is possible to set a minimum token frequency for words
+   in the corpus to be included in the calculation. This allows easy exclusion of rare
+   words. To include all words in the corpus, regardless of their token frequency,
+   leave the slot empty or set it to 0. Note that if a minimum frequency set,
+   all words below that frequency are simply ignored entirely for the purposes of the calculation.
 
-6. **Word boundary count**: A standard word object in PCT contains word
-   boundaries on both sides of it (e.g., [#kæt#] ‘cat’). If words were
-   concatenated in real running speech, however, one would expect to see
-   only one word boundary between each pair of words (e.g., [#mai#kæt#]
-   ‘my cat’ instead of [#mai##kæt#]). To reproduce this effect and assume
-   that word boundaries occur only once between words (as is assumed in
-   [Goldsmith2012]_, choose “halve word boundary count.” Note that this
-   technically divides the number of boundaries in half and then adds one,
-   to compensate for the extra “final” boundary at the end of an utterance.
-   (It will make a difference only for calculations that include a boundary
-   as one member of the pair.)
+6. **Word boundary count**: Select an option for word boundary. The default is to assume
+   that word boundaries occur only once in words (as is assumed in
+   [Goldsmith2012]_). Select "Keep both word boundaries" to have boundaries on both sides, or
+   "Ignore all word boundaries" to ignore all word boundaries in the calculation.
+
+7. **Set domain to word (unordered word-internal pMI)**: Select this button to
+   calculate :ref:`_mi_method_word_internal_pmi`. Note that environment filtering
+   is not meaningful in unordered word-internal pMI.
+
+8. **Environment (optional)**: Select “Set an environment filter” button to add
+   environment filters. (see :ref:`mi_env_filter` for how environment filtering
+   works in calculating pMI, and :ref:`environment_selection` for how to add
+   an environment)
+
+   a. **Should word boundaries be able to count as a member of a bigram?**:
+      As described in :ref:`mi_env_filter`, the user can include word boundary
+      as a member of a potential bigram.
+
+   b. **Output list of contexts to a file**: One can provide a path to export the corpus
+      'context', i.e., the result of environment filtering that is to be fed into calculating pMI.
+      The exported file can be found at the specified location after clicking “Calculate mutual
+      information.”
 
 7. **Results**: Once all options have been selected, click “Calculate mutual
    information.” If this is not the first calculation, and you want to add
    the results to a pre-existing results table, select the choice that
    says “add to current results table.” Otherwise, select “start new
    results table.” A dialogue box will open, showing a table of the
-   results, including sound 1, sound 2, the tier used, and the mutual
-   information value. To save these results to a .txt file, click on
+   results. The mutual information value is located on the right-most
+   column. The table also includes machine-provided information such as corpus name and PCT version,
+   as well as options selected by the user such as first segment, second segment, domain
+   (i.e., which one of the two algorithms), the word boundary option, the tier used, frequency type,
+   pronunciation variants, minimum word frequency and environment. To save these results to a .txt file, click on
    “Save to file” at the bottom of the table.
 
 The following image shows the inventory window used for selecting bigrams

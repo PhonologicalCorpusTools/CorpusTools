@@ -23,15 +23,17 @@ Depending on where you are building the environment, you may be able to
 edit the contents of this target. E.g., if you are doing a
 :ref:`phonological_search`, you can put the target(s) of the search
 here, and fill in the environment around them. On the other hand, if
-you are builiding an environment to be used with pairs of sounds, as in
-the :ref:`predictability_of_distribution` analysis, you will have specified
-the target pairs of sounds independently, and cannot edit the targets in the
-environment selection box. In order to select a target in cases where it
-is editable, simply click on the central target box; a sound selection box
-will open. See :ref:`sound_selection` for details on how to use this
-function, but basically, sounds can be selected either by clicking on
-segments or by specifying feature values. Multiple sounds can be selected
-as the targets; each will be placed in the same surrounding environments.
+you are building an environment to be used with pairs of sounds, as in
+the :ref:`predictability_of_distribution`, :ref:`mutual_information`,
+or :ref:`functional_load` analysis, you will have specified the target
+pairs of sounds independently, and cannot edit the targets in the
+environment selection box. In order to select a target in cases where
+it is editable, simply click on the central target box; a sound
+selection box will open. See :ref:`sound_selection` for details on how
+to use this function, but basically, sounds can be selected either by
+clicking on segments or by specifying feature values. Multiple sounds
+can be selected as the targets; each will be placed in the same
+surrounding environments.
 
 On either side of the central target rectangle, there is a "+" button.
 These allow you to add segments to either the left-hand or the right-hand
