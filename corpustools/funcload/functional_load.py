@@ -1,10 +1,12 @@
 import regex as re
+import numpy as np
+from scipy import sparse
 from collections import defaultdict
 from math import *
 import itertools
 from math import factorial
 import time
-#from pprint import pprint
+from sklearn.feature_extraction import DictVectorizer
 
 from corpustools.exceptions import FuncLoadError
 from corpustools.funcload.io import save_minimal_pairs
@@ -97,6 +99,7 @@ def fits_environment(w1, w2, index, environment_filter):
             return False
     return True
 
+
 def make_environment_re(environment_filter):
     if environment_filter.lhs:
         re_lhs = ' '.join(['(' + ('|'.join([seg for seg in position]) + ')') for position in environment_filter.lhs])
@@ -116,6 +119,228 @@ def make_environment_re(environment_filter):
         re_rhs = ' ' + re_rhs
     return re_lhs + '_' + re_rhs
 
+def deltah_fl_vectorized(corpus_context, segment_pairs,
+                         environment_filter=None,
+                         normalization=False,
+                         stop_check=None,
+                         call_back=None):
+    all_segments = corpus_context.inventory
+
+    # The following code creates a list of dicts where if the key is a tuple of two segments,
+    # then the values are a set of that tuple, but if the key is a tuple of one segment,
+    # then the value is a set of all possible pairs containing that segment
+    pair_dicts = [(seg_pair, {(seg_pair[0], other.symbol) for other in all_segments
+                              if other.symbol != seg_pair[0] and other.symbol != '#'})
+                  if len(seg_pair) == 1 else (seg_pair, {seg_pair}) for seg_pair in segment_pairs]
+
+    neutralize_dicts = []
+
+    orig_string = defaultdict(float)  # {'mata': 1.5} for vectorization
+    orig_transcription = defaultdict(float)  # {m.a.t.a: 1.5} for neutralization
+
+    if call_back is not None:
+        call_back('Building original dictionary...')
+        call_back(0, len(corpus_context))
+        cur = 0
+
+    for w in corpus_context:
+
+        if stop_check is not None and stop_check():
+            return
+        if call_back is not None:
+            cur += 1
+            if cur % 100 == 0:
+                call_back(cur)
+
+        trans = getattr(w, corpus_context.sequence_type)
+        string = ''.join(trans.with_word_boundaries())
+        orig_string[string] += w.frequency
+        orig_transcription[trans] += w.frequency
+
+    neutralize_dicts.append(orig_string)
+
+    if call_back is not None:
+        call_back('Neutralizing words...')
+        call_back(0, len(pair_dicts))
+        cur = 0
+
+    for specified_pair, neutralized_pairs in pair_dicts:
+        for pair in neutralized_pairs:
+
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 100 == 0:
+                    call_back(cur)
+
+            # TODO: speed up environment filter function
+            if environment_filter:
+                filled_environments = [EnvironmentFilter(pair, env.lhs, env.rhs)
+                                       for env in environment_filter]
+            else:
+                filled_environments = [EnvironmentFilter(middle_segments=pair,
+                                                         lhs=list(),
+                                                         rhs=list())]
+
+            neutralized = defaultdict(float)
+            for word, freq in orig_transcription.items():
+                neutral = neutralize_with_all_envs(word, filled_environments)
+                neutralized[neutral] += freq
+            neutralize_dicts.append(neutralized)
+
+    matrix = DictVectorizer(sparse=True).fit_transform(neutralize_dicts)
+
+    if corpus_context.type_or_token == 'type':
+        matrix.data = matrix.data > 0.
+        matrix = matrix.astype('float')
+
+    matrix /= matrix.sum(axis=1)
+    matrix = sparse.csr_matrix(matrix)
+    matrix.data = - np.log2(matrix.data) * matrix.data
+    raw_entropy = matrix.sum(1)
+    orig_entropy = raw_entropy[0, 0]
+
+    calc = list(np.nditer(orig_entropy - raw_entropy[1:, 0].flatten()))
+
+    num_pairs = [len(neutralized_pairs) for _, neutralized_pairs in pair_dicts]
+    cumsum_indices = [sum(num_pairs[0:i]) for i in range(0, len(num_pairs) + 1)]
+
+    result = []
+    for pair_tuple, cumsum_index in zip(pair_dicts, range(len(cumsum_indices) - 1)):
+        specified_pair = pair_tuple[0]
+        neutralized_pairs = pair_tuple[1]
+        fl = sum(calc[cumsum_indices[cumsum_index]:cumsum_indices[cumsum_index + 1]]) / len(
+            calc[cumsum_indices[cumsum_index]:cumsum_indices[cumsum_index + 1]])
+        fl = fl if fl > 1e-10 else 0.0
+        result.append((specified_pair, fl, {specified_pair: neutralized_pairs}))
+
+    if not normalization and orig_entropy.item() > 0.:
+        result = [(pair, fl / orig_entropy.item(), pairs) for pair, fl, pairs in result]
+
+    return result
+
+
+def satisfy_environment(word, index, environment_filter):
+    if not environment_filter:
+        return True
+
+    def ready_for_re(word, index):
+        w = [str(seg) for seg in word]
+        w[index] = '_'
+        return ' '.join(w)
+
+    w = ready_for_re(word, index)
+    for env in environment_filter:
+        env_re = make_environment_re(env)
+        if not bool(re.search(env_re, w)):
+            return False
+    return True
+
+
+def neutralize(seg, word, environment_filter, minimal_pair_definition):
+    results = set()
+
+    if minimal_pair_definition == 'true':
+        for i in range(len(word)):
+            if word[i] == seg and satisfy_environment(word, i, environment_filter):
+                neutralized = ''.join([word[j] if j != i else '*' for j in range(len(word))])
+                results.add(neutralized)
+    else:
+        neutralized = ''.join(
+            ['*' if s == seg and satisfy_environment(word, i, environment_filter) else s for i, s in enumerate(word)])
+        results.add(neutralized)
+
+    return results
+
+
+def minpair_fl_speed(corpus_context, segment_pairs,
+                     relativization='corpus',  # corpus, relevant, or raw
+                     distinguish_homophones=False,
+                     minimal_pair_definition='true',  # true or neutralization
+                     environment_filter=None, stop_check=None, call_back=None):
+    all_segments = corpus_context.inventory
+
+    if distinguish_homophones:
+        num_words_in_corpus = len(corpus_context.corpus)
+    else:
+        num_words_in_corpus = len({getattr(w, corpus_context.sequence_type) for w in corpus_context})
+
+    # The following code creates a list of dicts where if the key is a tuple of two segments,
+    # then the values are a set of that tuple, but if the key is a tuple of one segment,
+    # then the value is a set of all possible pairs containing that segment
+    pair_dicts = [{seg_pair: {(seg_pair[0], other.symbol) for other in all_segments
+                              if other.symbol != seg_pair[0] and other.symbol != '#'}}
+                  if len(seg_pair) == 1 else {seg_pair: {seg_pair}} for seg_pair in segment_pairs]
+
+    neutralized_dict = defaultdict(lambda: defaultdict(set))
+    all_target_segments = {seg for pair_dict in pair_dicts for _, pair_set in pair_dict.items() for pair in pair_set for
+                           seg in pair}
+
+    if call_back is not None:
+        call_back('Neutralizing words...')
+        call_back(0, len(all_target_segments))
+        cur = 0
+
+    for seg in all_target_segments:
+        for w in corpus_context:
+
+            if stop_check is not None and stop_check():
+                return
+            if call_back is not None:
+                cur += 1
+                if cur % 100 == 0:
+                    call_back(cur)
+
+            word = (w.Spelling, getattr(w, corpus_context.sequence_type), w.Frequency)
+            if seg in word[1]:
+                neutralized_words = neutralize(seg, word[1], environment_filter, minimal_pair_definition)
+                for nw in neutralized_words:
+                    neutralized_dict[seg][nw].add(word)
+
+    results = []
+
+    for pair_dict in pair_dicts:
+        for seg_pair, pair_set in pair_dict.items():
+            minimal_pairs = {pair: neutralized_dict[pair[0]].keys() & neutralized_dict[pair[1]].keys() for pair in
+                             pair_set}
+
+            results_dict = dict()
+            for pair, neutrals in minimal_pairs.items():
+                results_dict[pair] = set()
+                for neutral in neutrals:
+                    word_set1 = neutralized_dict[pair[0]][neutral]
+                    word_set2 = neutralized_dict[pair[1]][neutral]
+                    results_dict[pair].update([(w1, w2) for w1 in word_set1 for w2 in word_set2])
+
+            if distinguish_homophones:
+                num_pairs = sum([len(min_set) for _, min_set in results_dict.items()]) / len(pair_set)
+            else:
+                num_pairs = sum([len(neutralized_dict[pair[0]].keys() & neutralized_dict[pair[1]].keys()) for pair in
+                                 pair_set]) / len(pair_set)
+
+            if relativization == 'corpus':
+                fl = num_pairs / num_words_in_corpus
+            elif relativization == 'relevant':
+                unique_words = {word for seg in seg_pair for word_set in neutralized_dict[seg].values() for word in
+                                word_set}
+
+                if distinguish_homophones:
+                    num_possible_words = len(unique_words)
+                else:
+                    num_possible_words = len({w[1] for w in unique_words})
+
+                fl = num_pairs / num_possible_words
+            else:
+                fl = num_pairs
+
+            results.append((seg_pair, fl, results_dict))
+
+    # The format for the results should be:
+    # [(a tuple of segments(s), FL results, {a tuple of segments: {(minimal pairs)}})]
+    return results
+
+# ========== following code is from the old version; not used anymore ==========
 
 # This is the function I really edited
 # I changed the parameter called 'relative_count' to 'relative_count_to_relevant_sounds' and changed its default value.
@@ -123,7 +348,7 @@ def make_environment_re(environment_filter):
 # I updated the doc strings.
 def minpair_fl(corpus_context, segment_pairs,
                relative_count_to_relevant_sounds=False, relative_count_to_whole_corpus=True,
-               distinguish_homophones=False,
+               distinguish_homophones=False, minimal_pair_definition=False,
                environment_filter=None, prevent_normalization=False,
                stop_check=None, call_back=None):
     """Calculate the functional load of the contrast between two segments
@@ -172,11 +397,11 @@ def minpair_fl(corpus_context, segment_pairs,
     if stop_check is not None and stop_check():
         return
 
-    ## Count the number of words in the corpus (needed if relative_count_to_whole_corpus is True)
+    # Count the number of words in the corpus (needed if relative_count_to_whole_corpus is True)
     num_words_in_corpus = len(corpus_context.corpus)
 
-    ## Filter out words that have none of the target segments
-    ## (for relative_count_to_relevant_sounds as well as improving runtime)
+    # Filter out words that have none of the target segments
+    # (for relative_count_to_relevant_sounds as well as improving runtime)
     contain_target_segment = []
     if call_back is not None:
         call_back('Finding words with the specified segments...')
@@ -199,7 +424,7 @@ def minpair_fl(corpus_context, segment_pairs,
     if stop_check is not None and stop_check():
         return
 
-    ## Find minimal pairs
+    # Find minimal pairs
     minpairs = []
     if call_back is not None:
         call_back('Finding minimal pairs...')
@@ -219,7 +444,7 @@ def minpair_fl(corpus_context, segment_pairs,
                                   key=lambda x: x[1])  # sort by tier/transcription
             minpairs.append(tuple(ordered_pair))
 
-    ## Generate output
+    # Generate output
     if not distinguish_homophones:
         actual_minpairs = {}
 
@@ -238,20 +463,20 @@ def minpair_fl(corpus_context, segment_pairs,
                     actual_minpairs[key] = (pair[0][0], pair[1][0])
 
         result = len(actual_minpairs)
-        #result = sum((x[0].frequency + x[1].frequency) / 2
+        # result = sum((x[0].frequency + x[1].frequency) / 2
         #             for x in actual_minpairs.values())
     else:
         result = len(minpairs)
-        #sum((x[0][0].frequency + x[1][0].frequency) / 2 for x in minpairs)
+        # sum((x[0][0].frequency + x[1][0].frequency) / 2 for x in minpairs)
 
     if relative_count_to_relevant_sounds and len(contain_target_segment) > 0:
-        #result /= sum(x.frequency for x in contain_target_segment)
+        # result /= sum(x.frequency for x in contain_target_segment)
         result = result / len(contain_target_segment)
 
     elif relative_count_to_whole_corpus:
         result = result / num_words_in_corpus
 
-    return (result, minpairs)
+    return result, minpairs
 
 
 def deltah_fl(corpus_context, segment_pairs, environment_filter=None, prevent_normalization=False,
@@ -338,7 +563,6 @@ def deltah_fl(corpus_context, segment_pairs, environment_filter=None, prevent_no
             if cur % 100 == 0:
                 call_back(cur)
 
-
         neutralized = neutralize_with_all_envs(k, filled_environments)
         neutralized_probs[neutralized] += v
 
@@ -386,7 +610,8 @@ def neutralize_with_all_envs(trans, env_filters):
 # by calling the above minpair_fl() function).
 def relative_minpair_fl(corpus_context, segment,
                         relative_count_to_relevant_sounds=False, relative_count_to_whole_corpus=True,
-                        distinguish_homophones=False, output_filename=None, environment_filter=None,
+                        distinguish_homophones=False, minimal_pair_definition=False,
+                        output_filename=None, environment_filter=None,
                         prevent_normalization=False, stop_check=None, call_back=None):
     """Calculate the average functional load of the contrasts between a
     segment and all other segments, as a count of minimal pairs.
@@ -712,4 +937,4 @@ def all_pairwise_fls(corpus_context, relative_fl=False,
     elif relative_count_to_whole_corpus:
         result = result / num_words_in_corpus
 
-    return (result, minpairs)
+    return result, minpairs
