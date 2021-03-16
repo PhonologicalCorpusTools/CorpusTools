@@ -1293,7 +1293,7 @@ class Word(object):
                 yield (j, getattr(self, tier_name)[j])
 
     def __hash__(self):
-        return hash((self._spelling,str(self._transcription)))
+        return hash((self._spelling, str(self._transcription)))
 
     def __getstate__(self):
         state = self.__dict__.copy()

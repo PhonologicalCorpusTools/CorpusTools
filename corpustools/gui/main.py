@@ -779,7 +779,7 @@ class MainWindow(QMainWindow):
             if self.FLWindow is not None and dialog.update and self.FLWindow.isVisible():
                 self.FLWindow.table.model().addRows(dialog.results)
             else:
-                self.FLWindow = ResultsWindow('Functional load results',dialog,self)
+                self.FLWindow = ResultsWindow('Functional load results', dialog, self)
                 self.FLWindow.show()
                 self.showFLResults.triggered.connect(self.FLWindow.raise_)
                 self.showFLResults.triggered.connect(self.FLWindow.activateWindow)

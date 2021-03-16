@@ -95,6 +95,7 @@ class ProgressDialog(QProgressDialog):
             eta = str(datetime.timedelta(seconds = self.eta))
         self.setLabelText('{}\nEstimated time left: {}'.format(self.information,eta))
 
+
 class FunctionWorker(QThread):
     updateProgress = Signal(object)
     updateProgressText = Signal(str)
@@ -136,6 +137,7 @@ class FunctionWorker(QThread):
                 self.total = args[1]
         if self.total:
             self.updateProgress.emit((progress/self.total))
+
 
 class PCTDialog(QDialog):
 
@@ -182,6 +184,7 @@ class PCTDialog(QDialog):
                     "Error encountered", str(error))
         self.progressDialog.reject()
         return None
+
 
 class FunctionDialog(PCTDialog):
     header = None

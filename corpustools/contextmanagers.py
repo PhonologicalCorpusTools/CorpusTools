@@ -30,8 +30,7 @@ class BaseCorpusContext(object):
     frequency_threshold: float, optional
         If specified, ignore words below this token frequency
     """
-    def __init__(self, corpus, sequence_type, type_or_token,
-                attribute = None, frequency_threshold = 0, log_count=True):
+    def __init__(self, corpus, sequence_type, type_or_token, attribute=None, frequency_threshold=0, log_count=True):
         self.sequence_type = sequence_type
         self.type_or_token = type_or_token
         self.corpus = corpus

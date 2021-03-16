@@ -2077,7 +2077,7 @@ class FeaturePairDialog(AbstractPairDialog):
         self.featureWidget.setCompleter(self.featureCompleter)
         self.featureWidget.featureEntered.connect(self.updateSegments)
 
-        mainlayout.addRow('Feature to make pairs',self.featureWidget)
+        mainlayout.addRow('Feature to make pairs', self.featureWidget)
 
         self.searchWidget = FeatureEdit(self.inventory, clearOnEnter = False)
         self.completer = FeatureCompleter(self.inventory)
@@ -2086,7 +2086,7 @@ class FeaturePairDialog(AbstractPairDialog):
 
         mainlayout.addRow('Filter pairs', self.searchWidget)
 
-        self.layout().insertLayout(0,mainlayout)
+        self.layout().insertLayout(0, mainlayout)
 
         seglayout = QHBoxLayout()
         scroll = QScrollArea()
@@ -2634,7 +2634,7 @@ class SyllableBigramWidget(BigramWidget):
         dialog.deleteLater()
 
 class RadioSelectWidget(QGroupBox):
-    def __init__(self,title,options, actions=None, enabled=None,parent=None):
+    def __init__(self, title, options, actions=None, enabled=None,parent=None):
         QGroupBox.__init__(self,title,parent)
         self.is_enabled = True
         self.actions = None
