@@ -178,7 +178,7 @@ In the two tables below, the result of clipping is shown in the column labeled â
 we have simply extracted all bigrams that occur in the context __#.
 
 When applying environment filters, the question of word boundaries takes on an additional complication. 
-Specifically, we must decide where a word boundary is allowed to count as part of a bigram (separately from the 
+Specifically, we must decide whether a word boundary is allowed to count as part of a bigram (separately from the 
 presence of the word boundary that happens to be a part of our selected context in this case). 
 Whether the word boundary can be a part of potential bigram is critical for the last word, [#i#].
 If # can count as a member of a bigram, the word has the bigram [#i] in the context [__#]. If # is NOT
