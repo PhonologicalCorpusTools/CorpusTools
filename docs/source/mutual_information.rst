@@ -207,7 +207,7 @@ Note how the “Context” columns are different in the row for [#i#].
 Now, we can calculate pMI(ʃ,i) in this “Clipped corpus,” that is, using the forms in the “Context” column.
 
 :math:`pMI_{(\_\#, WB\ bigram)} (ʃ,i) = log_2 (\frac{p(ʃi)}
-{p(ʃ)*p(i)}) = 3.17`
+{p(ʃ)*p(i)}) = 2.58`
 
 since, :math:`p(ʃi) = \frac{2}{8}`, :math:`p(ʃ) = \frac{2}{12}`, and :math:`p(i) = \frac{3}{12}`
 
