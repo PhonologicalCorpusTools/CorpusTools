@@ -67,6 +67,7 @@ class FLDialog(FunctionDialog):
               'Second segment',
               'Algorithm',
               'Distinguished homophones',
+              'Minimal pair type',
               'Count',
               'Transcription tier',
               'Frequency type',
@@ -257,16 +258,19 @@ class FLDialog(FunctionDialog):
 
             self.distinguishHomophone.setToolTip(
                 '<FONT COLOR=black>'
-                'This setting will overcount alternative spellings of the same word, '
-                'e.g. axel~actual and axle~actual, but will allow you to count e.g. sock~shock twice, once for each '
-                'meaning of \'sock\' (footwear vs. punch)'
+                'Separate entries that have the same transcription will be counted separately. E.g. if the corpus consists of the three entries \'scent\' [sɛnt], \'cent\' [sɛnt], and \'bent\' [bɛnt], there will be two minimal pairs for [s]/[b] and three words in the corpus for relativization purposes.'
+                '</FONT>'
+            )
+
+            self.notDistinguishHomophone.setToolTip(
+                '<FONT COLOR=black>'
+                'Separate entries that have the same transcription will be counted only once. E.g. if the corpus consists of the three entries \'scent\' [sɛnt], \'cent\' [sɛnt], and \'bent\' [bɛnt], there will be one minimal pair for [s]/[b] and two words in the corpus for relativization purposes.'
                 '</FONT>'
             )
 
             self.relativeRelevantButton.setToolTip(
                 '<FONT COLOR=black>'
-                'The raw count of minimal pairs will be divided by the number of words that include any of the target '
-                'segments present in the list at the left.'
+                'The raw count of minimal pairs will be divided by the number of words that include either of the pair of target segments.'
                 '</FONT>'
             )
 
@@ -279,6 +283,18 @@ class FLDialog(FunctionDialog):
             self.relativeRawButton.setToolTip(
                 '<FONT COLOR=black>'
                 'The raw count of minimal pairs will not be changed.'
+                '</FONT>'
+            )
+
+            self.trueMinimal.setToolTip(
+                '<FONT COLOR=black>'
+                'E.g. \'sass\'~\'sad\' and \'sad\'~\'dad\' would be included as true minimal pairs, but \'sass\'~\'dad\' would not be included.'
+                '</FONT>'
+            )
+
+            self.neutralization.setToolTip(
+                '<FONT COLOR=black>'
+                'E.g. \'sass\'~\'sad\', \'sad\'~\'dad\', and \'sass\'~\'dad\' would all be included as minimal pairs by neutralization.'
                 '</FONT>'
             )
 
@@ -437,6 +453,7 @@ class FLDialog(FunctionDialog):
                                  'Second segment': seg_two,
                                  'Algorithm': self.algorithmWidget.displayValue(),
                                  'Distinguished homophones': self.distinguishHomophone.isChecked(),
+                                 'Minimal pair type': 'True minimal pairs' if self.trueMinimal.isChecked() else 'Neutralization',
                                  'Count': count_str,  # self.relativeCountWidget.isChecked(),
                                  'Transcription tier': self.tierWidget.displayValue(),
                                  'Frequency type': self.typeTokenWidget.value().title(),
