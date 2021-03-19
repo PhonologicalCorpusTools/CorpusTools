@@ -340,15 +340,30 @@ Once a corpus is loaded, use the following steps.
       minimal pairs that hinge on the contrast in the corpus, if you just
       want to know the scope of the contrast. On the other hand, the
       default is to relativize the raw count to the corpus size, by
-      dividing the raw number by the total number of words in the corpus. Still another possibility is to relativize by the number of lexical entries that
-      include at least one instance of any of the target segments. For discussion of these three options, see above.
+      dividing the raw number by the total number of words in the corpus.
+      Note that this relativization will take into account the choice regarding homophones
+      (e.g. if there are 18 words in the corpus, and 2 of them are homophones,
+      the relativization will be by 18 if 'distinguish homophones' is selected,
+      but will be by 17 if 'do not distinguish homophones' is selected).
+      Still another possibility is to relativize by the number of lexical entries that
+      include at least one instance of any of the target segments.
+      Note that, similarly, this option interacts with the choice of 'distinguish homophones' vs. 'do not distinguish homophones':
+      e.g. if there are 10 words that contain either sound X or sound Y (or both),
+      and 2 of them are homophones, this relativization will be by 10 if 'distinguish homophones' is selected
+      and by 9 if 'do not distinguish homophones' is selected.
+      For discussion of these three options, see above.
    b. **Distinguish homophones**: Second, PCT can either distinguish
       homophones or collapse them. For example, if the corpus includes
       separate entries for the words *sock* (n.), *sock* (v.), *shock* (n.),
       and *shock* (v.), this would count as four minimal pairs if homophones
       are distinguished, but only one if homophones are collapsed. The default is
-      to collapse homophones. 
-   c. **Output list of minimal pairs to a file**: It is possible to save
+      to collapse homophones.
+   c. **Minimal pair types**: 'True minimal pairs' are word pairs that differ in exact one segment in a specific position.
+      For example, 'sass'~'sad' and 'sad'~'dad' would be included as true minimal pairs, but 'sass'~'dad' would not be included.
+      'Minimal pairs by neutralization' counts a word pair as a minimal pair
+      if the neutralized pair is the same, where relevant segments (which might have multiple ones in a word) are neutralized.
+      For example, 'sass'~'sad', 'sad'~'dad', and 'sass'~'dad' would all be included as minimal pairs by neutralization.
+   d. **Output list of minimal pairs to a file**: It is possible to save
       a list of all the actual minimal pairs that PCT finds that hinge on a
       particular chosen contrast to a .txt file. To do so, enter a file
       path name, or select "Choose file..." to use a regular system
