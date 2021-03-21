@@ -843,9 +843,8 @@ To create a subset, click on “File” / “Generate a corpus subset” and fol
    skeleton tier), you can add as many or as few levels of the factor as you like.
    After a filter has been created, you can choose to “Add” it or “Add and create another” filter.
 4. **Create subset**: Once all filters have been selected, click on “Create
-   subset corpus.” You will be returned to your current corpus view,
-   but the subsetted corpus is available if you then go to “File” /
-   “Load corpus...” – it will automatically be added to your list of
+   subset corpus.” A prompt window “Corpus subset created” will appear, letting you know that the subset
+   corpus is available if you go to “File” / “Load corpus...” – it will automatically be added to your list of
    available corpora. Note that the subset corpus will automatically
    contain any additional tiers that were created in your original
    corpus before subsetting.
@@ -866,8 +865,8 @@ Here you can specify whether the changes should be saved within the corpus, i.e.
 It is also possible to export
 the corpus as a text file (.txt), which can be opened in other software,
 by selecting “File” / “Export corpus as text file” and entering the
-file name and location and the column and transcription delimiters.
-(Note: use \t to indicate a tab.) You can also choose whether and how to
+file name and location, and the delimiters for column, transcription and syllable (if the corpus has syllables).
+(Note: use \\t to indicate a tab as the delimiter.) You can also choose whether and how to
 export pronunciation variants, if there are any in the corpus
 (see :ref:`pronunciation_variants` and the subsection
 :ref:`exporting_pronunciation_variants` for more details).
