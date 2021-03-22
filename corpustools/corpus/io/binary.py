@@ -46,6 +46,8 @@ def download_binary(name, path, call_back = None):
             call_back(blocknum * bs)
     if name == 'example':
         download_link = 'https://www.dropbox.com/s/fb7txi4c1rf8lbx/example.corpus?dl=1'
+    elif name == 'example_syllabified':
+        download_link = 'https://www.dropbox.com/s/s2d4z5lhdnusrzl/example_syllabified.corpus?dl=1'
     elif name == 'lemurian':
         download_link = 'https://www.dropbox.com/s/o98q83bq5derf3u/lemurian.corpus?dl=1'
     elif name == 'iphod_with_homographs':
