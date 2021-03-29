@@ -456,8 +456,12 @@ class RecentSearchDialog(QDialog):
 
 
 class PhonoSearchDialog(FunctionDialog):
-    header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Target', 'Environment', 'Token frequency', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number', 'Min Syllable Number', 'Max Syllable Number']
-    summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number', 'Min Syllable Number', 'Max Syllable Number']
+    header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Token frequency', 'Target', 'Environment',
+              'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number',
+              'Min Syllable Number', 'Max Syllable Number']
+    summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency',
+                      'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number',
+                      'Min Syllable Number', 'Max Syllable Number']
     _about = ['']
     name = 'phonological search'
 
@@ -736,15 +740,15 @@ class PhonoSearchDialog(FunctionDialog):
         try:
             max_word_freq = float(self.maxWordFreqFrame.text())
         except ValueError:
-            max_word_freq = 99999
+            max_word_freq = float('inf')
         try:
             max_phon_num = float(self.maxPhonFreqFrame.text())
         except ValueError:
-            max_phon_num = 99999
+            max_phon_num = float('inf')
         try:
             max_syl_num = float(self.maxSyllFreqFrame.text())
         except ValueError:
-            max_syl_num = 99999
+            max_syl_num = float('inf')
 
         kwargs['min_word_freq'] = min_word_freq
         kwargs['min_phon_num'] = min_phon_num
@@ -792,8 +796,12 @@ class PhonoSearchDialog(FunctionDialog):
         if self.mode == 'segMode':
             for w, f in results:
                 segs = tuple(x.middle for x in f)
+                if len(segs) == 0 and self.resultType == 'negative':
+                    segs = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
                 try:
                     envs = tuple(str(x) for x in f)
+                    if len(envs) == 0 and self.resultType == 'negative':
+                        envs = tuple(str(y) for y in self.envWidget.value())
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,
@@ -802,6 +810,7 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Transcription': str(getattr(w, self.tierWidget.value())),
                                      'Target': segs,
                                      'Environment': envs,
+                                     'Result type': self.resultType,
                                      'Token frequency': w.frequency,
                                      'Min Word Freq': min_word_freq,
                                      'Max Word Freq': max_word_freq,
@@ -822,6 +831,7 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Transcription': str(getattr(word, self.tierWidget.value())),
                                      'Target': middle_syllables,
                                      'Environment': envs,
+                                     'Result type': self.resultType,
                                      'Token frequency': word.frequency,
                                      'Min Word Freq': min_word_freq,
                                      'Max Word Freq': max_word_freq,
