@@ -22,6 +22,7 @@ from .widgets import (FileWidget, RadioSelectWidget,SaveFileWidget,
 from .windows import FunctionWorker, DownloadWorker, PCTDialog
 from .helpgui import HelpDialog, get_url
 import corpustools.gui.modernize as modernize
+from urllib.request import urlretrieve
 
 class LoadFeatureSystemWorker(FunctionWorker):
     def run(self):
@@ -376,6 +377,17 @@ class DownloadFeatureMatrixDialog(QDialog):
             msgBox.addButton("Cancel", QMessageBox.RejectRole)
             if msgBox.exec_() != QMessageBox.AcceptRole:
                 return
+        try:
+            # try downloading a tiny bit from the PCT file storage on Dropbox.
+            # If fails for whatever reason, including no internet or SSL-certi issue on MacOS, prompt an error message.
+            # When making any changes to here, check the equivalent part on iogui.py as well.
+            urlretrieve('https://www.dropbox.com/s/ytcl72nxydiqkyg/do_not_remove.txt?dl=1')
+        except:
+            QMessageBox.critical(self, 'Cannot access online repository',
+                                 'PCT could not make a secured connection to PCT repository hosted at Dropbox.\n\n'
+                                 'Please make sure you are connected to the internet. \nIf you are using MacOS, '
+                                 'Go to "Applications -> Python 3.7" on Finder and run "Certificates.command".')
+            return
 
         self.thread.setParams({'name':name,
                 'path':system_name_to_path(self.settings['storage'],name)})
