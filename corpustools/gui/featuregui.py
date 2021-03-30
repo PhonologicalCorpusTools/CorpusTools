@@ -386,7 +386,8 @@ class DownloadFeatureMatrixDialog(QDialog):
             QMessageBox.critical(self, 'Cannot access online repository',
                                  'PCT could not make a secured connection to PCT repository hosted at Dropbox.\n\n'
                                  'Please make sure you are connected to the internet. \nIf you are using MacOS, '
-                                 'Go to "Applications -> Python 3.7" on Finder and run "Certificates.command".')
+                                 'Go to "Applications -> Python x.y (your version)" on Finder and run '
+                                 '"Certificates.command".')
             return
 
         self.thread.setParams({'name':name,
