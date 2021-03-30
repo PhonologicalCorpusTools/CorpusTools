@@ -152,7 +152,7 @@ def check_feature_coverage_csv(corpus_name, path, delimiter, annotation_types=No
                             if seg not in feature_matrix.segments:
                                 missing.add(seg)
 
-    print('In csv.py', missing)
+    #print('In csv.py', missing)
 
 
 
