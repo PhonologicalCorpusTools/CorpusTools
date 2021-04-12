@@ -2,7 +2,7 @@ from .imports import *
 import time
 import collections
 
-from .widgets import TierWidget
+from .widgets import TierWidget, RadioSelectWidget
 
 from .windows import FunctionWorker, FunctionDialog
 
@@ -487,46 +487,32 @@ class PhonoSearchDialog(FunctionDialog):
         modeLayout = QVBoxLayout()
         modeFrame.setLayout(modeLayout)
 
-        self.modeGroup = QButtonGroup()
-        segMode = QCheckBox('Segments')
-        segMode.clicked.connect(self.changeMode)
-        segMode.setChecked(True)
-        self.mode = 'segMode'
-        self.modeGroup.addButton(segMode)
-        sylMode = QCheckBox('Syllables')
-        sylMode.clicked.connect(self.changeMode)
-        self.modeGroup.addButton(sylMode)
-        self.modeGroup.setExclusive(True)
-        self.modeGroup.setId(segMode, 0)
-        self.modeGroup.setId(sylMode, 1)
+        self.modeGroup = RadioSelectWidget('Search mode',
+                                           collections.OrderedDict([('Segments', 'segs'),
+                                                                    ('Syllables', 'syls')])
+                                           )
+        self.mode = 'segMode'  # default search mode is 'segment mode' -- when the user doesn't touch any radio button
 
         if (len(inventory.syllables) == 0): # if there's no syllable in the corpus,
-            sylMode.setEnabled(False)       # then grey out the syllable search option.
+            self.modeGroup.widgets[1].setEnabled(False)  # then grey out the syllable search option.
 
-        modeLayout.addWidget(segMode)
-        modeLayout.addWidget(sylMode)
-        optionLayout.addWidget(modeFrame)
+        for sm_btn in self.modeGroup.widgets:
+            sm_btn.toggled.connect(lambda: self.changeMode(sm_btn))
+
+        optionLayout.addWidget(self.modeGroup)
 
         resultTypeFrame = QGroupBox('Result type')
         resultTypeLayout = QVBoxLayout()
         resultTypeFrame.setLayout(resultTypeLayout)
 
-        self.resultTypeGroup = QButtonGroup()
-        pos = QCheckBox('Positive')
-        pos.clicked.connect(self.changeResultType)
-        pos.setChecked(True)
-        self.resultType = 'positive'
-        self.resultTypeGroup.addButton(pos)
-        neg = QCheckBox('Negative')
-        neg.clicked.connect(self.changeResultType)
-        self.resultTypeGroup.addButton(neg)
-        self.resultTypeGroup.setExclusive(True)
-        self.resultTypeGroup.setId(pos, 2)
-        self.resultTypeGroup.setId(neg, -2)
+        self.resultTypeGroup = RadioSelectWidget('Result type',
+                                                 collections.OrderedDict([('Positive', 'pos'),
+                                                                          ('Negative', 'neg')]))
+        self.resultType = 'positive' # default result type is 'positive' -- when the user doesn't touch any radio button
 
-        resultTypeLayout.addWidget(pos)
-        resultTypeLayout.addWidget(neg)
-        optionLayout.addWidget(resultTypeFrame)
+        for n, rt_btn in enumerate(self.resultTypeGroup.widgets):
+            rt_btn.toggled.connect(lambda: self.changeResultType(rt_btn))
+        optionLayout.addWidget(self.resultTypeGroup)
 
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionLayout.addWidget(self.tierWidget)
@@ -593,26 +579,27 @@ class PhonoSearchDialog(FunctionDialog):
 
         self.progressDialog.setWindowTitle('Searching')
 
-    def changeResultType(self):
-        if self.resultTypeGroup.checkedId() == 2:  # positive
-            self.resultType = 'positive'
-        else:
-            self.resultType = 'negative'
+    def changeResultType(self, btn):
+        if btn.text() == 'Negative':
+            if btn.isChecked():     # 'negative' is checked
+                self.resultType = 'negative'
+            else:                   # 'negative' is deselected
+                self.resultType = 'positive'
 
-    def changeMode(self):
+    def changeMode(self, btn):
         self.pslayout.removeWidget(self.envWidget)
         self.envWidget.deleteLater()
-        if self.modeGroup.checkedId() == 0:  # segMode is checked
-            self.mode = 'segMode'
-            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
-                                                     mode=self.mode)
-            self.pslayout.insertWidget(0, self.envWidget)
 
-        else:
-            self.mode = 'sylMode'
-            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
-                                                     mode=self.mode)
-            self.pslayout.insertWidget(0, self.envWidget)
+        if btn.text() == 'Syllables':
+            if btn.isChecked():     # sylMode is checked
+                self.mode = 'sylMode'
+            else:                   # sylMode is deselected
+                self.mode = 'segMode'
+
+        self.envWidget = EnvironmentSelectWidget(self.inventory,
+                                                 show_full_inventory=bool(self.settings['show_full_inventory']),
+                                                 mode=self.mode)
+        self.pslayout.insertWidget(0, self.envWidget)
 
     def accept(self):
         for n in range(self.envWidget.environmentFrame.layout().count() - 2):
