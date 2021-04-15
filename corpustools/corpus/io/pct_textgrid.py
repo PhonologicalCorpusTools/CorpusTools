@@ -180,8 +180,8 @@ def guess_tiers(tg):
 
     return spelling_tiers, segment_tiers, attribute_tiers
 
-def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
-                            call_back = None):
+
+def textgrid_to_data(corpus_name, path, annotation_types, stop_check=None, call_back=None):
     tg = load_textgrid(path)
     name = corpus_name
     for a in annotation_types:
@@ -240,7 +240,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                 #     continue
 
                 if len(tier_elements) > 1:
-                    for j,_ in enumerate(tier_elements):
+                    for j, _ in enumerate(tier_elements):
                         if j == 0:
                             tier_elements[j].end = None
                         elif j == len(tier_elements)-1:
@@ -296,8 +296,8 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
 
 
 def load_discourse_textgrid(corpus_name, path, annotation_types,
-                            feature_system_path = None, support_corpus_path = None,
-                            stop_check = None, call_back = None):
+                            feature_system_path=None, support_corpus_path=None,
+                            stop_check=None, call_back=None):
     """
     Load a discourse from a TextGrid file
 
@@ -324,7 +324,6 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     Discourse
         Discourse object generated from the TextGrid file
     """
-
     data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
     #textgrid_to_data has side-effects that change annotation_types
     wav_path = find_wav_path(path)
@@ -339,7 +338,7 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
     else:
         support = None
     discourse = data_to_discourse2(corpus_name, wav_path,
-                                   annotation_types=annotation_types, support_corpus = support,
+                                   annotation_types=annotation_types, support_corpus=support,
                                    stop_check=stop_check, call_back=call_back)
 
     if feature_system_path is not None:

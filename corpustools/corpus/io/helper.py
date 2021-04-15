@@ -585,7 +585,7 @@ def log_annotation_types(annotation_types):
 def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, support_corpus=None, ignore_case=False,
                        call_back=None, stop_check=None):
     curr_word = list()
-    annotations = {at:list() for at in annotation_types}
+    annotations = {at: list() for at in annotation_types}
     spelling_name, transcription_name = None, None
     if call_back is not None:
         call_back('Processing data...')
@@ -617,7 +617,6 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
                     annotations[at].append((curr_word, begin, end))
                     curr_word = list()
         else:
-            print(at._list)
             raise TypeError("AnnotationType._list cannot contain a mix of Annotations and BaseAnnotations")
 
     if support_corpus is not None:
