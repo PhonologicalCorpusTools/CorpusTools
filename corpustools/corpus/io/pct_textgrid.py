@@ -43,6 +43,7 @@ class PCTTextGrid(TextGrid):
             if source.readline().rstrip().split()[2] == '"IntervalTier"':
                 inam = source.readline().rstrip().split(' = ')[1].strip('"')
                 inam = self.name_filter(inam)
+                inam = Attribute.sanitize_name(inam)
                 imin = round(float(source.readline().rstrip().split()[2]),
                              round_digits)
                 imax = round(float(source.readline().rstrip().split()[2]),
@@ -189,6 +190,8 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
     if call_back is not None:
         call_back('Loading...')
         cur = 0
+    # flags to keep track of whether we should keep adding transcriptions to data
+    transcription_flag = {n: True for n in data.base_levels}
     for word_name in data.word_levels:
         #data.word_levels = [k for k,v in data.data.items() if not v.token and v.anchor]
         #this should return the names of just the spelling tiers, and in most cases len(word_levels)==1
@@ -283,11 +286,12 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check = None,
                 annotations[at.attribute.name] = value
 
             annotations[word_name] = [word]
-            data.add_annotations(**annotations)
+            data.add_annotations(transcription_flag=transcription_flag, **annotations)
             #the add_annotations function appears to do nothing
             #it is supposed to update the dictionary data.data but the contents of the dictionary remain the
             #same after the function call
             #the annotations dictionary seems to contain useful information about words, but none of it is ever used
+        transcription_flag = {trans: False for trans, flag in transcription_flag.items()}
     return data
 
 

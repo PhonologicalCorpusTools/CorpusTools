@@ -366,9 +366,17 @@ class DiscourseData(object):
                 levels.append(k)
         return levels
 
-    def add_annotations(self,**kwargs):
-        for k,v in kwargs.items():
-            self.data[k].add(v)
+    def add_annotations(self, transcription_flag=None, **kwargs):
+        # the transcription_flag is for when importing TextGrid with multiple orthographic representation
+        # without the flags, columns of transcription will be repeatedly added to data (when they shoudln't be),
+        # which will cause errors later on
+        if not transcription_flag:
+            transcription_flag = dict()
+
+        for k, v in kwargs.items():
+            should_add = transcription_flag.get(k, True)
+            if should_add:
+                self.data[k].add(v)
 
     def level_length(self, key):
         return len(self.data[key])
