@@ -2168,7 +2168,7 @@ class Attribute(object):
         str
             Sanitized name
         """
-        name = re.sub('\W','',name)#.lower())
+        name = re.sub(r'\W', '', name)  #.lower())
         name = name if all([s.isupper() for s in name]) else name.capitalize()
         return name
 
@@ -2176,7 +2176,7 @@ class Attribute(object):
         return hash(self.name)
 
     def __repr__(self):
-        return '<Attribute of type {} with name \'{}\'>'.format(self.att_type,self.name)
+        return '<Attribute of type {} with name \'{}\'>'.format(self.att_type, self.name)
 
     def __str__(self):
         return self.display_name

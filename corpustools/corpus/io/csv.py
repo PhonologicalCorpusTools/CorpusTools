@@ -83,7 +83,7 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
                 if t in vals[h][0] or t in vals[h][-1]:
                     a.trans_delimiter = t
                     break
-        a.add(vals[h], save = False)
+        a.add(vals[h], save=False)
         atts.append(a)
 
     return atts, best
@@ -152,15 +152,9 @@ def check_feature_coverage_csv(corpus_name, path, delimiter, annotation_types=No
                             if seg not in feature_matrix.segments:
                                 missing.add(seg)
 
-    #print('In csv.py', missing)
 
-
-
-
-def load_corpus_csv(corpus_name, path, delimiter,
-                    annotation_types = None,
-                    feature_system_path = None,
-                    stop_check = None, call_back = None):
+def load_corpus_csv(corpus_name, path, delimiter, annotation_types=None, feature_system_path=None,
+                    stop_check=None, call_back=None):
     """
     Load a corpus from a column-delimited text file
 
@@ -211,7 +205,7 @@ def load_corpus_csv(corpus_name, path, delimiter,
         headers = f.readline()
         headers = headers.split(delimiter)
         if len(headers) == 1:
-            e = DelimiterError(('Could not parse the corpus.\n\Check that the column delimiter you typed in matches '
+            e = DelimiterError(('Could not parse the corpus.\nCheck that the column delimiter you typed in matches '
                                 'the one used in the file.'))
             raise e
         headers = annotation_types
@@ -243,7 +237,6 @@ def load_corpus_csv(corpus_name, path, delimiter,
                 else:
                     d[k.attribute.name] = (k.attribute, v)
             word = Word(**d)
-
             if word.transcription:
                 #transcriptions can have phonetic symbol delimiters
                 if not word.spelling:
@@ -266,7 +259,8 @@ def load_corpus_csv(corpus_name, path, delimiter,
 
     return corpus
 
-def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back = None):
+
+def load_feature_matrix_csv(name, path, delimiter, stop_check=None, call_back=None):
     """
     Load a FeatureMatrix from a column-delimited text file
 
@@ -297,7 +291,6 @@ def load_feature_matrix_csv(name, path, delimiter, stop_check = None, call_back 
     if call_back is not None:
         call_back('Reading file...')
         call_back(0, len(lines))
-
 
     for i, line in enumerate(lines):
         if stop_check is not None and stop_check():
