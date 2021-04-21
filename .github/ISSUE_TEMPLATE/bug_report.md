@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Sample corpus file**
-A sample file you created the corpus with. Note GitHub only supports .txt files. Please send the sample file to us if your file is in a format not supported by GitHub.
+A sample file you created the corpus with. Note GitHub only supports .txt files. Please send the sample file to us at PCTbugs@gmail.com if your file is in a format not supported by GitHub.
 
 **To Reproduce**
 Steps to reproduce the behavior:
