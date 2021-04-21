@@ -28,7 +28,8 @@ class PCTPythonError(PCTError):
 
         self.information = ('If you would like to help with the development of PCT, please copy and paste the '
                             'information below, along with some information about the corpus and the parameter setting for '
-                            'the function you are using, and send it to PCTbugs@gmail.com. Thank you!')
+                            'the function you are using, and post it as an issue on https://github.com/PhonologicalCorpusTools/CorpusTools/issues '
+                            'or send it to PCTbugs@gmail.com. Thank you!')
         self.details = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
         #self.smtp_report()
