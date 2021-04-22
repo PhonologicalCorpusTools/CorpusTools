@@ -1074,7 +1074,7 @@ class Word(object):
                 else:  # att.att_type == 'spelling' or att.att_type == 'factor':
                     pass
 
-                #setattr(self, key, value)
+                setattr(self, key, value)
 
                 if att.is_default:
                     if att.att_type == 'tier':
@@ -1177,16 +1177,16 @@ class Word(object):
 
     @property
     def transcription(self):
-        #if self._transcription_name is not None:
-        #    value = getattr(self, self._transcription_name)
-        #else:
-        value = self._transcription
+        if self._transcription_name is not None:
+            value = getattr(self, self._transcription_name)
+        else:
+            value = self._transcription
         return value
 
     @transcription.setter
     def transcription(self, value):
-        #if self._transcription_name is not None:
-        #    setattr(self, self._transcription_name, value)
+        if self._transcription_name is not None:
+            setattr(self, self._transcription_name, value)
         self._transcription = value
 
     @transcription.deleter
