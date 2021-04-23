@@ -10,7 +10,7 @@ References
    See also `http://sublexical.phonologist.org/ <http://sublexical.phonologist.org/>`_.
 
 .. [Anghelescu2016] Anghelescu, Andrei. (2016). "Distinctive transitional probabilities
-   across words and morphemes in Sesotho. University of British Columbia Working Papers in
+   across words and morphemes in Sesotho." University of British Columbia Working Papers in
    Linguistics. 44.1-17.
 
 .. [Archangeli2013] Archangeli, Diana & Douglas Pulleyblank. 2013.
