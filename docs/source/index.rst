@@ -32,6 +32,7 @@ Contents:
    .. frequency_of_alternation.rst
 
    mutual_information.rst
+   transitional_probability.rst
    acoustic_similarity.rst
    citing_pct.rst
    references.rst

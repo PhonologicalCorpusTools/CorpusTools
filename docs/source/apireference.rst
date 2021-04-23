@@ -218,6 +218,13 @@ Mutual information
 
    mutual_information.pointwise_mi
 
+.. _trans_prob_api:
+
+Transitional probability
+------------------------
+
+.. currentmodule:: corpustools.transprob
+
 .. _neigh_den_api:
 
 Neighborhood density

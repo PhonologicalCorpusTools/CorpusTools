@@ -9,6 +9,10 @@ References
    Ms. University of British Columbia and Stony Brook University.
    See also `http://sublexical.phonologist.org/ <http://sublexical.phonologist.org/>`_.
 
+.. [Anghelescu2016] Anghelescu, Andrei. (2016). "Distinctive transitional probabilities
+   across words and morphemes in Sesotho. University of British Columbia Working Papers in
+   Linguistics. 44.1-17.
+
 .. [Archangeli2013] Archangeli, Diana & Douglas Pulleyblank. 2013.
    The role of UG in phonology. Proceedings of the West Coast Conference
    on Formal Linguistics 31. Somerville, MA: Cascadilla Press.
@@ -36,6 +40,9 @@ References
 .. [Connine2008] Connine, Cynthia M., Larissa J. Ranbom, and David J. Patterson. 2008.
    Processing variant forms in spoken word recognition: The role of variant frequency.
    Perception & Psychophysics 70:403-411.
+
+.. [Daland2011] Daland, Robert, and Pierrehumbert, Janet B. (2011) Learning diphone-based
+   segmentation. Cognitive Science, 35:119–155.
 
 .. [Delvaux2007] Delvaux, V., Soquet, A., 2007. The influence of ambient speech on adult
    speech productions through unintentional imitation.
@@ -205,6 +212,10 @@ References
    exposure frequency in recognizing pronunciation variants. Journal of Phonetics
    39:304-311.
 
+.. [Pelucci2009] Pelucci, Bruna, Hay, Jessica F., and Saffran, Jenny R. (2009).
+   Learning in Reverse: Eight-month-old infants track backward transitional
+   probabilities. Cognition, 2.
+
 .. [R] R Core Team (2014).  R: A Language and Environment for Statistical
    Computing, Version 3.1.0. http://www.R-project.org/
 
@@ -215,6 +226,13 @@ References
 .. [Sakoe1971] Sakoe, H., & Chiba, S. (1971). A dynamic programming approach to
    continuous speech recognition. In Proceedings of the seventh
    international congress on acoustics (Vol. 3, pp. 65-69).
+
+.. [Saffran1996a] Saffran, Jenny R., Aslin, Richard N., and Newport, Elisa L. (1996). Statistical
+   learning by 8-month-old infants. Science, 274:1926–1928.
+
+.. [Saffran196b] Saffran, Jenny R., Newport, Elisa L., and Aslin, Richard N. (1996).
+   Word segmentation: The role of distributional cues. Journal of Memory and Languages,
+   35:606–621.
 
 .. [Shannon1949] Shannon, Claude E., & Weaver, Warren. (1949). The Mathematical Theory of
    Communication (1998 ed.). Urbana-Champaign: University of Illinois Press.
