@@ -165,6 +165,8 @@ class TextGridIOError(PCTError):
         self.information = information
         self.details = details
 
+
+# Analysis function exceptions
 class FreqAltError(PCTError):
     """
     Base error class for exceptions in frequency of alternation function

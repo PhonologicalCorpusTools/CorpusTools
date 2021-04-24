@@ -333,15 +333,15 @@ def load_discourse_textgrid(corpus_name, path, annotation_types,
         Discourse object generated from the TextGrid file
     """
     data = textgrid_to_data(corpus_name, path, annotation_types, call_back=call_back, stop_check=stop_check)
-    #textgrid_to_data has side-effects that change annotation_types
+    # textgrid_to_data has side-effects that change annotation_types
     wav_path = find_wav_path(path)
     if support_corpus_path is not None:
         if isinstance(support_corpus_path, Corpus):
-            #the corpus is 'preloaded' if this function is called by load_directory_textgrid
-            #otherwise the corpus has to be loaded once per file in a directory, which could be slow
+            # the corpus is 'preloaded' if this function is called by load_directory_textgrid
+            # otherwise the corpus has to be loaded once per file in a directory, which could be slow
             support = support_corpus_path
         else:
-            #otherwise, it's a string representing a path to the corpus
+            # otherwise, it's a string representing a path to the corpus
             support = load_binary(support_corpus_path)
     else:
         support = None
