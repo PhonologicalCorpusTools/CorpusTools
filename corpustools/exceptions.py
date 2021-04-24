@@ -158,7 +158,12 @@ class TextGridTierError(PCTError):
         for t in tiers:
             self.details += '{}\n'.format(t.name)
 
-## Analysis function exceptions
+
+class TextGridIOError(PCTError):
+    def __init__(self, main, information, details):
+        self.main = main
+        self.information = information
+        self.details = details
 
 class FreqAltError(PCTError):
     """

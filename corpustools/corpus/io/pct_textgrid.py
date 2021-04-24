@@ -5,7 +5,7 @@ from corpustools.corpus.io.textgrid11_pct import TextGrid, IntervalTier, readFil
 
 from corpustools.corpus.classes import SpontaneousSpeechCorpus, Attribute, Corpus
 from corpustools.corpus.classes.spontaneous import Discourse
-from corpustools.exceptions import PCTError
+from corpustools.exceptions import PCTError, TextGridIOError
 
 from corpustools.corpus.io.binary import load_binary
 import corpustools.gui.modernize as modernize
@@ -292,6 +292,14 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check=None, call_
             #same after the function call
             #the annotations dictionary seems to contain useful information about words, but none of it is ever used
         transcription_flag = {trans: False for trans, flag in transcription_flag.items()}
+    if len(annotation_types[0]) == 0:
+        raise(TextGridIOError('Empty corpus',
+                              'Currently PCT is not able to import a TextGrid corpus with only a Transcription tier. '
+                              'You must select another tier to be Orthography. If your TextGrid file only has one tier, '
+                              'please duplicate the tier and select the duplicated tier as Orthography when importing '
+                              'the file.',
+                              'PCT only supports TextGrid with at least two tiers, and when importing the file, '
+                              'there must be at least one Orthography column, in addition to the Transcription column.'))
     return data
 
 
