@@ -37,8 +37,6 @@ from .windows import FunctionWorker, DownloadWorker, PCTDialog
 from .widgets import (RadioSelectWidget, SaveFileWidget, AttributeFilterWidget, AnnotationTypeWidget, CorpusSelect)
 from .featuregui import FeatureSystemSelect, RestrictedFeatureSystemSelect
 from .helpgui import HelpDialog, get_url
-
-from pprint import pprint
 from urllib.request import urlretrieve
 
 
@@ -857,12 +855,8 @@ class LoadCorpusDialog(PCTDialog):
                                          'No feature file called {} could be found'.format(featurename))
             return
 
-        kwargs = {'corpus_name': name,
-                  'path': path,
-                  'isDirectory': self.isDirectory,
-                  'text_type': self.textType}
-
-        kwargs['annotation_types'] = [x.value() for x in reversed(self.columns)]
+        kwargs = {'corpus_name': name, 'path': path, 'isDirectory': self.isDirectory, 'text_type': self.textType,
+                  'annotation_types': [x.value() for x in reversed(self.columns)]}
 
         for x in kwargs['annotation_types']:
             if 'default' in x.name:
