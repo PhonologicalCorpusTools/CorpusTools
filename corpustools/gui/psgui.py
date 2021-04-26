@@ -455,6 +455,22 @@ class RecentSearchDialog(QDialog):
         super().reject()
 
 
+class PSEnvironmentSelectWidget(EnvironmentSelectWidget):
+    def __init__(self, inventory, rt, show_full_inventory, mode='segMode'):
+        super().__init__(self)
+        self.resultTypeGroup = rt
+
+    def addNewEnvironment(self):
+        super().addNewEnvironment()
+        pos = self.environmentFrame.layout().count() - 2
+        if pos > 1:
+            self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
+            if self.resultTypeGroup.widgets[1].isChecked():  # if 'negative search' has been previously selected.
+                self.resultTypeGroup.widgets[1].setChecked(False)  # then uncheck 'negative search'
+                self.resultTypeGroup.widgets[0].setChecked(True)  # and check 'positive search'
+
+
+
 class PhonoSearchDialog(FunctionDialog):
     header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Token frequency', 'Target', 'Environment',
               'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number',
@@ -493,11 +509,11 @@ class PhonoSearchDialog(FunctionDialog):
                                            )
         self.mode = 'segMode'  # default search mode is 'segment mode' -- when the user doesn't touch any radio button
 
-        if (len(inventory.syllables) == 0): # if there's no syllable in the corpus,
+        if len(inventory.syllables) == 0:  # if there's no syllable in the corpus,
             self.modeGroup.widgets[1].setEnabled(False)  # then grey out the syllable search option.
 
-        for sm_btn in self.modeGroup.widgets:
-            sm_btn.toggled.connect(lambda: self.changeMode(sm_btn))
+        for searchmode_btn in self.modeGroup.widgets:
+            searchmode_btn.toggled.connect(lambda: self.changeMode(searchmode_btn))
 
         optionLayout.addWidget(self.modeGroup)
 
@@ -508,10 +524,10 @@ class PhonoSearchDialog(FunctionDialog):
         self.resultTypeGroup = RadioSelectWidget('Result type',
                                                  collections.OrderedDict([('Positive', 'pos'),
                                                                           ('Negative', 'neg')]))
-        self.resultType = 'positive' # default result type is 'positive' -- when the user doesn't touch any radio button
+        self.resultType = 'positive'  # default result type is 'positive' -- when the users don't touch any radio button
 
-        for n, rt_btn in enumerate(self.resultTypeGroup.widgets):
-            rt_btn.toggled.connect(lambda: self.changeResultType(rt_btn))
+        for n, resulttype_btn in enumerate(self.resultTypeGroup.widgets):
+            resulttype_btn.toggled.connect(lambda: self.changeResultType(resulttype_btn))
         optionLayout.addWidget(self.resultTypeGroup)
 
         self.tierWidget = TierWidget(corpus, include_spelling=False)
@@ -568,7 +584,8 @@ class PhonoSearchDialog(FunctionDialog):
         syllFreqFrame.setLayout(sFbox)
         filterLayout.addWidget(syllFreqFrame)
 
-        self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
+        self.envWidget = PSEnvironmentSelectWidget(self.inventory, rt=self.resultTypeGroup,
+                                                   show_full_inventory=bool(settings['show_full_inventory']))
 
         self.pslayout.addWidget(self.envWidget)
         self.pslayout.addWidget(optionFrame)
@@ -593,12 +610,17 @@ class PhonoSearchDialog(FunctionDialog):
         if btn.text() == 'Syllables':
             if btn.isChecked():     # sylMode is checked
                 self.mode = 'sylMode'
+                self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
+                if self.resultTypeGroup.widgets[1].isChecked():  # if 'negative search' has been previously selected.
+                    self.resultTypeGroup.widgets[1].setChecked(False)  # then uncheck 'negative search'
+                    self.resultTypeGroup.widgets[0].setChecked(True)   # and check 'positive search'
             else:                   # sylMode is deselected
                 self.mode = 'segMode'
-
-        self.envWidget = EnvironmentSelectWidget(self.inventory,
+                self.resultTypeGroup.widgets[1].setEnabled(True)  # enable 'negative search' in result type
+        self.envWidget = PSEnvironmentSelectWidget(self.inventory,
                                                  show_full_inventory=bool(self.settings['show_full_inventory']),
-                                                 mode=self.mode)
+                                                 mode=self.mode,
+                                                 rt=self.resultTypeGroup)
         self.pslayout.insertWidget(0, self.envWidget)
 
     def accept(self):
