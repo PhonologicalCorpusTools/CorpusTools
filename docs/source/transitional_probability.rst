@@ -17,10 +17,14 @@ word or morpheme boundaries in speech (see [Saffran1996a]_, [Saffran1996b]_ and
 co-occur, which would predict that that a word or morpheme boundary is likely to
 exist between them. Conversely, two symbols with a high transitional probability
 are likely to co-occur, and are predicted to exist within one word or morpheme. For
-example, the symbols [n] and [d] may have a high forward transitional probability in a corpus,
-because they appear within words like [saʊnd] or [ʌndɚ]. In the same corpus, the symbols
+example, the symbols [n] and [d] may have a high forward transitional probability in a corpus of English,
+because they appear within words like [saʊnd] 'sound' or [ʌndɚ] 'under'. In the same corpus, the symbols
 [d] and [f] may have a low forward transitional probability, because the sequence [df] only
-occurs across word boundaries, such as in [ænd#fɹʌm].
+occurs across word boundaries, such as in [ænd#fɹʌm] 'and from'.
+
+Note that because corpora in PCT are treated as lists of words in isolation, even if they
+were created from running transcriptions, transitional probability calculations are always actually
+*within words* in PCT.
 
 .. _tp_method:
 
@@ -28,7 +32,7 @@ Method of calculation
 ---------------------
 In PCT, transitional probability is calculated on the segment level, and it is
 possible to calculate both forward and backward TP. Given two segments :math:`a` and
-:math:`b`,
+:math:`b`, occuring in the order :math:`ab`,
 
 Forward transitional probability:
 
@@ -56,12 +60,15 @@ Consider the following corpus:
 | ʃi       | ʃ.i           | 6         |
 +----------+---------------+-----------+
 
-Assuming type frequencies, the probability of the bigram `ɑm` is:
+Using type frequencies, the probability of the bigram `ɑm` is:
 
 :math:`P(am) = \frac{n_{am}}{n_{bigrams}} = \frac{1}{7}`
 
 i.e., the frequency of the bigram `am` divided by the total number of bigrams in
-the corpus. Assuming token frequencies, the probability is:
+the corpus (assuming only segments count toward bigrams; see more in the section 
+on word boundaries below). 
+
+Using token frequencies, the probability is:
 
 :math:`P(am) = \frac{n_{am}}{n_{bigrams}} = \frac{4}{24}`
 
@@ -85,15 +92,14 @@ The backward TP is:
 :math:`P(a|m) = \frac{P(am)}{P(m)} = \frac{1/7}{1/7} = 1` with type
 frequencies, or :math:`\frac{4/24}{4/24} = 1` with token frequencies.
 
-In this corpus, `m` is either 50% or 67% likely to occur after the segment `ɑ`, given token
-or type frequencies. At the same time, `ɑ` is certain to appear before `m`, if `m` is not word-initial.
+In this corpus, the segment `m` will occur after the segment `ɑ` 50% of the time given type frequencies or 67% of the time given token frequencies. Meanwhile, `ɑ` is certain to appear before the segment `m` (if `m` has any segment before it, i.e., is not word-initial).
 
 For more on this method, see [Anghelescu2016]_.
 
 Word Boundaries
 ```````````````
 In PCT, word boundaries can be set to occur once at the end of every word, to occur
-on both sides of a word, or to be ignored. The first option is the default setting.
+on both sides of a word, or to be ignored (as they were in the above examples). The first option is the default setting.
 
 Assuming a single boundary at the end of every word:
 
@@ -130,7 +136,7 @@ The backward TP is:
 :math:`P(a|m) = \frac{P(am)}{P(m)} = \frac{1/10}{1/10} = 1` with type
 frequencies, or :math:`\frac{4/36}{4/36} = 1` with token frequencies.
 
-Assuming two boundaries on both sides of a word:
+Assuming boundaries on each side of a word:
 
 +----------+---------------+-----------+
 | Spelling | Transcription | Frequency |
@@ -190,7 +196,8 @@ presence of either the first or second segment. The labels "P(B|A)" and
 
 4. **Word boundary**: Select an option for word boundary. The default is to
 assume that there is only one boundary per word, and that it is in final
-position (as is assumed in [Goldsmith2012]_). This is based on the assumption
+position (as is assumed in [Goldsmith2012]_ with respect to Mutual Information calculations). 
+This is based on the assumption
 that in running text, the final boundary of word 1 will be the initial boundary
 of word 2, so that there is no need to have two boundaries per word. Select
 “Keep both word boundaries” to have boundaries on both sides, or “Ignore all
