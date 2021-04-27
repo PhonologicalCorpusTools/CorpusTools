@@ -230,7 +230,7 @@ References
 .. [Saffran1996a] Saffran, Jenny R., Aslin, Richard N., and Newport, Elisa L. (1996). Statistical
    learning by 8-month-old infants. Science, 274:1926–1928.
 
-.. [Saffran196b] Saffran, Jenny R., Newport, Elisa L., and Aslin, Richard N. (1996).
+.. [Saffran1996b] Saffran, Jenny R., Newport, Elisa L., and Aslin, Richard N. (1996).
    Word segmentation: The role of distributional cues. Journal of Memory and Languages,
    35:606–621.
 

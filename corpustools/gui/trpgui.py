@@ -66,7 +66,7 @@ class TPDialog(FunctionDialog):
               'Minimum word frequency',
               'Transitional probability']
 
-    _about = [('This function calculates transitional probability' ' of two bigrams'), 'that are words or syllables']
+    _about = [('This function calculates transitional probability' ' of two bigrams')]
 
     name = 'transitional probability'
 
@@ -86,6 +86,7 @@ class TPDialog(FunctionDialog):
         self.bigramLayout.addWidget(self.envWidget)
         self.tpLayout.addLayout(self.bigramLayout)
 
+        tpOptionLayout = QFormLayout()
         optionLayout = QFormLayout()
 
         ## WIP: A syllable mode for TP
@@ -119,17 +120,18 @@ class TPDialog(FunctionDialog):
                                            OrderedDict([('P(B|A) Forward', 'forward'),
                                                         ('P(A|B) Backward', 'backward')]))
 
-        optionLayout.addWidget(self.dirWidget)
+        tpOptionLayout.addWidget(self.dirWidget)
 
         # Word boundary
         self.wordBoundaryWidget = RadioSelectWidget('Word boundary',
-                                                    OrderedDict([('Halve word boundaries (default)', 'Halved'),
+                                                    OrderedDict([('Word boundaries at the end only (default)',
+                                                                  'Word-end only'),
                                                                  ('Keep both word boundaries', 'Both sides'),
                                                                  ('Ignore all word boundaries', 'Ignored')]))
-        optionLayout.addWidget(self.wordBoundaryWidget)
+        tpOptionLayout.addWidget(self.wordBoundaryWidget)
 
         self.variantsWidget = ContextWidget(self.corpus, None)
-        optionLayout.addWidget(self.variantsWidget)
+        tpOptionLayout.addWidget(self.variantsWidget)
 
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionLayout.addWidget(self.tierWidget)
@@ -146,8 +148,11 @@ class TPDialog(FunctionDialog):
         minFreqFrame.setLayout(box)
         optionLayout.addWidget(minFreqFrame)
 
-        optionFrame = QGroupBox('Options')
+        tpOptionFrame = QGroupBox()
+        tpOptionFrame.setLayout(tpOptionLayout)
+        optionFrame = QGroupBox()
         optionFrame.setLayout(optionLayout)
+        self.tpLayout.addWidget(tpOptionFrame)
         self.tpLayout.addWidget(optionFrame)
         tpFrame.setLayout(self.tpLayout)
 

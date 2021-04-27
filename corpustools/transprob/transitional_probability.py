@@ -31,7 +31,7 @@ def calc_trans_prob(corpus_context, bigram, word_boundaries, direction, mode = '
         except KeyError:
             raise(TPError('The segment %s was not found in the corpus.' % bigram[1]))
 
-        if word_boundaries == 'Halved':
+        if word_boundaries == 'Word-end only':
             bigram_dict = corpus_context.get_frequency_base(gramsize=2, halve_edges=True, probability=True, need_wb=True)
         elif word_boundaries == 'Both sides':
             bigram_dict = corpus_context.get_frequency_base(gramsize=2, halve_edges=False, probability=True, need_wb=True)
