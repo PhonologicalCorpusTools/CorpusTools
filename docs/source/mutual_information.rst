@@ -54,7 +54,7 @@ measure of co-occurrence restrictions (harmony, phonotactics, etc.). For
 example, [Goldsmith2012]_ use pointwise mutual information as a
 way of examining Finnish vowel harmony; see also discussion in
 [Goldsmith2002]_. Mutual information has also been used instead of
-transitional probability as a way of finding boundaries between words
+:ref:`transitional_probability` as a way of finding boundaries between words
 in running speech, with the idea that bigrams that cross word boundaries
 will have, on average, lower values of mutual information than bigrams
 that are within words (see [Brent1999]_, [Rytting2004]_). Note, however, that
@@ -293,7 +293,7 @@ Follow these steps to calculate mutual information:
    environment filter is applied (see step 8 below).
 
 7. **Set domain to word (unordered word-internal pMI)**: Select this button to
-   calculate :ref:`_mi_method_word_internal_pmi`. Note that environment filtering
+   calculate :ref:`mi_method_word_internal_pmi`. Note that environment filtering
    is not meaningful in unordered word-internal pMI.
 
 8. **Environment (optional)**: Select “Set an environment filter” button to add
@@ -310,7 +310,7 @@ Follow these steps to calculate mutual information:
       The exported file can be found at the specified location after clicking “Calculate mutual
       information.”
 
-7. **Results**: Once all options have been selected, click “Calculate mutual
+9. **Results**: Once all options have been selected, click “Calculate mutual
    information.” If this is not the first calculation, and you want to add
    the results to a pre-existing results table, select the choice that
    says “add to current results table.” Otherwise, select “start new
@@ -329,7 +329,9 @@ in the sample corpus:
    :width: 90%
    :align: center
 
-The selected bigrams appear in the list in the “Mutual Information” dialogue box:
+The selected bigrams appear in the list in the “Mutual Information” dialogue box. You will see that we added another
+bigram, [i, #]. We did this by clicking **Add and create another** after entering the bigram [t,i], selecting i and #
+from the inventory chart. # (the word boundary symbol) should be under **Uncategorized**:
 
 .. image:: static/midialog.png
    :width: 90%
