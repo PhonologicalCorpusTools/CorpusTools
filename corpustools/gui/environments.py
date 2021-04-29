@@ -7,6 +7,7 @@ import regex as re
 
 SPECIAL_SYMBOL_RE = ['.', '^', '$', '*', '+', '?', '|', '{', '}', '[', ']', '#', '(', ')', '\'', '\"']
 
+
 class EnvironmentDialog(QDialog):
     rowToAdd = Signal(str)
     def __init__(self, inventory,parent=None):
@@ -248,6 +249,7 @@ class EnvironmentSegmentWidget(QWidget):
         for k, v in data.items(): #see the getData() function above for details
             setattr(self, k, v)
 
+
 class EnvironmentSelectWidget(QGroupBox):
     def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, single_env=False, mode='segMode'):
         QGroupBox.__init__(self, 'Environments', parent)
@@ -319,6 +321,7 @@ class EnvironmentSelectWidget(QGroupBox):
             wid = self.environmentFrame.layout().itemAt(ind).widget()
             envs.append(wid.displayValue())
         return envs
+
 
 class EnvironmentWidget(QWidget):
     envCopied = Signal(list)
@@ -507,6 +510,7 @@ class EnvironmentWidget(QWidget):
         rhs = ','.join(rhs) if rhs else ''
 
         return '{}_{}'.format(lhs, rhs)
+
 
 class SyllableConstructDialog(QDialog):
     def __init__(self, inventory, parent=None,
@@ -726,8 +730,6 @@ class SyllableConstructWidget(QGroupBox):
         segWidget.deleteLater()
         self.setZeroSymbol()
 
-
-
     def value(self):
         output = {'onset': dict(),
                   'nucleus': dict(),
@@ -846,6 +848,7 @@ class ToneWidget(QGroupBox):
                 selected.add(button.text())
 
         return selected
+
 
 class SyllableSegmentWidget(QWidget):
     segDeleted = Signal(list)
@@ -974,6 +977,7 @@ class SyllableSegmentWidget(QWidget):
         for k, v in data.items(): #see the getData() function above for details
             setattr(self, k, v)
         """
+
 
 class SyllableWidget(QWidget):
     segDeleted = Signal(list)
@@ -1166,7 +1170,6 @@ class SyllableWidget(QWidget):
             label = '{' + ', '.join(self.nonSeg) + '}'
             self.mainLabel.setText(label)
 
-
     def addUnspecifiedSyllable(self):
         self.nonSeg = set()
         self.onset = {'contents': [], 'search_type': 'Minimally contains'}
@@ -1282,6 +1285,7 @@ class SyllableWidget(QWidget):
     def loadData(self, data):
         for k, v in data.items():  # see the getData() function above for details
             setattr(self, k, v)
+
 
 class EnvironmentSyllableWidget(QWidget):
     envCopied = Signal(list)

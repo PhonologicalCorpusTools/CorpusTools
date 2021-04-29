@@ -6,7 +6,7 @@ from .widgets import TierWidget, RadioSelectWidget
 
 from .windows import FunctionWorker, FunctionDialog
 
-from .environments import EnvironmentSelectWidget
+from .environments import EnvironmentSelectWidget, EnvironmentWidget, EnvironmentSyllableWidget
 
 from corpustools.phonosearch import phonological_search
 
@@ -456,19 +456,67 @@ class RecentSearchDialog(QDialog):
 
 
 class PSEnvironmentSelectWidget(EnvironmentSelectWidget):
+    env_num_changed  = Signal(str)
     def __init__(self, inventory, rt, show_full_inventory, mode='segMode'):
         super().__init__(self)
         self.resultTypeGroup = rt
+        self.env_num_changed.connect(self.rt_control)
 
     def addNewEnvironment(self):
-        super().addNewEnvironment()
+        if self.mode == 'segMode':
+            envWidget = PSEnvironmentWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
+        else:
+            envWidget = PSEnvironmentSyllableWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
         pos = self.environmentFrame.layout().count() - 2
-        if pos > 1:
+        self.environmentFrame.layout().insertWidget(pos, envWidget)
+        self.env_num_changed.emit('add')
+
+    def addCopiedEnvironment(self, args):
+        copy_data = args[0] if args else None
+        if self.mode == 'segMode':
+            envWidget = PSEnvironmentWidget(self.inventory, middle=copy_data.middle, parent=self, copy_data=copy_data)
+        else:
+            envWidget = PSEnvironmentSyllableWidget(self.inventory, middle=copy_data.middle, parent=self,
+                                                    copy_data=copy_data)
+        pos = self.environmentFrame.layout().count() - 2
+        self.environmentFrame.layout().insertWidget(pos, envWidget)
+        self.env_num_changed.emit('add')
+
+    @Slot(str)
+    def rt_control(self, text):
+        # This function checks the number of environments (pos) and enable or disable 'negative search'.
+        # 'text' is either 'add' or 'remove'. It indicates where the signal has started.
+        pos = self.environmentFrame.layout().count() - 2
+        if text == 'remove':
+            pos -= 1
+        if pos > 1:  # if there are more than one environments, we disable 'negative search' in result type
             self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
             if self.resultTypeGroup.widgets[1].isChecked():  # if 'negative search' has been previously selected.
+                # TODO: the warning message should come here
                 self.resultTypeGroup.widgets[1].setChecked(False)  # then uncheck 'negative search'
                 self.resultTypeGroup.widgets[0].setChecked(True)  # and check 'positive search'
+        else:
+            self.resultTypeGroup.widgets[1].setEnabled(True)  # enable 'negative search' in result type
 
+
+class PSEnvironmentWidget(EnvironmentWidget):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, copy_data=None):
+        super().__init__(inventory, parent, middle, copy_data, show_full_inventory)
+        self.removeButton.clicked.connect(self.deleteEnvironment)
+
+    def deleteEnvironment(self):
+        self.deleteLater()
+        self.parent.env_num_changed.emit('remove')
+
+
+class PSEnvironmentSyllableWidget(EnvironmentSyllableWidget):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, copy_data=None):
+        super().__init__(inventory, parent, middle, copy_data, show_full_inventory)
+        self.removeButton.clicked.connect(self.deleteEnvironment)
+
+    def deleteEnvironment(self):
+        self.deleteLater()
+        self.parent.env_num_changed.emit()
 
 
 class PhonoSearchDialog(FunctionDialog):
