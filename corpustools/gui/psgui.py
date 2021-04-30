@@ -456,17 +456,20 @@ class RecentSearchDialog(QDialog):
 
 
 class PSEnvironmentSelectWidget(EnvironmentSelectWidget):
-    env_num_changed  = Signal(str)
+    env_num_changed = Signal(str)
+
     def __init__(self, inventory, rt, show_full_inventory, mode='segMode'):
-        super().__init__(self)
+        super().__init__(inventory, show_full_inventory=show_full_inventory, mode=mode)
         self.resultTypeGroup = rt
         self.env_num_changed.connect(self.rt_control)
 
     def addNewEnvironment(self):
         if self.mode == 'segMode':
-            envWidget = PSEnvironmentWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
+            envWidget = PSEnvironmentWidget(inventory=self.inventory, middle=self.middle, parent=self,
+                                            show_full_inventory=self.show_full_inventory)
         else:
-            envWidget = PSEnvironmentSyllableWidget(self.inventory, middle=self.middle, parent=self, show_full_inventory=self.show_full_inventory)
+            envWidget = PSEnvironmentSyllableWidget(inventory=self.inventory, middle=self.middle, parent=self,
+                                                    show_full_inventory=self.show_full_inventory)
         pos = self.environmentFrame.layout().count() - 2
         self.environmentFrame.layout().insertWidget(pos, envWidget)
         self.env_num_changed.emit('add')
@@ -490,18 +493,33 @@ class PSEnvironmentSelectWidget(EnvironmentSelectWidget):
         if text == 'remove':
             pos -= 1
         if pos > 1:  # if there are more than one environments, we disable 'negative search' in result type
-            self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
             if self.resultTypeGroup.widgets[1].isChecked():  # if 'negative search' has been previously selected.
-                # TODO: the warning message should come here
+                alert = QMessageBox(QMessageBox.Warning,
+                                    'Negative search with multiple environments',
+                                    'Negative search is not compatible with multiple environments.\n\n'
+                                    'Click "OK" to continue with multiple environments and a positive search type\n'
+                                    'Click "Cancel" to go back to a negative search type and a single environment.\n\n'
+                                    'You can run successive negative searches with different single environments '
+                                    'if you need to get multiple negative-search results.',
+                                    QMessageBox.NoButton, self)
+                alert.addButton('OK', QMessageBox.AcceptRole)
+                alert.addButton('Cancel', QMessageBox.RejectRole)
+                alert.exec_()
+                if alert.buttonRole(alert.clickedButton()) == QMessageBox.RejectRole:
+                    if text == 'add':
+                        self.environmentFrame.children()[-1].deleteLater()
+                        pass
+                    return
                 self.resultTypeGroup.widgets[1].setChecked(False)  # then uncheck 'negative search'
                 self.resultTypeGroup.widgets[0].setChecked(True)  # and check 'positive search'
+            self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
         else:
             self.resultTypeGroup.widgets[1].setEnabled(True)  # enable 'negative search' in result type
 
 
 class PSEnvironmentWidget(EnvironmentWidget):
     def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, copy_data=None):
-        super().__init__(inventory, parent, middle, copy_data, show_full_inventory)
+        super().__init__(inventory=inventory, parent=parent, middle=middle, copy_data=copy_data, show_full_inventory=show_full_inventory)
         self.removeButton.clicked.connect(self.deleteEnvironment)
 
     def deleteEnvironment(self):
@@ -511,12 +529,12 @@ class PSEnvironmentWidget(EnvironmentWidget):
 
 class PSEnvironmentSyllableWidget(EnvironmentSyllableWidget):
     def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, copy_data=None):
-        super().__init__(inventory, parent, middle, copy_data, show_full_inventory)
+        super().__init__(inventory=inventory, parent=parent, middle=middle, copy_data=copy_data, show_full_inventory=show_full_inventory)
         self.removeButton.clicked.connect(self.deleteEnvironment)
 
     def deleteEnvironment(self):
         self.deleteLater()
-        self.parent.env_num_changed.emit()
+        self.parent.env_num_changed.emit('remove')
 
 
 class PhonoSearchDialog(FunctionDialog):
@@ -632,8 +650,9 @@ class PhonoSearchDialog(FunctionDialog):
         syllFreqFrame.setLayout(sFbox)
         filterLayout.addWidget(syllFreqFrame)
 
-        self.envWidget = PSEnvironmentSelectWidget(self.inventory, rt=self.resultTypeGroup,
+        self.envWidget = PSEnvironmentSelectWidget(inventory=self.inventory, rt=self.resultTypeGroup,
                                                    show_full_inventory=bool(settings['show_full_inventory']))
+        # self.envWidget = EnvironmentSelectWidget(inventory=self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
 
         self.pslayout.addWidget(self.envWidget)
         self.pslayout.addWidget(optionFrame)
@@ -666,9 +685,9 @@ class PhonoSearchDialog(FunctionDialog):
                 self.mode = 'segMode'
                 self.resultTypeGroup.widgets[1].setEnabled(True)  # enable 'negative search' in result type
         self.envWidget = PSEnvironmentSelectWidget(self.inventory,
-                                                 show_full_inventory=bool(self.settings['show_full_inventory']),
-                                                 mode=self.mode,
-                                                 rt=self.resultTypeGroup)
+                                                   show_full_inventory=bool(self.settings['show_full_inventory']),
+                                                   mode=self.mode,
+                                                   rt=self.resultTypeGroup)
         self.pslayout.insertWidget(0, self.envWidget)
 
     def accept(self):
