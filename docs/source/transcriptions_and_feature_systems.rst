@@ -760,9 +760,9 @@ if you want to search for a syllable that has any phoneme except +labial at the 
 the "Construct syllables" window by specifying "Nucleus" as [a] and setting "Onset" as +labial with "Set negative" option checked from 
 the dropdown menu. This will search for [sa], [ra], etc. but exclude [ma] or [pa].
 
-Now, let's assume you search for the cases where the second syllables are either /bi/ or /pi/ (bilabial-stop onset and high-front vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
+Now, let's assume you search for the cases where the second syllables are either /ta/ or /sa/ (Alveolar-stop or alveolar-fricative onset and low-back vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
 
-An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of a bilabial stop and the nucleus of a high front vowel):
+An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of either an alveolar stop or fricative, and the nucleus of a low-back vowel):
 
 .. image:: static/phonosearchenvironmentsyllable.png
    :width: 100%
