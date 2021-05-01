@@ -111,8 +111,6 @@ box, as in the following diagram:
    :width: 90%
    :align: center
 
-In addition to the "Load" button, there is "Load with forced update" button. This mainly useful if you have updated PCT, and you are loading a corpus that was saved using an older version. Loading with forced update lets PCT inspect a corpus file, and repair any incompatibilities that it might find. You will only need to do a forced update once, and afterwards you may use the normal "Load" button. This will not cause any changes to your corpus data; this only affects the underlying Python objects. It is recommended that you select this option the first time you use a downloaded corpus, because corpora available online may not be formatted with the same version of PCT.
-
 The example corpora and the included version of the IPHOD corpus include
 phonetic transcriptions (in IPA for the example corpora and in Arpabet for IPHOD), and are by default interpreted either
 using the feature system of [Mielke2012]_, which in turn is based on
