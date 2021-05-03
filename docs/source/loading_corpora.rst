@@ -216,7 +216,7 @@ a .csv file with orthography, transcription, and frequency columns:
    :width: 90%
    :align: center
 
-And here is the "Parsing settings" window of the transcription column:
+And here is the "Parsing settings" window of the transcription column (note that because of the length of the window, we have split this image into two side-by-side images; in PCT itself, this is a single long vertical window):
 
 .. image:: static/parsingsettings.png
    :width: 90%
