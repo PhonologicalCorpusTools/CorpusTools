@@ -642,7 +642,7 @@ before a vowel”):
    :align: center
 
 An example of the phonological search window, set up to search for
-voiceless stops word-initially before vowels and between [a] vowels,
+voiceless stops word-initially before vowels and between [ɑ] vowels,
 on the transcription tier (positive search):
 
 .. image:: static/phonosearchenvironment2.png
@@ -650,7 +650,7 @@ on the transcription tier (positive search):
    :align: center
 
 An example of the phonological search window, set up to search for
-voiceless stops word-initially before vowels and between [a] vowels,
+voiceless stops word-initially before vowels and between [ɑ] vowels,
 on the transcription tier (negative search):
 
 .. image:: static/phonosearchenvironment3.png
