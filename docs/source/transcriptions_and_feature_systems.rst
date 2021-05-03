@@ -756,11 +756,11 @@ Please note that using "Exactly matches" while not specifying an onset/coda slot
 onset or coda means that the onset or coda may either be empty or filled. Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
 
 Additionally, you can exclude specific segments at a syllable component by selecting "Set negative" from the dropdown menu. For example, 
-if you want to search for a syllable that has any phoneme except +labial at the onset position and [a] as the nucleus, you can do so in 
-the "Construct syllables" window by specifying "Nucleus" as [a] and setting "Onset" as +labial with "Set negative" option checked from 
-the dropdown menu. This will search for [sa], [ra], etc. but exclude [ma] or [pa].
+if you want to search for a syllable that has any phoneme except +labial at the onset position and [ɑ] as the nucleus, you can do so in 
+the "Construct syllables" window by specifying "Nucleus" as [ɑ] and setting "Onset" as +labial with "Set negative" option checked from 
+the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ].
 
-Now, let's assume you search for the cases where the second syllables are either /ta/ or /sa/ (Alveolar-stop or alveolar-fricative onset and low-back vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
+Now, let's assume you search for the cases where the second syllables are either /tɑ/ or /sɑ/ (Alveolar-stop or alveolar-fricative onset and low-back vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
 
 An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of either an alveolar stop or fricative, and the nucleus of a low-back vowel):
 
