@@ -151,17 +151,7 @@ density...” in the main menu, and then follow these steps:
    then the number will still be returned, but additionally, a file
    will be created that lists all of the actual neighbours for each word. It can be specified whether the output file should contain the orthographic representation or the transcription of each neighbour. Note that in the case of homophones that have been collapsed, the representation of the alphabetically first homophone will be the only one included.
 
-10. **Results**: Once all options have been selected, click “Calculate neighborhood density.” If this is not the first calculation, and
-   you want to add the results to a pre-existing results table, select
-   the choice that says “add to current results table.” Otherwise,
-   select “start new results table.” A dialogue box will open, showing
-   a table of the results, including the word, its neighbourhood density,
-   the string type from which neighbourhood density was calculated, what choice was made regarding pronunciation variants,
-   whether type or token frequency was used (if applicable), the string
-   similarity algorithm that was used, and the threshold value. If the
-   neighbourhood density for all words in the corpus is being calculated,
-   simply click on the “start new results table” option, and you will be
-   returned to your corpus, where a new column has been added automatically.
+10. **Results**: Once all options have been selected, click “Calculate neighborhood density.” If this is not the first calculation, and you want to add the results to a pre-existing results table, select the choice that says “add to current results table.” Otherwise, select “start new results table.” A dialogue box will open, showing a table of the results, including the word, its neighbourhood density, the string type from which neighbourhood density was calculated, what choice was made regarding pronunciation variants, whether type or token frequency was used (if applicable), the string similarity algorithm that was used, and the threshold value. If the neighbourhood density for all words in the corpus is being calculated, simply click on the “start new results table” option, and you will be returned to your corpus, where a new column has been added automatically.
 
 11. **Saving results**: The results tables can each be saved to tab-delimited .txt files by selecting “Save to file” at the bottom of the window. Any output files containing actual lists of neighbours are already saved as .txt files in the location specified (see step 7). If all neighbourhood densities are calculated for a corpus, the corpus itself can be saved by going to “File” / “Export corpus as text file,” from where it can be reloaded into PCT for use in future sessions with the neighbourhood densities included.
 
