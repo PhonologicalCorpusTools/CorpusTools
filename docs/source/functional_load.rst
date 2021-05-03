@@ -435,7 +435,7 @@ Once a corpus is loaded, use the following steps.
       :width: 90%
       :align: center
 
-   Note that in the above screen shot, not all columns are visible; they are visible only by scrolling over to the right, due to constraints on the window size. All columns would be saved to the results file.)
+   (Note that in the above screen shot, not all columns are visible; they are visible only by scrolling over to the right, due to constraints on the window size. All columns would be saved to the results file.)
 
    To return to the function dialogue box with your most recently used
    selections, click on “Reopen function dialog.” Otherwise, the results
