@@ -151,8 +151,7 @@ density...” in the main menu, and then follow these steps:
    then the number will still be returned, but additionally, a file
    will be created that lists all of the actual neighbours for each word. It can be specified whether the output file should contain the orthographic representation or the transcription of each neighbour. Note that in the case of homophones that have been collapsed, the representation of the alphabetically first homophone will be the only one included.
 
-10. **Results**: Once all options have been selected, click “Calculate
-   neighborhood density.” If this is not the first calculation, and
+10. **Results**: Once all options have been selected, click “Calculate neighborhood density.” If this is not the first calculation, and
    you want to add the results to a pre-existing results table, select
    the choice that says “add to current results table.” Otherwise,
    select “start new results table.” A dialogue box will open, showing
