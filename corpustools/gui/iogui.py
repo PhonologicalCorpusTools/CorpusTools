@@ -908,11 +908,16 @@ class LoadCorpusDialog(PCTDialog):
                                  'corpus has no spelling system, then use "Other (character)" or "Notes".')
             return
 
-        #if all(x.attribute.name not in x.name for x in kwargs['annotation_types'] if x.name in {'Transcription (default)', 'Transcription (alternative)'}):
-        #    QMessageBox.critical(self, 'Column name error',
-        #                         'The column you selected as transcription is not named "Transcription". '
-        #                         'Please rename the column and import the file again.')
-        #    return
+        if any('Transcription' in x.name for x in kwargs['annotation_types']) and \
+                all(x.attribute.name not in x.name for x in kwargs['annotation_types'] if
+                    x.name in {'Transcription (default)', 'Transcription (alternative)'}):
+            col_name_warning = QMessageBox.warning(self, 'Column name error',
+                                                   'The column you selected as transcription is not named "Transcription". '
+                                                   'Consider renaming the column and importing the file again. '
+                                                   'If you wish to proceed with the current column name, click \'OK\'.',
+                                                   QMessageBox.Ok | QMessageBox.Cancel)
+            if col_name_warning == QMessageBox.Cancel:
+                return
 
         duplicates = False
         if names.count('Transcription (default)') > 1:
