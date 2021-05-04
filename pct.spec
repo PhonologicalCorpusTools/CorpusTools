@@ -1,6 +1,7 @@
 # -*- mode: python -*-
 import os
 import sys
+sys.setrecursionlimit(5000)
 
 block_cipher = None
 pct_path = os.getcwd()
