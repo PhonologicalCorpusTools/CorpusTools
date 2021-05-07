@@ -12,6 +12,7 @@ from corpustools.contextmanagers import (CanonicalVariantContext,
                                         WeightedVariantContext)
 from corpustools import __version__
 
+
 class MIWorker(FunctionWorker):
     def run(self):
         kwargs = self.kwargs
@@ -56,7 +57,6 @@ class MIWorker(FunctionWorker):
             self.finishedCancelling.emit()
             return
         self.dataReady.emit(self.results)
-
 
 
 class MIDialog(FunctionDialog):
@@ -157,7 +157,7 @@ class MIDialog(FunctionDialog):
         self.envCheck = QCheckBox('Set an environment filter')
         self.envCheck.clicked.connect(self.set_env_filters)
 
-        self.envWidget = EnvironmentSelectWidget(inventory, middle = False, single_env=True)
+        self.envWidget = EnvironmentSelectWidget(inventory, middle=False, single_env=True)
         self.envWidget.setTitle('')
         self.envWidget.setEnabled(False)
 

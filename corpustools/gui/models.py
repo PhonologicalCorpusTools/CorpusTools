@@ -569,17 +569,32 @@ class PhonoSearchResultsModel(BaseTableModel):
         for line in self.allData:
             segs = line['Target']
             envs = line['Environment']
+            res_type = line['Result type']
+            wf = line['Min Word Freq'], line['Max Word Freq']  # word freq filter min/max
+            pc = line['Min Phoneme Number'], line['Max Phoneme Number']  # phoneme count min/max
+            sc = line['Min Syllable Number'], line['Max Syllable Number']  # syllable count min/max
+            filters = wf, pc, sc
             for i,seg in enumerate(segs):
-                segenv = seg,envs[i]
-                typefreq[segenv] += 1
-                tokenfreq[segenv] += line['Word'].frequency
-
-        if len(self.rows) > 0:
-            metaInfo = self.rows[0][0], self.rows[0][1]  # get corpus and PCT version information
+                segenvfilters = seg, envs[i], filters, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
+                typefreq[segenvfilters] += 1
+                tokenfreq[segenvfilters] += line['Word'].frequency
 
         self.rows = list()
         for k,v in sorted(typefreq.items()):
-            self.rows.append([metaInfo[0], metaInfo[1], k[0], k[1], v, tokenfreq[k]])
+            corpus_name = self.allData[0]['Corpus']
+            PCT_version = self.allData[0]['PCT ver.']
+            segment = k[0]
+            environment = k[1]
+            filter_word_freq = k[2][0]
+            filter_phon_count = k[2][1]
+            filter_syll_count = k[2][2]
+            pos_neg = k[3]
+
+            self.rows.append([corpus_name, PCT_version, segment, environment, v, tokenfreq[k], pos_neg,
+                              filter_word_freq[0], filter_word_freq[1],
+                              filter_phon_count[0], filter_phon_count[1],
+                              filter_syll_count[0], filter_syll_count[1]])
+            # self.rows.append([metaInfo[0], metaInfo[1], k[0], k[1], v, tokenfreq[k], filters[0], filters[1], filters[2], filters[3], filters[4], filters[5]])
             #this row formatting doesn't match the dictionary-style results used elsewhere, which might be a problem,
             #but the results are fixed in the right order currently
         self.columns = self.summary_header

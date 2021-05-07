@@ -791,17 +791,26 @@ class PhonoSearchResults(ResultsWindow):
         self.table.setModel(dataModel)
 
         self.summarized = True
-        self.summaryButton = QPushButton('Show individual results')
+        self.summaryButton = QPushButton('Show summary results')
         self.summaryButton.clicked.connect(self.summaryDetail)
-        self.aclayout.insertWidget(0, self.summaryButton)
+        self.individualButton = QPushButton('Show individual results')
+        self.individualButton.clicked.connect(self.summaryDetail)
+        self.aclayout.insertWidget(0, self.individualButton)
 
     def summaryDetail(self):
+        # Toggle between summaryButton and individualButton.
+        # Previously QPushButton.setText() was used to update the text of the button,
+        # but due to MacOS-dependent issue, QPushButton.setText() doesn't update. Instead two identical buttons switch.
         if self.summarized:
             self.table.model().setSummarized(False)
-            self.summaryButton.setText('Show summary results')
+            self.individualButton.hide()
+            self.aclayout.insertWidget(0, self.summaryButton)
+            self.summaryButton.show()
         else:
             self.table.model().setSummarized(True)
-            self.summaryButton.setText('Show individual results')
+            self.summaryButton.hide()
+            self.aclayout.insertWidget(0, self.individualButton)
+            self.individualButton.show()
         self.summarized = not self.summarized
 
     def redo(self):

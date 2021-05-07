@@ -2,11 +2,11 @@ from .imports import *
 import time
 import collections
 
-from .widgets import TierWidget
+from .widgets import TierWidget, RadioSelectWidget
 
 from .windows import FunctionWorker, FunctionDialog
 
-from .environments import EnvironmentSelectWidget
+from .environments import EnvironmentSelectWidget, EnvironmentWidget, EnvironmentSyllableWidget
 
 from corpustools.phonosearch import phonological_search
 
@@ -455,9 +455,95 @@ class RecentSearchDialog(QDialog):
         super().reject()
 
 
+class PSEnvironmentSelectWidget(EnvironmentSelectWidget):
+    env_num_changed = Signal(str)
+
+    def __init__(self, inventory, rt, show_full_inventory, mode='segMode'):
+        super().__init__(inventory, show_full_inventory=show_full_inventory, mode=mode)
+        self.resultTypeGroup = rt
+        self.env_num_changed.connect(self.rt_control)
+
+    def addNewEnvironment(self):
+        if self.mode == 'segMode':
+            envWidget = PSEnvironmentWidget(inventory=self.inventory, middle=self.middle, parent=self,
+                                            show_full_inventory=self.show_full_inventory)
+        else:
+            envWidget = PSEnvironmentSyllableWidget(inventory=self.inventory, middle=self.middle, parent=self,
+                                                    show_full_inventory=self.show_full_inventory)
+        pos = self.environmentFrame.layout().count() - 2
+        self.environmentFrame.layout().insertWidget(pos, envWidget)
+        self.env_num_changed.emit('add')
+
+    def addCopiedEnvironment(self, args):
+        copy_data = args[0] if args else None
+        if self.mode == 'segMode':
+            envWidget = PSEnvironmentWidget(self.inventory, middle=copy_data.middle, parent=self, copy_data=copy_data)
+        else:
+            envWidget = PSEnvironmentSyllableWidget(self.inventory, middle=copy_data.middle, parent=self,
+                                                    copy_data=copy_data)
+        pos = self.environmentFrame.layout().count() - 2
+        self.environmentFrame.layout().insertWidget(pos, envWidget)
+        self.env_num_changed.emit('add')
+
+    @Slot(str)
+    def rt_control(self, text):
+        # This function checks the number of environments (pos) and enable or disable 'negative search'.
+        # 'text' is either 'add' or 'remove'. It indicates where the signal has started.
+        pos = self.environmentFrame.layout().count() - 2
+        if text == 'remove':
+            pos -= 1
+        if pos > 1:  # if there are more than one environments, we disable 'negative search' in result type
+            if self.resultTypeGroup.widgets[1].isChecked():  # if 'negative search' has been previously selected.
+                alert = QMessageBox(QMessageBox.Warning,
+                                    'Negative search with multiple environments',
+                                    'Negative search is not compatible with multiple environments.\n\n'
+                                    'Click "OK" to continue with multiple environments and a positive search type\n'
+                                    'Click "Cancel" to go back to a negative search type and a single environment.\n\n'
+                                    'You can run successive negative searches with different single environments '
+                                    'if you need to get multiple negative-search results.',
+                                    QMessageBox.NoButton, self)
+                alert.addButton('OK', QMessageBox.AcceptRole)
+                alert.addButton('Cancel', QMessageBox.RejectRole)
+                alert.exec_()
+                if alert.buttonRole(alert.clickedButton()) == QMessageBox.RejectRole:
+                    if text == 'add':
+                        self.environmentFrame.children()[-1].deleteLater()
+                        pass
+                    return
+                self.resultTypeGroup.widgets[1].setChecked(False)  # then uncheck 'negative search'
+                self.resultTypeGroup.widgets[0].setChecked(True)  # and check 'positive search'
+            self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
+        else:
+            self.resultTypeGroup.widgets[1].setEnabled(True)  # enable 'negative search' in result type
+
+
+class PSEnvironmentWidget(EnvironmentWidget):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, copy_data=None):
+        super().__init__(inventory=inventory, parent=parent, middle=middle, copy_data=copy_data, show_full_inventory=show_full_inventory)
+        self.removeButton.clicked.connect(self.deleteEnvironment)
+
+    def deleteEnvironment(self):
+        self.deleteLater()
+        self.parent.env_num_changed.emit('remove')
+
+
+class PSEnvironmentSyllableWidget(EnvironmentSyllableWidget):
+    def __init__(self, inventory, parent=None, middle=True, show_full_inventory=False, copy_data=None):
+        super().__init__(inventory=inventory, parent=parent, middle=middle, copy_data=copy_data, show_full_inventory=show_full_inventory)
+        self.removeButton.clicked.connect(self.deleteEnvironment)
+
+    def deleteEnvironment(self):
+        self.deleteLater()
+        self.parent.env_num_changed.emit('remove')
+
+
 class PhonoSearchDialog(FunctionDialog):
-    header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Target', 'Environment', 'Token frequency']
-    summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency']
+    header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Token frequency', 'Target', 'Environment',
+              'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number',
+              'Min Syllable Number', 'Max Syllable Number']
+    summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency',
+                      'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number',
+                      'Min Syllable Number', 'Max Syllable Number']
     _about = ['']
     name = 'phonological search'
 
@@ -483,46 +569,32 @@ class PhonoSearchDialog(FunctionDialog):
         modeLayout = QVBoxLayout()
         modeFrame.setLayout(modeLayout)
 
-        self.modeGroup = QButtonGroup()
-        segMode = QCheckBox('Segments')
-        segMode.clicked.connect(self.changeMode)
-        segMode.setChecked(True)
-        self.mode = 'segMode'
-        self.modeGroup.addButton(segMode)
-        sylMode = QCheckBox('Syllables')
-        sylMode.clicked.connect(self.changeMode)
-        self.modeGroup.addButton(sylMode)
-        self.modeGroup.setExclusive(True)
-        self.modeGroup.setId(segMode, 0)
-        self.modeGroup.setId(sylMode, 1)
+        self.modeGroup = RadioSelectWidget('Search mode',
+                                           collections.OrderedDict([('Segments', 'segs'),
+                                                                    ('Syllables', 'syls')])
+                                           )
+        self.mode = 'segMode'  # default search mode is 'segment mode' -- when the user doesn't touch any radio button
 
-        if (len(inventory.syllables) == 0): # if there's no syllable in the corpus,
-            sylMode.setEnabled(False)       # then grey out the syllable search option.
+        if len(inventory.syllables) == 0:  # if there's no syllable in the corpus,
+            self.modeGroup.widgets[1].setEnabled(False)  # then grey out the syllable search option.
 
-        modeLayout.addWidget(segMode)
-        modeLayout.addWidget(sylMode)
-        optionLayout.addWidget(modeFrame)
+        for searchmode_btn in self.modeGroup.widgets:
+            searchmode_btn.toggled.connect(lambda: self.changeMode(searchmode_btn))
+
+        optionLayout.addWidget(self.modeGroup)
 
         resultTypeFrame = QGroupBox('Result type')
         resultTypeLayout = QVBoxLayout()
         resultTypeFrame.setLayout(resultTypeLayout)
 
-        self.resultTypeGroup = QButtonGroup()
-        pos = QCheckBox('Positive')
-        pos.clicked.connect(self.changeResultType)
-        pos.setChecked(True)
-        self.resultType = 'positive'
-        self.resultTypeGroup.addButton(pos)
-        neg = QCheckBox('Negative')
-        neg.clicked.connect(self.changeResultType)
-        self.resultTypeGroup.addButton(neg)
-        self.resultTypeGroup.setExclusive(True)
-        self.resultTypeGroup.setId(pos, 2)
-        self.resultTypeGroup.setId(neg, -2)
+        self.resultTypeGroup = RadioSelectWidget('Result type',
+                                                 collections.OrderedDict([('Positive', 'pos'),
+                                                                          ('Negative', 'neg')]))
+        self.resultType = 'positive'  # default result type is 'positive' -- when the users don't touch any radio button
 
-        resultTypeLayout.addWidget(pos)
-        resultTypeLayout.addWidget(neg)
-        optionLayout.addWidget(resultTypeFrame)
+        for n, resulttype_btn in enumerate(self.resultTypeGroup.widgets):
+            resulttype_btn.toggled.connect(lambda: self.changeResultType(resulttype_btn))
+        optionLayout.addWidget(self.resultTypeGroup)
 
         self.tierWidget = TierWidget(corpus, include_spelling=False)
         optionLayout.addWidget(self.tierWidget)
@@ -541,36 +613,82 @@ class PhonoSearchDialog(FunctionDialog):
 
         optionLayout.addWidget(searchFrame)
 
-        self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
+        filterFrame = QGroupBox('Additional filters')
+        filterLayout = QVBoxLayout()
+        filterFrame.setLayout(filterLayout)
+        filterFrame.setFixedWidth(200)
+        wordFreqFrame = QGroupBox('Word frequency filters')
+        wFbox = QFormLayout()
+        self.minWordFreqFrame = QLineEdit()
+        wFbox.addRow('Minimum:', self.minWordFreqFrame)
+        self.maxWordFreqFrame = QLineEdit()
+        wFbox.addRow('Maximum:', self.maxWordFreqFrame)
+        wordFreqFrame.setLayout(wFbox)
+        filterLayout.addWidget(wordFreqFrame)
+
+        phonFreqFrame = QGroupBox('Phoneme number filters')
+        pFbox = QFormLayout()
+        self.minPhonFreqFrame = QLineEdit()
+        pFbox.addRow('Minimum:', self.minPhonFreqFrame)
+        self.maxPhonFreqFrame = QLineEdit()
+        pFbox.addRow('Maximum:', self.maxPhonFreqFrame)
+        phonFreqFrame.setLayout(pFbox)
+        filterLayout.addWidget(phonFreqFrame)
+
+        syllFreqFrame = QGroupBox('Syllable number filters')
+        sFbox = QFormLayout()
+        self.minSyllFreqFrame = QLineEdit()
+        sFbox.addRow('Minimum:', self.minSyllFreqFrame)
+        self.maxSyllFreqFrame = QLineEdit()
+        sFbox.addRow('Maximum:', self.maxSyllFreqFrame)
+        if len(inventory.syllables) == 0:
+            # grey out the box if there are no syllable delimiters
+            self.maxSyllFreqFrame.setStyleSheet("""QLineEdit { background-color: rgb(236, 236, 236);}""")
+            self.maxSyllFreqFrame.setEnabled(False)
+            self.minSyllFreqFrame.setStyleSheet("""QLineEdit { background-color: rgb(236, 236, 236);}""")
+            self.minSyllFreqFrame.setEnabled(False)
+        syllFreqFrame.setLayout(sFbox)
+        filterLayout.addWidget(syllFreqFrame)
+
+        self.envWidget = PSEnvironmentSelectWidget(inventory=self.inventory, rt=self.resultTypeGroup,
+                                                   show_full_inventory=bool(settings['show_full_inventory']))
+        # self.envWidget = EnvironmentSelectWidget(inventory=self.inventory, show_full_inventory=bool(settings['show_full_inventory']))
 
         self.pslayout.addWidget(self.envWidget)
         self.pslayout.addWidget(optionFrame)
+        self.pslayout.addWidget(filterFrame)
 
         self.psFrame.setLayout(self.pslayout)
         self.layout().insertWidget(0, self.psFrame)
 
         self.progressDialog.setWindowTitle('Searching')
 
-    def changeResultType(self):
-        if self.resultTypeGroup.checkedId() == 2:  # positive
-            self.resultType = 'positive'
-        else:
-            self.resultType = 'negative'
+    def changeResultType(self, btn):
+        if btn.text() == 'Negative':
+            if btn.isChecked():     # 'negative' is checked
+                self.resultType = 'negative'
+            else:                   # 'negative' is deselected
+                self.resultType = 'positive'
 
-    def changeMode(self):
+    def changeMode(self, btn):
         self.pslayout.removeWidget(self.envWidget)
         self.envWidget.deleteLater()
-        if self.modeGroup.checkedId() == 0:  # segMode is checked
-            self.mode = 'segMode'
-            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
-                                                     mode=self.mode)
-            self.pslayout.insertWidget(0, self.envWidget)
 
-        else:
-            self.mode = 'sylMode'
-            self.envWidget = EnvironmentSelectWidget(self.inventory, show_full_inventory=bool(self.settings['show_full_inventory']),
-                                                     mode=self.mode)
-            self.pslayout.insertWidget(0, self.envWidget)
+        if btn.text() == 'Syllables':
+            if btn.isChecked():     # sylMode is checked
+                self.mode = 'sylMode'
+                self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
+                if self.resultTypeGroup.widgets[1].isChecked():  # if 'negative search' has been previously selected.
+                    self.resultTypeGroup.widgets[1].setChecked(False)  # then uncheck 'negative search'
+                    self.resultTypeGroup.widgets[0].setChecked(True)   # and check 'positive search'
+            else:                   # sylMode is deselected
+                self.mode = 'segMode'
+                self.resultTypeGroup.widgets[1].setEnabled(True)  # enable 'negative search' in result type
+        self.envWidget = PSEnvironmentSelectWidget(self.inventory,
+                                                   show_full_inventory=bool(self.settings['show_full_inventory']),
+                                                   mode=self.mode,
+                                                   rt=self.resultTypeGroup)
+        self.pslayout.insertWidget(0, self.envWidget)
 
     def accept(self):
         for n in range(self.envWidget.environmentFrame.layout().count() - 2):
@@ -682,19 +800,84 @@ class PhonoSearchDialog(FunctionDialog):
                     return
             kwargs['envs'] = envs
 
+        try:
+            min_word_freq = float(self.minWordFreqFrame.text())
+        except ValueError:
+            min_word_freq = 0.0
+        try:
+            min_phon_num = float(self.minPhonFreqFrame.text())
+        except ValueError:
+            min_phon_num = 0.0
+        try:
+            min_syl_num = float(self.minSyllFreqFrame.text())
+        except ValueError:
+            min_syl_num = 0.0
+
+        try:
+            max_word_freq = float(self.maxWordFreqFrame.text())
+        except ValueError:
+            max_word_freq = float('inf')
+        try:
+            max_phon_num = float(self.maxPhonFreqFrame.text())
+        except ValueError:
+            max_phon_num = float('inf')
+        try:
+            max_syl_num = float(self.maxSyllFreqFrame.text())
+        except ValueError:
+            max_syl_num = float('inf')
+
+        kwargs['min_word_freq'] = min_word_freq
+        kwargs['min_phon_num'] = min_phon_num
+        kwargs['min_syl_num'] = min_syl_num
+        kwargs['max_word_freq'] = max_word_freq
+        kwargs['max_phon_num'] = max_phon_num
+        kwargs['max_syl_num'] = max_syl_num
+
         kwargs['corpus'] = self.corpus
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['mode'] = self.mode
         kwargs['result_type'] = self.resultType
+
         return kwargs
 
     def setResults(self, results):
         self.results = list()
+
+        try:
+            min_word_freq = float(self.minWordFreqFrame.text())
+        except ValueError:
+            min_word_freq = "N/A"
+        try:
+            min_phon_num = float(self.minPhonFreqFrame.text())
+        except ValueError:
+            min_phon_num = "N/A"
+        try:
+            min_syl_num = float(self.minSyllFreqFrame.text())
+        except ValueError:
+            min_syl_num = "N/A"
+
+        try:
+            max_word_freq = float(self.maxWordFreqFrame.text())
+        except ValueError:
+            max_word_freq = "N/A"
+        try:
+            max_phon_num = float(self.maxPhonFreqFrame.text())
+        except ValueError:
+            max_phon_num = "N/A"
+        try:
+            max_syl_num = float(self.maxSyllFreqFrame.text())
+        except ValueError:
+            max_syl_num = "N/A"
+
         if self.mode == 'segMode':
             for w, f in results:
                 segs = tuple(x.middle for x in f)
+                if len(segs) == 0 and self.resultType == 'negative':
+                    segs = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
                 try:
                     envs = tuple(str(x) for x in f)
+                    if len(envs) == 0 and self.resultType == 'negative':
+                        envs = tuple(str(y) for y in self.envWidget.value())
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,
@@ -703,7 +886,14 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Transcription': str(getattr(w, self.tierWidget.value())),
                                      'Target': segs,
                                      'Environment': envs,
-                                     'Token frequency': w.frequency})
+                                     'Result type': self.resultType,
+                                     'Token frequency': w.frequency,
+                                     'Min Word Freq': min_word_freq,
+                                     'Max Word Freq': max_word_freq,
+                                     'Min Phoneme Number': min_phon_num,
+                                     'Max Phoneme Number': max_phon_num,
+                                     'Min Syllable Number': min_syl_num,
+                                     'Max Syllable Number': max_syl_num})
         else:
             for word, list_of_sylEnvs in results:
                 middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
@@ -717,4 +907,11 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Transcription': str(getattr(word, self.tierWidget.value())),
                                      'Target': middle_syllables,
                                      'Environment': envs,
-                                     'Token frequency': word.frequency})
+                                     'Result type': self.resultType,
+                                     'Token frequency': word.frequency,
+                                     'Min Word Freq': min_word_freq,
+                                     'Max Word Freq': max_word_freq,
+                                     'Min Phoneme Number': min_phon_num,
+                                     'Max Phoneme Number': max_phon_num,
+                                     'Min Syllable Number': min_syl_num,
+                                     'Max Syllable Number': max_syl_num})
