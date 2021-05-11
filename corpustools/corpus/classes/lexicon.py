@@ -1486,9 +1486,13 @@ class SyllableEnvironment(object):
         self._start = new
 
     def __str__(self):
-        lhs = '-'.join(self._lhs)
-        rhs = '-'.join(self._rhs)
-        return lhs + '_' + rhs
+        lhs = '}-S:{'.join(self._lhs)
+        if lhs != '':
+            lhs = 'S:{' + lhs + '}'
+        rhs = '}-S:{'.join(self._rhs)
+        if rhs != '':
+            rhs = 'S:{' + rhs + '}'
+        return '' + lhs + '_' + rhs
 
     def __repr__(self):
         return self.__str__()
