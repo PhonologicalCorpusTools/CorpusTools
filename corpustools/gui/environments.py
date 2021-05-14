@@ -284,7 +284,7 @@ class EnvironmentSelectWidget(QGroupBox):
         layout.addWidget(scroll)
 
         self.setLayout(layout)
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(500)
 
     def addNewEnvironment(self):
         if self.mode == 'segMode':
@@ -1000,7 +1000,6 @@ class SyllableWidget(QWidget):
         self.middle = middle
 
         layout = QVBoxLayout()
-        self.setLayout(layout)
 
         self.specification = QFormLayout()
         self.onsetLabel = QLabel()
@@ -1021,6 +1020,8 @@ class SyllableWidget(QWidget):
         self.mainLabel = QPushButton('Edit')
         #self.mainLabel.setStyleSheet("padding: 4px")
         layout.addWidget(self.mainLabel)
+
+        self.setLayout(layout)
 
         self.menu = QMenu(self)
         unspecifiedSyllableAct = QAction('Add an unspecified syllable', self, triggered=self.addUnspecifiedSyllable)
@@ -1341,7 +1342,7 @@ class EnvironmentSyllableWidget(QWidget):
         layout.addLayout(optionlayout)
 
         self.setLayout(layout)
-        self.setMinimumWidth(400)
+        self.sizeHint()
 
         if copy_data:
             self.loadfromCopy(copy_data)
