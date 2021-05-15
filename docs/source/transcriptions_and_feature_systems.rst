@@ -622,9 +622,9 @@ Segment mode lets you search a target in linear environments.
 1. **Search mode**: Select “Segments.”
 
 2. **Result type**: Select either positive or negative. A positive search returns entries 
-that satisfy the environment you choose in the environment selection; while negative search 
-returns the strings that do *not* fall under the environment that you specify, i.e., the complement 
-of your search.
+   that satisfy the environment you choose in the environment selection; while negative search
+   returns the strings that do *not* fall under the environment that you specify, i.e., the complement
+   of your search.
 
 3. **Tier**: Select the tier on which phonological search should be performed.
    The default would be the transcription tier, so that phonological
@@ -634,32 +634,34 @@ of your search.
 
 4. **Environments**: Select the strings you want to search for. See :ref:`environment_selection` and :ref:`sound_selection` for details.
 
-An example of adding environments for a positive search (in this case, the environment “word-initial,
-before a vowel”):
+   An example of adding environments for a positive search (in this case, the environment “word-initial,
+   before a vowel”):
 
 .. image:: static/phonosearchenvironment.png
    :width: 100%
    :align: center
 
-An example of the phonological search window, set up to search for
-voiceless stops word-initially before vowels and between [ɑ] vowels,
-on the transcription tier (positive search):
+   An example of the phonological search window, set up to search for voiceless stops word-initially before vowels
+   and between [ɑ] vowels, on the transcription tier (positive search):
 
 .. image:: static/phonosearchenvironment2.png
    :width: 100%
    :align: center
 
-An example of the phonological search window, set up to search for
-voiceless stops word-initially before vowels and between [ɑ] vowels,
-on the transcription tier (negative search):
+   An example of the phonological search window, set up to search for voiceless stops word-initially before vowels and
+   between [ɑ] vowels, on the transcription tier (negative search):
 
 .. image:: static/phonosearchenvironment3.png
    :width: 100%
    :align: center
 
-5. **Saving Searches**: It is possible to save particular searches and then re-load them for later use (within the same corpus, or in a different one). PCT will automatically save the five most recent searches for you, but you can also specify that any particular search should be saved for the long term.
+5. **Saving Searches**: It is possible to save particular searches and then re-load them for later use (within the same
+   corpus, or in a different one). PCT will automatically save the five most recent searches for you, but you can also
+   specify that any particular search should be saved for the long term.
 
-To save a search, click on “Save current search” in the “Phonological Search” dialogue box (see above pictures). To modify it or to use a saved search, click on “Load recent search.” Doing so brings up the “Searches” dialogue box as follows:
+   To save a search, click on “Save current search” in the “Phonological Search” dialogue box (see above pictures).
+   To modify it or to use a saved search, click on “Load recent search.” Doing so brings up the “Searches” dialogue box
+   as follows:
 
 .. image:: static/phonosearchsaved.png
    :width: 90%
@@ -743,32 +745,32 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
    only at the canonical forms or whatever forms are listed in the specified tier.)
 
 4. **Environments**: Construct a syllable by selecting 'Construct the syllable,' or add a non-segment symbol (for non-targets). Constructing a syllable means 
-specifying the environment for each syllable component. See examples below for the syllable construction. Also, see :ref:`environment_selection` and :ref:`sound_selection` for environment selection.
+   specifying the environment for each syllable component. See examples below for the syllable construction. Also, see :ref:`environment_selection` and :ref:`sound_selection` for environment selection.
 
-To construct a syllable, first you will need to add a new environment by clicking the “New environment” button. 
-And then, you can construct a target syllable by selecting "Construct the syllable" from the dropdown menu 
-of Edit. The Construct syllables window will pop up. Now you can specify Onset and Nucleus just as you 
-would do in :ref:`environment_selection`. And you can also specify Stress and Tone for the target syllable 
-on the right-hand side. 
+   To construct a syllable, first you will need to add a new environment by clicking the “New environment” button.
+   And then, you can construct a target syllable by selecting "Construct the syllable" from the dropdown menu
+   of Edit. The Construct syllables window will pop up. Now you can specify Onset and Nucleus just as you
+   would do in :ref:`environment_selection`. And you can also specify Stress and Tone for the target syllable
+   on the right-hand side.
 
-For each syllable component, you can select environment and specify a search type among "Exactly matches", "Minimally contains", "Starts with", and "Ends with." 
-Please note that using "Exactly matches" while not specifying an onset/coda slot means "no onset/coda", while using "Minimally contains" without specifying an 
-onset or coda means that the onset or coda may either be empty or filled. Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
+   For each syllable component, you can select environment and specify a search type among "Exactly matches", "Minimally contains", "Starts with", and "Ends with."
+   Please note that using "Exactly matches" while not specifying an onset/coda slot means "no onset/coda", while using "Minimally contains" without specifying an
+   onset or coda means that the onset or coda may either be empty or filled. Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
 
-Additionally, you can exclude specific segments at a syllable component by selecting "Set negative" from the dropdown menu. For example, 
-if you want to search for a syllable that has any phoneme except +labial at the onset position and [ɑ] as the nucleus, you can do so in 
-the "Construct syllables" window by specifying "Nucleus" as [ɑ] and setting "Onset" as +labial with "Set negative" option checked from 
-the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ].
+   Additionally, you can exclude specific segments at a syllable component by selecting "Set negative" from the dropdown menu. For example,
+   if you want to search for a syllable that has any phoneme except +labial at the onset position and [ɑ] as the nucleus, you can do so in
+   the "Construct syllables" window by specifying "Nucleus" as [ɑ] and setting "Onset" as +labial with "Set negative" option checked from
+   the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ].
 
-Now, let's assume you search for the cases where the second syllables are either /tɑ/ or /sɑ/ (Alveolar-stop or alveolar-fricative onset and low-back vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
+   Now, let's assume you search for the cases where the second syllables are either /tɑ/ or /sɑ/ (Alveolar-stop or alveolar-fricative onset and low-back vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
 
-An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of either an alveolar stop or fricative, and the nucleus of a low-back vowel):
+   An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of either an alveolar stop or fricative, and the nucleus of a low-back vowel):
 
 .. image:: static/phonosearchenvironmentsyllable.png
    :width: 100%
    :align: center
 
-Another example of constructing the syllable (unlike above, only closed syllables are counted):
+   Another example of constructing the syllable (unlike above, only closed syllables are counted):
 
 .. image:: static/phonosearchenvironmentsyllable2.png
    :width: 100%
@@ -801,13 +803,13 @@ Another example of constructing the syllable (unlike above, only closed syllable
    return to the search selection dialogue box, click on “Reopen function dialogue.”
    Otherwise, when finished, click on “Close window” to return to the corpus.
 
-An example of the summary results window for the above syllable mode search:
+   An example of the summary results window for the above syllable mode search:
 
 .. image:: static/phonosearchsummarysyllable.png
    :width: 70%
    :align: center
 
-And the individual results from the same search, sorted by environment:
+   And the individual results from the same search, sorted by environment:
 
 
 .. image:: static/phonosearchindividualsyllable.png
