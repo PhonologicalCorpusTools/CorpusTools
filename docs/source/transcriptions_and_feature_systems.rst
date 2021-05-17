@@ -836,7 +836,7 @@ click “Load recent search.”
   can be found in the “Searches” dialogue, which is described next.
 
 .. image:: static/savingphonosearch2.png
-   :width: 90%
+   :width: 30%
    :align: center
 
 * **Load recent search**: Clicking on “Load recent search” in the “Phonological Search” dialogue prompts a dialogue box titled
@@ -859,7 +859,7 @@ or to add it to the current search. Finally, you can save or delete a current se
 on a recent search.
 
 .. image:: static/phonosearchsaved2.png
-   :width: 30%
+   :width: 90%
    :align: center
 
 You can give it a name when you save a current or recent search. If you want to change the name of an existing
