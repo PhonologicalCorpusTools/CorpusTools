@@ -637,23 +637,23 @@ Segment mode lets you search a target in linear environments.
    An example of adding environments for a positive search (in this case, the environment “word-initial,
    before a vowel”):
 
-.. image:: static/phonosearchenvironment.png
-   :width: 100%
-   :align: center
+   .. image:: static/phonosearchenvironment.png
+      :width: 100%
+      :align: center
 
    An example of the phonological search window, set up to search for voiceless stops word-initially before vowels
    and between [ɑ] vowels, on the transcription tier (positive search):
 
-.. image:: static/phonosearchenvironment2.png
-   :width: 100%
-   :align: center
+   .. image:: static/phonosearchenvironment2.png
+      :width: 100%
+      :align: center
 
    An example of the phonological search window, set up to search for voiceless stops word-initially before vowels and
    between [ɑ] vowels, on the transcription tier (negative search):
 
-.. image:: static/phonosearchenvironment3.png
-   :width: 100%
-   :align: center
+   .. image:: static/phonosearchenvironment3.png
+      :width: 100%
+      :align: center
 
 5. **Saving Searches**: It is possible to save particular searches and then re-load them for later use (within the same
    corpus, or in a different one). PCT will automatically save the five most recent searches for you, but you can also
@@ -688,24 +688,23 @@ Segment mode lets you search a target in linear environments.
    return to the search selection dialogue box, click on “Reopen function dialogue.”
    Otherwise, when finished, click on “Close window” to return to the corpus.
 
-An example of the summary results window for the above positive phonological search:
+   An example of the summary results window for the above positive phonological search:
 
-.. image:: static/phonosearchsummary.png
-   :width: 90%
-   :align: center
+   .. image:: static/phonosearchsummary.png
+      :width: 90%
+      :align: center
 
-And the individual results from the same search, sorted by environment:
+   And the individual results from the same search, sorted by environment:
 
+   .. image:: static/phonosearchindividual.png
+      :width: 90%
+      :align: center
 
-.. image:: static/phonosearchindividual.png
-   :width: 90%
-   :align: center
+   Finally, the same environment but negative search option returns the following individual results:
 
-Finally, the same environment but negative search option returns the following individual results:
-
-.. image:: static/phonosearchindividualnegative.png
-   :width: 90%
-   :align: center
+   .. image:: static/phonosearchindividualnegative.png
+      :width: 90%
+      :align: center
 
    
 .. _syllable_mode:
@@ -758,15 +757,15 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
 
    An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of either an alveolar stop or fricative, and the nucleus of a low-back vowel):
 
-.. image:: static/phonosearchenvironmentsyllable.png
-   :width: 100%
-   :align: center
+   .. image:: static/phonosearchenvironmentsyllable.png
+      :width: 100%
+      :align: center
 
    Another example of constructing the syllable (unlike above, only closed syllables are counted):
 
-.. image:: static/phonosearchenvironmentsyllable2.png
-   :width: 100%
-   :align: center
+   .. image:: static/phonosearchenvironmentsyllable2.png
+      :width: 100%
+      :align: center
 
    
 5. **Saving Searches**: It is possible to save particular searches, as in the Segments mode. To save a search,
@@ -799,15 +798,15 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
 
    An example of the summary results window for the above syllable mode search:
 
-.. image:: static/phonosearchsummarysyllable.png
-   :width: 70%
-   :align: center
+   .. image:: static/phonosearchsummarysyllable.png
+      :width: 70%
+      :align: center
 
    And the individual results from the same syllable mode search, sorted by environment:
 
-.. image:: static/phonosearchindividualsyllable.png
-   :width: 70%
-   :align: center
+   .. image:: static/phonosearchindividualsyllable.png
+      :width: 70%
+      :align: center
 
 
 .. _saving_phono_search:
@@ -827,47 +826,46 @@ click “Load recent search.”
   Before clicking “Save,” you can give it a name using the textbox. Here, we name this search ‘word initial t.’
   If you don’t want to save the search, you can click the “cancel” button.
 
-.. image:: static/savingphonosearch1.png
-   :width: 90%
-   :align: center
-
+  .. image:: static/savingphonosearch1.png
+     :width: 90%
+     :align: center
 
   If the search is successfully saved, a message box will appear as below. Now ‘word initial t’
   can be found in the “Searches” dialogue, which is described next.
 
-.. image:: static/savingphonosearch2.png
-   :width: 30%
-   :align: center
+  .. image:: static/savingphonosearch2.png
+     :width: 30%
+     :align: center
 
 * **Load recent search**: Clicking on “Load recent search” in the “Phonological Search” dialogue prompts a dialogue box titled
   “Searches” as shown below. This is the place where you can interact with recent, saved, or current searches:
 
-.. image:: static/phonosearchsaved.png
-   :width: 90%
-   :align: center
+  .. image:: static/phonosearchsaved.png
+     :width: 90%
+     :align: center
 
 
-On the left are listed the five most recent searches, showing the target and environment for each search.
-In the center are the “Saved searches.” On the right is the list of currently loaded searches. The list consists
-of searches that you created in the “Phonological Search” dialogue. It should be empty if you did not
-enter any search before coming into the “Searches” dialogue.
+  On the left are listed the five most recent searches, showing the target and environment for each search.
+  In the center are the “Saved searches.” On the right is the list of currently loaded searches. The list consists
+  of searches that you created in the “Phonological Search” dialogue. It should be empty if you did not
+  enter any search before coming into the “Searches” dialogue.
 
-You can right-click on one of these panels to bring up further options. For example, right-clicking on a
-recent search allows you to transfer it to the “Saved searches,” to delete it entirely, or to add it to the
-current search. Similarly, right-clicking on a saved search allows you to delete it entirely, to change its name,
-or to add it to the current search. Finally, you can save or delete a current search here too, by right-clicking
-on a recent search.
+  You can right-click on one of these panels to bring up further options. For example, right-clicking on a
+  recent search allows you to transfer it to the “Saved searches,” to delete it entirely, or to add it to the
+  current search. Similarly, right-clicking on a saved search allows you to delete it entirely, to change its name,
+  or to add it to the current search. Finally, you can save or delete a current search here too, by right-clicking
+  on a recent search.
 
-.. image:: static/phonosearchsaved2.png
-   :width: 90%
-   :align: center
+  .. image:: static/phonosearchsaved2.png
+     :width: 90%
+     :align: center
 
-You can give it a name when you save a current or recent search. If you want to change the name of an existing
-search, right-click on a saved search and select “Change name” as shown above. In these cases, the same
-“Name this search” dialogue will appear to let you (re)name the search.
+  You can give it a name when you save a current or recent search. If you want to change the name of an existing
+  search, right-click on a saved search and select “Change name” as shown above. In these cases, the same
+  “Name this search” dialogue will appear to let you (re)name the search.
 
-When you are done with saving searches, building a list of current searches, or other stuff in the “Searches”
-dialogue, click on the “Update environment” button to apply the change and go back to “Phonological Search.”
+  When you are done with saving searches, building a list of current searches, or other stuff in the “Searches”
+  dialogue, click on the “Update environment” button to apply the change and go back to “Phonological Search.”
 
 .. _io_classes_and_functions:
 
