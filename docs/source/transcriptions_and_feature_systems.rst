@@ -815,32 +815,32 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
 Saving searches
 ---------------
 The phonological searches you perform can be saved and used later, including in a different corpus.
-You also have the option to name the phonological search when you save it. For this, use the two buttons
+You also have the option to name the phonological search that you save. For this, use the two buttons
 under the “Searches” group in the “Phonological Search” dialogue. To save all current searches directly,
 click “Save current search.” To choose which one to save, or load from previously saved searches,
 click “Load recent search.”
 
-If you click “Save current search,” a dialogue box with the information of a search will appear as shown
-below. In this example, we have already created a search for word-initial /t/ that comes before a vowel.
-Since we are saving this search, the target is specified as {t}, and environment as {#}_{ɑ,o,e,i,u}.
-If you confirm that this is the search you want to save, you can give it a name using the textbox.
-Here, we name this search ‘word initial t.’ Now “Save” to save this search. If you don’t want to save the
-search, you can click the “cancel” button.
+* **Save current search**: If you click “Save current search,” a dialogue box with the information of a search will
+  appear as shown below. In this example, we have already created a search for word-initial /t/ that comes before a vowel.
+  Since we are saving this search, the target is specified as {t}, and environment as {#}_{ɑ,o,e,i,u}.
+  If you confirm that this is the search you want to save, you can select “Save” to save it.
+  Before clicking “Save,” you can give it a name using the textbox. Here, we name this search ‘word initial t.’
+  If you don’t want to save the search, you can click the “cancel” button.
 
 .. image:: static/savingphonosearch1.png
    :width: 90%
    :align: center
 
 
-If the search is successfully saved, a message box will be prompt as shown below. Now ‘word initial t’
-can be found in the “Searches” dialogue, which is described next.
+  If the search is successfully saved, a message box will appear as below. Now ‘word initial t’
+  can be found in the “Searches” dialogue, which is described next.
 
 .. image:: static/savingphonosearch2.png
    :width: 90%
    :align: center
 
-Clicking on “Load recent search” in the “Phonological Search” dialogue prompts a dialogue box titled
-“Searches” as shown below. This is the place where you can interact with recent, saved, or current searches:
+* **Load recent search**: Clicking on “Load recent search” in the “Phonological Search” dialogue prompts a dialogue box titled
+  “Searches” as shown below. This is the place where you can interact with recent, saved, or current searches:
 
 .. image:: static/phonosearchsaved.png
    :width: 90%
@@ -859,7 +859,7 @@ or to add it to the current search. Finally, you can save or delete a current se
 on a recent search.
 
 .. image:: static/phonosearchsaved2.png
-   :width: 90%
+   :width: 30%
    :align: center
 
 You can give it a name when you save a current or recent search. If you want to change the name of an existing
