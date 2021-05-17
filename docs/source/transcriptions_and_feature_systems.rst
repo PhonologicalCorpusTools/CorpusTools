@@ -615,7 +615,7 @@ and do the following:
 
 .. _segment_mode:
 
-Segment Mode
+Segment mode
 ------------
 Segment mode lets you search a target in linear environments.
 
@@ -660,15 +660,7 @@ Segment mode lets you search a target in linear environments.
    specify that any particular search should be saved for the long term.
 
    To save a search, click on “Save current search” in the “Phonological Search” dialogue box (see above pictures).
-   To modify it or to use a saved search, click on “Load recent search.” Doing so brings up the “Searches” dialogue box
-   as follows:
-
-.. image:: static/phonosearchsaved.png
-   :width: 90%
-   :align: center
-   
-
-On the left are listed the five most recent searches, showing the target and environment for each search. In the center are the officially “saved” searches. On the right is an empty panel in which a new search can be 'built' from the saved searches. Right-clicking on one of these panels will bring up further options. For example, right-clicking on a recent search allows you to transfer it to the saved searches, to delete it entirely, or to add it to the current search. Similarly, right-clicking on a saved search allows you to delete it entirely or to add it to the current search. Double-clicking in the “Notes” column of saved searches allows you to label searches or add other useful information about them. Once one or more searches have been added to the "Current Search" panel, they can be loaded by clicking on "Load selected search." (Note that if only one search is needed, it does not have to be added to the "Current Search" panel first, though it can be.) You will be turned to the main "Phonological Search" dialogue box and the environments for searches will be automatically populated with the selected searches. These can then be further modified if needed (though they would then need to be re-saved if you want them to be stored.)
+   To modify it or to use a saved search, click on “Load recent search.” See :ref:`saving_phono_search` for details.
 
 6. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
@@ -718,7 +710,7 @@ Finally, the same environment but negative search option returns the following i
    
 .. _syllable_mode:
 
-Syllable Mode
+Syllable mode
 -------------
 Syllable mode enables you to incorporate the notion of the syllable in your phonological searches. The basic 
 operation is the same as segments mode, except the environment selection. Syllables mode comes in handy 
@@ -777,7 +769,9 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
    :align: center
 
    
-5. **Saving Searches**: It is possible to save particular searches, as in the Segments mode. To save a search, click on "Save current search" in the "Phonological Search" dialogue box. See above for more information.
+5. **Saving Searches**: It is possible to save particular searches, as in the Segments mode. To save a search,
+   click on "Save current search" in the "Phonological Search" dialogue box. See :ref:`saving_phono_search` for more
+   information.
 
 6. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
@@ -809,12 +803,71 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
    :width: 70%
    :align: center
 
-   And the individual results from the same search, sorted by environment:
-
+   And the individual results from the same syllable mode search, sorted by environment:
 
 .. image:: static/phonosearchindividualsyllable.png
    :width: 70%
    :align: center
+
+
+.. _saving_phono_search:
+
+Saving searches
+---------------
+The phonological searches you perform can be saved and used later, including in a different corpus.
+You also have the option to name the phonological search when you save it. For this, use the two buttons
+under the “Searches” group in the “Phonological Search” dialogue. To save all current searches directly,
+click “Save current search.” To choose which one to save, or load from previously saved searches,
+click “Load recent search.”
+
+If you click “Save current search,” a dialogue box with the information of a search will appear as shown
+below. In this example, we have already created a search for word-initial /t/ that comes before a vowel.
+Since we are saving this search, the target is specified as {t}, and environment as {#}_{ɑ,o,e,i,u}.
+If you confirm that this is the search you want to save, you can give it a name using the textbox.
+Here, we name this search ‘word initial t.’ Now “Save” to save this search. If you don’t want to save the
+search, you can click the “cancel” button.
+
+.. image:: static/savingphonosearch1.png
+   :width: 90%
+   :align: center
+
+
+If the search is successfully saved, a message box will be prompt as shown below. Now ‘word initial t’
+can be found in the “Searches” dialogue, which is described next.
+
+.. image:: static/savingphonosearch2.png
+   :width: 90%
+   :align: center
+
+Clicking on “Load recent search” in the “Phonological Search” dialogue prompts a dialogue box titled
+“Searches” as shown below. This is the place where you can interact with recent, saved, or current searches:
+
+.. image:: static/phonosearchsaved.png
+   :width: 90%
+   :align: center
+
+
+On the left are listed the five most recent searches, showing the target and environment for each search.
+In the center are the “Saved searches.” On the right is the list of currently loaded searches. The list consists
+of searches that you created in the “Phonological Search” dialogue. It should be empty if you did not
+enter any search before coming into the “Searches” dialogue.
+
+You can right-click on one of these panels to bring up further options. For example, right-clicking on a
+recent search allows you to transfer it to the “Saved searches,” to delete it entirely, or to add it to the
+current search. Similarly, right-clicking on a saved search allows you to delete it entirely, to change its name,
+or to add it to the current search. Finally, you can save or delete a current search here too, by right-clicking
+on a recent search.
+
+.. image:: static/phonosearchsaved2.png
+   :width: 90%
+   :align: center
+
+You can give it a name when you save a current or recent search. If you want to change the name of an existing
+search, right-click on a saved search and select “Change name” as shown above. In these cases, the same
+“Name this search” dialogue will appear to let you (re)name the search.
+
+When you are done with saving searches, building a list of current searches, or other stuff in the “Searches”
+dialogue, click on the “Update environment” button to apply the change and go back to “Phonological Search.”
 
 .. _io_classes_and_functions:
 
