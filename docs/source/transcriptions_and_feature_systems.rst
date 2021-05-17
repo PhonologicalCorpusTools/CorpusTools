@@ -252,7 +252,7 @@ with the “ipa2spe” transcription and feature file:
    :align: center
 
 5. **Display options**: The standard view is to display the
-   segments and features as a matrix. 
+   segments and features as a matrix.
 
 .. _inventory_categories:
 
@@ -280,8 +280,8 @@ Hayes-style features. Note that for space reasons, the consonant chart and vowel
 .. image:: static/lemurian_sorted_cons.png
    :width: 90%
    :align: center
-   
-   
+
+
 .. image:: static/lemurian_sorted_vowels.png
    :width: 90%
    :align: center
@@ -312,13 +312,13 @@ feature for consonants vs vowels is now 'cons.')
 
 4. **Editing or deleting rows and columns**: Double-clicking a row or column also allows you to edit or delete that row or column.
 
-5. **Deciding which features to use**: In order to help make categorization as easy as possible, information about the feature specifications for uncategorized segments is available. In the "Uncategorized segments" tab, right-click on any listed segment to see both which rows and columns it may have a partial match with, and also an entire list of its featural specifications. If only high front and back vowels have been defined, for example, clicking on the uncategorized vowel [a] would show the following information. Note that this specifies that the [a] will go into the "back vowel" column; it also shows the rest of the features, so that for instance, it's clear that we need a row for [+low] vowels. 
+5. **Deciding which features to use**: In order to help make categorization as easy as possible, information about the feature specifications for uncategorized segments is available. In the "Uncategorized segments" tab, right-click on any listed segment to see both which rows and columns it may have a partial match with, and also an entire list of its featural specifications. If only high front and back vowels have been defined, for example, clicking on the uncategorized vowel [a] would show the following information. Note that this specifies that the [a] will go into the "back vowel" column; it also shows the rest of the features, so that for instance, it's clear that we need a row for [+low] vowels.
 
 .. image:: static/a_matches.png
-   :width: 90%
+   :width: 40%
    :align: center
 
-The above steps can be repeated until all segments are appropriately categorized. The resulting inventory system is the one that will appear in all situations throughout PCT when an inventory is being shown (e.g., for segment selection in searches or analyses). 
+The above steps can be repeated until all segments are appropriately categorized. The resulting inventory system is the one that will appear in all situations throughout PCT when an inventory is being shown (e.g., for segment selection in searches or analyses).
 
 .. note:: These categories are for display purposes only, however; if, for example, you left [j] and [w] in the vowel chart, this would not prevent you from specifying in an actual analysis that you wanted only [+syllabic, +high] segments and correctly eliminating them. (Likewise, one could safely leave them as uncategorized in the inventory display chart by specifying that vowels must be [+syllabic], and then still access them in analyses by selecting them directly or through use of shared features such as [+high].)
 
@@ -517,7 +517,7 @@ e.g., to calculate the neighbourhood density of a hypothetical word given
 the current corpus, you can also add a word in the relevant function’s
 dialogue box, without adding the word permanently to the corpus.
 
-To do add the word globally, howveer, go to “Corpus” / “Add new word...”
+To do add the word globally, however, go to “Corpus” / “Add new word...”
 and do the following:
 
 1. **Spelling**: Type in the orthographic representation of the new word.
@@ -597,17 +597,17 @@ and select “Show non-transcribed items.”
 Phonological Search
 ===================
 
-PCT allows you to do searches for various strings, defined by segments or features. 
+PCT allows you to do searches for various strings, defined by segments or features.
 The search returns two types of information: one, a general count
 of the number of entries that fit the search description, and two, the
 actual list of all the words in the corpus that contain the specified
 string. There are two modes in which this “phonological search” can be conducted: “Segment mode” and “Syllable mode.”
-“Segment mode” treats words in the corpus as a linear sequence of segments, so it is useful for 
-searching for a target in a linear context. This is the only search type that was available 
+“Segment mode” treats words in the corpus as a linear sequence of segments, so it is useful for
+searching for a target in a linear context. This is the only search type that was available
 in early versions of PCT.
-“Syllable mode,” on the other hand, allows you to construct syllables for your search, 
-such that you can search for both syllable components like “onset” and “coda” and also 
-for characteristics of words that are defined at the syllabic level, such as tone or stress. 
+“Syllable mode,” on the other hand, allows you to construct syllables for your search,
+such that you can search for both syllable components like “onset” and “coda” and also
+for characteristics of words that are defined at the syllabic level, such as tone or stress.
 Syllable mode requires your corpus to have syllable delimiters.
 
 To conduct a search, first choose “Corpus” / “Phonological search...”
@@ -621,7 +621,7 @@ Segment mode lets you search a target in linear environments.
 
 1. **Search mode**: Select “Segments.”
 
-2. **Result type**: Select either positive or negative. A positive search returns entries 
+2. **Result type**: Select either positive or negative. A positive search returns entries
    that satisfy the environment you choose in the environment selection; while negative search
    returns the strings that do *not* fall under the environment that you specify, i.e., the complement
    of your search.
@@ -706,17 +706,17 @@ Segment mode lets you search a target in linear environments.
       :width: 90%
       :align: center
 
-   
+
 .. _syllable_mode:
 
 Syllable mode
 -------------
-Syllable mode enables you to incorporate the notion of the syllable in your phonological searches. The basic 
-operation is the same as segments mode, except the environment selection. Syllables mode comes in handy 
-when, for example, you want to limit your search to the second syllable of a word, or to the onset of a syllable. 
+Syllable mode enables you to incorporate the notion of the syllable in your phonological searches. The basic
+operation is the same as segments mode, except the environment selection. Syllables mode comes in handy
+when, for example, you want to limit your search to the second syllable of a word, or to the onset of a syllable.
 If you were to do it in segments mode, you would need to construct by hand all the different types of possible syllables before
-the target, because the segments mode is blind to the notion of the syllable. Syllables mode also allows you to search 
-for characteristics that are specified at the syllabic level, such as stress or tone. In order to use syllables mode, though, 
+the target, because the segments mode is blind to the notion of the syllable. Syllables mode also allows you to search
+for characteristics that are specified at the syllabic level, such as stress or tone. In order to use syllables mode, though,
 your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
 
 
@@ -724,18 +724,18 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
 
 2. **Result type**: Select either positive or negative. A positive search returns entries that satisfy
    the environment you choose in the environment selection; while negative search returns the strings
-   that do NOT fall under the environment that you specify. 
+   that do NOT fall under the environment that you specify.
 
 3. **Tier**: Select the tier on which phonological search should be performed.
    The default would be the transcription tier, so that phonological
    environments are defined locally. But, for example, if a vowel tier
    is selected, then one could search for the occurrence of, e.g., [i]
-   before mid vowels on that tier (hence ignoring intervening consonants). 
-   Note that it is not currently possible to do a syllable search within other tiers than 'Transcription.' 
-   Also, phonological search within :ref:`pronunciation_variants` is not available. The search will look 
+   before mid vowels on that tier (hence ignoring intervening consonants).
+   Note that it is not currently possible to do a syllable search within other tiers than 'Transcription.'
+   Also, phonological search within :ref:`pronunciation_variants` is not available. The search will look
    only at the canonical forms or whatever forms are listed in the specified tier.)
 
-4. **Environments**: Construct a syllable by selecting 'Construct the syllable,' or add a non-segment symbol (for non-targets). Constructing a syllable means 
+4. **Environments**: Construct a syllable by selecting 'Construct the syllable,' or add a non-segment symbol (for non-targets). Constructing a syllable means
    specifying the environment for each syllable component. See examples below for the syllable construction. Also, see :ref:`environment_selection` and :ref:`sound_selection` for environment selection.
 
    To construct a syllable, first you will need to add a new environment by clicking the “New environment” button.
@@ -767,7 +767,7 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
       :width: 100%
       :align: center
 
-   
+
 5. **Saving Searches**: It is possible to save particular searches, as in the Segments mode. To save a search,
    click on "Save current search" in the "Phonological Search" dialogue box. See :ref:`saving_phono_search` for more
    information.
