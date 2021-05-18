@@ -4,11 +4,12 @@
 Example corpora
 *****************
 
-There are two example corpora that can be used in PCT that consist of
+There are two types of example corpora in PCT that consist of
 entirely made-up data. The first is a very small corpus called the
-"example" corpus; the second is a slightly larger corpus called
-"Lemurian." Their purpose is to serve as “practice” corpora, allowing
+“example” corpus; the second is a slightly larger corpus called
+“Lemurian.” Their purpose is to serve as “practice” corpora, allowing
 the user to become familiar with PCT while working with an unfamiliar language.
+See :ref:`download_corpora` for how to get the practice corpora in PCT.
 
 .. _example:
 
@@ -20,6 +21,12 @@ a few useful patterns for testing out analysis functions. For practical
 purposes, it is essentially superseded by the Lemurian corpus, which is
 more complex, but we continue to include it since many of the "help"
 examples are based on its contents.
+
+Additionally, PCT also provides a syllabified version of this example corpus.
+It has the same inventory and phonological patterns as the original example
+corpus. However, it contains the syllable structure so that syllable-based
+functionalities such as the syllable search (:ref:`syllable_mode`) can work
+on this.
 
 Inventory:
 ----------

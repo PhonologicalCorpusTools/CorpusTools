@@ -662,7 +662,13 @@ Segment mode lets you search a target in linear environments.
    To save a search, click on “Save current search” in the “Phonological Search” dialogue box (see above pictures).
    To modify it or to use a saved search, click on “Load recent search.” See :ref:`saving_phono_search` for details.
 
-6. **Results**: Once all selections have been made, click on “Calculate
+6. **Additional filters**: It is possible to filter out tokens by word, phoneme, or syllable frequencies.
+   To do this, enter numbers in the relevant slots located under the “Additional filters” group. Note that those
+   minimum and maximum frequency filters apply after the search is done, i.e., by removing unwanted search tokens on
+   search results. Also note that the syllable number filters are not applicable to a corpus without syllables.
+   See :ref:`column-delimited` for how to create a corpus with a syllable delimiter.
+
+7. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
    or you want to start a new one, choose the “Start new results table”
    option. If you want to add the results to a pre-existing table, choose
@@ -772,7 +778,12 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
    click on "Save current search" in the "Phonological Search" dialogue box. See :ref:`saving_phono_search` for more
    information.
 
-6. **Results**: Once all selections have been made, click on “Calculate
+6. **Additional filters**: It is possible to filter out tokens by word, phoneme, or syllable frequencies.
+   To do this, enter numbers in the relevant slots located under the “Additional filters” group. Note that those
+   minimum and maximum frequency filters apply after the search is done, i.e., by removing unwanted search tokens on
+   search results.
+
+7. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
    or you want to start a new one, choose the “Start new results table”
    option. If you want to add the results to a pre-existing table, choose
