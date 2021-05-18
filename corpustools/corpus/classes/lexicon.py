@@ -333,12 +333,13 @@ class Transcription(object):
     def find(self, environment, mode='segMode'):
         """
         Find instances of an EnvironmentFilter in the Transcription
+        Most notably, this function is called to perform phonological searches
 
         Parameters
         ----------
         environment : EnvironmentFilter
             EnvironmentFilter to search for
-        mode : ??
+        mode : either segMode (for finding segment instances) or sylMode (for finding syllable instances)
 
         Returns
         -------
@@ -393,9 +394,9 @@ class Transcription(object):
             for match in re.finditer(reg_exp, word_str, overlapped=True):
                 start = match.start()
                 group_dict = match.groupdict()
-                lhs = group_dict['LHS'].replace('.', '').strip('-').split(sep='--')
-                middle = group_dict['MID'].replace('.', '').strip('-').split(sep='--')
-                rhs = group_dict['RHS'].replace('.', '').strip('-').split(sep='--')
+                lhs = group_dict['LHS']
+                middle = group_dict['MID']
+                rhs = group_dict['RHS']
                 envs.append(SyllableEnvironment(start, middle, lhs=lhs, rhs=rhs))
 
         if not envs:
@@ -1447,11 +1448,15 @@ class Word(object):
         return self.spelling >= other.spelling
 
 class SyllableEnvironment(object):
-    def __init__(self, start, middle, lhs=list(), rhs=list()):
+    def __init__(self, start, middle, lhs, rhs):
         self._start = start
-        self._middle = middle
-        self._lhs = lhs
-        self._rhs = rhs
+        self._middle = middle.replace('.', '').strip('-').split(sep='--')
+        self._lhs = lhs.replace('.', '').strip('-').split(sep='--')
+        self._rhs = rhs.replace('.', '').strip('-').split(sep='--')
+        # object 'raw_syllables' should preserve all syllabic and syllable-internal delimiters
+        # I.e., '-' for syllable boundary, '.' for separating onset, neucleus, and coda.
+        # e.g., 'tataim' should be '-.t..a...--.t..a...--...i..m.-'.
+        self.raw_syllables = {'middle':middle, 'lhs': lhs, 'rhs': rhs}
 
     @property
     def middle(self):
@@ -1486,13 +1491,44 @@ class SyllableEnvironment(object):
         self._start = new
 
     def __str__(self):
-        lhs = '}-S:{'.join(self._lhs)
-        if lhs != '':
-            lhs = 'S:{' + lhs + '}'
-        rhs = '}-S:{'.join(self._rhs)
-        if rhs != '':
-            rhs = 'S:{' + rhs + '}'
-        return '' + lhs + '_' + rhs
+        lhs = '-'.join(self._lhs)
+        rhs = '-'.join(self._rhs)
+        return lhs + '_' + rhs
+
+    def syl_structure(self):
+        # this one should be called when printing out the syllable structure, e.g., the environment slot of PS result.
+        lhs_output = []
+        rhs_output = []
+        for s in self.parse_syl(self.raw_syllables['lhs']):
+            syl_output = []
+            if "nonseg" in s:
+                syl_str = s['nonseg']
+            else:
+                syl_output.append("O:{%s}" % s['onset']) if s['onset'] != '' else None
+                syl_output.append("N:{%s}" % s['nucleus']) if s['nucleus'] != '' else None
+                syl_output.append("C:{%s}" % s['coda']) if s['coda'] != '' else None
+                syl_output.append("Tone:{%s}" % s['tone']) if s['tone'] != '' else None
+                syl_output.append("Stress:{%s}" % s['stress']) if s['stress'] != '' else None
+                syl_str = ', '.join(syl_output)
+                syl_str = 'S:{' + syl_str + '}'
+            lhs_output.append(syl_str)
+        for s in self.parse_syl(self.raw_syllables['rhs']):
+            syl_output = []
+            if "nonseg" in s:
+                syl_str = s['nonseg']
+            else:
+                syl_output.append("O:{%s}" % s['onset']) if s['onset'] != '' else None
+                syl_output.append("N:{%s}" % s['nucleus']) if s['nucleus'] != '' else None
+                syl_output.append("C:{%s}" % s['coda']) if s['coda'] != '' else None
+                syl_output.append("Tone:{%s}" % s['tone']) if s['tone'] != '' else None
+                syl_output.append("Stress:{%s}" % s['stress']) if s['stress'] != '' else None
+                syl_str = ', '.join(syl_output)
+                syl_str = 'S:{' + syl_str + '}'
+            rhs_output.append(syl_str)
+
+        lhs = ' - '.join(lhs_output) + ' '
+        rhs = ' ' + ' - '.join(rhs_output)
+        return lhs + '_' + rhs
 
     def __repr__(self):
         return self.__str__()
@@ -1518,6 +1554,55 @@ class SyllableEnvironment(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def parse_syl(self, syl_rep):
+        """
+        Parse linear representation of syllable into list of dicts
+
+        Parameters
+        ----------
+        syl_rep : str
+            Linearly represented syllables.
+            for example, the syllable information for the word 'ma3shang4' (two syllables)
+            is linearlly represented as '-.m..a...3--.ʂ..a..ŋ.4-' where a pair of '-'s
+            demarcates a syllable, and a pair of '.'s demarcates a syllable-internal unit
+            such as onset nucleus and coda.
+            i.e., a syllable is '-(stress).(onset)..(nucleus)..(coda).(tone)-'
+
+        Returns
+        -------
+        list
+            List of dicts.
+            each dict in the list represents one syllable.
+            The keys are 'tone', 'stress', 'onset', 'nucleus', and 'coda' which have a str value
+        """
+
+        syllables = syl_rep.split(sep='--')
+        syl_output = []
+        for syl in syllables:
+            syl = syl.strip('-')
+            tone_str_onc = []
+
+            if len(syl) == 1:
+                syl_output.append({'nonseg': syl})
+                continue
+            elif len(syl) == 0:
+                continue
+
+            if syl[-1] != '.':  # if tone exists
+                tone_str_onc.append(syl[-1])
+                syl = syl[:-1]
+            else:
+                tone_str_onc.append('')
+            if syl[0] != '.':  # if stress exists
+                tone_str_onc.append(syl[0])
+                syl = syl[1:]
+            else:
+                tone_str_onc.append('')
+            tone_str_onc.extend([i.strip('.') for i in re.findall('\..*?\.', syl)])
+            syl_dict = dict(zip(['tone', 'stress', 'onset', 'nucleus', 'coda'], tone_str_onc))
+            syl_output.append(syl_dict)
+        return syl_output
 
 
 

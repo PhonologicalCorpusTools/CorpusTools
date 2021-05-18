@@ -898,7 +898,7 @@ class PhonoSearchDialog(FunctionDialog):
             for word, list_of_sylEnvs in results:
                 middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
                 try:
-                    envs = tuple(str(syl) for syl in list_of_sylEnvs)
+                    envs = tuple(syl.syl_structure() for syl in list_of_sylEnvs)
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,
