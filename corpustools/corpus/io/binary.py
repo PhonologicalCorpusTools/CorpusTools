@@ -55,7 +55,7 @@ def download_binary(name, path, call_back = None):
     elif name == 'iphod_without_homographs':
         download_link = 'https://www.dropbox.com/s/snlpehx157kfgbu/iphod_without_homographs.corpus?dl=1'
     elif name == 'ipa2spe':
-        download_link = 'https://www.dropbox.com/s/5jy86fpuhrmrq6c/ipa2spe.feature?dl=1'
+        download_link = 'https://www.dropbox.com/s/qxlmcpie496mu4g/ipa2spe.feature?dl=1'
     elif name == 'ipa2hayes':
         download_link = 'https://www.dropbox.com/s/cmg7om0vy84jav2/ipa2hayes.feature?dl=1'
     elif name == 'celex2spe':
