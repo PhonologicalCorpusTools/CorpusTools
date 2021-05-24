@@ -1495,7 +1495,17 @@ class SyllableEnvironment(object):
         rhs = '-'.join(self._rhs)
         return lhs + '_' + rhs
 
-    def syl_structure(self):
+    def print_syl_structure(self):
+        """
+        Take the syllable (list of dicts, cf. 'parse_syl' function) and convert it as a printable linear string.
+
+        Returns
+        -------
+        str
+            List of dicts.
+            each dict in the list represents one syllable.
+            The keys are 'tone', 'stress', 'onset', 'nucleus', and 'coda' which have a str value
+        """
         # this one should be called when printing out the syllable structure, e.g., the environment slot of PS result.
         lhs_output = []
         rhs_output = []
