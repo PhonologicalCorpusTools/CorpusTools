@@ -53,6 +53,11 @@ the new feature system will automatically be called ipa2hayes_November_fieldwork
 feature system is editable and available for use with any other corpora, as generally
 described in :ref:`applying_editing_feature`.
 
+Also note that all created or downloaded corpus files are stored as .corpus in the working
+directory of PCT. Typically, it is “C:\Users\[USER NAME]\Documents\PCT\CorpusTools\CORPUS\”
+(Windows), or “~/Documents/PCT/CorpusTools/CORPUS” (macOS). So you can use a corpus file from
+another machine if you save it in the right directory.
+
 .. _download_corpora:
 
 Using a built-in corpus

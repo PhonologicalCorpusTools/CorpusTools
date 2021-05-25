@@ -20,6 +20,7 @@ Contents:
    sound_selection.rst
    environment_selection.rst
    feature_selection.rst
+   phonological_search.rst
    pronunciation_variants.rst
    phonotactic_probability.rst
    functional_load.rst

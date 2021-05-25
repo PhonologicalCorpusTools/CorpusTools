@@ -5,7 +5,7 @@ Sound Selection
 ***************
 
 There are many instances in PCT where you are given the opportunity to
-select sounds that will be used in an analysis or a search. This section
+select sounds that will be used in an analysis or a :ref:`phonological_search`. This section
 describes the general interface used in all such instances, including
 using featural descriptions to select sounds. See also :ref:`feature_selection`
 for information about how to seelct features on which to do analyses.
