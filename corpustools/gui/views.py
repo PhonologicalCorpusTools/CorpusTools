@@ -814,10 +814,28 @@ class PhonoSearchResults(ResultsWindow):
         self.summarized = not self.summarized
 
     def redo(self):
+        # called when 'Reopen function dialog' selected in phono search result window
         if self.dialog.exec_():
-            if self.dialog.update:
-                self.table.model().addRows(self.dialog.results)
-            else:
+            if self.dialog.update:  # when 'Calculate [...] (add to current results table)' selected
+                if len(self.dialog.results) * len(self.table.model().allData) != 0:
+                    # check whether a same search has been repeated
+                    # if there is already search results AND the new search yielded results.
+                    new_targetenv = set([res['Target']+res['Environment'] for res in self.dialog.results])
+                    existing_targetenv = set([res['Target']+res['Environment'] for res in self.table.model().allData])
+                    if new_targetenv == new_targetenv.intersection(existing_targetenv):
+                        msgBox = QMessageBox(QMessageBox.Warning, "Duplicate searches",
+                                             "It seems that you repeated one of the previous searches. "
+                                             "Do you want to add the result to the current table?\n"
+                                             "Click OK to add the result of the current search to the current table. "
+                                             "This means counting the same result tokens twice.\n"
+                                             "Click Cancel to cancel the search.",
+                                             QMessageBox.NoButton, self)
+                        msgBox.addButton("OK", QMessageBox.AcceptRole)
+                        msgBox.addButton("Cancel", QMessageBox.RejectRole)
+                        if msgBox.exec_() != QMessageBox.AcceptRole:
+                            return
+                    self.table.model().addRows(self.dialog.results)
+            else:  # when 'Calculate [...] (add to current results table)' selected
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
                                                     self.dialog.summary_header,
                                                     self.dialog.results,
