@@ -81,7 +81,7 @@ class TPDialog(FunctionDialog):
         self.tpLayout = QHBoxLayout()
         self.bigramLayout = QVBoxLayout()
 
-        self.envWidget = BigramWidget(self.inventory, tplayout=True)
+        self.envWidget = BigramWidget(self.inventory, tplayout=True, wordlist=self.corpus.wordlist)
         self.envWidget.table.setModel(ABSegmentsModel())
         self.bigramLayout.addWidget(self.envWidget)
         self.tpLayout.addLayout(self.bigramLayout)
