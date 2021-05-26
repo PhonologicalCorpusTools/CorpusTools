@@ -761,14 +761,56 @@ class ResultsWindow(QDialog):
         return sz
 
     def redo(self):
+        # called when 'Reopen function dialog' in analyses (except for phonological search)
         if self.dialog.exec_():
             if self.dialog.update:
-                self.table.model().addRows(self.dialog.results)
+                if not self.duplicate_check():
+                    self.table.model().addRows(self.dialog.results)
             else:
                 dataModel = ResultsModel(self.dialog.header,self.dialog.results, self._parent.settings)
                 self.table.setModel(dataModel)
         self.raise_()
         self.activateWindow()
+
+    def duplicate_check(self):
+        """
+        When in 'repoen function dialog,' checks whether an analysis is conducted twice with the same parameters.
+        If so, raise an error message and discard the new search.
+
+        Returns
+        -------
+         Bool
+            True if duplicate
+        """
+        try:
+            analysis_name = self.dialog.results[0]['Analysis name']
+            warning_type = "calculations"
+            headers = self.table.model().columns
+            set_existing_results = set(tuple(r) for r in self.table.model().rows)
+        except KeyError:
+            analysis_name = "Phonological search"
+            warning_type = "searches"
+            headers = self.table.model().header
+            set_existing_results = set()
+            for r in self.table.model().allData:
+                set_existing_results.add(tuple(r[h] for h in headers))
+
+        set_new_results = set()
+        for r in self.dialog.results:
+            set_new_results.add(tuple([r[h] for h in headers]))
+        if set_new_results.intersection(set_existing_results):
+            msgBox = QMessageBox(QMessageBox.Critical, "Duplicate {}".format(warning_type),
+                                      "It seems that you repeated one of the previous {type}.\n"\
+                                      "{analysis} with identical parameters does not produce new results. "\
+                                      "Therefore, no new information will be added for these {type} this time.\n"\
+                                      "Click OK to go back to the previous results window.".format(type=warning_type,
+                                                                                         analysis=analysis_name),
+                                      QMessageBox.NoButton, self)
+            msgBox.addButton("OK", QMessageBox.AcceptRole)
+            msgBox.exec_()
+            return True
+        else:
+            return False
 
     def save(self):
         filename = QFileDialog.getSaveFileName(self,'Choose save file',
@@ -817,24 +859,9 @@ class PhonoSearchResults(ResultsWindow):
         # called when 'Reopen function dialog' selected in phono search result window
         if self.dialog.exec_():
             if self.dialog.update:  # when 'Calculate [...] (add to current results table)' selected
-                if len(self.dialog.results) * len(self.table.model().allData) != 0:
-                    # check whether a same search has been repeated
-                    # if there is already search results AND the new search yielded results.
-                    new_targetenv = set([res['Target']+res['Environment'] for res in self.dialog.results])
-                    existing_targetenv = set([res['Target']+res['Environment'] for res in self.table.model().allData])
-                    if new_targetenv == new_targetenv.intersection(existing_targetenv):
-                        msgBox = QMessageBox(QMessageBox.Warning, "Duplicate searches",
-                                             "It seems that you repeated one of the previous searches. "
-                                             "Do you want to add the result to the current table?\n"
-                                             "Click OK to add the result of the current search to the current table. "
-                                             "This means counting the same result tokens twice.\n"
-                                             "Click Cancel to cancel the search.",
-                                             QMessageBox.NoButton, self)
-                        msgBox.addButton("OK", QMessageBox.AcceptRole)
-                        msgBox.addButton("Cancel", QMessageBox.RejectRole)
-                        if msgBox.exec_() != QMessageBox.AcceptRole:
-                            return
-                    self.table.model().addRows(self.dialog.results)
+                if len(self.dialog.results) > 0:
+                    if not self.duplicate_check():
+                        self.table.model().addRows(self.dialog.results)
             else:  # when 'Calculate [...] (add to current results table)' selected
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
                                                     self.dialog.summary_header,
