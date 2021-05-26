@@ -94,7 +94,7 @@ class MIDialog(FunctionDialog):
         miFrame = QFrame()
         milayout = QHBoxLayout()
 
-        self.segPairWidget = BigramWidget(self.inventory)
+        self.segPairWidget = BigramWidget(self.inventory, wordlist=self.corpus.wordlist)
 
         milayout.addWidget(self.segPairWidget)
 

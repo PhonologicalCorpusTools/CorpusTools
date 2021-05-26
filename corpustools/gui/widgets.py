@@ -13,6 +13,7 @@ from corpustools.corpus.classes import Attribute
 from corpustools.corpus.io.helper import (get_corpora_list, get_systems_list, corpus_name_to_path, NUMBER_CHARACTERS,
                                             BaseAnnotation)
 from ..corpus.classes.lexicon import SyllableEnvironmentFilter
+from ..exceptions import PCTError
 
 
 def truncate_string(string, length = 10):
@@ -2273,7 +2274,7 @@ class SegmentPairSelectWidget(QGroupBox):
 
 class BigramDialog(QDialog):
     rowToAdd = Signal(object)
-    def __init__(self, inventory, parent = None):
+    def __init__(self, inventory, parent = None, wordlist=None):
         QDialog.__init__(self,parent)
 
         self.inventory = inventory
@@ -2335,6 +2336,9 @@ class BigramDialog(QDialog):
         #self.setFixedSize(self.sizeHint())
         self.setWindowTitle('Create bigram')
 
+        # if specified, word list for checking if bigrams are in the corpus
+        self.wordlist = wordlist
+
     def one(self):
         self.addOneMore = False
         self.accept()
@@ -2360,15 +2364,54 @@ class BigramDialog(QDialog):
                     "Missing information", "Please specify a right hand of the bigram.")
             return
 
+        # check if selected segments are in the corpus
+        bigram_products = [(l,r) for l,r in product(lhs,rhs)]
+        if self.wordlist:
+            pairs_not_found = [env for env in bigram_products if not self.check_bigram(env)]
+            if pairs_not_found:
+                warningBox = QMessageBox()
+                warningBox.setIcon(QMessageBox.Warning)
+                warningBox.setText(self.format_message(pairs_not_found))
+                warningBox.setStandardButtons(QMessageBox.Cancel | QMessageBox.No | QMessageBox.Yes)
+
+                buttonClicked = warningBox.exec()
+                if buttonClicked == QMessageBox.No:
+                    # remove the bigrams and continue
+                    for pair in pairs_not_found:
+                        bigram_products.remove(pair)
+                if buttonClicked == QMessageBox.Cancel:
+                    # go back to bigram selection
+                    return
+
         # iterate over multiple selected segments and add a row for each combination
-        for l, r in product(lhs, rhs):
-            env = l, r
-            self.rowToAdd.emit([env])
+        for pair in bigram_products:
+            self.rowToAdd.emit([pair])
 
         if not self.addOneMore:
             QDialog.accept(self)
         else:
             self.reset()
+
+    # check if a bigram is in the corpus
+    def check_bigram(self, bigram):
+        bigram_str = bigram[0] + bigram[1]
+        transcription_str = [''.join(w) for w in self.wordlist]
+        for w in transcription_str:
+            if bigram_str in w:
+                return True
+        return False
+
+    # format bigrams not found message
+    def format_message(self, pairs):
+        pairs_string = ', '.join(['('+','.join(p)+')' for p in pairs])
+        if len(pairs) == 1:
+            return 'Warning: the bigram %s is not found in the corpus. Do you wish to keep it?' % pairs_string
+        else:
+            if len(pairs) > 10:
+                return 'Warning: %d bigrams are not found in the corpus. Do you wish to keep them?' % len(pairs)
+            else:
+                return 'Warning: the bigrams \n%s\nare not found in the corpus. Do you wish to keep them?' % pairs_string
+
 
 class SyllableBigramDialog(QDialog):
     rowToAdd = Signal(object)
@@ -2555,11 +2598,15 @@ class SegmentSelectDialog(QDialog):
         self.segFrame.clearAll()
 
 class BigramWidget(QGroupBox):
-    def __init__(self,inventory,parent=None, tplayout=False):
+    def __init__(self,inventory,parent=None, tplayout=False, wordlist=None):
         QGroupBox.__init__(self,'Bigrams',parent)
         self.tplayout = tplayout
 
         self.inventory = inventory
+        if wordlist:
+            self.wordlist = [getattr(wordlist[w], 'transcription') for w in wordlist]
+        else:
+            self.wordlist = None
         vbox = QVBoxLayout()
 
         self.addButton = QPushButton('Add bigram')
@@ -2586,24 +2633,20 @@ class BigramWidget(QGroupBox):
         self.setLayout(vbox)
 
     def addRows(self, rows):
+        # if a wordlist is supplied, check if the rows are found in the corpus
+
         if self.tplayout:
-            if type(rows) == list:
-                for row in rows:
-                    resultsdict = {'A':row[0], 'B':row[1]}
-                    self.table.model().addRow(resultsdict)
-            elif type(rows) == SyllableEnvironmentFilter:
-                resultsdict = {'A':SyllableEnvironmentFilter(self.inventory, rows.lhs),
-                               'B':SyllableEnvironmentFilter(self.inventory, rows.middle)}
+            for row in rows:
+                resultsdict = {'A': row[0], 'B': row[1]}
                 self.table.model().addRow(resultsdict)
-            return
-        if isinstance(rows, list):
+        else:
             for row in rows:
                 self.table.model().addRow([row])
-        else:
-            self.table.model().addRow([rows])
+
 
     def envPopup(self):
-        dialog = BigramDialog(self.inventory,self)
+        dialog = BigramDialog(self.inventory,self,self.wordlist)
+
         dialog.rowToAdd.connect(self.addRows)
         result = dialog.exec_()
         dialog.rowToAdd.disconnect()
@@ -2632,6 +2675,15 @@ class SyllableBigramWidget(BigramWidget):
         result = dialog.exec_()
         dialog.rowToAdd.disconnect()
         dialog.deleteLater()
+
+    def addRows(self, rows):
+        if self.tplayout:
+            resultsdict = {'A': SyllableEnvironmentFilter(self.inventory, rows.lhs),
+                           'B': SyllableEnvironmentFilter(self.inventory, rows.middle)}
+            self.table.model().addRow(resultsdict)
+        self.table.model().addRow([rows])
+
+
 
 class RadioSelectWidget(QGroupBox):
     def __init__(self, title, options, actions=None, enabled=None,parent=None):
