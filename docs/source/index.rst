@@ -20,8 +20,8 @@ Contents:
    sound_selection.rst
    environment_selection.rst
    feature_selection.rst
-   phonological_search.rst
    pronunciation_variants.rst
+   phonological_search.rst
    phonotactic_probability.rst
    functional_load.rst
    predictability_of_distribution.rst
