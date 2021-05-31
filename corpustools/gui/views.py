@@ -786,26 +786,42 @@ class ResultsWindow(QDialog):
             analysis_name = self.dialog.results[0]['Analysis name']
             warning_type = "calculations"
             headers = self.table.model().columns
-            set_existing_results = set(tuple(r) for r in self.table.model().rows)
+            if any([isinstance(item, list) for item in self.table.model().rows[0]]):
+                existing_results_set = set()
+                for r in self.table.model().rows:
+                    row_list = list()
+                    for h in range(len(headers)):
+                        row_list.append(str(r[h])) if type(r[h]) == list else row_list.append(r[h])
+                    existing_results_set.add(tuple(row_list))
+            else:
+                existing_results_set = set(tuple(r) for r in self.table.model().rows)
+
         except KeyError:
             analysis_name = "Phonological search"
             warning_type = "searches"
             headers = self.table.model().header
-            set_existing_results = set()
+            existing_results_set = set()
             for r in self.table.model().allData:
-                set_existing_results.add(tuple(r[h] for h in headers))
+                existing_results_set.add(tuple(r[h] for h in headers))
 
-        set_new_results = set()
+        new_results_set = set()
         for r in self.dialog.results:
-            set_new_results.add(tuple([r[h] for h in headers]))
-        if set_new_results.intersection(set_existing_results):
+            if any([isinstance(item, list) for item in r.values()]):
+                row_list = list()
+                for h in headers:
+                    row_list.append(str(r[h])) if type(r[h]) == list else row_list.append(r[h])
+                new_results_set.add(tuple(row_list))
+            else:
+                new_results_set.add(tuple([r[h] for h in headers]))
+
+        if new_results_set.intersection(existing_results_set):
             msgBox = QMessageBox(QMessageBox.Critical, "Duplicate {}".format(warning_type),
-                                      "It seems that you repeated one of the previous {type}.\n"\
-                                      "{analysis} with identical parameters does not produce new results. "\
-                                      "Therefore, no new information will be added for these {type} this time.\n"\
-                                      "Click OK to go back to the previous results window.".format(type=warning_type,
-                                                                                         analysis=analysis_name),
-                                      QMessageBox.NoButton, self)
+                                 "It seems that you repeated one of the previous {type}.\n"
+                                 "{analysis} with identical parameters does not produce new results."
+                                 "Therefore, no new information will be added for these {type} this time.\n"
+                                 "Click OK to go back to the previous results window.".format(type=warning_type,
+                                                                                              analysis=analysis_name),
+                                 QMessageBox.NoButton, self)
             msgBox.addButton("OK", QMessageBox.AcceptRole)
             msgBox.exec_()
             return True
