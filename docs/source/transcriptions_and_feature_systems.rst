@@ -18,9 +18,7 @@ loading in at least one such system before attempting to work with corpora.
 
 This section describes how to create a custom feature file or download a ready-made system.
 Please note that all created or downloaded feature files are stored as .feature in the working
-directory of PCT. Typically, it is “C:\Users\[USER NAME]\Documents\PCT\CorpusTools\FEATURE\”
-(Windows), or “~/Documents/PCT/CorpusTools/FEATURE” (macOS). So you can use a feature file
-from another machine if you save it in the right directory.
+directory of PCT. See :ref:`local_storage` for details.
 
 .. _feature_format:
 

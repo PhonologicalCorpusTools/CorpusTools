@@ -54,9 +54,7 @@ feature system is editable and available for use with any other corpora, as gene
 described in :ref:`applying_editing_feature`.
 
 Also note that all created or downloaded corpus files are stored as .corpus in the working
-directory of PCT. Typically, it is “C:\Users\[USER NAME]\Documents\PCT\CorpusTools\CORPUS\”
-(Windows), or “~/Documents/PCT/CorpusTools/CORPUS” (macOS). So you can use a corpus file from
-another machine if you save it in the right directory.
+directory of PCT. See :ref:`local_storage:` for details.
 
 .. _download_corpora:
 

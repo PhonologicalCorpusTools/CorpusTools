@@ -18,7 +18,7 @@ using the following steps. Note that there are several dependencies that are
 pre-requisites before PCT can function properly. For Mac and Windows machines,
 we have created executable files that bundle most of the dependencies and the
 PCT software itself into a single package. Using these is the easiest /
-fastest way to get PCT up and running on your machine. Note: PCT v 1.4.1 is confirmed to work on Mac OS 10.13 and higher, but may have issues on earlier OS platforms
+fastest way to get PCT up and running on your machine. Note: PCT v 1.4.1 is confirmed to work on Mac OS 10.13 and higher, but may have issues on earlier OS platforms.
 
 Download
 ========
@@ -28,7 +28,7 @@ Download
  
 
 Windows Executable
-==================
+------------------
 
 # NOTE 1: This method requires that you are running a 64-bit version of windows. You can check this by in Control Panel -> System and Security -> System.
 
@@ -38,7 +38,7 @@ Windows Executable
 
 
 Mac Executable -- PCT v 1.4.1 is confirmed to work on 10.13 and higher, but may have issues on earlier OS platforms
-==============
+--------------
 
 # NOTE 1: When the software is downloaded, you may get a security warning indicating that you have tried to launch an unrecognized app. If you Ctrl-click on the application and select "Open," you should be able to override the security warning and use PCT normally.
 
@@ -53,9 +53,10 @@ Linux / Fallback instructions
    needed only for the Acoustic Similarity functionality to work.
 
   a. `Python 3.3 or higher <https://www.python.org/downloads/release/python-341/>`_
-  b. `NumPy <http://www.numpy.org/>`_
-  c. `SciPy <http://www.scipy.org/>`_
-  d. (NB: If you are on Windows and can't successfully use the acoustic
+  b. `regex <https://pypi.org/project/regex/>`_
+  c. `NumPy <http://www.numpy.org/>`_
+  d. `SciPy <http://www.scipy.org/>`_
+  e. (NB: If you are on Windows and can't successfully use the acoustic
      similarity module after installing NumPy and SciPy from the above sources,
      you may want to try installing them from `precompiled binaries
      <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.)
@@ -94,3 +95,23 @@ Linux / Fallback instructions
    terminal window using the command ``pct``. You can also open a
    "Run" dialogue and use the command ``pct`` there. In Windows, the
    Run tool is usually found in All Programs -> Accessories.
+
+.. _local_storage:
+
+Local storage
+=============
+While using PCT, you will work on a corpus file using one of the transcription systems. Once you create or download
+these files, they are saved in your local hard drive for later use. Be default, your PCT working directory is
+“C:\\Users\\[USER NAME]\\Documents\\PCT\\CorpusTools\\” (Windows), or “~/Documents/PCT/CorpusTools/” (macOS or Linux).
+You will find several directories in there:
+
+ * “CORPUS” is the place for the corpus files you created or downloaded (cf. :ref:`loading_corpora`).
+ * “ERRORS” is where you can find error messages for the environment exhaustivity (cf. :ref:`predictability_of_distribution`).
+ * “FEATURE” is the folder where all your feature files are saved (cf. :ref:`transcriptions_and_feature_systems`).
+ * “SEARCH” is where you can find recent phonological searches (recent.searches) and saved searches (saved.searches). See :ref:`saving_phono_search` for how to save a search.
+
+If you want to keep doing the analysis on a different machine, you can copy the files to the relevant path in the new
+machine. Or, if you received a file that runs on PCT, you need to save it in the correct directory for PCT to recognize it.
+Please note that the working directory will not exist if you have never run PCT.
+
+See :ref:`preferences` for information on how to change the working directory.
