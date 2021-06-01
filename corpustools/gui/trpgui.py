@@ -56,7 +56,7 @@ class TPWorker(FunctionWorker):
 class TPDialog(FunctionDialog):
     header = ['Corpus',
               'PCT ver.',
-              'Algorithm type',
+              'Analysis name',
               'Bigram',
               # 'Segment type',
               'Word boundary',
@@ -261,7 +261,7 @@ class TPDialog(FunctionDialog):
         for i, r in enumerate(results):
             self.results.append({'Corpus': self.corpus.name,
                                  'PCT ver.': __version__,
-                                 'Algorithm type': 'Transitional probability',
+                                 'Analysis name': 'Transitional probability',
                                  # 'First segment': self.get_symbol(0, seg_pairs[i]),
                                  # 'Second segment': self.get_symbol(1, seg_pairs[i]),
                                  'Bigram': ''.join(seg_pairs[i]),
