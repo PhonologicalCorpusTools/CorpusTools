@@ -58,7 +58,8 @@ setup(name='corpustools',
           'scipy',
           'textgrid',
           'pyqt5',
-          'sklearn'
+          'sklearn',
+          'regex'
           #'python-acoustic-similarity'
         ],
       entry_points = {

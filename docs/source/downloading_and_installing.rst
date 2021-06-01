@@ -53,10 +53,11 @@ Linux / Fallback instructions
    needed only for the Acoustic Similarity functionality to work.
 
   a. `Python 3.3 or higher <https://www.python.org/downloads/release/python-341/>`_
-  b. `regex <https://pypi.org/project/regex/>`_
+  b. `Regex <https://pypi.org/project/regex/>`_
   c. `NumPy <http://www.numpy.org/>`_
   d. `SciPy <http://www.scipy.org/>`_
-  e. (NB: If you are on Windows and can't successfully use the acoustic
+  e. `Scikit-learn <https://scikit-learn.org/stable/install.html>`_
+  f. (NB: If you are on Windows and can't successfully use the acoustic
      similarity module after installing NumPy and SciPy from the above sources,
      you may want to try installing them from `precompiled binaries
      <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.)
