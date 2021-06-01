@@ -288,5 +288,5 @@ click “Load recent search.”
   dialogue, click on the “Update environment” button to apply the change and go back to “Phonological Search.”
 
 .. note:: Your “saved searches” are locally stored in the SEARCH folder within the working directory that contains
-   the PCT software. See :ref:`local_storage:` for details. If you want to conduct the same searches on a different machine,
+   the PCT software. See :ref:`local_storage` for details. If you want to conduct the same searches on a different machine,
    simply copy “saved.searches” to another computer.

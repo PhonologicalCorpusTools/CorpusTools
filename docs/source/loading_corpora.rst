@@ -54,7 +54,7 @@ feature system is editable and available for use with any other corpora, as gene
 described in :ref:`applying_editing_feature`.
 
 Also note that all created or downloaded corpus files are stored as .corpus in the working
-directory of PCT. See :ref:`local_storage:` for details.
+directory of PCT. See :ref:`local_storage` for details.
 
 .. _download_corpora:
 
