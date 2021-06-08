@@ -1,6 +1,7 @@
 from .imports import *
 import time
 import collections
+import regex as re
 
 from .widgets import TierWidget, RadioSelectWidget
 
@@ -897,8 +898,12 @@ class PhonoSearchDialog(FunctionDialog):
         else:
             for word, list_of_sylEnvs in results:
                 middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
+                if len(middle_syllables) == 0 and self.resultType == 'negative':
+                    middle_syllables = tuple(str(y.middle) for y in self.envWidget.value())
                 try:
                     envs = tuple(syl.print_syl_structure() for syl in list_of_sylEnvs)
+                    if len(envs) == 0 and self.resultType == 'negative':
+                        envs = tuple(re.sub('\[\]','',str(y.lhs) + '_' + str(y.rhs)) for y in self.envWidget.value())
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,

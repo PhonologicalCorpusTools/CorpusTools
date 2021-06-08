@@ -860,12 +860,12 @@ class PhonoSearchResults(ResultsWindow):
         # Previously QPushButton.setText() was used to update the text of the button,
         # but due to MacOS-dependent issue, QPushButton.setText() doesn't update. Instead two identical buttons switch.
         if self.summarized:
-            self.table.model().setSummarized(False)
+            self.table.model().setSummarized(False)  # update table contents
             self.individualButton.hide()
             self.aclayout.insertWidget(0, self.summaryButton)
             self.summaryButton.show()
         else:
-            self.table.model().setSummarized(True)
+            self.table.model().setSummarized(True)  # update table contents
             self.summaryButton.hide()
             self.aclayout.insertWidget(0, self.individualButton)
             self.individualButton.show()
