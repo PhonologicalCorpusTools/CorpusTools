@@ -567,8 +567,8 @@ class PhonoSearchResultsModel(BaseTableModel):
         tokenfreq = defaultdict(float)
 
         for line in self.allData:
-            segs = line['Target']
-            envs = line['Environment']
+            segs = line['userinput_target']
+            envs = line['userinput_env']
             res_type = line['Result type']
             wf = line['Min Word Freq'], line['Max Word Freq']  # word freq filter min/max
             pc = line['Min Phoneme Number'], line['Max Phoneme Number']  # phoneme count min/max

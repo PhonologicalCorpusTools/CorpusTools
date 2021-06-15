@@ -873,12 +873,14 @@ class PhonoSearchDialog(FunctionDialog):
         if self.mode == 'segMode':
             for w, f in results:
                 segs = tuple(x.middle for x in f)
+                userinput_target = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
                 if len(segs) == 0 and self.resultType == 'negative':
-                    segs = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
+                    segs = userinput_target
                 try:
+                    userinput_env = tuple(str(y) for y in self.envWidget.value())
                     envs = tuple(str(x) for x in f)
                     if len(envs) == 0 and self.resultType == 'negative':
-                        envs = tuple(str(y) for y in self.envWidget.value())
+                        envs = userinput_env
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,
@@ -894,16 +896,20 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Min Phoneme Number': min_phon_num,
                                      'Max Phoneme Number': max_phon_num,
                                      'Min Syllable Number': min_syl_num,
-                                     'Max Syllable Number': max_syl_num})
+                                     'Max Syllable Number': max_syl_num,
+                                     'userinput_target': userinput_target,
+                                     'userinput_env': userinput_env})
         else:
             for word, list_of_sylEnvs in results:
                 middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
+                userinput_target = tuple(str(y.middle) for y in self.envWidget.value())
                 if len(middle_syllables) == 0 and self.resultType == 'negative':
-                    middle_syllables = tuple(str(y.middle) for y in self.envWidget.value())
+                    middle_syllables = userinput_target
                 try:
+                    userinput_env = tuple(re.sub('\[\]','',str(y.lhs) + '_' + str(y.rhs)) for y in self.envWidget.value())
                     envs = tuple(syl.print_syl_structure() for syl in list_of_sylEnvs)
                     if len(envs) == 0 and self.resultType == 'negative':
-                        envs = tuple(re.sub('\[\]','',str(y.lhs) + '_' + str(y.rhs)) for y in self.envWidget.value())
+                        envs = userinput_env
                 except IndexError:
                     envs = tuple()
                 self.results.append({'Corpus': self.corpus.name,
@@ -919,4 +925,6 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Min Phoneme Number': min_phon_num,
                                      'Max Phoneme Number': max_phon_num,
                                      'Min Syllable Number': min_syl_num,
-                                     'Max Syllable Number': max_syl_num})
+                                     'Max Syllable Number': max_syl_num,
+                                     'userinput_target': userinput_target,
+                                     'userinput_env': userinput_env})
