@@ -899,15 +899,16 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Max Syllable Number': max_syl_num,
                                      'userinput_target': userinput_target,
                                      'userinput_env': userinput_env})
-        else:
+        else:  # syllable search mode
+            userinput_target, userinput_env = self.cleanse_syl_userinput()
+
             for word, list_of_sylEnvs in results:
-                middle_syllables = tuple(syl.middle[0] for syl in list_of_sylEnvs)
-                userinput_target = tuple(str(y.middle) for y in self.envWidget.value())
+                middle_syllables = tuple(syl.print_syl_structure(env=False) for syl in list_of_sylEnvs)  # 'target' column in res. window
+
                 if len(middle_syllables) == 0 and self.resultType == 'negative':
                     middle_syllables = userinput_target
                 try:
-                    userinput_env = tuple(re.sub('\[\]','',str(y.lhs) + '_' + str(y.rhs)) for y in self.envWidget.value())
-                    envs = tuple(syl.print_syl_structure() for syl in list_of_sylEnvs)
+                    envs = tuple(syl.print_syl_structure(env=True) for syl in list_of_sylEnvs)  # 'environment' col in res. win
                     if len(envs) == 0 and self.resultType == 'negative':
                         envs = userinput_env
                 except IndexError:
@@ -926,5 +927,48 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Max Phoneme Number': max_phon_num,
                                      'Min Syllable Number': min_syl_num,
                                      'Max Syllable Number': max_syl_num,
-                                     'userinput_target': userinput_target,
-                                     'userinput_env': userinput_env})
+                                     'userinput_target': userinput_target,  # target from the user setting (for summary)
+                                     'userinput_env': userinput_env})    # env from user setting (used in summary view)
+
+    def cleanse_syl_userinput(self):
+        envs = tuple([y.lhs, y.rhs] for y in self.envWidget.value())
+        targets = tuple(y.middle for y in self.envWidget.value())
+
+        lhs, rhs = "", ""
+        for env in envs:
+            if len(env[0]) > 0:
+                lhs = [self.sylprint(e) for e in env[0]]
+                lhs = ", ".join(lhs)
+                lhs += " " if len(lhs) > 0 else lhs
+            if len(env[1]) > 0:
+                rhs = [self.sylprint(e) for e in env[1]]
+                rhs = ", ".join(rhs)
+                rhs += " " if len(rhs) > 0 else rhs
+
+        userinput_env = lhs + "_" + rhs
+        userinput_target = "".join([self.sylprint(target[0]) for target in targets])
+
+        return tuple([userinput_target]), tuple([userinput_env])
+
+    def sylprint(self, syll_dict):
+        if list(syll_dict['nonsegs']):
+            chunks = list(syll_dict['nonsegs'])
+            chunks = "{" + ",".join(chunks) + "}" if len(chunks) > 1 else chunks[0]
+
+            return chunks
+
+        chunks = []
+
+        for d in syll_dict.keys():
+            if len(syll_dict[d]) == 0 or list(syll_dict[d])[0] == 'None':
+                pass
+            elif len(syll_dict[d]['contents']) == 0:
+                pass
+            else:
+                header = d[0].capitalize() if d in ['onset', 'nucleus', 'coda'] else d.capitalize()
+                contents = str()
+                for c in syll_dict[d]['contents'][0]:
+                    contents += c
+                chunks.append(header + ":{[" + ", ".join(contents) + "], option: " + syll_dict[d]['search_type'] + "}")
+
+        return "S:{" + ", ".join(chunks) + "}"

@@ -1495,7 +1495,7 @@ class SyllableEnvironment(object):
         rhs = '-'.join(self._rhs)
         return lhs + '_' + rhs
 
-    def print_syl_structure(self):
+    def print_syl_structure(self, env=True):
         """
         Take the syllable (list of dicts, cf. 'parse_syl' function) and convert it as a printable linear string.
 
@@ -1505,40 +1505,61 @@ class SyllableEnvironment(object):
             List of dicts.
             each dict in the list represents one syllable.
             The keys are 'tone', 'stress', 'onset', 'nucleus', and 'coda' which have a str value
+        env
+            Bool.
+            If True, parse the raw syllable as an env. If False, parse it as the target of the PhonoSearch
         """
         # this one should be called when printing out the syllable structure, e.g., the environment slot of PS result.
-        lhs_output = []
-        rhs_output = []
-        for s in self.parse_syl(self.raw_syllables['lhs']):
-            syl_output = []
-            if "nonseg" in s:
-                syl_str = s['nonseg']
-            else:
-                syl_output.append("O:{%s}" % s['onset']) if s['onset'] != '' else None
-                syl_output.append("N:{%s}" % s['nucleus']) if s['nucleus'] != '' else None
-                syl_output.append("C:{%s}" % s['coda']) if s['coda'] != '' else None
-                syl_output.append("Tone:{%s}" % s['tone']) if s['tone'] != '' else None
-                syl_output.append("Stress:{%s}" % s['stress']) if s['stress'] != '' else None
-                syl_str = ', '.join(syl_output)
-                syl_str = 'S:{' + syl_str + '}'
-            lhs_output.append(syl_str)
-        for s in self.parse_syl(self.raw_syllables['rhs']):
-            syl_output = []
-            if "nonseg" in s:
-                syl_str = s['nonseg']
-            else:
-                syl_output.append("O:{%s}" % s['onset']) if s['onset'] != '' else None
-                syl_output.append("N:{%s}" % s['nucleus']) if s['nucleus'] != '' else None
-                syl_output.append("C:{%s}" % s['coda']) if s['coda'] != '' else None
-                syl_output.append("Tone:{%s}" % s['tone']) if s['tone'] != '' else None
-                syl_output.append("Stress:{%s}" % s['stress']) if s['stress'] != '' else None
-                syl_str = ', '.join(syl_output)
-                syl_str = 'S:{' + syl_str + '}'
-            rhs_output.append(syl_str)
+        if env:
+            lhs_output = []
+            rhs_output = []
+            for s in self.parse_syl(self.raw_syllables['lhs']):
+                syl_output = []
+                if "nonseg" in s:
+                    syl_str = s['nonseg']
+                else:
+                    syl_output.append("O:{%s}" % s['onset']) if s['onset'] != '' else None
+                    syl_output.append("N:{%s}" % s['nucleus']) if s['nucleus'] != '' else None
+                    syl_output.append("C:{%s}" % s['coda']) if s['coda'] != '' else None
+                    syl_output.append("Tone:{%s}" % s['tone']) if s['tone'] != '' else None
+                    syl_output.append("Stress:{%s}" % s['stress']) if s['stress'] != '' else None
+                    syl_str = ', '.join(syl_output)
+                    syl_str = 'S:{' + syl_str + '}'
+                lhs_output.append(syl_str)
+            for s in self.parse_syl(self.raw_syllables['rhs']):
+                syl_output = []
+                if "nonseg" in s:
+                    syl_str = s['nonseg']
+                else:
+                    syl_output.append("O:{%s}" % s['onset']) if s['onset'] != '' else None
+                    syl_output.append("N:{%s}" % s['nucleus']) if s['nucleus'] != '' else None
+                    syl_output.append("C:{%s}" % s['coda']) if s['coda'] != '' else None
+                    syl_output.append("Tone:{%s}" % s['tone']) if s['tone'] != '' else None
+                    syl_output.append("Stress:{%s}" % s['stress']) if s['stress'] != '' else None
+                    syl_str = ', '.join(syl_output)
+                    syl_str = 'S:{' + syl_str + '}'
+                rhs_output.append(syl_str)
 
-        lhs = ' - '.join(lhs_output) + ' '
-        rhs = ' ' + ' - '.join(rhs_output)
-        return lhs + '_' + rhs
+            lhs = ', '.join(lhs_output) + ' '
+            rhs = ' ' + ', '.join(rhs_output)
+            return lhs + '_' + rhs
+        else:
+            mid_output = []
+            for s in self.parse_syl(self.raw_syllables['middle']):
+                syl_output = []
+                if "nonseg" in s:
+                    syl_str = s['nonseg']
+                else:
+                    syl_output.append("O:{%s}" % s['onset']) if s['onset'] != '' else None
+                    syl_output.append("N:{%s}" % s['nucleus']) if s['nucleus'] != '' else None
+                    syl_output.append("C:{%s}" % s['coda']) if s['coda'] != '' else None
+                    syl_output.append("Tone:{%s}" % s['tone']) if s['tone'] != '' else None
+                    syl_output.append("Stress:{%s}" % s['stress']) if s['stress'] != '' else None
+                    syl_str = ', '.join(syl_output)
+                    syl_str = 'S:{' + syl_str + '}'
+                mid_output.append(syl_str)
+
+            return ', '.join(mid_output)
 
     def __repr__(self):
         return self.__str__()
