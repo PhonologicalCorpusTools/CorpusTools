@@ -18,8 +18,9 @@ Contents:
    examplecorpora.rst
    transcriptions_and_feature_systems.rst
    sound_selection.rst
-   environment_selection.rst
+   bigram_selector.rst
    feature_selection.rst
+   environment_selection.rst
    pronunciation_variants.rst
    phonological_search.rst
    phonotactic_probability.rst
