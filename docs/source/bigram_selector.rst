@@ -1,7 +1,7 @@
 .. _bigram_selection:
 
 *************************
-Using the Bigram Selector
+Bigram selection
 *************************
 
 The analysis functions :ref:`mutual_information` and
