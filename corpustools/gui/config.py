@@ -1,5 +1,6 @@
 import os
 import collections
+import shutil
 
 from .imports import *
 #from .widgets import DirectoryWidget
@@ -252,6 +253,7 @@ class PCTSettings(collections.defaultdict):
         return out
 
     def check_storage(self):
+        print(os.getcwd())
         if not os.path.exists(self['storage_folder']['directory']):
             os.makedirs(self['storage_folder']['directory'])
         LOG_DIR = self.log_directory()
@@ -268,11 +270,19 @@ class PCTSettings(collections.defaultdict):
             os.mkdir(TMP_DIR)
         if not os.path.exists(CORPUS_DIR):
             os.mkdir(CORPUS_DIR)
+            self.init_datacopy(src="CORPUS", target=CORPUS_DIR)  # copy built-in corpora
         if not os.path.exists(FEATURE_DIR):
             os.mkdir(FEATURE_DIR)
+            self.init_datacopy(src="FEATURE", target=FEATURE_DIR)  # copy built-in corpora
         if not os.path.exists(SEARCH_DIR):
             os.mkdir(SEARCH_DIR)
 
+    def init_datacopy(self, src, target):
+        example_dir = os.path.join('..', 'resources', src)
+        example_list = [f for f in os.listdir(example_dir) if '.'+src.lower() in f]
+        for file in example_list:
+            source = os.path.join(example_dir, file)
+            shutil.copy(source, target)
 
 class PreferencesDialog(QDialog):
 
