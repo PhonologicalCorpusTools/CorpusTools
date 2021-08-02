@@ -242,7 +242,7 @@ There are four basic options in PCT for dealing with pronunciation variants, eac
    ... (not all variants of the word "probably" are shown)
 
 
-4. **Weighted word types by the frequency of each variant**: The fourth
+4. **Weight each word types by the frequency of each variant**: The fourth
    option is for PCT to weight each variant's frequency by the overall
    token frequency (if using token frequency) or by the number of variants
    (if using type frequency).
