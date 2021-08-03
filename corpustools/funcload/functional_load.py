@@ -215,7 +215,7 @@ def deltah_fl_vectorized(corpus_context, segment_pairs,
         fl = fl if fl > 1e-10 else 0.0
         result.append((specified_pair, fl, {specified_pair: neutralized_pairs}))
 
-    if not normalization and orig_entropy.item() > 0.:
+    if normalization and orig_entropy.item() > 0.:
         result = [(pair, fl / orig_entropy.item(), pairs) for pair, fl, pairs in result]
 
     return result
