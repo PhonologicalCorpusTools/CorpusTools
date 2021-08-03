@@ -1098,6 +1098,12 @@ class Word(object):
                 setattr(self, '_transcription', value)
                 setattr(self, '_transcription_name', key)
 
+            elif isinstance(value, Transcription):
+                # definitely a transcription
+                setattr(self, key, value)
+                setattr(self, '_transcription', value)
+                setattr(self, '_transcription_name', key)
+
             elif isinstance(value, str):
                 if key == 'Spelling':
                     # it's spelling. leave value as-is even though it is only consist of numeric
@@ -1415,7 +1421,7 @@ class Word(object):
             return collections.Counter(getattr(x, 'Surface_transcription') for x in self.wordtokens)  # Buckeye Corpus
         except AttributeError:
             pass
-        return collections.Counter(getattr(x, sequence_type) for x in self.wordtokens)
+        return collections.Counter(getattr(x, 'transcription') for x in self.wordtokens)
 
     def __repr__(self):
         return '<Word: \'%s\'>' % self.spelling
