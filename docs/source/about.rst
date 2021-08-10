@@ -1,6 +1,6 @@
 .. _about:
 
-.. image:: static/logo.png
+.. image:: static/PCT_logo.png
    :height: 200px
    :align: center
    :target: #
