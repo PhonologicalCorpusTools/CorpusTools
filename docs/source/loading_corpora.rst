@@ -931,10 +931,7 @@ the current text is part). There are several options for accessing this informat
 
 2. Go to the `online PCT documentation`_ to get access to the help files online.
 
-3. Go to the `PCT website`_ and download a .pdf copy of the entire help
-   file for off-line use.
-
-4. While working in PCT, most dialogue boxes have options at the lower
+3. While working in PCT, most dialogue boxes have options at the lower
    right-hand corner that say either "Help" or "About..." (e.g., "About
    functional load..."). Clicking this button will pull up the relevant help file.
 
