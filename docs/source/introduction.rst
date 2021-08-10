@@ -102,6 +102,7 @@ Version 1.5 (Sept. 2021) differs from version 1.4.1 in the following areas:
 3. Pronunciation variants can be linked to lexical items through shared spelling.
 
 4. Various improvements to the phonological search function have been made, including naming searches, warning before duplicating searches, and adding word frequency, phoneme number, and syllable number filters.
+    * **WARNING**: In prior versions of PCT, duplicated phonological searches / analyses often resulted in _cumulative_ results, e.g., reported frequencies that summed over every instance of a repeated search. 
 
 5. The parameters for mutual information calculations have been clarified, and options added for calculating MI only within particular specified environments.
 
