@@ -13,8 +13,8 @@ are included in your corpus).
 
 .. _segment_selection:
 
-Segment selection
-============
+Segment-based selection
+=======================
 
 When you have the opportunity to define an environment, you will see a
 blank "Environments" box with a button in it for "New environment."
@@ -122,8 +122,8 @@ of the environment you want to edit, clear the selection, and re-enter it, or cl
 
 .. _syllable_selection:
 
-Syllable selection
-==================
+Syllable-based selection
+========================
 
 The basic principles of environment selection are the same in syllable mode, but the units being built have hierarchical syllable structure. 
 
