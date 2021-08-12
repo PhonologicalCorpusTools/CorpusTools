@@ -24,9 +24,8 @@ examples are based on its contents.
 
 Additionally, PCT also provides a syllabified version of this example corpus.
 It has the same inventory and phonological patterns as the original example
-corpus. However, it contains the syllable structure so that syllable-based
-functionalities such as the syllable search (:ref:`syllable_mode`) can work
-on this.
+corpus. However, it contains syllable structure so that syllable-based
+functionalities such as the syllable search (:ref:`syllable_mode`) can be used.
 
 Inventory:
 ----------
