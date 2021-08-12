@@ -1,0 +1,46 @@
+CorpusTools 1.5.0 Release Notes
+*******************************
+
+
+New features
+============
+
+* Implemented a transitional probability algorithm for calculating the conditional probabilities between segments.
+
+Duplicated Analyses
+===================
+
+* In prior versions of PCT, duplicated phonological searches / analyses often resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. This has been corrected so that users are provided a warning when a search / analysis is duplicated, and either no change is made to the output table or the same results are repeated as a new line.
+
+Phonological Search
+===================
+
+* Searches can be named.
+* Searches can include word frequency, phoneme number, and syllable number filters.
+
+String Similarity and Neighbourhood Density
+===========================================
+
+* Fixed some bugs that were causing the algorithm to crash when lists of words were added.
+
+Mutual Information
+==================
+
+* Parameters for MI calculations have been clarified.
+* Options have been added for calculating MI only within particular specified environments.
+
+Functional Load
+===============
+
+* Calculation algorithms have been re-factored to make them faster.
+
+Pronunciation Variants
+======================
+
+* Can be linked to lexical items through shared spelling.
+
+Feature Systems
+===============
+
+* The feature systems have been updated to be more accurate.
+* Feature systems are now stored within PCT itself instead of downloaded separately.
