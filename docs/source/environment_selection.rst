@@ -141,19 +141,19 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
 
 3. **Clear selection.**
   
-  * Use this option to re-set the position to be entirely empty.
+   * Use this option to re-set the position to be entirely empty.
 
 4. **Add new environment position {to the left, to the right}.**
 
-* Use this option to add another syllable to the left or right of the current position. Note that the same function can be obtained by clicking on the "+" button to the left or right of a given position. Additional syllables will have the same "Edit" menu, but with two *additional* options:
+   * Use this option to add another syllable to the left or right of the current position. Note that the same function can be obtained by clicking on the "+" button to the left or right of a given position. Additional syllables will have the same "Edit" menu, but with two *additional* options:
 
    * **Add non-segment syllable.**
 
-   * Use this option to include a word or morpheme boundary (#, - =) in the environment (instead of a syllable).
+      * Use this option to include a word or morpheme boundary (#, - =) in the environment (instead of a syllable).
    
    * **Delete.**   
    
-   * Use this option to delete only the position encompassed by the dropdown menu. Note that the 'middle' (target) position of an environment cannot be deleted.
+      * Use this option to delete only the position encompassed by the dropdown menu. Note that the 'middle' (target) position of an environment cannot be deleted.
 
 **Constructing the Syllable.**
 
