@@ -129,31 +129,48 @@ The basic principles of environment selection are the same in syllable mode, but
 
 To use syllable-based environments, first you will need to be in "Syllables mode" (there should be a checkbox within the search or analysis window that allows you to select either segment or syllable mode); then you add a new environment by clicking the “New environment” button.
 The interface shows you a blank 'target' syllable. At the bottom of the blank syllable is a dropdown menu labelled "Edit." This gives you four choices:
+
+
 1. **Add an unspecified syllable.**
+
    * Use this option to specify a 'wildcard' syllable. There must be a full syllable in the representation to match, but the syllable can contain any phonological material.
+
 2. **Construct the syllable.** 
+
    * Use this option to specify some or all parts of the phonological material of the syllable. See details below.
+
 3. **Clear selection.**
-   * Use this option to re-set the position to be entirely empty.
+  
+  * Use this option to re-set the position to be entirely empty.
+
 4. **Add new environment position {to the left, to the right}.**
-   * Use this option to add another syllable to the left or right of the current position. Note that the same function can be obtained by clicking on the "+" button to the left or right of a given position. Additional syllables will have the same "Edit" menu, but with two *additional* options:
+
+* Use this option to add another syllable to the left or right of the current position. Note that the same function can be obtained by clicking on the "+" button to the left or right of a given position. Additional syllables will have the same "Edit" menu, but with two *additional* options:
 
    * **Add non-segment syllable.**
-      * Use this option to include a word or morpheme boundary (#, - =) in the environment (instead of a syllable).
+
+   * Use this option to include a word or morpheme boundary (#, - =) in the environment (instead of a syllable).
+   
    * **Delete.**   
-      * Use this option to delete only the position encompassed by the dropdown menu. Note that the 'middle' (target) position of an environment cannot be deleted.
+   
+   * Use this option to delete only the position encompassed by the dropdown menu. Note that the 'middle' (target) position of an environment cannot be deleted.
 
 **Constructing the Syllable.**
+
 1. Once you have selected "Construct the syllable" from the dropdown menu as described above, the "Construct syllables" window will pop up. 
+
 2. The window has panels for each of the Onset, Nucleus, and Coda. Each of these can be specified using the same segment-based environment selector described in :ref:`segment_selection`above.
+
 3. Additionally, each of the Onset, Nucleus, and Coda, you choose among "Exactly matches", "Minimally contains", "Starts with", and "Ends with."
    * Please note that using "Exactly matches" while not specifying an onset/coda slot means "no onset/coda", while using "Minimally contains" without specifying an
    onset or coda means that the onset or coda may either be empty or filled. 
    * Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
+
 4. Additionally, you can exclude specific segments at a syllable component by selecting "Set negative" from the dropdown menu. For example,
    if you want to search for a syllable that has any phoneme except +labial at the onset position, and does have [ɑ] as the nucleus, you can do so in
    the "Construct syllables" window by specifying "Nucleus" as [ɑ] and setting "Onset" as +labial with "Set negative" option checked from
    the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ].
+
 5. On the right-hand side, you can also specify Stress and Tone for the target syllable, if these are included in your syllable representations.
 
 
