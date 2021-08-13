@@ -155,7 +155,7 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
    
       * Use this option to delete only the position encompassed by the dropdown menu. Note that the 'middle' (target) position of an environment cannot be deleted.
 
-**Constructing the Syllable.**
+**Constructing the Syllable:**
 
 1. Once you have selected "Construct the syllable" from the dropdown menu as described above, the "Construct syllables" window will pop up. 
 
