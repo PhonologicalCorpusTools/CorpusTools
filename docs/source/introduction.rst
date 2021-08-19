@@ -29,20 +29,20 @@ on dialogue- and sentence-level analysis, and/or the computational skills
 needed to efficiently handle large corpora can be daunting to learn.
 
 PCT is designed with the phonologist in mind and has an easy-to-use
-graphical user interface that requires no programming knowledge, though
-it can also be used with a command-line interface,1 and all of the original
-code is freely available for those who would like access to the source.
+graphical user interface that requires no programming knowledge, and all of the original
+code (written in Python) is freely available for those who would like access to the source.
 It specifically includes the following capabilities:
 
 * Summary descriptions of a corpus, including type and token frequency of
   individual segments in user-defined environments;
 * Calculation of the **phonotactic probability** of a word, given the other
   words that exist in the corpus (cf. [Vitevitch2004]_);
+* Calculation of the **transitional probability** between two segments in a word (cf. [Saffran1996a]_; [Saffran1996b]_);
 * Calculation of **functional load** of individual pairs of sounds,
   defined at either the segment or feature level (cf. [Hockett1966]_;
   [Surendran2003]_; [Wedel2013]_);
-* Calculation of the extent to which any pair of sounds is **predictably
-  distributed** given a set of environments that they can occur in, as a
+* Calculation of the extent to which any pair of sounds is **predictably distributed** 
+  given a set of environments that they can occur in, as a
   measure of phonological contrastiveness (cf. [Hall2009]_, [Hall2012]_; [Hall2013a]_);
 * Calculation of the **Kullback-Leibler divergence** between the distributions
   of two sounds, again as a measure of phonological contrastiveness
@@ -62,7 +62,7 @@ It specifically includes the following capabilities:
 
 The software can make use of pre-existing freely available corpora
 (e.g., the IPHOD corpus; [IPHOD]_), which are included with the
-system, or a user may upload his or her own corpus in several formats.
+system, or a user may upload their own corpus in several formats.
 First, lexical lists with transcription and token frequency information can be
 directly uploaded; such a list is what is deemed a “corpus” by PCT. Second,
 raw running text (orthographically and/or phonetically transcribed) can be
@@ -81,7 +81,7 @@ PCT comes with IPA transcription installed, with characters mapped to the two fe
 systems mentioned above. Again, users may create their own transcription-to-feature
 mappings by modifying the existing ones or uploading a new transcription-to-feature
 mapping file, and several alternative transcription-to-feature mapping files are
-available for download.
+available for download. There is (limited) support for syllabified corpora.
 
 Analysis can be done using type or token frequency, if token frequency is
 available in the corpus. All analyses are presented both on screen and
@@ -92,6 +92,31 @@ and using the various components of Phonological CorpusTools.
 We will do our best to keep the software up to date and to answer any questions
 you might have about it; questions, comments, and suggestions should be sent to
 `Kathleen Currie Hall <kathleen.hall@ubc.ca>`_.
+
+Version 1.5 (Sept. 2021) differs from version 1.4.1 in the following areas:
+
+1. An algorithm for calculating transitional probability has been added.
+
+2. Various bugs around string similarity and neighbourhood density have been fixed.
+
+3. Pronunciation variants can be linked to lexical items through shared spelling.
+
+4. Various improvements to the phonological search function have been made, including naming searches, warning before duplicating searches, and adding word frequency, phoneme number, and syllable number filters.
+    * **WARNING**: In prior versions of PCT, duplicated phonological searches / analyses often resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. 
+
+5. The parameters for mutual information calculations have been clarified, and options added for calculating MI only within particular specified environments.
+
+6. The feature systems have been updated to be more accurate and also stored within PCT itself instead of downloaded separately.
+
+7. The functional load algorithm has been re-factored to be faster.
+
+Version 1.4.1 (Sept. 2019) differs from version 1.2 in the following areas:
+
+1. Basic representation for syllables is now included. Not all algorithms support syllabification, but phonological searches can be performed on the syllable level.
+
+2. Functional load calculations are corrected.
+
+3. Various smaller fixes and enhancements, such as webpage links, frequency information in the corpus summary window, and inventory chart size.
 
 Version 1.2 (July 2016) differs from version 1.1 (July 2015) in the following areas:
 
@@ -139,14 +164,12 @@ Python (Windows, Mac, Linux). All code is available on the
 `GitHub repository`_; the details for
 getting access are given in :ref:`downloading_and_installing`.
 
-There is both a graphical user interface (GUI) and a command-line interface
-for PCT. In the following sections, we generally discuss interface-independent
-aspects of some functionality first, and then detail how to implement it in
-both the GUI and the command line. All functions are available in the GUI;
-many, but not all, are currently available in the command line due to
-complications in entering in phonological transcriptions that match a
-given corpus in a command-line interface.
+There is a graphical user interface (GUI). 
+Initial versions also included a command-line interface, but this has not been kept up to date with the GUI functionality.  
+In the following sections, we generally discuss interface-independent
+aspects of some functionality first, and then detail how to implement it in the GUI.
 
+**Deprecated information about the command line:**
 The command-line interface is accessed using command line scripts that are
 installed on your machine along with the core PCT GUI.
 

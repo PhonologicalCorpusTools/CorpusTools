@@ -1,6 +1,6 @@
 .. _about:
 
-.. image:: static/logo.png
+.. image:: static/PCT_logo.png
    :height: 200px
    :align: center
    :target: #
@@ -27,7 +27,9 @@ Contributors
 |
 | Kathleen Currie Hall (`kathleen.hall@ubc.ca`_)
 | Blake Allen
+| Edith Coates
 | Michael Fry
+| Serena Huang
 | Khia Johnson
 | Roger Lo
 | Scott Mackie
@@ -42,7 +44,8 @@ Acknowledgments
 ---------------
 
 We give special thanks to Kevin McMullin for help throughout
-this project; to Andy Wedel for help with the implementation of functional load;
+the first several years of this project; to Ivy Hu for help in updating the documentation;
+to Andy Wedel for help with the implementation of functional load;
 to Barbara Sennott, originally from Kispiox / Anspayax, for the use of her Gitksan
 love story as an example; to Paul Tupper, John Goldsmith, and Jason Riggle for
 discussion of mutual information; to Alfred Ko for help in compiling various

@@ -101,18 +101,20 @@ Linux / Fallback instructions
 
 Local storage
 =============
-While using PCT, you will work on a corpus file using one of the transcription systems. Once you create or download
-these files, they are saved in your local hard drive for later use. Be default, your PCT working directory is
-“C:\\Users\\[USER NAME]\\Documents\\PCT\\CorpusTools\\” (Windows), or “~/Documents/PCT/CorpusTools/” (macOS or Linux).
-You will find several directories in there:
+When using PCT, certain special (PCT-specific) files are created. These include .corpus files (for PCT's storage of your corpora), .feature files (for storage of your transcription-to-feature files), .searches files (for storing saved search paramaters), and various .txt files (usually for listing specific results or errors that PCT encounters). 
+
+
+Once PCT creates or downloads these files, they are saved in your local hard drive for later use. Be default, your PCT working directory is either
+“C:\\Users\\[USER NAME]\\Documents\\PCT\\CorpusTools\\” (for Windows machines), or “~/Documents/PCT/CorpusTools/” (for macOS or Linux machines).
+You will find several directories in this directory:
 
  * “CORPUS” is the place for the corpus files you created or downloaded (cf. :ref:`loading_corpora`).
  * “ERRORS” is where you can find error messages for the environment exhaustivity (cf. :ref:`predictability_of_distribution`).
  * “FEATURE” is the folder where all your feature files are saved (cf. :ref:`transcriptions_and_feature_systems`).
  * “SEARCH” is where you can find recent phonological searches (recent.searches) and saved searches (saved.searches). See :ref:`saving_phono_search` for how to save a search.
 
-If you want to keep doing the analysis on a different machine, you can copy the files to the relevant path in the new
-machine. Or, if you received a file that runs on PCT, you need to save it in the correct directory for PCT to recognize it.
+Occasionally, it is useful to access these folders directly. For example, if you want to give your corpus or feature files to another user, or access them on a different maching, you can copy the files to the relevant path in the new
+machine. Similarly, if you have received a file that runs with PCT (e.g. a corpus file from the developers), you will need to save it in the correct directory for PCT to recognize it.
 Please note that the working directory will not exist if you have never run PCT.
 
 See :ref:`preferences` for information on how to change the working directory.
