@@ -9,7 +9,7 @@ try:
     from acousticsim.main import(acoustic_similarity_mapping,
                             acoustic_similarity_directories,
                             analyze_directory, AcousticSimError)
-except ImportError:
+except (ImportError, ModuleNotFoundError) as e:
     real_acousticsim = False
     from corpustools.acousticsim.main import(acoustic_similarity_mapping,
                             acoustic_similarity_directories,
