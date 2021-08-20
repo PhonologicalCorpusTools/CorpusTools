@@ -419,10 +419,24 @@ class SSDialog(FunctionDialog):
 
             out = list()
             q = read_pairs_file(pairs_path)
+
+            # the following for-loop searches each word pair in the corpus. This part should be modified for issue #769
             for pair in q:
-                w1 = self.corpusModel.corpus.find(pair[0])
-                w2 = self.corpusModel.corpus.find(pair[1])
-                out.append((w1, w2))
+                wordpair_list = ['N/A', 'N/A']
+                for i, p in enumerate(pair):
+                    try:
+                        wordpair_list[i] = self.corpusModel.corpus.find(p)
+                    except KeyError as error_message:
+                        wordpair_list[i] = p
+                        QMessageBox.critical(self,
+                                             "Word not in corpus",
+                                             str(error_message).strip("'") +
+                                             '\nCurrently, the calculation is available only for the '
+                                             'words in the corpus. ' +
+                                             '\nResult for the words that are not in the corpus will be N/A.')
+
+                        pass
+                out.append(tuple(wordpair_list))
             kwargs['query'] = out
             #The following is original code, which doesn't seem to work
             #kwargs['query'] = read_pairs_file(pairs_path)

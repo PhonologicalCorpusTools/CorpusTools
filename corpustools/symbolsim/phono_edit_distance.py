@@ -29,9 +29,8 @@ def phono_edit_distance(word1, word2, sequence_type, features):
         the phonological edit distance between two words
     """
 
-    w1 = getattr(word1,sequence_type)
-    w2 = getattr(word2,sequence_type)
-
+    w1 = word1
+    w2 = word2
 
     a = Aligner(features_tf=True, features=features)
 

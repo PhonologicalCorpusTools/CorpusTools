@@ -79,8 +79,8 @@ def edit_distance(word1, word2, sequence_type, max_distance = None):
     int:
         the edit distance between two words
     """
-    s1 = getattr(word1, sequence_type)
-    s2 = getattr(word2, sequence_type)
+    s1 = word1
+    s2 = word2
 
     longer, shorter = (s1,s2) if len(s1) > len(s2) else (s2,s1)
 

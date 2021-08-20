@@ -119,8 +119,8 @@ def khorsi(word1, word2, freq_base, sequence_type, max_distance = None):
     float
         A number representing the relatedness of two words based on Khorsi (2012)
     """
-    w1 = getattr(word1, sequence_type)
-    w2 = getattr(word2, sequence_type)
+    w1 = word1
+    w2 = word2
     if sequence_type == 'spelling':
         w1 = list(w1)
         w2 = list(w2)

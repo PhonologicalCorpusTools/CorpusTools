@@ -132,14 +132,18 @@ def string_similarity(corpus_context, query, algorithm, **kwargs):
                 cur += 1
                 if cur % 50 == 0:
                     call_back(cur)
-            w1 = q1
-            w2 = q2
-            relatedness = relate_func(w1,w2)
-            if min_rel is not None and relatedness < min_rel:
-                continue
-            if max_rel is not None and relatedness > max_rel:
-                continue
-            related_data.append( (w1,w2,relatedness) )
+            try:
+                w1 = getattr(q1,corpus_context.sequence_type)
+                w2 = getattr(q2,corpus_context.sequence_type)
+                relatedness = relate_func(w1,w2)
+                if min_rel is not None and relatedness < min_rel:
+                    continue
+                if max_rel is not None and relatedness > max_rel:
+                    continue
+            except:
+                relatedness = "N/A"
+
+            related_data.append((q1, q2, relatedness))
 
     return related_data
 
