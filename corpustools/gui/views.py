@@ -764,8 +764,16 @@ class ResultsWindow(QDialog):
         # called when 'Reopen function dialog' in analyses (except for phonological search)
         if self.dialog.exec_():
             if self.dialog.update:
-                if not self.duplicate_check():
-                    self.table.model().addRows(self.dialog.results)
+                duplicated = self.duplicate_check()
+                if not duplicated[0]:
+                    new_result = list()
+                    duplicated_result = duplicated[1]
+                    for d in self.dialog.results:
+                        if not list(d.values()) in [list(i) for i in duplicated_result]:
+                            new_result.append(d)
+                    self.table.model().addRows(new_result)
+                    # simply adds all results of the new search
+                    # self.table.model().addRows(self.dialog.results)
             else:
                 dataModel = ResultsModel(self.dialog.header,self.dialog.results, self._parent.settings)
                 self.table.setModel(dataModel)
@@ -779,8 +787,11 @@ class ResultsWindow(QDialog):
 
         Returns
         -------
-         Bool
-            True if duplicate
+         List of
+            Bool
+                True if duplicate
+            List
+                list of duplicated individual result
         """
         try:
             analysis_name = self.dialog.results[0]['Analysis name']
@@ -814,7 +825,7 @@ class ResultsWindow(QDialog):
             else:
                 new_results_set.add(tuple([r[h] for h in headers]))
 
-        if new_results_set.intersection(existing_results_set):
+        if new_results_set.issubset(existing_results_set):
             msgBox = QMessageBox(QMessageBox.Critical, "Duplicate {}".format(warning_type),
                                  "It seems that you repeated one of the previous {type}.\n"
                                  "{analysis} with identical parameters does not produce new results."
@@ -824,9 +835,10 @@ class ResultsWindow(QDialog):
                                  QMessageBox.NoButton, self)
             msgBox.addButton("OK", QMessageBox.AcceptRole)
             msgBox.exec_()
-            return True
+            return [True, None]
         else:
-            return False
+            dup_individual_result = list(new_results_set.intersection(existing_results_set))
+            return [False, dup_individual_result]
 
     def save(self):
         filename = QFileDialog.getSaveFileName(self,'Choose save file',
@@ -876,7 +888,7 @@ class PhonoSearchResults(ResultsWindow):
         if self.dialog.exec_():
             if self.dialog.update:  # when 'Calculate [...] (add to current results table)' selected
                 if len(self.dialog.results) > 0:
-                    if not self.duplicate_check():
+                    if not self.duplicate_check()[0]:
                         self.table.model().addRows(self.dialog.results)
             else:  # when 'Calculate [...] (add to current results table)' selected
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
