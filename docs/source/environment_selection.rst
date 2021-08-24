@@ -193,21 +193,25 @@ In order to maintain a 'flat' structure for exporting and interpreting results f
 
 1. S: is used to indicate that a syllable is about to be defined; O: an onset, N: a nucleus, and C: a coda.
 
-2. The definition of a unit is then enclosed in { }. So e.g. the structure for defining a syllable would look like S:{ } and the structure for defining a syllable that contains a nucleus would have a nested structure, as in 
+2. The definition of a unit is then enclosed in { }. So e.g. the structure for defining a syllable would look like 
 
-S:{ N:{ } }
+   S:{ } 
+
+...and the structure for defining a syllable that contains a nucleus would have a nested structure, as in 
+
+   S:{ N:{ } }
 
 3. Multiple components within a syllable are separated by commas, so that the structure for defining a syllable that contains both an onset and a nucleus would be 
 
-S:{ O:{ }, N:{ } }
+   S:{ O:{ }, N:{ } }
 
 4. Individual segments that are specified in units of a syllable are then enclosed in [ ]. So e.g. the structure for defining the syllable [mi] would be 
 
-S:{ O:{[m]}, N:{[i]} }
+   S:{ O:{[m]}, N:{[i]} }
 
 5. If it is relevant to specify all of the possible options that a user selected (instead of simply representing the actual syllable), options are listed immediately after segments contained in the unit. So e.g. a search that required any non-labial onset to be followed exactly by the nucleus [ɑ] would be:
 
-S:{O:[e,ɑ,t,i,s,ʃ,n],option: Minimally contains},N:{[ɑ],option: Exactly matches}}
+   S:{O:[e,ɑ,t,i,s,ʃ,n],option: Minimally contains},N:{[ɑ],option: Exactly matches}}
 
 Examples of a full specification and a syllable-specific specification can be seen in the following images, respectively:
 
