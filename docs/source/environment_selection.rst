@@ -168,10 +168,9 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
    onset or coda means that the onset or coda may either be empty or filled. 
    * Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
 
-4. Additionally, you can exclude specific segments as a syllable component by selecting "Set negative" from the dropdown menu. For example,
-   if you want to search for a syllable that has any phoneme except +labial at the onset position, and does have [ɑ] as the nucleus, you can do so in
+4. Additionally, you can exclude specific segments as a syllable component by selecting "Set negative" from the dropdown menu associated with the specific component. For example, if you want to search for a syllable that has any phoneme except +labial at the onset position, and does have [ɑ] as the nucleus, you can do so in
    the "Construct syllables" window by specifying "Nucleus" as [ɑ] and setting "Onset" as +labial with "Set negative" option checked from
-   the (lower) dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ]. This would look like the following:
+   the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ]. This would look like the following:
 
 .. image:: static/non-labial_onset_plus_A.png
    :width: 90%
