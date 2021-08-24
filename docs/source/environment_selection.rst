@@ -161,7 +161,7 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
    :width: 90%
    :align: center
 
-2. The window has panels for each of the Onset, Nucleus, and Coda. Each of these can be specified using the same segment-based environment selector described in :ref:`segment_selection`above.
+2. The window has panels for each of the Onset, Nucleus, and Coda. Each of these can be specified using the same segment-based environment selector described in :ref:`segment_selection` above.
 
 3. Additionally, each of the Onset, Nucleus, and Coda, you choose among "Exactly matches", "Minimally contains", "Starts with", and "Ends with."
    * Please note that using "Exactly matches" while not specifying an onset/coda slot means "no onset/coda", while using "Minimally contains" without specifying an
@@ -181,7 +181,7 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
 
 6. Once the syllable has been constructed, click "OK" to return to the original dialogue box where the environment selector was accessed (e.g., the phonological search dialogue box). Note that here, you can generally continue to specify additional material within the same environment (e.g., adding a requirement that the constructed syllable be word-initial, as in the example below, or followed by the syllable [ke], or any other combination) and also specify entirely separate environments (e.g., also search for the syllable [ni] in word-final position, as in the example below). Components within a single environment are additive (i.e., if you specify # plus a syllable with [ɑ] and a non-labial onset in a single environment, then you will get only results that have all of those components). Components across environments are disjunctive (i.e., if you specify # plus a syllable with [ɑ] and a non-labial onset in one environment, and [ni]+# in a separate environment, you will get results for both searches independently).
 
-.. image:: static/two_separate_searches.png
+.. image:: static/two_separate_syllable_searches.png
    :width: 90%
    :align: center
 
