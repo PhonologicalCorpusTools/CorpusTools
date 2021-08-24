@@ -148,16 +148,18 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
    * Use this option to add another syllable to the left or right of the current position. Note that the same function can be obtained by clicking on the "+" button to the left or right of a given position. Additional syllables will have the same "Edit" menu, but with two *additional* options:
 
    * **Add non-segment syllable.**
-
       * Use this option to include a word or morpheme boundary (#, - =) in the environment (instead of a syllable).
    
    * **Delete.**   
-   
       * Use this option to delete only the position encompassed by the dropdown menu. Note that the 'middle' (target) position of an environment cannot be deleted.
 
 **Constructing the Syllable:**
 
-1. Once you have selected "Construct the syllable" from the dropdown menu as described above, the "Construct syllables" window will pop up. 
+1. Once you have selected "Construct the syllable" from the dropdown menu as described above, the "Construct syllables" window will pop up:
+
+.. image:: static/construct_syllables.png
+   :width: 90%
+   :align: center
 
 2. The window has panels for each of the Onset, Nucleus, and Coda. Each of these can be specified using the same segment-based environment selector described in :ref:`segment_selection`above.
 
@@ -166,12 +168,53 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
    onset or coda means that the onset or coda may either be empty or filled. 
    * Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
 
-4. Additionally, you can exclude specific segments at a syllable component by selecting "Set negative" from the dropdown menu. For example,
+4. Additionally, you can exclude specific segments as a syllable component by selecting "Set negative" from the dropdown menu. For example,
    if you want to search for a syllable that has any phoneme except +labial at the onset position, and does have [ɑ] as the nucleus, you can do so in
    the "Construct syllables" window by specifying "Nucleus" as [ɑ] and setting "Onset" as +labial with "Set negative" option checked from
-   the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ].
+   the (lower) dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ]. This would look like the following:
 
+.. image:: static/non-labial_onset_plus_A.png
+   :width: 90%
+   :align: center
+   
 5. On the right-hand side, you can also specify Stress and Tone for the target syllable, if these are included in your syllable representations.
 
+6. Once the syllable has been constructed, click "OK" to return to the original dialogue box where the environment selector was accessed (e.g., the phonological search dialogue box). Note that here, you can generally continue to specify additional material within the same environment (e.g., adding a requirement that the constructed syllable be word-initial, as in the example below, or followed by the syllable [ke], or any other combination) and also specify entirely separate environments (e.g., also search for the syllable [ni] in word-final position, as in the example below). Components within a single environment are additive (i.e., if you specify # plus a syllable with [ɑ] and a non-labial onset in a single environment, then you will get only results that have all of those components). Components across environments are disjunctive (i.e., if you specify # plus a syllable with [ɑ] and a non-labial onset in one environment, and [ni]+# in a separate environment, you will get results for both searches independently).
 
+.. image:: static/two_separate_searches.png
+   :width: 90%
+   :align: center
+
+**Syllables in Results Boxes:**
    
+Once a syllable-based analysis has been set up as in the above example, click on "Calculate [result]." General instructions for interpreting the results can be found in the sections for each individual analysis function / search function. However, we will also explain here the notation for syllable specification within results windows. 
+
+In order to maintain a 'flat' structure for exporting and interpreting results from PCT, while maintaining as much information about the set parameters as possible, we have developed the following conventions for syllables:
+
+1. S: is used to indicate that a syllable is about to be defined; O: an onset, N: a nucleus, and C: a coda.
+
+2. The definition of a unit is then enclosed in { }. So e.g. the structure for defining a syllable would look like S:{ } and the structure for defining a syllable that contains a nucleus would have a nested structure, as in 
+
+S:{ N:{ } }
+
+3. Multiple components within a syllable are separated by commas, so that the structure for defining a syllable that contains both an onset and a nucleus would be 
+
+S:{ O:{ }, N:{ } }
+
+4. Individual segments that are specified in units of a syllable are then enclosed in [ ]. So e.g. the structure for defining the syllable [mi] would be 
+
+S:{ O:{[m]}, N:{[i]} }
+
+5. If it is relevant to specify all of the possible options that a user selected (instead of simply representing the actual syllable), options are listed immediately after segments contained in the unit. So e.g. a search that required any non-labial onset to be followed exactly by the nucleus [ɑ] would be:
+
+S:{O:[e,ɑ,t,i,s,ʃ,n],option: Minimally contains},N:{[ɑ],option: Exactly matches}}
+
+Examples of a full specification and a syllable-specific specification can be seen in the following images, respectively:
+
+.. image:: static/two_separate_searches_summary_results.png
+   :width: 90%
+   :align: center
+   
+.. image:: static/two_separate_searches_individual_results.png
+   :width: 90%
+   :align: center
