@@ -619,10 +619,14 @@ class PhonoSearchResultsModel(BaseTableModel):
             return
         self.summarized = b
         self.layoutAboutToBeChanged.emit()
-        if self.summarized:
+        if self.summarized:     # summary result should be returned
             self._summarize()
-        else:
-            self.rows = [[data[h] for h in self.header] for data in self.allData]
+        else:                   # individual result should be returned
+            allData_list = [[data[h] for h in self.header] for data in self.allData]
+            allData_list.sort()
+            # the code below makes duplicated individual words invisible (meaningful when an individual result satisfies
+            # multiple searches e.g., mata satisfying both PS([m] and PS([m,n]).)
+            self.rows = list(l for l,_ in itertools.groupby(allData_list))
             self.columns = self.header
 
         self.layoutChanged.emit()

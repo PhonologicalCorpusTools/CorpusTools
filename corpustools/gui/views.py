@@ -870,7 +870,8 @@ class PhonoSearchResults(ResultsWindow):
     def summaryDetail(self):
         # Toggle between summaryButton and individualButton.
         # Previously QPushButton.setText() was used to update the text of the button,
-        # but due to MacOS-dependent issue, QPushButton.setText() doesn't update. Instead two identical buttons switch.
+        # but due to MacOS-dependent issue, QPushButton.setText() doesn't update. Instead two buttons with the identical
+        # label switch.
         if self.summarized:
             self.table.model().setSummarized(False)  # update table contents
             self.individualButton.hide()
@@ -890,7 +891,7 @@ class PhonoSearchResults(ResultsWindow):
                 if len(self.dialog.results) > 0:
                     if not self.duplicate_check()[0]:
                         self.table.model().addRows(self.dialog.results)
-            else:  # when 'Calculate [...] (add to current results table)' selected
+            else:                   # when 'Calculate [...] (start new results table)' selected
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
                                                     self.dialog.summary_header,
                                                     self.dialog.results,
