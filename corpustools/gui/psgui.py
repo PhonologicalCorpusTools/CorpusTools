@@ -871,7 +871,9 @@ class PhonoSearchDialog(FunctionDialog):
             max_syl_num = "N/A"
 
         if self.mode == 'segMode':
-            for w, f in results:
+            for w, found in results:
+
+                f = list(filter(None, found))
                 segs = tuple(x.middle for x in f)
                 userinput_target = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
                 if len(segs) == 0 and self.resultType == 'negative':
@@ -898,11 +900,14 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Min Syllable Number': min_syl_num,
                                      'Max Syllable Number': max_syl_num,
                                      'userinput_target': userinput_target,
-                                     'userinput_env': userinput_env})
+                                     'userinput_env': userinput_env,
+                                     'raw_env': found
+                                     })
         else:  # syllable search mode
             userinput_target, userinput_env = self.cleanse_syl_userinput()
 
-            for word, list_of_sylEnvs in results:
+            for word, found in results:
+                list_of_sylEnvs = list(filter(None, found))
                 middle_syllables = tuple(syl.print_syl_structure(env=False) for syl in list_of_sylEnvs)  # 'target' column in res. window
 
                 if len(middle_syllables) == 0 and self.resultType == 'negative':
@@ -928,14 +933,29 @@ class PhonoSearchDialog(FunctionDialog):
                                      'Min Syllable Number': min_syl_num,
                                      'Max Syllable Number': max_syl_num,
                                      'userinput_target': userinput_target,  # target from the user setting (for summary)
-                                     'userinput_env': userinput_env})    # env from user setting (used in summary view)
+                                     'userinput_env': userinput_env,      # env from user setting (used in summary view)
+                                     'raw_env': found})
 
     def cleanse_syl_userinput(self):
+        """Convert sylprint() results into more readable strings.
+
+        Parametres
+        ----------
+
+        Returns
+        -------
+        tuple(str, ...), tuple(str, ...)
+            Two tuples 'userinput_evn' and 'userinput_target' that feed into the PhonoSearch result window. They
+            can have more than one str. Each str represents each env or target that the user inputs.
+        """
+        # this function changes sylprint results into more readable string.
+        # returns userinput_env and unierinput_target
         envs = tuple([y.lhs, y.rhs] for y in self.envWidget.value())
         targets = tuple(y.middle for y in self.envWidget.value())
 
-        lhs, rhs = "", ""
+        userinput_env = list()
         for env in envs:
+            lhs, rhs = "", ""
             if len(env[0]) > 0:
                 lhs = [self.sylprint(e) for e in env[0]]
                 lhs = ", ".join(lhs)
@@ -944,11 +964,15 @@ class PhonoSearchDialog(FunctionDialog):
                 rhs = [self.sylprint(e) for e in env[1]]
                 rhs = ", ".join(rhs)
                 rhs += " " if len(rhs) > 0 else rhs
+            userinput_env.append(lhs + "_" + rhs)
 
-        userinput_env = lhs + "_" + rhs
-        userinput_target = "".join([self.sylprint(target[0]) for target in targets])
+        userinput_target = list()
+        for target in targets:
+            userinput_target.append(self.sylprint(target[0]))
+        # userinput_env = lhs + "_" + rhs
+        # userinput_target = "".join([self.sylprint(target[0]) for target in targets])
 
-        return tuple([userinput_target]), tuple([userinput_env])
+        return tuple(userinput_target), tuple(userinput_env)
 
     def sylprint(self, syll_dict):
         if list(syll_dict['nonsegs']):

@@ -60,14 +60,16 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
 
         for env in envs:
             es = tier.find(env, mode)
-            if es is not None:
+            try:
                 found.extend(es)
+            except TypeError:   # when es == None
+                found.append(es)
 
         if result_type == 'positive':
-            if found:
+            if not all(e is None for e in found):
                 results.append((word, found))
         else:
-            if not found:
+            if all(e is None for e in found):
                 results.append((word, found))
 
     # additional filters
