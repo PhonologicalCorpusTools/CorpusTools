@@ -163,12 +163,12 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
 
 2. The window has panels for each of the Onset, Nucleus, and Coda. Each of these can be specified using the same segment-based environment selector described in :ref:`segment_selection` above.
 
-3. Additionally, each of the Onset, Nucleus, and Coda, you choose among "Exactly matches", "Minimally contains", "Starts with", and "Ends with."
+3. Additionally, for each of the Onset, Nucleus, and Coda, you can choose among "Exactly matches", "Minimally contains", "Starts with", and "Ends with."
    * Please note that using "Exactly matches" while not specifying an onset/coda slot means "no onset/coda", while using "Minimally contains" without specifying an
    onset or coda means that the onset or coda may either be empty or filled. 
-   * Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
+   * Using a single wildcard for onset/coda slot does mean that a segment *must* fill the slot.
 
-4. Additionally, you can exclude specific segments as a syllable component by selecting "Set negative" from the dropdown menu associated with the specific component. For example, if you want to search for a syllable that has any phoneme except +labial at the onset position, and does have [ɑ] as the nucleus, you can do so in
+4. Additionally, you can exclude specific segments as a syllable component by selecting "Set negative" from the dropdown menu associated with the specific component. For example, if you want to search for a syllable that has any phoneme in the onset position except those that are [+labial], and does have exactly [ɑ] as the nucleus, you can do so in
    the "Construct syllables" window by specifying "Nucleus" as [ɑ] (setting this to be "Exactly matches") and setting "Onset" as +labial with "Set negative" option checked from
    the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ]. This would look like the following:
 
@@ -183,6 +183,8 @@ The interface shows you a blank 'target' syllable. At the bottom of the blank sy
 .. image:: static/two_separate_syllable_searches.png
    :width: 90%
    :align: center
+
+.. _syllable_notation:
 
 **Notation for Syllables in Results Boxes:**
    
@@ -208,7 +210,7 @@ In order to maintain a 'flat' structure for exporting and interpreting results f
 
    S:{ O:{[m]}, N:{[i]} }
 
-5. If it is relevant to specify all of the possible options that a user selected (instead of simply representing the actual syllable), options are listed immediately after segments contained in the unit. So e.g. a search that required any non-labial onset to be followed exactly by the nucleus [ɑ] would be:
+5. If it is relevant to specify all of the possible options that a user selected (instead of simply representing the actual syllable), options are listed immediately after segments contained in the unit. So e.g. a search that required any non-labial onset to be followed exactly by the nucleus [ɑ] would be as follows (note that the 'set negative' component and the '[+labial]' component have both been automatically converted into a positive list of matching segments):
 
    S:{O:[e,ɑ,t,i,s,ʃ,n],option: Minimally contains},N:{[ɑ],option: Exactly matches}}
 
