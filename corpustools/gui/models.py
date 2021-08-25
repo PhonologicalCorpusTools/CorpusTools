@@ -580,7 +580,7 @@ class PhonoSearchResultsModel(BaseTableModel):
                     if line['raw_env'][i] is not None :     # then check if the word is in results for satisfying env[i]
                         typefreq[segenvfilters] += 1        # if so, +1 in the type freq
                         tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
-                if line['Result type'] == 'negative':  # if negative search
+                elif line['Result type'] == 'negative':  # if negative search
                     typefreq[segenvfilters] += 1   # the word is in the result for NOT satisfying the env[i] so +1
                     tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
 
