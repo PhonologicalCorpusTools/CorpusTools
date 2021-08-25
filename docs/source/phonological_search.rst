@@ -4,29 +4,24 @@
 Phonological search
 *******************
 
-PCT allows you to do searches for various strings or syllables. They can be defined by segments or features.
+PCT allows you to do searches for various strings or syllables. They can be defined by segments or features, and can be filtered by frequency and / or length.
 The search returns two types of information: the first is called “summary results,” where a general count
 of the number of entries that fit the search is described, and the other is “individual results,” where
-a list of all the words in the corpus that contain the specified string is presented. There are two modes
-in which this “phonological search” can be conducted: “:ref:`segment_mode`” and “:ref:`syllable_mode`.”
-“Segment mode” treats words in the corpus as a linear sequence of segments, so it is useful for
-searching for a target in a linear context. This is the only search type that was available
-in early versions of PCT. “Syllable mode,” on the other hand, allows you to construct syllables for your search,
-such that you can search for both syllable components like “onset” and “coda” and also
-for characteristics of words that are defined at the syllabic level, such as tone or stress.
-Syllable mode requires your corpus to have syllable delimiters. Finally, you can save a search for later use.
+a list of all the words in the corpus that contain the specified string is presented. Finally, you can save a search for later use.
 
 To conduct a search, first choose “Corpus” / “Phonological search...”
 and do the following:
 
-.. _segment_mode:
-
-Segment mode
-============
-
-Segment mode lets you search a target in linear environments.
-
-1. **Search mode**: Select “Segments.”
+1. **Search mode**: There are two modes in which phonological searches can be conducted: "segment mode" and "syllable mode."
+“Segment mode” treats words in the corpus as a linear sequence of segments, so it is useful for
+searching for a target in a linear context. This is the only search type that was available
+in early versions of PCT. “Syllable mode,” on the other hand, allows you to construct syllables for your search,
+such that you can search for both syllable components like “onset” and “coda”. Syllable mode is useful
+when, for example, you want to limit your search to the second syllable of a word, or to the onset of a syllable.
+If you were to do it in segments mode, you would need to construct by hand all the different types of possible syllables before
+the target, because the segments mode is blind to the notion of the syllable. Syllable mode also allows you to search
+for characteristics that are specified at the syllabic level, such as stress or tone. In order to use syllables mode, though,
+your corpus must be delimited for syllables; see :ref:`parsing_parameters` and :ref:`column-delimited` for more information.
 
 2. **Result type**: Select either positive or negative. A positive search returns entries
    that satisfy the environment you choose in the environment selection; while negative search
@@ -39,10 +34,10 @@ Segment mode lets you search a target in linear environments.
    is selected, then one could search for the occurrence of, e.g., [i]
    before mid vowels on that tier (hence ignoring intervening consonants). (Note that it is not currently possible to do a phonological search within :ref:`pronunciation_variants`; the search will look only at the canonical forms or whatever forms are listed in the specified tier.)
 
-4. **Environments**: Select the strings you want to search for. See :ref:`environment_selection` and :ref:`sound_selection` for details.
+4. **Environments**: Select the strings you want to search for. See :ref:`environment_selection` and :ref:`sound_selection` for details, including the differences between selecting environments in segment vs. syllable mode.
 
-   An example of adding environments for a positive search (in this case, the environment “word-initial,
-   before a vowel”):
+   An example of adding environments for a positive search in segment mode (in this case, the environment “word-initial,
+   before a vowel”) (before any actual target has been selected):
 
    .. image:: static/phonosearchenvironment.png
       :width: 100%
@@ -55,8 +50,7 @@ Segment mode lets you search a target in linear environments.
       :width: 100%
       :align: center
 
-   An example of the phonological search window, set up to search for voiceless stops word-initially before vowels and
-   between [ɑ] vowels, on the transcription tier (negative search):
+   Note that if a negative search is to be performed, only a SINGLE environment can be specified at a time. This is to avoid confusion in the list of results.  An example of the phonological search window, set up to do a *negative* search for voiceless stops word-initially before vowels, on the transcription tier:
 
    .. image:: static/phonosearchenvironment3.png
       :width: 100%
@@ -69,11 +63,12 @@ Segment mode lets you search a target in linear environments.
    To save a search, click on “Save current search” in the “Phonological Search” dialogue box (see above pictures).
    To modify it or to use a saved search, click on “Load recent search.” See :ref:`saving_phono_search` for details.
 
-6. **Additional filters**: It is possible to filter out tokens by word, phoneme, or syllable frequencies.
-   To do this, enter numbers in the relevant slots located under the “Additional filters” group. Note that those
-   minimum and maximum frequency filters apply after the search is done, i.e., by removing unwanted search tokens on
-   search results. Also note that the syllable number filters are not applicable to a corpus without syllables.
-   See :ref:`column-delimited` for how to create a corpus with a syllable delimiter.
+6. **Additional Filters**: As of PCT 1.5.0, there are some extra options that can be added to phonological searches. These act as filters; essentially, the baseline phonological search is conducted, and then only the results that match the selected filters are actually returned. If the filters are left blank, they are simply not applied and all results are returned. The three filters are:
+   a. **Word frequency**: Specify what the minimum and / or maximum token frequency value each returned word should have is.
+   b. **Phoneme number**: Specify what the minimum number and / or maximum number of phonemes each returned word should have is.
+   b. **Syllable number**: Specify what the minimum number and / or maximum number of syllables each returned word should have is.
+   
+   Note that the syllable number filters are not applicable to a corpus without syllables. See :ref:`column-delimited` for how to create a corpus with a syllable delimiter.
 
 7. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
@@ -99,9 +94,9 @@ Segment mode lets you search a target in linear environments.
    “Show summary results.” Each set of results can be saved to a .txt file by
    clicking “Save to file” at the bottom of the relevant results window. To
    return to the search selection dialogue box, click on “Reopen function dialogue.”
-   Otherwise, when finished, click on “Close window” to return to the corpus.
+   Otherwise, when finished, click on “Close window” to return to the corpus. See also See :ref:`syllable_notation` for information on how constructed syllables are represented in results window in a flat notation.
 
-   An example of the summary results window for the above positive phonological search:
+   An example of the summary results window for the above positive phonological search (with two separate environments). Note that featural selections have automatically been turned into the relevant matching segments in the results window:
 
    .. image:: static/phonosearchsummary.png
       :width: 90%
@@ -113,118 +108,14 @@ Segment mode lets you search a target in linear environments.
       :width: 90%
       :align: center
 
-   Finally, the same environment but negative search option returns the following individual results:
+   Finally, the negative search option described above returns the following summary and individual results:
 
-   .. image:: static/phonosearchindividualnegative.png
+   .. image:: static/phonosearchsummarynegative.png
       :width: 90%
       :align: center
-
-
-.. _syllable_mode:
-
-Syllable mode
-=============
-
-Syllable mode enables you to incorporate the notion of the syllable in your phonological searches. The basic
-operation is the same as segments mode, except the environment selection. Syllables mode comes in handy
-when, for example, you want to limit your search to the second syllable of a word, or to the onset of a syllable.
-If you were to do it in segments mode, you would need to construct by hand all the different types of possible syllables before
-the target, because the segments mode is blind to the notion of the syllable. Syllables mode also allows you to search
-for characteristics that are specified at the syllabic level, such as stress or tone. In order to use syllables mode, though,
-your corpus must be delimited for syllables; see :ref:`parsing_parameters`.
-
-
-1. **Search mode**: Select “Syllables.”
-
-2. **Result type**: Select either positive or negative. A positive search returns entries that satisfy
-   the environment you choose in the environment selection; while negative search returns the strings
-   that do NOT fall under the environment that you specify.
-
-3. **Tier**: Select the tier on which phonological search should be performed.
-   The default would be the transcription tier, so that phonological
-   environments are defined locally. But, for example, if a vowel tier
-   is selected, then one could search for the occurrence of, e.g., [i]
-   before mid vowels on that tier (hence ignoring intervening consonants).
-   Note that it is not currently possible to do a syllable search within other tiers than 'Transcription.'
-   Also, phonological search within :ref:`pronunciation_variants` is not available. The search will look
-   only at the canonical forms or whatever forms are listed in the specified tier.)
-
-4. **Environments**: Construct a syllable by selecting 'Construct the syllable,' or add a non-segment symbol (for non-targets). Constructing a syllable means
-   specifying the environment for each syllable component. See examples below for the syllable construction. Also, see :ref:`environment_selection` and :ref:`sound_selection` for environment selection.
-
-   To construct a syllable, first you will need to add a new environment by clicking the “New environment” button.
-   And then, you can construct a target syllable by selecting "Construct the syllable" from the dropdown menu
-   of Edit. The Construct syllables window will pop up. Now you can specify Onset and Nucleus just as you
-   would do in :ref:`environment_selection`. And you can also specify Stress and Tone for the target syllable
-   on the right-hand side.
-
-   For each syllable component, you can select environment and specify a search type among "Exactly matches", "Minimally contains", "Starts with", and "Ends with."
-   Please note that using "Exactly matches" while not specifying an onset/coda slot means "no onset/coda", while using "Minimally contains" without specifying an
-   onset or coda means that the onset or coda may either be empty or filled. Using a single wildcard for onset/coda slot does mean that a segment must fill the slot.
-
-   Additionally, you can exclude specific segments at a syllable component by selecting "Set negative" from the dropdown menu. For example,
-   if you want to search for a syllable that has any phoneme except +labial at the onset position and [ɑ] as the nucleus, you can do so in
-   the "Construct syllables" window by specifying "Nucleus" as [ɑ] and setting "Onset" as +labial with "Set negative" option checked from
-   the dropdown menu. This will search for [sɑ], [rɑ], etc. but exclude [mɑ] or [pɑ].
-
-   Now, let's assume you search for the cases where the second syllables are either /tɑ/ or /sɑ/ (Alveolar-stop or alveolar-fricative onset and low-back vowel nucleus). You may want to select syllable environment as the below screenshot shows. To implement a second syllable position, the target syllable is preceded by a # and an unspecified syllable (select 'Add an unspecified syllable' from dropdown menu)
-
-   An example of constructing a target syllable at the second syllable position (in this case, a syllable constructed so as to have the onset consist of either an alveolar stop or fricative, and the nucleus of a low-back vowel):
-
-   .. image:: static/phonosearchenvironmentsyllable.png
-      :width: 100%
-      :align: center
-
-   Another example of constructing the syllable (unlike above, only closed syllables are counted):
-
-   .. image:: static/phonosearchenvironmentsyllable2.png
-      :width: 100%
-      :align: center
-
-
-5. **Saving Searches**: It is possible to save particular searches, as in the Segments mode. To save a search,
-   click on "Save current search" in the "Phonological Search" dialogue box. See :ref:`saving_phono_search` for more
-   information.
-
-6. **Additional filters**: It is possible to filter out tokens by word, phoneme, or syllable frequencies.
-   To do this, enter numbers in the relevant slots located under the “Additional filters” group. Note that those
-   minimum and maximum frequency filters apply after the search is done, i.e., by removing unwanted search tokens on
-   search results.
-
-7. **Results**: Once all selections have been made, click on “Calculate
-   phonological search.” If there is not already an existing results table,
-   or you want to start a new one, choose the “Start new results table”
-   option. If you want to add the results to a pre-existing table, choose
-   the “Add to current results table” option. The results appear in a new
-   dialogue box that first shows the summary results, i.e., a list that
-   contains the segment that was searched for, each environment that was
-   searched for, the total count of words that contain that segment in that
-   environment, and the total token frequency for those words (note that
-   these are the frequencies of the WORDS containing the specified environments,
-   so if for example, a particular word contains multiple instances of the same
-   environment, this is NOT reflected in the counts). The individual words in
-   the corpus that match the search criteria can be shown by clicking on “Show
-   individual results” at the bottom of the screen; this opens a new dialogue
-   box in which each word in the corpus that matches the search criteria is
-   listed, including the transcription of the word, the segment that was found
-   that matches the search criteria, and which environment that segment
-   occurred in in that word. Note that the results can be sorted by any of
-   the columns by clicking on that column’s name. To return to the summary results, click on
-   “Show summary results.” Each set of results can be saved to a .txt file by
-   clicking “Save to file” at the bottom of the relevant results window. To
-   return to the search selection dialogue box, click on “Reopen function dialogue.”
-   Otherwise, when finished, click on “Close window” to return to the corpus.
-
-   An example of the summary results window for the above syllable mode search:
-
-   .. image:: static/phonosearchsummarysyllable.png
-      :width: 70%
-      :align: center
-
-   And the individual results from the same syllable mode search, sorted by environment:
-
-   .. image:: static/phonosearchindividualsyllable.png
-      :width: 70%
+      
+   .. image:: static/phonosearchindividualnegative.png
+      :width: 90%
       :align: center
 
 
