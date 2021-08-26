@@ -59,7 +59,7 @@ transcription-to-feature mappings is laid out as above in a .txt file that
 can be downloaded from within PCT. The former system is called “spe” for
 short within PCT, while the latter is called “hayes.”
 
-As of v. 1.5.0, these systems are simply packaged with the PCT executable and should be available when you load the software. They can also be downloaded directly from https://www.dropbox.com/sh/0zdel7eglp9vvou/AACKey0JoRwqehJtq2rv9_72a?dl=0 See :ref:`local_storage` for details on how to store and access these.
+As of v. 1.5.0, these systems are simply packaged with the PCT executable and should be available when you load the software. They can also be downloaded directly from https://github.com/PhonologicalCorpusTools/PCT_Fileshare/tree/main/FEATURE. See :ref:`local_storage` for details on how to store and access these.
 
 Prior to v. 1.5.0, feature systems needed to be selected and downloaded from within PCT. To download one of these systems, click on “Corpus” /
 “Manage feature systems...” and follow these steps:
