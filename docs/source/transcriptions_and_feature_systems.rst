@@ -165,6 +165,8 @@ the name of the first column must always be “symbol” in order for PCT to
 read the file. Save the new file as a CSV or tab-delimited .txt file,
 and load it following the instructions in :ref:`load_custom_feature`.
 
+Note that the files "anything2hayes.xlsx" and "anything2spe.xlsx", available in the Hayes and SPE folders of https://github.com/PhonologicalCorpusTools/PCT_Fileshare/tree/main/FEATURE, respectively, are Excel spreadsheets that show all of the current Hayes and SPE features with tabs for EACH of the existing transcription systems. These are especially useful for modifying existing systems or creating new systems using a template.
+
 .. _applying_editing_feature:
 
 Applying / editing feature systems
