@@ -42,6 +42,8 @@ Mac Executable -- PCT v 1.4.1 is confirmed to work on 10.13 and higher, but may 
 
 # NOTE 1: When the software is downloaded, you may get a security warning indicating that you have tried to launch an unrecognized app. If you Ctrl-click on the application and select "Open," you should be able to override the security warning and use PCT normally.
 
+# NOTE 2: Similarly, you may get a warning asking whether you want to give PCT access to your Documents folder. In order for PCT to function properly, you should grant this permission. See details in `ref:local_storage'::. If you do not give permission when first downloading PCT, the software will still download and create sub-folders in your Documents folder, but the program itself will not launch. To change your permissions at any point, you can go to System Preferences / Security and Privacy / Privacy / Files and Folders, and then specify that Phonological CorpusTools can have access to the Documents folder.
+
 # Download the latest version's installer (should be a file ending in .dmg) from the Phonological CorpusTools page on GitHub (https://github.com/PhonologicalCorpusTools/CorpusTools/releases). You can then double-click this file to run Phonological CorpusTools. You can move the icon to your toolbar like any other application.
 
 
