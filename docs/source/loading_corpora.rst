@@ -64,7 +64,7 @@ Using a built-in corpus
 To use a built-in corpus, simply go to the “File” menu and select
 “Load corpus...” from the list, which will open the “Load corpora” dialogue box.
 
-As of v. 1.5.0, these corpora are directly packaged with the executable version of PCT and should simply be available on opening the software. You can also download them directly from Dropbox: https://www.dropbox.com/sh/0zdel7eglp9vvou/AACKey0JoRwqehJtq2rv9_72a?dl=0
+As of v. 1.5.0, these corpora are directly packaged with the executable version of PCT and should simply be available on opening the software. You can also download them directly from Dropbox: https://www.dropbox.com/sh/0zdel7eglp9vvou/AACKey0JoRwqehJtq2rv9_72a?dl=0 See :ref:`local_storage` for details on how to store and access these.
 
 Before v. 1.5.0, the first time you wanted to use a built-in corpus, you needed to download it
 (from a Dropbox link accessed by PCT internally); you had to therefore be
