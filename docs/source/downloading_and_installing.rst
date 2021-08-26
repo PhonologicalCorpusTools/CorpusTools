@@ -110,13 +110,13 @@ Once PCT creates or downloads these files, they are saved in your local hard dri
 “C:\\Users\\[USER NAME]\\Documents\\PCT\\CorpusTools\\” (for Windows machines), or “~/Documents/PCT/CorpusTools/” (for macOS or Linux machines).
 You will find several directories in this directory:
 
- * “CORPUS” is the place for the corpus files you created or downloaded (cf. :ref:`loading_corpora`).
- * “ERRORS” is where you can find error messages for the environment exhaustivity (cf. :ref:`predictability_of_distribution`).
- * “FEATURE” is the folder where all your feature files are saved (cf. :ref:`transcriptions_and_feature_systems`).
- * “SEARCH” is where you can find recent phonological searches (recent.searches) and saved searches (saved.searches). See :ref:`saving_phono_search` for how to save a search.
+   * “CORPUS” is the place for the corpus files you created or downloaded (cf. :ref:`loading_corpora`).
+   * “ERRORS” is where you can find error messages for the environment exhaustivity (cf. :ref:`predictability_of_distribution`).
+   * “FEATURE” is the folder where all your feature files are saved (cf. :ref:`transcriptions_and_feature_systems`).
+   * “SEARCH” is where you can find recent phonological searches (recent.searches) and saved searches (saved.searches). See :ref:`saving_phono_search` for how to save a search.
 
 Occasionally, it is useful to access these folders directly. For example, if you want to give your corpus or feature files to another user, or access them on a different maching, you can copy the files to the relevant path in the new
-machine. Similarly, if you have received a file that runs with PCT (e.g. a corpus file from the developers), you will need to save it in the correct directory for PCT to recognize it.
+machine. Similarly, if you have received a file that runs with PCT (e.g. a corpus file from the developers), you will need to save it in the correct directory for PCT to recognize it. You can also directly download the built-in .corpus and .feature files from https://github.com/PhonologicalCorpusTools/PCT_Fileshare.
 Please note that the working directory will not exist if you have never run PCT.
 
 See :ref:`preferences` for information on how to change the working directory.
