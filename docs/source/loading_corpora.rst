@@ -64,7 +64,7 @@ Using a built-in corpus
 To use a built-in corpus, simply go to the “File” menu and select
 “Load corpus...” from the list, which will open the “Load corpora” dialogue box.
 
-As of v. 1.5.0, these corpora are directly packaged with the executable version of PCT and should simply be available on opening the software. You can also download them directly from Dropbox: https://www.dropbox.com/sh/0zdel7eglp9vvou/AACKey0JoRwqehJtq2rv9_72a?dl=0 See :ref:`local_storage` for details on how to store and access these.
+As of v. 1.5.0, these corpora are directly packaged with the executable version of PCT and should simply be available on opening the software. You can also download them directly from GitHub: https://github.com/PhonologicalCorpusTools/PCT_Fileshare/tree/main/CORPUS See :ref:`local_storage` for details on how to store and access these.
 
 Before v. 1.5.0, the first time you wanted to use a built-in corpus, you needed to download it
 (from a Dropbox link accessed by PCT internally); you had to therefore be
@@ -133,7 +133,7 @@ download the actual feature files, as described in
 for defining classes of sounds (e.g., creating separate tiers for
 different types of segments) and for defining environments (e.g., the
 environments in which segments might occur, for use in calculating their
-predictability of distribution). As of v. 1.5.0, feature systems are also packaged directly with the software and should be immediately accessible.
+predictability of distribution). As of v. 1.5.0, feature systems are also packaged directly with the software and should be immediately accessible, though they can also be downloaded manually from https://github.com/PhonologicalCorpusTools/PCT_Fileshare/tree/main/FEATURE.
 
 The corpus may take several seconds to load, but will eventually appear;
 the following is the example corpus:
