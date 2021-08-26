@@ -64,8 +64,10 @@ Using a built-in corpus
 To use a built-in corpus, simply go to the “File” menu and select
 “Load corpus...” from the list, which will open the “Load corpora” dialogue box.
 
-The first time you want to use a built-in corpus, you’ll need to download it
-(from a Dropbox link accessed by PCT internally); you must therefore be
+As of v. 1.5.0, these corpora are directly packaged with the executable version of PCT and should simply be available on opening the software. You can also download them directly from Dropbox: https://www.dropbox.com/sh/0zdel7eglp9vvou/AACKey0JoRwqehJtq2rv9_72a?dl=0
+
+Before v. 1.5.0, the first time you wanted to use a built-in corpus, you needed to download it
+(from a Dropbox link accessed by PCT internally); you had to therefore be
 connected to the internet to complete this step. To do so, click on
 “Download example corpora” from the right-hand menu. This will allow
 you to download either of the two example corpora (one is called "example" and the
@@ -120,16 +122,18 @@ using the feature system of [Mielke2012]_, which in turn is based on
 SPE features [SPE]_ [this is the default for the example corpus], or using
 the feature system suggested by [Hayes2009]_ [this is the default
 for the IPHOD corpus and the Lemurian corpus]. These systems are fully functional for doing subsequent
-analyses. Note, however, that this is a built-in functionality of these
-particular corpora, and does not allow you to use SPE or Hayes features
+analyses. 
+
+Again, prior to v. 1.5.0, this was a built-in functionality of these
+particular corpora, and did not allow you to use SPE or Hayes features
 with other corpora. To use SPE features with other corpora, or to change
-the feature system associated with a built-in corpus, you’ll need to
+the feature system associated with a built-in corpus prior to 1.5.0, you’ll need to
 download the actual feature files, as described in
 :ref:`transcriptions_and_feature_systems`. Features can be used
 for defining classes of sounds (e.g., creating separate tiers for
 different types of segments) and for defining environments (e.g., the
 environments in which segments might occur, for use in calculating their
-predictability of distribution).
+predictability of distribution). As of v. 1.5.0, feature systems are also packaged directly with the software and should be immediately accessible.
 
 The corpus may take several seconds to load, but will eventually appear;
 the following is the example corpus:
