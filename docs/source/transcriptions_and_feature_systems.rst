@@ -11,12 +11,9 @@ systems available, but users can also define their own for custom
 use. Transcription and feature systems are essentially packaged
 together as .txt files in the form of a spreadsheet, where particular
 transcription symbols are mapped to a set of features (described below
-in :ref:`feature_format`). In general, however, feature systems (i.e., files containing
-transcriptions and their features) must be explicitly loaded into PCT
-before they are available for use. Thus, it makes sense to start by
-loading in at least one such system before attempting to work with corpora.
+in :ref:`feature_format`). 
 
-This section describes how to create a custom feature file or download a ready-made system.
+This section describes how to create a custom feature file or use a ready-made system.
 Please note that all created or downloaded feature files are stored as .feature in the working
 directory of PCT. See :ref:`local_storage` for details.
 
@@ -50,7 +47,7 @@ names aren’t aligned with the feature values visually.
 
 .. _download_features:
 
-Downloadable transcription and feature choices
+Built-in transcription and feature choices
 ==============================================
 
 Currently, the built-in transcription systems that are usable are
@@ -62,7 +59,9 @@ transcription-to-feature mappings is laid out as above in a .txt file that
 can be downloaded from within PCT. The former system is called “spe” for
 short within PCT, while the latter is called “hayes.”
 
-To download one of these systems, click on “Corpus” /
+As of v. 1.5.0, these systems are simply packaged with the PCT executable and should be available when you load the software. They can also be downloaded directly from https://www.dropbox.com/sh/0zdel7eglp9vvou/AACKey0JoRwqehJtq2rv9_72a?dl=0 See :ref:`local_storage` for details on how to store and access these.
+
+Prior to v. 1.5.0, feature systems needed to be selected and downloaded from within PCT. To download one of these systems, click on “Corpus” /
 “Manage feature systems...” and follow these steps:
 
 1. **Download**: Click on “Download feature systems” to open up the relevant dialogue box.
