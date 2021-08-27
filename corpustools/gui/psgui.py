@@ -249,7 +249,7 @@ class RecentSearchDialog(QDialog):
 
     def makeMenus(self):
         # Dropdown menu for recent searches
-        self.recentMenu = QMenu()
+        self.recentMenu = QMenu(parent=self)
         self.deleteRecentAction = QAction('Delete search', self)
         self.recentToSavedAction = QAction('Save search', self)
         self.addToCurrentAction = QAction('Add to current search', self)
@@ -260,7 +260,7 @@ class RecentSearchDialog(QDialog):
         self.recentSearchesTable.customContextMenuRequested.connect(self.showRecentMenu)
 
         # Dropdown menu for saved searches
-        self.savedMenu = QMenu()
+        self.savedMenu = QMenu(parent=self)
         self.deleteSaveAction = QAction('Delete search', self)
         self.changeSavedAction = QAction('Change name', self)
         self.savedMenu.addAction(self.deleteSaveAction)
@@ -270,7 +270,7 @@ class RecentSearchDialog(QDialog):
         self.savedSearchesTable.customContextMenuRequested.connect(self.showSavedMenu)
 
         # Dropdown menu for current searches
-        self.currentMenu = QMenu()
+        self.currentMenu = QMenu(parent=self)
         self.deleteCurrentAction = QAction('Delete search', self)
         self.currentToSavedAction = QAction('Save search', self)
         self.currentMenu.addAction(self.deleteCurrentAction)
