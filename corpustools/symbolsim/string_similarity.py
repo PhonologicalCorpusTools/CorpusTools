@@ -85,7 +85,7 @@ def string_similarity(corpus_context, query, algorithm, **kwargs):
         raise(StringSimilarityError('{} is not a possible string similarity algorithm.'.format(algorithm)))
 
     related_data = []
-    if isinstance(query,Word):
+    if isinstance(query, Word):       # 'comparison type' option set to "compare one word to entire corpus"
         if call_back is not None:
             total = len(corpus_context)
             if min_rel is not None or max_rel is not None:
@@ -102,7 +102,9 @@ def string_similarity(corpus_context, query, algorithm, **kwargs):
                 cur += 1
                 if cur % 50 == 0:
                     call_back(cur)
-            relatedness = relate_func(targ_word, word)
+            w1 = getattr(targ_word, corpus_context.sequence_type)
+            w2 = getattr(word, corpus_context.sequence_type)
+            relatedness = relate_func(w1, w2)
 
             if min_rel is not None and relatedness < min_rel:
                 continue
@@ -113,11 +115,15 @@ def string_similarity(corpus_context, query, algorithm, **kwargs):
         related_data.sort(key=lambda t:t[-1])
         if related_data[0][1] != targ_word:
             related_data.reverse()
-    elif isinstance(query, tuple):
-        w1 = query[0]
-        w2 = query[1]
+    elif isinstance(query, tuple):      # 'comparison type' option set to "Compare a single pair of words to each other"
+        word1 = query[0]
+        word2 = query[1]
+
+        w1 = getattr(word1, corpus_context.sequence_type)
+        w2 = getattr(word2, corpus_context.sequence_type)
         relatedness = relate_func(w1,w2)
-        related_data.append((w1,w2,relatedness))
+
+        related_data.append((word1,word2,relatedness))
     elif hasattr(query,'__iter__'):
         if call_back is not None:
             total = len(query)
