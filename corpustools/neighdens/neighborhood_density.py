@@ -15,13 +15,17 @@ def _is_edit_distance_neighbor(w, query, sequence_type, max_distance):
         return False
     if w_len < query_len-max_distance:
         return False
-    return edit_distance(w, query, sequence_type, max_distance) <= max_distance
+    return edit_distance(getattr(w, sequence_type), getattr(query, sequence_type),
+                         sequence_type, max_distance) <= max_distance
+
 
 def _is_phono_edit_distance_neighbor(w, query, sequence_type, specifier, max_distance):
-    return phono_edit_distance(w, query, sequence_type, specifier) <= max_distance
+    return phono_edit_distance(getattr(w, sequence_type), getattr(query, sequence_type), sequence_type, specifier) <= max_distance
+
 
 def _is_khorsi_neighbor(w, query, freq_base, sequence_type, max_distance):
-    return khorsi(w, query, freq_base, sequence_type, max_distance) >= max_distance
+    return khorsi(getattr(w, sequence_type), getattr(query, sequence_type), freq_base, sequence_type, max_distance) >= max_distance
+
 
 def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None, sequence_type = None,
             algorithm = 'edit_distance', max_distance = 1, output_format = 'spelling',

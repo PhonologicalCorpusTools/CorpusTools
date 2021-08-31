@@ -7,21 +7,23 @@ from corpustools.symbolsim.phono_edit_distance import phono_edit_distance
 from corpustools.exceptions import StringSimilarityError
 
 def khorsi_wrapper(w1, w2, freq_base,sequence_type, max_distance):
-    score = khorsi(w1, w2, freq_base = freq_base, sequence_type = sequence_type)
+    score = khorsi(getattr(w1, sequence_type), getattr(w2, sequence_type),
+                   freq_base=freq_base, sequence_type=sequence_type)
     if score >= max_distance:
         return score
     else:
         return None
 
 def edit_distance_wrapper(w1, w2, sequence_type, max_distance):
-    score = edit_distance(w1, w2, sequence_type)
+    score = edit_distance(getattr(w1, sequence_type), getattr(w2, sequence_type), sequence_type)
     if score <= max_distance:
         return score
     else:
         return None
 
 def phono_edit_distance_wrapper(w1, w2, sequence_type, features, max_distance):
-    score = phono_edit_distance(w1, w2, sequence_type = sequence_type,features = features)
+    score = phono_edit_distance(getattr(w1, sequence_type), getattr(w2, sequence_type),
+                                sequence_type=sequence_type, features=features)
     if score <= max_distance:
         return score
     else:
