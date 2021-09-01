@@ -64,9 +64,13 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters` and :
    To modify it or to use a saved search, click on “Load recent search.” See :ref:`saving_phono_search` for details.
 
 6. **Additional Filters**: As of PCT 1.5.0, there are some extra options that can be added to phonological searches. These act as filters; essentially, the baseline phonological search is conducted, and then only the results that match the selected filters are actually returned. If the filters are left blank, they are simply not applied and all results are returned. The three filters are:
+
    a. **Word frequency**: Specify what the minimum and / or maximum token frequency value each returned word should have is.
+   
    b. **Phoneme number**: Specify what the minimum number and / or maximum number of phonemes each returned word should have is.
-   b. **Syllable number**: Specify what the minimum number and / or maximum number of syllables each returned word should have is.
+   
+   c. **Syllable number**: Specify what the minimum number and / or maximum number of syllables each returned word should have is.
+   
    
    Note that the syllable number filters are not applicable to a corpus without syllables. See :ref:`column-delimited` for how to create a corpus with a syllable delimiter.
 
