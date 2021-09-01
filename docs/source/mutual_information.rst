@@ -251,16 +251,8 @@ to word-internal pMI is not available when the environment filter is on.
 Follow these steps to calculate mutual information:
 
 1. **Bigrams**: Click on the “Add bigram” button in the “Mutual Information”
-   dialogue box. A new window will open with an inventory of all
-   the segments that occur in your corpus. Select the bigram by clicking
-   on one segment from the “left-hand side” and one segment from the
-   “right-hand side.” Note that the order of the sounds matters if “Set domain to word
-   (unordered word-internal pMI)" is unchecked (the default). To add more than one bigram, click “Add and create
-   another” to be automatically returned to the selection window. Once
-   the last bigram has been selected, simply click “Add” to return to
-   the Mutual Information dialogue box. All the selected bigrams will
-   appear in a list. To remove one, click on it and select “Remove
-   selected bigram.”
+   dialogue box to get the :ref:`bigram_selector` dialogue box. Note that the order of the sounds matters if “Set domain to word
+   (unordered word-internal pMI)" is unchecked (the default). 
 
 2. **Tier**: Mutual information can be calculated on any available tier.
    The default is transcription. If a vowel tier has been created,
