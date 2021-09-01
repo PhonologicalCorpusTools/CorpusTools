@@ -50,7 +50,7 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters` and :
       :width: 100%
       :align: center
 
-   Note that if a negative search is to be performed, only a SINGLE environment can be specified at a time. This is to avoid confusion in the list of results.  An example of the phonological search window, set up to do a *negative* search for voiceless stops word-initially before vowels, on the transcription tier:
+   Note that if a negative search is to be performed, only a SINGLE environment can be specified at a time. This is to avoid confusion in the list of results.  An example of the phonological search window, set up to do a *negative* search for voiceless stops word-initially before vowels, on the transcription tier is as follows. In other words, this search should return all words in the corpus that do NOT contain word-initial, pre-vocalic voiceless stops:
 
    .. image:: static/phonosearchenvironment3.png
       :width: 100%
