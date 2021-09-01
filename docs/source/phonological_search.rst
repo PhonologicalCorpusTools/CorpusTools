@@ -171,7 +171,7 @@ click “Load recent search.”
   can be found in the “Searches” dialogue, which is described next.
 
   .. image:: static/savingphonosearch2.png
-     :width: 30%
+     :width: 50%
      :align: center
 
 * **Load recent search**: Clicking on “Load recent search” in the “Phonological Search” dialogue prompts a dialogue box titled
