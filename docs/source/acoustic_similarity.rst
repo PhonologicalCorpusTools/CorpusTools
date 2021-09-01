@@ -6,6 +6,8 @@ Acoustic Similarity
 
 .. _about_acoustic_similarity:
 
+**NOTE:** Although acoustic similarity is still included as an algorithm within PCT, the focus of the PCT software is *phonological* analysis, not acoustic analysis. We do not actively maintain the acoustic similarity algorithm, and recommend that users look to PCT's companion software, Speech Corpus Tools (https://github.com/MontrealCorpusTools/speechcorpustools), developed at McGill University, for better and more updated functionality.
+
 About the function
 ------------------
 
