@@ -20,7 +20,12 @@ Selecting bigrams using the GUI
 1. From the analysis function dialog, click
    on "Add Bigram." A new window will open, containing an inventory of all the
    segments in the loaded corpus, for selecting the left- and
-   right-hand sides of a bigram.
+   right-hand sides of a bigram:
+   
+   
+.. image:: static/bigram_selector.png
+   :width: 90%
+   :align: center
 
 2. **Using the inventory:** Selecting a single segment from both sides
    will add a single bigram, while selecting multiple segments from either
@@ -38,9 +43,19 @@ Selecting bigrams using the GUI
    bigrams. Click "Add and create another" to accept your selected bigrams
    while keeping the bigram selector window open.
 5. If an added bigram does not appear in the corpus, a message box will
-   appear. From it, click "Cancel" to return to the bigram selector window
+   appear specifying which bigrams are missing. From it, click "Cancel" to return to the bigram selector window
    without adding the bigram; click "No" to add all of the bigrams that do
    appear in the corpus without adding the ones that do not; and click
    "Yes" to add all of the bigrams regardless of whether they appear in
    the corpus. Note that PCT cannot calculate Mutual Information or
    Transitional Probability on bigrams that do not appear in the corpus.
+   
+   For example, in the following window, we have selected {m, t} as the first element and {i, u, o} as the second element. Ideally, this would result in six total bigrams being added to our search list: [mi], [mu], [mo], and [ti], [tu], [to]. However, PCT warns us that [mu] and [mo] are not in the corpus. By clicking "No" (i.e., we do not wish to keep them), we are returned to the main analysis window (in this case, the transitional probability dialogur box), with only the four extant bigrams selected:
+   
+   .. image:: static/bigram_warning.png
+   :width: 90%
+   :align: center
+   
+   .. image:: static/bigrams_selected.png
+   :width: 90%
+   :align: center
