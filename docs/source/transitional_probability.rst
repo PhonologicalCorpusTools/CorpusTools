@@ -184,10 +184,7 @@ As with most analysis functions, a corpus must first be loaded (see
 probability..." from the top menu bar.
 
 2. **Bigram selection**: To select segment pairs, click on the "Add
-bigram" button in the "Transitional Probability" dialog box. A new
-window will open with an inventory of all the segments that occur in
-the loaded corpus. Create the bigram by clicking on the intended
-"left-hand side" and "right-hand side" segments. Note that the order
+bigram" button to open the :ref:`bigram_selector` dialogue box. Note that the order
 of the bigram matters for calculating transitional probability.
 
 3. **Direction**: Transitional probability can be calculated based on the
