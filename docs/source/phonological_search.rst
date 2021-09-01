@@ -128,7 +128,7 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters` and :
 Note that if a subsequent duplicates a prior search and "Add to current search results" is selected, PCT will produce a warning (see below) and not actually add the same results again.
 
 .. image:: static/duplicated_search_warning.png
-   :width: 65%
+   :width: 35%
    :align: center
 
 If a subsequent search is a *superset* of a prior search (e.g., an initial search was for [m] before [ɑ] and then a subsequent search is for [m] before any [+syllabic], then the summary results will show the results of both searches:
