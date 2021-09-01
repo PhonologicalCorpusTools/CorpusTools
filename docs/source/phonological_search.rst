@@ -124,23 +124,24 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters` and :
 
 .. _duplicated_search:
 **NOTE: Duplicated Searches**
+
 Note that if a subsequent duplicates a prior search and "Add to current search results" is selected, PCT will produce a warning (see below) and not actually add the same results again.
 
-   .. image:: static/duplicated_search_warning.png
-      :width: 90%
-      :align: center
+.. image:: static/duplicated_search_warning.png
+   :width: 65%
+   :align: center
 
 If a subsequent search is a *superset* of a prior search (e.g., an initial search was for [m] before [ɑ] and then a subsequent search is for [m] before any [+syllabic], then the summary results will show the results of both searches:
 
-   .. image:: static/superset_search_summary.png
-      :width: 90%
-      :align: center
+.. image:: static/superset_search_summary.png
+   :width: 90%
+   :align: center
 
 ...but the individual search results will not duplicate the individual words with [mɑ] -- they appear only once each:
 
-   .. image:: static/superset_search_individuals.png
-      :width: 90%
-      :align: center
+.. image:: static/superset_search_individuals.png
+   :width: 90%
+   :align: center
 
 Similar behaviour occurs with subset searches: the summary results will show both searches separately, but the individual results will show each matched word only once.
 
