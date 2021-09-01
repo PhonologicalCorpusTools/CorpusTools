@@ -891,12 +891,16 @@ class PhonoSearchResults(ResultsWindow):
                 if len(self.dialog.results) > 0:
                     if not self.duplicate_check()[0]:
                         self.table.model().addRows(self.dialog.results)
+                        self.summarized = False
+                        self.table.model().setSummarized(True)
             else:                   # when 'Calculate [...] (start new results table)' selected
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
                                                     self.dialog.summary_header,
                                                     self.dialog.results,
                                                     self._parent.settings)
                 self.table.setModel(dataModel)
+                self.summarized = False
+                self.table.model().setSummarized(True)
         self.raise_()
         self.activateWindow()
 

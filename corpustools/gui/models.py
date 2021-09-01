@@ -577,9 +577,12 @@ class PhonoSearchResultsModel(BaseTableModel):
             for i,seg in enumerate(segs):
                 segenvfilters = seg, envs[i], filters, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
                 if line['Result type'] == 'positive':  # if positive search
-                    if line['raw_env'][i] is not None :     # then check if the word is in results for satisfying env[i]
+                    if line['raw_env'][i] is not None:      # then check if the word is in results for satisfying env[i]
                         typefreq[segenvfilters] += 1        # if so, +1 in the type freq
                         tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
+                    else:
+                        typefreq[segenvfilters] += 0
+                        tokenfreq[segenvfilters] += 0
                 elif line['Result type'] == 'negative':  # if negative search
                     typefreq[segenvfilters] += 1   # the word is in the result for NOT satisfying the env[i] so +1
                     tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
@@ -627,7 +630,11 @@ class PhonoSearchResultsModel(BaseTableModel):
         if self.summarized:     # summary result should be returned
             self._summarize()
         else:                   # individual result should be returned
-            allData_list = [[data[h] for h in self.header] for data in self.allData]
+            allData_list = []
+            for data in self.allData:
+                if str(data['Word']) == 'N/A' and data['Word'].Frequency == 'N/A':
+                    continue
+                allData_list.append([data[h] for h in self.header])
             allData_list.sort()
             # the code below makes duplicated individual words invisible (meaningful when an individual result satisfies
             # multiple searches e.g., mata satisfying both PS([m] and PS([m,n]).)

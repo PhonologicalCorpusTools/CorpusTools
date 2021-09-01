@@ -1,3 +1,4 @@
+from corpustools.corpus.classes import Word
 
 
 def phonological_search(corpus, envs, sequence_type='transcription', call_back=None, stop_check=None,
@@ -71,6 +72,11 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
         else:
             if all(e is None for e in found):
                 results.append((word, found))
+    if len(results) == 0:                   # if nothing in 'results', take the side way
+        word = Word(**{'spelling': 'N/A'})  # fake word to be a (invisible) placeholder in the result window
+        results.append((word, found))
+
+        return results
 
     # additional filters
     final_results = []

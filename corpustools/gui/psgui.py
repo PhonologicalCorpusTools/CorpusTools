@@ -870,71 +870,66 @@ class PhonoSearchDialog(FunctionDialog):
         except ValueError:
             max_syl_num = "N/A"
 
-        if self.mode == 'segMode':
-            for w, found in results:
-
-                f = list(filter(None, found))
-                segs = tuple(x.middle for x in f)
+        for word, found in results:
+            if self.mode == 'segMode':
                 userinput_target = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
-                if len(segs) == 0 and self.resultType == 'negative':
-                    segs = userinput_target
-                try:
-                    userinput_env = tuple(str(y) for y in self.envWidget.value())
-                    envs = tuple(str(x) for x in f)
-                    if len(envs) == 0 and self.resultType == 'negative':
-                        envs = userinput_env
-                except IndexError:
-                    envs = tuple()
-                self.results.append({'Corpus': self.corpus.name,
-                                     'PCT ver.': __version__, #self.corpus._version,
-                                     'Word': w,
-                                     'Transcription': str(getattr(w, self.tierWidget.value())),
-                                     'Target': segs,
-                                     'Environment': envs,
-                                     'Result type': self.resultType,
-                                     'Token frequency': w.frequency,
-                                     'Min Word Freq': min_word_freq,
-                                     'Max Word Freq': max_word_freq,
-                                     'Min Phoneme Number': min_phon_num,
-                                     'Max Phoneme Number': max_phon_num,
-                                     'Min Syllable Number': min_syl_num,
-                                     'Max Syllable Number': max_syl_num,
-                                     'userinput_target': userinput_target,
-                                     'userinput_env': userinput_env,
-                                     'raw_env': found
-                                     })
-        else:  # syllable search mode
-            userinput_target, userinput_env = self.cleanse_syl_userinput()
+                userinput_env = tuple(str(y) for y in self.envWidget.value())
 
-            for word, found in results:
-                list_of_sylEnvs = list(filter(None, found))
-                middle_syllables = tuple(syl.print_syl_structure(env=False) for syl in list_of_sylEnvs)  # 'target' column in res. window
+                if str(word) == 'N/A' and word.transcription is None:  # if there was no hit from the search, side way
+                    res_transcription = target = envs = word.frequency = 'N/A'
 
-                if len(middle_syllables) == 0 and self.resultType == 'negative':
-                    middle_syllables = userinput_target
-                try:
-                    envs = tuple(syl.print_syl_structure(env=True) for syl in list_of_sylEnvs)  # 'environment' col in res. win
-                    if len(envs) == 0 and self.resultType == 'negative':
-                        envs = userinput_env
-                except IndexError:
-                    envs = tuple()
-                self.results.append({'Corpus': self.corpus.name,
-                                     'PCT ver.': __version__,#self.corpus._version,
-                                     'Word': word,
-                                     'Transcription': str(getattr(word, self.tierWidget.value())),
-                                     'Target': middle_syllables,
-                                     'Environment': envs,
-                                     'Result type': self.resultType,
-                                     'Token frequency': word.frequency,
-                                     'Min Word Freq': min_word_freq,
-                                     'Max Word Freq': max_word_freq,
-                                     'Min Phoneme Number': min_phon_num,
-                                     'Max Phoneme Number': max_phon_num,
-                                     'Min Syllable Number': min_syl_num,
-                                     'Max Syllable Number': max_syl_num,
-                                     'userinput_target': userinput_target,  # target from the user setting (for summary)
-                                     'userinput_env': userinput_env,      # env from user setting (used in summary view)
-                                     'raw_env': found})
+                else:                                                   # regular cases with one or more words searched
+                    f = list(filter(None, found))
+                    target = tuple(x.middle for x in f)
+                    res_transcription = str(getattr(word, self.tierWidget.value()))
+                    if len(target) == 0 and self.resultType == 'negative':
+                        target = userinput_target
+                    try:
+                        envs = tuple(str(x) for x in f)
+                        if len(envs) == 0 and self.resultType == 'negative':
+                            envs = userinput_env
+                    except IndexError:
+                        envs = tuple()
+
+            else:  # syllable search mode
+                userinput_target, userinput_env = self.cleanse_syl_userinput()
+
+                if str(word) == 'N/A' and word.transcription is None:  # if there was no hit from the search, side way
+                    res_transcription = target = envs = word.frequency = 'N/A'
+
+                else:                                                   # regular cases with one or more words searched
+                    list_of_sylEnvs = list(filter(None, found))
+                    target = tuple(
+                        syl.print_syl_structure(env=False) for syl in list_of_sylEnvs)  # 'target' column in res. window
+
+                    if len(target) == 0 and self.resultType == 'negative':
+                        target = userinput_target
+                    try:
+                        envs = tuple(syl.print_syl_structure(env=True) for syl in
+                                     list_of_sylEnvs)  # 'environment' col in res. win
+                        if len(envs) == 0 and self.resultType == 'negative':
+                            envs = userinput_env
+                    except IndexError:
+                        envs = tuple()
+                    res_transcription = str(getattr(word, self.tierWidget.value()))
+
+            self.results.append({'Corpus': self.corpus.name,
+                                 'PCT ver.': __version__,  # self.corpus._version,
+                                 'Word': word,
+                                 'Transcription': res_transcription,
+                                 'Target': target,
+                                 'Environment': envs,
+                                 'Result type': self.resultType,
+                                 'Token frequency': word.frequency,
+                                 'Min Word Freq': min_word_freq,
+                                 'Max Word Freq': max_word_freq,
+                                 'Min Phoneme Number': min_phon_num,
+                                 'Max Phoneme Number': max_phon_num,
+                                 'Min Syllable Number': min_syl_num,
+                                 'Max Syllable Number': max_syl_num,
+                                 'userinput_target': userinput_target,  # target from the user setting (for summary)
+                                 'userinput_env': userinput_env,  # env from user setting (used in summary view)
+                                 'raw_env': found})
 
     def cleanse_syl_userinput(self):
         """Convert sylprint() results into more readable strings.
