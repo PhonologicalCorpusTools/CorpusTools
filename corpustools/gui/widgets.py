@@ -2394,11 +2394,10 @@ class BigramDialog(QDialog):
 
     # check if a bigram is in the corpus
     def check_bigram(self, bigram):
-        bigram_str = bigram[0] + bigram[1]
-        transcription_str = [''.join(w) for w in self.wordlist]
-        for w in transcription_str:
-            if bigram_str in w:
-                return True
+        for w in self.wordlist:
+            for i in range(len(w) - 1):
+                if w[i] == bigram[0] and w[i+1] == bigram[1]:
+                    return True
         return False
 
     # format bigrams not found message
