@@ -52,10 +52,10 @@ Selecting bigrams using the GUI
    
    For example, in the following window, we have selected {m, t} as the first element and {i, u, o} as the second element. Ideally, this would result in six total bigrams being added to our search list: [mi], [mu], [mo], and [ti], [tu], [to]. However, PCT warns us that [mu] and [mo] are not in the corpus. By clicking "No" (i.e., we do not wish to keep them), we are returned to the main analysis window (in this case, the transitional probability dialogur box), with only the four extant bigrams selected:
    
-   .. image:: static/bigram_warning.png
+.. image:: static/bigram_warning.png
    :width: 90%
    :align: center
    
-   .. image:: static/bigrams_selected.png
+.. image:: static/bigrams_selected.png
    :width: 90%
    :align: center
