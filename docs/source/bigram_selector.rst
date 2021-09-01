@@ -40,8 +40,7 @@ Selecting bigrams using the GUI
    right-hand segments. See :ref:`feature_selection` for more information
    on features.
 4. Click "Add" to return to the analysis function dialog with your selected
-   bigrams. Click "Add and create another" to accept your selected bigrams
-   while keeping the bigram selector window open.
+   bigrams. To add more than one bigram, click “Add and create another” to be automatically returned to the selection window. Once the last bigram has been selected, simply click “Add” to return to the Mutual Information dialogue box with all selected bigrams listed.
 5. If an added bigram does not appear in the corpus, a message box will
    appear specifying which bigrams are missing. From it, click "Cancel" to return to the bigram selector window
    without adding the bigram; click "No" to add all of the bigrams that do
