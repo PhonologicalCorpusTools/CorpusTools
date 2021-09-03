@@ -67,16 +67,11 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
                 found.append(es)
 
         if result_type == 'positive':
-            if not all(e is None for e in found):
-                results.append((word, found))
+            if not all(e is None for e in found):   # if the word satisfies at least one environment,
+                results.append((word, found))       # add it to 'results'
         else:
             if all(e is None for e in found):
                 results.append((word, found))
-    if len(results) == 0:                   # if nothing in 'results', take the side way
-        word = Word(**{'spelling': 'N/A'})  # fake word to be a (invisible) placeholder in the result window
-        results.append((word, found))
-
-        return results
 
     # additional filters
     final_results = []
@@ -91,6 +86,14 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
                     syll_len = len(word.transcription._syllable_list)
                     if syll_len >= min_syl_num and syll_len <= max_syl_num:
                         final_results.append((word, found))
+
+    # if the search does not have any result
+    if len(final_results) == 0:                   # if nothing in 'results', take the side way
+        word = Word(**{'spelling': 'N/A'})        # fake word to be a (invisible) placeholder in the result window
+        found = [None] * len(found)               # fake 'None' environment to be an indicator that it has no hit
+        final_results.append((word, found))
+        return final_results
+
     return final_results
 
 
