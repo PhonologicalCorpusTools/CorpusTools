@@ -114,7 +114,7 @@ class PPDialog(FunctionDialog):
 
         vbox = QFormLayout()
         self.compType = None
-        self.oneWordRadio = QRadioButton('Calculate for one word')
+        self.oneWordRadio = QRadioButton('Calculate for one word in the corpus\n(Enter spelling)')
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordRadio.setAutoExclusive(True)
         self.oneWordEdit = QLineEdit()
@@ -122,7 +122,7 @@ class PPDialog(FunctionDialog):
         self.oneWordRadio.setChecked(True)
         self.oneWordRadio.click()
 
-        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus\n(Enter transcription)')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
         self.oneNonwordRadio.setAutoExclusive(True)
         self.oneNonwordLabel = QLabel('None created')
@@ -131,7 +131,7 @@ class PPDialog(FunctionDialog):
         self.oneNonwordButton.clicked.connect(self.createNonword)
 
 
-        self.fileRadio = QRadioButton('Calculate for list of words')
+        self.fileRadio = QRadioButton('Calculate for list of words (Load text file)')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileRadio.setAutoExclusive(True)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')

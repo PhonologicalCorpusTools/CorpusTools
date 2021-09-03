@@ -197,20 +197,20 @@ class NDDialog(FunctionDialog):
         queryFrame = QGroupBox('Query')
         vbox = QFormLayout()
         self.compType = None
-        self.oneWordRadio = QRadioButton('Calculate for one word in the corpus')
+        self.oneWordRadio = QRadioButton('Calculate for one word in the corpus\n(Enter spelling)')
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
         self.oneWordRadio.setChecked(True)
 
-        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus\n(Enter transcription)')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
         self.oneNonwordLabel = QLabel('None created')
         self.oneNonword = None
         self.oneNonwordButton = QPushButton('Create word/nonword')
         self.oneNonwordButton.clicked.connect(self.createNonword)
 
-        self.fileRadio = QRadioButton('Calculate for list of words')
+        self.fileRadio = QRadioButton('Calculate for list of words (Load text file)')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
