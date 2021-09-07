@@ -422,36 +422,24 @@ class SSDialog(FunctionDialog):
 
             # the following for-loop searches each word pair in the corpus. This part should be modified for issue #769
             # Currently, fix #1 on issue #769 was temporarily applied.
-            not_in_corpus = 0   # number of words in the external file but not in the corpus
+            non_word = []       # list of words in the external file but not in the corpus
             for pair in q:
                 wordpair_list = ['N/A', 'N/A']
                 for i, p in enumerate(pair):
                     try:
                         wordpair_list[i] = self.corpusModel.corpus.find(p)
                     except KeyError as error_message:
-                        non_word = str(error_message).split('"')[1]    # extract the word from the error message
+                        non_word.append(str(error_message).split('"')[1])  # extract the word from the error message
                         wordpair_list[i] = p
-                        not_in_corpus += 1
                         pass
                 out.append(tuple(wordpair_list))
 
-            if not_in_corpus > 0:
-                if not_in_corpus == 1:
-                    error_title = "Word not in corpus"
-                    error_content = "The word {} is not in the corpus.".format(non_word)
-                else:
-                    error_title = "Words not in corpus"
-                    error_content = "{} words, including '{},' are not in the corpus.".format(not_in_corpus, non_word)
-                QMessageBox.critical(self,
-                                     error_title,
-                                     error_content +
-                                     '\nCurrently, the calculation is available only for the '
-                                     'words in the corpus. ' +
-                                     '\nResult for the words that are not in the corpus will be N/A.')
+            if len(non_word) > 0:  # if any word not in corpus, raise error window and export file
+                self.raise_noword_error(non_word)
 
             kwargs['query'] = out
-            #The following is original code, which doesn't seem to work
-            #kwargs['query'] = read_pairs_file(pairs_path)
+            # The following is original code, which doesn't seem to work
+            # kwargs['query'] = read_pairs_file(pairs_path)
         return kwargs
 
     def setResults(self, results):
@@ -471,7 +459,7 @@ class SSDialog(FunctionDialog):
             else:
                 typetoken = self.typeTokenWidget.value().title()
             self.results.append({'Corpus': self.corpusModel.corpus.name,
-                                 'PCT ver.': __version__,#self.corpusModel.corpus._version,
+                                 'PCT ver.': __version__,  # self.corpusModel.corpus._version,
                                  'Analysis name': self.name.capitalize(),
                                  'First word': w1,
                                  'Second word': w2,
@@ -493,3 +481,58 @@ class SSDialog(FunctionDialog):
     def phonoEditDistSelected(self):
         self.typeTokenWidget.disable()
         self.tierWidget.setSpellingEnabled(False)
+
+    def raise_noword_error(self, non_word):
+        """
+        Raise an error message and export a wordlist to the ERROR folder.
+        This function is called when the user loaded a text file of word pairs but one or more words
+        in the file are not found in the corpus. See issue #769
+
+        Parameters
+        ----------
+        non_word : list
+            List of words in the external file but not in the corpus
+        """
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Critical)
+        if len(non_word) == 1:
+            msg_box.setWindowTitle("Word not in corpus")
+            error_content = "The word '{}' is not in the corpus.".format(non_word[0])
+        else:
+            error_dir = self.parent().settings.error_directory()
+            corpus_name = self.corpusModel.corpus.name
+            details = "The following words are not found in the corpus '{}.' \nCurrently, the string similarity " \
+                      "calculation is only available for words already in the corpus.\n\n".format(corpus_name)
+            details += "The word pair you loaded: {}\n" \
+                       "Corpus: {}\nWords not in the corpus:".format(self.fileWidget.value(), corpus_name)
+            for nw in non_word:
+                details += "\n" + nw
+            error_filename = 'str_similarity_error.txt'
+            msg_box.setWindowTitle("Words not in corpus")
+            error_content = "{} words are not in the corpus.\nFor details, please refer to file {} in the" \
+                            "errors directory or click on Show Details.".format(len(non_word), error_filename)
+            msg_box.addButton("Open errors directory", QMessageBox.AcceptRole)
+            msg_box.setDetailedText(details)
+            with open(os.path.join(error_dir, error_filename), 'w', encoding='utf-8-sig') as f:
+                print(details, file=f)
+        msg_box.setText(error_content +
+                        '\n\nCurrently, the calculation is only available with the '
+                        'words in the corpus. ' +
+                        '\nResult for the words that are not in the corpus will be N/A.')
+        msg_box.addButton(QMessageBox.Close)
+        r = msg_box.exec()
+
+        if r == QMessageBox.AcceptRole:
+            if sys.platform == 'win32':
+                args = ['{}'.format(error_dir)]
+                program = 'explorer'
+                # subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
+            elif sys.platform == 'darwin':
+                program = 'open'
+                args = ['{}'.format(error_dir)]
+            else:
+                program = 'xdg-open'
+                args = ['{}'.format(error_dir)]
+            # subprocess.call([program]+args,shell=True)
+            proc = QProcess(self.parent())
+            t = proc.startDetached(program, args)
