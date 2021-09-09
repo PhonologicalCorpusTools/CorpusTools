@@ -44,7 +44,7 @@ class NDWorker(FunctionWorker):
                     last_value_removed = None
                     last_key_removed = None
                     for q in kwargs['query']:
-                        q = ensure_query_is_word(q, c, c.sequence_type, kwargs['tier_type'])
+                        q = ensure_query_is_word(q, c, c.sequence_type, kwargs['tier_type'], file_type=kwargs['file_type'])
                         #the following code for adding/removing keys is to ensure that homophones are counted later in
                         #the ND algorithm (if the user wants to), but that words are not considered their own neighbours
                         #however, we only do this when comparing inside a corpus. when using a list of external words
@@ -57,7 +57,7 @@ class NDWorker(FunctionWorker):
                             last_key_removed = str(w)
                             #last_value_removed = tierdict[last_key_removed].pop()
                             for i, item in enumerate(tierdict[last_key_removed]):
-                                if str(item) == str(q):
+                                if str(item) == str(q) or ''.join(item.Transcription.list) == str(q):
                                     last_value_removed = tierdict[last_key_removed].pop(i)
                                     break
 
@@ -249,11 +249,12 @@ class NDDialog(FunctionDialog):
         self.collapseHomophones = QCheckBox('Collapse homophones before calculating')
         optionLayout.addWidget(self.collapseHomophones)
 
-        self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
+        self.tierWidget = TierWidget(self.corpusModel.corpus, include_spelling=False)
 
         optionLayout.addWidget(self.tierWidget)
         for att in reversed(self.tierWidget.attValues()):
             self.fileOptions.addItem('File contains {}'.format(att.display_name))
+        self.fileOptions.addItem('File contains Spelling')
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
@@ -295,6 +296,7 @@ class NDDialog(FunctionDialog):
         self.saveFileFormat = QComboBox()
         for att in reversed(self.tierWidget.attValues()):
             self.saveFileFormat.addItem('Output neighbours as {}'.format(att.display_name))
+        self.saveFileFormat.addItem('File contains Spelling')
 
         vbox = QHBoxLayout()
         vbox.addWidget(self.saveFileWidget)
@@ -439,7 +441,7 @@ class NDDialog(FunctionDialog):
                 'frequency_cutoff':frequency_cutoff,
                 'num_cores':self.settings['num_cores'],
                 'force_quadratic': self.useQuadratic.isChecked(),
-                'file_type': self.fileOptions.currentText().split()[-1],
+                'file_type': self.fileOptions.currentText().split()[-1],   # "----" out of file contains "----"
                 'collapse_homophones': self.collapseHomophones.isChecked(),
                 'output_format': self.saveFileFormat.currentText().split(' ')[-1].lower(),\
                 'in_corpus': True}
@@ -480,12 +482,12 @@ class NDDialog(FunctionDialog):
                         "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
                 return
             kwargs['query'] = [self.oneNonword]
-            kwargs['in_corpus'] = False
+            kwargs['in_corpus'] = True
             kwargs['output_filename'] = out_file
         elif self.compType == 'file':
             path = self.fileWidget.value()
             kwargs['file_list'] = path
-            kwargs['in_corpus'] = False
+            kwargs['in_corpus'] = True
             if not path:
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please enter a file path.")
@@ -497,8 +499,17 @@ class NDDialog(FunctionDialog):
             kwargs['query'] = list()
             file_sequence_type = self.fileOptions.currentText().split(' ')[-1].lower()
             text = load_words_neighden(path, file_sequence_type)
+            not_in_corpus = []
             for t in text:
-                kwargs['query'].append(t)
+                try:
+                    kwargs['corpusModel'].corpus.find(t)
+                    kwargs['query'].append(t)
+                except KeyError:
+                    not_in_corpus.append(t)
+                    kwargs['query'].append(t)
+            if len(not_in_corpus) > 0:
+                QMessageBox.critical(self,
+                                     "Word(s) not in corpus", "Your file contains words not found in the corpus.")
         elif self.compType == 'all':
             column = self.columnEdit.text()
             if column == '':
@@ -558,14 +569,14 @@ class NDDialog(FunctionDialog):
     def khorsiSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.enable()
-        self.tierWidget.setSpellingEnabled(True)
+        # self.tierWidget.setSpellingEnabled(True)   # no more nd for spelling per se. see issue #770.
         self.useQuadratic.setEnabled(False)
         self.fileOptions.setEnabled(True)
 
     def editDistSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.disable()
-        self.tierWidget.setSpellingEnabled(True)
+        # self.tierWidget.setSpellingEnabled(True)   # no more nd for spelling per se. see issue #770.
         self.useQuadratic.setEnabled(True)
         self.fileOptions.setEnabled(True)
         #self.maxDistanceEdit.setText('1')
