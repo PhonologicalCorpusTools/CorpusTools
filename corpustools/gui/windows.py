@@ -158,7 +158,7 @@ class PCTDialog(QDialog):
 
                 if hasattr(error,'print_to_file'):
                     error.print_to_file(self.parent().settings.error_directory())
-                    reply.addButton('Open errors directory',QMessageBox.AcceptRole)
+                    reply.addButton('Open ERRORS directory',QMessageBox.AcceptRole)
                 reply.setStandardButtons(QMessageBox.Close)
                 ret = reply.exec_()
                 if ret == QMessageBox.AcceptRole:

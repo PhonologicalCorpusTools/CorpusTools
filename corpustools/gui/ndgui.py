@@ -296,7 +296,7 @@ class NDDialog(FunctionDialog):
         self.saveFileFormat = QComboBox()
         for att in reversed(self.tierWidget.attValues()):
             self.saveFileFormat.addItem('Output neighbours as {}'.format(att.display_name))
-        self.saveFileFormat.addItem('File contains Spelling')
+        self.saveFileFormat.addItem('Output neighbours as spelling')
 
         vbox = QHBoxLayout()
         vbox.addWidget(self.saveFileWidget)
@@ -501,12 +501,27 @@ class NDDialog(FunctionDialog):
             text = load_words_neighden(path, file_sequence_type)
             not_in_corpus = []
             for t in text:
-                try:
-                    kwargs['corpusModel'].corpus.find(t)
+                # before adding the line in the external file into 'query', need to check whether that word is
+                # found in the corpus. If not, raise a message letting the user know about this.
+                if kwargs['file_type'] == 'Spelling':            # user loaded the external file as 'spelling'
+                    try:
+                        kwargs['corpusModel'].corpus.find(t)
+                        kwargs['query'].append(t)
+                    except KeyError:
+                        not_in_corpus.append(t)
+                        kwargs['query'].append(t)
+                else:                                           # user loaded the external file as 'transcription'
+                    test = '.'.join(t) if '.' not in t else t  # 'test' to see if t is found in the corpus
+                    identified = False
+                    # for each word in the corpus, see if it has the same transcription as 't'
+                    for entry in kwargs['corpusModel'].corpus:
+                        if test == str(entry.transcription):
+                            identified = True
+                            break
+                    if not identified:
+                        not_in_corpus.append(t)
                     kwargs['query'].append(t)
-                except KeyError:
-                    not_in_corpus.append(t)
-                    kwargs['query'].append(t)
+
             if len(not_in_corpus) > 0:
                 QMessageBox.critical(self,
                                      "Word(s) not in corpus", "Your file contains words not found in the corpus.")

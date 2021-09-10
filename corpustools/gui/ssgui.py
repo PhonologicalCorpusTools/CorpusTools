@@ -494,7 +494,7 @@ class SSDialog(FunctionDialog):
             List of words in the external file but not in the corpus
         """
         msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Critical)
+        msg_box.setIcon(QMessageBox.Warning)
         if len(non_word) == 1:
             msg_box.setWindowTitle("Word not in corpus")
             error_content = "The word '{}' is not in the corpus.".format(non_word[0])
@@ -509,9 +509,9 @@ class SSDialog(FunctionDialog):
                 details += "\n" + nw
             error_filename = 'str_similarity_error.txt'
             msg_box.setWindowTitle("Words not in corpus")
-            error_content = "{} words are not in the corpus.\nFor details, please refer to file {} in the" \
-                            "errors directory or click on Show Details.".format(len(non_word), error_filename)
-            msg_box.addButton("Open errors directory", QMessageBox.AcceptRole)
+            error_content = "{} words are not in the corpus.\nFor details, please refer to file {} in the " \
+                            "ERRORS directory or click on Show Details.".format(len(non_word), error_filename)
+            msg_box.addButton("Open ERRORS directory", QMessageBox.AcceptRole)
             msg_box.setDetailedText(details)
             with open(os.path.join(error_dir, error_filename), 'w', encoding='utf-8-sig') as f:
                 print(details, file=f)
@@ -519,7 +519,7 @@ class SSDialog(FunctionDialog):
                         '\n\nCurrently, the calculation is only available with the '
                         'words in the corpus. ' +
                         '\nResult for the words that are not in the corpus will be N/A.')
-        msg_box.addButton(QMessageBox.Close)
+        msg_box.addButton("OK", QMessageBox.RejectRole)
         r = msg_box.exec()
 
         if r == QMessageBox.AcceptRole:
