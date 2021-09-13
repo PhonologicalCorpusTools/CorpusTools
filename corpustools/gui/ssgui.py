@@ -435,7 +435,7 @@ class SSDialog(FunctionDialog):
                 out.append(tuple(wordpair_list))
 
             if len(non_word) > 0:  # if any word not in corpus, raise error window and export file
-                self.raise_noword_error(non_word)
+                self.raise_noword_warning_msg(non_word)
 
             kwargs['query'] = out
             # The following is original code, which doesn't seem to work
@@ -482,9 +482,9 @@ class SSDialog(FunctionDialog):
         self.typeTokenWidget.disable()
         self.tierWidget.setSpellingEnabled(False)
 
-    def raise_noword_error(self, non_word):
+    def raise_noword_warning_msg(self, non_word):
         """
-        Raise an error message and export a wordlist to the ERROR folder.
+        Raise a warning message and export a wordlist to the ERRORS folder.
         This function is called when the user loaded a text file of word pairs but one or more words
         in the file are not found in the corpus. See issue #769
 
@@ -519,7 +519,14 @@ class SSDialog(FunctionDialog):
                         '\n\nCurrently, the calculation is only available with the '
                         'words in the corpus. ' +
                         '\nResult for the words that are not in the corpus will be N/A.')
-        msg_box.addButton("OK", QMessageBox.RejectRole)
+
+        # Internally 'close' button (so that it comes at the right-most side) but shown as 'OK'.
+        # This is done because this button should be on the right side of 'details' and should not mislead the user.
+        # This button does not 'close' the function, but instead the user still proceeds to the function result window.
+        msg_box.addButton(QMessageBox.Close)
+        ok_button = msg_box.button(QMessageBox.Close)
+        ok_button.setText('OK')
+
         r = msg_box.exec()
 
         if r == QMessageBox.AcceptRole:

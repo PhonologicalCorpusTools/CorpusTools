@@ -522,9 +522,8 @@ class NDDialog(FunctionDialog):
                         not_in_corpus.append(t)
                     kwargs['query'].append(t)
 
-            if len(not_in_corpus) > 0:
-                QMessageBox.critical(self,
-                                     "Word(s) not in corpus", "Your file contains words not found in the corpus.")
+            if len(not_in_corpus) > 0:  # if any word not in corpus, raise error window and export file
+                self.raise_noword_warning_msg(not_in_corpus, file_type=kwargs['file_type'])
         elif self.compType == 'all':
             column = self.columnEdit.text()
             if column == '':
@@ -603,3 +602,82 @@ class NDDialog(FunctionDialog):
         self.useQuadratic.setEnabled(False)
         self.fileOptions.setCurrentIndex(1)
         self.fileOptions.setEnabled(False)
+
+    def raise_noword_warning_msg(self, non_word, file_type):
+        """
+        Raise a warning message and export a wordlist to the ERRORS folder.
+        This function is called when the user loaded a text file of word pairs but one or more words
+        in the file are not found in the corpus. See issue #769
+
+        Parameters
+        ----------
+        non_word : list
+            List of words in the external file but not in the corpus
+        file_type : str
+            Either 'Spelling' or 'Transcription.' The warning message should be tailored with respect to the file_type
+        """
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Warning)
+        if len(non_word) == 1:
+            msg_box.setWindowTitle("Word not in corpus")
+            error_content = "The word '{}' is not in the corpus.\n".format(non_word[0])
+            if file_type == 'Spelling':
+                error_content += "PCT cannot calculate neighbourhood density from spelling, unless it refers to " \
+                                 "a word already in the corpus. " \
+                                 "Therefore, the result for '{}' will be 'N/A.'".format(non_word[0])
+            else:
+                error_content += "PCT can still calculate neighbourhood density for '{}' itself, " \
+                                 "but it is not considered in calculating ND for other words, " \
+                                 "nor added to the corpus.".format(non_word[0])
+        else:
+            error_dir = self.parent().settings.error_directory()
+            corpus_name = self.corpusModel.corpus.name
+            error_filename = 'neigh_density_error.txt'
+            msg_box.setWindowTitle("Words not in corpus")
+            error_content = "{} words are not in the corpus.\nFor details, please refer to file {} in the " \
+                            "ERRORS directory or click on Show Details.".format(len(non_word), error_filename)
+            details = "The following words are not found in the corpus '{}.'\n".format(corpus_name)
+            if file_type == 'Spelling':
+                details += "PCT cannot calculate neighbourhood density from spellings, unless they refer to a word " \
+                           "already in the corpus. Therefore, the result for the nonwords will be 'N/A.'\n\n"
+            else:
+                details += "PCT can still calculate neighbourhood density for a transcribed nonword itself." \
+                           "\nHowever, the nonwords are not considered in calculating ND for other "\
+                           "words, nor added to the corpus.\n\n"
+
+            details += "The word list file you loaded (as {}): {}\n".format(file_type, self.fileWidget.value())
+            details += "Corpus: {}\n".format(corpus_name)
+            details += "Words not in the corpus:"
+            for nw in non_word:
+                details += "\n" + nw
+            with open(os.path.join(error_dir, error_filename), 'w', encoding='utf-8-sig') as f:
+                print(details, file=f)
+
+            msg_box.addButton("Open ERRORS directory", QMessageBox.AcceptRole)
+
+            msg_box.setDetailedText(details)
+        msg_box.setText(error_content)
+
+        # Internally 'close' button (so that it comes at the right-most side) but shown as 'OK'.
+        # This is done because this button should be on the right side of 'details' and should not mislead the user.
+        # This button does not 'close' the function, but instead the user still proceeds to the function result window.
+        msg_box.addButton(QMessageBox.Close)
+        ok_button = msg_box.button(QMessageBox.Close)
+        ok_button.setText('OK')
+
+        r = msg_box.exec()
+
+        if r == QMessageBox.AcceptRole:
+            if sys.platform == 'win32':
+                args = ['{}'.format(error_dir)]
+                program = 'explorer'
+                # subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
+            elif sys.platform == 'darwin':
+                program = 'open'
+                args = ['{}'.format(error_dir)]
+            else:
+                program = 'xdg-open'
+                args = ['{}'.format(error_dir)]
+            # subprocess.call([program]+args,shell=True)
+            proc = QProcess(self.parent())
+            t = proc.startDetached(program, args)
