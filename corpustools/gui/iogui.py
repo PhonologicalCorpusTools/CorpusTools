@@ -913,10 +913,9 @@ class LoadCorpusDialog(PCTDialog):
                     x.name in {'Transcription (default)', 'Transcription (alternative)'}):
             col_name_warning = QMessageBox.warning(self, 'Column name error',
                                                    'The column you selected as transcription is not named "Transcription". '
-                                                   'Consider renaming the column and importing the file again. '
-                                                   'If you wish to proceed with the current column name, click \'OK\'.',
-                                                   QMessageBox.Ok | QMessageBox.Cancel)
-            if col_name_warning == QMessageBox.Cancel:
+                                                   'Please rename the column and import the file again.',
+                                                   QMessageBox.Ok)
+            if col_name_warning == QMessageBox.Ok:
                 return
 
         duplicates = False
