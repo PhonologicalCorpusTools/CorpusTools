@@ -143,6 +143,8 @@ class ASDialog(FunctionDialog):
 
         optionLayout = QVBoxLayout()
 
+        validator = QDoubleValidator(float('inf'), 0, 8)
+
         self.representationWidget = RadioSelectWidget('Represenation',
                                                         OrderedDict([('MFCC','mfcc'),
                                                         ('Amplitude envelopes','envelopes')]),
@@ -162,8 +164,11 @@ class ASDialog(FunctionDialog):
         box = QFormLayout()
 
         self.minFreqEdit = QLineEdit()
+        self.minFreqEdit.setValidator(validator)
         self.minFreqEdit.setText('80')
+
         self.maxFreqEdit = QLineEdit()
+        self.maxFreqEdit.setValidator(validator)
         self.maxFreqEdit.setText('7800')
 
         box.addRow('Minimum frequency (Hz):',self.minFreqEdit)
@@ -177,7 +182,9 @@ class ASDialog(FunctionDialog):
         box = QFormLayout()
 
         self.filterEdit = QLineEdit()
+        self.filterEdit.setValidator(validator)
         self.coeffEdit = QLineEdit()
+        self.coeffEdit.setValidator(validator)
 
         box.addRow('Number of filters:',self.filterEdit)
         box.addRow('Number of coefficients (MFCC only):',self.coeffEdit)

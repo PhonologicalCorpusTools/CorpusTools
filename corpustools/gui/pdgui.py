@@ -145,6 +145,7 @@ class PDDialog(FunctionDialog):
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
         self.minFreqEdit = QLineEdit()
+        self.minFreqEdit.setValidator(QDoubleValidator(float('inf'), 0, 8))
         box.addRow('Minimum word frequency:',self.minFreqEdit)
 
         minFreqFrame.setLayout(box)

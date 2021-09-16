@@ -183,10 +183,13 @@ class SSDialog(FunctionDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
+        validator = QDoubleValidator(float('inf'), 0, 8)
+
         ##----------------------
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
         self.minFreqEdit = QLineEdit()
+        self.minFreqEdit.setValidator(validator)
         box.addRow('Minimum word frequency:', self.minFreqEdit)
 
         minFreqFrame.setLayout(box)
@@ -197,7 +200,9 @@ class SSDialog(FunctionDialog):
         threshFrame = QGroupBox('Return only results between...')
 
         self.minEdit = QLineEdit()
+        self.minEdit.setValidator(validator)
         self.maxEdit = QLineEdit()
+        self.maxEdit.setValidator(validator)
 
         vbox = QFormLayout()
         vbox.addRow('Minimum:', self.minEdit)

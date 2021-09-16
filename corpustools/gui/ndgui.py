@@ -267,13 +267,16 @@ class NDDialog(FunctionDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
+        validator = QDoubleValidator(float('inf'), 0, 8)
+
         threshFrame = QGroupBox('Max distance/min similarity')
 
         self.maxDistanceEdit = QLineEdit()
         self.maxDistanceEdit.setText('1')
+        self.maxDistanceEdit.setValidator(validator)
 
         vbox = QFormLayout()
-        vbox.addRow('Threshold:',self.maxDistanceEdit)
+        vbox.addRow('Threshold:', self.maxDistanceEdit)
 
         threshFrame.setLayout(vbox)
 
@@ -283,7 +286,8 @@ class NDDialog(FunctionDialog):
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
         self.minFreqEdit = QLineEdit()
-        box.addRow('Minimum word frequency:',self.minFreqEdit)
+        self.minFreqEdit.setValidator(validator)
+        box.addRow('Minimum word frequency:', self.minFreqEdit)
 
         minFreqFrame.setLayout(box)
 
