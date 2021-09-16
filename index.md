@@ -10,7 +10,11 @@ There is an ever-increasing interest in exploring the roles of frequency and usa
 
 Phonological CorpusTools (PCT) is our answer to these problems -- a free, downloadable program with both a graphical and command-line interface, designed to be a search and analysis aid for dealing with questions of phonological interest in large corpora. 
 
-An overview of the beta version of PCT (0.15, July 2014) and its utility is available in [poster format](http://blogs.ubc.ca/kathleencurriehall/files/2019/09/Mackie_et_al_2014_LabPhon_poster.pdf).
+An overview article about the software is available:
+
+Hall, Kathleen Currie, J. Scott Mackie, and Roger Yu-Hsiang Lo. (2019). Phonological CorpusTools: Software for doing phonological analysis on transcribed corpora. International Journal of Corpus Linguistics 24(4). 522-535. https://doi.org/10.1075/ijcl.18009.hal
+
+Various files related to PCT, including example corpus and feature files, are available at https://github.com/PhonologicalCorpusTools/PCT_Fileshare.
 
 ### Versions
 #### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...").
@@ -54,15 +58,13 @@ We're delighted to have participated in various workshops / conferences:
 * [Tools for Big Data in Phonology / LabPhon 2016](http://mlmlab.org/bigphon/)
 * Symposium on the role of predictability in shaping human language sound patterns / SST 2016
 
-Example files and tutorial handouts can be downloaded from: https://www.dropbox.com/sh/v4l29isywe532an/AAB_a1mQqaEzBpirEY6a62Xha?dl=0
+Example files and tutorial handouts can be downloaded from: https://github.com/PhonologicalCorpusTools/PCT_Fileshare.
 
 ## Documentation
 
-Please see the user's manual of the latest version for complete documentation; currently available at [http://corpustools.readthedocs.org/en/latest/](http://corpustools.readthedocs.org/en/latest/). Note that you can download a .pdf of this guide by going to "Read the Docs" on the bottom left-hand side of the page and selecting "PDF." Documentation can also be found throughout the PCT software itself by clicking on "Help" (either in the main menu or in dialogue boxes relating to individual functions).
+Please see the user's manual of the latest version for complete documentation; currently available at [http://corpustools.readthedocs.org/en/latest/](http://corpustools.readthedocs.org/en/latest/). Documentation can also be found throughout the PCT software itself by clicking on "Help" (either in the main menu or in dialogue boxes relating to individual functions).
 
-PCT itself should be cited something like the following (using the correct version number):
-
-Hall, Kathleen Currie, Blake Allen, Michael Fry, Khia Johnson, Roger Lo, Scott Mackie, Michael McAuliffe, and Stanley Nam. (2018). Phonological CorpusTools, Version 1.4. [Computer program]. Available from https://github.com/PhonologicalCorpusTools/CorpusTools/releases.
+Information about how to cite PCT itself can be found at [https://corpustools.readthedocs.io/en/latest/citing_pct.html](https://corpustools.readthedocs.io/en/latest/citing_pct.html).
 
 ### About us
 We are a group of researchers in the [Linguistics Department](http://linguistics.ubc.ca) at the [University of British Columbia](http://www.ubc.ca). The PI on this project is [Dr. Kathleen Currie Hall](http://linguistics.ubc.ca/persons/kathleen-hall/), and the project is supported in part by a SSHRC Insight Development grant to Dr. Hall.
@@ -73,7 +75,7 @@ Within PCT, a corpus generally refers to a structured list of words, each phonol
 
 ### Multi-character sequences
 
-Below, you can find lists of the multi-character sequences that are included in each of the built-in transcription-to-feature system files. You may want to use these in order to copy & paste them into the corpus creation dialogue box if you are using a corpus file that is not already delimited.
+Below, you can find lists of the multi-character sequences that are included in each of the built-in transcription-to-feature system files. You may want to use these in order to copy & paste them into the corpus creation dialogue box if you are using a corpus file that is not already delimited. See also https://github.com/PhonologicalCorpusTools/PCT_Fileshare for more detail on the transcription / feature files.
 
 **Buckeye**: aa, aan, ae, aen, ah, ahn, ao, aon, aw, awn, ay, ayn, ch, dh, dx, eh, el, em, en, ey, eyn, hh, ih, ihn, iy, iyn, jh, ng, nx, ow, own, oy, oyn, sh, th, tq, uh, uhn, uw, uwn, zh, ehn, er, ern
 
@@ -99,6 +101,7 @@ Below, you can find lists of the multi-character sequences that are included in 
 * **Frequency of alternation**: Estimation of the frequency with which two sounds alternate with each other, given a measure of similarity (cf. Silverman 2006, Johnson & Babel 2010, Lu 2012).
 * **Informativity**: Calculation of the average information content of a given segment based on the sounds that precede it in words across the corpus (cf. Cohen-Priva 2008, 2015).
 * **Mutual Information**: Calculation of the mutual information between pairs of segments in the corpus (cf. Brent 1999; Goldsmith & Riggle 2012).
+* **Transitional probability**: Calculation of the transitional probability (forward or backward) between pairs of segments in the corpus (cf. Saffran 1996a, 1996b).
 * **Acoustic similarity**: Calculation of the acoustic similarity between sounds / words, based on alignment of MFCCs (cf. Mielke 2012) or amplitude envelopes (cf. Lewandowski 2012), derived from .wav files.
 
 ## Standard installation (executable)
@@ -130,7 +133,7 @@ Dependencies:
 - Python 3.3 or higher: https://www.python.org/downloads/release/python-341/
 - Setuptools: https://pypi.python.org/pypi/setuptools
 - PyQt5: http://www.riverbankcomputing.com/software/pyqt/download5
--TextGrid: https://github.com/kylebgorman/textgrid
+- TextGrid: https://github.com/kylebgorman/textgrid
 
 If you expect to use the acoustic similarity module, there are additional dependencies:
 - NumPy: http://www.numpy.org/
@@ -173,6 +176,8 @@ Phonological CorpusTools should now be installed! Run it from a terminal window 
 * Mielke, Jeff. 2008. The emergence of distinctive features. Oxford: Oxford UP.
 * Mielke, J. 2012. A phonetically based metric of sound similarity. Lingua, 122(2), 145-163. 
 * Peperkamp, Sharon, Le Calvez, Rozenn, Nadal, Jean-Pierre, & Dupoux, Emmanuel. (2006). The acquisition of allophonic rules: Statistical learning with linguistic constraints. Cognition, 101, B31-B41.
+* Saffran, Jenny R., Aslin, Richard N., and Newport, Elisa L. (1996a). Statistical learning by 8-month-old infants. Science, 274:1926–1928.
+* Saffran, Jenny R., Newport, Elisa L., and Aslin, Richard N. (1996b). Word segmentation: The role of distributional cues. Journal of Memory and Languages, 35:606–621.
 * Silverman, Daniel. 2006. A critical introduction to phonology: Of sound, mind, and body. London/New York: Continuum.
 * Surendran, Dinoj & Partha Niyogi. 2003. Measuring the functional load of phonological contrasts. In Tech. Rep. No. TR-2003-12. Chicago.
 * Vaden, K. I., H. R. Halpin & G. S. Hickok. 2009. Irvine Phonotactic Online Dictionary, Version 2.0. [Data file.] Available from: http://www.iphod.com.
