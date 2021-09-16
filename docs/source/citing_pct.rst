@@ -8,6 +8,18 @@ Citing PCT and the algorithms used therein
 Please cite PCT as the following (all authors after K. C. Hall are listed
 alphabetically):
 
+for version 1.5.0: 
+
+Hall, Kathleen Currie, Blake Allen, Edith Coates, Michael Fry, Serena Huang, Khia Johnson, Roger Lo, Scott Mackie, Stanley Nam, and
+Michael McAuliffe. (2021). Phonological CorpusTools, Version 1.5.0.
+[Computer program]. Available from `PCT GitHub page <http://phonologicalcorpustools.github.io/CorpusTools/>`_.
+
+for version 1.4.1: 
+
+Hall, Kathleen Currie, Blake Allen, Michael Fry, Khia Johnson, Roger Lo, Scott Mackie, Stanley Nam, and
+Michael McAuliffe. (2019). Phonological CorpusTools, Version 1.4.1.
+[Computer program]. Available from `PCT GitHub page <http://phonologicalcorpustools.github.io/CorpusTools/>`_.
+
 for version 1.3: 
 
 Hall, Kathleen Currie, Blake Allen, Michael Fry, Khia Johnson, Roger Lo, Scott Mackie, and
@@ -24,10 +36,7 @@ Michael McAuliffe. (2016). Phonological CorpusTools, Version 1.2.
 If you need to cite a more traditional academic source rather than the
 software itself, please use:
 
-Mackie, Scott, Kathleen Currie Hall, Blake Allen, Michael McAuliffe,
-Michael Fry. (2014). Phonological CorpusTools: A free, open-source tool
-for phonological analysis. Presented at the 14th Conference for Laboratory
-Phonology, Tokyo, Japan.
+Hall, Kathleen Currie, J. Scott Mackie, and Roger Yu-Hsiang Lo. (2019). Phonological CorpusTools: Software for doing phonological analysis on transcribed corpora. International Journal of Corpus Linguistics 24(4). 522-535. https://doi.org/10.1075/ijcl.18009.hal
 
 If you are using the IPHOD corpus as distributed with PCT, please also be
 sure to cite:
