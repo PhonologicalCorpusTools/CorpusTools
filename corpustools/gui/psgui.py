@@ -2,6 +2,7 @@ from .imports import *
 import time
 import collections
 import regex as re
+from PyQt5.QtGui import QDoubleValidator
 
 from .widgets import TierWidget, RadioSelectWidget
 
@@ -614,15 +615,20 @@ class PhonoSearchDialog(FunctionDialog):
 
         optionLayout.addWidget(searchFrame)
 
+        # for additional filters (word/phoneme/syllable frequency filters)
+        validator = QDoubleValidator(float('inf'), 0, 8)  # values should be 0-inf with max 8 sub-decimal digits
         filterFrame = QGroupBox('Additional filters')
         filterLayout = QVBoxLayout()
         filterFrame.setLayout(filterLayout)
         filterFrame.setFixedWidth(200)
+
         wordFreqFrame = QGroupBox('Word frequency filters')
         wFbox = QFormLayout()
         self.minWordFreqFrame = QLineEdit()
+        self.minWordFreqFrame.setValidator(validator)
         wFbox.addRow('Minimum:', self.minWordFreqFrame)
         self.maxWordFreqFrame = QLineEdit()
+        self.maxWordFreqFrame.setValidator(validator)
         wFbox.addRow('Maximum:', self.maxWordFreqFrame)
         wordFreqFrame.setLayout(wFbox)
         filterLayout.addWidget(wordFreqFrame)
@@ -630,8 +636,10 @@ class PhonoSearchDialog(FunctionDialog):
         phonFreqFrame = QGroupBox('Phoneme number filters')
         pFbox = QFormLayout()
         self.minPhonFreqFrame = QLineEdit()
+        self.minPhonFreqFrame.setValidator(validator)
         pFbox.addRow('Minimum:', self.minPhonFreqFrame)
         self.maxPhonFreqFrame = QLineEdit()
+        self.maxPhonFreqFrame.setValidator(validator)
         pFbox.addRow('Maximum:', self.maxPhonFreqFrame)
         phonFreqFrame.setLayout(pFbox)
         filterLayout.addWidget(phonFreqFrame)
@@ -639,8 +647,10 @@ class PhonoSearchDialog(FunctionDialog):
         syllFreqFrame = QGroupBox('Syllable number filters')
         sFbox = QFormLayout()
         self.minSyllFreqFrame = QLineEdit()
+        self.minSyllFreqFrame.setValidator(validator)
         sFbox.addRow('Minimum:', self.minSyllFreqFrame)
         self.maxSyllFreqFrame = QLineEdit()
+        self.maxSyllFreqFrame.setValidator(validator)
         sFbox.addRow('Maximum:', self.maxSyllFreqFrame)
         if len(inventory.syllables) == 0:
             # grey out the box if there are no syllable delimiters
@@ -801,6 +811,7 @@ class PhonoSearchDialog(FunctionDialog):
                     return
             kwargs['envs'] = envs
 
+        # The following chunk is messy. Need to be streamlined.
         try:
             min_word_freq = float(self.minWordFreqFrame.text())
         except ValueError:
@@ -844,31 +855,18 @@ class PhonoSearchDialog(FunctionDialog):
     def setResults(self, results):
         self.results = list()
 
-        try:
-            min_word_freq = float(self.minWordFreqFrame.text())
-        except ValueError:
-            min_word_freq = "N/A"
-        try:
-            min_phon_num = float(self.minPhonFreqFrame.text())
-        except ValueError:
-            min_phon_num = "N/A"
-        try:
-            min_syl_num = float(self.minSyllFreqFrame.text())
-        except ValueError:
-            min_syl_num = "N/A"
-
-        try:
-            max_word_freq = float(self.maxWordFreqFrame.text())
-        except ValueError:
-            max_word_freq = "N/A"
-        try:
-            max_phon_num = float(self.maxPhonFreqFrame.text())
-        except ValueError:
-            max_phon_num = "N/A"
-        try:
-            max_syl_num = float(self.maxSyllFreqFrame.text())
-        except ValueError:
-            max_syl_num = "N/A"
+        # 'additional' filters
+        freq_filters = {
+            "min_word": self.minWordFreqFrame.text(),
+            "max_word": self.maxWordFreqFrame.text(),
+            "min_phoneme": self.minPhonFreqFrame.text(),
+            "max_phoneme": self.maxPhonFreqFrame.text(),
+            "min_syl": self.minSyllFreqFrame.text(),
+            "max_syl": self.maxSyllFreqFrame.text()
+        }
+        for key in freq_filters:
+            if len(freq_filters[key]) == 0:
+                freq_filters[key] = 'N/A'           # if user didn't input a freq filter, 'N/A' in the result window.
 
         for word, found in results:
             if self.mode == 'segMode':
@@ -921,12 +919,12 @@ class PhonoSearchDialog(FunctionDialog):
                                  'Environment': envs,
                                  'Result type': self.resultType,
                                  'Token frequency': word.frequency,
-                                 'Min Word Freq': min_word_freq,
-                                 'Max Word Freq': max_word_freq,
-                                 'Min Phoneme Number': min_phon_num,
-                                 'Max Phoneme Number': max_phon_num,
-                                 'Min Syllable Number': min_syl_num,
-                                 'Max Syllable Number': max_syl_num,
+                                 'Min Word Freq': freq_filters['min_word'],
+                                 'Max Word Freq': freq_filters['max_word'],
+                                 'Min Phoneme Number': freq_filters['min_phoneme'],
+                                 'Max Phoneme Number': freq_filters['max_phoneme'],
+                                 'Min Syllable Number': freq_filters['min_syl'],
+                                 'Max Syllable Number': freq_filters['max_syl'],
                                  'userinput_target': userinput_target,  # target from the user setting (for summary)
                                  'userinput_env': userinput_env,  # env from user setting (used in summary view)
                                  'raw_env': found})

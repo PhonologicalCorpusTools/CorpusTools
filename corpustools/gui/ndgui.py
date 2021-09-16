@@ -44,7 +44,7 @@ class NDWorker(FunctionWorker):
                     last_value_removed = None
                     last_key_removed = None
                     for q in kwargs['query']:
-                        q = ensure_query_is_word(q, c, c.sequence_type, kwargs['tier_type'])
+                        q = ensure_query_is_word(q, c, c.sequence_type, kwargs['tier_type'], file_type=kwargs['file_type'])
                         #the following code for adding/removing keys is to ensure that homophones are counted later in
                         #the ND algorithm (if the user wants to), but that words are not considered their own neighbours
                         #however, we only do this when comparing inside a corpus. when using a list of external words
@@ -57,7 +57,7 @@ class NDWorker(FunctionWorker):
                             last_key_removed = str(w)
                             #last_value_removed = tierdict[last_key_removed].pop()
                             for i, item in enumerate(tierdict[last_key_removed]):
-                                if str(item) == str(q):
+                                if str(item) == str(q) or ''.join(item.Transcription.list) == str(q):
                                     last_value_removed = tierdict[last_key_removed].pop(i)
                                     break
 
@@ -197,20 +197,20 @@ class NDDialog(FunctionDialog):
         queryFrame = QGroupBox('Query')
         vbox = QFormLayout()
         self.compType = None
-        self.oneWordRadio = QRadioButton('Calculate for one word in the corpus')
+        self.oneWordRadio = QRadioButton('Calculate for one word in the corpus\n(Enter spelling)')
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
         self.oneWordRadio.setChecked(True)
 
-        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus\n(Enter transcription)')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
         self.oneNonwordLabel = QLabel('None created')
         self.oneNonword = None
         self.oneNonwordButton = QPushButton('Create word/nonword')
         self.oneNonwordButton.clicked.connect(self.createNonword)
 
-        self.fileRadio = QRadioButton('Calculate for list of words')
+        self.fileRadio = QRadioButton('Calculate for list of words (Load text file)')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
@@ -249,11 +249,12 @@ class NDDialog(FunctionDialog):
         self.collapseHomophones = QCheckBox('Collapse homophones before calculating')
         optionLayout.addWidget(self.collapseHomophones)
 
-        self.tierWidget = TierWidget(self.corpusModel.corpus,include_spelling=True)
+        self.tierWidget = TierWidget(self.corpusModel.corpus, include_spelling=False)
 
         optionLayout.addWidget(self.tierWidget)
         for att in reversed(self.tierWidget.attValues()):
             self.fileOptions.addItem('File contains {}'.format(att.display_name))
+        self.fileOptions.addItem('File contains Spelling')
 
         self.typeTokenWidget = RadioSelectWidget('Type or token',
                                             OrderedDict([('Count types','type'),
@@ -266,13 +267,16 @@ class NDDialog(FunctionDialog):
 
         optionLayout.addWidget(self.typeTokenWidget)
 
+        validator = QDoubleValidator(float('inf'), 0, 8)
+
         threshFrame = QGroupBox('Max distance/min similarity')
 
         self.maxDistanceEdit = QLineEdit()
         self.maxDistanceEdit.setText('1')
+        self.maxDistanceEdit.setValidator(validator)
 
         vbox = QFormLayout()
-        vbox.addRow('Threshold:',self.maxDistanceEdit)
+        vbox.addRow('Threshold:', self.maxDistanceEdit)
 
         threshFrame.setLayout(vbox)
 
@@ -282,7 +286,8 @@ class NDDialog(FunctionDialog):
         minFreqFrame = QGroupBox('Minimum frequency')
         box = QFormLayout()
         self.minFreqEdit = QLineEdit()
-        box.addRow('Minimum word frequency:',self.minFreqEdit)
+        self.minFreqEdit.setValidator(validator)
+        box.addRow('Minimum word frequency:', self.minFreqEdit)
 
         minFreqFrame.setLayout(box)
 
@@ -295,6 +300,7 @@ class NDDialog(FunctionDialog):
         self.saveFileFormat = QComboBox()
         for att in reversed(self.tierWidget.attValues()):
             self.saveFileFormat.addItem('Output neighbours as {}'.format(att.display_name))
+        self.saveFileFormat.addItem('Output neighbours as spelling')
 
         vbox = QHBoxLayout()
         vbox.addWidget(self.saveFileWidget)
@@ -439,7 +445,7 @@ class NDDialog(FunctionDialog):
                 'frequency_cutoff':frequency_cutoff,
                 'num_cores':self.settings['num_cores'],
                 'force_quadratic': self.useQuadratic.isChecked(),
-                'file_type': self.fileOptions.currentText().split()[-1],
+                'file_type': self.fileOptions.currentText().split()[-1],   # "----" out of file contains "----"
                 'collapse_homophones': self.collapseHomophones.isChecked(),
                 'output_format': self.saveFileFormat.currentText().split(' ')[-1].lower(),\
                 'in_corpus': True}
@@ -480,12 +486,12 @@ class NDDialog(FunctionDialog):
                         "Please recreate the word/nonword with '{}' specified.".format(self.tierWidget.displayValue()))
                 return
             kwargs['query'] = [self.oneNonword]
-            kwargs['in_corpus'] = False
+            kwargs['in_corpus'] = True
             kwargs['output_filename'] = out_file
         elif self.compType == 'file':
             path = self.fileWidget.value()
             kwargs['file_list'] = path
-            kwargs['in_corpus'] = False
+            kwargs['in_corpus'] = True
             if not path:
                 reply = QMessageBox.critical(self,
                         "Missing information", "Please enter a file path.")
@@ -497,8 +503,31 @@ class NDDialog(FunctionDialog):
             kwargs['query'] = list()
             file_sequence_type = self.fileOptions.currentText().split(' ')[-1].lower()
             text = load_words_neighden(path, file_sequence_type)
+            not_in_corpus = []
             for t in text:
-                kwargs['query'].append(t)
+                # before adding the line in the external file into 'query', need to check whether that word is
+                # found in the corpus. If not, raise a message letting the user know about this.
+                if kwargs['file_type'] == 'Spelling':            # user loaded the external file as 'spelling'
+                    try:
+                        kwargs['corpusModel'].corpus.find(t)
+                        kwargs['query'].append(t)
+                    except KeyError:
+                        not_in_corpus.append(t)
+                        kwargs['query'].append(t)
+                else:                                           # user loaded the external file as 'transcription'
+                    test = '.'.join(t) if '.' not in t else t  # 'test' to see if t is found in the corpus
+                    identified = False
+                    # for each word in the corpus, see if it has the same transcription as 't'
+                    for entry in kwargs['corpusModel'].corpus:
+                        if test == str(entry.transcription):
+                            identified = True
+                            break
+                    if not identified:
+                        not_in_corpus.append(t)
+                    kwargs['query'].append(t)
+
+            if len(not_in_corpus) > 0:  # if any word not in corpus, raise error window and export file
+                self.raise_noword_warning_msg(not_in_corpus, file_type=kwargs['file_type'])
         elif self.compType == 'all':
             column = self.columnEdit.text()
             if column == '':
@@ -558,14 +587,14 @@ class NDDialog(FunctionDialog):
     def khorsiSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.enable()
-        self.tierWidget.setSpellingEnabled(True)
+        # self.tierWidget.setSpellingEnabled(True)   # no more nd for spelling per se. see issue #770.
         self.useQuadratic.setEnabled(False)
         self.fileOptions.setEnabled(True)
 
     def editDistSelected(self):
         self.maxDistanceEdit.setEnabled(True)
         self.typeTokenWidget.disable()
-        self.tierWidget.setSpellingEnabled(True)
+        # self.tierWidget.setSpellingEnabled(True)   # no more nd for spelling per se. see issue #770.
         self.useQuadratic.setEnabled(True)
         self.fileOptions.setEnabled(True)
         #self.maxDistanceEdit.setText('1')
@@ -577,3 +606,82 @@ class NDDialog(FunctionDialog):
         self.useQuadratic.setEnabled(False)
         self.fileOptions.setCurrentIndex(1)
         self.fileOptions.setEnabled(False)
+
+    def raise_noword_warning_msg(self, non_word, file_type):
+        """
+        Raise a warning message and export a wordlist to the ERRORS folder.
+        This function is called when the user loaded a text file of word pairs but one or more words
+        in the file are not found in the corpus. See issue #769
+
+        Parameters
+        ----------
+        non_word : list
+            List of words in the external file but not in the corpus
+        file_type : str
+            Either 'Spelling' or 'Transcription.' The warning message should be tailored with respect to the file_type
+        """
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Warning)
+        if len(non_word) == 1:
+            msg_box.setWindowTitle("Word not in corpus")
+            error_content = "The word '{}' is not in the corpus.\n".format(non_word[0])
+            if file_type == 'Spelling':
+                error_content += "PCT cannot calculate neighbourhood density from spelling, unless it refers to " \
+                                 "a word already in the corpus. " \
+                                 "Therefore, the result for '{}' will be 'N/A.'".format(non_word[0])
+            else:
+                error_content += "PCT can still calculate neighbourhood density for '{}' itself, " \
+                                 "but it is not considered in calculating ND for other words, " \
+                                 "nor added to the corpus.".format(non_word[0])
+        else:
+            error_dir = self.parent().settings.error_directory()
+            corpus_name = self.corpusModel.corpus.name
+            error_filename = 'neigh_density_error.txt'
+            msg_box.setWindowTitle("Words not in corpus")
+            error_content = "{} words are not in the corpus.\nFor details, please refer to file {} in the " \
+                            "ERRORS directory or click on Show Details.".format(len(non_word), error_filename)
+            details = "The following words are not found in the corpus '{}.'\n".format(corpus_name)
+            if file_type == 'Spelling':
+                details += "PCT cannot calculate neighbourhood density from spellings, unless they refer to a word " \
+                           "already in the corpus. Therefore, the result for the nonwords will be 'N/A.'\n\n"
+            else:
+                details += "PCT can still calculate neighbourhood density for a transcribed nonword itself." \
+                           "\nHowever, the nonwords are not considered in calculating ND for other "\
+                           "words, nor added to the corpus.\n\n"
+
+            details += "The word list file you loaded (as {}): {}\n".format(file_type, self.fileWidget.value())
+            details += "Corpus: {}\n".format(corpus_name)
+            details += "Words not in the corpus:"
+            for nw in non_word:
+                details += "\n" + nw
+            with open(os.path.join(error_dir, error_filename), 'w', encoding='utf-8-sig') as f:
+                print(details, file=f)
+
+            msg_box.addButton("Open ERRORS directory", QMessageBox.AcceptRole)
+
+            msg_box.setDetailedText(details)
+        msg_box.setText(error_content)
+
+        # Internally 'close' button (so that it comes at the right-most side) but shown as 'OK'.
+        # This is done because this button should be on the right side of 'details' and should not mislead the user.
+        # This button does not 'close' the function, but instead the user still proceeds to the function result window.
+        msg_box.addButton(QMessageBox.Close)
+        ok_button = msg_box.button(QMessageBox.Close)
+        ok_button.setText('OK')
+
+        r = msg_box.exec()
+
+        if r == QMessageBox.AcceptRole:
+            if sys.platform == 'win32':
+                args = ['{}'.format(error_dir)]
+                program = 'explorer'
+                # subprocess.call('explorer "{0}"'.format(self.parent().settings.error_directory()),shell=True)
+            elif sys.platform == 'darwin':
+                program = 'open'
+                args = ['{}'.format(error_dir)]
+            else:
+                program = 'xdg-open'
+                args = ['{}'.format(error_dir)]
+            # subprocess.call([program]+args,shell=True)
+            proc = QProcess(self.parent())
+            t = proc.startDetached(program, args)
