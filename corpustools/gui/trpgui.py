@@ -63,6 +63,7 @@ class TPDialog(FunctionDialog):
               'Direction',
               'Sequence type',
               'Tier',
+              'Pronunciation variants',
               'Minimum word frequency',
               'Transitional probability']
 
@@ -267,10 +268,11 @@ class TPDialog(FunctionDialog):
                                  # 'Second segment': self.get_symbol(1, seg_pairs[i]),
                                  'Bigram': ''.join(seg_pairs[i]),
                                  # if self.mode=='segMode' else ''.join([str(i) for i in seg_pairs[i]]),
-                                 'Word boundary': self.wordBoundaryWidget.value(),
+                                 'Word boundary': self.wordBoundaryWidget.value().capitalize(),
                                  # 'Segment type': mode,
-                                 'Direction': self.dirWidget.value(),
+                                 'Direction': self.dirWidget.value().capitalize(),
                                  'Sequence type': self.typeTokenWidget.value(),
                                  'Tier': self.tierWidget.value(),
+                                 'Pronunciation variants': self.variantsWidget.value().capitalize(),
                                  'Minimum word frequency': f_cutoff,
                                  'Transitional probability': r})
