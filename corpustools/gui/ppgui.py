@@ -201,15 +201,15 @@ class PPDialog(FunctionDialog):
         optionLayout.addWidget(self.probabilityTypeWidget)
         
         ##----------------------
-        minFreqFrame = QGroupBox('Minimum frequency')
-        box = QFormLayout()
-        self.minFreqEdit = QLineEdit()
-        self.minFreqEdit.setValidator(QDoubleValidator(float('inf'), 0, 8))
-        box.addRow('Minimum word frequency:',self.minFreqEdit)
+        #  minFreqFrame = QGroupBox('Minimum frequency')
+        #  box = QFormLayout()
+        #  self.minFreqEdit = QLineEdit()
+        #  self.minFreqEdit.setValidator(QDoubleValidator(float('inf'), 0, 8))
+        #  box.addRow('Minimum word frequency:',self.minFreqEdit)
 
-        minFreqFrame.setLayout(box)
+        #  minFreqFrame.setLayout(box)
 
-        optionLayout.addWidget(minFreqFrame)
+        #  optionLayout.addWidget(minFreqFrame)
         ##----------------------
         
         optionFrame.setLayout(optionLayout)
@@ -261,10 +261,11 @@ class PPDialog(FunctionDialog):
 
     def generateKwargs(self):
         ##------------------
-        try:
-            frequency_cutoff = float(self.minFreqEdit.text())
-        except ValueError:
-            frequency_cutoff = 0.0
+        # try:
+        #     frequency_cutoff = float(self.minFreqEdit.text())
+        # except ValueError:
+        #     frequency_cutoff = 0.0
+        frequency_cutoff = 0.0
         ##-------------------
         
         kwargs = {'corpusModel':self.corpusModel,
