@@ -12,12 +12,34 @@ Phonological CorpusTools (PCT) is our answer to these problems -- a free, downlo
 
 An overview article about the software is available:
 
-Hall, Kathleen Currie, J. Scott Mackie, and Roger Yu-Hsiang Lo. (2019). Phonological CorpusTools: Software for doing phonological analysis on transcribed corpora. International Journal of Corpus Linguistics 24(4). 522-535. https://doi.org/10.1075/ijcl.18009.hal
+Hall, Kathleen Currie, J. Scott Mackie, and Roger Yu-Hsiang Lo. (2019). Phonological CorpusTools: Software for doing phonological analysis on transcribed corpora. International Journal of Corpus Linguistics 24(4). 522-535. [https://doi.org/10.1075/ijcl.18009.hal](https://doi.org/10.1075/ijcl.18009.hal)
 
-Various files related to PCT, including example corpus and feature files, are available at https://github.com/PhonologicalCorpusTools/PCT_Fileshare.
+Various files related to PCT, including example corpus and feature files, are available at [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare).
 
 ### Versions
 #### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...").
+Version 1.5.0 will be released at the end of 2021. It differs from version 1.4.1 in the following areas:
+
+1. An algorithm for calculating transitional probability has been added.
+
+2. There is now a syllabified version of the example corpus.
+
+3. Example corpora are now bundled with the executable, though can also be manually downloaded directly from [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare).
+
+4. In prior versions of PCT, duplicated phonological searches / analyses often resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. This has been corrected so that users are provided a warning when a search / analysis is duplicated, and either no change is made to the output table or the same results are repeated as a new line.
+
+5. Phonological searches can be named and can include word frequency, phoneme number, and syllable number filters.
+
+6. Various bugs around string similarity and neighbourhood density have been fixed.
+
+7. Parameters for MI calculations have been clarified, and options have been added for calculating MI only within particular specified environments.
+
+8. Calculation algorithms for functional load have been re-factored to make them faster. Minimal pairs can now be defined as either only "true" minimal pairs (e.g. "mad" and "pad") or as minimal pairs through neutralization (e.g., "mama" and "papa"). (Prior versions allowed only minimal pairs through neutralization.)
+
+9. Pronunciation variants can be linked to lexical items through shared spelling.
+
+10. The feature systems have been updated to be accurate. (As far as we can tell, the original released feature systems were accurate, but got corrupted at some point such that the feature values were all misaligned. We believe this error has now been fixed.) Feature / transcription systems are now bundled with the executable, though can also be downloaded from [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare). Master Excel files of all features / transcription symbols have also been provided at [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare) for transparency and ease of personal modification.
+
 Version 1.4.1 was released in September 2019. This version sizes inventory tables in a more appropriate way, includes the version number in output tables for archival purposes, and fixes bugs in the phonological search, functional load, and "About PCT" functions. 
 
 Version 1.4 was released in December 2018. It differs from v. 1.3 (July 2017) in the following areas:
@@ -58,7 +80,7 @@ We're delighted to have participated in various workshops / conferences:
 * [Tools for Big Data in Phonology / LabPhon 2016](http://mlmlab.org/bigphon/)
 * Symposium on the role of predictability in shaping human language sound patterns / SST 2016
 
-Example files and tutorial handouts can be downloaded from: https://github.com/PhonologicalCorpusTools/PCT_Fileshare.
+Example files and tutorial handouts can be downloaded from: [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare).
 
 ## Documentation
 
@@ -75,7 +97,7 @@ Within PCT, a corpus generally refers to a structured list of words, each phonol
 
 ### Multi-character sequences
 
-Below, you can find lists of the multi-character sequences that are included in each of the built-in transcription-to-feature system files. You may want to use these in order to copy & paste them into the corpus creation dialogue box if you are using a corpus file that is not already delimited. See also https://github.com/PhonologicalCorpusTools/PCT_Fileshare for more detail on the transcription / feature files.
+Below, you can find lists of the multi-character sequences that are included in each of the built-in transcription-to-feature system files. You may want to use these in order to copy & paste them into the corpus creation dialogue box if you are using a corpus file that is not already delimited. See also [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare) for more detail on the transcription / feature files.
 
 **Buckeye**: aa, aan, ae, aen, ah, ahn, ao, aon, aw, awn, ay, ayn, ch, dh, dx, eh, el, em, en, ey, eyn, hh, ih, ihn, iy, iyn, jh, ng, nx, ow, own, oy, oyn, sh, th, tq, uh, uhn, uw, uwn, zh, ehn, er, ern
 
