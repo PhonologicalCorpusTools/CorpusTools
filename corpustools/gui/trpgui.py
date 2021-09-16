@@ -270,7 +270,7 @@ class TPDialog(FunctionDialog):
                                  # if self.mode=='segMode' else ''.join([str(i) for i in seg_pairs[i]]),
                                  'Word boundary': self.wordBoundaryWidget.value().capitalize(),
                                  # 'Segment type': mode,
-                                 'Direction': self.dirWidget.value(),
+                                 'Direction': self.dirWidget.value().capitalize(),
                                  'Sequence type': self.typeTokenWidget.value(),
                                  'Tier': self.tierWidget.value(),
                                  'Pronunciation variants': self.variantsWidget.value().capitalize(),
