@@ -639,17 +639,17 @@ class NDDialog(FunctionDialog):
             error_filename = 'neigh_density_error.txt'
             msg_box.setWindowTitle("Words not in corpus")
             error_content = "{} words are not in the corpus.\nFor details, please refer to file {} in the " \
-                            "ERRORS directory or click on Show Details.".format(len(non_word), error_filename)
+                            "ERRORS directory or click on “Show Details” below.".format(len(non_word), error_filename)
             details = "The following words are not found in the corpus '{}.'\n".format(corpus_name)
             if file_type == 'Spelling':
                 details += "PCT cannot calculate neighbourhood density from spellings, unless they refer to a word " \
-                           "already in the corpus. Therefore, the result for the nonwords will be 'N/A.'\n\n"
+                           "already in the corpus. The results for the nonwords will be listed as 'N/A.'\n\n"
             else:
                 details += "PCT can still calculate neighbourhood density for a transcribed nonword itself." \
                            "\nHowever, the nonwords are not considered in calculating ND for other "\
                            "words, nor added to the corpus.\n\n"
 
-            details += "The word list file you loaded (as {}): {}\n".format(file_type, self.fileWidget.value())
+            details += "The text file you loaded (as {}): {}\n".format(file_type, self.fileWidget.value())
             details += "Corpus: {}\n".format(corpus_name)
             details += "Words not in the corpus:"
             for nw in non_word:

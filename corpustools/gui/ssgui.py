@@ -139,7 +139,7 @@ class SSDialog(FunctionDialog):
         self.nonwordTwoButton = QPushButton('Create word/nonword')
         self.nonwordTwoButton.clicked.connect(self.createNonwordTwo)
 
-        self.fileRadio = QRadioButton('Compare a list of pairs of words')
+        self.fileRadio = QRadioButton('Compare a list of pairs of words (in orthography)')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileWidget = FileWidget('Select a word pairs file', 'Text file (*.txt *.csv)')
         self.fileWidget.textChanged.connect(self.fileRadio.click)
@@ -508,22 +508,22 @@ class SSDialog(FunctionDialog):
             corpus_name = self.corpusModel.corpus.name
             details = "The following words are not found in the corpus '{}.' \nCurrently, the string similarity " \
                       "calculation is only available for words already in the corpus.\n\n".format(corpus_name)
-            details += "The word pair you loaded: {}\n" \
+            details += "The text file you loaded: {}\n" \
                        "Corpus: {}\nWords not in the corpus:".format(self.fileWidget.value(), corpus_name)
             for nw in non_word:
                 details += "\n" + nw
             error_filename = 'str_similarity_error.txt'
             msg_box.setWindowTitle("Words not in corpus")
             error_content = "{} words are not in the corpus.\nFor details, please refer to file {} in the " \
-                            "ERRORS directory or click on Show Details.".format(len(non_word), error_filename)
+                            "ERRORS directory or click on “Show Details” below.".format(len(non_word), error_filename)
             msg_box.addButton("Open ERRORS directory", QMessageBox.AcceptRole)
             msg_box.setDetailedText(details)
             with open(os.path.join(error_dir, error_filename), 'w', encoding='utf-8-sig') as f:
                 print(details, file=f)
         msg_box.setText(error_content +
                         '\n\nCurrently, the calculation is only available with the '
-                        'words in the corpus. ' +
-                        '\nResult for the words that are not in the corpus will be N/A.')
+                        'words in the corpus.' +
+                        '\nResults for the words that are not in the corpus will be listed as N/A.')
 
         # Internally 'close' button (so that it comes at the right-most side) but shown as 'OK'.
         # This is done because this button should be on the right side of 'details' and should not mislead the user.
