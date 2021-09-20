@@ -349,7 +349,7 @@ class PPDialog(FunctionDialog):
         self.results = []
         try:
             frequency_cutoff = float(self.minFreqEdit.text())
-        except ValueError:
+        except (ValueError, AttributeError):
             frequency_cutoff = 0.0
         for result in results:
             w, pp = result
