@@ -169,7 +169,9 @@ Kullback-Leibler...” and then follow these steps:
    The set /i,e/ have some overlap in their left- and right-hand environments  (e.g. they both occur after /t/ and before /f/), while /o,u/ have no overlapping environments. The KL algorithm will calculate a lower divergence for the pair /i,e/ than for /u,o/ if the "left side" or "right side" options are selected. 
    However, when considering both sides simaultaneously, /i/ and /e/ have no overlapping environments at all. The sound /i/ can appear in t_h, d_q, b_f, and b_v while the sound /e/ appears in t_y, d_x, p_f, and p_v. If you run the KL algorithm and select "both sides", then the pair /i,e/ will have the same divergence as /o,e/.
 
-6. **Results**: Once all selections have been made, click “Calculate
+6. **Minimum Word Frequency**: It is possible to set a minimum token frequency for including words in the calculation. This allows easy exclusion of rare words. To include all words in the corpus, regardless of their token frequency, set the minimum frequency to 0, or leave the field blank. Note that if a minimum frequency is set, all words below that frequency will be ignored entirely for the purposes of calculation.
+
+7. **Results**: Once all selections have been made, click “Calculate
    Kullback-Leibler.” If you want to start a new results table, click
    that button; if you’ve already done at least one calculation and
    want to add new calculations to the same table, select the button
