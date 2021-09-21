@@ -210,7 +210,9 @@ in the main menu, and then follow these steps:
    distance algorithm, because frequency isn’t taken into account in
    either one.
 
-5. **Minimum / Maximum similarity**: If one is calculating the similarity of
+5. **Minimum Word Frequency**: It is possible to set a minimum token frequency for including words in the calculation. This allows easy exclusion of rare words. To include all words in the corpus, regardless of their token frequency, set the minimum frequency to 0, or leave the field blank. Note that if a minimum frequency is set, all words below that frequency will be ignored entirely for the purposes of calculation.
+
+6. **Minimum / Maximum similarity**: If one is calculating the similarity of
    one word to all others in the corpus, an arbitrary minimum and maximum
    can be set to filter out words that are particularly close or distant.
    For example, one could require that only words with an edit distance
@@ -230,7 +232,7 @@ in the sample corpus, using token frequencies and comparing transcriptions:
    :width: 90%
    :align: center
 
-6. **Results**: Once all options have been selected, click “Calculate string
+7. **Results**: Once all options have been selected, click “Calculate string
    similarity.” If this is not the first calculation, and you want to
    add the results to a pre-existing results table, select the choice
    that says “add to current results table.” Otherwise, select “start
