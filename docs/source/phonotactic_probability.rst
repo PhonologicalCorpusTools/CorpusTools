@@ -153,11 +153,7 @@ in the main menu, and then follow these steps:
    c. **List of words**: If there is a specific list of words for which
       phonotactic probability is to be calculated (e.g., the stimuli list
       for an experiment), that list can be saved as a .txt file with one
-      word per line and uploaded into PCT for analysis.  If words in the
-      list are not in the corpus, you can still calculate their phonotactic
-      probability by entering in the spelling of the word and the transcription
-      of the word in a single line delimited by a tab. The transcription
-      should be delimited by periods.
+      word per line, each written in orthography, and uploaded into PCT for analysis. Currently, all words need to be in the corpus and presented orthographically for this function to work. 
    d. **Whole corpus**: Alternatively, the phonotactic probability for every
       current word in the corpus can be calculated. The phonotactic
       probability of each word will be added to the corpus itself, as
