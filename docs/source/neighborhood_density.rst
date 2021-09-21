@@ -28,7 +28,7 @@ those words' counts). The threshold that defines whether two words are
 considered similar to each other can be calculated using any of the three
 distance metrics described in :ref:`method_string_similarity`:
 Levenshtein edit distance,
-phonological edit distance, or Khorsi (2012) similarity. As implemented
+phonological edit distance, or [Khorsi2012]_ similarity. As implemented
 in PCT, for a query word, each other word in the corpus is checked for
 its similarity to the query word and then added to a list of neighbours
 if sufficiently similar.
