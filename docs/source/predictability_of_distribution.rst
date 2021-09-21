@@ -478,7 +478,9 @@ Once sounds have been selected, click “Add.” Pairs will appear in the “Pre
       :width: 90%
       :align: center
 
-8. **Entropy calculation / results**: Once all environments have been specified,
+9. **Minumum Word Frequency**: It is possible to set a minimum token frequency for including words in the calculation. This allows easy exclusion of rare words. To include all words in the corpus, regardless of their token frequency, set the minimum frequency to 0, or leave the field blank. Note that if a minimum frequency is set, all words below that frequency will be ignored entirely for the purposes of calculation.
+
+10. **Entropy calculation / results**: Once all environments have been specified,
    click “Calculate predictability of distribution.” If you want to start
    a new results table, click that button; if you’ve already done at least
    one calculation and want to add new calculations to the same table,
@@ -492,7 +494,7 @@ Once sounds have been selected, click “Add.” Pairs will appear in the “Pre
       :width: 90%
       :align: center
 
-9. **Output file / Saving results**: If you want to save the table of results,
+11. **Output file / Saving results**: If you want to save the table of results,
    click on “Save to file” at the bottom of the table. This opens up a
    system dialogue box where the directory and name can be selected.
 
