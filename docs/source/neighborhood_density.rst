@@ -147,7 +147,7 @@ density...” in the main menu, and then follow these steps:
    algorithm to determine what kinds of values are common for words
    that seem to count as neighbours, and working backward from that.
 
-9. **Minimum Word Frequency**: If a minimum word frequency is specified, the entire corpus is filtered for that frequency first, and then only neighbours within the filtered corpus are returned. 
+9. **Minimum Word Frequency**: It is possible to set a minimum token frequency for including words in the calculation. This allows easy exclusion of rare words. To include all words in the corpus, regardless of their token frequency, set the minimum frequency to 0, or leave the field blank. Note that if a minimum frequency is set, all words below that frequency will be ignored entirely for the purposes of calculation.
 
 10. **Output file**: If this option is left blank, PCT will simply return
    the actual neighbourhood density for each word that is calculated
