@@ -62,30 +62,42 @@ class NDWorker(FunctionWorker):
                                     break
 
                         #now we call the actual ND algorithms
-                        if kwargs['algorithm'] != 'substitution':
-                            res = neighborhood_density(c, q, tierdict,
-                                                algorithm = kwargs['algorithm'],
-                                                max_distance = kwargs['max_distance'],
-                                                force_quadratic=kwargs['force_quadratic'],
-                                                collapse_homophones = kwargs['collapse_homophones'],
-                                                file_type = kwargs['file_type'],
-                                                tier_type = kwargs['tier_type'],
-                                                sequence_type = kwargs['sequence_type'],
-                                                stop_check = kwargs['stop_check'],
-                                                call_back = kwargs['call_back'])
-                        else:
-                            res = find_mutation_minpairs(c, q,
-                                        tier_type=kwargs['tier_type'],
-                                        collapse_homophones = kwargs['collapse_homophones'],
-                                        stop_check = kwargs['stop_check'],
-                                        call_back = kwargs['call_back'])
+                        # but before doing so,
+                        # if the user loaded spelled wordlist file and a word is not in the corpus...
+                        non_word = False
+                        try:
+                            if kwargs['file_type'] != c.sequence_type:  # if spelled
+                                c.corpus.find(str(q))
+                        except KeyError:                                # if spelled non-word
+                            non_word = True
+                            res = 'N/A', ''  # then take a side way and return NA with no calculating
+
+                        # We really 'call the actual ND algorithms', only when the query is not a non_word
+                        if not non_word:
+                            if kwargs['algorithm'] != 'substitution':
+                                res = neighborhood_density(c, q, tierdict,
+                                                    algorithm = kwargs['algorithm'],
+                                                    max_distance = kwargs['max_distance'],
+                                                    force_quadratic=kwargs['force_quadratic'],
+                                                    collapse_homophones = kwargs['collapse_homophones'],
+                                                    file_type = kwargs['file_type'],
+                                                    tier_type = kwargs['tier_type'],
+                                                    sequence_type = kwargs['sequence_type'],
+                                                    stop_check = kwargs['stop_check'],
+                                                    call_back = kwargs['call_back'])
+                            else:
+                                res = find_mutation_minpairs(c, q,
+                                            tier_type=kwargs['tier_type'],
+                                            collapse_homophones = kwargs['collapse_homophones'],
+                                            stop_check = kwargs['stop_check'],
+                                            call_back = kwargs['call_back'])
                         if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
                             print_neighden_results(kwargs['output_filename'], res[1], kwargs['output_format'])
                         if self.stopped:
                             break
                         if kwargs['file_list'] is not None:
                             output.append(','.join([str(q), str(res[0]), ','.join([str(r) for r in res[1]])]))
-                        self.results.append([q,res[0]])
+                        self.results.append([q, res[0]])
                 else:#this will be the case if searching the entire corpus
                     end = kwargs['corpusModel'].beginAddColumn(att)
                     if kwargs['algorithm'] != 'substitution':
@@ -518,10 +530,8 @@ class NDDialog(FunctionDialog):
                     test = '.'.join(t) if '.' not in t else t  # 'test' to see if t is found in the corpus
                     identified = False
                     # for each word in the corpus, see if it has the same transcription as 't'
-                    for entry in kwargs['corpusModel'].corpus:
-                        if test == str(entry.transcription):
-                            identified = True
-                            break
+                    if test in [str(entry.transcription) for entry in kwargs['corpusModel'].corpus]:
+                        identified = True
                     if not identified:
                         not_in_corpus.append(t)
                     kwargs['query'].append(t)
@@ -630,9 +640,10 @@ class NDDialog(FunctionDialog):
                                  "a word already in the corpus. " \
                                  "Therefore, the result for '{}' will be 'N/A.'".format(non_word[0])
             else:
-                error_content += "PCT can still calculate neighbourhood density for '{}' itself, " \
-                                 "but it is not considered in calculating ND for other words, " \
-                                 "nor added to the corpus.".format(non_word[0])
+                error_content += "PCT can still calculate neighbourhood density for '{}' itself. " \
+                                 "Note that words in the .txt file will not be added to the corpus, nor does " \
+                                 "PCT include any of the words in the .txt file itself when calculating the " \
+                                 "neighbourhood densities of each word.".format(non_word[0])
         else:
             error_dir = self.parent().settings.error_directory()
             corpus_name = self.corpusModel.corpus.name
@@ -645,9 +656,10 @@ class NDDialog(FunctionDialog):
                 details += "PCT cannot calculate neighbourhood density from spellings, unless they refer to a word " \
                            "already in the corpus. The results for the nonwords will be listed as 'N/A.'\n\n"
             else:
-                details += "PCT can still calculate neighbourhood density for a transcribed nonword itself." \
-                           "\nHowever, the nonwords are not considered in calculating ND for other "\
-                           "words, nor added to the corpus.\n\n"
+                details += "PCT can still calculate neighbourhood density for a transcribed nonword itself.\n" \
+                           "However, note that words in the .txt file will not be added to the corpus, " \
+                           "nor does PCT include any of the words in the .txt file itself when calculating the " \
+                           "neighbourhood densities of each word.\n\n"
 
             details += "The text file you loaded (as {}): {}\n".format(file_type, self.fileWidget.value())
             details += "Corpus: {}\n".format(corpus_name)

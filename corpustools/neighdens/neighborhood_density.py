@@ -341,14 +341,10 @@ def ensure_query_is_word(query, corpus, sequence_type, tier_type, trans_delimite
 
         elif tier_type.att_type == 'tier':
             if file_type == sequence_type:
+                query_with̠td = '.'.join(query) if '.' not in query else query
                 for entry in corpus:
-                    if '.' not in query:                    # if no trans_delimiter in the query,
-                        query_with̠td = '.'.join(query)     # insert . between segments.
-                    else:
-                        query_with̠td = query
-
-                    corpus_word_with_td = str(getattr(entry,sequence_type))
-                    if query_with̠td == corpus_word_with_td:  # if a word in corpus has the same transcription
+                    corpus_word_with_td = str(getattr(entry, sequence_type))
+                    if query_with̠td == corpus_word_with_td:        # if a word in corpus has the same transcription
                         return entry                                # that word in the corpus is to be referred to.
 
                 # the following should be run if no word found in corpus with the transcription
