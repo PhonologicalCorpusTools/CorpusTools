@@ -188,7 +188,7 @@ in the main menu, and then follow these steps:
       with one *word pair* per line. In this case, click on “Choose file” and select the .txt file in the resulting system
       dialogue box. Note that this option is currently available only
       for words that already exist in the corpus, and that these pairs
-      should be listed using their standard orthographic representations.
+      should be listed using their standard orthographic representations. If there is a word that PCT can't find in the corpus, it will tell you and return "N/A" for that word pair, calculating the rest of the word pairs as normal.
 
 2. **Tier**: The tier from which string similarity is to be calculated can
    be selected. Generally, one is likely to care most about either
