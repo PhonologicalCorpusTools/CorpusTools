@@ -112,12 +112,12 @@ class SSDialog(FunctionDialog):
         vbox = QFormLayout()
 
         self.compType = None
-        self.oneWordRadio = QRadioButton('Compare one word to entire corpus')
+        self.oneWordRadio = QRadioButton('Compare one word to entire corpus\n(Enter spelling)')
         self.oneWordRadio.clicked.connect(self.oneWordSelected)
         self.oneWordEdit = QLineEdit()
         self.oneWordEdit.textChanged.connect(self.oneWordRadio.click)
 
-        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus')
+        self.oneNonwordRadio = QRadioButton('Calculate for a word/nonword not in the corpus\n(Enter transcription)')
         self.oneNonwordRadio.clicked.connect(self.oneNonwordSelected)
         self.oneNonwordLabel = QLabel('None created')
         self.oneNonword = None

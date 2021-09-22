@@ -131,7 +131,7 @@ class PPDialog(FunctionDialog):
         self.oneNonwordButton.clicked.connect(self.createNonword)
 
 
-        self.fileRadio = QRadioButton('Calculate for list of words (Load text file)')
+        self.fileRadio = QRadioButton('Calculate for list of words\n(Load text file containing spelling)')
         self.fileRadio.clicked.connect(self.fileSelected)
         self.fileRadio.setAutoExclusive(True)
         self.fileWidget = FileWidget('Select a file', 'Text file (*.txt *.csv)')
