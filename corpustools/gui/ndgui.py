@@ -595,6 +595,8 @@ class NDDialog(FunctionDialog):
         self.typeTokenWidget.disable()
         self.maxDistanceEdit.setEnabled(False)
         self.useQuadratic.setEnabled(False)
+        self.fileRadio.setEnabled(True)
+        self.fileWidget.setEnabled(True)
         self.fileOptions.setEnabled(True)
 
     def khorsiSelected(self):
@@ -602,6 +604,8 @@ class NDDialog(FunctionDialog):
         self.typeTokenWidget.enable()
         # self.tierWidget.setSpellingEnabled(True)   # no more nd for spelling per se. see issue #770.
         self.useQuadratic.setEnabled(False)
+        self.fileRadio.setEnabled(True)
+        self.fileWidget.setEnabled(True)
         self.fileOptions.setEnabled(True)
 
     def editDistSelected(self):
@@ -609,6 +613,8 @@ class NDDialog(FunctionDialog):
         self.typeTokenWidget.disable()
         # self.tierWidget.setSpellingEnabled(True)   # no more nd for spelling per se. see issue #770.
         self.useQuadratic.setEnabled(True)
+        self.fileRadio.setEnabled(True)
+        self.fileWidget.setEnabled(True)
         self.fileOptions.setEnabled(True)
         #self.maxDistanceEdit.setText('1')
 
@@ -617,6 +623,10 @@ class NDDialog(FunctionDialog):
         self.typeTokenWidget.disable()
         self.tierWidget.setSpellingEnabled(False)
         self.useQuadratic.setEnabled(False)
+
+        # disable file import altogether
+        self.fileRadio.setEnabled(False)
+        self.fileWidget.setEnabled(False)
         self.fileOptions.setCurrentIndex(1)
         self.fileOptions.setEnabled(False)
 
