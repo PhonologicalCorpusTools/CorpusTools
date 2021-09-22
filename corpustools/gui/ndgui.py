@@ -236,11 +236,14 @@ class NDDialog(FunctionDialog):
 
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
+        vbox.addRow(QHLine())  # add '------'
         vbox.addRow(self.oneNonwordRadio)
         vbox.addRow(self.oneNonwordLabel,self.oneNonwordButton)
+        vbox.addRow(QHLine())  # add '------'
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
         vbox.addRow(self.fileOptions)
+        vbox.addRow(QHLine())  # add '------'
         vbox.addRow(self.allwordsRadio)
         vbox.addRow(QLabel('Column name:'),self.columnEdit)
         note = QLabel('(Selecting this option will add a new column containing the results to your corpus. '

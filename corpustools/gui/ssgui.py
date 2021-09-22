@@ -149,14 +149,16 @@ class SSDialog(FunctionDialog):
 
         vbox.addRow(self.oneWordRadio)
         vbox.addRow(self.oneWordEdit)
+        vbox.addRow(QHLine())   # add '------'
         vbox.addRow(self.oneNonwordRadio)
         vbox.addRow(self.oneNonwordLabel, self.oneNonwordButton)
-
+        vbox.addRow(QHLine())  # add '------'
         vbox.addRow(self.twoWordRadio)
         vbox.addRow('Word 1 spelling (if in corpus):', self.wordOneEdit)
         vbox.addRow(self.nonwordOneLabel, self.nonwordOneButton)
         vbox.addRow('Word 2 spelling (if in corpus):', self.wordTwoEdit)
         vbox.addRow(self.nonwordTwoLabel, self.nonwordTwoButton)
+        vbox.addRow(QHLine())  # add '------'
         vbox.addRow(self.fileRadio)
         vbox.addRow(self.fileWidget)
         vbox.addRow(self.clearButton)
