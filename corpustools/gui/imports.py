@@ -24,6 +24,7 @@ try:
                                 QCompleter, QTableWidgetItem)
     from PyQt5.QtNetwork import QLocalSocket, QLocalServer
 
+    # The following chunk for importing QWebView can be removed. We are not using it anymore.
     try:
         from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView #This is required for PyQt5.9
     except ImportError:
@@ -36,6 +37,19 @@ try:
         from PyQt5.QtMultimedia import QSound, QMediaPlayer, QMediaContent, QAudioOutput
     except ImportError:
         AUDIO_ENABLED = False
+
+    class QHLine(QFrame):
+        def __init__(self):
+            super(QHLine, self).__init__()
+            self.setFrameShape(QFrame.HLine)
+            self.setFrameShadow(QFrame.Sunken)
+
+
+    class QVLine(QFrame):
+        def __init__(self):
+            super(QVLine, self).__init__()
+            self.setFrameShape(QFrame.VLine)
+            self.setFrameShadow(QFrame.Sunken)
 
 except ImportError:
     raise(Exception("We could not find an installation of PyQt5.  Please double check that it is installed."))
