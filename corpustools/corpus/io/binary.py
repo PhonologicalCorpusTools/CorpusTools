@@ -51,7 +51,8 @@ def download_binary(name, path, call_back = None):
     elif name == 'lemurian':
         download_link = 'https://www.dropbox.com/s/o98q83bq5derf3u/lemurian.corpus?dl=1'
     elif name == 'iphod_with_homographs':
-        download_link = 'https://www.dropbox.com/s/qgu6mu38arubu6s/iphod_with_homographs.corpus?dl=1'
+        download_link = 'https://www.dropbox.com/s/pmf6rp9db8pa8qa/iphod_with_homographs.corpus?dl=1'
+        # download_link = 'https://www.dropbox.com/s/qgu6mu38arubu6s/iphod_with_homographs.corpus?dl=1'
     elif name == 'iphod_without_homographs':
         download_link = 'https://www.dropbox.com/s/snlpehx157kfgbu/iphod_without_homographs.corpus?dl=1'
     elif name == 'ipa2spe':
