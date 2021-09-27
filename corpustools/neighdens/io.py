@@ -24,8 +24,13 @@ def print_all_neighden_results(output_filename, neighors_dict):
                 print('\t'.join([word, '0', '']), file=outf)
             else:
                 line = '\t'.join([word,
-                                  str(len(neighbors)-1),
-                                  ','.join([str(n).replace('.', '') for n in neighbors[1:]])])
-                #the -1 and the [1:] slice are to account for words being considered their own neighbours
-                #it's easier to fix this here than to mess with the ND algorithm
+                                  str(len(neighbors)),
+                                  ','.join([str(n).replace('.', '') for n in neighbors])])
+
+                # below is the original code
+                # line = '\t'.join([word,
+                #                   str(len(neighbors)-1),
+                #                   ','.join([str(n).replace('.', '') for n in neighbors[1:]])])
+                # #the -1 and the [1:] slice are to account for words being considered their own neighbours
+                # #it's easier to fix this here than to mess with the ND algorithm
                 print(line, file=outf)
