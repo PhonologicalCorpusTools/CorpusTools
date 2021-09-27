@@ -638,6 +638,7 @@ class NumericFilter(QWidget):
         layout.addWidget(self.conditionalSelect)
 
         self.valueEdit = QLineEdit()
+        self.valueEdit.setValidator(QDoubleValidator(float('inf'), 0, 8))
 
         layout.addWidget(self.valueEdit)
 

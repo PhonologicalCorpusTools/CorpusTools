@@ -85,6 +85,7 @@ class DisplayPane(BasePane):
         layout = QFormLayout()
 
         self.sigfigWidget = QLineEdit()
+        self.sigfigWidget.setValidator(QDoubleValidator(float('inf'), 0, 0))
         self.displayAllWidget = QCheckBox()
         displayAllLabel = QLabel('Display entire inventory in results when "Match single wildcard" is selected')
         displayAllLabel.setWordWrap(True)
@@ -126,6 +127,7 @@ class ProcessingPane(BasePane):
         layout.addRow(QLabel('Use multiprocessing (where available)'),self.usemultiCheck)
 
         self.numcoresWidget = QLineEdit()
+        self.numcoresWidget.setValidator(QDoubleValidator(float('inf'), 0, 0))
 
         layout.addRow(QLabel('Number of cores to use\n(Set to 0 to use 3/4 of the available cores):'),self.numcoresWidget)
 

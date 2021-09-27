@@ -218,6 +218,7 @@ class AddWordDialog(QDialog):
 
         # Frequency is mandatory
         self.edits['frequency'] = QLineEdit()
+        self.edits['frequency'].setValidator(QDoubleValidator(float('inf'), 0, 8))
         try:
             self.edits['frequency'].setText(str(word._frequency))
         except AttributeError:

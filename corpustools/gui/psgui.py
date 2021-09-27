@@ -2,7 +2,6 @@ from .imports import *
 import time
 import collections
 import regex as re
-from PyQt5.QtGui import QDoubleValidator
 
 from .widgets import TierWidget, RadioSelectWidget
 
