@@ -1114,6 +1114,11 @@ class LoadCorpusDialog(PCTDialog):
                 QDialog.accept(self)
 
     def updateName(self):
+        """
+        When creating a corpus from an external file/directory,
+        this function   (i) updates the '(recommended) corpus name' and
+                        (ii) passes the file extension info to updateType()
+        """
         path = self.pathWidget.value()
         filename = os.path.split(path)[1]
         if os.path.isdir(path):

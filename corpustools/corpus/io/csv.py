@@ -44,14 +44,14 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     else:
         trans_delimiters = ['.',' ', ';', ',']
 
-    with open(path,'r', encoding='utf-8-sig') as f:
+    with open(path, 'r', encoding='utf-8-sig') as f:
         lines = []
         head = f.readline().strip()
         for line in f.readlines():
             if line != '\n':
                 lines.append(line.strip())
 
-    best = ''
+    best = ''  ## best guess for the column delimiter (candidates: ',', 'tab', ':', and '|')
     num = 1
     for d in common_delimiters:
         trial = len(head.split(d))
@@ -62,20 +62,24 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
         raise(DelimiterError('The column delimiter specified did not create multiple columns.'))
 
     head = head.split(best)
-    vals = {h: list() for h in head}
+    vals = {h: list() for h in head}     # creating a dictionary object with headers (i.e., the 1st row in the file) as keys
 
-    for line in lines:
-        l = line.strip().split(best)
+    for line in lines:                   # for-loop each row in the file.
+        l = line.strip().split(best)     # and split it with the best column delimiter
         if len(l) != len(head):
             raise(PCTError('{}, {}'.format(l,head)))
         for i in range(len(head)):
             vals[head[i]].append(l[i])
     atts = list()
+    freq_flag = False  # Bool. flag for freq. the first numeric column makes it True and becomes the only freq for corpus
     for h in head:
-        if h in ['Transcription', 'transcription']:
+        if h in ['Transcription', 'transcription']:         # if the header explicitly says 'transcription' then 'tier'
             cat = 'tier'
-        else:
+        else:   # if not, guess the attribute (numeric, tier, factor, or spelling) depending on the type of contents
             cat = Attribute.guess_type(vals[h][:num_lines], trans_delimiters)
+        if cat == 'numeric' and not freq_flag:
+            cat = 'freq'
+            freq_flag = True
         att = Attribute(Attribute.sanitize_name(h), cat, h)
         a = AnnotationType(h, None, None, token=False, attribute=att)
         if cat == 'tier':

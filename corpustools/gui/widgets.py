@@ -316,7 +316,13 @@ class AnnotationTypeWidget(QGroupBox):
         elif self.annotation_type.attribute.att_type == 'spelling':
             self.typeWidget.setCurrentIndex(self.typeWidget.findText('Orthography (alternative)'))
         elif self.annotation_type.attribute.att_type == 'numeric':
-            self.typeWidget.setCurrentIndex(self.typeWidget.findText('Numeric'))
+            try:
+                if self.annotation_type.attribute.is_freq:
+                    self.typeWidget.setCurrentIndex(self.typeWidget.findText('Frequency'))
+                else:
+                    self.typeWidget.setCurrentIndex(self.typeWidget.findText('Numeric'))
+            except AttributeError:
+                self.typeWidget.setCurrentIndex(self.typeWidget.findText('Numeric'))
         else:
             self.typeWidget.setCurrentIndex(self.typeWidget.findText('Other (character)'))
 
