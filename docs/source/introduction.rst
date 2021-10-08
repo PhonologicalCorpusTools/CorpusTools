@@ -30,7 +30,7 @@ needed to efficiently handle large corpora can be daunting to learn.
 
 PCT is designed with the phonologist in mind and has an easy-to-use
 graphical user interface that requires no programming knowledge, and all of the original
-code (written in Python) is freely available for those who would like access to the source.
+code (written in Python) is freely available for those who would like access to the source (though we do not actively provide tech support for API functionality).
 It specifically includes the following capabilities:
 
 * Summary descriptions of a corpus, including type and token frequency of
