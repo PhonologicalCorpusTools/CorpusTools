@@ -61,7 +61,7 @@ short within PCT, while the latter is called “hayes.”
 
 As of v. 1.5.0, these systems are simply packaged with the PCT executable and should be available when you load the software. They can also be downloaded directly from https://github.com/PhonologicalCorpusTools/PCT_Fileshare/tree/main/FEATURE. See :ref:`local_storage` for details on how to store and access these.
 
-Prior to v. 1.5.0, feature systems needed to be selected and downloaded from within PCT. To download one of these systems, click on “Corpus” /
+Prior to v. 1.5.0, feature systems needed to be selected and downloaded from within PCT. That process still works as well, and you can use this approach to restore a feature system directly within PCT if it has been deleted. To download one of these systems, click on “Corpus” /
 “Manage feature systems...” and follow these steps:
 
 1. **Download**: Click on “Download feature systems” to open up the relevant dialogue box.
