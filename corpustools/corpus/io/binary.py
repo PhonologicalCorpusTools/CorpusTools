@@ -35,6 +35,8 @@ def download_binary(name, path, call_back = None):
 
     """
     reported_size = False
+    download_link = 'https://github.com/PhonologicalCorpusTools/PCT_Fileshare/blob/main/'
+
     if call_back is not None:
         call_back('Downloading file...')
     def report(blocknum, bs, size):
@@ -44,52 +46,21 @@ def download_binary(name, path, call_back = None):
                 reported_size = True
                 call_back(0,size)
             call_back(blocknum * bs)
-    if name == 'example':
-        download_link = 'https://www.dropbox.com/s/fb7txi4c1rf8lbx/example.corpus?dl=1'
-    elif name == 'example_syllabified':
-        download_link = 'https://www.dropbox.com/s/s2d4z5lhdnusrzl/example_syllabified.corpus?dl=1'
-    elif name == 'lemurian':
-        download_link = 'https://www.dropbox.com/s/o98q83bq5derf3u/lemurian.corpus?dl=1'
-    elif name == 'iphod_with_homographs':
-        download_link = 'https://www.dropbox.com/s/pmf6rp9db8pa8qa/iphod_with_homographs.corpus?dl=1'
-        # download_link = 'https://www.dropbox.com/s/qgu6mu38arubu6s/iphod_with_homographs.corpus?dl=1'
-    elif name == 'iphod_without_homographs':
-        download_link = 'https://www.dropbox.com/s/snlpehx157kfgbu/iphod_without_homographs.corpus?dl=1'
-    elif name == 'ipa2spe':
-        download_link = 'https://www.dropbox.com/s/qxlmcpie496mu4g/ipa2spe.feature?dl=1'
-    elif name == 'ipa2hayes':
-        download_link = 'https://www.dropbox.com/s/cmg7om0vy84jav2/ipa2hayes.feature?dl=1'
-    elif name == 'celex2spe':
-        download_link = 'https://www.dropbox.com/s/8rp0abitda0euan/celex2spe.feature?dl=1'
-    elif name == 'celex2hayes':
-        download_link = 'https://www.dropbox.com/s/fife4ajchf2smc4/celex2hayes.feature?dl=1'
-    elif name == 'arpabet2spe':
-        download_link = 'https://www.dropbox.com/s/v768usixjurotzj/arpabet2spe.feature?dl=1'
-    elif name == 'arpabet2hayes':
-        download_link = 'https://www.dropbox.com/s/hrkouyzx6bvb274/arpabet2hayes.feature?dl=1'
-    elif name == 'cpa2spe':
-        download_link = 'https://www.dropbox.com/s/d1zs9w4p1yo1971/cpa2spe.feature?dl=1'
-    elif name == 'cpa2hayes':
-        download_link = 'https://www.dropbox.com/s/wglm3fuhxivnc8g/cpa2hayes.feature?dl=1'
-    elif name == 'disc2spe':
-        download_link = 'https://www.dropbox.com/s/3136ajvpla8wvi5/disc2spe.feature?dl=1'
-    elif name == 'disc2hayes':
-        download_link = 'https://www.dropbox.com/s/9dxns42axzsbhht/disc2hayes.feature?dl=1'
-    elif name == 'klatt2spe':
-        download_link = 'https://www.dropbox.com/s/vzh0h3s9m28m5hj/klatt2spe.feature?dl=1'
-    elif name == 'klatt2hayes':
-        download_link = 'https://www.dropbox.com/s/hwfewt2ti4kh5e1/klatt2hayes.feature?dl=1'
-    elif name == 'sampa2spe':
-        download_link = 'https://www.dropbox.com/s/5w64o9lavz9eyum/sampa2spe.feature?dl=1'
-    elif name == 'sampa2hayes':
-        download_link = 'https://www.dropbox.com/s/4dq063yvi4ak5n1/sampa2hayes.feature?dl=1'
-    elif name == 'buckeye2spe':
-        download_link = 'https://www.dropbox.com/s/nkfizg3a0x4497m/buckeye2spe.feature?dl=1'
-    elif name == 'buckeye2hayes':
-        download_link = 'https://www.dropbox.com/s/37rv5j4lm9hcyxn/buckeye2hayes.feature?dl=1'
-    else:
+
+    if '2' in name:         # corpus file always contains '2' in the name. e.g., ipa2hayes
+        download_link += 'FEATURE/'
+        download_link += 'CORPUS/'
+        download_link += name + '.feature?raw=true'
+
+    else:                   # if not, it should be a corpus
+        download_link += 'CORPUS/'
+        download_link += name + '.corpus?raw=true'
+
+    try:
+        filename, headers = urlretrieve(download_link, path, reporthook=report)
+    except:
         return False
-    filename, headers = urlretrieve(download_link, path, reporthook=report)
+
     return True
 
 def load_binary(path):
