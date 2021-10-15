@@ -49,7 +49,10 @@ def download_binary(name, path, call_back = None):
 
     if '2' in name:         # corpus file always contains '2' in the name. e.g., ipa2hayes
         download_link += 'FEATURE/'
-        download_link += 'CORPUS/'
+        if 'hayes' in name:
+            download_link += 'Hayes/'
+        elif 'spe' in name:
+            download_link += 'SPE/'
         download_link += name + '.feature?raw=true'
 
     else:                   # if not, it should be a corpus
