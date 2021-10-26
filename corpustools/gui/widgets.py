@@ -339,7 +339,11 @@ class AnnotationTypeWidget(QGroupBox):
     def typeChanged(self):
         if 'Transcription' in self.typeWidget.currentText():
             self.editButton.setEnabled(True)
-            self.associationWidget.setEnabled(True)
+            if '(alternative)' in self.typeWidget.currentText():
+                self.associationWidget.setEnabled(True)
+            else:
+                self.associationWidget.widgets[0].setChecked(True)
+                self.associationWidget.setEnabled(False)
         else:
             self.editButton.setEnabled(False)
             self.associationWidget.widgets[0].setChecked(True)
