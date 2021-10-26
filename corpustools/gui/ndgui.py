@@ -91,6 +91,8 @@ class NDWorker(FunctionWorker):
                                             collapse_homophones = kwargs['collapse_homophones'],
                                             stop_check = kwargs['stop_check'],
                                             call_back = kwargs['call_back'])
+
+                        # export ND list when the calculation runs on a single word
                         if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
                             print_neighden_results(kwargs['output_filename'], res[1], kwargs['output_format'])
                         if self.stopped:
@@ -120,6 +122,8 @@ class NDWorker(FunctionWorker):
                                                 stop_check = kwargs['stop_check'],
                                                 call_back = kwargs['call_back'])
                     end = kwargs['corpusModel'].endAddColumn(end)
+
+                    # export neighbour list when calculating on the entire corpus
                     if 'output_filename' in kwargs and kwargs['output_filename'] is not None:
                         print_all_neighden_results(kwargs['output_filename'], results)
             except PCTError as e:
@@ -132,6 +136,8 @@ class NDWorker(FunctionWorker):
         if self.stopped:
             self.finishedCancelling.emit()
             return
+
+        # export neighbour list when calculating ND with an external .txt wordlist file
         if output and 'output_filename' in kwargs:
             with open(kwargs['output_filename'], encoding='utf-8', mode='w') as outf:
                 print('Word,Density,Neighbors', file=outf)

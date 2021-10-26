@@ -815,6 +815,9 @@ class ResultsWindow(QDialog):
             for r in self.table.model().allData:
                 existing_results_set.add(tuple(r[h] for h in headers))
 
+        except IndexError:
+            return [False, []]
+
         new_results_set = set()
         for r in self.dialog.results:
             if any([isinstance(item, list) for item in r.values()]):
