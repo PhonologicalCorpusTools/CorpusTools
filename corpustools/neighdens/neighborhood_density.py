@@ -11,11 +11,13 @@ from corpustools.multiproc import filter_mp, score_mp
 def _is_edit_distance_neighbor(w, query, sequence_type, max_distance):
     w_len = len(getattr(w, sequence_type))
     query_len = len(getattr(query, sequence_type))
-    if  w_len > query_len+max_distance:
+    if w_len > query_len + max_distance:
         return False
-    if w_len < query_len-max_distance:
+    if w_len < query_len - max_distance:
         return False
-    return edit_distance(getattr(w, sequence_type), getattr(query, sequence_type),
+
+    # should be greater than 0, because two identical words (i.e., an edit distance of 0) are not phono neighbours!
+    return 0 < edit_distance(getattr(w, sequence_type), getattr(query, sequence_type),
                          sequence_type, max_distance) <= max_distance
 
 
@@ -139,7 +141,7 @@ def neighborhood_density(corpus_context, query, tierdict,
         Tuple of the number of neighbors and the set of neighbor Words.
     """
 
-    matches = []
+    matches = []                # list to contain phono neighbours
     query = ensure_query_is_word(query, corpus_context, corpus_context.sequence_type, tier_type)
 
     if call_back is not None:
@@ -147,7 +149,7 @@ def neighborhood_density(corpus_context, query, tierdict,
         call_back(0,len(corpus_context))
         cur = 0
 
-    if algorithm == 'edit_distance' and max_distance == 1 and not force_quadratic:
+    if algorithm == 'edit_distance' and max_distance == 1 and force_quadratic:
         return fast_neighborhood_density(corpus_context, query, corpus_context.sequence_type, tier_type, tierdict,
                                          file_type=file_type, collapse_homophones=collapse_homophones)
 
@@ -166,15 +168,25 @@ def neighborhood_density(corpus_context, query, tierdict,
                                 freq_base = freq_base,
                                 sequence_type = corpus_context.sequence_type,
                                 max_distance = max_distance)
-    for w in corpus_context:
+    for w in corpus_context:            # loop over each word (w) in the corpus
         if stop_check is not None and stop_check():
             return
         if call_back is not None:
             cur += 1
             if cur % 10 == 0:
                 call_back(cur)
-        if not is_neighbor(w, query):
+        if not is_neighbor(w, query):                  # if *not* neighbor then do not add to 'matches'
             continue
+
+        # the following conditional checks whether collapse homophones is True. If so, remove homophones
+        if collapse_homophones:
+            w_sequence = getattr(w, sequence_type)
+
+            # if the transcription of the just-found potential neighbor is identical to
+            # anything we already have as previously found neighbours, do not add the current result into 'matches.'
+            if any(getattr(m, sequence_type) == w_sequence for m in matches):
+                continue
+
         matches.append(w)
     neighbors = set(matches)-set([query])
 

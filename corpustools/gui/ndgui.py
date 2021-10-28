@@ -50,13 +50,13 @@ class NDWorker(FunctionWorker):
                         #however, we only do this when comparing inside a corpus. when using a list of external words
                         #we don't want to do this, since it's possible for the external list to contain words that
                         #are in the corpus, and removing them gives the wrong ND value in this case
-                        if kwargs['in_corpus']:
+                        if kwargs['in_corpus']:   # if comparing inside a corpus
                             if last_value_removed:
                                 tierdict[last_key_removed].append(last_value_removed)
                             w = getattr(q, kwargs['sequence_type'])
                             last_key_removed = str(w)
                             #last_value_removed = tierdict[last_key_removed].pop()
-                            for i, item in enumerate(tierdict[last_key_removed]):
+                            for i, item in enumerate(tierdict[last_key_removed]):       # loop over homophones of 'last_key_removed'
                                 if str(item) == str(q) or ''.join(item.Transcription.list) == str(q):
                                     last_value_removed = tierdict[last_key_removed].pop(i)
                                     break
