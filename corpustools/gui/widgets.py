@@ -2784,7 +2784,7 @@ class RestrictedContextWidget(RadioSelectWidget):
                                             typetokenEnabled)
 
 class ContextWidget(RestrictedContextWidget):
-    separate = 'Count each word token as a separate entry'
+    separate = 'Count each pronunciation variant \nas a separate entry'
     relative = 'Weight each word type\nby the relative frequency of its variants'
     separate_value = 'separate token variants'
     relative_value = 'relative type variants'

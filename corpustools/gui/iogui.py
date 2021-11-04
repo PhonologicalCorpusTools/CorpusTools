@@ -885,6 +885,19 @@ class LoadCorpusDialog(PCTDialog):
                                          'but in the Parsing Preview window you did not select an orthography.')
                     return
 
+        if type_ != 'ilg' and type_ != 'multiple':
+            variant_tokens = [x.is_token_base for x in kwargs['annotation_types']]
+            if any(variant_tokens):
+                QMessageBox.critical(self,
+                                     'Pronunciation variants not supported',
+                                     ('You selected a transcription column to vary within words. However, your selected '
+                                      'format cannot be used for creating a corpus with pronunciation variants.\n\n'
+                                      'Currently, PCT supports pronunciation variants only for an interlinear gloss '
+                                      'file or a specially formatted corpus, such as the Buckeye corpus. If you are '
+                                      'dealing with one of the formats, please first change the left-hand side tab to '
+                                      'either "Interlinear text" or "Other standards."'))
+                return
+
         if (not any([x.base for x in kwargs['annotation_types']])
                 and not any([x.anchor for x in kwargs['annotation_types']])):
             QMessageBox.critical(self,
@@ -917,6 +930,7 @@ class LoadCorpusDialog(PCTDialog):
                                                    QMessageBox.Ok)
             if col_name_warning == QMessageBox.Ok:
                 return
+
 
         duplicates = False
         if names.count('Transcription (default)') > 1:
