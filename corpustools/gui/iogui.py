@@ -892,10 +892,10 @@ class LoadCorpusDialog(PCTDialog):
                                      'Pronunciation variants not supported',
                                      ('You selected a transcription column to vary within words. However, your selected '
                                       'format cannot be used for creating a corpus with pronunciation variants.\n\n'
-                                      'Currently, PCT supports pronunciation variants only for an interlinear gloss '
-                                      'file or a specially formatted corpus, such as the Buckeye corpus. If you are '
-                                      'dealing with one of the formats, please first change the left-hand side tab to '
-                                      'either "Interlinear text" or "Other standards."'))
+                                      'Currently, PCT supports pronunciation variants for an interlinear gloss file, '
+                                      'praat TextGrid file or a specially formatted corpus, such as the Buckeye corpus. '
+                                      'If you are dealing with one of these formats, please first change the left-hand '
+                                      'side tab accordingly'))
                 return
 
         if (not any([x.base for x in kwargs['annotation_types']])
