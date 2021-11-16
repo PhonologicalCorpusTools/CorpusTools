@@ -230,10 +230,10 @@ def load_corpus_csv(corpus_name, path, delimiter, annotation_types=None, feature
             if not line:  # blank or just a newline
                 continue
 
-            d = {}
+            d = {}      # d is the dictionary to be fed as the argument of Word()
             for k, v in zip(headers, line.split(delimiter)):
                 v = v.strip()
-                if k.attribute.att_type == 'tier':
+                if k.attribute.att_type == 'tier':      # if dealing with a transcription column
                     trans = parse_transcription(v, k, feature_matrix=feature_matrix, corpus=corpus)  # trans is a list of BaseAnnotation
                     if not trans_check and len(trans) > 1:
                         trans_check = True

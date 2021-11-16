@@ -613,7 +613,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
                 elif item.end is not None:
                     end = item.end
                     curr_word.append(item)
-                    curr_word = Transcription(curr_word)
+                    curr_word = Transcription(curr_word)    # here, combine segments as the transcription of a word
                     annotations[at].append((curr_word, begin, end))
                     curr_word = list()
         else:
@@ -666,7 +666,7 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
         add_frequency = False
 
     ind = 0
-    limit = max([len(list(v)) for v in annotations.values()])
+    limit = max([len(list(v)) for v in annotations.values()])  # limit = number of wordtokens
     for n in range(limit):
         if stop_check is not None and stop_check():
             return
@@ -684,12 +684,29 @@ def data_to_discourse2(corpus_name=None, wav_path=None, annotation_types=None, s
                     #annotations[at][n] should be a tuple of (curr_word, begin, end) or (item_label, None, None)
                 except IndexError:
                     word_kwargs[at.attribute.name] = (at.attribute, None)
+
+        if add_frequency:
+            word_kwargs['_freq_name'] = 'Frequency'
         word = Word(**word_kwargs)
-        try:
-            word = discourse.lexicon.find(word.spelling)
-            if add_frequency:
-                word.frequency += 1
-        except KeyError:
+
+        existing_words = discourse.lexicon.find_all(word.spelling)
+        # existing_words => list of words already in the corpus and with the same spelling with 'word'
+
+        if len(existing_words) > 0:
+            for existing_word in existing_words:
+                if existing_word.Transcription == word.Transcription:
+                    # same spelling AND same transcription => same word. so freq += 1
+                    word = existing_word
+                    if add_frequency:
+                        word.frequency += 1
+                    need_to_add = False
+                    break
+                else:
+                    need_to_add = True
+
+            # same spelling BUT different transcription => homophones. so add this as a separate entry
+            discourse.lexicon.add_word(word, allow_duplicates=True) if need_to_add else None
+        else:
             discourse.lexicon.add_word(word)
 
         word_token_kwargs = dict()

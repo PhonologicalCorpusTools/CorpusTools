@@ -885,7 +885,7 @@ class LoadCorpusDialog(PCTDialog):
                                          'but in the Parsing Preview window you did not select an orthography.')
                     return
 
-        if type_ != 'ilg' and type_ != 'multiple':
+        if type_ != 'ilg' and type_ != 'multiple' and type_ != 'textgrid':
             variant_tokens = [x.is_token_base for x in kwargs['annotation_types']]
             if any(variant_tokens):
                 QMessageBox.critical(self,

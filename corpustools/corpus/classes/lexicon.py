@@ -3229,7 +3229,7 @@ class Corpus(object):
 
         """
         word._corpus = self
-        tokens = word.wordtokens[:]  # What is this doing?
+        tokens = word.wordtokens[:]  # only becomes relevant when same spelling but different transcription?
 
         #If the word doesn't exist, add it
         try:
@@ -3245,6 +3245,8 @@ class Corpus(object):
                     try:
                         check = self.find(key)
                     except KeyError:
+                        if word.frequency == 0:
+                            word.frequency += 1
                         self.wordlist[key] = word
                         break
             else:

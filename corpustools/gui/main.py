@@ -499,16 +499,18 @@ class MainWindow(QMainWindow):
     def compatibility_check(self, corpus):
         update_corpus, update_inventory, update_words = False, False, False
         for attribute in Corpus.corpus_attributes:
+            # the loaded corpus should be updated unless it has all required attributes as in the Corpus class
             if not hasattr(corpus, attribute):
                 update_corpus = True
                 break
         for attribute in Inventory.inventory_attributes:
+            # the loaded inventory should be updated unless it has all required attributes as in the Inventory class
             if not hasattr(corpus.inventory, attribute):
                 update_inventory = True
                 break
         word = corpus.random_word()
 
-        for attribute in Word.word_attributes:
+        for attribute in Word.word_attributes:      # randomly pick a word and check all word_attributes
             if not hasattr(word, attribute):
                 update_words = True
                 break
