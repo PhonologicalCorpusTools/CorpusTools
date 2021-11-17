@@ -105,6 +105,7 @@ class NDWorker(FunctionWorker):
                     if kwargs['algorithm'] != 'substitution':
                         results = neighborhood_density_all_words(c, tierdict,
                                                 tier_type = kwargs['tier_type'],
+                                                sequence_type= kwargs['sequence_type'],
                                                 algorithm = kwargs['algorithm'],
                                                 output_format = kwargs['output_format'],
                                                 max_distance = kwargs['max_distance'],

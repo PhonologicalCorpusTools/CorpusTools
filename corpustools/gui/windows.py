@@ -4,6 +4,7 @@ import webbrowser
 from .helpgui import HelpDialog, get_url
 from corpustools.corpus.io import download_binary
 from corpustools.exceptions import PCTError
+import os
 
 class ProgressDialog(QProgressDialog):
     beginCancel = Signal()
@@ -291,10 +292,11 @@ class FunctionDialog(PCTDialog):
                 exported_filetype = 'List of contexts'
             else:
                 exported_filetype = 'Results'
-            QMessageBox.information(self, "{} exported".format(exported_filetype),
-                                    "The {} is exported to '{}.'".format(exported_filetype.lower(),
-                                                                         self.saveFileWidget.value()),
-                                    QMessageBox.Ok, QMessageBox.Ok)
+            if os.path.isfile(self.saveFileWidget.value()):
+                QMessageBox.information(self, "{} exported".format(exported_filetype),
+                                        "The {} is exported to '{}.'".format(exported_filetype.lower(),
+                                                                             self.saveFileWidget.value()),
+                                        QMessageBox.Ok, QMessageBox.Ok)
 
 
 class DownloadWorker(FunctionWorker):
