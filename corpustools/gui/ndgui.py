@@ -118,6 +118,7 @@ class NDWorker(FunctionWorker):
                     else:
                         results = find_mutation_minpairs_all_words(c, tierdict,
                                                 tier_type = kwargs['tier_type'],
+                                                output_format=kwargs['output_format'],
                                                 collapse_homophones = kwargs['collapse_homophones'],
                                                 num_cores = kwargs['num_cores'],
                                                 stop_check = kwargs['stop_check'],

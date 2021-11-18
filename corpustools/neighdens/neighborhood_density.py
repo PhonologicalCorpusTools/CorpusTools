@@ -85,7 +85,8 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None, s
                         algorithm = algorithm,
                         max_distance = max_distance,
                         collapse_homophones = collapse_homophones)
-            results[str(w)] = [getattr(r, output_format) for r in res[1]]
+            w_t_key = str(w) + ' [' + str(w.transcription) + ']'
+            results[w_t_key] = [getattr(r, output_format) for r in res[1]]
             setattr(w.original, settable_attr.name, res[0])
 
 
@@ -236,8 +237,9 @@ def generate_neighbor_candidates(corpus_context, query, sequence_type):
         if str(char) not in ['#', sequence[i]]:
             yield [str(c) for c in sequence[:]] + [str(char)] # insertion
 
-def find_mutation_minpairs_all_words(corpus_context, tierdict, tier_type = None, num_cores = -1, collapse_homophones = False,
-                    stop_check = None, call_back = None):
+def find_mutation_minpairs_all_words(corpus_context, tierdict, tier_type = None, num_cores = -1,
+                                     output_format = 'spelling', collapse_homophones=False,
+                                     stop_check = None, call_back = None):
 
     function = partial(find_mutation_minpairs, corpus_context, tier_type=tier_type, collapse_homophones = collapse_homophones)
     if call_back is not None:
@@ -262,7 +264,8 @@ def find_mutation_minpairs_all_words(corpus_context, tierdict, tier_type = None,
                     break
             res = find_mutation_minpairs(corpus_context, w,
                                          tier_type=tier_type, collapse_homophones = collapse_homophones)
-            results[str(w)] = res[1]
+            w_t_key = str(w) + ' [' + str(w.transcription) + ']'
+            results[w_t_key] = [getattr(r, output_format) for r in res[1]]
             setattr(w.original, corpus_context.attribute.name, res[0])
 
         # for w in corpus_context:
@@ -328,15 +331,14 @@ def find_mutation_minpairs(corpus_context, query, tier_type = None, collapse_hom
         if m[-1][-1]['f'] != 1:
             continue
 
-        w_sequence = getattr(w, sequence_type)
+        w_sequence = getattr(w, sequence_type)  # This is identical to the one right after the start of for-loop. why?
         if collapse_homophones and any(getattr(m, sequence_type) == w_sequence for m in matches):
             continue
         else:
             #matches.append(str(w_sequence))
             matches.append(w)
 
-    matches = [m.spelling for m in matches]
-    neighbors = list(set(matches)-set([str(query_sequence)]))
+    neighbors = set(matches)-set([query])
     return (len(neighbors), neighbors)
 
 def ensure_query_is_word(query, corpus, sequence_type, tier_type, trans_delimiter='.', file_type=None):

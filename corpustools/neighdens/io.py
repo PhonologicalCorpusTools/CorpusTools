@@ -25,7 +25,7 @@ def print_all_neighden_results(output_filename, neighors_dict):
             else:
                 line = '\t'.join([word,
                                   str(len(neighbors)),
-                                  ','.join([str(n).replace('.', '') for n in neighbors])])
+                                  ', '.join([str(n).replace('.', '') for n in neighbors])])
 
                 # below is the original code
                 # line = '\t'.join([word,
