@@ -18,19 +18,16 @@ def print_neighden_results(output_filename, neighbors, output_format):
 
 def print_all_neighden_results(output_filename, neighors_dict):
     with open(output_filename, mode='w', encoding='utf-8-sig') as outf:
-        print('Word\tDensity\tNeighbours', file=outf)
-        for word,neighbors in neighors_dict.items():
+        print('Spelling\tTranscription\tDensity\tNeighbours', file=outf)
+        for word, neighbors in neighors_dict.items():
+            try:
+                s, t = word.split('[')   # s is for spelling t is for transcription
+            except ValueError:
+                s = word
+                t = ''
+            t = '[' + t
             if not neighbors:
-                print('\t'.join([word, '0', '']), file=outf)
+                print('\t'.join([s, t, '0', '']), file=outf)
             else:
-                line = '\t'.join([word,
-                                  str(len(neighbors)),
-                                  ', '.join([str(n).replace('.', '') for n in neighbors])])
-
-                # below is the original code
-                # line = '\t'.join([word,
-                #                   str(len(neighbors)-1),
-                #                   ','.join([str(n).replace('.', '') for n in neighbors[1:]])])
-                # #the -1 and the [1:] slice are to account for words being considered their own neighbours
-                # #it's easier to fix this here than to mess with the ND algorithm
+                line = '\t'.join([s, t, str(len(neighbors)), ', '.join([str(n).replace('.', '') for n in neighbors])])
                 print(line, file=outf)
