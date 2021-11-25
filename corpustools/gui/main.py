@@ -418,7 +418,7 @@ class MainWindow(QMainWindow):
                 self.showTextAct.setEnabled(True)
                 self.showTextAct.setChecked(True)
 
-            else:#nothing special, just a corpus
+            else:  #nothing special, just a corpus
                 self.corpus = self.compatibility_check(self.corpus)
                 self.textWidget.hide()
                 self.discourseTree.hide()
@@ -467,10 +467,7 @@ class MainWindow(QMainWindow):
 
         if self.corpusModel.corpus.inventory.isNew:
             # just loaded from a text file
-            if hasattr(self.corpusModel.corpus,'discourse'):
-                inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=True)
-            else:
-                inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
+            inventoryModel = InventoryModel(self.corpusModel.corpus.inventory, copy_mode=False)
             inventoryModel.updateFeatures(self.corpusModel.corpus.specifier)
 
         else:

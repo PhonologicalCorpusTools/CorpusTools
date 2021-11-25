@@ -1083,6 +1083,7 @@ class LoadCorpusDialog(PCTDialog):
                 else:
                     # It's a Discourse object
                     c = self.corpus.lexicon
+                    c.inventory.update_features(c.specifier)
                 unmatched = list()
                 for seg in c.inventory:
                     if seg.symbol in c.inventory.non_segment_symbols:
