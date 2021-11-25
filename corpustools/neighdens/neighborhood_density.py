@@ -85,7 +85,7 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None, s
                         algorithm = algorithm,
                         max_distance = max_distance,
                         collapse_homophones = collapse_homophones)
-            w_t_key = str(w) + ' [' + str(w.transcription) + ']'
+            w_t_key = f'{w} [{w.transcription}]'
             results[w_t_key] = [getattr(r, output_format) for r in res[1]]
             setattr(w.original, settable_attr.name, res[0])
 
@@ -264,7 +264,7 @@ def find_mutation_minpairs_all_words(corpus_context, tierdict, tier_type = None,
                     break
             res = find_mutation_minpairs(corpus_context, w,
                                          tier_type=tier_type, collapse_homophones = collapse_homophones)
-            w_t_key = str(w) + ' [' + str(w.transcription) + ']'
+            w_t_key = f'{w} [{w.transcription}]'
             results[w_t_key] = [getattr(r, output_format) for r in res[1]]
             setattr(w.original, corpus_context.attribute.name, res[0])
 
