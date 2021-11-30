@@ -127,7 +127,9 @@ actually said in context. This would get read in to PCT as:
 
 A similar method works for creating pronunciation variants from TextGrid files. As in the interlinear gloss files, you would have three tiers in a TextGrid; one with spelling, one with canonical pronunciations; and one with the specific pronunciations used in particular instances. The :ref:`parsing_parameters` would be filled in similarly.
 
-Note that the canonical pronunciations are in fact optional; it is possible to simply associate pronunciation variants with spelling forms (though this may limit some of the functionality of searching and some analyses).
+Note that currently, every corpus must have canonical pronunciations; a two-line interlinear gloss file, for example, cannot have pronunciation variants.
+
+Note that it is also not currently possible to create a corpus with pronunciation variants from a .csv file, as there is no standard way of associating the variants with a given lexical item. 
 
 
 .. _viewing_pronunciation_variants:
