@@ -480,13 +480,12 @@ file, as described in the section on :ref:`custom_corpus`.
    within lexical items. Most types of information will be associated with
    lexical items (e.g., spelling, frequency). There are some kinds of
    information that do vary depending on the specific token, however,
-   such as pronunciation variants of individual words or the identity
-   of the speaker of an individual token. These are most likely to
+   such as pronunciation variants. These are most likely to
    arise when creating a corpus from a TextGrid that has a tier for
    lexical items (e.g., based on spelling on canonical transcriptions)
    and then a separate tier that will show the characteristics of
    particular tokens (similar structures may be found with interlinear
-   glosses). See also :ref:`pronunciation_variants` and specifically
+   glosses). Currently, PCT allows the choice of varying within lexical items ONLY for columns labelled as 'Transcription (alternative).' See also :ref:`pronunciation_variants` and specifically
    :ref:`creating_pronunciation_variants`.
 
 4. **Delimiters and Special Characters**: For transcription and orthography
