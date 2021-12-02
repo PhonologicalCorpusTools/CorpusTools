@@ -1370,6 +1370,7 @@ class ExportCorpusDialog(QDialog):
 
         # Success message
         QMessageBox.information(self, "Corpus exported",
-                                "You successfully exported \'{}\' corpus.".format(self.corpus.name),
+                               f"You successfully exported the \'{self.corpus.name}\' corpus.\n"
+                               f"It is saved as \'{filename}.\'",
                                 QMessageBox.Ok, QMessageBox.Ok)
         QDialog.accept(self)

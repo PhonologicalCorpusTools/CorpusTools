@@ -211,6 +211,13 @@ class ExportFeatureSystemDialog(QDialog):
 
         export_feature_matrix_csv(self.specifier,filename,colDelim)
 
+        # Success message
+        QMessageBox.information(self, "Feature matrix exported",
+                                f"You successfully exported the \'{self.specifier.name}\' feature.\n"
+                                f"It is saved as \'{filename}.\'",
+                                QMessageBox.Ok, QMessageBox.Ok)
+        QDialog.accept(self)
+
         QDialog.accept(self)
 
 class RestrictedFeatureSystemSelect(QGroupBox):
