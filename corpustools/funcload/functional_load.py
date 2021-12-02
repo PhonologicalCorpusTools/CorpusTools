@@ -292,7 +292,7 @@ def minpair_fl_speed(corpus_context, segment_pairs,
                 if cur % 100 == 0:
                     call_back(cur)
 
-            word = (w.Spelling, getattr(w, corpus_context.sequence_type), w.Frequency)
+            word = (getattr(w, w._spelling_name), getattr(w, corpus_context.sequence_type), w.Frequency)
             if seg in word[1]:
                 neutralized_words = neutralize(seg, word[1], environment_filter, minimal_pair_definition)
                 for nw in neutralized_words:
