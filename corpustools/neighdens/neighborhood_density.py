@@ -85,7 +85,19 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None, s
                         algorithm = algorithm,
                         max_distance = max_distance,
                         collapse_homophones = collapse_homophones)
-            w_t_key = f'{w} [{w.transcription}]'
+
+            # w_t_key is the pair of spelling and transcription which will be the key for the dictionary 'results'
+            # Need to add a unique number after the pair, since spelling + transcription pair may be duplicate,
+            # See the documentation on the 'Collapse homophones' option for the use case scenario and also Issue #785.
+            n = 0
+            w_t_key = f'{w} [{w.transcription}]{n}'
+            if w_t_key in results:
+                while True:
+                    n += 1
+                    w_t_key = f'{w} [{w.transcription}]{n}'
+                    if w_t_key not in results:
+                        break
+
             results[w_t_key] = [getattr(r, output_format) for r in res[1]]
             setattr(w.original, settable_attr.name, res[0])
 
@@ -189,7 +201,7 @@ def neighborhood_density(corpus_context, query, tierdict,
                 continue
 
         matches.append(w)
-    neighbors = set(matches)-set([query])
+    neighbors = matches
 
     return (len(neighbors), neighbors)
 

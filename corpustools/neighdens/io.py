@@ -25,7 +25,7 @@ def print_all_neighden_results(output_filename, neighors_dict):
             except ValueError:
                 s = word
                 t = ''
-            t = t[:-1].replace('.', '')
+            t = t[:-2].replace('.', '')
             if not neighbors:
                 print('\t'.join([s, t, '0', '']), file=outf)
             else:
