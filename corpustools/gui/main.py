@@ -353,6 +353,26 @@ class MainWindow(QMainWindow):
     def editWord(self, row, word):
         dialog = AddWordDialog(self, self.corpusModel.corpus, self.inventoryModel, word)
         if dialog.exec_():
+            try:
+                duplicate_check = self.corpus.find(dialog.word.spelling)
+                if duplicate_check.Transcription == dialog.word.Transcription and not dialog.word == word:
+                    askBox = QMessageBox()
+                    askBox.setWindowTitle("Duplicated words?")
+                    askBox.setText(("The word \'{}\' already exists in the corpus. \n"
+                                    "You can keep both as separate entries, \n"
+                                    "or choose to merge the two (i.e., one entry with the added frequency).".format(dialog.word.spelling)))
+                    askBox.addButton("Keep both as separate entries", QMessageBox.AcceptRole)
+                    askBox.addButton("Merge them and add frequency", QMessageBox.RejectRole)
+                    self.corpusModel.removeWord(self.corpusModel.rows[row])
+                    if askBox.exec_() == QMessageBox.AcceptRole:
+                        self.corpusModel.addWord(dialog.word, allow_duplicates=True)
+                    else:
+                        self.corpusModel.addWord(dialog.word, allow_duplicates=False)
+                    self.enableSave()
+                    return
+            except KeyError:
+                pass
+
             self.corpusModel.replaceWord(row, dialog.word)
             self.enableSave()
 
