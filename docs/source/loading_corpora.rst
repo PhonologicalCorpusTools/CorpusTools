@@ -409,7 +409,7 @@ use. As noted above, in order for there to be feature systems to choose
 from, you must first have loaded them into PCT
 (:ref:`transcriptions_and_feature_systems`). If you haven't yet added any,
 you may still import the corpus and then add them later. There is an
-option to download a Hayes-style feature system [Hayes2009] for the Buckeye
+option to download a Hayes-style feature system ([Hayes2009]_) for the Buckeye
 corpus transcriptions.
 
 At the right-hand side of the "Import corpus" dialogue box, you'll see a

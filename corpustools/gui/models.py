@@ -569,26 +569,27 @@ class PhonoSearchResultsModel(BaseTableModel):
         for line in self.allData:
             segs = line['userinput_target']
             envs = line['userinput_env']
+            tier = line['Transcription tier']
             res_type = line['Result type']
             wf = line['Min Word Freq'], line['Max Word Freq']  # word freq filter min/max
             pc = line['Min Phoneme Number'], line['Max Phoneme Number']  # phoneme count min/max
             sc = line['Min Syllable Number'], line['Max Syllable Number']  # syllable count min/max
             filters = wf, pc, sc
             for i,seg in enumerate(segs):
-                segenvfilters = seg, envs[i], filters, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
-                if line['Result type'] == 'positive':  # if positive search
+                segenvfilters = seg, envs[i], filters, tier, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
+                if res_type == 'positive':  # if positive search
                     if line['raw_env'][i] is not None:      # then check if the word is in results for satisfying env[i]
                         typefreq[segenvfilters] += 1        # if so, +1 in the type freq
                         tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
                     else:
                         typefreq[segenvfilters] += 0
                         tokenfreq[segenvfilters] += 0
-                elif line['Result type'] == 'negative':  # if negative search
+                elif res_type == 'negative':  # if negative search
                     typefreq[segenvfilters] += 1   # the word is in the result for NOT satisfying the env[i] so +1
                     tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
 
         self.rows = list()
-        for k,v in sorted(typefreq.items()):
+        for k, v in sorted(typefreq.items()):
             corpus_name = self.allData[0]['Corpus']
             PCT_version = self.allData[0]['PCT ver.']
             segment = k[0]
@@ -596,9 +597,10 @@ class PhonoSearchResultsModel(BaseTableModel):
             filter_word_freq = k[2][0]
             filter_phon_count = k[2][1]
             filter_syll_count = k[2][2]
-            pos_neg = k[3]
+            tier = k[3]
+            pos_neg = k[4]
 
-            self.rows.append([corpus_name, PCT_version, segment, environment, v, tokenfreq[k], pos_neg,
+            self.rows.append([corpus_name, PCT_version, segment, environment, v, tokenfreq[k], tier, pos_neg,
                               filter_word_freq[0], filter_word_freq[1],
                               filter_phon_count[0], filter_phon_count[1],
                               filter_syll_count[0], filter_syll_count[1]])

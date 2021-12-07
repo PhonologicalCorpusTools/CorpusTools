@@ -540,11 +540,11 @@ class PSEnvironmentSyllableWidget(EnvironmentSyllableWidget):
 
 class PhonoSearchDialog(FunctionDialog):
     header = ['Corpus', 'PCT ver.', 'Word', 'Transcription', 'Token frequency', 'Target', 'Environment',
-              'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number',
-              'Min Syllable Number', 'Max Syllable Number']
+              'Transcription tier', 'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number',
+              'Max Phoneme Number', 'Min Syllable Number', 'Max Syllable Number']
     summary_header = ['Corpus', 'PCT ver.', 'Target', 'Environment', 'Type frequency', 'Token frequency',
-                      'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number', 'Max Phoneme Number',
-                      'Min Syllable Number', 'Max Syllable Number']
+                      'Transcription tier', 'Result type', 'Min Word Freq', 'Max Word Freq', 'Min Phoneme Number',
+                      'Max Phoneme Number', 'Min Syllable Number', 'Max Syllable Number']
     _about = ['']
     name = 'phonological search'
 
@@ -916,6 +916,7 @@ class PhonoSearchDialog(FunctionDialog):
                                  'Transcription': res_transcription,
                                  'Target': target,
                                  'Environment': envs,
+                                 'Transcription tier': self.tierWidget.displayValue(),
                                  'Result type': self.resultType,
                                  'Token frequency': word.frequency,
                                  'Min Word Freq': freq_filters['min_word'],
