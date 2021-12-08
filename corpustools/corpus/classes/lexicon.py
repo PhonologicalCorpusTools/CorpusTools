@@ -3274,7 +3274,7 @@ class Corpus(object):
         for alt_trans in word.alt_transcriptions:
             if getattr(word, alt_trans) is not None:
                 added_default_var = self.update_inventory(getattr(word, alt_trans))
-                word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
+                # word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
 
         for d in word.descriptors:
             if d not in self._attributes:
