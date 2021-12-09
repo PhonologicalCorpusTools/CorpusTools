@@ -119,7 +119,7 @@ density...” in the main menu, and then follow these steps:
    a. If the neighbourhood density of 'nata' is calculated without collapsing homophones, then it has a density of 4 ([mɑtɑ], [mɑtɑ], [sɑtɑ], and [sɑtɑ]); 
    b. If the neighbourhood density of 'nata' is calculated after first collapsing homophones, then it has a density of 2 ([mɑtɑ] and [sɑtɑ]). 
    
-   Note that if homophones are collapsed before calculating neighbourhood density, this will also affect any words that are homophones of the word in question. E.g., if the neighbourhood density of 'sata' is calculated in the above example, it will have a density of 4 if homophones are not collapsed ([mɑtɑ], [mɑtɑ], [nɑtɑ], and [sɑtɑ], with [sɑtɑ] coming only from 'satha'), while it will have a density of 2 if homophones are collapsed ([mɑtɑ] and [nɑtɑ]; [sɑtɑ] no longer counts as a neighbour because homophones are collapsed before any calculations are made).  #NB: THIS IS CURRENTLY ONLY TRUE IF CALCULATING ND FOR ALL WORDS IN THE CORPUS; YOU GET DIFFERENT BEHAVIOUR IF IT'S ONE WORD AT A TIME! FIX THIS.
+   Note that homophones of the target word are NOT affected by this choice, and simply never count as neighbours -- we assume that there must be a distance of at least 1 phone. E.g., if the neighbourhood density of 'sata' is calculated in the above example, it will have a density of 3 if homophones are not collapsed ([mɑtɑ], [mɑtɑ], and [nɑtɑ]; [sɑtɑ] coming from 'satha' does NOT count as a neighbour), while it will have a density of 2 if homophones are collapsed ([mɑtɑ] and [nɑtɑ]).  
 
 5. **Tier**: Neighbourhood density can be calculated from most of the available
    tiers in a corpus (e.g., spelling, transcription, or tiers that
@@ -145,15 +145,11 @@ density...” in the main menu, and then follow these steps:
    recommendations for what value(s) might be good defaults here;
    instead, we recommend experimenting with the string similarity
    algorithm to determine what kinds of values are common for words
-   that seem to count as neighbours, and working backward from that.
+   that seem to count as neighbours, and working backward from that. *Note: there is an inherent 'minimum' of 1 as well; that is, homophones of a target word do not count as neighbours of the target word. See more in (4) ("Collapse homophones") above.
 
 9. **Minimum Word Frequency**: It is possible to set a minimum token frequency for including words in the calculation. This allows easy exclusion of rare words. To include all words in the corpus, regardless of their token frequency, set the minimum frequency to 0, or leave the field blank. Note that if a minimum frequency is set, all words below that frequency will be ignored entirely for the purposes of calculation.
 
-10. **Output file**: If this option is left blank, PCT will simply return
-   the actual neighbourhood density for each word that is calculated
-   (i.e., the number of neighbours of each word). If a file is chosen,
-   then the number will still be returned, but additionally, a file
-   will be created that lists all of the actual neighbours for each word. It can be specified whether the output file should contain the orthographic representation or the transcription of each neighbour. Note that in the case of homophones that have been collapsed, the representation of the alphabetically first homophone will be the only one included.
+10. **Output file**: If this option is left blank, PCT will simply return the actual neighbourhood density for each word that is calculated (i.e., the number of neighbours of each word). If a file is chosen, then the number will still be returned, but additionally, a file will be created that lists all of the actual neighbours for each word. It can be specified whether the output file should contain the orthographic representation or the transcription of each neighbour. Note that in the case of homophones that have been collapsed, the representation of the alphabetically first homophone will be the only one included.
 
 11. **Results**: Once all options have been selected, click “Calculate neighborhood density.” If this is not the first calculation, and you want to add the results to a pre-existing results table, select the choice that says “add to current results table.” Otherwise, select “start new results table.” A dialogue box will open, showing a table of the results, including the word, its neighbourhood density, the string type from which neighbourhood density was calculated, what choice was made regarding pronunciation variants, whether type or token frequency was used (if applicable), the string similarity algorithm that was used, and the threshold value. If the neighbourhood density for all words in the corpus is being calculated, simply click on the “start new results table” option, and you will be returned to your corpus, where a new column has been added automatically.
 
