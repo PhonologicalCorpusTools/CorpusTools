@@ -672,13 +672,14 @@ class PhonoSearchDialog(FunctionDialog):
 
         psTempnote_Frame = QFrame()
         notelayout = QVBoxLayout()
-        psTempnote_Frame.setLayout(notelayout)
         temp_note = QLabel(text=('* Currently, PCT cannot search for symbols that are only found in '
-                                 'pronunciation variants.\n* Even if you can select one in the inventory table,'
-                                 ' searching for a variant-only segment returns 0.\n'
-                                 '* "Syllable search" and "Syllable number filters" only work on a syllabified corpus'))
-        temp_note.setFont(QFont('Arial', 11))
+                                 'pronunciation variants.\n* Even if you can select one from the inventory table,'
+                                 ' searching for a variant-only segment returns 0.'))
+        note_font = QFont()
+        note_font.setPointSize(12)
+        temp_note.setFont(note_font)
         notelayout.addWidget(temp_note)
+        psTempnote_Frame.setLayout(notelayout)
         self.layout().insertWidget(0, self.psFrame)
         self.layout().insertWidget(1, psTempnote_Frame)
 
