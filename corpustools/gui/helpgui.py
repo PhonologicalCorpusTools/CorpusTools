@@ -108,12 +108,8 @@ def get_url(name, section=None):
     else:
         help_url += 'latest/'
 
-    if name == 'phonological search':
-        html_name = 'transcriptions_and_feature_systems.html'
-        section = 'phonological-search'
-    else:
-        html_name = '{}.html'.format(name.lower().replace(' ', '_'))
-        #section = ''
+    html_name = '{}.html'.format(name.lower().replace(' ', '_'))
+    #section = ''
 
     help_url = help_url + html_name
 
