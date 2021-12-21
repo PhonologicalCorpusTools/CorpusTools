@@ -669,7 +669,19 @@ class PhonoSearchDialog(FunctionDialog):
         self.pslayout.addWidget(filterFrame)
 
         self.psFrame.setLayout(self.pslayout)
+
+        psTempnote_Frame = QFrame()
+        notelayout = QVBoxLayout()
+        temp_note = QLabel(text=('* Currently, PCT cannot search for symbols that are only found in '
+                                 'pronunciation variants.\n* Even if you can select one from the inventory table,'
+                                 ' searching for a variant-only segment returns 0.'))
+        note_font = QFont()
+        note_font.setPointSize(12)
+        temp_note.setFont(note_font)
+        notelayout.addWidget(temp_note)
+        psTempnote_Frame.setLayout(notelayout)
         self.layout().insertWidget(0, self.psFrame)
+        self.layout().insertWidget(1, psTempnote_Frame)
 
         self.progressDialog.setWindowTitle('Searching')
 

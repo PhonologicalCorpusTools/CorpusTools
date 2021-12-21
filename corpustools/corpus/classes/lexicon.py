@@ -3269,6 +3269,13 @@ class Corpus(object):
             #in this case, the symbol has been given a default value of 'n' for every feature
             word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
 
+        # make shift code for adding variant segs to the inventory. Need to be removed eventually
+        added_default_var = False
+        for alt_trans in word.alt_transcriptions:
+            if getattr(word, alt_trans) is not None:
+                added_default_var = self.update_inventory(getattr(word, alt_trans))
+                # word.transcription._list = [self.inventory[x].symbol for x in word.transcription._list]
+
         for d in word.descriptors:
             if d not in self._attributes:
                 if isinstance(getattr(word, d), str):
@@ -3284,7 +3291,7 @@ class Corpus(object):
                 word.add_attribute(a.name, a.default_value)
             a.update_range(getattr(word, a.name))
 
-        return added_default
+        return added_default or added_default_var
 
     def update_features(self):
         for seg in self.inventory:
