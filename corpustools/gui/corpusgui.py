@@ -172,6 +172,21 @@ class CorpusSummary(QDialog):
             self.inventorySummary = InventorySummary(corpus, inventory)
             layout.addWidget(self.inventorySummary)
 
+            # the line below was out of the if statement but is moved here to prevent reference before assignment issue
+            self.resize(self.inventorySummary.width(), self.inventorySummary.height() + 200)
+
+            # interim note that variant symbols are not in this inventory chart
+            tempnote_frame = QFrame()
+            notelayout = QVBoxLayout()
+            temp_note = QLabel(text=('* Note that this inventory is based on only the symbols '
+                                     'that occur in canonical pronunciations.\n'
+                                     '* PCT does not include symbols from pronunciation variants in the inventory, '
+                                     'and such symbols \n   cannot currently be directly searched for '
+                                     'or used in analyses.'))
+            notelayout.addWidget(temp_note)
+            tempnote_frame.setLayout(notelayout)
+            layout.addWidget(tempnote_frame)
+
         self.doneButton = QPushButton('Done')
         acLayout = QHBoxLayout()
         acLayout.addWidget(self.doneButton)
@@ -183,7 +198,6 @@ class CorpusSummary(QDialog):
         layout.addWidget(acFrame)
 
         self.setLayout(layout)
-        self.resize(self.inventorySummary.width(), self.inventorySummary.height() + 200)
         self.setWindowTitle('Corpus summary')
 
 
