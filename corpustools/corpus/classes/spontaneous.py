@@ -234,11 +234,6 @@ class Discourse(object):
                 wordtoken.add_attribute(a.name, a.default_value)
             a.update_range(getattr(wordtoken,a.name))
 
-        added_default_var = False
-        if wordtoken.transcription is not None:
-            added_default_var = self.lexicon.update_inventory(wordtoken.transcription)
-        return added_default_var
-
     def add_attribute(self, attribute, initialize_defaults = False):
         """
         Add an Attribute of any type to the Discourse or replace an existing Attribute.
