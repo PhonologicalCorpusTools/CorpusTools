@@ -480,6 +480,7 @@ class MainWindow(QMainWindow):
             self.createSubsetAct.setEnabled(True)
             self.exportCorpusAct.setEnabled(True)
             self.exportFeatureSystemAct.setEnabled(True)
+            self.saveCorpusAsAct.setEnabled(True)
 
     def generateInventoryModel(self):
         if not hasattr(self.corpusModel.corpus.inventory, 'segs'):
@@ -604,6 +605,18 @@ class MainWindow(QMainWindow):
                     os.path.join(self.settings['storage'], 'FEATURE', self.corpusModel.corpus.specifier.name+'.feature'))
         self.saveCorpusAct.setEnabled(False)
         self.unsavedChanges = False
+
+    def saveCorpusAs(self):
+        name_hint = self.generate_corpus_name_hint()
+        dialog = FileNameDialog(name=self.corpusModel.corpus.name,
+                                file_type='corpus',
+                                settings=self.settings,
+                                hint=name_hint,
+                                saveas=True)
+        dialog.exec_()
+        self.corpusModel.corpus.name = dialog.getFilename()
+        self.saveCorpus()
+        self.corpusStatus.setText('Corpus: {}'.format(self.corpusModel.corpus.name))
 
     def exportCorpus(self):
         dialog = ExportCorpusDialog(self,self.corpusModel.corpus)
@@ -1099,6 +1112,11 @@ class MainWindow(QMainWindow):
                 statusTip="Save corpus", triggered=self.saveCorpus)
         self.saveCorpusAct.setEnabled(False)
 
+        self.saveCorpusAsAct = QAction( "Save corpus as...",
+                self,
+                statusTip="Save corpus in a different name", triggered=self.saveCorpusAs)
+        self.saveCorpusAsAct.setEnabled(False)
+
         self.exportCorpusAct = QAction( "Export corpus as text file (use with spreadsheets etc.)...",
                 self,
                 statusTip="Export corpus", triggered=self.exportCorpus)
@@ -1303,6 +1321,8 @@ class MainWindow(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.createSubsetAct)
         self.fileMenu.addAction(self.saveCorpusAct)
+        self.fileMenu.addAction(self.saveCorpusAsAct)
+        self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exportCorpusAct)
         self.fileMenu.addAction(self.exportFeatureSystemAct)
         self.fileMenu.addSeparator()

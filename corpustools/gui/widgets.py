@@ -2870,7 +2870,7 @@ class CreateClassWidget(QDialog):
                                                                       ', '.join(notInClass)))
 class FileNameDialog(QDialog):
 
-    def __init__(self, name, file_type, settings, hint=None):
+    def __init__(self, name, file_type, settings, hint=None, saveas=False):   # 'saveas' parameter: True when 'Save As'
         super().__init__()
 
         if file_type == 'features':
@@ -2930,9 +2930,17 @@ class FileNameDialog(QDialog):
                                  'Options > Preferences...')
         stopShowingLayout.addWidget(stopShowingText)
         layout.addLayout(stopShowingLayout)
+        cancel_msg = 'Cancel (unsaved changes will be lost)'
+
+        if saveas:
+            self.setWindowTitle('Save corpus as...')
+            layout.removeWidget(explain)
+            layout.removeWidget(options)
+            stopShowingLayout.removeWidget(self.stopShowing)
+            cancel_msg = 'Cancel'
 
         okButton = QPushButton('OK')
-        cancelButton = QPushButton('Cancel (unsaved changes will be lost)')
+        cancelButton = QPushButton(cancel_msg)
         okButton.clicked.connect(self.accept)
         cancelButton.clicked.connect(self.cancel)
         layout.addWidget(okButton)
