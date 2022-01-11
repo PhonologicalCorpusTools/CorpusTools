@@ -1108,7 +1108,7 @@ class MainWindow(QMainWindow):
         self.createSubsetAct.setEnabled(False)
 
         self.saveCorpusAct = QAction( "Save corpus",
-                self,
+                self, shortcut=QKeySequence.Save,
                 statusTip="Save corpus", triggered=self.saveCorpus)
         self.saveCorpusAct.setEnabled(False)
 
