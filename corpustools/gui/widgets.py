@@ -2934,9 +2934,9 @@ class FileNameDialog(QDialog):
 
         if saveas:
             self.setWindowTitle('Save corpus as...')
-            layout.removeWidget(explain)
-            layout.removeWidget(options)
-            stopShowingLayout.removeWidget(self.stopShowing)
+            explain.hide()
+            options.hide()
+            self.stopShowing.hide()
             cancel_msg = 'Cancel'
 
         okButton = QPushButton('OK')
