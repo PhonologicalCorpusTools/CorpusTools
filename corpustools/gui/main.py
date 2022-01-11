@@ -359,12 +359,19 @@ class MainWindow(QMainWindow):
                     askBox = QMessageBox()
                     askBox.setWindowTitle("Duplicated words?")
                     askBox.setText(("The word \'{}\' already exists in the corpus. \n"
-                                    "You can keep both as separate entries, \n"
-                                    "or choose to merge the two (i.e., one entry with the added frequency).".format(dialog.word.spelling)))
+                                    "You can keep both as separate entries, or merge the two\n"
+                                    "(i.e., one entry with the added frequency).\n"
+                                    "If there are multiple instances of \'{}\' in the corpus,\n"
+                                    "the frequency will be added to the first such entry"
+                                    .format(dialog.word.spelling, dialog.word.spelling)))
                     askBox.addButton("Keep both as separate entries", QMessageBox.AcceptRole)
                     askBox.addButton("Merge them and add frequency", QMessageBox.RejectRole)
+                    askBox.addButton(QMessageBox.Cancel)
+                    choice = askBox.exec_()
+                    if choice == QMessageBox.Cancel:
+                        return
                     self.corpusModel.removeWord(self.corpusModel.rows[row])
-                    if askBox.exec_() == QMessageBox.AcceptRole:
+                    if choice == QMessageBox.AcceptRole:
                         self.corpusModel.addWord(dialog.word, allow_duplicates=True)
                     else:
                         self.corpusModel.addWord(dialog.word, allow_duplicates=False)
@@ -975,12 +982,18 @@ class MainWindow(QMainWindow):
                     askBox = QMessageBox()
                     askBox.setWindowTitle("Duplicated words?")
                     askBox.setText(("Your input \'{}\' already exists in the corpus. \n"
-                                    "You can add it as a separate entry, \n"
-                                    "or simply add frequency to the existing entry.".format(dialog.word.spelling)))
+                                    "You can add it as a separate entry, or simply add frequency to the existing entry.\n"
+                                    "If there are multiple instances of \'{}\' already in the corpus,\n"
+                                    "then frequency will be added to the first such entry."
+                                    .format(dialog.word.spelling, dialog.word.spelling)))
                     askBox.addButton("Add as a separate entry", QMessageBox.AcceptRole)
                     askBox.addButton("Add frequency to the existing word", QMessageBox.RejectRole)
-                    if askBox.exec_() == QMessageBox.AcceptRole:
+                    askBox.addButton(QMessageBox.Cancel)
+                    choice = askBox.exec_()
+                    if choice == QMessageBox.AcceptRole:
                         allow_duplicates = True
+                    elif choice == QMessageBox.Cancel:
+                        return
                 else:
                     allow_duplicates = True
             except KeyError:
