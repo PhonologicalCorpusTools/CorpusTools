@@ -101,61 +101,8 @@ Download the latest version of the source code for Phonological CorpusTools from
 Phonological CorpusTools should now be installed! Run it from a terminal window using the command "pct". You can also open a "Run" dialogue and use the command "pct" there. In Windows, the Run tool is usuall found in All Programs -> Accessories.
 
 ### Versions
-#### Please always use the latest version of PCT! You can check for updates from within PCT ("Help" / "Check for updates...").
-Version 1.5.0 will be released at the end of 2021. It differs from version 1.4.1 in the following areas:
-
-1. An algorithm for calculating transitional probability has been added.
-
-2. There is now a syllabified version of the example corpus.
-
-3. Example corpora are now bundled with the executable, though can also be manually downloaded directly from [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare).
-
-4. In prior versions of PCT, duplicated phonological searches / analyses often resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. This has been corrected so that users are provided a warning when a search / analysis is duplicated, and either no change is made to the output table or the same results are repeated as a new line.
-
-5. Phonological searches can be named and can include word frequency, phoneme number, and syllable number filters.
-
-6. Various bugs around string similarity and neighbourhood density have been fixed.
-
-7. Parameters for MI calculations have been clarified, and options have been added for calculating MI only within particular specified environments.
-
-8. Calculation algorithms for functional load have been re-factored to make them faster. Minimal pairs can now be defined as either only "true" minimal pairs (e.g. "mad" and "pad") or as minimal pairs through neutralization (e.g., "mama" and "papa"). (Prior versions allowed only minimal pairs through neutralization.)
-
-9. Pronunciation variants can be linked to lexical items through shared spelling.
-
-10. The feature systems have been updated to be accurate. (As far as we can tell, the original released feature systems were accurate, but got corrupted at some point such that the feature values were all misaligned. We believe this error has now been fixed.) Feature / transcription systems are now bundled with the executable, though can also be downloaded from [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare). Master Excel files of all features / transcription symbols have also been provided at [https://github.com/PhonologicalCorpusTools/PCT_Fileshare](https://github.com/PhonologicalCorpusTools/PCT_Fileshare) for transparency and ease of personal modification.
-
-Version 1.4.1 was released in September 2019. This version sizes inventory tables in a more appropriate way, includes the version number in output tables for archival purposes, and fixes bugs in the phonological search, functional load, and "About PCT" functions. 
-
-Version 1.4 was released in December 2018. It differs from v. 1.3 (July 2017) in the following areas:
-
-1. Support for syllable structure has been added to the software, allowing searches based on stress or tone.
-2. The functional load algorithm based on minimal pair counts has been FIXED -- previous versions returned counts based on token frequencies instead of type frequencies.
-3. The feature values in the pre-included feature systems have been updated to fix corruption issues.
-4. Functional load calculations with right-hand environment specifications should be working.
-
-Smaller updates within 1.4 (e.g., 1.4.1) are to fix small issues in functionality but do not reflect major changes.
-
-Version 1.3 was released in July 2017. It differs from v. 1.2 (December 2016) in the following areas:
-
-1. An additonal analysis algorithm for calculating informativity has been added.
-2. The options for relativizing functional load have been revised and clarified.
-3. Numerous small usability fixes have been included.
-
-Version 1.2 was released in December 2016. It differs from v. 1.1 (July 2015) in the following areas:
-
-1. Inventory management -- The tools for categorizing segments into an inventory chart have been updated to allow users to interactively update the chart based on nature classes, including the ability to add / delete / rearrange columns and rows in the chart. Uncategorized segments are more clearly shown and their features easily examined for reference.
-
-2. Increased flexibility -- Environments can be more flexibly defined, e.g., using wildcards and inserting / modifying / deleting segments or classes of segments within a linear string. Within the functional load analysis, functional load can be calculated within individual sets of environments rather than exclusively at the word level.
-
-3. Small updates for usability -- Numerous small updates have been implemented to aid usability, such as improving the ability to select segments based on features, returning results that list features if those were used in the selection of segments, updating the documentation for clarity, adding an option for normalizing functional load results, etc.
-
-Version 1.1 was released as of 6 July 2015. It differs from version 1.0.1 (March 2015) in three main areas:
-
-1. Loading of corpora -- The interface for corpus loading has been streamlined, and users have more options for adjusting the interpretation of transcriptions and columns as they initiate a corpus. Better support for interlinear glosses and TextGrids is also provided.
-
-2. Specification of inventories, features, and environments -- Inventories can now be displayed in IPA-like charts based on user-specified features. Feature selection in analysis functions has been streamlined and natural class selection is better supported. Environment selection is now iterative and more interactive.
-
-3. Pronunciation variants -- Analysis functions now provide users with options for how to handle pronunciation variants when they occur in a corpus.
+Get the latest version of PCT from: https://github.com/PhonologicalCorpusTools/CorpusTools/releases. 
+See the release notes for each version at: https://corpustools.readthedocs.io/en/latest/release.html.
 
 ### Multi-character sequences
 
