@@ -1,0 +1,4 @@
+CorpusTools 1.4.1 Release Notes
+*******************************
+
+Version 1.4.1 was released in September 2019. This version sizes inventory tables in a more appropriate way, includes the version number in output tables for archival purposes, and fixes bugs in the phonological search, functional load, and "About PCT" functions. 

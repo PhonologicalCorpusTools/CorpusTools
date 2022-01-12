@@ -1,0 +1,25 @@
+CorpusTools 1.2.0 Release Notes
+*******************************
+
+Version 1.2 was released in December 2016. 
+
+Inventory Management
+====================
+
+* The tools for categorizing segments into an inventory chart have been updated to allow users to interactively update the chart based on nature classes, including the ability to add / delete / rearrange columns and rows in the chart. Uncategorized segments are more clearly shown and their features easily examined for reference.
+
+
+Environments
+============
+* Environments can be more flexibly defined, e.g., using wildcards and inserting / modifying / deleting segments or classes of segments within a linear string. 
+
+
+Functional Load
+===============
+* Within the functional load analysis, functional load can be calculated within individual sets of environments rather than exclusively at the word level.
+
+
+Other
+=====
+
+* Numerous small updates have been implemented to aid usability, such as improving the ability to select segments based on features, returning results that list features if those were used in the selection of segments, updating the documentation for clarity, adding an option for normalizing functional load results, etc.
