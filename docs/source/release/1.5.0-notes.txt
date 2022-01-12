@@ -1,16 +1,25 @@
 CorpusTools 1.5.0 Release Notes
 *******************************
 
+Version 1.5.0 was released in February of 2022.
 
 New features
 ============
 
-* Implemented a transitional probability algorithm for calculating the conditional probabilities between segments.
+* Implemented a transitional probability algorithm for calculating the conditional probabilities between segments, which widens the scope of use of the 'bigram selector' module.
+* Entry boxes that should have numeric values have now all been set to accept only numeric entries, to avoid inadvertent crashes with non-numeric values.
+
+Corpora
+=======
+
+* There is now a syllabified version of the example corpus.
+* Example corpora are now bundled with the executable, though can also be manually downloaded directly from https://github.com/PhonologicalCorpusTools/PCT_Fileshare.
+* If a new word is added or an existing word is edited to be the same as an existing word, PCT offers options to either create separate items or merge the two, summing frequencies.
 
 Duplicated Analyses
 ===================
 
-* In prior versions of PCT, duplicated phonological searches / analyses often resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. This has been corrected so that users are provided a warning when a search / analysis is duplicated, and either no change is made to the output table or the same results are repeated as a new line.
+* In prior versions of PCT, duplicated phonological searches / analyses could result in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. This has been corrected so that users are provided a warning when a search / analysis is duplicated, and either no change is made to the output table or the same results are repeated as a new line.
 
 Phonological Search
 ===================
@@ -22,6 +31,8 @@ String Similarity and Neighbourhood Density
 ===========================================
 
 * Fixed some bugs that were causing the algorithm to crash when lists of words were added.
+* The option to calculate neighbourhood density based on spelling has been removed, in order to avoid issues with trying to calculate an 'inventory' of spelling symbols. Note that it is still possible to calculate raw string similarity based on spelling, and it is possible to force PCT to read a spelling column as transcription (when reading the corpus in to the software initially), if ND based on spelling is required.
+
 
 Mutual Information
 ==================
@@ -33,14 +44,16 @@ Functional Load
 ===============
 
 * Calculation algorithms have been re-factored to make them faster.
+* Minimal pairs can now be defined as either only "true" minimal pairs (e.g. "mad" and "pad") or as minimal pairs through neutralization (e.g., "mama" and "papa"). (Prior versions allowed only minimal pairs through neutralization.)
 
 Pronunciation Variants
 ======================
 
-* Can be linked to lexical items through shared spelling.
+* It has been clarified that all corpora must include canonical pronunciations. It is not possible to have pronunciation variants that are linked to the same lexical item through shared spelling. 
 
 Feature Systems
 ===============
 
-* The feature systems have been updated to be more accurate.
-* Feature systems are now stored within PCT itself instead of downloaded separately.
+* The feature systems have been updated to be accurate. (As far as we can tell, the original released feature systems were accurate, but got corrupted at some point such that the feature values were all misaligned. We believe this error has now been fixed.)
+* Feature / transcription systems are now bundled with the executable, though can also be downloaded from https://github.com/PhonologicalCorpusTools/PCT_Fileshare. 
+* Master Excel files of all features / transcription symbols have also been provided at https://github.com/PhonologicalCorpusTools/PCT_Fileshare for transparency and ease of personal modification.
