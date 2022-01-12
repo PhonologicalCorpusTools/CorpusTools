@@ -101,8 +101,8 @@ Download the latest version of the source code for Phonological CorpusTools from
 Phonological CorpusTools should now be installed! Run it from a terminal window using the command "pct". You can also open a "Run" dialogue and use the command "pct" there. In Windows, the Run tool is usuall found in All Programs -> Accessories.
 
 ### Versions
-Get the latest version of PCT from: https://github.com/PhonologicalCorpusTools/CorpusTools/releases. 
-See the release notes for each version at: https://corpustools.readthedocs.io/en/latest/release.html.
+Get the latest version of PCT from: [https://github.com/PhonologicalCorpusTools/CorpusTools/releases](https://github.com/PhonologicalCorpusTools/CorpusTools/releases). 
+See the release notes for each version at: [https://corpustools.readthedocs.io/en/latest/release.html](https://corpustools.readthedocs.io/en/latest/release.html).
 
 ### Multi-character sequences
 
