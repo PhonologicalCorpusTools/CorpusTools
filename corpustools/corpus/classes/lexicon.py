@@ -2757,8 +2757,12 @@ class Corpus(object):
                     self.alternative_spellings.append(att)
 
     def generate_alternative_inventories(self):
-
-        for att in self.alternative_transcriptions:
+        alternative_transcriptions = []
+        self.alternative_inventories = {}  # this attribute is only needed for a corpus with alternative transcription.
+        for a in self.attributes:
+            if a.att_type == 'tier' and not a.is_default:
+                alternative_transcriptions.append(a)
+        for att in alternative_transcriptions:
             altinv = set()
             for word in self:
                 transcription = getattr(word, att.name)
