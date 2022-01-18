@@ -1,7 +1,7 @@
 CorpusTools 1.5.0 Release Notes
 *******************************
 
-Version 1.5.0 was released in February of 2022.
+Version 1.5.0 was released in January of 2022.
 
 New features
 ============
