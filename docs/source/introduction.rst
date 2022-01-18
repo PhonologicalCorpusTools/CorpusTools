@@ -93,65 +93,12 @@ We will do our best to keep the software up to date and to answer any questions
 you might have about it; questions, comments, and suggestions should be sent to
 `Kathleen Currie Hall <kathleen.hall@ubc.ca>`_.
 
-Version 1.5 (Sept. 2021) differs from version 1.4.1 in the following areas:
+See :ref:`release` for full release notes for each version. We always recommend using the most recent version. We have noted a few crucial differences between versions below:
 
-1. An algorithm for calculating transitional probability has been added.
+* In versions of PCT prior to 1.5.0, duplicated phonological searches / analyses resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. 
 
-2. Various bugs around string similarity and neighbourhood density have been fixed.
+* In versions of PCT prior to 1.4.1, the calculation of functional load had a bug where the minimal pair-based algorithm returned counts based on token frequencies instead of type frequencies and the change-in-entropy algorithm sometimes crashed.
 
-3. Pronunciation variants can be linked to lexical items through shared spelling.
-
-4. Various improvements to the phonological search function have been made, including naming searches, warning before duplicating searches, and adding word frequency, phoneme number, and syllable number filters.
-    * **WARNING**: In prior versions of PCT, duplicated phonological searches / analyses often resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. 
-
-5. The parameters for mutual information calculations have been clarified, and options added for calculating MI only within particular specified environments.
-
-6. The feature systems have been updated to be more accurate and also stored within PCT itself instead of downloaded separately.
-
-7. The functional load algorithm has been re-factored to be faster.
-
-Version 1.4.1 (Sept. 2019) differs from version 1.2 in the following areas:
-
-1. Basic representation for syllables is now included. Not all algorithms support syllabification, but phonological searches can be performed on the syllable level.
-
-2. Functional load calculations are corrected.
-
-3. Various smaller fixes and enhancements, such as webpage links, frequency information in the corpus summary window, and inventory chart size.
-
-Version 1.2 (July 2016) differs from version 1.1 (July 2015) in the following areas:
-
-1. Inventory management -- The tools for categorizing segments into an inventory chart have been updated to allow users to interactively update the chart based on nature classes, including the ability to add / delete / rearrange columns and rows in the chart. Uncategorized segments are more clearly shown and their features easily examined for reference.
-
-2. Increased flexibility -- Environments can be more flexibly defined, e.g., using wildcards and inserting / modifying / deleting segments or classes of segments within a linear string. Within the functional load analysis, functional load can be calculated within individual sets of environments rather than exclusively at the word level.
-
-3. Small updates for usability -- Numerous small updates have been implemented to aid usability, such as improving the ability to select segments based on features, returning results that list features if those were used in the selection of segments, updating the documentation for clarity, adding an option for normalizing functional load results, etc.
-
-Version 1.1 (July 2015) differs from version 1.0.1 (March 2015) in three main areas:
-
-1. Loading of corpora -- The interface for corpus loading has been streamlined,
-   and users have more options for adjusting the interpretation of transcriptions
-   and columns as they initiate a corpus. Better support for interlinear glosses
-   and TextGrids is also provided.
-
-2. Specification of inventories, features, and environments -- Inventories
-   can now be displayed in IPA-like charts based on user-specified features.
-   Feature selection in analysis functions has been streamlined and natural
-   class selection is better supported. Environment selection is now iterative
-   and more interactive.
-
-3. Pronunciation variants -- Analysis functions now provide users with
-   options for how to handle pronunciation variants when they occur in a corpus.
-
-Version 1.0 differs from the original release version (0.15, July 2014)
-primarily in its user interface; we switched the GUI from TK to QT and
-tried to reorganize the utility menus to be somewhat more intuitive.
-For example, the original release version had all segment inventory views
-in alphabetical order; segments are now arranged as closely as possible to
-standard IPA chart layouts (based on their featural interpretations).
-Additionally, we have added greater search and edit functions as well as
-some additional analysis tools (phonotactic probability, mutual information,
-neighbourhood density), and a greater ability to work with running text /
-spontaneous speech corpora.
 
 .. _code_and_interfaces:
 
