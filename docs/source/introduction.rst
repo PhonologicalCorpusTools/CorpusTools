@@ -91,7 +91,7 @@ The following sections walk through the specifics of downloading, installing,
 and using the various components of Phonological CorpusTools.
 We will do our best to keep the software up to date and to answer any questions
 you might have about it; questions, comments, and suggestions should be sent to
-`Kathleen Currie Hall <kathleen.hall@ubc.ca>`_.
+`Kathleen Currie Hall <kathleen.hall@ubc.ca>`_. Note that we no longer provide active support for the command-line interface of PCT.
 
 See :ref:`release` for full release notes for each version. We always recommend using the most recent version. We have noted a few crucial differences between versions below:
 
