@@ -93,7 +93,7 @@ We will do our best to keep the software up to date and to answer any questions
 you might have about it; questions, comments, and suggestions should be sent to
 `Kathleen Currie Hall <kathleen.hall@ubc.ca>`_. Note that (as of 1.4.1) we no longer provide active support for the command-line interface of PCT.
 
-See :ref:`release-notes` for full release notes for each version. We always recommend using the most recent version. We have noted a few crucial differences between versions below:
+See :doc:`release` for full release notes for each version. We always recommend using the most recent version. We have noted a few crucial differences between versions below:
 
 * In versions of PCT prior to 1.5.0, duplicated phonological searches / analyses resulted in *cumulative* results, e.g., reported frequencies that summed over every instance of a repeated search. 
 
