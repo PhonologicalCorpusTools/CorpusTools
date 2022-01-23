@@ -480,10 +480,11 @@ class MainWindow(QMainWindow):
             self.corpusTable.setModel(self.corpusModel)
             self.corpusStatus.setText('Corpus: {}'.format(self.corpus.name))
             self.inventoryModel = None if specifier_check is None else self.generateInventoryModel()
-
             # when variants
             if hasattr(self.corpus.wordlist[self.corpus.words[0]],'alt_transcriptions'):
-                self.inventories = self.corpus.generate_alternative_inventories()
+                if len(self.corpus.wordlist[self.corpus.words[0]].alt_transcriptions) > 0:
+                    self.corpus.generate_alternative_inventories()
+                    self.alt_inventoryModels = self.generateVarInventoryModel()
 
             self.corpusModel.corpus.inventory.isNew = False
             self.saveCorpus()
@@ -510,13 +511,22 @@ class MainWindow(QMainWindow):
         return inventoryModel
 
 
-    def generateVarInventoryModel(self, invModel, var_col_list):
-        for var_col in var_col_list:
-            var_segs_list = []
-            for w in self.corpus.words:
-                var_segs_list += getattr(self.corpus.wordlist[w], var_col).list
-            var_segs_list = list(set(var_segs_list))
+    def generateVarInventoryModel(self):
+        if not hasattr(self.corpus, 'alternative_inventories'):
+            return None
+        inventoryModels = dict()
+        if self.corpusModel.corpus.inventory.isNew:
+            # just loaded from a text file
+            for key, inventory in self.corpus.alternative_inventories.items():
+                inventoryModels[key] = InventoryModel(inventory, copy_mode=False)
+                inventoryModels[key].updateFeatures(self.corpusModel.corpus.specifier)
 
+        else:
+            # just loaded a .corpus file, not from text
+            for key, inventory in self.corpus.alternative_inventories.items():
+                inventoryModels[key] = InventoryModel(inventory, copy_mode=False)
+
+        return inventoryModels
 
 
     # def forceUpdate(self, corpus):
@@ -596,7 +606,13 @@ class MainWindow(QMainWindow):
             alert.addButton('OK', QMessageBox.AcceptRole)
             alert.exec_()
             return
-        dialog = InventoryManager(copy_model)
+        if hasattr(self, 'alt_inventoryModels'):
+            copy_models_alt = dict()
+            for key, inv_model in self.alt_inventoryModels.items():
+                copy_models_alt[key] = InventoryModel(inv_model, copy_mode=True)
+            dialog = InventoryManager(copy_model, copy_models_alt)
+        else:
+            dialog = InventoryManager(copy_model)
         result = dialog.exec_()
         if result:
             self.inventoryModel.updateFromCopy(dialog.inventory)

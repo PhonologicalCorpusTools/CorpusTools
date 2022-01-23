@@ -9,7 +9,7 @@ class InventoryManager(QDialog):
     def __init__(self, inventory, alt_inv= None):
         super().__init__()
         self.setWindowTitle('Manage inventory')
-        self.inventory = inventory
+        self.inventory = inventory  # inventory is an InventoryModel object
 
         font = QFont('Arial', 12)
         font.setBold(True)
@@ -19,10 +19,8 @@ class InventoryManager(QDialog):
         superTabs = QTabWidget()
         superTabs.setTabPosition(QTabWidget.West)
         inventoryTabs = QTabWidget()
-        alt_inventoryTabs = QTabWidget()
         inventoryLayout.addWidget(superTabs)
         superTabs.addTab(inventoryTabs, 'Phonological')
-        superTabs.addTab(alt_inventoryTabs, 'Phonetic(Not working)')
         # inventoryLayout.addWidget(inventoryTabs)
 
         self.consModel = ConsonantModel(self.inventory)
@@ -43,23 +41,26 @@ class InventoryManager(QDialog):
         inventoryTabs.addTab(self.uncView, 'Uncategorized segments')
 
         if alt_inv is not None:
-            for ai in alt_inv:
-                self.consModel = ConsonantModel(ai)
-                self.consView = InventoryView(self.consModel)
-                self.consView.resizeRowsToContents()
-                self.consView.resizeColumnsToContents()
-                inventoryTabs.addTab(self.consView, f'Consonants {ai}')
+            alt_inventoryTabs = {}  # dictionary of QTabWidget. Each for non-canonitcal transcription
+            consView, vowelView, uncView = {}, {}, {}
+            for key, ai in alt_inv.items():
+                alt_inventoryTabs[key] = QTabWidget()
+                consModel = ConsonantModel(ai)
+                consView[key] = InventoryView(consModel)
+                consView[key].resizeRowsToContents()
+                consView[key].resizeColumnsToContents()
+                alt_inventoryTabs[key].addTab(consView[key], 'Consonants')
 
-                self.vowelModel = VowelModel(ai)
-                self.vowelView = InventoryView(self.vowelModel)
+                vowelModel = VowelModel(ai)
+                vowelView[key] = InventoryView(vowelModel)
+                vowelView[key].resizeRowsToContents()
+                vowelView[key].resizeColumnsToContents()
+                alt_inventoryTabs[key].addTab(vowelView[key], 'Vowels')
 
-                self.vowelView.resizeRowsToContents()
-                self.vowelView.resizeColumnsToContents()
-                inventoryTabs.addTab(self.vowelView, f'Vowels {ai}')
-
-                self.uncModel = UncategorizedModel(ai)
-                self.uncView = UncategorizedView(self.uncModel)
-                inventoryTabs.addTab(self.uncView, f'Uncategorized segments {ai}')
+                uncModel = UncategorizedModel(ai)
+                uncView[key] = UncategorizedView(uncModel)
+                alt_inventoryTabs[key].addTab(uncView[key], 'Uncategorized segments')
+                superTabs.addTab(alt_inventoryTabs[key], f'{key}')
 
 
         self.inventory.modelResetSignal.connect(self.uncModel.modelReset)
