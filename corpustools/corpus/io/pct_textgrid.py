@@ -201,7 +201,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check=None, call_
             cur += 1
             call_back(cur)
 
-        spelling_tier = tg.getFirst(word_name)
+        spelling_tier = tg.getFirst(data.data[word_name].output_name)
 
         for si in spelling_tier:
             if not si.mark:# is None:
@@ -214,7 +214,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check=None, call_
                 #compare with data.word_levels a few lines back in the nesting loop
                 if data[word_name].speaker != data[n].speaker and data[n].speaker is not None:
                     continue
-                t = tg.getFirst(n)
+                t = tg.getFirst(data[n].output_name)
                 # t is a list of Intervals
                 tier_elements = list()
                 for ti in t:
@@ -292,7 +292,7 @@ def textgrid_to_data(corpus_name, path, annotation_types, stop_check=None, call_
             #same after the function call
             #the annotations dictionary seems to contain useful information about words, but none of it is ever used
         transcription_flag = {trans: False for trans, flag in transcription_flag.items()}
-    if len(annotation_types[0]) == 0:
+    if all([len(at) == 0 for at in annotation_types]):
         raise(TextGridIOError('Empty corpus',
                               'Currently PCT is not able to import a TextGrid corpus with only a Transcription tier. '
                               'You must select another tier to be Orthography. If your TextGrid file only has one tier, '
