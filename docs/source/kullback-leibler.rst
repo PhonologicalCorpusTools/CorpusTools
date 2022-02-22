@@ -287,7 +287,7 @@ Optional arguments:
 
    Name of output file
 
-EXAMPLE 1: If your corpus file is example.corpus (no prounciation variants)
+EXAMPLE 1: If your corpus file is example.corpus (no pronunciation variants)
 and you want to calculate the KL-divergence of the segments
 [m] and [n] considering contexts on both sides and using defaults for all
 optional arguments, you would run the following command in your terminal window::
