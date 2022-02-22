@@ -5,7 +5,7 @@ from collections import OrderedDict, defaultdict
 import webbrowser
 
 from .imports import *
-from corpustools.exceptions import PCTError, PCTPythonError, MissingFeatureError
+from corpustools.exceptions import PCTError, PCTPythonError, MissingFeatureError, PCTEncodingError
 from corpustools.decorators import check_for_errors
 from corpustools.corpus.io.binary import load_binary, save_binary, PCTUnpickler
 from corpustools.corpus.io.csv import (inspect_csv, load_corpus_csv,
@@ -755,6 +755,11 @@ class LoadCorpusDialog(PCTDialog):
             if self.textType == 'csv':
                 try:
                     atts, coldelim = inspect_csv(self.pathWidget.value())
+                except PCTEncodingError as error:
+                    # when user tries to load a file with an unknown encoding
+                    reply = QMessageBox.critical(self, "Error encountered", str(error))
+                    self.updateColumnFrame([])
+                    return
                 except PCTError:
                     self.updateColumnFrame([])
                     return

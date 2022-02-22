@@ -59,6 +59,15 @@ class PCTContextError(PCTError):
     """
     pass
 
+## External file loading exceptions
+
+class PCTEncodingError(PCTError):
+    """
+    Exception class for when the user tries to load an external file that cannot be
+    decoded. For example, UTF-16
+    """
+    pass
+
 ## Corpus loading exceptions
 
 class PCTOSError(PCTError):

@@ -6,7 +6,7 @@ from corpustools.corpus.io.binary import save_binary, load_binary
 
 from .helper import parse_transcription, AnnotationType, SyllableBaseAnnotation
 
-from corpustools.exceptions import DelimiterError, PCTError
+from corpustools.exceptions import DelimiterError, PCTEncodingError, PCTError
 import corpustools.gui.modernize as modernize
 
 import time
@@ -44,12 +44,17 @@ def inspect_csv(path, num_lines = 10, coldelim = None, transdelim = None):
     else:
         trans_delimiters = ['.',' ', ';', ',']
 
-    with open(path, 'r', encoding='utf-8-sig') as f:
-        lines = []
-        head = f.readline().strip()
-        for line in f.readlines():
-            if line != '\n':
-                lines.append(line.strip())
+    try:
+        with open(path, 'r', encoding='utf-8-sig') as f:
+            lines = []
+            head = f.readline().strip()
+            for line in f.readlines():
+                if line != '\n':
+                    lines.append(line.strip())
+    except UnicodeDecodeError:
+        raise(PCTEncodingError("PCT cannot decode your text file. Make sure it is in UTF-8.\n\n"
+                               "To convert your file to UTF-8, please open it in Notepad or TextEdit "
+                               "and then 'Save as' with the encoding set to 'UTF-8.'"))
 
     best = ''  ## best guess for the column delimiter (candidates: ',', 'tab', ':', and '|')
     num = 1
