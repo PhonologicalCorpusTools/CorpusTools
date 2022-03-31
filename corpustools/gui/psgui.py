@@ -613,7 +613,8 @@ class PhonoSearchDialog(FunctionDialog):
         searchLayout.addWidget(saveSearch)
 
         optionLayout.addWidget(searchFrame)
-
+        self.segsum = QCheckBox('summarize target by segments')
+        optionLayout.addWidget(self.segsum)
         # for additional filters (word/phoneme/syllable frequency filters)
         validator = QDoubleValidator(float('inf'), 0, 8)  # values should be 0-inf with max 8 sub-decimal digits
         filterFrame = QGroupBox('Additional filters')
@@ -849,6 +850,7 @@ class PhonoSearchDialog(FunctionDialog):
         kwargs['sequence_type'] = self.tierWidget.value()
         kwargs['mode'] = self.mode
         kwargs['result_type'] = self.resultType
+        kwargs['seg_summary'] = self.segsum
 
         return kwargs
 

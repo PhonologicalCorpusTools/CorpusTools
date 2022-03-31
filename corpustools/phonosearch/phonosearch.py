@@ -3,7 +3,7 @@ from corpustools.corpus.classes import Word
 
 def phonological_search(corpus, envs, sequence_type='transcription', call_back=None, stop_check=None,
                         mode='segMode', result_type='positive', min_word_freq=0.0, max_word_freq=float('inf'),
-                        min_phon_num = 0.0, max_phon_num=float('inf'), min_syl_num=0.0, max_syl_num=float('inf')):
+                        min_phon_num = 0.0, max_phon_num=float('inf'), min_syl_num=0.0, max_syl_num=float('inf'), seg_summary=False):
     """
     Perform a search of a corpus for segments, with the option of only
     searching in certain phonological environments. Can filter by minimum word frequency,

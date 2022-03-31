@@ -860,7 +860,8 @@ class PhonoSearchResults(ResultsWindow):
         dataModel = PhonoSearchResultsModel(self.dialog.header,
                         self.dialog.summary_header,
                         self.dialog.results, self._parent.settings)
-        dataModel.setSummarized(True)
+        summary_by_seg = dialog.segsum.isChecked()
+        dataModel.setSummarized(True, summary_by_seg)
         self.table.setModel(dataModel)
 
         self.summarized = True

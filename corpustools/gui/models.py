@@ -562,13 +562,17 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.rows = [[data[h] for h in self.header] for data in self.allData]
         self.summarized = False
 
-    def _summarize(self):
+    def _summarize(self,segsum):
         typefreq = defaultdict(float)
         tokenfreq = defaultdict(float)
 
         for line in self.allData:
-            segs = line['userinput_target']
-            envs = line['userinput_env']
+            if segsum:
+                segs = line['Target']
+                envs = line['Environment']
+            else:
+                segs = line['userinput_target']
+                envs = line['userinput_env']
             tier = line['Transcription tier']
             res_type = line['Result type']
             wf = line['Min Word Freq'], line['Max Word Freq']  # word freq filter min/max
@@ -628,13 +632,13 @@ class PhonoSearchResultsModel(BaseTableModel):
             mini_dict['Token frequency'] = sum([line['Word'].frequency for s in line['Segment']])
             self.summarizedAllData.append(mini_dict)
 
-    def setSummarized(self, b):
+    def setSummarized(self, b, segsum=False):
         if self.summarized == b:
             return
         self.summarized = b
         self.layoutAboutToBeChanged.emit()
         if self.summarized:     # summary result should be returned
-            self._summarize()
+            self._summarize(segsum)
         else:                   # individual result should be returned
             allData_list = []
             for data in self.allData:
