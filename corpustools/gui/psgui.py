@@ -613,7 +613,7 @@ class PhonoSearchDialog(FunctionDialog):
         searchLayout.addWidget(saveSearch)
 
         optionLayout.addWidget(searchFrame)
-        self.segsum = QCheckBox('Separate summary rows by segments')
+        self.segsum = QCheckBox('List target segments separately in summary results')
         optionLayout.addWidget(self.segsum)
         # for additional filters (word/phoneme/syllable frequency filters)
         validator = QDoubleValidator(float('inf'), 0, 8)  # values should be 0-inf with max 8 sub-decimal digits
