@@ -679,8 +679,12 @@ class PhonoSearchDialog(FunctionDialog):
         if btn.text() == 'Negative':
             if btn.isChecked():     # 'negative' is checked
                 self.resultType = 'negative'
+
+                self.segsum.setChecked(False)  # unselect the list-summary-result-by-seg option
+                self.segsum.setEnabled(False)  # and grey it out
             else:                   # 'negative' is deselected
                 self.resultType = 'positive'
+                self.segsum.setEnabled(True)  # list-sum-res-by-seg option enabled
 
     def changeMode(self, btn):
         self.pslayout.removeWidget(self.envWidget)
