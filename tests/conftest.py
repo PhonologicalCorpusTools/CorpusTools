@@ -10,7 +10,7 @@ from corpustools.corpus.classes import (Word, Corpus, FeatureMatrix, Segment,
                                         WordToken, Discourse, Attribute)
 from corpustools.corpus.io.helper import AnnotationType
 
-from corpustools.corpus.io.textgrid import load_discourse_textgrid, inspect_discourse_textgrid
+from corpustools.corpus.io.pct_textgrid import load_discourse_textgrid, inspect_discourse_textgrid
 
 from corpustools.utils import generate_discourse
 

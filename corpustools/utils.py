@@ -5,7 +5,17 @@ import copy
 from corpustools.corpus.classes.spontaneous import WordToken, Discourse
 
 def generate_discourse(corpus):
-    d = Discourse(name = '{} discourse'.format(corpus.name))
+    kwargs = dict(name=f'{corpus.name} discourse',
+                  wav_path=corpus.wav_path)
+    for a in corpus.attributes:
+        if a.att_type == 'tier':
+            kwargs['transcription_name'] = a.name
+        elif a.att_type == 'spelling':
+            kwargs['spelling_name'] = a.name
+        if 'transcription_name' in kwargs and 'spelling_name' in kwargs:
+            break
+
+    d = Discourse(kwargs=kwargs)
     lookup_list = list()
     for k in corpus.keys():
         lookup_list.extend([k for x in range(int(corpus[k].frequency))])
