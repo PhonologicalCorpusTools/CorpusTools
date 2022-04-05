@@ -84,10 +84,10 @@ def export_test_dir(test_dir):
 
 @pytest.fixture(scope='session')
 def settings():
-    from corpustools.gui.config import Settings
-    s = Settings()
+    from corpustools.gui.config import PCTSettings
+    s = PCTSettings()
     s['sigfigs'] = 3
-    return Settings()
+    return PCTSettings()
 
 @pytest.fixture(scope='module')
 def spe_specifier():
