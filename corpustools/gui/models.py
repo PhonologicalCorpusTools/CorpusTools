@@ -562,7 +562,7 @@ class PhonoSearchResultsModel(BaseTableModel):
         self.rows = [[data[h] for h in self.header] for data in self.allData]
         self.summarized = False
 
-    def _summarize(self,segsum):
+    def _summarize(self, segsum):
         typefreq = defaultdict(float)
         tokenfreq = defaultdict(float)
 
@@ -570,6 +570,9 @@ class PhonoSearchResultsModel(BaseTableModel):
             if segsum:
                 segs = line['Target']
                 envs = line['Environment']
+
+                if segs == 'N/A':  # search has no hits then continue
+                    continue
             else:
                 segs = line['userinput_target']
                 envs = line['userinput_env']
@@ -579,7 +582,7 @@ class PhonoSearchResultsModel(BaseTableModel):
             pc = line['Min Phoneme Number'], line['Max Phoneme Number']  # phoneme count min/max
             sc = line['Min Syllable Number'], line['Max Syllable Number']  # syllable count min/max
             filters = wf, pc, sc
-            for i,seg in enumerate(segs):
+            for i, seg in enumerate(segs):
                 segenvfilters = seg, envs[i], filters, tier, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
                 if res_type == 'positive':  # if positive search
                     if line['raw_env'][i] is not None:      # then check if the word is in results for satisfying env[i]
@@ -632,7 +635,7 @@ class PhonoSearchResultsModel(BaseTableModel):
             mini_dict['Token frequency'] = sum([line['Word'].frequency for s in line['Segment']])
             self.summarizedAllData.append(mini_dict)
 
-    def setSummarized(self, b, segsum=False):
+    def setSummarized(self, b, segsum):
         if self.summarized == b:
             return
         self.summarized = b
@@ -653,11 +656,16 @@ class PhonoSearchResultsModel(BaseTableModel):
 
         self.layoutChanged.emit()
 
-    def addRows(self,rows):
+    def addRows(self, rows, segsum):
+        '''
+        Adding phonological search result rows on top of existing results
+        :param rows: list. rows to add
+        :param segsum: bool. whether the rows in the summary result should be separated by segments.
+        '''
         self.layoutAboutToBeChanged.emit()
         self.allData.extend(rows)
         if self.summarized:
-            self._summarize()
+            self._summarize(segsum)
         self.layoutChanged.emit()
 
 class TreeItem(object):

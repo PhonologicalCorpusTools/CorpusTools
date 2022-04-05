@@ -860,8 +860,8 @@ class PhonoSearchResults(ResultsWindow):
         dataModel = PhonoSearchResultsModel(self.dialog.header,
                         self.dialog.summary_header,
                         self.dialog.results, self._parent.settings)
-        summary_by_seg = dialog.segsum.isChecked()
-        dataModel.setSummarized(True, summary_by_seg)
+        self.summary_by_seg = dialog.segsum.isChecked()
+        dataModel.setSummarized(True, self.summary_by_seg)
         self.table.setModel(dataModel)
 
         self.summarized = True
@@ -878,13 +878,13 @@ class PhonoSearchResults(ResultsWindow):
         # label switch.
         if self.summarized:
             # summarized result -> total result
-            self.table.model().setSummarized(False)  # update table contents
+            self.table.model().setSummarized(False, self.summary_by_seg)  # update table contents
             self.individualButton.hide()
             self.aclayout.insertWidget(0, self.summaryButton)
             self.summaryButton.show()
         else:
             # total result -> summarized result
-            self.table.model().setSummarized(True)  # update table contents
+            self.table.model().setSummarized(True, self.summary_by_seg)  # update table contents
             self.summaryButton.hide()
             self.aclayout.insertWidget(0, self.individualButton)
             self.individualButton.show()
@@ -896,9 +896,9 @@ class PhonoSearchResults(ResultsWindow):
             if self.dialog.update:  # when 'Calculate [...] (add to current results table)' selected
                 if len(self.dialog.results) > 0:
                     if not self.duplicate_check()[0]:
-                        self.table.model().addRows(self.dialog.results)
+                        self.table.model().addRows(rows=self.dialog.results, segsum=self.dialog.segsum.isChecked())
                         self.summarized = False
-                        self.table.model().setSummarized(True)
+                        self.table.model().setSummarized(True, self.summary_by_seg)
             else:                   # when 'Calculate [...] (start new results table)' selected
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
                                                     self.dialog.summary_header,
@@ -906,7 +906,8 @@ class PhonoSearchResults(ResultsWindow):
                                                     self._parent.settings)
                 self.table.setModel(dataModel)
                 self.summarized = False
-                self.table.model().setSummarized(True)
+                segsum = self.dialog.segsum.isChecked()
+                self.table.model().setSummarized(True, segsum)
         self.raise_()
         self.activateWindow()
 
