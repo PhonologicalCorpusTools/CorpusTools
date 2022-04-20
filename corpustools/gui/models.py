@@ -583,6 +583,12 @@ class PhonoSearchResultsModel(BaseTableModel):
             sc = line['Min Syllable Number'], line['Max Syllable Number']  # syllable count min/max
             filters = wf, pc, sc
             for i, seg in enumerate(segs):
+                try:
+                    # do not count duplicates. For example, in s.ɑ.s.i, [s_] should only be counted once.
+                    if segenvfilters == (seg, envs[i], filters, tier, res_type):
+                        continue
+                except NameError:
+                    pass
                 segenvfilters = seg, envs[i], filters, tier, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
                 if res_type == 'positive':  # if positive search
                     if line['raw_env'][i] is not None:      # then check if the word is in results for satisfying env[i]
@@ -598,6 +604,7 @@ class PhonoSearchResultsModel(BaseTableModel):
                         continue
                     typefreq[segenvfilters] += 1   # the word is in the result for NOT satisfying the env[i] so +1
                     tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
+            del segenvfilters
 
         self.rows = list()
         for k, v in sorted(typefreq.items()):
