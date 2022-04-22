@@ -520,7 +520,7 @@ class ResultsModel(BaseTableModel):
             headerIdx += 1
             currRow = 0
             stop = 0
-            while stop is not 1 and currRow+1 < len(results):
+            while stop != 1 and currRow+1 < len(results):
                 cv = results[currRow][currHeader]
                 nv = results[currRow+1][currHeader]
                 if cv != nv:

@@ -1414,27 +1414,27 @@ class FeatureEdit(QLineEdit):
     def event(self, e):
         # keyPressEvent() doesn't catch the tab key when pressed so catch it under event
         if e.type() == QEvent.KeyPress:
-            if e.key() == Qt.Key_Tab:
-                self.tabPressed.emit()
-                return True
-            else:
-                self.keyPressed(e)
-                return True
+            # if e.key() == Qt.Key_Tab:
+            #     self.tabPressed.emit()
+            #     return True
+            # else:
+            self.keyPressed(e)
+            return True
         return super().event(e)
 
 
     def keyPressed(self,e):
         if self.completer and self.completer.popup().isVisible():
-            if e.key() in ( Qt.Key_Space, Qt.Key_Enter,
-                            Qt.Key_Return, Qt.Key_Escape,
-                            Qt.Key_Tab, Qt.Key_Backtab):  # e.ignore() doesn't work when e.key() == Qt.Key_Tab
+            if e.key() in (Qt.Key_Space, Qt.Key_Enter,
+                           Qt.Key_Return, Qt.Key_Escape,
+                           Qt.Key_Tab, Qt.Key_Backtab):  # e.ignore() doesn't work when e.key() == Qt.Key_Tab
                 e.ignore()
                 return
         else:
-            if e.key() in (Qt.Key_Enter, Qt.Key_Return):
+            if e.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Tab):
                 self.finalize()
                 return
-        isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key()==Qt.Key_E)
+        isShortcut=((e.modifiers() & Qt.ControlModifier) and e.key() == Qt.Key_E)
         if (self.completer is None or not isShortcut):
             super().keyPressEvent(e)
 
