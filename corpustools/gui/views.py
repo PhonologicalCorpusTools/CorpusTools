@@ -860,8 +860,7 @@ class PhonoSearchResults(ResultsWindow):
         dataModel = PhonoSearchResultsModel(self.dialog.header,
                         self.dialog.summary_header,
                         self.dialog.results, self._parent.settings)
-        self.summary_by_seg = dialog.segsum.isChecked()
-        dataModel.setSummarized(True, self.summary_by_seg)
+        dataModel.setSummarized(True, self.dialog.segsum.isChecked())
         self.table.setModel(dataModel)
 
         self.summarized = True
@@ -878,13 +877,13 @@ class PhonoSearchResults(ResultsWindow):
         # label switch.
         if self.summarized:
             # summarized result -> total result
-            self.table.model().setSummarized(False, self.summary_by_seg)  # update table contents
+            self.table.model().setSummarized(False, self.dialog.segsum.isChecked())  # update table contents
             self.individualButton.hide()
             self.aclayout.insertWidget(0, self.summaryButton)
             self.summaryButton.show()
         else:
             # total result -> summarized result
-            self.table.model().setSummarized(True, self.summary_by_seg)  # update table contents
+            self.table.model().setSummarized(True, self.dialog.segsum.isChecked())  # update table contents
             self.summaryButton.hide()
             self.aclayout.insertWidget(0, self.individualButton)
             self.individualButton.show()
@@ -898,7 +897,7 @@ class PhonoSearchResults(ResultsWindow):
                     if not self.duplicate_check()[0]:
                         self.table.model().addRows(rows=self.dialog.results, segsum=self.dialog.segsum.isChecked())
                         self.summarized = False
-                        self.table.model().setSummarized(True, self.summary_by_seg)
+                        self.table.model().setSummarized(True, self.dialog.segsum.isChecked())
             else:                   # when 'Calculate [...] (start new results table)' selected
                 dataModel = PhonoSearchResultsModel(self.dialog.header,
                                                     self.dialog.summary_header,
