@@ -591,7 +591,7 @@ class PhonoSearchResultsModel(BaseTableModel):
                     pass
                 segenvfilters = seg, envs[i], filters, tier, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
                 if res_type == 'positive':  # if positive search
-                    if line['raw_env'][i] is not None:      # then check if the word is in results for satisfying env[i]
+                    if line['raw_env'][i] is not None or segsum:  # then check if the word is in results for satisfying env[i]
                         typefreq[segenvfilters] += 1        # if so, +1 in the type freq
                         tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
                     else:
