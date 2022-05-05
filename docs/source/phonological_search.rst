@@ -63,7 +63,26 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters` and :
    To save a search, click on “Save current search” in the “Phonological Search” dialogue box (see above pictures).
    To modify it or to use a saved search, click on “Load recent search.” See :ref:`saving_phono_search` for details.
 
-6. **Additional Filters**: As of PCT 1.5.0, there are some extra options that can be added to phonological searches. These act as filters on the returned results. If the filters are left blank, they are simply not applied and all results are returned. It is **VERY IMPORTANT** to realize that they act as *positive* filters on the *results*. This is crucially relevant for negative searches. If a search is performed, positive or negative, PCT first finds all words that match the search criteria, and then applies the filter(s). For example, if the search is a positive search for words that begin with [m] in the example corpus, with a filter set such that the minimum phoneme number is 3, then first all [#m...] words will be found, and then PCT will report only the subset of those words that match the filter, i.e., have a minimum length of 3 phonemes (e.g., [mɑtɑ]). If the same search is done but set to be negative, then first all the words that do *not* begin with [m] are found, and then PCT applies the positive filter and again reports only the subset of those words that match the filter, i.e., have a minimum length of 3 phonemes (e.g., [nɑtɑ]). For positive searches, the effects are simply cumulative. But for negative searches, the search and filter are crucially separate. The alternative would be to do a full positive search on the whole corpus, looking for words that both begin with [m] *and* are longer than three phonemes, and then returning all words that do not match *BOTH* those criteria. The difference in the result is whether words that are shorter than three phonemes and don't begin with [m] are included (e.g., [ʃi] in the example corpus). The actual implementation of PCT will *not* include such words, whereas the alternative interpretation described above *would* include such words. The three filters are:
+6. **Summary Display Option** As of PCT 1.5.1, there are two options for the display of results for searches that have multiple components in the target and environment selections. The default is that each environment specified returns one row of results in the summary results window. For example, if a search is done for [s, ʃ] in the environment __ [ɑ, i], then the summary results window will show that there are a total of six words that have either [s] or [ʃ] before either [ɑ] or [i]:
+
+   .. image:: static/phonosearchenvironment4_not_sep.png
+      :width: 100%
+      :align: center
+
+On the other hand, if the option "List target segments and environments separately in summary results" is checked, then each target and environment is shown separately, so that there are four results, one for [s] before [ɑ], one for [s] before [i], one for [ʃ] before [ɑ], and one for [ʃ] before [i] (this is the equivalent of doing these four searches separately):
+
+   .. image:: static/phonosearchenvironment4_sep.png
+      :width: 100%
+      :align: center
+
+Note that in either case, the individual results will be identical; this is just the list of individual words that match any of these four environments:
+
+   .. image:: static/phonosearchenvironment4_individ_results.png
+      :width: 100%
+      :align: center
+
+
+7. **Additional Filters**: As of PCT 1.5.0, there are some extra options that can be added to phonological searches. These act as filters on the returned results. If the filters are left blank, they are simply not applied and all results are returned. It is **VERY IMPORTANT** to realize that they act as *positive* filters on the *results*. This is crucially relevant for negative searches. If a search is performed, positive or negative, PCT first finds all words that match the search criteria, and then applies the filter(s). For example, if the search is a positive search for words that begin with [m] in the example corpus, with a filter set such that the minimum phoneme number is 3, then first all [#m...] words will be found, and then PCT will report only the subset of those words that match the filter, i.e., have a minimum length of 3 phonemes (e.g., [mɑtɑ]). If the same search is done but set to be negative, then first all the words that do *not* begin with [m] are found, and then PCT applies the positive filter and again reports only the subset of those words that match the filter, i.e., have a minimum length of 3 phonemes (e.g., [nɑtɑ]). For positive searches, the effects are simply cumulative. But for negative searches, the search and filter are crucially separate. The alternative would be to do a full positive search on the whole corpus, looking for words that both begin with [m] *and* are longer than three phonemes, and then returning all words that do not match *BOTH* those criteria. The difference in the result is whether words that are shorter than three phonemes and don't begin with [m] are included (e.g., [ʃi] in the example corpus). The actual implementation of PCT will *not* include such words, whereas the alternative interpretation described above *would* include such words. The three filters are:
 
    a. **Word frequency**: Specify what the minimum and / or maximum token frequency value each returned word should have is.
    
@@ -74,7 +93,7 @@ your corpus must be delimited for syllables; see :ref:`parsing_parameters` and :
    
    Note that the syllable number filters are not applicable to a corpus without syllables. See :ref:`column-delimited` for how to create a corpus with a syllable delimiter.
 
-7. **Results**: Once all selections have been made, click on “Calculate
+8. **Results**: Once all selections have been made, click on “Calculate
    phonological search.” If there is not already an existing results table,
    or you want to start a new one, choose the “Start new results table”
    option. If you want to add the results to a pre-existing table, choose
