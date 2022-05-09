@@ -6,7 +6,7 @@ from corpustools.corpus.classes import Speaker
 
 from corpustools.corpus.io.helper import AnnotationType, Annotation, BaseAnnotation
 
-from corpustools.corpus.io.textgrid import (textgrid_to_data,load_textgrid,
+from corpustools.corpus.io.pct_textgrid import (textgrid_to_data,load_textgrid,
                                             guess_tiers)
 
 #def test_guess_tiers(textgrid_test_dir):
