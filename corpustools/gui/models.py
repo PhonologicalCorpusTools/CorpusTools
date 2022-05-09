@@ -590,10 +590,12 @@ class PhonoSearchResultsModel(BaseTableModel):
                 except NameError:
                     pass
                 segenvfilters = seg, envs[i], filters, tier, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
-                if res_type == 'positive':  # if positive search
-                    if line['raw_env'][i] is not None or segsum:  # then check if the word is in results for satisfying env[i]
-                        typefreq[segenvfilters] += 1        # if so, +1 in the type freq
-                        tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
+                if res_type == 'positive':# if positive search
+                    for ie in line['raw_env']:  # ie being Index and Env
+                        if ie[0] == i and ie[1] is not None or segsum:  # ie[0] is the env # in the query. ie[1] is not None then that env # gave a search result.
+                            typefreq[segenvfilters] += 1  # Therefore, +1 in the type freq
+                            tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
+                            break
                     else:
                         typefreq[segenvfilters] += 0
                         tokenfreq[segenvfilters] += 0

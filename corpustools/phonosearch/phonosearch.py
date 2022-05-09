@@ -59,18 +59,19 @@ def phonological_search(corpus, envs, sequence_type='transcription', call_back=N
         tier = getattr(word, sequence_type)
         found = []
 
-        for env in envs:
+        for i, env in enumerate(envs):
             es = tier.find(env, mode)
             try:
-                found.extend(es)
-            except TypeError:   # when es == None
-                found.append(es)
+                found.extend([[i, e] for e in es])
+            except TypeError:  # when es == None
+                found.append([i, es])
 
+        fo = [f[1] for f in found]
         if result_type == 'positive':
-            if not all(e is None for e in found):   # if the word satisfies at least one environment,
+            if not all(e is None for e in fo):   # if the word satisfies at least one environment,
                 results.append((word, found))       # add it to 'results'
         else:
-            if all(e is None for e in found):
+            if all(e is None for e in fo):
                 results.append((word, found))
 
     # additional filters

@@ -878,12 +878,13 @@ class PhonoSearchDialog(FunctionDialog):
             if self.mode == 'segMode':
                 userinput_target = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
                 userinput_env = tuple(str(y) for y in self.envWidget.value())
+                fo = [f[1] for f in found]  # fo drops all env# info. i.e., contains environment objects only.
 
                 if str(word) == 'N/A' and word.transcription is None:  # if there was no hit from the search, side way
                     res_transcription = target = envs = word.frequency = 'N/A'
 
                 else:                                                   # regular cases with one or more words searched
-                    f = list(filter(None, found))
+                    f = list(filter(None, fo))
                     target = tuple(x.middle for x in f)
                     res_transcription = str(getattr(word, self.tierWidget.value()))
                     if len(target) == 0 and self.resultType == 'negative':
@@ -897,12 +898,13 @@ class PhonoSearchDialog(FunctionDialog):
 
             else:  # syllable search mode
                 userinput_target, userinput_env = self.cleanse_syl_userinput()
+                fo = [f[1] for f in found]  # fo drops all env# info. i.e., contains environment objects only.
 
                 if str(word) == 'N/A' and word.transcription is None:  # if there was no hit from the search, side way
                     res_transcription = target = envs = word.frequency = 'N/A'
 
                 else:                                                   # regular cases with one or more words searched
-                    list_of_sylEnvs = list(filter(None, found))
+                    list_of_sylEnvs = list(filter(None, fo))
                     target = tuple(
                         syl.print_syl_structure(env=False) for syl in list_of_sylEnvs)  # 'target' column in res. window
 
