@@ -1,7 +1,7 @@
 pytest~=5.4.3
 sphinx==3.0.4
 numpydoc
-numpy~=1.19.0
+numpy>=1.21
 scipy~=1.4.1
 pyqt5~=5.15.0
 setuptools~=47.3.0
