@@ -1,6 +1,5 @@
 pytest~=5.4.3
-sphinx>=1.3b3
-numpydoc
+sphinx==3.0.4
 numpy~=1.19.0
 scipy~=1.4.1
 pyqt5~=5.15.0
