@@ -108,9 +108,9 @@ TextGrids
    :toctree: generate/
    :template: function.rst
 
-   textgrid.inspect_discourse_textgrid
-   textgrid.load_discourse_textgrid
-   textgrid.load_directory_textgrid
+   pct_textgrid.inspect_discourse_textgrid
+   pct_textgrid.load_discourse_textgrid
+   pct_textgrid.load_directory_textgrid
 
 Running text
 ------------
@@ -190,6 +190,7 @@ Functional load
    functional_load.deltah_fl
    functional_load.relative_minpair_fl
    functional_load.relative_deltah_fl
+   functional_load.entropy
 
 .. _kl_api:
 
