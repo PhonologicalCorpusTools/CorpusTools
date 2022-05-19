@@ -693,13 +693,8 @@ class PhonoSearchDialog(FunctionDialog):
         if btn.text() == 'Syllables':
             if btn.isChecked():     # sylMode is checked
                 self.mode = 'sylMode'
-                self.resultTypeGroup.widgets[1].setEnabled(False)  # disable 'negative search' in result type
-                if self.resultTypeGroup.widgets[1].isChecked():  # if 'negative search' has been previously selected.
-                    self.resultTypeGroup.widgets[1].setChecked(False)  # then uncheck 'negative search'
-                    self.resultTypeGroup.widgets[0].setChecked(True)   # and check 'positive search'
             else:                   # sylMode is deselected
                 self.mode = 'segMode'
-                self.resultTypeGroup.widgets[1].setEnabled(True)  # enable 'negative search' in result type
         self.envWidget = PSEnvironmentSelectWidget(self.inventory,
                                                    show_full_inventory=bool(self.settings['show_full_inventory']),
                                                    mode=self.mode,
