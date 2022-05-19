@@ -117,7 +117,7 @@ bdist_mac_options = {'iconfile':'docs/images/favicon.icns',
 bdist_dmg_options = {'applications_shortcut':True}
 
 setup(name="PhonologicalCorpusTools",
-        version="1.5.0",
+        version="1.5.1",
         scripts=[exe],
         packages=['corpustools',
                 'corpustools.corpus',
