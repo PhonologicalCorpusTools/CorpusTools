@@ -1,0 +1,17 @@
+CorpusTools 1.5.1 Release Notes
+*******************************
+
+Version 1.5.1 was released in May of 2022.
+
+Phonological Search
+===================
+
+* A summary display option, "List target segments and environments separately in summary results" was added. By default,
+  the summary results present each input environment as a row. The added option instead shows each target and environment
+  separately. The individual results are identical between the two options.
+
+Bug fixes
+=========
+
+* Autocompleting feature or segment selection with the tab key now works correctly.
+* PCT can now import TextGrid files without issues.
