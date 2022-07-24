@@ -873,8 +873,10 @@ class PhonoSearchDialog(FunctionDialog):
             if self.mode == 'segMode':
                 userinput_target = tuple(', '.join(list(y.original_middle)) for y in self.envWidget.value())
                 userinput_env = tuple(str(y) for y in self.envWidget.value())
-                fo = [f[1] for f in found]  # fo drops all env# info. i.e., contains environment objects only.
-
+                try:
+                    fo = [f[1] for f in found]  # fo drops all env# info. i.e., contains environment objects only.
+                except TypeError:  # no results
+                    pass
                 if str(word) == 'N/A' and word.transcription is None:  # if there was no hit from the search, side way
                     res_transcription = target = envs = word.frequency = 'N/A'
 

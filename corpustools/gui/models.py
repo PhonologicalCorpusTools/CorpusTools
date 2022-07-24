@@ -592,13 +592,14 @@ class PhonoSearchResultsModel(BaseTableModel):
                 segenvfilters = seg, envs[i], filters, tier, res_type  # segs + envs + (freq and phoneme/syllable count filters) + result_type
                 if res_type == 'positive':# if positive search
                     for ie in line['raw_env']:  # ie being Index and Env
-                        if ie[0] == i and ie[1] is not None or segsum:  # ie[0] is the env # in the query. ie[1] is not None then that env # gave a search result.
-                            typefreq[segenvfilters] += 1  # Therefore, +1 in the type freq
-                            tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
-                            break
-                    else:
-                        typefreq[segenvfilters] += 0
-                        tokenfreq[segenvfilters] += 0
+                        try:
+                            if ie[0] == i and ie[1] is not None or segsum:  # ie[0] is the env # in the query. ie[1] is not None then that env # gave a search result.
+                                typefreq[segenvfilters] += 1  # Therefore, +1 in the type freq
+                                tokenfreq[segenvfilters] += line['Word'].frequency  # and add token freq accordingly
+                                break
+                        except TypeError:
+                            typefreq[segenvfilters] += 0
+                            tokenfreq[segenvfilters] += 0
                 elif res_type == 'negative':  # if negative search
                     if line['Word'].transcription is None:
                         typefreq[segenvfilters] += 0  # check first if the negative search has no hit
