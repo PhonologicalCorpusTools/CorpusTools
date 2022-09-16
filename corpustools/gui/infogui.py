@@ -124,7 +124,7 @@ class InformativityDialog(FunctionDialog):
             if seg in items:
                 continue
             else:
-                self.segView.addItem(seg[0])
+                self.segView.addItem(seg)
         self.segView.sortItems()
 
     def generateKwargs(self):
