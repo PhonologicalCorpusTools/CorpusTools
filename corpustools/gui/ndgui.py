@@ -37,7 +37,10 @@ class NDWorker(FunctionWorker):
                 tierdict = defaultdict(list)
                 # Create a dict with sequence_type keys for constant-time lookup
                 for entry in c:
-                    w = getattr(entry, kwargs['sequence_type'])
+                    try:
+                        w = getattr(entry, kwargs['sequence_type'])
+                    except TypeError:
+                        w = getattr(entry, 'Transcription')
                     key = str(w)
                     tierdict[key].append(entry)
                 if 'query' in kwargs:#this will be true when searching for a single word (in the corpus or not)

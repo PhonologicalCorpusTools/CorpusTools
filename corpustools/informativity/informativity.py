@@ -260,7 +260,7 @@ def get_informativity(corpus_context, segment, sequence_type = 'transcription', 
 
 def calculate_informativity(s_frs, c_prs, rounding):
     informativity=round(-(sum([(s_frs[c]) * log2(c_prs[c]) for c in c_prs]))/sum([(s_frs[s]) for s in s_frs]), rounding)
-    if informativity is -0.0:
+    if informativity == -0.0:
         informativity = 0.0
     return informativity
 

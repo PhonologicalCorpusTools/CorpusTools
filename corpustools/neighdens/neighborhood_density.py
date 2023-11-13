@@ -73,7 +73,10 @@ def neighborhood_density_all_words(corpus_context, tierdict, tier_type = None, s
                 return
             if last_value_removed:
                 tierdict[last_key_removed].append(last_value_removed)
-            w_sequence = getattr(w, corpus_context.sequence_type)
+            try:
+                w_sequence = getattr(w, corpus_context.sequence_type)
+            except TypeError:
+                w_sequence = getattr(w, 'Transcription')
             last_key_removed = str(w_sequence)
             for i, item in enumerate(tierdict[last_key_removed]):
                 if str(item) == str(w):
