@@ -86,15 +86,15 @@ class ProgressDialog(QProgressDialog):
                     self.eta = eta
                 if eta < self.eta or eta > self.eta + 10:
                     self.eta = eta
-        self.setValue(progress*100)
+        self.setValue(int(progress*100))
         if self.eta is None:
             eta = 'Unknown'
 
         else:
             if self.eta < 0:
                 self.eta = 0
-            eta = str(datetime.timedelta(seconds = self.eta))
-        self.setLabelText('{}\nEstimated time left: {}'.format(self.information,eta))
+            eta = str(datetime.timedelta(seconds=self.eta))
+        self.setLabelText('{}\nEstimated time left: {}'.format(self.information, eta))
 
 
 class FunctionWorker(QThread):
