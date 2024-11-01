@@ -175,23 +175,6 @@ Frequency of alternation
 
    freq_of_alt.calc_freq_of_alt
 
-.. _func_load_api:
-
-Functional load
----------------
-
-.. currentmodule:: corpustools.funcload
-
-.. autosummary::
-   :toctree: generate/
-   :template: function.rst
-
-   functional_load.minpair_fl
-   functional_load.deltah_fl
-   functional_load.relative_minpair_fl
-   functional_load.relative_deltah_fl
-   functional_load.entropy
-
 .. _kl_api:
 
 Kullback-Leibler divergence
