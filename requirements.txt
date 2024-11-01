@@ -1,5 +1,5 @@
 pytest~=8.0.0
-sphinx~=4.5.0
+sphinx~=5.0.0
 numpydoc
 numpy>=1.21
 scipy~=1.11.4
