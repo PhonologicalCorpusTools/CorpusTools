@@ -1,5 +1,6 @@
 pytest~=8.0.0
 sphinx~=5.0.0
+sphinx_rtd_theme~=0.5.2
 numpydoc
 numpy>=1.21
 scipy~=1.11.4
