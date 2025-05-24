@@ -43,15 +43,18 @@ Please use the fallback installation method below to install from source.
 
 1. Install Python 3.3 or higher (Python 3.10 recommended) if your system does not have Python: https://www.python.org/downloads/ 
 
-2. Download the latest version of the source code for Phonological CorpusTools
-   from the [releases page](https://github.com/PhonologicalCorpusTools/CorpusTools/releases).
-   You can find this under `Assets`. Download `Source code (zip)` or `Source code (tar.gz)`
+2. Download the latest source code for Phonological CorpusTools by clicking on `Code` > `` (see image below).
+   ![image](https://github.com/user-attachments/assets/b4bf61c6-87e9-4830-b396-0dc7cc1783bc)
+   
+   If you want to download a specific version, go to [releases page](https://github.com/PhonologicalCorpusTools/CorpusTools/releases)
+   and Download `Source code (zip)` or `Source code (tar.gz)` under `Assets`.
 
-3. Unpack the source code in a directory of your choice. 
 
-4. Open a terminal (or command prompt for Windows) and `cd` into the directory.
+4. Unpack the source code in a directory of your choice. 
 
-5. Use the following command to install the dependencies
+5. Open a terminal (or command prompt for Windows) and `cd` into the directory.
+
+6. Use the following command to install the dependencies
    ```bash
    pip install -r requirements.txt
    ```
